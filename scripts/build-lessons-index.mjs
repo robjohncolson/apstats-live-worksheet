@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+// build-lessons-index.mjs — generate lessons-index.json for the mobile launcher
+// (ANDROID_PACKET_APP_SPEC §2). One clean, offline-ready entry per topic:
+//   - worksheet/quiz URLs relativized to local bundled paths
+//   - the local video file(s), parsed straight from the media dir's filenames
+//     (topic "1.2" → files "1-2__<order>__<driveId>.mp4")
+// Usage: node scripts/build-lessons-index.mjs [--out <path>] [--media <dir>]
+
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
+const OUT = resolve(REPO, arg('--out', 'lessons-index.json'));
+const WS_BASE = 'https://robjohncolson.github.io/apstats-live-worksheet/';
+const CR_BASE = 'https://robjohncolson.github.io/curriculum_render/';
+
+const roadmap = JSON.parse(readFileSync(resolve(REPO, 'roadmap-data.json'), 'utf8'));
+const lessons = roadmap.lessons || {};
+
+const mediaDir = arg('--media', existsSync(resolve(REPO, 'media-compressed')) ? 'media-compressed'
+                 : existsSync(resolve(REPO, 'media')) ? 'media' : null);
+const videoFiles = (mediaDir && existsSync(resolve(REPO, mediaDir)))
+  ? readdirSync(resolve(REPO, mediaDir)).filter((f) => f.toLowerCase().endsWith('.mp4'))
+  : [];
+
+function videosFor(topicId) {
+  const dash = topicId.replace('.', '-');                       // "1.2" → "1-2", "4.10" → "4-10"
+  return videoFiles
+    .filter((f) => f.startsWith(dash + '__'))
+    .map((f) => ({ file: 'media/' + f, idx: (f.match(/__(\d+)__/) || [, 0])[1] | 0 }))
+    .sort((a, b) => a.idx - b.idx)
+    .map((v) => v.file);
+}
+const relWS = (url) => (typeof url === 'string' && url.startsWith(WS_BASE)) ? url.slice(WS_BASE.length) : (url || null);
+const quizLocal = (url) => (typeof url === 'string' && url.startsWith(CR_BASE)) ? 'quiz/' + url.slice(CR_BASE.length) : (url || null);
+const lessonNum = (id) => parseInt(String(id).split('.')[1], 10) || 0;
+
+const out = [];
+for (const id of Object.keys(lessons)) {
+  const L = lessons[id] || {};
+  const u = L.urls || {};
+  out.push({
+    id,
+    unit: parseInt(id, 10) || 0,
+    label: L.topic || ('Topic ' + id),
+    worksheet: relWS(u.worksheet),
+    quiz: quizLocal(u.quiz),
+    videos: videosFor(id),
+  });
+}
+out.sort((a, b) => (a.unit - b.unit) || (lessonNum(a.id) - lessonNum(b.id)));
+
+const withVideo = out.filter((l) => l.videos.length).length;
+writeFileSync(OUT, JSON.stringify({ generatedAt: null, count: out.length, lessons: out }, null, 1));
+console.log(`lessons-index.json → ${OUT}`);
+console.log(`  ${out.length} lessons; ${withVideo} with local video; media: ${mediaDir || 'none'}`);

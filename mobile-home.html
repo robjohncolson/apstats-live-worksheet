@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AP Statistics</title>
+<!-- Mobile-first lesson launcher for the Android packet app (ANDROID_PACKET_APP_SPEC §2).
+     Pure navigation: units → lessons → [▶ video] [✍ worksheet] [❓ quiz]. Data is the
+     build-time lessons-index.json. The Desk stays the desktop home; this is the phone home. -->
+<style>
+  :root { --blue:#0b5cad; --ink:#1a1a1a; --bg:#f2f4f7; --card:#fff; --line:#dfe3e8; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; }
+  body { font-family:-apple-system,Roboto,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; background:var(--blue); color:#fff; z-index:5;
+           padding:calc(12px + env(safe-area-inset-top,0)) 16px 12px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  header h1 { margin:0; font-size:19px; font-weight:700; }
+  header .who { font-size:12px; opacity:.9; margin-top:3px; }
+  main { padding:10px 12px 48px; max-width:680px; margin:0 auto; }
+  details.unit { margin:0 0 8px; }
+  details.unit > summary { list-style:none; cursor:pointer; padding:12px 14px; background:#e7edf5;
+           border:1px solid var(--line); border-radius:10px; font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; }
+  details.unit > summary::-webkit-details-marker { display:none; }
+  details.unit > summary .caret { margin-left:auto; opacity:.55; transition:transform .15s; }
+  details.unit[open] > summary .caret { transform:rotate(90deg); }
+  .lesson { background:var(--card); border:1px solid var(--line); border-top:none; padding:10px 12px; }
+  .lesson:first-of-type { border-top:1px solid var(--line); margin-top:6px; border-radius:10px 10px 0 0; }
+  .lesson:last-of-type { border-radius:0 0 10px 10px; }
+  .lesson .title { font-weight:600; font-size:14px; margin-bottom:8px; }
+  .btns { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn { flex:1 1 auto; min-width:84px; text-align:center; padding:12px 8px; border-radius:9px;
+         border:1px solid var(--line); background:#f7f9fb; font-size:13px; font-weight:600; color:var(--ink);
+         text-decoration:none; cursor:pointer; }
+  .btn:active { background:#e9eef4; }
+  .btn.video { background:#fff3e0; border-color:#ffd9a3; }
+  .btn.ws { background:#e8f1ff; border-color:#bcd6ff; }
+  .btn.quiz { background:#e9f9ec; border-color:#b6e6c0; }
+  .btn[disabled] { opacity:.4; pointer-events:none; }
+  #vo { position:fixed; inset:0; background:#000; display:none; z-index:50; flex-direction:column; }
+  #vo.show { display:flex; }
+  #vo video { flex:1; width:100%; background:#000; min-height:0; }
+  #vo .bar { display:flex; gap:10px; align-items:center; background:#111; color:#fff;
+             padding:10px 14px calc(10px + env(safe-area-inset-bottom,0)); }
+  #vo .bar button { background:#333; color:#fff; border:0; padding:10px 16px; border-radius:8px; font-size:14px; }
+  #vo .bar .vtitle { font-size:13px; opacity:.85; margin-left:auto; }
+  .empty { text-align:center; color:#778; padding:40px 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 AP Statistics</h1>
+  <div class="who" id="who">Tap a lesson to begin. Sign in inside a worksheet so your work saves.</div>
+</header>
+<main id="main"><div class="empty">Loading lessons…</div></main>
+
+<div id="vo" role="dialog" aria-label="Video player">
+  <video id="vplayer" controls playsinline></video>
+  <div class="bar"><button onclick="closeVideo()">✕ Close</button><span class="vtitle" id="vtitle"></span></div>
+</div>
+
+<script src="roster_config.js" onerror=""></script>
+<script src="roster-client.js" onerror=""></script>
+<script>
+(function () {
+  var main = document.getElementById('main');
+  var UNIT_NAMES = {
+    1:'Unit 1 · Exploring One-Variable Data', 2:'Unit 2 · Exploring Two-Variable Data',
+    3:'Unit 3 · Collecting Data', 4:'Unit 4 · Probability, Random Variables & Distributions',
+    5:'Unit 5 · Sampling Distributions', 6:'Unit 6 · Inference for Proportions',
+    7:'Unit 7 · Inference for Means', 8:'Unit 8 · Inference for Categorical Data (Chi-Square)',
+    9:'Unit 9 · Inference for Quantitative Data (Slopes)'
+  };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  try {
+    var who = (window.rosterClient && rosterClient.current && rosterClient.current()) || null;
+    if (who) document.getElementById('who').textContent = 'Signed in as ' + (who.realName || who.username || 'student');
+  } catch (e) {}
+
+  function openVideo(file, title) {
+    var v = document.getElementById('vplayer');
+    v.src = file; document.getElementById('vtitle').textContent = title || '';
+    document.getElementById('vo').classList.add('show');
+    try { v.play(); } catch (e) {}
+  }
+  window.closeVideo = function () {
+    var v = document.getElementById('vplayer'); try { v.pause(); } catch (e) {}
+    v.removeAttribute('src'); v.load();
+    document.getElementById('vo').classList.remove('show');
+  };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeVideo(); });
+
+  function render(lessons) {
+    if (!lessons || !lessons.length) { main.innerHTML = '<div class="empty">No lessons found.</div>'; return; }
+    var byUnit = {};
+    lessons.forEach(function (l) { (byUnit[l.unit] = byUnit[l.unit] || []).push(l); });
+    var units = Object.keys(byUnit).map(Number).sort(function (a, b) { return a - b; });
+    main.innerHTML = '';
+    units.forEach(function (u, ui) {
+      var det = document.createElement('details'); det.className = 'unit'; if (ui === 0) det.open = true;
+      var sum = document.createElement('summary');
+      sum.innerHTML = esc(UNIT_NAMES[u] || ('Unit ' + u)) + '<span class="caret">▶</span>';
+      det.appendChild(sum);
+      byUnit[u].forEach(function (l) {
+        var card = document.createElement('div'); card.className = 'lesson';
+        var t = document.createElement('div'); t.className = 'title'; t.textContent = l.label || ('Topic ' + l.id);
+        card.appendChild(t);
+        var btns = document.createElement('div'); btns.className = 'btns';
+        (l.videos || []).forEach(function (file, i) {
+          var b = document.createElement('button'); b.className = 'btn video';
+          b.textContent = (l.videos.length > 1 ? '▶ Video ' + (i + 1) : '▶ Video');
+          b.onclick = function () { openVideo(file, l.label); };
+          btns.appendChild(b);
+        });
+        var w = document.createElement('a'); w.className = 'btn ws'; w.textContent = '✍ Worksheet';
+        if (l.worksheet) w.href = l.worksheet; else w.setAttribute('disabled', '');
+        btns.appendChild(w);
+        var q = document.createElement('a'); q.className = 'btn quiz'; q.textContent = '❓ Quiz';
+        if (l.quiz) q.href = l.quiz; else q.setAttribute('disabled', '');
+        btns.appendChild(q);
+        card.appendChild(btns);
+        det.appendChild(card);
+      });
+      main.appendChild(det);
+    });
+  }
+
+  fetch('lessons-index.json', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) { render((d && d.lessons) || []); })
+    .catch(function () { main.innerHTML = '<div class="empty">Could not load lessons-index.json.</div>'; });
+})();
+</script>
+</body>
+</html>

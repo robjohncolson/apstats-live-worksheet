@@ -160,7 +160,12 @@ function main() {
   const grading = all.filter((f) => GRADING_RE.test(f));
   const files = [...ROOT_FILES, ...worksheets, ...grading].filter((f) => existsSync(resolve(REPO, f)));
   const dirs = DIRS.filter((d) => existsSync(resolve(REPO, d)));
-  const hasMedia = existsSync(resolve(REPO, 'media'));
+  // Prefer the re-encoded media-compressed/ (H.264 CRF23, ~1.3 GB vs ~25 GB; same filenames so
+  // media-manifest.json still resolves). Falls back to the raw media/ master. Either is copied
+  // INTO the pack as media/ (ANDROID_PACKET_APP_SPEC §3).
+  const mediaSrc = existsSync(resolve(REPO, 'media-compressed')) ? 'media-compressed'
+                 : existsSync(resolve(REPO, 'media')) ? 'media' : null;
+  const hasMedia = !argv.includes('--no-media') && !!mediaSrc;   // --no-media → a fast app-shell pack (no video)
   const hasQuiz = existsSync(resolve(REPO, '..', 'curriculum_render', 'index.html'));
 
   // transcripts/slides from unit dirs
@@ -173,7 +178,7 @@ function main() {
 
   console.log(`build-offline-pack — ${dryRun ? 'DRY RUN' : 'BUILD'} → ${relative(REPO, out)}/`);
   console.log(`  ${files.length} files, ${dirs.length} dirs, ${transcripts.length} transcripts/slides, ${worksheets.length} worksheets`);
-  console.log(`  identity: ${identity ? (identity.realName || identity.username) : '(generic pack)'}; media/: ${hasMedia ? 'yes' : 'no (run fetch-offline-videos.mjs)'}; quiz app: ${hasQuiz ? 'will bundle' : 'absent'}`);
+  console.log(`  identity: ${identity ? (identity.realName || identity.username) : '(generic pack)'}; media: ${hasMedia ? mediaSrc + '/' : 'none (run fetch-offline-videos.mjs)'}; quiz app: ${hasQuiz ? 'will bundle' : 'absent'}`);
   if (dryRun) { console.log('\nDry run — nothing written.'); return; }
 
   mkdirSync(out, { recursive: true });
@@ -210,7 +215,9 @@ function main() {
   }
   // 4. transcripts, media, quiz app
   for (const rel of transcripts) copyInto(rel);
-  if (hasMedia) copyInto('media');
+  // Copy the chosen media source (media-compressed/ or media/) INTO the pack as media/ so the
+  // bundled media-manifest.json + offline-video.js resolve unchanged.
+  if (hasMedia) cpSync(resolve(REPO, mediaSrc), resolve(out, 'media'), { recursive: true });
   if (hasQuiz) {
     try {
       cpSync(resolve(REPO, '..', 'curriculum_render'), resolve(out, 'quiz'), { recursive: true, filter: (s) => !/[\\/](node_modules|\.git|tests)([\\/]|$)/.test(s) });

@@ -82,3 +82,12 @@ temp_check.js
 # Offline pack build artifacts (OFFLINE_MODE_SPEC)
 offline-pack/
 media/
+media-compressed/
+
+# Android Capacitor app build artifacts (ANDROID_PACKET_APP_SPEC) — generated/heavy; the
+# native android/ project + www/ are regenerated from the offline pack on build.
+android-app/node_modules/
+android-app/www/
+android-app/android/
+android-app/.gradle/
+android-app/*.keystore
