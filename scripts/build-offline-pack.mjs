@@ -33,6 +33,9 @@ const ROOT_FILES = [
   'index.html', 'TOC.html', 'calendar.html', 'start-here.html',
   'ap_stats_roadmap_square_mode.html', 'study_guide_diagnostic.html', 'offline.html',
   'roster_config.js', 'roster-client.js', 'offline-queue.js', 'offline-video.js', 'gradebook-client.js',
+  // ANDROID Phase 2 — on-device ledger merge: the verifier, the shared grade engine
+  // bundle, and the local signed-ledger store (offline grade re-derivation).
+  'receipt-verify.js', 'grade-engine.bundle.js', 'ledger-store.js',
   'railway_client.js', 'railway_config.js', 'roadmap-data.json',
   'sw.js', 'pwa-register.js', 'manifest.webmanifest', 'icon.svg', 'version.json',
 ];

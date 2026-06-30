@@ -55,8 +55,10 @@ describe('renderDoNowGrades offline behavior', () => {
   it('restores from cache ONLY when offline (a thrown fetch), never on an HTTP error', () => {
     // offline flag set by the catch (thrown/unreachable fetch)
     expect(body).toMatch(/catch \(_\) \{ _gradeOffline = true; \}/);
-    // restore gated on that flag
-    expect(body).toMatch(/else if \(_gradeOffline\) \{ data = _loadGradeCache\(\); \}/);
+    // restore gated on that flag (ANDROID Phase 2: re-derive from the local signed
+    // ledger first, falling back to the last cached /grade payload)
+    expect(body).toMatch(/else if \(_gradeOffline\)/);
+    expect(body).toMatch(/_phase2ReDeriveGrade\(\)\)\s*\|\|\s*_loadGradeCache\(\)/);
     // an HTTP response that isn't ok does NOT set offline (so 401/500 behave as before)
     expect(body).toMatch(/if \(!res\) \{ _gradeOffline = true; \}\s*else if \(res\.ok\)/);
   });
