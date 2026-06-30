@@ -1,9 +1,9 @@
-# CONTINUATION PROMPT — GRADE-LEDGER DURABILITY + nightly backup/review (s29): survive a Supabase loss — signed off-Supabase snapshot / verify / FAITHFUL restore, teacher dashboard "Grade Backup & Recovery" card, Desk 1-click 💾 Download Grade Backup, a LOCAL nightly backup Task Scheduler job that also writes a per-student REVIEW digest, and the default teacher key changed apstats2627→**apteacher2627** (it collided with the student password). NIGHTLY REVIEW feature (mark-seen + comment + candy + toast, signed) is SPEC'D (NIGHTLY_REVIEW_SPEC.md), not yet built. ; GUESTS RETIRED everywhere + teacher-trust fixes (s28): guests fully disabled on every student surface (Desk/worksheets/study-guide/quiz + cr presence-server `Guest_` reject), off-roster students self-sign-up with a REAL NAME; worksheet "revise anytime" hint on all 69; VIEW-AS grade-cache bug fixed (it was showing the teacher's OWN grades under the student's banner); "Why so low?" AI COACH fixed (stops pushing not-yet-open Progress Checks + surfaces the flashcard completion/unlock gate). ; OFFLINE MODE shipped end-to-end + FEATURE AUDIT closed (s27): every student surface (worksheets/Desk/study-guide/quiz) captures grades offline → export → teacher import (`/ledger/import`); one-click USB pack (build + launcher, 24 GB video pulled local); installable PWA on BOTH repos. Distribution machinery (per-unit/torrent/USB) deliberately NOT built (YAGNI). ; TEACHER CHAT: guests can now READ + get notified of teacher messages (s26) ; cr typed sign-in roster dropdown (Codex s26) ; REPO HYGIENE + PRESENCE FIX: edgar/MIT removal + roadmap resilience + greyed-ghost-avatar ⇄ "Online Now" agreement; grade behavior clarified (s25) ; TETRIS HARDENING: Study Break 1v1 multiplayer + stakes robustness pass (s24) ; MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — ANDROID Phase 2 (on-device ledger merge) + Phase 3 (P2P gossip) SHIPPED + APK rebuilt (s31): PHASE 2 — the student device re-derives its OWN grade OFFLINE from local signed ledger rows using the EXACT server engine (item-level re-derivation, user-chosen), made divergence-proof by SHARING the engine: `scripts/build-grade-engine.mjs` bundles the 3 pure server modules (grade-config+scoring+lesson-grade+gradebook-grid+grade) into `window.GradeEngine` (`grade-engine.bundle.js`); a PARITY test pins client `computeGrade`/`buildGradebook` ≡ server across all sim-world archetypes + a no-drift check. The answer key NEVER ships: new read-only token-gated `roster-server/grade-offline-inputs.js` `GET /grade/offline-inputs` returns a REDACTED per-student key (same item-ids + gradability so denominators match, every answer a sentinel EXCEPT the student's OWN correctly-answered items; proctored PC redacted by default, `?includePc=1` restores PC parity when PCs open). `ledger-store.js` = content-addressed (receipt_id) IndexedDB G-Set w/ `.pull()` from /ledger/student + `.verifyAll()` (Ed25519 via receipt-verify.js); Desk offline branch re-derives via GradeEngine over LedgerStore ∪ unsynced OfflineQueue (REPLACES the unverified `apstats_grade_cache_v1` restore), strictly additive — online /grade still wins, never-downgrade, OFF in view-as; 🔐 verification chip in My Ledger (roster issuer pubkey fetched from `/receipts/issuer` + registered into ReceiptVerify). PHASE 3 — phones epidemically gossip the signed-ledger G-Set so a student's work reaches the teacher via classmates with no internet/no direct contact: `ledger-gossip.js` anti-entropy (HELLO→SYNC→SEND, both peers converge to the union; merge=union so conflicts impossible), VERIFY-ON-INGEST is the SECURITY BOUNDARY (a row is stored/relayed only if its receipt verifies → a peer CANNOT inject a fake grade; replay harmless). Committable local Capacitor plugin `android-app/plugins/gossip-nearby/` wraps Google Nearby Connections (P2P_CLUSTER: BT/BLE/Wi-Fi-Direct, auto-discover, no pairing); `nearby-transport.js` registers `window.GossipTransport` ONLY in the APK (web Desk inert, "Sync Nearby" menu item stays hidden); Desk `_phase3SyncNearby` runs one session per peer. APK REBUILT with the plugin (cap sync detects `gossip-nearby@1.0.0`, gradle compiles it + resolves play-services-nearby + packages it; 1514 MB). Tests root **7613/7613**, roster-server **1134/1134**. ⏭ NEXT = PHASE 4 (teacher app: move the issuer signing key on-device into Android Keystore+PIN, backup = Railway warm-spare of the EXISTING `RECEIPT_ISSUER_PRIVATE_KEY` — NOT the apteacher2627 login key — + issuer-key history; the import→grade-FRQ→sign→seal-epoch→push loop). ⚠ runtime P2P needs a **2-PHONE test** (only the user can do this; drive via adb). ; NIGHTLY REVIEW shipped + ANDROID offline-course app + cr quiz mobile pass (s30): NIGHTLY REVIEW all 4 phases LIVE — a 🌙 teacher Desk surface to review recent student work (mark SEEN per item/session/day + comment + editable templates + "not reviewed in N days" flag), each review a signed `t:'review'` receipt that mints **1 bonus candy/student/day** (new additive `candy_bonus` MINT — spec §3.3's "bump candy_given" was BACKWARDS) and toasts the student via the existing nudge path; student sees 👁seen/💬comment in My Ledger; reviews ride snapshot/verify/restore + the nightly digest; **migration 0025 USER-RUN + DONE**. ANDROID PACKET APP — the whole AP Stats course as a SIDELOADABLE offline Capacitor APK (~1.5 GB: 144 videos re-encoded H.264-CRF23 24.96GB→1.49GB visually-identical, all worksheets, the quiz app, a mobile-first lessons launcher `mobile-home.html`); grades capture offline → existing ledger; ANDROID_PACKET_APP_SPEC.md brainstormed the durable model (single-writer signed-CRDT grade ledger gossiped P2P over Nearby/BT across phones+teacher-app+Supabase, latest-ts wins, clear-text/UI-level-privacy, teacher key on-device w/ Railway warm-spare). cr quiz given a mobile-responsive `@media ≤600px` pass (desktop untouched), verified on-device via adb screenshots. ; GRADE-LEDGER DURABILITY + nightly backup/review (s29): survive a Supabase loss — signed off-Supabase snapshot / verify / FAITHFUL restore, teacher dashboard "Grade Backup & Recovery" card, Desk 1-click 💾 Download Grade Backup, a LOCAL nightly backup Task Scheduler job that also writes a per-student REVIEW digest, and the default teacher key changed apstats2627→**apteacher2627** (it collided with the student password). NIGHTLY REVIEW feature (mark-seen + comment + candy + toast, signed) is SPEC'D (NIGHTLY_REVIEW_SPEC.md), not yet built. ; GUESTS RETIRED everywhere + teacher-trust fixes (s28): guests fully disabled on every student surface (Desk/worksheets/study-guide/quiz + cr presence-server `Guest_` reject), off-roster students self-sign-up with a REAL NAME; worksheet "revise anytime" hint on all 69; VIEW-AS grade-cache bug fixed (it was showing the teacher's OWN grades under the student's banner); "Why so low?" AI COACH fixed (stops pushing not-yet-open Progress Checks + surfaces the flashcard completion/unlock gate). ; OFFLINE MODE shipped end-to-end + FEATURE AUDIT closed (s27): every student surface (worksheets/Desk/study-guide/quiz) captures grades offline → export → teacher import (`/ledger/import`); one-click USB pack (build + launcher, 24 GB video pulled local); installable PWA on BOTH repos. Distribution machinery (per-unit/torrent/USB) deliberately NOT built (YAGNI). ; TEACHER CHAT: guests can now READ + get notified of teacher messages (s26) ; cr typed sign-in roster dropdown (Codex s26) ; REPO HYGIENE + PRESENCE FIX: edgar/MIT removal + roadmap resilience + greyed-ghost-avatar ⇄ "Online Now" agreement; grade behavior clarified (s25) ; TETRIS HARDENING: Study Break 1v1 multiplayer + stakes robustness pass (s24) ; MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-29 (session 29 — GRADE-LEDGER DURABILITY: signed off-Supabase snapshot / verify / faithful restore, teacher dashboard card + Desk 1-click backup, local nightly backup + per-student review digest, teacher key → **apteacher2627**; NIGHTLY REVIEW feature SPEC'D). Prior s28 = guests retired + view-as/worksheet/coach trust fixes.
-> follow-alongs HEAD = `5bdd60c` (s29 CODE tip; s29 fa `0fa51b1`→`5bdd60c`, + this docs commit). cr unchanged this session: HEAD = `dd165b3`. Earlier s27 anchor was fa `5f19f54` / cr `788b04d`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**; cr `railway-server/**` auto-deploys to the cr Railway server, cr root → cr GH Pages (the quiz app).
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-30 (session 31 — ANDROID Phase 2 on-device ledger merge + Phase 3 P2P gossip SHIPPED; APK rebuilt with the Nearby plugin). Prior s30 = NIGHTLY REVIEW all 4 phases + migration 0025 RUN; ANDROID offline-course Capacitor app; cr quiz mobile pass.
+> follow-alongs HEAD = `2873da3` (s31 tip; s31 fa: `4bb5810` Phase 2 on-device ledger merge, `2873da3` Phase 3 P2P gossip). cr HEAD = `1f446c7` (UNCHANGED this session — Phase 2/3 are follow-alongs-only). s30 tip was fa `7119dcc`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**; cr `railway-server/**` auto-deploys to the cr Railway server, cr root → cr GH Pages (the quiz app).
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
-> **curriculum_render** (HEAD `dd165b3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
+> **curriculum_render** (HEAD `1f446c7`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
 > `C:/Users/rober/Downloads/Projects/school/curriculum_render`; ⚠ stage only own paths (it has many unrelated dirty files).
 > Teacher tests on the **public GH Pages URL** — commit+push promptly; `file://` is not a valid surface. Style:
@@ -12,6 +12,179 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 31 (2026-06-30) — ANDROID Phase 2 (on-device ledger merge) + Phase 3 (P2P gossip) SHIPPED
+
+Continuing the ANDROID_PACKET_APP_SPEC phase ladder (0 video✓ 1 shell✓). All SHIPPED + PUSHED to
+follow-alongs `master`. Tests **root 7613/7613, roster-server 1134/1134**. cr UNTOUCHED. fa
+`7119dcc`→`4bb5810` (Phase 2)→`2873da3` (Phase 3). Specs: `ANDROID_PHASE2_LEDGER_MERGE_SPEC.md`,
+`ANDROID_PHASE3_GOSSIP_SPEC.md`.
+
+### A. PHASE 2 — on-device ledger merge (fa `4bb5810`)
+The student device re-derives its OWN grade OFFLINE from local signed ledger rows. **User chose
+item-level re-derivation** (the device computes lesson/quarter grades from items, not by caching the
+/grade summary). Divergence made impossible by SHARING the engine, not re-implementing it:
+- **`grade-engine.bundle.js`** (generated by `scripts/build-grade-engine.mjs`): bundles the 3 pure
+  server modules — `grade-config.js` → `scoring.js` → `lesson-grade.js` → `gradebook-grid.js` →
+  `grade.js` — into `window.GradeEngine` (computeGrade/buildGradebook/…). The generator does targeted
+  surgery on grade.js only (neutralizes the fs-based BLOOKET_LESSONS read → `[]`; drops the express
+  `mountGrade` route); **grade.js on the server stays byte-identical**.
+- **Parity guarantee** (`tests/grade-engine-bundle-parity.test.js`): (1) drift check — committed
+  bundle === a fresh generation; (2) `GradeEngine.computeGrade`/`buildGradebook` deep-equal the server
+  functions across every `sim-world` archetype. Regenerate after any engine edit: `node
+  scripts/build-grade-engine.mjs` (parity test fails loudly otherwise).
+- **Answer key NEVER ships** (cheating surface): new `roster-server/grade-offline-inputs.js` mounts
+  read-only token-gated **`GET /grade/offline-inputs`** → a REDACTED per-student key: same item-id set
+  + gradability as the real key (so computeQuizTotals denominators match), every answer replaced by a
+  sentinel EXCEPT the items THIS student answered correctly (reproduces their grade, reveals only their
+  own correct answers). Built as `{...realEntry, answerKey: redacted}` so non-answer fields/gradability
+  are preserved → `computeGrade(redacted) === computeGrade(real)` (pinned in
+  `roster-server/tests/grade-offline-inputs.test.js`). **Proctored PC answers redacted by default**
+  (parity-neutral today, no PC rows); `?includePc=1` restores PC parity when PCs open ~fall.
+- **`ledger-store.js`** (`window.LedgerStore`): durable IndexedDB **G-Set keyed by `receipt_id`** (union/
+  dedup/idempotent — the structure Phase 3 gossips). `.pull(rosterClient)` from /ledger/student;
+  `.verifyAll()` Ed25519-verifies each `receipt_compact` via `receipt-verify.js` (copied to repo root).
+- **Desk wiring** (`ap_stats_roadmap_square_mode.html`): loads receipt-verify + grade-engine.bundle +
+  ledger-store. OFFLINE branch of `renderDoNowGrades` now `data = (await _phase2ReDeriveGrade()) ||
+  _loadGradeCache()` — re-derives via GradeEngine over `LedgerStore.all()` ∪ unsynced OfflineQueue,
+  using inputs cached from `/grade/offline-inputs` (`apstats_grade_inputs_v1:<sid>`). **Strictly
+  additive: online /grade still wins, never downgrades, OFF in view-as.** 🔐 verification chip in My
+  Ledger (`_walletPaint`) from a cached `_phase2VerifySummary`; roster issuer pubkey fetched from
+  `GET /receipts/issuer` + registered into `ReceiptVerify.ISSUERS` at boot.
+- Tests: `tests/{grade-engine-bundle-parity,ledger-store,desk-ledger-reconcile}.test.js` +
+  `roster-server/tests/grade-offline-inputs.test.js`. **APK rebuilt** (scripts bundled into www).
+
+### B. PHASE 3 — P2P gossip (fa `2873da3`)
+Phones epidemically merge their signed-ledger G-Sets → a student's work reaches the teacher via
+classmates with no internet + no direct contact. Built on Phase 2's receipt_id G-Set (merge = union →
+conflicts impossible).
+- **`ledger-gossip.js`** (`window.LedgerGossip`): transport-agnostic anti-entropy. One round =
+  `HELLO{digest}` → `SYNC{rows-you-lack, ids-I-lack}` → `SEND{requested}`, after which both peers hold
+  the union. **VERIFY-ON-INGEST is the security boundary**: `ingest()` stores/relays a row ONLY if its
+  receipt verifies → a malicious peer **cannot inject a fake grade** (forgery needs the teacher key);
+  replay is harmless (idempotent). Privacy is UI-level (clear-text class rows, per the packet spec).
+- **`android-app/plugins/gossip-nearby/`** — a **committable local Capacitor plugin** (NOT under the
+  gitignored `android-app/android/`; discovered by `cap sync` via its package.json `capacitor.android.src`,
+  wired as a gradle subproject). Java `GossipNearbyPlugin` wraps **Google Nearby Connections**
+  (`Strategy.P2P_CLUSTER`: BT + BLE + Wi-Fi Direct, auto-discovery, no pairing; auto-accepts connections
+  — trust is at the receipt layer). Manifest declares the BT/Wi-Fi/location perms; build.gradle pulls
+  `play-services-nearby:18.7.0`. `android-app/package.json` depends on it via `file:plugins/gossip-nearby`.
+- **`nearby-transport.js`** registers `window.GossipTransport` (the `start/send/stop` contract) **ONLY
+  inside the APK** (Capacitor native + plugin present). On the GH-Pages web Desk there's no transport →
+  the gossip layer is inert + the Apps-menu "📡 Sync Nearby" item stays hidden. No backend change, no
+  web behavior change.
+- **Desk**: `_phase3SyncNearby` time-boxes a round, one `LedgerGossip` session per discovered peer over
+  the transport, ingesting verified rows into LedgerStore (not view-as). `_phase3SyncNearbyClick` toasts
+  the result; `_phase3RevealSyncMenu` unhides the menu item when a transport exists.
+- **Validated**: cap sync detects `gossip-nearby@1.0.0`; **gradle assembleDebug compiles the plugin +
+  resolves play-services-nearby + packages it into the APK** (1514 MB). Tests:
+  `tests/{ledger-gossip,nearby-transport,desk-phase3-gossip}.test.js` (convergence, tampered-row
+  rejection, multi-hop delivery, the bridge, the Desk round).
+
+### ⚠ s31 — what only the USER can do / next
+- **2-PHONE runtime test of gossip**: sideload the APK on two phones, sign in on each, do work, then
+  Apps→📡 Sync Nearby on both (grant BT/Nearby perms). Should report "Synced with 1 device · +N records".
+  Drive via adb (`adb -s <serial> shell input tap …`). Android 12/13 permission UX is the likely
+  rough edge → report symptoms to tune `GossipNearbyPlugin`.
+- **PHASE 4 (NEXT)** — teacher app: move the issuer signing key on-device into Android **Keystore +
+  PIN**; backup = **Railway warm-spare = a copy of the EXISTING `RECEIPT_ISSUER_PRIVATE_KEY`** (NOT the
+  `apteacher2627` login key — separate secrets) + an **issuer-key history** (cert-chain style, so old
+  receipts stay verifiable after rotation); the teacher import→grade-pending-FRQ→sign→seal-epoch→push
+  loop. Then Phase 5 = Play Store (split video to per-unit on-demand download; same applicationId).
+- **toolchain (machine-specific, carried from s30)**: JDK 17 pinned in `android/gradle.properties`,
+  SDK/build-tools 35, Gradle 8.2.1; full build `node scripts/build-android.mjs` (`--no-media` = fast
+  app-shell smoke). `android-app/{node_modules,www,android,plugins/**/node_modules,plugins/**/build}`
+  gitignored; the plugin SOURCE under `android-app/plugins/gossip-nearby/` IS committed.
+
+## ⏭ SESSION 30 (2026-06-29/30) — NIGHTLY REVIEW shipped (all 4 phases) + ANDROID offline-course app + cr quiz mobile pass
+
+Three threads, all SHIPPED + PUSHED. fa `5bdd60c`→`7119dcc`; cr `dd165b3`→`1f446c7`. Tests green:
+**roster-server 1101→1121, root 7529→7537**. On-device iteration via adb (screencap/tap/swipe) was the
+unlock for the mobile work.
+
+### A. NIGHTLY REVIEW — all 4 phases LIVE (fa `44b13e2`; migration 0025 USER-RUN + DONE)
+Built `NIGHTLY_REVIEW_SPEC.md` end-to-end. Teacher reviews recent student work, marks SEEN, comments, the
+review mints 1 candy + toasts the student; signed → durable.
+- **⚠ CANDY DECISION (user-approved, the one real fork):** spec §3.3's "bump `candy_given`" was BACKWARDS —
+  `candy_given` (Materialized) SUBTRACTS from the wallet, so it'd DOCK a candy per review. The reward is a
+  **MINT** → new additive `candy_bonus` column. 9-number identity: `Earned+Received+Realized+Bonus =
+  Gifted+Converted+Materialized+Escrowed+Owed`. Spendability handled IN the SQL guards (migration 0025
+  re-creates `doge_spend`/`doge_gift`/`doge_mark`/`tetris_bet_open` adding `+ candy_bonus`, byte-identical at
+  0); JS spend paths UNCHANGED, only `deriveBalances`+`/class/wallets` display add `+bonus`. Conservation
+  fuzz (`wallet-world.js`/pg-wallet Layer B) LEFT UNTOUCHED (pins 0019-0024); validated the new SQL with a
+  focused **pglite** test in `roster-server/tests/review.test.js` (mint atomic + idempotent/day + spendable).
+- **Phase 1 server:** migration `0025_review_marks.sql` (`review_marks` keyed on `ledger_id`,
+  `review_candy_grants` once/student/NY-date, `candy_bonus`, atomic `review_award()` fn);
+  `receipts.js::issueReviewReceipt` (`t:'review'`, comment bound by hash `ch`); `GET /class/review-queue`
+  (priority-sorted FRQ>low-score>proctored>auto, unseen counts, daysSinceReview, N-days flag);
+  `POST /class/review` (mark by ledgerIds or {studentId,scope:all|day|session}; comment≤500; signed receipt;
+  candy; notify-on-comment via nudgesDb); `/ledger/student` gains `review:{seenAt,teacher,comment}`. New
+  `roster-server/review.js`; DAO in `db.js`; `ledger-db.js::getRowsByLedgerIds`.
+- **Phase 2 teacher Desk** (`ap_stats_roadmap_square_mode.html`): Teacher-menu **🌙 Nightly Review** item +
+  `#menu-review-badge` unseen badge + `#app-nightlyreview-overlay` System-7 window (priority `<details>` per
+  student, per-item [Seen], comment box + localStorage templates `desk_review_templates_v1`, Mark-all +
+  per-session bulk); `_reviewBadgePoll()` from `updateUserRoleUI`; tile in `_TEACHER_TOOLS`.
+- **Phase 3 student Desk:** My Ledger rows render "👁 Seen by teacher · 💬 comment" (`_loadReviewMarksForSelf`
+  → `_reviewByItem` → `_walletReceiptRow`; students only, not view-as). Toast already works via nudge poll.
+- **Phase 4 durability:** `admin-snapshot.js` carries `bundle.reviews`; `snapshot-verify.js::verifyReviewMark`
+  (`t:'review'` + `ch` tamper-detect); `admin-restore.js::normalizeReviews` best-effort replay (⚠ ledger_id
+  REGENERATES on a full restore → reviews orphan on a total wipe; signed receipt still verifies);
+  `tools/nightly-backup.mjs` review-coverage + "not reviewed in N days" digest.
+- Tests: `roster-server/tests/review.test.js` (20), `tests/desk-nightly-review.test.js` (8),
+  `tests/phase4-structure.test.js` allow-list `/admin/` (fixed a PRE-EXISTING s29 dashboard-card failure).
+
+### B. ANDROID PACKET APP — whole course offline, sideloaded to a phone (fa `dd1ba24`,`9f1d00d`,`7119dcc`)
+Brainstormed → `ANDROID_PACKET_APP_SPEC.md` → built Phase 0+1. The course as a **Capacitor** Android app.
+- **Video (Phase 0):** `scripts/compress-videos.mjs` transcoded all 144 to **H.264 CRF23** (max-compat;
+  beats H.265 for near-static slide screencasts). **24.96 GB → 1.49 GB (−94.0%)**, visually identical (a
+  9-min lesson 187.6MB→10.3MB, pixel-identical frame). `media-compressed/` (gitignored).
+- **App (Phase 1):** `android-app/` Capacitor project (`com.robcolson.apstats`). `mobile-home.html` = a
+  mobile-first lessons launcher (units→lessons→▶video ✍worksheet ❓quiz, fullscreen local `<video>`); data
+  from `scripts/build-lessons-index.mjs` (worksheet/quiz URLs relativized to bundled paths). The **Desk is
+  desktop-only** (System-7 metaphor) → NOT the phone home. `scripts/build-android.mjs` = one-command pipeline
+  (offline pack → launcher as index.html → cap sync → gradle). **Full 1.5 GB APK built + sideloaded; video,
+  worksheets, quiz + a injected "‹ Lessons" back pill all work offline.**
+- **⚠ Toolchain (machine-specific):** SDK has only platform/build-tools **35** → bumped
+  `android/variables.gradle` to 35. Machine `JAVA_HOME`=**JDK 22** which Gradle 8.2.1 rejects ("major version
+  66") → pinned `org.gradle.java.home` to **JDK 17** in `android/gradle.properties`. Windows build calls
+  `.\gradlew.bat`. Heavy artifacts (`android-app/{node_modules,www,android}`, `media-compressed/`) gitignored.
+  `--keep-media` → ~35s rebuilds.
+- **OFFLINE reality:** content + grade CAPTURE work offline (offline-config.js → OfflineQueue → syncs on
+  reconnect). ONE caveat: FIRST sign-in needs internet once (roster auth); after that the session persists.
+  AI grading + live aggregates need internet (degrade gracefully). `--identity` per-student baked session
+  (zero-internet-ever) deliberately NOT wired (teacher declined). iOS DEFERRED to the existing PWA.
+- **Durable model (spec, brainstormed not built):** grades = single-writer (teacher-signed) content-addressed
+  **CRDT** (merge=union). Multi-master replicas: phones + teacher app + Supabase (fast preview) + git mirror;
+  truth=union, sealed by the daily epoch anchor. **No encryption** (UI-level privacy, teacher-accepted).
+  P2P gossip over **Nearby Connections** (BT/BLE/WiFi-Direct). Authority ladder: auto-grade(f(response,signed
+  key)) → AI(only-raises) → teacher-override; changes are APPENDS. Teacher signing key → on-device (Keystore+
+  PIN) with **Railway warm-spare = copy the EXISTING `RECEIPT_ISSUER_PRIVATE_KEY`** (NOT the `apteacher2627`
+  login key). Phases: 0 video✓ 1 shell✓ → 2 on-device merge, 3 P2P gossip, 4 teacher app+key, 5 Play (video
+  download-on-demand since 1.5GB > Play's 150MB cap; reuses the delete-old-unit-videos eviction idea).
+
+### C. cr QUIZ MOBILE PASS (cr `1f446c7` → GH Pages; fa `7119dcc` install-hide)
+cr quiz was desktop-only on a phone. Fixed via an ADDITIVE `@media (max-width:600px)` block appended to
+`css/styles.css` (**desktop byte-identical**). Real culprits found by adb screenshots: (1) two-column question
+layout kept a FIXED `flex:0 0 450px` peer sidebar → overflow → forced column + sidebar full-width `!important`;
+(2) wide data tables → `display:block;width:100%;overflow-x:auto`; (3) FAB rail (8× 56px) shrunk to 44-46px;
+(4) `#spriteCanvas width:100vw`→`100%` (100vw incl. scrollbar gutter = sideways scroll on a fixed el);
+(5) padding/16px-inputs/tap-targets. App-only: `#pwa-install-fab` install button hidden via follow-alongs
+`injectAppNav`. ⚠ a faint top-right status widget ("100/Connected") still peeks (cosmetic; needs DOM-inspect).
+
+### s30 remaining / next
+- **Nightly Review:** live now that 0025 is run — teacher should exercise the 🌙 surface.
+- **Android:** teacher testing on-device; next = Phase 2 on-device ledger merge → 3 P2P gossip → 4 teacher app
+  (+ on-device key warm-spare) → 5 Play. Also optional: chase the cr quiz cosmetic sliver (chrome://inspect).
+- **⭐ ON-DEVICE WORKFLOW (reusable):** drive the connected phone over adb — `adb -s <serial> exec-out
+  screencap -p > x.png` (binary-safe), `adb shell input tap X Y` / `input swipe …`, `monkey -p
+  com.robcolson.apstats -c android.intent.category.LAUNCHER 1`. Screenshots 1080×2340 shown at 923×2000 (×1.17).
+
+### s30 artifacts
+`NIGHTLY_REVIEW_SPEC.md`(impl), `ANDROID_PACKET_APP_SPEC.md`; `roster-server/{review.js,migrations/0025_review_marks.sql,
+tests/review.test.js}` + edits to `{receipts,db,ledger-db,ledger,doge-wallet,server,admin-snapshot,snapshot-verify,
+admin-restore}.js` + `tools/nightly-backup.mjs`; `mobile-home.html`, `scripts/{compress-videos,build-lessons-index,
+build-android}.mjs` + `build-offline-pack.mjs`(media-compressed/--no-media/--app-nav/--keep-media); `android-app/`
+(Capacitor: package.json/capacitor.config.json/lockfile committed, rest gitignored); cr `css/styles.css`.
 
 ## ⏭ SESSION 29 (2026-06-29) — GRADE-LEDGER DURABILITY (survive a Supabase loss) + nightly backup/review; NIGHTLY REVIEW spec'd
 
