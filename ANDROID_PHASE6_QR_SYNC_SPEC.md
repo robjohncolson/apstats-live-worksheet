@@ -14,10 +14,16 @@
 > (3) **uncongested RF** — 30 phones advertising at once exhaust BLE slots
 > (`ADVERTISE_FAILED_TOO_MANY_ADVERTISERS`, seen live on the tablet).
 >
-> **Status:** spec → BLOCKED on §0. This spec was adversarially reviewed (security /
-> math / UX-integration) against the real code before implementation; the review found
-> a **pre-existing integrity gap that must be closed first** (§0) plus a batch of
-> design corrections, all folded below.
+> **Status (2026-07-01):** §0 binding SHIPPED (`5cea79b`). The animated-QR ENGINE is
+> built + tested + adversarially reviewed (`257cb3f`: `qr-fountain.js` + `qr-sync.js`,
+> 25 tests) but **inert — no render/camera/UI wired**. Decision: the render/camera/UI
+> layer is **DEFERRED** — the animated-QR path is the zero-radio floor, and Nearby
+> (`GossipNearby`, built) + the roster server (online hub) already cover the common and
+> online cases. A raw-Bluetooth (RFCOMM) alternative was spec'd + reviewed and
+> **REJECTED** (see `ANDROID_PHASE6B_QR_BT_SPEC.md` §0: not faster than Nearby, needs a
+> per-session OS prompt, broadcast-QR-key breaks confidentiality). This spec was
+> adversarially reviewed (security / math / UX-integration); the review found a
+> **pre-existing integrity gap closed by §0** plus design corrections, all folded below.
 
 ---
 
