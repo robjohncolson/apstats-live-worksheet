@@ -1,27 +1,36 @@
-// review.js — Nightly Review (NIGHTLY_REVIEW_SPEC.md). Two teacher-gated endpoints:
+// review.js — Nightly Review (NIGHTLY_REVIEW_SPEC.md + NIGHTLY_REVIEW_V2_SPEC.md).
+// Teacher-gated endpoints:
 //
-//   GET  /class/review-queue?section=&days=  → the review surface: per-student recent work,
+//   GET  /class/review-queue?section=&days=    → the review surface: per-student recent work,
 //        priority-sorted, with unseen counts + "not reviewed in N days" flag.
-//   POST /class/review                        → mark item(s) SEEN, optionally COMMENT, mint
+//   GET  /class/review-by-item?section=&days=  → v2: the transpose — recent work grouped by
+//        itemId, all students side-by-side (spot class-wide misconceptions).
+//   GET  /class/review-item/:ledgerId          → v2: one row's full context for the ✨ Draft
+//        button; the full response is returned ONLY for AI-graded-at-grade-time rows (§0.1).
+//   POST /class/review                          → mark item(s) SEEN, optionally COMMENT, mint
 //        1 bonus candy (once/student/review-day, idempotent) + persist a signed t:'review'
 //        receipt, and (on a comment) drop a teacher→student message so the student toasts.
+//        v2: optional expected[] pins (rh/score) reject with 409 when a row changed under
+//        the teacher (worksheets are revisable in place), and truncation is reported.
 //
 // A review NEVER changes a score/grade. Reviews are signed → they ride the same
-// snapshot/verify/restore durability rails as grades. See migration 0025.
+// snapshot/verify/restore durability rails as grades. See migration 0025 (v2 adds none).
 
+import crypto from 'crypto';
 import { requireTeacher } from './teacher-auth.js';
 import { verifyToken } from './token.js';
-import { issueReviewReceipt } from './receipts.js';
+import { issueReviewReceipt, receiptInternals } from './receipts.js';
 import { todayInTz } from './lesson-grade.js';
 import { computeGrade } from './grade.js';
-import { answerKeyMapOrNull } from './scoring.js';
+import { answerKeyMapOrNull, unitOf } from './scoring.js';
 
 const SESSION_GAP_MS = 25 * 60 * 1000;   // > 25 min idle starts a new session burst (mirrors commits.js)
 const N_DAYS_FLAG = 5;                    // "not reviewed in N school days" flag (spec §13 default)
 const COMMENT_MAX = 500;                  // stored comment cap
 const NUDGE_MAX = 280;                    // teacher→student message cap (mirrors nudge.js)
-const MAX_ITEMS_PER_STUDENT = 80;         // cap the queue payload per student (newest first)
-const MAX_TARGETS = 500;                  // cap one mark request
+const MAX_ITEMS_PER_STUDENT = 80;         // cap the queue's per-student ITEM PAYLOAD (counts are never capped)
+const MAX_TARGETS = 500;                  // cap one mark request (v2: truncation is reported, not silent)
+const DEFAULT_WINDOW_DAYS = 14;           // v2 §0.7: ONE default window for badge + both views (?days=all → full history)
 
 // Migration 0025 not run yet → tables/fn absent. 42P01 undefined_table, 42883 undefined_function,
 // PGRST205 schema-cache miss (table), PGRST202 function-not-found.
@@ -71,6 +80,57 @@ export function responseSnippet(response) {
   else { try { s = JSON.stringify(response); } catch (_) { s = ''; } }
   s = s.trim();
   return s.length > 140 ? s.slice(0, 140) + '…' : s;
+}
+
+// v2 §0.5: hash of the response bytes the teacher is looking at — the same recipe as the
+// ledger receipt's `ah` (sha256(stringifyResponse(x)).hex.slice(0,16)), shared via
+// receiptInternals so issuer and reviewer can never drift.
+export function responseHash(response) {
+  if (response === null || response === undefined) return null;
+  try {
+    const s = receiptInternals.stringifyResponse(response);
+    return crypto.createHash('sha256').update(s, 'utf8').digest('hex').slice(0, 16);
+  } catch (_) {
+    return null;
+  }
+}
+
+// v2 §0.1 privacy boundary (corrected against real rows — the spec's proposed
+// {'ai','ai-graded'} strings have never been written: not in the item_ledger source
+// CHECK, zero writers in any repo). A row's full response may be shown / sent to the
+// AI drafter ONLY when it already crossed the LLM boundary at grade time:
+//   - quiz_review / quiz_exception → only exist after an /api/ai/appeal round
+//   - pc rows ending '-SG'         → study-guide gate, graded via /api/ai/grade
+//   - frq rows WITH a score        → worksheet reflections graded via /api/ai/grade
+//     (documented-accepted caveat: rare teacher-app human-graded rows share this shape)
+// Proctored work is NEVER draftable, regardless of source. Everything else (worksheet
+// blanks, quizzes, blooket, trainer, null-score frq drafts) stays redacted.
+export function aiGradedRow(row) {
+  if (!row) return false;
+  if (row.evidence_tier === 'proctored') return false;
+  const src = String(row.source || '');
+  if (src === 'quiz_review' || src === 'quiz_exception') return true;
+  if (src === 'pc' && /-SG$/.test(String(row.item_id || ''))) return true;
+  if (src === 'frq' && row.score !== null && row.score !== undefined) return true;
+  return false;
+}
+
+// v2 §0.7: ONE window definition shared by the badge, the by-student queue, and the
+// by-item view. Absent/invalid → DEFAULT_WINDOW_DAYS; 'all' → full history; else 1..365.
+export function windowFloorFrom(daysQuery, nowMs = Date.now()) {
+  const raw = (daysQuery === undefined || daysQuery === null) ? '' : String(daysQuery).trim();
+  if (raw.toLowerCase() === 'all') return { days: null, floor: null };
+  const n = Number(raw);
+  const days = (raw !== '' && Number.isFinite(n) && n > 0) ? Math.min(n, 365) : DEFAULT_WINDOW_DAYS;
+  return { days, floor: nowMs - days * 86400000 };
+}
+
+// Numeric equality with null-awareness (mirrors snapshot-verify's numEq semantics).
+function numEq(a, b) {
+  const an = (a === null || a === undefined) ? null : Number(a);
+  const bn = (b === null || b === undefined) ? null : Number(b);
+  if (an === null || bn === null) return an === bn;
+  return Math.abs(an - bn) < 1e-9;
 }
 
 // Assign a session index to each row (rows in ANY order in → map keyed by ledger_id).
@@ -134,9 +194,7 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
     const section = (req.query.section && String(req.query.section).trim()) || null;
-    const daysRaw = Number(req.query.days);
-    const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 365) : null;
-    const windowFloor = days ? Date.now() - days * 86400000 : null;
+    const { days, floor: windowFloor } = windowFloorFrom(req.query.days);
 
     let rosterRes;
     try { rosterRes = await db.listRoster(section); } catch (e) { rosterRes = { error: e }; }
@@ -154,7 +212,7 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
       console.error('GET /class/review-queue marks error:', marksRes.error);
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
-    const markByLedger = {};
+    const markByLedger = Object.create(null);
     for (const m of (marksRes.data || [])) markByLedger[m.ledger_id] = m;
 
     // Optional grade context (best-effort; never blocks the queue).
@@ -177,13 +235,20 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
         ? rows.filter((row) => (Date.parse(row.recorded_at) || 0) >= windowFloor)
         : rows;
 
+      // v2 §0.7: unseen counts (and the priority inputs) run over the FULL windowed set;
+      // MAX_ITEMS_PER_STUDENT caps only the item payload (itemsTruncated flags it).
       const items = [];
       let unseen = 0;
+      let maxUnseenPriority = 0;
       for (const row of windowed) {
-        if (items.length >= MAX_ITEMS_PER_STUDENT) break;
         const mark = markByLedger[row.ledger_id] || null;
         const seen = !!mark;
-        if (!seen) unseen += 1;
+        const priority = itemPriority(row);
+        if (!seen) {
+          unseen += 1;
+          if (priority > maxUnseenPriority) maxUnseenPriority = priority;
+        }
+        if (items.length >= MAX_ITEMS_PER_STUDENT) continue;
         items.push({
           ledgerId: row.ledger_id,
           source: row.source,
@@ -192,10 +257,12 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
           recordedAt: row.recorded_at,
           responseSnippet: responseSnippet(row.response),
           sessionId: sessionByLedger[row.ledger_id] ?? null,
-          priority: itemPriority(row),
+          priority,
           seen,
           seenAt: mark ? mark.seen_at : null,
           comment: mark ? (mark.comment ?? null) : null,
+          rh: responseHash(row.response),
+          draftable: aiGradedRow(row),
         });
       }
       unseenTotal += unseen;
@@ -210,8 +277,6 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
         : null;
 
       // Student priority = max UNSEEN item priority + a nudge for staleness.
-      let maxUnseenPriority = 0;
-      for (const it of items) if (!it.seen && it.priority > maxUnseenPriority) maxUnseenPriority = it.priority;
       const stalenessNudge = (daysSinceReview === null) ? 25 : Math.min(daysSinceReview * 5, 50);
       const priority = unseen > 0 ? maxUnseenPriority + stalenessNudge : 0;
 
@@ -227,6 +292,7 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
         unseen,
         priority,
         items,
+        itemsTruncated: windowed.length > MAX_ITEMS_PER_STUDENT,
       });
     }
 
@@ -236,9 +302,204 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
       ok: true,
       asOf: new Date().toISOString(),
       section,
+      windowDays: days,
       nDaysFlag: N_DAYS_FLAG,
       unseenTotal,
       students,
+    });
+  });
+
+  // ── GET /class/review-item/:ledgerId (v2) ───────────────────────────────────
+  // One row's full context, fetched on-demand when the teacher taps ✨ Draft.
+  // §0.1: the full response leaves the server ONLY for rows already on the
+  // AI-grading trust boundary (aiGradedRow) — everything else comes back redacted.
+  // §0.4: the row must belong to a current roster student (no arbitrary ledgerId
+  // probing); the endpoint is teacher-gated like every /class/review* route.
+  app.get('/class/review-item/:ledgerId', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    const ledgerId = String(req.params.ledgerId || '');
+    if (!UUID_RE.test(ledgerId)) return res.status(400).json({ ok: false, error: 'bad ledgerId' });
+
+    let rowsRes;
+    try { rowsRes = await ledgerDb.getRowsByLedgerIds([ledgerId]); } catch (e) { rowsRes = { error: e }; }
+    if (rowsRes && rowsRes.error) {
+      console.error('GET /class/review-item error:', rowsRes.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const row = ((rowsRes && rowsRes.data) || [])[0];
+    if (!row) return res.status(404).json({ ok: false, error: 'not found' });
+
+    let student = null;
+    try { const sr = await db.findByStudentId(row.student_id); student = (sr && sr.data) || null; } catch (_) { student = null; }
+    if (!student) return res.status(404).json({ ok: false, error: 'not found' });
+
+    // Existing mark, best-effort (pre-0025 this endpoint still serves the response).
+    let mark = null;
+    try {
+      const mr = await db.listReviewMarksByStudents([row.student_id]);
+      for (const m of ((mr && mr.data) || [])) if (m.ledger_id === ledgerId) mark = m;
+    } catch (_) { mark = null; }
+
+    const draftable = aiGradedRow(row);
+    return res.json({
+      ok: true,
+      ledgerId,
+      studentId: row.student_id,
+      username: student.login_username ?? null,
+      realName: student.real_name ?? null,
+      itemId: row.item_id,
+      source: row.source,
+      score: (row.score === undefined ? null : row.score),
+      evidenceTier: row.evidence_tier ?? null,
+      recordedAt: row.recorded_at,
+      rh: responseHash(row.response),
+      draftable,
+      response: draftable ? row.response : null,
+      redacted: !draftable,
+      seen: !!mark,
+      comment: mark ? (mark.comment ?? null) : null,
+    });
+  });
+
+  // ── GET /class/review-by-item?section=&days= (v2) ───────────────────────────
+  // The transpose of the queue: recent work grouped by itemId, all students
+  // side-by-side, so "8 kids botched the same FRQ" is visible at a glance.
+  // §0.6: the row universe is IDENTICAL to the by-student queue (same roster fetch,
+  // same getLedgerByStudent, same window) with NO per-student cap; §0.7: same
+  // shared window default; §0.8: labels derive from the answer key (unitOf/topic),
+  // row.topic is best-effort display only.
+  app.get('/class/review-by-item', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    const section = (req.query.section && String(req.query.section).trim()) || null;
+    const { days, floor: windowFloor } = windowFloorFrom(req.query.days);
+
+    let rosterRes;
+    try { rosterRes = await db.listRoster(section); } catch (e) { rosterRes = { error: e }; }
+    if (rosterRes && rosterRes.error) {
+      console.error('GET /class/review-by-item roster error:', rosterRes.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const rosterRows = (Array.isArray(rosterRes.data) ? rosterRes.data : [])
+      .filter((r) => r && r.student_id && r.role !== 'teacher');
+    const studentIds = rosterRows.map((r) => r.student_id);
+
+    const marksRes = await db.listReviewMarksByStudents(studentIds);
+    if (marksRes && marksRes.error) {
+      if (isReviewMissing(marksRes.error)) return notProvisioned(res);
+      console.error('GET /class/review-by-item marks error:', marksRes.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const markByLedger = Object.create(null);
+    for (const m of (marksRes.data || [])) markByLedger[m.ledger_id] = m;
+
+    // Answer key for item labels (best-effort; never blocks the view).
+    let answerKey = null;
+    if (typeof loadAnswerKey === 'function') {
+      try { answerKey = answerKeyMapOrNull(await loadAnswerKey()); } catch (_) { answerKey = null; }
+    }
+
+    // Null-prototype: item_id is CLIENT-supplied text — a planted '__proto__' /
+    // 'constructor' row must group like any other item, not walk the prototype
+    // chain (Object.prototype pollution → a thrown TypeError would crash the
+    // shared server on every By-item load).
+    const groups = Object.create(null);
+    let unseenTotal = 0;
+    for (const r of rosterRows) {
+      const sid = r.student_id;
+      let rows = [];
+      try { const lr = await ledgerDb.getLedgerByStudent(sid); rows = (lr && lr.data) || []; } catch (_) { rows = []; }
+      const windowed = windowFloor
+        ? rows.filter((row) => (Date.parse(row.recorded_at) || 0) >= windowFloor)
+        : rows;
+
+      for (const row of windowed) {
+        const mark = markByLedger[row.ledger_id] || null;
+        const seen = !!mark;
+        if (!seen) unseenTotal += 1;
+
+        const key = String(row.item_id);
+        let g = groups[key];
+        if (!g) {
+          const keyEntry = answerKey ? answerKey[key] : null;
+          g = groups[key] = {
+            itemId: row.item_id,
+            source: row.source,
+            unit: unitOf(row.item_id, keyEntry),
+            topic: (keyEntry && keyEntry.topic != null && String(keyEntry.topic).trim() !== '')
+              ? String(keyEntry.topic)
+              : (row.topic ?? null),
+            priority: 0,
+            unseen: 0,
+            count: 0,
+            meanScore: null,
+            draftable: false,
+            answers: [],
+          };
+        }
+        const priority = itemPriority(row);
+        if (priority > g.priority) g.priority = priority;
+        g.count += 1;
+        if (!seen) g.unseen += 1;
+        const draftable = aiGradedRow(row);
+        if (draftable) g.draftable = true;
+        g.answers.push({
+          ledgerId: row.ledger_id,
+          studentId: sid,
+          username: r.login_username,
+          realName: r.real_name ?? null,
+          score: (row.score === undefined ? null : row.score),
+          source: row.source,
+          evidenceTier: row.evidence_tier ?? null,
+          recordedAt: row.recorded_at,
+          responseSnippet: responseSnippet(row.response),
+          rh: responseHash(row.response),
+          draftable,
+          seen,
+          seenAt: mark ? mark.seen_at : null,
+          comment: mark ? (mark.comment ?? null) : null,
+        });
+      }
+    }
+
+    // Mean score in the item's native scale; sort keys normalize >1 scores (percent
+    // scales like the Desk's *-DESK_DONE rows) so low-mean FRQs still float first.
+    const normScore = (s) => {
+      const v = Number(s);
+      if (!Number.isFinite(v)) return null;
+      return v > 1 ? v / 100 : v;
+    };
+    const items = Object.values(groups);
+    for (const g of items) {
+      let sum = 0, n = 0, normSum = 0;
+      for (const a of g.answers) {
+        if (a.score === null || !Number.isFinite(Number(a.score))) continue;
+        sum += Number(a.score);
+        normSum += normScore(a.score);
+        n += 1;
+      }
+      g.meanScore = n ? sum / n : null;
+      g._meanNorm = n ? normSum / n : null;
+      g.answers.sort((a, b) => {
+        const as = (a.score === null) ? Infinity : Number(a.score);
+        const bs = (b.score === null) ? Infinity : Number(b.score);
+        return (as - bs)
+          || String(a.realName || a.username || '').localeCompare(String(b.realName || b.username || ''));
+      });
+    }
+    items.sort((a, b) => (b.priority - a.priority)
+      || (((a._meanNorm === null) ? 2 : a._meanNorm) - ((b._meanNorm === null) ? 2 : b._meanNorm))
+      || (b.unseen - a.unseen));
+    for (const g of items) delete g._meanNorm;
+
+    return res.json({
+      ok: true,
+      asOf: new Date().toISOString(),
+      section,
+      windowDays: days,
+      unseenTotal,
+      items,
     });
   });
 
@@ -247,9 +508,13 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
   // one item, a session's items, or all), or a server-resolved {studentId, scope}.
   async function resolveTargets(body) {
     if (Array.isArray(body.ledgerIds) && body.ledgerIds.length) {
-      const ids = body.ledgerIds.filter((x) => typeof x === 'string' && UUID_RE.test(x)).slice(0, MAX_TARGETS);
-      if (!ids.length) return { rows: [] };
-      return await ledgerDb.getRowsByLedgerIds(ids);
+      const valid = body.ledgerIds.filter((x) => typeof x === 'string' && UUID_RE.test(x));
+      const ids = valid.slice(0, MAX_TARGETS);
+      if (!ids.length) return { rows: [], requested: 0, truncated: false };
+      const r = await ledgerDb.getRowsByLedgerIds(ids);
+      // v2 §0.9: a "comment to many" that exceeds MAX_TARGETS must WARN, not silently
+      // drop the tail — requested/truncated ride to the response.
+      return { ...r, requested: valid.length, truncated: valid.length > MAX_TARGETS };
     }
     const sid = body.studentId;
     const scope = body.scope;
@@ -263,11 +528,11 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
         const sessionByLedger = sessionize(rows);
         rows = rows.filter((row) => sessionByLedger[row.ledger_id] === Number(body.sessionId));
       } else if (scope !== 'all') {
-        return { rows: [] };
+        return { rows: [], requested: 0, truncated: false };
       }
-      return { data: rows.slice(0, MAX_TARGETS) };
+      return { data: rows.slice(0, MAX_TARGETS), requested: rows.length, truncated: rows.length > MAX_TARGETS };
     }
-    return { rows: [] };
+    return { rows: [], requested: 0, truncated: false };
   }
 
   // ── POST /class/review ──────────────────────────────────────────────────────
@@ -289,6 +554,31 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
     }
     const targets = (targetRes.data || targetRes.rows || []).filter((row) => row && row.ledger_id && row.student_id);
     if (!targets.length) return res.status(400).json({ ok: false, error: 'no items to review' });
+
+    // v2 §0.5 TOCTOU guard: the client may pin what it was LOOKING AT via
+    // expected: [{ ledgerId, rh?, score? }]. Worksheets are revisable IN PLACE
+    // (the ledger upsert keeps the same ledger_id), so a row can mutate between
+    // the Draft fetch and the mark — any pinned row that changed rejects the WHOLE
+    // request with 409 so a comment never lands on content the teacher hasn't seen.
+    const expected = Array.isArray(body.expected) ? body.expected : [];
+    if (expected.length) {
+      const byLedger = Object.create(null);   // exp.ledgerId is client text — no prototype walk
+      for (const row of targets) byLedger[row.ledger_id] = row;
+      const stale = [];
+      for (const exp of expected) {
+        if (!exp || typeof exp.ledgerId !== 'string') continue;
+        const row = byLedger[exp.ledgerId];
+        if (!row) continue;
+        // rh: null is a REAL pin ("I saw a row with no response") — only an
+        // absent (undefined) rh skips the check, so null→answer revisions 409 too.
+        if (exp.rh !== undefined && exp.rh !== responseHash(row.response)) {
+          stale.push(exp.ledgerId);
+          continue;
+        }
+        if (exp.score !== undefined && !numEq(exp.score, row.score)) stale.push(exp.ledgerId);
+      }
+      if (stale.length) return res.status(409).json({ ok: false, error: 'stale', stale });
+    }
 
     const teacherUsername = await resolveTeacherUsername(req);
     const seenAtMs = Date.now();
@@ -330,6 +620,9 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
           teacher: teacherUsername,
           seenAt: seenAtMs,
           comment: comment || undefined,
+          // v2 §0.5: bind the response the teacher reviewed into the signed payload,
+          // so post-review drift is detectable like grade tampering.
+          responseHash: responseHash(row.response) || undefined,
         });
         const up = await db.upsertReviewMark({
           ledgerId: row.ledger_id,
@@ -380,6 +673,14 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
       }
     }
 
-    return res.json({ ok: true, marked: marks.length, candyAwarded, notified, marks });
+    return res.json({
+      ok: true,
+      marked: marks.length,
+      requested: targetRes.requested ?? targets.length,
+      truncated: !!targetRes.truncated,
+      candyAwarded,
+      notified,
+      marks,
+    });
   });
 }

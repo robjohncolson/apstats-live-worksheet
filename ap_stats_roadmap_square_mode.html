@@ -14157,14 +14157,31 @@ function _paintTeacherTools(host) {
     host.appendChild(note);
 }
 
-// ── Nightly Review (NIGHTLY_REVIEW_SPEC.md) — teacher surface ────────────────
+// ── Nightly Review (NIGHTLY_REVIEW_SPEC.md + NIGHTLY_REVIEW_V2_SPEC.md) ──────
 // Review recent student work: priority-sorted, mark SEEN (item / session / all),
 // comment with editable templates, "not reviewed in N days" flag. Marking seen mints
 // 1 candy/student/day and (with a comment) toasts the student via the existing nudge
 // path; reviews are signed receipts. Teacher session token auths every call.
+// v2 adds: a By student ▾ / By item ▾ toggle (the by-item lens groups the class
+// under each itemId), ✨ Draft (AI pre-fills the comment box from the FULL response —
+// server only releases responses for rows already AI-graded at grade time), ✨ Draft
+// for cluster (ONE comment for ≤5 same-mistake answers), and rh stale-pins so a mark
+// 409s instead of landing a comment on work a student revised mid-review.
 var _REVIEW_TEMPLATES_KEY = 'desk_review_templates_v1';
 var _REVIEW_DEFAULT_TEMPLATES = ['Nice work!', 'Show your steps', 'See me', 'Great improvement'];
 var _reviewBusy = false;
+var _reviewMode = 'student';        // 'student' (v1 queue) | 'item' (v2 transpose)
+var _reviewPins = {};               // ledgerId → {rh, score} at render time (TOCTOU pins, §0.5)
+// Pin what we rendered: rh AND score (a *-DESK_DONE retake changes ONLY the score —
+// the response is a constant {selfAttest} — so an rh-only pin would let a comment
+// land on a score the teacher never saw). rh:null is meaningful ("no response").
+function _reviewPinRow(ledgerId, rh, score) {
+    if (!ledgerId) return;
+    _reviewPins[ledgerId] = {
+        rh: (rh === undefined ? null : rh),
+        score: (score === undefined ? null : score)
+    };
+}
 
 function _reviewCfg() {
     var token = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
@@ -14188,6 +14205,17 @@ async function _reviewFetchQueue() {
     if (!cfg.token || !cfg.base) return { error: 'signin' };
     try {
         var res = await fetch(cfg.base + '/class/review-queue', { headers: { Authorization: 'Bearer ' + cfg.token } });
+        if (res.status === 503) return { error: '503' };
+        if (res.status === 401) return { error: 'signin' };
+        if (res.status !== 200) return { error: 'http' + res.status };
+        return await res.json();
+    } catch (e) { return { error: 'network' }; }
+}
+async function _reviewFetchByItem() {
+    var cfg = _reviewCfg();
+    if (!cfg.token || !cfg.base) return { error: 'signin' };
+    try {
+        var res = await fetch(cfg.base + '/class/review-by-item', { headers: { Authorization: 'Bearer ' + cfg.token } });
         if (res.status === 503) return { error: '503' };
         if (res.status === 401) return { error: 'signin' };
         if (res.status !== 200) return { error: 'http' + res.status };
@@ -14219,7 +14247,8 @@ async function _reviewRefresh() {
     var host = document.getElementById('nightlyreview-content');
     if (!host) return;
     host.innerHTML = '<div class="geneva" style="font-size:11px;color:#555;padding:12px">Loading review queue…</div>';
-    var data = await _reviewFetchQueue();
+    _reviewPins = {};   // pins describe what's ON SCREEN — a refresh resets them
+    var data = (_reviewMode === 'item') ? await _reviewFetchByItem() : await _reviewFetchQueue();
     if (!data || data.error) {
         var msg = (data && data.error === '503') ? 'Nightly Review isn\'t turned on yet — run migration 0025 on the roster database.'
             : (data && data.error === 'signin') ? 'Sign in as a teacher first.'
@@ -14228,7 +14257,21 @@ async function _reviewRefresh() {
         return;
     }
     _reviewSetBadge(Number(data.unseenTotal) || 0);
-    _paintReviewQueue(host, data);
+    if (_reviewMode === 'item') _paintReviewByItem(host, data);
+    else _paintReviewQueue(host, data);
+}
+// The By student ▾ / By item ▾ toggle (v2). Both painters mount it in their header.
+function _reviewToggleBtns() {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:0';
+    [['student', 'By student'], ['item', 'By item']].forEach(function (m) {
+        var b = document.createElement('button'); b.className = 's7btn';
+        b.style.cssText = 'font-size:10px;padding:2px 7px' + (_reviewMode === m[0] ? ';font-weight:bold;background:#ddd' : '');
+        b.textContent = m[1];
+        b.onclick = function () { if (_reviewMode !== m[0]) { _reviewMode = m[0]; _reviewRefresh(); } };
+        wrap.appendChild(b);
+    });
+    return wrap;
 }
 function _reviewEditTemplates() {
     var next = prompt('Edit comment templates (one per line):', _reviewTemplates().join('\n'));
@@ -14252,6 +14295,17 @@ function _reviewItemRow(it) {
         main.appendChild(seen);
     }
     row.appendChild(main);
+    _reviewPinRow(it.ledgerId, it.rh, it.score);   // pin what we're showing (§0.5)
+    if (!it.seen && it.draftable) {
+        var d = document.createElement('button'); d.className = 's7btn'; d.style.cssText = 'font-size:10px;padding:1px 7px;flex-shrink:0';
+        d.textContent = '✨ Draft'; d.title = 'AI-draft a comment from this answer (you edit before sending)';
+        d.onclick = function () {
+            var det = row.parentNode; while (det && det.tagName !== 'DETAILS') det = det.parentNode;
+            var ta = det ? det.querySelector('textarea') : null;
+            if (ta) _reviewDraftForItem(it, ta, d);
+        };
+        row.appendChild(d);
+    }
     if (!it.seen) {
         var b = document.createElement('button'); b.className = 's7btn'; b.style.cssText = 'font-size:10px;padding:1px 7px;flex-shrink:0';
         b.textContent = 'Seen';
@@ -14275,6 +14329,7 @@ function _paintReviewQueue(host, data) {
     h.innerHTML = '<b>' + (Number(data.unseenTotal) || 0) + '</b> unseen · ' + withWork.length + ' student' + (withWork.length === 1 ? '' : 's');
     hdr.appendChild(h);
     var spacer = document.createElement('div'); spacer.style.flex = '1'; hdr.appendChild(spacer);
+    hdr.appendChild(_reviewToggleBtns());
     var tplBtn = document.createElement('button'); tplBtn.className = 's7btn'; tplBtn.style.cssText = 'font-size:10px;padding:2px 7px'; tplBtn.textContent = '✎ Templates'; tplBtn.onclick = _reviewEditTemplates;
     var rBtn = document.createElement('button'); rBtn.className = 's7btn'; rBtn.style.cssText = 'font-size:10px;padding:2px 7px'; rBtn.textContent = '↻ Refresh'; rBtn.onclick = function () { _reviewRefresh(); };
     hdr.appendChild(tplBtn); hdr.appendChild(rBtn);
@@ -14347,6 +14402,17 @@ async function _reviewMark(body) {
     if (_reviewBusy) return; _reviewBusy = true;
     var cfg = _reviewCfg();
     if (!cfg.token || !cfg.base) { _reviewBusy = false; alert('Sign in as a teacher first.'); return; }
+    // §0.5: pin every marked row we rendered an rh for — if a student revised the
+    // work after we painted it, the server 409s instead of attaching our comment
+    // to an answer we never saw.
+    if (Array.isArray(body.ledgerIds) && !body.expected) {
+        var expected = [];
+        body.ledgerIds.forEach(function (id) {
+            var p = _reviewPins[id];
+            if (p) expected.push({ ledgerId: id, rh: p.rh, score: p.score });
+        });
+        if (expected.length) body.expected = expected;
+    }
     try {
         var res = await fetch(cfg.base + '/class/review', {
             method: 'POST',
@@ -14355,13 +14421,240 @@ async function _reviewMark(body) {
         });
         var data = await res.json().catch(function () { return null; });
         if (res.status === 503) { alert('Nightly Review isn\'t turned on yet — run migration 0025 first.'); }
+        else if (res.status === 409) { alert('Heads up — a student revised that work while you were reviewing. Nothing was marked; here\'s the fresh version.'); }
         else if (!res.ok || !data || !data.ok) { alert('Mark failed' + (data && data.error ? ': ' + data.error : ' (HTTP ' + res.status + ')')); }
         else {
+            if (data.truncated) alert('Marked ' + data.marked + ' of ' + data.requested + ' items (500 max per request). Refresh and repeat for the rest.');
             try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play((data.candyAwarded > 0) ? 'wildEep' : 'click', 0.4); } catch (_) {}
         }
     } catch (e) { alert('Mark failed: ' + ((e && e.message) || e)); }
     _reviewBusy = false;
     _reviewRefresh();
+}
+
+// ── Nightly Review v2 — ✨ Draft (AI comment pre-fill) + the by-item lens ─────
+function _reviewCrBase() {
+    return (typeof window !== 'undefined' && window.RAILWAY_SERVER_URL)
+        ? window.RAILWAY_SERVER_URL
+        : 'https://curriculumrender-production.up.railway.app';
+}
+// Full row context for a Draft tap. The SERVER decides redaction (§0.1): only
+// rows that already crossed the LLM at grade time come back with a response.
+async function _reviewFetchItemFull(ledgerId) {
+    var cfg = _reviewCfg();
+    if (!cfg.token || !cfg.base) return null;
+    try {
+        var res = await fetch(cfg.base + '/class/review-item/' + encodeURIComponent(ledgerId), { headers: { Authorization: 'Bearer ' + cfg.token } });
+        if (res.status !== 200) return null;
+        return await res.json();
+    } catch (e) { return null; }
+}
+// POST the (identifier-free) draft request to the cr server. Returns '' on any
+// failure — a failed draft must never block the review (the teacher just types).
+async function _reviewDraftComment(payload) {
+    try {
+        var res = await fetch(_reviewCrBase() + '/api/ai/review-comment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) return '';
+        var data = await res.json().catch(function () { return null; });
+        return (data && typeof data.comment === 'string') ? data.comment : '';
+    } catch (e) { return ''; }
+}
+function _reviewShowDraftHint(ta) {
+    var prev = ta.previousSibling;
+    if (prev && prev.nodeType === 1 && prev.getAttribute && prev.getAttribute('data-draft-hint')) return;
+    var hint = document.createElement('div');
+    hint.setAttribute('data-draft-hint', '1');
+    hint.className = 'geneva';
+    hint.style.cssText = 'font-size:9px;color:#7a5c00;margin-bottom:2px';
+    hint.textContent = '✨ AI draft — edit me';
+    ta.parentNode.insertBefore(hint, ta);
+}
+function _reviewDraftFill(ta, comment) {
+    if (!comment) { alert('No draft came back — write it yourself (the AI is offline or the answer is empty).'); return; }
+    ta.value = ta.value && ta.value.trim() ? (ta.value.replace(/\s*$/, '') + ' ' + comment) : comment;
+    _reviewShowDraftHint(ta);
+    ta.focus();
+}
+async function _reviewDraftForItem(it, ta, btn) {
+    if (btn.disabled) return;
+    btn.disabled = true; var was = btn.textContent; btn.textContent = '✨ …';
+    try {
+        var full = await _reviewFetchItemFull(it.ledgerId);
+        if (!full || !full.ok || full.redacted || full.response == null) {
+            alert('This answer isn\'t draftable (only AI-graded work can be sent to the drafter).');
+            return;
+        }
+        _reviewPinRow(it.ledgerId, full.rh, full.score);   // freshest pin wins
+        var comment = await _reviewDraftComment({
+            response: (typeof full.response === 'string') ? full.response : JSON.stringify(full.response),
+            score: full.score,
+            source: full.source,
+            topic: full.itemId
+        });
+        _reviewDraftFill(ta, comment);
+    } finally { btn.disabled = false; btn.textContent = was; }
+}
+// ✨ Draft for cluster: up to 5 of the SELECTED draftable answers (lowest scores
+// first — the server pre-sorts) → ONE shared comment about the shared mistake.
+async function _reviewDraftCluster(item, det, ta, btn) {
+    if (btn.disabled) return;
+    btn.disabled = true; var was = btn.textContent; btn.textContent = '✨ …';
+    try {
+        var picked = _reviewSelectedAnswers(det, item).filter(function (a) { return a.draftable; }).slice(0, 5);
+        if (!picked.length) { alert('Select at least one draftable (AI-graded) answer first.'); return; }
+        var fulls = await Promise.all(picked.map(function (a) { return _reviewFetchItemFull(a.ledgerId); }));
+        var answers = [];
+        fulls.forEach(function (f, i) {
+            if (!f || !f.ok || f.redacted || f.response == null) return;
+            _reviewPinRow(picked[i].ledgerId, f.rh, f.score);
+            answers.push((typeof f.response === 'string') ? f.response : JSON.stringify(f.response));
+        });
+        if (!answers.length) { alert('None of the selected answers are draftable.'); return; }
+        var comment = await _reviewDraftComment({
+            answers: answers,
+            source: item.source,
+            topic: (item.unit || '') + (item.topic ? ' · ' + item.topic : '') || item.itemId
+        });
+        _reviewDraftFill(ta, comment);
+    } finally { btn.disabled = false; btn.textContent = was; }
+}
+function _reviewSelectedAnswers(det, item) {
+    var byId = {};
+    (item.answers || []).forEach(function (a) { byId[a.ledgerId] = a; });
+    var out = [];
+    det.querySelectorAll('input[type=checkbox][data-ledger]').forEach(function (cb) {
+        if (cb.checked && byId[cb.getAttribute('data-ledger')]) out.push(byId[cb.getAttribute('data-ledger')]);
+    });
+    return out;
+}
+function _reviewScoreLabel(score) {
+    if (score == null) return '—';
+    return score <= 1 ? Math.round(score * 100) + '%' : String(score);
+}
+function _paintReviewByItem(host, data) {
+    host.innerHTML = '';
+    var items = data.items || [];
+
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--black);padding-bottom:6px;margin-bottom:8px';
+    var h = document.createElement('div'); h.className = 'chicago'; h.style.cssText = 'font-size:12px';
+    h.innerHTML = '<b>' + (Number(data.unseenTotal) || 0) + '</b> unseen · ' + items.length + ' item' + (items.length === 1 ? '' : 's');
+    hdr.appendChild(h);
+    var spacer = document.createElement('div'); spacer.style.flex = '1'; hdr.appendChild(spacer);
+    hdr.appendChild(_reviewToggleBtns());
+    var tplBtn = document.createElement('button'); tplBtn.className = 's7btn'; tplBtn.style.cssText = 'font-size:10px;padding:2px 7px'; tplBtn.textContent = '✎ Templates'; tplBtn.onclick = _reviewEditTemplates;
+    var rBtn = document.createElement('button'); rBtn.className = 's7btn'; rBtn.style.cssText = 'font-size:10px;padding:2px 7px'; rBtn.textContent = '↻ Refresh'; rBtn.onclick = function () { _reviewRefresh(); };
+    hdr.appendChild(tplBtn); hdr.appendChild(rBtn);
+    host.appendChild(hdr);
+
+    if (!items.length) {
+        var empty = document.createElement('div'); empty.className = 'geneva'; empty.style.cssText = 'font-size:11px;color:#555;padding:10px';
+        empty.textContent = 'No recent work to review — you\'re all caught up. 🌙';
+        host.appendChild(empty); return;
+    }
+
+    var openCount = 0;
+    items.forEach(function (item) {
+        var answers = item.answers || [];
+        if (!answers.length) return;
+        var det = document.createElement('details');
+        det.style.cssText = 'border:1px solid #999;background:#fff;margin:0 0 6px;box-shadow:1px 1px 0 #bbb';
+        if (item.unseen > 0 && openCount < 3) { det.open = true; openCount += 1; }
+
+        var prio = item.priority >= 100 ? '📝 ' : (item.priority >= 80 ? '⚠ ' : '');
+        var label = (item.unit ? item.unit : '') + (item.topic ? ' · ' + item.topic : '');
+        var mean = (item.meanScore == null) ? '' : ' · μ ' + _reviewScoreLabel(item.meanScore);
+        var sum = document.createElement('summary'); sum.className = 'geneva';
+        sum.style.cssText = 'font-size:11px;padding:6px 8px;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+        sum.innerHTML = '<b>' + _deskEsc(prio + (item.source || '')) + '</b>'
+            + '<span style="color:#888">' + _deskEsc(item.itemId || '') + '</span>'
+            + '<span style="color:#666">' + _deskEsc(label + mean) + '</span>'
+            + (item.unseen > 0 ? '<span style="margin-left:auto;border:1px solid #777;background:#ffe;padding:0 6px">' + item.unseen + ' unseen</span>'
+                : '<span style="margin-left:auto;color:#070">✓ all seen</span>');
+        det.appendChild(sum);
+
+        var body = document.createElement('div'); body.style.cssText = 'padding:4px 8px 8px';
+        answers.forEach(function (a) {
+            _reviewPinRow(a.ledgerId, a.rh, a.score);   // pin what we're showing (§0.5)
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid #eee;font-size:11px';
+            var cb = document.createElement('input'); cb.type = 'checkbox';
+            cb.setAttribute('data-ledger', a.ledgerId);
+            cb.checked = !a.seen;
+            cb.style.cssText = 'margin-top:2px;flex-shrink:0';
+            row.appendChild(cb);
+            var main = document.createElement('div'); main.className = 'geneva'; main.style.cssText = 'min-width:0;flex:1;line-height:1.3';
+            main.innerHTML = '<b>' + _deskEsc(a.realName || a.username || 'Student') + '</b>'
+                + ' <span style="color:#666">' + _deskEsc(_reviewScoreLabel(a.score)) + '</span>'
+                + (a.draftable ? ' <span style="color:#7a5c00">✨</span>' : '');
+            if (a.responseSnippet) {
+                var snip = document.createElement('div'); snip.style.cssText = 'color:#555;word-break:break-word'; snip.textContent = a.responseSnippet; main.appendChild(snip);
+            }
+            if (a.seen) {
+                var seen = document.createElement('div'); seen.style.cssText = 'color:#070;font-size:10px';
+                seen.textContent = '👁 seen' + (a.comment ? ' · 💬 ' + a.comment : '');
+                main.appendChild(seen);
+            }
+            row.appendChild(main);
+            body.appendChild(row);
+        });
+
+        var selRow = document.createElement('div'); selRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-top:5px';
+        [['All unseen', function (a) { return !a.seen; }],
+         ['Below 50%', function (a) { return !a.seen && a.score != null && (a.score <= 1 ? a.score < 0.5 : a.score < 50); }],
+         ['None', function () { return false; }]].forEach(function (pair) {
+            var b = document.createElement('button'); b.className = 's7btn'; b.style.cssText = 'font-size:9px;padding:1px 6px';
+            b.textContent = pair[0];
+            b.onclick = function () {
+                var byId = {};
+                answers.forEach(function (a) { byId[a.ledgerId] = a; });
+                det.querySelectorAll('input[type=checkbox][data-ledger]').forEach(function (cb) {
+                    var a = byId[cb.getAttribute('data-ledger')];
+                    cb.checked = !!(a && pair[1](a));
+                });
+            };
+            selRow.appendChild(b);
+        });
+        body.appendChild(selRow);
+
+        var cWrap = document.createElement('div'); cWrap.style.cssText = 'margin-top:6px;border-top:1px dashed #ccc;padding-top:6px';
+        var chips = document.createElement('div'); chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
+        var ta = document.createElement('textarea'); ta.className = 'geneva';
+        ta.style.cssText = 'width:100%;box-sizing:border-box;font-size:11px;height:42px;border:1px solid #999;padding:4px'; ta.maxLength = 500;
+        ta.placeholder = 'One comment for every selected student — sent as a message if filled';
+        _reviewTemplates().forEach(function (t) {
+            var chip = document.createElement('button'); chip.type = 'button'; chip.className = 's7btn';
+            chip.style.cssText = 'font-size:9px;padding:1px 6px'; chip.textContent = t;
+            chip.onclick = function () { ta.value = ta.value ? (ta.value.replace(/\s*$/, '') + ' ' + t) : t; ta.focus(); };
+            chips.appendChild(chip);
+        });
+        cWrap.appendChild(chips); cWrap.appendChild(ta);
+
+        var btns = document.createElement('div'); btns.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-top:5px';
+        if (item.draftable) {
+            var dBtn = document.createElement('button'); dBtn.className = 's7btn'; dBtn.style.cssText = 'font-size:10px;padding:2px 8px';
+            dBtn.textContent = '✨ Draft for cluster';
+            dBtn.title = 'One AI-drafted comment for up to 5 selected AI-graded answers (you edit before sending)';
+            dBtn.onclick = function () { _reviewDraftCluster(item, det, ta, dBtn); };
+            btns.appendChild(dBtn);
+        }
+        var mBtn = document.createElement('button'); mBtn.className = 's7btn'; mBtn.style.cssText = 'font-size:10px;padding:2px 8px;font-weight:bold';
+        mBtn.textContent = '✓ Mark selected seen';
+        mBtn.onclick = function () {
+            var ids = _reviewSelectedAnswers(det, item).map(function (a) { return a.ledgerId; });
+            if (!ids.length) { alert('Select at least one answer first.'); return; }
+            _reviewMark({ ledgerIds: ids, comment: ta.value });
+        };
+        btns.appendChild(mBtn);
+        cWrap.appendChild(btns);
+        body.appendChild(cWrap);
+        det.appendChild(body);
+        host.appendChild(det);
+    });
 }
 
 var _myGradebookQuarter = null;

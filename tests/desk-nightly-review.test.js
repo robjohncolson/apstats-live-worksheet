@@ -52,3 +52,50 @@ describe('Desk — student My Ledger review badge (Phase 3)', () => {
     expect(DESK).toMatch(/👁 Seen by teacher/);
   });
 });
+
+describe('Desk — Nightly Review v2 (NIGHTLY_REVIEW_V2_SPEC)', () => {
+  it('has the By student / By item toggle wired through _reviewMode', () => {
+    expect(DESK).toMatch(/var _reviewMode = 'student'/);
+    expect(DESK).toContain('function _reviewToggleBtns');
+    expect(DESK).toMatch(/\[\['student', 'By student'\], \['item', 'By item'\]\]/);
+    expect(DESK).toMatch(/_reviewMode === 'item'\) \? await _reviewFetchByItem\(\) : await _reviewFetchQueue\(\)/);
+  });
+  it('defines the v2 fetch + paint + draft functions', () => {
+    for (const fn of ['async function _reviewFetchByItem', 'function _paintReviewByItem',
+                      'async function _reviewDraftForItem', 'async function _reviewDraftCluster',
+                      'async function _reviewFetchItemFull', 'async function _reviewDraftComment']) {
+      expect(DESK, `missing ${fn}`).toContain(fn);
+    }
+  });
+  it('hits the v2 roster endpoints with the Bearer token and the cr drafter', () => {
+    expect(DESK).toMatch(/fetch\(cfg\.base \+ '\/class\/review-by-item'/);
+    expect(DESK).toMatch(/fetch\(cfg\.base \+ '\/class\/review-item\/' \+ encodeURIComponent\(ledgerId\)/);
+    expect(DESK).toMatch(/_reviewCrBase\(\) \+ '\/api\/ai\/review-comment'/);
+  });
+  it('pins rh AND score at render + sends expected[] so a revised answer 409s instead of mis-attaching a comment (§0.5)', () => {
+    expect(DESK).toMatch(/var _reviewPins = \{\}/);
+    expect(DESK).toMatch(/function _reviewPinRow/);
+    expect(DESK).toMatch(/_reviewPinRow\(it\.ledgerId, it\.rh, it\.score\)/);
+    expect(DESK).toMatch(/_reviewPinRow\(a\.ledgerId, a\.rh, a\.score\)/);
+    // Score rides the pin: a *-DESK_DONE retake changes only the score (constant
+    // {selfAttest} response) — rh alone would let a comment land on an unseen score.
+    expect(DESK).toMatch(/expected\.push\(\{ ledgerId: id, rh: p\.rh, score: p\.score \}\)/);
+    expect(DESK).toMatch(/res\.status === 409/);
+    expect(DESK).toContain('a student revised that work while you were reviewing');
+  });
+  it('surfaces the 500-cap truncation instead of silently dropping the tail (§0.9)', () => {
+    expect(DESK).toMatch(/data\.truncated/);
+    expect(DESK).toContain('500 max per request');
+  });
+  it('the ✨ Draft button appears only for draftable rows and the fill is marked as an AI draft', () => {
+    expect(DESK).toMatch(/if \(!it\.seen && it\.draftable\)/);
+    expect(DESK).toContain('✨ AI draft — edit me');
+    expect(DESK).toMatch(/full\.redacted \|\| full\.response == null/);   // redacted rows never reach the drafter
+  });
+  it('cluster drafts cap at 5 selected draftable answers and never send identifiers', () => {
+    expect(DESK).toMatch(/filter\(function \(a\) \{ return a\.draftable; \}\)\.slice\(0, 5\)/);
+    // The cr payloads carry only response/answers + score/source/topic — no names/ids.
+    const draftBlock = DESK.slice(DESK.indexOf('async function _reviewDraftForItem'), DESK.indexOf('function _reviewSelectedAnswers'));
+    expect(draftBlock).not.toMatch(/realName|studentId|username/);
+  });
+});

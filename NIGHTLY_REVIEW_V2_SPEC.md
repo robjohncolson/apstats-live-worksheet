@@ -7,9 +7,27 @@
 > and (2) a **review-by-item** lens — which compose: AI drafts one comment for the *cluster*
 > of kids who made the same mistake, you approve, it goes to all of them.
 >
-> **Status:** spec → REVIEWED + hardened. A 2-lens review (privacy + correctness) found real
-> defects — the corrections in **§0 are binding** and override the original §§1–10 below.
-> Reuses the shipped review pipeline + the existing AI-grading provider chain.
+> **Status:** ✅ IMPLEMENTED 2026-07-01 (all 3 phases + §0 corrections; adversarial-reviewed).
+> A 2-lens review (privacy + correctness) found real defects — the corrections in **§0 are
+> binding** and override the original §§1–10 below. Reuses the shipped review pipeline + the
+> existing AI-grading provider chain.
+>
+> **Implementation deltas (vs §0 as written):**
+> - §0.1 the proposed `{'ai','ai-graded'}` allowlist strings have NEVER been written (not in
+>   the item_ledger source CHECK, zero writers) — the real AI-graded-at-grade-time set is
+>   `aiGradedRow()` in `roster-server/review.js`: `quiz_review` | `quiz_exception` |
+>   `pc`+`-SG` suffix | scored `frq` (documented-accepted: rare teacher-app human-graded rows
+>   share the scored-frq shape); NEVER proctored.
+> - §0.6 by-item reuses the SAME per-student `getLedgerByStudent` loop as the queue (identical
+>   row universe BY CONSTRUCTION) with no per-student cap, rather than a parallel DAO; the
+>   80-item cap on the by-student queue is now payload-only (counts uncapped, `itemsTruncated`).
+> - §0.7 default window = **14 days** for badge + both views; `?days=all` = full history.
+> - §0.4 section-scoping of `review-item` = roster-membership validation (single-teacher
+>   deployment; the same secret already grants /admin/snapshot). ⚠ set `TEACHER_KEY` on Railway.
+> - §0.5 pins carry BOTH `rh` and `score` (a *-DESK_DONE retake changes only the score);
+>   `rh:null` is a real pin; the signed receipt binds `rh`.
+> - Post-review hardening: the by-item `groups` map is null-prototype (a student-planted
+>   `__proto__` item_id would otherwise pollute Object.prototype and crash the server).
 
 ---
 

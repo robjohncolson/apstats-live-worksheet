@@ -328,9 +328,12 @@ export function issueEpochReceipt({ asOf = Date.now(), asOfDateNY, cnt, root, pr
 
 // A "review": a teacher marking one work item (item_ledger row, by ledger_id) SEEN,
 // optionally with a comment bound by hash (`ch`, like `ah`) so a tampered stored comment
-// is detectable while the payload stays small. Signed so reviews ride the same durability
-// rails as grades (snapshot/verify/restore). See NIGHTLY_REVIEW_SPEC.md.
-export function issueReviewReceipt({ ledgerId, studentId, teacher, seenAt = Date.now(), comment }) {
+// is detectable while the payload stays small. `rh` (v2) binds the hash of the student
+// response the teacher was LOOKING AT when they reviewed — worksheets are revisable
+// (the ledger upsert keeps the same ledger_id), so without `rh` a comment drafted about
+// an old answer silently attaches to a new one. Signed so reviews ride the same
+// durability rails as grades (snapshot/verify/restore). See NIGHTLY_REVIEW_V2_SPEC.md §0.5.
+export function issueReviewReceipt({ ledgerId, studentId, teacher, seenAt = Date.now(), comment, responseHash }) {
   if (!issuer.enabled || !ledgerId || !studentId) return null;
   try {
     const payload = {
@@ -342,6 +345,7 @@ export function issueReviewReceipt({ ledgerId, studentId, teacher, seenAt = Date
       by: teacher || undefined,
       ts: seenAt,
       ch: comment ? crypto.createHash('sha256').update(stringifyResponse(comment), 'utf8').digest('hex').slice(0, 16) : undefined,
+      rh: responseHash || undefined,
       n: crypto.randomBytes(4).toString('hex')
     };
     const { receiptId, compact } = signPayload(issuer.privateKey, payload);

@@ -12,7 +12,7 @@ import crypto from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mountReview, itemPriority, responseSnippet } from '../review.js';
+import { mountReview, itemPriority, responseSnippet, responseHash, aiGradedRow, windowFloorFrom } from '../review.js';
 import { mountLedger } from '../ledger.js';
 import { initReceipts, issueReviewReceipt, getReceiptIssuer } from '../receipts.js';
 import { verifyCompact, publicKeyFromX, verifySnapshot } from '../snapshot-verify.js';
@@ -316,6 +316,337 @@ describe('review durability (snapshot + verify + normalizeReviews)', () => {
     const { snapshot } = snapshotWithReview('hi');
     expect(normalizeReviews(snapshot).length).toBe(1);                         // { students:[{bundle}] }
     expect(normalizeReviews({ bundles: [snapshot.students[0].bundle] }).length).toBe(1); // { bundles:[...] }
+  });
+});
+
+// ── v2 helpers (NIGHTLY_REVIEW_V2_SPEC.md §0) ──────────────────────────────────
+describe('v2 helpers: windowFloorFrom / aiGradedRow / responseHash', () => {
+  it('windowFloorFrom defaults to 14 days, honors all, clamps at 365', () => {
+    const now = 1000 * 86400000;
+    expect(windowFloorFrom(undefined, now)).toEqual({ days: 14, floor: now - 14 * 86400000 });
+    expect(windowFloorFrom('', now).days).toBe(14);
+    expect(windowFloorFrom('garbage', now).days).toBe(14);
+    expect(windowFloorFrom('-3', now).days).toBe(14);
+    expect(windowFloorFrom('all', now)).toEqual({ days: null, floor: null });
+    expect(windowFloorFrom('7', now)).toEqual({ days: 7, floor: now - 7 * 86400000 });
+    expect(windowFloorFrom('9999', now).days).toBe(365);
+  });
+
+  it('aiGradedRow admits ONLY rows that crossed the LLM at grade time (§0.1)', () => {
+    // AI-mediated at grade time → draftable
+    expect(aiGradedRow({ source: 'quiz_review', item_id: 'U1-L2-Q02#rev' })).toBe(true);
+    expect(aiGradedRow({ source: 'quiz_exception', item_id: 'U1-L2-Q02#exc' })).toBe(true);
+    expect(aiGradedRow({ source: 'pc', item_id: 'U1-SG', score: 0.5 })).toBe(true);
+    expect(aiGradedRow({ source: 'frq', item_id: 'WS-U1L2-reflect1', score: 0.5 })).toBe(true);
+    // Never crossed the LLM → redacted
+    expect(aiGradedRow({ source: 'frq', item_id: 'WS-U1L2-reflect1', score: null })).toBe(false);   // draft
+    expect(aiGradedRow({ source: 'frq', item_id: 'WS-U1L2-reflect1' })).toBe(false);                // no score
+    expect(aiGradedRow({ source: 'pc', item_id: 'U1-PC-MCQ-A-Q05', score: 1 })).toBe(false);        // proctored-family MCQ
+    expect(aiGradedRow({ source: 'worksheet', item_id: 'WS-U1L2-Q1', score: 1 })).toBe(false);
+    expect(aiGradedRow({ source: 'curriculum_quiz', item_id: 'U1-L2-Q01', score: 1 })).toBe(false);
+    expect(aiGradedRow({ source: 'blooket', item_id: 'BLOOKET-U1L2', score: 0.9 })).toBe(false);
+    expect(aiGradedRow({ source: 'trainer', item_id: 'TI84-1-var-stats' })).toBe(false);
+    // NEVER proctored, no matter the source (§0.1 "Never draft proctored")
+    expect(aiGradedRow({ source: 'frq', item_id: 'X', score: 1, evidence_tier: 'proctored' })).toBe(false);
+    expect(aiGradedRow({ source: 'quiz_review', item_id: 'X#rev', evidence_tier: 'proctored' })).toBe(false);
+    // The spec's dead strings stay dead (no writer can produce them; they must NOT unlock drafting)
+    expect(aiGradedRow({ source: 'ai', item_id: 'X', score: 1 })).toBe(false);
+    expect(aiGradedRow({ source: 'ai-graded', item_id: 'X', score: 1 })).toBe(false);
+    expect(aiGradedRow(null)).toBe(false);
+  });
+
+  it('responseHash matches the ledger-receipt ah recipe and is null for empty', () => {
+    expect(responseHash('my answer')).toBe(crypto.createHash('sha256').update('my answer', 'utf8').digest('hex').slice(0, 16));
+    expect(responseHash({ a: 1 })).toBe(crypto.createHash('sha256').update(JSON.stringify({ a: 1 }), 'utf8').digest('hex').slice(0, 16));
+    expect(responseHash(null)).toBeNull();
+    expect(responseHash(undefined)).toBeNull();
+  });
+});
+
+// ── v2: the shared window + uncapped counts on the queue ──────────────────────
+describe('GET /class/review-queue (v2 window + counts)', () => {
+  it('applies the 14-day default window; days=all restores full history', async () => {
+    const world = makeWorld();
+    addRow(world, SID_A);                                                          // now-ish → in window
+    addRow(world, SID_A, { recorded_at: new Date(Date.now() - 30 * 86400000).toISOString() }); // 30d ago
+    const dflt = await call(mountServer(world), 'GET', '/class/review-queue', { secret: TEACHER_SECRET });
+    expect(dflt.body.windowDays).toBe(14);
+    expect(dflt.body.unseenTotal).toBe(1);                                         // old row outside the window
+    const all = await call(mountServer(world), 'GET', '/class/review-queue?days=all', { secret: TEACHER_SECRET });
+    expect(all.body.windowDays).toBeNull();
+    expect(all.body.unseenTotal).toBe(2);
+  });
+
+  it('unseen counts are NOT capped by the 80-item payload cap (itemsTruncated flags it)', async () => {
+    const world = makeWorld();
+    for (let i = 0; i < 85; i += 1) addRow(world, SID_A);
+    const res = await call(mountServer(world), 'GET', '/class/review-queue', { secret: TEACHER_SECRET });
+    const a = res.body.students.find((s) => s.studentId === SID_A);
+    expect(a.items.length).toBe(80);                                               // payload capped
+    expect(a.unseen).toBe(85);                                                     // count NOT capped
+    expect(a.itemsTruncated).toBe(true);
+    expect(res.body.unseenTotal).toBe(85);
+  });
+
+  it('items carry rh + draftable for the Draft flow', async () => {
+    const world = makeWorld();
+    addRow(world, SID_A, { source: 'frq', score: 0.5, response: 'my essay', item_id: 'WS-U1L2-reflect1' });
+    addRow(world, SID_A, { source: 'worksheet', score: 1, response: '42' });
+    const res = await call(mountServer(world), 'GET', '/class/review-queue', { secret: TEACHER_SECRET });
+    const a = res.body.students.find((s) => s.studentId === SID_A);
+    const frq = a.items.find((it) => it.source === 'frq');
+    const ws = a.items.find((it) => it.source === 'worksheet');
+    expect(frq.draftable).toBe(true);
+    expect(frq.rh).toBe(responseHash('my essay'));
+    expect(ws.draftable).toBe(false);
+    expect(ws.rh).toBe(responseHash('42'));
+  });
+});
+
+// ── v2: GET /class/review-item/:ledgerId ───────────────────────────────────────
+describe('GET /class/review-item/:ledgerId (v2)', () => {
+  it('401s without the teacher secret and 400s on a non-UUID', async () => {
+    const world = makeWorld();
+    const row = addRow(world, SID_A);
+    expect((await call(mountServer(world), 'GET', `/class/review-item/${row.ledger_id}`)).status).toBe(401);
+    expect((await call(mountServer(world), 'GET', '/class/review-item/not-a-uuid', { secret: TEACHER_SECRET })).status).toBe(400);
+  });
+
+  it('404s for an unknown ledgerId and for a row whose student left the roster', async () => {
+    const world = makeWorld();
+    const gone = addRow(world, '00000000-0000-4000-8000-00000000dead');
+    expect((await call(mountServer(world), 'GET', '/class/review-item/00000000-0000-4000-9000-999999999999', { secret: TEACHER_SECRET })).status).toBe(404);
+    expect((await call(mountServer(world), 'GET', `/class/review-item/${gone.ledger_id}`, { secret: TEACHER_SECRET })).status).toBe(404);
+  });
+
+  it('returns the FULL response only for AI-graded rows (§0.1)', async () => {
+    const world = makeWorld();
+    const frq = addRow(world, SID_A, { source: 'frq', score: 0.5, response: 'a long reflection about sampling', item_id: 'WS-U1L2-reflect1' });
+    const res = await call(mountServer(world), 'GET', `/class/review-item/${frq.ledger_id}`, { secret: TEACHER_SECRET });
+    expect(res.status).toBe(200);
+    expect(res.body.draftable).toBe(true);
+    expect(res.body.redacted).toBe(false);
+    expect(res.body.response).toBe('a long reflection about sampling');
+    expect(res.body.rh).toBe(responseHash('a long reflection about sampling'));
+    expect(res.body.realName).toBe('Ana Apple');
+    expect(res.body.score).toBe(0.5);
+  });
+
+  it('REDACTS the response for non-AI-graded and proctored rows', async () => {
+    const world = makeWorld();
+    const ws = addRow(world, SID_A, { source: 'worksheet', score: 1, response: 'secret worksheet answer' });
+    const proc = addRow(world, SID_A, { source: 'frq', score: 1, response: 'proctored essay', evidence_tier: 'proctored' });
+    for (const row of [ws, proc]) {
+      const res = await call(mountServer(world), 'GET', `/class/review-item/${row.ledger_id}`, { secret: TEACHER_SECRET });
+      expect(res.status).toBe(200);
+      expect(res.body.redacted).toBe(true);
+      expect(res.body.draftable).toBe(false);
+      expect(res.body.response).toBeNull();
+      expect(res.body.rh).toBeTruthy();                       // the stale-pin still works on redacted rows
+    }
+  });
+
+  it('carries the existing mark (seen/comment) when one exists', async () => {
+    const world = makeWorld();
+    const row = addRow(world, SID_A, { source: 'frq', score: 0.5 });
+    world.reviewMarks.set(row.ledger_id, {
+      ledger_id: row.ledger_id, student_id: SID_A, teacher_username: 'teach',
+      seen_at: '2026-06-30T00:00:00.000Z', comment: 'already seen',
+    });
+    const res = await call(mountServer(world), 'GET', `/class/review-item/${row.ledger_id}`, { secret: TEACHER_SECRET });
+    expect(res.body.seen).toBe(true);
+    expect(res.body.comment).toBe('already seen');
+  });
+});
+
+// ── v2: GET /class/review-by-item ──────────────────────────────────────────────
+describe('GET /class/review-by-item (v2)', () => {
+  it('401s without the teacher secret and 503s pre-migration', async () => {
+    const world = makeWorld();
+    expect((await call(mountServer(world), 'GET', '/class/review-by-item')).status).toBe(401);
+    world.db.listReviewMarksByStudents = async () => ({ data: null, error: { code: '42P01' } });
+    expect((await call(mountServer(world), 'GET', '/class/review-by-item', { secret: TEACHER_SECRET })).status).toBe(503);
+  });
+
+  it('groups all students under one itemId with unseen/count/meanScore and lowest-score-first answers', async () => {
+    const world = makeWorld();
+    const a = addRow(world, SID_A, { source: 'frq', score: 0.5, item_id: 'WS-U1L2-reflect1', response: 'ana says' });
+    const b = addRow(world, SID_B, { source: 'frq', score: 0, item_id: 'WS-U1L2-reflect1', response: 'ben says' });
+    world.reviewMarks.set(a.ledger_id, { ledger_id: a.ledger_id, student_id: SID_A, teacher_username: 'teach', seen_at: '2026-06-30T00:00:00.000Z', comment: null });
+    const res = await call(mountServer(world), 'GET', '/class/review-by-item', { secret: TEACHER_SECRET });
+    expect(res.status).toBe(200);
+    const item = res.body.items.find((it) => it.itemId === 'WS-U1L2-reflect1');
+    expect(item.count).toBe(2);
+    expect(item.unseen).toBe(1);
+    expect(item.meanScore).toBe(0.25);
+    expect(item.priority).toBe(100);
+    expect(item.draftable).toBe(true);
+    expect(item.unit).toBe('U1');
+    expect(item.answers[0].studentId).toBe(SID_B);           // score 0 floats first
+    expect(item.answers[0].rh).toBe(responseHash('ben says'));
+    expect(item.answers[1].seen).toBe(true);
+    expect(res.body.unseenTotal).toBe(1);
+  });
+
+  it('sorts FRQ/low-mean items first and has NO per-student cap (§0.6)', async () => {
+    const world = makeWorld();
+    for (let i = 0; i < 85; i += 1) addRow(world, SID_A, { source: 'worksheet', score: 1, item_id: 'WS-BULK-' + i });
+    addRow(world, SID_A, { source: 'frq', score: 0.2, item_id: 'WS-U1L2-reflect1', response: 'essay' });
+    const res = await call(mountServer(world), 'GET', '/class/review-by-item', { secret: TEACHER_SECRET });
+    expect(res.body.items.length).toBe(86);                  // 85 worksheet items + 1 frq — nothing dropped
+    expect(res.body.items[0].itemId).toBe('WS-U1L2-reflect1'); // FRQ floats to the top
+    expect(res.body.unseenTotal).toBe(86);
+  });
+
+  it('shares the SAME row universe as the by-student queue (badge consistency, §0.7)', async () => {
+    const world = makeWorld();
+    for (let i = 0; i < 85; i += 1) addRow(world, SID_A);    // beyond the by-student payload cap
+    addRow(world, SID_B, { recorded_at: new Date(Date.now() - 30 * 86400000).toISOString() }); // outside window
+    const server1 = mountServer(world);
+    const queue = await call(server1, 'GET', '/class/review-queue', { secret: TEACHER_SECRET });
+    const byItem = await call(mountServer(world), 'GET', '/class/review-by-item', { secret: TEACHER_SECRET });
+    expect(byItem.body.unseenTotal).toBe(queue.body.unseenTotal);   // identical universes → identical badge
+    expect(byItem.body.windowDays).toBe(queue.body.windowDays);
+  });
+
+  it('groups a planted "__proto__" item_id safely (no prototype pollution, no crash)', async () => {
+    // item_id is CLIENT-supplied text: a student can write itemId '__proto__' via
+    // POST /ledger/record. With a plain {} groups map that returns Object.prototype
+    // → pollution + TypeError → the shared server crashes on every By-item load.
+    const world = makeWorld();
+    addRow(world, SID_A, { item_id: '__proto__', source: 'worksheet', score: 1 });
+    addRow(world, SID_A, { item_id: 'constructor', source: 'worksheet', score: 1 });
+    const res = await call(mountServer(world), 'GET', '/class/review-by-item', { secret: TEACHER_SECRET });
+    expect(res.status).toBe(200);
+    const proto = res.body.items.find((it) => it.itemId === '__proto__');
+    const ctor = res.body.items.find((it) => it.itemId === 'constructor');
+    expect(proto.count).toBe(1);
+    expect(ctor.count).toBe(1);
+    expect(Object.prototype.count).toBeUndefined();          // no pollution escaped
+    expect(Object.prototype.unseen).toBeUndefined();
+  });
+
+  it('derives the item label from the answer key when available (§0.8)', async () => {
+    const world = makeWorld();
+    addRow(world, SID_A, { source: 'curriculum_quiz', score: 1, item_id: 'U1-L2-Q01', topic: 'client junk' });
+    const loadAnswerKey = async () => ({ answerKey: { 'U1-L2-Q01': { answerKey: 'D', type: 'multiple-choice', unit: '1', topic: '1.10' } } });
+    const res = await call(mountServer(world, { loadAnswerKey }), 'GET', '/class/review-by-item', { secret: TEACHER_SECRET });
+    const item = res.body.items.find((it) => it.itemId === 'U1-L2-Q01');
+    expect(item.unit).toBe('U1');
+    expect(item.topic).toBe('1.10');                          // key wins over the client-supplied row topic
+  });
+});
+
+// ── v2: POST /class/review — TOCTOU 409 + truncation + rh binding ─────────────
+describe('POST /class/review (v2 stale pins + truncation + rh)', () => {
+  it('binds rh into the signed t:review receipt', async () => {
+    const world = makeWorld();
+    const row = addRow(world, SID_A, { source: 'frq', score: 0.5, response: 'the essay' });
+    await call(mountServer(world), 'POST', '/class/review', { secret: TEACHER_SECRET, body: { ledgerIds: [row.ledger_id], comment: 'good' } });
+    const mark = world.reviewMarks.get(row.ledger_id);
+    const payload = verifyCompact(mark.receipt_compact, publicKeyFromX(getReceiptIssuer().pubkey));
+    expect(payload.rh).toBe(responseHash('the essay'));
+  });
+
+  it('accepts a mark whose expected pins match the current row', async () => {
+    const world = makeWorld();
+    const row = addRow(world, SID_A, { source: 'frq', score: 0.5, response: 'stable answer' });
+    const res = await call(mountServer(world), 'POST', '/class/review', {
+      secret: TEACHER_SECRET,
+      body: { ledgerIds: [row.ledger_id], comment: 'drafted about THIS answer', expected: [{ ledgerId: row.ledger_id, rh: responseHash('stable answer'), score: 0.5 }] },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.marked).toBe(1);
+  });
+
+  it('409s with the stale ids and marks NOTHING when a pinned row changed (§0.5)', async () => {
+    const world = makeWorld();
+    const row = addRow(world, SID_A, { source: 'frq', score: 0.5, response: 'original answer' });
+    const pinnedRh = responseHash('original answer');
+    row.response = 'REVISED answer';                          // the student revised between fetch and mark
+    row.score = 0.9;
+    const res = await call(mountServer(world), 'POST', '/class/review', {
+      secret: TEACHER_SECRET,
+      body: { ledgerIds: [row.ledger_id], comment: 'drafted about the OLD answer', expected: [{ ledgerId: row.ledger_id, rh: pinnedRh }] },
+    });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('stale');
+    expect(res.body.stale).toEqual([row.ledger_id]);
+    expect(world.reviewMarks.size).toBe(0);                   // whole request rejected — nothing marked
+    expect(world.grants.size).toBe(0);                        // no candy either
+  });
+
+  it('treats rh:null as a REAL pin — a null→answer revision 409s; a still-null response passes', async () => {
+    const world = makeWorld();
+    const draft = addRow(world, SID_A, { source: 'frq', score: null, response: null });
+    // Teacher rendered the row while it had NO response; student then typed one.
+    draft.response = 'late-arriving essay';
+    const stale = await call(mountServer(world), 'POST', '/class/review', {
+      secret: TEACHER_SECRET,
+      body: { ledgerIds: [draft.ledger_id], expected: [{ ledgerId: draft.ledger_id, rh: null }] },
+    });
+    expect(stale.status).toBe(409);
+    const still = addRow(world, SID_B, { source: 'frq', score: null, response: null });
+    const ok = await call(mountServer(world), 'POST', '/class/review', {
+      secret: TEACHER_SECRET,
+      body: { ledgerIds: [still.ledger_id], expected: [{ ledgerId: still.ledger_id, rh: null, score: null }] },
+    });
+    expect(ok.status).toBe(200);
+  });
+
+  it('409s on a score-only pin mismatch and ignores pins for rows not in the request', async () => {
+    const world = makeWorld();
+    const row = addRow(world, SID_A, { source: 'frq', score: 0.5, response: 'answer' });
+    const other = addRow(world, SID_B, { source: 'frq', score: 1, response: 'other' });
+    const scoreStale = await call(mountServer(world), 'POST', '/class/review', {
+      secret: TEACHER_SECRET,
+      body: { ledgerIds: [row.ledger_id], expected: [{ ledgerId: row.ledger_id, score: 0.25 }] },
+    });
+    expect(scoreStale.status).toBe(409);
+    const ignored = await call(mountServer(world), 'POST', '/class/review', {
+      secret: TEACHER_SECRET,
+      body: { ledgerIds: [row.ledger_id], expected: [{ ledgerId: other.ledger_id, rh: 'ffffffffffffffff' }] },
+    });
+    expect(ignored.status).toBe(200);                         // the pin targets a row outside this request → ignored
+  });
+
+  it('reports truncation instead of silently dropping the tail (§0.9)', async () => {
+    const world = makeWorld();
+    const real = addRow(world, SID_A);
+    const ids = [real.ledger_id];
+    for (let i = 0; i < 501; i += 1) ids.push('00000000-0000-4000-9000-9' + String(i).padStart(11, '0'));
+    const res = await call(mountServer(world), 'POST', '/class/review', { secret: TEACHER_SECRET, body: { ledgerIds: ids } });
+    expect(res.status).toBe(200);
+    expect(res.body.requested).toBe(502);
+    expect(res.body.truncated).toBe(true);
+    expect(res.body.marked).toBe(1);
+    const small = await call(mountServer(world), 'POST', '/class/review', { secret: TEACHER_SECRET, body: { ledgerIds: [real.ledger_id] } });
+    expect(small.body.truncated).toBe(false);
+    expect(small.body.requested).toBe(1);
+  });
+});
+
+// ── v2: durability back-compat — rh rides verify/snapshot without breaking v1 ──
+describe('review durability with rh (v2 back-compat)', () => {
+  it('a v1 receipt (no rh) and a v2 receipt (rh) BOTH verify through verifySnapshot', () => {
+    const mkSnapshot = (receipt, comment) => {
+      const ledgerRow = { ledger_id: '00000000-0000-4000-9000-0000000000ef', student_id: SID_A, source: 'frq', item_id: 'FRQ-9', score: 0.5, response: 'my answer', recorded_at: '2026-06-29T12:00:00.000Z' };
+      const mark = {
+        ledger_id: ledgerRow.ledger_id, student_id: SID_A, teacher_username: 'teach',
+        seen_at: '2026-06-29T13:00:00.000Z', comment, candy_awarded: 1,
+        receipt_id: receipt.receiptId, receipt_compact: receipt.compact,
+      };
+      const entry = buildStudentEntry({ student_id: SID_A, login_username: 'apple_fox', real_name: 'Ana', section: 'PeriodX' }, [ledgerRow], [mark]);
+      return { issuer: getReceiptIssuer(), students: [entry] };
+    };
+    const v1 = issueReviewReceipt({ ledgerId: '00000000-0000-4000-9000-0000000000ef', studentId: SID_A, teacher: 'teach', seenAt: 1000, comment: 'hi' });
+    const v2 = issueReviewReceipt({ ledgerId: '00000000-0000-4000-9000-0000000000ef', studentId: SID_A, teacher: 'teach', seenAt: 1000, comment: 'hi', responseHash: responseHash('my answer') });
+    expect(verifySnapshot(mkSnapshot(v1, 'hi')).ok).toBe(true);
+    expect(verifySnapshot(mkSnapshot(v2, 'hi')).ok).toBe(true);
+    const v2payload = verifyCompact(v2.compact, publicKeyFromX(getReceiptIssuer().pubkey));
+    expect(v2payload.rh).toBe(responseHash('my answer'));
+    const v1payload = verifyCompact(v1.compact, publicKeyFromX(getReceiptIssuer().pubkey));
+    expect(v1payload.rh).toBeUndefined();
   });
 });
 
