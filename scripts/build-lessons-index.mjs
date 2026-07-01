@@ -55,6 +55,7 @@ for (const id of Object.keys(lessons)) {
     label: L.topic || ('Topic ' + id),
     worksheet: relWS(u.worksheet),
     quiz: quizLocal(u.quiz),
+    blooket: u.blooket || null,          // external Blooket URL (needs internet; baked from roadmap-data.json)
     videos: videosFor(id),
   });
 }

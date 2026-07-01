@@ -40,7 +40,13 @@
   .btn.video { background:#fff3e0; border-color:#ffd9a3; }
   .btn.ws { background:#e8f1ff; border-color:#bcd6ff; }
   .btn.quiz { background:#e9f9ec; border-color:#b6e6c0; }
+  .btn.bloo { background:#f3e8ff; border-color:#d9bcff; }
   .btn[disabled] { opacity:.4; pointer-events:none; }
+  header #gradepill { display:inline-block; margin-top:8px; background:rgba(255,255,255,.16);
+           border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:5px 12px; font-size:13px; font-weight:700; }
+  .lesson .title { display:flex; align-items:center; gap:8px; }
+  .lesson .done-badge { margin-left:auto; font-size:11px; font-weight:700; color:#1a7f37;
+           background:#e9f9ec; border:1px solid #b6e6c0; border-radius:999px; padding:1px 8px; white-space:nowrap; }
   #vo { position:fixed; inset:0; background:#000; display:none; z-index:50; flex-direction:column; }
   #vo.show { display:flex; }
   #vo video { flex:1; width:100%; background:#000; min-height:0; }
@@ -59,6 +65,7 @@
     <button id="signin-btn" class="hdr-btn" onclick="openNameFinder()">👤 Sign in</button>
     <button id="sync-nearby" class="hdr-btn" onclick="syncNearby()">📡 Sync Nearby</button>
   </div>
+  <div id="gradepill" style="display:none"></div>
   <div class="who" id="vhint"></div>
 </header>
 <main id="main"><div class="empty">Loading lessons…</div></main>
@@ -444,6 +451,7 @@
         refreshIdentity();
         // Pull this student's signed ledger so their grades are on-device to gossip.
         try { if (window.LedgerStore && LedgerStore.pull) LedgerStore.pull(window.rosterClient, { serverUrl: svcUrl() }).catch(function () {}); } catch (_) {}
+        try { loadGrade(); } catch (_) {}   // fetch + show the current grade for the just-signed-in student
         var msg = result.mustChangePassword
           ? '✅ Signed in as ' + (who.realName || r.username) + ' — change your password in the full app.'
           : '✅ Signed in as ' + (who.realName || r.username);
@@ -496,7 +504,16 @@
       det.appendChild(sum);
       byUnit[u].forEach(function (l) {
         var card = document.createElement('div'); card.className = 'lesson';
-        var t = document.createElement('div'); t.className = 'title'; t.textContent = l.label || ('Topic ' + l.id);
+        var t = document.createElement('div'); t.className = 'title';
+        var tlabel = document.createElement('span'); tlabel.textContent = l.label || ('Topic ' + l.id);
+        t.appendChild(tlabel);
+        // Done badge from the offline-cached grade (best-effort; hidden if no grade for this topic).
+        var g = _gradeByTopic[_normTopic(l.id)];
+        if (g && g.lessonGrade != null && isFinite(g.lessonGrade)) {
+          var badge = document.createElement('span'); badge.className = 'done-badge';
+          badge.textContent = '✓ ' + Math.round(g.lessonGrade) + '%';
+          t.appendChild(badge);
+        }
         card.appendChild(t);
         var btns = document.createElement('div'); btns.className = 'btns';
         (l.videos || []).forEach(function (file, i) {
@@ -511,6 +528,12 @@
         var q = document.createElement('a'); q.className = 'btn quiz'; q.textContent = '❓ Quiz';
         if (l.quiz) q.href = l.quiz; else q.setAttribute('disabled', '');
         btns.appendChild(q);
+        // Blooket (external — opens in the browser). Only when the lesson has a URL.
+        if (l.blooket) {
+          var bl = document.createElement('a'); bl.className = 'btn bloo'; bl.textContent = '🎯 Blooket';
+          bl.href = l.blooket; bl.target = '_blank'; bl.rel = 'noopener';
+          btns.appendChild(bl);
+        }
         card.appendChild(btns);
         det.appendChild(card);
       });
@@ -518,9 +541,58 @@
     });
   }
 
+  // ── Grade + per-lesson completion ────────────────────────────────────────────
+  // Offline-cached: show the last-fetched grade immediately (so it works with no
+  // network), then refresh from GET /grade when signed in + online. The grade is
+  // computed server-side (authoritative) from the same ledger the app already pulls.
+  var GRADE_KEY = 'apstats_mobile_grade_v1';
+  var _gradeByTopic = {}, _lastLessons = [];
+  function _normTopic(s) { s = String(s == null ? '' : s); var m = s.match(/U?(\d+)[.\-_ ]?L?(\d+)/i); return m ? (m[1] + '.' + m[2]) : s; }
+
+  // Populate the per-topic lesson-grade map + the header pill from a /grade payload.
+  // repaint=true re-renders the tiles so their ✓ badges appear.
+  function _applyGradeData(g, repaint) {
+    if (!g) return;
+    _gradeByTopic = {};
+    var ls = Array.isArray(g.lessons) ? g.lessons
+      : (g.lessons && typeof g.lessons === 'object') ? Object.keys(g.lessons).map(function (k) { var e = g.lessons[k] || {}; if (e.topic == null && e.topicKey == null) e.topic = k; return e; })
+      : [];
+    ls.forEach(function (e) { if (!e) return; var key = _normTopic(e.lessonKey || e.topic || e.topicKey || e.id || e.lesson || ''); if (key) _gradeByTopic[key] = e; });
+    // Current grade = the last quarter carrying a numeric quarterGrade.
+    var qs = Array.isArray(g.quarters) ? g.quarters
+      : (g.quarters && typeof g.quarters === 'object') ? Object.keys(g.quarters).map(function (k) { var e = g.quarters[k] || {}; if (e.quarter == null && e.label == null && e.key == null) e.key = k; return e; })
+      : [];
+    var best = null;
+    qs.forEach(function (q) { if (q && typeof q.quarterGrade === 'number' && isFinite(q.quarterGrade)) best = q; });
+    var pill = document.getElementById('gradepill');
+    if (pill) {
+      if (best) { var ql = best.quarter || best.label || best.key || ''; pill.textContent = '📊 Current grade: ' + Math.round(best.quarterGrade) + '%' + (ql ? (' · ' + ql) : ''); pill.style.display = ''; }
+      else { pill.style.display = 'none'; }
+    }
+    if (repaint && _lastLessons.length) render(_lastLessons);
+  }
+
+  function loadGrade() {
+    if (!window.rosterClient || !rosterClient.current || !rosterClient.current()) return;
+    var base = svcUrl(); if (!base) return;
+    var token = (rosterClient.token && rosterClient.token()) || null; if (!token) return;
+    fetch(base + '/grade?token=' + encodeURIComponent(token))
+      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (g) {
+        if (!g || !g.ok) return;
+        try { localStorage.setItem(GRADE_KEY, JSON.stringify({ lessons: g.lessons, quarters: g.quarters })); } catch (_) {}
+        _applyGradeData(g, true);
+      })
+      .catch(function () {});
+  }
+  window.loadGrade = loadGrade;
+
+  // Cached grade → first paint has the pill + ✓ badges even offline.
+  try { var _cg = localStorage.getItem(GRADE_KEY); if (_cg) _applyGradeData(JSON.parse(_cg), false); } catch (_) {}
+
   fetch('lessons-index.json', { cache: 'no-store' })
     .then(function (r) { return r.json(); })
-    .then(function (d) { render((d && d.lessons) || []); })
+    .then(function (d) { _lastLessons = (d && d.lessons) || []; render(_lastLessons); loadGrade(); })
     .catch(function () { main.innerHTML = '<div class="empty">Could not load lessons-index.json.</div>'; });
 })();
 </script>
