@@ -53,7 +53,13 @@ function memStore(rows = []) {
     ids: () => Array.from(map.keys()).sort(),
   };
 }
-const ReceiptVerify = { verifyReceipt: (c) => Promise.resolve({ ok: /^good\./.test(c) }) };
+// _phase3VerifyRow now routes through the shared BINDING verifier (verifyLedgerRow);
+// a 'good.*' compact stands in for a signed+bound row here. The real field-binding
+// logic is covered by receipt-verify-binding.test.js.
+const ReceiptVerify = {
+  verifyReceipt: (c) => Promise.resolve({ ok: /^good\./.test(c) }),
+  verifyLedgerRow: (row) => Promise.resolve(!!(row && /^good\./.test(row.receipt_compact || ''))),
+};
 
 // A transport that connects the Desk to ONE real peer session backed by peerStore.
 function mockTransport(peerStore) {

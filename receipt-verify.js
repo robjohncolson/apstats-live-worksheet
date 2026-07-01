@@ -90,6 +90,43 @@
     return { ok: !!issuer, issuer: issuer, payload: payload, receiptId: receiptId };
   }
 
+  // Bind a stored ledger ROW to its signed receipt. verifyReceipt only proves "a
+  // trusted issuer signed some bytes"; this proves those bytes ARE this row's
+  // grade-bearing fields — so grading off the row equals grading off the signature.
+  // WITHOUT this, a harvested valid receipt_compact can be re-stapled onto a row with
+  // a forged score / item / id and would still pass (the signatures would be
+  // decorative). This is the verify-on-ingest trust boundary for the UNTRUSTED
+  // transports (P2P gossip / QR). Returns Promise<boolean>.
+  //
+  // includeTestKeys is FORCED false: never honor test issuer keys on the ingest path
+  // (an app deep-link `?test=1` is attacker-influenceable, and a leaked test key would
+  // otherwise verify). The server builds a row's columns and its receipt payload from
+  // the same data, so a legitimate row always matches — only forged rows are rejected.
+  async function verifyLedgerRow(row) {
+    if (!row || !row.receipt_compact) return false;
+    var r;
+    try { r = await verifyReceipt(row.receipt_compact, { includeTestKeys: false }); }
+    catch (e) { return false; }
+    if (!r || !r.ok) return false;
+    var p = r.payload || {};
+    // Content address: the row id MUST be SHA-256(signed payload). Blocks replaying one
+    // signature under many ids (G-Set bloat) and pinning a signature to a foreign id.
+    if (String(row.receipt_id) !== String(r.receiptId)) return false;
+    // Grade-bearing fields must equal the signed payload (src / i / sc).
+    if (String(row.source) !== String(p.src)) return false;
+    if (String(row.item_id) !== String(p.i)) return false;
+    if (p.sc == null) {
+      // Ungraded: the row must not claim a score the signature doesn't carry.
+      if (row.score != null && row.score !== '') return false;
+    } else if (Number(row.score) !== Number(p.sc)) {
+      return false;
+    }
+    // Attribution: a row that names a student must name the SIGNED student.
+    var rowSid = (row.student_id != null) ? row.student_id : row.sid;
+    if (rowSid != null && String(rowSid) !== String(p.sid)) return false;
+    return true;
+  }
+
   async function sha256HexText(s) {
     return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
   }
@@ -121,6 +158,7 @@
     hasTestModeFlag: hasTestModeFlag,
     issuersForRun: issuersForRun,
     verifyReceipt: verifyReceipt,
+    verifyLedgerRow: verifyLedgerRow,
     sha256HexText: sha256HexText,
     parseVerifyTarget: parseVerifyTarget
   };
@@ -135,6 +173,7 @@
   root.hasTestModeFlag = hasTestModeFlag;
   root.issuersForRun = issuersForRun;
   root.verifyReceipt = verifyReceipt;
+  root.verifyLedgerRow = verifyLedgerRow;
   root.sha256HexText = sha256HexText;
   root.parseVerifyTarget = parseVerifyTarget;
 })(typeof window !== 'undefined' ? window : this);

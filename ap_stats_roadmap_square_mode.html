@@ -8181,11 +8181,13 @@ function _phase3GossipReady() {
     && typeof LedgerStore.all === 'function' && _phase2InputsKey() != null);
 }
 function _phase3VerifyRow(row) {
+  // Verify-on-ingest for gossiped rows: the shared BINDING verifier (receipt-verify.js)
+  // — the signature must cover THIS row's grade fields, not just "some bytes". A plain
+  // verifyReceipt().ok check would let a harvested signature be re-stapled to a forged
+  // score; verifyLedgerRow closes that (content-address + field binding).
   try {
-    if (!row || !row.receipt_compact) return Promise.resolve(false);
-    return Promise.resolve(ReceiptVerify.verifyReceipt(row.receipt_compact))
-      .then(function (r) { return !!(r && r.ok); })
-      .catch(function () { return false; });
+    if (!window.ReceiptVerify || typeof ReceiptVerify.verifyLedgerRow !== 'function') return Promise.resolve(false);
+    return Promise.resolve(ReceiptVerify.verifyLedgerRow(row)).catch(function () { return false; });
   } catch (_) { return Promise.resolve(false); }
 }
 // Run a time-boxed gossip round. Returns a Promise<{available, peers, received}>.

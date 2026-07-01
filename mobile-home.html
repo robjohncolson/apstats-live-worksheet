@@ -176,10 +176,12 @@
     return String(u).replace(/\/$/, '');
   }
   function verifyRow(row) {
+    // Verify-on-ingest for gossiped/QR'd rows: the shared BINDING verifier
+    // (receipt-verify.js) — the signature must cover THIS row's grade fields, not just
+    // "some bytes", or a harvested signature could be re-stapled to a forged score.
     try {
-      if (!row || !row.receipt_compact || !window.ReceiptVerify) return Promise.resolve(false);
-      return Promise.resolve(ReceiptVerify.verifyReceipt(row.receipt_compact))
-        .then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });
+      if (!window.ReceiptVerify || typeof ReceiptVerify.verifyLedgerRow !== 'function') return Promise.resolve(false);
+      return Promise.resolve(ReceiptVerify.verifyLedgerRow(row)).catch(function () { return false; });
     } catch (_) { return Promise.resolve(false); }
   }
   var _issuerReg = false;
