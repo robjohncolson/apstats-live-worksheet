@@ -95,7 +95,9 @@
     list.forEach(function (row) {
       chain = chain.then(function () {
         return Promise.resolve()
-          .then(function () { return typeof verify === 'function' ? verify(row) : true; })
+          // Fail CLOSED: no verifier → reject. A trust boundary must never accept
+          // unverified rows just because a caller forgot to wire the verifier.
+          .then(function () { return typeof verify === 'function' ? verify(row) : false; })
           .then(function (ok) {
             if (!ok) { rejected += 1; return; }
             var id = idOf(row);
