@@ -16,6 +16,11 @@
            padding:calc(12px + env(safe-area-inset-top,0)) 16px 12px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
   header h1 { margin:0; font-size:19px; font-weight:700; }
   header .who { font-size:12px; opacity:.9; margin-top:3px; }
+  header .hdr-row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  header .hdr-btn { background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.35);
+           border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600; -webkit-tap-highlight-color:transparent; }
+  header .hdr-btn:active { background:rgba(255,255,255,.28); }
+  header #vhint { margin-top:6px; }
   main { padding:10px 12px 48px; max-width:680px; margin:0 auto; }
   details.unit { margin:0 0 8px; }
   details.unit > summary { list-style:none; cursor:pointer; padding:12px 14px; background:#e7edf5;
@@ -49,8 +54,12 @@
 <body>
 <header>
   <h1>📊 AP Statistics <a href="teacher-app.html" style="float:right;color:#fff;opacity:.85;font-size:12px;font-weight:400;text-decoration:none;margin-top:3px">🔑 Teacher</a></h1>
-  <div class="who" id="who">Tap a lesson to begin. Sign in inside a worksheet so your work saves.</div>
-  <button id="sync-nearby" onclick="syncNearby()" style="margin-top:10px;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;-webkit-tap-highlight-color:transparent">📡 Sync Nearby</button>
+  <div class="who" id="who">Not signed in.</div>
+  <div class="hdr-row">
+    <button id="signin-btn" class="hdr-btn" onclick="openNameFinder()">👤 Sign in</button>
+    <button id="sync-nearby" class="hdr-btn" onclick="syncNearby()">📡 Sync Nearby</button>
+  </div>
+  <div class="who" id="vhint"></div>
 </header>
 <main id="main"><div class="empty">Loading lessons…</div></main>
 
@@ -88,10 +97,23 @@
   };
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
-  try {
+  // Identity line + Sign-in button reflect the shared roster session (the same
+  // localStorage session every bundled page uses). refreshIdentity() is re-run after
+  // a sign-in so the student's name appears without a reload.
+  function refreshIdentity() {
     var who = (window.rosterClient && rosterClient.current && rosterClient.current()) || null;
-    if (who) document.getElementById('who').textContent = 'Signed in as ' + (who.realName || who.username || 'student');
-  } catch (e) {}
+    var w = document.getElementById('who');
+    var b = document.getElementById('signin-btn');
+    if (who) {
+      if (w) w.textContent = '👤 Signed in as ' + (who.realName || who.username || 'student');
+      if (b) b.textContent = '⇄ Switch student';
+    } else {
+      if (w) w.textContent = 'Not signed in — sign in so your work counts toward your grade.';
+      if (b) b.textContent = '👤 Sign in';
+    }
+  }
+  window.refreshIdentity = refreshIdentity;
+  try { refreshIdentity(); } catch (e) {}
 
   function openVideo(file, title) {
     var v = document.getElementById('vplayer');
@@ -141,7 +163,9 @@
   // Load the on-demand catalog (Play build only; inert otherwise).
   if (window.PLAY_BUILD && window.VideoOnDemand) {
     try { window.VideoOnDemand.loadCatalog('video-catalog.json'); } catch (e) {}
-    try { var w = document.getElementById('who'); if (w) w.textContent = 'Videos download on first tap. Worksheets + quiz work offline.'; } catch (e) {}
+    // Its own line — must NOT clobber #who (the identity line), which was the bug that
+    // hid the signed-in student's name on the launcher.
+    try { var vh = document.getElementById('vhint'); if (vh) vh.textContent = 'Videos download on first tap. Worksheets + quiz work offline.'; } catch (e) {}
   }
 
   // ── ANDROID Phase 3 — Sync Nearby (P2P ledger gossip) ─────────────────────────
@@ -194,6 +218,268 @@
       })
       .catch(function (e) { dlMsg('Sync failed: ' + (e && e.message || e)); setTimeout(dlHide, 4000); });
   };
+
+  // ── Sign-in: diamond-dial name finder (ported from the Desk) ──────────────────
+  // Same 4-way narrowing pick as ap_stats_roadmap_square_mode.html's _nf* wall: fetch
+  // the class roster (section PeriodX), sort by name, and let the student "turn the
+  // dial" (↑ ← → ↓) down to their own name — never typing a username — then just their
+  // password. Success flows into rosterClient, so every signed grade receipt they earn
+  // carries their `sid`. First sign-in needs the network; the session then persists.
+  var ROSTER_CACHE_TTL_MS = 60 * 60 * 1000;
+
+  function _periodToSection(period) {
+    if (typeof period !== 'string' || !period) return 'PeriodX';
+    if (/^Period/.test(period)) return period;
+    if (/^[A-Za-z]$/.test(period)) return 'Period' + period.toUpperCase();
+    return 'PeriodX';
+  }
+  function _fetchSectionRoster(section, opts) {
+    if (!section) return Promise.resolve([]);
+    var fresh = !!(opts && opts.fresh);
+    var cacheKey = 'apstats_desk_roster_cache_' + section;
+    if (!fresh) { try {
+      var raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        var cached = JSON.parse(raw);
+        if (cached && cached.ts && (Date.now() - cached.ts < ROSTER_CACHE_TTL_MS)) return Promise.resolve(cached.roster || []);
+      }
+    } catch (_) {} }
+    var base = svcUrl();
+    if (!base) return Promise.resolve([]);
+    return fetch(base + '/roster/section/' + encodeURIComponent(section), fresh ? { cache: 'no-store' } : undefined)
+      .then(function (res) { return res && res.ok ? res.json() : null; })
+      .then(function (data) {
+        var students = (data && data.ok && Array.isArray(data.students)) ? data.students : [];
+        students.sort(function (a, b) { return (a.realName || '').localeCompare(b.realName || ''); });
+        try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), roster: students })); } catch (_) {}
+        return students;
+      })
+      .catch(function () { return []; });
+  }
+  function _fetchPeriodRoster(period, opts) {
+    var primary = _periodToSection(period);
+    return _fetchSectionRoster(primary, opts).then(function (rows) {
+      if (rows.length > 0) return rows;
+      if (primary !== 'PeriodX') return _fetchSectionRoster('PeriodX', opts);
+      return [];
+    });
+  }
+
+  function _nfEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function _nfFriendly(r) {
+    var nm = (r && r.realName || '').trim();
+    if (!nm) return (r && r.username) || '(unnamed)';
+    var p = nm.split(/\s+/);
+    if (p.length === 1) return p[0];
+    return p[0] + ' ' + p[p.length - 1].charAt(0).toUpperCase() + '.';
+  }
+  function _nfRangeKey(r) {
+    var nm = ((r && (r.realName || r.username)) || '').trim();
+    if (!nm) return '?';
+    return nm.charAt(0).toUpperCase() + (nm.charAt(1) || '').toLowerCase();
+  }
+  // Split [lo,hi] into up to 4 contiguous buckets. <=4 names -> one leaf per name.
+  function _nfBuckets(lo, hi) {
+    var n = hi - lo + 1, out = [];
+    if (n <= 0) return out;
+    if (n <= 4) { for (var i = lo; i <= hi; i++) out.push({ lo: i, hi: i, leaf: true }); return out; }
+    var bs = Math.ceil(n / 4), start = lo;
+    for (var b = 0; b < 4 && start <= hi; b++) {
+      var end = (b === 3) ? hi : Math.min(start + bs - 1, hi);
+      out.push({ lo: start, hi: end, leaf: false });
+      start = end + 1;
+    }
+    return out;
+  }
+
+  var _nfRoster = [], _nfStack = [], _nfLo = 0, _nfHi = -1, _nfState = 'dial', _nfPicked = null;
+
+  function openNameFinder() {
+    if (!window.rosterClient || !rosterClient.signIn) { dlMsg('Sign-in needs the app + a moment online.'); setTimeout(dlHide, 3000); return Promise.resolve(); }
+    dlMsg('Loading class list…');
+    return _fetchPeriodRoster('PeriodX', { fresh: true }).then(function (roster) {
+      dlHide();
+      _nfRoster = (roster || []).slice().sort(function (a, b) { return (a.realName || a.username || '').localeCompare(b.realName || b.username || ''); });
+      if (!_nfRoster.length) { dlMsg('No class list found (offline?). Connect to Wi-Fi once to sign in.'); setTimeout(dlHide, 4000); return; }
+      _nfLo = 0; _nfHi = _nfRoster.length - 1; _nfStack = []; _nfPicked = null;
+      _nfEnsureOverlay();
+      document.getElementById('namefinder-overlay').style.display = 'flex';
+      _nfRenderDial();
+    }).catch(function () { dlHide(); dlMsg('Could not load the class list. Try again online.'); setTimeout(dlHide, 3500); });
+  }
+  window.openNameFinder = openNameFinder;
+
+  function _nfEnsureOverlay() {
+    if (document.getElementById('namefinder-overlay')) return;
+    var ov = document.createElement('div');
+    ov.id = 'namefinder-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,20,35,.55);display:none;align-items:center;justify-content:center;z-index:100001;padding:16px';
+    ov.innerHTML =
+      '<style>'
+      + '#namefinder-overlay .nf-card{background:#fff;border-radius:16px;max-width:460px;width:100%;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0));box-shadow:0 12px 40px rgba(0,0,0,.35);text-align:center;font-family:-apple-system,Roboto,"Segoe UI",sans-serif}'
+      + '#namefinder-overlay .nf-title{font-size:16px;font-weight:800;color:#0b5cad;margin-bottom:2px}'
+      + '#namefinder-overlay .nf-count{font-size:11px;color:#667;margin-bottom:12px}'
+      + '#namefinder-overlay .nf-diamond{display:flex;flex-direction:column;align-items:center;gap:8px;margin:4px 0}'
+      + '#namefinder-overlay .nf-row{display:flex;gap:8px;justify-content:center;width:100%}'
+      + '#namefinder-overlay .nf-tile{flex:1;min-width:120px;max-width:200px;min-height:64px;border:1.5px solid #bcd6ff;background:#eaf2ff;border-radius:12px;cursor:pointer;padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#12325a}'
+      + '#namefinder-overlay .nf-tile:active{background:#d6e6ff}'
+      + '#namefinder-overlay .nf-arrow{font-size:20px;line-height:1}'
+      + '#namefinder-overlay .nf-label{font-size:14px;font-weight:700;margin-top:3px}'
+      + '#namefinder-overlay .nf-sub{font-size:9px;color:#5a6b82;margin-top:2px}'
+      + '#namefinder-overlay .nf-foot{font-size:12px;color:#667;margin-top:12px}'
+      + '#namefinder-overlay .nf-foot a{color:#0b5cad;text-decoration:none}'
+      + '#namefinder-overlay input{width:100%;max-width:260px;font-size:16px;padding:11px;border:1.5px solid #bcd6ff;border-radius:10px;box-sizing:border-box}'
+      + '#namefinder-overlay .nf-go{margin-top:12px;background:#0b5cad;color:#fff;border:0;border-radius:10px;padding:12px 22px;font-size:15px;font-weight:700;min-width:150px}'
+      + '#namefinder-overlay .nf-err{color:#cc0000;font-size:11px;margin-top:6px;min-height:13px}'
+      + '</style>'
+      + '<div class="nf-card" role="dialog" aria-label="Sign in"><div id="nf-content"></div></div>';
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeNameFinder(); });
+    document.body.appendChild(ov);
+    document.addEventListener('keydown', _nfKeydown);
+  }
+
+  function _nfRenderDial() {
+    _nfState = 'dial';
+    var host = document.getElementById('nf-content');
+    if (!host) return;
+    var n = _nfHi - _nfLo + 1;
+    if (n <= 1) { _nfSelectName(_nfRoster[_nfLo]); return; }   // singleton: auto-pick
+    var buckets = _nfBuckets(_nfLo, _nfHi);
+    var arrows = ['↑', '←', '→', '↓'];
+    var arrowName = ['up', 'left', 'right', 'down'];
+    function tile(b, i) {
+      if (!b) return '<div class="nf-tile" style="visibility:hidden"></div>';
+      var label, sub, aria;
+      if (b.leaf) {
+        var r = _nfRoster[b.lo];
+        label = _nfEsc(_nfFriendly(r)); sub = '';
+        aria = 'Press ' + arrowName[i] + ': select ' + _nfFriendly(r);
+      } else {
+        var first = _nfRoster[b.lo], last = _nfRoster[b.hi], c = b.hi - b.lo + 1;
+        label = _nfEsc(_nfRangeKey(first)) + '–' + _nfEsc(_nfRangeKey(last));
+        sub = _nfEsc(_nfFriendly(first)) + ' … ' + _nfEsc(_nfFriendly(last)) + ' (' + c + ')';
+        aria = 'Press ' + arrowName[i] + ': ' + _nfFriendly(first) + ' to ' + _nfFriendly(last) + ', ' + c + ' names';
+      }
+      return '<button class="nf-tile" aria-label="' + _nfEsc(aria) + '" onclick="_nfPick(' + i + ')">'
+        + '<div class="nf-arrow">' + arrows[i] + '</div>'
+        + '<div class="nf-label">' + label + '</div>'
+        + (sub ? '<div class="nf-sub">' + sub + '</div>' : '')
+        + '</button>';
+    }
+    host.innerHTML =
+      '<div class="nf-title">🔒 Find your name</div>'
+      + '<div class="nf-count" aria-live="polite">' + n + ' classmates left · turn the dial to you</div>'
+      + '<div class="nf-diamond">'
+      + '<div class="nf-row">' + tile(buckets[0], 0) + '</div>'
+      + '<div class="nf-row">' + tile(buckets[1], 1) + tile(buckets[2], 2) + '</div>'
+      + '<div class="nf-row">' + tile(buckets[3], 3) + '</div>'
+      + '</div>'
+      + '<div class="nf-foot">press ↑ ← → ↓'
+      + (_nfStack.length ? ' &nbsp;·&nbsp; <a href="#" onclick="_nfBack();return false;">⌫ back</a>' : '')
+      + '</div>'
+      + '<div class="nf-foot" style="color:#889"><a href="#" onclick="_nfCreate();return false;">I\'m not on the list →</a></div>';
+  }
+
+  function _nfPick(i) {
+    if (_nfState !== 'dial') return;
+    var b = _nfBuckets(_nfLo, _nfHi)[i];
+    if (!b) return;
+    if (b.leaf) { _nfSelectName(_nfRoster[b.lo]); return; }
+    _nfStack.push({ lo: _nfLo, hi: _nfHi });
+    _nfLo = b.lo; _nfHi = b.hi;
+    _nfRenderDial();
+  }
+  window._nfPick = _nfPick;
+
+  function _nfBack() {
+    if (!_nfStack.length) return;
+    var w = _nfStack.pop();
+    _nfLo = w.lo; _nfHi = w.hi;
+    _nfRenderDial();
+  }
+  window._nfBack = _nfBack;
+
+  function _nfSelectName(r) { _nfPicked = r || null; _nfRenderPassword(); }
+
+  function _nfRenderPassword() {
+    _nfState = 'password';
+    var host = document.getElementById('nf-content');
+    if (!host) return;
+    var r = _nfPicked || {};
+    host.innerHTML =
+      '<div class="nf-title">👋 Hi, ' + _nfEsc(_nfFriendly(r)) + '!</div>'
+      + '<div class="nf-count">Enter your password to sign in.</div>'
+      + '<input type="password" id="nf-pw" autocomplete="current-password" placeholder="password">'
+      + '<div id="nf-pw-error" class="nf-err"></div>'
+      + '<div><button class="nf-go" id="nf-pw-ok" onclick="_nfSubmitPassword()">Sign in</button></div>'
+      + '<div class="nf-foot" style="color:#889"><a href="#" onclick="_nfBackToDial();return false;">← that’s not me</a></div>';
+    var pw = document.getElementById('nf-pw');
+    if (pw) { pw.onkeydown = function (e) { if (e.key === 'Enter') _nfSubmitPassword(); }; setTimeout(function () { pw.focus(); }, 60); }
+  }
+
+  function _nfSubmitPassword() {
+    if (_nfSubmitPassword._pending) return;
+    var r = _nfPicked || {};
+    var pw = document.getElementById('nf-pw');
+    var err = document.getElementById('nf-pw-error');
+    var okBtn = document.getElementById('nf-pw-ok');
+    var password = (pw && pw.value) || '';    // NOT trimmed — edge whitespace can be valid
+    if (err) err.textContent = '';
+    if (!r.username) { _nfBackToDial(); return; }
+    if (!password) { if (err) err.textContent = 'Enter your password.'; return; }
+    if (!window.rosterClient || !window.rosterClient.signIn) { if (err) err.textContent = 'Sign-in unavailable — connect to Wi-Fi and try again.'; return; }
+    _nfSubmitPassword._pending = true;
+    if (okBtn) okBtn.disabled = true;
+    if (err) err.textContent = 'Signing in…';
+    Promise.resolve()
+      .then(function () { return window.rosterClient.signIn(r.username, password); })
+      .catch(function (e) { return { ok: false, error: (e && e.message) || 'Network error' }; })
+      .then(function (result) {
+        if (!result || !result.ok) { if (err) err.textContent = (result && result.error) || 'Sign-in failed. Check your password.'; return; }
+        var who = (window.rosterClient.current && window.rosterClient.current()) || {};
+        try { localStorage.setItem('apstats_desk_student_email', who.username || r.username); } catch (_) {}
+        closeNameFinder();
+        refreshIdentity();
+        // Pull this student's signed ledger so their grades are on-device to gossip.
+        try { if (window.LedgerStore && LedgerStore.pull) LedgerStore.pull(window.rosterClient, { serverUrl: svcUrl() }).catch(function () {}); } catch (_) {}
+        var msg = result.mustChangePassword
+          ? '✅ Signed in as ' + (who.realName || r.username) + ' — change your password in the full app.'
+          : '✅ Signed in as ' + (who.realName || r.username);
+        dlMsg(msg); setTimeout(dlHide, 4000);
+      })
+      .then(function () { _nfSubmitPassword._pending = false; if (okBtn) okBtn.disabled = false; })
+      .catch(function () { _nfSubmitPassword._pending = false; if (okBtn) okBtn.disabled = false; });
+  }
+  window._nfSubmitPassword = _nfSubmitPassword;
+
+  function _nfBackToDial() { _nfRenderDial(); }
+  window._nfBackToDial = _nfBackToDial;
+
+  // Off-roster escape hatch: the launcher's finder only lists enrolled students, so
+  // send a genuinely-new student to the full app, whose sign-in wall has self-signup
+  // (real name + 4-digit PIN). Both pages share the roster session, so once they make
+  // an account there and come back, their name shows here too.
+  function _nfCreate() {
+    closeNameFinder();
+    try { location.href = 'ap_stats_roadmap_square_mode.html'; } catch (_) {}
+  }
+  window._nfCreate = _nfCreate;
+
+  function _nfKeydown(e) {
+    var ov = document.getElementById('namefinder-overlay');
+    if (!ov || ov.style.display === 'none') return;
+    if (_nfState !== 'dial') { if (e.key === 'Escape') { e.preventDefault(); closeNameFinder(); } return; }
+    var map = { ArrowUp: 0, ArrowLeft: 1, ArrowRight: 2, ArrowDown: 3 };
+    if (e.key in map) { e.preventDefault(); _nfPick(map[e.key]); }
+    else if (e.key === 'Backspace') { e.preventDefault(); _nfBack(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeNameFinder(); }
+  }
+
+  function closeNameFinder() {
+    var ov = document.getElementById('namefinder-overlay');
+    if (ov) ov.style.display = 'none';
+  }
+  window.closeNameFinder = closeNameFinder;
 
   function render(lessons) {
     if (!lessons || !lessons.length) { main.innerHTML = '<div class="empty">No lessons found.</div>'; return; }
