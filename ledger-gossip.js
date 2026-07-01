@@ -173,6 +173,45 @@
     return { initiate: initiate, handle: handle, done: done };
   }
 
+  // Drive one time-boxed anti-entropy ROUND over a GossipTransport: create a session
+  // per discovered peer, initiate, route incoming messages, and after durationMs stop
+  // + resolve {available, peers, received}. Shared by the Desk + the phone launcher.
+  // transport: { start({onPeer,onMessage,onLost}), send(peerId,msg), stop() }.
+  // opts: { getRows, store, verify, durationMs, onPeer, setTimeout }.
+  function runRound(transport, opts) {
+    opts = opts || {};
+    if (!transport || typeof transport.start !== 'function') return Promise.resolve({ available: false });
+    var sessions = {}, peers = 0, received = 0;
+    function ensure(peerId) {
+      if (sessions[peerId]) return sessions[peerId];
+      peers += 1;
+      var sess = createSession({
+        getRows: opts.getRows,
+        verify: opts.verify,
+        store: opts.store,
+        send: function (m) { try { transport.send(peerId, m); } catch (_) {} }
+      });
+      sess.done.then(function (r) { received += (r && r.received) || 0; }).catch(function () {});
+      sessions[peerId] = sess;
+      return sess;
+    }
+    try {
+      transport.start({
+        onPeer: function (id) { if (id) { ensure(id).initiate(); if (typeof opts.onPeer === 'function') opts.onPeer(id); } },
+        onMessage: function (id, msg) { if (id) ensure(id).handle(msg); },
+        onLost: function (id) { if (id) delete sessions[id]; }
+      });
+    } catch (_) {}
+    var timer = opts.setTimeout || ((typeof setTimeout !== 'undefined') ? setTimeout : (typeof root.setTimeout !== 'undefined' ? root.setTimeout : null));
+    return new Promise(function (resolve) {
+      var ms = (typeof opts.durationMs === 'number') ? opts.durationMs : 15000;
+      timer(function () {
+        try { transport.stop(); } catch (_) {}
+        resolve({ available: true, peers: peers, received: received });
+      }, ms);
+    });
+  }
+
   root.LedgerGossip = {
     VERSION: V,
     TYPES: T,
@@ -182,7 +221,8 @@
     frame: frame,
     parse: parse,
     ingest: ingest,
-    createSession: createSession
+    createSession: createSession,
+    runRound: runRound
   };
 
 })();

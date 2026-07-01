@@ -128,3 +128,25 @@ describe('LedgerGossip — epidemic multi-hop delivery', () => {
     expect(classmate.ids().sort()).toEqual(['s1', 't1']);
   });
 });
+
+describe('LedgerGossip.runRound — drives a round over a transport', () => {
+  it('gossips with a discovered peer and reports received', async () => {
+    const myStore = memStore([signed('m1')]);
+    const peerStore = memStore([signed('p1')]);
+    let handlers = null;
+    const peerSess = LG.createSession({ getRows: peerStore.all, verify, store: peerStore, send: (m) => { if (handlers) handlers.onMessage('peerB', m); } });
+    const transport = {
+      start(h) { handlers = h; Promise.resolve().then(() => h.onPeer('peerB')); },
+      send(peerId, msg) { peerSess.handle(msg); },
+      stop() {},
+    };
+    const res = await LG.runRound(transport, { getRows: myStore.all, verify, store: myStore, durationMs: 0, setTimeout: (fn) => setTimeout(fn, 40) });
+    expect(res).toMatchObject({ available: true, peers: 1, received: 1 });
+    expect(myStore.ids()).toEqual(['m1', 'p1']);
+    expect(peerStore.ids()).toEqual(['m1', 'p1']);
+  });
+
+  it('returns {available:false} with no transport', async () => {
+    expect(await LG.runRound(null, {})).toEqual({ available: false });
+  });
+});

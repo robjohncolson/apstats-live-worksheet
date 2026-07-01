@@ -50,6 +50,7 @@
 <header>
   <h1>📊 AP Statistics <a href="teacher-app.html" style="float:right;color:#fff;opacity:.85;font-size:12px;font-weight:400;text-decoration:none;margin-top:3px">🔑 Teacher</a></h1>
   <div class="who" id="who">Tap a lesson to begin. Sign in inside a worksheet so your work saves.</div>
+  <button id="sync-nearby" onclick="syncNearby()" style="margin-top:10px;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;-webkit-tap-highlight-color:transparent">📡 Sync Nearby</button>
 </header>
 <main id="main"><div class="empty">Loading lessons…</div></main>
 
@@ -69,6 +70,12 @@
      which offline-config.js sets for a --play build). -->
 <script src="video-ondemand.js" onerror=""></script>
 <script src="video-store.js" onerror=""></script>
+<!-- ANDROID Phase 3 — P2P gossip ("Sync Nearby" on the phone home). Inert on the web
+     (nearby-transport.js only registers window.GossipTransport inside the APK). -->
+<script src="receipt-verify.js" onerror=""></script>
+<script src="ledger-store.js" onerror=""></script>
+<script src="ledger-gossip.js" onerror=""></script>
+<script src="nearby-transport.js" onerror=""></script>
 <script>
 (function () {
   var main = document.getElementById('main');
@@ -136,6 +143,57 @@
     try { window.VideoOnDemand.loadCatalog('video-catalog.json'); } catch (e) {}
     try { var w = document.getElementById('who'); if (w) w.textContent = 'Videos download on first tap. Worksheets + quiz work offline.'; } catch (e) {}
   }
+
+  // ── ANDROID Phase 3 — Sync Nearby (P2P ledger gossip) ─────────────────────────
+  function svcUrl() {
+    var u = (typeof window.ROSTER_SERVICE_URL === 'string' && window.ROSTER_SERVICE_URL)
+      || (typeof window.RAILWAY_ROSTER_URL === 'string' && window.RAILWAY_ROSTER_URL)
+      || (typeof window.ROSTER_SERVER_URL === 'string' && window.ROSTER_SERVER_URL) || '';
+    return String(u).replace(/\/$/, '');
+  }
+  function verifyRow(row) {
+    try {
+      if (!row || !row.receipt_compact || !window.ReceiptVerify) return Promise.resolve(false);
+      return Promise.resolve(ReceiptVerify.verifyReceipt(row.receipt_compact))
+        .then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });
+    } catch (_) { return Promise.resolve(false); }
+  }
+  var _issuerReg = false;
+  function registerIssuer(base) {
+    if (_issuerReg || !window.ReceiptVerify || !Array.isArray(ReceiptVerify.ISSUERS) || !base || typeof fetch !== 'function') return Promise.resolve();
+    return fetch(base + '/receipts/issuer').then(function (r) { return r && r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || !j.enabled) return;
+      var keys = (j.pubkeys && j.pubkeys.length) ? j.pubkeys : (j.pubkey ? [j.pubkey] : []);
+      keys.forEach(function (pk) { if (pk && !ReceiptVerify.ISSUERS.some(function (i) { return i.pubkey === pk; })) ReceiptVerify.ISSUERS.push({ name: 'Roster', pubkey: pk, kind: 'roster' }); });
+      _issuerReg = true;
+    }).catch(function () {});
+  }
+
+  window.syncNearby = function () {
+    if (!window.GossipTransport || !window.LedgerGossip || !window.LedgerStore) {
+      dlMsg('📡 Nearby sync needs the app + Bluetooth on.'); setTimeout(dlHide, 3000); return;
+    }
+    dlMsg('📡 Looking for nearby devices…');
+    var base = svcUrl();
+    registerIssuer(base)
+      .then(function () { return (window.rosterClient && LedgerStore.pull) ? LedgerStore.pull(window.rosterClient, { serverUrl: base }).catch(function () {}) : null; })
+      .then(function () {
+        return LedgerGossip.runRound(window.GossipTransport, {
+          getRows: function () { return LedgerStore.all(); },
+          verify: verifyRow,
+          store: LedgerStore,
+          durationMs: 20000,
+          onPeer: function () { dlMsg('📡 Connected — syncing…'); }
+        });
+      })
+      .then(function (r) {
+        if (!r || !r.available) dlMsg('📡 Nearby sync unavailable on this device.');
+        else if (!r.peers) dlMsg('No nearby devices found. Tap Sync on both phones + allow Bluetooth/Nearby.');
+        else dlMsg('✅ Synced with ' + r.peers + ' device' + (r.peers === 1 ? '' : 's') + ' · +' + r.received + ' record' + (r.received === 1 ? '' : 's'));
+        setTimeout(dlHide, 6000);
+      })
+      .catch(function (e) { dlMsg('Sync failed: ' + (e && e.message || e)); setTimeout(dlHide, 4000); });
+  };
 
   function render(lessons) {
     if (!lessons || !lessons.length) { main.innerHTML = '<div class="empty">No lessons found.</div>'; return; }
