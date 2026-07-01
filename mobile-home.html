@@ -41,6 +41,7 @@
   .btn.ws { background:#e8f1ff; border-color:#bcd6ff; }
   .btn.quiz { background:#e9f9ec; border-color:#b6e6c0; }
   .btn.bloo { background:#f3e8ff; border-color:#d9bcff; }
+  .btn.fc { background:#fff0f5; border-color:#ffc4dd; }
   .btn[disabled] { opacity:.4; pointer-events:none; }
   header #gradepill { display:inline-block; margin-top:8px; background:rgba(255,255,255,.16);
            border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:5px 12px; font-size:13px; font-weight:700; }
@@ -528,11 +529,16 @@
         var q = document.createElement('a'); q.className = 'btn quiz'; q.textContent = '❓ Quiz';
         if (l.quiz) q.href = l.quiz; else q.setAttribute('disabled', '');
         btns.appendChild(q);
-        // Blooket (external — opens in the browser). Only when the lesson has a URL.
+        // Blooket (external game) + the in-app Flashcards deck for the same topic.
         if (l.blooket) {
           var bl = document.createElement('a'); bl.className = 'btn bloo'; bl.textContent = '🎯 Blooket';
           bl.href = l.blooket; bl.target = '_blank'; bl.rel = 'noopener';
           btns.appendChild(bl);
+          // Flashcards are IN-APP: deep-link into the bundled Desk, which owns the deck +
+          // scoring + recording (source 'blooket' → grade). It returns here on close.
+          var fc = document.createElement('a'); fc.className = 'btn fc'; fc.textContent = '🃏 Flashcards';
+          fc.href = 'ap_stats_roadmap_square_mode.html?flashcards=' + encodeURIComponent(l.id);
+          btns.appendChild(fc);
         }
         card.appendChild(btns);
         det.appendChild(card);

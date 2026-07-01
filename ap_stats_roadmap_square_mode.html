@@ -11624,7 +11624,41 @@ function closeBlooketFlashcards() {
         _bfSaveProgress();
     }
     _bfCloseUI();
+    // ANDROID: launched from mobile-home.html (?flashcards=) → return to the launcher on close.
+    if (window._flashcardLauncherReturn) { try { location.href = 'mobile-home.html'; } catch (_) {} }
 }
+
+// ── ANDROID: mobile launcher deep-link into the flashcards ─────────────────────
+// mobile-home.html opens this page with `?flashcards=<topic>` so the launcher can run
+// the in-app Blooket flashcards — the Desk owns the deck / scoring / recording (source
+// 'blooket' → grade + gossip), so the launcher reuses it rather than re-implementing it.
+// An always-available "← Lessons" button returns even if the deck is missing/slow; once
+// the roster session is ready we open the deck, and closing navigates back to the launcher.
+(function _flashcardsFromLauncher() {
+    var topic;
+    try { topic = new URLSearchParams(location.search).get('flashcards'); } catch (_) { return; }
+    if (!topic) return;
+    function go() {
+        window._flashcardLauncherReturn = true;
+        try {
+            var back = document.createElement('button');
+            back.textContent = '← Lessons';
+            back.style.cssText = 'position:fixed;top:8px;left:8px;z-index:100002;background:#0b5cad;color:#fff;border:0;border-radius:8px;padding:8px 12px;font:600 13px sans-serif;-webkit-tap-highlight-color:transparent';
+            back.onclick = function () { try { location.href = 'mobile-home.html'; } catch (_) {} };
+            (document.body || document.documentElement).appendChild(back);
+        } catch (_) {}
+        var tries = 0;
+        var iv = setInterval(function () {
+            tries += 1;
+            var ready = (typeof openBlooketFlashcards === 'function')
+                && window.rosterClient && rosterClient.current && rosterClient.current();
+            if (ready) { clearInterval(iv); try { openBlooketFlashcards(null, topic); } catch (_) {} }
+            else if (tries > 150) { clearInterval(iv); }   // ~30s; the ← Lessons button remains
+        }, 200);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+})();
 
 // ── Full timed deck (FLASHCARD_TIMED_DECK_BUILD.md) ────────────────────────────
 // A rigorous Blooket substitute: ALL cards, BLOOKET_FULLDECK_SECONDS each, no
