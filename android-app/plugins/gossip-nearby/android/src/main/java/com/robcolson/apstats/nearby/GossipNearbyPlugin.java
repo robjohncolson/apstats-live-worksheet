@@ -2,6 +2,7 @@ package com.robcolson.apstats.nearby;
 
 import android.Manifest;
 import android.os.Build;
+import android.util.Log;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -48,6 +49,11 @@ import java.util.UUID;
 @CapacitorPlugin(
     name = "GossipNearby",
     permissions = {
+        // Nearby Connections' startDiscovery REQUIRES ACCESS_COARSE/FINE_LOCATION at
+        // runtime even on Android 14 (neverForLocation does NOT exempt it — it fails
+        // 8034 MISSING_PERMISSION_ACCESS_COARSE_LOCATION without it). So location must be
+        // declared WITHOUT maxSdkVersion (see AndroidManifest.xml) AND be in this alias so
+        // Capacitor requests it. All alias perms must exist in the effective manifest.
         @Permission(
             alias = "nearby",
             strings = {
@@ -63,6 +69,7 @@ import java.util.UUID;
 )
 public class GossipNearbyPlugin extends Plugin {
 
+    private static final String TAG = "GossipNearby";
     private static final String SERVICE_ID = "com.robcolson.apstats.gossip.v1";
     private static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
 
@@ -105,10 +112,10 @@ public class GossipNearbyPlugin extends Plugin {
                 connections()
                     .startDiscovery(SERVICE_ID, endpointDiscovery,
                         new DiscoveryOptions.Builder().setStrategy(STRATEGY).build())
-                    .addOnSuccessListener(u2 -> { running = true; call.resolve(); })
-                    .addOnFailureListener(e -> call.reject("startDiscovery failed: " + e.getMessage()));
+                    .addOnSuccessListener(u2 -> { running = true; Log.d(TAG, "advertising+discovery started as " + localName); call.resolve(); })
+                    .addOnFailureListener(e -> { Log.e(TAG, "startDiscovery failed", e); call.reject("startDiscovery failed: " + e.getMessage()); });
             })
-            .addOnFailureListener(e -> call.reject("startAdvertising failed: " + e.getMessage()));
+            .addOnFailureListener(e -> { Log.e(TAG, "startAdvertising failed", e); call.reject("startAdvertising failed: " + e.getMessage()); });
     }
 
     // ── send ─────────────────────────────────────────────────────────────────
@@ -140,12 +147,15 @@ public class GossipNearbyPlugin extends Plugin {
     private final EndpointDiscoveryCallback endpointDiscovery = new EndpointDiscoveryCallback() {
         @Override
         public void onEndpointFound(String endpointId, DiscoveredEndpointInfo info) {
+            Log.d(TAG, "onEndpointFound " + endpointId + " svc=" + info.getServiceId() + " name=" + info.getEndpointName());
             // Symmetric: both peers request; Nearby resolves to a single connection.
-            connections().requestConnection(localName, endpointId, connectionLifecycle);
+            connections().requestConnection(localName, endpointId, connectionLifecycle)
+                .addOnFailureListener(e -> Log.w(TAG, "requestConnection failed for " + endpointId + ": " + e.getMessage()));
         }
 
         @Override
         public void onEndpointLost(String endpointId) {
+            Log.d(TAG, "onEndpointLost " + endpointId);
             emit("lost", endpointId, null, null);
         }
     };
@@ -153,19 +163,24 @@ public class GossipNearbyPlugin extends Plugin {
     private final ConnectionLifecycleCallback connectionLifecycle = new ConnectionLifecycleCallback() {
         @Override
         public void onConnectionInitiated(String endpointId, ConnectionInfo info) {
+            Log.d(TAG, "onConnectionInitiated " + endpointId + " name=" + info.getEndpointName());
             // Auto-accept: trust is enforced at the receipt layer, not the transport.
-            connections().acceptConnection(endpointId, payloadCallback);
+            connections().acceptConnection(endpointId, payloadCallback)
+                .addOnFailureListener(e -> Log.w(TAG, "acceptConnection failed for " + endpointId + ": " + e.getMessage()));
         }
 
         @Override
         public void onConnectionResult(String endpointId, ConnectionResolution result) {
-            if (result.getStatus().getStatusCode() == ConnectionsStatusCodes.STATUS_OK) {
+            int code = result.getStatus().getStatusCode();
+            Log.d(TAG, "onConnectionResult " + endpointId + " status=" + code + " (" + result.getStatus().getStatusMessage() + ")");
+            if (code == ConnectionsStatusCodes.STATUS_OK) {
                 emit("peer", endpointId, null, null);
             }
         }
 
         @Override
         public void onDisconnected(String endpointId) {
+            Log.d(TAG, "onDisconnected " + endpointId);
             emit("lost", endpointId, null, null);
         }
     };
@@ -175,6 +190,7 @@ public class GossipNearbyPlugin extends Plugin {
         public void onPayloadReceived(String endpointId, Payload payload) {
             if (payload.getType() == Payload.Type.BYTES && payload.asBytes() != null) {
                 String msg = new String(payload.asBytes(), StandardCharsets.UTF_8);
+                Log.d(TAG, "onPayloadReceived " + endpointId + " (" + msg.length() + " chars)");
                 emit("message", endpointId, msg, null);
             }
         }
