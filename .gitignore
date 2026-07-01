@@ -93,3 +93,6 @@ android-app/.gradle/
 android-app/*.keystore
 android-app/plugins/**/node_modules/
 android-app/plugins/**/build/
+
+# Cloudflare R2 upload credentials (Phase 5 video host) — NEVER commit; local only.
+.r2.env

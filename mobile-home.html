@@ -58,6 +58,11 @@
   <div class="bar"><button onclick="closeVideo()">✕ Close</button><span class="vtitle" id="vtitle"></span></div>
 </div>
 
+<!-- offline-config.js is GENERATED into the pack; it sets window.OFFLINE_MODE and,
+     in a --play build, window.PLAY_BUILD + window.MEDIA_BASE_URL. mobile-home isn't in
+     ROOT_FILES (build-android copies it in separately), so it must load this itself.
+     Must be FIRST. On the web it 404s harmlessly (mobile-home is the APK home). -->
+<script src="offline-config.js" onerror=""></script>
 <script src="roster_config.js" onerror=""></script>
 <script src="roster-client.js" onerror=""></script>
 <!-- ANDROID Phase 5 — Google Play on-demand video (inert unless window.PLAY_BUILD,

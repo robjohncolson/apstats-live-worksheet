@@ -10,6 +10,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "aws4fetch": "^1.0.20",
     "jsdom": "^23.0.0",
     "qrcode": "^1.5.4",
     "vitest": "^1.2.0"
