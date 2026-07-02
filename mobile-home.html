@@ -93,11 +93,14 @@
 <script src="ledger-store.js" onerror=""></script>
 <script src="ledger-gossip.js" onerror=""></script>
 <script src="nearby-transport.js" onerror=""></script>
-<!-- OFFLINE GRADING MESH Phase 1 — the student's device signing key (submissions
-     lane). Inert on the web: SecureKeyStore only exists inside the APK. -->
+<!-- OFFLINE GRADING MESH Phase 1-2 — the student's device signing key + the
+     submissions lane (self-sign raw work, gossip it beside grades). Inert on the
+     web: SecureKeyStore only exists inside the APK. -->
 <script src="receipt-sign.js" onerror=""></script>
 <script src="secure-key.js" onerror=""></script>
 <script src="student-key.js" onerror=""></script>
+<script src="submission-store.js" onerror=""></script>
+<script src="submission-capture.js" onerror=""></script>
 <script>
 (function () {
   var main = document.getElementById('main');
@@ -228,6 +231,21 @@
   }
   window.meshKeyBoot = meshKeyBoot;
 
+  // The submissions-lane verifier (student trust set). Fail-closed like verifyRow.
+  function verifySubRow(row) {
+    try {
+      if (!window.ReceiptVerify || typeof ReceiptVerify.verifySubmissionRow !== 'function') return Promise.resolve(false);
+      return Promise.resolve(ReceiptVerify.verifySubmissionRow(row)).catch(function () { return false; });
+    } catch (_) { return Promise.resolve(false); }
+  }
+  // The submissions lane is live only when the whole mesh-P2 stack is present
+  // (APK: SubmissionStore + verifySubmissionRow + at least one student key synced).
+  function subsLaneReady() {
+    return !!(window.SubmissionStore && window.ReceiptVerify
+      && typeof ReceiptVerify.verifySubmissionRow === 'function'
+      && typeof LedgerGossip.runLanes === 'function');
+  }
+
   window.syncNearby = function () {
     if (!window.GossipTransport || !window.LedgerGossip || !window.LedgerStore) {
       dlMsg('📡 Nearby sync needs the app + Bluetooth on.'); setTimeout(dlHide, 3000); return;
@@ -237,9 +255,38 @@
     registerIssuer(base)
       .then(function () { return meshKeyBoot(); })
       .then(function () { return (window.rosterClient && LedgerStore.pull) ? LedgerStore.pull(window.rosterClient, { serverUrl: base }).catch(function () {}) : null; })
-      .then(function () {
-        return LedgerGossip.runRound(window.GossipTransport, {
+      // Snapshot the grades G-Set ONCE for §0.7 suppression (monotone → a snapshot
+      // is safe). Used for BOTH the offer side (exclude covered) and the ingest
+      // side (reject covered) so the two never disagree within a round.
+      .then(function () { return subsLaneReady() ? LedgerStore.all().catch(function () { return []; }) : Promise.resolve(null); })
+      .then(function (gradesSnapshot) {
+        var gradesLane = {
+          lane: 'grades',
           getRows: function () { return LedgerStore.all(); },
+          verify: verifyRow,
+          store: LedgerStore
+        };
+        // Two lanes over one Nearby discovery when the submissions stack is live;
+        // else the byte-identical grades-only round (unchanged behavior).
+        if (gradesSnapshot !== null) {
+          var covered = SubmissionStore.coveredKeys(gradesSnapshot);
+          return LedgerGossip.runLanes(window.GossipTransport, {
+            lanes: [gradesLane, {
+              lane: 'subs',
+              getRows: function () {
+                return SubmissionStore.all().then(function (rows) {
+                  return rows.filter(function (r) { return !SubmissionStore.isCovered(r, covered); });
+                });
+              },
+              verify: SubmissionStore.suppressingVerify(verifySubRow, covered),
+              store: SubmissionStore
+            }],
+            durationMs: 45000,
+            onPeer: function () { dlMsg('📡 Connected — syncing…'); }
+          });
+        }
+        return LedgerGossip.runRound(window.GossipTransport, {
+          getRows: gradesLane.getRows,
           verify: verifyRow,
           store: LedgerStore,
           durationMs: 45000,

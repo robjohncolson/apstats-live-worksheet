@@ -65,6 +65,12 @@ describe('build (real, into a temp dir)', () => {
     // identity baked
     expect(readFileSync(resolve(out, 'offline-config.js'), 'utf8')).toContain('offline-abc');
 
+    // the offline-grading-mesh scripts the mobile launcher references are bundled
+    // (else the APK 404s on them) — the deployment-checklist gotcha, guarded here.
+    for (const f of ['student-key.js', 'submission-store.js', 'submission-capture.js', 'receipt-sign.js', 'secure-key.js']) {
+      expect(existsSync(resolve(out, f)), `${f} must be in the pack`).toBe(true);
+    }
+
     // a worksheet was copied AND had offline-config.js injected
     const ws = readFileSync(resolve(out, 'u3_lesson6-7_live.html'), 'utf8');
     expect(ws).toContain('src="offline-config.js"');

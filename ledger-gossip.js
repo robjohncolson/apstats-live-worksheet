@@ -71,13 +71,21 @@
     });
   }
 
-  function frame(type, payload) { return JSON.stringify({ t: type, p: payload || {} }); }
+  // Frames are {t, p}. A `lane` tag rides ONLY when the caller sets one
+  // (OFFLINE_GRADING_MESH_SPEC §0.6, so a grades peer and a submissions peer don't
+  // cross-feed digests). When lane is falsy the frame is BYTE-IDENTICAL to the
+  // pre-mesh shape — existing grades gossip and its wire tests are unaffected.
+  function frame(type, payload, lane) {
+    var o = { t: type, p: payload || {} };
+    if (lane) o.lane = lane;
+    return JSON.stringify(o);
+  }
 
   function parse(str) {
     try {
       var o = (typeof str === 'string') ? JSON.parse(str) : str;
       if (!o || typeof o.t !== 'string') return null;
-      return { type: o.t, payload: o.p || {} };
+      return { type: o.t, payload: o.p || {}, lane: (typeof o.lane === 'string' ? o.lane : null) };
     } catch (_) { return null; }
   }
 
@@ -123,6 +131,10 @@
     var getRows = opts.getRows || function () { return Promise.resolve([]); };
     var send = opts.send || function () {};
     var ingestOpts = { verify: opts.verify, store: opts.store };
+    // opts.lane (mesh §0.6): when set, stamp it onto every outgoing frame and
+    // DEFENSIVELY ignore any incoming frame of a different lane. Unset → the
+    // pre-mesh behavior exactly (no stamp, accept every frame).
+    var lane = opts.lane || null;
 
     var received = 0;
     var resolveDone;
@@ -131,13 +143,16 @@
 
     function initiate() {
       return Promise.resolve(getRows()).then(function (rows) {
-        send(frame(T.HELLO, { digest: digest(rows) }));
+        send(frame(T.HELLO, { digest: digest(rows) }, lane));
       });
     }
 
     function handle(msg) {
       var m = parse(msg);
       if (!m) return Promise.resolve();
+      // Lane isolation: a lane-scoped session ignores other lanes' frames. A
+      // lane-less (legacy) session accepts everything, as before.
+      if (lane && m.lane && m.lane !== lane) return Promise.resolve();
 
       if (m.type === T.HELLO) {
         // Responder: reply with the rows the peer lacks + a request for what I lack.
@@ -146,7 +161,7 @@
           var peerIds = (m.payload.digest && m.payload.digest.ids) || [];
           var rowsPeerLacks = rowsFor(rows, diff(peerIds, myIds));
           var idsILack = diff(myIds, peerIds);
-          send(frame(T.SYNC, { rows: rowsPeerLacks, request: idsILack }));
+          send(frame(T.SYNC, { rows: rowsPeerLacks, request: idsILack }, lane));
         });
       }
 
@@ -155,7 +170,7 @@
         return ingest(m.payload.rows || [], ingestOpts).then(function (res) {
           received += res.accepted;
           return Promise.resolve(getRows()).then(function (rows) {
-            send(frame(T.SEND, { rows: rowsFor(rows, m.payload.request || []) }));
+            send(frame(T.SEND, { rows: rowsFor(rows, m.payload.request || []) }, lane));
             finish(); // I've sent everything the peer asked for → done.
           });
         });
@@ -214,6 +229,84 @@
     });
   }
 
+  // Multi-lane round (mesh §0.6): carry SEVERAL lanes over ONE transport session
+  // per peer, so a single Nearby discovery syncs both the grades and submissions
+  // G-Sets. Each lane has its own {getRows, verify, store}; incoming frames are
+  // demuxed by their `lane` tag to the matching per-(peer,lane) session, and each
+  // session only accepts/relays its own lane's rows (verify-on-ingest stays the
+  // trust boundary — a submission offered to the grades lane fails grades verify).
+  //   lanes: [{ lane:'grades'|'subs', getRows, verify, store }]
+  // A frame with no lane tag routes to the FIRST lane (back-compat with a peer
+  // still speaking the pre-mesh, lane-less protocol — that peer only knows grades).
+  function runLanes(transport, opts) {
+    opts = opts || {};
+    var lanes = Array.isArray(opts.lanes) ? opts.lanes.filter(function (l) { return l && l.lane; }) : [];
+    if (!transport || typeof transport.start !== 'function' || !lanes.length) {
+      return Promise.resolve({ available: false });
+    }
+    var defaultLane = lanes[0].lane;
+    var byPeer = {};   // peerId -> { laneName -> session }
+    var peers = 0;
+    var received = {}; // laneName -> count
+    lanes.forEach(function (l) { received[l.lane] = 0; });
+
+    function laneCfg(name) {
+      for (var i = 0; i < lanes.length; i++) if (lanes[i].lane === name) return lanes[i];
+      return null;
+    }
+    function ensurePeer(peerId) {
+      if (byPeer[peerId]) return byPeer[peerId];
+      peers += 1;
+      byPeer[peerId] = {};
+      return byPeer[peerId];
+    }
+    function sessionFor(peerId, laneName) {
+      var peer = ensurePeer(peerId);
+      if (peer[laneName]) return peer[laneName];
+      var cfg = laneCfg(laneName);
+      if (!cfg) return null;
+      var sess = createSession({
+        lane: cfg.lane,
+        getRows: cfg.getRows,
+        verify: cfg.verify,
+        store: cfg.store,
+        send: function (m) { try { transport.send(peerId, m); } catch (_) {} }
+      });
+      sess.done.then(function (r) { received[cfg.lane] += (r && r.received) || 0; }).catch(function () {});
+      peer[laneName] = sess;
+      return sess;
+    }
+    try {
+      transport.start({
+        onPeer: function (id) {
+          if (!id) return;
+          ensurePeer(id);
+          // Open every lane to the new peer (each initiates its own HELLO).
+          lanes.forEach(function (l) { var s = sessionFor(id, l.lane); if (s) s.initiate(); });
+          if (typeof opts.onPeer === 'function') opts.onPeer(id);
+        },
+        onMessage: function (id, msg) {
+          if (!id) return;
+          var m = parse(msg);
+          var laneName = (m && m.lane) ? m.lane : defaultLane;   // lane-less → grades
+          var s = sessionFor(id, laneName);
+          if (s) s.handle(msg);
+        },
+        onLost: function (id) { if (id) delete byPeer[id]; }
+      });
+    } catch (_) {}
+    var timer = opts.setTimeout || ((typeof setTimeout !== 'undefined') ? setTimeout : (typeof root.setTimeout !== 'undefined' ? root.setTimeout : null));
+    return new Promise(function (resolve) {
+      var ms = (typeof opts.durationMs === 'number') ? opts.durationMs : 15000;
+      timer(function () {
+        try { transport.stop(); } catch (_) {}
+        var total = 0;
+        Object.keys(received).forEach(function (k) { total += received[k]; });
+        resolve({ available: true, peers: peers, received: total, byLane: received });
+      }, ms);
+    });
+  }
+
   root.LedgerGossip = {
     VERSION: V,
     TYPES: T,
@@ -224,7 +317,8 @@
     parse: parse,
     ingest: ingest,
     createSession: createSession,
-    runRound: runRound
+    runRound: runRound,
+    runLanes: runLanes
   };
 
 })();

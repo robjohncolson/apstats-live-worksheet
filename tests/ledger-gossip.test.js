@@ -67,7 +67,10 @@ describe('LedgerGossip pure helpers', () => {
   });
   it('frame/parse round-trips; parse rejects junk', () => {
     const f = LG.frame('hello', { x: 1 });
-    expect(LG.parse(f)).toEqual({ type: 'hello', payload: { x: 1 } });
+    // parse now also surfaces the mesh §0.6 lane tag (null for a lane-less frame);
+    // frame() itself stays byte-identical when no lane is passed.
+    expect(f).toBe(JSON.stringify({ t: 'hello', p: { x: 1 } }));
+    expect(LG.parse(f)).toEqual({ type: 'hello', payload: { x: 1 }, lane: null });
     expect(LG.parse('not json')).toBeNull();
     expect(LG.parse('{"no":"type"}')).toBeNull();
   });

@@ -41,6 +41,9 @@ const ROOT_FILES = [
   'ledger-gossip.js', 'nearby-transport.js',
   // ANDROID Phase 4 — on-device teacher app: signing + epoch seal + the key-store bridge.
   'teacher-app.html', 'receipt-sign.js', 'ledger-seal.js', 'secure-key.js',
+  // OFFLINE GRADING MESH Phase 1-2 — the student's device signing key + the
+  // submissions lane (self-sign raw work, gossip it beside grades). Inert on web.
+  'student-key.js', 'submission-store.js', 'submission-capture.js',
   // ANDROID Phase 5 — Google Play on-demand video (inert unless window.PLAY_BUILD).
   'video-ondemand.js', 'video-store.js',
   'railway_client.js', 'railway_config.js', 'roadmap-data.json',

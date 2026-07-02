@@ -41,9 +41,44 @@
 >   sync the class trust set, clear-on-revoke. Wired into `mobile-home.html` sign-in + sync boot.
 > - Tests: `tests/{mesh-submission-verify,student-key-client}.test.js`,
 >   `roster-server/tests/student-keys.test.js` + verifyRecord type-check regressions.
-> - ⏭ **USER: run migration 0027** on the roster Supabase (routes 503 until then).
-> - ⏭ **Phases 2-4 NOT built:** submissions lane + lane-tagged gossip + suppression (2);
->   teacher offline grade loop w/ deterministic receipts + anti-farming (3); hub reconcile (4).
+> - ✅ **USER RAN migration 0027** (`/student-keys` live: returns `{ok,keys}`, gates on the teacher secret).
+>
+> **Phase 2 shipped — the submissions lane (§2, §0.6, §0.7):**
+> - **`submission-store.js`** (`window.SubmissionStore`) — a SECOND content-addressed G-Set
+>   (`apstats_submissions_v1`), fully separate from the grades store. Grade-gated SUPPRESSION
+>   (§0.7): `coveredKeys(gradesRows)` reads a `sub` field (the graded submission's receipt_id)
+>   from each grade's decoded payload and covers that submission IF same student (blocks
+>   cross-student griefing); `rowsForGossip` excludes covered subs from the offer, and
+>   `suppressingVerify` rejects them on ingest — the row is never deleted (deletion resurrects
+>   in a G-Set). Monotone (grade-presence grows) → converges to suppressed. Until Phase 3 mints
+>   grades carrying `sub`, nothing is suppressed (safe: subs keep gossiping until graded).
+> - **`submission-capture.js`** (`window.SubmissionCapture`) — build a `t:'submission'` payload
+>   (NO `sc`/`g`), self-sign with the unlocked device key, content-address, store.
+>   `signPendingWork` unlocks once and signs a batch, FORCING `student_id` = the caller sid
+>   (self-attribution §0.2). Proven end-to-end: a captured submission is ACCEPTED by
+>   `verifySubmissionRow` and REJECTED by `verifyLedgerRow`; a swapped response breaks the `ah` bind.
+> - **`ledger-gossip.js`** — lane tags: `frame(type,payload,lane)` is byte-identical when no lane
+>   is set (grades back-compat); `createSession(opts.lane)` stamps outgoing + ignores other lanes'
+>   frames; NEW `runLanes(transport,{lanes})` carries both lanes over ONE Nearby discovery with
+>   per-(peer,lane) sessions, demuxing by `frame.lane` (lane-less → grades). `runRound` UNCHANGED.
+> - **`mobile-home.html`** Sync-Nearby runs `runLanes(grades+subs)` when the subs stack is present
+>   (APK), else the unchanged `runRound`; the grades set is snapshotted ONCE per round so the
+>   offer side (exclude covered) and ingest side (`suppressingVerify`) agree.
+> - Adversarial review (7-agent: 3 raised, 3 refuted, 0 confirmed) still drove fixes: a Promise
+>   passed where an array was expected (would silently disable suppression once Phase 3 lands) and
+>   the missing reject-on-ingest half of §0.7 — both fixed; the per-student flood cap is correctly
+>   DEFERRED to Phase 3 anti-farming (per the binding §0 phasing; §0.9 content-addressing forbids
+>   a "re-answer replaces" cap).
+> - Tests: `tests/{submission-store,submission-capture,ledger-gossip-lanes,mobile-home-submissions}.test.js`
+>   + `ledger-gossip`/`build-offline-pack` extended.
+>
+> **⏭ Phases 3-4 NOT built:** teacher offline grade loop — ingest gossiped submissions →
+> auto-grade deterministic items + FRQ queue → sign DETERMINISTIC grade receipts (ts/n derived
+> from the submission so re-grades dedup, §0.8) carrying `sub`=<submission receipt_id> so
+> suppression activates → emit on the grades lane; anti-farming (teacher ASSIGNS attempt,
+> max-score supersession, teacher clock §0.4) + the per-student submission flood cap (3). Hub
+> reconcile: server verifies student sigs, archives submissions, NEVER re-grades one already
+> carrying a teacher grade (§0.10) (4).
 
 ---
 
