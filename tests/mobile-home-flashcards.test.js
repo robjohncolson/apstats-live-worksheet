@@ -49,13 +49,19 @@ const ONE_CARD_CSV = [
   '1,"Q one","alpha","beta","gamma","delta",20,2',   // correctIdx = 1 (data-i="1")
 ].join('\n');
 
-function bootLauncher({ gradeBlooket }) {
+function bootLauncher({ gradeBlooket, indexMissing }) {
   const recorded = [];
   const lesson = { id: '4.1-2', unit: 4, label: 'Sampling', worksheet: 'u4_lesson1-2_live.html', quiz: null, blooket: 'https://b', videos: [] };
+  // The published fallback source: roadmap-data.json (full URLs, no local video paths).
+  const roadmap = { lessons: { '4.1-2': { topic: 'Sampling', urls: { worksheet: 'https://gh/u4_lesson1-2_live.html', quiz: null, blooket: 'https://b' } } } };
   const gradePayload = { ok: true, quarters: [], lessons: [{ topic: '4.1-2', lessonGrade: 55, blooket: gradeBlooket }] };
   const fakeFetch = (url) => {
     const u = String(url);
+    if (indexMissing && u.indexOf('lessons-index.json') >= 0) {
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve(null), text: () => Promise.resolve('') });
+    }
     const body = u.indexOf('lessons-index.json') >= 0 ? { lessons: [lesson] }
+      : u.indexOf('roadmap-data.json') >= 0 ? roadmap
       : u.indexOf('/grade') >= 0 ? gradePayload
       : u.indexOf('blooket-difficulty.json') >= 0 ? { tags: {} }
       : null;
@@ -119,6 +125,26 @@ describe('mobile-home — native flashcards (behavioral boot)', () => {
 
     expect(recorded.length).toBe(0);                                // 100 !> 100 → dropped
     expect(win.document.querySelector('.fc-result p').textContent).toMatch(/best score/i);
+    dom.window.close();
+  });
+
+  it('falls back to roadmap-data.json when lessons-index.json 404s (laptop / GH-Pages)', async () => {
+    const { dom, win, recorded } = bootLauncher({ gradeBlooket: 40, indexMissing: true });
+    await flush(8);                                                 // index 404 → roadmap → render
+
+    const fcBtn = win.document.querySelector('.btn.fc');
+    expect(fcBtn, 'tiles did not render from the roadmap fallback').toBeTruthy();
+    fcBtn.click();
+    await flush(2);
+    win.document.getElementById('fc-mode-full').click();
+    await flush();
+    win.document.querySelector('#fc-choices .fc-choice[data-i="1"]').click();
+    await flush(1);
+    win.document.getElementById('fc-next').click();
+    await flush(2);
+
+    expect(recorded.length).toBe(1);
+    expect(recorded[0].itemId).toBe('BL-U4-L1-2-DESK_DONE');        // flashcards work off the fallback too
     dom.window.close();
   });
 });

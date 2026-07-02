@@ -1091,10 +1091,39 @@
   // Cached grade → first paint has the pill + ✓ badges even offline.
   try { var _cg = localStorage.getItem(GRADE_KEY); if (_cg) _applyGradeData(JSON.parse(_cg), false); } catch (_) {}
 
+  // Web / GH-Pages fallback: lessons-index.json is an APK BUILD ARTIFACT (local
+  // bundled quiz + media/video paths) and isn't published to Pages, so on a laptop it
+  // 404s. roadmap-data.json IS tracked/published and carries the real published URLs,
+  // so the web launcher builds its list from that — worksheets, quiz, Blooket, and
+  // flashcards all work; videos are APK-only (media isn't hosted on Pages).
+  function _lessonsFromRoadmap(roadmap) {
+    var L = (roadmap && roadmap.lessons) || {};
+    var out = Object.keys(L).map(function (id) {
+      var u = (L[id] && L[id].urls) || {};
+      return {
+        id: id, unit: parseInt(id, 10) || 0, label: (L[id] && L[id].topic) || ('Topic ' + id),
+        worksheet: u.worksheet || null, quiz: u.quiz || null, blooket: u.blooket || null, videos: []
+      };
+    });
+    out.sort(function (a, b) {
+      if (a.unit !== b.unit) return a.unit - b.unit;
+      return ((parseInt(String(a.id).split('.')[1], 10) || 0) - (parseInt(String(b.id).split('.')[1], 10) || 0));
+    });
+    return out;
+  }
+  function _bootLessons(lessons) { _lastLessons = lessons || []; render(_lastLessons); loadGrade(); }
+
+  // Primary: the bundled lessons-index.json (APK — has local video paths).
+  // Fallback: the published roadmap-data.json (the laptop / GH-Pages launcher).
   fetch('lessons-index.json', { cache: 'no-store' })
-    .then(function (r) { return r.json(); })
-    .then(function (d) { _lastLessons = (d && d.lessons) || []; render(_lastLessons); loadGrade(); })
-    .catch(function () { main.innerHTML = '<div class="empty">Could not load lessons-index.json.</div>'; });
+    .then(function (r) { if (!r || !r.ok) throw new Error('lessons-index ' + (r && r.status)); return r.json(); })
+    .then(function (d) { _bootLessons((d && d.lessons) || []); })
+    .catch(function () {
+      fetch('roadmap-data.json', { cache: 'no-store' })
+        .then(function (r) { if (!r || !r.ok) throw new Error('roadmap ' + (r && r.status)); return r.json(); })
+        .then(function (rm) { var ls = _lessonsFromRoadmap(rm); if (!ls.length) throw new Error('empty'); _bootLessons(ls); })
+        .catch(function () { main.innerHTML = '<div class="empty">Could not load the lesson list.</div>'; });
+    });
 })();
 </script>
 </body>
