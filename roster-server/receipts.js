@@ -187,7 +187,11 @@ export function issueLedgerReceipt({
   evidenceTier,
   response,
   gradingProvenance: provenanceOverride,
-  ts = Date.now()
+  ts = Date.now(),
+  nonce,   // §0.8: pass a deterministic nonce (from the submission) so a re-mint of the
+           // SAME grade is byte-identical → dedups. Default random (unchanged behavior).
+  sub,     // §0.7: the offline-grading-mesh submission this grade covers (its receipt_id).
+  kv       // §0.10: the answer-key version this was scored against.
 }) {
   if (!issuer.enabled) return null;
   if (!studentId || !source || !itemId) return null;
@@ -205,12 +209,14 @@ export function issueLedgerReceipt({
       e: evidenceTier,
       ah: crypto.createHash('sha256').update(valueString, 'utf8').digest('hex').slice(0, 16),
       ts,
-      n: crypto.randomBytes(4).toString('hex')
+      n: (nonce !== undefined && nonce !== null) ? String(nonce) : crypto.randomBytes(4).toString('hex')
     };
 
     if (score !== undefined && score !== null) payload.sc = Number(score);
     const g = provenanceOverride || gradingProvenance(source, itemId);
     if (g) payload.g = g;
+    if (sub !== undefined && sub !== null) payload.sub = String(sub);
+    if (kv !== undefined && kv !== null) payload.kv = String(kv);
 
     const { receiptId, compact } = signPayload(issuer.privateKey, payload);
     return { receiptId, compact };

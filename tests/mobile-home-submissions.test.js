@@ -23,11 +23,12 @@ describe('mobile-home — submissions lane wiring', () => {
     expect(HOME).toContain('function subsLaneReady');
   });
 
-  it('snapshots the grades set once for §0.7 suppression (offer + ingest agree)', () => {
+  it('snapshots the grades set once for §0.7 suppression + §0.4 flood cap (offer + ingest agree)', () => {
     // coveredKeys is computed once from a grades snapshot and drives BOTH sides.
     expect(HOME).toContain('SubmissionStore.coveredKeys(gradesSnapshot)');
     expect(HOME).toContain('SubmissionStore.isCovered(r, covered)');           // offer side
-    expect(HOME).toContain('SubmissionStore.suppressingVerify(verifySubRow, covered)'); // ingest side
+    // ingest side: the flood cap wraps the suppression verifier (§0.4/§5 anti-farming)
+    expect(HOME).toContain('SubmissionStore.floodCapVerify(SubmissionStore.suppressingVerify(verifySubRow, covered))');
   });
 
   it('runs two lanes when the subs stack is live, else the grades-only round', () => {

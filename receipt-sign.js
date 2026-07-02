@@ -133,10 +133,16 @@
   }
 
   // Build + sign a ledger receipt matching receipts.js::issueLedgerReceipt's payload
-  // ({v:1,t:'ledger',sid,u?,src,i,a,e,ah,ts,n,sc?,g?}). A teacher FRQ grade is an
-  // 'frq' receipt with the student's response (for `ah`) + a score + an incremented
+  // ({v:1,t:'ledger',sid,u?,src,i,a,e,ah,ts,n,sc?,g?,sub?,kv?}). A teacher FRQ grade is
+  // an 'frq' receipt with the student's response (for `ah`) + a score + an incremented
   // attempt (latest-wins supersedes). The signed record then passes verifyRecord.
-  // fields: { sid, u?, src, i, a(attempt), e(evidenceTier), response, sc?, g?, ts?, n? }
+  // fields: { sid, u?, src, i, a(attempt), e(evidenceTier), response, sc?, g?, ts?, n?,
+  //           sub?, kv? }
+  //   sub — the offline-grading-mesh submission this grade covers = that submission's
+  //         receipt_id (§0.7: makes SubmissionStore suppress the graded submission).
+  //   kv  — the answer-key version this grade was scored against (§0.10 provenance).
+  //   ts/n — pass explicit deterministic values (derived from the submission) so
+  //          re-grading the SAME submission yields a byte-identical receipt → dedups (§0.8).
   function signLedgerReceipt(privateKey, fields) {
     fields = fields || {};
     return answerHash(fields.response).then(function (ah) {
@@ -149,6 +155,8 @@
       if (fields.u !== undefined) payload.u = fields.u;
       if (fields.sc !== undefined && fields.sc !== null) payload.sc = Number(fields.sc);
       if (fields.g !== undefined) payload.g = fields.g;
+      if (fields.sub !== undefined && fields.sub !== null) payload.sub = String(fields.sub);
+      if (fields.kv !== undefined && fields.kv !== null) payload.kv = String(fields.kv);
       return signPayload(privateKey, payload).then(function (r) {
         return { receiptId: r.receiptId, compact: r.compact, payload: payload };
       });

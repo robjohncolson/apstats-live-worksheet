@@ -85,4 +85,45 @@ describe('receipt-sign — device key, server verifies (cross-stack)', () => {
     const b = await RS.signPayload(reimported, PAYLOAD);
     expect(b.compact).toBe(a.compact);                   // Ed25519 is deterministic
   });
+
+  // ── mesh Phase 3: sub/kv + deterministic ts/n on signLedgerReceipt ────────────
+  it('signLedgerReceipt carries sub + kv into the SIGNED payload (verifiable, canonical)', async () => {
+    const signed = await RS.signLedgerReceipt(privateKey, {
+      sid: 'stu-1', src: 'worksheet', i: 'WS-U1L1-Q1', a: 1, e: 'practice',
+      response: 'mean', sc: 1, sub: 'subReceipt123', kv: 'kv-2026-06', ts: 5000, n: 'deadbeef',
+    });
+    const pub = publicKeyFromX(publicKeyX);
+    const p = verifyCompact(signed.compact, pub);         // re-checks canonical form + sig
+    expect(p).toBeTruthy();
+    expect(p.sub).toBe('subReceipt123');
+    expect(p.kv).toBe('kv-2026-06');
+    expect(p.ts).toBe(5000);
+    expect(p.n).toBe('deadbeef');
+    // verifyRecord (grades lane) still binds it (it ignores sub/kv, per §0.1a design).
+    const rec = { studentId: 'stu-1', itemId: 'WS-U1L1-Q1', source: 'worksheet', score: 1, receipt_id: signed.receiptId, receipt_compact: signed.compact };
+    expect(verifyRecord(rec, [pub], 'stu-1').ok).toBe(true);
+  });
+
+  it('deterministic ts+n → a re-sign of the SAME grade is byte-identical (§0.8 dedup)', async () => {
+    const fields = { sid: 'stu-1', src: 'worksheet', i: 'WS-U1L1-Q1', a: 1, e: 'practice', response: 'mean', sc: 1, sub: 'subX', ts: 7, n: 'cafebabe' };
+    const a = await RS.signLedgerReceipt(privateKey, fields);
+    const b = await RS.signLedgerReceipt(privateKey, fields);
+    expect(b.receiptId).toBe(a.receiptId);
+    expect(b.compact).toBe(a.compact);
+  });
+
+  it('a client grade with sub/kv/ts/n is byte-identical to the server issueLedgerReceipt (interop §0.8)', async () => {
+    // The server signs with its issuer key; to compare the CANONICAL BYTES independent
+    // of the key, compare the payload the two builders produce for identical inputs.
+    const clientSigned = await RS.signLedgerReceipt(privateKey, {
+      sid: 'stu-1', src: 'worksheet', i: 'WS-U1L1-Q1', a: 2, e: 'practice',
+      response: 'mean', sc: 1, g: 'key', sub: 'subX', kv: 'kvY', ts: 42, n: 'abcd1234',
+    });
+    // Reconstruct the server-side canonical payload (issueLedgerReceipt builds the same
+    // object shape; ah is sha256(stringifyResponse(response)).slice(16) on both sides).
+    const ah = receiptInternals.stringifyResponse('mean');
+    const ahHex = (await import('node:crypto')).createHash('sha256').update(ah, 'utf8').digest('hex').slice(0, 16);
+    const serverPayload = { v: 1, t: 'ledger', sid: 'stu-1', src: 'worksheet', i: 'WS-U1L1-Q1', a: 2, e: 'practice', ah: ahHex, ts: 42, n: 'abcd1234', sc: 1, g: 'key', sub: 'subX', kv: 'kvY' };
+    expect(receiptInternals.canonicalize(clientSigned.payload)).toBe(receiptInternals.canonicalize(serverPayload));
+  });
 });

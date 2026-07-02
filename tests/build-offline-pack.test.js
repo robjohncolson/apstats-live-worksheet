@@ -67,9 +67,16 @@ describe('build (real, into a temp dir)', () => {
 
     // the offline-grading-mesh scripts the mobile launcher references are bundled
     // (else the APK 404s on them) — the deployment-checklist gotcha, guarded here.
-    for (const f of ['student-key.js', 'submission-store.js', 'submission-capture.js', 'receipt-sign.js', 'secure-key.js']) {
+    for (const f of ['student-key.js', 'submission-store.js', 'submission-capture.js', 'submission-grader.js', 'receipt-sign.js', 'secure-key.js']) {
       expect(existsSync(resolve(out, f)), `${f} must be in the pack`).toBe(true);
     }
+    // SECURITY: the FULL answer key must NEVER ship to a student device (mesh Phase 3b).
+    // The redacted key comes from the server at runtime; the teacher fetches the full
+    // key from the teacher-gated endpoint — neither belongs in the bundled data/.
+    expect(existsSync(resolve(out, 'data', 'answer-key.json')), 'answer-key.json must NOT be in the student pack').toBe(false);
+    expect(existsSync(resolve(out, 'data', 'worksheet-key.json')), 'worksheet-key.json must NOT be in the student pack').toBe(false);
+    // but the non-secret data files still ship
+    expect(existsSync(resolve(out, 'data', 'lesson-schedule.json')) || existsSync(resolve(out, 'data'))).toBe(true);
 
     // a worksheet was copied AND had offline-config.js injected
     const ws = readFileSync(resolve(out, 'u3_lesson6-7_live.html'), 'utf8');

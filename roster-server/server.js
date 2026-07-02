@@ -19,6 +19,7 @@ import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
 import { mountOfflineInputs } from './grade-offline-inputs.js';
+import { mountAnswerKey } from './grade-answer-key.js';
 import { mountTranscript } from './transcript.js';
 import { mountCommits } from './commits.js';
 import { mountMastery } from './mastery.js';
@@ -921,6 +922,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       : PHASE3_CONFIG;
     mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
     mountOfflineInputs(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
+    // OFFLINE_GRADING_MESH Phase 3b — TEACHER-gated full (unredacted) key so the
+    // teacher device auto-grades gossiped submissions offline (§7.1). Students never
+    // hit this — they get the REDACTED key from /grade/offline-inputs.
+    mountAnswerKey(app, { db, worksheetKey, loadAnswerKey, lessonSchedule: lessonSchedule || null, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
     mountTranscript(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
     mountCommits(app, { verifyToken, ledgerDb, db });
   }

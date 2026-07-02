@@ -205,6 +205,38 @@
     };
   }
 
+  // §0.4/§5 anti-farming flood cap on the subs ingest: a STATEFUL verify wrapper that
+  // bounds how much a single student can push into the grow-only mesh per round —
+  // total rows, rows per student, and rows per (student,item). A row is admitted only
+  // if it's under every cap AND the base verifier accepts it; the base runs FIRST so a
+  // forged/covered row is rejected without consuming budget. Content-addressed dedup
+  // already collapses identical re-submissions; this caps DISTINCT junk. Make ONE
+  // wrapper per round (the counters are per-instance).
+  //   opts: { maxTotal=1200, maxPerStudent=200, maxPerItem=12 }
+  function floodCapVerify(baseVerify, opts) {
+    opts = opts || {};
+    var maxTotal = opts.maxTotal || 1200;
+    var maxPerStudent = opts.maxPerStudent || 200;
+    var maxPerItem = opts.maxPerItem || 12;
+    var total = 0;
+    var perStudent = Object.create(null);
+    var perItem = Object.create(null);
+    return function (row) {
+      return Promise.resolve(typeof baseVerify === 'function' ? baseVerify(row) : false).then(function (ok) {
+        if (!ok) return false;
+        var sid = String((row && row.student_id) == null ? '' : row.student_id);
+        var ik = sid + '|' + String((row && row.item_id) == null ? '' : row.item_id);
+        if (total >= maxTotal) return false;
+        if ((perStudent[sid] || 0) >= maxPerStudent) return false;
+        if ((perItem[ik] || 0) >= maxPerItem) return false;
+        total += 1;
+        perStudent[sid] = (perStudent[sid] || 0) + 1;
+        perItem[ik] = (perItem[ik] || 0) + 1;
+        return true;
+      });
+    };
+  }
+
   root.SubmissionStore = {
     keyOf: keyOf,
     tsOf: tsOf,
@@ -218,6 +250,7 @@
     isCovered: isCovered,
     rowsForGossip: rowsForGossip,
     suppressingVerify: suppressingVerify,
+    floodCapVerify: floodCapVerify,
     _DB_NAME: DB_NAME
   };
 

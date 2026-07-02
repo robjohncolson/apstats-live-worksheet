@@ -408,4 +408,23 @@ describe('roster-server receipt integration', () => {
 
     expect(crypto.verify(null, decoded.bytes, publicKey, decoded.sig)).toBe(true);
   });
+
+  it('carries sub/kv + a deterministic nonce for the offline-grading mesh (§0.7, §0.8, §0.10)', () => {
+    process.env.RECEIPT_ISSUER_PRIVATE_KEY = V11_TEST_PRIVATE_KEY;
+    initReceipts();
+    const args = {
+      studentId, source: 'worksheet', itemId: 'WS-U1L1-Q1', score: 1, attempt: 1,
+      evidenceTier: 'practice', response: 'mean', sub: 'subReceipt123', kv: 'kv-2026-06', nonce: 'abcd1234'
+    };
+    const r1 = issueLedgerReceipt(args);
+    const payload = JSON.parse(Buffer.from(r1.compact.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+    expect(payload.sub).toBe('subReceipt123');
+    expect(payload.kv).toBe('kv-2026-06');
+    expect(payload.n).toBe('abcd1234');
+    // Deterministic nonce (+ an explicit ts) → a re-mint is byte-identical (dedup).
+    const r2 = issueLedgerReceipt({ ...args, ts: 42 });
+    const r3 = issueLedgerReceipt({ ...args, ts: 42 });
+    expect(r3.compact).toBe(r2.compact);
+    expect(r3.receiptId).toBe(r2.receiptId);
+  });
 });

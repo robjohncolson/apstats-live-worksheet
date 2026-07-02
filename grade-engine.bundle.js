@@ -2254,6 +2254,9 @@
     sectionToPeriod: __reg["lesson-grade"].sectionToPeriod,
     latestPerItem: __reg["scoring"].latestPerItem,
     answerKeyMapOrNull: __reg["scoring"].answerKeyMapOrNull,
+    isCorrect: __reg["scoring"].isCorrect,
+    normalizeResponse: __reg["scoring"].normalizeResponse,
+    scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
     _engineVersion: "a268e27a88cb",
   };
 

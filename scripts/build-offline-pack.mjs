@@ -41,9 +41,10 @@ const ROOT_FILES = [
   'ledger-gossip.js', 'nearby-transport.js',
   // ANDROID Phase 4 — on-device teacher app: signing + epoch seal + the key-store bridge.
   'teacher-app.html', 'receipt-sign.js', 'ledger-seal.js', 'secure-key.js',
-  // OFFLINE GRADING MESH Phase 1-2 — the student's device signing key + the
-  // submissions lane (self-sign raw work, gossip it beside grades). Inert on web.
-  'student-key.js', 'submission-store.js', 'submission-capture.js',
+  // OFFLINE GRADING MESH Phase 1-3 — the student's device signing key + the
+  // submissions lane (self-sign raw work, gossip it beside grades) + the teacher
+  // device's grade-from-submission core. Inert on web.
+  'student-key.js', 'submission-store.js', 'submission-capture.js', 'submission-grader.js',
   // ANDROID Phase 5 — Google Play on-demand video (inert unless window.PLAY_BUILD).
   'video-ondemand.js', 'video-store.js',
   'railway_client.js', 'railway_config.js', 'roadmap-data.json',
@@ -228,11 +229,17 @@ function main() {
 
   mkdirSync(out, { recursive: true });
 
+  // The FULL answer key is a cheating surface — it must NEVER ship to a student
+  // device. The offline grade re-derivation uses the REDACTED key from
+  // /grade/offline-inputs (cached), never these files, and no client page reads them,
+  // so excluding them from data/ closes the leak with no functional loss. The TEACHER
+  // device fetches the full key from the teacher-gated GET /grade/answer-key instead.
+  const KEY_LEAK_FILES = new Set(['answer-key.json', 'worksheet-key.json']);
   const copyInto = (rel) => {
     const src = resolve(REPO, rel);
     const dst = resolve(out, rel);
     mkdirSync(dirname(dst), { recursive: true });
-    cpSync(src, dst, { recursive: true });
+    cpSync(src, dst, { recursive: true, filter: (s) => !KEY_LEAK_FILES.has(s.split(/[\\/]/).pop()) });
     return dst;
   };
 
@@ -273,6 +280,13 @@ function main() {
       else if (/\.html$/i.test(e.name)) { const rel = relative(out, p); writeFileSync(p, prepHtml(readFileSync(p, 'utf8'), rel), 'utf8'); }
     } };
     walk(resolve(out, d));
+  }
+  // The cpSync filter above SKIPS copying the full keys, but the out dir persists
+  // across builds (android-app/www is reused), so a key a PRE-fix build already left
+  // there would survive. Explicitly PURGE them so the leak can't ride a stale file.
+  for (const f of KEY_LEAK_FILES) {
+    const stale = resolve(out, 'data', f);
+    if (existsSync(stale)) rmSync(stale, { force: true });
   }
   // 4. transcripts, media, quiz app
   for (const rel of transcripts) copyInto(rel);

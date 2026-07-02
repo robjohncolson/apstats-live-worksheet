@@ -117,3 +117,36 @@ describe('SubmissionStore — grade-gated suppression (§0.7)', () => {
     expect(await vReject(sub('r2'))).toBe(false);
   });
 });
+
+describe('SubmissionStore — flood cap (§0.4/§5 anti-farming)', () => {
+  let S;
+  beforeEach(() => { S = load(); });
+
+  it('bounds rows per (student,item) — a brute-force flood on one item is capped', async () => {
+    const v = S.floodCapVerify(() => Promise.resolve(true), { maxPerItem: 3 });
+    let ok = 0;
+    for (let i = 0; i < 10; i++) if (await v(sub('r' + i, { sid: 'stu-1', item: 'WS-X' }))) ok += 1;
+    expect(ok).toBe(3);                                    // only 3 admitted for (stu-1, WS-X)
+    // a DIFFERENT item for the same student still has its own budget
+    expect(await v(sub('other', { sid: 'stu-1', item: 'WS-Y' }))).toBe(true);
+  });
+
+  it('bounds rows per student and total across items', async () => {
+    const v = S.floodCapVerify(() => Promise.resolve(true), { maxPerStudent: 4, maxPerItem: 100, maxTotal: 100 });
+    let ok = 0;
+    for (let i = 0; i < 10; i++) if (await v(sub('r' + i, { sid: 'stu-1', item: 'WS-' + i }))) ok += 1;
+    expect(ok).toBe(4);                                    // per-student cap
+    // another student is unaffected
+    expect(await v(sub('z', { sid: 'stu-2', item: 'WS-0' }))).toBe(true);
+  });
+
+  it('runs the base verifier FIRST so a rejected row never consumes budget', async () => {
+    const v = S.floodCapVerify(() => Promise.resolve(false), { maxPerItem: 1 });
+    expect(await v(sub('r1', { sid: 'stu-1', item: 'WS-X' }))).toBe(false);
+    expect(await v(sub('r2', { sid: 'stu-1', item: 'WS-X' }))).toBe(false);
+    // budget intact: a good row on the same key still admits (the rejects didn't count)
+    const v2 = S.floodCapVerify((r) => Promise.resolve(r.receipt_id !== 'bad'), { maxPerItem: 1 });
+    expect(await v2(sub('bad', { sid: 'stu-1', item: 'WS-X' }))).toBe(false);
+    expect(await v2(sub('good', { sid: 'stu-1', item: 'WS-X' }))).toBe(true);
+  });
+});

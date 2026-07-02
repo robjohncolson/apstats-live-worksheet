@@ -278,7 +278,9 @@
                   return rows.filter(function (r) { return !SubmissionStore.isCovered(r, covered); });
                 });
               },
-              verify: SubmissionStore.suppressingVerify(verifySubRow, covered),
+              // §0.7 suppression + §0.4/§5 flood cap, composed per round (one stateful
+              // budget instance): reject covered submissions, bound per-student/-item/-total.
+              verify: SubmissionStore.floodCapVerify(SubmissionStore.suppressingVerify(verifySubRow, covered)),
               store: SubmissionStore
             }],
             durationMs: 45000,

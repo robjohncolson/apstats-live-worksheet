@@ -94,13 +94,37 @@
 >   `tests/{secure-key,secure-key-plugin,student-key-client,mobile-home-submissions}.test.js`. ⚠ USER
 >   rebuilds the APK + re-tests on-device (the silent-key + signup are native/UI, only runtime-checkable on a phone).
 >
-> **⏭ Phases 3-4 NOT built:** teacher offline grade loop — ingest gossiped submissions →
-> auto-grade deterministic items + FRQ queue → sign DETERMINISTIC grade receipts (ts/n derived
-> from the submission so re-grades dedup, §0.8) carrying `sub`=<submission receipt_id> so
-> suppression activates → emit on the grades lane; anti-farming (teacher ASSIGNS attempt,
-> max-score supersession, teacher clock §0.4) + the per-student submission flood cap (3). Hub
-> reconcile: server verifies student sigs, archives submissions, NEVER re-grades one already
-> carrying a teacher grade (§0.10) (4).
+> **Phase 3 shipped — the teacher offline grade loop (§3, §0.4, §0.8-0.11):**
+> - **`submission-grader.js`** (`window.SubmissionGrader`, pure + fully unit-tested): `autoScore`
+>   (worksheet scorer BYTE-matched to `ledger.js`; MC via the lifted `GradeEngine.isCorrect`);
+>   `buildGradeFields` → unsigned `signLedgerReceipt` fields carrying `sub` (§0.7) + `kv` (§0.10) +
+>   deterministic ts/n (§0.8); `planAutoGrades` = per (sid,item) grade ONLY the max-score submission
+>   (never-downgrade) — the §0.9 emit fix; `assignAttempt` = **teacher-assigned max existing grade
+>   attempt + 1**, NEVER the student's forgeable submission attempt (§0.4 — so the engine's
+>   latest-by-attempt supersession records the max score; a wrong high-attempt submission can't
+>   bury a correct one).
+> - **`receipt-sign.js` + server `receipts.js`**: `signLedgerReceipt`/`issueLedgerReceipt` gain
+>   `sub`/`kv` + a deterministic `nonce` (client/server byte-identical, proven in interop).
+> - **`GradeEngine`**: `isCorrect`/`normalizeResponse`/`scoreAgainstKey` lifted into the public API
+>   (bundle regenerated, parity pinned).
+> - **Server**: teacher-gated `GET /grade/answer-key` (`grade-answer-key.js`) returns the FULL
+>   unredacted key + a `keyVersion` hash for the teacher device (§7.1 — students still get the
+>   redacted key). **⚠ closed a real leak: `build-offline-pack` copied the whole `data/` dir → the
+>   full answer key shipped in the STUDENT APK; now excluded + PURGED (stale copies deleted, a test
+>   guards it).**
+> - **Flood cap (§0.4/§5)**: `SubmissionStore.floodCapVerify` bounds per-student/-item/-total rows
+>   on the subs ingest; composed into the mobile + teacher subs lanes.
+> - **`teacher-app.html`**: an Offline grading card + loop — Nearby two-lane sync, verify
+>   submissions (student trust set), auto-grade (max-score, never-downgrade, teacher-assigned
+>   attempt), FRQ E/P/I queue (already-covered work filtered out so a re-judge can't silently
+>   downgrade), sign with the teacher key, verify-before-emit into the grades G-Set.
+> - 8-agent adversarial review: 4 confirmed + FIXED (the stale-file leak; the §0.4/§0.9 attempt
+>   assignment; the never-downgrade-vs-active-score; the FRQ re-queue downgrade) + 1 refuted.
+>
+> **⏭ Phase 4 NOT built:** hub reconcile — the server verifies student sigs + archives raw
+> submissions (durable/audit, decoupled from grading so it never mints a competing score, §0.10);
+> teacher grades already reach the server via the existing `/admin/restore` (teacher key = trusted
+> issuer). ⚠ the teacher-app offline loop is RUNTIME-UNTESTED (needs a teacher device + student phones).
 
 ---
 

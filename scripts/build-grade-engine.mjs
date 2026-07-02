@@ -58,6 +58,11 @@ const PUBLIC_API = {
   sectionToPeriod:           'lesson-grade',
   latestPerItem:             'scoring',
   answerKeyMapOrNull:        'scoring',
+  // offline-grading mesh Phase 3: the teacher device auto-grades a single submission
+  // against the real key with the SAME normalization the server uses (§0.10 one module).
+  isCorrect:                 'scoring',
+  normalizeResponse:         'scoring',
+  scoreAgainstKey:           'scoring',
 };
 
 function pathToRegKey(p) {
