@@ -41,9 +41,10 @@ function baseWin(over = {}) {
     rosterClient: { studentId: () => SID, token: () => 'TOKEN' },
     SecureKeyStore: {
       available: true,
+      _opts: [],                              // captures every (setKey/getKey) opts arg
       hasKey: (name) => Promise.resolve(store.has(name)),
-      getKey: (name) => Promise.resolve(store.get(name) || null),
-      setKey: (name, val) => { store.set(name, val); return Promise.resolve(); },
+      getKey: function (name, opts) { this._opts.push(opts); return Promise.resolve(store.get(name) || null); },
+      setKey: function (name, val, opts) { this._opts.push(opts); store.set(name, val); return Promise.resolve(); },
       removeKey: (name) => { store.delete(name); return Promise.resolve(); },
     },
     ReceiptSign: {
@@ -77,8 +78,8 @@ describe('StudentKey.ensureKey — get-or-generate', () => {
     expect(r.ok).toBe(true);
     expect(r.generated).toBe(true);
     expect(r.pubkey).toBe('PK_NEW');
-    expect(win._store.has('apstats_student_signing_v1:' + SID)).toBe(true);
-    expect(win.localStorage.getItem('apstats_student_pubkey_v1:' + SID)).toBe('PK_NEW');
+    expect(win._store.has('apstats_student_signing_v2:' + SID)).toBe(true);
+    expect(win.localStorage.getItem('apstats_student_pubkey_v2:' + SID)).toBe('PK_NEW');
   });
 
   it('reuses the cached pubkey on a later run (no regeneration)', async () => {
@@ -90,11 +91,25 @@ describe('StudentKey.ensureKey — get-or-generate', () => {
     expect(again.pubkey).toBe('PK_NEW');
   });
 
+  it('stores the student key SILENTLY — requireAuth:false on every SecureKeyStore call (§2.5)', async () => {
+    const win = baseWin();
+    const SK = load(win);
+    await SK.ensureKey(SID);                                   // generate + setKey
+    win.localStorage.removeItem('apstats_student_pubkey_v2:' + SID);
+    await SK.ensureKey(SID);                                   // re-derive path → getKey
+    await SK.unlock(SID);                                      // unlock → getKey
+    expect(win.SecureKeyStore._opts.length).toBeGreaterThanOrEqual(3);
+    for (const o of win.SecureKeyStore._opts) {
+      expect(o, 'every student key op must pass an opts arg').toBeTruthy();
+      expect(o.requireAuth).toBe(false);                      // never a biometric prompt
+    }
+  });
+
   it('re-derives the pubkey (one unlock) if the key exists but the cache was cleared', async () => {
     const win = baseWin();
     const SK = load(win);
     await SK.ensureKey(SID);
-    win.localStorage.removeItem('apstats_student_pubkey_v1:' + SID);
+    win.localStorage.removeItem('apstats_student_pubkey_v2:' + SID);
     const r = await SK.ensureKey(SID);
     expect(r.ok).toBe(true);
     expect(r.generated).toBe(false);
@@ -131,8 +146,8 @@ describe('StudentKey.register — authenticated, idempotent, revocation-aware', 
     await SK.ensureKey(SID);                         // establish a key + caches
     const r = await SK.register('https://roster', 'TOKEN', SID, 'PK_NEW');
     expect(r.reason).toBe('revoked');
-    expect(win._store.has('apstats_student_signing_v1:' + SID)).toBe(false);
-    expect(win.localStorage.getItem('apstats_student_pubkey_v1:' + SID)).toBeNull();
+    expect(win._store.has('apstats_student_signing_v2:' + SID)).toBe(false);
+    expect(win.localStorage.getItem('apstats_student_pubkey_v2:' + SID)).toBeNull();
   });
 });
 

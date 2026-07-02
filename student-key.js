@@ -5,12 +5,13 @@
  * self-signed so the mesh can carry them without impersonation. The key NEVER
  * signs a grade — grades are the issuer trust set's job (domain separation §0.1).
  *
- * Storage: the private JWK is hardware-wrapped via SecureKeyStore (Android
- * Keystore AES-GCM + biometric/credential gate — APK only; on the web this
- * module is inert, StudentKey.available() === false). Keys are labeled PER
- * STUDENT ('apstats_student_signing_v1:<sid>') so a shared device gives each
- * signed-in student their own key. The pubkey is cached in plain localStorage
- * (it's public) so boot never needs a biometric prompt.
+ * Storage: the private JWK is hardware-wrapped via SecureKeyStore in the SILENT
+ * (non-biometric) key class (§2.5) — a student on a SHARED classroom device must not
+ * need the teacher's fingerprint to sign in or do routine work; the roster password is
+ * the auth, and the key just makes mesh submissions attributable. APK only; on the web
+ * this module is inert (StudentKey.available() === false). Keys are labeled PER STUDENT
+ * ('apstats_student_signing_v2:<sid>') so a shared device gives each signed-in student
+ * their own key. The pubkey is cached in plain localStorage (it's public).
  *
  * Registration (§0.2 — the impersonation gate): the pubkey is bound to the sid
  * server-side via POST /student-keys/register, authenticated by the caller's
@@ -24,9 +25,15 @@
 (function (root) {
   'use strict';
 
-  var KEY_PREFIX = 'apstats_student_signing_v1:';   // SecureKeyStore label, per sid
-  var PUB_PREFIX = 'apstats_student_pubkey_v1:';    // plain localStorage pubkey cache
-  var REG_PREFIX = 'apstats_student_key_reg_v1:';   // set to the pubkey once the server confirms
+  // v2: the silent (non-biometric) key class (§2.5). A fresh label version so the new
+  // APK never tries to read a v1 auth-required key with the silent master (wrong master
+  // → decrypt fails); v1 keys are simply left orphaned + a fresh v2 key is generated.
+  var KEY_PREFIX = 'apstats_student_signing_v2:';   // SecureKeyStore label, per sid
+  var PUB_PREFIX = 'apstats_student_pubkey_v2:';    // plain localStorage pubkey cache
+  var REG_PREFIX = 'apstats_student_key_reg_v2:';   // set to the pubkey once the server confirms
+  // requireAuth:false → SILENT store/unlock (no biometric). title/subtitle are unused
+  // when there's no prompt, but pass a student-correct copy for defense in depth.
+  var STUDENT_OPTS = { requireAuth: false, title: 'Signing in', subtitle: 'AP Statistics — your account key' };
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
@@ -56,8 +63,8 @@
     return root.SecureKeyStore.hasKey(label).then(function (has) {
       if (has && cached) return { ok: true, pubkey: cached, generated: false };
       if (has && !cached) {
-        // Key exists but the pubkey cache was cleared — one unlock to re-derive.
-        return root.SecureKeyStore.getKey(label).then(function (jwkStr) {
+        // Key exists but the pubkey cache was cleared — re-derive (silent, no prompt).
+        return root.SecureKeyStore.getKey(label, STUDENT_OPTS).then(function (jwkStr) {
           return root.ReceiptSign.importPrivateKey(JSON.parse(jwkStr));
         }).then(function (priv) {
           return root.ReceiptSign.publicKeyXFromPrivate(priv);
@@ -67,7 +74,7 @@
         });
       }
       return root.ReceiptSign.generateKey().then(function (k) {
-        return root.SecureKeyStore.setKey(label, JSON.stringify(k.privateJwk)).then(function () {
+        return root.SecureKeyStore.setKey(label, JSON.stringify(k.privateJwk), STUDENT_OPTS).then(function () {
           lsSet(PUB_PREFIX + sid, k.publicKeyX);
           return { ok: true, pubkey: k.publicKeyX, generated: true };
         });
@@ -120,7 +127,7 @@
   function unlock(sid) {
     if (!available()) return Promise.reject(new Error('unavailable'));
     if (!sid) return Promise.reject(new Error('no-identity'));
-    return root.SecureKeyStore.getKey(KEY_PREFIX + sid).then(function (jwkStr) {
+    return root.SecureKeyStore.getKey(KEY_PREFIX + sid, STUDENT_OPTS).then(function (jwkStr) {
       return root.ReceiptSign.importPrivateKey(JSON.parse(jwkStr));
     });
   }

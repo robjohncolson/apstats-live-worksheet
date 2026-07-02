@@ -63,6 +63,25 @@ describe('secure-key bridge — native app', () => {
     expect(await sk.getKey('signing')).toBe('JWK-signing');
   });
 
+  it('a 2-arg (teacher) call forwards NO requireAuth → native default (true) applies', async () => {
+    const { plugin, calls } = mockPlugin();
+    const sk = load({ isNativePlatform: () => true, Plugins: { SecureKeyStore: plugin } });
+    await sk.setKey('teacher', 'jwk');
+    const args = calls.find((c) => c[0] === 'setKey')[1];
+    expect('requireAuth' in args).toBe(false);   // byte-identical to the pre-2.5 call
+  });
+
+  it('opts forward requireAuth + caller copy (§2.5: student=silent, teacher=labeled)', async () => {
+    const { plugin, calls } = mockPlugin();
+    const sk = load({ isNativePlatform: () => true, Plugins: { SecureKeyStore: plugin } });
+    await sk.setKey('student', 'jwk', { requireAuth: false, title: 'Signing in', subtitle: 'your account key' });
+    await sk.getKey('student', { requireAuth: false });
+    const setArgs = calls.find((c) => c[0] === 'setKey')[1];
+    expect(setArgs).toEqual({ key: 'student', value: 'jwk', requireAuth: false, title: 'Signing in', subtitle: 'your account key' });
+    const getArgs = calls.find((c) => c[0] === 'getKey')[1];
+    expect(getArgs.requireAuth).toBe(false);
+  });
+
   it('hasKey maps {exists}', async () => {
     const { plugin } = mockPlugin();
     const sk = load({ isNativePlatform: () => true, Plugins: { SecureKeyStore: plugin } });

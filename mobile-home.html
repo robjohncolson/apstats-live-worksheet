@@ -541,15 +541,132 @@
   function _nfBackToDial() { _nfRenderDial(); }
   window._nfBackToDial = _nfBackToDial;
 
-  // Off-roster escape hatch: the launcher's finder only lists enrolled students, so
-  // send a genuinely-new student to the full app, whose sign-in wall has self-signup
-  // (real name + 4-digit PIN). Both pages share the roster session, so once they make
-  // an account there and come back, their name shows here too.
+  // Off-roster self-signup, NATIVE to the launcher (§2.5 mobile port — was a redirect
+  // to the desktop Desk). A genuinely-new student makes an account here: real name +
+  // a spun fruit_animal username (re-rollable) + a 4-digit PIN. Mirrors the Desk's
+  // client-side spinner (word lists copied from ap_stats_roadmap_square_mode.html /
+  // roster-server/username.js); the server's POST /roster/claim is the authoritative
+  // first-come-first-serve check, so the lists need not byte-match.
+  var _SU_FRUITS = ['apple','banana','cherry','grape','kiwi','lemon','lime','mango','melon','peach','pear','plum','berry','fig','date','guava','lychee','papaya','orange','apricot','coconut','pineapple','pomelo','quince','raisin','olive','tomato','avocado','pumpkin','cranberry'];
+  var _SU_ANIMALS = ['koala','panda','tiger','lion','bear','wolf','fox','otter','seal','whale','shark','eagle','hawk','owl','duck','swan','deer','moose','zebra','horse','llama','sloth','gecko','turtle','frog','toad','rabbit','hamster','badger','beaver'];
+  var _suUsername = '';
+  var _suSection = 'PeriodX';   // single-section class; the picker adapts if the server lists more.
+  function _suPick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function _suSpin() {
+    _suUsername = _suPick(_SU_FRUITS) + '_' + _suPick(_SU_ANIMALS);
+    var el = document.getElementById('nf-su-user');
+    if (el) el.textContent = _suUsername;
+    return _suUsername;
+  }
+  window._nfSpin = function () { _suSpin(); };
+
   function _nfCreate() {
-    closeNameFinder();
-    try { location.href = 'ap_stats_roadmap_square_mode.html'; } catch (_) {}
+    _nfState = 'signup';
+    _suSpin();
+    var host = document.getElementById('nf-content');
+    if (!host) return;
+    host.innerHTML =
+      '<div class="nf-title">🎉 Create your account</div>'
+      + '<div class="nf-count">So your work counts toward your grade.</div>'
+      + '<input type="text" id="nf-su-name" autocomplete="name" placeholder="Your real name" style="margin-bottom:8px">'
+      + '<div style="font-size:11px;color:#556;margin:2px 0 4px">Your username: '
+      +   '<b id="nf-su-user">' + _nfEsc(_suUsername) + '</b> '
+      +   '<button class="nf-go" style="min-width:0;padding:2px 8px;font-size:11px" onclick="_nfSpin()" type="button">🎲 Re-roll</button></div>'
+      + '<div id="nf-su-period-row" style="font-size:11px;color:#556;margin:2px 0 8px"></div>'
+      + '<input type="tel" id="nf-su-pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Pick a 4-digit PIN" style="margin-bottom:6px">'
+      + '<div id="nf-su-error" class="nf-err"></div>'
+      + '<div><button class="nf-go" id="nf-su-ok" onclick="_nfSubmitSignup()">Create account</button></div>'
+      + '<div class="nf-foot" style="color:#889"><a href="#" onclick="_nfBackToDial();return false;">← back</a></div>';
+    var name = document.getElementById('nf-su-name');
+    if (name) setTimeout(function () { name.focus(); }, 60);
+    // Period picker (parity with the Desk): default to Period X, then adapt to the
+    // server's open sections. One section → a read-only label; MANY → a real <select>
+    // so a multi-period student picks their OWN period (never silently section[0]).
+    _nfRenderPeriod([{ value: 'PeriodX', label: 'Period X' }]);
+    try {
+      if (window.rosterClient && rosterClient.openSections) {
+        rosterClient.openSections().then(function (secs) {
+          if (Array.isArray(secs) && secs.length) _nfRenderPeriod(secs);
+        }).catch(function () {});
+      }
+    } catch (_) {}
   }
   window._nfCreate = _nfCreate;
+
+  // Render the period field into #nf-su-period-row. Labels only (section values stay
+  // hidden). Sets _suSection to the current selection.
+  function _nfRenderPeriod(secs) {
+    var row = document.getElementById('nf-su-period-row');
+    if (!row) return;
+    while (row.firstChild) row.removeChild(row.firstChild);
+    if (!secs || !secs.length) secs = [{ value: 'PeriodX', label: 'Period X' }];
+    _suSection = secs[0].value || 'PeriodX';
+    row.appendChild(document.createTextNode('Class period: '));
+    if (secs.length === 1) {
+      var b = document.createElement('b');
+      b.textContent = secs[0].label || secs[0].value;   // textContent → XSS-safe
+      row.appendChild(b);
+    } else {
+      var sel = document.createElement('select');
+      sel.id = 'nf-su-period';
+      sel.style.cssText = 'font-size:13px;padding:4px';
+      secs.forEach(function (s) {
+        var o = document.createElement('option');
+        o.value = s.value;                              // value set as a property, not innerHTML
+        o.textContent = s.label || s.value;
+        sel.appendChild(o);
+      });
+      sel.value = _suSection;
+      sel.onchange = function () { _suSection = sel.value; };
+      row.appendChild(sel);
+    }
+  }
+
+  function _nfSubmitSignup() {
+    if (_nfSubmitSignup._pending) return;
+    var name = document.getElementById('nf-su-name');
+    var pinEl = document.getElementById('nf-su-pin');
+    var err = document.getElementById('nf-su-error');
+    var okBtn = document.getElementById('nf-su-ok');
+    var realName = (name && name.value || '').trim();
+    var pin = (pinEl && pinEl.value || '').trim();
+    if (err) err.textContent = '';
+    if (!realName) { if (err) err.textContent = 'Enter your real name.'; return; }
+    if (!/^\d{4}$/.test(pin)) { if (err) err.textContent = 'Your PIN must be exactly 4 digits.'; return; }
+    if (!window.rosterClient || !window.rosterClient.claim) { if (err) err.textContent = 'Signup unavailable — connect to Wi-Fi and try again.'; return; }
+    _nfSubmitSignup._pending = true;
+    if (okBtn) okBtn.disabled = true;
+    if (err) err.textContent = 'Creating your account…';
+
+    // Retry a taken username by re-rolling (bounded), mirroring the Desk.
+    function attempt(triesLeft) {
+      return window.rosterClient.claim({ realName: realName, section: _suSection, username: _suUsername, pin: pin })
+        .catch(function (e) { return { ok: false, error: (e && e.message) || 'Network error' }; })
+        .then(function (result) {
+          if (result && result.ok) return result;
+          if (result && result.code === 'username-taken' && triesLeft > 0) { _suSpin(); return attempt(triesLeft - 1); }
+          return result || { ok: false, error: 'Signup failed' };
+        });
+    }
+    attempt(5)
+      .then(function (result) {
+        if (!result || !result.ok) { if (err) err.textContent = (result && result.error) || 'Signup failed.'; return; }
+        var who = (window.rosterClient.current && window.rosterClient.current()) || {};
+        try { localStorage.setItem('apstats_desk_student_email', who.username || _suUsername); } catch (_) {}
+        closeNameFinder();
+        refreshIdentity();
+        // Same post-sign-in flow as the password path: pull the ledger, boot the mesh
+        // key (silent, §2.5), show the grade.
+        try { if (window.LedgerStore && LedgerStore.pull) LedgerStore.pull(window.rosterClient, { serverUrl: svcUrl() }).catch(function () {}); } catch (_) {}
+        try { if (window.meshKeyBoot) meshKeyBoot(); } catch (_) {}
+        try { loadGrade(); } catch (_) {}
+        dlMsg('✅ Welcome, ' + (who.realName || realName) + '! You\'re signed in as ' + (who.username || _suUsername) + '.');
+        setTimeout(dlHide, 5000);
+      })
+      .then(function () { _nfSubmitSignup._pending = false; if (okBtn) okBtn.disabled = false; })
+      .catch(function () { _nfSubmitSignup._pending = false; if (okBtn) okBtn.disabled = false; });
+  }
+  window._nfSubmitSignup = _nfSubmitSignup;
 
   function _nfKeydown(e) {
     var ov = document.getElementById('namefinder-overlay');

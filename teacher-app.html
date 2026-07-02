@@ -254,7 +254,7 @@
     toast('Generating key…');
     ReceiptSign.generateKey().then(function (k) {
       return ReceiptSign.exportPrivateJwk(k.privateKey).then(function (jwk) {
-        return SecureKeyStore.setKey(KEY_NAME, JSON.stringify(jwk)).then(function () {
+        return SecureKeyStore.setKey(KEY_NAME, JSON.stringify(jwk), { requireAuth: true, title: 'Save teacher key', subtitle: 'AP Statistics — teacher signing key' }).then(function () {
           try { localStorage.setItem(PUBKEY_LS, k.publicKeyX); } catch (_) {}
           _signingKey = k.privateKey;
           toast('Key generated + stored. Now register its pubkey.');
@@ -266,7 +266,7 @@
 
   function unlockKey() {
     if (!window.SecureKeyStore || !SecureKeyStore.available) { toast('Unlock is only available in the app.'); return Promise.reject(); }
-    return SecureKeyStore.getKey(KEY_NAME).then(function (jwkStr) {
+    return SecureKeyStore.getKey(KEY_NAME, { requireAuth: true, title: 'Unlock teacher key', subtitle: 'AP Statistics — teacher signing key' }).then(function (jwkStr) {
       if (!jwkStr) { toast('No key stored.'); return Promise.reject(); }
       return ReceiptSign.importPrivateKey(JSON.parse(jwkStr)).then(function (key) {
         _signingKey = key; toast('Unlocked.'); return refreshKeyStatus();

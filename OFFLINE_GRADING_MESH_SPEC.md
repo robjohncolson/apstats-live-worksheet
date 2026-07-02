@@ -72,6 +72,28 @@
 > - Tests: `tests/{submission-store,submission-capture,ledger-gossip-lanes,mobile-home-submissions}.test.js`
 >   + `ledger-gossip`/`build-offline-pack` extended.
 >
+> **Phase 2.5 shipped — hardware-smoke UX/security fixes (3-device smoke passed):** the
+> 3-device smoke (Pixel Tablet + S24 + Pixel 3) PROVED real Nearby convergence (Pixel3↔S24
+> both 1→2 submission rows), lane separation (grades stayed 49→49), and student-signed
+> submission verification. It found two issues, both fixed here:
+> - **Silent student key (§2.5, user-chosen "auto on sign-in, no biometric"):** the native
+>   `secure-key-store` plugin gains a SECOND master key class — `MASTER_ALIAS_NOAUTH` created
+>   WITHOUT `setUserAuthenticationRequired`, picked by `masterKey(requireAuth)`; `setKey`/`getKey`
+>   read `requireAuth` (default true = teacher back-compat) + caller-provided `title`/`subtitle`;
+>   `requireAuth:false` → `runDirect` (no BiometricPrompt). `student-key.js` uses `requireAuth:false`
+>   (label bumped v1→v2 so the new APK never reads a v1 auth-required key with the silent master);
+>   the roster password is the auth, the key only makes submissions attributable. `teacher-app.html`
+>   keeps its biometric gate + now-correct explicit "teacher signing key" copy. So a student on a
+>   SHARED teacher device never needs the teacher's fingerprint, and the wrong prompt copy is gone.
+> - **Native mobile signup:** `mobile-home.html _nfCreate` renders an in-launcher signup (real name
+>   + spun fruit_animal username + 4-digit PIN + a period PICKER — a `<select>` when >1 open section,
+>   Desk parity) → `rosterClient.claim` (re-rolls on username-taken) → the post-sign-in flow. Was a
+>   redirect to the desktop Desk.
+> - Review (4-agent: 1 raised, 1 CONFIRMED + fixed = the multi-section signup dropped students into
+>   section[0] with no picker; keystore-security + key-migration lenses clean). Tests:
+>   `tests/{secure-key,secure-key-plugin,student-key-client,mobile-home-submissions}.test.js`. ⚠ USER
+>   rebuilds the APK + re-tests on-device (the silent-key + signup are native/UI, only runtime-checkable on a phone).
+>
 > **⏭ Phases 3-4 NOT built:** teacher offline grade loop — ingest gossiped submissions →
 > auto-grade deterministic items + FRQ queue → sign DETERMINISTIC grade receipts (ts/n derived
 > from the submission so re-grades dedup, §0.8) carrying `sub`=<submission receipt_id> so
