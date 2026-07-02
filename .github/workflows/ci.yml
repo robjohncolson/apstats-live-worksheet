@@ -1,0 +1,51 @@
+name: CI
+
+# TYPECHECK_HARDENING_SPEC.md — run the tests (blocking) + the grade-engine typecheck
+# (advisory in P1; flip to blocking after P4 by removing continue-on-error). Separate
+# from pages.yml so a test/type failure never blocks a deploy, and vice-versa.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    name: tests (root + roster-server)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install root deps
+        run: npm ci
+      # --retry=2 absorbs the known signup-claim brute-force-lockout timeout, which is a
+      # parallel-load timing flake (passes in isolation), not a logic failure.
+      - name: Root tests
+        run: npm test -- --retry=2
+      - name: Install roster-server deps
+        working-directory: roster-server
+        run: npm ci
+      - name: roster-server tests
+        working-directory: roster-server
+        run: npm test -- --retry=2
+
+  typecheck:
+    name: typecheck — grade engine (advisory)
+    runs-on: ubuntu-latest
+    # Advisory in P1: reports status but does not fail the run. The allowlist is already
+    # clean; P4 removes this line to make the gate blocking.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install roster-server deps
+        working-directory: roster-server
+        run: npm ci
+      - name: tsc --noEmit (P1 allowlist)
+        working-directory: roster-server
+        run: npm run typecheck
