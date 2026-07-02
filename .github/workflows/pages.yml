@@ -1,0 +1,41 @@
+name: Deploy to GitHub Pages
+
+# Replaces the deprecated legacy (branch-based) Pages builder, which began failing
+# ("Page build failed") on this repo. This publishes the repo root as a pure static
+# site — same URL (robjohncolson.github.io/apstats-live-worksheet/), no Jekyll
+# (.nojekyll is present), no source changes. Every push to master redeploys.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Least privilege for Pages deploys.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; don't cancel an in-flight publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site (repo root)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
