@@ -70,6 +70,12 @@ export function verifyRecord(rec, pubKey, sid) {
   if (!payload) return { ok: false, payload: null, breaks: [{ kind: 'bad-signature', itemId: rec.itemId }] };
 
   const breaks = [];
+  // Domain separation (OFFLINE_GRADING_MESH_SPEC §0.1a): a GRADE record must carry a
+  // grade-type payload. Every grade receipt ever minted is t:'ledger' (teacher FRQ
+  // grades are t:'ledger' with src:'frq'); without this, any trusted-issuer receipt
+  // of another type could be replayed as a grade through /admin/restore. Mirrors
+  // verifyReviewMark's own t check and the client verifyLedgerRow.
+  if (payload.t !== 'ledger') breaks.push({ kind: 'wrong-type', itemId: rec.itemId, signed: payload.t ?? null });
   const owner = rec.studentId || sid;
   if (payload.sid !== owner) breaks.push({ kind: 'sid-mismatch', itemId: rec.itemId });
   if (payload.i !== rec.itemId) breaks.push({ kind: 'item-mismatch', itemId: rec.itemId });

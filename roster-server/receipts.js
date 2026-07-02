@@ -393,6 +393,15 @@ export function mountReceipts(app, { db, requireTeacher } = {}) {
     if (!db || typeof db.addTrustedIssuer !== 'function') {
       return res.status(503).json({ ok: false, error: 'trusted_issuers not provisioned (run migration 0026)' });
     }
+    // Domain separation (OFFLINE_GRADING_MESH_SPEC §0.1c): a STUDENT key can never
+    // be promoted into the GRADES trust set — the two sets stay disjoint. Best-effort
+    // (pre-0027 the table is absent and the guard is moot).
+    try {
+      if (typeof db.findStudentKey === 'function') {
+        const sk = await db.findStudentKey(pubkey);
+        if (sk && sk.data) return res.status(409).json({ ok: false, error: 'pubkey is a student key' });
+      }
+    } catch (_) { /* student_keys not provisioned — nothing to collide with */ }
     try {
       const { error } = await db.addTrustedIssuer({ pubkey, label });
       if (error) {

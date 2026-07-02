@@ -19,9 +19,11 @@ function makeKey() {
   };
 }
 
-// A signed item receipt (the shape verifyRecord binds against).
+// A signed item receipt (the shape verifyRecord binds against). Real grade
+// receipts always carry t:'ledger' (issueLedgerReceipt / signLedgerReceipt) — the
+// fixture must too, or verifyRecord's domain-separation check (§0.1a) rejects it.
 function signedRecord(key, { sid = 'stu-1', i = 'WS-U1L1-Q1', src = 'worksheet', sc = 1 } = {}) {
-  const { receiptId, compact } = signPayload(key.privateKey, { v: 1, sid, i, src, sc });
+  const { receiptId, compact } = signPayload(key.privateKey, { v: 1, t: 'ledger', sid, i, src, sc });
   return { studentId: sid, itemId: i, source: src, score: sc, receipt_id: receiptId, receipt_compact: compact };
 }
 
@@ -54,6 +56,15 @@ describe('verifyRecord — honors a trusted key list', () => {
   it('passes when the retired key is in the trust set', () => {
     const vr = verifyRecord(rec, [publicKeyFromX(current.x), publicKeyFromX(retired.x)], 'stu-1');
     expect(vr.ok).toBe(true);
+  });
+  it('rejects a validly-signed NON-GRADE (t≠ledger) payload replayed as a grade (mesh §0.1a)', () => {
+    const key = makeKey();
+    // A t:'review' payload with grade-record field shape, signed by a trusted key.
+    const { receiptId, compact } = signPayload(key.privateKey, { v: 1, t: 'review', sid: 'stu-1', i: 'WS-U1L1-Q1', src: 'worksheet', sc: 1 });
+    const rec2 = { studentId: 'stu-1', itemId: 'WS-U1L1-Q1', source: 'worksheet', score: 1, receipt_id: receiptId, receipt_compact: compact };
+    const vr = verifyRecord(rec2, [publicKeyFromX(key.x)], 'stu-1');
+    expect(vr.ok).toBe(false);
+    expect(vr.breaks.some((b) => b.kind === 'wrong-type')).toBe(true);
   });
 });
 

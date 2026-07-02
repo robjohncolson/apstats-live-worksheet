@@ -27,7 +27,9 @@ function loadSign() {
   return win.ReceiptSign;
 }
 
-const PAYLOAD = { v: 1, sid: 'stu-1', i: 'WS-U1L1-Q1', src: 'worksheet', sc: 1 };
+// t:'ledger' matches how every real grade receipt is minted (signLedgerReceipt /
+// issueLedgerReceipt); verifyRecord's domain-separation check (§0.1a) requires it.
+const PAYLOAD = { v: 1, t: 'ledger', sid: 'stu-1', i: 'WS-U1L1-Q1', src: 'worksheet', sc: 1 };
 
 describe('receipt-sign — canonical form matches the server', () => {
   it('ReceiptSign.canonicalize === receipts.js canonicalize (sorted keys, undefined dropped)', () => {

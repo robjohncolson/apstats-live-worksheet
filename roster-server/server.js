@@ -41,6 +41,7 @@ import { requireTeacher, getTeacherKey } from './teacher-auth.js';
 import { getOpenSections, isOpenSection } from './signup-config.js';
 import { createRateLimiter, createLoginThrottle } from './rate-limit.js';
 import { getReceiptHealth, initReceipts, mountReceipts } from './receipts.js';
+import { mountStudentKeys } from './student-keys.js';
 import { readFile } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -69,6 +70,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   app.set('trust proxy', 1);
   initReceipts();
   mountReceipts(app, { db, requireTeacher });
+  // OFFLINE_GRADING_MESH_SPEC §0.1-0.3 — the student SUBMISSION trust set
+  // (authenticated pubkey→sid binding + terminal revocation). 503 until
+  // migration 0027 runs. Disjoint from the issuer trust set by construction.
+  mountStudentKeys(app, { db });
 
   // Per-IP throttle for the un-authed self-signup claim. Generous on purpose: a
   // whole class shares one school NAT, so a low cap would block real students.

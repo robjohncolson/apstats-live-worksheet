@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -440,5 +440,42 @@ export function createDb(client) {
   // the in-process cache so the key loses authority IMMEDIATELY, not just at restart.
   async function revokeTrustedIssuer({ pubkey }) {
     return client.from('trusted_issuers').update({ revoked: true }).eq('pubkey', pubkey).select('*').maybeSingle();
+  }
+
+  // ── Student keys (migration 0027 — the offline-grading mesh's SUBMISSION trust set) ──
+  // Deliberately NOT an upsert (unlike addTrustedIssuer): a pubkey binds to ONE
+  // student forever, and revocation is terminal — re-registering must neither
+  // re-bind nor un-revoke (OFFLINE_GRADING_MESH_SPEC §0.2-0.3, §0.5). The route
+  // layer reads findStudentKey first and only inserts genuinely new keys.
+  async function findStudentKey(pubkey) {
+    return client.from('student_keys').select('*').eq('pubkey', pubkey).maybeSingle();
+  }
+
+  async function insertStudentKey({ pubkey, studentId, label }) {
+    return client.from('student_keys').insert([{
+      pubkey,
+      student_id: studentId,
+      label: label ?? null,
+      revoked: false
+    }]).select('*').maybeSingle();
+  }
+
+  // The full set INCLUDING revoked rows — verifiers need the revoked flag to
+  // reject a stolen key's rows, not just an absence they can't distinguish
+  // from "key not yet synced".
+  async function listStudentKeys() {
+    return client.from('student_keys').select('pubkey, student_id, revoked');
+  }
+
+  async function listStudentKeysByStudent(studentId) {
+    return client.from('student_keys').select('*').eq('student_id', studentId);
+  }
+
+  async function revokeStudentKey({ pubkey }) {
+    return client.from('student_keys')
+      .update({ revoked: true, revoked_at: new Date().toISOString() })
+      .eq('pubkey', pubkey)
+      .select('*')
+      .maybeSingle();
   }
 }

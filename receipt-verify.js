@@ -109,6 +109,12 @@
     catch (e) { return false; }
     if (!r || !r.ok) return false;
     var p = r.payload || {};
+    // Domain separation (OFFLINE_GRADING_MESH_SPEC §0.1a): a GRADE row must carry a
+    // grade-type payload. Every grade receipt ever minted is t:'ledger' (a teacher FRQ
+    // grade is t:'ledger' with src:'frq'); without this check, any trusted-issuer
+    // receipt of another type (review / epoch / commit) — or a future student
+    // submission — could be dressed up as a grade row.
+    if (String(p.t) !== 'ledger') return false;
     // Content address: the row id MUST be SHA-256(signed payload). Blocks replaying one
     // signature under many ids (G-Set bloat) and pinning a signature to a foreign id.
     if (String(row.receipt_id) !== String(r.receiptId)) return false;
@@ -129,6 +135,119 @@
 
   async function sha256HexText(s) {
     return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
+  }
+
+  // ── Student trust set (OFFLINE_GRADING_MESH_SPEC §0.1) ─────────────────────
+  // A SECOND, fully separate registry: student keys sign SUBMISSIONS (raw work),
+  // never grades. The two trust sets are never merged — §0.1c — so a student key
+  // can never validate a grade row and an issuer key can never validate a
+  // submission's key→sid binding. Entries: { pubkey, sid, revoked }.
+  var STUDENT_KEYS = [];
+
+  // Register/refresh the student trust set (typically the server's /student-keys
+  // list). Disjointness is ASSERTED here: a pubkey that already appears in the
+  // issuer registry is refused (and counted), never added — §0.1c.
+  function registerStudentKeys(list) {
+    var added = 0, updated = 0, conflicts = 0;
+    (Array.isArray(list) ? list : []).forEach(function (k) {
+      if (!k || typeof k.pubkey !== 'string' || !k.pubkey || k.sid == null) return;
+      var inIssuers = ISSUERS.some(function (i) { return i.pubkey === k.pubkey; });
+      if (inIssuers) { conflicts += 1; return; }
+      var entry = { pubkey: k.pubkey, sid: String(k.sid), revoked: !!k.revoked };
+      var idx = -1;
+      for (var i = 0; i < STUDENT_KEYS.length; i++) if (STUDENT_KEYS[i].pubkey === k.pubkey) { idx = i; break; }
+      if (idx >= 0) {
+        // One-sid-per-pubkey: a re-register may flip `revoked` (revocation
+        // propagates) but NEVER re-binds the key to a different student.
+        if (STUDENT_KEYS[idx].sid !== entry.sid) { conflicts += 1; return; }
+        // Revocation is terminal on this registry: never un-revoke from a refresh.
+        STUDENT_KEYS[idx].revoked = STUDENT_KEYS[idx].revoked || entry.revoked;
+        updated += 1;
+      } else {
+        STUDENT_KEYS.push(entry);
+        added += 1;
+      }
+    });
+    return { added: added, updated: updated, conflicts: conflicts };
+  }
+
+  // The mirror guard for issuer registration: refuse any pubkey already bound to
+  // a student. Client boot code (Desk/mobile) should add issuer keys through this
+  // instead of pushing into ISSUERS directly.
+  function registerIssuerKeys(pubkeys, meta) {
+    meta = meta || {};
+    var added = 0, conflicts = 0;
+    (Array.isArray(pubkeys) ? pubkeys : []).forEach(function (pk) {
+      if (typeof pk !== 'string' || !pk) return;
+      var isStudent = STUDENT_KEYS.some(function (k) { return k.pubkey === pk; });
+      if (isStudent) { conflicts += 1; return; }
+      var have = ISSUERS.some(function (i) { return i.pubkey === pk; });
+      if (have) return;
+      ISSUERS.push({ name: meta.name || 'Roster', pubkey: pk, kind: meta.kind || 'roster' });
+      added += 1;
+    });
+    return { added: added, conflicts: conflicts };
+  }
+
+  // stringifyResponse — MUST byte-match receipt-sign.js / roster-server receipts.js
+  // so the submission's `ah` binds the same bytes everywhere.
+  function stringifyResponse(value) {
+    if (typeof value === 'string') return value;
+    var s;
+    try { s = JSON.stringify(value); } catch (e) { s = undefined; }
+    return (s === undefined) ? String(value) : s;
+  }
+
+  // Bind a stored SUBMISSION row to its student-signed receipt. This is the
+  // submissions-lane twin of verifyLedgerRow, verified ONLY against the student
+  // trust set (§0.1b) — the two lanes share no keys. Checks:
+  //   - Ed25519 signature by a NON-REVOKED registered student key
+  //   - payload.t === 'submission' AND the payload carries NO grade fields (sc/g)
+  //     — a submission structurally cannot be a grade
+  //   - content address: row.receipt_id === sha256(signed payload)
+  //   - field binding: src / i match the row
+  //   - response binding: payload.ah === sha256(stringifyResponse(row.response)).slice(16)
+  //     (the response is the cargo — without this a peer could swap the answer
+  //     text under a valid signature)
+  //   - attribution (the impersonation gate, §0.2): the row MUST name a student,
+  //     the payload sid must equal it, and BOTH must equal the sid the signing
+  //     key is REGISTERED to — never the payload's own claim.
+  async function verifySubmissionRow(row) {
+    if (!row || !row.receipt_compact) return false;
+    if (row.student_id == null || row.student_id === '') return false;
+    var parts, payloadBytes, sigBytes, p;
+    try {
+      parts = String(row.receipt_compact).trim().split('.');
+      if (parts.length !== 2) return false;
+      payloadBytes = b64urlToBytes(parts[0]);
+      sigBytes = b64urlToBytes(parts[1]);
+      p = JSON.parse(new TextDecoder().decode(payloadBytes));
+    } catch (e) { return false; }
+    if (!p || p.v !== 1) return false;
+    if (String(p.t) !== 'submission') return false;
+    // §0.1b: grade fields present at ALL (even null) → structurally not a submission.
+    if ('sc' in p || 'g' in p) return false;
+
+    var signer = null;
+    for (var i = 0; i < STUDENT_KEYS.length; i++) {
+      var cand = STUDENT_KEYS[i];
+      if (cand.revoked) continue;
+      try {
+        var key = await importIssuerKey(cand.pubkey);
+        if (await crypto.subtle.verify({ name: 'Ed25519' }, key, sigBytes, payloadBytes)) { signer = cand; break; }
+      } catch (e) { /* try the next key */ }
+    }
+    if (!signer) return false;
+
+    var receiptId = hex(await crypto.subtle.digest('SHA-256', payloadBytes));
+    if (String(row.receipt_id) !== receiptId) return false;
+    if (String(row.source) !== String(p.src)) return false;
+    if (String(row.item_id) !== String(p.i)) return false;
+    var ah = (await sha256HexText(stringifyResponse(row.response))).slice(0, 16);
+    if (String(p.ah) !== ah) return false;
+    if (String(row.student_id) !== String(p.sid)) return false;
+    if (String(p.sid) !== signer.sid) return false;
+    return true;
   }
 
   // Pull the verifiable token out of whatever a QR scan / paste produced:
@@ -152,6 +271,7 @@
 
   var api = {
     ISSUERS: ISSUERS,
+    STUDENT_KEYS: STUDENT_KEYS,
     b64urlToBytes: b64urlToBytes,
     hex: hex,
     importIssuerKey: importIssuerKey,
@@ -159,6 +279,9 @@
     issuersForRun: issuersForRun,
     verifyReceipt: verifyReceipt,
     verifyLedgerRow: verifyLedgerRow,
+    registerStudentKeys: registerStudentKeys,
+    registerIssuerKeys: registerIssuerKeys,
+    verifySubmissionRow: verifySubmissionRow,
     sha256HexText: sha256HexText,
     parseVerifyTarget: parseVerifyTarget
   };

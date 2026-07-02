@@ -93,6 +93,11 @@
 <script src="ledger-store.js" onerror=""></script>
 <script src="ledger-gossip.js" onerror=""></script>
 <script src="nearby-transport.js" onerror=""></script>
+<!-- OFFLINE GRADING MESH Phase 1 — the student's device signing key (submissions
+     lane). Inert on the web: SecureKeyStore only exists inside the APK. -->
+<script src="receipt-sign.js" onerror=""></script>
+<script src="secure-key.js" onerror=""></script>
+<script src="student-key.js" onerror=""></script>
 <script>
 (function () {
   var main = document.getElementById('main');
@@ -198,10 +203,30 @@
     return fetch(base + '/receipts/issuer').then(function (r) { return r && r.ok ? r.json() : null; }).then(function (j) {
       if (!j || !j.enabled) return;
       var keys = (j.pubkeys && j.pubkeys.length) ? j.pubkeys : (j.pubkey ? [j.pubkey] : []);
-      keys.forEach(function (pk) { if (pk && !ReceiptVerify.ISSUERS.some(function (i) { return i.pubkey === pk; })) ReceiptVerify.ISSUERS.push({ name: 'Roster', pubkey: pk, kind: 'roster' }); });
+      // registerIssuerKeys refuses any pubkey already bound to a student (§0.1c
+      // disjointness) — falls back to a raw push if the guarded API isn't present.
+      if (typeof ReceiptVerify.registerIssuerKeys === 'function') {
+        ReceiptVerify.registerIssuerKeys(keys, { name: 'Roster', kind: 'roster' });
+      } else {
+        keys.forEach(function (pk) { if (pk && !ReceiptVerify.ISSUERS.some(function (i) { return i.pubkey === pk; })) ReceiptVerify.ISSUERS.push({ name: 'Roster', pubkey: pk, kind: 'roster' }); });
+      }
       _issuerReg = true;
     }).catch(function () {});
   }
+
+  // OFFLINE GRADING MESH Phase 1 — get-or-generate this student's device key,
+  // register it (authenticated), and sync the class student trust set so gossiped
+  // submissions can be verified. Inert on the web (StudentKey.available()===false).
+  // Fire-and-forget; never blocks navigation or sign-in.
+  function meshKeyBoot() {
+    if (!window.StudentKey || !window.rosterClient) return Promise.resolve();
+    var base = svcUrl();
+    var token = null;
+    try { token = rosterClient.token && rosterClient.token(); } catch (_) {}
+    var p = StudentKey.available() ? StudentKey.ensure(window.rosterClient, base) : Promise.resolve();
+    return p.then(function () { return token ? StudentKey.syncTrustSet(base, token) : null; }).catch(function () {});
+  }
+  window.meshKeyBoot = meshKeyBoot;
 
   window.syncNearby = function () {
     if (!window.GossipTransport || !window.LedgerGossip || !window.LedgerStore) {
@@ -210,6 +235,7 @@
     dlMsg('📡 Looking for nearby devices…');
     var base = svcUrl();
     registerIssuer(base)
+      .then(function () { return meshKeyBoot(); })
       .then(function () { return (window.rosterClient && LedgerStore.pull) ? LedgerStore.pull(window.rosterClient, { serverUrl: base }).catch(function () {}) : null; })
       .then(function () {
         return LedgerGossip.runRound(window.GossipTransport, {
@@ -452,6 +478,8 @@
         refreshIdentity();
         // Pull this student's signed ledger so their grades are on-device to gossip.
         try { if (window.LedgerStore && LedgerStore.pull) LedgerStore.pull(window.rosterClient, { serverUrl: svcUrl() }).catch(function () {}); } catch (_) {}
+        // Get-or-generate + register this device's mesh signing key (APK only; inert on web).
+        try { if (window.meshKeyBoot) meshKeyBoot(); } catch (_) {}
         try { loadGrade(); } catch (_) {}   // fetch + show the current grade for the just-signed-in student
         var msg = result.mustChangePassword
           ? '✅ Signed in as ' + (who.realName || r.username) + ' — change your password in the full app.'

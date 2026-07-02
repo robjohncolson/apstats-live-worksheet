@@ -15,10 +15,35 @@
 > existing signed-grade lane and spread. Then: kids do work → mesh ferries it to the
 > teacher's phone → teacher signs → grades mesh back out. No server in the loop.
 >
-> **Status:** spec → REVIEWED + hardened. A 2-lens review (trust/PKI + convergence) found
-> the naive design **not shippable** — ~11 concrete defects. The **§0 corrections are
-> binding** and override §§1–9 below. This is a LARGE, security-critical build; treat §0 as
-> the real design.
+> **Status:** spec → REVIEWED + hardened → **Phase 1 IMPLEMENTED (2026-07-01)**. A 2-lens
+> review (trust/PKI + convergence) found the naive design **not shippable** — ~11 concrete
+> defects. The **§0 corrections are binding** and override §§1–9 below. This is a LARGE,
+> security-critical build; treat §0 as the real design.
+>
+> **Phase 1 shipped — student PKI + domain-separated verification (§0.1-0.3, §0.5):**
+> - **Domain separation (§0.1a):** `receipt-verify.js verifyLedgerRow` + server
+>   `snapshot-verify.js verifyRecord` now REQUIRE `payload.t === 'ledger'` — grade receipts
+>   are uniformly `t:'ledger'` (a teacher FRQ grade is `t:'ledger'` + `src:'frq'`), so a
+>   review/epoch/submission receipt can no longer be replayed as a grade. New `wrong-type` break.
+> - **Second trust set (§0.1b/c):** `ReceiptVerify.STUDENT_KEYS` + `registerStudentKeys` /
+>   `registerIssuerKeys` (mutual disjointness asserted at register time) + `verifySubmissionRow`
+>   (t:'submission', NO `sc`/`g` fields, response-hash `ah` bind, and the impersonation gate:
+>   row.sid === payload.sid === the signing key's REGISTERED sid). Verified only against the
+>   student set — the two lanes share no keys.
+> - **Server (auto-deploys, 503 until migration 0027 runs):** migration `0027_student_keys`
+>   (pubkey PK, FK to roster, terminal `revoked`); `student-keys.js` — `POST /student-keys/register`
+>   (sid from the TOKEN, never the body — §0.2; one-sid-per-pubkey — §0.5; a revoked key never
+>   comes back — §0.3), `GET /student-keys` (served trust set incl. the revoked flag),
+>   `POST /student-keys/revoke` (teacher). The trusted-issuers route now refuses a pubkey
+>   already bound to a student (disjointness mirror).
+> - **Client (APK-only, inert on web):** `student-key.js` (`window.StudentKey`) — get-or-generate
+>   a device Ed25519 key hardware-wrapped via SecureKeyStore, register it (authenticated),
+>   sync the class trust set, clear-on-revoke. Wired into `mobile-home.html` sign-in + sync boot.
+> - Tests: `tests/{mesh-submission-verify,student-key-client}.test.js`,
+>   `roster-server/tests/student-keys.test.js` + verifyRecord type-check regressions.
+> - ⏭ **USER: run migration 0027** on the roster Supabase (routes 503 until then).
+> - ⏭ **Phases 2-4 NOT built:** submissions lane + lane-tagged gossip + suppression (2);
+>   teacher offline grade loop w/ deterministic receipts + anti-farming (3); hub reconcile (4).
 
 ---
 
