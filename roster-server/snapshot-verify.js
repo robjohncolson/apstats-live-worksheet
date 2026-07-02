@@ -83,6 +83,12 @@ export function verifyRecord(rec, pubKey, sid) {
   if (!numEq(payload.sc, rec.score)) {
     breaks.push({ kind: 'score-tampered', itemId: rec.itemId, signed: payload.sc ?? null, record: rec.score ?? null });
   }
+  // Attempt is grade-affecting (latestPerItem picks the highest attempt), so bind it too:
+  // otherwise a tampered backup could replay a signed score under a forged attempt. Default
+  // to 1 on both sides for receipts minted before `a`.
+  if (!numEq(payload.a == null ? 1 : payload.a, rec.attempt == null ? 1 : rec.attempt)) {
+    breaks.push({ kind: 'attempt-tampered', itemId: rec.itemId, signed: payload.a ?? null, record: rec.attempt ?? null });
+  }
   // The signed `ah` binds the response. Postgres JSONB can reorder object keys vs.
   // what was signed, so only assert this for primitive responses (the common
   // worksheet/quiz case); object responses still ride the signature + score bind.

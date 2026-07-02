@@ -99,7 +99,7 @@ export function mountAdminRestore(app, { db, ledgerDb }) {
           response: rec.response,
           score: (rec.score === undefined ? null : rec.score), // AS-IS — verified by signature
           evidenceTier: payload.e || 'practice',               // from the SIGNED payload
-          attempt: rec.attempt ?? 1,
+          attempt: payload.a ?? 1,                             // SIGNED attempt (verifyRecord already bound rec.attempt to it)
           recordedAt: rec.recorded_at || undefined             // preserve original timestamp
         });
         data = result && result.data;

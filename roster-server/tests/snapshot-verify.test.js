@@ -64,6 +64,16 @@ describe('verifySnapshot', () => {
     expect(r.breaks.some((b) => b.kind === 'score-tampered')).toBe(true);
   });
 
+  it('catches a forged attempt (signature valid, attempt binding broken)', () => {
+    // Mirror of the score-tamper: latestPerItem picks the highest attempt, so an unbound
+    // attempt let a tampered backup replay a signed score under a forged attempt.
+    const s = clone(freshSnapshot());
+    s.students[0].bundle.records[1].attempt = 99; // signed a=1 -> forged to 99
+    const r = verifySnapshot(s);
+    expect(r.ok).toBe(false);
+    expect(r.breaks.some((b) => b.kind === 'attempt-tampered')).toBe(true);
+  });
+
   it('catches a flipped primitive response via the answer-hash bind', () => {
     const s = clone(freshSnapshot());
     s.students[0].bundle.records[0].response = 'B'; // signed ah was for 'A'

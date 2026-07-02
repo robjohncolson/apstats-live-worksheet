@@ -130,6 +130,13 @@
     // Attribution: a row that names a student must name the SIGNED student.
     var rowSid = (row.student_id != null) ? row.student_id : row.sid;
     if (rowSid != null && String(rowSid) !== String(p.sid)) return false;
+    // Attempt is grade-affecting: latestPerItem picks the HIGHEST attempt per item, so an
+    // unbound attempt lets a student resurrect an older signed score under a forged higher
+    // attempt (the score stays bound, but "latest attempt wins" is defeated). Bind it;
+    // default-1 on both sides for receipts minted before `a` existed.
+    var rowA = (row.attempt == null) ? 1 : Number(row.attempt);
+    var sigA = (p.a == null) ? 1 : Number(p.a);
+    if (!Number.isFinite(rowA) || !Number.isFinite(sigA) || rowA !== sigA) return false;
     return true;
   }
 

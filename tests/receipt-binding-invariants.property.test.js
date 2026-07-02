@@ -50,13 +50,12 @@ beforeAll(async () => {
 });
 
 describe('verifyLedgerRow — signature binding (prop 7)', () => {
-  it('accepts the legit row; rejects ANY tamper of a BOUND grade field', async () => {
-    // verifyLedgerRow binds these to the signed payload (receipt-verify.js §0). `attempt`
-    // is deliberately absent — see the documented-gap test below.
+  it('accepts the legit row; rejects ANY tamper of a bound grade field (incl. attempt)', async () => {
+    // verifyLedgerRow binds all of these to the signed payload (receipt-verify.js §0).
     const { receiptId, compact } = await signLedger();
     expect(await RV.verifyLedgerRow(rowFrom(receiptId, compact))).toBe(true);
     await fc.assert(fc.asyncProperty(
-      fc.constantFrom('score', 'item_id', 'source', 'student_id'),
+      fc.constantFrom('score', 'item_id', 'source', 'student_id', 'attempt'),
       fc.oneof(fc.integer({ min: 2, max: 100 }), fc.string({ minLength: 1, maxLength: 12 })),
       async (field, val) => {
         if (String(LEGIT[field]) === String(val)) return;   // a no-op "tamper" is not a tamper
@@ -65,14 +64,17 @@ describe('verifyLedgerRow — signature binding (prop 7)', () => {
     ), { numRuns: 50 });
   });
 
-  it('DOCUMENTED GAP: `attempt` is NOT bound by the signature (flagged for P2 review)', async () => {
-    // A forged attempt still verifies today: verifyLedgerRow binds src/i/sc/sid/receipt_id/t
-    // but not `a`. Downstream latestPerItem selects the HIGHEST attempt per item, so a
-    // student could reorder among their OWN already-signed rows (score stays bound, so no
-    // grade can be fabricated — the blast radius is limited to self). Pinned here as
-    // current behavior; the fix (bind `a`) is a one-line add if review wants it.
+  it('binds `attempt`: a forged attempt (resurrecting an older signed score) is rejected', async () => {
+    // Was a documented gap (Codex P2 review) — now a hard bind. latestPerItem picks the
+    // highest attempt, so an unbound attempt let a student make an older signed high score
+    // beat a later low one. The score is still bound (no fabrication), but this closes the
+    // "latest attempt wins" bypass. Default-1 means an omitted attempt still matches a=1.
     const { receiptId, compact } = await signLedger({ a: 1 });
-    expect(await RV.verifyLedgerRow(rowFrom(receiptId, compact, { attempt: 99 }))).toBe(true);
+    expect(await RV.verifyLedgerRow(rowFrom(receiptId, compact, { attempt: 1 }))).toBe(true);
+    expect(await RV.verifyLedgerRow(rowFrom(receiptId, compact, { attempt: undefined }))).toBe(true); // omitted → 1
+    await fc.assert(fc.asyncProperty(fc.integer({ min: 2, max: 100 }), async (forgedA) => {
+      expect(await RV.verifyLedgerRow(rowFrom(receiptId, compact, { attempt: forgedA }))).toBe(false);
+    }), { numRuns: 20 });
   });
 
   it('same receipt_id + different content ⇒ verify FAILS (tamper is caught here, not merged as LWW)', async () => {
