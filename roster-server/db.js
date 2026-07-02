@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -477,5 +477,26 @@ export function createDb(client) {
       .eq('pubkey', pubkey)
       .select('*')
       .maybeSingle();
+  }
+
+  // ── Submission archive (migration 0028 — the offline-grading mesh hub reconcile) ──
+  // Append-only, content-addressed by receipt_id. Upsert-do-nothing so re-uploading a
+  // submission is idempotent — the archive NEVER writes a score (§0.10 decoupled).
+  async function insertSubmissionArchive({ receiptId, studentId, source, itemId, response, attempt, recordedAt, receiptCompact }) {
+    return client.from('submission_archive').upsert([{
+      receipt_id:      receiptId,
+      student_id:      studentId,
+      source:          source,
+      item_id:         itemId,
+      response:        response ?? null,
+      attempt:         attempt ?? 1,
+      recorded_at:     recordedAt ?? null,
+      receipt_compact: receiptCompact
+    }], { onConflict: 'receipt_id', ignoreDuplicates: true }).select('receipt_id').maybeSingle();
+  }
+
+  async function listSubmissionArchive(studentIds) {
+    if (!Array.isArray(studentIds) || !studentIds.length) return { data: [], error: null };
+    return client.from('submission_archive').select('*').in('student_id', studentIds);
   }
 }

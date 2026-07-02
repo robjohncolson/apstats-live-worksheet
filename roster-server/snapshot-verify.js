@@ -115,6 +115,44 @@ export function verifyReviewMark(rec, pubKey, sid) {
   return { ok: breaks.length === 0, payload, breaks };
 }
 
+// Verify ONE student SUBMISSION record (offline-grading mesh Phase 4, §0.1b/§0.2):
+// the self-signed t:'submission' receipt AND that it binds this record, verified ONLY
+// against the STUDENT trust set (NEVER the issuer/grades keys — the lanes share no
+// keys). studentKeys = [{ pubkey, sid, revoked }] (from migration 0027). The
+// impersonation gate: rec.studentId === payload.sid === the SIGNING key's registered
+// sid. A submission structurally can't be a grade (no sc/g). Mirrors the client
+// receipt-verify.js verifySubmissionRow. Returns { ok, payload, signerSid, breaks }.
+export function verifySubmissionRecord(rec, studentKeys) {
+  if (!rec || !rec.receipt_compact) {
+    return { ok: false, payload: null, unsigned: true, breaks: [{ kind: 'sub-unsigned', itemId: rec && rec.itemId }] };
+  }
+  // Find the non-revoked student key that signed these exact bytes.
+  let signer = null, payload = null;
+  for (const k of (Array.isArray(studentKeys) ? studentKeys : [])) {
+    if (!k || k.revoked || !k.pubkey) continue;
+    const p = verifyCompact(rec.receipt_compact, publicKeyFromX(k.pubkey));
+    if (p) { signer = k; payload = p; break; }
+  }
+  if (!signer) return { ok: false, payload: null, breaks: [{ kind: 'sub-bad-signature', itemId: rec.itemId }] };
+
+  const breaks = [];
+  if (payload.t !== 'submission') breaks.push({ kind: 'sub-wrong-type', itemId: rec.itemId });
+  if ('sc' in payload || 'g' in payload) breaks.push({ kind: 'sub-has-grade-fields', itemId: rec.itemId });
+  if (payload.sid !== rec.studentId) breaks.push({ kind: 'sub-sid-mismatch', itemId: rec.itemId });
+  if (String(payload.sid) !== String(signer.sid)) breaks.push({ kind: 'sub-impersonation', itemId: rec.itemId });
+  if (payload.i !== rec.itemId) breaks.push({ kind: 'sub-item-mismatch', itemId: rec.itemId });
+  if (payload.src !== rec.source) breaks.push({ kind: 'sub-source-mismatch', itemId: rec.itemId });
+  const prim = typeof rec.response === 'string' || typeof rec.response === 'number';
+  if (payload.ah && prim && payload.ah !== answerHash(rec.response)) breaks.push({ kind: 'sub-response-tampered', itemId: rec.itemId });
+  // Content address: receipt_id must be sha256 of the signed payload bytes.
+  if (rec.receipt_id != null) {
+    const pB64 = String(rec.receipt_compact).split('.')[0];
+    const receiptId = crypto.createHash('sha256').update(Buffer.from(pB64, 'base64url')).digest('hex');
+    if (String(rec.receipt_id) !== receiptId) breaks.push({ kind: 'sub-id-mismatch', itemId: rec.itemId });
+  }
+  return { ok: breaks.length === 0, payload, signerSid: signer.sid, breaks };
+}
+
 export function verifySnapshot(snapshot, { pubkey, pubkeys } = {}) {
   const breaks = [];
   // Trust the union of: explicit pubkeys[], explicit pubkey, and whatever the

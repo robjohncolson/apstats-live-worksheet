@@ -43,6 +43,7 @@ import { getOpenSections, isOpenSection } from './signup-config.js';
 import { createRateLimiter, createLoginThrottle } from './rate-limit.js';
 import { getReceiptHealth, initReceipts, mountReceipts } from './receipts.js';
 import { mountStudentKeys } from './student-keys.js';
+import { mountSubmissions } from './submissions.js';
 import { readFile } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -75,6 +76,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // (authenticated pubkey→sid binding + terminal revocation). 503 until
   // migration 0027 runs. Disjoint from the issuer trust set by construction.
   mountStudentKeys(app, { db });
+  // OFFLINE_GRADING_MESH_SPEC §4/§0.10 — the hub reconcile: verify + archive raw
+  // student submissions (decoupled from grading, so no competing score). 503 until
+  // migration 0028 runs. Teacher grades reach the ledger via /admin/restore.
+  mountSubmissions(app, { db });
 
   // Per-IP throttle for the un-authed self-signup claim. Generous on purpose: a
   // whole class shares one school NAT, so a low cap would block real students.

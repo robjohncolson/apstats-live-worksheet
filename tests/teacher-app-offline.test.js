@@ -58,4 +58,10 @@ describe('teacher-app — offline grade loop wiring', () => {
     expect(APP).toContain("lane: 'subs'");
     expect(APP).toContain('SubmissionStore.floodCapVerify(SubmissionStore.suppressingVerify');
   });
+
+  it('best-effort archives verified submissions to the server (Phase 4 durability, decoupled from grading)', () => {
+    expect(APP).toContain('function _archiveSubmissions');
+    expect(APP).toContain("'/submissions/archive'");
+    expect(APP).toContain('_archiveSubmissions(subs)');
+  });
 });

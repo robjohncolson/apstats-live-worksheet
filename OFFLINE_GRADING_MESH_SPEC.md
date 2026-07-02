@@ -121,10 +121,26 @@
 > - 8-agent adversarial review: 4 confirmed + FIXED (the stale-file leak; the §0.4/§0.9 attempt
 >   assignment; the never-downgrade-vs-active-score; the FRQ re-queue downgrade) + 1 refuted.
 >
-> **⏭ Phase 4 NOT built:** hub reconcile — the server verifies student sigs + archives raw
-> submissions (durable/audit, decoupled from grading so it never mints a competing score, §0.10);
-> teacher grades already reach the server via the existing `/admin/restore` (teacher key = trusted
-> issuer). ⚠ the teacher-app offline loop is RUNTIME-UNTESTED (needs a teacher device + student phones).
+> **Phase 4 shipped — hub reconcile (§4, §0.10) — THE MESH IS FEATURE-COMPLETE (all phases 1-4 + 2.5):**
+> - **Server verifies + archives raw submissions, decoupled from grading (§0.10):** migration
+>   `0028_submission_archive` (append-only, content-addressed by `receipt_id`, FK to roster,
+>   NEVER a score column); `snapshot-verify.js verifySubmissionRecord` (the server twin of the
+>   client `verifySubmissionRow` — verifies a `t:'submission'` ONLY against the student trust set,
+>   with the impersonation gate `rec.studentId === payload.sid === signer.sid` + the no-grade-fields
+>   check); `submissions.js` — teacher-gated `POST /submissions/archive` (verify each row, archive
+>   valid via idempotent upsert-ignore, reject forged, honest archived/duplicate/rejected counts)
+>   + `GET /submissions/archive` (teacher audit). The archive path NEVER writes `item_ledger`, so
+>   the server can't mint a competing score; teacher GRADES reach the ledger via the unchanged
+>   `/admin/restore` (teacher key = trusted issuer). `teacher-app.html` best-effort uploads its
+>   verified submissions after grading.
+> - Review (5-agent: 3 raised, 3 refuted, 0 confirmed — the object-`ah` caveat + the teacher-gated
+>   verify cost matched the shipped `verifyRecord`'s accepted limits; the count over-report was
+>   fixed to be honest). Tests: `roster-server/tests/submissions.test.js` (11, incl. real Ed25519
+>   sign→verify + a pglite migration test).
+> - **⚠ USER: run migrations `0028` (+ confirm `0027` ran). The whole mesh (Phases 1-4 + 2.5) is
+>   feature-complete but the offline P2P grade loop is RUNTIME-UNTESTED end-to-end — it needs a
+>   teacher device + ≥1 student phone (rebuild the APK; drive via adb) to validate the full
+>   student-submits → teacher-grades-offline → grade-gossips-back → suppression loop.**
 
 ---
 

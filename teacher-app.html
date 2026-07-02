@@ -515,6 +515,8 @@
             return _signAndEmit(autoPlans, keyPack, attemptsByKey).then(function (emitted) {
               $('offline-summary').textContent = 'Verified ' + subs.length + ' submission(s) · auto-graded + emitted ' + emitted + ' · ' + _offlineFrq.length + ' FRQ(s) to judge.';
               _renderOfflineFrqs();
+              // Phase 4: best-effort durability upload (no-op offline; never blocks).
+              try { _archiveSubmissions(subs); } catch (_) {}
               $('offline-status').innerHTML = '<span class="ok">✓ Ready.</span>';
             });
           });
@@ -528,6 +530,25 @@
     return (items || []).reduce(function (chain, it) {
       return chain.then(function () { return Promise.resolve(pred(it)).then(function (ok) { if (ok) out.push(it); }); });
     }, Promise.resolve()).then(function () { return out; });
+  }
+
+  // Phase 4 hub reconcile (§4/§0.10): best-effort upload of the VERIFIED submissions to
+  // the server's append-only archive when online (durability + audit). The server
+  // re-verifies each student signature; archiving never writes a grade. No-op offline.
+  function _archiveSubmissions(subs) {
+    var base = _meshBase();
+    var secret = (localStorage.getItem(SECRET_LS) || '').trim();
+    if (!base || !subs || !subs.length) return Promise.resolve(null);
+    var headers = { 'Content-Type': 'application/json' };
+    if (secret) headers['x-teacher-secret'] = secret;
+    try { var tok = rosterClient && rosterClient.token && rosterClient.token(); if (tok) headers['Authorization'] = 'Bearer ' + tok; } catch (_) {}
+    return fetch(base + '/submissions/archive', {
+      method: 'POST', headers: headers,
+      body: JSON.stringify({ submissions: subs.map(function (s) {
+        return { student_id: s.student_id, source: s.source, item_id: s.item_id, response: s.response,
+          attempt: s.attempt, recorded_at: s.recorded_at, receipt_id: s.receipt_id, receipt_compact: s.receipt_compact };
+      }) })
+    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
   }
 
   // FRQ submissions needing human E/P/I: the highest-attempt verified FRQ per (sid,item)
