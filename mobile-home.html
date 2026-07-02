@@ -1096,13 +1096,19 @@
   // 404s. roadmap-data.json IS tracked/published and carries the real published URLs,
   // so the web launcher builds its list from that — worksheets, quiz, Blooket, and
   // flashcards all work; videos are APK-only (media isn't hosted on Pages).
+  // Strip this repo's GH-Pages base so worksheet links are ORIGIN-RELATIVE — they then
+  // resolve against whatever host serves this page (GH Pages OR a Vercel mirror), so the
+  // launcher is self-sufficient on either. quiz (separate curriculum_render site) and
+  // blooket (external) stay absolute.
+  var _WS_BASE = 'https://robjohncolson.github.io/apstats-live-worksheet/';
+  function _relWs(u) { return (typeof u === 'string' && u.indexOf(_WS_BASE) === 0) ? u.slice(_WS_BASE.length) : (u || null); }
   function _lessonsFromRoadmap(roadmap) {
     var L = (roadmap && roadmap.lessons) || {};
     var out = Object.keys(L).map(function (id) {
       var u = (L[id] && L[id].urls) || {};
       return {
         id: id, unit: parseInt(id, 10) || 0, label: (L[id] && L[id].topic) || ('Topic ' + id),
-        worksheet: u.worksheet || null, quiz: u.quiz || null, blooket: u.blooket || null, videos: []
+        worksheet: _relWs(u.worksheet), quiz: u.quiz || null, blooket: u.blooket || null, videos: []
       };
     });
     out.sort(function (a, b) {

@@ -52,8 +52,8 @@ const ONE_CARD_CSV = [
 function bootLauncher({ gradeBlooket, indexMissing }) {
   const recorded = [];
   const lesson = { id: '4.1-2', unit: 4, label: 'Sampling', worksheet: 'u4_lesson1-2_live.html', quiz: null, blooket: 'https://b', videos: [] };
-  // The published fallback source: roadmap-data.json (full URLs, no local video paths).
-  const roadmap = { lessons: { '4.1-2': { topic: 'Sampling', urls: { worksheet: 'https://gh/u4_lesson1-2_live.html', quiz: null, blooket: 'https://b' } } } };
+  // The published fallback source: roadmap-data.json (absolute GH-Pages URLs).
+  const roadmap = { lessons: { '4.1-2': { topic: 'Sampling', urls: { worksheet: 'https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html', quiz: null, blooket: 'https://b' } } } };
   const gradePayload = { ok: true, quarters: [], lessons: [{ topic: '4.1-2', lessonGrade: 55, blooket: gradeBlooket }] };
   const fakeFetch = (url) => {
     const u = String(url);
@@ -134,6 +134,10 @@ describe('mobile-home — native flashcards (behavioral boot)', () => {
 
     const fcBtn = win.document.querySelector('.btn.fc');
     expect(fcBtn, 'tiles did not render from the roadmap fallback').toBeTruthy();
+    // Worksheet link is ORIGIN-RELATIVE (github.io base stripped) so a Vercel mirror is self-sufficient.
+    const wsA = win.document.querySelector('.btn.ws');
+    expect(wsA.getAttribute('href')).toBe('u4_lesson1-2_live.html');
+    expect(wsA.getAttribute('href')).not.toMatch(/github\.io/);
     fcBtn.click();
     await flush(2);
     win.document.getElementById('fc-mode-full').click();
