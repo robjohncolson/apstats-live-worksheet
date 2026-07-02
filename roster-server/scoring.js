@@ -1,3 +1,4 @@
+// @ts-check
 // scoring.js — shared cr-quiz/PC answer-key scoring + ledger aggregation
 // helpers. Single source of truth so /rollup (Phase 2), /grade and /mastery
 // (Phase 3) score identically (GRADEBOOK_PHASE3_BUILD.md §5: "reuse the

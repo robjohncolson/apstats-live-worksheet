@@ -1,3 +1,4 @@
+// @ts-check
 // gradebook-grid.js — derive the in-app "1:1 Schoology gradebook" grid from a
 // computeGrade() result (Gradebook in-app rep). Pure functions, no I/O.
 //
@@ -155,7 +156,7 @@ export function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
   // resolvable date is left without a `due` field (clients show it).
   if (dueOpts && dueOpts.todayStr) {
     const period = sectionToPeriod(dueOpts.section);
-    for (const col of cols) {
+    for (const col of /** @type {Array<{due?: boolean, [k: string]: any}>} */ (cols)) {
       const ds = _columnDueDate(col, dueOpts.lessons, period);
       if (ds != null) col.due = ds <= dueOpts.todayStr;
     }
@@ -295,7 +296,7 @@ export function schoologyWeightedTotal(categoryAverages, weights = SCHOOLOGY_CAT
 }
 
 // ── Full per-student gradebook (all quarters) — for /grade + /class/grades ──────
-export function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = null, section = null, todayStr = null } = {}) {
+export function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = /** @type {any} */ (null), section = /** @type {string|null} */ (null), todayStr = /** @type {string|null} */ (null) } = {}) {
   // Date-gating opts are passed to the column builder only when both the schedule
   // and today are present; otherwise columns carry no `due` field (degrade to all).
   const dueOpts = (lessonSchedule && todayStr) ? { lessons: lessonSchedule, section, todayStr } : null;

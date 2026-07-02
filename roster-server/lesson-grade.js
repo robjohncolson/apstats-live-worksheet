@@ -1,3 +1,4 @@
+// @ts-check
 // lesson-grade.js — Gradebook Phase 6 + W1 (worksheet blank scoring) + F2 (quarters-by-date).
 //
 // Pure functions for lesson-level aggregation + date filter.
@@ -538,7 +539,7 @@ export function computeQuarterFromLessons({
   section,
   pcBandData,
   C = 85,
-  gradingWindowStart = null,
+  gradingWindowStart = /** @type {string|null} */ (null),
 }) {
   const period = sectionToPeriod(section); // "B" | "E" | null
 
@@ -727,7 +728,7 @@ export function workAvgV3(tracks, weights = V3_WORK_WEIGHTS) {
 // tolerating a missing (null) track. A track is null when nothing in it is due
 // yet — we must NOT penalize a student for an un-scheduled track, so the
 // present track alone sets the grade until BOTH tracks have due assignments.
-function combineV3(pcAvg, workAvg, gates = V3_GATES) {
+export function combineV3(pcAvg, workAvg, gates = V3_GATES) {
   if (pcAvg == null && workAvg == null) return null;
   if (pcAvg == null) return workAvg;
   if (workAvg == null) return pcAvg;
@@ -783,10 +784,10 @@ export function computeQuarterV3({
   todayDateStr,
   section,
   unitPcData,
-  gradingWindowStart = null,
-  workTracks = null,
-  blooketLessons = null,   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
-  quizLessons = null,      // [topicKey] that HAVE a quiz — the Quiz-track denominator
+  gradingWindowStart = /** @type {string|null} */ (null),
+  workTracks = /** @type {{posters?: number|null}|null} */ (null),
+  blooketLessons = /** @type {string[]|null} */ (null),   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
+  quizLessons = /** @type {string[]|null} */ (null),      // [topicKey] that HAVE a quiz — the Quiz-track denominator
 }) {
   const period = sectionToPeriod(section);
   const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
@@ -907,7 +908,7 @@ export function computeQuarterV3({
   // is null (older caller / tests), fall back to the all-due-lessons denominator.
   const quizSet = quizLessons == null ? null : new Set(quizLessons);
   let quizSum = 0, quizDue = 0, quizDone = 0;
-  const quizTodo = [];
+  const quizTodo = /** @type {string[]} */ ([]);
   // FINDING F1-B fix (flagged; default off): when on, a quiz-bearing lesson counts
   // only if scheduled-due OR actually attempted — so starting a FUTURE lesson's
   // worksheet doesn't turn its un-taken quiz into a 0 (mirrors the Blooket track's
@@ -945,7 +946,7 @@ export function computeQuarterV3({
   const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
   const seenBlooketGroups = new Set();
   let blooketSum = 0, blooketDue = 0, blooketDone = 0;
-  const blooketTodo = [];
+  const blooketTodo = /** @type {string[]} */ ([]);
   for (const topicKey of bandLessons) {
     if (!blooketSet.has(topicKey)) continue;
     const r = lessonMap.get(topicKey);

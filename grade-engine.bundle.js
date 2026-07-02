@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: a268e27a88cb
+ * engine-version: b4e4b2dcb6a8
  */
 ;(function (root) {
   'use strict';
@@ -15,6 +15,7 @@
 
   // ── grade-config.js ──────────────────────────────────────────────────────
   __reg["grade-config"] = (function () {
+    // @ts-check
     // grade-config.js — the ONE Phase-3 config constant block.
     // Every §7 pilot-tunable knob lives here and nowhere else (GRADEBOOK_PHASE3_BUILD.md
     // §1–§3 + §5). Changing a number here re-tunes the model with zero code edits;
@@ -163,6 +164,7 @@
 
   // ── scoring.js ──────────────────────────────────────────────────────
   __reg["scoring"] = (function () {
+    // @ts-check
     // scoring.js — shared cr-quiz/PC answer-key scoring + ledger aggregation
     // helpers. Single source of truth so /rollup (Phase 2), /grade and /mastery
     // (Phase 3) score identically (GRADEBOOK_PHASE3_BUILD.md §5: "reuse the
@@ -361,6 +363,7 @@
 
   // ── lesson-grade.js ──────────────────────────────────────────────────────
   __reg["lesson-grade"] = (function () {
+    // @ts-check
     // lesson-grade.js — Gradebook Phase 6 + W1 (worksheet blank scoring) + F2 (quarters-by-date).
     //
     // Pure functions for lesson-level aggregation + date filter.
@@ -901,7 +904,7 @@
       section,
       pcBandData,
       C = 85,
-      gradingWindowStart = null,
+      gradingWindowStart = /** @type {string|null} */ (null),
     }) {
       const period = sectionToPeriod(section); // "B" | "E" | null
     
@@ -1146,10 +1149,10 @@
       todayDateStr,
       section,
       unitPcData,
-      gradingWindowStart = null,
-      workTracks = null,
-      blooketLessons = null,   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
-      quizLessons = null,      // [topicKey] that HAVE a quiz — the Quiz-track denominator
+      gradingWindowStart = /** @type {string|null} */ (null),
+      workTracks = /** @type {{posters?: number|null}|null} */ (null),
+      blooketLessons = /** @type {string[]|null} */ (null),   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
+      quizLessons = /** @type {string[]|null} */ (null),      // [topicKey] that HAVE a quiz — the Quiz-track denominator
     }) {
       const period = sectionToPeriod(section);
       const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
@@ -1270,7 +1273,7 @@
       // is null (older caller / tests), fall back to the all-due-lessons denominator.
       const quizSet = quizLessons == null ? null : new Set(quizLessons);
       let quizSum = 0, quizDue = 0, quizDone = 0;
-      const quizTodo = [];
+      const quizTodo = /** @type {string[]} */ ([]);
       // FINDING F1-B fix (flagged; default off): when on, a quiz-bearing lesson counts
       // only if scheduled-due OR actually attempted — so starting a FUTURE lesson's
       // worksheet doesn't turn its un-taken quiz into a 0 (mirrors the Blooket track's
@@ -1308,7 +1311,7 @@
       const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
       const seenBlooketGroups = new Set();
       let blooketSum = 0, blooketDue = 0, blooketDone = 0;
-      const blooketTodo = [];
+      const blooketTodo = /** @type {string[]} */ ([]);
       for (const topicKey of bandLessons) {
         if (!blooketSet.has(topicKey)) continue;
         const r = lessonMap.get(topicKey);
@@ -1567,6 +1570,7 @@
 
   // ── gradebook-grid.js ──────────────────────────────────────────────────────
   __reg["gradebook-grid"] = (function () {
+    // @ts-check
     // gradebook-grid.js — derive the in-app "1:1 Schoology gradebook" grid from a
     // computeGrade() result (Gradebook in-app rep). Pure functions, no I/O.
     //
@@ -1724,7 +1728,7 @@
       // resolvable date is left without a `due` field (clients show it).
       if (dueOpts && dueOpts.todayStr) {
         const period = sectionToPeriod(dueOpts.section);
-        for (const col of cols) {
+        for (const col of /** @type {Array<{due?: boolean, [k: string]: any}>} */ (cols)) {
           const ds = _columnDueDate(col, dueOpts.lessons, period);
           if (ds != null) col.due = ds <= dueOpts.todayStr;
         }
@@ -1864,7 +1868,7 @@
     }
     
     // ── Full per-student gradebook (all quarters) — for /grade + /class/grades ──────
-    function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = null, section = null, todayStr = null } = {}) {
+    function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = /** @type {any} */ (null), section = /** @type {string|null} */ (null), todayStr = /** @type {string|null} */ (null) } = {}) {
       // Date-gating opts are passed to the column builder only when both the schedule
       // and today are present; otherwise columns carry no `due` field (degrade to all).
       const dueOpts = (lessonSchedule && todayStr) ? { lessons: lessonSchedule, section, todayStr } : null;
@@ -1891,6 +1895,7 @@
 
   // ── grade.js ──────────────────────────────────────────────────────
   __reg["grade"] = (function () {
+    // @ts-check
     // grade.js — mounts GET /grade onto an Express app (Gradebook Phase 3+6).
     // Call mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule }) from createApp().
     //
@@ -2115,6 +2120,31 @@
         // Lesson-weighted date-driven quarter grade (Phase 6 + F2).
         // F2: pass quarterKey + config instead of quarterBand so
         // computeQuarterFromLessons uses date-driven quarter assignment.
+        /**
+         * The per-quarter summary. Its shape is a union across three producers
+         * (computeQuarterV3 · computeQuarterFromLessons · the no-schedule fallback);
+         * the v3-only fields are absent on the Phase-6 path, so they're optional and
+         * every read below guards with `!= null`/`typeof`. Encoding it once here lets
+         * the checker validate the picks at line ~329 without narrowing noise.
+         * @typedef {Object} QuarterResult
+         * @property {number|null} [quarterGrade]
+         * @property {number|null} [ceiling]
+         * @property {number|null} [lessonsDue]
+         * @property {number} [lessonsGraded]
+         * @property {number|null} [lessonsTotal]
+         * @property {number|null} [pcAvg]
+         * @property {number|null} [workAvg]
+         * @property {number|null} [pcAvgRaw]
+         * @property {number|null} [workAvgRaw]
+         * @property {{posters?: number|null}|null} [workTracks]
+         * @property {number|null} [blooketDue]
+         * @property {number|null} [blooketDone]
+         * @property {string[]} [blooketTodo]
+         * @property {number|null} [quizDue]
+         * @property {number|null} [quizDone]
+         * @property {string[]} [quizTodo]
+         */
+        /** @type {QuarterResult} */
         let qResult;
         if (config.useV3 && schedule) {
           // v3 (GRADING_MODEL_V3_BUILD.md): two-track max/mean conditional. Same
@@ -2257,7 +2287,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "a268e27a88cb",
+    _engineVersion: "b4e4b2dcb6a8",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

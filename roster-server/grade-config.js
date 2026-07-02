@@ -1,3 +1,4 @@
+// @ts-check
 // grade-config.js — the ONE Phase-3 config constant block.
 // Every §7 pilot-tunable knob lives here and nowhere else (GRADEBOOK_PHASE3_BUILD.md
 // §1–§3 + §5). Changing a number here re-tunes the model with zero code edits;

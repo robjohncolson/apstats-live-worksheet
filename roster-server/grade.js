@@ -1,3 +1,4 @@
+// @ts-check
 // grade.js — mounts GET /grade onto an Express app (Gradebook Phase 3+6).
 // Call mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule }) from createApp().
 //
@@ -249,6 +250,31 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     // Lesson-weighted date-driven quarter grade (Phase 6 + F2).
     // F2: pass quarterKey + config instead of quarterBand so
     // computeQuarterFromLessons uses date-driven quarter assignment.
+    /**
+     * The per-quarter summary. Its shape is a union across three producers
+     * (computeQuarterV3 · computeQuarterFromLessons · the no-schedule fallback);
+     * the v3-only fields are absent on the Phase-6 path, so they're optional and
+     * every read below guards with `!= null`/`typeof`. Encoding it once here lets
+     * the checker validate the picks at line ~329 without narrowing noise.
+     * @typedef {Object} QuarterResult
+     * @property {number|null} [quarterGrade]
+     * @property {number|null} [ceiling]
+     * @property {number|null} [lessonsDue]
+     * @property {number} [lessonsGraded]
+     * @property {number|null} [lessonsTotal]
+     * @property {number|null} [pcAvg]
+     * @property {number|null} [workAvg]
+     * @property {number|null} [pcAvgRaw]
+     * @property {number|null} [workAvgRaw]
+     * @property {{posters?: number|null}|null} [workTracks]
+     * @property {number|null} [blooketDue]
+     * @property {number|null} [blooketDone]
+     * @property {string[]} [blooketTodo]
+     * @property {number|null} [quizDue]
+     * @property {number|null} [quizDone]
+     * @property {string[]} [quizTodo]
+     */
+    /** @type {QuarterResult} */
     let qResult;
     if (config.useV3 && schedule) {
       // v3 (GRADING_MODEL_V3_BUILD.md): two-track max/mean conditional. Same
