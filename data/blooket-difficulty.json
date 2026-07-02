@@ -9192,6 +9192,128 @@
         "difficulty": "hard",
         "rationale": "Because it compares the sample with more extreme results under H0."
       }
+    },
+    "u3_l6_l7_blooket.csv": {
+      "1": {
+        "difficulty": "easy",
+        "rationale": "A block design groups similar units, then randomizes to treatments within each block."
+      },
+      "2": {
+        "difficulty": "med",
+        "rationale": "Blocking separates variability due to the blocking variable from differences due to the treatment."
+      },
+      "3": {
+        "difficulty": "med",
+        "rationale": "Units are randomized to treatments within each block, not across all blocks at once."
+      },
+      "4": {
+        "difficulty": "easy",
+        "rationale": "A completely randomized design skips blocking and randomizes every unit directly to a treatment."
+      },
+      "5": {
+        "difficulty": "easy",
+        "rationale": "Matched pairs is blocking with blocks of two similar units, one getting each treatment."
+      },
+      "6": {
+        "difficulty": "med",
+        "rationale": "Each unit can serve as its own block by receiving both treatments in random order."
+      },
+      "7": {
+        "difficulty": "easy",
+        "rationale": "Blinding means subjects and/or researchers do not know which treatment was administered."
+      },
+      "8": {
+        "difficulty": "med",
+        "rationale": "Double-blind = neither the subjects nor those assessing the response know the assignment."
+      },
+      "9": {
+        "difficulty": "med",
+        "rationale": "Blinding guards against placebo effects and biased measurement of the response."
+      },
+      "10": {
+        "difficulty": "easy",
+        "rationale": "Replication means many units get each treatment, not just one."
+      },
+      "11": {
+        "difficulty": "med",
+        "rationale": "More units per treatment averages out natural variability, revealing true effects."
+      },
+      "12": {
+        "difficulty": "easy",
+        "rationale": "Confounding means a variable's effect is tangled with the treatment's effect."
+      },
+      "13": {
+        "difficulty": "med",
+        "rationale": "Soil type would be confounded with the treatment because it never varies randomly across plots."
+      },
+      "14": {
+        "difficulty": "hard",
+        "rationale": "The three pillars of experimental design are control, randomization, and replication."
+      },
+      "15": {
+        "difficulty": "hard",
+        "rationale": "Block on a variable associated with the response to reduce its noise in the comparison."
+      },
+      "16": {
+        "difficulty": "med",
+        "rationale": "Random assignment balances confounding variables across groups, enabling fair comparison."
+      },
+      "17": {
+        "difficulty": "easy",
+        "rationale": "A statistically significant difference is bigger than chance variation would plausibly produce."
+      },
+      "18": {
+        "difficulty": "easy",
+        "rationale": "Statistical inference draws conclusions about a population or treatment from sample data."
+      },
+      "19": {
+        "difficulty": "med",
+        "rationale": "Only the name differed, so the name was the treatment being tested."
+      },
+      "20": {
+        "difficulty": "med",
+        "rationale": "10.08% - 6.70% ~ 3.38 percentage points."
+      },
+      "21": {
+        "difficulty": "hard",
+        "rationale": "Random assignment plus significance lets us attribute the effect to the treatment (the name)."
+      },
+      "22": {
+        "difficulty": "med",
+        "rationale": "Random assignment is the ingredient that licenses cause-and-effect conclusions."
+      },
+      "23": {
+        "difficulty": "hard",
+        "rationale": "Generalization requires random selection of representative units from the population."
+      },
+      "24": {
+        "difficulty": "hard",
+        "rationale": "Random assignment -> causation; random selection -> generalization."
+      },
+      "25": {
+        "difficulty": "med",
+        "rationale": "More units improve representativeness and the power to detect true effects."
+      },
+      "26": {
+        "difficulty": "med",
+        "rationale": "A small p-value says a difference this large would rarely happen by chance alone."
+      },
+      "27": {
+        "difficulty": "hard",
+        "rationale": "With random assignment, a significant difference is evidence the treatment caused the effect."
+      },
+      "28": {
+        "difficulty": "med",
+        "rationale": "Generalization is justified only when units were randomly selected from the target population."
+      },
+      "29": {
+        "difficulty": "easy",
+        "rationale": "Only a randomized experiment can establish cause and effect."
+      },
+      "30": {
+        "difficulty": "hard",
+        "rationale": "Random assignment gives causation; without random selection, results shouldn't be generalized."
+      }
     }
   }
 }
