@@ -56,6 +56,44 @@
   #vo .bar button { background:#333; color:#fff; border:0; padding:10px 16px; border-radius:8px; font-size:14px; }
   #vo .bar .vtitle { font-size:13px; opacity:.85; margin-left:auto; }
   .empty { text-align:center; color:#778; padding:40px 20px; }
+
+  /* Native flashcards overlay — same fixed-sheet pattern as #vo, mobile palette. */
+  #fco { position:fixed; inset:0; background:var(--bg); display:none; z-index:60; flex-direction:column; }
+  #fco.show { display:flex; }
+  #fco .fc-bar { display:flex; gap:10px; align-items:center; background:var(--blue); color:#fff;
+             padding:calc(12px + env(safe-area-inset-top,0)) 16px 12px; }
+  #fco .fc-bar .fc-title { font-size:14px; font-weight:700; }
+  #fco .fc-bar .fc-prog { font-size:12px; opacity:.9; margin-left:auto; }
+  #fco .fc-bar button { background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.35);
+             border-radius:8px; padding:8px 12px; font-size:13px; font-weight:600; }
+  #fco .fc-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; max-width:680px;
+             width:100%; margin:0 auto; display:flex; flex-direction:column; }
+  #fco .fc-timer { height:5px; background:#dfe3e8; border-radius:3px; overflow:hidden; margin-bottom:14px; display:none; }
+  #fco.timed .fc-timer { display:block; }
+  #fco .fc-timer > i { display:block; height:100%; width:100%; background:var(--blue); transition:width .95s linear; }
+  #fco .fc-q { font-size:17px; font-weight:600; line-height:1.4; margin-bottom:16px; }
+  #fco .fc-choice { display:block; width:100%; text-align:left; padding:14px 16px; margin-bottom:10px; border-radius:10px;
+             border:1px solid var(--line); background:var(--card); font-size:15px; color:var(--ink); font-weight:500; }
+  #fco .fc-choice:active { background:#e9eef4; }
+  #fco .fc-choice.right { background:#e9f9ec; border-color:#57b26b; color:#0f7a2e; font-weight:700; }
+  #fco .fc-choice.wrong { background:#fdecec; border-color:#e39a9a; color:#b00020; }
+  #fco .fc-choice[disabled] { pointer-events:none; }
+  #fco .fc-feedback { min-height:22px; margin-top:6px; font-size:14px; font-weight:600; }
+  #fco .fc-next { margin-top:auto; padding:14px; border-radius:10px; border:0; background:var(--blue); color:#fff;
+             font-size:15px; font-weight:700; display:none; }
+  #fco .fc-next.show { display:block; }
+  /* Mode picker + result panels reuse .fc-body; big beveled choices. */
+  #fco .fc-pick, #fco .fc-result { text-align:center; margin:auto 0; }
+  #fco .fc-pick h2, #fco .fc-result h2 { font-size:20px; margin:0 0 6px; }
+  #fco .fc-pick p, #fco .fc-result p { color:#556; font-size:14px; margin:0 0 20px; line-height:1.4; }
+  #fco .fc-mode { display:block; width:100%; padding:18px; margin-bottom:12px; border-radius:12px; border:1px solid var(--line);
+             background:var(--card); font-size:16px; font-weight:700; color:var(--ink); }
+  #fco .fc-mode small { display:block; font-weight:500; font-size:12px; color:#667; margin-top:4px; }
+  #fco .fc-mode:active { background:#e9eef4; }
+  #fco .fc-mode.quick { background:#fff0f5; border-color:#ffc4dd; }
+  #fco .fc-mode.full { background:#e8f1ff; border-color:#bcd6ff; }
+  #fco .fc-score { font-size:44px; font-weight:800; margin:8px 0; }
+  #fco .fc-score.pass { color:#1a7f37; } #fco .fc-score.fail { color:#b00020; }
 </style>
 </head>
 <body>
@@ -74,6 +112,15 @@
 <div id="vo" role="dialog" aria-label="Video player">
   <video id="vplayer" controls playsinline></video>
   <div class="bar"><button onclick="closeVideo()">✕ Close</button><span class="vtitle" id="vtitle"></span></div>
+</div>
+
+<div id="fco" role="dialog" aria-label="Flashcards">
+  <div class="fc-bar">
+    <span class="fc-title" id="fc-title">🃏 Flashcards</span>
+    <span class="fc-prog" id="fc-prog"></span>
+    <button type="button" onclick="closeFlashcards()">✕ Close</button>
+  </div>
+  <div class="fc-body" id="fc-body"><!-- mode picker / cards / result injected here --></div>
 </div>
 
 <!-- offline-config.js is GENERATED into the pack; it sets window.OFFLINE_MODE and,
@@ -101,6 +148,14 @@
 <script src="student-key.js" onerror=""></script>
 <script src="submission-store.js" onerror=""></script>
 <script src="submission-capture.js" onerror=""></script>
+<!-- FLASHCARDS (native) — the shared pure Blooket-flashcard engine + the gradebook
+     ledger feeder, so the launcher runs flashcards IN-APP instead of deep-linking to
+     the Desk. flashcards.js is byte-pinned to the Desk's inline engine by
+     tests/flashcards-engine.test.js. offline-queue.js lets a finished deck queue its
+     grade row when offline; gradebook-client.js is the same feeder the Desk uses. -->
+<script src="flashcards.js" onerror=""></script>
+<script src="offline-queue.js" onerror=""></script>
+<script src="gradebook-client.js" onerror=""></script>
 <script>
 (function () {
   var main = document.getElementById('main');
@@ -728,10 +783,11 @@
           var bl = document.createElement('a'); bl.className = 'btn bloo'; bl.textContent = '🎯 Blooket';
           bl.href = l.blooket; bl.target = '_blank'; bl.rel = 'noopener';
           btns.appendChild(bl);
-          // Flashcards are IN-APP: deep-link into the bundled Desk, which owns the deck +
-          // scoring + recording (source 'blooket' → grade). It returns here on close.
-          var fc = document.createElement('a'); fc.className = 'btn fc'; fc.textContent = '🃏 Flashcards';
-          fc.href = 'ap_stats_roadmap_square_mode.html?flashcards=' + encodeURIComponent(l.id);
+          // Flashcards run NATIVELY here (shared flashcards.js engine + the gradebook
+          // feeder) — no longer a deep-link into the Desk. Same deck, same scoring, same
+          // BL-…-DESK_DONE grade row.
+          var fc = document.createElement('button'); fc.className = 'btn fc'; fc.textContent = '🃏 Flashcards';
+          fc.onclick = function () { openFlashcards(l); };
           btns.appendChild(fc);
         }
         card.appendChild(btns);
@@ -772,20 +828,265 @@
     if (repaint && _lastLessons.length) render(_lastLessons);
   }
 
+  // Returns a promise so callers can await a fresh floor before recording (see the
+  // flashcards commit). Resolves (never rejects) even when offline / not signed in.
   function loadGrade() {
-    if (!window.rosterClient || !rosterClient.current || !rosterClient.current()) return;
-    var base = svcUrl(); if (!base) return;
-    var token = (rosterClient.token && rosterClient.token()) || null; if (!token) return;
-    fetch(base + '/grade?token=' + encodeURIComponent(token))
+    if (!window.rosterClient || !rosterClient.current || !rosterClient.current()) return Promise.resolve(false);
+    var base = svcUrl(); if (!base) return Promise.resolve(false);
+    var token = (rosterClient.token && rosterClient.token()) || null; if (!token) return Promise.resolve(false);
+    return fetch(base + '/grade?token=' + encodeURIComponent(token))
       .then(function (r) { return r && r.ok ? r.json() : null; })
       .then(function (g) {
-        if (!g || !g.ok) return;
+        if (!g || !g.ok) return false;
         try { localStorage.setItem(GRADE_KEY, JSON.stringify({ lessons: g.lessons, quarters: g.quarters })); } catch (_) {}
         _applyGradeData(g, true);
+        return true;
       })
-      .catch(function () {});
+      .catch(function () { return false; });
   }
   window.loadGrade = loadGrade;
+
+  // ── Native flashcards (shared flashcards.js engine + the gradebook feeder) ────
+  // Runs the Blooket deck IN-APP: mode picker → cards → the BL-…-DESK_DONE grade
+  // row. Scoring + item-id come from window.Flashcards, byte-pinned to the Desk's
+  // inline engine by tests/flashcards-engine.test.js so they can't drift. The grade
+  // write is the same fire-and-forget gradebookClient.record the Desk uses; the
+  // best-wins floor here means a weaker re-run never lowers a recorded score.
+  var FC = window.Flashcards || null;
+  var _fcTags = null, _fc = null;
+  function fcoEl() { return document.getElementById('fco'); }
+  function fcBody() { return document.getElementById('fc-body'); }
+  function _fcSetProg(t) { var p = document.getElementById('fc-prog'); if (p) p.textContent = t || ''; }
+  function _fcTimerStop() { if (_fc && _fc.timer) { clearInterval(_fc.timer); _fc.timer = null; } }
+
+  function closeFlashcards() {
+    _fcTimerStop(); _fc = null;
+    var el = fcoEl(); if (el) el.classList.remove('show', 'timed');
+  }
+  window.closeFlashcards = closeFlashcards;
+
+  // Worksheet URL → deck CSV; fall back to the topic id (U.key → u{U}_l{key}_blooket.csv).
+  function _fcCsvPath(lesson) {
+    if (!FC) return null;
+    var p = lesson && lesson.worksheet ? FC.csvPathFromWorksheet(lesson.worksheet) : null;
+    if (p) return p;
+    var m = /^(\d+)\.([\d-]+)$/.exec(String((lesson && lesson.id) || ''));
+    return m ? ('u' + m[1] + '_l' + m[2].replace(/-/g, '_l') + '_blooket.csv') : null;
+  }
+  function _fcLoadTags() {
+    if (_fcTags) return Promise.resolve(_fcTags);
+    return fetch('data/blooket-difficulty.json', { cache: 'no-store' })
+      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (j) { _fcTags = (j && j.tags) || {}; return _fcTags; })
+      .catch(function () { _fcTags = {}; return _fcTags; });
+  }
+  function _fcLoadDeck(csvPath) {
+    return fetch(csvPath, { cache: 'no-store' })
+      .then(function (r) { if (!r || !r.ok) throw new Error('deck ' + (r && r.status)); return r.text(); })
+      .then(function (txt) { return FC.rowsToDeck(FC.parseCsv(txt)); });
+  }
+  function _fcBodyHtml(html) { var b = fcBody(); if (b) b.innerHTML = html; }
+
+  function openFlashcards(lesson) {
+    if (!FC) { _fcBodyHtml('<div class="fc-result"><h2>Unavailable</h2><p>Flashcards engine not loaded.</p></div>'); fcoEl() && fcoEl().classList.add('show'); return; }
+    var el = fcoEl(); if (!el) return;
+    _fcTimerStop(); _fc = null; el.classList.remove('timed');
+    document.getElementById('fc-title').textContent = '🃏 ' + esc((lesson && lesson.label) || ('Topic ' + (lesson && lesson.id)));
+    _fcSetProg(''); el.classList.add('show');
+    _fcBodyHtml(
+      '<div class="fc-pick">' +
+        '<h2>Choose a mode</h2>' +
+        '<p>Quick check tops out at 80% — enough to unlock. Full deck goes to 100%.</p>' +
+        '<button class="fc-mode quick" id="fc-mode-quick">⚡ Quick check<small>Top 10 cards · pass at 80%</small></button>' +
+        '<button class="fc-mode full" id="fc-mode-full">🎯 Full deck<small>Every card · 40s each · up to 100%</small></button>' +
+      '</div>');
+    document.getElementById('fc-mode-quick').onclick = function () { _fcStart(lesson, 'quick'); };
+    document.getElementById('fc-mode-full').onclick = function () { _fcStart(lesson, 'full'); };
+  }
+  window.openFlashcards = openFlashcards;
+
+  function _fcStart(lesson, mode) {
+    var csv = _fcCsvPath(lesson);
+    if (!csv) { _fcBodyHtml('<div class="fc-result"><h2>No deck</h2><p>This lesson has no flashcard deck.</p></div>'); return; }
+    _fcBodyHtml('<div class="fc-result"><h2>Loading deck…</h2></div>');
+    var tagsP = (mode === 'quick') ? _fcLoadTags() : Promise.resolve({});
+    Promise.all([_fcLoadDeck(csv), tagsP]).then(function (res) {
+      var deck = res[0], tags = res[1] || {};
+      if (!deck || !deck.length) { _fcBodyHtml('<div class="fc-result"><h2>Empty deck</h2><p>Could not read cards for this lesson.</p></div>'); return; }
+      if (mode === 'quick') {
+        var top = FC.selectTop10(deck, tags[csv] || {});
+        _fc = { mode: 'quick', lesson: lesson, deck: FC.shuffle(top), idx: 0, correct: 0, need: FC.quickPassCount(top.length), answered: false, timer: null };
+        fcoEl().classList.remove('timed');
+      } else {
+        _fc = { mode: 'full', lesson: lesson, round: FC.createRound(FC.shuffle(deck)), answered: false, timer: null };
+        fcoEl().classList.add('timed');
+      }
+      _fcRender();
+    }).catch(function (e) {
+      _fcBodyHtml('<div class="fc-result"><h2>Couldn’t load deck</h2><p>' + esc(String(e && e.message || e)) + '</p></div>');
+    });
+  }
+
+  function _fcCurrentCard() {
+    if (!_fc) return null;
+    if (_fc.mode === 'quick') return _fc.deck[_fc.idx] || null;
+    var i = FC.currentIdx(_fc.round);
+    return i >= 0 ? _fc.round.deck[i] : null;
+  }
+
+  function _fcRender() {
+    _fcTimerStop();
+    var card = _fcCurrentCard();
+    if (!card) { _fcFinish(); return; }
+    _fc.answered = false;
+    if (_fc.mode === 'quick') _fcSetProg((_fc.idx + 1) + ' / ' + _fc.deck.length + ' · ' + _fc.correct + '✓');
+    else _fcSetProg(_fc.round.order.length + ' left · ' + _fc.round.total + ' cards');
+    var html = '<div class="fc-timer"><i id="fc-timer-bar"></i></div>' +
+      '<div class="fc-q">' + esc(card.q) + '</div><div id="fc-choices">';
+    card.choices.forEach(function (ch, i) { html += '<button class="fc-choice" data-i="' + i + '">' + esc(ch) + '</button>'; });
+    html += '</div><div class="fc-feedback" id="fc-feedback"></div><button class="fc-next" id="fc-next">Next →</button>';
+    var b = fcBody(); b.innerHTML = html; b.scrollTop = 0;
+    Array.prototype.forEach.call(b.querySelectorAll('.fc-choice'), function (btn) {
+      btn.onclick = function () { _fcAnswer(parseInt(btn.getAttribute('data-i'), 10)); };
+    });
+    document.getElementById('fc-next').onclick = function () { _fcNext(); };
+    _fc.cardStart = Date.now();
+    if (_fc.mode === 'full') _fcStartTimer(card);
+  }
+
+  function _fcStartTimer(card) {
+    var total = FC.FULLDECK_SECONDS, left = total;
+    var bar = document.getElementById('fc-timer-bar');
+    if (bar) bar.style.width = '100%';
+    _fc.timer = setInterval(function () {
+      left -= 1;
+      if (bar) bar.style.width = Math.max(0, (left / total) * 100) + '%';
+      if (left <= 0) { _fcTimerStop(); _fcResolve('timeout', card, -1); }
+    }, 1000);
+  }
+
+  function _fcAnswer(choiceIdx) {
+    if (!_fc || _fc.answered) return;
+    var card = _fcCurrentCard(); if (!card) return;
+    _fcTimerStop();
+    _fcResolve(choiceIdx === card.correctIdx ? 'correct' : 'wrong', card, choiceIdx);
+  }
+
+  function _fcResolve(outcome, card, choiceIdx) {
+    if (!_fc || _fc.answered) return;
+    _fc.answered = true;
+    var latency = _fc.cardStart ? (Date.now() - _fc.cardStart) : 0;
+    var b = fcBody();
+    Array.prototype.forEach.call(b.querySelectorAll('.fc-choice'), function (btn) {
+      var i = parseInt(btn.getAttribute('data-i'), 10);
+      btn.setAttribute('disabled', '');
+      if (i === card.correctIdx) btn.classList.add('right');
+      else if (i === choiceIdx) btn.classList.add('wrong');
+    });
+    var correct = (outcome === 'correct');
+    var fb = document.getElementById('fc-feedback');
+    if (fb) { fb.textContent = correct ? '✓ Correct' : (outcome === 'timeout' ? '⏱ Time’s up — answer shown' : '✗ Not quite'); fb.style.color = correct ? '#1a7f37' : '#b00020'; }
+    if (_fc.mode === 'quick') {
+      if (correct) _fc.correct += 1;
+      if (_fc.correct >= _fc.need) { setTimeout(function () { _fcFinish(); }, 700); return; }   // early-stop caps at 80%
+    } else {
+      FC.recordOutcome(_fc.round, outcome, latency);
+    }
+    var nx = document.getElementById('fc-next'); if (nx) nx.classList.add('show');
+  }
+
+  function _fcNext() {
+    if (!_fc) return;
+    if (_fc.mode === 'quick') _fc.idx += 1;
+    _fcRender();
+  }
+
+  function _fcBlooketFloor(topic) {
+    var e = _gradeByTopic[_normTopic(topic)];
+    var v = e && (typeof e.blooket === 'number' ? e.blooket : (e.blooket && e.blooket.score));
+    return (typeof v === 'number' && isFinite(v)) ? v : -1;
+  }
+  function _fcBumpLocalBlooket(topic, score) {
+    var key = _normTopic(topic);
+    var e = _gradeByTopic[key] || (_gradeByTopic[key] = {});
+    var cur = (typeof e.blooket === 'number') ? e.blooket : -1;
+    if (score > cur) e.blooket = score;
+  }
+
+  // best-wins: never downgrade a recorded score; record the same ledger row the Desk
+  // does (source 'worksheet' + BL-…-DESK_DONE → the server's Blooket track).
+  function _fcCommit(topic, score) {
+    var floor = _fcBlooketFloor(topic);
+    if (!(score > floor)) return { skipped: true, floor: floor };
+    var built = FC.blooketItemId(topic);
+    var res = { ok: false, reason: 'no-client' };
+    try {
+      if (window.gradebookClient && window.gradebookClient.record) {
+        res = window.gradebookClient.record({
+          source: 'worksheet', itemId: built.itemId, unit: built.unit, topic: topic,
+          response: { selfAttest: 'blooket' }, score: score, attempt: 1
+        }) || res;
+      }
+    } catch (e) { res = { ok: false, reason: 'error' }; }
+    _fcBumpLocalBlooket(topic, score);
+    try { loadGrade(); } catch (_) {}   // refresh the pill/badges with the new record
+    return res;
+  }
+
+  function _fcFinish() {
+    _fcTimerStop();
+    if (!_fc) return;
+    var lesson = _fc.lesson, topic = String(lesson.id);
+    var score, passed;
+    if (_fc.mode === 'quick') { score = FC.quickScorePct(_fc.correct, _fc.deck.length); passed = FC.quickPassed(_fc.correct, _fc.deck.length); }
+    else { score = FC.fullScorePct(_fc.round); passed = score >= (FC.PASS_THRESHOLD * 100); }
+    // Quick records only on pass (Desk behavior); the full deck always records its score.
+    var doCommit = (_fc.mode === 'quick') ? passed : true;
+    fcoEl().classList.remove('timed');
+    _fc = null;
+
+    function finishCommit() {
+      var committed = doCommit ? _fcCommit(topic, score) : { skipped: true };
+      _fcRenderResult(lesson, score, passed, committed);
+    }
+    // Desk parity: refresh /grade FIRST so the best-wins floor reflects any higher
+    // score recorded on another device, THEN commit (a cold session can't downgrade).
+    Promise.resolve(loadGrade()).then(finishCommit, finishCommit);
+  }
+
+  function _fcRenderResult(lesson, score, passed, committed) {
+    var note;
+    if (committed && committed.skipped && !passed && score < 80) note = 'Reach 80% to unlock — your grade wasn’t lowered.';
+    else if (committed && committed.skipped) note = 'Kept your best score — a higher one is already recorded.';
+    else if (committed && committed.queued) note = 'Saved offline — it’ll sync when you reconnect.';
+    else if (committed && committed.ok === false) note = (committed.reason === 'no-identity' || committed.reason === 'no-client') ? 'Sign in to save this to your grade.' : 'Couldn’t save right now — try again when online.';
+    else note = passed ? '🎯 Recorded — lesson unlocked.' : 'Score recorded. Reach 80% to unlock this lesson.';
+    _fcBodyHtml(
+      '<div class="fc-result">' +
+        '<h2>' + (passed ? '🎉 Passed!' : 'Keep going') + '</h2>' +
+        '<div class="fc-score ' + (passed ? 'pass' : 'fail') + '">' + (Math.round(score * 10) / 10) + '%</div>' +
+        '<p>' + esc(note) + '</p>' +
+        '<button class="fc-mode quick" id="fc-again">↻ Try again</button>' +
+        '<button class="fc-mode full" id="fc-done">✓ Done</button>' +
+      '</div>');
+    document.getElementById('fc-again').onclick = function () { openFlashcards(lesson); };
+    document.getElementById('fc-done').onclick = function () { closeFlashcards(); };
+    _fcSetProg('');
+  }
+
+  // Keyboard (desktop testers): Esc closes, 1-4 answers, Enter/Space advances.
+  document.addEventListener('keydown', function (e) {
+    var el = fcoEl(); if (!el || !el.classList.contains('show')) return;
+    if (e.key === 'Escape') { closeFlashcards(); return; }
+    if (!_fc) return;
+    if (!_fc.answered && /^[1-4]$/.test(e.key)) {
+      var card = _fcCurrentCard(); var i = parseInt(e.key, 10) - 1;
+      if (card && i < card.choices.length) _fcAnswer(i);
+    } else if (_fc.answered && (e.key === 'Enter' || e.key === ' ')) {
+      var nx = document.getElementById('fc-next');
+      if (nx && nx.classList.contains('show')) { e.preventDefault(); _fcNext(); }
+    }
+  });
 
   // Cached grade → first paint has the pill + ✓ badges even offline.
   try { var _cg = localStorage.getItem(GRADE_KEY); if (_cg) _applyGradeData(JSON.parse(_cg), false); } catch (_) {}
