@@ -803,6 +803,12 @@
   // computed server-side (authoritative) from the same ledger the app already pulls.
   var GRADE_KEY = 'apstats_mobile_grade_v1';
   var _gradeByTopic = {}, _lastLessons = [];
+  // Whose /grade filled _gradeByTopic (stamped at FETCH time from the token's owner,
+  // and persisted inside the GRADE_KEY cache). The map + cache are device-global, so
+  // on a shared device the best-wins floor must only trust the synced half when it
+  // belongs to the CURRENT student — clearing on sign-in wouldn't cover a previous
+  // student's still-in-flight /grade response landing late.
+  var _gradeOwner = null;
   function _normTopic(s) { s = String(s == null ? '' : s); var m = s.match(/U?(\d+)[.\-_ ]?L?(\d+)/i); return m ? (m[1] + '.' + m[2]) : s; }
 
   // Populate the per-topic lesson-grade map + the header pill from a /grade payload.
@@ -834,11 +840,13 @@
     if (!window.rosterClient || !rosterClient.current || !rosterClient.current()) return Promise.resolve(false);
     var base = svcUrl(); if (!base) return Promise.resolve(false);
     var token = (rosterClient.token && rosterClient.token()) || null; if (!token) return Promise.resolve(false);
+    var owner = _fcStudent();   // whose token this fetch carries — stamped at request time
     return fetch(base + '/grade?token=' + encodeURIComponent(token))
       .then(function (r) { return r && r.ok ? r.json() : null; })
       .then(function (g) {
         if (!g || !g.ok) return false;
-        try { localStorage.setItem(GRADE_KEY, JSON.stringify({ lessons: g.lessons, quarters: g.quarters })); } catch (_) {}
+        try { localStorage.setItem(GRADE_KEY, JSON.stringify({ lessons: g.lessons, quarters: g.quarters, owner: owner })); } catch (_) {}
+        _gradeOwner = owner;
         _applyGradeData(g, true);
         return true;
       })
@@ -1033,10 +1041,13 @@
 
   function _fcBlooketFloor(topic) {
     var key = _normTopic(topic);
-    var e = _gradeByTopic[key];
-    var v = e && (typeof e.blooket === 'number' ? e.blooket : (e.blooket && e.blooket.score));
-    var synced = (typeof v === 'number' && isFinite(v)) ? v : -1;
     var who = _fcStudent();
+    var synced = -1;
+    if (who && _gradeOwner === who) {   // the synced map counts only for the student whose /grade filled it
+      var e = _gradeByTopic[key];
+      var v = e && (typeof e.blooket === 'number' ? e.blooket : (e.blooket && e.blooket.score));
+      synced = (typeof v === 'number' && isFinite(v)) ? v : -1;
+    }
     var mine = who && _fcLocalBest[who];
     var b = mine && mine[key];
     var local = (typeof b === 'number' && isFinite(b)) ? b : -1;
@@ -1133,8 +1144,17 @@
     }
   });
 
-  // Cached grade → first paint has the pill + ✓ badges even offline.
-  try { var _cg = localStorage.getItem(GRADE_KEY); if (_cg) _applyGradeData(JSON.parse(_cg), false); } catch (_) {}
+  // Cached grade → first paint has the pill + ✓ badges even offline. The cache is
+  // device-global: honor its owner stamp so another student's cached grades never
+  // feed the current student's best-wins floor (old unstamped caches → owner null).
+  try {
+    var _cg = localStorage.getItem(GRADE_KEY);
+    if (_cg) {
+      var _cgp = JSON.parse(_cg);
+      _gradeOwner = (_cgp && typeof _cgp.owner === 'string') ? _cgp.owner : null;
+      _applyGradeData(_cgp, false);
+    }
+  } catch (_) {}
 
   // Web / GH-Pages fallback: lessons-index.json is an APK BUILD ARTIFACT (local
   // bundled quiz + media/video paths) and isn't published to Pages, so on a laptop it

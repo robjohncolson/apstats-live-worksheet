@@ -80,7 +80,7 @@ function loadLauncher({ storage } = {}) {
   });
   const script = [
     FLASHCARDS,                                       // window.Flashcards (pure, no DOM)
-    'var _gradeByTopic = {}, _lastLessons = [];',
+    'var _gradeByTopic = {}, _lastLessons = [], _gradeOwner = null;',
     'function loadGrade() { return Promise.resolve(false); }',
     'var FC_BEST_KEY = "apstats_mobile_fcbest_v2";',
     fnBody(HOME, '_normTopic'),
@@ -92,12 +92,16 @@ function loadLauncher({ storage } = {}) {
     fnBody(HOME, '_fcBlooketFloor'),
     fnBody(HOME, '_fcBumpLocalBlooket'),
     fnBody(HOME, '_fcCommit'),
-    '({ applyGrade: function (g) { _applyGradeData(g, false); },',
+    // applyGrade mirrors the shipped loadGrade success path: the owner is stamped from
+    // the token that made the fetch (= the CURRENT student for a fresh refresh);
+    // applyGradeAs models a PREVIOUS student's response landing late (owner ≠ current).
+    '({ applyGrade: function (g) { _gradeOwner = _fcStudent(); _applyGradeData(g, false); },',
+    '   applyGradeAs: function (o, g) { _gradeOwner = o; _applyGradeData(g, false); },',
     '   floor: function (t) { return _fcBlooketFloor(t); },',
     '   bump: function (t, s) { _fcBumpLocalBlooket(t, s); },',
     '   commit: function (t, s) { return _fcCommit(t, s); },',
-    '   setEntry: function (t, v) { _gradeByTopic = {}; _gradeByTopic[_normTopic(t)] = { blooket: v }; },',
-    '   reset: function () { _gradeByTopic = {}; _fcLocalBest = {}; } })',
+    '   setEntry: function (t, v) { _gradeOwner = _fcStudent(); _gradeByTopic = {}; _gradeByTopic[_normTopic(t)] = { blooket: v }; },',
+    '   reset: function () { _gradeByTopic = {}; _fcLocalBest = {}; _gradeOwner = null; } })',
   ].join('\n');
   const api = runInContext(script, ctx);
   const setUser = (name) => { currentUser = name ? { username: name } : null; };
@@ -309,6 +313,35 @@ describe('launcher best-wins floor (mobile-home _fcCommit, prop 12b)', () => {
         expect(L.api.floor(TOPIC)).toBeGreaterThanOrEqual(a);
       },
     ));
+  });
+
+  it('SHARED DEVICE + FAILED REFRESH: A\'s in-memory synced map never floors B when B\'s /grade refresh fails', () => {
+    fc.assert(fc.property(
+      fc.integer({ min: 1, max: 100 }),               // student A's synced + recorded score
+      fc.integer({ min: 0, max: 100 }),               // student B's run on the same device
+      (a, b) => {
+        start();                                      // signed in as 'kid' (A)
+        L.api.applyGrade(payloadFor(a));              // A's own /grade sync fills the map
+        L.api.commit(TOPIC, a);                       // and A re-records their best
+        L.setUser('other_kid');                       // B signs in on the same device
+        // NO applyGrade for B: the sign-in /grade refresh FAILED (offline / hiccup),
+        // so A's blooket value is still sitting in the in-memory map.
+        const before = L.emissions.length;
+        L.api.commit(TOPIC, b);
+        expect(L.emissions.length).toBe(before + 1);  // B's legitimate run records anyway
+        expect(L.emissions[L.emissions.length - 1].score).toBe(b);
+        // …and A's LATE-LANDING /grade response (fetched with A's token before the
+        // switch) must not poison B either — clearing-on-sign-in alone misses this.
+        L.api.applyGradeAs('kid', payloadFor(a));
+        expect(L.api.floor(TOPIC)).toBeLessThanOrEqual(b);   // only B's own local best floors B
+      },
+    ));
+  });
+
+  it('the shipped /grade cache + fetch are owner-stamped (the boot/loadGrade halves the vm harness cannot extract)', () => {
+    expect(HOME).toContain('var owner = _fcStudent();');
+    expect(HOME).toContain('JSON.stringify({ lessons: g.lessons, quarters: g.quarters, owner: owner })');
+    expect(HOME).toContain("_gradeOwner = (_cgp && typeof _cgp.owner === 'string') ? _cgp.owner : null;");
   });
 
   it('a signed-out run never persists a bump (cannot poison a future signed-in floor)', () => {
