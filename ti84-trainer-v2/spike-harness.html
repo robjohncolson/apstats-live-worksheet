@@ -90,6 +90,12 @@
     <div class="tally" id="tally">No runs yet.</div>
     <div class="gallery" id="gallery"></div>
     <textarea class="results" id="a2-results" readonly placeholder="A2 results JSON appears here — paste into TI84_TRAINER_SPIKE_RESULT.md"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" id="import-a2-btn">Import pasted A2 JSON</button>
+      <button class="secondary" id="summarize-a2-btn">Build A2 summary</button>
+      <span class="sub" id="a2-import-status" style="margin:0">No imported A2 runs.</span>
+    </div>
+    <textarea class="results" id="a2-import" placeholder="Paste one A2 JSON object, an array of objects, or several JSON objects here. Import restores golden hashes for A3 verify without rerunning stress."></textarea>
   </section>
 
   <section>
@@ -138,6 +144,7 @@
     stopRequested: false,
     goldens: {},        // datasetKey -> { hash, region, frameDataUrl }
     a2: null,           // last stress result object
+    a2Imported: {},     // datasetKey -> imported A2 stress result
     a3: { events: [] },
   };
 
@@ -424,11 +431,179 @@
         runs,
         capturedAt: new Date().toISOString(),
       };
+      state.a2Imported[key] = state.a2;
       document.getElementById('a2-results').value = JSON.stringify(state.a2, null, 2);
+      updateA2ImportStatus();
       log(`Stress done: ${passes}/${runs.length} matched golden.`);
     } catch (error) {
       log(`Stress run failed: ${error.message}`);
     }
+  });
+
+  // ---------- A2 import / summary ----------
+
+  function parseJsonEvidence(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch (_) {
+      // Fall through to a balanced-object extractor so operators can paste
+      // several JSON objects copied from chat or notes without wrapping them.
+    }
+
+    const objects = [];
+    let depth = 0;
+    let start = -1;
+    let inString = false;
+    let escaped = false;
+
+    for (let index = 0; index < trimmed.length; index += 1) {
+      const char = trimmed[index];
+
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (char === '\\') {
+          escaped = true;
+        } else if (char === '"') {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (char === '"') {
+        inString = true;
+        continue;
+      }
+
+      if (char === '{') {
+        if (depth === 0) start = index;
+        depth += 1;
+      } else if (char === '}') {
+        depth -= 1;
+        if (depth === 0 && start !== -1) {
+          objects.push(JSON.parse(trimmed.slice(start, index + 1)));
+          start = -1;
+        }
+        if (depth < 0) {
+          throw new Error('Unbalanced JSON braces in pasted A2 evidence.');
+        }
+      }
+    }
+
+    if (depth !== 0 || inString) {
+      throw new Error('Incomplete JSON object in pasted A2 evidence.');
+    }
+
+    return objects;
+  }
+
+  function validateA2Evidence(record) {
+    if (!record || typeof record !== 'object') {
+      throw new Error('A2 evidence must be a JSON object.');
+    }
+    if (!DATASETS[record.dataset]) {
+      throw new Error(`Unknown dataset "${record.dataset}".`);
+    }
+    if (!record.goldenHash || typeof record.goldenHash !== 'string') {
+      throw new Error(`${record.dataset}: missing goldenHash.`);
+    }
+    if (!record.region || typeof record.region !== 'object') {
+      throw new Error(`${record.dataset}: missing hash region.`);
+    }
+    if (!Array.isArray(record.runs)) {
+      throw new Error(`${record.dataset}: missing runs array.`);
+    }
+    return record;
+  }
+
+  function updateA2ImportStatus() {
+    const entries = Object.values(state.a2Imported);
+    const status = document.getElementById('a2-import-status');
+
+    if (!entries.length) {
+      status.textContent = 'No imported A2 runs.';
+      return;
+    }
+
+    const parts = entries.map((entry) => {
+      const total = Number(entry.totalRuns ?? entry.runs?.length ?? 0);
+      const passes = Number(entry.passes ?? 0);
+      return `${entry.dataset}: ${passes}/${total}`;
+    });
+    status.textContent = `A2 loaded: ${parts.join(' · ')}`;
+  }
+
+  function buildA2Summary() {
+    const datasets = Object.values(state.a2Imported)
+      .sort((left, right) => left.dataset.localeCompare(right.dataset))
+      .map((entry) => {
+        const totalRuns = Number(entry.totalRuns ?? entry.runs?.length ?? 0);
+        const passes = Number(entry.passes ?? 0);
+        return {
+          dataset: entry.dataset,
+          goldenHash: entry.goldenHash,
+          totalRuns,
+          passes,
+          failures: totalRuns - passes,
+          failureRate: totalRuns ? (totalRuns - passes) / totalRuns : null,
+          mismatches: (entry.runs ?? [])
+            .filter((run) => !run.match)
+            .map((run) => ({ run: run.run, hash: run.hash, stable: run.stable })),
+          capturedAt: entry.capturedAt,
+        };
+      });
+
+    const totalRuns = datasets.reduce((sum, entry) => sum + entry.totalRuns, 0);
+    const passes = datasets.reduce((sum, entry) => sum + entry.passes, 0);
+
+    return {
+      kind: 'A2-autofill-stress-summary',
+      generatedAt: new Date().toISOString(),
+      datasetCount: datasets.length,
+      totalRuns,
+      passes,
+      failures: totalRuns - passes,
+      failureRate: totalRuns ? (totalRuns - passes) / totalRuns : null,
+      datasets,
+    };
+  }
+
+  document.getElementById('import-a2-btn').addEventListener('click', () => {
+    try {
+      const records = parseJsonEvidence(document.getElementById('a2-import').value)
+        .map(validateA2Evidence);
+
+      if (!records.length) {
+        log('No A2 JSON found to import.');
+        return;
+      }
+
+      for (const record of records) {
+        state.a2Imported[record.dataset] = record;
+        state.goldens[record.dataset] = {
+          hash: record.goldenHash,
+          region: record.region,
+          frameDataUrl: null,
+          imported: true,
+        };
+      }
+
+      updateA2ImportStatus();
+      document.getElementById('a2-results').value = JSON.stringify(buildA2Summary(), null, 2);
+      log(`Imported ${records.length} A2 result${records.length === 1 ? '' : 's'} and restored golden hashes for A3 verify.`);
+    } catch (error) {
+      log(`A2 import failed: ${error.message}`);
+    }
+  });
+
+  document.getElementById('summarize-a2-btn').addEventListener('click', () => {
+    const summary = buildA2Summary();
+    document.getElementById('a2-results').value = JSON.stringify(summary, null, 2);
+    log(`A2 summary built for ${summary.datasetCount} dataset${summary.datasetCount === 1 ? '' : 's'}.`);
   });
 
   // ---------- A3: .8xl builder ----------
