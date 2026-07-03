@@ -1007,11 +1007,23 @@
   // in-map bump, and a later run whose pre-commit refresh FAILS (offline / server
   // hiccup) could then emit a weaker score that the server's last-write-wins upsert
   // records over the better one. localStorage-backed so it also survives a reload
-  // while the higher score is still queued. Guarded by
+  // while the higher score is still queued. Scoped PER STUDENT (v2): the synced half
+  // of the floor is the signed-in student's /grade, so on a shared classroom device
+  // a device-global local best would let student A's 90 suppress student B's
+  // legitimate 60. A signed-out run never persists a bump — it can't be keyed and
+  // its write is dropped by gradebook-client anyway. Guarded by
   // tests/feeder-bestwins-invariants.property.test.js (prop 12b).
-  var FC_BEST_KEY = 'apstats_mobile_fcbest_v1';
+  var FC_BEST_KEY = 'apstats_mobile_fcbest_v2';   // { username: { topicKey: score } }
+  function _fcStudent() {
+    try {
+      var u = window.rosterClient && rosterClient.current && rosterClient.current();
+      var name = u && u.username;
+      return (typeof name === 'string' && name) ? name : null;
+    } catch (_) { return null; }
+  }
   function _fcLoadLocalBest() {
     try {
+      localStorage.removeItem('apstats_mobile_fcbest_v1');   // v1 was device-global (shared-device leak)
       var s = localStorage.getItem(FC_BEST_KEY);
       var m = s ? JSON.parse(s) : null;
       return (m && typeof m === 'object') ? m : {};
@@ -1024,15 +1036,20 @@
     var e = _gradeByTopic[key];
     var v = e && (typeof e.blooket === 'number' ? e.blooket : (e.blooket && e.blooket.score));
     var synced = (typeof v === 'number' && isFinite(v)) ? v : -1;
-    var local = (typeof _fcLocalBest[key] === 'number' && isFinite(_fcLocalBest[key])) ? _fcLocalBest[key] : -1;
+    var who = _fcStudent();
+    var mine = who && _fcLocalBest[who];
+    var b = mine && mine[key];
+    var local = (typeof b === 'number' && isFinite(b)) ? b : -1;
     return synced > local ? synced : local;
   }
   function _fcBumpLocalBlooket(topic, score) {
     var key = _normTopic(topic);
-    if (typeof score === 'number' && isFinite(score)) {
-      var best = (typeof _fcLocalBest[key] === 'number') ? _fcLocalBest[key] : -1;
+    var who = _fcStudent();
+    if (who && typeof score === 'number' && isFinite(score)) {
+      var mine = _fcLocalBest[who] || (_fcLocalBest[who] = {});
+      var best = (typeof mine[key] === 'number') ? mine[key] : -1;
       if (score > best) {
-        _fcLocalBest[key] = score;
+        mine[key] = score;
         try { localStorage.setItem(FC_BEST_KEY, JSON.stringify(_fcLocalBest)); } catch (_) {}
       }
     }

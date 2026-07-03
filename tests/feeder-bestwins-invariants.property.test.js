@@ -20,6 +20,13 @@
 //      live INSIDE _gradeByTopic, so a stale payload erased it; _fcLocalBest now keeps
 //      the local-best half of the floor outside the map (and in localStorage).
 //
+// The persisted local best is scoped PER STUDENT (Codex blocker on the v1 fix): the
+// synced half of the floor is the signed-in student's /grade, so a device-global local
+// best on a shared classroom device would let student A's 90 suppress student B's
+// legitimate 60. A signed-out run must never persist a bump at all — gradebook-client
+// drops the write (no-identity), so a persisted floor for it would suppress real
+// scores the server never received.
+//
 // @vitest-environment node
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -54,13 +61,19 @@ const TOPIC = '4.1-2';   // combined topic — exercises the BL-U4-L1-2-DESK_DON
 // and a FAILED refresh attempt as no applyGrade at all (loadGrade resolves false
 // without touching state when offline / not signed in / non-ok).
 // Pass `storage` to back _fcLocalBest with a fake localStorage (reload persistence).
+// The signed-in student is switchable via setUser (null = signed out) — _fcStudent
+// reads the BARE rosterClient global (page scripts see window.* as globals), so the
+// stub is installed as both window.rosterClient and a context global.
 function loadLauncher({ storage } = {}) {
   const emissions = [];
+  let currentUser = { username: 'kid' };
+  const rosterClient = { current: () => currentUser, token: () => (currentUser ? 'tok' : null) };
   const win = {
+    rosterClient,
     gradebookClient: { record: (row) => { emissions.push(row); return { ok: true, ledgerId: 'L1' }; } },
   };
   const ctx = createContext({
-    window: win, document: { getElementById: () => null }, console,
+    window: win, rosterClient, document: { getElementById: () => null }, console,
     Math, JSON, String, Number, Array, Object, Promise, RegExp, Date,
     isFinite, parseInt, parseFloat,
     ...(storage ? { localStorage: storage } : {}),   // absent by default, like the vm has no DOM
@@ -69,10 +82,11 @@ function loadLauncher({ storage } = {}) {
     FLASHCARDS,                                       // window.Flashcards (pure, no DOM)
     'var _gradeByTopic = {}, _lastLessons = [];',
     'function loadGrade() { return Promise.resolve(false); }',
-    'var FC_BEST_KEY = "apstats_mobile_fcbest_v1";',
+    'var FC_BEST_KEY = "apstats_mobile_fcbest_v2";',
     fnBody(HOME, '_normTopic'),
     fnBody(HOME, '_applyGradeData'),
     'var FC = window.Flashcards;',
+    fnBody(HOME, '_fcStudent'),
     fnBody(HOME, '_fcLoadLocalBest'),
     'var _fcLocalBest = _fcLoadLocalBest();',         // mirrors the shipped hydrate line
     fnBody(HOME, '_fcBlooketFloor'),
@@ -86,7 +100,8 @@ function loadLauncher({ storage } = {}) {
     '   reset: function () { _gradeByTopic = {}; _fcLocalBest = {}; } })',
   ].join('\n');
   const api = runInContext(script, ctx);
-  return { api, emissions };
+  const setUser = (name) => { currentUser = name ? { username: name } : null; };
+  return { api, emissions, setUser };
 }
 
 // A /grade payload carrying one blooket value for TOPIC (null = no row recorded yet).
@@ -145,7 +160,7 @@ const lessonsFor = (score) => (score == null ? null : [{ lessonKey: TOPIC, blook
 describe('launcher best-wins floor (mobile-home _fcCommit, prop 12b)', () => {
   let L;
   beforeAll(() => { L = loadLauncher(); });
-  const start = () => { L.api.reset(); L.emissions.length = 0; };
+  const start = () => { L.setUser('kid'); L.api.reset(); L.emissions.length = 0; };
 
   it('emit gate: a run records iff it strictly beats the synced floor, with the exact Desk-parity row', () => {
     fc.assert(fc.property(
@@ -276,15 +291,56 @@ describe('launcher best-wins floor (mobile-home _fcCommit, prop 12b)', () => {
     ));
   });
 
-  it('the local best survives a reload (localStorage-backed): a weaker post-restart run is still dropped', () => {
+  it('SHARED DEVICE: one student\'s local best never floors another student (per-student scoping)', () => {
+    fc.assert(fc.property(
+      fc.integer({ min: 1, max: 100 }),                 // student A's recorded best
+      fc.integer({ min: 0, max: 100 }),                 // student B's run on the same device
+      (a, b) => {
+        start();                                        // signed in as 'kid' (A)
+        L.api.commit(TOPIC, a);                         // A records a + bumps A's local best
+        L.setUser('other_kid');                         // B signs in on the same device
+        L.api.applyGrade(payloadFor(null));             // B's sign-in /grade refresh: no row for B
+        expect(L.api.floor(TOPIC)).toBe(-1);            // A's best must NOT floor B
+        const before = L.emissions.length;
+        L.api.commit(TOPIC, b);
+        expect(L.emissions.length).toBe(before + 1);    // B's legitimate run records
+        expect(L.emissions[L.emissions.length - 1].score).toBe(b);
+        L.setUser('kid');                               // back to A: A's own floor is intact
+        expect(L.api.floor(TOPIC)).toBeGreaterThanOrEqual(a);
+      },
+    ));
+  });
+
+  it('a signed-out run never persists a bump (cannot poison a future signed-in floor)', () => {
     const mem = {};
-    const storage = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); } };
+    const storage = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: (k) => { delete mem[k]; } };
+    const H = loadLauncher({ storage });
+    H.setUser(null);                                    // wall failed open / signed out mid-session
+    H.api.commit(TOPIC, 90);                            // gradebook-client drops this write (no-identity)
+    expect(mem['apstats_mobile_fcbest_v2']).toBeUndefined();   // nothing persisted for it
+    H.setUser('kid');
+    H.api.applyGrade(payloadFor(null));                 // sign-in /grade refresh clears the session map
+    expect(H.api.floor(TOPIC)).toBe(-1);                // the signed-in floor is clean
+    H.api.commit(TOPIC, 60);
+    expect(H.emissions[H.emissions.length - 1].score).toBe(60);
+  });
+
+  it('the local best survives a reload (localStorage-backed), stays per-student, and drops the v1 device-global key', () => {
+    const mem = { apstats_mobile_fcbest_v1: JSON.stringify({ '4.1': 95 }) };   // leaky v1 leftover
+    const storage = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: (k) => { delete mem[k]; } };
     const A = loadLauncher({ storage });
+    expect(mem['apstats_mobile_fcbest_v1']).toBeUndefined();   // v1 purged on load, not honored
+    expect(A.api.floor(TOPIC)).toBe(-1);
     A.api.bump(TOPIC, 90);                              // e.g. the 90 POST is still queued offline
     const B = loadLauncher({ storage });                // page reload: fresh state, same device
-    expect(B.api.floor(TOPIC)).toBeGreaterThanOrEqual(90);
+    expect(B.api.floor(TOPIC)).toBeGreaterThanOrEqual(90);     // same student ('kid'): still floored
     B.api.commit(TOPIC, 60);
     expect(B.emissions).toHaveLength(0);
+    B.setUser('other_kid');                             // a different student on the same device
+    expect(B.api.floor(TOPIC)).toBe(-1);                // is NOT floored by kid's 90
+    B.api.commit(TOPIC, 60);
+    expect(B.emissions).toHaveLength(1);
+    expect(B.emissions[0].score).toBe(60);
   });
 
   it('the shipped _fcFinish refreshes /grade BEFORE _fcCommit (the discipline E2E-A models)', () => {
