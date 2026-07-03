@@ -1001,13 +1001,41 @@
     _fcRender();
   }
 
+  // The LOCAL-BEST half of the best-wins floor. Lives OUTSIDE _gradeByTopic because
+  // _applyGradeData rebuilds that map from every /grade payload — a stale response
+  // (the fire-and-forget refresh racing this run's own record POST) would wipe an
+  // in-map bump, and a later run whose pre-commit refresh FAILS (offline / server
+  // hiccup) could then emit a weaker score that the server's last-write-wins upsert
+  // records over the better one. localStorage-backed so it also survives a reload
+  // while the higher score is still queued. Guarded by
+  // tests/feeder-bestwins-invariants.property.test.js (prop 12b).
+  var FC_BEST_KEY = 'apstats_mobile_fcbest_v1';
+  function _fcLoadLocalBest() {
+    try {
+      var s = localStorage.getItem(FC_BEST_KEY);
+      var m = s ? JSON.parse(s) : null;
+      return (m && typeof m === 'object') ? m : {};
+    } catch (_) { return {}; }
+  }
+  var _fcLocalBest = _fcLoadLocalBest();
+
   function _fcBlooketFloor(topic) {
-    var e = _gradeByTopic[_normTopic(topic)];
+    var key = _normTopic(topic);
+    var e = _gradeByTopic[key];
     var v = e && (typeof e.blooket === 'number' ? e.blooket : (e.blooket && e.blooket.score));
-    return (typeof v === 'number' && isFinite(v)) ? v : -1;
+    var synced = (typeof v === 'number' && isFinite(v)) ? v : -1;
+    var local = (typeof _fcLocalBest[key] === 'number' && isFinite(_fcLocalBest[key])) ? _fcLocalBest[key] : -1;
+    return synced > local ? synced : local;
   }
   function _fcBumpLocalBlooket(topic, score) {
     var key = _normTopic(topic);
+    if (typeof score === 'number' && isFinite(score)) {
+      var best = (typeof _fcLocalBest[key] === 'number') ? _fcLocalBest[key] : -1;
+      if (score > best) {
+        _fcLocalBest[key] = score;
+        try { localStorage.setItem(FC_BEST_KEY, JSON.stringify(_fcLocalBest)); } catch (_) {}
+      }
+    }
     var e = _gradeByTopic[key] || (_gradeByTopic[key] = {});
     var cur = (typeof e.blooket === 'number') ? e.blooket : -1;
     if (score > cur) e.blooket = score;
