@@ -124,6 +124,11 @@
     var heads = opts.heads || {};
     var sign = opts.signImpl || (root.ReceiptSign && root.ReceiptSign.signPayload);
     if (typeof sign !== 'function') return Promise.reject(new Error('ReceiptSign.signPayload unavailable'));
+    // Refuse to seal without a date: canonicalize DROPS undefined keys, so a missing
+    // asOfDateNY would silently sign an epoch receipt with no `d` field at all.
+    if (typeof opts.asOfDateNY !== 'string' || !opts.asOfDateNY) {
+      return Promise.reject(new Error('sealEpoch: asOfDateNY (NY calendar date) is required'));
+    }
     return epochRoot(heads).then(function (rootHex) {
       /** @type {EpochReceiptPayload} */
       var payload = {

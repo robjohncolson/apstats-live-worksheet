@@ -140,9 +140,14 @@
           .then(function () { return typeof verify === 'function' ? verify(row) : false; })
           .then(function (ok) {
             if (!ok) { rejected += 1; return; }
-            var id = idOf(row);
-            accepted += 1; if (id) acceptedIds.push(id);
-            if (store && typeof store.put === 'function') return store.put(row);
+            // Count accepted only AFTER the row is durably stored: a rejecting
+            // store.put previously landed the row in BOTH tallies (the trailing
+            // catch) and offered its id as converged when it never persisted.
+            return Promise.resolve(store && typeof store.put === 'function' ? store.put(row) : undefined)
+              .then(function () {
+                var id = idOf(row);
+                accepted += 1; if (id) acceptedIds.push(id);
+              });
           })
           .catch(function () { rejected += 1; });
       });

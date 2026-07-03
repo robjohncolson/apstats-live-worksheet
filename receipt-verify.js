@@ -47,13 +47,21 @@
   var keyCache = new Map();
   /** @param {string} pubkey - base64url raw 32-byte Ed25519 public key @returns {Promise<CryptoKey>} */
   function importIssuerKey(pubkey) {
-    if (!keyCache.has(pubkey)) {
-      keyCache.set(pubkey, crypto.subtle.importKey(
-        'raw', b64urlToBytes(pubkey), { name: 'Ed25519' }, false, ['verify']
-      ));
+    var cached = keyCache.get(pubkey);
+    if (cached) return cached;
+    var p;
+    try {
+      p = crypto.subtle.importKey('raw', b64urlToBytes(pubkey), { name: 'Ed25519' }, false, ['verify']);
+    } catch (e) {
+      // Synchronous failure (malformed base64url): never cached, always retryable.
+      return Promise.reject(e);
     }
-    // Cast: the has()/set() above guarantees the entry exists; Map.get can't see that.
-    return /** @type {Promise<CryptoKey>} */ (keyCache.get(pubkey));
+    keyCache.set(pubkey, p);
+    // A REJECTED import must not poison the cache: evict so the next call retries.
+    // (A transient WebCrypto failure would otherwise disable this issuer for the
+    // page's lifetime.) Successful imports stay cached.
+    p.catch(function () { if (keyCache.get(pubkey) === p) keyCache.delete(pubkey); });
+    return p;
   }
 
   // Test issuer keys are only honored when ?test=1 (query or hash). Browser-only.
@@ -95,11 +103,17 @@
     var issuer = null;
     var candidates = issuersForRun(!!options.includeTestKeys);
     for (var i = 0; i < candidates.length; i++) {
-      var key = await importIssuerKey(candidates[i].pubkey);
-      if (await crypto.subtle.verify({ name: 'Ed25519' }, key, sigBytes, payloadBytes)) {
-        issuer = candidates[i];
-        break;
-      }
+      // Per-candidate isolation (mirrors verifySubmissionRow): one malformed or
+      // transiently-unimportable registered key must not abort the whole loop —
+      // the real signer may be a LATER candidate. An all-candidates failure just
+      // returns ok:false (fail closed), never a thrown error to the caller.
+      try {
+        var key = await importIssuerKey(candidates[i].pubkey);
+        if (await crypto.subtle.verify({ name: 'Ed25519' }, key, sigBytes, payloadBytes)) {
+          issuer = candidates[i];
+          break;
+        }
+      } catch (e) { /* try the next issuer key */ }
     }
     var receiptId = hex(await crypto.subtle.digest('SHA-256', payloadBytes));
     return { ok: !!issuer, issuer: issuer, payload: payload, receiptId: receiptId };
