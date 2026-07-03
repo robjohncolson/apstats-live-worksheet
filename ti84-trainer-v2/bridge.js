@@ -824,6 +824,71 @@
       return Boolean(state.module) && !state.usingMock;
     }
 
+    function getFrame() {
+      if (!isRealEmulator()) {
+        return null;
+      }
+
+      const frameFn = state.module._lcd_get_frame;
+
+      if (typeof frameFn !== 'function') {
+        return null;
+      }
+
+      const framePtr = frameFn();
+      return new Uint32Array(state.module.HEAPU32.buffer, framePtr, TOTAL_PIXELS).slice();
+    }
+
+    function sampleRegion(x, y, width, height) {
+      const frame = getFrame();
+
+      if (!frame) {
+        return null;
+      }
+
+      const left = Math.max(0, Math.min(LCD_WIDTH, Math.floor(x)));
+      const top = Math.max(0, Math.min(LCD_HEIGHT, Math.floor(y)));
+      const right = Math.max(left, Math.min(LCD_WIDTH, Math.floor(x + width)));
+      const bottom = Math.max(top, Math.min(LCD_HEIGHT, Math.floor(y + height)));
+      const regionWidth = right - left;
+      const regionHeight = bottom - top;
+      const pixels = new Uint32Array(regionWidth * regionHeight);
+
+      for (let row = 0; row < regionHeight; row += 1) {
+        const sourceStart = (top + row) * LCD_WIDTH + left;
+        pixels.set(frame.subarray(sourceStart, sourceStart + regionWidth), row * regionWidth);
+      }
+
+      return { x: left, y: top, width: regionWidth, height: regionHeight, pixels };
+    }
+
+    function frameHash(region) {
+      const pixels = region
+        ? sampleRegion(region.x, region.y, region.width, region.height)?.pixels
+        : getFrame();
+
+      if (!pixels) {
+        return null;
+      }
+
+      // FNV-1a over the RGB bytes only. drawRealFrame never renders the top
+      // byte of each pixel, so it must not influence the hash either.
+      let hash = 0x811c9dc5;
+
+      for (let index = 0; index < pixels.length; index += 1) {
+        const pixel = pixels[index];
+        hash = Math.imul(hash ^ (pixel & 0xff), 0x01000193);
+        hash = Math.imul(hash ^ ((pixel >> 8) & 0xff), 0x01000193);
+        hash = Math.imul(hash ^ ((pixel >> 16) & 0xff), 0x01000193);
+      }
+
+      return (hash >>> 0).toString(16).padStart(8, '0');
+    }
+
+    function getModule() {
+      return isRealEmulator() ? state.module : null;
+    }
+
     return {
       init,
       mountCanvas,
@@ -837,6 +902,10 @@
       isRealEmulator,
       getStatus,
       supportsManualRomSelection,
+      getFrame,
+      sampleRegion,
+      frameHash,
+      getModule,
       keyMap: KEY_TO_RC,
     };
   }
@@ -845,6 +914,8 @@
     ROM_CONFIG,
     CHAR_TO_BUTTON,
     KEY_TO_RC,
+    LCD_WIDTH,
+    LCD_HEIGHT,
     createBridge,
   };
 }());

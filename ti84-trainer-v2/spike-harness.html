@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TI-84 Spike Harness (A2/A3)</title>
+<!--
+  DEV-ONLY page for TI84_TRAINER_WEEK1_SPIKE_SPEC.md Track A.
+  Not linked from any student-facing page. Requires the real ROM, so it can
+  never run in CI — serve over http(s) (GH Pages URL, or `python -m http.server`
+  from the repo root) and run it by hand.
+
+  A2: autofill keystroke stress harness. Mirrors the app's exact entry path
+      (app.js goToListHeader + autoFillList timing) and compares a frame hash
+      of the home-screen "L1 ENTER" echo against a golden captured with slow,
+      generous timing.
+  A3: _emu_send_variable feasibility. Builds a .8xl in JS, writes it into the
+      Emscripten FS (probing write APIs at runtime), calls the export, then
+      verifies with the same echo oracle.
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #212121; line-height: 1.5; padding: 16px; }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 1.25rem; margin-bottom: 4px; }
+  .sub { color: #757575; font-size: 0.85rem; margin-bottom: 16px; }
+  section { background: #fff; border: 1px solid #ccc; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  section h2 { font-size: 1.05rem; margin-bottom: 10px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  label { font-size: 0.85rem; font-weight: 600; }
+  input, select { padding: 5px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
+  input[type="number"] { width: 80px; }
+  button { padding: 7px 14px; border: 1px solid #1565c0; border-radius: 6px; background: #1565c0; color: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+  button.secondary { background: #fff; color: #1565c0; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  canvas#lcd { border: 2px solid #263238; border-radius: 6px; image-rendering: pixelated; width: 480px; max-width: 100%; }
+  .status { font-family: 'Courier New', monospace; font-size: 0.85rem; color: #1565c0; margin-top: 6px; }
+  pre#log { background: #263238; color: #b2dfdb; font-size: 0.78rem; padding: 10px; border-radius: 8px; max-height: 280px; overflow: auto; white-space: pre-wrap; }
+  table { border-collapse: collapse; font-size: 0.85rem; margin: 8px 0; }
+  th, td { border: 1px solid #ddd; padding: 4px 10px; text-align: left; }
+  .ok { color: #2e7d32; font-weight: 700; }
+  .bad { color: #c62828; font-weight: 700; }
+  .warn { color: #f57f17; font-weight: 700; }
+  .gallery { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .gallery figure { width: 176px; font-size: 0.72rem; }
+  .gallery img { width: 100%; border: 1px solid #ccc; border-radius: 4px; }
+  textarea.results { width: 100%; min-height: 100px; font-family: 'Courier New', monospace; font-size: 0.75rem; margin-top: 8px; }
+  .tally { font-size: 1rem; font-weight: 700; margin: 6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TI-84 Trainer — Week-One Spike Harness</h1>
+  <div class="sub">Track A of TI84_TRAINER_WEEK1_SPIKE_SPEC.md · A2 keystroke stress + A3 variable-transfer feasibility · dev-only, needs the real ROM</div>
+
+  <section id="boot-section">
+    <h2>0 · Boot the emulator</h2>
+    <div class="row">
+      <button id="boot-btn">Boot ROM</button>
+      <label>or pick a ROM file:</label>
+      <input type="file" id="rom-file" accept=".rom">
+    </div>
+    <canvas id="lcd" width="320" height="240"></canvas>
+    <div class="status" id="boot-status">Not booted.</div>
+  </section>
+
+  <section>
+    <h2>A2 · Autofill keystroke stress harness</h2>
+    <div class="row">
+      <label>Dataset</label>
+      <select id="dataset">
+        <option value="small-int">small-int: 1,2,3,4,5</option>
+        <option value="dec-neg">dec-neg: 2.5,-3.1,4.75,-0.5,12.25</option>
+        <option value="realistic-20">realistic-20: twenty values w/ halves</option>
+      </select>
+      <label>Runs</label>
+      <input type="number" id="runs" value="20" min="1" max="200">
+    </div>
+    <div class="row">
+      <label>Echo hash region</label>
+      x <input type="number" id="rx" value="0"> y <input type="number" id="ry" value="30">
+      w <input type="number" id="rw" value="320"> h <input type="number" id="rh" value="44">
+      <button class="secondary" id="preview-region-btn">Preview region</button>
+    </div>
+    <div class="row">
+      <button id="golden-btn">1 · Capture golden (slow keystrokes)</button>
+      <button id="stress-btn">2 · Run stress @ app timing</button>
+      <button class="secondary" id="stop-btn">Stop</button>
+    </div>
+    <div class="tally" id="tally">No runs yet.</div>
+    <div class="gallery" id="gallery"></div>
+    <textarea class="results" id="a2-results" readonly placeholder="A2 results JSON appears here — paste into TI84_TRAINER_SPIKE_RESULT.md"></textarea>
+  </section>
+
+  <section>
+    <h2>A3 · _emu_send_variable feasibility</h2>
+    <div class="row">
+      <button id="probe-btn">1 · Probe exports</button>
+    </div>
+    <div id="probe-table"></div>
+    <div class="row">
+      <label>Target</label>
+      <select id="send-list"><option value="L1">L1</option><option value="L2">L2</option></select>
+      <label>loc</label>
+      <input type="number" id="send-loc" value="0">
+      <button class="secondary" id="build-btn">2 · Build .8xl (+download for offline validation)</button>
+      <button id="send-btn">3 · Send variable</button>
+      <button class="secondary" id="alt-send-btn">alt: set_file_to_send</button>
+      <button id="verify-btn">4 · Verify echo vs golden</button>
+    </div>
+    <div class="sub">Uses the A2 dataset selector. Step 2's download is the offline-validation artifact: import it into desktop CEmu / TI Connect CE before blaming the emulator API. Step 4 needs a golden captured in A2 for the same dataset.</div>
+    <textarea class="results" id="a3-results" readonly placeholder="A3 evidence JSON appears here"></textarea>
+  </section>
+
+  <section>
+    <h2>Log</h2>
+    <pre id="log"></pre>
+  </section>
+</div>
+
+<script src="./rom-config.js"></script>
+<script src="./bridge.js"></script>
+<script>
+(function () {
+  const bridgeApi = window.TI84V2Bridge;
+  const LCD_WIDTH = bridgeApi.LCD_WIDTH;
+  const LCD_HEIGHT = bridgeApi.LCD_HEIGHT;
+
+  const DATASETS = {
+    'small-int': [1, 2, 3, 4, 5],
+    'dec-neg': [2.5, -3.1, 4.75, -0.5, 12.25],
+    'realistic-20': [28, 32, 29, 35, 30.5, 27, 33, 31, 29.5, 34, 26, 30, 32.5, 28.5, 31.5, 29, 33.5, 27.5, 30, 35.5],
+  };
+
+  const state = {
+    bridge: null,
+    booted: false,
+    stopRequested: false,
+    goldens: {},        // datasetKey -> { hash, region, frameDataUrl }
+    a2: null,           // last stress result object
+    a3: { events: [] },
+  };
+
+  // ---------- logging ----------
+
+  const logEl = document.getElementById('log');
+
+  function log(message, cls) {
+    const stamp = new Date().toISOString().slice(11, 19);
+    logEl.textContent += `[${stamp}] ${message}\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+    console.log('[spike]', message);
+    if (cls) {
+      state.a3.events.push({ at: stamp, message });
+    }
+  }
+
+  function delay(ms) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
+  }
+
+  // ---------- boot ----------
+
+  const bootStatus = document.getElementById('boot-status');
+
+  function requireBridge() {
+    if (!state.bridge || !state.bridge.isRealEmulator()) {
+      throw new Error('Emulator is not booted (mock mode is useless here — the spike measures the real ROM).');
+    }
+    return state.bridge;
+  }
+
+  async function boot() {
+    if (!state.bridge) {
+      state.bridge = bridgeApi.createBridge({
+        onStatus(status) {
+          bootStatus.textContent = `${status.code}: ${status.detail || ''}`;
+        },
+      });
+      state.bridge.mountCanvas(document.getElementById('lcd'));
+    }
+
+    await state.bridge.init();
+    state.booted = state.bridge.isRealEmulator();
+    log(state.booted ? 'ROM booted — real emulator live.' : 'Boot fell back to mock — pick a ROM file above.');
+  }
+
+  document.getElementById('boot-btn').addEventListener('click', () => {
+    boot().catch((error) => log(`Boot failed: ${error.message}`));
+  });
+
+  document.getElementById('rom-file').addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!state.bridge) {
+      state.bridge = bridgeApi.createBridge({
+        onStatus(status) {
+          bootStatus.textContent = `${status.code}: ${status.detail || ''}`;
+        },
+      });
+      state.bridge.mountCanvas(document.getElementById('lcd'));
+    }
+    try {
+      await state.bridge.selectRomFile(file);
+      state.booted = state.bridge.isRealEmulator();
+      log('ROM file loaded.');
+    } catch (error) {
+      log(`ROM file failed: ${error.message}`);
+    }
+  });
+
+  // ---------- keystroke sequences (mirror app.js exactly) ----------
+
+  async function sendAndWait(buttonId, delayMs = 80) {
+    await state.bridge.sendButton(buttonId);
+    await delay(delayMs);
+  }
+
+  async function quitToHome() {
+    await sendAndWait('2ND');
+    await sendAndWait('MODE', 160);
+  }
+
+  // Mirrors app.js goToListHeader(0) + autoFillList — the exact production
+  // path whose reliability A2 measures. Timing changes here would invalidate
+  // the measurement; change app.js first, then re-mirror.
+  async function keystrokeFillL1(values) {
+    await quitToHome();
+    await delay(100);
+    await sendAndWait('STAT', 80);
+    await sendAndWait('ENTER', 200);
+    await sendAndWait('UP', 80);
+    await sendAndWait('CLEAR', 100);
+    await sendAndWait('ENTER', 120);
+
+    for (const value of values) {
+      await state.bridge.typeValue(String(value));
+      await delay(70);
+      await sendAndWait('ENTER', 110);
+    }
+  }
+
+  // Golden path: same sequence at ~2.5x hold/gap so a dropped keystroke is
+  // effectively impossible. The operator should also eyeball the echo.
+  async function keystrokeFillL1Slow(values) {
+    await quitToHome();
+    await delay(300);
+    await sendAndWait('STAT', 250);
+    await sendAndWait('ENTER', 400);
+    await sendAndWait('UP', 250);
+    await sendAndWait('CLEAR', 300);
+    await sendAndWait('ENTER', 350);
+
+    for (const value of values) {
+      await state.bridge.sendButton('CLEAR', 200);
+      await delay(160);
+      for (const char of String(value)) {
+        const buttonId = bridgeApi.CHAR_TO_BUTTON[char];
+        if (!buttonId) throw new Error(`Cannot type "${char}"`);
+        await state.bridge.sendButton(buttonId, 200);
+        await delay(160);
+      }
+      await delay(200);
+      await sendAndWait('ENTER', 300);
+    }
+  }
+
+  async function echoList(listName) {
+    await quitToHome();
+    await sendAndWait('CLEAR', 120);
+    await sendAndWait('2ND');
+    await sendAndWait(listName === 'L2' ? 'TWO' : 'ONE', 100);
+    await sendAndWait('ENTER', 350);
+  }
+
+  // ---------- frame hashing ----------
+
+  function currentRegion() {
+    return {
+      x: Number(document.getElementById('rx').value),
+      y: Number(document.getElementById('ry').value),
+      width: Number(document.getElementById('rw').value),
+      height: Number(document.getElementById('rh').value),
+    };
+  }
+
+  // The home-screen cursor blinks (~2 Hz). If the region accidentally covers
+  // it, hashes alternate — sample until stable and flag instability instead
+  // of producing garbage pass/fail data.
+  async function captureStableHash(region) {
+    const samples = [];
+    for (let i = 0; i < 5; i += 1) {
+      samples.push(state.bridge.frameHash(region));
+      if (i < 4) await delay(260);
+    }
+    const stable = samples.every((h) => h === samples[0]);
+    return { hash: samples[0], stable, samples };
+  }
+
+  function frameToDataUrl(highlightRegion) {
+    const frame = state.bridge.getFrame();
+    if (!frame) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = LCD_WIDTH;
+    canvas.height = LCD_HEIGHT;
+    const ctx = canvas.getContext('2d');
+    const img = ctx.createImageData(LCD_WIDTH, LCD_HEIGHT);
+    for (let i = 0; i < frame.length; i += 1) {
+      const pixel = frame[i];
+      const offset = i * 4;
+      img.data[offset] = (pixel >> 16) & 0xff;
+      img.data[offset + 1] = (pixel >> 8) & 0xff;
+      img.data[offset + 2] = pixel & 0xff;
+      img.data[offset + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    if (highlightRegion) {
+      ctx.strokeStyle = '#ff1744';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(highlightRegion.x, highlightRegion.y, highlightRegion.width, highlightRegion.height);
+    }
+    return canvas.toDataURL('image/png');
+  }
+
+  function addToGallery(dataUrl, caption) {
+    const gallery = document.getElementById('gallery');
+    if (gallery.children.length >= 12) {
+      gallery.removeChild(gallery.firstChild);
+    }
+    const figure = document.createElement('figure');
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    const cap = document.createElement('figcaption');
+    cap.textContent = caption;
+    figure.appendChild(img);
+    figure.appendChild(cap);
+    gallery.appendChild(figure);
+  }
+
+  document.getElementById('preview-region-btn').addEventListener('click', () => {
+    try {
+      requireBridge();
+      const url = frameToDataUrl(currentRegion());
+      if (url) addToGallery(url, 'region preview');
+    } catch (error) {
+      log(error.message);
+    }
+  });
+
+  // ---------- A2 ----------
+
+  function selectedDataset() {
+    const key = document.getElementById('dataset').value;
+    return { key, values: DATASETS[key] };
+  }
+
+  document.getElementById('golden-btn').addEventListener('click', async () => {
+    try {
+      requireBridge();
+      const { key, values } = selectedDataset();
+      const region = currentRegion();
+      log(`Golden capture for ${key}: slow keystroke entry of ${values.length} values...`);
+      await keystrokeFillL1Slow(values);
+      await echoList('L1');
+      const captured = await captureStableHash(region);
+      if (!captured.stable) {
+        log(`UNSTABLE hash (blinking element in region?): ${captured.samples.join(', ')} — adjust the region and retry.`);
+        addToGallery(frameToDataUrl(region), `UNSTABLE golden ${key}`);
+        return;
+      }
+      state.goldens[key] = { hash: captured.hash, region, frameDataUrl: frameToDataUrl(region) };
+      addToGallery(state.goldens[key].frameDataUrl, `golden ${key} ${captured.hash}`);
+      log(`Golden for ${key}: ${captured.hash} (region ${JSON.stringify(region)}). Eyeball the echo before trusting it.`);
+    } catch (error) {
+      log(`Golden capture failed: ${error.message}`);
+    }
+  });
+
+  document.getElementById('stop-btn').addEventListener('click', () => {
+    state.stopRequested = true;
+    log('Stop requested — finishing the current run.');
+  });
+
+  document.getElementById('stress-btn').addEventListener('click', async () => {
+    try {
+      requireBridge();
+      const { key, values } = selectedDataset();
+      const golden = state.goldens[key];
+      if (!golden) {
+        log(`No golden for ${key} yet — capture it first.`);
+        return;
+      }
+      const totalRuns = Number(document.getElementById('runs').value) || 20;
+      state.stopRequested = false;
+      const runs = [];
+      let passes = 0;
+      log(`Stress: ${totalRuns} runs of ${key} at app timing vs golden ${golden.hash}.`);
+
+      for (let run = 1; run <= totalRuns; run += 1) {
+        if (state.stopRequested) break;
+        await keystrokeFillL1(values);
+        await echoList('L1');
+        const captured = await captureStableHash(golden.region);
+        const match = captured.stable && captured.hash === golden.hash;
+        if (match) passes += 1;
+        runs.push({ run, hash: captured.hash, stable: captured.stable, match });
+        document.getElementById('tally').textContent =
+          `${key}: ${passes}/${run} match (${run}/${totalRuns} done)`;
+        if (!match) {
+          addToGallery(frameToDataUrl(golden.region), `MISMATCH run ${run} ${captured.hash}`);
+          log(`Run ${run}: MISMATCH hash=${captured.hash} stable=${captured.stable}`);
+        }
+      }
+
+      state.a2 = {
+        dataset: key,
+        values,
+        goldenHash: golden.hash,
+        region: golden.region,
+        totalRuns: runs.length,
+        passes,
+        failureRate: runs.length ? (runs.length - passes) / runs.length : null,
+        timing: 'bridge DEFAULT_HOLD_MS=90 / typeValue 90+55 / autoFillList 70+ENTER110 (mirrors app.js)',
+        runs,
+        capturedAt: new Date().toISOString(),
+      };
+      document.getElementById('a2-results').value = JSON.stringify(state.a2, null, 2);
+      log(`Stress done: ${passes}/${runs.length} matched golden.`);
+    } catch (error) {
+      log(`Stress run failed: ${error.message}`);
+    }
+  });
+
+  // ---------- A3: .8xl builder ----------
+
+  // TI-8x real: byte0 sign/type, byte1 exponent biased 0x80, bytes2-8 = 14 BCD
+  // digits, mantissa normalized to d.ddddddddddddd.
+  function encodeTiReal(value) {
+    const bytes = new Uint8Array(9);
+    let v = Number(value);
+    if (!Number.isFinite(v)) throw new Error(`Cannot encode ${value}`);
+    if (v === 0) {
+      bytes[1] = 0x80;
+      return bytes;
+    }
+    if (v < 0) {
+      bytes[0] = 0x80;
+      v = -v;
+    }
+    const [mantissa, exp] = v.toExponential(13).split('e');
+    const digits = mantissa.replace('.', '').padEnd(14, '0').slice(0, 14);
+    bytes[1] = 0x80 + Number(exp);
+    for (let i = 0; i < 7; i += 1) {
+      bytes[2 + i] = (Number(digits[i * 2]) << 4) | Number(digits[i * 2 + 1]);
+    }
+    return bytes;
+  }
+
+  const LIST_NAME_TOKENS = { L1: [0x5d, 0x00], L2: [0x5d, 0x01] };
+
+  function buildRealList8xl(listName, values) {
+    const token = LIST_NAME_TOKENS[listName];
+    if (!token) throw new Error(`Unsupported list ${listName}`);
+
+    const varData = new Uint8Array(2 + values.length * 9);
+    varData[0] = values.length & 0xff;
+    varData[1] = (values.length >> 8) & 0xff;
+    values.forEach((value, index) => varData.set(encodeTiReal(value), 2 + index * 9));
+
+    // 0x0D-format variable entry: 13-byte header (incl. version + archive
+    // flag) + var data. flag 0x00 = RAM, which is the whole point (spec §0).
+    const entry = new Uint8Array(17 + varData.length);
+    const view = new DataView(entry.buffer);
+    view.setUint16(0, 0x0d, true);
+    view.setUint16(2, varData.length, true);
+    entry[4] = 0x01;
+    entry[5] = token[0];
+    entry[6] = token[1];
+    entry[13] = 0x00;
+    entry[14] = 0x00;
+    view.setUint16(15, varData.length, true);
+    entry.set(varData, 17);
+
+    const header = new Uint8Array(55);
+    const signature = '**TI83F*';
+    for (let i = 0; i < signature.length; i += 1) header[i] = signature.charCodeAt(i);
+    header[8] = 0x1a;
+    header[9] = 0x0a;
+    header[10] = 0x00;
+    const comment = 'ti84-trainer spike harness';
+    for (let i = 0; i < comment.length; i += 1) header[11 + i] = comment.charCodeAt(i);
+    new DataView(header.buffer).setUint16(53, entry.length, true);
+
+    let checksum = 0;
+    for (const byte of entry) checksum = (checksum + byte) & 0xffff;
+
+    const file = new Uint8Array(55 + entry.length + 2);
+    file.set(header, 0);
+    file.set(entry, 55);
+    file[55 + entry.length] = checksum & 0xff;
+    file[55 + entry.length + 1] = (checksum >> 8) & 0xff;
+    return file;
+  }
+
+  function toHex(bytes, limit) {
+    const slice = Array.from(bytes.slice(0, limit ?? bytes.length));
+    return slice.map((b) => b.toString(16).padStart(2, '0')).join(' ');
+  }
+
+  document.getElementById('build-btn').addEventListener('click', () => {
+    try {
+      const { key, values } = selectedDataset();
+      const listName = document.getElementById('send-list').value;
+      const file = buildRealList8xl(listName, values);
+      log(`.8xl built for ${listName} = ${key}: ${file.length} bytes. head: ${toHex(file, 32)} ... checksum: ${toHex(file.slice(-2))}`);
+      const blob = new Blob([file], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `spike-${listName.toLowerCase()}-${key}.8xl`;
+      a.click();
+      URL.revokeObjectURL(url);
+      state.a3.lastBuild = { listName, dataset: key, bytes: file.length, head: toHex(file, 32) };
+      document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
+    } catch (error) {
+      log(`.8xl build failed: ${error.message}`);
+    }
+  });
+
+  // ---------- A3: probes + send ----------
+
+  function probeReport(module) {
+    return [
+      ['_emu_send_variable', typeof module._emu_send_variable === 'function'],
+      ['_emu_send_variables', typeof module._emu_send_variables === 'function'],
+      ['_set_file_to_send', typeof module._set_file_to_send === 'function'],
+      ['ccall', typeof module.ccall === 'function'],
+      ['cwrap', typeof module.cwrap === 'function'],
+      ['Module.FS.writeFile', typeof module.FS?.writeFile === 'function'],
+      ['Module.FS.createDataFile', typeof module.FS?.createDataFile === 'function'],
+      ['Module.FS_createDataFile', typeof module.FS_createDataFile === 'function'],
+      ['_malloc', typeof module._malloc === 'function'],
+      ['_free', typeof module._free === 'function'],
+    ];
+  }
+
+  document.getElementById('probe-btn').addEventListener('click', () => {
+    try {
+      const module = requireBridge().getModule();
+      const rows = probeReport(module);
+      const html = ['<table><tr><th>export</th><th>present</th></tr>'];
+      for (const [name, present] of rows) {
+        html.push(`<tr><td>${name}</td><td class="${present ? 'ok' : 'bad'}">${present ? 'yes' : 'NO'}</td></tr>`);
+      }
+      html.push('</table>');
+      document.getElementById('probe-table').innerHTML = html.join('');
+      state.a3.probes = Object.fromEntries(rows);
+      document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
+      log(`Probe: ${rows.filter(([, p]) => p).length}/${rows.length} present.`);
+    } catch (error) {
+      log(error.message);
+    }
+  });
+
+  // Codex-amended probe order: FS.writeFile -> FS.createDataFile ->
+  // FS_createDataFile. Record which one actually worked.
+  function writeToEmscriptenFs(module, path, bytes) {
+    const bare = path.replace(/^\//, '');
+    if (typeof module.FS?.writeFile === 'function') {
+      module.FS.writeFile(path, bytes);
+      return 'Module.FS.writeFile';
+    }
+    if (typeof module.FS?.createDataFile === 'function') {
+      module.FS.createDataFile('/', bare, bytes, true, true);
+      return 'Module.FS.createDataFile';
+    }
+    if (typeof module.FS_createDataFile === 'function') {
+      module.FS_createDataFile('/', bare, bytes, true, true);
+      return 'Module.FS_createDataFile';
+    }
+    throw new Error('No Emscripten FS write API found on the module.');
+  }
+
+  function callSendVariable(module, path, loc) {
+    if (typeof module.ccall === 'function') {
+      return { via: 'ccall', result: module.ccall('emu_send_variable', 'number', ['string', 'number'], [path, loc]) };
+    }
+    if (typeof module._emu_send_variable === 'function' && typeof module._malloc === 'function') {
+      const encoded = new TextEncoder().encode(path);
+      const ptr = module._malloc(encoded.length + 1);
+      module.HEAPU8.set(encoded, ptr);
+      module.HEAPU8[ptr + encoded.length] = 0;
+      try {
+        return { via: '_malloc+direct', result: module._emu_send_variable(ptr, loc) };
+      } finally {
+        if (typeof module._free === 'function') module._free(ptr);
+      }
+    }
+    throw new Error('Neither ccall nor _emu_send_variable+_malloc is available.');
+  }
+
+  document.getElementById('send-btn').addEventListener('click', () => {
+    try {
+      const module = requireBridge().getModule();
+      const { key, values } = selectedDataset();
+      const listName = document.getElementById('send-list').value;
+      const loc = Number(document.getElementById('send-loc').value) || 0;
+      const file = buildRealList8xl(listName, values);
+      const fsApi = writeToEmscriptenFs(module, '/spike.8xl', file);
+      log(`FS write via ${fsApi} (${file.length} bytes).`);
+      const call = callSendVariable(module, '/spike.8xl', loc);
+      log(`emu_send_variable('/spike.8xl', ${loc}) via ${call.via} -> ${call.result}`);
+      state.a3.lastSend = { listName, dataset: key, loc, fsApi, via: call.via, result: call.result, at: new Date().toISOString() };
+      document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
+    } catch (error) {
+      log(`Send failed: ${error.message}`);
+      state.a3.lastSend = { error: error.message, at: new Date().toISOString() };
+      document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
+    }
+  });
+
+  document.getElementById('alt-send-btn').addEventListener('click', () => {
+    try {
+      const module = requireBridge().getModule();
+      const { key, values } = selectedDataset();
+      const listName = document.getElementById('send-list').value;
+      const file = buildRealList8xl(listName, values);
+      const fsApi = writeToEmscriptenFs(module, '/spike.8xl', file);
+      const result = module.ccall
+        ? module.ccall('set_file_to_send', null, ['string'], ['/spike.8xl'])
+        : '(no ccall)';
+      log(`set_file_to_send('/spike.8xl') after ${fsApi} -> ${result}`);
+      state.a3.lastAltSend = { listName, dataset: key, fsApi, result: String(result), at: new Date().toISOString() };
+      document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
+    } catch (error) {
+      log(`set_file_to_send failed: ${error.message}`);
+    }
+  });
+
+  document.getElementById('verify-btn').addEventListener('click', async () => {
+    try {
+      requireBridge();
+      const { key } = selectedDataset();
+      const listName = document.getElementById('send-list').value;
+      const golden = state.goldens[key];
+      if (!golden) {
+        log(`No golden for ${key} — capture one in A2 first (keystroke entry is the reference).`);
+        return;
+      }
+      await echoList(listName);
+      const captured = await captureStableHash(golden.region);
+      const match = captured.stable && captured.hash === golden.hash;
+      addToGallery(frameToDataUrl(golden.region), `A3 verify ${match ? 'MATCH' : 'MISMATCH'} ${captured.hash}`);
+      log(`A3 verify vs golden ${golden.hash}: ${match ? 'MATCH' : `MISMATCH (${captured.hash}, stable=${captured.stable})`}`);
+      state.a3.lastVerify = { dataset: key, listName, goldenHash: golden.hash, hash: captured.hash, stable: captured.stable, match, at: new Date().toISOString() };
+      document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
+    } catch (error) {
+      log(`Verify failed: ${error.message}`);
+    }
+  });
+
+  log('Harness loaded. Boot the ROM to begin.');
+})();
+</script>
+</body>
+</html>

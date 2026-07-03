@@ -17948,6 +17948,17 @@ function bumpUsage(id) {
     } catch(e) {}
 }
 
+// TI-84 trainer deep-link (FIX_PLAN D5, Desk side): pre-filter the trainer
+// to today's unit. The trainer parses [#&]unit=(\d+) session-only. No lesson
+// today (weekend, schedule gap) => bare URL and the trainer shows all units;
+// the student can change the in-app unit filter either way.
+function appLaunchUrl(app, id) {
+    if (id !== 'ti84') return app.url;
+    var unit = _todayLessonInf && _todayLessonInf.u;
+    if (!unit || unit < 1 || unit > 9) return app.url;
+    return app.url + '#unit=' + unit;
+}
+
 function openApp(id) {
     var app = APP_REGISTRY[id];
     if (!app) return;
@@ -17957,7 +17968,7 @@ function openApp(id) {
     var iframe = document.getElementById('app-' + id + '-frame');
     var win = overlay.querySelector('.app-window');
     if (!iframe.src || iframe.src === 'about:blank' || iframe.src === window.location.href) {
-        iframe.src = app.url;
+        iframe.src = appLaunchUrl(app, id);
     }
     // Reset position to centered
     win.style.left = '50%';
@@ -17975,7 +17986,7 @@ function popOutApp(id) {
     var app = APP_REGISTRY[id];
     if (!app) return;
     try { if (typeof MacSFX !== 'undefined') MacSFX.play('click', 0.3); } catch (e) {}
-    window.open(app.url, '_blank', 'noopener');
+    window.open(appLaunchUrl(app, id), '_blank', 'noopener');
 }
 
 function destroyApp(id) {
