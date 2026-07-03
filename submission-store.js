@@ -1,3 +1,4 @@
+// @ts-check
 // submission-store.js — the SUBMISSIONS G-Set for the offline-grading mesh
 // (OFFLINE_GRADING_MESH_SPEC.md §2, §0.6, §0.7). The second lane's durable store,
 // deliberately SEPARATE from ledger-store.js (the grades lane) — the two lanes
@@ -41,11 +42,13 @@
   // Content address first (receipt_id = hash of the signed payload). A submission
   // ALWAYS carries a receipt (it can only exist self-signed), so the fallback key
   // is just belt-and-suspenders for a malformed row.
+  /** @param {SubmissionRow | null | undefined} row @returns {string} */
   function keyOf(row) {
     if (row && row.receipt_id) return 'r:' + String(row.receipt_id);
     return 'k:' + String(row && row.student_id) + '|' + String(row && row.item_id) + '|' + String(attemptOf(row));
   }
 
+  /** @param {SubmissionRow | null | undefined} row @returns {number} signed ts (ms), else recorded_at, else 0 */
   function tsOf(row) {
     if (!row) return 0;
     if (typeof row.ts === 'number' && isFinite(row.ts)) return row.ts;
@@ -55,6 +58,7 @@
 
   function pickNewer(prev, next) { return tsOf(next) >= tsOf(prev) ? next : prev; }
 
+  /** @param {SubmissionRow[] | null | undefined} list @param {SubmissionRow} row @returns {SubmissionRow[]} pure union/dedup, newer signed-ts wins a key collision */
   function mergeRow(list, row) {
     var out = Array.isArray(list) ? list.slice() : [];
     var k = keyOf(row);
@@ -65,6 +69,7 @@
     return out;
   }
 
+  /** @param {SubmissionRow[] | null | undefined} list @param {SubmissionRow[] | null | undefined} rows @returns {SubmissionRow[]} */
   function mergeAll(list, rows) {
     var out = Array.isArray(list) ? list.slice() : [];
     if (!Array.isArray(rows)) return out;
@@ -79,6 +84,7 @@
   // top-level row field, so a peer cannot forge coverage by editing the row — the
   // grade's own signature is verified elsewhere (verifyLedgerRow) before it is
   // stored, and here we only trust its receipt_compact payload.
+  /** Decode (never verify) the signed payload out of a row's compact receipt. @param {LedgerRow | null | undefined} row @returns {Receipt | null} */
   function decodePayload(row) {
     try {
       var compact = row && row.receipt_compact;
@@ -90,11 +96,13 @@
       var json = (typeof atob === 'function') ? atob(b)
         : (typeof Buffer !== 'undefined' ? Buffer.from(b, 'base64').toString('binary') : null);
       if (json == null) return null;
-      return JSON.parse(decodeURIComponent(escape(json)));
+      return /** @type {Receipt} */ (JSON.parse(decodeURIComponent(escape(json))));
     } catch (_) { return null; }
   }
 
+  /** @param {LedgerRow[] | null | undefined} gradesRows GRADE-lane rows @returns {Record<string, string>} { submissionReceiptId: coveringStudentId } */
   function coveredKeys(gradesRows) {
+    /** @type {Record<string, string>} */
     var set = {};
     (Array.isArray(gradesRows) ? gradesRows : []).forEach(function (g) {
       var p = decodePayload(g);
@@ -107,6 +115,7 @@
 
   // A submission is covered iff the covered-set names its receipt_id AND the
   // covering grade is for the same student.
+  /** @param {SubmissionRow | null | undefined} row @param {Record<string, string> | null | undefined} covered from coveredKeys @returns {boolean} */
   function isCovered(row, covered) {
     if (!row || !covered) return false;
     var rid = row.receipt_id != null ? String(row.receipt_id) : null;
@@ -129,6 +138,7 @@
   function makeIdbStore() {
     var idb = (typeof root.indexedDB !== 'undefined') ? root.indexedDB : null;
     if (!idb) return null;
+    /** @returns {Promise<IDBDatabase>} */
     function open() {
       return new Promise(function (resolve, reject) {
         var req = idb.open(DB_NAME, 1);
@@ -140,6 +150,11 @@
         req.onerror = function () { reject(req.error); };
       });
     }
+    /**
+     * @param {IDBTransactionMode} mode
+     * @param {(s: IDBObjectStore) => {_result?: *}} fn returns a box; box._result is the value the tx resolves with
+     * @returns {Promise<*>}
+     */
     function tx(mode, fn) {
       return open().then(function (db) {
         return new Promise(function (resolve, reject) {
@@ -163,6 +178,7 @@
   var _store = null;
   function store() { if (!_store) _store = makeIdbStore() || makeMemStore(); return _store; }
 
+  /** @param {SubmissionRow | null | undefined} row @returns {Promise<SubmissionRow | null>} the stored (merged) row */
   function put(row) {
     if (!row) return Promise.resolve(null);
     var s = store();
@@ -172,19 +188,23 @@
       return s.put(k, merged).then(function () { return merged; });
     });
   }
+  /** @param {SubmissionRow[] | null | undefined} rows @returns {Promise<number>} count written */
   function putAll(rows) {
     if (!Array.isArray(rows) || !rows.length) return Promise.resolve(0);
     var chain = Promise.resolve(), n = 0;
     rows.forEach(function (row) { chain = chain.then(function () { return put(row).then(function () { n += 1; }); }); });
     return chain.then(function () { return n; });
   }
+  /** @returns {Promise<SubmissionRow[]>} */
   function all() { return store().getAll(); }
+  /** @returns {Promise<void>} */
   function clear() { return store().clear(); }
 
   // What to gossip: every stored submission EXCEPT those a local grade covers.
   // Accepts the grades G-Set as an ARRAY or a Promise of one (LedgerStore.all()
   // returns a Promise) — resolving here means a caller can't accidentally pass the
   // unresolved Promise and silently disable suppression.
+  /** @param {LedgerRow[] | Promise<LedgerRow[]> | null | undefined} gradesRows the grades G-Set (or LedgerStore.all()'s Promise) @returns {Promise<SubmissionRow[]>} */
   function rowsForGossip(gradesRows) {
     return Promise.resolve(gradesRows).then(function (grades) {
       var covered = coveredKeys(grades);
@@ -198,9 +218,15 @@
   // refused (returns false) BEFORE the signature check even runs. `coveredSet`
   // comes from coveredKeys(gradesRows), snapshotted once per round (monotone, so a
   // stale snapshot only under-suppresses by one round — never wrongly suppresses).
+  /**
+   * @param {RowVerifier | undefined} baseVerify fails closed when absent
+   * @param {Record<string, string>} coveredSet from coveredKeys(gradesRows)
+   * @returns {RowVerifier}
+   */
   function suppressingVerify(baseVerify, coveredSet) {
     return function (row) {
-      if (isCovered(row, coveredSet)) return Promise.resolve(false);
+      // RowVerifier's row is the lane union; on the subs ingest lane it is a SubmissionRow.
+      if (isCovered(/** @type {SubmissionRow} */ (row), coveredSet)) return Promise.resolve(false);
       return Promise.resolve(typeof baseVerify === 'function' ? baseVerify(row) : false);
     };
   }
@@ -213,13 +239,20 @@
   // already collapses identical re-submissions; this caps DISTINCT junk. Make ONE
   // wrapper per round (the counters are per-instance).
   //   opts: { maxTotal=1200, maxPerStudent=200, maxPerItem=12 }
+  /**
+   * @param {RowVerifier | undefined} baseVerify runs FIRST; fails closed when absent
+   * @param {{maxTotal?: number, maxPerStudent?: number, maxPerItem?: number}} [opts]
+   * @returns {RowVerifier} stateful — make ONE per round
+   */
   function floodCapVerify(baseVerify, opts) {
     opts = opts || {};
     var maxTotal = opts.maxTotal || 1200;
     var maxPerStudent = opts.maxPerStudent || 200;
     var maxPerItem = opts.maxPerItem || 12;
     var total = 0;
+    /** @type {Record<string, number>} */
     var perStudent = Object.create(null);
+    /** @type {Record<string, number>} */
     var perItem = Object.create(null);
     return function (row) {
       return Promise.resolve(typeof baseVerify === 'function' ? baseVerify(row) : false).then(function (ok) {

@@ -1,3 +1,4 @@
+// @ts-check
 // ledger-gossip.js — anti-entropy gossip over the signed-ledger G-Set.
 // ANDROID_PHASE3_GOSSIP_SPEC. Pure browser JS (no build, no imports); loaded as a
 // <script> alongside ledger-store.js + receipt-verify.js.
@@ -40,12 +41,18 @@
 
   // ── Pure helpers ────────────────────────────────────────────────────────────
 
+  /** @param {LedgerRow | SubmissionRow | null | undefined} row @returns {string | null} */
   function idOf(row) { return row && row.receipt_id != null ? String(row.receipt_id) : null; }
 
   // Only content-addressed (signed) rows gossip — an un-addressable row can't be
   // verified by a peer anyway, so it's excluded from the digest and from sends.
+  /**
+   * @param {Array<LedgerRow | SubmissionRow>} rows
+   * @returns {{v: number, ids: string[]}}
+   */
   function digest(rows) {
     var ids = [];
+    /** @type {Record<string, number>} */
     var seen = {};
     (Array.isArray(rows) ? rows : []).forEach(function (r) {
       var id = idOf(r);
@@ -54,7 +61,9 @@
     return { v: V, ids: ids };
   }
 
+  /** @param {string[]} haveIds @param {string[]} wantIds @returns {string[]} ids in wantIds missing from haveIds */
   function diff(haveIds, wantIds) {
+    /** @type {Record<string, number>} */
     var have = {};
     (haveIds || []).forEach(function (id) { have[String(id)] = 1; });
     var out = [];
@@ -62,7 +71,13 @@
     return out;
   }
 
+  /**
+   * @param {Array<LedgerRow | SubmissionRow>} rows
+   * @param {string[]} ids
+   * @returns {Array<LedgerRow | SubmissionRow>} rows whose receipt_id ∈ ids
+   */
   function rowsFor(rows, ids) {
+    /** @type {Record<string, number>} */
     var want = {};
     (ids || []).forEach(function (id) { want[String(id)] = 1; });
     return (Array.isArray(rows) ? rows : []).filter(function (r) {
@@ -75,12 +90,24 @@
   // (OFFLINE_GRADING_MESH_SPEC §0.6, so a grades peer and a submissions peer don't
   // cross-feed digests). When lane is falsy the frame is BYTE-IDENTICAL to the
   // pre-mesh shape — existing grades gossip and its wire tests are unaffected.
+  /**
+   * @param {string} type
+   * @param {object} payload
+   * @param {string | null} [lane]
+   * @returns {string}
+   */
   function frame(type, payload, lane) {
+    /** @type {{t: string, p: object, lane?: string}} */
     var o = { t: type, p: payload || {} };
     if (lane) o.lane = lane;
     return JSON.stringify(o);
   }
 
+  /**
+   * A parsed gossip frame. `payload` is untrusted until ingest verifies its rows.
+   * @typedef {{type: string, payload: any, lane: string | null}} GossipFrame
+   */
+  /** @param {string | object} str @returns {GossipFrame | null} */
   function parse(str) {
     try {
       var o = (typeof str === 'string') ? JSON.parse(str) : str;
@@ -93,6 +120,11 @@
   // verify(row) -> Promise<boolean> (true = a trusted issuer signed it). Rows that
   // fail verification are dropped and reported, never stored. Accepted rows are
   // union-merged into the store (idempotent). store: { put(row)->Promise }.
+  /**
+   * @param {Array<LedgerRow | SubmissionRow>} rows
+   * @param {{verify?: RowVerifier, store?: GossipStore}} [opts]
+   * @returns {Promise<{accepted: number, rejected: number, ids: string[]}>}
+   */
   function ingest(rows, opts) {
     opts = opts || {};
     var verify = opts.verify;
@@ -126,9 +158,21 @@
   //   send(framedMsg) -> any         (transport send to THIS peer)
   // }
   // `done` resolves with {received} when this side has finished the exchange.
+  /**
+   * One anti-entropy exchange with one peer (createSession's return).
+   * @typedef {Object} GossipSession
+   * @property {() => Promise<void>} initiate - send HELLO with my digest
+   * @property {(msg: string) => Promise<void>} handle - drive the exchange with an incoming framed message
+   * @property {Promise<{received: number}>} done
+   */
+  /**
+   * @param {{getRows?: () => any, verify?: RowVerifier, store?: GossipStore, send?: (msg: string) => void, lane?: string | null}} [opts]
+   * @returns {GossipSession}
+   */
   function createSession(opts) {
     opts = opts || {};
     var getRows = opts.getRows || function () { return Promise.resolve([]); };
+    /** @type {(msg: string) => void} */
     var send = opts.send || function () {};
     var ingestOpts = { verify: opts.verify, store: opts.store };
     // opts.lane (mesh §0.6): when set, stamp it onto every outgoing frame and
@@ -138,6 +182,7 @@
 
     var received = 0;
     var resolveDone;
+    /** @type {Promise<{received: number}>} */
     var done = new Promise(function (res) { resolveDone = res; });
     function finish() { resolveDone({ received: received }); }
 
@@ -158,7 +203,8 @@
         // Responder: reply with the rows the peer lacks + a request for what I lack.
         return Promise.resolve(getRows()).then(function (rows) {
           var myIds = digest(rows).ids;
-          var peerIds = (m.payload.digest && m.payload.digest.ids) || [];
+          // (casts: `m` is null-checked at the top of handle, but tsc can't carry a `var`'s narrowing into a callback)
+          var peerIds = (/** @type {GossipFrame} */ (m).payload.digest && /** @type {GossipFrame} */ (m).payload.digest.ids) || [];
           var rowsPeerLacks = rowsFor(rows, diff(peerIds, myIds));
           var idsILack = diff(myIds, peerIds);
           send(frame(T.SYNC, { rows: rowsPeerLacks, request: idsILack }, lane));
@@ -170,7 +216,7 @@
         return ingest(m.payload.rows || [], ingestOpts).then(function (res) {
           received += res.accepted;
           return Promise.resolve(getRows()).then(function (rows) {
-            send(frame(T.SEND, { rows: rowsFor(rows, m.payload.request || []) }, lane));
+            send(frame(T.SEND, { rows: rowsFor(rows, /** @type {GossipFrame} */ (m).payload.request || []) }, lane));
             finish(); // I've sent everything the peer asked for → done.
           });
         });
@@ -195,17 +241,28 @@
   // + resolve {available, peers, received}. Shared by the Desk + the phone launcher.
   // transport: { start({onPeer,onMessage,onLost}), send(peerId,msg), stop() }.
   // opts: { getRows, store, verify, durationMs, onPeer, setTimeout }.
+  /**
+   * Options for one gossip round.
+   * @typedef {{getRows?: () => any, verify?: RowVerifier, store?: GossipStore, durationMs?: number, onPeer?: (id: string) => void, setTimeout?: (fn: () => void, ms: number) => any}} GossipRoundOpts
+   */
+  /**
+   * @param {GossipTransport} transport
+   * @param {GossipRoundOpts} [opts]
+   * @returns {Promise<{available: boolean, peers?: number, received?: number}>}
+   */
   function runRound(transport, opts) {
     opts = opts || {};
     if (!transport || typeof transport.start !== 'function') return Promise.resolve({ available: false });
-    var sessions = {}, peers = 0, received = 0;
+    var sessions = /** @type {Record<string, GossipSession>} */ ({}), peers = 0, received = 0;
     function ensure(peerId) {
       if (sessions[peerId]) return sessions[peerId];
       peers += 1;
       var sess = createSession({
-        getRows: opts.getRows,
-        verify: opts.verify,
-        store: opts.store,
+        // (casts: `opts` is defaulted at the top of runRound, but `ensure` is a hoisted
+        // declaration, so tsc can't carry that narrowing in here)
+        getRows: /** @type {GossipRoundOpts} */ (opts).getRows,
+        verify: /** @type {GossipRoundOpts} */ (opts).verify,
+        store: /** @type {GossipRoundOpts} */ (opts).store,
         send: function (m) { try { transport.send(peerId, m); } catch (_) {} }
       });
       sess.done.then(function (r) { received += (r && r.received) || 0; }).catch(function () {});
@@ -238,6 +295,15 @@
   //   lanes: [{ lane:'grades'|'subs', getRows, verify, store }]
   // A frame with no lane tag routes to the FIRST lane (back-compat with a peer
   // still speaking the pre-mesh, lane-less protocol — that peer only knows grades).
+  /**
+   * Per-lane config for runLanes: one G-Set's row source + its own trust boundary.
+   * @typedef {{lane: string, getRows?: () => any, verify?: RowVerifier, store?: GossipStore}} GossipLane
+   */
+  /**
+   * @param {GossipTransport} transport
+   * @param {{lanes?: GossipLane[], durationMs?: number, onPeer?: (id: string) => void, setTimeout?: (fn: () => void, ms: number) => any}} [opts]
+   * @returns {Promise<{available: boolean, peers?: number, received?: number, byLane?: Record<string, number>}>}
+   */
   function runLanes(transport, opts) {
     opts = opts || {};
     var lanes = Array.isArray(opts.lanes) ? opts.lanes.filter(function (l) { return l && l.lane; }) : [];
@@ -245,8 +311,10 @@
       return Promise.resolve({ available: false });
     }
     var defaultLane = lanes[0].lane;
+    /** @type {Record<string, Record<string, GossipSession>>} */
     var byPeer = {};   // peerId -> { laneName -> session }
     var peers = 0;
+    /** @type {Record<string, number>} */
     var received = {}; // laneName -> count
     lanes.forEach(function (l) { received[l.lane] = 0; });
 
@@ -272,7 +340,8 @@
         store: cfg.store,
         send: function (m) { try { transport.send(peerId, m); } catch (_) {} }
       });
-      sess.done.then(function (r) { received[cfg.lane] += (r && r.received) || 0; }).catch(function () {});
+      // (cast: `cfg` is null-checked above, but tsc can't carry a `var`'s narrowing into a callback)
+      sess.done.then(function (r) { received[/** @type {GossipLane} */ (cfg).lane] += (r && r.received) || 0; }).catch(function () {});
       peer[laneName] = sess;
       return sess;
     }

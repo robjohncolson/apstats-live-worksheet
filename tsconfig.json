@@ -1,0 +1,31 @@
+{
+  "//": "TYPECHECK_HARDENING_SPEC.md P2 — checker only, no emit. Tight allowlist: the",
+  "// ": "root mesh/receipt browser modules + the shared JSDoc contracts. Per-file",
+  "//  ": "`// @ts-check` opts each in (checkJs off), so anything outside the list is",
+  "//   ": "loaded for types but never error-reported. NOT on the Pages/Vercel path.",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  "include": [
+    "types/contracts.js",
+    "receipt-sign.js",
+    "receipt-verify.js",
+    "ledger-store.js",
+    "ledger-gossip.js",
+    "ledger-seal.js",
+    "submission-store.js",
+    "submission-grader.js"
+  ]
+}

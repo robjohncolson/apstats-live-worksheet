@@ -1,3 +1,4 @@
+// @ts-check
 // submission-grader.js — the teacher device's grade-from-submission core for the
 // offline-grading mesh (OFFLINE_GRADING_MESH_SPEC.md §3, §0.4, §0.8-0.11).
 // window.SubmissionGrader. PURE logic only: it turns a verified student submission
@@ -29,11 +30,14 @@
   var root = (typeof window !== 'undefined') ? window
     : (typeof globalThis !== 'undefined') ? globalThis : this;
 
+  /** @type {Record<string, 1>} */
   var AUTO_SOURCES = { worksheet: 1, curriculum_quiz: 1, pc: 1 };
+  /** @type {Record<string, 1>} */
   var HUMAN_SOURCES = { frq: 1 };
 
   // What grading a submission needs: 'auto' (key-scored), 'human' (teacher E/P/I),
   // or 'skip' (blooket/trainer/unknown — not gradable off a raw submission here).
+  /** @param {unknown} source - a row's `source` string @returns {'auto' | 'human' | 'skip'} */
   function gradeableKind(source) {
     var s = String(source || '');
     if (AUTO_SOURCES[s]) return 'auto';
@@ -45,9 +49,11 @@
   // Uses the exact `String(value || '')` the server uses (not `== null`), so it agrees
   // for EVERY input type — including falsy non-strings (0/false/NaN) that can't occur
   // for a DOM-string worksheet response but must still match to satisfy §0.10.
+  /** @param {unknown} value @returns {string} */
   function normalizeWorksheetAnswer(value) {
     return String(value || '').toLowerCase().trim().replace(/[^\w\s./-]/g, '');
   }
+  /** @param {string} dataAnswer - pipe-separated accepted answers @param {unknown} response @returns {Pct01} 1 exact, 0.5 partial, 0 blank/wrong */
   function scoreWorksheetAnswer(dataAnswer, response) {
     var accepted = String(dataAnswer).split('|').map(normalizeWorksheetAnswer);
     var user = normalizeWorksheetAnswer(response);
@@ -59,6 +65,11 @@
     }
     return 0;
   }
+  /**
+   * @param {Record<string, any> | null | undefined} worksheetKey - item→"a|b" map, or a {worksheetKey: map} wrapper
+   * @param {string} itemId
+   * @returns {string | undefined}
+   */
   function findWorksheetAnswer(worksheetKey, itemId) {
     if (!worksheetKey || typeof worksheetKey !== 'object') return undefined;
     var values = (worksheetKey.worksheetKey && typeof worksheetKey.worksheetKey === 'object')
@@ -69,6 +80,7 @@
   // MC (curriculum_quiz / pc) scoring via the shared normalization (§0.10). Uses the
   // injected isCorrect (default GradeEngine.isCorrect = the bundled scoring.js) so the
   // teacher device grades exactly as the server would.
+  /** @param {{isCorrect?: (response: any, answer: any) => boolean} | null | undefined} opts @returns {((response: any, answer: any) => boolean) | null} */
   function mcCorrect(opts) {
     if (opts && typeof opts.isCorrect === 'function') return opts.isCorrect;
     if (root.GradeEngine && typeof root.GradeEngine.isCorrect === 'function') return root.GradeEngine.isCorrect;
@@ -80,6 +92,11 @@
   // the caller queues it or skips it, never fabricates a score).
   //   inputs: { answerKey (MC map: item→{answerKey}), worksheetKey (item→"a|b"),
   //             isCorrect? }
+  /**
+   * @param {SubmissionRow | null | undefined} submission
+   * @param {{answerKey?: Record<string, any>, worksheetKey?: Record<string, any>, isCorrect?: (response: any, answer: any) => boolean}} [inputs]
+   * @returns {Pct01 | null}
+   */
   function autoScore(submission, inputs) {
     inputs = inputs || {};
     if (!submission) return null;
@@ -111,6 +128,7 @@
   // integrity is the Ed25519 signature over these bytes). Note: the receipt_id is
   // sha256 of the WHOLE payload (incl. `sub` = this submission's id), so two DIFFERENT
   // submissions can never collide on receipt_id even if their n tokens collide.
+  /** @param {string} str @param {string} salt @returns {string} 8 hex chars (FNV-1a) */
   function hashHex(str, salt) {
     var s = String(salt || '') + '|' + String(str || '');
     var h = 0x811c9dc5;
@@ -120,6 +138,7 @@
     }
     return ('00000000' + h.toString(16)).slice(-8);
   }
+  /** @param {SubmissionRow} submission @returns {{ts: number, n: string} | null} null when the submission has no receipt_id */
   function deterministicReceiptFields(submission) {
     var rid = submission && submission.receipt_id;
     if (!rid) return null;
@@ -142,6 +161,7 @@
   // byte-determinism (the attempt now depends on device state) for the §0.9 guarantee
   // — dedup still holds once devices' grade sets converge (same existing → same attempt).
   //   existingAttempts = the GRADE attempts already recorded for this (sid,item).
+  /** @param {SubmissionRow} submission @param {Array<number | string> | null | undefined} [existingAttempts] @returns {number} */
   function assignAttempt(submission, existingAttempts) {
     var max = 0;
     (Array.isArray(existingAttempts) ? existingAttempts : []).forEach(function (a) {
@@ -159,11 +179,17 @@
   // never be proctored (proctoring needs the server's x-proctor-secret), matching the
   // /ledger/import convention. Keeping it constant also keeps the auto-grade payload a
   // pure function of the submission (§0.8), independent of any caller context.
+  /**
+   * @param {(SubmissionRow & {sid?: string}) | null | undefined} submission - legacy feeds may carry `sid` instead of `student_id`
+   * @param {{score?: number | null, keyVersion?: string | number | null, existingAttempts?: Array<number | string>, provenance?: string}} [opts]
+   * @returns {LedgerGradeFields | null}
+   */
   function buildGradeFields(submission, opts) {
     opts = opts || {};
     if (!submission || !submission.sid && !submission.student_id) return null;
-    var sid = submission.student_id != null ? submission.student_id : submission.sid;
+    var sid = /** @type {string} */ (submission.student_id != null ? submission.student_id : submission.sid); // guard above ensures one id exists
     var kind = gradeableKind(submission.source);
+    /** @type {LedgerGradeFields} */
     var fields = {
       sid: sid,
       src: submission.source,
@@ -189,6 +215,7 @@
   // the student's attempt/ts — none of which a student can forge to win). Returns the
   // winning row (or null). The emit side uses this to decide what to record + to
   // NEVER-DOWNGRADE (only emit a grade that raises the recorded max).
+  /** @param {LedgerRow[] | null | undefined} rows @returns {LedgerRow | null} */
   function supersede(rows) {
     var list = (Array.isArray(rows) ? rows : []).filter(Boolean);
     if (!list.length) return null;
@@ -201,7 +228,7 @@
       var bid = String(best.receipt_id == null ? '' : best.receipt_id);
       var rid = String(r.receipt_id == null ? '' : r.receipt_id);
       return (rid < bid) ? r : best;
-    }, null);
+    }, /** @type {LedgerRow | null} */ (null));
   }
 
   // ── Auto-grade emit plan (§0.9 max-score + never-downgrade) ──────────────────
@@ -216,17 +243,28 @@
   //   inputs: { answerKey, worksheetKey, isCorrect? }
   //   recordedScoreByKey: { 'sid|item' -> current recorded score } (from the grades store)
   // Returns [{ submission, score }] — one plan per (sid,item) that should be signed+emitted.
+  /** @typedef {{submission: SubmissionRow, score: Pct01}} AutoGradePlan */
+  /**
+   * @param {SubmissionRow[]} submissions - verified auto-gradable submission rows
+   * @param {{answerKey?: Record<string, any>, worksheetKey?: Record<string, any>, isCorrect?: (response: any, answer: any) => boolean}} inputs
+   * @param {Record<string, number | null>} [recordedScoreByKey] - 'sid|item' → currently-recorded score
+   * @returns {AutoGradePlan[]} one plan per (sid,item) that should be signed+emitted
+   */
   function planAutoGrades(submissions, inputs, recordedScoreByKey) {
+    /** @type {Record<string, number | null>} */
     var recorded = recordedScoreByKey || {};
+    /** @type {Record<string, AutoGradePlan[]>} */
     var groups = Object.create(null);
-    (Array.isArray(submissions) ? submissions : []).forEach(function (sub) {
+    (Array.isArray(submissions) ? submissions : []).forEach(/** @param {SubmissionRow & {sid?: string}} sub */ function (sub) {
       if (gradeableKind(sub && sub.source) !== 'auto') return;
+      /** @type {Pct01 | null | undefined} */
       var score = autoScore(sub, inputs);
       if (score === null || score === undefined) return;   // unkeyed / not scorable → skip
       var sid = sub.student_id != null ? sub.student_id : sub.sid;
       var key = String(sid) + '|' + String(sub.item_id);
       (groups[key] = groups[key] || []).push({ submission: sub, score: Number(score) });
     });
+    /** @type {AutoGradePlan[]} */
     var plans = [];
     Object.keys(groups).forEach(function (key) {
       // Max score, tie → min receipt_id (supersede semantics on the scored candidates).
@@ -237,7 +275,7 @@
         var bid = String(b.submission.receipt_id || '');
         var cid = String(c.submission.receipt_id || '');
         return (cid < bid) ? c : b;
-      }, null);
+      }, /** @type {AutoGradePlan | null} */ (null));
       if (!best) return;
       var cur = (key in recorded && recorded[key] != null) ? Number(recorded[key]) : -Infinity;
       if (best.score > cur) plans.push(best);              // never-downgrade

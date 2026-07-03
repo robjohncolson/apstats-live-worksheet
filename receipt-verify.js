@@ -1,3 +1,4 @@
+// @ts-check
 /* receipt-verify.js — shared Ed25519 receipt/transcript verification core.
  *
  * Single source of truth for the signed-receipt crypto, used by BOTH:
@@ -17,6 +18,7 @@
 (function (root) {
   'use strict';
 
+  /** @type {Issuer[]} */
   var ISSUERS = [
     { name: 'Quiz Server', pubkey: 'yFByWH5a7OwhF2KOD3SLd1BE4MlHEN_JDtDaMwW-Eg4', kind: 'quiz' },
     { name: 'The Desk',    pubkey: 'DRfEbaWByfatxMq26iHrw4wxt4MIpypZlbB3GeBFSO4', kind: 'desk' },
@@ -24,6 +26,7 @@
     { name: 'The Desk (TEST)',    pubkey: 'sj9NUx5jBO-KTI58WKjQwEr22i7f8fiv--KH4z95JCc', kind: 'desk', test: true }
   ];
 
+  /** @param {string} s @returns {Uint8Array<ArrayBuffer>} */
   function b64urlToBytes(s) {
     s = s.replace(/-/g, '+').replace(/_/g, '/');
     while (s.length % 4) s += '=';
@@ -33,23 +36,28 @@
     return out;
   }
 
+  /** @param {ArrayBuffer | Uint8Array} buf @returns {string} lowercase hex */
   function hex(buf) {
     return Array.prototype.map.call(new Uint8Array(buf), function (b) {
       return b.toString(16).padStart(2, '0');
     }).join('');
   }
 
+  /** @type {Map<string, Promise<CryptoKey>>} */
   var keyCache = new Map();
+  /** @param {string} pubkey - base64url raw 32-byte Ed25519 public key @returns {Promise<CryptoKey>} */
   function importIssuerKey(pubkey) {
     if (!keyCache.has(pubkey)) {
       keyCache.set(pubkey, crypto.subtle.importKey(
         'raw', b64urlToBytes(pubkey), { name: 'Ed25519' }, false, ['verify']
       ));
     }
-    return keyCache.get(pubkey);
+    // Cast: the has()/set() above guarantees the entry exists; Map.get can't see that.
+    return /** @type {Promise<CryptoKey>} */ (keyCache.get(pubkey));
   }
 
   // Test issuer keys are only honored when ?test=1 (query or hash). Browser-only.
+  /** @returns {boolean} */
   function hasTestModeFlag() {
     var query = new URLSearchParams(location.search);
     var hashQuery = location.hash.includes('?')
@@ -59,6 +67,7 @@
     return query.get('test') === '1' || hash.get('test') === '1';
   }
 
+  /** @param {boolean} includeTestKeys @returns {Issuer[]} */
   function issuersForRun(includeTestKeys) {
     return ISSUERS.filter(function (issuer) { return includeTestKeys || !issuer.test; });
   }
@@ -66,12 +75,18 @@
   // Verify one compact receipt ("payloadB64url.sigB64url"). Returns
   // { ok, issuer, payload, receiptId }. ok=false means no known production
   // (or, with includeTestKeys, test) issuer signed these exact bytes.
+  /**
+   * @param {string} compact - "payloadB64url.sigB64url"
+   * @param {{includeTestKeys?: boolean}} [options]
+   * @returns {Promise<VerifyReceiptResult>}
+   */
   async function verifyReceipt(compact, options) {
     options = options || {};
     var parts = compact.trim().split('.');
     if (parts.length !== 2) throw new Error('Not a receipt: expected two dot-separated parts.');
     var payloadBytes = b64urlToBytes(parts[0]);
     var sigBytes = b64urlToBytes(parts[1]);
+    /** @type {Receipt} */
     var payload;
     try { payload = JSON.parse(new TextDecoder().decode(payloadBytes)); }
     catch (e) { throw new Error('Receipt payload is not valid JSON.'); }
@@ -102,13 +117,18 @@
   // (an app deep-link `?test=1` is attacker-influenceable, and a leaked test key would
   // otherwise verify). The server builds a row's columns and its receipt payload from
   // the same data, so a legitimate row always matches — only forged rows are rejected.
+  /**
+   * @param {LedgerRow} row - loose row from an untrusted transport (gossip / QR)
+   * @returns {Promise<boolean>}
+   */
   async function verifyLedgerRow(row) {
     if (!row || !row.receipt_compact) return false;
     var r;
     try { r = await verifyReceipt(row.receipt_compact, { includeTestKeys: false }); }
     catch (e) { return false; }
     if (!r || !r.ok) return false;
-    var p = r.payload || {};
+    // Cast to the grade-lane payload shape; the String(p.t) check below stays the runtime gate.
+    var p = /** @type {LedgerReceiptPayload} */ (r.payload || {});
     // Domain separation (OFFLINE_GRADING_MESH_SPEC §0.1a): a GRADE row must carry a
     // grade-type payload. Every grade receipt ever minted is t:'ledger' (a teacher FRQ
     // grade is t:'ledger' with src:'frq'); without this check, any trusted-issuer
@@ -140,6 +160,7 @@
     return true;
   }
 
+  /** @param {string} s @returns {Promise<string>} lowercase sha256 hex */
   async function sha256HexText(s) {
     return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
   }
@@ -149,11 +170,16 @@
   // never grades. The two trust sets are never merged — §0.1c — so a student key
   // can never validate a grade row and an issuer key can never validate a
   // submission's key→sid binding. Entries: { pubkey, sid, revoked }.
+  /** @type {StudentKeyEntry[]} */
   var STUDENT_KEYS = [];
 
   // Register/refresh the student trust set (typically the server's /student-keys
   // list). Disjointness is ASSERTED here: a pubkey that already appears in the
   // issuer registry is refused (and counted), never added — §0.1c.
+  /**
+   * @param {Array<{pubkey?: unknown, sid?: unknown, revoked?: unknown}>} list - untrusted (server /student-keys response)
+   * @returns {{added: number, updated: number, conflicts: number}}
+   */
   function registerStudentKeys(list) {
     var added = 0, updated = 0, conflicts = 0;
     (Array.isArray(list) ? list : []).forEach(function (k) {
@@ -181,6 +207,11 @@
   // The mirror guard for issuer registration: refuse any pubkey already bound to
   // a student. Client boot code (Desk/mobile) should add issuer keys through this
   // instead of pushing into ISSUERS directly.
+  /**
+   * @param {unknown[]} pubkeys - untrusted candidate keys
+   * @param {{name?: string, kind?: string}} [meta]
+   * @returns {{added: number, conflicts: number}}
+   */
   function registerIssuerKeys(pubkeys, meta) {
     meta = meta || {};
     var added = 0, conflicts = 0;
@@ -198,6 +229,7 @@
 
   // stringifyResponse — MUST byte-match receipt-sign.js / roster-server receipts.js
   // so the submission's `ah` binds the same bytes everywhere.
+  /** @param {unknown} value @returns {string} */
   function stringifyResponse(value) {
     if (typeof value === 'string') return value;
     var s;
@@ -219,6 +251,10 @@
   //   - attribution (the impersonation gate, §0.2): the row MUST name a student,
   //     the payload sid must equal it, and BOTH must equal the sid the signing
   //     key is REGISTERED to — never the payload's own claim.
+  /**
+   * @param {SubmissionRow} row - loose row from an untrusted transport (gossip / QR)
+   * @returns {Promise<boolean>}
+   */
   async function verifySubmissionRow(row) {
     if (!row || !row.receipt_compact) return false;
     if (row.student_id == null || row.student_id === '') return false;
@@ -228,7 +264,8 @@
       if (parts.length !== 2) return false;
       payloadBytes = b64urlToBytes(parts[0]);
       sigBytes = b64urlToBytes(parts[1]);
-      p = JSON.parse(new TextDecoder().decode(payloadBytes));
+      // Cast to the submission-lane payload shape; String(p.t) below stays the runtime gate.
+      p = /** @type {SubmissionReceiptPayload} */ (JSON.parse(new TextDecoder().decode(payloadBytes)));
     } catch (e) { return false; }
     if (!p || p.v !== 1) return false;
     if (String(p.t) !== 'submission') return false;
@@ -261,6 +298,10 @@
   //   - a full verify URL ( …/verify.html#r=<compact>  or  #commit=<deep> )
   //   - a bare compact receipt ( payload.sig )
   // Returns { kind:'receipt'|'commit', value } or null if unrecognized.
+  /**
+   * @param {unknown} text - raw scan / paste text
+   * @returns {{kind: 'receipt'|'commit', value: string} | null}
+   */
   function parseVerifyTarget(text) {
     if (!text) return null;
     var str = String(text).trim();

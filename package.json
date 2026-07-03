@@ -7,13 +7,16 @@
     "build:ti84": "node ti84-trainer-v2/build.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
+    "@types/node": "^26.1.0",
     "aws4fetch": "^1.0.20",
     "fast-check": "^4.8.0",
     "jsdom": "^23.0.0",
     "qrcode": "^1.5.4",
+    "typescript": "^6.0.3",
     "vitest": "^1.2.0"
   },
   "keywords": [

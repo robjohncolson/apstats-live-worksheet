@@ -1,3 +1,4 @@
+// @ts-check
 // ledger-seal.js — on-device DAILY EPOCH sealing (ANDROID Phase 4 §4 step 5).
 // The teacher device, after grading + signing receipts, computes each student's
 // commit `head` and seals the day with a signed epoch anchor — byte-compatible with
@@ -32,23 +33,27 @@
     if (!c || !c.subtle) throw new Error('WebCrypto SubtleCrypto unavailable');
     return c.subtle;
   }
+  /** @param {string} str @returns {Uint8Array} */
   function utf8(str) {
     if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str);
     var b = new Uint8Array(str.length);
     for (var i = 0; i < str.length; i++) b[i] = str.charCodeAt(i) & 0xff;
     return b;
   }
+  /** @param {Uint8Array | ArrayBuffer} buf @returns {string} lowercase hex */
   function hex(buf) {
     var arr = (buf instanceof Uint8Array) ? buf : new Uint8Array(buf);
     var out = '';
     for (var i = 0; i < arr.length; i++) out += arr[i].toString(16).padStart(2, '0');
     return out;
   }
+  /** @param {string} str @returns {Promise<string>} */
   function sha256Hex(str) {
     return subtle().digest('SHA-256', utf8(str)).then(hex);
   }
 
   // commits.js commitRoot — order-independent root over a chunk's ids.
+  /** @param {string[]} ids @returns {Promise<string>} sha256 hex */
   function commitRoot(ids) {
     return sha256Hex(ids.slice().sort().join('\n'));
   }
@@ -56,6 +61,7 @@
   // commits.js buildCommits, reduced to just the HEAD (root of the last commit).
   // The head depends only on the ids of the final non-duplicate chunk, so we
   // replicate the ordering + session/chunk split and root each chunk in order.
+  /** @param {Array<{id: string, ts: number}>} rows @returns {Promise<string | null>} head hex, or null if no commits */
   function buildHead(rows) {
     var ordered = (Array.isArray(rows) ? rows.slice() : []).sort(function (a, b) {
       return (a.ts - b.ts) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
@@ -92,12 +98,14 @@
   }
 
   // admin-snapshot.js epochRoot — sorted "sid:head|-" lines, sha256.
+  /** @param {Record<string, string | null>} heads @returns {Promise<string>} sha256 hex */
   function epochRoot(heads) {
     var keys = Object.keys(heads || {}).sort();
     var lines = keys.map(function (sid) { return sid + ':' + (heads[sid] || '-'); });
     return sha256Hex(lines.join('\n'));
   }
 
+  /** @returns {string} 8 hex chars */
   function randomNonce() {
     var c = root.crypto || (typeof globalThis !== 'undefined' && globalThis.crypto);
     var b = new Uint8Array(4);
@@ -107,14 +115,19 @@
 
   // Seal the day: epochRoot over heads, then sign the epoch receipt with the device
   // key via ReceiptSign. opts: { heads, asOfDateNY, prev?, privateKey, now?, nonce?, signImpl? }.
+  /**
+   * @param {{heads?: Record<string, string | null>, asOfDateNY?: string, prev?: string | null, privateKey?: CryptoKey, now?: number, nonce?: string, signImpl?: (key: any, payload: Record<string, unknown>) => Promise<{compact: string, receiptId: string}>}} opts
+   * @returns {Promise<{root: string, compact: string, receiptId: string, epoch: {asOfDateNY: string, d: string, cnt: number, heads: Record<string, string | null>, root: string, prev: string | null, receipt_compact: string}}>}
+   */
   function sealEpoch(opts) {
     opts = opts || {};
     var heads = opts.heads || {};
     var sign = opts.signImpl || (root.ReceiptSign && root.ReceiptSign.signPayload);
     if (typeof sign !== 'function') return Promise.reject(new Error('ReceiptSign.signPayload unavailable'));
     return epochRoot(heads).then(function (rootHex) {
+      /** @type {EpochReceiptPayload} */
       var payload = {
-        v: 1, t: 'epoch', iss: 'desk', d: opts.asOfDateNY,
+        v: 1, t: 'epoch', iss: 'desk', d: /** @type {string} */ (opts.asOfDateNY),
         cnt: Object.keys(heads).length, root: rootHex,
         ts: (opts.now != null ? opts.now : Date.now()),
         n: (opts.nonce != null ? opts.nonce : randomNonce())

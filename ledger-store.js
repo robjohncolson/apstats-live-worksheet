@@ -1,3 +1,4 @@
+// @ts-check
 // ledger-store.js — durable local replica of the student's OWN signed ledger.
 // ANDROID_PHASE2_LEDGER_MERGE_SPEC §1.B. Pure browser JS (no build, no imports);
 // loaded as a <script> alongside receipt-verify.js + grade-engine.bundle.js.
@@ -30,6 +31,7 @@
 
   // ── Pure helpers ────────────────────────────────────────────────────────────
 
+  /** @param {LedgerRow | null | undefined} row @returns {number} attempt, defaulted to 1 (matches the verifiers) */
   function attemptOf(row) {
     return (row && row.attempt != null) ? row.attempt : 1;
   }
@@ -37,6 +39,7 @@
   // Content address first: receipt_id uniquely identifies a signed record, so two
   // devices that saw the same record dedup perfectly. Pre-0018 rows (no receipt)
   // fall back to the logical "source|item|attempt" key so they still dedup.
+  /** @param {LedgerRow | null | undefined} row @returns {string} G-Set identity key */
   function keyOf(row) {
     if (row && row.receipt_id) return 'r:' + String(row.receipt_id);
     return 'k:' + String(row && row.source) + '|' + String(row && row.item_id) + '|' + String(attemptOf(row));
@@ -46,6 +49,7 @@
   // (e.g. a re-submission re-graded). Prefer the receipt payload's `ts`, then the
   // row's recorded_at, then 0. (Within a single receipt_id rows are identical, so
   // this only matters for the fallback key path.)
+  /** @param {LedgerRow | null | undefined} row @returns {number} signed timestamp (ms), 0 when unknown */
   function tsOf(row) {
     if (!row) return 0;
     if (typeof row.ts === 'number' && isFinite(row.ts)) return row.ts;
@@ -56,6 +60,7 @@
     return 0;
   }
 
+  /** @param {LedgerRow} prev @param {LedgerRow} next @returns {LedgerRow} */
   function pickNewer(prev, next) {
     return tsOf(next) >= tsOf(prev) ? next : prev;
   }
@@ -64,6 +69,7 @@
   // records are byte-identical so either wins; on a fallback-key collision keep the
   // newer signed-ts. (Latest-WINS for grading happens later in computeGrade's
   // latestPerItem; the store keeps the full G-Set.)
+  /** @param {LedgerRow[]} list @param {LedgerRow} row @returns {LedgerRow[]} */
   function mergeRow(list, row) {
     var out = Array.isArray(list) ? list.slice() : [];
     var k = keyOf(row);
@@ -74,6 +80,7 @@
     return out;
   }
 
+  /** @param {LedgerRow[]} list @param {LedgerRow[]} rows @returns {LedgerRow[]} */
   function mergeAll(list, rows) {
     var out = Array.isArray(list) ? list.slice() : [];
     if (!Array.isArray(rows)) return out;
@@ -83,6 +90,16 @@
 
   // ── Storage adapter: IndexedDB, with an in-memory fallback (jsdom/file://) ─────
 
+  /**
+   * Minimal async KV surface both storage backends implement.
+   * @typedef {Object} RowStore
+   * @property {(k: string) => Promise<LedgerRow | null>} get
+   * @property {(k: string, v: LedgerRow) => Promise<void>} put
+   * @property {() => Promise<LedgerRow[]>} getAll
+   * @property {() => Promise<void>} clear
+   */
+
+  /** @returns {RowStore} */
   function makeMemStore() {
     var map = new Map();
     return {
@@ -93,10 +110,12 @@
     };
   }
 
+  /** @returns {RowStore | null} null when indexedDB is unavailable (store() falls back to memory) */
   function makeIdbStore() {
     var idb = (typeof root.indexedDB !== 'undefined') ? root.indexedDB : null;
     if (!idb) return null;
 
+    /** @returns {Promise<IDBDatabase>} */
     function open() {
       return new Promise(function (resolve, reject) {
         var req = idb.open(DB_NAME, 1);
@@ -109,6 +128,11 @@
       });
     }
 
+    /**
+     * @param {IDBTransactionMode} mode
+     * @param {(s: IDBObjectStore) => {_result?: any}} fn - runs inside the tx; stashes any read on the returned box
+     * @returns {Promise<any>} resolves with box._result once the tx completes
+     */
     function tx(mode, fn) {
       return open().then(function (db) {
         return new Promise(function (resolve, reject) {
@@ -124,16 +148,17 @@
 
     return {
       get: function (k) {
-        return tx('readonly', function (s) { var box = {}; var r = s.get(k); r.onsuccess = function () { box._result = r.result ? r.result.v : null; }; return box; });
+        return tx('readonly', function (s) { var box = /** @type {{_result?: any}} */ ({}); var r = s.get(k); r.onsuccess = function () { box._result = r.result ? r.result.v : null; }; return box; });
       },
       put: function (k, v) { return tx('readwrite', function (s) { s.put({ _k: k, v: v }); return {}; }); },
       getAll: function () {
-        return tx('readonly', function (s) { var box = {}; var r = s.getAll(); r.onsuccess = function () { box._result = (r.result || []).map(function (row) { return row.v; }); }; return box; });
+        return tx('readonly', function (s) { var box = /** @type {{_result?: any}} */ ({}); var r = s.getAll(); r.onsuccess = function () { box._result = (r.result || []).map(function (row) { return row.v; }); }; return box; });
       },
       clear: function () { return tx('readwrite', function (s) { s.clear(); return {}; }); }
     };
   }
 
+  /** @type {RowStore | null} */
   var _store = null;
   function store() {
     if (!_store) _store = makeIdbStore() || makeMemStore();
@@ -143,6 +168,10 @@
   // ── Durable API ───────────────────────────────────────────────────────────
 
   // Compare-and-merge: never let an older write clobber a newer stored record.
+  /**
+   * @param {LedgerRow | null | undefined} row
+   * @returns {Promise<LedgerRow | null>} the stored record (the newer of existing vs incoming)
+   */
   function put(row) {
     if (!row) return Promise.resolve(null);
     var s = store();
@@ -153,6 +182,7 @@
     });
   }
 
+  /** @param {LedgerRow[] | null | undefined} rows @returns {Promise<number>} rows processed (not rows added) */
   function putAll(rows) {
     if (!Array.isArray(rows) || !rows.length) return Promise.resolve(0);
     var chain = Promise.resolve();
@@ -163,13 +193,20 @@
     return chain.then(function () { return n; });
   }
 
+  /** @returns {Promise<LedgerRow[]>} */
   function all() { return store().getAll(); }
+  /** @returns {Promise<void>} */
   function clear() { return store().clear(); }
 
   // Pull the student's own signed rows and merge them in. Online-only: any thrown
   // fetch (offline / unreachable) is swallowed and the local replica is left as-is.
   // `client` is window.rosterClient (has .current()/.token()); opts.fetchImpl and
   // opts.serverUrl override for tests.
+  /**
+   * @param {{current?: () => any, token?: () => any} | null | undefined} client - window.rosterClient (or a stub)
+   * @param {{fetchImpl?: typeof fetch, serverUrl?: string, studentId?: string, token?: string}} [opts]
+   * @returns {Promise<{added: number, offline: boolean, total?: number, reason?: string}>}
+   */
   function pull(client, opts) {
     opts = opts || {};
     var fetchImpl = opts.fetchImpl || (typeof root.fetch === 'function' ? root.fetch.bind(root) : null);
@@ -211,6 +248,10 @@
   // Returns counts: verified (a known issuer signed it), unverified (no receipt to
   // check), tampered (a receipt present but NO known issuer signs those bytes).
   // Per-row results are attached on the returned `rows` (additive: row._verify).
+  /**
+   * @param {{receiptVerify?: {verifyReceipt: (compact: string, opts?: {includeTestKeys?: boolean}) => (VerifyReceiptResult | Promise<VerifyReceiptResult>)}, includeTestKeys?: boolean}} [opts]
+   * @returns {Promise<{verified: number, unverified: number, tampered: number, total: number, rows: LedgerRow[], available: boolean}>}
+   */
   function verifyAll(opts) {
     opts = opts || {};
     var RV = opts.receiptVerify || root.ReceiptVerify;

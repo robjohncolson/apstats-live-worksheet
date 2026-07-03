@@ -1,3 +1,4 @@
+// @ts-check
 // receipt-sign.js — on-device Ed25519 receipt SIGNING (ANDROID Phase 4 §3B).
 // The verify side already exists (receipt-verify.js); this is the issuing side, so
 // the TEACHER DEVICE can generate a key and sign receipts that the existing server
@@ -37,6 +38,7 @@
     return c.subtle;
   }
 
+  /** @param {string} str @returns {Uint8Array} */
   function utf8(str) {
     if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str);
     var bytes = new Uint8Array(str.length);
@@ -44,6 +46,7 @@
     return bytes;
   }
 
+  /** @param {Uint8Array | ArrayBuffer} bytes @returns {string} base64url, no padding */
   function bytesToB64url(bytes) {
     var arr = (bytes instanceof Uint8Array) ? bytes : new Uint8Array(bytes);
     var bin = '';
@@ -54,6 +57,7 @@
     return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
+  /** @param {Uint8Array | ArrayBuffer} bytes @returns {string} lowercase hex */
   function hex(bytes) {
     var arr = (bytes instanceof Uint8Array) ? bytes : new Uint8Array(bytes);
     var out = '';
@@ -62,17 +66,19 @@
   }
 
   // EXACTLY roster-server/receipts.js::canonicalize — sorted keys, undefined dropped.
+  /** @param {Record<string, unknown>} payload @returns {string} */
   function canonicalize(payload) {
-    var sorted = {};
+    var sorted = /** @type {Record<string, unknown>} */ ({});
     Object.keys(payload).sort().forEach(function (k) {
       if (payload[k] !== undefined) sorted[k] = payload[k];
     });
     return JSON.stringify(sorted);
   }
 
+  /** @returns {Promise<{publicKeyX: string | undefined, privateKey: CryptoKey, privateJwk: JsonWebKey}>} */
   function generateKey() {
     return subtle().generateKey({ name: 'Ed25519' }, true, ['sign', 'verify'])
-      .then(function (pair) {
+      .then(function (/** @type {CryptoKeyPair} */ pair) {
         return Promise.all([
           subtle().exportKey('jwk', pair.publicKey),
           subtle().exportKey('jwk', pair.privateKey)
@@ -82,19 +88,28 @@
       });
   }
 
+  /** @param {CryptoKey} privateKey @returns {Promise<JsonWebKey>} */
   function exportPrivateJwk(privateKey) {
     return subtle().exportKey('jwk', privateKey);
   }
 
+  /** @param {JsonWebKey} jwk @returns {Promise<CryptoKey>} */
   function importPrivateKey(jwk) {
     return subtle().importKey('jwk', jwk, { name: 'Ed25519' }, true, ['sign']);
   }
 
+  /** @param {CryptoKey} privateKey @returns {Promise<string | undefined>} base64url x */
   function publicKeyXFromPrivate(privateKey) {
     // Re-derive the public JWK x from the (extractable) private JWK.
     return exportPrivateJwk(privateKey).then(function (jwk) { return jwk.x; });
   }
 
+  /**
+   * Sign a canonicalized payload. The compact form is what every verifier parses.
+   * @param {CryptoKey} privateKey
+   * @param {Record<string, unknown>} payload
+   * @returns {Promise<{receiptId: string, compact: string, canonical: string}>}
+   */
   function signPayload(privateKey, payload) {
     var canonical = canonicalize(payload);
     var bytes = utf8(canonical);
@@ -110,21 +125,25 @@
   }
 
   // EXACTLY roster-server/receipts.js::stringifyResponse.
+  /** @param {unknown} value @returns {string} */
   function stringifyResponse(value) {
     if (typeof value === 'string') return value;
     var s = JSON.stringify(value);
     return s === undefined ? String(value) : s;
   }
 
+  /** @param {string} str @returns {Promise<string>} */
   function sha256HexStr(str) {
     return subtle().digest('SHA-256', utf8(str)).then(function (buf) { return hex(buf); });
   }
 
   // answerHash matches snapshot-verify.js: sha256(stringifyResponse(response)).slice(0,16).
+  /** @param {unknown} response @returns {Promise<string>} */
   function answerHash(response) {
     return sha256HexStr(stringifyResponse(response)).then(function (h) { return h.slice(0, 16); });
   }
 
+  /** @returns {string} 8 hex chars */
   function randomNonce() {
     var c = root.crypto || (typeof globalThis !== 'undefined' && globalThis.crypto);
     var bytes = new Uint8Array(4);
@@ -143,9 +162,15 @@
   //   kv  — the answer-key version this grade was scored against (§0.10 provenance).
   //   ts/n — pass explicit deterministic values (derived from the submission) so
   //          re-grading the SAME submission yields a byte-identical receipt → dedups (§0.8).
+  /**
+   * @param {CryptoKey} privateKey - the device's Ed25519 signing key
+   * @param {LedgerGradeFields} fields
+   * @returns {Promise<{receiptId: string, compact: string, payload: LedgerReceiptPayload}>}
+   */
   function signLedgerReceipt(privateKey, fields) {
-    fields = fields || {};
+    fields = fields || /** @type {any} */ ({});
     return answerHash(fields.response).then(function (ah) {
+      /** @type {LedgerReceiptPayload} */
       var payload = {
         v: 1, t: 'ledger', sid: fields.sid, src: fields.src, i: fields.i,
         a: (fields.a == null ? 1 : fields.a), e: fields.e || 'practice', ah: ah,
