@@ -13,12 +13,14 @@
     "strict": true,
     "noImplicitAny": false,
     "noImplicitThis": false,
+    "useUnknownInCatchVariables": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node"]
   },
   "include": [
+    "types/globals.d.ts",
     "types/contracts.js",
     "receipt-sign.js",
     "receipt-verify.js",
@@ -26,6 +28,7 @@
     "ledger-gossip.js",
     "ledger-seal.js",
     "submission-store.js",
-    "submission-grader.js"
+    "submission-grader.js",
+    "gradebook-client.js"
   ]
 }

@@ -1,8 +1,9 @@
 name: CI
 
-# TYPECHECK_HARDENING_SPEC.md — run the tests (blocking) + the grade-engine typecheck
-# (advisory in P1; flip to blocking after P4 by removing continue-on-error). Separate
-# from pages.yml so a test/type failure never blocks a deploy, and vice-versa.
+# TYPECHECK_HARDENING_SPEC.md — run the tests (blocking) + the typecheck (BLOCKING
+# as of P4: both allowlists are clean and annotated). Separate from pages.yml so a
+# test/type failure never blocks a deploy, and vice-versa — tsc --noEmit is never
+# on the Railway/Pages/Vercel path.
 
 on:
   push:
@@ -33,11 +34,10 @@ jobs:
         run: npm test -- --retry=2
 
   typecheck:
-    name: typecheck — grade engine + mesh/receipts (advisory)
+    name: typecheck — grade engine + mesh/receipts + feeder (blocking)
     runs-on: ubuntu-latest
-    # Advisory in P1/P2: reports status but does not fail the run. Both allowlists are
-    # already clean; P4 removes this line to make the gate blocking.
-    continue-on-error: true
+    # BLOCKING as of P4 (was advisory in P1-P3): a type error on the allowlist now
+    # fails CI. It still never blocks a deploy — pages.yml is a separate workflow.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

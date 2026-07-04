@@ -103,11 +103,22 @@ describe('§5 decks — structural validity of all Blooket CSVs', () => {
     expect(problems, problems.join('\n')).toEqual([]);
   });
 
-  // RATCHET, not a hard rule: 24 legacy decks put >60% of correct answers in one
-  // position (19 are 100% position-1). Harmless at play time — Blooket and
-  // flashcards.js shuffle choices — but new decks should be authored balanced.
-  it('the set of heavily-imbalanced decks (>60% one correct position) does not grow past the 24 legacy ones', () => {
-    const imbalanced = [];
+  // RATCHET, not a hard rule: these 24 legacy decks put >60% of correct answers in
+  // one position (19 are 100% position-1). Harmless at play time — Blooket and
+  // flashcards.js shuffle choices — but new decks must be authored balanced. The
+  // set is pinned by FILENAME (shrink-only): fixing an old deck removes it here;
+  // a NEW imbalanced deck cannot hide behind an old one being fixed (Codex review
+  // of the count-only v1).
+  const LEGACY_IMBALANCED = new Set([
+    'u4_l1_l2_blooket.csv', 'u4_l6_blooket.csv', 'u4_l7_blooket.csv', 'u4_l7_l8_blooket.csv',
+    'u4_l8_blooket.csv', 'u4_l9_blooket.csv', 'u4_l10_blooket.csv', 'u4_l10_l11_l12_blooket.csv',
+    'u4_l10_l12_blooket.csv', 'u4_l11_blooket.csv', 'u4_l12_blooket.csv', 'u4_lesson6_blooket.csv',
+    'u5_l1_blooket.csv', 'u5_l1_l2_blooket.csv', 'u5_l2_blooket.csv', 'u5_l3_blooket.csv',
+    'u5_l4_blooket.csv', 'u5_l5_blooket.csv', 'u5_l6_blooket.csv', 'u5_l7_blooket.csv',
+    'u5_l8_blooket.csv', 'u6_l1_l2_blooket.csv', 'u6_l3_blooket.csv', 'u6_l6_blooket.csv',
+  ]);
+  it('no NEW heavily-imbalanced deck (>60% one correct position) outside the pinned legacy set', () => {
+    const offenders = [];
     for (const f of DECKS) {
       const counts = [0, 0, 0, 0];
       const rows = questionRows(FC.parseCsv(read(f)));
@@ -115,9 +126,11 @@ describe('§5 decks — structural validity of all Blooket CSVs', () => {
         const c = parseInt(String(r[7] == null ? '' : r[7]).trim(), 10);
         if (c >= 1 && c <= 4) counts[c - 1] += 1;
       }
-      if (rows.length >= 5 && Math.max(...counts) / rows.length > 0.6) imbalanced.push(f);
+      if (rows.length >= 5 && Math.max(...counts) / rows.length > 0.6 && !LEGACY_IMBALANCED.has(f)) {
+        offenders.push(f);
+      }
     }
-    expect(imbalanced.length, `imbalanced decks: ${imbalanced.join(', ')}`).toBeLessThanOrEqual(24);
+    expect(offenders, `new imbalanced deck(s): ${offenders.join(', ')}`).toEqual([]);
   });
 });
 

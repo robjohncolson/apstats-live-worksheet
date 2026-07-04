@@ -1,3 +1,4 @@
+// @ts-check
 // gradebook-client.js — AP Stats gradebook ledger feeder client
 // Repo root sibling of roster-client.js and roster_config.js.
 // Loaded AFTER roster_config.js + roster-client.js.
@@ -124,7 +125,8 @@
     var sid;
     try { if (window.rosterClient && typeof window.rosterClient.studentId === 'function') sid = window.rosterClient.studentId(); } catch (_) { /* best-effort */ }
     try {
-      return Promise.resolve(window.OfflineQueue.enqueue({
+      // Cast: _hasQueue() above guarantees enqueue exists; tsc can't see across the call.
+      return Promise.resolve(/** @type {any} */ (window.OfflineQueue).enqueue({
         source: opts.source, itemId: opts.itemId, response: opts.response,
         score: opts.score, attempt: opts.attempt,
         unit: opts.unit, topic: opts.topic, skill: opts.skill,
@@ -135,6 +137,7 @@
 
   // Raw POST to /ledger/record. NEVER throws; NEVER enqueues (so it is safe to
   // call from a drain without re-queuing). Returns { ok, reason?, ledgerId? }.
+  /** @param {RecordOpts} opts @returns {Promise<RecordResult>} */
   async function _postRecord(opts) {
     try {
       var token = _token();
@@ -185,6 +188,7 @@
     // Fire-and-forget ledger write.
     // NEVER throws. NEVER rejects. NEVER blocks the caller.
     // Returns a Promise that always resolves to { ok, ... }.
+    /** @param {RecordOpts} opts @returns {Promise<RecordResult>} */
     record: async function (opts) {
       try {
         // --- Validate required args BEFORE touching anything ---
@@ -206,8 +210,13 @@
 
         // --- Offline pack: capture locally, skip the network entirely ---
         if (_isOfflineMode()) {
-          await _enqueueOffline(opts); // _isOfflineMode() implies the queue exists
-          return { ok: true, queued: true, ledgerId: null };
+          // queued:true must be HONEST: if the capture itself fails (quota, a
+          // broken queue), saying "queued" would hide a LOST grade behind a
+          // "Saved offline" toast. Report the failure so the caller surfaces it.
+          if (await _enqueueOffline(opts)) {
+            return { ok: true, queued: true, ledgerId: null };
+          }
+          return { ok: false, reason: 'network' };
         }
 
         // --- Online path: must have identity to attribute the write ---
@@ -221,10 +230,12 @@
 
         // Reachability failure → capture for later instead of dropping the grade.
         // reason stays 'network' (the frozen whitelist); the additive `queued`
-        // flag signals the write was captured locally.
+        // flag signals the write was captured locally — only when it actually was.
         if (r.reason === 'network' && _hasQueue()) {
-          await _enqueueOffline(opts);
-          return { ok: false, reason: 'network', queued: true };
+          if (await _enqueueOffline(opts)) {
+            return { ok: false, reason: 'network', queued: true };
+          }
+          return r;
         }
         if (r.reason === 'no-identity') _showNoIdentityNudge();
         return r;
@@ -242,7 +253,7 @@
     syncOfflineQueue: async function () {
       try {
         if (!window.OfflineQueue || typeof window.OfflineQueue.drain !== 'function') return { sent: 0, failed: 0 };
-        return await window.OfflineQueue.drain(function (rec) { return _postRecord(rec); });
+        return await window.OfflineQueue.drain(function (rec) { return _postRecord(/** @type {RecordOpts} */ (rec)); });
       } catch (_) {
         return { sent: 0, failed: 0 };
       }
@@ -378,7 +389,7 @@
   try {
     if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
       window.addEventListener('online', function () {
-        try { window.gradebookClient.syncOfflineQueue(); } catch (_) { /* best-effort */ }
+        try { /** @type {any} */ (window.gradebookClient).syncOfflineQueue(); } catch (_) { /* best-effort */ }
       });
     }
   } catch (_) { /* best-effort */ }

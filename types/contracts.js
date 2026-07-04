@@ -156,6 +156,39 @@
  * @property {number} [ts]
  */
 
+// ── Feeder contract (gradebook-client.js, spec §2 "record() shape only") ───────
+
+/**
+ * The FROZEN record() failure whitelist — callers switch on these strings, so the
+ * set is a compatibility contract, not documentation (prop 12 pins it at runtime).
+ * @typedef {'no-identity' | 'network' | 'server' | 'auth' | 'bad-args' | 'read-only'} RecordFailReason
+ */
+
+/**
+ * @typedef {Object} RecordOpts
+ * @property {string} source - 'worksheet' | 'curriculum_quiz' | 'frq' | … (required)
+ * @property {string} itemId - WS-/BL-/CR-… feeder id (required)
+ * @property {*} response - the graded work; null is a valid response, undefined = bad-args
+ * @property {number | string} [score]
+ * @property {number} [attempt]
+ * @property {string} [unit]
+ * @property {string} [topic]
+ * @property {string} [skill]
+ * @property {string} [kind] - offline-queue record kind (defaults to 'record')
+ */
+
+/**
+ * record()'s result. NEVER a rejection: fire-and-forget callers must be safe to
+ * ignore it. `queued` is HONEST — true only when the offline queue actually
+ * captured the write (prop 12's honesty property).
+ * @typedef {Object} RecordResult
+ * @property {boolean} ok
+ * @property {RecordFailReason} [reason] - present iff ok === false
+ * @property {boolean} [queued] - the write was captured into window.OfflineQueue
+ * @property {string | null} [ledgerId]
+ * @property {*} [receipt] - the server's signed receipt, when one was issued
+ */
+
 // ── Trust registries (receipt-verify.js) ───────────────────────────────────────
 
 /**
