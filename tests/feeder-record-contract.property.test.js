@@ -6,10 +6,15 @@
 //   - record() ALWAYS resolves (never throws, never rejects), to {ok: boolean, …}
 //   - ok:false always carries a reason from the FROZEN whitelist
 //     ('no-identity' | 'network' | 'server' | 'auth' | 'bad-args' | 'read-only')
-//   - guard ORDER is behavior: bad-args → read-only → offline-capture → identity.
+//   - guard ORDER is behavior: bad-args → read-only → IDENTITY → offline-capture.
 //     In particular read-only NEVER touches the queue or the network (an
 //     impersonating teacher's action must never be captured/attributed), and
-//     no-identity/bad-args never issue a fetch.
+//     no-identity/bad-args never issue a fetch AND never enqueue — in OFFLINE
+//     MODE too (Codex P4 blocker: an unattributed queued record would later be
+//     POSTed under whatever token is current at drain time → cross-student
+//     attribution on a shared device).
+//   - a successful offline capture is ATTRIBUTED: the enqueued record carries a
+//     non-empty studentId.
 //   - queued:true is HONEST: it is only ever returned when the offline queue
 //     actually captured the write (a failing enqueue must not report a lost write
 //     as saved — that would silently drop a grade behind a "Saved offline" toast).
@@ -30,15 +35,19 @@ const REASONS = new Set(['no-identity', 'network', 'server', 'auth', 'bad-args',
 // is generated: identity, service URL, fetch behavior, queue presence/behavior,
 // read-only flag. Counters record what the client actually did.
 function bootClient(env) {
-  const counts = { fetch: 0, enqueue: 0 };
+  const counts = { fetch: 0, enqueue: 0, recs: [] };
   const win = {};
   win.window = win;
 
   if (env.serviceUrl) win.ROSTER_SERVICE_URL = 'https://svc.test';
 
-  win.rosterClient = env.token === 'throws'
-    ? { token: () => { throw new Error('storage exploded'); }, studentId: () => 'sid-1' }
-    : { token: () => env.token, studentId: () => 'sid-1' };
+  const sid = 'sid' in env ? env.sid : 'sid-1';
+  if (env.roster !== 'absent') {
+    win.rosterClient = {
+      token: env.token === 'throws' ? () => { throw new Error('storage exploded'); } : () => env.token,
+      studentId: sid === 'throws' ? () => { throw new Error('session exploded'); } : () => sid,
+    };
+  }
 
   win.fetch = (...args) => {
     counts.fetch += 1;
@@ -57,6 +66,7 @@ function bootClient(env) {
       isOffline: () => env.queue === 'offline',
       enqueue: (rec) => {
         counts.enqueue += 1;
+        counts.recs.push(rec);
         if (env.enqueueFails) return Promise.reject(new Error('quota exceeded'));
         return Promise.resolve({ id: 1, rec });
       },
@@ -75,7 +85,9 @@ function bootClient(env) {
 }
 
 const envArb = fc.record({
+  roster: fc.constantFrom('present', 'absent'),
   token: fc.constantFrom(null, '', 'tok-1', 'throws'),
+  sid: fc.constantFrom(null, '', 'sid-1', 'throws'),
   serviceUrl: fc.boolean(),
   fetch: fc.constantFrom('ok', 'okfalse', 'http500', 'http401', 'badjson', 'reject'),
   queue: fc.constantFrom('absent', 'online', 'offline'),
@@ -168,5 +180,40 @@ describe('feeder record() contract (prop 12) — frozen result shape under any e
     const res = await bad.client.record({ source: 'worksheet', itemId: 'WS-U1L1-Q1', response: 'x' });
     expect(res.queued, 'a failed capture must not be reported as queued').not.toBe(true);
     expect(res.ok, 'a lost write must not be reported as ok').toBe(false);
+  });
+
+  it('OFFLINE MODE + missing identity: no-op {ok:false, no-identity} — an unattributed record must never enter the queue', async () => {
+    // Codex P4 blocker: the offline capture used to run BEFORE the identity check.
+    // An unattributed queued record is later POSTed by syncOfflineQueue() under
+    // whatever token is current at drain time → cross-student attribution on a
+    // shared device. Identity (token AND studentId) must gate the capture.
+    await fc.assert(fc.asyncProperty(
+      envArb,
+      fc.constantFrom('roster-absent', 'token-null', 'token-empty', 'token-throws', 'sid-null', 'sid-empty', 'sid-throws'),
+      async (env, how) => {
+        const broken = { ...env, queue: 'offline', readOnly: false };
+        if (how === 'roster-absent') broken.roster = 'absent';
+        if (how === 'token-null') { broken.roster = 'present'; broken.token = null; }
+        if (how === 'token-empty') { broken.roster = 'present'; broken.token = ''; }
+        if (how === 'token-throws') { broken.roster = 'present'; broken.token = 'throws'; }
+        if (how.startsWith('sid-')) { broken.roster = 'present'; broken.token = 'tok-1'; }
+        if (how === 'sid-null') broken.sid = null;
+        if (how === 'sid-empty') broken.sid = '';
+        if (how === 'sid-throws') broken.sid = 'throws';
+        const { client, counts } = bootClient(broken);
+        const res = await client.record({ source: 'worksheet', itemId: 'WS-U1L1-Q1', response: 'x' });
+        expect(res).toMatchObject({ ok: false, reason: 'no-identity' });
+        expect(counts.fetch).toBe(0);
+        expect(counts.enqueue, 'an unattributed record entered the queue').toBe(0);
+      },
+    ), { numRuns: 200 });
+  });
+
+  it('a successful offline capture is ATTRIBUTED: the enqueued record carries the non-empty studentId', async () => {
+    const { client, counts } = bootClient({ roster: 'present', token: 'tok-1', sid: 'sid-1', serviceUrl: true, fetch: 'ok', queue: 'offline', enqueueFails: false, readOnly: false });
+    await expect(client.record({ source: 'worksheet', itemId: 'WS-U1L1-Q1', response: 'x' }))
+      .resolves.toMatchObject({ ok: true, queued: true });
+    expect(counts.recs).toHaveLength(1);
+    expect(counts.recs[0].studentId, 'queued record must carry its owner').toBe('sid-1');
   });
 });

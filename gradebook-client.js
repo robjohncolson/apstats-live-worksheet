@@ -110,6 +110,15 @@
     return null;
   }
 
+  function _studentId() {
+    try {
+      if (window.rosterClient && typeof window.rosterClient.studentId === 'function') {
+        return window.rosterClient.studentId();
+      }
+    } catch (_) { /* treat as no identity */ }
+    return null;
+  }
+
   function _hasQueue() {
     return !!(window.OfflineQueue && typeof window.OfflineQueue.enqueue === 'function');
   }
@@ -122,8 +131,7 @@
 
   function _enqueueOffline(opts) {
     if (!_hasQueue()) return Promise.resolve(false);
-    var sid;
-    try { if (window.rosterClient && typeof window.rosterClient.studentId === 'function') sid = window.rosterClient.studentId(); } catch (_) { /* best-effort */ }
+    var sid = _studentId();
     try {
       // Cast: _hasQueue() above guarantees enqueue exists; tsc can't see across the call.
       return Promise.resolve(/** @type {any} */ (window.OfflineQueue).enqueue({
@@ -210,6 +218,14 @@
 
         // --- Offline pack: capture locally, skip the network entirely ---
         if (_isOfflineMode()) {
+          // Identity FIRST (Codex P4 blocker): an unattributed capture would sit
+          // in the queue and later be POSTed by syncOfflineQueue() under whatever
+          // token is current at drain time — cross-student attribution on a
+          // shared device. No token or no studentId → no-op, like the online path.
+          if (!_token() || !_studentId()) {
+            _showNoIdentityNudge();
+            return { ok: false, reason: 'no-identity' };
+          }
           // queued:true must be HONEST: if the capture itself fails (quota, a
           // broken queue), saying "queued" would hide a LOST grade behind a
           // "Saved offline" toast. Report the failure so the caller surfaces it.
@@ -231,7 +247,9 @@
         // Reachability failure → capture for later instead of dropping the grade.
         // reason stays 'network' (the frozen whitelist); the additive `queued`
         // flag signals the write was captured locally — only when it actually was.
-        if (r.reason === 'network' && _hasQueue()) {
+        // Attribution gate here too: a queued record must carry its owner's
+        // studentId (the token alone is drain-time state, not ownership).
+        if (r.reason === 'network' && _hasQueue() && _studentId()) {
           if (await _enqueueOffline(opts)) {
             return { ok: false, reason: 'network', queued: true };
           }
