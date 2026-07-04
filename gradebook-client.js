@@ -271,7 +271,21 @@
     syncOfflineQueue: async function () {
       try {
         if (!window.OfflineQueue || typeof window.OfflineQueue.drain !== 'function') return { sent: 0, failed: 0 };
-        return await window.OfflineQueue.drain(function (rec) { return _postRecord(/** @type {RecordOpts} */ (rec)); });
+        return await window.OfflineQueue.drain(function (rec) {
+          // Drain-time OWNERSHIP gate (P4): _postRecord attributes by the CURRENT
+          // session token, so draining a record the signed-in student does not
+          // OWN — another student's capture, or a legacy record with no owner —
+          // would attribute their work to whoever is signed in now on a shared
+          // device (and the queue would then delete it as sent). Refusing with
+          // ok:false leaves it queued for the owner's next session, or the
+          // teacher export/import path which attributes explicitly.
+          var r = /** @type {RecordOpts & {studentId?: string}} */ (rec);
+          var sid = _studentId();
+          if (!r || !r.studentId || !sid || String(r.studentId) !== String(sid)) {
+            return { ok: false, reason: 'no-identity' };
+          }
+          return _postRecord(r);
+        });
       } catch (_) {
         return { sent: 0, failed: 0 };
       }

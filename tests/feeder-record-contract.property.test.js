@@ -28,6 +28,7 @@ import { resolve } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
 
 const SRC = readFileSync(resolve(import.meta.dirname, '..', 'gradebook-client.js'), 'utf8');
+const OFFLINE_SRC = readFileSync(resolve(import.meta.dirname, '..', 'offline-queue.js'), 'utf8');
 
 const REASONS = new Set(['no-identity', 'network', 'server', 'auth', 'bad-args', 'read-only']);
 
@@ -49,7 +50,9 @@ function bootClient(env) {
     };
   }
 
-  win.fetch = (...args) => {
+  // NOTE: gradebook-client calls BARE fetch — it must be a vm GLOBAL, not just
+  // a window property (window.fetch alone leaves the online paths dead).
+  const doFetch = (...args) => {
     counts.fetch += 1;
     switch (env.fetch) {
       case 'ok': return Promise.resolve({ ok: true, status: 200, json: async () => ({ ok: true, ledgerId: 'L1' }) });
@@ -60,6 +63,7 @@ function bootClient(env) {
       default: return Promise.reject(new Error('network down'));
     }
   };
+  win.fetch = doFetch;
 
   if (env.queue !== 'absent') {
     win.OfflineQueue = {
@@ -76,7 +80,7 @@ function bootClient(env) {
   if (env.readOnly) win.__WS_READ_ONLY__ = true;
 
   const ctx = createContext({
-    window: win, console: { warn: () => {}, log: () => {} },
+    window: win, fetch: doFetch, console: { warn: () => {}, log: () => {} },
     JSON, Promise, Map, String, Number, Object, Array, Date, isFinite, encodeURIComponent,
     localStorage: { getItem: () => null, setItem: () => {} },
   });
@@ -215,5 +219,80 @@ describe('feeder record() contract (prop 12) — frozen result shape under any e
       .resolves.toMatchObject({ ok: true, queued: true });
     expect(counts.recs).toHaveLength(1);
     expect(counts.recs[0].studentId, 'queued record must carry its owner').toBe('sid-1');
+  });
+});
+
+// ── Drain-time ownership (P4 blocker #2) ────────────────────────────────────────
+// The queued studentId is only worth storing if the DRAIN honors it: _postRecord
+// attributes by the CURRENT session token, so syncOfflineQueue must refuse to
+// post any record the signed-in student does not own — it stays queued for the
+// owner's next session (or the teacher export path). Uses the REAL offline-queue.js
+// (in-memory store in the vm) so drain's delete-on-ok semantics are the shipped ones.
+
+function bootSharedDevice() {
+  const counts = { fetch: 0, bodies: [] };
+  let identity = { token: 'tok-A', sid: 'sid-A' };
+  const win = {};
+  win.window = win;
+  win.ROSTER_SERVICE_URL = 'https://svc.test';
+  win.rosterClient = { token: () => identity.token, studentId: () => identity.sid };
+  const doFetch = (url, init) => {
+    counts.fetch += 1;
+    counts.bodies.push(init && init.body);
+    return Promise.resolve({ ok: true, status: 200, json: async () => ({ ok: true, ledgerId: 'L1' }) });
+  };
+  win.fetch = doFetch;
+  const ctx = createContext({
+    window: win, fetch: doFetch, console: { warn: () => {}, log: () => {} },
+    JSON, Promise, Map, String, Number, Object, Array, Date, isFinite, encodeURIComponent,
+    localStorage: { getItem: () => null, setItem: () => {} },
+  });
+  runInContext(OFFLINE_SRC, ctx);                       // the REAL queue (memory fallback)
+  runInContext(SRC, ctx);
+  return {
+    win, counts,
+    client: win.gradebookClient, queue: win.OfflineQueue,
+    setIdentity: (token, sid) => { identity = { token, sid }; },
+  };
+}
+
+describe('shared-device drain ownership — a queued record only drains under its OWNER\'s session', () => {
+  it('another student signed in: the owner\'s queued record is NOT posted and STAYS queued', async () => {
+    const dev = bootSharedDevice();
+    dev.win.OFFLINE_MODE = true;                        // student A works offline
+    await expect(dev.client.record({ source: 'worksheet', itemId: 'WS-U1L1-Q1', response: 'a', score: 1 }))
+      .resolves.toMatchObject({ ok: true, queued: true });
+    dev.win.OFFLINE_MODE = false;
+
+    dev.setIdentity('tok-B', 'sid-B');                  // student B signs in before the drain
+    const r = await dev.client.syncOfflineQueue();
+    expect(dev.counts.fetch, 'A\'s record must NOT be posted under B\'s token').toBe(0);
+    expect(r.sent).toBe(0);
+    expect(await dev.queue.all(), 'A\'s record must stay queued for A').toHaveLength(1);
+  });
+
+  it('the owner signs back in: their record drains, posts under THEIR token, and clears', async () => {
+    const dev = bootSharedDevice();
+    dev.win.OFFLINE_MODE = true;
+    await dev.client.record({ source: 'worksheet', itemId: 'WS-U1L1-Q1', response: 'a', score: 1 });
+    dev.win.OFFLINE_MODE = false;
+
+    dev.setIdentity('tok-B', 'sid-B');
+    await dev.client.syncOfflineQueue();                // B: nothing drains
+    dev.setIdentity('tok-A', 'sid-A');                  // A returns
+    const r = await dev.client.syncOfflineQueue();
+    expect(r.sent).toBe(1);
+    expect(dev.counts.fetch).toBe(1);
+    expect(dev.counts.bodies[0]).toContain('"token":"tok-A"');
+    expect(await dev.queue.all()).toHaveLength(0);
+  });
+
+  it('a legacy queued record with NO studentId never drains (no POST, stays queued)', async () => {
+    const dev = bootSharedDevice();
+    await dev.queue.enqueue({ source: 'worksheet', itemId: 'WS-LEGACY-Q1', response: 'x' });   // pre-fix capture: unowned
+    const r = await dev.client.syncOfflineQueue();
+    expect(dev.counts.fetch, 'an unowned record must never be posted').toBe(0);
+    expect(r.sent).toBe(0);
+    expect(await dev.queue.all()).toHaveLength(1);
   });
 });
