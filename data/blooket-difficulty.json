@@ -4159,106 +4159,6 @@
       "35": {
         "difficulty": "hard",
         "rationale": "Given that setup, 9.85."
-      },
-      "36": {
-        "difficulty": "med",
-        "rationale": "Key idea: 7."
-      },
-      "37": {
-        "difficulty": "hard",
-        "rationale": "Independence idea: About $0.64."
-      },
-      "38": {
-        "difficulty": "med",
-        "rationale": "Key idea: 17 lbs."
-      },
-      "39": {
-        "difficulty": "hard",
-        "rationale": "Independence idea: 1.7 lbs."
-      },
-      "40": {
-        "difficulty": "hard",
-        "rationale": "Given that setup, 0.9 times the old mean."
-      },
-      "41": {
-        "difficulty": "hard",
-        "rationale": "Given that setup, 0.9 times the old SD."
-      },
-      "42": {
-        "difficulty": "easy",
-        "rationale": "Key idea: Adding variances requires independence."
-      },
-      "43": {
-        "difficulty": "hard",
-        "rationale": "Variable-type idea: Add and subtract normally."
-      },
-      "44": {
-        "difficulty": "hard",
-        "rationale": "Variable-type idea: Independent."
-      },
-      "45": {
-        "difficulty": "hard",
-        "rationale": "Given that setup, we cannot use 2(X+Y) = 2X + 2Y."
-      },
-      "46": {
-        "difficulty": "med",
-        "rationale": "Key idea: 6."
-      },
-      "47": {
-        "difficulty": "hard",
-        "rationale": "Independence idea: 1.12."
-      },
-      "48": {
-        "difficulty": "hard",
-        "rationale": "Independence idea: 1.12."
-      },
-      "49": {
-        "difficulty": "med",
-        "rationale": "Key idea: Variances add either way so SD is the same."
-      },
-      "50": {
-        "difficulty": "hard",
-        "rationale": "Key idea: Cannot subtract SDs - must add variances."
-      },
-      "51": {
-        "difficulty": "hard",
-        "rationale": "Independence idea: 34 5.83."
-      },
-      "52": {
-        "difficulty": "easy",
-        "rationale": "The TRAP in combining random variables- is Adding SDs instead of variances."
-      },
-      "53": {
-        "difficulty": "hard",
-        "rationale": "Key idea: Add / do NOT add directly."
-      },
-      "54": {
-        "difficulty": "hard",
-        "rationale": "Given that setup, making a common mistake."
-      },
-      "55": {
-        "difficulty": "hard",
-        "rationale": "Key idea: 93."
-      },
-      "56": {
-        "difficulty": "hard",
-        "rationale": "Key idea: 11."
-      },
-      "57": {
-        "difficulty": "med",
-        "rationale": "Key idea: 68."
-      },
-      "58": {
-        "difficulty": "med",
-        "rationale": "Key idea: 9."
-      },
-      "59": {
-        "difficulty": "med",
-        "rationale": "Key idea: No - constants don't affect spread."
-      },
-      "60": {
-        "difficulty": "med",
-        "rationale": "Key idea: The multiplier only not the constant."
       }
     },
     "u4_lesson6_blooket.csv": {
@@ -9313,6 +9213,570 @@
       "30": {
         "difficulty": "hard",
         "rationale": "Random assignment gives causation; without random selection, results shouldn't be generalized."
+      }
+    },
+    "u4_l6_blooket.csv": {
+      "1": {
+        "difficulty": "easy",
+        "rationale": "Independence idea: Knowing A occurred does not change the probability of B."
+      },
+      "2": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, independent."
+      },
+      "3": {
+        "difficulty": "med",
+        "rationale": "Independence idea: P(A) - the unconditional probability of A."
+      },
+      "4": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, p(B)."
+      },
+      "5": {
+        "difficulty": "easy",
+        "rationale": "The MULTIPLICATION RULE for independent events- is P(A and B) = P(A) times P(B)."
+      },
+      "6": {
+        "difficulty": "med",
+        "rationale": "Key idea: Independent."
+      },
+      "7": {
+        "difficulty": "med",
+        "rationale": "Key idea: Independent - probabilities stay the same."
+      },
+      "8": {
+        "difficulty": "hard",
+        "rationale": "Because the probabilities remain unchanged between selections."
+      },
+      "9": {
+        "difficulty": "med",
+        "rationale": "Given that setup, 0.4 times 0.4 = 0.16."
+      },
+      "10": {
+        "difficulty": "med",
+        "rationale": "Key idea: 0.4 times 0.4 times 0.6 times 0.6 = 0.0576."
+      },
+      "11": {
+        "difficulty": "med",
+        "rationale": "Key idea: Complement rule: 1 minus P(no successes)."
+      },
+      "12": {
+        "difficulty": "med",
+        "rationale": "Key idea: 1 minus P(no red in all 10 draws)."
+      },
+      "13": {
+        "difficulty": "med",
+        "rationale": "The FIRST way to check if events are independent- is Check if P(A|B) equals P(A)."
+      },
+      "14": {
+        "difficulty": "med",
+        "rationale": "The SECOND way to check if events are independent- is Check if P(A and B) equals P(A) times P(B)."
+      },
+      "15": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, no - because 0.4 times 0.6 = 0.24, not 0.25."
+      },
+      "16": {
+        "difficulty": "hard",
+        "rationale": "Conditional-probability idea: P(E and F) divided by P(F)."
+      },
+      "17": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, not independent - conditional does not equal unconditional."
+      },
+      "18": {
+        "difficulty": "easy",
+        "rationale": "The UNION of events A and B- is The probability that A OR B (or both) occurs."
+      },
+      "19": {
+        "difficulty": "easy",
+        "rationale": "Key idea: A occurs, B occurs, or both occur."
+      },
+      "20": {
+        "difficulty": "easy",
+        "rationale": "The addition rule is P(A or B) = P(A) + P(B) - P(A and B)."
+      },
+      "21": {
+        "difficulty": "hard",
+        "rationale": "Key idea: To avoid counting the intersection twice."
+      },
+      "22": {
+        "difficulty": "med",
+        "rationale": "Key idea: Add P(A) and P(B) without subtracting overlap."
+      },
+      "23": {
+        "difficulty": "med",
+        "rationale": "Key idea: The set {3, 5} with 2 outcomes."
+      },
+      "24": {
+        "difficulty": "easy",
+        "rationale": "Key idea: 3/6 + 3/6 - 2/6 = 4/6."
+      },
+      "25": {
+        "difficulty": "med",
+        "rationale": "Given that setup, p(F) times P(E|F) = 0.6 times 0.25 = 0.15."
+      },
+      "26": {
+        "difficulty": "med",
+        "rationale": "Key idea: 0.4 + 0.6 - 0.15 = 0.85."
+      },
+      "27": {
+        "difficulty": "med",
+        "rationale": "Disjoint-events idea: They cannot occur at the same time - P(A and B) = 0."
+      },
+      "28": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, zero - they cannot both happen."
+      },
+      "29": {
+        "difficulty": "med",
+        "rationale": "Disjoint-events idea: P(A or B) = P(A) + P(B)."
+      },
+      "30": {
+        "difficulty": "med",
+        "rationale": "Disjoint-events idea: A student can only choose one superpower, not both."
+      },
+      "31": {
+        "difficulty": "hard",
+        "rationale": "Independence idea: No - independence requires P(A and B) > 0, but mutually exclusive means P(A and B) = 0."
+      },
+      "32": {
+        "difficulty": "med",
+        "rationale": "Independence idea: P(A) times P(B) which is greater than zero."
+      },
+      "33": {
+        "difficulty": "easy",
+        "rationale": "Key idea: The entire sample of all adults."
+      },
+      "34": {
+        "difficulty": "hard",
+        "rationale": "Key idea: Only the college graduates - a conditional selection."
+      },
+      "35": {
+        "difficulty": "hard",
+        "rationale": "Key idea: Conditional probability - restrict to that group."
+      },
+      "36": {
+        "difficulty": "easy",
+        "rationale": "Key idea: Only the college graduate row/column."
+      },
+      "37": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, not independent - knowing A changes probability of B."
+      },
+      "38": {
+        "difficulty": "hard",
+        "rationale": "Independence idea: P(A|B) is not equal to P(A) OR P(A and B) is not equal to P(A) times P(B)."
+      },
+      "39": {
+        "difficulty": "hard",
+        "rationale": "Key idea: ALL events - whether independent or not."
+      },
+      "40": {
+        "difficulty": "hard",
+        "rationale": "Key idea: All events."
+      },
+      "41": {
+        "difficulty": "easy",
+        "rationale": "Table-reading idea: The cell where row A and column B intersect."
+      },
+      "42": {
+        "difficulty": "easy",
+        "rationale": "Table-reading idea: Dividing the row total for A by the grand total."
+      },
+      "43": {
+        "difficulty": "easy",
+        "rationale": "Table-reading idea: The cell (A and B) divided by the column total for B."
+      },
+      "44": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, 245/693 = 0.354."
+      },
+      "45": {
+        "difficulty": "hard",
+        "rationale": "Key idea: P(internet) overall - if equal, independent."
+      },
+      "46": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, not independent - conditional differs from unconditional."
+      },
+      "47": {
+        "difficulty": "easy",
+        "rationale": "Key idea: 1 - P(A)."
+      },
+      "48": {
+        "difficulty": "hard",
+        "rationale": "Key idea: 1 - P(none) using the complement."
+      },
+      "49": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, (0.6)^10 = 0.006."
+      },
+      "50": {
+        "difficulty": "med",
+        "rationale": "Key idea: 0.994."
+      },
+      "51": {
+        "difficulty": "med",
+        "rationale": "Key idea: Addition Rule: P(A) + P(B) - P(A and B)."
+      },
+      "52": {
+        "difficulty": "med",
+        "rationale": "Independence idea: Multiplication Rule: P(A) times P(B)."
+      },
+      "53": {
+        "difficulty": "med",
+        "rationale": "Probability idea: A or B or both - inclusive or."
+      },
+      "54": {
+        "difficulty": "med",
+        "rationale": "Probability idea: Both events occur together - intersection."
+      },
+      "55": {
+        "difficulty": "hard",
+        "rationale": "Key idea: The intersection - outcomes in both A and B."
+      },
+      "56": {
+        "difficulty": "med",
+        "rationale": "Key idea: The union - all outcomes in A or B or both."
+      },
+      "57": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, yes - 0.3 times 0.5 = 0.15 equals P(A and B)."
+      },
+      "58": {
+        "difficulty": "med",
+        "rationale": "Key idea: 0.3 + 0.5 - 0.15 = 0.65."
+      },
+      "59": {
+        "difficulty": "hard",
+        "rationale": "Key idea: Independent - the product rule holds."
+      },
+      "60": {
+        "difficulty": "hard",
+        "rationale": "Independence idea: Independent events CAN occur together; mutually exclusive CANNOT."
+      }
+    },
+    "u4_l10_l12_blooket.csv": {
+      "1": {
+        "difficulty": "easy",
+        "rationale": "Binomial idea: Binary - two possible outcomes."
+      },
+      "2": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: Success or failure (two options only)."
+      },
+      "3": {
+        "difficulty": "easy",
+        "rationale": "Key idea: Independent trials."
+      },
+      "4": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: Knowing one outcome doesn't affect the probability of another."
+      },
+      "5": {
+        "difficulty": "easy",
+        "rationale": "Key idea: Fixed Number of trials."
+      },
+      "6": {
+        "difficulty": "easy",
+        "rationale": "Binomial idea: Fixed and known in advance (n)."
+      },
+      "7": {
+        "difficulty": "easy",
+        "rationale": "Key idea: Same probability of success for each trial."
+      },
+      "8": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: Remain constant for every trial."
+      },
+      "9": {
+        "difficulty": "easy",
+        "rationale": "A binomial random variable- is The count of successes in n independent trials."
+      },
+      "10": {
+        "difficulty": "med",
+        "rationale": "Given that setup, the number of successes in n trials."
+      },
+      "11": {
+        "difficulty": "med",
+        "rationale": "Probability idea: 6."
+      },
+      "12": {
+        "difficulty": "med",
+        "rationale": "Probability idea: 0.53."
+      },
+      "13": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: The number of ways to choose x successes from n trials."
+      },
+      "14": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: The probability of x successes occurring."
+      },
+      "15": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: The probability of (n-x) failures occurring."
+      },
+      "16": {
+        "difficulty": "med",
+        "rationale": "Key idea: C(6,5) (0.53)^5 (0.47)^1."
+      },
+      "17": {
+        "difficulty": "easy",
+        "rationale": "C(6,5) equal to- is 6."
+      },
+      "18": {
+        "difficulty": "med",
+        "rationale": "Given that setup, there's an 11.8% chance exactly 5 of 6 storms become hurricanes."
+      },
+      "19": {
+        "difficulty": "easy",
+        "rationale": "Binomial idea: Finding P(X k) or P(X k) by summing multiple values."
+      },
+      "20": {
+        "difficulty": "med",
+        "rationale": "Key idea: P(X=16) + P(X=17) + P(X=18) + ... up to n."
+      },
+      "21": {
+        "difficulty": "med",
+        "rationale": "Key idea: 1 - binomcdf(n, p, 15)."
+      },
+      "22": {
+        "difficulty": "hard",
+        "rationale": "Key idea: NOT earn credit - you must show the distribution and parameters."
+      },
+      "23": {
+        "difficulty": "easy",
+        "rationale": "Binomial idea: Define the variable, identify distribution, show formula setup."
+      },
+      "24": {
+        "difficulty": "easy",
+        "rationale": "The formula for the mean of a binomial distribution- is = np."
+      },
+      "25": {
+        "difficulty": "med",
+        "rationale": "Given that setup, 8.4."
+      },
+      "26": {
+        "difficulty": "easy",
+        "rationale": "Binomial idea: The expected (average) number of successes in n trials."
+      },
+      "27": {
+        "difficulty": "med",
+        "rationale": "Given that setup, on average, 8.4 of 40 sampled people will have cracked screens."
+      },
+      "28": {
+        "difficulty": "easy",
+        "rationale": "The formula for the standard deviation of a binomial distribution- is = [np(1-p)]."
+      },
+      "29": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, 2.58."
+      },
+      "30": {
+        "difficulty": "easy",
+        "rationale": "Binomial idea: How much the number of successes typically varies from the mean."
+      },
+      "31": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, the number of cracked screens typically varies by about 2.58 from 8.4."
+      },
+      "32": {
+        "difficulty": "hard",
+        "rationale": "Key idea: No - one above mean (26.87) exceeds 25 supplies."
+      },
+      "33": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, 26.87."
+      },
+      "34": {
+        "difficulty": "med",
+        "rationale": "Probability idea: High enough that running out of supplies is not surprising."
+      },
+      "35": {
+        "difficulty": "easy",
+        "rationale": "The key difference between binomial and geometric distributions- is Binomial has fixed n; geometric has no fixed n."
+      },
+      "36": {
+        "difficulty": "hard",
+        "rationale": "Geometric idea: The number of trials until the first success."
+      },
+      "37": {
+        "difficulty": "hard",
+        "rationale": "Binomial idea: Binary outcomes, independent trials, same probability p."
+      },
+      "38": {
+        "difficulty": "hard",
+        "rationale": "Distribution idea: Geometric - counting trials until first success."
+      },
+      "39": {
+        "difficulty": "hard",
+        "rationale": "Distribution idea: Binomial - counting successes in fixed n=6 trials."
+      },
+      "40": {
+        "difficulty": "med",
+        "rationale": "The formula for geometric probability- is P(X = x) = (1-p)^(x-1) p."
+      },
+      "41": {
+        "difficulty": "hard",
+        "rationale": "Geometric idea: The probability of (x-1) failures before the first success."
+      },
+      "42": {
+        "difficulty": "med",
+        "rationale": "Key idea: (0.59)^3 (0.41)."
+      },
+      "43": {
+        "difficulty": "med",
+        "rationale": "Key idea: There's an 8.42% chance the 4th storm is the first hurricane."
+      },
+      "44": {
+        "difficulty": "med",
+        "rationale": "Key idea: P(H=1) + P(H=2) + P(H=3)."
+      },
+      "45": {
+        "difficulty": "med",
+        "rationale": "Key idea: There's a 79.5% chance the first hurricane occurs by the 3rd storm."
+      },
+      "46": {
+        "difficulty": "med",
+        "rationale": "The formula for the mean of a geometric distribution- is = 1/p."
+      },
+      "47": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, 1/0.41 = 2.44 storms."
+      },
+      "48": {
+        "difficulty": "med",
+        "rationale": "Key idea: On average, it takes 2.44 storms to get the first hurricane."
+      },
+      "49": {
+        "difficulty": "med",
+        "rationale": "The formula for the standard deviation of a geometric distribution- is = (1-p) / p."
+      },
+      "50": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, 1.87 storms."
+      },
+      "51": {
+        "difficulty": "med",
+        "rationale": "Key idea: The number of storms to get the first hurricane typically varies by 1.87 from the mean."
+      },
+      "52": {
+        "difficulty": "hard",
+        "rationale": "Key idea: Geometric with p = 0.20."
+      },
+      "53": {
+        "difficulty": "med",
+        "rationale": "Key idea: There's an 8.2% chance the 5th litter is the first large one."
+      },
+      "54": {
+        "difficulty": "med",
+        "rationale": "Key idea: 1/0.20 = 5 litters."
+      },
+      "55": {
+        "difficulty": "hard",
+        "rationale": "Key idea: Binomial mean: 18 0.22 = 3.96."
+      },
+      "56": {
+        "difficulty": "hard",
+        "rationale": "Key idea: Geometric mean: 1/0.22 = 4.55 storms."
+      },
+      "57": {
+        "difficulty": "med",
+        "rationale": "Key idea: It's unusual (about 5% chance) to wait this long for a major hurricane."
+      },
+      "58": {
+        "difficulty": "hard",
+        "rationale": "Binomial idea: There's a 36% chance they need to survey more than 4 - preparation may be insufficient."
+      },
+      "59": {
+        "difficulty": "hard",
+        "rationale": "Key idea: Binomial distribution."
+      },
+      "60": {
+        "difficulty": "hard",
+        "rationale": "Key idea: Geometric distribution."
+      },
+      "61": {
+        "difficulty": "easy",
+        "rationale": "Fixed-trial cue: the wording asks for an exact number of successes in a fixed number of trials."
+      },
+      "62": {
+        "difficulty": "hard",
+        "rationale": "Geometric cue: the wording asks how many trials until the first success occurs."
+      },
+      "63": {
+        "difficulty": "easy",
+        "rationale": "Binomial idea: 0, 1, 2, 3, ... up to n."
+      },
+      "64": {
+        "difficulty": "hard",
+        "rationale": "Geometric idea: 1, 2, 3, 4, ... (no upper limit)."
+      },
+      "65": {
+        "difficulty": "hard",
+        "rationale": "Because you need at least 1 trial to get your first success."
+      },
+      "66": {
+        "difficulty": "med",
+        "rationale": "Key idea: NOT earn credit - must define variable and show formula."
+      },
+      "67": {
+        "difficulty": "hard",
+        "rationale": "Binomial idea: Multiplying trials by probability gives expected successes."
+      },
+      "68": {
+        "difficulty": "hard",
+        "rationale": "Geometric idea: Higher p means fewer trials needed on average."
+      },
+      "69": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, 2 trials on average."
+      },
+      "70": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, 10 trials on average."
+      },
+      "71": {
+        "difficulty": "hard",
+        "rationale": "Geometric idea: More trials expected until first success."
+      },
+      "72": {
+        "difficulty": "hard",
+        "rationale": "Binomial idea: More successes expected on average."
+      },
+      "73": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: 6 successes."
+      },
+      "74": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: 2.05."
+      },
+      "75": {
+        "difficulty": "med",
+        "rationale": "Binomial idea: 0.5."
+      },
+      "76": {
+        "difficulty": "hard",
+        "rationale": "Given that setup, skewed (not symmetric)."
+      },
+      "77": {
+        "difficulty": "hard",
+        "rationale": "Binomial idea: Context and appropriate units."
+      },
+      "78": {
+        "difficulty": "hard",
+        "rationale": "Geometric idea: Context and appropriate units."
+      },
+      "79": {
+        "difficulty": "hard",
+        "rationale": "Sample/population idea: The binomial mean = np."
+      },
+      "80": {
+        "difficulty": "hard",
+        "rationale": "Key idea: The geometric mean = 1/p."
       }
     }
   }

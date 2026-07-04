@@ -5,8 +5,8 @@
 
 import { describe, it, expect, afterAll } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, existsSync, rmSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 import { injectOfflineConfig, genOfflineConfig } from '../scripts/build-offline-pack.mjs';
 
 const repo = resolve(import.meta.dirname, '..');
@@ -49,7 +49,9 @@ describe('build (real, into a temp dir)', () => {
   afterAll(() => { try { rmSync(out, { recursive: true, force: true }); } catch (_) {} });
 
   it('assembles a personalized pack with injected config and the launcher', () => {
-    const r = spawnSync('node', ['scripts/build-offline-pack.mjs', '--out', 'state/_pack_test',
+    // --no-media: the key-leak guard doesn't need ~GB of video copied on machines
+    // where media-compressed/ exists; CI has no media either way.
+    const r = spawnSync('node', ['scripts/build-offline-pack.mjs', '--out', 'state/_pack_test', '--no-media',
       '--identity', '{"studentId":"abc","username":"mango_tiger","realName":"Mango T.","section":"PeriodX"}'],
       { cwd: repo, encoding: 'utf8' });
     expect(r.status).toBe(0);
@@ -75,6 +77,20 @@ describe('build (real, into a temp dir)', () => {
     // key from the teacher-gated endpoint — neither belongs in the bundled data/.
     expect(existsSync(resolve(out, 'data', 'answer-key.json')), 'answer-key.json must NOT be in the student pack').toBe(false);
     expect(existsSync(resolve(out, 'data', 'worksheet-key.json')), 'worksheet-key.json must NOT be in the student pack').toBe(false);
+    // …and not just at the one known path: sweep the WHOLE built pack. The quiz/
+    // subtree is copied with a DIFFERENT cpSync filter than data/, and stale
+    // pre-fix copies could survive at any depth — a key file anywhere is a leak
+    // (TYPECHECK_HARDENING_SPEC.md §5, the mesh-P3 answer-key leak).
+    const KEY_NAMES = new Set(['answer-key.json', 'worksheet-key.json']);
+    const leaked = [];
+    (function sweep(dir) {
+      for (const ent of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, ent.name);
+        if (ent.isDirectory()) sweep(p);
+        else if (KEY_NAMES.has(ent.name)) leaked.push(p);
+      }
+    })(out);
+    expect(leaked, `answer-key file(s) found in the built pack: ${leaked.join(', ')}`).toEqual([]);
     // but the non-secret data files still ship
     expect(existsSync(resolve(out, 'data', 'lesson-schedule.json')) || existsSync(resolve(out, 'data'))).toBe(true);
 
