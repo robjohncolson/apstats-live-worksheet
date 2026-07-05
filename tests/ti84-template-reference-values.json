@@ -451,34 +451,34 @@
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 0,
     "ref": {
-      "t": 1.6345871,
-      "p": 0.0597514
+      "t": 1.5135066,
+      "p": 0.0737559
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 1,
     "ref": {
-      "t": -2.1540659,
-      "p": 0.0399888
+      "t": -2.1072384,
+      "p": 0.0441814
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 2,
     "ref": {
-      "t": 2.0185155,
-      "p": 0.0571491
+      "t": 2.0048769,
+      "p": 0.0587014
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 3,
     "ref": {
       "t": -1.2990381,
@@ -487,17 +487,8 @@
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 4,
-    "ref": {
-      "t": -1.4789121,
-      "p": 0.0782257
-    }
-  },
-  {
-    "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
-    "seed": 5,
     "ref": {
       "t": -1.4983715,
       "p": 0.0756847
@@ -505,7 +496,16 @@
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
+    "seed": 5,
+    "ref": {
+      "t": -1.5013985,
+      "p": 0.0752957
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "000153eb",
     "seed": 6,
     "ref": {
       "t": 2.9154759,
@@ -514,70 +514,70 @@
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 7,
     "ref": {
-      "t": 1.3975425,
-      "p": 0.0846289
+      "t": 1.5093459,
+      "p": 0.0691793
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 8,
     "ref": {
-      "t": 1.5033384,
-      "p": 0.0738212
+      "t": 1.5012884,
+      "p": 0.0740842
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 9,
     "ref": {
-      "t": 2.0076046,
-      "p": 0.0630503
+      "t": 2.0,
+      "p": 0.063945
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 10,
     "ref": {
-      "t": 1.4896604,
-      "p": 0.0727662
+      "t": 1.4790199,
+      "p": 0.0741705
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 11,
     "ref": {
-      "t": 1.4999235,
-      "p": 0.1437508
+      "t": 1.5427784,
+      "p": 0.1330323
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 12,
     "ref": {
-      "t": -2.9694743,
-      "p": 0.0029096
+      "t": -3.0048252,
+      "p": 0.0026625
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 13,
     "ref": {
-      "t": -2.9816332,
-      "p": 0.0053035
+      "t": -3.0400966,
+      "p": 0.0047394
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 14,
     "ref": {
       "t": -1.4958791,
@@ -586,7 +586,7 @@
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 15,
     "ref": {
       "t": -2.0,
@@ -595,115 +595,115 @@
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 16,
     "ref": {
-      "t": 2.9544847,
-      "p": 0.002746
+      "t": 2.919726,
+      "p": 0.0030049
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 17,
     "ref": {
-      "t": -2.4343225,
-      "p": 0.0106544
+      "t": -2.5103951,
+      "p": 0.008945
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 18,
     "ref": {
-      "t": 1.5078461,
-      "p": 0.1427952
+      "t": 1.5028367,
+      "p": 0.1440769
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 19,
     "ref": {
-      "t": -1.9794866,
-      "p": 0.0584406
+      "t": -2.0026837,
+      "p": 0.0557417
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 20,
     "ref": {
-      "t": 2.5289466,
-      "p": 0.0083722
+      "t": 2.5141574,
+      "p": 0.008668
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 21,
     "ref": {
-      "t": 2.9907336,
-      "p": 0.0036125
+      "t": 2.9972522,
+      "p": 0.0035599
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 22,
     "ref": {
-      "t": 2.9719766,
-      "p": 0.0040839
+      "t": 3.0875534,
+      "p": 0.0031749
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 23,
     "ref": {
-      "t": -2.5850532,
-      "p": 0.0072498
+      "t": -2.4988848,
+      "p": 0.0088921
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 24,
     "ref": {
-      "t": 2.9962995,
-      "p": 0.0035675
+      "t": 3.0000337,
+      "p": 0.0035377
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 0,
     "ref": {
-      "lower": 9.6144123,
-      "upper": 10.3855877
+      "lower": 173.0594222,
+      "upper": 186.9405778
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 1,
     "ref": {
-      "lower": 9.1303126,
-      "upper": 10.6696874
+      "lower": 13.6198126,
+      "upper": 15.9801874
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 2,
     "ref": {
-      "lower": 65.6844062,
-      "upper": 76.1155938
+      "lower": 37.5196607,
+      "upper": 43.4803393
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 3,
     "ref": {
       "lower": 14.3582834,
@@ -712,191 +712,191 @@
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 4,
     "ref": {
-      "lower": 67.7721997,
-      "upper": 72.2278003
+      "lower": 38.7269713,
+      "upper": 41.2730287
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 5,
     "ref": {
-      "lower": 152.3618277,
-      "upper": 167.6381723
+      "lower": 71.4196067,
+      "upper": 78.5803933
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 6,
     "ref": {
-      "lower": 9.6208668,
-      "upper": 10.1791332
+      "lower": 14.3813002,
+      "upper": 15.2186998
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 7,
     "ref": {
-      "lower": 19.2789602,
-      "upper": 20.7210398
+      "lower": 192.7896018,
+      "upper": 207.2103982
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 8,
     "ref": {
-      "lower": 123.0833475,
-      "upper": 136.9166525
+      "lower": 416.5897915,
+      "upper": 463.4102085
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 9,
     "ref": {
-      "lower": 158.9253628,
-      "upper": 197.6746372
+      "lower": 490.4290641,
+      "upper": 609.7709359
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 10,
     "ref": {
-      "lower": 175.4503659,
-      "upper": 194.5496341
+      "lower": 80.6030462,
+      "upper": 89.3969538
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 11,
     "ref": {
-      "lower": 103.5969089,
-      "upper": 116.4030911
+      "lower": 51.7984544,
+      "upper": 58.2015456
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 12,
     "ref": {
-      "lower": 18.5854888,
-      "upper": 20.4145112
+      "lower": 194.6976328,
+      "upper": 213.9023672
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 13,
     "ref": {
-      "lower": 75.2708681,
-      "upper": 81.3291319
+      "lower": 37.5854341,
+      "upper": 40.6145659
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 14,
     "ref": {
-      "lower": 87.1569712,
-      "upper": 92.8430288
+      "lower": 348.627885,
+      "upper": 371.372115
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 15,
     "ref": {
-      "lower": 82.9915005,
-      "upper": 88.8084995
+      "lower": 341.5238254,
+      "upper": 365.4761746
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 16,
     "ref": {
-      "lower": 33.2330419,
-      "upper": 35.5669581
+      "lower": 23.7664585,
+      "upper": 25.4335415
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 17,
     "ref": {
-      "lower": 44.1832198,
-      "upper": 46.4167802
+      "lower": 29.4554798,
+      "upper": 30.9445202
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 18,
     "ref": {
-      "lower": 119.8687504,
-      "upper": 130.1312496
+      "lower": 412.3485015,
+      "upper": 447.6514985
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 19,
     "ref": {
-      "lower": 63.3849795,
-      "upper": 74.6150205
+      "lower": 289.7313347,
+      "upper": 341.0686653
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 20,
     "ref": {
-      "lower": 80.4354232,
-      "upper": 86.5645768
+      "lower": 42.577577,
+      "upper": 45.822423
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 21,
     "ref": {
-      "lower": 92.7756518,
-      "upper": 101.4243482
+      "lower": 361.2578019,
+      "upper": 394.9421981
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 22,
     "ref": {
-      "lower": 53.8792679,
-      "upper": 58.1207321
+      "lower": 29.443237,
+      "upper": 31.756763
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 23,
     "ref": {
-      "lower": 19.2102636,
-      "upper": 20.3897364
+      "lower": 192.4026363,
+      "upper": 204.1973637
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 24,
     "ref": {
-      "lower": 184.4989651,
-      "upper": 198.7010349
+      "lower": 558.2148176,
+      "upper": 601.1851824
     }
   }
 ]

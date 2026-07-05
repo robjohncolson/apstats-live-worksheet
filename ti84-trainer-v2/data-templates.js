@@ -1,5 +1,6 @@
-// Seeded parameterized problem templates — Track C wave 1, first template only
-// (TI84_TRAINER_TEMPLATES_SPEC.md, review-approved 2026-07-05).
+// Seeded parameterized problem templates — Track C wave 1
+// (TI84_TRAINER_TEMPLATES_SPEC.md, review-approved 2026-07-05):
+// one-prop z test/interval + one-sample t test/interval from stats.
 //
 // NOT wired into serving yet: build.mjs picks this file up only when the
 // runtime lands. Generated problems speak the exact values vocabulary that
@@ -271,6 +272,8 @@
       stems: [
         {
           id: 'battery',
+          // Realism (Codex review): battery life in minutes must be laptop-like.
+          paramOverrides: { mu0: { min: 180, max: 600, step: 10 } },
           text: 'A manufacturer claims its laptop battery lasts {mu0} minutes on average. A reviewer tests {n} laptops and finds a mean of {xbar} minutes with a standard deviation of {sx} minutes. Test whether the true mean battery life {claim}.',
           claims: {
             '<': 'is less than the claimed {mu0} minutes',
@@ -280,6 +283,7 @@
         },
         {
           id: 'commute',
+          paramOverrides: { mu0: { min: 15, max: 90, step: 5 } },
           text: 'A transit authority reports an average commute of {mu0} minutes on a bus route. A rider times {n} random trips: mean {xbar} minutes, standard deviation {sx} minutes. Test whether the true mean commute time {claim}.',
           claims: {
             '<': 'is less than the reported {mu0} minutes',
@@ -324,10 +328,12 @@
       stems: [
         {
           id: 'battery',
+          paramOverrides: { muTrue: { min: 180, max: 600, step: 10 } },
           text: 'A reviewer tests {n} laptops of the same model and finds a mean battery life of {xbar} minutes with a standard deviation of {sx} minutes. Construct a {clpct}% confidence interval for the true mean battery life.',
         },
         {
           id: 'commute',
+          paramOverrides: { muTrue: { min: 15, max: 90, step: 5 } },
           text: 'A rider times {n} random trips on a bus route: mean {xbar} minutes, standard deviation {sx} minutes. Construct a {clpct}% confidence interval for the true mean commute time.',
         },
       ],

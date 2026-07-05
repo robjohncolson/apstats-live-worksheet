@@ -526,43 +526,43 @@
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 0,
     "values": {
-      "mu0": 10,
-      "xbar": 10.3,
-      "sx": 0.8,
+      "mu0": 180,
+      "xbar": 185,
+      "sx": 14.4,
       "n": 19,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 1,
     "values": {
-      "mu0": 10,
-      "xbar": 9.4,
-      "sx": 1.5,
+      "mu0": 15,
+      "xbar": 14.1,
+      "sx": 2.3,
       "n": 29,
       "direction": "≠"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 2,
     "values": {
-      "mu0": 70,
-      "xbar": 73.7,
-      "sx": 8.4,
+      "mu0": 40,
+      "xbar": 42.1,
+      "sx": 4.8,
       "n": 21,
       "direction": "≠"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 3,
     "values": {
       "mu0": 15,
@@ -574,292 +574,292 @@
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 4,
     "values": {
-      "mu0": 70,
-      "xbar": 68.1,
-      "sx": 5.6,
+      "mu0": 40,
+      "xbar": 38.9,
+      "sx": 3.2,
       "n": 19,
       "direction": "<"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 5,
     "values": {
-      "mu0": 160,
-      "xbar": 153.4,
-      "sx": 19.2,
+      "mu0": 75,
+      "xbar": 71.9,
+      "sx": 9,
       "n": 19,
       "direction": "<"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 6,
     "values": {
-      "mu0": 10,
-      "xbar": 10.4,
-      "sx": 0.8,
+      "mu0": 15,
+      "xbar": 15.6,
+      "sx": 1.2,
       "n": 34,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 7,
     "values": {
-      "mu0": 20,
-      "xbar": 20.5,
-      "sx": 2.4,
+      "mu0": 200,
+      "xbar": 205.4,
+      "sx": 24,
       "n": 45,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 8,
     "values": {
-      "mu0": 130,
-      "xbar": 135,
-      "sx": 15.6,
+      "mu0": 440,
+      "xbar": 456.9,
+      "sx": 52.8,
       "n": 22,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 9,
     "values": {
-      "mu0": 175,
-      "xbar": 188.2,
-      "sx": 26.3,
+      "mu0": 540,
+      "xbar": 580.5,
+      "sx": 81,
       "n": 16,
       "direction": "≠"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 10,
     "values": {
-      "mu0": 185,
-      "xbar": 192,
-      "sx": 27.8,
+      "mu0": 85,
+      "xbar": 88.2,
+      "sx": 12.8,
       "n": 35,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 11,
     "values": {
-      "mu0": 110,
-      "xbar": 113.5,
-      "sx": 13.2,
+      "mu0": 55,
+      "xbar": 56.8,
+      "sx": 6.6,
       "n": 32,
       "direction": "≠"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 12,
     "values": {
-      "mu0": 20,
-      "xbar": 18.4,
-      "sx": 3,
+      "mu0": 210,
+      "xbar": 193,
+      "sx": 31.5,
       "n": 31,
       "direction": "<"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 13,
     "values": {
-      "mu0": 80,
-      "xbar": 74.9,
-      "sx": 6.4,
+      "mu0": 40,
+      "xbar": 37.4,
+      "sx": 3.2,
       "n": 14,
       "direction": "<"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 14,
     "values": {
-      "mu0": 90,
-      "xbar": 87.5,
-      "sx": 9,
+      "mu0": 360,
+      "xbar": 350,
+      "sx": 36,
       "n": 29,
       "direction": "<"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 15,
     "values": {
-      "mu0": 85,
-      "xbar": 81.6,
-      "sx": 8.5,
+      "mu0": 350,
+      "xbar": 336,
+      "sx": 35,
       "n": 25,
       "direction": "<"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 16,
     "values": {
-      "mu0": 35,
-      "xbar": 36.7,
-      "sx": 3.5,
+      "mu0": 25,
+      "xbar": 26.2,
+      "sx": 2.5,
       "n": 37,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 17,
     "values": {
-      "mu0": 45,
-      "xbar": 43.4,
-      "sx": 3.6,
+      "mu0": 30,
+      "xbar": 28.9,
+      "sx": 2.4,
       "n": 30,
       "direction": "<"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 18,
     "values": {
-      "mu0": 125,
-      "xbar": 127.8,
-      "sx": 10,
+      "mu0": 430,
+      "xbar": 439.6,
+      "sx": 34.4,
       "n": 29,
       "direction": "≠"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 19,
     "values": {
-      "mu0": 70,
-      "xbar": 66,
-      "sx": 10.5,
+      "mu0": 320,
+      "xbar": 301.5,
+      "sx": 48,
       "n": 27,
       "direction": "≠"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 20,
     "values": {
-      "mu0": 85,
-      "xbar": 88.8,
-      "sx": 8.5,
+      "mu0": 45,
+      "xbar": 47,
+      "sx": 4.5,
       "n": 32,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 21,
     "values": {
-      "mu0": 95,
-      "xbar": 101.2,
-      "sx": 9.5,
+      "mu0": 370,
+      "xbar": 394.2,
+      "sx": 37,
       "n": 21,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 22,
     "values": {
-      "mu0": 55,
-      "xbar": 58,
-      "sx": 4.4,
+      "mu0": 30,
+      "xbar": 31.7,
+      "sx": 2.4,
       "n": 19,
       "direction": ">"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 23,
     "values": {
-      "mu0": 20,
-      "xbar": 19.1,
-      "sx": 2,
+      "mu0": 200,
+      "xbar": 191.3,
+      "sx": 20,
       "n": 33,
       "direction": "<"
     }
   },
   {
     "templateId": "t-test-stats",
-    "templateHash": "b6c5fa5b",
+    "templateHash": "000153eb",
     "seed": 24,
     "values": {
-      "mu0": 195,
-      "xbar": 205.2,
-      "sx": 15.6,
+      "mu0": 590,
+      "xbar": 620.9,
+      "sx": 47.2,
       "n": 21,
       "direction": ">"
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 0,
     "values": {
-      "xbar": 10,
-      "sx": 0.8,
+      "xbar": 180,
+      "sx": 14.4,
       "n": 19,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 1,
     "values": {
-      "xbar": 9.9,
-      "sx": 1.5,
+      "xbar": 14.8,
+      "sx": 2.3,
       "n": 29,
       "cLevel": 0.99
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 2,
     "values": {
-      "xbar": 70.9,
-      "sx": 8.4,
+      "xbar": 40.5,
+      "sx": 4.8,
       "n": 21,
       "cLevel": 0.99
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 3,
     "values": {
       "xbar": 15,
@@ -870,231 +870,231 @@
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 4,
     "values": {
-      "xbar": 70,
-      "sx": 5.6,
+      "xbar": 40,
+      "sx": 3.2,
       "n": 19,
       "cLevel": 0.9
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 5,
     "values": {
-      "xbar": 160,
-      "sx": 19.2,
+      "xbar": 75,
+      "sx": 9,
       "n": 19,
       "cLevel": 0.9
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 6,
     "values": {
-      "xbar": 9.9,
-      "sx": 0.8,
+      "xbar": 14.8,
+      "sx": 1.2,
       "n": 34,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 7,
     "values": {
-      "xbar": 20,
-      "sx": 2.4,
+      "xbar": 200,
+      "sx": 24,
       "n": 45,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 8,
     "values": {
-      "xbar": 130,
-      "sx": 15.6,
+      "xbar": 440,
+      "sx": 52.8,
       "n": 22,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 9,
     "values": {
-      "xbar": 178.3,
-      "sx": 26.3,
+      "xbar": 550.1,
+      "sx": 81,
       "n": 16,
       "cLevel": 0.99
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 10,
     "values": {
-      "xbar": 185,
-      "sx": 27.8,
+      "xbar": 85,
+      "sx": 12.8,
       "n": 35,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 11,
     "values": {
-      "xbar": 110,
-      "sx": 13.2,
+      "xbar": 55,
+      "sx": 6.6,
       "n": 32,
       "cLevel": 0.99
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 12,
     "values": {
-      "xbar": 19.5,
-      "sx": 3,
+      "xbar": 204.3,
+      "sx": 31.5,
       "n": 31,
       "cLevel": 0.9
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 13,
     "values": {
-      "xbar": 78.3,
-      "sx": 6.4,
+      "xbar": 39.1,
+      "sx": 3.2,
       "n": 14,
       "cLevel": 0.9
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 14,
     "values": {
-      "xbar": 90,
-      "sx": 9,
+      "xbar": 360,
+      "sx": 36,
       "n": 29,
       "cLevel": 0.9
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 15,
     "values": {
-      "xbar": 85.9,
-      "sx": 8.5,
+      "xbar": 353.5,
+      "sx": 35,
       "n": 25,
       "cLevel": 0.9
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 16,
     "values": {
-      "xbar": 34.4,
-      "sx": 3.5,
+      "xbar": 24.6,
+      "sx": 2.5,
       "n": 37,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 17,
     "values": {
-      "xbar": 45.3,
-      "sx": 3.6,
+      "xbar": 30.2,
+      "sx": 2.4,
       "n": 30,
       "cLevel": 0.9
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 18,
     "values": {
-      "xbar": 125,
-      "sx": 10,
+      "xbar": 430,
+      "sx": 34.4,
       "n": 29,
       "cLevel": 0.99
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 19,
     "values": {
-      "xbar": 69,
-      "sx": 10.5,
+      "xbar": 315.4,
+      "sx": 48,
       "n": 27,
       "cLevel": 0.99
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 20,
     "values": {
-      "xbar": 83.5,
-      "sx": 8.5,
+      "xbar": 44.2,
+      "sx": 4.5,
       "n": 32,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 21,
     "values": {
-      "xbar": 97.1,
-      "sx": 9.5,
+      "xbar": 378.1,
+      "sx": 37,
       "n": 21,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 22,
     "values": {
-      "xbar": 56,
-      "sx": 4.4,
+      "xbar": 30.6,
+      "sx": 2.4,
       "n": 19,
       "cLevel": 0.95
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 23,
     "values": {
-      "xbar": 19.8,
-      "sx": 2,
+      "xbar": 198.3,
+      "sx": 20,
       "n": 33,
       "cLevel": 0.9
     }
   },
   {
     "templateId": "t-interval-stats",
-    "templateHash": "7fbf8afb",
+    "templateHash": "b03986ef",
     "seed": 24,
     "values": {
-      "xbar": 191.6,
-      "sx": 15.6,
+      "xbar": 579.7,
+      "sx": 47.2,
       "n": 21,
       "cLevel": 0.95
     }
