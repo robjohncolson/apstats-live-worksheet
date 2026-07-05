@@ -24,7 +24,7 @@
     "9.5": ["linreg-ttest"]
   },
   "planned": {
-    "3.3": ["randint-sampling", "seed-rand"],
+    "3.3": ["randint-sampling"],
     "3.6": ["randint-assignment"]
   }
 }

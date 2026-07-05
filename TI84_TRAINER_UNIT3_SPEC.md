@@ -6,23 +6,31 @@ FRQs actually require. Design-only until reviewed. Agreed constraint (Codex):
 (L'Ecuyer) reimplementation. Exact seed→output pinning is a later mini-spike
 only if procedural validation proves insufficient.
 
-## 1. Three new procedures (`unit: 3`)
+## 1. Two new procedures (`unit: 3`) — both no-repeats (Codex review)
 
 | id | Teaches | Core keystrokes |
 |---|---|---|
-| `seed-rand` | Seeding makes simulations reproducible | `{seed}` `STO→` `MATH`▸PROB▸`rand` `ENTER` |
-| `randint-sampling` | Draw a random sample | seed, then `MATH`▸PROB▸`randInt(` `{lo}`,`{hi}`,`{n}` `)` `ENTER` |
-| `randint-assignment` | Random assignment without repeats | seed, then `MATH`▸PROB▸`randIntNoRep(` `{lo}`,`{hi}`,`{n}` `)` `ENTER`, then read off treatment groups |
+| `randint-sampling` | Select a simple random sample (no repeats — repeated IDs are not an SRS) | `{seed}` `STO→` `rand` `ENTER`, then `MATH`▸PRB▸`randIntNoRep(` `{lo}`,`{hi}`,`{n}` `)` `ENTER` |
+| `randint-assignment` | Random assignment to treatment groups | same sequence, then APPLY the rule: first `{groupSize}` numbers → Treatment A |
 
-- Exact step arrays are authored at implementation against the existing
-  `menu-tables`/`menu-nav` natives (MATH▸PROB is already a modeled menu).
+- **Seeding is a micro-skill folded into both procedures as their opening
+  steps** (Codex review) — no standalone `seed-rand` trainer item. Veto-able:
+  if the teacher wants seeding visible as its own tile, it can be split back
+  out at authoring time.
+- **`randInt(` (with replacement) is deliberately absent** — reserved for a
+  future simulation-with-replacement procedure (Unit 4-ish, e.g. simulating
+  binomial trials), where replacement is the point.
+- **Required native/menu modeling work (Codex correction — MATH▸PRB is NOT
+  currently modeled):** the trainer's menu tables have no MATH menu, no PRB
+  tab, and no rand/randInt(/randIntNoRep( entries. Implementation must add:
+  `math-menu` + `math-prb-menu` tables (menu-tables), PRB tab navigation
+  (menu-nav), paste-to-home behavior for the three commands, and mock-screen
+  output lines for pasted random commands (screen-renderer). This is the
+  second-biggest lift after recognition authoring.
 - Parameter steps use the existing `{slot}` mechanism resolved from
-  `problem.values` — no engine changes for the walkthrough phase. **The
-  guided/recall walkthrough IS the procedural validation**: it checks the key
-  sequence step by step, which is exactly what "validate procedure" means.
-- `randint-assignment` ends with 1–2 reflection steps in the stem (which
-  participants land in treatment A) rather than checked fields — the
-  assignment RULE is the skill; the specific numbers are seed-dependent.
+  `problem.values` — no walkthrough-engine changes. **The guided/recall
+  walkthrough IS the procedural validation**: it checks the key sequence step
+  by step, which is exactly what "validate procedure" means.
 
 ## 2. Canonical problems (2–3 each, hand-authored)
 
@@ -45,17 +53,24 @@ trainer validates FORM, not values:
 
 ```js
 PROPERTY_FIELDS = {
-  'randint-sampling':   { count: 'n', integer: true, min: 'lo', max: 'hi', distinct: false },
-  'randint-assignment': { count: 'n', integer: true, min: 'lo', max: 'hi', distinct: true },
-  // seed-rand stays self-attested: its output is a single decimal with no
-  // checkable property beyond "is a number in (0,1)" — checked as exactly that.
+  'randint-sampling':   [{ key: 'draw', count: 'n', integer: true, min: 'lo', max: 'hi', distinct: true }],
+  'randint-assignment': [
+    { key: 'draw',   count: 'n',         integer: true, min: 'lo', max: 'hi', distinct: true },
+    { key: 'groupA', count: 'groupSize', mustBePrefixOf: 'draw' },
+  ],
 }
 ```
 
-- One input field ("the numbers, separated by commas"); the checker parses
-  and validates: exactly `n` entries, integers, each in `[lo, hi]`,
-  distinct when `randIntNoRep` (the property that DISTINGUISHES the two
-  functions — typing repeats after randIntNoRep proves the wrong command ran).
+- Sampling: one field ("the numbers, separated by commas"); the checker
+  parses and validates: exactly `n` entries, integers, each in `[lo, hi]`,
+  all distinct (typing repeats after `randIntNoRep(` proves the wrong
+  command ran).
+- Assignment gets TWO fields (Codex review — validate the interpretation,
+  not just the draw): the full draw, plus "the participants assigned to
+  Treatment A". The rule is stated in the stem (first {groupSize} numbers →
+  A), so `groupA` must equal the first `groupSize` entries of `draw` — a
+  pure-form consistency check that proves the student applied the assignment
+  rule to their own numbers, with the trainer never knowing the values.
 - `checkHandheld` branches to the property path when
   `PROPERTY_FIELDS[procedureId]` exists, BEFORE the null-`computeExpected`
   self-attest fallback. Pass → `finishHandheldMastery` exactly as today.
@@ -69,11 +84,10 @@ PROPERTY_FIELDS = {
 New `patternSignatures`, `confusionMatrix` rows, and `distractorSets` entries
 in the patterns data so Track 1 questions exist. Distractor design:
 
-- `randint-sampling` vs `randint-assignment` vs `seed-rand` confuse with EACH
-  OTHER first (when do you need no-repeats? when do you seed?), then with
-  `one-var-stats` (the "I'll just compute stats" reflex).
-- Signature keywords: "select a random sample" / "assign … to treatments" /
-  "reproduce the same random numbers".
+- `randint-sampling` vs `randint-assignment` confuse with EACH OTHER first
+  (selecting subjects vs assigning them), then with `one-var-stats` (the
+  "I'll just compute stats" reflex).
+- Signature keywords: "select a random sample" / "assign … to treatments".
 
 ## 5. Mock mode (no ROM)
 
@@ -84,8 +98,9 @@ shows the ROM's true output (deterministic per seed — free realism).
 
 ## 6. Map promotion + audit
 
-`data/ti84-lesson-map.json`: move `3.3: [randint-sampling, seed-rand]` and
-`3.6: [randint-assignment]` from `planned` to `lessons`. The existing audit
+`data/ti84-lesson-map.json`: move `3.3: [randint-sampling]` and
+`3.6: [randint-assignment]` from `planned` to `lessons` (`seed-rand` is
+removed from the planned block — it is a folded-in micro-skill now). The existing audit
 test enforces this mechanically (planned procedures must not exist; lessons
 procedures must). The Desk chip and `#topic=3.3` links light up with zero
 Desk changes.
@@ -95,8 +110,9 @@ Desk changes.
 1. Data integrity: new procedures/problems pass the existing structural
    suites (steps resolve, screens exist, slots fill).
 2. Property-check unit tests: parser (commas/spaces), count/range/integer/
-   distinct rules, the randIntNoRep-repeats rejection, `(0,1)` rule for
-   seed-rand, and the branch ordering (property path before self-attest).
+   distinct rules, the repeats rejection, the `groupA`-is-prefix-of-`draw`
+   consistency rule, and the branch ordering (property path before
+   self-attest).
 3. Recognition: new signatures/distractors pass the patterns integrity
    checks; confusion pairs are mutual.
 4. Map audit flips: promotion satisfies `planned`→`lessons` rules.
