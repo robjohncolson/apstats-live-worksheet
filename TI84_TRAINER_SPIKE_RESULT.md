@@ -102,3 +102,39 @@ Recommendation for the next spec, to be confirmed in review:
   data-integrity check is the point of the whole exercise.
 - Fold caveat 1's soak loop into the rewire's acceptance test rather than
   re-running the manual harness.
+
+---
+
+## Addendum (2026-07-05): acceptance soak — caveat 1 CLOSED
+
+Run by the operator on the public harness (`21031e8` per-list goldens +
+`5f037f3` soak button + `c0900f5` accumulation), after the rewrite's commits
+1–2 shipped (`eb0a576`, `5f037f3`). 20× build → send → echo-verify per
+(dataset, list) via the frame oracle:
+
+| Dataset | Target | Runs | Passes | Golden | At (UTC) |
+|---|---|---|---|---|---|
+| small-int | L1 | 20 | **20/20** | `3c028d63` | 2026-07-05T03:42:05Z |
+| small-int | L2 | 20 | **20/20** | `32f6d53d` | 2026-07-05T04:00:46Z |
+| dec-neg | L1 | 20 | **20/20** | `1b2a6281` | 2026-07-05T04:20:01Z |
+| dec-neg | L2 | 20 | **20/20** | `7399145b` | 2026-07-05T04:24:08Z |
+| realistic-20 | L1 | 20 | **20/20** | `36043877` | 2026-07-05T04:44:19Z |
+| realistic-20 | L2 | 20 | **20/20** | `78fe2a51` | 2026-07-05T04:52:39Z |
+
+**120/120, zero failures** (six separate harness exports, merged here; the
+page was refreshed between runs so each export carries one soak). Confirmed
+by Codex review. The decisive rows are realistic-20: flaky at 18/20 under
+keystroke autofill, perfect over 40 transfer reps across both lists.
+
+Cross-check: the goldens were **recaptured from scratch** in this session
+(post-refresh) and hashed identically to the original A3 verify goldens from
+2026-07-04/05 for all six pairs — the echo rendering, and therefore the frame
+oracle, is deterministic across sessions.
+
+Caveat status after this addendum: caveat 1 (no injected soak) **closed**;
+caveat 3 (send-state envelope) resolved by call structure — production
+autofill fires in the data-setup phase from a `quitToHome()` prelude (see
+`TI84_TRAINER_AUTOFILL_REWRITE_SPEC.md` §1); caveat 2 (matrix `.8xm`) and
+caveat 4 (archive loc) remain open and out of scope. Remaining gate for the
+leniency commit: the three in-app smokes (transfer-filled data problem,
+chi-square-test matrix path, `?autofill=keys` fallback).
