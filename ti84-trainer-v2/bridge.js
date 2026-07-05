@@ -157,6 +157,142 @@
     );
   }
 
+  // ---------- list variable transfer (.8xl) ----------
+  //
+  // Proven by the week-one spike (TI84_TRAINER_SPIKE_RESULT.md: 6/6 echo-oracle
+  // matches, L1+L2 x 3 datasets). Ported verbatim from spike-harness.html —
+  // including the header comment string, so a built file stays byte-identical
+  // to the spike-validated artifact.
+
+  // TI-8x real: byte0 sign/type, byte1 exponent biased 0x80, bytes2-8 = 14 BCD
+  // digits, mantissa normalized to d.ddddddddddddd.
+  function encodeTiReal(value) {
+    const bytes = new Uint8Array(9);
+    let v = Number(value);
+    if (!Number.isFinite(v)) throw new Error(`Cannot encode ${value}`);
+    if (v === 0) {
+      bytes[1] = 0x80;
+      return bytes;
+    }
+    if (v < 0) {
+      bytes[0] = 0x80;
+      v = -v;
+    }
+    const [mantissa, exp] = v.toExponential(13).split('e');
+    const digits = mantissa.replace('.', '').padEnd(14, '0').slice(0, 14);
+    bytes[1] = 0x80 + Number(exp);
+    for (let i = 0; i < 7; i += 1) {
+      bytes[2 + i] = (Number(digits[i * 2]) << 4) | Number(digits[i * 2 + 1]);
+    }
+    return bytes;
+  }
+
+  // Token bytes are index-derived so all six lists are buildable, but only
+  // L1/L2 are spike-proven — autofill gates which lists may use transfer.
+  const LIST_NAME_TOKENS = {
+    L1: [0x5d, 0x00],
+    L2: [0x5d, 0x01],
+    L3: [0x5d, 0x02],
+    L4: [0x5d, 0x03],
+    L5: [0x5d, 0x04],
+    L6: [0x5d, 0x05],
+  };
+
+  function buildRealList8xl(listName, values) {
+    const token = LIST_NAME_TOKENS[listName];
+    if (!token) throw new Error(`Unsupported list ${listName}`);
+
+    const varData = new Uint8Array(2 + values.length * 9);
+    varData[0] = values.length & 0xff;
+    varData[1] = (values.length >> 8) & 0xff;
+    values.forEach((value, index) => varData.set(encodeTiReal(value), 2 + index * 9));
+
+    // 0x0D-format variable entry: 13-byte header (incl. version + archive
+    // flag) + var data. flag 0x00 = RAM, which is the whole point (spec §0).
+    const entry = new Uint8Array(17 + varData.length);
+    const view = new DataView(entry.buffer);
+    view.setUint16(0, 0x0d, true);
+    view.setUint16(2, varData.length, true);
+    entry[4] = 0x01;
+    entry[5] = token[0];
+    entry[6] = token[1];
+    entry[13] = 0x00;
+    entry[14] = 0x00;
+    view.setUint16(15, varData.length, true);
+    entry.set(varData, 17);
+
+    const header = new Uint8Array(55);
+    const signature = '**TI83F*';
+    for (let i = 0; i < signature.length; i += 1) header[i] = signature.charCodeAt(i);
+    header[8] = 0x1a;
+    header[9] = 0x0a;
+    header[10] = 0x00;
+    const comment = 'ti84-trainer spike harness';
+    for (let i = 0; i < comment.length; i += 1) header[11 + i] = comment.charCodeAt(i);
+    new DataView(header.buffer).setUint16(53, entry.length, true);
+
+    let checksum = 0;
+    for (const byte of entry) checksum = (checksum + byte) & 0xffff;
+
+    const file = new Uint8Array(55 + entry.length + 2);
+    file.set(header, 0);
+    file.set(entry, 55);
+    file[55 + entry.length] = checksum & 0xff;
+    file[55 + entry.length + 1] = (checksum >> 8) & 0xff;
+    return file;
+  }
+
+  function writeToEmscriptenFs(module, path, bytes) {
+    const bare = path.replace(/^\//, '');
+    if (typeof module.FS?.writeFile === 'function') {
+      module.FS.writeFile(path, bytes);
+      return 'Module.FS.writeFile';
+    }
+    if (typeof module.FS?.createDataFile === 'function') {
+      module.FS.createDataFile('/', bare, bytes, true, true);
+      return 'Module.FS.createDataFile';
+    }
+    if (typeof module.FS_createDataFile === 'function') {
+      module.FS_createDataFile('/', bare, bytes, true, true);
+      return 'Module.FS_createDataFile';
+    }
+    throw new Error('No Emscripten FS write API found on the module.');
+  }
+
+  function callSendVariable(module, path, loc) {
+    if (typeof module.ccall === 'function') {
+      return { via: 'ccall', result: module.ccall('emu_send_variable', 'number', ['string', 'number'], [path, loc]) };
+    }
+    if (typeof module._emu_send_variable === 'function' && typeof module._malloc === 'function') {
+      const encoded = new TextEncoder().encode(path);
+      const ptr = module._malloc(encoded.length + 1);
+      module.HEAPU8.set(encoded, ptr);
+      module.HEAPU8[ptr + encoded.length] = 0;
+      try {
+        return { via: '_malloc+direct', result: module._emu_send_variable(ptr, loc) };
+      } finally {
+        if (typeof module._free === 'function') module._free(ptr);
+      }
+    }
+    throw new Error('Neither ccall nor _emu_send_variable+_malloc is available.');
+  }
+
+  // One-shot list transfer into a running emulator module. Never throws:
+  // autofill decides the keystroke fallback from { ok: false }.
+  function transferList(module, listName, values) {
+    if (!module) return { ok: false, reason: 'no-module' };
+    if (!LIST_NAME_TOKENS[listName]) return { ok: false, reason: 'unsupported-list' };
+    try {
+      const file = buildRealList8xl(listName, values);
+      const fsApi = writeToEmscriptenFs(module, '/autofill.8xl', file);
+      const call = callSendVariable(module, '/autofill.8xl', 0);
+      if (call.result !== 0) return { ok: false, reason: `send-result-${call.result}` };
+      return { ok: true, via: call.via, fsApi };
+    } catch (error) {
+      return { ok: false, reason: error.message };
+    }
+  }
+
   function toUint8Array(value) {
     if (value instanceof Uint8Array) {
       return value;
@@ -889,6 +1025,10 @@
       return isRealEmulator() ? state.module : null;
     }
 
+    function sendList(listName, values) {
+      return transferList(getModule(), listName, values);
+    }
+
     return {
       init,
       mountCanvas,
@@ -906,6 +1046,7 @@
       sampleRegion,
       frameHash,
       getModule,
+      sendList,
       keyMap: KEY_TO_RC,
     };
   }
@@ -917,5 +1058,11 @@
     LCD_WIDTH,
     LCD_HEIGHT,
     createBridge,
+    encodeTiReal,
+    buildRealList8xl,
+    writeToEmscriptenFs,
+    callSendVariable,
+    transferList,
+    LIST_NAME_TOKENS,
   };
 }());
