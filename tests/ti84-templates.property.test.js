@@ -1,11 +1,22 @@
 // Property suite for the Track C seeded template engine
-// (TI84_TRAINER_TEMPLATES_SPEC.md §7A) — wave 1 template: one-propztest.
+// (TI84_TRAINER_TEMPLATES_SPEC.md §7A) — wave 1: all 8 stats-input templates.
 //
 // The load-bearing property is #2: generation is CONSTRUCTIVE, so constraints
 // hold for every seed and the runtime fallback-to-canonical can never fire.
 // valuesMatch/typedDecimalPlaces are extracted from app.js source (same
 // pattern as ti84-data-trust's CHAR_TO_BUTTON extraction) so the checker
 // round-trip and discrimination properties run against the real checker.
+//
+// Mutation-sanity checklist (spec §7C, hand-run 2026-07-05 via sed + revert
+// against this suite + ti84-template-accuracy):
+//   M1 sign-forcing removed from derive        → KILLED (direction props + pins)
+//   M2 mulberry32 constant changed             → KILLED (committed samples mismatch)
+//   M3 skin selection pinned to stems[0]       → KILLED (sample regeneration)
+//   M4 claim slot never filled                 → KILLED (stem hygiene, 4 tests)
+//   M5 runtime constraint checking disabled    → SURVIVES BY DESIGN: constructive
+//      generation means the guard changes no output; these properties are the
+//      oracle. The guard exists to catch FUTURE bad template edits at runtime.
+//   M6 templateHash blind to derive edits      → KILLED (hash-sensitivity test)
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import fs from 'node:fs';
@@ -392,6 +403,9 @@ describe('seed and hash plumbing', () => {
     expect(T.templateHash(template)).toBe(base);
     const edited = { ...template, constraints: [...template.constraints, 'true'] };
     expect(T.templateHash(edited)).not.toBe(base);
+    // The hash must also see derive/recompute edits — pins bind through it.
+    expect(T.templateHash({ ...template, derive: () => ({}) })).not.toBe(base);
+    expect(T.templateHash({ ...template, recompute: () => ({}) })).not.toBe(base);
   });
 
   it('generated problems carry the current templateHash', () => {
