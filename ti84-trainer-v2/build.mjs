@@ -47,6 +47,7 @@ export function buildStandalone() {
   const stateMachineSource = fs.readFileSync(stateMachinePath, 'utf8');
   const styleSource = fs.readFileSync(stylePath, 'utf8');
   const bridgeSource = fs.readFileSync(bridgePath, 'utf8');
+  const templatesSource = fs.readFileSync(path.join(__dirname, 'data-templates.js'), 'utf8');
   const appSource = fs.readFileSync(appPath, 'utf8');
   const nativeSources = nativeScriptFilenames.map((filename) => ({
     filename,
@@ -110,6 +111,9 @@ ${escapeInlineScript(generatedStateMachine)}
 ${escapeInlineScript(bridgeSource)}
   </script>
 ${nativeInlineScripts}
+  <script>
+${escapeInlineScript(templatesSource)}
+  </script>
   <script>
 ${escapeInlineScript(appSource)}
   </script>

@@ -1264,11 +1264,16 @@
     }
 
     // Backfill new fields for records persisted before the mastery gate shipped.
-    const track2 = app.persisted.records[procedureId].track2;
+    const record = app.persisted.records[procedureId];
+    const track2 = record.track2;
     if (track2.handheldPassed === undefined) track2.handheldPassed = false;
     if (track2.awaitingHandheld === undefined) track2.awaitingHandheld = false;
 
-    return app.persisted.records[procedureId];
+    // Generated-problem state (Track C serving) — nested-safe for old records.
+    record.gen ??= {};
+    record.gen.handheld ??= { attempt: 0, lastSeed: null, templateHash: null };
+
+    return record;
   }
 
   function getProcedureRecord(procedureId) {
@@ -2557,6 +2562,38 @@
   // the typed result against the canonical answer (recompute matches the real
   // TI to <0.001%); graph/utility procedures are a self-attested confirmation.
 
+  function generatedProblemsEnabled() {
+    if (new URLSearchParams(window.location.search).get('gen') === 'off') {
+      return false;
+    }
+    return app.persisted.generatedProblems !== false;
+  }
+
+  // Serves the phase's problem: seeded generated problem for templated
+  // procedures, canonical otherwise. Pure read — the attempt counter and seed
+  // metadata commit only when the outcome is recorded (finishHandheldMastery),
+  // so reload/re-serve replays the same problem and canonical fallbacks can
+  // never leave stale seed metadata.
+  function pickProblem(procedureId, phase) {
+    const canonical = () => pickRandom(patternsData.canonicalProblems[procedureId] ?? []);
+    if (!generatedProblemsEnabled()) {
+      return canonical();
+    }
+    const template = window.TI84V2Templates?.TEMPLATES?.[procedureId];
+    if (!template || !template.phases.includes(phase)) {
+      return canonical();
+    }
+    try {
+      const attempt = ensureProcedureRecord(procedureId).gen[phase].attempt;
+      const studentId = window.rosterClient?.current?.()?.studentId ?? 'anon';
+      const seed = window.TI84V2Templates.deriveSeed(studentId, procedureId, phase, attempt);
+      return window.TI84V2Templates.generateProblem(template, seed);
+    } catch (error) {
+      console.warn(`[templates] generation failed for ${procedureId}/${phase} — serving canonical`, error);
+      return canonical();
+    }
+  }
+
   function startHandheldCheck(procedureId) {
     if (!procedureId) {
       startNextQuestion();
@@ -2569,7 +2606,7 @@
     app.sessionResult = null;
     app.handheldCheck = {
       procedureId,
-      problem: pickRandom(patternsData.canonicalProblems[procedureId] ?? []),
+      problem: pickProblem(procedureId, 'handheld'),
       fields: VERIFICATION_FIELDS[procedureId] ?? null,
       values: {},
       checkResults: null,
@@ -2640,9 +2677,20 @@
   }
 
   function finishHandheldMastery(procedureId, { recordCredit }) {
-    const track2 = ensureProcedureRecord(procedureId).track2;
+    const record = ensureProcedureRecord(procedureId);
+    const track2 = record.track2;
     track2.handheldPassed = true;
     track2.awaitingHandheld = false;
+
+    // A recorded outcome on a GENERATED problem advances the seed sequence
+    // and commits its provenance for teacher regeneration. Canonical serves
+    // never touch the generated-problem state.
+    const served = app.handheldCheck?.problem;
+    if (served?.templateId) {
+      record.gen.handheld.attempt += 1;
+      record.gen.handheld.lastSeed = served.seed;
+      record.gen.handheld.templateHash = served.templateHash;
+    }
 
     app.handheldCheck = null;
     app.sessionResult = {
