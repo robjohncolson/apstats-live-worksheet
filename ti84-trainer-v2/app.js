@@ -499,6 +499,7 @@
     choiceFlash: null,
     romDialogOpen: false,
     optionsDialogOpen: false,
+    practice: null,
     clutch: {
       engaged: true,
       phase: 'idle',
@@ -1460,7 +1461,80 @@
     };
   }
 
+  // ---------- Desk-launched lesson practice (TI84_TRAINER_DESK_LINK_SPEC.md §2) ----------
+  //
+  // A #topic= / #procedure= deep link runs a scoped session: recognition →
+  // walkthrough → handheld per queued procedure, with SRS scheduling
+  // untouched. Verified handheld mastery still counts (it is real evidence);
+  // completion is recorded trainer-locally per topic.
+
+  function startNextPracticeItem() {
+    const practice = app.practice;
+
+    if (practice.stage === 'awaiting-walkthrough') {
+      practice.stage = 'awaiting-handheld';
+      startHandheldCheck(practice.queue[practice.index]);
+      return;
+    }
+
+    if (practice.stage === 'awaiting-handheld') {
+      practice.index += 1;
+      practice.stage = 'idle';
+    }
+
+    const procedureId = practice.queue[practice.index];
+
+    if (!procedureId) {
+      finishPracticeSession();
+      return;
+    }
+
+    practice.stage = 'awaiting-walkthrough';
+    app.question = buildQuestion(procedureId);
+    app.walkthrough = null;
+    app.branchIntro = null;
+    app.sessionResult = null;
+    app.handheldCheck = null;
+    app.banner = practice.topicKey
+      ? `Lesson ${practice.topicKey} calculator skill: choose the correct procedure.`
+      : 'Calculator skill practice: choose the correct procedure.';
+    render();
+  }
+
+  function finishPracticeSession() {
+    const practice = app.practice;
+    app.practice = null;
+
+    if (practice.topicKey) {
+      app.persisted.lessonPractice ??= {};
+      app.persisted.lessonPractice[practice.topicKey] = {
+        completedAt: new Date().toISOString(),
+        procedures: practice.queue,
+      };
+      savePersisted();
+    }
+
+    app.question = null;
+    app.walkthrough = null;
+    app.handheldCheck = null;
+    app.sessionResult = {
+      headline: 'Calculator skill complete!',
+      detail: practice.topicKey
+        ? `You worked every calculator skill for lesson ${practice.topicKey}. You can close this window or keep practicing.`
+        : 'Practice complete. You can close this window or keep practicing.',
+      actionLabel: 'Keep practicing',
+      action: 'next-item',
+    };
+    app.banner = 'Lesson practice complete.';
+    render();
+  }
+
   function startNextQuestion() {
+    if (app.practice) {
+      startNextPracticeItem();
+      return;
+    }
+
     const procedureId = nextQuestionProcedureId();
 
     if (!procedureId) {
@@ -2339,6 +2413,10 @@
   }
 
   function applyTrack1Outcome(procedureId, quality) {
+    // Desk-launched practice never moves SRS state (spec §2).
+    if (app.practice) {
+      return;
+    }
     const track1 = ensureProcedureRecord(procedureId).track1;
     track1.exposures += 1;
     track1.lastReview = todayIso();
@@ -2403,6 +2481,11 @@
   }
 
   function recordTrainerAttempt(walkthrough) {
+    // Practice sessions record no attempt rows; verified handheld mastery
+    // still records through its own path.
+    if (app.practice) {
+      return;
+    }
     if (typeof window.gradebookClient?.record !== 'function') {
       return false;
     }
@@ -2491,6 +2574,44 @@
     }
 
     resetClutchState();
+
+    // Desk-launched practice: no SRS outcome, no attempt row — the dispatcher
+    // chains the handheld check next. Branch bookkeeping is question-local
+    // state (not SRS), so branches still return to the original question.
+    if (app.practice) {
+      if (walkthrough.sourceKind === 'branch') {
+        const question = walkthrough.sourceQuestion;
+        question.branchCount += 1;
+        question.branchHistory.push(walkthrough.procedureId);
+        question.remainingChoices = question.remainingChoices.filter(
+          (choice) => choice !== walkthrough.procedureId,
+        );
+        app.walkthrough = null;
+        app.branchIntro = null;
+        app.banner = `${PROCEDURE_BY_ID[walkthrough.procedureId].name} removed from the choices. Return to the original problem.`;
+        app.sessionResult = {
+          headline: 'Branch complete',
+          detail: 'The original problem is back with one fewer distractor.',
+          actionLabel: 'Return to question',
+          action: 'return-question',
+        };
+        render();
+        return;
+      }
+
+      app.question = null;
+      app.walkthrough = null;
+      app.branchIntro = null;
+      app.sessionResult = {
+        headline: 'Walkthrough complete',
+        detail: 'Now prove it on your real TI-84 — the handheld check is next.',
+        actionLabel: 'Handheld check',
+        action: 'next-item',
+      };
+      app.banner = 'Practice walkthrough done.';
+      render();
+      return;
+    }
 
     const track2Summary = applyTrack2Outcome(walkthrough);
     recordTrainerAttempt(walkthrough);
@@ -4402,10 +4523,54 @@
     }
   }
 
+  // Honor '#topic=6.4' / '#procedure=one-propztest' deep links (from the
+  // Desk lesson tiles). Topics resolve through the curated lesson map; any
+  // failure falls through to the regular trainer with a banner.
+  async function applyPracticeHash() {
+    const hash = window.location.hash ?? '';
+    const source = /[#&]source=(\w+)/.exec(hash)?.[1] ?? null;
+
+    const procedureMatch = /[#&]procedure=([\w-]+)/.exec(hash);
+    if (procedureMatch) {
+      const procedureId = procedureMatch[1];
+      if (PROCEDURE_BY_ID[procedureId]) {
+        app.practice = { topicKey: null, source, queue: [procedureId], index: 0, stage: 'idle' };
+        app.banner = `${PROCEDURE_BY_ID[procedureId].name} practice ready — press Start Session.`;
+      } else {
+        app.banner = `No calculator skill named "${procedureId}" — showing the regular trainer.`;
+      }
+      render();
+      return;
+    }
+
+    const topicMatch = /[#&]topic=([\d.]+)/.exec(hash);
+    if (!topicMatch) {
+      return;
+    }
+    const topicKey = topicMatch[1];
+
+    try {
+      const response = await fetch('../data/ti84-lesson-map.json');
+      const map = await response.json();
+      const queue = (map.lessons?.[topicKey] ?? []).filter((id) => PROCEDURE_BY_ID[id]);
+      if (queue.length) {
+        app.practice = { topicKey, source, queue, index: 0, stage: 'idle' };
+        app.banner = `Lesson ${topicKey} calculator skill ready — press Start Session.`;
+      } else {
+        app.banner = `No calculator skill mapped for lesson ${topicKey} yet — showing the regular trainer.`;
+      }
+    } catch (error) {
+      console.warn('[practice] lesson map unavailable — regular trainer', error);
+      app.banner = "Couldn't load the lesson map — showing the regular trainer.";
+    }
+    render();
+  }
+
   async function init() {
     attachBridge();
     bindEvents();
     applyUnitHash();
+    void applyPracticeHash();
     render();
 
     if (!app.persisted.physicalMode) {
