@@ -1,7 +1,7 @@
 [
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 0,
     "values": {
       "p0": 0.6,
@@ -12,7 +12,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 1,
     "values": {
       "p0": 0.75,
@@ -23,7 +23,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 2,
     "values": {
       "p0": 0.4,
@@ -34,18 +34,18 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 3,
     "values": {
       "p0": 0.2,
-      "x": 59,
+      "x": 29,
       "n": 220,
       "direction": "<"
     }
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 4,
     "values": {
       "p0": 0.4,
@@ -56,18 +56,18 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 5,
     "values": {
       "p0": 0.7,
-      "x": 82,
+      "x": 114,
       "n": 140,
       "direction": ">"
     }
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 6,
     "values": {
       "p0": 0.75,
@@ -78,7 +78,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 7,
     "values": {
       "p0": 0.6,
@@ -89,7 +89,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 8,
     "values": {
       "p0": 0.75,
@@ -100,7 +100,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 9,
     "values": {
       "p0": 0.8,
@@ -111,7 +111,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 10,
     "values": {
       "p0": 0.8,
@@ -122,7 +122,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 11,
     "values": {
       "p0": 0.8,
@@ -133,18 +133,18 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 12,
     "values": {
       "p0": 0.6,
-      "x": 136,
+      "x": 176,
       "n": 260,
       "direction": ">"
     }
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 13,
     "values": {
       "p0": 0.75,
@@ -155,7 +155,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 14,
     "values": {
       "p0": 0.75,
@@ -166,7 +166,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 15,
     "values": {
       "p0": 0.7,
@@ -177,7 +177,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 16,
     "values": {
       "p0": 0.75,
@@ -188,7 +188,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 17,
     "values": {
       "p0": 0.3,
@@ -199,7 +199,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 18,
     "values": {
       "p0": 0.8,
@@ -210,7 +210,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 19,
     "values": {
       "p0": 0.65,
@@ -221,7 +221,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 20,
     "values": {
       "p0": 0.45,
@@ -232,7 +232,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 21,
     "values": {
       "p0": 0.75,
@@ -243,7 +243,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 22,
     "values": {
       "p0": 0.75,
@@ -254,7 +254,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 23,
     "values": {
       "p0": 0.6,
@@ -265,11 +265,11 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 24,
     "values": {
       "p0": 0.8,
-      "x": 136,
+      "x": 120,
       "n": 160,
       "direction": "<"
     }

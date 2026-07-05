@@ -1,7 +1,7 @@
 [
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 0,
     "ref": {
       "z": -1.5526475,
@@ -10,7 +10,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 1,
     "ref": {
       "z": -1.490712,
@@ -19,7 +19,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 2,
     "ref": {
       "z": 3.0661118,
@@ -28,16 +28,16 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 3,
     "ref": {
-      "z": 2.5282495,
-      "p": 0.9942684
+      "z": -2.5282495,
+      "p": 0.0057316
     }
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 4,
     "ref": {
       "z": -2.4152295,
@@ -46,16 +46,16 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 5,
     "ref": {
-      "z": -2.9508445,
-      "p": 0.9984155
+      "z": 2.9508445,
+      "p": 0.0015845
     }
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 6,
     "ref": {
       "z": -2.0,
@@ -64,7 +64,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 7,
     "ref": {
       "z": 1.5309311,
@@ -73,7 +73,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 8,
     "ref": {
       "z": 1.5491933,
@@ -82,7 +82,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 9,
     "ref": {
       "z": 2.0539596,
@@ -91,7 +91,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 10,
     "ref": {
       "z": -2.4537386,
@@ -100,7 +100,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 11,
     "ref": {
       "z": -1.4940358,
@@ -109,16 +109,16 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 12,
     "ref": {
-      "z": -2.5318484,
-      "p": 0.9943268
+      "z": 2.5318484,
+      "p": 0.0056732
     }
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 13,
     "ref": {
       "z": -3.0022214,
@@ -127,7 +127,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 14,
     "ref": {
       "z": -2.981424,
@@ -136,7 +136,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 15,
     "ref": {
       "z": -2.4688536,
@@ -145,7 +145,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 16,
     "ref": {
       "z": -2.4528895,
@@ -154,7 +154,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 17,
     "ref": {
       "z": -2.9773258,
@@ -163,7 +163,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 18,
     "ref": {
       "z": -1.4523688,
@@ -172,7 +172,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 19,
     "ref": {
       "z": 2.9683647,
@@ -181,7 +181,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 20,
     "ref": {
       "z": -1.4414999,
@@ -190,7 +190,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 21,
     "ref": {
       "z": -2.5560386,
@@ -199,7 +199,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 22,
     "ref": {
       "z": -2.5373402,
@@ -208,7 +208,7 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 23,
     "ref": {
       "z": -1.9518001,
@@ -217,11 +217,11 @@
   },
   {
     "templateId": "one-propztest",
-    "templateHash": "6aa0a5ee",
+    "templateHash": "162476e2",
     "seed": 24,
     "ref": {
-      "z": 1.5811388,
-      "p": 0.9430769
+      "z": -1.5811388,
+      "p": 0.0569231
     }
   }
 ]

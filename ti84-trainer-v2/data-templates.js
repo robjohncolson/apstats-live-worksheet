@@ -128,8 +128,14 @@
         kSE: { grid: [-3, -2.5, -2, -1.5, 1.5, 2, 2.5, 3] },
       },
       derive(p) {
+        // One-sided alternatives get data that move WITH the claim (Codex
+        // review: opposite-direction samples give p ≈ .99 — statistically
+        // valid but a trap for calculator-procedure practice). Two-sided
+        // keeps the drawn sign, so both sides still appear under '≠'.
+        const sign = p.direction === '>' ? 1 : p.direction === '<' ? -1 : Math.sign(p.kSE);
+        const kSE = sign * Math.abs(p.kSE);
         const se = Math.sqrt(p.p0 * (1 - p.p0) / p.n);
-        const x = Math.round(p.n * (p.p0 + p.kSE * se));
+        const x = Math.round(p.n * (p.p0 + kSE * se));
         return { x };
       },
       recompute(values) {
@@ -143,6 +149,7 @@
         'answer.p >= 1e-4',
         'Math.abs(answer.p - 0.5) >= 0.1',
         'Number.isFinite(answer.z) && Number.isFinite(answer.p)',
+        "p.direction === '≠' || (p.direction === '>' ? p.x / p.n > p.p0 : p.x / p.n < p.p0)",
       ],
       stems: [
         {

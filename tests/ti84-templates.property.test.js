@@ -46,6 +46,10 @@ describe('one-propztest template properties', () => {
       expect(problem.values.x).toBeLessThan(problem.values.n);
       expect(problem.values.n * problem.values.p0).toBeGreaterThanOrEqual(10);
       expect(problem.values.n * (1 - problem.values.p0)).toBeGreaterThanOrEqual(10);
+      // One-sided data move WITH the alternative (Codex review) — no p ≈ .99 traps.
+      const pHat = problem.values.x / problem.values.n;
+      if (problem.values.direction === '>') expect(pHat).toBeGreaterThan(problem.values.p0);
+      if (problem.values.direction === '<') expect(pHat).toBeLessThan(problem.values.p0);
     }), { numRuns: 1000 });
   });
 
