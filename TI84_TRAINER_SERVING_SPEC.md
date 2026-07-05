@@ -27,14 +27,10 @@ function pickProblem(procedureId, phase) {
   const template = window.TI84V2Templates?.TEMPLATES?.[procedureId];
   if (!template || !template.phases.includes(phase)) return canonical();
   try {
-    const gen = genState(procedureId, phase);           // { attempt }
+    const attempt = genState(procedureId, phase).attempt;
     const studentId = window.rosterClient?.current?.()?.studentId ?? 'anon';
-    const seed = window.TI84V2Templates.deriveSeed(studentId, procedureId, phase, gen.attempt);
-    const problem = window.TI84V2Templates.generateProblem(template, seed);
-    gen.lastSeed = seed;
-    gen.templateHash = problem.templateHash;
-    savePersisted();
-    return problem;
+    const seed = window.TI84V2Templates.deriveSeed(studentId, procedureId, phase, attempt);
+    return window.TI84V2Templates.generateProblem(template, seed);
   } catch (error) {
     console.warn(`[templates] generation failed for ${procedureId}/${phase} — serving canonical`, error);
     return canonical();
@@ -44,6 +40,13 @@ function pickProblem(procedureId, phase) {
 
 - **Canonical fallback on every exit path** — flag off, no template, wrong
   phase, missing script, generation throw. Students can never hit a dead end.
+- **`pickProblem` is a pure read** (Codex amendment 3): it never writes
+  persisted state. The generated problem object already carries
+  `seed`/`templateId`/`templateHash`; the serve state (`app.handheldCheck`)
+  holds it transiently, and the metadata commits to the record ONLY when that
+  problem's outcome is recorded (§2). A canonical serve, flag-off run, or
+  abandoned check therefore can never leave stale `lastSeed`/`templateHash`
+  looking current.
 - Signed-out students hash as `'anon'` (templates spec §4); their attempt
   counter still persists in trainer-local state like every other record field.
 
@@ -61,9 +64,18 @@ records[procedureId].gen = {
 
 - `pickProblem` READS the counter; it never advances it. Reload/re-serve →
   same seed → same problem (no reroll-fishing, templates spec §4).
-- The counter increments in exactly the code paths that record a handheld
-  outcome: `recordHandheldMastery` (confirm) and the skip path if it records.
-  One increment per recorded outcome, after the record succeeds locally.
+- The counter increments in **`finishHandheldMastery`** (app.js:2642 region,
+  after `handheldPassed` is set) — the LOCAL recorded outcome — NOT in
+  `recordHandheldMastery`, which is the async gradebook write and
+  early-returns for signed-out users (Codex amendment 1). One increment per
+  recorded outcome; the same spot commits the served problem's
+  `seed`/`templateHash` from `app.handheldCheck` into
+  `records[proc].gen.handheld` (and only when the served problem was
+  generated, not canonical).
+- **Legacy backfill** (Codex amendment 2): the record normalizer at
+  app.js:1232 — which already backfills old track2 fields — gains
+  `record.gen ??= { handheld: { attempt: 0, lastSeed: null, templateHash: null } }`
+  so pre-existing records can't crash `genState`.
 - `lastSeed` + `templateHash` give the teacher exact regeneration (review
   decision §10.4 — stored lookup, no UI display).
 
@@ -99,6 +111,14 @@ in this wave — the stem text is simply different per student/attempt.
 5. `generateProblem` forced to throw (stub) → canonical + console.warn.
 6. Signed-out → 'anon' seeding, still deterministic.
 7. `ti84-standalone-sync` keeps passing after the build.mjs change.
+8. **App-level answer compatibility across all 8 templates** (Codex
+   amendment 4): generated `values` fed through the app's real
+   `computeExpected` (extraction-based, same pattern as valuesMatch) must
+   return an answer where every `VERIFICATION_FIELDS[procedureId]` key is a
+   finite number — proving the app-level dispatch path, not just
+   template-level `recompute`.
+9. Canonical serve / `?gen=off` / abandoned check → `gen.handheld` metadata
+   unchanged (no stale seed, Codex amendment 3).
 
 ## 7. Rollout
 
