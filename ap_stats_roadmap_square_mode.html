@@ -8876,6 +8876,10 @@ async function renderDoNow() {
   var msg = document.getElementById('donow-msg');
   if (!card || !msg) return;
 
+  // Desk-link step 3: refresh the calculator-skill chip on every pass — the
+  // chip only exists when today's lesson has a mapped trainer skill.
+  try { _renderTi84SkillBtn(); } catch (_) {}
+
   // ICON_MOTION -- which app icon to breathe for the next task (curriculum work
   // lives in the Quiz app; appForNextTask refines this if the manifest grows).
   var _dnNextApp = 'quiz';
@@ -17948,12 +17952,57 @@ function bumpUsage(id) {
     } catch(e) {}
 }
 
-// TI-84 trainer deep-link (FIX_PLAN D5, Desk side): pre-filter the trainer
-// to today's unit. The trainer parses [#&]unit=(\d+) session-only. No lesson
+// Desk-link step 3 (TI84_TRAINER_DESK_LINK_SPEC.md §3): today's lesson maps
+// to specific trainer skills via the curated lesson map. Loaded once; any
+// failure leaves it null and the unit deep-link below takes over.
+var _ti84LessonMap = null;
+try {
+    fetch('data/ti84-lesson-map.json')
+        .then(function (r) { return r.json(); })
+        .then(function (m) { _ti84LessonMap = (m && m.lessons) || null; _renderTi84SkillBtn(); })
+        .catch(function () { _ti84LessonMap = null; });
+} catch (_) { /* no fetch (tests) — unit fallback */ }
+
+function _ti84TodayTopic() {
+    var t = _todayLessonInf && _todayLessonInf.t;
+    return (t && _ti84LessonMap && _ti84LessonMap[t]) ? t : null;
+}
+
+// "Today's calculator skill" chip on the Do-Now card — present ONLY when
+// today's lesson has a mapped skill (no fake calculator exercises). Idempotent:
+// called after the map loads and on every renderDoNow pass.
+function _renderTi84SkillBtn() {
+    var body = document.querySelector('#donow-card .donow-body');
+    if (!body) return;
+    var existing = document.getElementById('ti84-skill-btn');
+    var topic = _ti84TodayTopic();
+    if (!topic) { if (existing) existing.remove(); return; }
+    if (existing) return;
+    var btn = document.createElement('button');
+    btn.id = 'ti84-skill-btn';
+    btn.type = 'button';
+    btn.textContent = '🖩 Today’s calculator skill';
+    btn.style.cssText = 'display:block;margin-top:6px;font-size:11px;padding:2px 8px;cursor:pointer';
+    btn.onclick = function () {
+        var app = APP_REGISTRY && APP_REGISTRY.ti84;
+        var frame = document.getElementById('app-ti84-frame');
+        // Force the deep link even if the trainer iframe was opened earlier
+        // with a stale (or bare) URL — openApp only sets src when empty.
+        if (app && frame) frame.src = appLaunchUrl(app, 'ti84');
+        if (typeof openApp === 'function') openApp('ti84');
+    };
+    body.appendChild(btn);
+}
+
+// TI-84 trainer deep-link (FIX_PLAN D5, Desk side): a mapped lesson links its
+// exact calculator skill (#topic=...&source=desk, trainer resolves the same
+// curated map); otherwise pre-filter the trainer to today's unit. No lesson
 // today (weekend, schedule gap) => bare URL and the trainer shows all units;
 // the student can change the in-app unit filter either way.
 function appLaunchUrl(app, id) {
     if (id !== 'ti84') return app.url;
+    var topic = _ti84TodayTopic();
+    if (topic) return app.url + '#topic=' + topic + '&source=desk';
     var unit = _todayLessonInf && _todayLessonInf.u;
     if (!unit || unit < 1 || unit > 9) return app.url;
     return app.url + '#unit=' + unit;
