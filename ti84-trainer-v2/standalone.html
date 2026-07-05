@@ -9306,15 +9306,26 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       || Array.isArray(v.observed) || Array.isArray(v.matrix);
   }
 
-  // Typing data into the WASM emulator can drop keystrokes, so the on-screen
-  // numeric check for a data procedure is best-effort: show it, but never let a
-  // flaky emulator entry block a student who navigated the procedure correctly.
-  // The handheld pass (the student's own calculator) is the rigorous numeric
-  // gate. Physical mode and non-data procedures keep the hard check.
+  // Hard check only when EVERY filled data target went in via transfer.
+  // Manual entry never records a method, so an empty map stays lenient.
+  function allDataTransferFilled() {
+    const methods = app.clutch.dataFillMethods ?? {};
+    const names = Object.keys(methods);
+    return names.length > 0 && names.every((name) => methods[name] === 'transfer');
+  }
+
+  // Keystroke-typing data into the WASM emulator can drop keys, so the numeric
+  // check stays best-effort for keystroke-filled data: never block a student on
+  // a flaky entry path. Variable transfer is soak-proven reliable
+  // (TI84_TRAINER_SPIKE_RESULT.md: 120/120), so when every data target went in
+  // via transfer the hard check applies — a mismatch then means the procedure
+  // was run wrong, and Restart + Auto-fill is the remedy. Physical mode and
+  // non-data procedures keep the hard check as before.
   function emulatorDataLeniency() {
     return !app.persisted.physicalMode
       && Boolean(app.bridge?.isRealEmulator?.())
-      && problemUsesData(app.walkthrough?.problem);
+      && problemUsesData(app.walkthrough?.problem)
+      && !allDataTransferFilled();
   }
 
   function formatExpectedValue(value) {
