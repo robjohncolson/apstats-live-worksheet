@@ -1,0 +1,277 @@
+[
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 0,
+    "values": {
+      "p0": 0.6,
+      "x": 75,
+      "n": 140,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 1,
+    "values": {
+      "p0": 0.75,
+      "x": 170,
+      "n": 240,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 2,
+    "values": {
+      "p0": 0.4,
+      "x": 83,
+      "n": 160,
+      "direction": ">"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 3,
+    "values": {
+      "p0": 0.2,
+      "x": 59,
+      "n": 220,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 4,
+    "values": {
+      "p0": 0.4,
+      "x": 42,
+      "n": 140,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 5,
+    "values": {
+      "p0": 0.7,
+      "x": 82,
+      "n": 140,
+      "direction": ">"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 6,
+    "values": {
+      "p0": 0.75,
+      "x": 210,
+      "n": 300,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 7,
+    "values": {
+      "p0": 0.6,
+      "x": 255,
+      "n": 400,
+      "direction": ">"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 8,
+    "values": {
+      "p0": 0.75,
+      "x": 144,
+      "n": 180,
+      "direction": ">"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 9,
+    "values": {
+      "p0": 0.8,
+      "x": 105,
+      "n": 120,
+      "direction": ">"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 10,
+    "values": {
+      "p0": 0.8,
+      "x": 223,
+      "n": 300,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 11,
+    "values": {
+      "p0": 0.8,
+      "x": 214,
+      "n": 280,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 12,
+    "values": {
+      "p0": 0.6,
+      "x": 136,
+      "n": 260,
+      "direction": ">"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 13,
+    "values": {
+      "p0": 0.75,
+      "x": 62,
+      "n": 100,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 14,
+    "values": {
+      "p0": 0.75,
+      "x": 160,
+      "n": 240,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 15,
+    "values": {
+      "p0": 0.7,
+      "x": 124,
+      "n": 200,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 16,
+    "values": {
+      "p0": 0.75,
+      "x": 221,
+      "n": 320,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 17,
+    "values": {
+      "p0": 0.3,
+      "x": 56,
+      "n": 260,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 18,
+    "values": {
+      "p0": 0.8,
+      "x": 183,
+      "n": 240,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 19,
+    "values": {
+      "p0": 0.65,
+      "x": 164,
+      "n": 220,
+      "direction": ">"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 20,
+    "values": {
+      "p0": 0.45,
+      "x": 114,
+      "n": 280,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 21,
+    "values": {
+      "p0": 0.75,
+      "x": 106,
+      "n": 160,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 22,
+    "values": {
+      "p0": 0.75,
+      "x": 92,
+      "n": 140,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 23,
+    "values": {
+      "p0": 0.6,
+      "x": 152,
+      "n": 280,
+      "direction": "<"
+    }
+  },
+  {
+    "templateId": "one-propztest",
+    "templateHash": "6aa0a5ee",
+    "seed": 24,
+    "values": {
+      "p0": 0.8,
+      "x": 136,
+      "n": 160,
+      "direction": "<"
+    }
+  }
+]
