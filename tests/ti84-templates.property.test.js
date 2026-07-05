@@ -169,6 +169,100 @@ describe('one-propzint template properties', () => {
   });
 });
 
+describe('t-test-stats template properties', () => {
+  const tt = T.TEMPLATES['t-test-stats'];
+  const genT = (seed) => T.generateProblem(tt, seed);
+
+  it('P1: determinism', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      expect(genT(seed)).toEqual(genT(seed));
+    }), { numRuns: 300 });
+  });
+
+  it('P2+P3: constraints hold; one-sided data move with the alternative', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { values } = genT(seed);
+      const answer = window.TI84StatMath.tTest(values.mu0, values.xbar, values.sx, values.n, values.direction);
+      expect(Math.abs(answer.t)).toBeGreaterThanOrEqual(0.8);
+      expect(Math.abs(answer.t)).toBeLessThanOrEqual(6);
+      expect(answer.p).toBeGreaterThanOrEqual(1e-4);
+      expect(Math.abs(answer.p - 0.5)).toBeGreaterThanOrEqual(0.1);
+      if (values.direction === '>') expect(values.xbar).toBeGreaterThan(values.mu0);
+      if (values.direction === '<') expect(values.xbar).toBeLessThan(values.mu0);
+    }), { numRuns: 1000 });
+  });
+
+  it('P4+P5: renderings accepted; flipped sign and wrong tail rejected', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { values } = genT(seed);
+      const answer = window.TI84StatMath.tTest(values.mu0, values.xbar, values.sx, values.n, values.direction);
+      for (const [key, exact] of [['t', answer.t], ['p', answer.p]]) {
+        for (const rendering of [String(exact), exact.toFixed(4)].filter((r) => parseFloat(r) !== 0)) {
+          expect(valuesMatch(rendering, exact, key), `${key} as "${rendering}"`).toBe(true);
+        }
+      }
+      expect(valuesMatch((-answer.t).toFixed(4), answer.t, 't')).toBe(false);
+      expect(valuesMatch((1 - answer.p).toFixed(4), answer.p, 'p')).toBe(false);
+    }), { numRuns: 300 });
+  });
+
+  it('P6: stem hygiene — rounded stats appear exactly as typed', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { stem, values } = genT(seed);
+      expect(stem).not.toMatch(/\{\w+\}/);
+      for (const key of ['mu0', 'xbar', 'sx', 'n']) {
+        expect(stem).toContain(`${values[key]}`);
+      }
+    }), { numRuns: 300 });
+  });
+});
+
+describe('t-interval-stats template properties', () => {
+  const ti = T.TEMPLATES['t-interval-stats'];
+  const genI = (seed) => T.generateProblem(ti, seed);
+
+  it('P1: determinism', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      expect(genI(seed)).toEqual(genI(seed));
+    }), { numRuns: 300 });
+  });
+
+  it('P2+P3: constraints hold; endpoints finite with usable width', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { values } = genI(seed);
+      const answer = window.TI84StatMath.tInterval(values.xbar, values.sx, values.n, values.cLevel);
+      expect(Number.isFinite(answer.lower)).toBe(true);
+      expect(Number.isFinite(answer.upper)).toBe(true);
+      expect(answer.upper - answer.lower).toBeGreaterThanOrEqual(0.15);
+    }), { numRuns: 1000 });
+  });
+
+  it('P4+P5: endpoint renderings accepted; swapped endpoints rejected', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { values } = genI(seed);
+      const answer = window.TI84StatMath.tInterval(values.xbar, values.sx, values.n, values.cLevel);
+      for (const [key, exact] of [['lower', answer.lower], ['upper', answer.upper]]) {
+        for (const rendering of [String(exact), exact.toFixed(4)].filter((r) => parseFloat(r) !== 0)) {
+          expect(valuesMatch(rendering, exact, key), `${key} as "${rendering}"`).toBe(true);
+        }
+      }
+      expect(valuesMatch(answer.upper.toFixed(4), answer.lower, 'lower')).toBe(false);
+      expect(valuesMatch(answer.lower.toFixed(4), answer.upper, 'upper')).toBe(false);
+    }), { numRuns: 300 });
+  });
+
+  it('P6: stem hygiene — stats and confidence level present', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { stem, values } = genI(seed);
+      expect(stem).not.toMatch(/\{\w+\}/);
+      for (const key of ['xbar', 'sx', 'n']) {
+        expect(stem).toContain(`${values[key]}`);
+      }
+      expect(stem).toContain(`${Math.round(values.cLevel * 100)}%`);
+    }), { numRuns: 300 });
+  });
+});
+
 describe('seed and hash plumbing', () => {
   it('deriveSeed is deterministic and phase-distinct', () => {
     const a = T.deriveSeed('STU1', 'one-propztest', 'walkthrough', 3);

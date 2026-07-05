@@ -448,5 +448,455 @@
       "lower": 0.7479852,
       "upper": 0.8520148
     }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 0,
+    "ref": {
+      "t": 1.6345871,
+      "p": 0.0597514
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 1,
+    "ref": {
+      "t": -2.1540659,
+      "p": 0.0399888
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 2,
+    "ref": {
+      "t": 2.0185155,
+      "p": 0.0571491
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 3,
+    "ref": {
+      "t": -1.2990381,
+      "p": 0.2053334
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 4,
+    "ref": {
+      "t": -1.4789121,
+      "p": 0.0782257
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 5,
+    "ref": {
+      "t": -1.4983715,
+      "p": 0.0756847
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 6,
+    "ref": {
+      "t": 2.9154759,
+      "p": 0.003169
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 7,
+    "ref": {
+      "t": 1.3975425,
+      "p": 0.0846289
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 8,
+    "ref": {
+      "t": 1.5033384,
+      "p": 0.0738212
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 9,
+    "ref": {
+      "t": 2.0076046,
+      "p": 0.0630503
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 10,
+    "ref": {
+      "t": 1.4896604,
+      "p": 0.0727662
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 11,
+    "ref": {
+      "t": 1.4999235,
+      "p": 0.1437508
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 12,
+    "ref": {
+      "t": -2.9694743,
+      "p": 0.0029096
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 13,
+    "ref": {
+      "t": -2.9816332,
+      "p": 0.0053035
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 14,
+    "ref": {
+      "t": -1.4958791,
+      "p": 0.0729362
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 15,
+    "ref": {
+      "t": -2.0,
+      "p": 0.0284699
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 16,
+    "ref": {
+      "t": 2.9544847,
+      "p": 0.002746
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 17,
+    "ref": {
+      "t": -2.4343225,
+      "p": 0.0106544
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 18,
+    "ref": {
+      "t": 1.5078461,
+      "p": 0.1427952
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 19,
+    "ref": {
+      "t": -1.9794866,
+      "p": 0.0584406
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 20,
+    "ref": {
+      "t": 2.5289466,
+      "p": 0.0083722
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 21,
+    "ref": {
+      "t": 2.9907336,
+      "p": 0.0036125
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 22,
+    "ref": {
+      "t": 2.9719766,
+      "p": 0.0040839
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 23,
+    "ref": {
+      "t": -2.5850532,
+      "p": 0.0072498
+    }
+  },
+  {
+    "templateId": "t-test-stats",
+    "templateHash": "b6c5fa5b",
+    "seed": 24,
+    "ref": {
+      "t": 2.9962995,
+      "p": 0.0035675
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 0,
+    "ref": {
+      "lower": 9.6144123,
+      "upper": 10.3855877
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 1,
+    "ref": {
+      "lower": 9.1303126,
+      "upper": 10.6696874
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 2,
+    "ref": {
+      "lower": 65.6844062,
+      "upper": 76.1155938
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 3,
+    "ref": {
+      "lower": 14.3582834,
+      "upper": 15.6417166
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 4,
+    "ref": {
+      "lower": 67.7721997,
+      "upper": 72.2278003
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 5,
+    "ref": {
+      "lower": 152.3618277,
+      "upper": 167.6381723
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 6,
+    "ref": {
+      "lower": 9.6208668,
+      "upper": 10.1791332
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 7,
+    "ref": {
+      "lower": 19.2789602,
+      "upper": 20.7210398
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 8,
+    "ref": {
+      "lower": 123.0833475,
+      "upper": 136.9166525
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 9,
+    "ref": {
+      "lower": 158.9253628,
+      "upper": 197.6746372
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 10,
+    "ref": {
+      "lower": 175.4503659,
+      "upper": 194.5496341
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 11,
+    "ref": {
+      "lower": 103.5969089,
+      "upper": 116.4030911
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 12,
+    "ref": {
+      "lower": 18.5854888,
+      "upper": 20.4145112
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 13,
+    "ref": {
+      "lower": 75.2708681,
+      "upper": 81.3291319
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 14,
+    "ref": {
+      "lower": 87.1569712,
+      "upper": 92.8430288
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 15,
+    "ref": {
+      "lower": 82.9915005,
+      "upper": 88.8084995
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 16,
+    "ref": {
+      "lower": 33.2330419,
+      "upper": 35.5669581
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 17,
+    "ref": {
+      "lower": 44.1832198,
+      "upper": 46.4167802
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 18,
+    "ref": {
+      "lower": 119.8687504,
+      "upper": 130.1312496
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 19,
+    "ref": {
+      "lower": 63.3849795,
+      "upper": 74.6150205
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 20,
+    "ref": {
+      "lower": 80.4354232,
+      "upper": 86.5645768
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 21,
+    "ref": {
+      "lower": 92.7756518,
+      "upper": 101.4243482
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 22,
+    "ref": {
+      "lower": 53.8792679,
+      "upper": 58.1207321
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 23,
+    "ref": {
+      "lower": 19.2102636,
+      "upper": 20.3897364
+    }
+  },
+  {
+    "templateId": "t-interval-stats",
+    "templateHash": "7fbf8afb",
+    "seed": 24,
+    "ref": {
+      "lower": 184.4989651,
+      "upper": 198.7010349
+    }
   }
 ]

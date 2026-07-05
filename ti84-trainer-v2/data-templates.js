@@ -92,10 +92,8 @@
       }
     }
 
-    const slots = {
-      n: p.n,
-      x: p.x,
-    };
+    // Every param and derived value is a stem slot, plus percent conveniences.
+    const slots = { ...p };
     if (p.p0 !== undefined) slots.p0pct = Math.round(p.p0 * 100);
     if (p.cLevel !== undefined) slots.clpct = Math.round(p.cLevel * 100);
     if (skin.claims && p.direction) {
@@ -232,6 +230,109 @@
       ],
       frameworkSkill: 'UNC-4.C',
       unit: 6,
+    },
+
+    // One-sample t test from summary stats. Round-first rule (spec §5): sx and
+    // xbar are rounded to 1dp INSIDE derive, so the stem shows exactly what
+    // the student types and the answer is recomputed from the rounded values.
+    // Bounds keep |t| in ~[1.05, 3.45] after rounding — outside the checker's
+    // (0.4, 0.6) p-value ambiguity band, above the 1e-4 floor.
+    't-test-stats': {
+      id: 't-test-stats',
+      procedureId: 't-test-stats',
+      phases: ['walkthrough', 'handheld'],
+      params: {
+        mu0: { min: 10, max: 200, step: 5 },
+        n: { min: 12, max: 45, step: 1 },
+        sxRel: { grid: [0.08, 0.1, 0.12, 0.15] },
+        direction: { oneOf: ['<', '>', '≠'] },
+        kSE: { grid: [-3, -2.5, -2, -1.5, 1.5, 2, 2.5, 3] },
+      },
+      derive(p) {
+        const round1 = (v) => Math.round(v * 10) / 10;
+        const sx = round1(p.mu0 * p.sxRel);
+        const sign = p.direction === '>' ? 1 : p.direction === '<' ? -1 : Math.sign(p.kSE);
+        const xbar = round1(p.mu0 + sign * Math.abs(p.kSE) * (sx / Math.sqrt(p.n)));
+        return { sx, xbar };
+      },
+      recompute(values) {
+        return window.TI84StatMath.tTest(values.mu0, values.xbar, values.sx, values.n, values.direction);
+      },
+      valueKeys: ['mu0', 'xbar', 'sx', 'n', 'direction'],
+      constraints: [
+        'p.n >= 12',
+        'p.sx > 0',
+        'answer.p >= 1e-4',
+        'Math.abs(answer.p - 0.5) >= 0.1',
+        'Math.abs(answer.t) >= 0.8 && Math.abs(answer.t) <= 6',
+        "p.direction === '≠' || (p.direction === '>' ? p.xbar > p.mu0 : p.xbar < p.mu0)",
+        'Number.isFinite(answer.t) && Number.isFinite(answer.p)',
+      ],
+      stems: [
+        {
+          id: 'battery',
+          text: 'A manufacturer claims its laptop battery lasts {mu0} minutes on average. A reviewer tests {n} laptops and finds a mean of {xbar} minutes with a standard deviation of {sx} minutes. Test whether the true mean battery life {claim}.',
+          claims: {
+            '<': 'is less than the claimed {mu0} minutes',
+            '>': 'is greater than the claimed {mu0} minutes',
+            '≠': 'differs from the claimed {mu0} minutes',
+          },
+        },
+        {
+          id: 'commute',
+          text: 'A transit authority reports an average commute of {mu0} minutes on a bus route. A rider times {n} random trips: mean {xbar} minutes, standard deviation {sx} minutes. Test whether the true mean commute time {claim}.',
+          claims: {
+            '<': 'is less than the reported {mu0} minutes',
+            '>': 'is greater than the reported {mu0} minutes',
+            '≠': 'differs from the reported {mu0} minutes',
+          },
+        },
+      ],
+      frameworkSkill: 'VAR-7.E',
+      unit: 7,
+    },
+
+    // One-sample t interval from summary stats — same contexts, same
+    // round-first rule; muTrue and kOff are helper params.
+    't-interval-stats': {
+      id: 't-interval-stats',
+      procedureId: 't-interval-stats',
+      phases: ['walkthrough', 'handheld'],
+      params: {
+        muTrue: { min: 10, max: 200, step: 5 },
+        n: { min: 12, max: 45, step: 1 },
+        sxRel: { grid: [0.08, 0.1, 0.12, 0.15] },
+        cLevel: { oneOf: [0.90, 0.95, 0.99] },
+        kOff: { grid: [-1, -0.5, 0, 0.5, 1] },
+      },
+      derive(p) {
+        const round1 = (v) => Math.round(v * 10) / 10;
+        const sx = round1(p.muTrue * p.sxRel);
+        const xbar = round1(p.muTrue + p.kOff * (sx / Math.sqrt(p.n)));
+        return { sx, xbar };
+      },
+      recompute(values) {
+        return window.TI84StatMath.tInterval(values.xbar, values.sx, values.n, values.cLevel);
+      },
+      valueKeys: ['xbar', 'sx', 'n', 'cLevel'],
+      constraints: [
+        'p.n >= 12',
+        'p.sx > 0',
+        'answer.upper - answer.lower >= 0.15',
+        'Number.isFinite(answer.lower) && Number.isFinite(answer.upper)',
+      ],
+      stems: [
+        {
+          id: 'battery',
+          text: 'A reviewer tests {n} laptops of the same model and finds a mean battery life of {xbar} minutes with a standard deviation of {sx} minutes. Construct a {clpct}% confidence interval for the true mean battery life.',
+        },
+        {
+          id: 'commute',
+          text: 'A rider times {n} random trips on a bus route: mean {xbar} minutes, standard deviation {sx} minutes. Construct a {clpct}% confidence interval for the true mean commute time.',
+        },
+      ],
+      frameworkSkill: 'UNC-4.T',
+      unit: 7,
     },
   };
 

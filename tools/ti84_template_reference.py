@@ -9,7 +9,7 @@ import json
 import math
 from pathlib import Path
 
-from scipy.stats import norm
+from scipy.stats import norm, t as tdist
 
 ROOT = Path(__file__).resolve().parent.parent
 SAMPLES = ROOT / "tests" / "ti84-template-samples.json"
@@ -36,9 +36,30 @@ def one_prop_z_int(x, n, c_level):
     return {"lower": round(p_hat - me, 7), "upper": round(p_hat + me, 7)}
 
 
+def t_test(mu0, xbar, sx, n, direction):
+    se = sx / math.sqrt(n)
+    t = (xbar - mu0) / se
+    df = n - 1
+    if direction == ">":
+        p = 1 - tdist.cdf(t, df)
+    elif direction == "<":
+        p = tdist.cdf(t, df)
+    else:
+        p = 2 * (1 - tdist.cdf(abs(t), df))
+    return {"t": round(t, 7), "p": round(p, 7)}
+
+
+def t_interval(xbar, sx, n, c_level):
+    t_star = tdist.ppf(1 - (1 - c_level) / 2, n - 1)
+    me = t_star * sx / math.sqrt(n)
+    return {"lower": round(xbar - me, 7), "upper": round(xbar + me, 7)}
+
+
 COMPUTE = {
     "one-propztest": lambda v: one_prop_z_test(v["p0"], v["x"], v["n"], v["direction"]),
     "one-propzint": lambda v: one_prop_z_int(v["x"], v["n"], v["cLevel"]),
+    "t-test-stats": lambda v: t_test(v["mu0"], v["xbar"], v["sx"], v["n"], v["direction"]),
+    "t-interval-stats": lambda v: t_interval(v["xbar"], v["sx"], v["n"], v["cLevel"]),
 }
 
 
