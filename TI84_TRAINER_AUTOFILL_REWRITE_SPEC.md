@@ -36,6 +36,14 @@ Unchanged: `autoFillMatrix`, `goToListHeader`, `typeValue`, the clutch/guided ke
 `syncDataTargetToNative`, `rememberDataTarget`, `startProcedurePhase`, mock mode,
 physical mode.
 
+**Coverage** (from `generated/data-procedures.js` `dataRequirements`): 13 procedures
+declare data targets. 12 are L1/L2-only — one-var-stats, histogram,
+modified-boxplot, linreg-a-plus-bx, scatterplot, residual-plot, t-test-data,
+t-interval-data, linreg-ttest, linreg-tint, chi-square-gof-test, and
+**matrix-entry** (despite the name). `chi-square-test` is the sole `[A]` target.
+So this rewrite moves 12 of 13 data procedures to transfer-backed autofill;
+only chi-square-test stays fully keystroke until the `.8xm` spike.
+
 ## 2. New bridge API — `sendList(listName, values)`
 
 Lives in `ti84-trainer-v2/bridge.js` (the emulator interface), exported on the bridge
@@ -73,16 +81,22 @@ async function autoFillList(listName, values) {
     const sent = await app.bridge?.sendList?.(listName, values);
     if (sent?.ok) {
       app.clutch.dataProgress[listName] = { ...app.clutch.dataProgress[listName], entered: values.length };
-      app.clutch.lastFillMethod = 'transfer';
+      app.clutch.dataFillMethods[listName] = 'transfer';
       render();
       return;
     }
     console.warn(`[autofill] transfer failed (${sent?.reason ?? 'unavailable'}) — falling back to keystrokes`);
   }
-  app.clutch.lastFillMethod = 'keys';
+  app.clutch.dataFillMethods[listName] = 'keys';
   await keystrokeFillList(listName, values);   // the current :1837 body, renamed
 }
 ```
+
+Fill tracking is **per data-target name** (`dataFillMethods[name]`), not a scalar —
+Codex amendment: a scalar "last fill wins" would false-hard-check a future procedure
+that mixes transfer-filled lists with keystroke-filled matrix data. `autoFillMatrix`
+records `dataFillMethods[matrixName] = 'keys'`; `resetClutchState` (:1002) resets the
+map to `{}`.
 
 - `PROVEN_TRANSFER_LISTS = { L1: true, L2: true }` — requirement 1. A dataTarget
   containing any other list name uses keystrokes for that list (per-list decision,
@@ -112,7 +126,14 @@ function emulatorDataLeniency() {
   return !app.persisted.physicalMode
     && Boolean(app.bridge?.isRealEmulator?.())
     && problemUsesData(app.walkthrough?.problem)
-    && app.clutch.lastFillMethod !== 'transfer';
+    && !allDataTransferFilled();
+}
+
+// Hard check only when EVERY filled data target went in via transfer.
+function allDataTransferFilled() {
+  const methods = app.clutch.dataFillMethods ?? {};
+  const names = Object.keys(methods);
+  return names.length > 0 && names.every((name) => methods[name] === 'transfer');
 }
 ```
 
@@ -121,12 +142,12 @@ function emulatorDataLeniency() {
   (:2823 path), which is the correct remedy and doubles as the runtime integrity
   check for a corrupted transfer (no golden exists at runtime; the wizard result IS
   the verification).
-- Keystroke-filled problems (fallback flag, unproven list, transfer failure, manual
-  entry) keep today's leniency — retiring it there would re-introduce the exact
-  false-blocking the leniency was built to prevent.
+- The aggregate is deliberately conservative (Codex amendment): a problem with ANY
+  keystroke-filled target — fallback flag, unproven list, transfer failure, a mixed
+  lists+matrix procedure — keeps today's leniency, since retiring it there would
+  re-introduce the exact false-blocking the leniency was built to prevent.
+- Manual data entry never touches `dataFillMethods`, so the empty map stays lenient.
 - All three call sites (:2821, :3233, :4084) work unchanged with the new predicate.
-- `lastFillMethod` resets to `null` on problem/walkthrough start and is set only by
-  `autoFillList`/`keystrokeFillList`; manual data entry leaves it `null` → lenient.
 
 **Gate:** this lands as a separate commit, only after the §5 soak passes 20/20.
 
@@ -149,9 +170,12 @@ New `tests/ti84-list-transfer.test.js` alongside the existing ti84 suites:
    present → direct path with `_free` called; nothing present → `ok: false`.
 4. **Fallback behavior** — mock bridge: `sendList` returns `ok: false` →
    `keystrokeFillList` invoked; `ok: true` → no keystrokes, progress = total,
-   `lastFillMethod === 'transfer'`; L3 in dataTarget → keystrokes for L3 only.
-5. **Leniency predicate** — method-aware truth table (physical mode, mock mode,
-   non-data problem, transfer vs keys vs null).
+   `dataFillMethods[name] === 'transfer'`; L3 in dataTarget → keystrokes for L3
+   only, and the map records both methods.
+5. **Leniency predicate** — truth table over `allDataTransferFilled()`: physical
+   mode, mock mode, non-data problem, all-transfer (strict), any-keys (lenient),
+   mixed transfer+keys (lenient — the Codex-amendment case), empty map / manual
+   entry (lenient).
 
 ### Manual, ROM-gated (operator-run, closes verdict caveat 1)
 
@@ -160,8 +184,11 @@ New `tests/ti84-list-transfer.test.js` alongside the existing ti84 suites:
    reporting `N/20`. Required: **20/20 on all 3 datasets × L1 and L2** (120 total).
 7. **In-app smoke on the public URL**: one 1-Var-Stats-style data problem
    (transfer path: banner → instant fill → wizard → hard check passes), one
-   matrix-entry problem (unchanged keystroke path), one run with `?autofill=keys`
-   (keystroke path + leniency intact).
+   **chi-square-test** problem for the unchanged `[A]` keystroke path — it is the
+   ONLY procedure whose `dataRequirements` declare `[A]` (Codex correction:
+   `matrix-entry`, despite the name, declares L1/L2 and is therefore a transfer
+   target, not the matrix smoke) — and one run with `?autofill=keys` (keystroke
+   path + leniency intact).
 
 ## 6. Rollout order
 
