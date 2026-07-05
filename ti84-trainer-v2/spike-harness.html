@@ -84,6 +84,8 @@
     </div>
     <div class="row">
       <button id="golden-btn">1 · Capture golden (slow keystrokes)</button>
+      <label>into</label>
+      <select id="golden-list"><option value="L1">L1</option><option value="L2">L2</option></select>
       <button id="stress-btn">2 · Run stress @ app timing</button>
       <button class="secondary" id="stop-btn">Stop</button>
     </div>
@@ -114,7 +116,7 @@
       <button class="secondary" id="alt-send-btn">alt: set_file_to_send</button>
       <button id="verify-btn">4 · Verify echo vs golden</button>
     </div>
-    <div class="sub">Uses the A2 dataset selector. Step 2's download is the offline-validation artifact: import it into desktop CEmu / TI Connect CE before blaming the emulator API. Step 4 needs a golden captured in A2 for the same dataset.</div>
+    <div class="sub">Uses the A2 dataset selector. Step 2's download is the offline-validation artifact: import it into desktop CEmu / TI Connect CE before blaming the emulator API. Step 4 needs a golden captured in A2 for the same dataset AND the same target list — the echo hash includes the typed "L1"/"L2" glyphs, so verifying L2 requires an L2 golden (set the golden target to L2 first).</div>
     <textarea class="results" id="a3-results" readonly placeholder="A3 evidence JSON appears here"></textarea>
   </section>
 
@@ -142,7 +144,7 @@
     bridge: null,
     booted: false,
     stopRequested: false,
-    goldens: {},        // datasetKey -> { hash, region, frameDataUrl }
+    goldens: {},        // goldenKey(datasetKey, listName) -> { hash, region, frameDataUrl }
     a2: null,           // last stress result object
     a2Imported: {},     // datasetKey -> imported A2 stress result
     a3: { events: [] },
@@ -249,11 +251,17 @@
 
   // Golden path: same sequence at ~2.5x hold/gap so a dropped keystroke is
   // effectively impossible. The operator should also eyeball the echo.
-  async function keystrokeFillL1Slow(values) {
+  // Column navigation mirrors app.js goToListHeader: STAT>Edit lands on
+  // L1 row 1, RIGHT moves to the target column, then UP to the header.
+  async function keystrokeFillSlow(listName, values) {
+    const listIndex = Number(listName.slice(1)) - 1;
     await quitToHome();
     await delay(300);
     await sendAndWait('STAT', 250);
     await sendAndWait('ENTER', 400);
+    for (let step = 0; step < listIndex; step += 1) {
+      await sendAndWait('RIGHT', 250);
+    }
     await sendAndWait('UP', 250);
     await sendAndWait('CLEAR', 300);
     await sendAndWait('ENTER', 350);
@@ -361,23 +369,32 @@
     return { key, values: DATASETS[key] };
   }
 
+  // L1 goldens keep the bare dataset key so existing A2 exports/imports and
+  // the L1-only stress rig stay compatible. The echo hash region includes the
+  // typed "L1"/"L2" glyphs, so each target list needs its own golden.
+  function goldenKey(datasetKey, listName) {
+    return listName === 'L1' ? datasetKey : `${datasetKey}:${listName}`;
+  }
+
   document.getElementById('golden-btn').addEventListener('click', async () => {
     try {
       requireBridge();
       const { key, values } = selectedDataset();
+      const listName = document.getElementById('golden-list').value;
+      const gk = goldenKey(key, listName);
       const region = currentRegion();
-      log(`Golden capture for ${key}: slow keystroke entry of ${values.length} values...`);
-      await keystrokeFillL1Slow(values);
-      await echoList('L1');
+      log(`Golden capture for ${gk}: slow keystroke entry of ${values.length} values into ${listName}...`);
+      await keystrokeFillSlow(listName, values);
+      await echoList(listName);
       const captured = await captureStableHash(region);
       if (!captured.stable) {
         log(`UNSTABLE hash (blinking element in region?): ${captured.samples.join(', ')} — adjust the region and retry.`);
-        addToGallery(frameToDataUrl(region), `UNSTABLE golden ${key}`);
+        addToGallery(frameToDataUrl(region), `UNSTABLE golden ${gk}`);
         return;
       }
-      state.goldens[key] = { hash: captured.hash, region, frameDataUrl: frameToDataUrl(region) };
-      addToGallery(state.goldens[key].frameDataUrl, `golden ${key} ${captured.hash}`);
-      log(`Golden for ${key}: ${captured.hash} (region ${JSON.stringify(region)}). Eyeball the echo before trusting it.`);
+      state.goldens[gk] = { hash: captured.hash, region, frameDataUrl: frameToDataUrl(region) };
+      addToGallery(state.goldens[gk].frameDataUrl, `golden ${gk} ${captured.hash}`);
+      log(`Golden for ${gk}: ${captured.hash} (region ${JSON.stringify(region)}). Eyeball the echo before trusting it.`);
     } catch (error) {
       log(`Golden capture failed: ${error.message}`);
     }
@@ -817,17 +834,18 @@
       requireBridge();
       const { key } = selectedDataset();
       const listName = document.getElementById('send-list').value;
-      const golden = state.goldens[key];
+      const gk = goldenKey(key, listName);
+      const golden = state.goldens[gk];
       if (!golden) {
-        log(`No golden for ${key} — capture one in A2 first (keystroke entry is the reference).`);
+        log(`No ${listName} golden for ${key} — capture one in A2 with the golden target set to ${listName}. An L1 golden cannot verify L2: the echo region includes the typed list-name glyphs.`);
         return;
       }
       await echoList(listName);
       const captured = await captureStableHash(golden.region);
       const match = captured.stable && captured.hash === golden.hash;
-      addToGallery(frameToDataUrl(golden.region), `A3 verify ${match ? 'MATCH' : 'MISMATCH'} ${captured.hash}`);
-      log(`A3 verify vs golden ${golden.hash}: ${match ? 'MATCH' : `MISMATCH (${captured.hash}, stable=${captured.stable})`}`);
-      state.a3.lastVerify = { dataset: key, listName, goldenHash: golden.hash, hash: captured.hash, stable: captured.stable, match, at: new Date().toISOString() };
+      addToGallery(frameToDataUrl(golden.region), `A3 verify ${listName} ${match ? 'MATCH' : 'MISMATCH'} ${captured.hash}`);
+      log(`A3 verify ${listName} vs golden ${golden.hash}: ${match ? 'MATCH' : `MISMATCH (${captured.hash}, stable=${captured.stable})`}`);
+      state.a3.lastVerify = { dataset: key, listName, goldenKey: gk, goldenHash: golden.hash, hash: captured.hash, stable: captured.stable, match, at: new Date().toISOString() };
       document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
     } catch (error) {
       log(`Verify failed: ${error.message}`);
