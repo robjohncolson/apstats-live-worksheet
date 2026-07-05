@@ -860,8 +860,20 @@
         results.push({ run, result: call.result, hash: captured.hash, stable: captured.stable, match });
         log(`Soak run ${run}: ${match ? 'MATCH' : `MISMATCH (result=${call.result}, hash=${captured.hash}, stable=${captured.stable})`}`);
       }
-      state.a3.soak = { dataset: key, listName, goldenHash: golden.hash, runs: results.length, passes, results, at: new Date().toISOString() };
-      log(`Soak done: ${passes}/${results.length} matched for ${key} → ${listName}.`);
+      // Accumulate per (dataset, list) so one JSON paste at the end carries
+      // all six acceptance soaks. Matched runs are identical (result 0,
+      // golden hash, stable), so only failures keep their run detail.
+      state.a3.soaks = state.a3.soaks ?? {};
+      state.a3.soaks[gk] = {
+        dataset: key,
+        listName,
+        goldenHash: golden.hash,
+        runs: results.length,
+        passes,
+        failures: results.filter((r) => !r.match),
+        at: new Date().toISOString(),
+      };
+      log(`Soak done: ${passes}/${results.length} matched for ${key} → ${listName}. (${Object.keys(state.a3.soaks).length}/6 soaks recorded)`);
       document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
     } catch (error) {
       log(`Soak failed: ${error.message}`);
