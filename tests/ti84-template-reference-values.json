@@ -1351,16 +1351,16 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 0,
     "ref": {
-      "t": 2.0107882,
-      "p": 0.0262553
+      "t": 2.003084,
+      "p": 0.0266858
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 1,
     "ref": {
       "t": 2.0025408,
@@ -1369,7 +1369,7 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 2,
     "ref": {
       "t": 1.9768009,
@@ -1378,7 +1378,7 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 3,
     "ref": {
       "t": 2.4607893,
@@ -1387,7 +1387,7 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 4,
     "ref": {
       "t": -3.0003885,
@@ -1396,7 +1396,7 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 5,
     "ref": {
       "t": -1.5233082,
@@ -1405,7 +1405,7 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 6,
     "ref": {
       "t": -3.0631874,
@@ -1414,25 +1414,25 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 7,
     "ref": {
-      "t": 2.4854972,
-      "p": 0.0076471
+      "t": 2.5049152,
+      "p": 0.0072726
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 8,
     "ref": {
-      "t": -2.4929246,
-      "p": 0.0169762
+      "t": -2.4971215,
+      "p": 0.0168043
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 9,
     "ref": {
       "t": -2.9990139,
@@ -1441,7 +1441,7 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 10,
     "ref": {
       "t": -2.9822522,
@@ -1450,7 +1450,7 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 11,
     "ref": {
       "t": -1.4978865,
@@ -1459,16 +1459,16 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 12,
     "ref": {
-      "t": 1.9559691,
-      "p": 0.0549393
+      "t": 2.0098931,
+      "p": 0.0487615
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 13,
     "ref": {
       "t": -1.9641855,
@@ -1477,25 +1477,25 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 14,
     "ref": {
-      "t": -3.0062604,
-      "p": 0.0043623
+      "t": -2.9963191,
+      "p": 0.0044818
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 15,
     "ref": {
-      "t": -2.007986,
-      "p": 0.0508484
+      "t": -1.9979461,
+      "p": 0.0519669
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 16,
     "ref": {
       "t": 1.5633047,
@@ -1504,7 +1504,7 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 17,
     "ref": {
       "t": -1.5076138,
@@ -1513,25 +1513,25 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 18,
     "ref": {
-      "t": -2.501746,
-      "p": 0.0160314
+      "t": -2.5023579,
+      "p": 0.0160094
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 19,
     "ref": {
-      "t": 1.500996,
-      "p": 0.0704847
+      "t": 1.4958975,
+      "p": 0.0711445
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 20,
     "ref": {
       "t": 2.4903987,
@@ -1540,16 +1540,16 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 21,
     "ref": {
-      "t": -1.9979953,
-      "p": 0.0524921
+      "t": -1.9993124,
+      "p": 0.0523438
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 22,
     "ref": {
       "t": 1.9715377,
@@ -1558,34 +1558,34 @@
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 23,
     "ref": {
-      "t": 2.9876387,
-      "p": 0.0021708
+      "t": 3.0078254,
+      "p": 0.0020525
     }
   },
   {
     "templateId": "two-samp-ttest",
-    "templateHash": "52254ef7",
+    "templateHash": "55e5786e",
     "seed": 24,
     "ref": {
-      "t": -1.501276,
-      "p": 0.0709632
+      "t": -1.4991104,
+      "p": 0.0712426
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 0,
     "ref": {
-      "lower": -2.2333337,
-      "upper": 3.6333337
+      "lower": -10.0000017,
+      "upper": 16.4000017
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 1,
     "ref": {
       "lower": -1.008753,
@@ -1594,7 +1594,7 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 2,
     "ref": {
       "lower": -3.9703402,
@@ -1603,7 +1603,7 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 3,
     "ref": {
       "lower": -2.3609006,
@@ -1612,7 +1612,7 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 4,
     "ref": {
       "lower": -0.9271794,
@@ -1621,7 +1621,7 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 5,
     "ref": {
       "lower": -5.630139,
@@ -1630,7 +1630,7 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 6,
     "ref": {
       "lower": -0.3301839,
@@ -1639,34 +1639,34 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 7,
     "ref": {
-      "lower": -3.167147,
-      "upper": 1.967147
+      "lower": -12.8685879,
+      "upper": 7.6685879
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 8,
     "ref": {
-      "lower": -13.9252586,
-      "upper": 9.5252586
+      "lower": -43.6508128,
+      "upper": 30.0508128
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 9,
     "ref": {
-      "lower": -4.342623,
-      "upper": 16.742623
+      "lower": -12.927869,
+      "upper": 50.327869
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 10,
     "ref": {
       "lower": -5.5694525,
@@ -1675,7 +1675,7 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 11,
     "ref": {
       "lower": -3.2388961,
@@ -1684,16 +1684,16 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 12,
     "ref": {
-      "lower": -2.0807368,
-      "upper": 3.0807368
+      "lower": -8.8390946,
+      "upper": 12.8390946
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 13,
     "ref": {
       "lower": -2.7602604,
@@ -1702,25 +1702,25 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 14,
     "ref": {
-      "lower": -10.3234406,
-      "upper": 4.7234406
+      "lower": -33.7221692,
+      "upper": 15.5221692
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 15,
     "ref": {
-      "lower": -9.5470178,
-      "upper": 6.5470178
+      "lower": -31.8233926,
+      "upper": 21.8233926
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 16,
     "ref": {
       "lower": -1.8756238,
@@ -1729,7 +1729,7 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 17,
     "ref": {
       "lower": -1.9261213,
@@ -1738,25 +1738,25 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 18,
     "ref": {
-      "lower": -16.7860871,
-      "upper": 11.5860871
+      "lower": -53.5276732,
+      "upper": 36.7276732
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 19,
     "ref": {
-      "lower": -6.1879211,
-      "upper": 6.1879211
+      "lower": -22.0014971,
+      "upper": 22.0014971
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 20,
     "ref": {
       "lower": -1.9117246,
@@ -1765,16 +1765,16 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 21,
     "ref": {
-      "lower": -13.1949329,
-      "upper": 8.9949329
+      "lower": -44.2193198,
+      "upper": 30.4193198
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 22,
     "ref": {
       "lower": -2.1896959,
@@ -1783,20 +1783,20 @@
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 23,
     "ref": {
-      "lower": -1.287236,
-      "upper": 3.687236
+      "lower": -4.9489441,
+      "upper": 14.9489441
     }
   },
   {
     "templateId": "two-samp-tint",
-    "templateHash": "4def0b14",
+    "templateHash": "f2f1a9d7",
     "seed": 24,
     "ref": {
-      "lower": -10.5684732,
-      "upper": 10.5684732
+      "lower": -31.9764062,
+      "upper": 31.9764062
     }
   }
 ]

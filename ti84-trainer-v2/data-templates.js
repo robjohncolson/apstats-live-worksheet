@@ -1,6 +1,6 @@
-// Seeded parameterized problem templates — Track C wave 1
-// (TI84_TRAINER_TEMPLATES_SPEC.md, review-approved 2026-07-05):
-// one-prop z test/interval + one-sample t test/interval from stats.
+// Seeded parameterized problem templates — Track C wave 1, all 8 stats-input
+// inference wizards (TI84_TRAINER_TEMPLATES_SPEC.md, review-approved
+// 2026-07-05): one/two-prop z test+interval, one/two-sample t test+interval.
 //
 // NOT wired into serving yet: build.mjs picks this file up only when the
 // runtime lands. Generated problems speak the exact values vocabulary that
@@ -337,7 +337,7 @@
           text: 'A rider times {n} random trips on a bus route: mean {xbar} minutes, standard deviation {sx} minutes. Construct a {clpct}% confidence interval for the true mean commute time.',
         },
       ],
-      frameworkSkill: 'UNC-4.T',
+      frameworkSkill: 'UNC-4.R',
       unit: 7,
     },
 
@@ -436,7 +436,7 @@
           text: 'Version 1 of an ad was shown to {n1} people and {x1} clicked; Version 2 was shown to {n2} people and {x2} clicked. Construct a {clpct}% confidence interval for the difference in true click rates (Version 1 − Version 2).',
         },
       ],
-      frameworkSkill: 'UNC-4.O',
+      frameworkSkill: 'UNC-4.L',
       unit: 6,
     },
 
@@ -485,6 +485,7 @@
       stems: [
         {
           id: 'brands',
+          paramOverrides: { muBase: { min: 180, max: 600, step: 10 } },
           text: 'A consumer group compares two battery brands. Brand 1: {n1} batteries, mean life {xbar1} minutes, SD {sx1}. Brand 2: {n2} batteries, mean life {xbar2} minutes, SD {sx2}. Test whether Brand 1’s true mean life {claim}.',
           claims: {
             '<': 'is less than Brand 2’s',
@@ -503,7 +504,7 @@
           },
         },
       ],
-      frameworkSkill: 'VAR-7.J',
+      frameworkSkill: 'VAR-7.I',
       unit: 7,
     },
 
@@ -546,6 +547,7 @@
       stems: [
         {
           id: 'brands',
+          paramOverrides: { muBase: { min: 180, max: 600, step: 10 } },
           text: 'A consumer group tests two battery brands. Brand 1: {n1} batteries, mean life {xbar1} minutes, SD {sx1}. Brand 2: {n2} batteries, mean life {xbar2} minutes, SD {sx2}. Construct a {clpct}% confidence interval for the difference in true mean life (Brand 1 − Brand 2).',
         },
         {
