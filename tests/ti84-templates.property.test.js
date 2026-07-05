@@ -263,6 +263,120 @@ describe('t-interval-stats template properties', () => {
   });
 });
 
+// Two-sample templates share one generic property harness: determinism,
+// constructive constraints (incl. BOTH groups' AP conditions), one-sided
+// direction agreement, checker round-trip + discrimination, stem hygiene.
+const TWO_SAMPLE_CASES = [
+  {
+    id: 'two-propztest',
+    fields: ['z', 'p'],
+    groupStats: (v) => [v.x1 / v.n1, v.x2 / v.n2],
+    conditions: (v) => {
+      expect(v.x1).toBeGreaterThanOrEqual(10);
+      expect(v.n1 - v.x1).toBeGreaterThanOrEqual(10);
+      expect(v.x2).toBeGreaterThanOrEqual(10);
+      expect(v.n2 - v.x2).toBeGreaterThanOrEqual(10);
+    },
+    answerChecks: (a) => {
+      expect(a.p).toBeGreaterThanOrEqual(1e-4);
+      expect(Math.abs(a.p - 0.5)).toBeGreaterThanOrEqual(0.1);
+    },
+    discriminations: (a) => [[(1 - a.p).toFixed(4), a.p, 'p'], [(-a.z).toFixed(4), a.z, 'z']],
+    hygieneKeys: ['x1', 'n1', 'x2', 'n2'],
+  },
+  {
+    id: 'two-propzint',
+    fields: ['lower', 'upper'],
+    conditions: (v) => {
+      expect(v.x1).toBeGreaterThanOrEqual(10);
+      expect(v.x2).toBeGreaterThanOrEqual(10);
+    },
+    answerChecks: (a) => {
+      expect(a.upper - a.lower).toBeGreaterThanOrEqual(0.02);
+    },
+    discriminations: (a) => [[a.upper.toFixed(4), a.lower, 'lower'], [a.lower.toFixed(4), a.upper, 'upper']],
+    hygieneKeys: ['x1', 'n1', 'x2', 'n2'],
+    pctKey: 'cLevel',
+  },
+  {
+    id: 'two-samp-ttest',
+    fields: ['t', 'p'],
+    groupStats: (v) => [v.xbar1, v.xbar2],
+    conditions: (v) => {
+      expect(v.sx1).toBeGreaterThan(0);
+      expect(v.sx2).toBeGreaterThan(0);
+    },
+    answerChecks: (a) => {
+      expect(a.p).toBeGreaterThanOrEqual(1e-4);
+      expect(Math.abs(a.p - 0.5)).toBeGreaterThanOrEqual(0.1);
+      expect(Math.abs(a.t)).toBeGreaterThanOrEqual(0.8);
+      expect(Math.abs(a.t)).toBeLessThanOrEqual(6);
+    },
+    discriminations: (a) => [[(1 - a.p).toFixed(4), a.p, 'p'], [(-a.t).toFixed(4), a.t, 't']],
+    hygieneKeys: ['xbar1', 'sx1', 'n1', 'xbar2', 'sx2', 'n2'],
+  },
+  {
+    id: 'two-samp-tint',
+    fields: ['lower', 'upper'],
+    conditions: (v) => {
+      expect(v.sx1).toBeGreaterThan(0);
+      expect(v.sx2).toBeGreaterThan(0);
+    },
+    answerChecks: (a) => {
+      expect(a.upper - a.lower).toBeGreaterThanOrEqual(0.15);
+    },
+    discriminations: (a) => [[a.upper.toFixed(4), a.lower, 'lower'], [a.lower.toFixed(4), a.upper, 'upper']],
+    hygieneKeys: ['xbar1', 'sx1', 'n1', 'xbar2', 'sx2', 'n2'],
+    pctKey: 'cLevel',
+  },
+];
+
+describe.each(TWO_SAMPLE_CASES)('$id template properties', (cfg) => {
+  const tpl = T.TEMPLATES[cfg.id];
+  const genP = (seed) => T.generateProblem(tpl, seed);
+
+  it('P1: determinism', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      expect(genP(seed)).toEqual(genP(seed));
+    }), { numRuns: 200 });
+  });
+
+  it('P2-P5: conditions, answer bands, direction agreement, checker round-trip + discrimination', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { values } = genP(seed);
+      cfg.conditions(values);
+      const answer = tpl.recompute(values);
+      cfg.answerChecks(answer);
+      if (cfg.groupStats && values.direction && values.direction !== '≠') {
+        const [g1, g2] = cfg.groupStats(values);
+        if (values.direction === '>') expect(g1).toBeGreaterThan(g2);
+        if (values.direction === '<') expect(g1).toBeLessThan(g2);
+      }
+      for (const field of cfg.fields) {
+        const exact = answer[field];
+        expect(Number.isFinite(exact)).toBe(true);
+        for (const rendering of [String(exact), exact.toFixed(4)].filter((r) => parseFloat(r) !== 0)) {
+          expect(valuesMatch(rendering, exact, field), `${field} as "${rendering}"`).toBe(true);
+        }
+      }
+      for (const [rendering, exact, field] of cfg.discriminations(answer)) {
+        expect(valuesMatch(rendering, exact, field), `${field} should reject "${rendering}"`).toBe(false);
+      }
+    }), { numRuns: 700 });
+  });
+
+  it('P6: stem hygiene', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { stem, values } = genP(seed);
+      expect(stem).not.toMatch(/\{\w+\}/);
+      for (const key of cfg.hygieneKeys) {
+        expect(stem).toContain(`${values[key]}`);
+      }
+      if (cfg.pctKey) expect(stem).toContain(`${Math.round(values[cfg.pctKey] * 100)}%`);
+    }), { numRuns: 200 });
+  });
+});
+
 describe('seed and hash plumbing', () => {
   it('deriveSeed is deterministic and phase-distinct', () => {
     const a = T.deriveSeed('STU1', 'one-propztest', 'walkthrough', 3);

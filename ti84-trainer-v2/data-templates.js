@@ -340,6 +340,223 @@
       frameworkSkill: 'UNC-4.T',
       unit: 7,
     },
+
+    // Two-proportion z test. pBase anchors group 2; group 1 derives from a
+    // target effect in SE units, sign-locked to one-sided directions. pBase
+    // >= 0.35 with n >= 100 keeps all FOUR group conditions >= 10 even at the
+    // extreme p1 = pBase - 3*SE. The test statistic uses TI's pooled p-hat
+    // (stat-math twoPropZTest); the scipy reference mirrors pooled.
+    'two-propztest': {
+      id: 'two-propztest',
+      procedureId: 'two-propztest',
+      phases: ['walkthrough', 'handheld'],
+      params: {
+        pBase: { grid: [0.35, 0.4, 0.45, 0.5, 0.55, 0.6] },
+        n1: { min: 100, max: 300, step: 20 },
+        n2: { min: 100, max: 300, step: 20 },
+        direction: { oneOf: ['<', '>', '≠'] },
+        kSE: { grid: [-3, -2.5, -2, -1.5, 1.5, 2, 2.5, 3] },
+      },
+      derive(p) {
+        const sign = p.direction === '>' ? 1 : p.direction === '<' ? -1 : Math.sign(p.kSE);
+        const se0 = Math.sqrt(p.pBase * (1 - p.pBase) * (1 / p.n1 + 1 / p.n2));
+        const x2 = Math.round(p.n2 * p.pBase);
+        const x1 = Math.round(p.n1 * (p.pBase + sign * Math.abs(p.kSE) * se0));
+        return { x1, x2 };
+      },
+      recompute(values) {
+        return window.TI84StatMath.twoPropZTest(values.x1, values.n1, values.x2, values.n2, values.direction);
+      },
+      valueKeys: ['x1', 'n1', 'x2', 'n2', 'direction'],
+      constraints: [
+        'p.x1 >= 10 && p.n1 - p.x1 >= 10',
+        'p.x2 >= 10 && p.n2 - p.x2 >= 10',
+        'answer.p >= 1e-4',
+        'Math.abs(answer.p - 0.5) >= 0.1',
+        "p.direction === '≠' || (p.direction === '>' ? p.x1 / p.n1 > p.x2 / p.n2 : p.x1 / p.n1 < p.x2 / p.n2)",
+        'Number.isFinite(answer.z) && Number.isFinite(answer.p)',
+      ],
+      stems: [
+        {
+          id: 'tutoring',
+          text: 'Two schools run different tutoring programs. At School 1, {x1} of {n1} randomly sampled students passed the state exam; at School 2, {x2} of {n2} passed. Test whether School 1’s true passing rate {claim}.',
+          claims: {
+            '<': 'is less than School 2’s',
+            '>': 'is greater than School 2’s',
+            '≠': 'differs from School 2’s',
+          },
+        },
+        {
+          id: 'ads',
+          text: 'A company tests two versions of an ad. Version 1 was shown to {n1} people and {x1} clicked; Version 2 was shown to {n2} people and {x2} clicked. Test whether Version 1’s true click rate {claim}.',
+          claims: {
+            '<': 'is less than Version 2’s',
+            '>': 'is greater than Version 2’s',
+            '≠': 'differs from Version 2’s',
+          },
+        },
+      ],
+      frameworkSkill: 'VAR-6.K',
+      unit: 6,
+    },
+
+    // Two-proportion z interval — independent true proportions per group;
+    // grid bounds keep every count >= 30. Unpooled SE (TI 2-PropZInt).
+    'two-propzint': {
+      id: 'two-propzint',
+      procedureId: 'two-propzint',
+      phases: ['walkthrough', 'handheld'],
+      params: {
+        p1True: { grid: [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7] },
+        p2True: { grid: [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7] },
+        n1: { min: 100, max: 300, step: 20 },
+        n2: { min: 100, max: 300, step: 20 },
+        cLevel: { oneOf: [0.90, 0.95, 0.99] },
+      },
+      derive(p) {
+        return { x1: Math.round(p.n1 * p.p1True), x2: Math.round(p.n2 * p.p2True) };
+      },
+      recompute(values) {
+        return window.TI84StatMath.twoPropZInt(values.x1, values.n1, values.x2, values.n2, values.cLevel);
+      },
+      valueKeys: ['x1', 'n1', 'x2', 'n2', 'cLevel'],
+      constraints: [
+        'p.x1 >= 10 && p.n1 - p.x1 >= 10',
+        'p.x2 >= 10 && p.n2 - p.x2 >= 10',
+        'answer.upper - answer.lower >= 0.02',
+        'Number.isFinite(answer.lower) && Number.isFinite(answer.upper)',
+      ],
+      stems: [
+        {
+          id: 'tutoring',
+          text: 'At School 1, {x1} of {n1} randomly sampled students passed the state exam; at School 2, {x2} of {n2} passed. Construct a {clpct}% confidence interval for the difference in true passing rates (School 1 − School 2).',
+        },
+        {
+          id: 'ads',
+          text: 'Version 1 of an ad was shown to {n1} people and {x1} clicked; Version 2 was shown to {n2} people and {x2} clicked. Construct a {clpct}% confidence interval for the difference in true click rates (Version 1 − Version 2).',
+        },
+      ],
+      frameworkSkill: 'UNC-4.O',
+      unit: 6,
+    },
+
+    // Two-sample t test from stats — Welch (Pooled: No), matching
+    // computeExpected's pooled=false. Round-first rule as in the one-sample
+    // pair; group 2 anchors at muBase, group 1 derives from a target effect.
+    'two-samp-ttest': {
+      id: 'two-samp-ttest',
+      procedureId: 'two-samp-ttest',
+      phases: ['walkthrough', 'handheld'],
+      params: {
+        muBase: { min: 40, max: 200, step: 5 },
+        n1: { min: 15, max: 40, step: 1 },
+        n2: { min: 15, max: 40, step: 1 },
+        s1Rel: { grid: [0.08, 0.1, 0.12, 0.15] },
+        s2Rel: { grid: [0.08, 0.1, 0.12, 0.15] },
+        direction: { oneOf: ['<', '>', '≠'] },
+        kSE: { grid: [-3, -2.5, -2, -1.5, 1.5, 2, 2.5, 3] },
+      },
+      derive(p) {
+        const round1 = (v) => Math.round(v * 10) / 10;
+        const sx1 = round1(p.muBase * p.s1Rel);
+        const sx2 = round1(p.muBase * p.s2Rel);
+        const se = Math.sqrt((sx1 * sx1) / p.n1 + (sx2 * sx2) / p.n2);
+        const sign = p.direction === '>' ? 1 : p.direction === '<' ? -1 : Math.sign(p.kSE);
+        const xbar1 = round1(p.muBase + sign * Math.abs(p.kSE) * se);
+        return { sx1, sx2, xbar1, xbar2: p.muBase };
+      },
+      recompute(values) {
+        return window.TI84StatMath.twoSampTTest(
+          values.xbar1, values.sx1, values.n1,
+          values.xbar2, values.sx2, values.n2,
+          values.direction, false,
+        );
+      },
+      valueKeys: ['xbar1', 'sx1', 'n1', 'xbar2', 'sx2', 'n2', 'direction'],
+      constraints: [
+        'p.n1 >= 15 && p.n2 >= 15',
+        'p.sx1 > 0 && p.sx2 > 0',
+        'answer.p >= 1e-4',
+        'Math.abs(answer.p - 0.5) >= 0.1',
+        'Math.abs(answer.t) >= 0.8 && Math.abs(answer.t) <= 6',
+        "p.direction === '≠' || (p.direction === '>' ? p.xbar1 > p.xbar2 : p.xbar1 < p.xbar2)",
+        'Number.isFinite(answer.t) && Number.isFinite(answer.p)',
+      ],
+      stems: [
+        {
+          id: 'brands',
+          text: 'A consumer group compares two battery brands. Brand 1: {n1} batteries, mean life {xbar1} minutes, SD {sx1}. Brand 2: {n2} batteries, mean life {xbar2} minutes, SD {sx2}. Test whether Brand 1’s true mean life {claim}.',
+          claims: {
+            '<': 'is less than Brand 2’s',
+            '>': 'is greater than Brand 2’s',
+            '≠': 'differs from Brand 2’s',
+          },
+        },
+        {
+          id: 'routes',
+          paramOverrides: { muBase: { min: 20, max: 90, step: 5 } },
+          text: 'A commuter compares two routes to work. Route 1: {n1} trips, mean {xbar1} minutes, SD {sx1}. Route 2: {n2} trips, mean {xbar2} minutes, SD {sx2}. Test whether Route 1’s true mean time {claim}.',
+          claims: {
+            '<': 'is less than Route 2’s',
+            '>': 'is greater than Route 2’s',
+            '≠': 'differs from Route 2’s',
+          },
+        },
+      ],
+      frameworkSkill: 'VAR-7.J',
+      unit: 7,
+    },
+
+    // Two-sample t interval — Welch df, same anchor-and-offset construction.
+    'two-samp-tint': {
+      id: 'two-samp-tint',
+      procedureId: 'two-samp-tint',
+      phases: ['walkthrough', 'handheld'],
+      params: {
+        muBase: { min: 40, max: 200, step: 5 },
+        n1: { min: 15, max: 40, step: 1 },
+        n2: { min: 15, max: 40, step: 1 },
+        s1Rel: { grid: [0.08, 0.1, 0.12, 0.15] },
+        s2Rel: { grid: [0.08, 0.1, 0.12, 0.15] },
+        cLevel: { oneOf: [0.90, 0.95, 0.99] },
+        kOff: { grid: [-1, -0.5, 0, 0.5, 1] },
+      },
+      derive(p) {
+        const round1 = (v) => Math.round(v * 10) / 10;
+        const sx1 = round1(p.muBase * p.s1Rel);
+        const sx2 = round1(p.muBase * p.s2Rel);
+        const se = Math.sqrt((sx1 * sx1) / p.n1 + (sx2 * sx2) / p.n2);
+        const xbar1 = round1(p.muBase + p.kOff * se);
+        return { sx1, sx2, xbar1, xbar2: p.muBase };
+      },
+      recompute(values) {
+        return window.TI84StatMath.twoSampTInt(
+          values.xbar1, values.sx1, values.n1,
+          values.xbar2, values.sx2, values.n2,
+          values.cLevel, false,
+        );
+      },
+      valueKeys: ['xbar1', 'sx1', 'n1', 'xbar2', 'sx2', 'n2', 'cLevel'],
+      constraints: [
+        'p.n1 >= 15 && p.n2 >= 15',
+        'p.sx1 > 0 && p.sx2 > 0',
+        'answer.upper - answer.lower >= 0.15',
+        'Number.isFinite(answer.lower) && Number.isFinite(answer.upper)',
+      ],
+      stems: [
+        {
+          id: 'brands',
+          text: 'A consumer group tests two battery brands. Brand 1: {n1} batteries, mean life {xbar1} minutes, SD {sx1}. Brand 2: {n2} batteries, mean life {xbar2} minutes, SD {sx2}. Construct a {clpct}% confidence interval for the difference in true mean life (Brand 1 − Brand 2).',
+        },
+        {
+          id: 'routes',
+          paramOverrides: { muBase: { min: 20, max: 90, step: 5 } },
+          text: 'A commuter times two routes. Route 1: {n1} trips, mean {xbar1} minutes, SD {sx1}. Route 2: {n2} trips, mean {xbar2} minutes, SD {sx2}. Construct a {clpct}% confidence interval for the difference in true mean time (Route 1 − Route 2).',
+        },
+      ],
+      frameworkSkill: 'UNC-4.X',
+      unit: 7,
+    },
   };
 
   window.TI84V2Templates = {

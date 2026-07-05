@@ -898,5 +898,905 @@
       "lower": 558.2148176,
       "upper": 601.1851824
     }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 0,
+    "ref": {
+      "z": 1.4087246,
+      "p": 0.0794583
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 1,
+    "ref": {
+      "z": -2.0028017,
+      "p": 0.0451986
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 2,
+    "ref": {
+      "z": 2.0147247,
+      "p": 0.0439335
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 3,
+    "ref": {
+      "z": -1.6194543,
+      "p": 0.1053495
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 4,
+    "ref": {
+      "z": -1.4910633,
+      "p": 0.0679724
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 5,
+    "ref": {
+      "z": -1.4546128,
+      "p": 0.0728882
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 6,
+    "ref": {
+      "z": 2.915532,
+      "p": 0.0017754
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 7,
+    "ref": {
+      "z": 1.5027778,
+      "p": 0.0664482
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 8,
+    "ref": {
+      "z": 1.4723465,
+      "p": 0.0704637
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 9,
+    "ref": {
+      "z": 2.05941,
+      "p": 0.039455
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 10,
+    "ref": {
+      "z": 1.5443068,
+      "p": 0.061257
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 11,
+    "ref": {
+      "z": 1.5295907,
+      "p": 0.1261181
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 12,
+    "ref": {
+      "z": -3.1405672,
+      "p": 0.0008431
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 13,
+    "ref": {
+      "z": -3.1237344,
+      "p": 0.0008929
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 14,
+    "ref": {
+      "z": -1.5361475,
+      "p": 0.0622511
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 15,
+    "ref": {
+      "z": -2.0464775,
+      "p": 0.0203547
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 16,
+    "ref": {
+      "z": 2.8829135,
+      "p": 0.0019701
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 17,
+    "ref": {
+      "z": -2.6157565,
+      "p": 0.0044515
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 18,
+    "ref": {
+      "z": 1.5504968,
+      "p": 0.1210223
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 19,
+    "ref": {
+      "z": -2.0275611,
+      "p": 0.0426051
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 20,
+    "ref": {
+      "z": 2.4526335,
+      "p": 0.0070907
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 21,
+    "ref": {
+      "z": 2.9953641,
+      "p": 0.0013706
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 22,
+    "ref": {
+      "z": 2.9887578,
+      "p": 0.0014006
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 23,
+    "ref": {
+      "z": -2.6337588,
+      "p": 0.0042223
+    }
+  },
+  {
+    "templateId": "two-propztest",
+    "templateHash": "51a4ca2c",
+    "seed": 24,
+    "ref": {
+      "z": 3.2596848,
+      "p": 0.0005577
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 0,
+    "ref": {
+      "lower": -0.2064533,
+      "upper": 0.0064533
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 1,
+    "ref": {
+      "lower": -0.2644089,
+      "upper": -0.1355911
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 2,
+    "ref": {
+      "lower": -0.0888956,
+      "upper": 0.0888956
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 3,
+    "ref": {
+      "lower": -0.3084471,
+      "upper": -0.0915529
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 4,
+    "ref": {
+      "lower": -0.0743458,
+      "upper": 0.1743458
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 5,
+    "ref": {
+      "lower": 0.1362898,
+      "upper": 0.3637102
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 6,
+    "ref": {
+      "lower": -0.3360606,
+      "upper": -0.1639394
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 7,
+    "ref": {
+      "lower": -0.4859931,
+      "upper": -0.3140069
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 8,
+    "ref": {
+      "lower": 0.0597105,
+      "upper": 0.2402895
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 9,
+    "ref": {
+      "lower": 0.1919251,
+      "upper": 0.4080749
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 10,
+    "ref": {
+      "lower": 0.0121793,
+      "upper": 0.1878207
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 11,
+    "ref": {
+      "lower": -0.1380958,
+      "upper": 0.0380958
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 12,
+    "ref": {
+      "lower": -0.3364527,
+      "upper": -0.1635473
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 13,
+    "ref": {
+      "lower": 0.0387442,
+      "upper": 0.2612558
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 14,
+    "ref": {
+      "lower": -0.1631459,
+      "upper": 0.0631459
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 15,
+    "ref": {
+      "lower": -0.1098779,
+      "upper": 0.1098779
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 16,
+    "ref": {
+      "lower": -0.3364744,
+      "upper": -0.1635256
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 17,
+    "ref": {
+      "lower": -0.3207803,
+      "upper": 0.0207803
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 18,
+    "ref": {
+      "lower": -0.0523956,
+      "upper": 0.1523956
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 19,
+    "ref": {
+      "lower": -0.1689351,
+      "upper": -0.0310649
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 20,
+    "ref": {
+      "lower": -0.1889115,
+      "upper": -0.0110885
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 21,
+    "ref": {
+      "lower": -0.0310611,
+      "upper": 0.2310611
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 22,
+    "ref": {
+      "lower": -0.1421993,
+      "upper": 0.1421993
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 23,
+    "ref": {
+      "lower": -0.3379555,
+      "upper": -0.1620445
+    }
+  },
+  {
+    "templateId": "two-propzint",
+    "templateHash": "333a7eec",
+    "seed": 24,
+    "ref": {
+      "lower": 0.2055104,
+      "upper": 0.3944896
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 0,
+    "ref": {
+      "t": 2.0107882,
+      "p": 0.0262553
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 1,
+    "ref": {
+      "t": 2.0025408,
+      "p": 0.0257423
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 2,
+    "ref": {
+      "t": 1.9768009,
+      "p": 0.0275253
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 3,
+    "ref": {
+      "t": 2.4607893,
+      "p": 0.0091575
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 4,
+    "ref": {
+      "t": -3.0003885,
+      "p": 0.0028626
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 5,
+    "ref": {
+      "t": -1.5233082,
+      "p": 0.1341209
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 6,
+    "ref": {
+      "t": -3.0631874,
+      "p": 0.0017652
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 7,
+    "ref": {
+      "t": 2.4854972,
+      "p": 0.0076471
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 8,
+    "ref": {
+      "t": -2.4929246,
+      "p": 0.0169762
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 9,
+    "ref": {
+      "t": -2.9990139,
+      "p": 0.0025148
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 10,
+    "ref": {
+      "t": -2.9822522,
+      "p": 0.0020177
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 11,
+    "ref": {
+      "t": -1.4978865,
+      "p": 0.0699299
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 12,
+    "ref": {
+      "t": 1.9559691,
+      "p": 0.0549393
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 13,
+    "ref": {
+      "t": -1.9641855,
+      "p": 0.0294163
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 14,
+    "ref": {
+      "t": -3.0062604,
+      "p": 0.0043623
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 15,
+    "ref": {
+      "t": -2.007986,
+      "p": 0.0508484
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 16,
+    "ref": {
+      "t": 1.5633047,
+      "p": 0.1235608
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 17,
+    "ref": {
+      "t": -1.5076138,
+      "p": 0.0720941
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 18,
+    "ref": {
+      "t": -2.501746,
+      "p": 0.0160314
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 19,
+    "ref": {
+      "t": 1.500996,
+      "p": 0.0704847
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 20,
+    "ref": {
+      "t": 2.4903987,
+      "p": 0.0161578
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 21,
+    "ref": {
+      "t": -1.9979953,
+      "p": 0.0524921
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 22,
+    "ref": {
+      "t": 1.9715377,
+      "p": 0.0285571
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 23,
+    "ref": {
+      "t": 2.9876387,
+      "p": 0.0021708
+    }
+  },
+  {
+    "templateId": "two-samp-ttest",
+    "templateHash": "52254ef7",
+    "seed": 24,
+    "ref": {
+      "t": -1.501276,
+      "p": 0.0709632
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 0,
+    "ref": {
+      "lower": -2.2333337,
+      "upper": 3.6333337
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 1,
+    "ref": {
+      "lower": -1.008753,
+      "upper": 1.608753
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 2,
+    "ref": {
+      "lower": -3.9703402,
+      "upper": 2.3703402
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 3,
+    "ref": {
+      "lower": -2.3609006,
+      "upper": 0.7609006
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 4,
+    "ref": {
+      "lower": -0.9271794,
+      "upper": 3.7271794
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 5,
+    "ref": {
+      "lower": -5.630139,
+      "upper": 5.630139
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 6,
+    "ref": {
+      "lower": -0.3301839,
+      "upper": 1.5301839
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 7,
+    "ref": {
+      "lower": -3.167147,
+      "upper": 1.967147
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 8,
+    "ref": {
+      "lower": -13.9252586,
+      "upper": 9.5252586
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 9,
+    "ref": {
+      "lower": -4.342623,
+      "upper": 16.742623
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 10,
+    "ref": {
+      "lower": -5.5694525,
+      "upper": 1.3694525
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 11,
+    "ref": {
+      "lower": -3.2388961,
+      "upper": 3.2388961
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 12,
+    "ref": {
+      "lower": -2.0807368,
+      "upper": 3.0807368
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 13,
+    "ref": {
+      "lower": -2.7602604,
+      "upper": 1.5602604
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 14,
+    "ref": {
+      "lower": -10.3234406,
+      "upper": 4.7234406
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 15,
+    "ref": {
+      "lower": -9.5470178,
+      "upper": 6.5470178
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 16,
+    "ref": {
+      "lower": -1.8756238,
+      "upper": 1.8756238
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 17,
+    "ref": {
+      "lower": -1.9261213,
+      "upper": 1.9261213
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 18,
+    "ref": {
+      "lower": -16.7860871,
+      "upper": 11.5860871
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 19,
+    "ref": {
+      "lower": -6.1879211,
+      "upper": 6.1879211
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 20,
+    "ref": {
+      "lower": -1.9117246,
+      "upper": 4.1117246
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 21,
+    "ref": {
+      "lower": -13.1949329,
+      "upper": 8.9949329
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 22,
+    "ref": {
+      "lower": -2.1896959,
+      "upper": 3.5896959
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 23,
+    "ref": {
+      "lower": -1.287236,
+      "upper": 3.687236
+    }
+  },
+  {
+    "templateId": "two-samp-tint",
+    "templateHash": "4def0b14",
+    "seed": 24,
+    "ref": {
+      "lower": -10.5684732,
+      "upper": 10.5684732
+    }
   }
 ]
