@@ -162,8 +162,9 @@ in declaration order → run `derive` → assemble `values` → render stem → 
 constraints. Any future edit to a template's params/skins legitimately changes what a
 seed produces — that's fine (seeds are reproducibility handles, not eternal contracts),
 but it means **templates change by PR, never hot-edited**, and the stored `lastSeed` is
-only meaningful against the deployed template version. Record `templateVersion` (an
-integer bumped on any change) alongside the seed.
+only meaningful against the deployed template version. Record `templateHash` (FNV-1a
+over the template's canonical serialization incl. `derive.toString()` — auto-computed,
+per review decision §10.5) alongside the seed.
 
 ### Second worked example — `t-test-stats` (sketch)
 
@@ -302,11 +303,14 @@ Resolved here with a recommendation (veto in review if wrong):
 3. **Walkthrough integration UX** → recognition on canonical stem, walkthrough on a
    generated problem with an explicit "fresh numbers" banner (§3).
 
-Genuinely open:
+Resolved in review (teacher, 2026-07-05):
 
-4. Should the handheld check *display* the seed (tiny footer code) so a student can read
-   it to the teacher for regeneration, or is the stored-seed lookup enough?
-5. `templateVersion` bump discipline — is an integer in the template object enough, or
-   should the sample/reference JSONs embed a content hash so a stale pin fails loudly?
-6. Does the branch walkthrough eventually want generated problems too, or are contrast
-   lessons better served by stable canonical examples permanently?
+4. **No seed display in the UI** — the stored-seed lookup on the track record is
+   sufficient for teacher regeneration.
+5. **Content hash, not an integer** — the engine computes `templateHash` (FNV-1a over a
+   canonical serialization of the template: params, `derive.toString()`, constraints,
+   stems). It is stored with the seed on the track record and embedded in the
+   sample/reference JSONs, so a stale pin fails loudly instead of relying on a human
+   remembering to bump a number. §4/§5's `templateVersion` references mean this hash.
+6. **Branch walkthroughs stay canonical permanently** — stable contrast examples force
+   learning the discrimination skill; generated numbers would dilute that.
