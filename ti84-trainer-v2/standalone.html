@@ -8612,6 +8612,13 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
         return cemu.isRealEmulator();
       },
 
+      // Variable transfer into the real emulator. The ?? guard covers a stale
+      // cached bridge.js that predates sendList — autofill then falls back to
+      // keystrokes instead of crashing.
+      sendList(listName, values) {
+        return cemu.sendList?.(listName, values) ?? { ok: false, reason: 'no-send-list' };
+      },
+
       getStatus() {
         return cemu.getStatus();
       },
@@ -9014,6 +9021,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       phase: 'idle',
       dataTarget: null,
       dataProgress: {},
+      dataFillMethods: {},
       autoFilling: false,
       manualEntry: null,
     },
@@ -9521,6 +9529,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     app.clutch.phase = 'idle';
     app.clutch.dataTarget = null;
     app.clutch.dataProgress = {};
+    app.clutch.dataFillMethods = {};
     app.clutch.autoFilling = false;
     app.clutch.manualEntry = null;
   }
@@ -10351,7 +10360,37 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     await sendAndWait('UP', 80);
   }
 
+  // Only lists the week-one spike proved via the frame oracle may use variable
+  // transfer (TI84_TRAINER_SPIKE_RESULT.md). Others fall back to keystrokes.
+  const PROVEN_TRANSFER_LISTS = { L1: true, L2: true };
+
+  function transferAutofillEnabled() {
+    if (new URLSearchParams(window.location.search).get('autofill') === 'keys') {
+      return false;
+    }
+    return app.persisted.transferAutofill !== false;
+  }
+
   async function autoFillList(listName, values) {
+    if (transferAutofillEnabled() && listName in PROVEN_TRANSFER_LISTS) {
+      const sent = app.bridge?.sendList?.(listName, values);
+      if (sent?.ok) {
+        app.clutch.dataProgress[listName] = {
+          ...app.clutch.dataProgress[listName],
+          entered: values.length,
+        };
+        app.clutch.dataFillMethods[listName] = 'transfer';
+        render();
+        return;
+      }
+      console.warn(`[autofill] transfer failed for ${listName} (${sent?.reason ?? 'unavailable'}) — falling back to keystrokes`);
+    }
+
+    app.clutch.dataFillMethods[listName] = 'keys';
+    await keystrokeFillList(listName, values);
+  }
+
+  async function keystrokeFillList(listName, values) {
     const listIndex = Number(listName.slice(1)) - 1;
 
     await goToListHeader(listIndex);
@@ -10386,6 +10425,9 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     if (!matrixIndex || !rows || !cols) {
       return;
     }
+
+    // Matrices have no proven transfer path yet (.8xm spike pending).
+    app.clutch.dataFillMethods[matrixName] = 'keys';
 
     await quitToHome();
     await sendAndWait('2ND');
@@ -10467,9 +10509,9 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
     // On the real emulator, syncing only the native sim leaves the ROM's lists
     // empty/stale, so 1-Var Stats (etc.) runs on the wrong data and the student
-    // reads a wrong result. The ROM can only be loaded via keystrokes, so route
-    // "I'm done" through the auto-fill that actually types the data in. (Mock
-    // mode reads from the native sim, so the plain sync is correct there.)
+    // reads a wrong result. Route "I'm done" through the auto-fill that loads
+    // the ROM for real — variable transfer for proven lists, keystrokes
+    // otherwise. (Mock mode reads from the native sim, so plain sync is fine.)
     if (!app.persisted.physicalMode && app.bridge?.isRealEmulator?.()) {
       void autoFillData(app.clutch.dataTarget);
       return;

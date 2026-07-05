@@ -115,8 +115,9 @@
       <button id="send-btn">3 · Send variable</button>
       <button class="secondary" id="alt-send-btn">alt: set_file_to_send</button>
       <button id="verify-btn">4 · Verify echo vs golden</button>
+      <button id="soak-btn">5 · Soak send+verify ×20</button>
     </div>
-    <div class="sub">Uses the A2 dataset selector. Step 2's download is the offline-validation artifact: import it into desktop CEmu / TI Connect CE before blaming the emulator API. Step 4 needs a golden captured in A2 for the same dataset AND the same target list — the echo hash includes the typed "L1"/"L2" glyphs, so verifying L2 requires an L2 golden (set the golden target to L2 first).</div>
+    <div class="sub">Uses the A2 dataset selector. Step 2's download is the offline-validation artifact: import it into desktop CEmu / TI Connect CE before blaming the emulator API. Step 4 needs a golden captured in A2 for the same dataset AND the same target list — the echo hash includes the typed "L1"/"L2" glyphs, so verifying L2 requires an L2 golden (set the golden target to L2 first). Step 5 is the autofill-rewrite acceptance soak: 20 send+verify reps per (dataset, list); the leniency-retirement commit needs 20/20 on all 3 datasets × L1 and L2 (120 total).</div>
     <textarea class="results" id="a3-results" readonly placeholder="A3 evidence JSON appears here"></textarea>
   </section>
 
@@ -826,6 +827,44 @@
       document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
     } catch (error) {
       log(`set_file_to_send failed: ${error.message}`);
+    }
+  });
+
+  document.getElementById('soak-btn').addEventListener('click', async () => {
+    try {
+      const module = requireBridge().getModule();
+      const { key, values } = selectedDataset();
+      const listName = document.getElementById('send-list').value;
+      const gk = goldenKey(key, listName);
+      const golden = state.goldens[gk];
+      if (!golden) {
+        log(`No ${listName} golden for ${key} — capture one first (golden target = ${listName}).`);
+        return;
+      }
+      state.stopRequested = false;
+      const results = [];
+      let passes = 0;
+      log(`Soak: 20× build+send+verify of ${key} → ${listName} vs golden ${golden.hash}.`);
+      for (let run = 1; run <= 20 && !state.stopRequested; run += 1) {
+        const file = buildRealList8xl(listName, values);
+        writeToEmscriptenFs(module, '/spike.8xl', file);
+        const call = callSendVariable(module, '/spike.8xl', 0);
+        await echoList(listName);
+        const captured = await captureStableHash(golden.region);
+        const match = call.result === 0 && captured.stable && captured.hash === golden.hash;
+        if (match) {
+          passes += 1;
+        } else {
+          addToGallery(frameToDataUrl(golden.region), `SOAK MISMATCH run ${run} ${captured.hash}`);
+        }
+        results.push({ run, result: call.result, hash: captured.hash, stable: captured.stable, match });
+        log(`Soak run ${run}: ${match ? 'MATCH' : `MISMATCH (result=${call.result}, hash=${captured.hash}, stable=${captured.stable})`}`);
+      }
+      state.a3.soak = { dataset: key, listName, goldenHash: golden.hash, runs: results.length, passes, results, at: new Date().toISOString() };
+      log(`Soak done: ${passes}/${results.length} matched for ${key} → ${listName}.`);
+      document.getElementById('a3-results').value = JSON.stringify(state.a3, null, 2);
+    } catch (error) {
+      log(`Soak failed: ${error.message}`);
     }
   });
 
