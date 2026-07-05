@@ -29,8 +29,16 @@ def one_prop_z_test(p0, x, n, direction):
     return {"z": round(z, 7), "p": round(p, 7)}
 
 
+def one_prop_z_int(x, n, c_level):
+    p_hat = x / n
+    z_star = norm.ppf(1 - (1 - c_level) / 2)
+    me = z_star * math.sqrt(p_hat * (1 - p_hat) / n)
+    return {"lower": round(p_hat - me, 7), "upper": round(p_hat + me, 7)}
+
+
 COMPUTE = {
     "one-propztest": lambda v: one_prop_z_test(v["p0"], v["x"], v["n"], v["direction"]),
+    "one-propzint": lambda v: one_prop_z_int(v["x"], v["n"], v["cLevel"]),
 }
 
 

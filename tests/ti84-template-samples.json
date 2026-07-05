@@ -273,5 +273,255 @@
       "n": 160,
       "direction": "<"
     }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 0,
+    "values": {
+      "x": 28,
+      "n": 140,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 1,
+    "values": {
+      "x": 48,
+      "n": 240,
+      "cLevel": 0.99
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 2,
+    "values": {
+      "x": 112,
+      "n": 160,
+      "cLevel": 0.95
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 3,
+    "values": {
+      "x": 154,
+      "n": 220,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 4,
+    "values": {
+      "x": 98,
+      "n": 140,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 5,
+    "values": {
+      "x": 112,
+      "n": 140,
+      "cLevel": 0.95
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 6,
+    "values": {
+      "x": 60,
+      "n": 300,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 7,
+    "values": {
+      "x": 80,
+      "n": 400,
+      "cLevel": 0.99
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 8,
+    "values": {
+      "x": 108,
+      "n": 180,
+      "cLevel": 0.99
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 9,
+    "values": {
+      "x": 90,
+      "n": 120,
+      "cLevel": 0.99
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 10,
+    "values": {
+      "x": 225,
+      "n": 300,
+      "cLevel": 0.99
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 11,
+    "values": {
+      "x": 140,
+      "n": 280,
+      "cLevel": 0.95
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 12,
+    "values": {
+      "x": 52,
+      "n": 260,
+      "cLevel": 0.99
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 13,
+    "values": {
+      "x": 40,
+      "n": 100,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 14,
+    "values": {
+      "x": 108,
+      "n": 240,
+      "cLevel": 0.95
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 15,
+    "values": {
+      "x": 90,
+      "n": 200,
+      "cLevel": 0.95
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 16,
+    "values": {
+      "x": 80,
+      "n": 320,
+      "cLevel": 0.95
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 17,
+    "values": {
+      "x": 182,
+      "n": 260,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 18,
+    "values": {
+      "x": 132,
+      "n": 240,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 19,
+    "values": {
+      "x": 88,
+      "n": 220,
+      "cLevel": 0.99
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 20,
+    "values": {
+      "x": 210,
+      "n": 280,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 21,
+    "values": {
+      "x": 72,
+      "n": 160,
+      "cLevel": 0.95
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 22,
+    "values": {
+      "x": 49,
+      "n": 140,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 23,
+    "values": {
+      "x": 56,
+      "n": 280,
+      "cLevel": 0.9
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 24,
+    "values": {
+      "x": 128,
+      "n": 160,
+      "cLevel": 0.9
+    }
   }
 ]

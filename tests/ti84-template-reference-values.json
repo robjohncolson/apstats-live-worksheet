@@ -223,5 +223,230 @@
       "z": -1.5811388,
       "p": 0.0569231
     }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 0,
+    "ref": {
+      "lower": 0.1443938,
+      "upper": 0.2556062
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 1,
+    "ref": {
+      "lower": 0.1334924,
+      "upper": 0.2665076
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 2,
+    "ref": {
+      "lower": 0.6289936,
+      "upper": 0.7710064
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 3,
+    "ref": {
+      "lower": 0.6491811,
+      "upper": 0.7508189
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 4,
+    "ref": {
+      "lower": 0.6362951,
+      "upper": 0.7637049
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 5,
+    "ref": {
+      "lower": 0.7337411,
+      "upper": 0.8662589
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 6,
+    "ref": {
+      "lower": 0.1620137,
+      "upper": 0.2379863
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 7,
+    "ref": {
+      "lower": 0.1484834,
+      "upper": 0.2515166
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 8,
+    "ref": {
+      "lower": 0.505944,
+      "upper": 0.694056
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 9,
+    "ref": {
+      "lower": 0.6481814,
+      "upper": 0.8518186
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 10,
+    "ref": {
+      "lower": 0.6856043,
+      "upper": 0.8143957
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 11,
+    "ref": {
+      "lower": 0.4414349,
+      "upper": 0.5585651
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 12,
+    "ref": {
+      "lower": 0.1361015,
+      "upper": 0.2638985
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 13,
+    "ref": {
+      "lower": 0.319419,
+      "upper": 0.480581
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 14,
+    "ref": {
+      "lower": 0.3870595,
+      "upper": 0.5129405
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 15,
+    "ref": {
+      "lower": 0.3810522,
+      "upper": 0.5189478
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 16,
+    "ref": {
+      "lower": 0.2025568,
+      "upper": 0.2974432
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 17,
+    "ref": {
+      "lower": 0.6532534,
+      "upper": 0.7467466
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 18,
+    "ref": {
+      "lower": 0.4971787,
+      "upper": 0.6028213
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 19,
+    "ref": {
+      "lower": 0.3149232,
+      "upper": 0.4850768
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 20,
+    "ref": {
+      "lower": 0.7074354,
+      "upper": 0.7925646
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 21,
+    "ref": {
+      "lower": 0.372914,
+      "upper": 0.527086
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 22,
+    "ref": {
+      "lower": 0.2836938,
+      "upper": 0.4163062
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 23,
+    "ref": {
+      "lower": 0.1606805,
+      "upper": 0.2393195
+    }
+  },
+  {
+    "templateId": "one-propzint",
+    "templateHash": "347b60d0",
+    "seed": 24,
+    "ref": {
+      "lower": 0.7479852,
+      "upper": 0.8520148
+    }
   }
 ]

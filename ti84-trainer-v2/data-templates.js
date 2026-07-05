@@ -95,9 +95,12 @@
     const slots = {
       n: p.n,
       x: p.x,
-      p0pct: Math.round(p.p0 * 100),
     };
-    slots.claim = renderSlots(skin.claims[p.direction], slots);
+    if (p.p0 !== undefined) slots.p0pct = Math.round(p.p0 * 100);
+    if (p.cLevel !== undefined) slots.clpct = Math.round(p.cLevel * 100);
+    if (skin.claims && p.direction) {
+      slots.claim = renderSlots(skin.claims[p.direction], slots);
+    }
     const stem = renderSlots(skin.text, slots);
 
     return {
@@ -182,6 +185,52 @@
         },
       ],
       frameworkSkill: 'VAR-6.G',
+      unit: 6,
+    },
+
+    // Same contexts as the test template, interval phrasing. pTrue is a
+    // helper param (like kSE): x derives from it, only x/n/cLevel are values.
+    // Grid bounds make x >= 16 and n - x >= 16, so the AP conditions and
+    // in-(0,1) endpoints hold by construction.
+    'one-propzint': {
+      id: 'one-propzint',
+      procedureId: 'one-propzint',
+      phases: ['walkthrough', 'handheld'],
+      params: {
+        pTrue: { grid: [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8] },
+        n: { min: 80, max: 400, step: 20 },
+        cLevel: { oneOf: [0.90, 0.95, 0.99] },
+      },
+      derive(p) {
+        return { x: Math.round(p.n * p.pTrue) };
+      },
+      recompute(values) {
+        return window.TI84StatMath.onePropZInt(values.x, values.n, values.cLevel);
+      },
+      valueKeys: ['x', 'n', 'cLevel'],
+      constraints: [
+        'p.x >= 10',
+        'p.n - p.x >= 10',
+        'answer.lower > 0 && answer.upper < 1',
+        'answer.upper - answer.lower >= 0.02',
+        'Number.isFinite(answer.lower) && Number.isFinite(answer.upper)',
+      ],
+      stems: [
+        {
+          id: 'satisfaction',
+          text: 'A counselor surveys {n} randomly selected students and {x} say they are satisfied with the new schedule. Construct a {clpct}% confidence interval for the true proportion of satisfied students.',
+        },
+        {
+          id: 'recycling',
+          text: 'An auditor checks {n} randomly selected households and finds {x} participating in curbside recycling. Construct a {clpct}% confidence interval for the true participation rate.',
+        },
+        {
+          id: 'germination',
+          paramOverrides: { pTrue: { grid: [0.7, 0.75, 0.8] } },
+          text: 'A greenhouse plants {n} tomato seeds from a new supplier and {x} germinate. Construct a {clpct}% confidence interval for the true germination rate.',
+        },
+      ],
+      frameworkSkill: 'UNC-4.C',
       unit: 6,
     },
   };

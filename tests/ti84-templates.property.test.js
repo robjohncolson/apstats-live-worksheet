@@ -122,6 +122,53 @@ describe('one-propztest template properties', () => {
   });
 });
 
+describe('one-propzint template properties', () => {
+  const intTemplate = T.TEMPLATES['one-propzint'];
+  const genInt = (seed) => T.generateProblem(intTemplate, seed);
+
+  it('P1: determinism', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      expect(genInt(seed)).toEqual(genInt(seed));
+    }), { numRuns: 300 });
+  });
+
+  it('P2+P3: constraints hold, endpoints finite and inside (0, 1)', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { values } = genInt(seed);
+      expect(values.x).toBeGreaterThanOrEqual(10);
+      expect(values.n - values.x).toBeGreaterThanOrEqual(10);
+      const answer = window.TI84StatMath.onePropZInt(values.x, values.n, values.cLevel);
+      expect(answer.lower).toBeGreaterThan(0);
+      expect(answer.upper).toBeLessThan(1);
+      expect(answer.upper - answer.lower).toBeGreaterThanOrEqual(0.02);
+    }), { numRuns: 1000 });
+  });
+
+  it('P4+P5: endpoint renderings accepted, swapped endpoints rejected', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { values } = genInt(seed);
+      const answer = window.TI84StatMath.onePropZInt(values.x, values.n, values.cLevel);
+      for (const [key, exact] of [['lower', answer.lower], ['upper', answer.upper]]) {
+        for (const rendering of [String(exact), exact.toFixed(4)].filter((r) => parseFloat(r) !== 0)) {
+          expect(valuesMatch(rendering, exact, key), `${key} as "${rendering}"`).toBe(true);
+        }
+      }
+      expect(valuesMatch(answer.upper.toFixed(4), answer.lower, 'lower')).toBe(false);
+      expect(valuesMatch(answer.lower.toFixed(4), answer.upper, 'upper')).toBe(false);
+    }), { numRuns: 300 });
+  });
+
+  it('P6: stem hygiene — no unfilled slots, x/n/confidence level present', () => {
+    fc.assert(fc.property(anySeed, (seed) => {
+      const { stem, values } = genInt(seed);
+      expect(stem).not.toMatch(/\{\w+\}/);
+      expect(stem).toContain(`${values.n}`);
+      expect(stem).toContain(`${values.x}`);
+      expect(stem).toContain(`${Math.round(values.cLevel * 100)}%`);
+    }), { numRuns: 300 });
+  });
+});
+
 describe('seed and hash plumbing', () => {
   it('deriveSeed is deterministic and phase-distinct', () => {
     const a = T.deriveSeed('STU1', 'one-propztest', 'walkthrough', 3);
