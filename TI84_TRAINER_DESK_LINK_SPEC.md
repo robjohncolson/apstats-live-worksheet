@@ -19,28 +19,38 @@ and `lesson_urls`). Values are trainer procedure ids.
     "1.5": ["histogram"],
     "1.7": ["one-var-stats", "modified-boxplot"],
     "1.10": ["normalcdf", "invnorm"],
-    "2.4": ["scatterplot", "linreg-a-plus-bx"],
-    "2.8": ["residual-plot"],
+    "2.4": ["scatterplot"],
+    "2.7": ["residual-plot"],
+    "2.8": ["linreg-a-plus-bx"],
     "4.10": ["binompdf", "binomcdf"],
     "4.12": ["geometpdf", "geometcdf"],
-    "5.6": ["normalcdf-sampling", "invnorm-sampling"],
-    "6.4": ["one-propztest"],
+    "5.7": ["normalcdf-sampling", "invnorm-sampling"],
     "6.2": ["one-propzint"],
-    "6.8": ["two-propztest"],
-    "6.6": ["two-propzint"],
-    "7.4": ["t-test-stats", "t-test-data"],
+    "6.4": ["one-propztest"],
+    "6.8": ["two-propzint"],
+    "6.10": ["two-propztest"],
     "7.2": ["t-interval-stats", "t-interval-data"],
-    "7.8": ["two-samp-ttest", "two-samp-tint"],
+    "7.4": ["t-test-stats", "t-test-data"],
+    "7.6": ["two-samp-tint"],
+    "7.8": ["two-samp-ttest"],
     "8.2": ["chi-square-gof-test"],
     "8.5": ["matrix-entry", "chi-square-test"],
-    "9.5": ["linreg-ttest", "linreg-tint"]
+    "9.2": ["linreg-tint"],
+    "9.5": ["linreg-ttest"]
   },
   "planned": {
-    "3.4": ["randint-sampling"],
-    "3.5": ["randint-assignment", "seed-rand"]
+    "3.3": ["randint-sampling", "seed-rand"],
+    "3.6": ["randint-assignment"]
   }
 }
 ```
+
+Topic assignments follow the AP CED ordering per Codex's curation pass
+(intervals precede their tests within each inference unit; scatterplot,
+residuals, and LinReg land on their own CED topics). Where Codex gave a range
+(2.6/2.8, 7.8/7.9, 9.4/9.5, 3.5/3.6) one value is picked here; the teacher
+veto pass settles final placement. Unit congruence in CI is a floor, not the
+curation — CED-correct topic placement is a human review responsibility.
 
 - The starter `lessons` block above is a DRAFT — final curation happens at
   implementation with the audit test as referee, and the teacher gets a veto
@@ -90,8 +100,9 @@ still do:
   `app.persisted.lessonPractice[topicKey] = { completedAt, procedures: [...] }`.
 - Ledger row for the completion (`source: 'trainer'`,
   `item_id: 'TI84-LESSON-<topic>'`) is **deferred until migration 0016 is
-  verified** — until then the completion is local-only. The spec's Desk
-  checkmark (§3) reads the local signal first regardless.
+  verified** — until then the completion is local-only, visible in the
+  trainer's own UI only (the Desk shows no completion state until the ledger
+  row exists, per §3).
 
 ## 3. Desk side (`ap_stats_roadmap_square_mode.html` — surgical hunks only)
 
