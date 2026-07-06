@@ -700,7 +700,7 @@
         "8:randIntNoRep("
       ],
       "cursor": 0,
-      "description": "MATH menu with PRB tab active — rand, randInt(, randIntNoRep( paste to the home screen."
+      "description": "MATH menu with PRB tab active — rand pastes directly; randInt( and randIntNoRep( open wizard prompts."
     },
     {
       "id": "randint-wizard",

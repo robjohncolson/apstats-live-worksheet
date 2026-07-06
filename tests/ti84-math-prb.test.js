@@ -2,9 +2,9 @@
 // prove the MATH▸PRB command substrate END-TO-END with literal keys in
 // native/no-ROM mode, BEFORE any Unit 3 procedure content exists.
 //
-//   5 STO→ rand ENTER                      (seeding path incl. STO→ + paste)
-//   MATH → RIGHT (PRB) → 8:randIntNoRep(   (menu nav + paste)
-//   1,30,5) ENTER                          (typed args + evaluate)
+//   5 STO→ rand ENTER                        (seeding: STO→ + direct paste)
+//   MATH →→→ PRB → 8:randIntNoRep(           (3 RIGHTs; opens the wizard)
+//   1 ↓ 30 ↓ 5 ↓ Paste, ENTER                (wizard fields → compose → run)
 //
 // The mock PRNG is deterministic (seeded from the stored rand value) and is
 // NOT TI's RNG — the test asserts PROPERTIES: 5 entries, integers, in

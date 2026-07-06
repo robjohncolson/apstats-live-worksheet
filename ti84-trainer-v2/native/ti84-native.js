@@ -539,7 +539,8 @@
       });
 
       // paste:X — append X to the home entry line (raw command entry)
-      // instead of opening a wizard/editor. E.g. MATH▸PRB▸randIntNoRep(.
+      // instead of opening a wizard/editor. Only argument-less commands use
+      // this (e.g. MATH▸PRB▸rand); arg-taking commands open wizards.
       if (typeof target === 'string' && target.indexOf('paste:') === 0) {
         var pasted = target.slice(6);
         goHome();
