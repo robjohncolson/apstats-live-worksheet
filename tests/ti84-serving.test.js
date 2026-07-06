@@ -79,7 +79,8 @@ function stubBridge() {
 function bootTrainer({ records = {}, signedIn = true } = {}) {
   document.body.innerHTML = '<div id="app"></div>';
   window.localStorage.clear();
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+  // Trainer state is student-keyed — seed the slot the app will resolve.
+  window.localStorage.setItem(`${STORAGE_KEY}.${signedIn ? 'TEST1' : 'anon'}`, JSON.stringify({
     version: 2, filterUnit: 'all', physicalMode: false, records,
   }));
 
@@ -124,7 +125,7 @@ function expectedGenerated(procedureId, studentId, attempt) {
 }
 
 function persistedGen(procedureId) {
-  return JSON.parse(window.localStorage.getItem(STORAGE_KEY)).records[procedureId]?.gen?.handheld;
+  return JSON.parse(window.localStorage.getItem(`${STORAGE_KEY}.TEST1`)).records[procedureId]?.gen?.handheld;
 }
 
 afterEach(() => {

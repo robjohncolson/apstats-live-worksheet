@@ -9592,6 +9592,46 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
   const STORAGE_KEY = 'ti84trainer_v2_state';
   const MEMORY_KEY = 'ti84-trainer-list-memory';
+  const ROSTER_KEY = 'apstats_roster.v1';
+
+  // Per-student state (TI84_TRAINER_STUDENT_STATE_SPEC.md): trainer progress
+  // is keyed by roster studentId, with a signed-out 'anon' fallback, so shared
+  // classroom devices never blend one student's SRS/mastery/seeds into
+  // another's. The bare legacy keys are frozen and copied to anon once.
+  function resolveStudentId() {
+    try {
+      const id = window.rosterClient?.current?.()?.studentId;
+      return id ? String(id) : 'anon';
+    } catch (error) {
+      return 'anon';
+    }
+  }
+
+  let activeKeyId = resolveStudentId();
+  const stateKey = () => `${STORAGE_KEY}.${activeKeyId}`;
+  const memKey = () => `${MEMORY_KEY}.${activeKeyId}`;
+
+  // One-time: seed a fresh anon slot from the pre-namespacing device blob so
+  // the device's history survives for signed-out use. No student inherits it
+  // implicitly (spec §2.1) — only anon.
+  function migrateLegacyToAnon() {
+    if (activeKeyId !== 'anon') {
+      return;
+    }
+    try {
+      const legacyState = window.localStorage.getItem(STORAGE_KEY);
+      if (legacyState !== null && window.localStorage.getItem(stateKey()) === null) {
+        window.localStorage.setItem(stateKey(), legacyState);
+      }
+      const legacyMem = window.localStorage.getItem(MEMORY_KEY);
+      if (legacyMem !== null && window.localStorage.getItem(memKey()) === null) {
+        window.localStorage.setItem(memKey(), legacyMem);
+      }
+    } catch (error) {
+      console.warn('Legacy trainer state migration skipped.', error);
+    }
+  }
+  migrateLegacyToAnon();
   const PARAMETER_PATTERN = /^\{.+\}$/;
   const DATA_SETUP_INPUT_CHAR = {
     ZERO: '0',
@@ -10324,7 +10364,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     };
 
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(stateKey());
 
       if (!raw) {
         return fallback;
@@ -10344,9 +10384,15 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   }
 
   function savePersisted() {
+    // Pre-save recheck (spec §1): if the signed-in student changed since the
+    // last resolve, hand off cleanly rather than writing this session under
+    // the wrong key. The switch persists the OLD state itself, so return.
+    if (maybeSwitchIdentity()) {
+      return;
+    }
     app.persisted.filterUnit = app.filterUnit;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(app.persisted));
+      window.localStorage.setItem(stateKey(), JSON.stringify(app.persisted));
     } catch (error) {
       if (!storageWarningShown) {
         storageWarningShown = true;
@@ -10358,7 +10404,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
   function loadListMemory() {
     try {
-      const raw = window.localStorage.getItem(MEMORY_KEY);
+      const raw = window.localStorage.getItem(memKey());
 
       if (!raw) {
         return {};
@@ -10373,7 +10419,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
   function saveListMemory() {
     try {
-      window.localStorage.setItem(MEMORY_KEY, JSON.stringify(listMemory));
+      window.localStorage.setItem(memKey(), JSON.stringify(listMemory));
     } catch (error) {
       if (!storageWarningShown) {
         storageWarningShown = true;
@@ -10381,6 +10427,44 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       }
       console.warn('Failed to save TI-84 list memory.', error);
     }
+  }
+
+  // Hand off to a new signed-in identity WITHOUT merging (spec §1/§2): flush
+  // the current student's state to their own key, reset the live session, then
+  // reboot the persisted layers from the new key. Returns true if it switched.
+  function maybeSwitchIdentity() {
+    const nextId = resolveStudentId();
+    if (nextId === activeKeyId) {
+      return false;
+    }
+
+    // Flush the OUTGOING student's state under the OLD key directly — never
+    // via savePersisted (which would re-resolve and write under the new id).
+    try {
+      app.persisted.filterUnit = app.filterUnit;
+      window.localStorage.setItem(stateKey(), JSON.stringify(app.persisted));
+      window.localStorage.setItem(memKey(), JSON.stringify(listMemory));
+    } catch (error) {
+      console.warn('Could not flush outgoing trainer state.', error);
+    }
+
+    activeKeyId = nextId;
+    migrateLegacyToAnon();
+
+    // Fresh session for the incoming student — no walkthrough/handheld/practice
+    // state carries across an identity boundary.
+    app.persisted = loadPersisted();
+    app.filterUnit = app.persisted.filterUnit ?? 'all';
+    listMemory = loadListMemory();
+    app.question = null;
+    app.walkthrough = null;
+    app.branchIntro = null;
+    app.sessionResult = null;
+    app.handheldCheck = null;
+    app.practice = null;
+    resetClutchState();
+    app.banner = 'Pick a problem, choose the right procedure, and we drill the keys.';
+    return true;
   }
 
   function cloneDataValue(data) {
@@ -14120,6 +14204,21 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
   window.addEventListener('beforeunload', () => {
     app.bridge?.destroy();
+  });
+
+  // Identity-change triggers (spec §1): another tab signing in/out writes the
+  // shared roster key; window focus catches a switch that happened while the
+  // trainer was hidden. Either way, hand off without merging and re-render.
+  window.addEventListener('storage', (event) => {
+    if (event.key === ROSTER_KEY && maybeSwitchIdentity()) {
+      render();
+    }
+  });
+
+  window.addEventListener('visibilitychange', () => {
+    if (!document.hidden && maybeSwitchIdentity()) {
+      render();
+    }
   });
 
   window.addEventListener('resize', () => {

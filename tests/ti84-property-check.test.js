@@ -136,7 +136,7 @@ async function flush(rounds = 30) {
 function bootTrainer(records) {
   document.body.innerHTML = '<div id="app"></div>';
   window.localStorage.clear();
-  window.localStorage.setItem('ti84trainer_v2_state', JSON.stringify({
+  window.localStorage.setItem('ti84trainer_v2_state.TEST1', JSON.stringify({
     version: 2, filterUnit: 'all', physicalMode: false, introSeen: true, records,
   }));
   window.TI84V2Bridge = {

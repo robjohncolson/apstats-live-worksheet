@@ -90,7 +90,8 @@ function stubRealEmulatorBridge({ sendList } = {}) {
 function bootTrainer({ records = {}, extraPersisted = {}, sendList } = {}) {
   document.body.innerHTML = '<div id="app"></div>';
   window.localStorage.clear();
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+  // Trainer state is student-keyed — this suite always signs in as TEST1.
+  window.localStorage.setItem(`${STORAGE_KEY}.TEST1`, JSON.stringify({
     version: 2, filterUnit: 'all', physicalMode: false, records, ...extraPersisted,
   }));
 

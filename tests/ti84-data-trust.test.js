@@ -89,7 +89,8 @@ async function flush(rounds = 30) {
 function bootTrainer({ records = {}, physicalMode = false, signedIn = true, recordFn } = {}) {
   document.body.innerHTML = '<div id="app"></div>';
   window.localStorage.clear();
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+  // Trainer state is student-keyed — seed the slot the app will resolve.
+  window.localStorage.setItem(`${STORAGE_KEY}.${signedIn ? 'TEST1' : 'anon'}`, JSON.stringify({
     version: 2, filterUnit: 'all', physicalMode, records,
   }));
 
@@ -123,7 +124,8 @@ function procedureById(id) {
 }
 
 function persisted() {
-  return JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+  // The signed-in suites read the studentId-keyed slot.
+  return JSON.parse(window.localStorage.getItem(`${STORAGE_KEY}.TEST1`));
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
