@@ -9962,7 +9962,10 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   };
 
   function checkPropertyField(rule, rawInput, values, parsedByKey) {
-    const raw = `${rawInput ?? ''}`.trim();
+    // Accept the calculator's EXACT display format — students copy the
+    // screen, so "{10 29 14 22 26}" must parse the same as "10, 29, 14...".
+    // Braces and a trailing ellipsis (long lists scroll) are stripped.
+    const raw = `${rawInput ?? ''}`.replace(/[{}]/g, ' ').replace(/(\.\.\.|…)/g, ' ').trim();
     const numbers = raw ? raw.split(/[\s,]+/).map(Number) : [];
     parsedByKey[rule.key] = numbers;
 

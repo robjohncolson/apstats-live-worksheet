@@ -32,6 +32,15 @@ describe('checkPropertyField rules', () => {
     expect(run(DRAW_RULE, '3 11 7 22 30')).toBe(true);
   });
 
+  it("accepts the calculator's exact display format (braces, teacher smoke 2026-07-05)", () => {
+    expect(run(DRAW_RULE, '{10 29 14 22 26}')).toBe(true);
+    expect(run(DRAW_RULE, '{10, 29, 14, 22, 26}')).toBe(true);
+    expect(run(DRAW_RULE, '{10 29 14 22 26')).toBe(true);   // missing close brace
+    expect(run(DRAW_RULE, '{10 29 14 22 26…}')).toBe(true); // scroll ellipsis
+    // Braces alone are not numbers.
+    expect(run(DRAW_RULE, '{}')).toBe(false);
+  });
+
   it('rejects wrong count, non-integers, out-of-range, repeats, empty', () => {
     expect(run(DRAW_RULE, '3, 11, 7, 22')).toBe(false);          // count
     expect(run(DRAW_RULE, '3, 11.5, 7, 22, 30')).toBe(false);    // integer
