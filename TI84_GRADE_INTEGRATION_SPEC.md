@@ -25,8 +25,8 @@ same row), fire-and-forget with a "Saved to your gradebook" status line:
 
 | Site | Fires when | Score |
 |------|-----------|-------|
-| `recordTrainerAttempt` | Walkthrough/recall completes; signed-in only; **physical mode requires the type-the-result verification**; **Desk-launched practice (`app.practice`) records NOTHING** | `max(track2.bestScore, quality/5)` — 0..1, raise-only |
-| `recordHandheldMastery` | Handheld mastery check passed (typed the real calculator's result, verified against recompute) | forces `1.0` |
+| `recordTrainerAttempt` | Walkthrough/recall completes; signed-in only; **physical mode requires the type-the-result verification**; **Desk-launched practice (`app.practice`) suppresses this row** (no SRS outcome, no attempt row) | `max(track2.bestScore, quality/5)` — 0..1, raise-only |
+| `recordHandheldMastery` | Handheld mastery check passed (typed the real calculator's result, verified against recompute). **No practice guard — fires even in Desk-launched practice**, whose flow chains into the handheld check (§B.2) | forces `1.0` |
 
 Signed-out sessions never write. Local per-student state
 (`ti84trainer_v2_state.<studentId>`, list memory) is device bookkeeping only —
@@ -101,15 +101,23 @@ check_violation 23514 → HTTP 503.
   it, calendar behavior is unchanged by design this phase.
 - Never derive cross-device completion from trainer localStorage.
 
-### B.2 Deferred (needs teacher sign-off)
+### B.2 Practice-completion rows — DECIDED: WAIT (teacher, 2026-07-06)
 
-- Desk-launched practice currently records nothing (by design: no SRS
-  movement, no attempt row). That means chip-launched practice won't light the
-  chip. Proposal for later: on completing a topic's practice queue, write a
-  `TI84-LESSON-<topic>` completion row (practice tier, score 1, distinct
-  namespace so procedure mastery rows stay clean) — anticipated by
-  TI84_TRAINER_DESK_LINK_SPEC. Not in this slice.
-- "Desk practice does not advance SRS scheduling" stays inviolate either way.
+Precision on what Desk-launched practice records: `app.practice` suppresses
+the normal walkthrough/attempt row (`recordTrainerAttempt` returns early — no
+SRS outcome, no attempt row), but the practice flow **chains into the handheld
+check**, and verified handheld mastery still records through
+`recordHandheldMastery` (it has no practice guard). So chip-launched practice
+DOES light the chip whenever the student proves the procedure on real
+hardware — mastery-backed procedure evidence needs no new row type.
+
+A `TI84-LESSON-<topic>` completion row would only add a separate
+"topic practice completed" signal independent of procedure mastery.
+**Decision: wait — procedure mastery rows are cleaner evidence.** Revisit only
+if real usage shows students finishing practice queues without handheld
+passes and that gap turns out to matter.
+
+"Desk practice does not advance SRS scheduling" stays inviolate either way.
 
 ---
 
@@ -209,5 +217,7 @@ directions comfortably readable, buttons clickable at reduced scale.
 3. B+C visible-but-uncounted (roster-server + Desk chip) — grade-affecting
    SURFACE but engine-inert by default; invariance test required before push
    (roster-server auto-deploys on push to master).
-4. Teacher decisions: delete smoke student; whether Desk practice should write
-   `TI84-LESSON-<topic>` rows (§B.2); counted-mode weight + timing (§C.3).
+4. Teacher decisions (2026-07-06): delete smoke student `zz_smoke_delete_me`
+   (still owed); counting stays OFF for now; `TI84-LESSON-<topic>` rows —
+   WAIT, mastery rows are the cleaner evidence (§B.2). Remaining open:
+   counted-mode weight + timing (§C.3, ~Sept with real data).
