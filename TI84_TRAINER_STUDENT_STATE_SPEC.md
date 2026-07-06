@@ -18,10 +18,21 @@ trainer joins them. Design-only until reviewed.
 - Identity source: `window.rosterClient.current()?.studentId` — the exact
   field quiz/cr use, shared via `apstats_roster.v1` on the same origin, so a
   Desk sign-in carries into the trainer automatically.
-- The active key resolves once at boot. If the roster identity CHANGES while
-  the trainer is open (sign-in/sign-out in another tab, or mid-session), the
-  trainer saves to the old key and re-boots its persisted layer from the new
-  key — a full state reload, never an in-place merge.
+- The active key resolves at boot, and identity changes are detected by
+  CONCRETE triggers (Codex amendment 1 — the trainer currently only reads at
+  boot): a `storage` event listener on `apstats_roster.v1`, a recheck on
+  `visibilitychange`/window focus, and a cheap recheck before every
+  `savePersisted`. On a detected change: save state to the OLD key, reset the
+  active walkthrough/question/handheld/practice session state cleanly, then
+  reload the persisted layer from the NEW key — a full re-boot of state,
+  never an in-place merge, and never a save of student A's session under
+  student B's key.
+- **`ti84-trainer-list-memory` gets the same suffix** (Codex amendment 2):
+  the list/matrix data-target cache is also cross-student device state — a
+  shared key would leak one student's problem data into another's "remembered
+  data" checks. It namespaces identically (`ti84-trainer-list-memory.<studentId>`
+  / `.anon`, legacy copied to anon once) and reloads on the same identity
+  triggers. No shared keys remain.
 - Desk deep links (`#topic=…`) keep working signed out: anon sessions get the
   full practice flow on the anon key. Server-side records were never blurred
   (the gradebook token is per-student); only local state was.
@@ -86,7 +97,11 @@ to it).
    non-empty ∧ unclaimed); Import copies + claims; a SECOND student on the
    same device never sees the offer; Decline persists.
 4. Identity change mid-session re-boots state from the new key (no merge —
-   assert student A's mastery never appears under student B).
+   assert student A's mastery never appears under student B), fired through
+   each concrete trigger: a `storage` event on `apstats_roster.v1`, a
+   `visibilitychange` recheck, and the pre-save recheck.
+4b. `ti84-trainer-list-memory` is student-suffixed and never written to the
+   bare legacy key; list memory from student A is invisible to student B.
 5. Status strip renders the identity label + counts; signed-out label
    correct.
 6. Desk deep-link practice works signed out on the anon key (extends
