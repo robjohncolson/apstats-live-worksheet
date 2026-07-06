@@ -1486,3 +1486,51 @@ code {
     width: 100%;
   }
 }
+
+/* ── Readability + fit pass (teacher UI feedback, 2026-07-05) ──────────────
+   The guidance pane was mostly whitespace with small text, while the
+   calculator column forced vertical scrolling at 100% zoom. Larger reading
+   sizes on the left; the calculator column steps its scale down on shorter
+   viewports so the WHOLE calculator (screen + keypad) fits without
+   scrolling or page-zoom. */
+
+.problem-stem {
+  font-size: 1.08rem;
+  line-height: 1.5;
+}
+
+.panel-note,
+.dialog-note,
+.clutch-note {
+  font-size: 1rem;
+}
+
+.narration-copy strong {
+  font-size: 1.05rem;
+}
+
+.narration-copy span {
+  font-size: 0.98rem;
+}
+
+.answer-label {
+  font-size: 1.02rem;
+}
+
+@media (max-height: 940px) {
+  .calc-panel:not(.physical-panel) {
+    zoom: 0.88;
+  }
+}
+
+@media (max-height: 820px) {
+  .calc-panel:not(.physical-panel) {
+    zoom: 0.76;
+  }
+}
+
+@media (max-height: 720px) {
+  .calc-panel:not(.physical-panel) {
+    zoom: 0.66;
+  }
+}
