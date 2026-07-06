@@ -591,6 +591,48 @@
     geometcdf: [{ key: 'value', label: 'P =' }],
   };
 
+  // Randomization procedures have no exact reference answer (the student's
+  // own calculator produces the values), so the handheld check validates
+  // FORM instead (TI84_TRAINER_UNIT3_SPEC.md §3): count, integers, range,
+  // distinctness, and — for assignment — that Treatment A is exactly the
+  // first groupSize entries of the draw, proving the rule was applied.
+  const PROPERTY_FIELDS = {
+    'randint-sampling': [
+      { key: 'draw', label: 'Your sample:', count: 'n', min: 'lo', max: 'hi', distinct: true },
+    ],
+    'randint-assignment': [
+      { key: 'draw', label: 'Full ordering:', count: 'n', min: 'lo', max: 'hi', distinct: true },
+      { key: 'groupA', label: 'Treatment A:', count: 'groupSize', mustBePrefixOf: 'draw' },
+    ],
+  };
+
+  function checkPropertyField(rule, rawInput, values, parsedByKey) {
+    const raw = `${rawInput ?? ''}`.trim();
+    const numbers = raw ? raw.split(/[\s,]+/).map(Number) : [];
+    parsedByKey[rule.key] = numbers;
+
+    if (!numbers.length || !numbers.every((x) => Number.isInteger(x))) {
+      return false;
+    }
+    if (rule.count !== undefined && numbers.length !== values[rule.count]) {
+      return false;
+    }
+    if (rule.min !== undefined && !numbers.every((x) => x >= values[rule.min])) {
+      return false;
+    }
+    if (rule.max !== undefined && !numbers.every((x) => x <= values[rule.max])) {
+      return false;
+    }
+    if (rule.distinct && new Set(numbers).size !== numbers.length) {
+      return false;
+    }
+    if (rule.mustBePrefixOf) {
+      const base = parsedByKey[rule.mustBePrefixOf] ?? [];
+      return numbers.every((x, i) => x === base[i]);
+    }
+    return true;
+  }
+
   function escapeHtml(value) {
     return `${value ?? ''}`.replace(/[&<>"']/g, (char) => ({
       '&': '&amp;',
@@ -2728,7 +2770,7 @@
     app.handheldCheck = {
       procedureId,
       problem: pickProblem(procedureId, 'handheld'),
-      fields: VERIFICATION_FIELDS[procedureId] ?? null,
+      fields: VERIFICATION_FIELDS[procedureId] ?? PROPERTY_FIELDS[procedureId] ?? null,
       values: {},
       checkResults: null,
       failCounts: {},
@@ -2837,6 +2879,47 @@
     }
 
     syncHandheldInputsFromDom();
+
+    // Property-checked procedures (U3 randomization) validate the FORM of
+    // the student's own numbers — this branch must come before the
+    // null-computeExpected self-attest fallback.
+    const propertyRules = PROPERTY_FIELDS[check.procedureId];
+    if (propertyRules) {
+      const values = check.problem?.values ?? {};
+      const parsedByKey = {};
+      const propResults = {};
+      let allValid = true;
+
+      propertyRules.forEach((rule) => {
+        const correct = checkPropertyField(rule, check.values[rule.key], values, parsedByKey);
+        const failCount = correct ? 0 : (check.failCounts?.[rule.key] || 0) + 1;
+        check.failCounts[rule.key] = failCount;
+        propResults[rule.key] = {
+          actual: check.values[rule.key] ?? '',
+          expected: null,
+          correct,
+          failCount,
+        };
+        if (!correct) {
+          allValid = false;
+        }
+      });
+
+      check.checkResults = propResults;
+      check.verified = allValid;
+
+      if (allValid) {
+        finishHandheldMastery(check.procedureId, { recordCredit: true });
+        return;
+      }
+
+      app.banner = check.procedureId === 'randint-assignment'
+        ? 'Check your entries: distinct whole numbers in range, and Treatment A must be the FIRST numbers of your ordering.'
+        : 'Check your entries: you need the right count of distinct whole numbers, all within the label range.';
+      render();
+      return;
+    }
+
     const expected = computeExpected(check.procedureId, check.problem);
 
     if (!expected) {
