@@ -57,6 +57,29 @@
         inputModes: null
       },
 
+      // U3 randomization: the real CE opens a field prompt for randInt(/
+      // randIntNoRep( (wizards ON, the default). Paste composes the command
+      // onto the home entry line; a second ENTER evaluates it.
+      'randint-wizard': {
+        fields: [
+          { label: 'lower', type: 'integer' },
+          { label: 'upper', type: 'integer' },
+          { label: 'n',     type: 'integer', default: '1' },
+          { label: 'Paste', type: 'action-button' }
+        ],
+        inputModes: null
+      },
+
+      'randintnorep-wizard': {
+        fields: [
+          { label: 'lower', type: 'integer' },
+          { label: 'upper', type: 'integer' },
+          { label: 'n',     type: 'integer' },
+          { label: 'Paste', type: 'action-button' }
+        ],
+        inputModes: null
+      },
+
       'invnorm-wizard': {
         fields: [
           { label: 'area', type: 'number' },

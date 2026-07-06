@@ -599,6 +599,18 @@
     function handleWizardSubmit(evt) {
       var action = evt.action;
 
+      // U3 randomization wizards mirror the real CE: Paste composes the
+      // command onto the home entry line, and a second ENTER evaluates it
+      // (via the mock PRNG in no-ROM mode).
+      if (action === 'Paste' && (evt.wizardId === 'randint-wizard' || evt.wizardId === 'randintnorep-wizard')) {
+        var randFn = evt.wizardId === 'randintnorep-wizard' ? 'randIntNoRep' : 'randInt';
+        var rv = evt.values || {};
+        activeWizard = null;
+        setScreen('home', 'home', {});
+        homeEntry += randFn + '(' + (rv.lower || '') + ',' + (rv.upper || '') + ',' + (rv.n || '') + ')';
+        return;
+      }
+
       if (action === 'Calculate' || action === 'Paste') {
         var compResult = runComputation(
           evt.wizardId, evt.values, evt.inputMode, lists, matrices
@@ -905,6 +917,13 @@
           goHome();
         }
         return;
+      }
+
+      // FormEngine expects digit CHARS ('1'-'9', '0'); convert digit button
+      // ids so direct key entry works (same conversion as handleMenuKey).
+      var wizardDigit = HOME_KEY_CHARS[key];
+      if (wizardDigit !== undefined && wizardDigit >= '0' && wizardDigit <= '9') {
+        key = wizardDigit;
       }
 
       activeWizard.handleKey(key);

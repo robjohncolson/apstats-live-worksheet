@@ -389,12 +389,13 @@
         2: 'plot1-editor-scatter'  // 3:Plot3...
       },
 
-      // paste:X targets append X to the home-screen entry line instead of
-      // opening a wizard — raw command entry (U3 randomization substrate).
+      // rand pastes directly (no arguments); the arg-taking commands open
+      // wizard prompts like the real CE (wizards ON), which compose the
+      // command onto the home entry line on Paste.
       'math-prb-menu': {
-        0: 'paste:rand',           // 1:rand
-        4: 'paste:randInt(',       // 5:randInt(
-        7: 'paste:randIntNoRep('   // 8:randIntNoRep(
+        0: 'paste:rand',            // 1:rand
+        4: 'randint-wizard',        // 5:randInt(
+        7: 'randintnorep-wizard'    // 8:randIntNoRep(
       }
     },
 

@@ -39,17 +39,19 @@ const lastLine = (native) => native._getHomeLines().at(-1);
 
 // PRB is THREE RIGHTs from MATH on the real calculator (MATH → NUM →
 // CMPLX → PRB) — the physical-calculator smoke caught the earlier
-// one-RIGHT simplification teaching wrong keys.
+// one-RIGHT simplification teaching wrong keys. randIntNoRep( opens a
+// WIZARD prompt (wizards ON, the CE default) — the second smoke caught
+// the raw comma-syntax model; Paste composes the command, ENTER runs it.
 
-// 5 STO→ [MATH ▸▸▸ PRB ▸ 1:rand] ENTER
+// 5 STO→ [MATH ▸▸▸ PRB ▸ 1:rand] ENTER — rand takes no args, pastes directly
 function seedRand(native, seedKey) {
   press(native, seedKey, 'STO', 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'ONE', 'ENTER');
 }
 
-// [MATH ▸▸▸ PRB ▸ 8:randIntNoRep(] 1,30,5) ENTER
+// [MATH ▸▸▸ PRB ▸ 8:randIntNoRep(] wizard: 1 ↓ 30 ↓ 5 ↓ Paste, ENTER runs
 function drawNoRep(native) {
   press(native, 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'EIGHT',
-    'ONE', 'COMMA', 'THREE', 'ZERO', 'COMMA', 'FIVE', 'RPAREN', 'ENTER');
+    'ONE', 'DOWN', 'THREE', 'ZERO', 'DOWN', 'FIVE', 'DOWN', 'ENTER', 'ENTER');
 }
 
 function parseList(line) {
@@ -117,9 +119,19 @@ describe('MATH▸PRB command substrate (literal keys, mock mode)', () => {
     expect(value).toBeLessThan(1);
   });
 
+  it('selecting randIntNoRep( opens its wizard prompt, and Paste composes the command', () => {
+    press(native, 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'EIGHT');
+    expect(native.getScreen().id).toBe('randintnorep-wizard');
+    press(native, 'ONE', 'DOWN', 'THREE', 'ZERO', 'DOWN', 'FIVE', 'DOWN', 'ENTER');
+    expect(native.getScreen().id).toBe('home');
+    // The composed command sits on the entry line awaiting the second ENTER.
+    press(native, 'ENTER');
+    expect(native._getHomeLines().at(-2)).toBe('randIntNoRep(1,30,5)');
+  });
+
   it('asking for more distinct values than the range yields ERR:DOMAIN', () => {
     press(native, 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'EIGHT',
-      'ONE', 'COMMA', 'THREE', 'COMMA', 'NINE', 'RPAREN', 'ENTER');
+      'ONE', 'DOWN', 'THREE', 'DOWN', 'NINE', 'DOWN', 'ENTER', 'ENTER');
     expect(lastLine(native)).toBe('ERR:DOMAIN');
   });
 
@@ -129,7 +141,7 @@ describe('MATH▸PRB command substrate (literal keys, mock mode)', () => {
   });
 
   it('CLEAR wipes the entry line first, then history', () => {
-    press(native, 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'EIGHT', 'ONE');
+    press(native, 'FIVE', 'STO');
     press(native, 'CLEAR');
     press(native, 'ENTER'); // empty entry — no evaluation
     expect(native._getHomeLines()).toHaveLength(0);

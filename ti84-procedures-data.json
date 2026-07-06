@@ -703,6 +703,28 @@
       "description": "MATH menu with PRB tab active — rand, randInt(, randIntNoRep( paste to the home screen."
     },
     {
+      "id": "randint-wizard",
+      "type": "wizard",
+      "description": "randInt wizard — lower, upper, n, then Paste composes the command onto the home screen.",
+      "fields": [
+        { "label": "lower", "type": "integer" },
+        { "label": "upper", "type": "integer" },
+        { "label": "n", "type": "integer", "default": "1" },
+        { "label": "Paste", "type": "action-button" }
+      ]
+    },
+    {
+      "id": "randintnorep-wizard",
+      "type": "wizard",
+      "description": "randIntNoRep wizard — lower, upper, n, then Paste composes the command onto the home screen.",
+      "fields": [
+        { "label": "lower", "type": "integer" },
+        { "label": "upper", "type": "integer" },
+        { "label": "n", "type": "integer" },
+        { "label": "Paste", "type": "action-button" }
+      ]
+    },
+    {
       "id": "math-frac-menu",
       "type": "menu",
       "title": "MATH",
@@ -7754,9 +7776,9 @@
         {
           "stepNumber": 13,
           "key": "8",
-          "screen": "home",
+          "screen": "randintnorep-wizard",
           "highlight": "8:randIntNoRep(",
-          "narration": "Paste randIntNoRep( — no repeats, because a label can only be selected once in a simple random sample.",
+          "narration": "Open randIntNoRep — no repeats, because a label can only be selected once in a simple random sample. The calculator prompts for each value.",
           "skillType": "confirmation",
           "commonErrors": [
             {
@@ -7768,53 +7790,61 @@
         {
           "stepNumber": 14,
           "key": "{lo}",
-          "screen": "home",
-          "highlight": "entry line",
+          "screen": "randintnorep-wizard",
+          "highlight": "lower",
           "narration": "Type the smallest label.",
           "skillType": "parameter"
         },
         {
           "stepNumber": 15,
-          "key": ",",
-          "screen": "home",
-          "highlight": "entry line",
-          "narration": "Comma between arguments.",
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "upper",
+          "narration": "Down to the upper bound.",
           "skillType": "navigation"
         },
         {
           "stepNumber": 16,
           "key": "{hi}",
-          "screen": "home",
-          "highlight": "entry line",
+          "screen": "randintnorep-wizard",
+          "highlight": "upper",
           "narration": "Type the largest label.",
           "skillType": "parameter"
         },
         {
           "stepNumber": 17,
-          "key": ",",
-          "screen": "home",
-          "highlight": "entry line",
-          "narration": "Comma before the sample size.",
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "n",
+          "narration": "Down to n, the sample size.",
           "skillType": "navigation"
         },
         {
           "stepNumber": 18,
           "key": "{n}",
-          "screen": "home",
-          "highlight": "entry line",
+          "screen": "randintnorep-wizard",
+          "highlight": "n",
           "narration": "Type how many labels to select.",
           "skillType": "parameter"
         },
         {
           "stepNumber": 19,
-          "key": ")",
-          "screen": "home",
-          "highlight": "entry line",
-          "narration": "Close the parentheses.",
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "Paste",
+          "narration": "Down to Paste.",
           "skillType": "navigation"
         },
         {
           "stepNumber": 20,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Paste the completed command onto the home screen.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 21,
           "key": "ENTER",
           "screen": "home",
           "highlight": "result line",
@@ -7936,9 +7966,9 @@
         {
           "stepNumber": 13,
           "key": "8",
-          "screen": "home",
+          "screen": "randintnorep-wizard",
           "highlight": "8:randIntNoRep(",
-          "narration": "Paste randIntNoRep( — every subject must appear exactly once in the ordering.",
+          "narration": "Open randIntNoRep — every subject must appear exactly once in the ordering. The calculator prompts for each value.",
           "skillType": "confirmation",
           "commonErrors": [
             {
@@ -7950,37 +7980,61 @@
         {
           "stepNumber": 14,
           "key": "{lo}",
-          "screen": "home",
-          "highlight": "entry line",
+          "screen": "randintnorep-wizard",
+          "highlight": "lower",
           "narration": "Type the smallest subject label.",
           "skillType": "parameter"
         },
         {
           "stepNumber": 15,
-          "key": ",",
-          "screen": "home",
-          "highlight": "entry line",
-          "narration": "Comma between arguments.",
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "upper",
+          "narration": "Down to the upper bound.",
           "skillType": "navigation"
         },
         {
           "stepNumber": 16,
           "key": "{hi}",
-          "screen": "home",
-          "highlight": "entry line",
-          "narration": "Type the largest subject label — with no third argument, randIntNoRep gives a full random ordering.",
+          "screen": "randintnorep-wizard",
+          "highlight": "upper",
+          "narration": "Type the largest subject label.",
           "skillType": "parameter"
         },
         {
           "stepNumber": 17,
-          "key": ")",
-          "screen": "home",
-          "highlight": "entry line",
-          "narration": "Close the parentheses.",
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "n",
+          "narration": "Down to n.",
           "skillType": "navigation"
         },
         {
           "stepNumber": 18,
+          "key": "{n}",
+          "screen": "randintnorep-wizard",
+          "highlight": "n",
+          "narration": "Type the total number of subjects — the full ordering places everyone.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 19,
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "Paste",
+          "narration": "Down to Paste.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 20,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Paste the completed command onto the home screen.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 21,
           "key": "ENTER",
           "screen": "home",
           "highlight": "result line",
