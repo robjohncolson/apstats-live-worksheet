@@ -360,6 +360,48 @@
     // Home screen lines
     var homeLines = [];
 
+    // Raw command entry on the home screen (U3 randomization substrate):
+    // typed characters + pasted MATH▸PRB commands accumulate here until ENTER.
+    var homeEntry = '';
+
+    // MOCK PRNG — deterministic mock output for native/no-ROM mode ONLY.
+    // This is NOT TI's RNG and makes no claim of calculator equivalence;
+    // real-emulator mode shows the ROM's true output, and handheld
+    // validation is property-based, never exact-value. Seeding via
+    // "{n}→rand" reseeds the stream so mock output is reproducible.
+    var mockRandState = 0x2545f491;
+
+    function mockRandSeed(seed) {
+      mockRandState = (seed >>> 0) || 0x2545f491;
+    }
+
+    function mockRandNext() {
+      mockRandState = (mockRandState + 0x6d2b79f5) | 0;
+      var t = Math.imul(mockRandState ^ (mockRandState >>> 15), 1 | mockRandState);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+
+    // n integers in [lo, hi]; distinct via partial Fisher-Yates when noRep.
+    function mockRandInts(lo, hi, n, noRep) {
+      var range = hi - lo + 1;
+      if (noRep && n > range) return null; // ERR:DOMAIN on the real calc
+      if (!noRep) {
+        var out = [];
+        for (var i = 0; i < n; i++) out.push(lo + Math.floor(mockRandNext() * range));
+        return out;
+      }
+      var pool = [];
+      for (var v = lo; v <= hi; v++) pool.push(v);
+      var picked = [];
+      for (var k = 0; k < n; k++) {
+        var idx = k + Math.floor(mockRandNext() * (pool.length - k));
+        var tmp = pool[k]; pool[k] = pool[idx]; pool[idx] = tmp;
+        picked.push(pool[k]);
+      }
+      return picked;
+    }
+
     // Result screen state
     var resultState = null;   // { lines, scrollable, nextPage }
     var resultHistory = [];   // stack of previous result screen IDs for UP navigation
@@ -426,7 +468,7 @@
 
       switch (screen.type) {
         case 'home':
-          renderer.renderHome(homeLines);
+          renderer.renderHome(homeEntry ? homeLines.concat([homeEntry]) : homeLines);
           break;
         case 'menu':
           if (activeMenu) {
@@ -495,6 +537,15 @@
         itemIndex: evt.itemIndex,
         itemLabel: evt.itemLabel
       });
+
+      // paste:X — append X to the home entry line (raw command entry)
+      // instead of opening a wizard/editor. E.g. MATH▸PRB▸randIntNoRep(.
+      if (typeof target === 'string' && target.indexOf('paste:') === 0) {
+        var pasted = target.slice(6);
+        goHome();
+        homeEntry += pasted;
+        return;
+      }
 
       // Determine if the target is a wizard or editor
       var FieldTables = getFieldTables();
@@ -735,6 +786,14 @@
 
     // ── Home screen key handler ─────────────────────────────────────────
 
+    // Characters typeable into the raw home entry line.
+    var HOME_KEY_CHARS = {
+      ZERO: '0', ONE: '1', TWO: '2', THREE: '3', FOUR: '4',
+      FIVE: '5', SIX: '6', SEVEN: '7', EIGHT: '8', NINE: '9',
+      DECIMAL: '.', COMMA: ',', LPAREN: '(', RPAREN: ')',
+      NEGATIVE: '-', STO: '→'
+    };
+
     function handleHomeKey(key) {
       if (key === 'STAT') {
         openMenu('stat-menu');
@@ -744,11 +803,61 @@
         openMenu('zoom-menu');
         return;
       }
+      if (key === 'MATH') {
+        openMenu('math-menu');
+        return;
+      }
       if (key === 'CLEAR') {
-        homeLines = [];
+        // CLEAR wipes the entry line first (TI behavior), then the history.
+        if (homeEntry) homeEntry = '';
+        else homeLines = [];
+        return;
+      }
+      if (key === 'ENTER') {
+        if (homeEntry) evaluateHomeEntry();
+        return;
+      }
+      var ch = HOME_KEY_CHARS[key];
+      if (ch !== undefined) {
+        homeEntry += ch;
         return;
       }
       // Other keys on home: ignore for now
+    }
+
+    // Evaluates the raw home entry. Only the U3 randomization commands are
+    // modeled; anything else echoes with an ERR:SYNTAX line (mock-only).
+    function evaluateHomeEntry() {
+      var entry = homeEntry;
+      homeEntry = '';
+      homeLines.push(entry);
+
+      var seedMatch = /^(-?\d+(?:\.\d+)?)→rand$/.exec(entry);
+      if (seedMatch) {
+        var seed = Number(seedMatch[1]);
+        mockRandSeed(Math.abs(Math.round(seed * 1000)));
+        homeLines.push(String(seed));
+        return;
+      }
+
+      if (entry === 'rand') {
+        homeLines.push(String(Math.round(mockRandNext() * 1e10) / 1e10));
+        return;
+      }
+
+      var callMatch = /^(randInt|randIntNoRep)\((-?\d+),(-?\d+)(?:,(\d+))?\)$/.exec(entry);
+      if (callMatch) {
+        var lo = Number(callMatch[2]);
+        var hi = Number(callMatch[3]);
+        var n = callMatch[4] ? Number(callMatch[4]) : (callMatch[1] === 'randIntNoRep' ? hi - lo + 1 : 1);
+        var values = (lo <= hi && n >= 1)
+          ? mockRandInts(lo, hi, n, callMatch[1] === 'randIntNoRep')
+          : null;
+        homeLines.push(values ? '{' + values.join(' ') + '}' : 'ERR:DOMAIN');
+        return;
+      }
+
+      homeLines.push('ERR:SYNTAX');
     }
 
     // ── Menu screen key handler ─────────────────────────────────────────
@@ -759,6 +868,13 @@
       if (key === 'CLEAR') {
         goHome();
         return;
+      }
+
+      // Menu-nav expects prefix CHARS ('1'-'9', '0'); convert digit button ids
+      // so number-key jump-and-select works (e.g. 8 on MATH▸PRB).
+      var digit = HOME_KEY_CHARS[key];
+      if (digit !== undefined && digit >= '0' && digit <= '9') {
+        key = digit;
       }
 
       var result = activeMenu.handleKey(key);

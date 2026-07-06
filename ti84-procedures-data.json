@@ -622,6 +622,48 @@
       "description": "ZOOM menu with ZoomStat available."
     },
     {
+      "id": "math-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": ["MATH", "PRB"],
+      "activeTab": "MATH",
+      "items": [
+        "1:▶Frac",
+        "2:▶Dec",
+        "3:³",
+        "4:³√(",
+        "5:ˣ√",
+        "6:fMin(",
+        "7:fMax(",
+        "8:nDeriv(",
+        "9:fnInt(",
+        "0:summation Σ(",
+        "A:logBASE(",
+        "B:piecewise("
+      ],
+      "cursor": 0,
+      "description": "MATH menu with MATH tab active. Only MATH and PRB tabs are modeled."
+    },
+    {
+      "id": "math-prb-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": ["MATH", "PRB"],
+      "activeTab": "PRB",
+      "items": [
+        "1:rand",
+        "2:nPr",
+        "3:nCr",
+        "4:!",
+        "5:randInt(",
+        "6:randNorm(",
+        "7:randBin(",
+        "8:randIntNoRep("
+      ],
+      "cursor": 0,
+      "description": "MATH menu with PRB tab active — rand, randInt(, randIntNoRep( paste to the home screen."
+    },
+    {
       "id": "one-var-stats-wizard",
       "type": "wizard",
       "description": "1-Var Stats setup wizard.",

@@ -130,6 +130,47 @@
         cursor: 0
       },
 
+      // MATH menu (U3 randomization substrate). The real CE has five tabs
+      // (MATH/NUM/CMPLX/PRB/FRAC); only MATH + PRB are modeled — see the
+      // 'math' TAB_FAMILIES note.
+      'math-menu': {
+        title: 'MATH',
+        tabs: ['MATH', 'PRB'],
+        activeTab: 'MATH',
+        items: [
+          '1:▶Frac',
+          '2:▶Dec',
+          '3:³',
+          '4:³√(',
+          '5:ˣ√',
+          '6:fMin(',
+          '7:fMax(',
+          '8:nDeriv(',
+          '9:fnInt(',
+          '0:summation Σ(',
+          'A:logBASE(',
+          'B:piecewise('
+        ],
+        cursor: 0
+      },
+
+      'math-prb-menu': {
+        title: 'MATH',
+        tabs: ['MATH', 'PRB'],
+        activeTab: 'PRB',
+        items: [
+          '1:rand',
+          '2:nPr',
+          '3:nCr',
+          '4:!',
+          '5:randInt(',
+          '6:randNorm(',
+          '7:randBin(',
+          '8:randIntNoRep('
+        ],
+        cursor: 0
+      },
+
       'list-names-menu': {
         title: 'LIST NAMES',
         tabs: null,
@@ -241,6 +282,13 @@
       'matrix': {
         tabs: ['NAMES', 'MATH', 'EDIT'],
         menuIds: ['matrix-menu-names', 'matrix-menu-math', 'matrix-menu-edit']
+      },
+      // The real CE has MATH/NUM/CMPLX/PRB/FRAC; only the two tabs the
+      // trainer teaches are modeled (U3 randomization). One RIGHT from
+      // MATH reaches PRB, matching what walkthrough steps will teach.
+      'math': {
+        tabs: ['MATH', 'PRB'],
+        menuIds: ['math-menu', 'math-prb-menu']
       }
     },
 
@@ -292,6 +340,14 @@
         0: 'plot1-editor-scatter', // 1:Plot1...
         1: 'plot1-editor-scatter', // 2:Plot2...
         2: 'plot1-editor-scatter'  // 3:Plot3...
+      },
+
+      // paste:X targets append X to the home-screen entry line instead of
+      // opening a wizard — raw command entry (U3 randomization substrate).
+      'math-prb-menu': {
+        0: 'paste:rand',           // 1:rand
+        4: 'paste:randInt(',       // 5:randInt(
+        7: 'paste:randIntNoRep('   // 8:randIntNoRep(
       }
     },
 
