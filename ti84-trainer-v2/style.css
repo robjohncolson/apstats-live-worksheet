@@ -1534,3 +1534,37 @@ code {
     zoom: 0.66;
   }
 }
+
+/* ── Status strip (per-student state spec §3) ──────────────────────────────
+   The due/new/mastery cards collapsed to one line; the identity label says
+   WHOSE numbers these are — the trust anchor on shared devices. */
+
+.status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin: 12px 16px 16px;
+  padding: 8px 14px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark);
+  font-size: 0.95rem;
+}
+
+.strip-identity {
+  font-weight: 700;
+}
+
+.strip-stats strong {
+  font-size: 1.05rem;
+}
+
+.strip-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}

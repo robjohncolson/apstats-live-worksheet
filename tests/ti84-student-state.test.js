@@ -201,6 +201,103 @@ describe('list-memory namespacing (Codex amendment 2)', () => {
   });
 });
 
+describe('import dialog — explicit one-time claim (spec §2.2)', () => {
+  function anonBlobWithHistory(extra = {}) {
+    return {
+      version: 2,
+      filterUnit: 'all',
+      physicalMode: false,
+      introSeen: true,
+      records: {
+        'one-var-stats': { track1: {}, track2: { handheldPassed: true } },
+        histogram: { track1: {}, track2: { handheldPassed: false } },
+      },
+      ...extra,
+    };
+  }
+
+  const dialog = () => document.querySelector('[data-action="import-history"]');
+
+  async function click(selector) {
+    const el = document.querySelector(selector);
+    if (!el) throw new Error(`No element matches ${selector}`);
+    el.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    await flush();
+  }
+
+  it('offers unclaimed anon history to a signed-in student with empty state', async () => {
+    writeState(`${STATE}.anon`, anonBlobWithHistory());
+    setStudent('STU_A');
+    await bootTrainer();
+    expect(dialog()).toBeTruthy();
+    expect(document.body.innerHTML).toContain('2</strong> procedures started');
+    expect(document.body.innerHTML).toContain('1</strong> mastered');
+  });
+
+  it('importing copies the history and claims the anon blob', async () => {
+    writeState(`${STATE}.anon`, anonBlobWithHistory());
+    window.localStorage.setItem(`${MEM}.anon`, JSON.stringify({ L1: [1, 2] }));
+    setStudent('STU_A');
+    await bootTrainer();
+    await click('[data-action="import-history"]');
+
+    expect(dialog()).toBe(null);
+    expect(readState(`${STATE}.STU_A`)?.records['one-var-stats']).toBeTruthy();
+    expect(readState(`${STATE}.STU_A`)?.claimedBy).toBeUndefined();
+    expect(readState(`${STATE}.anon`)?.claimedBy).toBe('STU_A');
+    expect(readState(`${MEM}.STU_A`)).toEqual({ L1: [1, 2] });
+  });
+
+  it('a second student is never offered a claimed blob', async () => {
+    writeState(`${STATE}.anon`, anonBlobWithHistory({ claimedBy: 'STU_A' }));
+    setStudent('STU_B');
+    await bootTrainer();
+    expect(dialog()).toBe(null);
+  });
+
+  it('declining persists and the dialog never returns for that student', async () => {
+    writeState(`${STATE}.anon`, anonBlobWithHistory());
+    setStudent('STU_A');
+    await bootTrainer();
+    await click('[data-action="decline-history"]');
+    expect(dialog()).toBe(null);
+    expect(readState(`${STATE}.STU_A`)?.importDeclined).toBe(true);
+
+    // Re-boot: still no offer, and the anon blob stays unclaimed for its owner.
+    await bootTrainer();
+    expect(dialog()).toBe(null);
+    expect(readState(`${STATE}.anon`)?.claimedBy).toBeUndefined();
+  });
+
+  it('students with existing state and anon sessions never see the offer', async () => {
+    writeState(`${STATE}.anon`, anonBlobWithHistory());
+    writeState(`${STATE}.STU_C`, { version: 2, records: { histogram: {} } });
+    setStudent('STU_C');
+    await bootTrainer();
+    expect(dialog()).toBe(null);
+
+    setStudent(null);
+    await bootTrainer();
+    expect(dialog()).toBe(null);
+  });
+});
+
+describe('status strip', () => {
+  it('shows the signed-in identity label with counts', async () => {
+    setStudent('fig_panda');
+    await bootTrainer();
+    expect(document.body.innerHTML).toContain('fig_panda’s progress');
+    expect(document.querySelector('.strip-stats')).toBeTruthy();
+    expect(document.querySelector('#unit-filter')).toBeTruthy();
+  });
+
+  it('shows the device label when signed out', async () => {
+    setStudent(null);
+    await bootTrainer();
+    expect(document.body.innerHTML).toContain('This device (not signed in)');
+  });
+});
+
 describe('source-level trigger wiring', () => {
   const appSrc = sources.app;
   it('registers storage + visibilitychange identity triggers and a pre-save recheck', () => {

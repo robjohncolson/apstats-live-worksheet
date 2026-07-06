@@ -370,7 +370,7 @@ describe('onboarding and progress signals', () => {
     record.track1.nextReview = '2099-01-01'; // track1 not due; track2 past-due
     await bootTrainer({ records: { 't-test-stats': record } });
 
-    const dueValue = document.querySelector('.dashboard-card strong').textContent.trim();
+    const dueValue = document.querySelector('.strip-stats strong').textContent.trim();
     expect(dueValue).toBe('0');
   });
 
@@ -385,7 +385,7 @@ describe('onboarding and progress signals', () => {
 
     const record = persisted().records['matrix-entry'];
     expect(record.track2.nextReview).not.toBe(record.track2.lastReview);
-    const dueValue = document.querySelector('.dashboard-card strong').textContent.trim();
+    const dueValue = document.querySelector('.strip-stats strong').textContent.trim();
     expect(dueValue).toBe('0');
   });
 
@@ -505,9 +505,8 @@ describe('handheld mastery check', () => {
     strong.track1.exposures = 8;
     await bootTrainer({ records: { 't-test-stats': strong } });
     const masteryBefore = Number(
-      [...document.querySelectorAll('.dashboard-card')]
-        .find((c) => c.textContent.includes('Mastery'))
-        .querySelector('strong').textContent.replace('%', ''),
+      [...document.querySelectorAll('.strip-stats strong')]
+        .at(-1).textContent.replace('%', ''),
     );
     expect(masteryBefore).toBeLessThanOrEqual(70);
   });

@@ -539,6 +539,7 @@
     choiceFlash: null,
     romDialogOpen: false,
     optionsDialogOpen: false,
+    importOffer: null,
     practice: null,
     clutch: {
       engaged: true,
@@ -1061,6 +1062,7 @@
     app.practice = null;
     resetClutchState();
     app.banner = 'Pick a problem, choose the right procedure, and we drill the keys.';
+    evaluateImportOffer();
     return true;
   }
 
@@ -4179,25 +4181,29 @@
     `;
   }
 
+  // WHOSE numbers these are — the trust anchor for shared devices
+  // (TI84_TRAINER_STUDENT_STATE_SPEC.md §3).
+  function identityLabel() {
+    const who = window.rosterClient?.current?.();
+    return who?.username
+      ? `👤 ${escapeHtml(who.username)}’s progress`
+      : '👤 This device (not signed in)';
+  }
+
+  // Compact status strip — the old due/new/mastery cards collapsed to one
+  // line so the calculator gets the vertical space.
   function renderDashboard(snapshot) {
     const dashHidden = isMobileViewport() && app.walkthrough ? ' mobile-hidden' : '';
 
     return `
-      <section class="dashboard-row${dashHidden}">
-        <div class="dashboard-card">
-          <span>Due</span>
-          <strong>${snapshot.dueCount}</strong>
-        </div>
-        <div class="dashboard-card">
-          <span>New</span>
-          <strong>${snapshot.newCount}</strong>
-        </div>
-        <div class="dashboard-card">
-          <span>Mastery</span>
-          <strong>${snapshot.mastery}%</strong>
-        </div>
-        <div class="dashboard-card dashboard-control">
-          <label for="unit-filter">Unit</label>
+      <section class="status-strip${dashHidden}">
+        <span class="strip-identity">${identityLabel()}</span>
+        <span class="strip-stats">
+          Due <strong>${snapshot.dueCount}</strong>
+          · New <strong>${snapshot.newCount}</strong>
+          · Mastery <strong>${snapshot.mastery}%</strong>
+        </span>
+        <label class="strip-unit" for="unit-filter">Unit
           <select id="unit-filter">
             ${UNIT_OPTIONS.map((option) => `
               <option value="${option}" ${option === app.filterUnit ? 'selected' : ''}>
@@ -4205,8 +4211,103 @@
               </option>
             `).join('')}
           </select>
-        </div>
+        </label>
       </section>
+    `;
+  }
+
+  // Explicit one-time import of this device's unclaimed anon history
+  // (TI84_TRAINER_STUDENT_STATE_SPEC.md §2.2). Never automatic; never
+  // offered twice; a claimed blob is never offered to a second student.
+  function evaluateImportOffer() {
+    app.importOffer = null;
+    if (activeKeyId === 'anon') return;
+    if (Object.keys(app.persisted.records ?? {}).length > 0) return;
+    if (app.persisted.importDeclined) return;
+
+    let anon = null;
+    try {
+      anon = JSON.parse(window.localStorage.getItem(`${STORAGE_KEY}.anon`) ?? 'null');
+    } catch (error) {
+      return;
+    }
+    const records = anon?.records ?? {};
+    const ids = Object.keys(records);
+    if (!ids.length || anon.claimedBy) return;
+
+    const mastered = ids.filter((id) => records[id]?.track2?.handheldPassed).length;
+    app.importOffer = { procedures: ids.length, mastered };
+  }
+
+  function importAnonHistory() {
+    try {
+      const anonRaw = window.localStorage.getItem(`${STORAGE_KEY}.anon`);
+      const anon = anonRaw ? JSON.parse(anonRaw) : null;
+      if (!anon || anon.claimedBy) {
+        app.importOffer = null;
+        render();
+        return;
+      }
+
+      app.persisted = {
+        ...app.persisted,
+        ...anon,
+        records: anon.records ?? {},
+        physicalMode: anon.physicalMode !== false,
+      };
+      delete app.persisted.claimedBy;
+      app.filterUnit = app.persisted.filterUnit ?? 'all';
+
+      // Claim the anon blob so no second student is ever offered it.
+      anon.claimedBy = activeKeyId;
+      window.localStorage.setItem(`${STORAGE_KEY}.anon`, JSON.stringify(anon));
+
+      const anonMem = window.localStorage.getItem(`${MEMORY_KEY}.anon`);
+      if (anonMem !== null) {
+        window.localStorage.setItem(memKey(), anonMem);
+        listMemory = loadListMemory();
+      }
+
+      savePersisted();
+      app.importOffer = null;
+      app.banner = 'Practice history imported — it counts as yours now.';
+      render();
+    } catch (error) {
+      console.warn('Import of device history failed.', error);
+      app.importOffer = null;
+      render();
+    }
+  }
+
+  function renderImportDialog() {
+    if (!app.importOffer) {
+      return '';
+    }
+
+    const { procedures, mastered } = app.importOffer;
+
+    return `
+      <div class="dialog-backdrop">
+        <section class="dialog-window">
+          <div class="dialog-titlebar">
+            <span class="close-box"></span>
+            <strong>Is this your practice history?</strong>
+            <span></span>
+          </div>
+          <div class="dialog-body">
+            <p>This device has practice history that isn't linked to anyone —
+            <strong>${procedures}</strong> procedure${procedures === 1 ? '' : 's'} started,
+            <strong>${mastered}</strong> mastered.</p>
+            <p class="dialog-note">If it's yours, import it and it counts as your progress.
+            If someone else practiced here, start fresh — importing someone else's work
+            would mix up your mastery record.</p>
+            <div class="button-row">
+              <button type="button" class="mac-button primary" data-action="import-history">Import as mine</button>
+              <button type="button" class="mac-button" data-action="decline-history">No — start fresh</button>
+            </div>
+          </div>
+        </section>
+      </div>
     `;
   }
 
@@ -4349,6 +4450,7 @@
       </main>
       ${renderOptionsDialog()}
       ${renderRomDialog()}
+      ${renderImportDialog()}
     `;
 
     const nextCanvas = document.getElementById('calc-canvas');
@@ -4570,6 +4672,16 @@
         app.optionsDialogOpen = true;
         render();
         break;
+      case 'import-history':
+        importAnonHistory();
+        break;
+      case 'decline-history':
+        app.persisted.importDeclined = true;
+        savePersisted();
+        app.importOffer = null;
+        app.banner = 'Starting fresh — this device’s old history stays unassigned.';
+        render();
+        break;
       case 'close-options-dialog':
         app.optionsDialogOpen = false;
         render();
@@ -4787,6 +4899,7 @@
     bindEvents();
     applyUnitHash();
     void applyPracticeHash();
+    evaluateImportOffer();
     render();
 
     if (!app.persisted.physicalMode) {
