@@ -89,12 +89,20 @@ export const ANSWER_KEY = {
 // Blooket-bearing lessons (the Blooket-track denominator). Only 1.2 has one.
 export const BLOOKET_LESSONS = ['1.2'];
 
+// TI-84 trainer lesson map (the trainer-track denominator + procedure
+// bucketing). Only 1.2 has a mapped skill. Passed EXPLICITLY so server and
+// bundled-client runs resolve the same map (the bundle neutralizes the
+// fs-backed default) and the trainer surface is exercised by the parity test.
+// Grade-inert at the default weight 0 (TI84_GRADE_INTEGRATION_SPEC.md §C).
+export const TRAINER_MAP = { '1.2': ['histogram'] };
+
 // opts object for computeGrade(rows, ANSWER_KEY, CONFIG, GRADE_OPTS).
 export const GRADE_OPTS = {
   lessonSchedule: SCHEDULE,
   section: SECTION,
   worksheetBlankCounts: WORKSHEET_BLANK_COUNTS,
   blooketLessons: BLOOKET_LESSONS,
+  trainerMap: TRAINER_MAP,
   asOf: AS_OF,
 };
 

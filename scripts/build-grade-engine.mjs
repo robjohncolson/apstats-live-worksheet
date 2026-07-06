@@ -99,6 +99,13 @@ function transformModule(mod) {
       /const BLOOKET_LESSONS = \(\(\) => \{[\s\S]*?\}\)\(\);/,
       'const BLOOKET_LESSONS = [];'
     );
+    // Same for the fs-backed TI-84 lesson map: the client passes trainerMap via
+    // opts (or omits it → the strand is simply invisible; grade numbers are
+    // unaffected at weight 0 — TI84_GRADE_INTEGRATION_SPEC.md §C).
+    src = src.replace(
+      /const TRAINER_LESSON_MAP = \(\(\) => \{[\s\S]*?\}\)\(\);/,
+      'const TRAINER_LESSON_MAP = null;'
+    );
     // Drop the express route mounter (and its preceding banner) → EOF.
     const cutAt = src.search(/\n\/\/ ── Route mounter|^export function mountGrade/m);
     if (cutAt !== -1) src = src.slice(0, cutAt);

@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: b4e4b2dcb6a8
+ * engine-version: b8a45e45e25f
  */
 ;(function (root) {
   'use strict';
@@ -113,6 +113,16 @@
       // lower the grade — FINDING F4). Monotonicity wins. (only-helps stays available
       // for experimentation but must not ship.)
       v3AheadOfScheduleLessons: 'not-until-due',
+    
+      // ── TI-84 trainer strand (TI84_GRADE_INTEGRATION_SPEC.md §C) ────────────────
+      // weight 0 = VISIBLE-BUT-UNCOUNTED: per-lesson trainer pct + quarter
+      // trainerDue/Done/Todo + workTracks.trainer are surfaced, but the track never
+      // enters workAvgV3 (grade-invariant — pinned by test). Setting weight > 0
+      // (teacher decision, ~Sept with real data) adds tracks.trainer at that weight,
+      // which RENORMALIZES the other Work slices — a real grade change. Counted mode
+      // should also restrict to mastery-tier evidence per the spec before enabling.
+      // doneThreshold: what the Desk shows as "trainer done" (display only).
+      trainer: { weight: 0, doneThreshold: 80 },
     };
     
     // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
@@ -585,6 +595,8 @@
             blooket: null,          // 0..100 — RESOLVED: game score, else flashcard make-up, else null
             blooketGame: null,      // 0..100 from a real Blooket game row (source 'blooket')
             blooketFlashcard: null, // 0..100 from a BL-…-DESK_DONE flashcard pass (make-up)
+            trainer: null,          // 0..100 — TI-84 trainer pct (mean over mapped procedures, missing=0)
+            trainerProcScores: /** @type {Record<string, number>|null} */ (null), // procId → best 0..1
           });
         }
         return byTopic.get(topicKey);
@@ -632,6 +644,46 @@
           credit = 1;
         }
         if (base) reviewCredit.set(base, Math.max(reviewCredit.get(base) || 0, credit));
+      }
+    
+      // TI-84 trainer rows (source='trainer', item_id `TI84-<procedureId>`) carry no
+      // unit/lesson in the id — the baked lesson map (opts.trainerMap: topicKey →
+      // [procedureId]) buckets them, so they get their own pre-pass (they match no
+      // parseItemLesson pattern and no source branch below — never double-counted).
+      // Procedure ids are sanitized the same way the trainer client builds item_ids.
+      // Unmapped procedures (incl. smoke probes like TI84-SMOKE-0016) are ignored.
+      // Scores are 0..1 raise-only client-side; max() here is defensive against
+      // multi-device races. GRADE-INERT unless config.trainer.weight > 0 — see
+      // computeQuarterV3 (TI84_GRADE_INTEGRATION_SPEC.md §C).
+      const trainerMap = (opts && opts.trainerMap) || null;
+      if (trainerMap) {
+        const procTopics = new Map();
+        for (const [topicKey, procs] of Object.entries(trainerMap)) {
+          if (!Array.isArray(procs)) continue;
+          for (const proc of procs) {
+            const procKey = String(proc).replace(/[^A-Za-z0-9-]/g, '-');
+            if (!procTopics.has(procKey)) procTopics.set(procKey, []);
+            procTopics.get(procKey).push(topicKey);
+          }
+        }
+        for (const row of (Array.isArray(rows) ? rows : [])) {
+          if (!row || row.source !== 'trainer' || typeof row.item_id !== 'string') continue;
+          if (!row.item_id.startsWith('TI84-')) continue;
+          // Reject null/blank/non-numeric BEFORE coercion (Number(null)===0 would
+          // write a spurious 0) — mirrors the blooket guard.
+          const raw = row.score;
+          if (raw === null || raw === undefined || raw === '' || !Number.isFinite(Number(raw))) continue;
+          const procKey = row.item_id.slice('TI84-'.length);
+          const topics = procTopics.get(procKey);
+          if (!topics) continue;
+          const score = Math.min(1, Math.max(0, Number(raw)));
+          for (const topicKey of topics) {
+            const acc = ensure(topicKey);
+            if (!acc.trainerProcScores) acc.trainerProcScores = {};
+            const prev = acc.trainerProcScores[procKey];
+            acc.trainerProcScores[procKey] = prev != null ? Math.max(prev, score) : score;
+          }
+        }
       }
     
       for (const row of (Array.isArray(rows) ? rows : [])) {
@@ -803,6 +855,25 @@
           acc.blooket = null;
         }
         acc.blooket = acc.blooket != null ? Math.round(acc.blooket * 10) / 10 : null;
+    
+        // TI-84 trainer pct (0..100): mean over the topic's MAPPED procedures of the
+        // best recorded score, a missing procedure counting 0 — transparent partial
+        // progress that can only rise as more procedures are practiced. null = the
+        // student has touched none of this topic's procedures ("no evidence yet",
+        // same semantics as blooket); the quarter track turns missing-but-due into 0.
+        acc.trainer = null;
+        if (trainerMap && acc.trainerProcScores) {
+          const procs = trainerMap[acc.topicKey];
+          if (Array.isArray(procs) && procs.length > 0) {
+            let sum = 0;
+            for (const proc of procs) {
+              const procKey = String(proc).replace(/[^A-Za-z0-9-]/g, '-');
+              const s = acc.trainerProcScores[procKey];
+              sum += s != null ? s : 0;
+            }
+            acc.trainer = Math.round((sum / procs.length) * 100 * 10) / 10;
+          }
+        }
       }
     
       return byTopic;
@@ -1153,6 +1224,7 @@
       workTracks = /** @type {{posters?: number|null}|null} */ (null),
       blooketLessons = /** @type {string[]|null} */ (null),   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
       quizLessons = /** @type {string[]|null} */ (null),      // [topicKey] that HAVE a quiz — the Quiz-track denominator
+      trainerLessons = /** @type {string[]|null} */ (null),   // [topicKey] with mapped TI-84 skills — the trainer-track denominator
     }) {
       const period = sectionToPeriod(section);
       const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
@@ -1334,6 +1406,28 @@
       }
       const blooketAvg = blooketDue > 0 ? (blooketSum / blooketDue) / 100 : null;
     
+      // ── TI-84 trainer track (TI84_GRADE_INTEGRATION_SPEC.md §C) ──
+      // Mirrors the Blooket track: denominator = trainer-bearing lessons (topics in
+      // the baked lesson map) that are scheduled-due OR already have a trainer score;
+      // missing-but-due counts 0. No combined-group collapse: unlike a combined
+      // Blooket row, trainer scores attach per-topic (distinct skills), so each
+      // mapped topic is its own slot. ALWAYS visible (workTracks.trainer +
+      // trainerDue/Done/Todo); COUNTED in workAvg only when config.trainer.weight>0
+      // (0 today — enabling it renormalizes the other Work slices: teacher call).
+      const trainerSet = new Set(Array.isArray(trainerLessons) ? trainerLessons : []);
+      let trainerSum = 0, trainerDue = 0, trainerDone = 0;
+      const trainerTodo = /** @type {string[]} */ ([]);
+      for (const topicKey of bandLessons) {
+        if (!trainerSet.has(topicKey)) continue;
+        const r = lessonMap.get(topicKey);
+        if (!(isDue(topicKey) || (r && r.trainer != null))) continue;
+        trainerDue += 1;
+        if (r && r.trainer != null) { trainerSum += r.trainer; trainerDone += 1; }
+        else { trainerTodo.push(topicKey); }
+      }
+      const trainerAvg = trainerDue > 0 ? (trainerSum / trainerDue) / 100 : null;
+      const trainerWeight = (config && config.trainer && Number(config.trainer.weight)) || 0;
+    
       // ── PC track (raw PC % per unit, bucketed by unit→quarter band) ──
       // Per the spec, pcAvg is the mean of PCs DUE-BY-TODAY. A unit's PC is "due"
       // once the unit's last lesson is due-by-today (the PC is scheduled 1-2 days
@@ -1388,7 +1482,16 @@
         // workTracks channel. null -> renormalized away by workAvgV3.
         blooket: blooketAvg,
       };
-      const workAvg = workAvgV3(tracks, workWeights);
+      // Trainer joins the Work blend ONLY when its weight is enabled. At weight 0
+      // (shipped default) the key is absent from BOTH tracks and weights, so the
+      // renormalization math is bit-identical to the pre-trainer engine (pinned by
+      // the grade-invariance test).
+      let effectiveWorkWeights = workWeights;
+      if (trainerWeight > 0) {
+        /** @type {Record<string, number|null>} */ (tracks).trainer = trainerAvg;
+        effectiveWorkWeights = { ...workWeights, trainer: trainerWeight };
+      }
+      const workAvg = workAvgV3(tracks, effectiveWorkWeights);
       const quarterGrade = to100(combineV3(pcAvg, workAvg, gates));
     
       // ── Ceiling: best case if every remaining/un-attempted item scores 100 ──
@@ -1405,7 +1508,7 @@
       const pcAvgBest = pcTotal > 0
         ? (pcSumPct + (pcTotal - pcGradedCount) * 100) / pcTotal / 100
         : null;
-      const workAvgBest = workAvgV3({
+      const bestTracks = {
         lessons: lessonsAvgBest,
         quizzes: quizzesAvgBest,
         posters: tracks.posters,
@@ -1413,7 +1516,12 @@
         // We do NOT assume future blookets score 100 (unlike lessons/quizzes/PC,
         // which have a known remaining count). A missing blooket stays excluded.
         blooket: blooketAvg,
-      }, workWeights);
+      };
+      if (trainerWeight > 0) {
+        // Same no-inflation rule as blooket: the trainer ceiling is its recorded mean.
+        /** @type {Record<string, number|null>} */ (bestTracks).trainer = trainerAvg;
+      }
+      const workAvgBest = workAvgV3(bestTracks, effectiveWorkWeights);
       // Ceiling only when the quarter has signal (matches Phase 6: nothing due → null).
       const ceiling = quarterGrade == null ? null : to100(combineV3(pcAvgBest, workAvgBest, gates));
     
@@ -1446,6 +1554,9 @@
           quizzes: to100(quizzesAvg),
           blooket: to100(blooketAvg),
           posters: to100(tracks.posters),
+          // TI-84 trainer sub-track (0..100 or null). VISIBLE regardless of weight;
+          // it participates in workAvg only when config.trainer.weight > 0.
+          trainer: to100(trainerAvg),
         },
         // Blooket make-up surface: how many Blooket-bearing lessons are due, how many
         // have a score, and the topicKeys still needing one (the flashcard make-ups).
@@ -1458,6 +1569,11 @@
         quizDue,
         quizDone,
         quizTodo,
+        // TI-84 trainer surface (symmetry with Blooket): trainer-bearing lessons due,
+        // how many have a trainer score, and the topicKeys still without one.
+        trainerDue,
+        trainerDone,
+        trainerTodo,
       };
     }
     
@@ -1497,9 +1613,11 @@
     // topicNames: optional topicKey → topic name string
     // quizTotals: optional topicKey → gradable-quiz-question count (computeQuizTotals)
     // blooketLessons: optional [topicKey] that HAVE a Blooket → sets hasBlooket per lesson
-    function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = []) {
+    // trainerLessons: optional [topicKey] with mapped TI-84 skills → sets hasTrainer per lesson
+    function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = []) {
       const result = [];
       const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
+      const trainerSet = new Set(Array.isArray(trainerLessons) ? trainerLessons : []);
     
       // Include every lesson from the schedule (not just those with data).
       const sortedKeys = Object.keys(schedule).sort((a, b) => {
@@ -1553,6 +1671,11 @@
           // Whether this lesson HAS a Blooket at all (in the make-up denominator), so
           // the coach can tell "Blooket not done yet" apart from "no Blooket exists".
           hasBlooket: blooketSet.has(topicKey),
+          // TI-84 trainer: per-lesson pct (mean over mapped procedures, missing=0;
+          // null = untouched) + whether the lesson has mapped calculator skills at
+          // all. Display-only today (weight 0) — the Desk 🖩 chip reads these.
+          trainer: lessonResult ? (lessonResult.trainer != null ? lessonResult.trainer : null) : null,
+          hasTrainer: trainerSet.has(topicKey),
           items: lessonResult
             ? {
                 frq: lessonResult.frqItems.map(f => ({ itemId: f.itemId, score: f.score, ts: f.ts })),
@@ -1924,6 +2047,14 @@
     // to [] if the file is missing → Blooket track null → renormalized away (no tank).
     const BLOOKET_LESSONS = [];
     
+    // TI-84 trainer lesson map — topicKey → [procedureId]: buckets `TI84-<proc>`
+    // ledger rows to lessons AND is the trainer-track denominator. A committed copy
+    // of data/ti84-lesson-map.json (tests/ti84-lesson-map-sync.test.js at repo root
+    // pins the two files identical). Missing/malformed file → null → the trainer
+    // strand is simply invisible (no tank, mirrors the Blooket fallback).
+    // TI84_GRADE_INTEGRATION_SPEC.md §B/§C.
+    const TRAINER_LESSON_MAP = null;
+    
     // ── Helpers ───────────────────────────────────────────────────────────────────
     
     function extractToken(req) {
@@ -2063,10 +2194,15 @@
       // produces a lesson-weighted quarter grade, not the old unit-mean.
       const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
       const blooketLessons = (opts && opts.blooketLessons) || BLOOKET_LESSONS;
+      // Tests can pass an explicit trainerMap (or null to disable); production uses
+      // the baked map. `!== undefined` (not ||) so an explicit null stays null.
+      const trainerMap = (opts && opts.trainerMap !== undefined) ? opts.trainerMap : TRAINER_LESSON_MAP;
+      const trainerLessons = trainerMap ? Object.keys(trainerMap) : [];
       const allLatestRows = latestPerItem(rows);
       const lessonMap = computeLessonGrades(allLatestRows, config.frqBand, answerKey, schedule, {
         worksheetBlankCounts,
         weights: config.lessonFeederWeights || { ws: 1, W: 2, Q: 3 },
+        trainerMap,
       });
     
       // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
@@ -2143,6 +2279,9 @@
          * @property {number|null} [quizDue]
          * @property {number|null} [quizDone]
          * @property {string[]} [quizTodo]
+         * @property {number|null} [trainerDue]
+         * @property {number|null} [trainerDone]
+         * @property {string[]} [trainerTodo]
          */
         /** @type {QuarterResult} */
         let qResult;
@@ -2165,6 +2304,7 @@
             gradingWindowStart: (config && config.gradingWindowStart) || null,
             blooketLessons,
             quizLessons,
+            trainerLessons,
           });
         } else if (schedule) {
           qResult = computeQuarterFromLessons({
@@ -2250,13 +2390,17 @@
           quizDue: typeof qResult.quizDue === 'number' ? qResult.quizDue : null,
           quizDone: typeof qResult.quizDone === 'number' ? qResult.quizDone : null,
           quizTodo: Array.isArray(qResult.quizTodo) ? qResult.quizTodo : [],
+          // TI-84 trainer surface (visible-but-uncounted; TI84_GRADE_INTEGRATION_SPEC.md).
+          trainerDue: typeof qResult.trainerDue === 'number' ? qResult.trainerDue : null,
+          trainerDone: typeof qResult.trainerDone === 'number' ? qResult.trainerDone : null,
+          trainerTodo: Array.isArray(qResult.trainerTodo) ? qResult.trainerTodo : [],
         };
       }
     
       // ── Phase 6: build the lessons[] array ────────────────────────────────────
       // (quizTotals computed above, reused here.)
       const lessons = schedule
-        ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals, blooketLessons)
+        ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals, blooketLessons, trainerLessons)
         : [];
     
       // Stable sorted unit / completion order.
@@ -2287,7 +2431,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "b4e4b2dcb6a8",
+    _engineVersion: "b8a45e45e25f",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

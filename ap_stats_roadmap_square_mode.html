@@ -6488,6 +6488,44 @@ function _blooketScoreFor(topicId) {
   } catch (_) { return null; }
 }
 
+// TI-84 trainer pct for a topic from the /grade lessons[] cache (mean over the
+// lesson's mapped calculator procedures, missing=0), or null when untouched or
+// the cache is cold. Ledger-authoritative — NEVER derived from the trainer's
+// localStorage, so it is honest cross-device (TI84_GRADE_INTEGRATION_SPEC.md
+// §B). DISPLAY ONLY: _isLessonComplete must not read this — trainer work never
+// gates lesson advancement/greying in this phase.
+function _trainerScoreFor(topicId) {
+  try {
+    if (!topicId || !Array.isArray(_gradeLessonsCache)) return null;
+    for (var i = 0; i < _gradeLessonsCache.length; i++) {
+      if (_gradeLessonsCache[i] && _gradeLessonsCache[i].lessonKey === topicId) {
+        var t = _gradeLessonsCache[i].trainer;
+        return (typeof t === 'number') ? t : null;
+      }
+    }
+    return null;
+  } catch (_) { return null; }
+}
+
+// Does this lesson have mapped TI-84 skills at all? Prefers the static lesson
+// map (loads signed-out; the same curated file the trainer itself resolves);
+// falls back to the /grade hasTrainer flag when the map fetch failed but a
+// grade cache exists.
+function _lessonHasTrainer(topicId) {
+  try {
+    if (!topicId) return false;
+    if (_ti84LessonMap) return !!_ti84LessonMap[topicId];
+    if (Array.isArray(_gradeLessonsCache)) {
+      for (var i = 0; i < _gradeLessonsCache.length; i++) {
+        if (_gradeLessonsCache[i] && _gradeLessonsCache[i].lessonKey === topicId) {
+          return !!_gradeLessonsCache[i].hasTrainer;
+        }
+      }
+    }
+    return false;
+  } catch (_) { return false; }
+}
+
 // Shared red/yellow/green color for a score vs its asset gate (the teacher's
 // ask): 🔴 red below the gate, 🟡 amber at/above the gate but < 100, 🟢 green at
 // 100. Returns the hex, or null when there's no numeric score. Single source of
@@ -8286,6 +8324,11 @@ function _phase2ReDeriveGrade() {
         section: inputs.section || null,
         worksheetBlankCounts: inputs.worksheetBlankCounts || null,
         blooketLessons: inputs.blooketLessons || null,
+        // TI-84 trainer map: keeps the offline-derived trainer surface
+        // (lessons[].trainer, trainerDue/Done/Todo) identical to the server's.
+        // Older cached inputs lack it → null → the strand is simply absent
+        // (grade numbers unaffected at weight 0).
+        trainerMap: inputs.trainerMap || null,
       };
       var g = GradeEngine.computeGrade(rows, inputs.redactedKey, inputs.config, opts);
       if (!g) return null;
@@ -10819,6 +10862,17 @@ function showResourcePanel(inf, dateStr) {
                     : '';
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
             }
+        }
+
+        // TI-84 calculator-skill row (TI84_GRADE_INTEGRATION_SPEC.md §B):
+        // rendered only for lessons with mapped trainer procedures. The chip
+        // shows the ledger-recorded practice pct from /grade (cross-device
+        // honest — never trainer localStorage); the link opens the in-Desk
+        // trainer deep-linked to THIS topic. Display-only: no Done button and
+        // no gate — _isLessonComplete never reads trainer.
+        if (typeof _lessonHasTrainer === 'function' && _lessonHasTrainer(_stuTopicId)) {
+            var _tiScore = (typeof _trainerScoreFor === 'function') ? _trainerScoreFor(_stuTopicId) : null;
+            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:#0000cc;text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '</div>';
         }
 
         // Phase 5: AI-tutor copy button (per-lesson artifact in ai-tutor/u{U}_l{L}.md).
@@ -17992,6 +18046,17 @@ function _renderTi84SkillBtn() {
         if (typeof openApp === 'function') openApp('ti84');
     };
     body.appendChild(btn);
+}
+
+// Open the in-Desk trainer deep-linked to a SPECIFIC topic (the resource
+// panel's Calculator Skill row — any mapped lesson, not just today's). Same
+// force-src trick as the Do-Now chip: openApp only sets src when empty, so a
+// stale/bare trainer iframe must be re-pointed explicitly.
+function _openTi84ForTopic(topic) {
+    var app = APP_REGISTRY && APP_REGISTRY.ti84;
+    var frame = document.getElementById('app-ti84-frame');
+    if (app && frame && topic) frame.src = app.url + '#topic=' + topic + '&source=desk';
+    if (typeof openApp === 'function') openApp('ti84');
 }
 
 // TI-84 trainer deep-link (FIX_PLAN D5, Desk side): a mapped lesson links its

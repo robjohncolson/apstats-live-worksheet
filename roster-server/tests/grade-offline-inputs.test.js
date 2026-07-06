@@ -94,6 +94,7 @@ describe('GET /grade/offline-inputs route', () => {
       config: CONFIG,
       worksheetBlankCounts: GRADE_OPTS.worksheetBlankCounts,
       blooketLessons: GRADE_OPTS.blooketLessons,
+      trainerMap: GRADE_OPTS.trainerMap,
     });
     server = http.createServer(app);
     await new Promise((r) => server.listen(0, '127.0.0.1', r));
@@ -134,6 +135,7 @@ describe('GET /grade/offline-inputs route', () => {
       section: res.body.section,
       worksheetBlankCounts: res.body.worksheetBlankCounts,
       blooketLessons: res.body.blooketLessons,
+      trainerMap: res.body.trainerMap,
       asOf: GRADE_OPTS.asOf,
     });
     expect(offline).toEqual(real);
