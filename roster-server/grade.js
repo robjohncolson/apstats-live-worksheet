@@ -54,6 +54,22 @@ const BLOOKET_LESSONS = (() => {
   }
 })();
 
+// TI-84 trainer lesson map — topicKey → [procedureId]: buckets `TI84-<proc>`
+// ledger rows to lessons AND is the trainer-track denominator. A committed copy
+// of data/ti84-lesson-map.json (tests/ti84-lesson-map-sync.test.js at repo root
+// pins the two files identical). Missing/malformed file → null → the trainer
+// strand is simply invisible (no tank, mirrors the Blooket fallback).
+// TI84_GRADE_INTEGRATION_SPEC.md §B/§C.
+const TRAINER_LESSON_MAP = (() => {
+  try {
+    const p = resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'ti84-lesson-map.json');
+    const doc = JSON.parse(readFileSync(p, 'utf8'));
+    return doc && doc.lessons && typeof doc.lessons === 'object' ? doc.lessons : null;
+  } catch (_) {
+    return null;
+  }
+})();
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function extractToken(req) {
@@ -193,10 +209,15 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   // produces a lesson-weighted quarter grade, not the old unit-mean.
   const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
   const blooketLessons = (opts && opts.blooketLessons) || BLOOKET_LESSONS;
+  // Tests can pass an explicit trainerMap (or null to disable); production uses
+  // the baked map. `!== undefined` (not ||) so an explicit null stays null.
+  const trainerMap = (opts && opts.trainerMap !== undefined) ? opts.trainerMap : TRAINER_LESSON_MAP;
+  const trainerLessons = trainerMap ? Object.keys(trainerMap) : [];
   const allLatestRows = latestPerItem(rows);
   const lessonMap = computeLessonGrades(allLatestRows, config.frqBand, answerKey, schedule, {
     worksheetBlankCounts,
     weights: config.lessonFeederWeights || { ws: 1, W: 2, Q: 3 },
+    trainerMap,
   });
 
   // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
@@ -273,6 +294,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
      * @property {number|null} [quizDue]
      * @property {number|null} [quizDone]
      * @property {string[]} [quizTodo]
+     * @property {number|null} [trainerDue]
+     * @property {number|null} [trainerDone]
+     * @property {string[]} [trainerTodo]
      */
     /** @type {QuarterResult} */
     let qResult;
@@ -295,6 +319,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
         gradingWindowStart: (config && config.gradingWindowStart) || null,
         blooketLessons,
         quizLessons,
+        trainerLessons,
       });
     } else if (schedule) {
       qResult = computeQuarterFromLessons({
@@ -380,13 +405,17 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       quizDue: typeof qResult.quizDue === 'number' ? qResult.quizDue : null,
       quizDone: typeof qResult.quizDone === 'number' ? qResult.quizDone : null,
       quizTodo: Array.isArray(qResult.quizTodo) ? qResult.quizTodo : [],
+      // TI-84 trainer surface (visible-but-uncounted; TI84_GRADE_INTEGRATION_SPEC.md).
+      trainerDue: typeof qResult.trainerDue === 'number' ? qResult.trainerDue : null,
+      trainerDone: typeof qResult.trainerDone === 'number' ? qResult.trainerDone : null,
+      trainerTodo: Array.isArray(qResult.trainerTodo) ? qResult.trainerTodo : [],
     };
   }
 
   // ── Phase 6: build the lessons[] array ────────────────────────────────────
   // (quizTotals computed above, reused here.)
   const lessons = schedule
-    ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals, blooketLessons)
+    ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals, blooketLessons, trainerLessons)
     : [];
 
   // Stable sorted unit / completion order.

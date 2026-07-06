@@ -96,6 +96,16 @@ export const PHASE3_CONFIG = {
   // lower the grade — FINDING F4). Monotonicity wins. (only-helps stays available
   // for experimentation but must not ship.)
   v3AheadOfScheduleLessons: 'not-until-due',
+
+  // ── TI-84 trainer strand (TI84_GRADE_INTEGRATION_SPEC.md §C) ────────────────
+  // weight 0 = VISIBLE-BUT-UNCOUNTED: per-lesson trainer pct + quarter
+  // trainerDue/Done/Todo + workTracks.trainer are surfaced, but the track never
+  // enters workAvgV3 (grade-invariant — pinned by test). Setting weight > 0
+  // (teacher decision, ~Sept with real data) adds tracks.trainer at that weight,
+  // which RENORMALIZES the other Work slices — a real grade change. Counted mode
+  // should also restrict to mastery-tier evidence per the spec before enabling.
+  // doneThreshold: what the Desk shows as "trainer done" (display only).
+  trainer: { weight: 0, doneThreshold: 80 },
 };
 
 // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
