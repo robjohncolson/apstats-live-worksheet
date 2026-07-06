@@ -59,8 +59,13 @@ describe('Desk ti84 deep link', () => {
     expect(appLaunchUrl({ url: 'https://example.com/quiz' }, 'quiz')).toBe('https://example.com/quiz');
   });
 
-  it('planned (not yet shipped) topics do not produce a topic link', () => {
+  it('promoted Unit 3 topics now produce a topic link', () => {
     const appLaunchUrl = launchUrlWith({ todayLesson: { u: 3, t: '3.3' }, map: LESSON_MAP.lessons });
+    expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('ti84-trainer-v2/standalone.html#topic=3.3&source=desk');
+  });
+
+  it('unmapped Unit 3 topics still fall back to the unit filter', () => {
+    const appLaunchUrl = launchUrlWith({ todayLesson: { u: 3, t: '3.1' }, map: LESSON_MAP.lessons });
     expect(appLaunchUrl(TI84_APP, 'ti84')).toBe('ti84-trainer-v2/standalone.html#unit=3');
   });
 });

@@ -164,6 +164,28 @@
       "frameworkSkills": ["UNC-4.AC", "UNC-4.AD", "UNC-4.AE", "UNC-4.AF"],
       "unit": 9
     },
+    "randint-sampling": {
+      "dataType": "n/a",
+      "parameterType": "n/a",
+      "questionType": "randomization",
+      "sampleStructure": "one-sample",
+      "distributionFamily": "none",
+      "keywords": ["random sample", "simple random sample", "SRS", "select", "randomly choose", "label", "number the", "seed"],
+      "antiKeywords": ["assign", "treatment", "experiment", "compare two", "mean", "proportion", "confidence interval", "hypothesis"],
+      "frameworkSkills": ["DAT-2.C"],
+      "unit": 3
+    },
+    "randint-assignment": {
+      "dataType": "n/a",
+      "parameterType": "n/a",
+      "questionType": "randomization",
+      "sampleStructure": "two-group",
+      "distributionFamily": "none",
+      "keywords": ["random assignment", "assign", "treatment", "treatment group", "experiment", "volunteers", "randomly allocate", "seed"],
+      "antiKeywords": ["select a sample", "survey", "SRS", "estimate", "confidence interval", "hypothesis test"],
+      "frameworkSkills": ["VAR-3.C"],
+      "unit": 3
+    },
     "normalcdf": {
       "dataType": "quantitative",
       "parameterType": "probability",
@@ -487,6 +509,12 @@
       "b": "two-samp-ttest",
       "type": "proportion-vs-mean",
       "contrast": "Both compare two groups, but look at the data type. Counts of successes out of totals ('92 of 400 purchased') are categorical -- compare proportions with a 2-PropZTest. Measurements with means and standard deviations are quantitative -- compare means with a two-sample t-test. Proportions use z; means use t."
+    },
+    {
+      "a": "randint-sampling",
+      "b": "randint-assignment",
+      "type": "sampling-vs-assignment",
+      "contrast": "Both use randIntNoRep, but ask WHO the random numbers pick. Selecting which subjects get INTO the study (a sample from a population) is random sampling. Splitting subjects you already have into treatment groups is random assignment -- generate an ordering and apply the first-k rule."
     }
   ],
 
@@ -956,6 +984,40 @@
         "frameworkSkill": "VAR-8.H",
         "unit": 8
       }
+    ],
+    "randint-sampling": [
+      {
+        "stem": "A counselor wants to interview a simple random sample of 5 of the 30 students in a class. Number the students 1 through 30. Seed your calculator with 42, then use randIntNoRep to select which students are interviewed.",
+        "values": { "seed": 42, "lo": 1, "hi": 30, "n": 5 },
+        "frameworkSkill": "DAT-2.C",
+        "unit": 3
+      },
+      {
+        "stem": "A clinic will audit 6 of its 80 patient files this month. Number the files 1 through 80. Seed your calculator with 7, then select which files get audited.",
+        "values": { "seed": 7, "lo": 1, "hi": 80, "n": 6 },
+        "frameworkSkill": "DAT-2.C",
+        "unit": 3
+      },
+      {
+        "stem": "An inspector must check 4 of the 24 plots in an orchard. Number the plots 1 through 24. Seed your calculator with 15, then select the plots to inspect.",
+        "values": { "seed": 15, "lo": 1, "hi": 24, "n": 4 },
+        "frameworkSkill": "DAT-2.C",
+        "unit": 3
+      }
+    ],
+    "randint-assignment": [
+      {
+        "stem": "Twelve volunteers, numbered 1 through 12, will be split evenly between Treatment A and Treatment B. Seed your calculator with 8, generate a random ordering of 1-12 with randIntNoRep, and assign the FIRST 6 numbers to Treatment A.",
+        "values": { "seed": 8, "lo": 1, "hi": 12, "n": 12, "groupSize": 6 },
+        "frameworkSkill": "VAR-3.C",
+        "unit": 3
+      },
+      {
+        "stem": "Ten tomato plants, numbered 1 through 10, are used to test a new fertilizer: 5 plants get the new fertilizer (Treatment A) and 5 get the standard one (Treatment B). Seed your calculator with 23, generate a random ordering of 1-10, and assign the FIRST 5 numbers to Treatment A.",
+        "values": { "seed": 23, "lo": 1, "hi": 10, "n": 10, "groupSize": 5 },
+        "frameworkSkill": "VAR-3.C",
+        "unit": 3
+      }
     ]
   },
 
@@ -988,6 +1050,8 @@
     "modified-boxplot": ["histogram", "one-var-stats", "scatterplot"],
     "scatterplot": ["residual-plot", "linreg-a-plus-bx", "histogram"],
     "residual-plot": ["scatterplot", "linreg-a-plus-bx", "histogram"],
-    "matrix-entry": ["chi-square-test", "chi-square-gof-test", "one-var-stats"]
+    "matrix-entry": ["chi-square-test", "chi-square-gof-test", "one-var-stats"],
+    "randint-sampling": ["randint-assignment", "one-var-stats", "binompdf"],
+    "randint-assignment": ["randint-sampling", "two-samp-ttest", "one-var-stats"]
   }
 }

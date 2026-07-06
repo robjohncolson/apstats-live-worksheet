@@ -7580,6 +7580,296 @@
         "L1": "numeric",
         "L2": "numeric"
       }
+    },
+    {
+      "id": "randint-sampling",
+      "name": "randIntNoRep (random sample)",
+      "unit": 3,
+      "category": "randomization",
+      "description": "Seed the calculator, then use randIntNoRep(lo,hi,n) to select a simple random sample of n distinct labels.",
+      "prerequisites": [],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "key": "{seed}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type the seed value from the problem.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 2,
+          "key": "STO",
+          "screen": "home",
+          "highlight": "→",
+          "narration": "Press [STO→] to store the seed.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "ENTER",
+              "feedback": "Don't evaluate yet — store the value into rand first with [STO→]."
+            }
+          ]
+        },
+        {
+          "stepNumber": 3,
+          "key": "MATH",
+          "screen": "math-menu",
+          "highlight": "MATH tab",
+          "narration": "Open the MATH menu.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "STAT",
+              "feedback": "[STAT] is for data lists. Random-number commands live under [MATH]."
+            }
+          ]
+        },
+        {
+          "stepNumber": 4,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "Arrow right to the PRB tab.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 5,
+          "key": "1",
+          "screen": "home",
+          "highlight": "1:rand",
+          "narration": "Paste rand — the seed target.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 6,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Store the seed. Now every random draw is reproducible.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 7,
+          "key": "MATH",
+          "screen": "math-menu",
+          "highlight": "MATH tab",
+          "narration": "Back to the MATH menu for the sampling command.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 8,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "Arrow right to PRB again.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 9,
+          "key": "8",
+          "screen": "home",
+          "highlight": "8:randIntNoRep(",
+          "narration": "Paste randIntNoRep( — no repeats, because a label can only be selected once in a simple random sample.",
+          "skillType": "confirmation",
+          "commonErrors": [
+            {
+              "key": "5",
+              "feedback": "randInt( can repeat labels — a repeated label is not a valid simple random sample. Use 8:randIntNoRep(."
+            }
+          ]
+        },
+        {
+          "stepNumber": 10,
+          "key": "{lo}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type the smallest label.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 11,
+          "key": ",",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Comma between arguments.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 12,
+          "key": "{hi}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type the largest label.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 13,
+          "key": ",",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Comma before the sample size.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 14,
+          "key": "{n}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type how many labels to select.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 15,
+          "key": ")",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Close the parentheses.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 16,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "result line",
+          "narration": "Your sample: the distinct labels shown. The people or items with these labels are selected.",
+          "skillType": "confirmation"
+        }
+      ]
+    },
+    {
+      "id": "randint-assignment",
+      "name": "randIntNoRep (random assignment)",
+      "unit": 3,
+      "category": "randomization",
+      "description": "Seed the calculator, generate a random ordering of all subjects with randIntNoRep(lo,hi), and assign the first groupSize labels to Treatment A.",
+      "prerequisites": [],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "key": "{seed}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type the seed value from the problem.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 2,
+          "key": "STO",
+          "screen": "home",
+          "highlight": "→",
+          "narration": "Press [STO→] to store the seed.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 3,
+          "key": "MATH",
+          "screen": "math-menu",
+          "highlight": "MATH tab",
+          "narration": "Open the MATH menu.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "STAT",
+              "feedback": "[STAT] is for data lists. Random-number commands live under [MATH]."
+            }
+          ]
+        },
+        {
+          "stepNumber": 4,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "Arrow right to the PRB tab.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 5,
+          "key": "1",
+          "screen": "home",
+          "highlight": "1:rand",
+          "narration": "Paste rand — the seed target.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 6,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Store the seed so the assignment is reproducible.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 7,
+          "key": "MATH",
+          "screen": "math-menu",
+          "highlight": "MATH tab",
+          "narration": "Back to the MATH menu.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 8,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "Arrow right to PRB.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 9,
+          "key": "8",
+          "screen": "home",
+          "highlight": "8:randIntNoRep(",
+          "narration": "Paste randIntNoRep( — every subject must appear exactly once in the ordering.",
+          "skillType": "confirmation",
+          "commonErrors": [
+            {
+              "key": "5",
+              "feedback": "randInt( can repeat a subject — then your groups overlap. Use 8:randIntNoRep(."
+            }
+          ]
+        },
+        {
+          "stepNumber": 10,
+          "key": "{lo}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type the smallest subject label.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 11,
+          "key": ",",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Comma between arguments.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 12,
+          "key": "{hi}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type the largest subject label — with no third argument, randIntNoRep gives a full random ordering.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 13,
+          "key": ")",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Close the parentheses.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 14,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "result line",
+          "narration": "Apply the rule: the FIRST groupSize labels shown go to Treatment A; the rest go to Treatment B.",
+          "skillType": "confirmation"
+        }
+      ]
     }
   ],
   "dag": {

@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "lessons": {
     "1.5": ["histogram"],
+    "3.3": ["randint-sampling"],
+    "3.6": ["randint-assignment"],
     "1.7": ["one-var-stats", "modified-boxplot"],
     "1.10": ["normalcdf", "invnorm"],
     "2.4": ["scatterplot"],
@@ -23,8 +25,5 @@
     "9.2": ["linreg-tint"],
     "9.5": ["linreg-ttest"]
   },
-  "planned": {
-    "3.3": ["randint-sampling"],
-    "3.6": ["randint-assignment"]
-  }
+  "planned": {}
 }
