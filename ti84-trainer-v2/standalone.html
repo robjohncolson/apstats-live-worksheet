@@ -392,7 +392,7 @@ h2 {
 
 .compact-problem-bar,
 .calc-top,
-.narration-bar {
+.calc-action-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -568,24 +568,30 @@ h2 {
   font-size: 0.82rem;
 }
 
-.narration-bar {
-  padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  background: rgba(18, 20, 24, 0.28);
+/* Calculator status/action bar — a COMPACT control row (status line +
+   Firmware / Restart / Hint). A SIBLING of the scaled calculator shell on
+   purpose: 🖩−/Fit/🖩+ resizes the screen+keypad as one unit and never moves
+   or resizes this bar, and the guide A−/A+ scale doesn't touch it either.
+   Solid dark background — it used to borrow the shell's body color. */
+.calc-action-bar {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #3e4248 0%, #2f3237 100%);
   color: var(--label-primary);
 }
 
-.narration-copy {
+.calc-action-copy {
   display: grid;
   gap: 4px;
 }
 
-.narration-copy strong {
+.calc-action-copy strong {
   font-size: 0.95rem;
 }
 
-.narration-copy span {
+.calc-action-copy span {
   font-size: 0.86rem;
   opacity: 0.85;
 }
@@ -1214,32 +1220,33 @@ code {
     border-radius: 8px;
   }
 
-  .narration-bar {
+  .calc-action-bar {
     position: sticky;
     bottom: 0;
     z-index: 2;
+    margin-top: 0;
     padding: 8px 10px;
     border-radius: 12px 12px 0 0;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
 
-  .narration-copy {
+  .calc-action-copy {
     min-width: 0;
   }
 
-  .narration-copy strong {
+  .calc-action-copy strong {
     font-size: 0.88rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .narration-copy span {
+  .calc-action-copy span {
     display: none;
   }
 
-  .narration-bar .button-row .mac-button {
+  .calc-action-bar .button-row .mac-button {
     width: 36px;
     height: 36px;
     min-height: 36px;
@@ -1544,11 +1551,11 @@ code {
   font-size: 1rem;
 }
 
-.narration-copy strong {
+.calc-action-copy strong {
   font-size: 1.05rem;
 }
 
-.narration-copy span {
+.calc-action-copy span {
   font-size: 0.98rem;
 }
 
@@ -1560,11 +1567,12 @@ code {
    Browser zoom was being used as a workaround because the guidance text and
    the calculator scaled together. Two independent scales fix that at 100%
    browser zoom:
-   - --guide-scale enlarges instruction text (left pane, banner, narration,
+   - --guide-scale enlarges instruction text (left pane, banner,
      physical-mode cards) and is a stored user preference (A− / A+).
-   - --calc-scale shrinks ONLY the calculator shell; "Fit" mode picks the
-     largest scale where the whole calculator (screen + keypad) sits inside
-     the viewport height, so nothing needs page zoom or scrolling.
+   - --calc-scale shrinks ONLY the calculator shell (screen + keypad — the
+     status/action bar is a sibling and never scales); "Fit" picks the
+     largest scale where the whole calculator sits inside the viewport
+     height, so nothing needs page zoom or scrolling.
    Both are set on <html> by app.js and default to 1, so the layout is
    unchanged if JS never runs. `zoom` (not transform) is used on purpose: it
    participates in layout, so scaled panes reserve exactly their rendered
@@ -1574,7 +1582,6 @@ code {
 :root {
   --guide-scale: 1;
   --calc-scale: 1;
-  --narration-scale: 1;
 }
 
 @media (min-width: 961px) {
@@ -1597,12 +1604,13 @@ code {
     margin: 0 auto;
   }
 
-  /* The narration bar is instruction text that happens to live inside the
-     scaled calculator shell — compensate so it tracks the guide scale
-     instead of shrinking with the keypad. app.js sets this to
-     guide-scale / calc-scale (clamped). */
-  .calc-panel:not(.physical-panel) .narration-bar {
-    zoom: var(--narration-scale);
+  /* The status/action bar is a sibling of the scaled shell — no compensation
+     needed; it simply never scales. Cap it to the shell's rendered width so
+     the row reads as part of the calculator group. */
+  .calc-panel:not(.physical-panel) .calc-action-bar {
+    max-width: min(100%, calc(500px * var(--calc-scale)));
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* Long guidance scrolls INSIDE its own pane instead of scrolling the
@@ -10155,14 +10163,8 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   }
 
   function setCalcScale(scale) {
-    const rootStyle = document.documentElement.style;
     const clamped = clampNumber(roundScale(scale), CALC_SCALE_MIN, CALC_SCALE_MAX);
-    rootStyle.setProperty('--calc-scale', String(clamped));
-
-    // The narration bar (instruction text inside the scaled shell) tracks the
-    // guide scale: shell zoom × narration zoom ≈ guide scale.
-    const narration = clampNumber(roundScale(uiPrefs.guideScale / clamped), 1, 2);
-    rootStyle.setProperty('--narration-scale', String(narration));
+    document.documentElement.style.setProperty('--calc-scale', String(clamped));
   }
 
   function applyPaneScales() {
@@ -10171,7 +10173,6 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     if (!isDesktopViewport()) {
       rootStyle.setProperty('--guide-scale', '1');
       rootStyle.setProperty('--calc-scale', '1');
-      rootStyle.setProperty('--narration-scale', '1');
       return;
     }
 
@@ -10191,8 +10192,8 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
     // Fit mode. The shell's natural top is measured against the (non-sticky)
     // workspace so the result is the same whether or not the panel is
-    // currently pinned. Changing the scale re-zooms the narration bar, which
-    // changes the measured height — a few proportional passes converge.
+    // currently pinned. The (unscaled) action bar below the shell is part of
+    // the vertical budget so it stays on screen too.
     const workspace = root.querySelector('.workspace');
     const panel = shell.closest('.calc-panel');
 
@@ -10202,6 +10203,8 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     }
 
     const workspacePadding = Number.parseFloat(window.getComputedStyle(workspace).paddingTop) || 0;
+    const actionBar = panel.querySelector('.calc-action-bar');
+    const actionBarSpace = actionBar ? actionBar.getBoundingClientRect().height + 12 : 0;
     let scale = clampNumber(effectiveCalcScale(), CALC_SCALE_MIN, 1);
 
     for (let pass = 0; pass < 3; pass += 1) {
@@ -10209,7 +10212,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       const shellRect = shell.getBoundingClientRect();
       const naturalTop = workspace.getBoundingClientRect().top + window.scrollY + workspacePadding
         + (shellRect.top - panel.getBoundingClientRect().top);
-      const available = window.innerHeight - naturalTop - 18;
+      const available = window.innerHeight - naturalTop - actionBarSpace - 18;
 
       if (shellRect.height <= 0 || available <= 0) {
         break;
@@ -13836,23 +13839,6 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
               </div>
             </div>
           </div>
-          <div class="narration-bar">
-            <div class="narration-copy">
-              <strong>${walkthrough ? walkthroughHeadline : idleHeadline}</strong>
-              <span>${walkthrough ? walkthroughDetail : app.bridgeStatus.detail}</span>
-            </div>
-            <div class="button-row compact">
-              <button type="button" class="mac-button" data-action="open-rom-dialog" ${firmwareAttrs}>${firmwareLabel}</button>
-              <button type="button" class="mac-button" data-action="toggle-physical-mode" title="Follow along on a real TI-84 instead of the emulator">${mobile ? '📱' : 'Real TI-84'}</button>
-              <button type="button" class="mac-button" data-action="restart-walkthrough" ${restartAttrs} ${!walkthrough ? 'disabled' : ''}>${restartLabel}</button>
-              <button type="button" class="mac-button" data-action="show-hint" ${hintAttrs} ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>${hintLabel}</button>
-              ${walkthrough && app.clutch.phase === 'procedure'
-                ? app.clutch.engaged
-                  ? `<button type="button" class="mac-button" data-action="pause-guidance" ${pauseAttrs}>${pauseLabel}</button>`
-                  : `<button type="button" class="mac-button primary" data-action="resume-guidance" ${resumeAttrs}>${resumeLabel}</button>`
-                : ''}
-            </div>
-          </div>
           ${walkthrough
             ? `
               <div class="keypad-shell">
@@ -13860,6 +13846,28 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
               </div>
             `
             : '<div class="keypad-empty">Pattern recognition comes first. The keypad unlocks after you enter a walkthrough.</div>'}
+        </div>
+        <!-- Status/action bar: a SIBLING of the scaled shell on purpose — the
+             calculator 🖩−/Fit/🖩+ controls resize the screen+keypad as one
+             unit and must never move or resize this row. The full step
+             guidance lives in the left pane; this copy is the compact echo
+             (and the only narration surface on phones). -->
+        <div class="calc-action-bar">
+          <div class="calc-action-copy">
+            <strong>${walkthrough ? walkthroughHeadline : idleHeadline}</strong>
+            <span>${walkthrough ? walkthroughDetail : app.bridgeStatus.detail}</span>
+          </div>
+          <div class="button-row compact">
+            <button type="button" class="mac-button" data-action="open-rom-dialog" ${firmwareAttrs}>${firmwareLabel}</button>
+            <button type="button" class="mac-button" data-action="toggle-physical-mode" title="Follow along on a real TI-84 instead of the emulator">${mobile ? '📱' : 'Real TI-84'}</button>
+            <button type="button" class="mac-button" data-action="restart-walkthrough" ${restartAttrs} ${!walkthrough ? 'disabled' : ''}>${restartLabel}</button>
+            <button type="button" class="mac-button" data-action="show-hint" ${hintAttrs} ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>${hintLabel}</button>
+            ${walkthrough && app.clutch.phase === 'procedure'
+              ? app.clutch.engaged
+                ? `<button type="button" class="mac-button" data-action="pause-guidance" ${pauseAttrs}>${pauseLabel}</button>`
+                : `<button type="button" class="mac-button primary" data-action="resume-guidance" ${resumeAttrs}>${resumeLabel}</button>`
+              : ''}
+          </div>
         </div>
       </section>
     `;

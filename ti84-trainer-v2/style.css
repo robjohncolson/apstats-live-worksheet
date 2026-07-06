@@ -385,7 +385,7 @@ h2 {
 
 .compact-problem-bar,
 .calc-top,
-.narration-bar {
+.calc-action-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -561,24 +561,30 @@ h2 {
   font-size: 0.82rem;
 }
 
-.narration-bar {
-  padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  background: rgba(18, 20, 24, 0.28);
+/* Calculator status/action bar — a COMPACT control row (status line +
+   Firmware / Restart / Hint). A SIBLING of the scaled calculator shell on
+   purpose: 🖩−/Fit/🖩+ resizes the screen+keypad as one unit and never moves
+   or resizes this bar, and the guide A−/A+ scale doesn't touch it either.
+   Solid dark background — it used to borrow the shell's body color. */
+.calc-action-bar {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #3e4248 0%, #2f3237 100%);
   color: var(--label-primary);
 }
 
-.narration-copy {
+.calc-action-copy {
   display: grid;
   gap: 4px;
 }
 
-.narration-copy strong {
+.calc-action-copy strong {
   font-size: 0.95rem;
 }
 
-.narration-copy span {
+.calc-action-copy span {
   font-size: 0.86rem;
   opacity: 0.85;
 }
@@ -1207,32 +1213,33 @@ code {
     border-radius: 8px;
   }
 
-  .narration-bar {
+  .calc-action-bar {
     position: sticky;
     bottom: 0;
     z-index: 2;
+    margin-top: 0;
     padding: 8px 10px;
     border-radius: 12px 12px 0 0;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
 
-  .narration-copy {
+  .calc-action-copy {
     min-width: 0;
   }
 
-  .narration-copy strong {
+  .calc-action-copy strong {
     font-size: 0.88rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .narration-copy span {
+  .calc-action-copy span {
     display: none;
   }
 
-  .narration-bar .button-row .mac-button {
+  .calc-action-bar .button-row .mac-button {
     width: 36px;
     height: 36px;
     min-height: 36px;
@@ -1537,11 +1544,11 @@ code {
   font-size: 1rem;
 }
 
-.narration-copy strong {
+.calc-action-copy strong {
   font-size: 1.05rem;
 }
 
-.narration-copy span {
+.calc-action-copy span {
   font-size: 0.98rem;
 }
 
@@ -1553,11 +1560,12 @@ code {
    Browser zoom was being used as a workaround because the guidance text and
    the calculator scaled together. Two independent scales fix that at 100%
    browser zoom:
-   - --guide-scale enlarges instruction text (left pane, banner, narration,
+   - --guide-scale enlarges instruction text (left pane, banner,
      physical-mode cards) and is a stored user preference (A− / A+).
-   - --calc-scale shrinks ONLY the calculator shell; "Fit" mode picks the
-     largest scale where the whole calculator (screen + keypad) sits inside
-     the viewport height, so nothing needs page zoom or scrolling.
+   - --calc-scale shrinks ONLY the calculator shell (screen + keypad — the
+     status/action bar is a sibling and never scales); "Fit" picks the
+     largest scale where the whole calculator sits inside the viewport
+     height, so nothing needs page zoom or scrolling.
    Both are set on <html> by app.js and default to 1, so the layout is
    unchanged if JS never runs. `zoom` (not transform) is used on purpose: it
    participates in layout, so scaled panes reserve exactly their rendered
@@ -1567,7 +1575,6 @@ code {
 :root {
   --guide-scale: 1;
   --calc-scale: 1;
-  --narration-scale: 1;
 }
 
 @media (min-width: 961px) {
@@ -1590,12 +1597,13 @@ code {
     margin: 0 auto;
   }
 
-  /* The narration bar is instruction text that happens to live inside the
-     scaled calculator shell — compensate so it tracks the guide scale
-     instead of shrinking with the keypad. app.js sets this to
-     guide-scale / calc-scale (clamped). */
-  .calc-panel:not(.physical-panel) .narration-bar {
-    zoom: var(--narration-scale);
+  /* The status/action bar is a sibling of the scaled shell — no compensation
+     needed; it simply never scales. Cap it to the shell's rendered width so
+     the row reads as part of the calculator group. */
+  .calc-panel:not(.physical-panel) .calc-action-bar {
+    max-width: min(100%, calc(500px * var(--calc-scale)));
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* Long guidance scrolls INSIDE its own pane instead of scrolling the

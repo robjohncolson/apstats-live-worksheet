@@ -147,17 +147,29 @@ describe('independent pane scaling', () => {
     expect(savedPrefs().calcMode).toBe('fit');
   });
 
-  it('scaling the calculator does not shrink the guide scale, and narration compensates', async () => {
+  it('scaling the calculator does not touch the guide scale or the action bar', async () => {
     await bootTrainer();
 
     await click('[data-action="calc-scale-down"]');
     await click('[data-action="calc-scale-down"]');
 
     expect(cssVar('--guide-scale')).toBe('1.3');
-    // narration zoom ≈ guide / calc so narration text tracks the guide scale.
-    const calc = Number(cssVar('--calc-scale'));
-    const narration = Number(cssVar('--narration-scale'));
-    expect(narration).toBeCloseTo(Math.min(2, Math.max(1, 1.3 / calc)), 1);
+    // The status/action bar is a sibling of the scaled shell — there is no
+    // compensation variable to drive it (the old --narration-scale is gone).
+    expect(cssVar('--narration-scale')).toBe('');
+  });
+
+  it('STRUCTURAL: the status/action bar lives OUTSIDE the scaled calculator shell', async () => {
+    await bootTrainer();
+
+    const appEl = document.getElementById('app');
+    // 🖩−/Fit/🖩+ resize the shell (screen + keypad) as ONE unit; the
+    // Firmware/Restart/Hint row must not ride along inside it.
+    expect(appEl.querySelector('.calculator-shell .calc-action-bar')).toBeNull();
+    expect(appEl.querySelector('.calc-panel .calc-action-bar')).not.toBeNull();
+    // The bar keeps its control row, and the shell keeps screen + keypad area.
+    expect(appEl.querySelector('.calc-action-bar [data-action="open-rom-dialog"]')).not.toBeNull();
+    expect(appEl.querySelector('.calculator-shell .calc-canvas')).not.toBeNull();
   });
 
   it('hides the calculator size group in physical mode but keeps text controls', async () => {
