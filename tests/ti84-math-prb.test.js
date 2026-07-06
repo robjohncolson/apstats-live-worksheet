@@ -37,14 +37,18 @@ function press(native, ...keys) {
 
 const lastLine = (native) => native._getHomeLines().at(-1);
 
-// 5 STO→ [MATH ▸ PRB ▸ 1:rand] ENTER
+// PRB is THREE RIGHTs from MATH on the real calculator (MATH → NUM →
+// CMPLX → PRB) — the physical-calculator smoke caught the earlier
+// one-RIGHT simplification teaching wrong keys.
+
+// 5 STO→ [MATH ▸▸▸ PRB ▸ 1:rand] ENTER
 function seedRand(native, seedKey) {
-  press(native, seedKey, 'STO', 'MATH', 'RIGHT', 'ONE', 'ENTER');
+  press(native, seedKey, 'STO', 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'ONE', 'ENTER');
 }
 
-// [MATH ▸ PRB ▸ 8:randIntNoRep(] 1,30,5) ENTER
+// [MATH ▸▸▸ PRB ▸ 8:randIntNoRep(] 1,30,5) ENTER
 function drawNoRep(native) {
-  press(native, 'MATH', 'RIGHT', 'EIGHT',
+  press(native, 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'EIGHT',
     'ONE', 'COMMA', 'THREE', 'ZERO', 'COMMA', 'FIVE', 'RPAREN', 'ENTER');
 }
 
@@ -59,11 +63,18 @@ beforeEach(() => {
 });
 
 describe('MATH▸PRB command substrate (literal keys, mock mode)', () => {
-  it('MATH opens the MATH menu; RIGHT reaches the PRB tab', () => {
+  it('MATH tab order matches the real calculator: NUM, CMPLX, then PRB', () => {
     press(native, 'MATH');
     expect(native.getScreen().id).toBe('math-menu');
+    // Regression pin (physical smoke 2026-07-05): ONE right must NOT be PRB.
+    press(native, 'RIGHT');
+    expect(native.getScreen().id).toBe('math-num-menu');
+    press(native, 'RIGHT');
+    expect(native.getScreen().id).toBe('math-cmplx-menu');
     press(native, 'RIGHT');
     expect(native.getScreen().id).toBe('math-prb-menu');
+    press(native, 'RIGHT');
+    expect(native.getScreen().id).toBe('math-frac-menu');
   });
 
   it('5 STO→ rand ENTER stores the seed and echoes it', () => {
@@ -100,14 +111,14 @@ describe('MATH▸PRB command substrate (literal keys, mock mode)', () => {
 
   it('rand alone returns a number in (0, 1)', () => {
     seedRand(native, 'SEVEN');
-    press(native, 'MATH', 'RIGHT', 'ONE', 'ENTER');
+    press(native, 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'ONE', 'ENTER');
     const value = Number(lastLine(native));
     expect(value).toBeGreaterThan(0);
     expect(value).toBeLessThan(1);
   });
 
   it('asking for more distinct values than the range yields ERR:DOMAIN', () => {
-    press(native, 'MATH', 'RIGHT', 'EIGHT',
+    press(native, 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'EIGHT',
       'ONE', 'COMMA', 'THREE', 'COMMA', 'NINE', 'RPAREN', 'ENTER');
     expect(lastLine(native)).toBe('ERR:DOMAIN');
   });
@@ -118,7 +129,7 @@ describe('MATH▸PRB command substrate (literal keys, mock mode)', () => {
   });
 
   it('CLEAR wipes the entry line first, then history', () => {
-    press(native, 'MATH', 'RIGHT', 'EIGHT', 'ONE');
+    press(native, 'MATH', 'RIGHT', 'RIGHT', 'RIGHT', 'EIGHT', 'ONE');
     press(native, 'CLEAR');
     press(native, 'ENTER'); // empty entry — no evaluation
     expect(native._getHomeLines()).toHaveLength(0);

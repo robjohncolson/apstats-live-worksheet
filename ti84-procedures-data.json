@@ -625,7 +625,7 @@
       "id": "math-menu",
       "type": "menu",
       "title": "MATH",
-      "tabs": ["MATH", "PRB"],
+      "tabs": ["MATH", "NUM", "CMPLX", "PRB", "FRAC"],
       "activeTab": "MATH",
       "items": [
         "1:▶Frac",
@@ -642,13 +642,52 @@
         "B:piecewise("
       ],
       "cursor": 0,
-      "description": "MATH menu with MATH tab active. Only MATH and PRB tabs are modeled."
+      "description": "MATH menu with MATH tab active. PRB is three RIGHT presses away, matching the real calculator."
+    },
+    {
+      "id": "math-num-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": ["MATH", "NUM", "CMPLX", "PRB", "FRAC"],
+      "activeTab": "NUM",
+      "items": [
+        "1:abs(",
+        "2:round(",
+        "3:iPart(",
+        "4:fPart(",
+        "5:int(",
+        "6:min(",
+        "7:max(",
+        "8:lcm(",
+        "9:gcd(",
+        "0:remainder("
+      ],
+      "cursor": 0,
+      "description": "MATH menu with NUM tab active — one RIGHT from MATH; keep going for PRB."
+    },
+    {
+      "id": "math-cmplx-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": ["MATH", "NUM", "CMPLX", "PRB", "FRAC"],
+      "activeTab": "CMPLX",
+      "items": [
+        "1:conj(",
+        "2:real(",
+        "3:imag(",
+        "4:angle(",
+        "5:abs(",
+        "6:▶Rect",
+        "7:▶Polar"
+      ],
+      "cursor": 0,
+      "description": "MATH menu with CMPLX tab active — two RIGHTs from MATH; one more for PRB."
     },
     {
       "id": "math-prb-menu",
       "type": "menu",
       "title": "MATH",
-      "tabs": ["MATH", "PRB"],
+      "tabs": ["MATH", "NUM", "CMPLX", "PRB", "FRAC"],
       "activeTab": "PRB",
       "items": [
         "1:rand",
@@ -662,6 +701,21 @@
       ],
       "cursor": 0,
       "description": "MATH menu with PRB tab active — rand, randInt(, randIntNoRep( paste to the home screen."
+    },
+    {
+      "id": "math-frac-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": ["MATH", "NUM", "CMPLX", "PRB", "FRAC"],
+      "activeTab": "FRAC",
+      "items": [
+        "1:n/d",
+        "2:Un/d",
+        "3:▶n/d◀▶Un/d",
+        "4:▶F◀▶D"
+      ],
+      "cursor": 0,
+      "description": "MATH menu with FRAC tab active — one RIGHT past PRB."
     },
     {
       "id": "one-var-stats-wizard",
@@ -7628,13 +7682,29 @@
         {
           "stepNumber": 4,
           "key": "RIGHT",
-          "screen": "math-prb-menu",
-          "highlight": "PRB tab",
-          "narration": "Arrow right to the PRB tab.",
+          "screen": "math-num-menu",
+          "highlight": "NUM tab",
+          "narration": "Arrow right — this is NUM, not PRB yet. Keep going.",
           "skillType": "navigation"
         },
         {
           "stepNumber": 5,
+          "key": "RIGHT",
+          "screen": "math-cmplx-menu",
+          "highlight": "CMPLX tab",
+          "narration": "Arrow right again — CMPLX. One more.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 6,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "Third right arrow lands on PRB — the random-number commands.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 7,
           "key": "1",
           "screen": "home",
           "highlight": "1:rand",
@@ -7642,7 +7712,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 8,
           "key": "ENTER",
           "screen": "home",
           "highlight": "entry line",
@@ -7650,7 +7720,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 9,
           "key": "MATH",
           "screen": "math-menu",
           "highlight": "MATH tab",
@@ -7658,15 +7728,31 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 10,
           "key": "RIGHT",
-          "screen": "math-prb-menu",
-          "highlight": "PRB tab",
-          "narration": "Arrow right to PRB again.",
+          "screen": "math-num-menu",
+          "highlight": "NUM tab",
+          "narration": "Arrow right toward PRB.",
           "skillType": "navigation"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 11,
+          "key": "RIGHT",
+          "screen": "math-cmplx-menu",
+          "highlight": "CMPLX tab",
+          "narration": "Keep going.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 12,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "PRB again.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 13,
           "key": "8",
           "screen": "home",
           "highlight": "8:randIntNoRep(",
@@ -7680,7 +7766,7 @@
           ]
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 14,
           "key": "{lo}",
           "screen": "home",
           "highlight": "entry line",
@@ -7688,7 +7774,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 15,
           "key": ",",
           "screen": "home",
           "highlight": "entry line",
@@ -7696,7 +7782,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 16,
           "key": "{hi}",
           "screen": "home",
           "highlight": "entry line",
@@ -7704,7 +7790,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 17,
           "key": ",",
           "screen": "home",
           "highlight": "entry line",
@@ -7712,7 +7798,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 18,
           "key": "{n}",
           "screen": "home",
           "highlight": "entry line",
@@ -7720,7 +7806,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 19,
           "key": ")",
           "screen": "home",
           "highlight": "entry line",
@@ -7728,7 +7814,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 20,
           "key": "ENTER",
           "screen": "home",
           "highlight": "result line",
@@ -7778,13 +7864,29 @@
         {
           "stepNumber": 4,
           "key": "RIGHT",
-          "screen": "math-prb-menu",
-          "highlight": "PRB tab",
-          "narration": "Arrow right to the PRB tab.",
+          "screen": "math-num-menu",
+          "highlight": "NUM tab",
+          "narration": "Arrow right — this is NUM, not PRB yet. Keep going.",
           "skillType": "navigation"
         },
         {
           "stepNumber": 5,
+          "key": "RIGHT",
+          "screen": "math-cmplx-menu",
+          "highlight": "CMPLX tab",
+          "narration": "Arrow right again — CMPLX. One more.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 6,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "Third right arrow lands on PRB — the random-number commands.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 7,
           "key": "1",
           "screen": "home",
           "highlight": "1:rand",
@@ -7792,7 +7894,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 8,
           "key": "ENTER",
           "screen": "home",
           "highlight": "entry line",
@@ -7800,7 +7902,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 9,
           "key": "MATH",
           "screen": "math-menu",
           "highlight": "MATH tab",
@@ -7808,15 +7910,31 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 10,
           "key": "RIGHT",
-          "screen": "math-prb-menu",
-          "highlight": "PRB tab",
-          "narration": "Arrow right to PRB.",
+          "screen": "math-num-menu",
+          "highlight": "NUM tab",
+          "narration": "Arrow right toward PRB.",
           "skillType": "navigation"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 11,
+          "key": "RIGHT",
+          "screen": "math-cmplx-menu",
+          "highlight": "CMPLX tab",
+          "narration": "Keep going.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 12,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "PRB again.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 13,
           "key": "8",
           "screen": "home",
           "highlight": "8:randIntNoRep(",
@@ -7830,7 +7948,7 @@
           ]
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 14,
           "key": "{lo}",
           "screen": "home",
           "highlight": "entry line",
@@ -7838,7 +7956,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 15,
           "key": ",",
           "screen": "home",
           "highlight": "entry line",
@@ -7846,7 +7964,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 16,
           "key": "{hi}",
           "screen": "home",
           "highlight": "entry line",
@@ -7854,7 +7972,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 17,
           "key": ")",
           "screen": "home",
           "highlight": "entry line",
@@ -7862,7 +7980,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 18,
           "key": "ENTER",
           "screen": "home",
           "highlight": "result line",

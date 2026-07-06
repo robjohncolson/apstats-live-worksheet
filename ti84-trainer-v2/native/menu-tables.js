@@ -130,12 +130,11 @@
         cursor: 0
       },
 
-      // MATH menu (U3 randomization substrate). The real CE has five tabs
-      // (MATH/NUM/CMPLX/PRB/FRAC); only MATH + PRB are modeled — see the
-      // 'math' TAB_FAMILIES note.
+      // MATH menu (U3 randomization substrate) — all five real CE tabs,
+      // matching the physical calculator's navigation exactly.
       'math-menu': {
         title: 'MATH',
-        tabs: ['MATH', 'PRB'],
+        tabs: ['MATH', 'NUM', 'CMPLX', 'PRB', 'FRAC'],
         activeTab: 'MATH',
         items: [
           '1:▶Frac',
@@ -154,9 +153,44 @@
         cursor: 0
       },
 
+      'math-num-menu': {
+        title: 'MATH',
+        tabs: ['MATH', 'NUM', 'CMPLX', 'PRB', 'FRAC'],
+        activeTab: 'NUM',
+        items: [
+          '1:abs(',
+          '2:round(',
+          '3:iPart(',
+          '4:fPart(',
+          '5:int(',
+          '6:min(',
+          '7:max(',
+          '8:lcm(',
+          '9:gcd(',
+          '0:remainder('
+        ],
+        cursor: 0
+      },
+
+      'math-cmplx-menu': {
+        title: 'MATH',
+        tabs: ['MATH', 'NUM', 'CMPLX', 'PRB', 'FRAC'],
+        activeTab: 'CMPLX',
+        items: [
+          '1:conj(',
+          '2:real(',
+          '3:imag(',
+          '4:angle(',
+          '5:abs(',
+          '6:▶Rect',
+          '7:▶Polar'
+        ],
+        cursor: 0
+      },
+
       'math-prb-menu': {
         title: 'MATH',
-        tabs: ['MATH', 'PRB'],
+        tabs: ['MATH', 'NUM', 'CMPLX', 'PRB', 'FRAC'],
         activeTab: 'PRB',
         items: [
           '1:rand',
@@ -167,6 +201,19 @@
           '6:randNorm(',
           '7:randBin(',
           '8:randIntNoRep('
+        ],
+        cursor: 0
+      },
+
+      'math-frac-menu': {
+        title: 'MATH',
+        tabs: ['MATH', 'NUM', 'CMPLX', 'PRB', 'FRAC'],
+        activeTab: 'FRAC',
+        items: [
+          '1:n/d',
+          '2:Un/d',
+          '3:▶n/d◀▶Un/d',
+          '4:▶F◀▶D'
         ],
         cursor: 0
       },
@@ -283,12 +330,12 @@
         tabs: ['NAMES', 'MATH', 'EDIT'],
         menuIds: ['matrix-menu-names', 'matrix-menu-math', 'matrix-menu-edit']
       },
-      // The real CE has MATH/NUM/CMPLX/PRB/FRAC; only the two tabs the
-      // trainer teaches are modeled (U3 randomization). One RIGHT from
-      // MATH reaches PRB, matching what walkthrough steps will teach.
+      // All five real CE tabs — the walkthrough teaches PHYSICAL keys, so
+      // the tab order must match the real calculator: PRB is three RIGHTs
+      // from MATH (caught by the physical-calculator smoke, 2026-07-05).
       'math': {
-        tabs: ['MATH', 'PRB'],
-        menuIds: ['math-menu', 'math-prb-menu']
+        tabs: ['MATH', 'NUM', 'CMPLX', 'PRB', 'FRAC'],
+        menuIds: ['math-menu', 'math-num-menu', 'math-cmplx-menu', 'math-prb-menu', 'math-frac-menu']
       }
     },
 

@@ -22,11 +22,13 @@ only if procedural validation proves insufficient.
   binomial trials), where replacement is the point.
 - **Required native/menu modeling work (Codex correction — MATH▸PRB is NOT
   currently modeled):** the trainer's menu tables have no MATH menu, no PRB
-  tab, and no rand/randInt(/randIntNoRep( entries. Implementation must add:
-  `math-menu` + `math-prb-menu` tables (menu-tables), PRB tab navigation
-  (menu-nav), paste-to-home behavior for the three commands, and mock-screen
-  output lines for pasted random commands (screen-renderer). This is the
-  second-biggest lift after recognition authoring.
+  tab, and no rand/randInt(/randIntNoRep( entries. Implementation must add
+  the MATH menu tables, PRB tab navigation (menu-nav), paste-to-home behavior
+  for the three commands, and mock-screen output lines for pasted random
+  commands. **All FIVE real tabs (MATH/NUM/CMPLX/PRB/FRAC) must be modeled —
+  PRB is three RIGHTs from MATH.** A two-tab simplification shipped first and
+  the physical-calculator smoke caught it teaching wrong keys (one RIGHT
+  landed on NUM); hotfixed with a regression test pinning the real tab order.
 - Parameter steps use the existing `{slot}` mechanism resolved from
   `problem.values` — no walkthrough-engine changes. **The guided/recall
   walkthrough IS the procedural validation**: it checks the key sequence step
