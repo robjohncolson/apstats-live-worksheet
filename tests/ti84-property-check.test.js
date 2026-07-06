@@ -52,6 +52,35 @@ describe('checkPropertyField rules', () => {
   });
 });
 
+// ── Walkthrough review wiring (source-level — driving a full walkthrough
+// to the review screen needs a keypad bot; the review UI is manual-smoke
+// verified). Every gate that consulted VERIFICATION_FIELDS must also
+// consult PROPERTY_FIELDS so U3 reviews require the property check. ──
+
+describe('walkthrough review consults PROPERTY_FIELDS at every gate', () => {
+  it('checkAnswerVerification handles property procedures before computeExpected', () => {
+    const body = appSrc.match(/  function checkAnswerVerification\(\) \{[\s\S]*?\n  \}/)[0];
+    const propertyBranch = body.indexOf('PROPERTY_FIELDS[procedure.id]');
+    const exactPath = body.indexOf('const expected = computeExpected');
+    expect(propertyBranch).toBeGreaterThan(-1);
+    expect(exactPath).toBeGreaterThan(-1);
+    expect(propertyBranch).toBeLessThan(exactPath);
+  });
+
+  it('the finish-review button, handler gate, physical note, reset, and banner all include PROPERTY_FIELDS', () => {
+    expect(appSrc).toMatch(/data-action="finish-review" \$\{walkthrough\.answerVerified \|\| \(!PROPERTY_FIELDS\[/);
+    expect(appSrc).toMatch(/needsVerification = PROPERTY_FIELDS\[finishProcedure\?\.id\]/);
+    expect(appSrc).toMatch(/needsVerify = Boolean\(VERIFICATION_FIELDS\[procedure\.id\] \?\? PROPERTY_FIELDS\[procedure\.id\]\)/);
+    expect(appSrc).toMatch(/if \(VERIFICATION_FIELDS\[procedureId\] \?\? PROPERTY_FIELDS\[procedureId\]\) \{/);
+    expect(appSrc).toMatch(/banner = \(VERIFICATION_FIELDS\[procedureId\] \?\? PROPERTY_FIELDS\[procedureId\]\)/);
+  });
+
+  it('the review panel renders property fields for U3 procedures', () => {
+    const body = appSrc.match(/  function renderResultReviewPanel\(\) \{[\s\S]*?\n  \}/)[0];
+    expect(body).toContain('PROPERTY_FIELDS[procedure.id]');
+  });
+});
+
 // ── App-boot: the real handheld flow for randint-sampling ──
 
 const NATIVE_FILES = [

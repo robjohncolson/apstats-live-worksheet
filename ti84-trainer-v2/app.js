@@ -1947,7 +1947,7 @@
     app.clutch.phase = 'result-review';
     app.walkthrough.answerVerified = false;
     app.walkthrough.answerCheckResults = null;
-    app.banner = VERIFICATION_FIELDS[procedureId]
+    app.banner = (VERIFICATION_FIELDS[procedureId] ?? PROPERTY_FIELDS[procedureId])
       ? 'Walkthrough complete. Check your answer, then finish the review.'
       : 'Walkthrough complete. Explore the result, then finish the review.';
     updateMockCanvas();
@@ -3049,7 +3049,7 @@
 
     root.querySelector('.answer-card')?.classList.remove('verified');
 
-    if (VERIFICATION_FIELDS[procedureId]) {
+    if (VERIFICATION_FIELDS[procedureId] ?? PROPERTY_FIELDS[procedureId]) {
       const finishButton = root.querySelector('[data-action="finish-review"]');
 
       if (finishButton) {
@@ -3066,13 +3066,56 @@
   function checkAnswerVerification() {
     const walkthrough = app.walkthrough;
     const procedure = currentProcedure();
-    const fields = procedure ? VERIFICATION_FIELDS[procedure.id] : null;
+    const fields = procedure
+      ? (VERIFICATION_FIELDS[procedure.id] ?? PROPERTY_FIELDS[procedure.id])
+      : null;
 
     if (!walkthrough || !fields?.length) {
       return;
     }
 
     syncAnswerInputsFromDom();
+
+    // Randomization procedures verify FORM (the same property rules as the
+    // handheld check) — the student reads the numbers the calculator just
+    // displayed and types them back, so transcription and interpretation get
+    // checked even though no exact reference answer exists.
+    if (PROPERTY_FIELDS[procedure.id]) {
+      const problemValues = walkthrough.problem?.values ?? {};
+      const answerValues = walkthrough.answerValues ?? {};
+      const parsedByKey = {};
+      const propResults = {};
+      let allValid = true;
+
+      fields.forEach((field) => {
+        const correct = checkPropertyField(field, answerValues[field.key], problemValues, parsedByKey);
+        const failCount = correct ? 0 : (walkthrough.answerFailCounts?.[field.key] || 0) + 1;
+        walkthrough.answerFailCounts[field.key] = failCount;
+        propResults[field.key] = {
+          actual: answerValues[field.key] ?? '',
+          expected: null,
+          correct,
+          failCount,
+        };
+        if (!correct) {
+          allValid = false;
+        }
+      });
+
+      walkthrough.answerCheckResults = propResults;
+      walkthrough.answerVerified = allValid;
+      if (!allValid) {
+        walkthrough.errors += 1;
+      }
+
+      app.banner = allValid
+        ? 'Answer verified. Finish review is unlocked.'
+        : (procedure.id === 'randint-assignment'
+          ? 'Check your entries: distinct whole numbers in range, and Treatment A must be the FIRST numbers of your ordering.'
+          : 'Check your entries: you need the right count of distinct whole numbers, all within the label range.');
+      render();
+      return;
+    }
 
     const expected = computeExpected(procedure.id, walkthrough.problem);
 
@@ -3503,7 +3546,9 @@
   function renderResultReviewPanel() {
     const walkthrough = app.walkthrough;
     const procedure = currentProcedure();
-    const fields = procedure ? VERIFICATION_FIELDS[procedure.id] : null;
+    const fields = procedure
+      ? (VERIFICATION_FIELDS[procedure.id] ?? PROPERTY_FIELDS[procedure.id])
+      : null;
 
     if (!walkthrough || !fields) {
       return `
@@ -3535,7 +3580,7 @@
           <button type="button" class="mac-button" data-action="check-answer">
             Check
           </button>
-          <button type="button" class="mac-button primary" data-action="finish-review" ${walkthrough.answerVerified || !computeExpected(currentProcedure()?.id, walkthrough.problem) || emulatorDataLeniency() ? '' : 'disabled'}>
+          <button type="button" class="mac-button primary" data-action="finish-review" ${walkthrough.answerVerified || (!PROPERTY_FIELDS[currentProcedure()?.id] && !computeExpected(currentProcedure()?.id, walkthrough.problem)) || emulatorDataLeniency() ? '' : 'disabled'}>
             Finish review
           </button>
         </div>
@@ -3846,7 +3891,7 @@
     }
 
     if (phase === 'result-review') {
-      const needsVerify = Boolean(VERIFICATION_FIELDS[procedure.id]) && !walkthrough.answerVerified;
+      const needsVerify = Boolean(VERIFICATION_FIELDS[procedure.id] ?? PROPERTY_FIELDS[procedure.id]) && !walkthrough.answerVerified;
       return `
         <div class="physical-card physical-review">
           <p class="panel-kicker">Result review</p>
@@ -4384,8 +4429,9 @@
         break;
       case 'finish-review': {
         const finishProcedure = currentProcedure();
-        const needsVerification = VERIFICATION_FIELDS[finishProcedure?.id]
-          && computeExpected(finishProcedure.id, app.walkthrough?.problem);
+        const needsVerification = PROPERTY_FIELDS[finishProcedure?.id]
+          || (VERIFICATION_FIELDS[finishProcedure?.id]
+            && computeExpected(finishProcedure.id, app.walkthrough?.problem));
         if (needsVerification && !app.walkthrough?.answerVerified && !emulatorDataLeniency()) {
           app.banner = 'Check your answer before finishing the review.';
           render();
