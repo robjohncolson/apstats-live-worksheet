@@ -296,6 +296,13 @@ describe('status strip', () => {
     await bootTrainer();
     expect(document.body.innerHTML).toContain('This device (not signed in)');
   });
+
+  it('a valid session without a username still shows as signed in (Codex review)', async () => {
+    currentStudent = { studentId: 'STU_42' }; // no username, no realName
+    await bootTrainer();
+    expect(document.body.innerHTML).toContain('STU_42’s progress');
+    expect(document.body.innerHTML).not.toContain('This device (not signed in)');
+  });
 });
 
 describe('source-level trigger wiring', () => {

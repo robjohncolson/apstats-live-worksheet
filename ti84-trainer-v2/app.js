@@ -4185,9 +4185,14 @@
   // (TI84_TRAINER_STUDENT_STATE_SPEC.md §3).
   function identityLabel() {
     const who = window.rosterClient?.current?.();
-    return who?.username
-      ? `👤 ${escapeHtml(who.username)}’s progress`
-      : '👤 This device (not signed in)';
+    // Branch on SESSION existence, not username presence — the trust anchor
+    // must never claim "not signed in" for a valid roster session that
+    // happens to lack a username (Codex review).
+    if (!who?.studentId) {
+      return '👤 This device (not signed in)';
+    }
+    const name = who.username || who.realName || who.studentId;
+    return `👤 ${escapeHtml(String(name))}’s progress`;
   }
 
   // Compact status strip — the old due/new/mastery cards collapsed to one
