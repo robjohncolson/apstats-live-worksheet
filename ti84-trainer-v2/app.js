@@ -229,6 +229,61 @@
     }
   }
   migrateLegacyToAnon();
+
+  // ── Display prefs (independent pane scaling) ─────────────────────────────
+  // DEVICE-level on purpose, not per-student: they describe the physical
+  // screen (how big the calculator and guidance text need to be), so they
+  // survive sign-in/out and never mix into mastery state.
+  const UI_PREFS_KEY = 'ti84trainer_ui_prefs_v1';
+  const GUIDE_SCALE_MIN = 1;
+  const GUIDE_SCALE_MAX = 1.75;
+  const GUIDE_SCALE_STEP = 0.15;
+  const GUIDE_SCALE_DEFAULT = 1.3;
+  const CALC_SCALE_MIN = 0.55;
+  const CALC_SCALE_MAX = 1.2;
+  const CALC_SCALE_STEP = 0.08;
+
+  function roundScale(value) {
+    return Math.round(value * 100) / 100;
+  }
+
+  function clampNumber(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function loadUiPrefs() {
+    const fallback = { calcMode: 'fit', guideScale: GUIDE_SCALE_DEFAULT };
+
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(UI_PREFS_KEY) ?? 'null');
+
+      if (!parsed || typeof parsed !== 'object') {
+        return fallback;
+      }
+
+      const calcMode = typeof parsed.calcMode === 'number' && Number.isFinite(parsed.calcMode)
+        ? clampNumber(roundScale(parsed.calcMode), CALC_SCALE_MIN, CALC_SCALE_MAX)
+        : 'fit';
+      const guideScale = typeof parsed.guideScale === 'number' && Number.isFinite(parsed.guideScale)
+        ? clampNumber(roundScale(parsed.guideScale), GUIDE_SCALE_MIN, GUIDE_SCALE_MAX)
+        : GUIDE_SCALE_DEFAULT;
+
+      return { calcMode, guideScale };
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  const uiPrefs = loadUiPrefs();
+
+  function saveUiPrefs() {
+    try {
+      window.localStorage.setItem(UI_PREFS_KEY, JSON.stringify(uiPrefs));
+    } catch (error) {
+      console.warn('Failed to save TI-84 display prefs.', error);
+    }
+  }
+
   const PARAMETER_PATTERN = /^\{.+\}$/;
   const DATA_SETUP_INPUT_CHAR = {
     ZERO: '0',
@@ -554,6 +609,109 @@
 
   function isMobileViewport() {
     return window.innerWidth <= 600;
+  }
+
+  // ── Independent pane scaling ─────────────────────────────────────────────
+  // The guidance text and the calculator get separate scales so nobody has
+  // to touch browser zoom: --guide-scale is a stored preference (A− / A+),
+  // --calc-scale defaults to "fit" (largest scale where the whole calculator
+  // sits inside the viewport height). Applied as CSS vars on <html>, which
+  // survives the innerHTML re-renders. Desktop-only; the CSS media query
+  // ignores the vars on narrow viewports.
+  function isDesktopViewport() {
+    return window.innerWidth > 960;
+  }
+
+  function effectiveCalcScale() {
+    const raw = document.documentElement.style.getPropertyValue('--calc-scale');
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  }
+
+  function setCalcScale(scale) {
+    const rootStyle = document.documentElement.style;
+    const clamped = clampNumber(roundScale(scale), CALC_SCALE_MIN, CALC_SCALE_MAX);
+    rootStyle.setProperty('--calc-scale', String(clamped));
+
+    // The narration bar (instruction text inside the scaled shell) tracks the
+    // guide scale: shell zoom × narration zoom ≈ guide scale.
+    const narration = clampNumber(roundScale(uiPrefs.guideScale / clamped), 1, 2);
+    rootStyle.setProperty('--narration-scale', String(narration));
+  }
+
+  function applyPaneScales() {
+    const rootStyle = document.documentElement.style;
+
+    if (!isDesktopViewport()) {
+      rootStyle.setProperty('--guide-scale', '1');
+      rootStyle.setProperty('--calc-scale', '1');
+      rootStyle.setProperty('--narration-scale', '1');
+      return;
+    }
+
+    rootStyle.setProperty('--guide-scale', String(uiPrefs.guideScale));
+
+    const shell = root.querySelector('.calc-panel:not(.physical-panel) .calculator-shell');
+
+    if (!shell) {
+      setCalcScale(1);
+      return;
+    }
+
+    if (typeof uiPrefs.calcMode === 'number') {
+      setCalcScale(uiPrefs.calcMode);
+      return;
+    }
+
+    // Fit mode. The shell's natural top is measured against the (non-sticky)
+    // workspace so the result is the same whether or not the panel is
+    // currently pinned. Changing the scale re-zooms the narration bar, which
+    // changes the measured height — a few proportional passes converge.
+    const workspace = root.querySelector('.workspace');
+    const panel = shell.closest('.calc-panel');
+
+    if (!workspace || !panel) {
+      setCalcScale(1);
+      return;
+    }
+
+    const workspacePadding = Number.parseFloat(window.getComputedStyle(workspace).paddingTop) || 0;
+    let scale = clampNumber(effectiveCalcScale(), CALC_SCALE_MIN, 1);
+
+    for (let pass = 0; pass < 3; pass += 1) {
+      setCalcScale(scale);
+      const shellRect = shell.getBoundingClientRect();
+      const naturalTop = workspace.getBoundingClientRect().top + window.scrollY + workspacePadding
+        + (shellRect.top - panel.getBoundingClientRect().top);
+      const available = window.innerHeight - naturalTop - 18;
+
+      if (shellRect.height <= 0 || available <= 0) {
+        break;
+      }
+
+      const fitted = clampNumber(scale * (available / shellRect.height), CALC_SCALE_MIN, 1);
+
+      if (Math.abs(fitted - scale) < 0.02) {
+        break;
+      }
+
+      scale = fitted;
+    }
+
+    setCalcScale(scale);
+  }
+
+  function adjustGuideScale(delta) {
+    uiPrefs.guideScale = clampNumber(roundScale(uiPrefs.guideScale + delta), GUIDE_SCALE_MIN, GUIDE_SCALE_MAX);
+    saveUiPrefs();
+    render();
+  }
+
+  function adjustCalcScale(delta) {
+    const current = typeof uiPrefs.calcMode === 'number' ? uiPrefs.calcMode : effectiveCalcScale();
+    uiPrefs.calcMode = clampNumber(roundScale(current + delta), CALC_SCALE_MIN, CALC_SCALE_MAX);
+    saveUiPrefs();
+    render();
   }
 
   const VERIFICATION_FIELDS = {
@@ -4443,7 +4601,8 @@
         </header>
 
         <section class="banner-row">
-          <span>${app.banner}</span>
+          <span class="banner-message">${app.banner}</span>
+          ${renderScaleControls()}
         </section>
 
         <section class="workspace">
@@ -4467,6 +4626,32 @@
     }
 
     app.bridge.mountCanvas(app.canvasEl);
+    applyPaneScales();
+  }
+
+  // Rendered on every screen so the controls are always reachable; the CSS
+  // media query hides them on narrow viewports where scaling is disabled.
+  function renderScaleControls() {
+    const emulatorVisible = !app.handheldCheck && !app.persisted.physicalMode;
+    const fitActive = uiPrefs.calcMode === 'fit';
+    const calcControls = emulatorVisible
+      ? `
+        <span class="scale-group" role="group" aria-label="Calculator size">
+          <button type="button" class="mac-button scale-button" data-action="calc-scale-down" title="Smaller calculator" aria-label="Smaller calculator">🖩−</button>
+          <button type="button" class="mac-button scale-button${fitActive ? ' active' : ''}" data-action="calc-scale-fit" title="Fit the whole calculator on screen" aria-pressed="${fitActive}">Fit</button>
+          <button type="button" class="mac-button scale-button" data-action="calc-scale-up" title="Larger calculator" aria-label="Larger calculator">🖩+</button>
+        </span>`
+      : '';
+
+    return `
+      <span class="ui-scale-controls">
+        <span class="scale-group" role="group" aria-label="Guidance text size">
+          <button type="button" class="mac-button scale-button" data-action="guide-scale-down" title="Smaller guidance text" aria-label="Smaller guidance text">A−</button>
+          <button type="button" class="mac-button scale-button" data-action="guide-scale-up" title="Larger guidance text" aria-label="Larger guidance text">A+</button>
+        </span>
+        ${calcControls}
+      </span>
+    `;
   }
 
   function screenLinesForMock() {
@@ -4571,6 +4756,23 @@
     }
 
     switch (action) {
+      case 'guide-scale-up':
+        adjustGuideScale(GUIDE_SCALE_STEP);
+        break;
+      case 'guide-scale-down':
+        adjustGuideScale(-GUIDE_SCALE_STEP);
+        break;
+      case 'calc-scale-up':
+        adjustCalcScale(CALC_SCALE_STEP);
+        break;
+      case 'calc-scale-down':
+        adjustCalcScale(-CALC_SCALE_STEP);
+        break;
+      case 'calc-scale-fit':
+        uiPrefs.calcMode = 'fit';
+        saveUiPrefs();
+        render();
+        break;
       case 'intro-physical':
       case 'intro-emulator': {
         app.persisted.physicalMode = action === 'intro-physical';
@@ -4944,7 +5146,10 @@
       if (nowMobile !== wasMobile) {
         wasMobile = nowMobile;
         render();
+        return;
       }
+
+      applyPaneScales();
     }, 120);
   });
 

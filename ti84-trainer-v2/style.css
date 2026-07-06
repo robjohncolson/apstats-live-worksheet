@@ -152,10 +152,44 @@ input[type="file"] {
 }
 
 .banner-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--ink);
   background: #efefef;
   font-size: 0.95rem;
+}
+
+.banner-message {
+  min-width: 0;
+}
+
+/* Display-size controls live in the banner so they are reachable from every
+   screen. Desktop-only — phones have their own compact layout. */
+.ui-scale-controls {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.scale-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.scale-button {
+  min-height: 26px;
+  min-width: 34px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
+
+.scale-button.active {
+  background: var(--accent-soft);
 }
 
 .workspace {
@@ -1490,9 +1524,7 @@ code {
 /* ── Readability + fit pass (teacher UI feedback, 2026-07-05) ──────────────
    The guidance pane was mostly whitespace with small text, while the
    calculator column forced vertical scrolling at 100% zoom. Larger reading
-   sizes on the left; the calculator column steps its scale down on shorter
-   viewports so the WHOLE calculator (screen + keypad) fits without
-   scrolling or page-zoom. */
+   sizes on the left. */
 
 .problem-stem {
   font-size: 1.08rem;
@@ -1517,21 +1549,78 @@ code {
   font-size: 1.02rem;
 }
 
-@media (max-height: 940px) {
-  .calc-panel:not(.physical-panel) {
-    zoom: 0.88;
-  }
+/* ── Independent pane scaling (2026-07-06) ─────────────────────────────────
+   Browser zoom was being used as a workaround because the guidance text and
+   the calculator scaled together. Two independent scales fix that at 100%
+   browser zoom:
+   - --guide-scale enlarges instruction text (left pane, banner, narration,
+     physical-mode cards) and is a stored user preference (A− / A+).
+   - --calc-scale shrinks ONLY the calculator shell; "Fit" mode picks the
+     largest scale where the whole calculator (screen + keypad) sits inside
+     the viewport height, so nothing needs page zoom or scrolling.
+   Both are set on <html> by app.js and default to 1, so the layout is
+   unchanged if JS never runs. `zoom` (not transform) is used on purpose: it
+   participates in layout, so scaled panes reserve exactly their rendered
+   size and button hitboxes stay correct. Desktop-only — phones keep their
+   own compact layout. */
+
+:root {
+  --guide-scale: 1;
+  --calc-scale: 1;
+  --narration-scale: 1;
 }
 
-@media (max-height: 820px) {
-  .calc-panel:not(.physical-panel) {
-    zoom: 0.76;
+@media (min-width: 961px) {
+  .problem-panel {
+    zoom: var(--guide-scale);
   }
-}
 
-@media (max-height: 720px) {
+  .banner-message {
+    font-size: calc(0.95rem * var(--guide-scale));
+  }
+
+  /* Physical / handheld guidance is all text — it follows the guide scale. */
+  .calc-panel.physical-panel {
+    zoom: var(--guide-scale);
+  }
+
+  .calc-panel:not(.physical-panel) .calculator-shell {
+    zoom: var(--calc-scale);
+    width: min(100%, 500px);
+    margin: 0 auto;
+  }
+
+  /* The narration bar is instruction text that happens to live inside the
+     scaled calculator shell — compensate so it tracks the guide scale
+     instead of shrinking with the keypad. app.js sets this to
+     guide-scale / calc-scale (clamped). */
+  .calc-panel:not(.physical-panel) .narration-bar {
+    zoom: var(--narration-scale);
+  }
+
+  /* Long guidance scrolls INSIDE its own pane instead of scrolling the
+     calculator off screen; both panes pin once the page scrolls past the
+     titlebar. (Viewport units inside a zoomed pane resolve against the real
+     viewport, so the cap holds at any guide scale.) */
+  .problem-panel {
+    position: sticky;
+    top: 12px;
+    align-self: start;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    min-height: 0;
+  }
+
   .calc-panel:not(.physical-panel) {
-    zoom: 0.66;
+    position: sticky;
+    top: 12px;
+    align-self: start;
+    min-height: 0;
+  }
+
+  .ui-scale-controls {
+    display: inline-flex;
   }
 }
 
