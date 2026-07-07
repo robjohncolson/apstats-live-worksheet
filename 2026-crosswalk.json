@@ -1,0 +1,472 @@
+{
+ "source": "ap-stats-video-crosswalk.md (EK-verified vs 5 official Fall-2026 unit guides)",
+ "generatedAt": null,
+ "map": {
+  "1.1": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.1",
+   "newLabel": "What Can We Learn from Data?"
+  },
+  "1.2": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.2",
+   "newLabel": "Variables"
+  },
+  "1.3": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.3",
+   "newLabel": "Tabular Representation & Summary Statistics (1 categorical)"
+  },
+  "1.4": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.4",
+   "newLabel": "Graphical Representations (1 categorical)"
+  },
+  "1.5": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.5",
+   "newLabel": "Graphical Representations (1 quantitative)"
+  },
+  "1.6": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.6",
+   "newLabel": "Descriptions for 1-Quantitative Distributions"
+  },
+  "1.7": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.7",
+   "newLabel": "Summary Statistics (1 quantitative)"
+  },
+  "1.8": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.8",
+   "newLabel": "Graphical Representations of Summary Statistics"
+  },
+  "1.9": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.9",
+   "newLabel": "Comparisons of Distributions"
+  },
+  "1.10": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.11",
+   "newLabel": "The Normal Distribution",
+   "migrationNote": "Normal Dist. moved to Unit 2"
+  },
+  "2.1": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.1",
+   "newLabel": "Two Categorical Variables: Tables & Graphs",
+   "migrationNote": "intro folded"
+  },
+  "2.2": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.1",
+   "newLabel": "Two Categorical Variables: Tables & Graphs"
+  },
+  "2.3": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.2",
+   "newLabel": "Two Categorical Variables: Summary Statistics"
+  },
+  "2.4": {
+   "status": "core",
+   "newUnit": 5,
+   "newTopic": "5.1",
+   "newLabel": "Graphical Representations (two quantitative variables)"
+  },
+  "2.5": {
+   "status": "core",
+   "newUnit": 5,
+   "newTopic": "5.2",
+   "newLabel": "Correlation"
+  },
+  "2.6": {
+   "status": "core",
+   "newUnit": 5,
+   "newTopic": "5.3",
+   "newLabel": "Linear Regression Models"
+  },
+  "2.7": {
+   "status": "core",
+   "newUnit": 5,
+   "newTopic": "5.4",
+   "newLabel": "Residuals"
+  },
+  "2.8": {
+   "status": "core",
+   "newUnit": 5,
+   "newTopic": "5.5",
+   "newLabel": "Least-Squares Regression"
+  },
+  "2.9": {
+   "status": "bonus",
+   "bonusUnit": 5,
+   "newLabel": "Beyond the Exam: Departures from linearity (outliers/high-leverage/influential points in a scatterplot)"
+  },
+  "3.1": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.10",
+   "newLabel": "Investigative Question & Data Collection",
+   "migrationNote": "collecting-data folds into Unit 1"
+  },
+  "3.2": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.10",
+   "newLabel": "Investigative Question & Data Collection"
+  },
+  "3.3": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.11",
+   "newLabel": "Random Sampling"
+  },
+  "3.4": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.12",
+   "newLabel": "Potential Problems with Sampling"
+  },
+  "3.5": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.13",
+   "newLabel": "Experimental Design"
+  },
+  "3.6": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.13",
+   "newLabel": "Experimental Design"
+  },
+  "3.7": {
+   "status": "core",
+   "newUnit": 1,
+   "newTopic": "1.13",
+   "newLabel": "Experimental Design",
+   "migrationNote": "Inference&Experiments: pull sim-significance segment"
+  },
+  "4.1": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.3",
+   "newLabel": "Estimating Probabilities Using Simulation",
+   "migrationNote": "intro folded"
+  },
+  "4.2": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.3",
+   "newLabel": "Estimating Probabilities Using Simulation"
+  },
+  "4.3": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.4",
+   "newLabel": "Introduction to Probability"
+  },
+  "4.4": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.5",
+   "newLabel": "Mutually Exclusive Events"
+  },
+  "4.5": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.6",
+   "newLabel": "Conditional Probability"
+  },
+  "4.6": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.7",
+   "newLabel": "Independent Events & Unions"
+  },
+  "4.7": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.8",
+   "newLabel": "Introduction to Random Variables"
+  },
+  "4.8": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.9",
+   "newLabel": "Parameters of Random Variables"
+  },
+  "4.9": {
+   "status": "bonus",
+   "bonusUnit": 2,
+   "newLabel": "Beyond the Exam: Combining random variables"
+  },
+  "4.10": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.10",
+   "newLabel": "The Binomial Distribution"
+  },
+  "4.11": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.10",
+   "newLabel": "The Binomial Distribution",
+   "migrationNote": "merged into Binomial"
+  },
+  "4.12": {
+   "status": "bonus",
+   "bonusUnit": 2,
+   "newLabel": "Beyond the Exam: Geometric distribution"
+  },
+  "5.1": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.12",
+   "newLabel": "Sampling Distributions & the CLT",
+   "migrationNote": "intro folded"
+  },
+  "5.2": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.11",
+   "newLabel": "The Normal Distribution",
+   "migrationNote": "Normal, merged"
+  },
+  "5.3": {
+   "status": "core",
+   "newUnit": 2,
+   "newTopic": "2.12",
+   "newLabel": "Sampling Distributions & the CLT"
+  },
+  "5.4": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.1",
+   "newLabel": "Estimators"
+  },
+  "5.5": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.2",
+   "newLabel": "Sampling Distributions for Sample Proportions"
+  },
+  "5.6": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.9",
+   "newLabel": "Sampling Distributions (difference of proportions)"
+  },
+  "5.7": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.1",
+   "newLabel": "Sampling Distributions for Sample Means"
+  },
+  "5.8": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.6",
+   "newLabel": "Sampling Distributions (difference of two means)"
+  },
+  "6.1": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.3",
+   "newLabel": "Constructing a CI for a Proportion",
+   "migrationNote": "intro folded"
+  },
+  "6.2": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.3",
+   "newLabel": "Constructing a CI for a Proportion"
+  },
+  "6.3": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.4",
+   "newLabel": "Justifying a Claim (CI, proportion)"
+  },
+  "6.4": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.5",
+   "newLabel": "Setting Up a Test for a Proportion"
+  },
+  "6.5": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.6",
+   "newLabel": "p-Values"
+  },
+  "6.6": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.7",
+   "newLabel": "Carrying Out a Test for a Proportion"
+  },
+  "6.7": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.8",
+   "newLabel": "Potential Errors When Performing Tests"
+  },
+  "6.8": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.10",
+   "newLabel": "CI (difference of two proportions)"
+  },
+  "6.9": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.11",
+   "newLabel": "Justifying a Claim (CI, 2 proportions)"
+  },
+  "6.10": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.12",
+   "newLabel": "Setting Up a Test (difference of two proportions)"
+  },
+  "6.11": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.13",
+   "newLabel": "Carrying Out a Test (difference of two proportions)"
+  },
+  "7.1": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.2",
+   "newLabel": "Constructing a CI for a Mean or Mean Difference",
+   "migrationNote": "intro folded"
+  },
+  "7.2": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.2",
+   "newLabel": "Constructing a CI for a Mean or Mean Difference",
+   "migrationNote": "+matched-pairs supplement"
+  },
+  "7.3": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.3",
+   "newLabel": "Justifying a Claim (CI, mean/mean difference)"
+  },
+  "7.4": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.4",
+   "newLabel": "Setting Up a Test for a Mean or Mean Difference",
+   "migrationNote": "+matched-pairs supplement"
+  },
+  "7.5": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.5",
+   "newLabel": "Carrying Out a Test for a Mean or Mean Difference"
+  },
+  "7.6": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.7",
+   "newLabel": "CI (difference of two means)"
+  },
+  "7.7": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.8",
+   "newLabel": "Justifying a Claim (CI, 2 means)"
+  },
+  "7.8": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.9",
+   "newLabel": "Setting Up a Test (difference of two means)"
+  },
+  "7.9": {
+   "status": "core",
+   "newUnit": 4,
+   "newTopic": "4.10",
+   "newLabel": "Carrying Out a Test (difference of two means)"
+  },
+  "8.1": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.14",
+   "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
+   "migrationNote": "intro folded"
+  },
+  "8.2": {
+   "status": "bonus",
+   "bonusUnit": 3,
+   "newLabel": "Beyond the Exam: Chi-square goodness-of-fit"
+  },
+  "8.3": {
+   "status": "bonus",
+   "bonusUnit": 3,
+   "newLabel": "Beyond the Exam: Chi-square goodness-of-fit"
+  },
+  "8.4": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.14",
+   "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
+   "migrationNote": "expected counts (also feeds 3.15)"
+  },
+  "8.5": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.14",
+   "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)"
+  },
+  "8.6": {
+   "status": "core",
+   "newUnit": 3,
+   "newTopic": "3.15",
+   "newLabel": "Carrying Out a Chi-Square Test (homogeneity/independence)"
+  },
+  "9.1": {
+   "status": "bonus",
+   "bonusUnit": 5,
+   "newLabel": "Beyond the Exam: Slope inference"
+  },
+  "9.2": {
+   "status": "bonus",
+   "bonusUnit": 5,
+   "newLabel": "Beyond the Exam: Slope inference"
+  },
+  "9.3": {
+   "status": "bonus",
+   "bonusUnit": 5,
+   "newLabel": "Beyond the Exam: Slope inference"
+  },
+  "9.4": {
+   "status": "bonus",
+   "bonusUnit": 5,
+   "newLabel": "Beyond the Exam: Slope inference"
+  },
+  "9.5": {
+   "status": "bonus",
+   "bonusUnit": 5,
+   "newLabel": "Beyond the Exam: Slope inference"
+  }
+ }
+}

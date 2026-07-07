@@ -19,6 +19,12 @@ const CR_BASE = 'https://robjohncolson.github.io/curriculum_render/';
 const roadmap = JSON.parse(readFileSync(resolve(REPO, 'roadmap-data.json'), 'utf8'));
 const lessons = roadmap.lessons || {};
 
+// Fall 2026 CED crosswalk (EK-verified vs the 5 official unit guides). ADDITIVE:
+// old id + video filenames are unchanged; each entry gains status ('core'|'bonus'),
+// newUnit/newTopic/newLabel (core), or bonusUnit (bonus → greyed "Beyond the Exam").
+const CW_PATH = resolve(REPO, '2026-crosswalk.json');
+const crosswalk = existsSync(CW_PATH) ? (JSON.parse(readFileSync(CW_PATH, 'utf8')).map || {}) : {};
+
 const mediaDir = arg('--media', existsSync(resolve(REPO, 'media-compressed')) ? 'media-compressed'
                  : existsSync(resolve(REPO, 'media')) ? 'media' : null);
 const videoFiles = (mediaDir && existsSync(resolve(REPO, mediaDir)))
@@ -49,6 +55,7 @@ const out = [];
 for (const id of Object.keys(lessons)) {
   const L = lessons[id] || {};
   const u = L.urls || {};
+  const cw = crosswalk[id] || { status: 'unmapped' };
   out.push({
     id,
     unit: parseInt(id, 10) || 0,
@@ -57,11 +64,14 @@ for (const id of Object.keys(lessons)) {
     quiz: quizLocal(u.quiz),
     blooket: u.blooket || null,          // external Blooket URL (needs internet; baked from roadmap-data.json)
     videos: videosFor(id),
+    ...cw,                               // Fall 2026 CED: status, newUnit/newTopic/newLabel | bonusUnit
   });
 }
 out.sort((a, b) => (a.unit - b.unit) || (lessonNum(a.id) - lessonNum(b.id)));
 
 const withVideo = out.filter((l) => l.videos.length).length;
+const core = out.filter((l) => l.status === 'core').length;
+const bonus = out.filter((l) => l.status === 'bonus').length;
 writeFileSync(OUT, JSON.stringify({ generatedAt: null, count: out.length, lessons: out }, null, 1));
 console.log(`lessons-index.json → ${OUT}`);
-console.log(`  ${out.length} lessons; ${withVideo} with local video; media: ${mediaDir || 'none'}`);
+console.log(`  ${out.length} lessons; ${withVideo} with local video; ${core} core / ${bonus} bonus (Fall 2026); media: ${mediaDir || 'none'}`);
