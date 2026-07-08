@@ -33,7 +33,10 @@ import { fileURLToPath } from 'node:url';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
-const SRC = resolve(REPO, 'roster-server/data/work-manifest.json');
+// Read the FROZEN 9-unit source snapshot (not the live manifest — that's now
+// CED-shaped, so reading it would no longer be a clean transform). Refresh the
+// source with build-work-manifest.mjs. Pass --deploy to write both live paths.
+const SRC = resolve(REPO, 'scripts/fixtures/work-manifest-9unit-source.json');
 const CW  = resolve(REPO, '2026-crosswalk.json');
 const OUT = resolve(REPO, arg('--out', 'scripts/fixtures/work-manifest-ced.json'));
 
@@ -194,6 +197,22 @@ const out = {
 
 writeFileSync(OUT, JSON.stringify(out, null, 1) + '\n');
 console.log(`Wrote ${OUT}`);
+
+// --deploy: write the CLEAN live manifest (audit metadata stripped) to BOTH live
+// paths — the only sanctioned way to refresh the live Do-Now manifest post-P2.
+if (process.argv.includes('--deploy')) {
+  const live = {
+    generatedFrom: 'work-manifest-ced (P1a) — Fall-2026 5-unit CED Do-Now order; old ids + itemIds preserved; bonus + PCs omitted (PCs live in AP Classroom)',
+    generated: null,
+    units,     // {unit, title, lessons} — no pc (computeDonow skips unit-less-pc)
+    index,
+  };
+  const liveJson = JSON.stringify(live, null, 1) + '\n';
+  for (const p of ['data/work-manifest.json', 'roster-server/data/work-manifest.json']) {
+    writeFileSync(resolve(REPO, p), liveJson);
+    console.log(`  deployed → ${p}`);
+  }
+}
 console.log(`  units: ${units.map((u) => u.unit + '(' + u.lessons.length + ')').join(' ')}`);
 console.log(`  itemIds: source ${invariants.srcItemIds} = kept ${invariants.keptItemIds} + bonus ${invariants.bonusItemIds} + PC ${invariants.pcItemIds}  [accounting ${invariants.accountingOk ? 'OK' : 'FAIL'}]`);
 console.log(`  invariants: allMissingBonusOrPc=${invariants.allMissingAreBonusOrPc} noDup=${invariants.noDuplicateKeptItemIds} unknown=${invariants.unknownEmpty} crossUnit=${invariants.crossUnitEmpty}`);

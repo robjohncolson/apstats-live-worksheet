@@ -43,7 +43,11 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const SKILL_MAP_PATH = resolve(ROOT, 'data/skill-map.json');
-const MANIFEST_PATH = resolve(ROOT, 'data/work-manifest.json');
+// NOTE (P2, 2026-07): this builder now writes the FROZEN 9-UNIT SOURCE snapshot,
+// NOT the live manifest. The live Do-Now manifest is the Fall-2026 5-unit CED
+// reframe produced by build-work-manifest-ced.mjs (reads this source → --deploy
+// writes both live paths). Writing live here would clobber the CED reframe (669f088).
+const MANIFEST_PATH = resolve(ROOT, 'scripts/fixtures/work-manifest-9unit-source.json');
 
 // Railway deploys roster-server with Root Directory = roster-server, so the
 // repo-root data/ dir is NOT in the deployed container. Ship a byte-identical
@@ -337,11 +341,11 @@ if (isMain) {
   writeFileSync(MANIFEST_PATH, withTimestamp, 'utf8');
   console.log(`Wrote ${MANIFEST_PATH}`);
 
-  // Bundled copy for the roster-server Railway deploy (root=roster-server).
-  // Byte-identical to MANIFEST_PATH so /donow reads the same data in prod.
-  mkdirSync(dirname(BUNDLED_MANIFEST_PATH), { recursive: true });
-  writeFileSync(BUNDLED_MANIFEST_PATH, withTimestamp, 'utf8');
-  console.log(`Wrote ${BUNDLED_MANIFEST_PATH} (bundled for deploy)`);
+  // The LIVE Do-Now manifests (data/ + roster-server/data/) are NOT written here
+  // anymore — they are the 5-unit CED reframe. Refresh them with:
+  //   node scripts/build-work-manifest-ced.mjs --deploy
+  // (that reads this frozen 9-unit source and writes both live paths).
+  console.log('NOTE: live Do-Now manifests are produced by `build-work-manifest-ced.mjs --deploy` (5-unit CED). This run only refreshed the frozen 9-unit source.');
 
   // Quick summary
   const unitCount = manifest.units.length;
