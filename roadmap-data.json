@@ -25,6 +25,14 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.14",
+        "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
+        "bonusUnit": null,
+        "migrationNote": "intro folded"
       }
     },
     "8.2": {
@@ -50,6 +58,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Chi-square goodness-of-fit",
+        "bonusUnit": 3
       }
     },
     "8.3": {
@@ -75,6 +90,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Chi-square goodness-of-fit",
+        "bonusUnit": 3
       }
     },
     "8.4": {
@@ -100,6 +122,14 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.14",
+        "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
+        "bonusUnit": null,
+        "migrationNote": "expected counts (also feeds 3.15)"
       }
     },
     "8.5": {
@@ -125,6 +155,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.14",
+        "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
+        "bonusUnit": null
       }
     },
     "8.6": {
@@ -150,6 +187,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.15",
+        "newLabel": "Carrying Out a Chi-Square Test (homogeneity/independence)",
+        "bonusUnit": null
       }
     },
     "9.1": {
@@ -175,6 +219,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Slope inference",
+        "bonusUnit": 5
       }
     },
     "9.2": {
@@ -200,6 +251,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Slope inference",
+        "bonusUnit": 5
       }
     },
     "9.3": {
@@ -225,6 +283,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Slope inference",
+        "bonusUnit": 5
       }
     },
     "9.4": {
@@ -250,6 +315,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Slope inference",
+        "bonusUnit": 5
       }
     },
     "9.5": {
@@ -275,6 +347,13 @@
           "posted": true,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Slope inference",
+        "bonusUnit": 5
       }
     },
     "3.6": {
@@ -300,6 +379,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.13",
+        "newLabel": "Experimental Design",
+        "bonusUnit": null
       }
     },
     "3.7": {
@@ -325,6 +411,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.13",
+        "newLabel": "Experimental Design",
+        "bonusUnit": null,
+        "migrationNote": "Inference&Experiments: pull sim-significance segment"
       }
     },
     "4.1": {
@@ -350,6 +444,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.3",
+        "newLabel": "Estimating Probabilities Using Simulation",
+        "bonusUnit": null,
+        "migrationNote": "intro folded"
       }
     },
     "4.2": {
@@ -375,6 +477,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.3",
+        "newLabel": "Estimating Probabilities Using Simulation",
+        "bonusUnit": null
       }
     },
     "4.3": {
@@ -400,6 +509,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.4",
+        "newLabel": "Introduction to Probability",
+        "bonusUnit": null
       }
     },
     "4.4": {
@@ -425,6 +541,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.5",
+        "newLabel": "Mutually Exclusive Events",
+        "bonusUnit": null
       }
     },
     "4.5": {
@@ -450,6 +573,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.6",
+        "newLabel": "Conditional Probability",
+        "bonusUnit": null
       }
     },
     "4.6": {
@@ -475,6 +605,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.7",
+        "newLabel": "Independent Events & Unions",
+        "bonusUnit": null
       }
     },
     "4.7": {
@@ -500,6 +637,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.8",
+        "newLabel": "Introduction to Random Variables",
+        "bonusUnit": null
       }
     },
     "4.8": {
@@ -525,6 +669,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.9",
+        "newLabel": "Parameters of Random Variables",
+        "bonusUnit": null
       }
     },
     "4.9": {
@@ -550,6 +701,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Combining random variables",
+        "bonusUnit": 2
       }
     },
     "4.10": {
@@ -575,6 +733,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.10",
+        "newLabel": "The Binomial Distribution",
+        "bonusUnit": null
       }
     },
     "4.11": {
@@ -600,6 +765,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.10",
+        "newLabel": "The Binomial Distribution",
+        "bonusUnit": null,
+        "migrationNote": "merged into Binomial"
       }
     },
     "4.12": {
@@ -625,6 +798,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Geometric distribution",
+        "bonusUnit": 2
       }
     },
     "5.1": {
@@ -650,6 +830,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.12",
+        "newLabel": "Sampling Distributions & the CLT",
+        "bonusUnit": null,
+        "migrationNote": "intro folded"
       }
     },
     "5.2": {
@@ -675,6 +863,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.11",
+        "newLabel": "The Normal Distribution",
+        "bonusUnit": null,
+        "migrationNote": "Normal, merged"
       }
     },
     "5.3": {
@@ -700,6 +896,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.12",
+        "newLabel": "Sampling Distributions & the CLT",
+        "bonusUnit": null
       }
     },
     "5.4": {
@@ -725,6 +928,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.1",
+        "newLabel": "Estimators",
+        "bonusUnit": null
       }
     },
     "5.5": {
@@ -750,6 +960,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.2",
+        "newLabel": "Sampling Distributions for Sample Proportions",
+        "bonusUnit": null
       }
     },
     "5.6": {
@@ -775,6 +992,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.9",
+        "newLabel": "Sampling Distributions (difference of proportions)",
+        "bonusUnit": null
       }
     },
     "5.7": {
@@ -800,6 +1024,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.1",
+        "newLabel": "Sampling Distributions for Sample Means",
+        "bonusUnit": null
       }
     },
     "5.8": {
@@ -825,6 +1056,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.6",
+        "newLabel": "Sampling Distributions (difference of two means)",
+        "bonusUnit": null
       }
     },
     "6.1": {
@@ -850,6 +1088,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.3",
+        "newLabel": "Constructing a CI for a Proportion",
+        "bonusUnit": null,
+        "migrationNote": "intro folded"
       }
     },
     "6.2": {
@@ -875,6 +1121,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.3",
+        "newLabel": "Constructing a CI for a Proportion",
+        "bonusUnit": null
       }
     },
     "6.3": {
@@ -900,6 +1153,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.4",
+        "newLabel": "Justifying a Claim (CI, proportion)",
+        "bonusUnit": null
       }
     },
     "6.4": {
@@ -925,6 +1185,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.5",
+        "newLabel": "Setting Up a Test for a Proportion",
+        "bonusUnit": null
       }
     },
     "6.5": {
@@ -950,6 +1217,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.6",
+        "newLabel": "p-Values",
+        "bonusUnit": null
       }
     },
     "6.6": {
@@ -975,6 +1249,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.7",
+        "newLabel": "Carrying Out a Test for a Proportion",
+        "bonusUnit": null
       }
     },
     "6.7": {
@@ -1000,6 +1281,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.8",
+        "newLabel": "Potential Errors When Performing Tests",
+        "bonusUnit": null
       }
     },
     "6.8": {
@@ -1025,6 +1313,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.10",
+        "newLabel": "CI (difference of two proportions)",
+        "bonusUnit": null
       }
     },
     "6.9": {
@@ -1050,6 +1345,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.11",
+        "newLabel": "Justifying a Claim (CI, 2 proportions)",
+        "bonusUnit": null
       }
     },
     "6.10": {
@@ -1075,6 +1377,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.12",
+        "newLabel": "Setting Up a Test (difference of two proportions)",
+        "bonusUnit": null
       }
     },
     "6.11": {
@@ -1100,6 +1409,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 3,
+        "newTopic": "3.13",
+        "newLabel": "Carrying Out a Test (difference of two proportions)",
+        "bonusUnit": null
       }
     },
     "7.1": {
@@ -1125,6 +1441,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.2",
+        "newLabel": "Constructing a CI for a Mean or Mean Difference",
+        "bonusUnit": null,
+        "migrationNote": "intro folded"
       }
     },
     "7.2": {
@@ -1150,6 +1474,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.2",
+        "newLabel": "Constructing a CI for a Mean or Mean Difference",
+        "bonusUnit": null,
+        "migrationNote": "+matched-pairs supplement"
       }
     },
     "7.3": {
@@ -1175,6 +1507,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.3",
+        "newLabel": "Justifying a Claim (CI, mean/mean difference)",
+        "bonusUnit": null
       }
     },
     "7.4": {
@@ -1200,6 +1539,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.4",
+        "newLabel": "Setting Up a Test for a Mean or Mean Difference",
+        "bonusUnit": null,
+        "migrationNote": "+matched-pairs supplement"
       }
     },
     "7.5": {
@@ -1225,6 +1572,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.5",
+        "newLabel": "Carrying Out a Test for a Mean or Mean Difference",
+        "bonusUnit": null
       }
     },
     "7.6": {
@@ -1250,6 +1604,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.7",
+        "newLabel": "CI (difference of two means)",
+        "bonusUnit": null
       }
     },
     "7.7": {
@@ -1275,6 +1636,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.8",
+        "newLabel": "Justifying a Claim (CI, 2 means)",
+        "bonusUnit": null
       }
     },
     "7.8": {
@@ -1300,6 +1668,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.9",
+        "newLabel": "Setting Up a Test (difference of two means)",
+        "bonusUnit": null
       }
     },
     "7.9": {
@@ -1325,6 +1700,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 4,
+        "newTopic": "4.10",
+        "newLabel": "Carrying Out a Test (difference of two means)",
+        "bonusUnit": null
       }
     },
     "1.3": {
@@ -1350,6 +1732,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.3",
+        "newLabel": "Tabular Representation & Summary Statistics (1 categorical)",
+        "bonusUnit": null
       }
     },
     "1.1": {
@@ -1375,6 +1764,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.1",
+        "newLabel": "What Can We Learn from Data?",
+        "bonusUnit": null
       }
     },
     "1.2": {
@@ -1400,6 +1796,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.2",
+        "newLabel": "Variables",
+        "bonusUnit": null
       }
     },
     "1.4": {
@@ -1425,6 +1828,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.4",
+        "newLabel": "Graphical Representations (1 categorical)",
+        "bonusUnit": null
       }
     },
     "1.5": {
@@ -1450,6 +1860,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.5",
+        "newLabel": "Graphical Representations (1 quantitative)",
+        "bonusUnit": null
       }
     },
     "1.6": {
@@ -1475,6 +1892,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.6",
+        "newLabel": "Descriptions for 1-Quantitative Distributions",
+        "bonusUnit": null
       }
     },
     "1.8": {
@@ -1500,6 +1924,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.8",
+        "newLabel": "Graphical Representations of Summary Statistics",
+        "bonusUnit": null
       }
     },
     "1.7": {
@@ -1525,6 +1956,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.7",
+        "newLabel": "Summary Statistics (1 quantitative)",
+        "bonusUnit": null
       }
     },
     "1.9": {
@@ -1550,6 +1988,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.9",
+        "newLabel": "Comparisons of Distributions",
+        "bonusUnit": null
       }
     },
     "1.10": {
@@ -1575,6 +2020,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.11",
+        "newLabel": "The Normal Distribution",
+        "bonusUnit": null,
+        "migrationNote": "Normal Dist. moved to Unit 2"
       }
     },
     "2.2": {
@@ -1600,6 +2053,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.1",
+        "newLabel": "Two Categorical Variables: Tables & Graphs",
+        "bonusUnit": null
       }
     },
     "2.1": {
@@ -1625,6 +2085,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.1",
+        "newLabel": "Two Categorical Variables: Tables & Graphs",
+        "bonusUnit": null,
+        "migrationNote": "intro folded"
       }
     },
     "2.3": {
@@ -1650,6 +2118,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 2,
+        "newTopic": "2.2",
+        "newLabel": "Two Categorical Variables: Summary Statistics",
+        "bonusUnit": null
       }
     },
     "2.4": {
@@ -1675,6 +2150,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 5,
+        "newTopic": "5.1",
+        "newLabel": "Graphical Representations (two quantitative variables)",
+        "bonusUnit": null
       }
     },
     "2.5": {
@@ -1700,6 +2182,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 5,
+        "newTopic": "5.2",
+        "newLabel": "Correlation",
+        "bonusUnit": null
       }
     },
     "2.6": {
@@ -1725,6 +2214,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 5,
+        "newTopic": "5.3",
+        "newLabel": "Linear Regression Models",
+        "bonusUnit": null
       }
     },
     "2.7": {
@@ -1750,6 +2246,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 5,
+        "newTopic": "5.4",
+        "newLabel": "Residuals",
+        "bonusUnit": null
       }
     },
     "2.8": {
@@ -1775,6 +2278,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 5,
+        "newTopic": "5.5",
+        "newLabel": "Least-Squares Regression",
+        "bonusUnit": null
       }
     },
     "2.9": {
@@ -1800,6 +2310,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "bonus",
+        "newUnit": null,
+        "newTopic": null,
+        "newLabel": "Beyond the Exam: Departures from linearity (outliers/high-leverage/influential points in a scatterplot)",
+        "bonusUnit": 5
       }
     },
     "3.1": {
@@ -1825,6 +2342,14 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.10",
+        "newLabel": "Investigative Question & Data Collection",
+        "bonusUnit": null,
+        "migrationNote": "collecting-data folds into Unit 1"
       }
     },
     "3.2": {
@@ -1850,6 +2375,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.10",
+        "newLabel": "Investigative Question & Data Collection",
+        "bonusUnit": null
       }
     },
     "3.3": {
@@ -1875,6 +2407,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.11",
+        "newLabel": "Random Sampling",
+        "bonusUnit": null
       }
     },
     "3.4": {
@@ -1900,6 +2439,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.12",
+        "newLabel": "Potential Problems with Sampling",
+        "bonusUnit": null
       }
     },
     "3.5": {
@@ -1925,6 +2471,13 @@
           "posted": false,
           "verified": false
         }
+      },
+      "ced2026": {
+        "status": "core",
+        "newUnit": 1,
+        "newTopic": "1.13",
+        "newLabel": "Experimental Design",
+        "bonusUnit": null
       }
     }
   },

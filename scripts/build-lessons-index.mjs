@@ -55,7 +55,6 @@ const out = [];
 for (const id of Object.keys(lessons)) {
   const L = lessons[id] || {};
   const u = L.urls || {};
-  const cw = crosswalk[id] || { status: 'unmapped' };
   out.push({
     id,
     unit: parseInt(id, 10) || 0,
@@ -64,14 +63,14 @@ for (const id of Object.keys(lessons)) {
     quiz: quizLocal(u.quiz),
     blooket: u.blooket || null,          // external Blooket URL (needs internet; baked from roadmap-data.json)
     videos: videosFor(id),
-    ...cw,                               // Fall 2026 CED: status, newUnit/newTopic/newLabel | bonusUnit
+    ced2026: crosswalk[id] || null,      // Fall 2026 CED overlay (namespaced; matches roadmap-data.json shape)
   });
 }
 out.sort((a, b) => (a.unit - b.unit) || (lessonNum(a.id) - lessonNum(b.id)));
 
 const withVideo = out.filter((l) => l.videos.length).length;
-const core = out.filter((l) => l.status === 'core').length;
-const bonus = out.filter((l) => l.status === 'bonus').length;
+const core = out.filter((l) => l.ced2026 && l.ced2026.status === 'core').length;
+const bonus = out.filter((l) => l.ced2026 && l.ced2026.status === 'bonus').length;
 writeFileSync(OUT, JSON.stringify({ generatedAt: null, count: out.length, lessons: out }, null, 1));
 console.log(`lessons-index.json → ${OUT}`);
 console.log(`  ${out.length} lessons; ${withVideo} with local video; ${core} core / ${bonus} bonus (Fall 2026); media: ${mediaDir || 'none'}`);

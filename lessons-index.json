@@ -12,10 +12,13 @@
    "videos": [
     "media/1-1__0__1wEbNmDM4KBUWvvoRoQIgIYKYWxG3x6Cv.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.1",
-   "newLabel": "What Can We Learn from Data?"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.1",
+    "newLabel": "What Can We Learn from Data?",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.2",
@@ -27,10 +30,13 @@
    "videos": [
     "media/1-2__0__1cJ3a5DSlZ0w3vta901HVyADfQ-qKVQcD.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.2",
-   "newLabel": "Variables"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.2",
+    "newLabel": "Variables",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.3",
@@ -42,10 +48,13 @@
    "videos": [
     "media/1-3__0__1F9_jLryrjHyXUN21eZmNHrTIGATBhhDw.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.3",
-   "newLabel": "Tabular Representation & Summary Statistics (1 categorical)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.3",
+    "newLabel": "Tabular Representation & Summary Statistics (1 categorical)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.4",
@@ -58,10 +67,13 @@
     "media/1-4__0__1vo3zsZu4wZAAkf-fPTuCmKXudgs0Gnl4.mp4",
     "media/1-4__1__1Hp7GWdTzjPQNvcAnnrrt_QYXV27gCEHh.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.4",
-   "newLabel": "Graphical Representations (1 categorical)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.4",
+    "newLabel": "Graphical Representations (1 categorical)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.5",
@@ -73,10 +85,13 @@
    "videos": [
     "media/1-5__0__1jlopxNducZRaqXtU9c2NvXxq_tGK90ue.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.5",
-   "newLabel": "Graphical Representations (1 quantitative)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.5",
+    "newLabel": "Graphical Representations (1 quantitative)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.6",
@@ -88,10 +103,13 @@
    "videos": [
     "media/1-6__0__1oWGqzk4meQ6HuXE-mTDHMStp-qOGDUZJ.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.6",
-   "newLabel": "Descriptions for 1-Quantitative Distributions"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.6",
+    "newLabel": "Descriptions for 1-Quantitative Distributions",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.7",
@@ -104,10 +122,13 @@
     "media/1-7__0__1JpzXso3aZ8P8MXQ8b8f1kpjlq_ciaQCK.mp4",
     "media/1-7__1__1_LYoOie55jPT2tM-o3spuiqbVxga9VPv.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.7",
-   "newLabel": "Summary Statistics (1 quantitative)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.7",
+    "newLabel": "Summary Statistics (1 quantitative)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.8",
@@ -119,10 +140,13 @@
    "videos": [
     "media/1-8__0__1sKc6XpjX5RUjGv5wbjUl7R1QEYLXG6W8.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.8",
-   "newLabel": "Graphical Representations of Summary Statistics"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.8",
+    "newLabel": "Graphical Representations of Summary Statistics",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.9",
@@ -134,10 +158,13 @@
    "videos": [
     "media/1-9__0__1zUev1tHzgJLMi337FjuxY49siAJJf_w8.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.9",
-   "newLabel": "Comparisons of Distributions"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.9",
+    "newLabel": "Comparisons of Distributions",
+    "bonusUnit": null
+   }
   },
   {
    "id": "1.10",
@@ -151,11 +178,14 @@
     "media/1-10__1__1UF7VafU4agY3JcxHnp61EEjpOv959wZ8.mp4",
     "media/1-10__2__1aYbhplXukoDHOpWYCNG5OOTGVYZOcyCV.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.11",
-   "newLabel": "The Normal Distribution",
-   "migrationNote": "Normal Dist. moved to Unit 2"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.11",
+    "newLabel": "The Normal Distribution",
+    "bonusUnit": null,
+    "migrationNote": "Normal Dist. moved to Unit 2"
+   }
   },
   {
    "id": "2.1",
@@ -167,11 +197,14 @@
    "videos": [
     "media/2-1__0__1epQNhpTqA0qMv8ceTpH5IagjDDUlOPC0.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.1",
-   "newLabel": "Two Categorical Variables: Tables & Graphs",
-   "migrationNote": "intro folded"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.1",
+    "newLabel": "Two Categorical Variables: Tables & Graphs",
+    "bonusUnit": null,
+    "migrationNote": "intro folded"
+   }
   },
   {
    "id": "2.2",
@@ -183,10 +216,13 @@
    "videos": [
     "media/2-2__0__170yFl1LoVYwYZ8a6coNhfQkfkFiHD1gg.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.1",
-   "newLabel": "Two Categorical Variables: Tables & Graphs"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.1",
+    "newLabel": "Two Categorical Variables: Tables & Graphs",
+    "bonusUnit": null
+   }
   },
   {
    "id": "2.3",
@@ -198,10 +234,13 @@
    "videos": [
     "media/2-3__0__1IZIAXWtHsQfr1o7GZIJ2nnYXaQZt6Xyh.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.2",
-   "newLabel": "Two Categorical Variables: Summary Statistics"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.2",
+    "newLabel": "Two Categorical Variables: Summary Statistics",
+    "bonusUnit": null
+   }
   },
   {
    "id": "2.4",
@@ -214,10 +253,13 @@
     "media/2-4__0__1RCEtVGX87UjgbneQqQKc5rNYhAQb4jPS.mp4",
     "media/2-4__1__1ZpPac1ofe4Bot2yrLgwLPvSHdMUHvK4J.mp4"
    ],
-   "status": "core",
-   "newUnit": 5,
-   "newTopic": "5.1",
-   "newLabel": "Graphical Representations (two quantitative variables)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 5,
+    "newTopic": "5.1",
+    "newLabel": "Graphical Representations (two quantitative variables)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "2.5",
@@ -229,10 +271,13 @@
    "videos": [
     "media/2-5__0__1UnF2HFBgzzgj7M7_SIxhzJxrWiQQ7Itm.mp4"
    ],
-   "status": "core",
-   "newUnit": 5,
-   "newTopic": "5.2",
-   "newLabel": "Correlation"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 5,
+    "newTopic": "5.2",
+    "newLabel": "Correlation",
+    "bonusUnit": null
+   }
   },
   {
    "id": "2.6",
@@ -245,10 +290,13 @@
     "media/2-6__0__1O_VPIl1W7TNAOi2wWNs0Uphbw11Mlagj.mp4",
     "media/2-6__1__1_NOitEc1RuIwOgfx9lWcjOkq5yDdXToa.mp4"
    ],
-   "status": "core",
-   "newUnit": 5,
-   "newTopic": "5.3",
-   "newLabel": "Linear Regression Models"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 5,
+    "newTopic": "5.3",
+    "newLabel": "Linear Regression Models",
+    "bonusUnit": null
+   }
   },
   {
    "id": "2.7",
@@ -261,10 +309,13 @@
     "media/2-7__0__1bk2KcUGXtM_uqBiv4IHwiXImazzX8S0k.mp4",
     "media/2-7__1__1UjY1FF2ztFtcT5tk6brklCxRanMhFmOf.mp4"
    ],
-   "status": "core",
-   "newUnit": 5,
-   "newTopic": "5.4",
-   "newLabel": "Residuals"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 5,
+    "newTopic": "5.4",
+    "newLabel": "Residuals",
+    "bonusUnit": null
+   }
   },
   {
    "id": "2.8",
@@ -278,10 +329,13 @@
     "media/2-8__1__1XuzJlAW6HfR6E4L2DSSYxf66yqbG15dg.mp4",
     "media/2-8__2__1Ghvv9jo8PH9KmX25-23oSRLVlLlUZX7N.mp4"
    ],
-   "status": "core",
-   "newUnit": 5,
-   "newTopic": "5.5",
-   "newLabel": "Least-Squares Regression"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 5,
+    "newTopic": "5.5",
+    "newLabel": "Least-Squares Regression",
+    "bonusUnit": null
+   }
   },
   {
    "id": "2.9",
@@ -294,9 +348,13 @@
     "media/2-9__0__19OKlAS6U2MyiT0E3LMsR8Hxu9LHWt78Q.mp4",
     "media/2-9__1__1Y0qapTVLcbLj02JjkzA11uEEWFYPe7Cr.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 5,
-   "newLabel": "Beyond the Exam: Departures from linearity (outliers/high-leverage/influential points in a scatterplot)"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Departures from linearity (outliers/high-leverage/influential points in a scatterplot)",
+    "bonusUnit": 5
+   }
   },
   {
    "id": "3.1",
@@ -308,11 +366,14 @@
    "videos": [
     "media/3-1__0__1TvZluuFXhx8theWMpU0hSs19vvP39Vua.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.10",
-   "newLabel": "Investigative Question & Data Collection",
-   "migrationNote": "collecting-data folds into Unit 1"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.10",
+    "newLabel": "Investigative Question & Data Collection",
+    "bonusUnit": null,
+    "migrationNote": "collecting-data folds into Unit 1"
+   }
   },
   {
    "id": "3.2",
@@ -324,10 +385,13 @@
    "videos": [
     "media/3-2__0__121AAheYGEysRFC58l3KVJVkBVJmPo--U.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.10",
-   "newLabel": "Investigative Question & Data Collection"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.10",
+    "newLabel": "Investigative Question & Data Collection",
+    "bonusUnit": null
+   }
   },
   {
    "id": "3.3",
@@ -340,10 +404,13 @@
     "media/3-3__0__1ogJAzU5hvGomK2eZGCkMza7EOpU67BaT.mp4",
     "media/3-3__1__1jiVMlN3Y_xdARYHGB1ASbOSwroRfuFCB.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.11",
-   "newLabel": "Random Sampling"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.11",
+    "newLabel": "Random Sampling",
+    "bonusUnit": null
+   }
   },
   {
    "id": "3.4",
@@ -355,10 +422,13 @@
    "videos": [
     "media/3-4__0__1o3YuZt7Kai5qovHysWo4vaXlHp3WXtc9.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.12",
-   "newLabel": "Potential Problems with Sampling"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.12",
+    "newLabel": "Potential Problems with Sampling",
+    "bonusUnit": null
+   }
   },
   {
    "id": "3.5",
@@ -372,10 +442,13 @@
     "media/3-5__1__1x43Gy-QtIflBQXHe39LqIkABco0qrkMi.mp4",
     "media/3-5__2__1pp-KwUGnBS-6RWvB4U5eKxopkCOYQ9KD.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.13",
-   "newLabel": "Experimental Design"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.13",
+    "newLabel": "Experimental Design",
+    "bonusUnit": null
+   }
   },
   {
    "id": "3.6",
@@ -388,10 +461,13 @@
     "media/3-6__0__14I05d33AzFvCrjTAFSxtAlPiFLEuspZK.mp4",
     "media/3-6__1__1DQZQMZVzesDILUqzVetIysD7DB94UYVT.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.13",
-   "newLabel": "Experimental Design"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.13",
+    "newLabel": "Experimental Design",
+    "bonusUnit": null
+   }
   },
   {
    "id": "3.7",
@@ -403,11 +479,14 @@
    "videos": [
     "media/3-7__0__10TnxIb09QzsRvYQm-G3eiWQ5CSrELuJz.mp4"
    ],
-   "status": "core",
-   "newUnit": 1,
-   "newTopic": "1.13",
-   "newLabel": "Experimental Design",
-   "migrationNote": "Inference&Experiments: pull sim-significance segment"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 1,
+    "newTopic": "1.13",
+    "newLabel": "Experimental Design",
+    "bonusUnit": null,
+    "migrationNote": "Inference&Experiments: pull sim-significance segment"
+   }
   },
   {
    "id": "4.1",
@@ -419,11 +498,14 @@
    "videos": [
     "media/4-1__0__1lNfQZIrnUbG6JkCzw4wB-kcYNHpckwc-.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.3",
-   "newLabel": "Estimating Probabilities Using Simulation",
-   "migrationNote": "intro folded"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.3",
+    "newLabel": "Estimating Probabilities Using Simulation",
+    "bonusUnit": null,
+    "migrationNote": "intro folded"
+   }
   },
   {
    "id": "4.2",
@@ -436,10 +518,13 @@
     "media/4-2__0__1qdvG72sMnfrQAavaoLV7x4wa1o_uE5Eh.mp4",
     "media/4-2__1__1ksMiLGYx5cFCg1-Zosq4m_D_mlt2M7qo.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.3",
-   "newLabel": "Estimating Probabilities Using Simulation"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.3",
+    "newLabel": "Estimating Probabilities Using Simulation",
+    "bonusUnit": null
+   }
   },
   {
    "id": "4.3",
@@ -451,10 +536,13 @@
    "videos": [
     "media/4-3__0__1eAYcRNceHy01t7bmARB3vtTDZnNNqmOV.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.4",
-   "newLabel": "Introduction to Probability"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.4",
+    "newLabel": "Introduction to Probability",
+    "bonusUnit": null
+   }
   },
   {
    "id": "4.4",
@@ -466,10 +554,13 @@
    "videos": [
     "media/4-4__0__1TRJBAVaIbAWWLREvsDgRCxf0sNcFkpxf.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.5",
-   "newLabel": "Mutually Exclusive Events"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.5",
+    "newLabel": "Mutually Exclusive Events",
+    "bonusUnit": null
+   }
   },
   {
    "id": "4.5",
@@ -481,10 +572,13 @@
    "videos": [
     "media/4-5__0__1fpXLiPwBKO3kqppTWm4FpqjCcHX3Qf84.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.6",
-   "newLabel": "Conditional Probability"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.6",
+    "newLabel": "Conditional Probability",
+    "bonusUnit": null
+   }
   },
   {
    "id": "4.6",
@@ -497,10 +591,13 @@
     "media/4-6__0__1TwLZF8dM35fcduBwRzmQUWgSTCynk5tV.mp4",
     "media/4-6__1__1qOQsPzsOeNQJHu18PJwUbfsQyjrdP2pV.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.7",
-   "newLabel": "Independent Events & Unions"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.7",
+    "newLabel": "Independent Events & Unions",
+    "bonusUnit": null
+   }
   },
   {
    "id": "4.7",
@@ -513,10 +610,13 @@
     "media/4-7__0__1UgJNPPVuG8ZGUobUD-KfM_EQz9AKfgAX.mp4",
     "media/4-7__1__1cpK16Dp_3xVifQQahdMiahq44Jha-FKc.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.8",
-   "newLabel": "Introduction to Random Variables"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.8",
+    "newLabel": "Introduction to Random Variables",
+    "bonusUnit": null
+   }
   },
   {
    "id": "4.8",
@@ -528,10 +628,13 @@
    "videos": [
     "media/4-8__0__1KgvrdwR0U9ScngjSq4AS7WJ2ecuQzswu.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.9",
-   "newLabel": "Parameters of Random Variables"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.9",
+    "newLabel": "Parameters of Random Variables",
+    "bonusUnit": null
+   }
   },
   {
    "id": "4.9",
@@ -544,9 +647,13 @@
     "media/4-9__0__1welWQ8TTKlI1gBl4MrWzsd_NGeXZNanh.mp4",
     "media/4-9__1__1Jqewt6n4TxqMtoQ_AAOXYfzyq9gh-x6M.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 2,
-   "newLabel": "Beyond the Exam: Combining random variables"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Combining random variables",
+    "bonusUnit": 2
+   }
   },
   {
    "id": "4.10",
@@ -558,10 +665,13 @@
    "videos": [
     "media/4-10__0__1JC95sdBTR6XF2W9STnF9ENg8ki85B2oM.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.10",
-   "newLabel": "The Binomial Distribution"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.10",
+    "newLabel": "The Binomial Distribution",
+    "bonusUnit": null
+   }
   },
   {
    "id": "4.11",
@@ -573,11 +683,14 @@
    "videos": [
     "media/4-11__0__1Yb5FnTa4R-JbWUaAqNsWJtYtbMaWw2gd.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.10",
-   "newLabel": "The Binomial Distribution",
-   "migrationNote": "merged into Binomial"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.10",
+    "newLabel": "The Binomial Distribution",
+    "bonusUnit": null,
+    "migrationNote": "merged into Binomial"
+   }
   },
   {
    "id": "4.12",
@@ -590,9 +703,13 @@
     "media/4-12__0__1PVmey_huN37gyeaxXfKMOJRKhdWpPY_N.mp4",
     "media/4-12__1__1ZsUp6flFbcAnpDP6U2Jj_3iBbi3rfkjz.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 2,
-   "newLabel": "Beyond the Exam: Geometric distribution"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Geometric distribution",
+    "bonusUnit": 2
+   }
   },
   {
    "id": "5.1",
@@ -604,11 +721,14 @@
    "videos": [
     "media/5-1__0__1QtdgRvz6FDzTKK4UgACKVxdqJMyZDGR8.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.12",
-   "newLabel": "Sampling Distributions & the CLT",
-   "migrationNote": "intro folded"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.12",
+    "newLabel": "Sampling Distributions & the CLT",
+    "bonusUnit": null,
+    "migrationNote": "intro folded"
+   }
   },
   {
    "id": "5.2",
@@ -622,11 +742,14 @@
     "media/5-2__1__1pRBVyjLPY1aEPGbkTdYzt5aPlQIy9FDW.mp4",
     "media/5-2__2__1HVGa0OuHML6pHhGdp4UOln6oncX3n53_.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.11",
-   "newLabel": "The Normal Distribution",
-   "migrationNote": "Normal, merged"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.11",
+    "newLabel": "The Normal Distribution",
+    "bonusUnit": null,
+    "migrationNote": "Normal, merged"
+   }
   },
   {
    "id": "5.3",
@@ -639,10 +762,13 @@
     "media/5-3__0__1N5xTQ9hpOwIDTxbF0AxIzPxxaCbmOWaA.mp4",
     "media/5-3__1__1Lrf2azQI_qx0zLOyp0Yn-TS11zK4fb5u.mp4"
    ],
-   "status": "core",
-   "newUnit": 2,
-   "newTopic": "2.12",
-   "newLabel": "Sampling Distributions & the CLT"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 2,
+    "newTopic": "2.12",
+    "newLabel": "Sampling Distributions & the CLT",
+    "bonusUnit": null
+   }
   },
   {
    "id": "5.4",
@@ -654,10 +780,13 @@
    "videos": [
     "media/5-4__0__1n0CE4BjYdx_bRDz-iEH2FyK7sfgcG3Mj.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.1",
-   "newLabel": "Estimators"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.1",
+    "newLabel": "Estimators",
+    "bonusUnit": null
+   }
   },
   {
    "id": "5.5",
@@ -670,10 +799,13 @@
     "media/5-5__0__1y1iW173PGADlfmDuZuvUYwg-czY2FKCo.mp4",
     "media/5-5__1__1EosOt0OTG3faHrdnkhQy-SrFdAxRndjF.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.2",
-   "newLabel": "Sampling Distributions for Sample Proportions"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.2",
+    "newLabel": "Sampling Distributions for Sample Proportions",
+    "bonusUnit": null
+   }
   },
   {
    "id": "5.6",
@@ -686,10 +818,13 @@
     "media/5-6__0__1XufYZpotzaSRppEfFckSzr6mVavfTWoX.mp4",
     "media/5-6__1__1_C6vTO44i3ypH5wU2XYU53BOa4whSZxW.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.9",
-   "newLabel": "Sampling Distributions (difference of proportions)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.9",
+    "newLabel": "Sampling Distributions (difference of proportions)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "5.7",
@@ -702,10 +837,13 @@
     "media/5-7__0__1ovisJH6Caxyyg8bLqPfGINveGYqQGD39.mp4",
     "media/5-7__1__1J9UirY-l46WkrwlJRC-kX42vYd2t7_26.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.1",
-   "newLabel": "Sampling Distributions for Sample Means"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.1",
+    "newLabel": "Sampling Distributions for Sample Means",
+    "bonusUnit": null
+   }
   },
   {
    "id": "5.8",
@@ -718,10 +856,13 @@
     "media/5-8__0__1zaan99AFqpAEwbvLob9LwBqV-dji4Yli.mp4",
     "media/5-8__1__1s-fZYap_45Cl2DKzsZV3l4UNs8RzCxNr.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.6",
-   "newLabel": "Sampling Distributions (difference of two means)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.6",
+    "newLabel": "Sampling Distributions (difference of two means)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.1",
@@ -733,11 +874,14 @@
    "videos": [
     "media/6-1__0__1fKcwvZJ-k_1_W4oNdavj1PhE5HdxpwiA.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.3",
-   "newLabel": "Constructing a CI for a Proportion",
-   "migrationNote": "intro folded"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.3",
+    "newLabel": "Constructing a CI for a Proportion",
+    "bonusUnit": null,
+    "migrationNote": "intro folded"
+   }
   },
   {
    "id": "6.2",
@@ -751,10 +895,13 @@
     "media/6-2__1__1fq3GJRjLgVz9HOo5_1SkHtCOd306KBrw.mp4",
     "media/6-2__2__1jmaj_VpyrN_KyBLEm3rfPx8Bo-cQiEjG.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.3",
-   "newLabel": "Constructing a CI for a Proportion"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.3",
+    "newLabel": "Constructing a CI for a Proportion",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.3",
@@ -768,10 +915,13 @@
     "media/6-3__1__1VkVgzdGiy73QAzXzBevf-Rb-kcFBRXNr.mp4",
     "media/6-3__2__1Tv1o7BEvI0vaM8Ec09E2MuDjFwpUGo1X.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.4",
-   "newLabel": "Justifying a Claim (CI, proportion)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.4",
+    "newLabel": "Justifying a Claim (CI, proportion)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.4",
@@ -784,10 +934,13 @@
     "media/6-4__0__11xz3nOZxcbyVkG5zbq62s0A1Bjl4hSaL.mp4",
     "media/6-4__1__1WcGkierE6UKER-UtAX-7HbGtwbmJlbZv.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.5",
-   "newLabel": "Setting Up a Test for a Proportion"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.5",
+    "newLabel": "Setting Up a Test for a Proportion",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.5",
@@ -800,10 +953,13 @@
     "media/6-5__0__1K1SjzRvRK_7YmJCDwktQvqDKrZl0hXes.mp4",
     "media/6-5__1__1_C9FAHoG_78nqXAcBh-REYx7a79zC7Cl.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.6",
-   "newLabel": "p-Values"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.6",
+    "newLabel": "p-Values",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.6",
@@ -816,10 +972,13 @@
     "media/6-6__0__1DMt9tQ1_QTmBEQtOZAAukjxirGcMBrUf.mp4",
     "media/6-6__1__1SwyAJpXZF5U7GUm2jUNMlx5dV9JfX5rx.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.7",
-   "newLabel": "Carrying Out a Test for a Proportion"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.7",
+    "newLabel": "Carrying Out a Test for a Proportion",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.7",
@@ -832,10 +991,13 @@
     "media/6-7__0__1xbhiSuRKc4cfXW3Ppb7iItQoh1FM_QRX.mp4",
     "media/6-7__1__12sJrnadHPSRJ6RUauB-VWpUnhMEunCvH.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.8",
-   "newLabel": "Potential Errors When Performing Tests"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.8",
+    "newLabel": "Potential Errors When Performing Tests",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.8",
@@ -848,10 +1010,13 @@
     "media/6-8__0__1mRfi7bTMSHtadxhLc2pAEmAMjmLpgvZn.mp4",
     "media/6-8__1__1cH5jaDvcEOCQ6RGeLZxaqGVOFFt1nT5F.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.10",
-   "newLabel": "CI (difference of two proportions)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.10",
+    "newLabel": "CI (difference of two proportions)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.9",
@@ -864,10 +1029,13 @@
     "media/6-9__0__1LqtzJe8MTykYtX8mVcf4pbU1BtVcvwfb.mp4",
     "media/6-9__1__1pBYs6pAkS_RyUVfNMxoaKvg8tuapkNFe.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.11",
-   "newLabel": "Justifying a Claim (CI, 2 proportions)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.11",
+    "newLabel": "Justifying a Claim (CI, 2 proportions)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.10",
@@ -880,10 +1048,13 @@
     "media/6-10__0__1dIRMyHdePpkx7pCJFcAkRHIPj2Q8RtqG.mp4",
     "media/6-10__1__1SDYELDZa9kcJldq_qf1DsOOMhrjzfkio.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.12",
-   "newLabel": "Setting Up a Test (difference of two proportions)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.12",
+    "newLabel": "Setting Up a Test (difference of two proportions)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "6.11",
@@ -897,10 +1068,13 @@
     "media/6-11__1__1rEKSvHoivPVRtsq63NOys-A5x-xtMjoG.mp4",
     "media/6-11__2__1K9ZtMx2HhFlPWXq6Ip-7slWaY0zJDMOU.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.13",
-   "newLabel": "Carrying Out a Test (difference of two proportions)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.13",
+    "newLabel": "Carrying Out a Test (difference of two proportions)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "7.1",
@@ -912,11 +1086,14 @@
    "videos": [
     "media/7-1__0__1DRCmH8ENSMJwf75yG-M_hPnUWcF2uww4.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.2",
-   "newLabel": "Constructing a CI for a Mean or Mean Difference",
-   "migrationNote": "intro folded"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.2",
+    "newLabel": "Constructing a CI for a Mean or Mean Difference",
+    "bonusUnit": null,
+    "migrationNote": "intro folded"
+   }
   },
   {
    "id": "7.2",
@@ -930,11 +1107,14 @@
     "media/7-2__1__1CaDaKiUhi3e954ZcpVYUEVpWZdKgNi0o.mp4",
     "media/7-2__2__1eQUfrAiMrRCz1GpDzzQJ4ueBD3IQiD6z.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.2",
-   "newLabel": "Constructing a CI for a Mean or Mean Difference",
-   "migrationNote": "+matched-pairs supplement"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.2",
+    "newLabel": "Constructing a CI for a Mean or Mean Difference",
+    "bonusUnit": null,
+    "migrationNote": "+matched-pairs supplement"
+   }
   },
   {
    "id": "7.3",
@@ -948,10 +1128,13 @@
     "media/7-3__1__1ie_ChlondI_Y1tiTlEum5OZAGovX5R2u.mp4",
     "media/7-3__2__1VP_COxmeIU2S0jC24EgYgAnRqnsJz9B6.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.3",
-   "newLabel": "Justifying a Claim (CI, mean/mean difference)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.3",
+    "newLabel": "Justifying a Claim (CI, mean/mean difference)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "7.4",
@@ -964,11 +1147,14 @@
     "media/7-4__0__1ugAdsbFI9jyFAClJPphWtmva2DWNron2.mp4",
     "media/7-4__1__1093Dkx-RAxtiFVsWnnZ22rS1E6Tkhau6.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.4",
-   "newLabel": "Setting Up a Test for a Mean or Mean Difference",
-   "migrationNote": "+matched-pairs supplement"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.4",
+    "newLabel": "Setting Up a Test for a Mean or Mean Difference",
+    "bonusUnit": null,
+    "migrationNote": "+matched-pairs supplement"
+   }
   },
   {
    "id": "7.5",
@@ -982,10 +1168,13 @@
     "media/7-5__1__14CEJsy6KqSjm-kPilGkdhzSidogpeRf6.mp4",
     "media/7-5__2__13htsG5jUJZbwNCi9gAr1DEglECxHE-j5.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.5",
-   "newLabel": "Carrying Out a Test for a Mean or Mean Difference"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.5",
+    "newLabel": "Carrying Out a Test for a Mean or Mean Difference",
+    "bonusUnit": null
+   }
   },
   {
    "id": "7.6",
@@ -998,10 +1187,13 @@
     "media/7-6__0__1fIwr8VpJ1OfuMxmweLAYOL88CLUVpzvF.mp4",
     "media/7-6__1__1dju4ZGQzNLFdFbR5oCoz4e9bzQHapIVk.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.7",
-   "newLabel": "CI (difference of two means)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.7",
+    "newLabel": "CI (difference of two means)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "7.7",
@@ -1014,10 +1206,13 @@
     "media/7-7__0__1bkfmDJMIaDxbg2XTAnRfdpamFMSCFfM-.mp4",
     "media/7-7__1__1njeWzbSUOPWw0fZHWoYBU7uca9RbduBU.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.8",
-   "newLabel": "Justifying a Claim (CI, 2 means)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.8",
+    "newLabel": "Justifying a Claim (CI, 2 means)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "7.8",
@@ -1030,10 +1225,13 @@
     "media/7-8__0__1uLGTaehZ2mRh5el69Zu88SnsWfwiKwRR.mp4",
     "media/7-8__1__1PAx6MB_d4DDsF5KHYAbxjOf7VUP0_-E5.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.9",
-   "newLabel": "Setting Up a Test (difference of two means)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.9",
+    "newLabel": "Setting Up a Test (difference of two means)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "7.9",
@@ -1047,10 +1245,13 @@
     "media/7-9__1__1bJ-id40s9xbnD2UZp9bzfBAKxUwtOT2q.mp4",
     "media/7-9__2__1BWoDK2CpQFkIjMsZtzrHb3VjiaJCQlw-.mp4"
    ],
-   "status": "core",
-   "newUnit": 4,
-   "newTopic": "4.10",
-   "newLabel": "Carrying Out a Test (difference of two means)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 4,
+    "newTopic": "4.10",
+    "newLabel": "Carrying Out a Test (difference of two means)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "8.1",
@@ -1062,11 +1263,14 @@
    "videos": [
     "media/8-1__0__1kw-NYDqOcOUP8zvAsSuzIfuQ9KXow99C.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.14",
-   "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
-   "migrationNote": "intro folded"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.14",
+    "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
+    "bonusUnit": null,
+    "migrationNote": "intro folded"
+   }
   },
   {
    "id": "8.2",
@@ -1080,9 +1284,13 @@
     "media/8-2__1__1Y7lopnXRCIbckoMM9csk8h1uCixX3LKd.mp4",
     "media/8-2__2__1FMDpI5aNP3UoB4YppkX3ba7llfvfhLba.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 3,
-   "newLabel": "Beyond the Exam: Chi-square goodness-of-fit"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Chi-square goodness-of-fit",
+    "bonusUnit": 3
+   }
   },
   {
    "id": "8.3",
@@ -1096,9 +1304,13 @@
     "media/8-3__1__1A3t8-9QW7ubguCrQdApGKf4GkZWb1qBi.mp4",
     "media/8-3__2__1tqgSvs4IHjltdUWtH7WmyqbPWGCMMoXb.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 3,
-   "newLabel": "Beyond the Exam: Chi-square goodness-of-fit"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Chi-square goodness-of-fit",
+    "bonusUnit": 3
+   }
   },
   {
    "id": "8.4",
@@ -1110,11 +1322,14 @@
    "videos": [
     "media/8-4__0__16dgP2zYBVUN2qzFlGRXKZ5aqErJv8FyQ.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.14",
-   "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
-   "migrationNote": "expected counts (also feeds 3.15)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.14",
+    "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
+    "bonusUnit": null,
+    "migrationNote": "expected counts (also feeds 3.15)"
+   }
   },
   {
    "id": "8.5",
@@ -1126,10 +1341,13 @@
    "videos": [
     "media/8-5__0__1YHP2ipcZ5Vj35OVgZBYwExUjfU-yB2q1.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.14",
-   "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.14",
+    "newLabel": "Setting Up a Chi-Square Test (homogeneity/independence)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "8.6",
@@ -1143,10 +1361,13 @@
     "media/8-6__1__1hm-K8vBzjXcx7hTdU2E8-0bIDhdUgiq_.mp4",
     "media/8-6__2__1v9ENpspNX7MSsuE50ZXoQyizuGOJ35sp.mp4"
    ],
-   "status": "core",
-   "newUnit": 3,
-   "newTopic": "3.15",
-   "newLabel": "Carrying Out a Chi-Square Test (homogeneity/independence)"
+   "ced2026": {
+    "status": "core",
+    "newUnit": 3,
+    "newTopic": "3.15",
+    "newLabel": "Carrying Out a Chi-Square Test (homogeneity/independence)",
+    "bonusUnit": null
+   }
   },
   {
    "id": "9.1",
@@ -1158,9 +1379,13 @@
    "videos": [
     "media/9-1__0__1aMPs1uK5H7dvYoVaGh2TQLkdJGBAjoPd.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 5,
-   "newLabel": "Beyond the Exam: Slope inference"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Slope inference",
+    "bonusUnit": 5
+   }
   },
   {
    "id": "9.2",
@@ -1174,9 +1399,13 @@
     "media/9-2__1__1LLyG6B71f0kAoo6QHxQPb1JGQ4hVwkKq.mp4",
     "media/9-2__2__1UkOJyY-qEovCHQANK5jtZhzNNpa4iHbK.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 5,
-   "newLabel": "Beyond the Exam: Slope inference"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Slope inference",
+    "bonusUnit": 5
+   }
   },
   {
    "id": "9.3",
@@ -1189,9 +1418,13 @@
     "media/9-3__0__1yWqjcF-IyHImRwTBV3cEIt13u0infZzI.mp4",
     "media/9-3__1__1GqvcUy_AJRnTgDORWQkAVHSWjKpRxTaT.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 5,
-   "newLabel": "Beyond the Exam: Slope inference"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Slope inference",
+    "bonusUnit": 5
+   }
   },
   {
    "id": "9.4",
@@ -1204,9 +1437,13 @@
     "media/9-4__0__1LKHmLObjf3Nnszvk833XeLgH5JJ9F0_g.mp4",
     "media/9-4__1__1EBPBsC-oJXGaxn7jp1Q92IWetvaPNl1M.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 5,
-   "newLabel": "Beyond the Exam: Slope inference"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Slope inference",
+    "bonusUnit": 5
+   }
   },
   {
    "id": "9.5",
@@ -1220,9 +1457,13 @@
     "media/9-5__1__1vct7foAM_sxXzRy4rviUox0DkQMm7Yf-.mp4",
     "media/9-5__2__1h5OJH_mC6MUqmKbW_K-Xqx7IN3bjOscz.mp4"
    ],
-   "status": "bonus",
-   "bonusUnit": 5,
-   "newLabel": "Beyond the Exam: Slope inference"
+   "ced2026": {
+    "status": "bonus",
+    "newUnit": null,
+    "newTopic": null,
+    "newLabel": "Beyond the Exam: Slope inference",
+    "bonusUnit": 5
+   }
   }
  ]
 }
