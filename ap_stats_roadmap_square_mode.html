@@ -13813,20 +13813,20 @@ function _walletPaint(host, receipts, loading) {
                 }
             }
         } catch (_) {}
-        var nextText = next ? (' Next: ' + next.topic + ' due ' + next.due) : ' Unit 1 complete.';
-        banner.textContent = 'Summer goal: Unit 1 by Sept 1 - '
+        var nextText = next ? (' Next: ' + next.topic + ' due ' + next.due) : ' Summer Foundations complete.';
+        banner.textContent = 'Summer Foundations by Sept 1 - '
             + readiness.actual + '/' + readiness.total + ' done · ' + status + '.' + nextText;
         if (readiness.state === 'done') {
-            banner.textContent = 'Unit 1 complete! 🎉';
+            banner.textContent = 'Summer Foundations complete! 🎉';
         } else if (readiness.state === 'behind') {
-            banner.textContent = 'Summer goal: Unit 1 by Sept 1 - '
+            banner.textContent = 'Summer Foundations by Sept 1 - '
                 + readiness.actual + '/' + readiness.total + ' · ' + readiness.behind + ' behind'
                 + (next ? (' · lesson ' + next.topic + ' due ' + next.due) : '');
         } else if (readiness.state === 'catchingup') {
             banner.textContent = 'Catching up - nice! Still ' + readiness.behind
                 + ' behind; keep going to get back on track.';
         } else if (readiness.state === 'notdue') {
-            banner.textContent = 'Summer goal: Unit 1 by Sept 1 - starts '
+            banner.textContent = 'Summer Foundations by Sept 1 - starts '
                 + (next && next.due ? next.due : '');
         } else if (readiness.state === 'resting') {
             banner.textContent = 'Nice work - ' + readiness.actual + '/' + readiness.total
@@ -19537,7 +19537,10 @@ function _summerWeeks() {
   for (var si = 0; si < S.length; si++) {
     var row = S[si] || [];
     [row[3], row[4]].forEach(function (inf) {
-      if (inf && typeof inf === 'object' && inf.t && inf.n && !(inf.t in nameByTopic)) nameByTopic[inf.t] = inf.n;
+      // Summer Foundations view: strip the school-year "→ new topic" CED arrow so
+      // summer cells read plainly (e.g. "1.10 · The Normal Distribution"), since the
+      // summer packet is foundations, not a CED unit. School-year tiles keep the tag.
+      if (inf && typeof inf === 'object' && inf.t && inf.n && !(inf.t in nameByTopic)) nameByTopic[inf.t] = String(inf.n).replace(/^(\d+\.\d+) → \d+\.\d+ · /, '$1 · ');
     });
   }
   var byDate = {};
