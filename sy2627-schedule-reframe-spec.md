@@ -50,9 +50,9 @@ Everything below assumes **Option B**.
 - *Alternative considered:* sort by ced2026 order inside `computeDonow()` instead of reordering data. Rejected as default — changing the grade-path algorithm is riskier than reordering data the algorithm already trusts; keep as fallback only.
 
 ### 5.2 Schedule dates (`topic-schedule.json` → Desk calendar overlay)
-- Generate SY2627 dates for the **core** old-id topics in new teaching order (needs §6). Feeds the Desk's calendar/period overlay, not Do-Now sequencing.
+- Generate SY2627 dates for the **core** old-id topics in new teaching order (needs §6). Feeds the Desk's calendar/period overlay, not Do-Now sequencing. **Built (fixture):** `scripts/build-topic-schedule-sy2627.mjs` (synthetic calendar, self-asserting, no prod sync).
 - Bonus topics get **no date** (§6.3).
-- Reconcile the **`6.review` drift** here (registry has it, deployed roadmap doesn't): decide if review days are scheduled.
+- **Review markers:** the generator emits `1.review`..`5.review` at new-unit boundaries. These keys are NEW — the Agent registry only has `6.review`. **P2 must add registry entries or special-title handling for `1.review`..`5.review`** (else the published roadmap / Supabase sync surfaces them as fallback "Topic N.review" rows). Reconcile the old `6.review` drift at the same time.
 
 ### 5.3 Supabase `topic_schedule` — NO schema migration (Codex)
 - Re-run `sync-schedule-to-supabase.mjs --execute` after SY2627 dates exist; rows stay old-id-keyed, **dates only**.
