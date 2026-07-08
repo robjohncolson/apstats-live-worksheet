@@ -48,6 +48,12 @@
   .lesson .title { display:flex; align-items:center; gap:8px; }
   .lesson .done-badge { margin-left:auto; font-size:11px; font-weight:700; color:#1a7f37;
            background:#e9f9ec; border:1px solid #b6e6c0; border-radius:999px; padding:1px 8px; white-space:nowrap; }
+  /* Fall 2026 "Beyond the Exam" — bonus lessons kept as greyed enrichment. */
+  .bonus-strip { margin-top:10px; border-top:2px dashed var(--line); padding-top:6px; }
+  .bonus-head { font-size:12px; font-weight:700; color:#8a8f98; padding:6px 4px 8px; }
+  .lesson.bonus { background:#f4f4f6; filter:grayscale(.55); }
+  .lesson.bonus .title { color:#6b7078; }
+  .lesson.bonus .btn { opacity:.82; }
   #vo { position:fixed; inset:0; background:#000; display:none; z-index:50; flex-direction:column; }
   #vo.show { display:flex; }
   #vo video { flex:1; width:100%; background:#000; min-height:0; }
@@ -166,6 +172,16 @@
     7:'Unit 7 · Inference for Means', 8:'Unit 8 · Inference for Categorical Data (Chi-Square)',
     9:'Unit 9 · Inference for Quantitative Data (Slopes)'
   };
+  // Fall 2026 CED (5-unit). Rendering groups by ced2026.newUnit when present.
+  var NEW_UNIT_NAMES = {
+    1:'Unit 1 · Exploring One-Variable Data & Collecting Data',
+    2:'Unit 2 · Probability, Random Variables & Distributions',
+    3:'Unit 3 · Inference for Categorical Data: Proportions',
+    4:'Unit 4 · Inference for Quantitative Data: Means',
+    5:'Unit 5 · Regression Analysis'
+  };
+  // Numeric sort key from a "U.T" topic string (new topic if present, else id).
+  function _topicKey(l){ var t=(l.ced2026&&l.ced2026.newTopic)||l.id||''; var m=String(t).split('.'); return (parseInt(m[0],10)||0)*100+(parseInt(m[1],10)||0); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
   // Identity line + Sign-in button reflect the shared roster session (the same
@@ -743,58 +759,87 @@
 
   function render(lessons) {
     if (!lessons || !lessons.length) { main.innerHTML = '<div class="empty">No lessons found.</div>'; return; }
-    var byUnit = {};
-    lessons.forEach(function (l) { (byUnit[l.unit] = byUnit[l.unit] || []).push(l); });
-    var units = Object.keys(byUnit).map(Number).sort(function (a, b) { return a - b; });
+    // Fall 2026 CED view: group CORE lessons under their NEW unit; BONUS lessons drop
+    // into a greyed "Beyond the Exam" strip at the end of their bonusUnit. Old ids,
+    // labels, links, and video paths are all unchanged — this is presentation only.
+    var coreByUnit = {}, bonusByUnit = {};
+    lessons.forEach(function (l) {
+      var c = l.ced2026;
+      if (c && c.status === 'bonus') { var bu = c.bonusUnit || l.unit; (bonusByUnit[bu] = bonusByUnit[bu] || []).push(l); }
+      else { var nu = (c && c.newUnit) || l.unit; (coreByUnit[nu] = coreByUnit[nu] || []).push(l); }
+    });
+    var seen = {};
+    Object.keys(coreByUnit).forEach(function (u) { seen[u] = 1; });
+    Object.keys(bonusByUnit).forEach(function (u) { seen[u] = 1; });
+    var units = Object.keys(seen).map(Number).sort(function (a, b) { return a - b; });
+    units.forEach(function (u) { if (coreByUnit[u]) coreByUnit[u].sort(function (a, b) { return _topicKey(a) - _topicKey(b); }); });
     main.innerHTML = '';
     units.forEach(function (u, ui) {
       var det = document.createElement('details'); det.className = 'unit'; if (ui === 0) det.open = true;
       var sum = document.createElement('summary');
-      sum.innerHTML = esc(UNIT_NAMES[u] || ('Unit ' + u)) + '<span class="caret">▶</span>';
+      sum.innerHTML = esc(NEW_UNIT_NAMES[u] || ('Unit ' + u)) + '<span class="caret">▶</span>';
       det.appendChild(sum);
-      byUnit[u].forEach(function (l) {
-        var card = document.createElement('div'); card.className = 'lesson';
-        var t = document.createElement('div'); t.className = 'title';
-        var tlabel = document.createElement('span'); tlabel.textContent = l.label || ('Topic ' + l.id);
-        t.appendChild(tlabel);
-        // Done badge from the offline-cached grade (best-effort; hidden if no grade for this topic).
-        var g = _gradeByTopic[_normTopic(l.id)];
-        if (g && g.lessonGrade != null && isFinite(g.lessonGrade)) {
-          var badge = document.createElement('span'); badge.className = 'done-badge';
-          badge.textContent = '✓ ' + Math.round(g.lessonGrade) + '%';
-          t.appendChild(badge);
-        }
-        card.appendChild(t);
-        var btns = document.createElement('div'); btns.className = 'btns';
-        (l.videos || []).forEach(function (file, i) {
-          var b = document.createElement('button'); b.className = 'btn video';
-          b.textContent = (l.videos.length > 1 ? '▶ Video ' + (i + 1) : '▶ Video');
-          b.onclick = function () { playVideo(file, l.label); };
-          btns.appendChild(b);
-        });
-        var w = document.createElement('a'); w.className = 'btn ws'; w.textContent = '✍ Worksheet';
-        if (l.worksheet) w.href = l.worksheet; else w.setAttribute('disabled', '');
-        btns.appendChild(w);
-        var q = document.createElement('a'); q.className = 'btn quiz'; q.textContent = '❓ Quiz';
-        if (l.quiz) q.href = l.quiz; else q.setAttribute('disabled', '');
-        btns.appendChild(q);
-        // Blooket (external game) + the in-app Flashcards deck for the same topic.
-        if (l.blooket) {
-          var bl = document.createElement('a'); bl.className = 'btn bloo'; bl.textContent = '🎯 Blooket';
-          bl.href = l.blooket; bl.target = '_blank'; bl.rel = 'noopener';
-          btns.appendChild(bl);
-          // Flashcards run NATIVELY here (shared flashcards.js engine + the gradebook
-          // feeder) — no longer a deep-link into the Desk. Same deck, same scoring, same
-          // BL-…-DESK_DONE grade row.
-          var fc = document.createElement('button'); fc.className = 'btn fc'; fc.textContent = '🃏 Flashcards';
-          fc.onclick = function () { openFlashcards(l); };
-          btns.appendChild(fc);
-        }
-        card.appendChild(btns);
-        det.appendChild(card);
-      });
+      (coreByUnit[u] || []).forEach(function (l) { det.appendChild(lessonCard(l, false)); });
+      var bonus = bonusByUnit[u];
+      if (bonus && bonus.length) {
+        var strip = document.createElement('div'); strip.className = 'bonus-strip';
+        var bh = document.createElement('div'); bh.className = 'bonus-head';
+        bh.textContent = '★ Beyond the Exam — enrichment, not on the Fall 2026 test';
+        strip.appendChild(bh);
+        bonus.forEach(function (l) { strip.appendChild(lessonCard(l, true)); });
+        det.appendChild(strip);
+      }
       main.appendChild(det);
     });
+  }
+
+  // Build one lesson card. isBonus greys it and trims the "Beyond the Exam:" prefix
+  // from the title (the strip header already carries that framing). Every link, file
+  // path, and button is the lesson's original — untouched by the Fall 2026 relabel.
+  function lessonCard(l, isBonus) {
+    var c = l.ced2026;
+    var name = (c && c.newLabel) ? c.newLabel : (l.label || ('Topic ' + l.id));
+    if (isBonus) name = name.replace(/^Beyond the Exam:\s*/i, '');
+    var topicTag = (c && c.status === 'core' && c.newTopic) ? (c.newTopic + ' · ') : '';
+    var card = document.createElement('div'); card.className = 'lesson' + (isBonus ? ' bonus' : '');
+    var t = document.createElement('div'); t.className = 'title';
+    var tlabel = document.createElement('span'); tlabel.textContent = topicTag + name;
+    t.appendChild(tlabel);
+    // Done badge from the offline-cached grade (best-effort; hidden if no grade for this topic).
+    var g = _gradeByTopic[_normTopic(l.id)];
+    if (g && g.lessonGrade != null && isFinite(g.lessonGrade)) {
+      var badge = document.createElement('span'); badge.className = 'done-badge';
+      badge.textContent = '✓ ' + Math.round(g.lessonGrade) + '%';
+      t.appendChild(badge);
+    }
+    card.appendChild(t);
+    var btns = document.createElement('div'); btns.className = 'btns';
+    (l.videos || []).forEach(function (file, i) {
+      var b = document.createElement('button'); b.className = 'btn video';
+      b.textContent = (l.videos.length > 1 ? '▶ Video ' + (i + 1) : '▶ Video');
+      b.onclick = function () { playVideo(file, name); };
+      btns.appendChild(b);
+    });
+    var w = document.createElement('a'); w.className = 'btn ws'; w.textContent = '✍ Worksheet';
+    if (l.worksheet) w.href = l.worksheet; else w.setAttribute('disabled', '');
+    btns.appendChild(w);
+    var q = document.createElement('a'); q.className = 'btn quiz'; q.textContent = '❓ Quiz';
+    if (l.quiz) q.href = l.quiz; else q.setAttribute('disabled', '');
+    btns.appendChild(q);
+    // Blooket (external game) + the in-app Flashcards deck for the same topic.
+    if (l.blooket) {
+      var bl = document.createElement('a'); bl.className = 'btn bloo'; bl.textContent = '🎯 Blooket';
+      bl.href = l.blooket; bl.target = '_blank'; bl.rel = 'noopener';
+      btns.appendChild(bl);
+      // Flashcards run NATIVELY here (shared flashcards.js engine + the gradebook
+      // feeder) — no longer a deep-link into the Desk. Same deck, same scoring, same
+      // BL-…-DESK_DONE grade row.
+      var fc = document.createElement('button'); fc.className = 'btn fc'; fc.textContent = '🃏 Flashcards';
+      fc.onclick = function () { openFlashcards(l); };
+      btns.appendChild(fc);
+    }
+    card.appendChild(btns);
+    return card;
   }
 
   // ── Grade + per-lesson completion ────────────────────────────────────────────
@@ -1173,7 +1218,8 @@
       var u = (L[id] && L[id].urls) || {};
       return {
         id: id, unit: parseInt(id, 10) || 0, label: (L[id] && L[id].topic) || ('Topic ' + id),
-        worksheet: _relWs(u.worksheet), quiz: u.quiz || null, blooket: u.blooket || null, videos: []
+        worksheet: _relWs(u.worksheet), quiz: u.quiz || null, blooket: u.blooket || null, videos: [],
+        ced2026: (L[id] && L[id].ced2026) || null   // Fall 2026 CED overlay (web fallback keeps it too)
       };
     });
     out.sort(function (a, b) {
