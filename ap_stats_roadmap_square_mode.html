@@ -4865,6 +4865,11 @@ function _mergeRegistryData(fresh) {
           }
         }
       }
+      // Fall-2026 CED overlay must survive a live roadmap refresh — else an already
+      // baked lesson loses ced2026 and the Desk can't relabel/grey it. hasOwnProperty
+      // (not a truthiness test) so an explicit ced2026:null also propagates, clearing a
+      // stale overlay if a lesson ever leaves the crosswalk. (Codex fix + hardening.)
+      if (Object.prototype.hasOwnProperty.call(incoming, 'ced2026')) existing.ced2026 = incoming.ced2026;
     }
   }
   if (fresh.generatedAt) REGISTRY.generatedAt = fresh.generatedAt;
@@ -10646,9 +10651,27 @@ function showResourcePanel(inf, dateStr) {
     const topicIds = lookupTopic(inf.t);
     const ids = Array.isArray(topicIds) ? topicIds : (topicIds ? [topicIds] : []);
 
+    // Fall-2026 CED relabel (display-only, additive): show the NEW topic number +
+    // label from the ced2026 overlay, keeping the old id visible as "(was X)". Bonus
+    // topics read "Beyond the Exam" + greyed. Falls back to the old label when there
+    // is no overlay (review days, uncrosswalked/combined ids). Links/resources below
+    // are unchanged \u2014 this only relabels the header.
+    var _hdrEl = document.getElementById('resource-header');
+    var _ced = (typeof REGISTRY !== 'undefined' && REGISTRY.lessons && REGISTRY.lessons[inf.t]) ? REGISTRY.lessons[inf.t].ced2026 : null;
     let header = dateStr + ' \u2014 ';
-    header += inf.t === R ? inf.n : (inf.t + ': ' + inf.n);
-    document.getElementById('resource-header').textContent = header;
+    if (inf.t === R) {
+        header += inf.n;
+    } else if (_ced && _ced.status === 'core' && _ced.newTopic) {
+        header += _ced.newTopic + ': ' + (_ced.newLabel || inf.n) + '  (was ' + inf.t + ')';
+    } else if (_ced && _ced.status === 'bonus') {
+        header += '\u2605 Beyond the Exam \u2014 ' + inf.n + '  (was ' + inf.t + ', not on the Fall 2026 exam)';
+    } else {
+        header += inf.t + ': ' + inf.n;
+    }
+    _hdrEl.textContent = header;
+    var _cedBonus = !!(_ced && _ced.status === 'bonus');
+    _hdrEl.style.color = _cedBonus ? '#777' : '';
+    _hdrEl.style.fontStyle = _cedBonus ? 'italic' : '';
 
     let html = '';
 
