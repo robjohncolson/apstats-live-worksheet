@@ -209,16 +209,20 @@ describe('F072 diagnostic study guide peer scoreboard', () => {
   });
 });
 
-describe('F062 external Equation Trainer link', () => {
-  it('opens the external formula deck in a new tab with noopener labeling', () => {
+describe('F062 external Formula Lab link (W2 / G3)', () => {
+  it('primary card opens Formula Lab; Defense is secondary legacy review', () => {
     const dom = new JSDOM(INDEX);
-    const link = dom.window.document.querySelector('a[href="https://tmux-trainer.vercel.app/#deck=ap-stats-formulas"]');
+    const lab = dom.window.document.querySelector('a[href="https://tmux-trainer.vercel.app/formula-lab.html"]');
+    expect(lab).not.toBeNull();
+    expect(lab.getAttribute('target')).toBe('_blank');
+    expect(lab.getAttribute('rel')).toContain('noopener');
+    expect(lab.textContent).toContain('Formula Lab');
+    expect(lab.textContent).toContain('external');
+    expect(lab.textContent).toContain('opens in new tab');
 
-    expect(link).not.toBeNull();
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toContain('noopener');
-    expect(link.textContent).toContain('Equation Trainer');
-    expect(link.textContent).toContain('external');
-    expect(link.textContent).toContain('opens in new tab');
+    const defense = dom.window.document.querySelector('a[href="https://tmux-trainer.vercel.app/#deck=ap-stats-formulas"]');
+    expect(defense).not.toBeNull();
+    expect(defense.textContent).toMatch(/legacy review/i);
+    expect(defense.textContent).toContain('Formula Defense');
   });
 });

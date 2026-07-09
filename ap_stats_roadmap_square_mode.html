@@ -1906,7 +1906,8 @@
         <div class="menu-dropdown" id="menu-apps">
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('ti84')" style="font-weight:bold">&#128290; TI-84 Trainer</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('quiz')" style="font-weight:bold">&#128221; AP Stats Quiz</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Formula Lab</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas','_blank','noopener')" style="font-size:11px;opacity:0.85">Formula Defense <span style="font-weight:400;opacity:.9">(legacy review)</span></div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()" style="font-weight:bold"><img src="icons/icon-ledger.svg" alt="" style="width:14px;height:14px;vertical-align:-3px;margin-right:3px">My Ledger</div>
             <!-- ANDROID Phase 3: P2P ledger gossip. Hidden until the native Nearby
@@ -2446,13 +2447,13 @@
     </div>
 </div>
 
-<!-- ═══ App Window: Equation Trainer ═══ -->
+<!-- ═══ App Window: Formula Lab (primary; Defense remains legacy review via Apps menu) ═══ -->
 <div class="app-overlay" id="app-formulas-overlay">
     <div class="app-window">
         <div class="game-title-bar">
             <div class="close-box" onclick="destroyApp('formulas')" title="Close"></div>
             <div class="title-stripes"></div>
-            <span class="title-text chicago">Equation Trainer</span>
+            <span class="title-text chicago">Formula Lab</span>
             <span onclick="popOutApp('formulas')" title="Open in a new window" style="position:absolute;right:22px;top:50%;transform:translateY(-50%);z-index:3;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:16px;height:13px;font-size:10px;line-height:1;color:#fff;background:#7c3aed;border:1px solid #4c1d95;border-radius:2px;box-shadow:inset 1px 1px 0 rgba(255,255,255,.4),inset -1px -1px 0 rgba(0,0,0,.3);user-select:none">&#8599;</span>
             <div class="collapse-box" onclick="minimizeApp('formulas')" title="Minimize"></div>
         </div>
@@ -12517,7 +12518,7 @@ function updateWalletReadinessIcon() {
 // ICON_MOTION -- paint the desktop "next task" / "caught up" cues. Pure DOM
 // class toggles, best-effort, never throws. nextApp = the data-app to breathe
 // (the app to open next), or null. caughtUp = no assigned work left, so the
-// practice tools (Equation Trainer, TI-84) gently invite optional skill work.
+// practice tools (Formula Lab, TI-84) gently invite optional skill work.
 function _paintDeskMotionCues(nextApp, caughtUp) {
     try {
         var icons = document.querySelectorAll('.app-icon[data-app]');
@@ -18017,7 +18018,9 @@ function destroyProgress() { ProgressApp.destroy(); }
 const APP_REGISTRY = {
     ti84:     { url: 'https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html', sfx: 'wildEep' },
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
-    formulas: { url: 'https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', sfx: 'wildEep' }
+    // W2 / G3: Formula Lab is primary (working URL is /formula-lab.html — bare /formula-lab 404s).
+    // Formula Defense deck stays Apps-menu secondary as "legacy review" until W13.
+    formulas: { url: 'https://tmux-trainer.vercel.app/formula-lab.html', sfx: 'wildEep' }
     // driller deprecated — removed 2026-05
 };
 
@@ -18173,7 +18176,7 @@ function minimizeApp(id) {
 }
 
 /* ── Trainer bridge (desk-roster-alignment-spec §1.3 + §5.4) ──
-   Answers the embedded Equation Trainer's identity handshake and surfaces
+   Answers the embedded Formula Lab's identity handshake and surfaces
    its achievement events. Additive and fail-open: every branch is wrapped
    so a throw can never affect the rest of the Desk. */
 
@@ -18221,7 +18224,7 @@ function _trainerEventMessage(entry) {
         'daily-mission': 'daily mission done',
         'quest-claim': 'quest claimed'
     };
-    var msg = 'Equation Trainer: ' + (labels[entry.event] || entry.event || 'achievement');
+    var msg = 'Formula Lab: ' + (labels[entry.event] || entry.event || 'achievement');
     if (entry.topicId) msg += ' on ' + entry.topicId;
     if (entry.accuracy > 0) msg += ' — ' + Math.round(entry.accuracy * 100) + '%';
     return msg;
