@@ -20,6 +20,11 @@ Every increment below follows the same loop that shipped the calendar/manifest/s
 5. **Adversarial review before push** for anything live-facing: relay the diff + smoke results to Codex/Grok; push on green. (Docs/specs: lighter.)
 6. **Generated data is idempotent + footgun-guarded:** builders read a frozen source and reproduce live byte-for-byte (the `build-work-manifest-ced.mjs --deploy` pattern). Never hand-edit generated output. Dual live manifests stay byte-identical; the old 9-unit builder must not silently clobber the 5-unit Do-Now deploy.
 7. **Provisional stays labeled provisional** (SY2627 dates, exam date, inferred skill mappings).
+8. **THE SEAMLESSNESS GATE (user directive, 2026-07-09): current students' work is uninterrupted on every layer — they notice nothing.** Every push that touches a student-reachable surface must pass, and its review packet must report:
+   - **Grade invariance** — old ids/itemIds/receipts untouched; core worksheet blank-counts byte-identical (the P2 ritual).
+   - **Current-student simulation** — run `computeDonow` (and any changed surface) against representative live ledgers: fresh student, mid-summer (done 1.1–1.5), summer-boundary (done 1.1–1.9), summer-complete, worked-ahead. **Every surface a student sees (Do-Now card, calendar next-up, summer banner) must agree on "what's next"** — a two-against-one split across surfaces is a FAIL even when no data is harmed. (This gate exists because the P2 manifest reorder created exactly that split at the 1.9→1.10 boundary: card said 3.1, calendar+banner said 1.10.)
+   - **Old-bookmark resolution** — a worksheet/quiz/video URL saved by a student last month still lands (200 + renders) on the live host.
+   - **No student-visible flow change ships without the user's explicit sign-off** — cosmetics included; list every visible delta in the review packet, don't bundle them silently.
 
 ---
 
