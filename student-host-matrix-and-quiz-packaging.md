@@ -9,18 +9,22 @@
 
 ---
 
-## 1. Origins resolved from code (not assumed)
+## 1. Origins (hardcoded from verified code constants)
 
-| Constant | Source | Live value |
+The smoke script does **not** parse source files at runtime. Values in
+`scripts/smoke-student-host-matrix.mjs` → `ORIGINS` are **hardcoded from verified
+code constants** (re-check those files if URLs ever move):
+
+| Constant | Verified source file | Live value |
 |---|---|---|
-| `WS_BASE` | `scripts/build-lessons-index.mjs` L16 | `https://robjohncolson.github.io/apstats-live-worksheet/` |
-| `CR_BASE` | `scripts/build-lessons-index.mjs` L17 | `https://robjohncolson.github.io/curriculum_render/` |
-| `ROSTER_SERVICE_URL` (prod) | `roster_config.js` fallback | `https://roster-production-12c1.up.railway.app` |
+| `WS_BASE` | `scripts/build-lessons-index.mjs` (`WS_BASE`) | `https://robjohncolson.github.io/apstats-live-worksheet/` |
+| `CR_BASE` | `scripts/build-lessons-index.mjs` (`CR_BASE`) | `https://robjohncolson.github.io/curriculum_render/` |
+| `ROSTER_SERVICE_URL` (prod) | `roster_config.js` production fallback | `https://roster-production-12c1.up.railway.app` |
 | `RAILWAY_SERVER_URL` (AI grade proxy) | `railway_config.js` | `https://curriculumrender-production.up.railway.app` |
-| Formula deck (Desk primary today) | `APP_REGISTRY.formulas` in Desk | `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` |
+| Formula deck (Desk primary today) | Desk `APP_REGISTRY.formulas` | `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` |
 | Formula Lab (exists; not primary) | Vercel path probe | `https://tmux-trainer.vercel.app/formula-lab.html` (**200**) — bare `/formula-lab` is **404** |
-| TI-84 | `APP_REGISTRY.ti84` | `https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html` |
-| Desk Apps quiz | `APP_REGISTRY.quiz` | `https://robjohncolson.github.io/curriculum_render/` (absolute CR) |
+| TI-84 | Desk `APP_REGISTRY.ti84` | `https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html` |
+| Desk Apps quiz | Desk `APP_REGISTRY.quiz` | `https://robjohncolson.github.io/curriculum_render/` (absolute CR) |
 
 ### How lesson **1.2** quiz is wired (dual path — the H0 root cause)
 
@@ -48,7 +52,7 @@ Legend: **200** = HTTP ok · **404** = missing · **401** = expected auth gate �
 | **Worksheet 1.2** | **200** + render (`u1_lesson2_live.html`) | n/a | n/a | n/a | n/a | **PRESENT** |
 | **Quiz (relative `/quiz`)** | **404** + no render (H0) | n/a | n/a | n/a | n/a | **PRESENT** (`quiz/index.html`) |
 | **Quiz (absolute CR)** | n/a | **200** + render | n/a | n/a | n/a | n/a (uses bundled relative) |
-| **Video `/media/…` 1.2** | **404** (media not published on Pages) | n/a | n/a | n/a | n/a | **MISSING** in current pack snapshot |
+| **Video `/media/*`** | **140/140 404** (full lessons-index sweep) | n/a | n/a | n/a | n/a | sample 1.2 **MISSING** in current pack snapshot |
 | **Flashcards CSV** `u1_l2_blooket.csv` | **200** | n/a | n/a | n/a | n/a | **MISSING** in current pack snapshot |
 | **Flashcards engine** `flashcards.js` | **200** | n/a | n/a | n/a | n/a | **MISSING** in current pack snapshot |
 | **Formula deck** (current primary) | n/a (iframe external) | n/a | **200** + render ("AP Stats Formula Defense") | n/a | n/a | external / network |
@@ -71,18 +75,32 @@ Legend: **200** = HTTP ok · **404** = missing · **401** = expected auth gate �
 
 **Conclusion:** The day-one dead-end is real for any UI that uses **relative** `quiz/index.html` on the Desk/Pages host (live **mobile-home** via `lessons-index.json`). The Desk tile/registry path that uses **absolute CR** works today.
 
-### 2.3 Video / media (related H3)
+### 2.3 Video / media — full sweep (related H3; W7 keys off this)
+
+Smoke script `runMediaSweep()` fetches **live** `lessons-index.json`, collects every
+unique `media/*` path, and `HEAD`s each against `WS_BASE`.
 
 | Probe | Result |
 |---|---|
-| Live `lessons-index` 1.2 `videos` | `["media/1-2__0__1cJ3a5DSlZ0w3vta901HVyADfQ-qKVQcD.mp4"]` |
-| `GET/HEAD` that path on GH Pages | **404** |
+| Live `lessons-index` unique media paths | **140** |
+| HEAD on GH Pages (`…/apstats-live-worksheet/<path>`) | **140/140 → 404** (`all404: true`) |
+| Sample path 1.2 | `media/1-2__0__1cJ3a5DSlZ0w3vta901HVyADfQ-qKVQcD.mp4` → 404 |
 | Live `roadmap-data` 1.2 `videos` | `[]` (empty — Desk bake has no media URLs) |
 | APK pack `media/…` for 1.2 | **MISSING** in current `android-app/www` snapshot |
 
-**Conclusion:** Web students do not get lesson video from Pages media. Desk relies on other video sources in the resource panel when configured (AP Classroom / Drive links in legacy tile data — provisional; not fully re-probed as a single URL family). Mobile documents videos as APK-oriented. Treat "open video on Pages" as **unavailable** unless a non-`/media` URL is used.
+**Conclusion for W7:** Do **not** assume Pages hosts lesson mp4s. Rehydrate/merge strategies must point at a real media host (R2 / Drive / AP Classroom / pack on-demand), not `WS_BASE/media/…`. Re-run `node scripts/smoke-student-host-matrix.mjs --http-only` and read `media.total` / `media.all404` after any Pages media deploy.
 
-### 2.4 Browser smoke summary (playwright-core, 2026-07-09)
+### 2.4 Stale comment in `mobile-home.html` (crux of H0 on web)
+
+Source comment near the lessons boot (~L1204) still claims:
+
+> `lessons-index.json` is an APK BUILD ARTIFACT … and **isn't published to Pages**, so on a laptop it 404s. `roadmap-data.json` IS tracked/published…
+
+**Reality (measured):** live Pages serves `lessons-index.json` **200**. Mobile-web therefore takes the **primary** path (relative `quiz/index.html?…`), not the roadmap fallback that would have carried absolute CR quiz URLs.
+
+That stale assumption is exactly why mobile-web hit H0 while the Desk (absolute CR from registry) stayed fine. The H0 fix (context-aware quiz href rewrite) does not depend on deleting the fallback — it corrects quiz resolution when the index *does* load on web.
+
+### 2.5 Browser smoke summary (playwright-core, 2026-07-09)
 
 Desktop 1280×800 and phone 390×844 agreed:
 
@@ -136,7 +154,7 @@ Desktop 1280×800 and phone 390×844 agreed:
 
 | Host | Serves | Does not serve |
 |---|---|---|
-| **GH Pages `apstats-live-worksheet`** | Desk, mobile, worksheets, TI-84, flashcards JS/CSV, roadmap + lessons-index + work-manifest JSON | **`/quiz/**` (404)**, **`/media/**` lesson videos (404)** |
+| **GH Pages `apstats-live-worksheet`** | Desk, mobile, worksheets, TI-84, flashcards JS/CSV, roadmap + lessons-index + work-manifest JSON | **`/quiz/**` (404)**, **`/media/**` 140/140 index paths 404** |
 | **GH Pages `curriculum_render`** | Quiz HTML app (`?u=&l=`), static cr assets | Worksheets, Desk, media |
 | **Vercel `tmux-trainer`** | Formula Defense deck, Formula Lab HTML | Course worksheets/quizzes |
 | **Railway roster** | Auth, ledger, `/donow`, grades APIs | Static lesson HTML |

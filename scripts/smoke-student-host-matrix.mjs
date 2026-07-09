@@ -31,8 +31,12 @@ const arg = (n, d) => {
 const HTTP_ONLY = process.argv.includes('--http-only');
 const OUT = resolve(REPO, arg('--out', 'state/w0-host-matrix-results.json'));
 
-// ── Origins resolved from live code (build-lessons-index.mjs, roster_config.js,
-//    railway_config.js, APP_REGISTRY in ap_stats_roadmap_square_mode.html) ─────
+// ── Origins: hardcoded from verified code constants (not parsed at runtime).
+// Sources (re-check if these files change):
+//   WS_BASE / CR_BASE  → scripts/build-lessons-index.mjs (WS_BASE, CR_BASE)
+//   ROSTER             → roster_config.js production fallback
+//   RAILWAY_CR_AI      → railway_config.js RAILWAY_SERVER_URL
+//   FORMULA_*          → ap_stats_roadmap_square_mode.html APP_REGISTRY + Vercel probe
 export const ORIGINS = {
   WS_BASE: 'https://robjohncolson.github.io/apstats-live-worksheet/',
   CR_BASE: 'https://robjohncolson.github.io/curriculum_render/',
@@ -201,6 +205,112 @@ export function runApkSnapshot(apkRoot = resolve(REPO, 'android-app/www')) {
   return results;
 }
 
+/**
+ * Full media sweep: fetch live lessons-index.json, HEAD every unique media/*
+ * path on WS_BASE. W7 keys off total/ok/fail counts (historically 140/140 404).
+ */
+export async function runMediaSweep({ concurrency = 12 } = {}) {
+  console.log('\n=== Full media sweep (live lessons-index → Pages HEAD) ===');
+  const indexUrl = `${WS}/lessons-index.json`;
+  let lessons = [];
+  try {
+    const r = await fetch(indexUrl, {
+      headers: { 'User-Agent': 'W0-host-matrix-smoke/1.0' },
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!r.ok) {
+      return {
+        ok: false,
+        error: `lessons-index HTTP ${r.status}`,
+        total: 0,
+        okCount: 0,
+        failCount: 0,
+        statuses: {},
+        samples: [],
+      };
+    }
+    const doc = await r.json();
+    lessons = Array.isArray(doc.lessons) ? doc.lessons : [];
+  } catch (e) {
+    return {
+      ok: false,
+      error: e.message,
+      total: 0,
+      okCount: 0,
+      failCount: 0,
+      statuses: {},
+      samples: [],
+    };
+  }
+
+  const paths = new Set();
+  for (const L of lessons) {
+    for (const v of L.videos || []) {
+      if (typeof v === 'string' && v) paths.add(v.replace(/^\//, ''));
+    }
+  }
+  const list = [...paths].sort();
+  const statuses = {};
+  let okCount = 0;
+  let failCount = 0;
+  const samples = [];
+
+  async function headOne(rel) {
+    const url = `${WS}/${rel}`;
+    const t0 = Date.now();
+    try {
+      const r = await fetch(url, {
+        method: 'HEAD',
+        redirect: 'follow',
+        headers: { 'User-Agent': 'W0-host-matrix-smoke/1.0' },
+        signal: AbortSignal.timeout(20000),
+      });
+      const st = r.status;
+      statuses[st] = (statuses[st] || 0) + 1;
+      if (r.ok) okCount += 1;
+      else failCount += 1;
+      if (samples.length < 8) {
+        samples.push({ path: rel, status: st, ok: r.ok, ms: Date.now() - t0 });
+      }
+      return { path: rel, status: st, ok: r.ok };
+    } catch (e) {
+      failCount += 1;
+      statuses.error = (statuses.error || 0) + 1;
+      if (samples.length < 8) {
+        samples.push({ path: rel, status: null, ok: false, error: e.message });
+      }
+      return { path: rel, status: null, ok: false, error: e.message };
+    }
+  }
+
+  // Bounded concurrency
+  let i = 0;
+  async function worker() {
+    while (i < list.length) {
+      const idx = i++;
+      await headOne(list[idx]);
+    }
+  }
+  const nWorkers = Math.min(concurrency, Math.max(1, list.length));
+  await Promise.all(Array.from({ length: nWorkers }, () => worker()));
+
+  const summary = {
+    ok: true,
+    indexUrl,
+    lessonCount: lessons.length,
+    total: list.length,
+    okCount,
+    failCount,
+    all404: failCount === list.length && okCount === 0 && list.length > 0,
+    statuses,
+    samples,
+  };
+  console.log(
+    `media paths unique=${list.length} ok=${okCount} fail=${failCount} all404=${summary.all404} statuses=${JSON.stringify(statuses)}`,
+  );
+  return summary;
+}
+
 export async function runBrowserSmoke() {
   let chromium;
   try {
@@ -326,6 +436,7 @@ export function recommendG1(httpResults) {
 
 async function main() {
   console.log('W0 student host matrix smoke');
+  console.log('Origins are hardcoded from verified code constants (see ORIGINS comment).');
   console.log('WS_BASE=', ORIGINS.WS_BASE);
   console.log('CR_BASE=', ORIGINS.CR_BASE);
   console.log('ROSTER=', ORIGINS.ROSTER);
@@ -333,6 +444,7 @@ async function main() {
   console.log('');
 
   const http = await runHttpChecks();
+  const media = await runMediaSweep();
   const apk = runApkSnapshot();
   let browser = { skipped: true, reason: '--http-only', results: [] };
   if (!HTTP_ONLY) {
@@ -346,15 +458,29 @@ async function main() {
   g1.evidence.apkQuizPresent = !!(apkQuiz && apkQuiz.ok);
   g1.evidence.apkMediaPresent = !!apk.find((r) => r.resource === 'video_media' && r.ok);
   g1.evidence.apkFlashcardsCsvPresent = !!apk.find((r) => r.resource === 'flashcards_csv' && r.ok);
+  g1.evidence.mediaSweep = {
+    total: media.total,
+    okCount: media.okCount,
+    failCount: media.failCount,
+    all404: media.all404,
+  };
 
   const payload = {
     probedAt: new Date().toISOString(),
+    originsNote: 'hardcoded from verified code constants (not parsed at runtime)',
     origins: ORIGINS,
     lesson: LESSON,
     http,
+    media,
     apk,
     browser,
     g1,
+    staleComment: {
+      file: 'mobile-home.html',
+      claim: 'lessons-index.json is an APK BUILD ARTIFACT and is not published to Pages',
+      reality:
+        'live Pages serves lessons-index.json 200; mobile-web therefore takes the primary relative-quiz path and hits H0 404 on /quiz',
+    },
   };
 
   mkdirSync(dirname(OUT), { recursive: true });
@@ -362,6 +488,9 @@ async function main() {
   console.log('\n=== G1 recommendation ===');
   console.log(g1.decision);
   console.log(g1.rationale);
+  console.log(
+    `media sweep: ${media.total} unique paths, ok=${media.okCount}, fail=${media.failCount}, all404=${media.all404}`,
+  );
   console.log('Wrote', OUT);
 
   if (browser.launchFailed) process.exit(2);
