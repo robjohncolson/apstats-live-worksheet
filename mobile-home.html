@@ -824,7 +824,9 @@
     if (l.worksheet) w.href = l.worksheet; else w.setAttribute('disabled', '');
     btns.appendChild(w);
     var q = document.createElement('a'); q.className = 'btn quiz'; q.textContent = '❓ Quiz';
-    if (l.quiz) q.href = l.quiz; else q.setAttribute('disabled', '');
+    // G1/H0: web → absolute CR origin; APK (OFFLINE_MODE) keeps relative bundled quiz/.
+    var quizHref = resolveQuizHref(l.quiz);
+    if (quizHref) q.href = quizHref; else q.setAttribute('disabled', '');
     btns.appendChild(q);
     // Blooket (external game) + the in-app Flashcards deck for the same topic.
     if (l.blooket) {
@@ -1201,16 +1203,38 @@
     }
   } catch (_) {}
 
-  // Web / GH-Pages fallback: lessons-index.json is an APK BUILD ARTIFACT (local
-  // bundled quiz + media/video paths) and isn't published to Pages, so on a laptop it
-  // 404s. roadmap-data.json IS tracked/published and carries the real published URLs,
-  // so the web launcher builds its list from that — worksheets, quiz, Blooket, and
-  // flashcards all work; videos are APK-only (media isn't hosted on Pages).
-  // Strip this repo's GH-Pages base so worksheet links are ORIGIN-RELATIVE — they then
-  // resolve against whatever host serves this page (GH Pages OR a Vercel mirror), so the
-  // launcher is self-sufficient on either. quiz (separate curriculum_render site) and
-  // blooket (external) stay absolute.
+  // Origins (hardcoded from verified constants — match build-lessons-index.mjs).
   var _WS_BASE = 'https://robjohncolson.github.io/apstats-live-worksheet/';
+  var _CR_BASE = 'https://robjohncolson.github.io/curriculum_render/';
+  // Web-vs-APK signal: offline-config.js (pack only) sets window.OFFLINE_MODE = true.
+  // On the web that script 404s harmlessly and OFFLINE_MODE stays falsy.
+  function isOfflinePack() { return window.OFFLINE_MODE === true; }
+  // G1 / H0: lessons-index stores relative quiz/index.html?u=&l= for the APK bundle.
+  // That relative path 404s on GH Pages (no /quiz published under WS_BASE). On web,
+  // rewrite relative quiz paths to absolute CR origin; keep ?u=&l= (and #) intact.
+  // Absolute quiz URLs (roadmap fallback / already-CR) pass through unchanged.
+  // APK keeps the relative form so offline bundled quiz/ still works.
+  // Does NOT mutate lessons-index.json — resolution is display-time only.
+  function resolveQuizHref(quiz) {
+    if (typeof quiz !== 'string' || !quiz) return null;
+    if (/^https?:\/\//i.test(quiz)) return quiz;
+    if (isOfflinePack()) return quiz;
+    // Relative bundled form → absolute CR, preserve query + hash only.
+    if (/^(?:\.\/)?quiz(?:\/|$)/i.test(quiz)) {
+      var qi = quiz.indexOf('?');
+      var hi = quiz.indexOf('#');
+      var qs = '';
+      var hs = '';
+      if (qi >= 0) {
+        qs = quiz.slice(qi, hi >= qi ? hi : quiz.length);
+        if (hi >= 0) hs = quiz.slice(hi);
+      } else if (hi >= 0) {
+        hs = quiz.slice(hi);
+      }
+      return _CR_BASE + (qs || '') + (hs || '');
+    }
+    return quiz;
+  }
   function _relWs(u) { return (typeof u === 'string' && u.indexOf(_WS_BASE) === 0) ? u.slice(_WS_BASE.length) : (u || null); }
   function _lessonsFromRoadmap(roadmap) {
     var L = (roadmap && roadmap.lessons) || {};
@@ -1230,8 +1254,12 @@
   }
   function _bootLessons(lessons) { _lastLessons = lessons || []; render(_lastLessons); loadGrade(); }
 
-  // Primary: the bundled lessons-index.json (APK — has local video paths).
-  // Fallback: the published roadmap-data.json (the laptop / GH-Pages launcher).
+  // Primary: lessons-index.json (published on Pages AND bundled in APK — the old
+  // comment claiming it is "APK-only / not on Pages" was stale; live Pages serves
+  // it 200, which is why mobile-web used relative quiz/ and hit H0 until resolveQuizHref).
+  // Fallback: roadmap-data.json when the index is missing (older hosts / sparse packs).
+  // Strip WS_BASE so worksheet links are ORIGIN-RELATIVE (GH Pages or Vercel mirror).
+  // Videos under /media are still not hosted on Pages (see host-matrix media sweep).
   fetch('lessons-index.json', { cache: 'no-store' })
     .then(function (r) { if (!r || !r.ok) throw new Error('lessons-index ' + (r && r.status)); return r.json(); })
     .then(function (d) { _bootLessons((d && d.lessons) || []); })
