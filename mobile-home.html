@@ -823,11 +823,23 @@
     var w = document.createElement('a'); w.className = 'btn ws'; w.textContent = '✍ Worksheet';
     if (l.worksheet) w.href = l.worksheet; else w.setAttribute('disabled', '');
     btns.appendChild(w);
-    var q = document.createElement('a'); q.className = 'btn quiz'; q.textContent = '❓ Quiz';
     // G1/H0: web → absolute CR origin; APK (OFFLINE_MODE) keeps relative bundled quiz/.
+    // W1 honesty: openers with quiz:null get a plain label — not a dead/disabled Quiz control
+    // (a grey button that does nothing is more confusing than "no quiz" text).
     var quizHref = resolveQuizHref(l.quiz);
-    if (quizHref) q.href = quizHref; else q.setAttribute('disabled', '');
-    btns.appendChild(q);
+    if (quizHref) {
+      var q = document.createElement('a'); q.className = 'btn quiz'; q.textContent = '❓ Quiz';
+      q.href = quizHref;
+      btns.appendChild(q);
+    } else {
+      var qNote = document.createElement('span');
+      qNote.className = 'btn quiz';
+      qNote.textContent = 'Worksheet only — no quiz';
+      qNote.title = 'This lesson has a worksheet only (no graded quiz).';
+      qNote.setAttribute('aria-disabled', 'true');
+      qNote.style.cssText = 'opacity:0.75;cursor:default;pointer-events:none;border-style:dashed;';
+      btns.appendChild(qNote);
+    }
     // Blooket (external game) + the in-app Flashcards deck for the same topic.
     if (l.blooket) {
       var bl = document.createElement('a'); bl.className = 'btn bloo'; bl.textContent = '🎯 Blooket';
@@ -1208,7 +1220,8 @@
   var _CR_BASE = 'https://robjohncolson.github.io/curriculum_render/';
   // Web-vs-APK signal: offline-config.js (pack only) sets window.OFFLINE_MODE = true.
   // On the web that script 404s harmlessly and OFFLINE_MODE stays falsy.
-  function isOfflinePack() { return window.OFFLINE_MODE === true; }
+  // Match offline-queue.js: true or '1' (pack builders may emit either).
+  function isOfflinePack() { return window.OFFLINE_MODE === true || window.OFFLINE_MODE === '1'; }
   // G1 / H0: lessons-index stores relative quiz/index.html?u=&l= for the APK bundle.
   // That relative path 404s on GH Pages (no /quiz published under WS_BASE). On web,
   // rewrite relative quiz paths to absolute CR origin; keep ?u=&l= (and #) intact.
