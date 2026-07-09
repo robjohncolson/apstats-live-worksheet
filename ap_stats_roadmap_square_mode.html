@@ -8035,6 +8035,9 @@ function _walletLoadSummerSchedule() {
           // The first rCal may have run before this fetch resolved — repaint so
           // the summer weeks weave into the grid now that the schedule is in hand.
           if (typeof rCal === 'function') { try { rCal(); } catch (_) {} }
+          // After summer cells exist, re-run Do Now so the summer-guard in
+          // renderDoNow can override CED-ordered /donow nextTask (e.g. 3.1 → 1.10).
+          if (typeof renderDoNow === 'function') { try { renderDoNow(); } catch (_) {} }
           // Also refresh the readiness-COLORED surfaces (Do Now card + an open
           // wallet) so they switch from the fall fallback to SUMMER mode once the
           // schedule lands. Without this a slow/failed-then-retried load leaves My
@@ -9049,6 +9052,37 @@ async function renderDoNow() {
         return;
       }
     } catch (_) { /* best-effort; fall through to the server nextTask below */ }
+
+    // Summer Foundations guard (seamlessness): calendar + banner walk the summer
+    // track (old 1.1–1.10), but /donow is CED-ordered (P2), so after 1.9 the server
+    // nextTask jumps to U1 3.1. While summer cells are on the grid, prefer the
+    // summer track's next incomplete lesson so the card agrees with calendar + banner.
+    // Signals mirror paintLocalDoneCells (~L7892). All typeof-guarded for DN3a vm tests.
+    // Paint order: if rCal has not yet painted .dc[data-summer="1"], the guard is inert
+    // (same family as _calNextUp null before rCal); after summer-schedule load / rCal we
+    // re-invoke renderDoNow so the card catches up.
+    try {
+      var _summerActive = !!(document.querySelector && document.querySelector('#cg .dc[data-summer="1"]'));
+      // Teacher view-as: /donow already carries the VIEWED STUDENT's task, but
+      // getStudentMarks() is the TEACHER's local storage (_hydrateMarksFromDonow
+      // deliberately skips view-as) — the override would show the teacher's own
+      // summer next-up (often 1.1). Skip it; view-as renders the student's server
+      // task verbatim. (Codex review catch on af1a2cd.)
+      var _sumViewAs = (typeof _viewAsContext === 'function') && !!_viewAsContext();
+      if (_summerActive
+          && !_sumViewAs
+          && typeof calNextUpTopic === 'function'
+          && typeof _orderedSummerTopics === 'function'
+          && typeof getStudentMarks === 'function') {
+        var _sumNext = calNextUpTopic(_orderedSummerTopics(), getStudentMarks());
+        if (_sumNext) {
+          show('Do Now: Topic ' + _sumNext + ' — keep going.', 'todo');
+          return;
+        }
+        // summerNextUp null = summer track complete → fall through to server (e.g. U1 3.1)
+      }
+    } catch (_) { /* best-effort; fall through to the server nextTask below */ }
+
     if (!nt) {
       show('All caught up — every assigned item is done. 🎉', 'done');
       return;
