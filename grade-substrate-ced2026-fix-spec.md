@@ -62,3 +62,11 @@ Drills: explicitly non-grade, grade-invariant (or get their own spec later). Pos
 
 ## 7. Unchanged open items
 v1's §7 (window dates, anchor carry-forward, no SY2526 export needed) — defaults stand.
+
+## 8. USER DECISIONS (recorded 2026-07-09 — these override anything above)
+
+1. **PC redo deferred to its own pass.** The user now has access to the official Fall-2026 Progress Checks; the next major pass replaces current PC material wholesale (then video comparison follows). M2c′'s PC-banding work and the A3 year-partition scaffold WAIT for that pass — don't build banding against PC content that's about to be replaced.
+2. **G9 confirmed, and stronger:** Q4 is a review quarter (fine to have no new PC). Bigger: **the grading scheme only has to be fully faithful through the end of Q1** (~Nov). By second semester the model is done — the teacher awards curved A's based on classwork. Engineering consequence: M2 optimizes for Q1-fidelity + history persistence; do NOT gold-plate Q2–Q4 band mechanics.
+3. **G8 = SY2627 owns summer work.** Current summer students ARE the SY2627 cohort (period assignment pending the real schedule); their summer rows resolve under the SY2627 context and **must persist** into fall.
+4. **Bonus lessons: OMIT from the SY2627 schedule** (user call, overriding D3′'s present-but-unscheduled). Safe because: students haven't reached bonus content (summer = 1.1–1.10), SY2526 history resolves under the frozen context which retains them, and bonus is never-required anyway. Caveat accepted: a SY2627 student who does bonus work won't see it in schedule-driven grade views (ledger rows persist regardless).
+5. **M2a and M2b′ approved** for dispatch.
