@@ -73,7 +73,16 @@ Legend: **200** = HTTP ok · **404** = missing · **401** = expected auth gate �
 | `…/curriculum_render/?u=1&l=2` | **200** | true — title **AP Stats Consensus Quiz** (desktop + phone) |
 | `…/curriculum_render/index.html?u=1&l=2` | **200** | (HTTP only) |
 
-**Conclusion:** The day-one dead-end is real for any UI that uses **relative** `quiz/index.html` on the Desk/Pages host (live **mobile-home** via `lessons-index.json`). The Desk tile/registry path that uses **absolute CR** works today.
+**Status (post-fix):** **Fixed on web in `6ebf6c6`** (live-verified after GH Pages redeploy, 2026-07-09).
+
+| Surface | Quiz 1.2 resolution after deploy |
+|---|---|
+| Live mobile-home on Pages | `href` → `https://robjohncolson.github.io/curriculum_render/?u=1&l=2` → **200** (playwright) |
+| Desk registry (unchanged) | absolute CR → **200** |
+| Pages relative `/quiz/**` | still **404** (unused by web mobile after fix) |
+| APK | relative `quiz/` kept when `OFFLINE_MODE` is true or `'1'` |
+
+**Original conclusion (pre-fix):** The day-one dead-end was real for any UI that used **relative** `quiz/index.html` on the Desk/Pages host (live **mobile-home** via `lessons-index.json`). The Desk tile/registry path that uses **absolute CR** already worked.
 
 ### 2.3 Video / media — full sweep (related H3; W7 keys off this)
 
