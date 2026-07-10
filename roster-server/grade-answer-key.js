@@ -22,16 +22,26 @@ import { fileURLToPath } from 'url';
 import { requireTeacher } from './teacher-auth.js';
 import { answerKeyMapOrNull } from './scoring.js';
 
-// Same Blooket-lessons source grade.js / grade-offline-inputs use.
-const BLOOKET_LESSONS = (() => {
+// Blooket presence + required for teacher offline re-derive (mesh Phase 3b).
+// Ships both so teacher devices match server Due denom (core 67) + presence UI.
+const _BLOOKET_DOC = (() => {
   try {
     const p = resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'blooket-lessons.json');
-    const doc = JSON.parse(readFileSync(p, 'utf8'));
-    return Array.isArray(doc.topics) ? doc.topics : [];
+    return JSON.parse(readFileSync(p, 'utf8')) || {};
   } catch (_) {
-    return [];
+    return {};
   }
 })();
+const BLOOKET_PRESENCE_DEFAULT = Array.isArray(_BLOOKET_DOC.topics)
+  ? _BLOOKET_DOC.topics
+  : Array.isArray(_BLOOKET_DOC.allTopics)
+    ? _BLOOKET_DOC.allTopics
+    : [];
+const BLOOKET_REQUIRED_DEFAULT = Array.isArray(_BLOOKET_DOC.requiredTopics)
+  ? _BLOOKET_DOC.requiredTopics
+  : BLOOKET_PRESENCE_DEFAULT.slice();
+/** @deprecated presence alias */
+const BLOOKET_LESSONS = BLOOKET_PRESENCE_DEFAULT;
 
 // Deterministic, order-independent canonical JSON (sorted keys, recursively) so the
 // version hash is stable regardless of object key order. Mirrors the sorted-key
@@ -60,11 +70,14 @@ function worksheetMapOf(worksheetKey) {
 
 export function mountAnswerKey(app, {
   db, worksheetKey, loadAnswerKey, lessonSchedule, config,
-  worksheetBlankCounts = null, blooketLessons = null,
+  worksheetBlankCounts = null,
+  blooketLessons = null, blooketPresence = null, blooketRequired = null,
 }) {
+  const _presence = blooketPresence || blooketLessons || BLOOKET_PRESENCE_DEFAULT;
+  const _required = blooketRequired || BLOOKET_REQUIRED_DEFAULT;
   // GET /grade/answer-key — TEACHER only. Returns the full unredacted keys + a version.
-  //   → 200 { ok, answerKey, worksheetKey, blooketLessons, schedule, config,
-  //           worksheetBlankCounts, keyVersion }
+  //   → 200 { ok, answerKey, worksheetKey, blooketLessons, blooketPresence,
+  //           blooketRequired, schedule, config, worksheetBlankCounts, keyVersion }
   //   → 401 not a teacher · 500 key load/malformed
   app.get('/grade/answer-key', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
@@ -85,7 +98,9 @@ export function mountAnswerKey(app, {
       ok: true,
       answerKey,
       worksheetKey: worksheetMap,
-      blooketLessons: blooketLessons || BLOOKET_LESSONS,
+      blooketLessons: _presence, // legacy alias = presence
+      blooketPresence: _presence,
+      blooketRequired: _required,
       schedule: lessonSchedule || null,
       config: config || null,
       worksheetBlankCounts: worksheetBlankCounts || null,

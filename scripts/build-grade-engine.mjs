@@ -11,9 +11,9 @@
 //     same-named helpers across modules can never collide;
 //   - intra-bundle `import { a } from './x.js'` → `const { a } = __reg['x'];`;
 //   - Node-builtin imports (fs/path/url) dropped;
-//   - grade.js only: the fs-based BLOOKET_LESSONS read → `[]` (the client always
-//     passes blooketLessons via opts, so the default is never used), and the
-//     express `mountGrade` route dropped.
+//   - grade.js only: the fs-based BLOOKET_* reads → `[]` (the client always
+//     passes blooketPresence/blooketRequired via opts after M2a; legacy
+//     blooketLessons = presence), and the express `mountGrade` route dropped.
 //
 // The committed bundle's output is pinned EQUAL to the server's by
 // tests/grade-engine-bundle-parity.test.js (drift check + client≡server on real
@@ -40,12 +40,13 @@ const MODULES = [
   { key: 'scoring',        file: 'scoring.js',        exports: ['blooketScore', 'normalizeResponse', 'isCorrect', 'stableLedgerSort', 'latestPerItem', 'unitOf', 'answerKeyMapOrNull', 'skillMapValidOrNull', 'scoreAgainstKey'] },
   { key: 'lesson-grade',   file: 'lesson-grade.js',   exports: ['parseItemLesson', 'expandLessonKey', 'buildWorksheetBlankCounts', 'computeLessonGrades', 'todayInTz', 'sectionToPeriod', 'quarterOfLesson', 'computeQuarterFromLessons', 'V3_WORK_WEIGHTS', 'V3_GATES', 'quarterGradeV3', 'workAvgV3', 'computeQuarterV3', 'computeQuizTotals', 'buildLessonsArray'] },
   { key: 'gradebook-grid', file: 'gradebook-grid.js', exports: ['SCHOOLOGY_CATEGORY_WEIGHTS', 'buildGradebookColumns', 'reconcileQuarter', 'buildGradebookRow', 'schoologyWeightedTotal', 'buildGradebook'] },
-  { key: 'grade',          file: 'grade.js',          exports: ['computeGrade', 'mountGrade'], omit: ['mountGrade'] },
+  { key: 'grade',          file: 'grade.js',          exports: ['computeGrade', 'mountGrade', 'resolveBlooketLists', 'BLOOKET_PRESENCE', 'BLOOKET_REQUIRED'], omit: ['mountGrade'] },
 ];
 
 // The curated public API surface exposed as window.GradeEngine.
 const PUBLIC_API = {
   computeGrade:              'grade',
+  resolveBlooketLists:       'grade',
   buildGradebook:            'gradebook-grid',
   PHASE3_CONFIG:             'grade-config',
   computeQuarterV3:          'lesson-grade',
@@ -93,8 +94,22 @@ function transformModule(mod) {
   let src = readFileSync(resolve(SRV, mod.file), 'utf8');
 
   if (mod.key === 'grade') {
-    // Neutralize the fs-backed BLOOKET_LESSONS read — the client always supplies
-    // blooketLessons via opts, so this default is never consulted in practice.
+    // Neutralize the fs-backed Blooket load (M2a presence/required split).
+    // Client always supplies blooketPresence + blooketRequired via opts (offline
+    // pack / Desk re-derive). Empty module defaults keep a mis-wired client from
+    // silently inventing a 77-required denominator from a stale single list.
+    src = src.replace(
+      /function _loadBlooketDoc\(\) \{[\s\S]*?export const BLOOKET_BONUS_TOPICS = Array\.isArray\(_blooketDoc\?\.bonusTopics\)\s*\n\s*\? _blooketDoc\.bonusTopics\s*\n\s*: \[\];/,
+      [
+        'function _loadBlooketDoc() { return null; }',
+        'const _blooketDoc = null;',
+        'const BLOOKET_LESSONS = [];',
+        'const BLOOKET_PRESENCE = [];',
+        'const BLOOKET_REQUIRED = [];',
+        'const BLOOKET_BONUS_TOPICS = [];',
+      ].join('\n'),
+    );
+    // Legacy pre-M2a shape (IIFE BLOOKET_LESSONS only) — keep as safety net.
     src = src.replace(
       /const BLOOKET_LESSONS = \(\(\) => \{[\s\S]*?\}\)\(\);/,
       'const BLOOKET_LESSONS = [];'

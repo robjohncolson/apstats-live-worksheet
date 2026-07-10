@@ -86,8 +86,12 @@ export const ANSWER_KEY = {
   'U2-PC-Q3': { answerKey: 'c' }, 'U2-PC-Q4': { answerKey: 'd' },
 };
 
-// Blooket-bearing lessons (the Blooket-track denominator). Only 1.2 has one.
+// Blooket-bearing lessons in this fixture world. Only 1.2 has one.
+// M2a: presence (hasBlooket) and required (Due denom) are separate; the sim
+// world keeps them equal so existing archetype math stays intentional.
 export const BLOOKET_LESSONS = ['1.2'];
+export const BLOOKET_PRESENCE = BLOOKET_LESSONS;
+export const BLOOKET_REQUIRED = BLOOKET_LESSONS;
 
 // TI-84 trainer lesson map (the trainer-track denominator + procedure
 // bucketing). Only 1.2 has a mapped skill. Passed EXPLICITLY so server and
@@ -97,11 +101,15 @@ export const BLOOKET_LESSONS = ['1.2'];
 export const TRAINER_MAP = { '1.2': ['histogram'] };
 
 // opts object for computeGrade(rows, ANSWER_KEY, CONFIG, GRADE_OPTS).
+// Pass BOTH presence and required so server module defaults (67 core) and the
+// empty-bundle client defaults cannot diverge (parity + offline contract).
 export const GRADE_OPTS = {
   lessonSchedule: SCHEDULE,
   section: SECTION,
   worksheetBlankCounts: WORKSHEET_BLANK_COUNTS,
-  blooketLessons: BLOOKET_LESSONS,
+  blooketLessons: BLOOKET_LESSONS, // legacy alias = presence
+  blooketPresence: BLOOKET_PRESENCE,
+  blooketRequired: BLOOKET_REQUIRED,
   trainerMap: TRAINER_MAP,
   asOf: AS_OF,
 };

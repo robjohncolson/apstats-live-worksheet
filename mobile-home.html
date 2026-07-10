@@ -932,13 +932,53 @@
   }
   window.closeFlashcards = closeFlashcards;
 
-  // Worksheet URL → deck CSV; fall back to the topic id (U.key → u{U}_l{key}_blooket.csv).
+  // Worksheet URL → deck CSV (primary — already correct for combined lessons).
+  // ID-only fallback: bare topic ids like 3.6 used to invent u3_l6_blooket.csv, but the
+  // real deck is u3_l6_l7_blooket.csv. Resolve via topic→csv map (from lessons-index
+  // worksheet names) so combined lessons hit the real file; unknown → null (explicit
+  // "No deck" in _fcStart). Do NOT invent a naive u{U}_l{key} path.
+  // Topic→CSV map: static JSON (combined-lesson IDs) merged with worksheet-derived paths.
+  // Track loaded-vs-partial so a rebuild that seeds {} cannot poison the static fetch
+  // (Codex M2a C: early-return on truthy map skipped data/blooket-topic-csv.json).
+  var _fcTopicCsvMap = null; // merged result (static base + derived overlay)
+  var _fcTopicCsvMapStaticLoaded = false;
+  function _fcLoadTopicCsvMap() {
+    if (_fcTopicCsvMapStaticLoaded) return Promise.resolve(_fcTopicCsvMap || {});
+    return fetch('data/blooket-topic-csv.json', { cache: 'no-store' })
+      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (j) {
+        var staticMap = (j && j.map && typeof j.map === 'object') ? j.map : {};
+        // Static as base; worksheet-derived keys already on the map overlay (fresher).
+        var derived = _fcTopicCsvMap || {};
+        _fcTopicCsvMap = Object.assign({}, staticMap, derived);
+        _fcTopicCsvMapStaticLoaded = true;
+        return _fcTopicCsvMap;
+      })
+      .catch(function () {
+        if (!_fcTopicCsvMap) _fcTopicCsvMap = {};
+        _fcTopicCsvMapStaticLoaded = true; // don't spin forever; keep any derived partial
+        return _fcTopicCsvMap;
+      });
+  }
+  // Sync rebuild from a lessons array (worksheet paths). Merges into the map without
+  // marking static as loaded — so a later/pending _fcLoadTopicCsvMap still fetches.
+  function _fcRebuildTopicCsvMapFromLessons(lessons) {
+    if (!FC || !Array.isArray(lessons)) return;
+    if (!_fcTopicCsvMap) _fcTopicCsvMap = {};
+    for (var i = 0; i < lessons.length; i++) {
+      var L = lessons[i];
+      if (!L || !L.id) continue;
+      var p = L.worksheet ? FC.csvPathFromWorksheet(L.worksheet) : null;
+      if (p) _fcTopicCsvMap[L.id] = p;
+    }
+  }
   function _fcCsvPath(lesson) {
     if (!FC) return null;
     var p = lesson && lesson.worksheet ? FC.csvPathFromWorksheet(lesson.worksheet) : null;
     if (p) return p;
-    var m = /^(\d+)\.([\d-]+)$/.exec(String((lesson && lesson.id) || ''));
-    return m ? ('u' + m[1] + '_l' + m[2].replace(/-/g, '_l') + '_blooket.csv') : null;
+    var id = String((lesson && lesson.id) || '');
+    if (_fcTopicCsvMap && _fcTopicCsvMap[id]) return _fcTopicCsvMap[id];
+    return null; // explicit no-deck — never invent a wrong solo CSV for combined topics
   }
   function _fcLoadTags() {
     if (_fcTags) return Promise.resolve(_fcTags);
@@ -960,15 +1000,24 @@
     _fcTimerStop(); _fc = null; el.classList.remove('timed');
     document.getElementById('fc-title').textContent = '🃏 ' + esc((lesson && lesson.label) || ('Topic ' + (lesson && lesson.id)));
     _fcSetProg(''); el.classList.add('show');
-    _fcBodyHtml(
-      '<div class="fc-pick">' +
-        '<h2>Choose a mode</h2>' +
-        '<p>Quick check tops out at 80% — enough to unlock. Full deck goes to 100%.</p>' +
-        '<button class="fc-mode quick" id="fc-mode-quick">⚡ Quick check<small>Top 10 cards · pass at 80%</small></button>' +
-        '<button class="fc-mode full" id="fc-mode-full">🎯 Full deck<small>Every card · 40s each · up to 100%</small></button>' +
-      '</div>');
-    document.getElementById('fc-mode-quick').onclick = function () { _fcStart(lesson, 'quick'); };
-    document.getElementById('fc-mode-full').onclick = function () { _fcStart(lesson, 'full'); };
+    // Ensure topic→csv map is warm before mode pick (ID-only combined-lesson fix).
+    _fcLoadTopicCsvMap().then(function () {
+      // If worksheet missing but we have last lessons list, fold it in.
+      try { if (_lastLessons && _lastLessons.length) _fcRebuildTopicCsvMapFromLessons(_lastLessons); } catch (_) {}
+      if (!_fcCsvPath(lesson)) {
+        _fcBodyHtml('<div class="fc-result"><h2>No deck</h2><p>This lesson has no flashcard deck.</p></div>');
+        return;
+      }
+      _fcBodyHtml(
+        '<div class="fc-pick">' +
+          '<h2>Choose a mode</h2>' +
+          '<p>Quick check tops out at 80% — enough to unlock. Full deck goes to 100%.</p>' +
+          '<button class="fc-mode quick" id="fc-mode-quick">⚡ Quick check<small>Top 10 cards · pass at 80%</small></button>' +
+          '<button class="fc-mode full" id="fc-mode-full">🎯 Full deck<small>Every card · 40s each · up to 100%</small></button>' +
+        '</div>');
+      document.getElementById('fc-mode-quick').onclick = function () { _fcStart(lesson, 'quick'); };
+      document.getElementById('fc-mode-full').onclick = function () { _fcStart(lesson, 'full'); };
+    });
   }
   window.openFlashcards = openFlashcards;
 
@@ -1265,7 +1314,13 @@
     });
     return out;
   }
-  function _bootLessons(lessons) { _lastLessons = lessons || []; render(_lastLessons); loadGrade(); }
+  function _bootLessons(lessons) {
+    _lastLessons = lessons || [];
+    try { _fcRebuildTopicCsvMapFromLessons(_lastLessons); } catch (_) {}
+    try { _fcLoadTopicCsvMap(); } catch (_) {}
+    render(_lastLessons);
+    loadGrade();
+  }
 
   // Primary: lessons-index.json (published on Pages AND bundled in APK — the old
   // comment claiming it is "APK-only / not on Pages" was stale; live Pages serves

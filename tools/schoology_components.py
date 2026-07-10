@@ -148,12 +148,20 @@ def load_quiz_topics(answer_key_path: str) -> set:
 
 
 def load_blooket_topics(blooket_lessons_path: str) -> set:
-    """Return the set of topicKeys that HAVE a Blooket (engine hasBlooket source).
+    """Return the set of topicKeys that HAVE a Blooket (presence / hasBlooket UI).
 
-    blooket-lessons.json::  { "topics": ["1.1", "1.2", ...] }
+    M2a presence/required split (G4):
+      topics / allTopics = PRESENCE (all Blooket-bearing lessons, incl. bonus)
+      requiredTopics     = grade Due denominator (core only) — NOT used here
+
+    Schoology component columns need the presence set so bonus lessons still
+    get a visible Blooket column (enrichment, never required).
+    Prefer allTopics when present; fall back to topics.
     """
     with open(blooket_lessons_path, "r", encoding="utf-8") as f:
         doc = json.load(f)
+    if isinstance(doc.get("allTopics"), list) and doc["allTopics"]:
+        return set(doc["allTopics"])
     return set(doc.get("topics") or [])
 
 

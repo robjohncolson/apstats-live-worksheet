@@ -8332,7 +8332,12 @@ function _phase2ReDeriveGrade() {
         lessonSchedule: inputs.schedule || null,
         section: inputs.section || null,
         worksheetBlankCounts: inputs.worksheetBlankCounts || null,
-        blooketLessons: inputs.blooketLessons || null,
+        // M2a presence/required: ship both so offline Due denom matches server
+        // (core 67) while hasBlooket stays on all presence topics. Legacy
+        // blooketLessons alone = presence; required falls to engine module default.
+        blooketLessons: inputs.blooketLessons || inputs.blooketPresence || null,
+        blooketPresence: inputs.blooketPresence || inputs.blooketLessons || null,
+        blooketRequired: inputs.blooketRequired || null,
         // TI-84 trainer map: keeps the offline-derived trainer surface
         // (lessons[].trainer, trainerDue/Done/Todo) identical to the server's.
         // Older cached inputs lack it → null → the strand is simply absent

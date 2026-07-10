@@ -94,6 +94,8 @@ describe('GET /grade/offline-inputs route', () => {
       config: CONFIG,
       worksheetBlankCounts: GRADE_OPTS.worksheetBlankCounts,
       blooketLessons: GRADE_OPTS.blooketLessons,
+      blooketPresence: GRADE_OPTS.blooketPresence,
+      blooketRequired: GRADE_OPTS.blooketRequired,
       trainerMap: GRADE_OPTS.trainerMap,
     });
     server = http.createServer(app);
@@ -135,9 +137,14 @@ describe('GET /grade/offline-inputs route', () => {
       section: res.body.section,
       worksheetBlankCounts: res.body.worksheetBlankCounts,
       blooketLessons: res.body.blooketLessons,
+      blooketPresence: res.body.blooketPresence || res.body.blooketLessons,
+      blooketRequired: res.body.blooketRequired,
       trainerMap: res.body.trainerMap,
       asOf: GRADE_OPTS.asOf,
     });
     expect(offline).toEqual(real);
+    // M2a contract: offline pack ships both lists
+    expect(Array.isArray(res.body.blooketPresence)).toBe(true);
+    expect(Array.isArray(res.body.blooketRequired)).toBe(true);
   });
 });
