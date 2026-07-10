@@ -1239,10 +1239,13 @@ export function computeQuizTotals(answerKey, schedule) {
 // quizTotals: optional topicKey → gradable-quiz-question count (computeQuizTotals)
 // blooketLessons: optional [topicKey] that HAVE a Blooket → sets hasBlooket per lesson
 // trainerLessons: optional [topicKey] with mapped TI-84 skills → sets hasTrainer per lesson
-export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = []) {
+// blooketBonusTopics: optional [topicKey] enrichment (G4/M2d) → sets blooketBonus per lesson
+//   so teacher dashboards can label bonus vs core; never part of the required Due set.
+export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = [], blooketBonusTopics = []) {
   const result = [];
   const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
   const trainerSet = new Set(Array.isArray(trainerLessons) ? trainerLessons : []);
+  const bonusSet = new Set(Array.isArray(blooketBonusTopics) ? blooketBonusTopics : []);
 
   // Include every lesson from the schedule (not just those with data).
   const sortedKeys = Object.keys(schedule).sort((a, b) => {
@@ -1293,9 +1296,12 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       // Per-lesson Blooket score (0..100), surfaced for the Desk day-grade modal
       // + the grade coach; null when no game/flashcard score attached.
       blooket: lessonResult ? (lessonResult.blooket != null ? lessonResult.blooket : null) : null,
-      // Whether this lesson HAS a Blooket at all (in the make-up denominator), so
+      // Whether this lesson HAS a Blooket at all (presence list), so
       // the coach can tell "Blooket not done yet" apart from "no Blooket exists".
       hasBlooket: blooketSet.has(topicKey),
+      // M2d: enrichment topic (crosswalk bonus / BLOOKET_BONUS_TOPICS). Visible in
+      // teacher dashboards as "bonus"; NEVER counts toward required Due (core 67).
+      blooketBonus: bonusSet.has(topicKey),
       // TI-84 trainer: per-lesson pct (mean over mapped procedures, missing=0;
       // null = untouched) + whether the lesson has mapped calculator skills at
       // all. Display-only today (weight 0) — the Desk 🖩 chip reads these.

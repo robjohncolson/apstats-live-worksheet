@@ -40,6 +40,9 @@ const BLOOKET_PRESENCE_DEFAULT = Array.isArray(_BLOOKET_DOC.topics)
 const BLOOKET_REQUIRED_DEFAULT = Array.isArray(_BLOOKET_DOC.requiredTopics)
   ? _BLOOKET_DOC.requiredTopics
   : BLOOKET_PRESENCE_DEFAULT.slice();
+const BLOOKET_BONUS_DEFAULT = Array.isArray(_BLOOKET_DOC.bonusTopics)
+  ? _BLOOKET_DOC.bonusTopics
+  : [];
 /** @deprecated presence alias */
 const BLOOKET_LESSONS = BLOOKET_PRESENCE_DEFAULT;
 
@@ -72,12 +75,15 @@ export function mountAnswerKey(app, {
   db, worksheetKey, loadAnswerKey, lessonSchedule, config,
   worksheetBlankCounts = null,
   blooketLessons = null, blooketPresence = null, blooketRequired = null,
+  blooketBonusTopics = null,
 }) {
   const _presence = blooketPresence || blooketLessons || BLOOKET_PRESENCE_DEFAULT;
   const _required = blooketRequired || BLOOKET_REQUIRED_DEFAULT;
+  const _bonus = blooketBonusTopics || BLOOKET_BONUS_DEFAULT;
   // GET /grade/answer-key — TEACHER only. Returns the full unredacted keys + a version.
   //   → 200 { ok, answerKey, worksheetKey, blooketLessons, blooketPresence,
-  //           blooketRequired, schedule, config, worksheetBlankCounts, keyVersion }
+  //           blooketRequired, blooketBonusTopics, schedule, config,
+  //           worksheetBlankCounts, keyVersion }
   //   → 401 not a teacher · 500 key load/malformed
   app.get('/grade/answer-key', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
@@ -101,6 +107,7 @@ export function mountAnswerKey(app, {
       blooketLessons: _presence, // legacy alias = presence
       blooketPresence: _presence,
       blooketRequired: _required,
+      blooketBonusTopics: _bonus,
       schedule: lessonSchedule || null,
       config: config || null,
       worksheetBlankCounts: worksheetBlankCounts || null,

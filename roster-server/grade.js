@@ -453,8 +453,21 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
 
   // ── Phase 6: build the lessons[] array ────────────────────────────────────
   // (quizTotals computed above, reused here.)
+  // M2d: stamp blooketBonus from bonus list (opts override or module default).
+  const blooketBonusTopics =
+    (opts && opts.blooketBonusTopics) ||
+    BLOOKET_BONUS_TOPICS;
   const lessons = schedule
-    ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals, blooketPresence, trainerLessons)
+    ? buildLessonsArray(
+        lessonMap,
+        schedule,
+        undefined,
+        (config && config.gradingWindowStart) || null,
+        quizTotals,
+        blooketPresence,
+        trainerLessons,
+        blooketBonusTopics,
+      )
     : [];
 
   // Stable sorted unit / completion order.
@@ -474,9 +487,11 @@ export function mountGrade(app, {
   // Presence (hasBlooket UI) vs required (Due denominator). blooketLessons is a
   // legacy alias for presence when only one list is supplied.
   blooketLessons = null, blooketPresence = null, blooketRequired = null,
+  blooketBonusTopics = null,
 }) {
   const _presence = blooketPresence || blooketLessons || null;
   const _required = blooketRequired || null;
+  const _bonus = blooketBonusTopics || null;
 
   // GET /grade
   //   Auth: roster token (Authorization: Bearer <t> OR ?token=).
@@ -543,6 +558,7 @@ export function mountGrade(app, {
         worksheetBlankCounts,
         blooketPresence: _presence || undefined,
         blooketRequired: _required || undefined,
+        blooketBonusTopics: _bonus || undefined,
         // legacy single-list alias (presence) for older callers
         blooketLessons: _presence || undefined,
       }

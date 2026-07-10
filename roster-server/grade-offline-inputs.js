@@ -48,6 +48,9 @@ const BLOOKET_PRESENCE_DEFAULT = Array.isArray(_BLOOKET_DOC.topics)
 const BLOOKET_REQUIRED_DEFAULT = Array.isArray(_BLOOKET_DOC.requiredTopics)
   ? _BLOOKET_DOC.requiredTopics
   : BLOOKET_PRESENCE_DEFAULT.slice();
+const BLOOKET_BONUS_DEFAULT = Array.isArray(_BLOOKET_DOC.bonusTopics)
+  ? _BLOOKET_DOC.bonusTopics
+  : [];
 /** @deprecated presence alias */
 const BLOOKET_LESSONS = BLOOKET_PRESENCE_DEFAULT;
 
@@ -112,15 +115,18 @@ export function mountOfflineInputs(app, {
   verifyToken, ledgerDb, loadAnswerKey, lessonSchedule, db,
   config, worksheetBlankCounts = null,
   blooketLessons = null, blooketPresence = null, blooketRequired = null,
+  blooketBonusTopics = null,
   trainerMap = undefined,
 }) {
   const _presence = blooketPresence || blooketLessons || BLOOKET_PRESENCE_DEFAULT;
   const _required = blooketRequired || BLOOKET_REQUIRED_DEFAULT;
+  const _bonus = blooketBonusTopics || BLOOKET_BONUS_DEFAULT;
   // GET /grade/offline-inputs
   //   Auth: roster token (Bearer or ?token=) — SELF only (no view-as: a device
   //   only ever re-derives its own grade). Read-only.
   //   → 200 { ok, redactedKey, schedule, config, section, worksheetBlankCounts,
-  //           blooketLessons, blooketPresence, blooketRequired, trainerMap, redactPc }
+  //           blooketLessons, blooketPresence, blooketRequired, blooketBonusTopics,
+  //           trainerMap, redactPc }
   app.get('/grade/offline-inputs', async (req, res) => {
     const rawToken = extractToken(req);
     if (!rawToken) return res.status(401).json({ ok: false, error: 'Token required' });
@@ -168,6 +174,9 @@ export function mountOfflineInputs(app, {
       blooketLessons: _presence, // legacy alias = presence
       blooketPresence: _presence,
       blooketRequired: _required,
+      // M2d: enrichment ids so offline re-derive stamps lessons[].blooketBonus
+      // (shared "(bonus)" column title for My Gradebook / My Ledger).
+      blooketBonusTopics: _bonus,
       trainerMap: (trainerMap !== undefined ? trainerMap : TRAINER_LESSON_MAP) || null,
       redactPc,
     });

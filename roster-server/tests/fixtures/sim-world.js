@@ -43,11 +43,13 @@ export const AS_OF = '2026-09-20T12:00:00-04:00';
 
 // ── Schedule (topicKey → { unit, worksheetKey, periods }) ─────────────────────
 // 1.1            quiz-less opener (worksheet only)
-// 1.2            worksheet + quiz(2) + Blooket
+// 1.2            worksheet + quiz(2) + Blooket (core / required)
 // 1.3            worksheet + quiz(3)
 // 1.4 + 1.5      combined worksheet (share worksheetKey '4-5'), no quiz
 // 2.1            worksheet + quiz(2), due in the FUTURE (10-01)
 // 2.2            worksheet, NULL dates (not yet scheduled)
+// 2.9            REAL crosswalk bonus topic + Blooket (enrichment; not in Due)
+//                — future date so it does not change due-denominator math
 export const SCHEDULE = {
   '1.1': { unit: 1, worksheetKey: '1',   periods: { B: '2026-09-09', E: '2026-09-09' } },
   '1.2': { unit: 1, worksheetKey: '2',   periods: { B: '2026-09-11', E: '2026-09-11' } },
@@ -56,6 +58,7 @@ export const SCHEDULE = {
   '1.5': { unit: 1, worksheetKey: '4-5', periods: { B: '2026-09-18', E: '2026-09-18' } },
   '2.1': { unit: 2, worksheetKey: '1',   periods: { B: '2026-10-01', E: '2026-10-01' } },
   '2.2': { unit: 2, worksheetKey: '2',   periods: { B: null,          E: null } },
+  '2.9': { unit: 2, worksheetKey: '9',   periods: { B: '2026-11-01', E: '2026-11-01' } },
 };
 
 // Worksheet blank counts (the Cws denominator), keyed "<unit>.<worksheetKey>"
@@ -86,12 +89,13 @@ export const ANSWER_KEY = {
   'U2-PC-Q3': { answerKey: 'c' }, 'U2-PC-Q4': { answerKey: 'd' },
 };
 
-// Blooket-bearing lessons in this fixture world. Only 1.2 has one.
-// M2a: presence (hasBlooket) and required (Due denom) are separate; the sim
-// world keeps them equal so existing archetype math stays intentional.
-export const BLOOKET_LESSONS = ['1.2'];
-export const BLOOKET_PRESENCE = BLOOKET_LESSONS;
-export const BLOOKET_REQUIRED = BLOOKET_LESSONS;
+// Blooket-bearing lessons in this fixture world.
+// M2a/M2d: presence (hasBlooket) vs required (Due) vs bonus (enrichment label).
+// 1.2 = core required Blooket; 2.9 = REAL bonus topic (crosswalk status:bonus).
+export const BLOOKET_LESSONS = ['1.2', '2.9']; // legacy alias = presence
+export const BLOOKET_PRESENCE = ['1.2', '2.9'];
+export const BLOOKET_REQUIRED = ['1.2']; // Due denom — bonus excluded
+export const BLOOKET_BONUS_TOPICS = ['2.9'];
 
 // TI-84 trainer lesson map (the trainer-track denominator + procedure
 // bucketing). Only 1.2 has a mapped skill. Passed EXPLICITLY so server and
@@ -101,8 +105,9 @@ export const BLOOKET_REQUIRED = BLOOKET_LESSONS;
 export const TRAINER_MAP = { '1.2': ['histogram'] };
 
 // opts object for computeGrade(rows, ANSWER_KEY, CONFIG, GRADE_OPTS).
-// Pass BOTH presence and required so server module defaults (67 core) and the
+// Pass presence + required + bonus so server module defaults and the
 // empty-bundle client defaults cannot diverge (parity + offline contract).
+// Bundle empties BLOOKET_BONUS_TOPICS=[]; opts must supply bonus for stamping.
 export const GRADE_OPTS = {
   lessonSchedule: SCHEDULE,
   section: SECTION,
@@ -110,6 +115,7 @@ export const GRADE_OPTS = {
   blooketLessons: BLOOKET_LESSONS, // legacy alias = presence
   blooketPresence: BLOOKET_PRESENCE,
   blooketRequired: BLOOKET_REQUIRED,
+  blooketBonusTopics: BLOOKET_BONUS_TOPICS,
   trainerMap: TRAINER_MAP,
   asOf: AS_OF,
 };

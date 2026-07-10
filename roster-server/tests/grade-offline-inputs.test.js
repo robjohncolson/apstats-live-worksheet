@@ -96,6 +96,7 @@ describe('GET /grade/offline-inputs route', () => {
       blooketLessons: GRADE_OPTS.blooketLessons,
       blooketPresence: GRADE_OPTS.blooketPresence,
       blooketRequired: GRADE_OPTS.blooketRequired,
+      blooketBonusTopics: GRADE_OPTS.blooketBonusTopics,
       trainerMap: GRADE_OPTS.trainerMap,
     });
     server = http.createServer(app);
@@ -139,12 +140,20 @@ describe('GET /grade/offline-inputs route', () => {
       blooketLessons: res.body.blooketLessons,
       blooketPresence: res.body.blooketPresence || res.body.blooketLessons,
       blooketRequired: res.body.blooketRequired,
+      blooketBonusTopics: res.body.blooketBonusTopics,
       trainerMap: res.body.trainerMap,
       asOf: GRADE_OPTS.asOf,
     });
     expect(offline).toEqual(real);
-    // M2a contract: offline pack ships both lists
+    // M2a/M2d contract: offline pack ships presence + required + bonus
     expect(Array.isArray(res.body.blooketPresence)).toBe(true);
     expect(Array.isArray(res.body.blooketRequired)).toBe(true);
+    expect(Array.isArray(res.body.blooketBonusTopics)).toBe(true);
+    expect(res.body.blooketBonusTopics).toEqual(GRADE_OPTS.blooketBonusTopics);
+    // Offline re-derive stamps real bonus topic
+    const bonusLesson = offline.lessons.find((L) => L.lessonKey === '2.9');
+    expect(bonusLesson).toBeTruthy();
+    expect(bonusLesson.blooketBonus).toBe(true);
+    expect(bonusLesson.hasBlooket).toBe(true);
   });
 });

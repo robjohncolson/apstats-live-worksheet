@@ -156,6 +156,23 @@ describe('buildLessonsArray -- per-lesson blooket display', () => {
     const lessons = buildLessonsArray(map, SCHEDULE);
     expect(lessons.find((l) => l.lessonKey === '1.2').hasBlooket).toBe(false);
   });
+
+  it('M2d: blooketBonus stamps enrichment topics (not required)', () => {
+    const map = computeLessonGrades([], FRQ_BAND, {}, SCHEDULE, {});
+    // presence both 1.1+1.2; only 1.2 is bonus enrichment
+    const lessons = buildLessonsArray(
+      map, SCHEDULE, undefined, null, {},
+      ['1.1', '1.2'], // presence
+      [],
+      ['1.2'], // bonus
+    );
+    const l11 = lessons.find((l) => l.lessonKey === '1.1');
+    const l12 = lessons.find((l) => l.lessonKey === '1.2');
+    expect(l11.hasBlooket).toBe(true);
+    expect(l11.blooketBonus).toBe(false);
+    expect(l12.hasBlooket).toBe(true);
+    expect(l12.blooketBonus).toBe(true);
+  });
 });
 
 // ── computeQuarterV3 -- the Blooket track ──────────────────────────────────────

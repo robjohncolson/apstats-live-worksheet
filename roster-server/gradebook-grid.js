@@ -133,8 +133,20 @@ export function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
       }
     }
     if (g.topics.some((t) => t.hasBlooket)) {
-      cols.push({ key: `BL:${label}`, kind: 'blooket', category: 'Blooket',
-        title: `${label} Blooket`, unit: g.unit, topicKeys });
+      // M2d: teacher-facing bonus label when every Blooket-bearing topic in the
+      // group is enrichment (never-required). Mixed groups stay unlabeled as
+      // required (core presence dominates the column).
+      const blTopics = g.topics.filter((t) => t.hasBlooket);
+      const allBonus = blTopics.length > 0 && blTopics.every((t) => t.blooketBonus);
+      cols.push({
+        key: `BL:${label}`,
+        kind: 'blooket',
+        category: 'Blooket',
+        title: allBonus ? `${label} Blooket (bonus)` : `${label} Blooket`,
+        unit: g.unit,
+        topicKeys,
+        blooketBonus: allBonus,
+      });
     }
   }
 

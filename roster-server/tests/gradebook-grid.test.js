@@ -27,10 +27,10 @@ function gradeObj() {
     units: { U1: { pcRawPct: 80 } },
     quarters: { Q1: { units: [1], quarterGrade: 90, pcAvg: 90, workAvg: 70 } },
     lessons: [
-      { lessonKey: '1.1', unit: 1, worksheetKey: '1', Cws: 88, lessonGradeNoQuiz: 84, Q: null, quizTotal: 0, blooket: 95, hasBlooket: true },
-      { lessonKey: '1.2', unit: 1, worksheetKey: '2', Cws: 90, lessonGradeNoQuiz: 86, Q: 78, quizTotal: 3, blooket: 100, hasBlooket: true },
-      { lessonKey: '1.3', unit: 1, worksheetKey: '3-4', Cws: 70, lessonGradeNoQuiz: 66, Q: null, quizTotal: 0, blooket: null, hasBlooket: false },
-      { lessonKey: '1.4', unit: 1, worksheetKey: '3-4', Cws: 70, lessonGradeNoQuiz: 66, Q: 65, quizTotal: 4, blooket: null, hasBlooket: false },
+      { lessonKey: '1.1', unit: 1, worksheetKey: '1', Cws: 88, lessonGradeNoQuiz: 84, Q: null, quizTotal: 0, blooket: 95, hasBlooket: true, blooketBonus: false },
+      { lessonKey: '1.2', unit: 1, worksheetKey: '2', Cws: 90, lessonGradeNoQuiz: 86, Q: 78, quizTotal: 3, blooket: 100, hasBlooket: true, blooketBonus: false },
+      { lessonKey: '1.3', unit: 1, worksheetKey: '3-4', Cws: 70, lessonGradeNoQuiz: 66, Q: null, quizTotal: 0, blooket: null, hasBlooket: false, blooketBonus: false },
+      { lessonKey: '1.4', unit: 1, worksheetKey: '3-4', Cws: 70, lessonGradeNoQuiz: 66, Q: 65, quizTotal: 4, blooket: null, hasBlooket: false, blooketBonus: false },
     ],
   };
 }
@@ -62,6 +62,55 @@ describe('buildGradebookColumns', () => {
     expect(byKey['FA:1.2'].category).toBe('Lesson');
     expect(byKey['QUIZ:1.2'].category).toBe('Quizzes');
     expect(byKey['BL:1.2'].category).toBe('Blooket');
+  });
+
+  it('core Blooket column is unlabeled (not bonus)', () => {
+    const byKey = Object.fromEntries(cols.map((c) => [c.key, c]));
+    expect(byKey['BL:1.2'].title).toBe('1.2 Blooket');
+    expect(byKey['BL:1.2'].blooketBonus).toBe(false);
+  });
+});
+
+describe('M2d teacher dashboard bonus Blooket labeling', () => {
+  function gradeWithBonus() {
+    return {
+      units: { U2: { pcRawPct: null } },
+      quarters: { Q1: { units: [2], quarterGrade: null, pcAvg: null, workAvg: null } },
+      lessons: [
+        // core with blooket
+        { lessonKey: '2.1', unit: 2, worksheetKey: '1', Cws: null, lessonGradeNoQuiz: null, Q: null, quizTotal: 0, blooket: null, hasBlooket: true, blooketBonus: false },
+        // enrichment (crosswalk bonus) with blooket — must never read as required
+        { lessonKey: '2.9', unit: 2, worksheetKey: '9', Cws: null, lessonGradeNoQuiz: null, Q: null, quizTotal: 0, blooket: null, hasBlooket: true, blooketBonus: true },
+      ],
+    };
+  }
+
+  it('bonus topic Blooket column is labeled (bonus) and flagged', () => {
+    const cols = buildGradebookColumns(gradeWithBonus(), 'Q1');
+    const byKey = Object.fromEntries(cols.map((c) => [c.key, c]));
+    expect(byKey['BL:2.9'].title).toBe('2.9 Blooket (bonus)');
+    expect(byKey['BL:2.9'].blooketBonus).toBe(true);
+  });
+
+  it('core topic Blooket column stays unlabeled', () => {
+    const cols = buildGradebookColumns(gradeWithBonus(), 'Q1');
+    const byKey = Object.fromEntries(cols.map((c) => [c.key, c]));
+    expect(byKey['BL:2.1'].title).toBe('2.1 Blooket');
+    expect(byKey['BL:2.1'].blooketBonus).toBe(false);
+  });
+
+  it('M2d CONTRACT: student-facing gradebook payload carries "(bonus)" title', () => {
+    // My Gradebook + My Ledger render the shared column.title — the "(bonus)"
+    // suffix is student-visible by design (honest labeling; user-approved).
+    const gb = buildGradebook(gradeWithBonus());
+    const cols = gb.quarters.Q1.columns;
+    const bonusCol = cols.find((c) => c.key === 'BL:2.9');
+    expect(bonusCol).toBeTruthy();
+    expect(bonusCol.title).toBe('2.9 Blooket (bonus)');
+    expect(bonusCol.blooketBonus).toBe(true);
+    const coreCol = cols.find((c) => c.key === 'BL:2.1');
+    expect(coreCol.title).toBe('2.1 Blooket');
+    expect(coreCol.title).not.toMatch(/bonus/i);
   });
 });
 

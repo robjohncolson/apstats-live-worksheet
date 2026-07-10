@@ -98,4 +98,38 @@ describe('grade-engine bundle — client≡server parity', () => {
     const client = Engine.computeGrade([], ANSWER_KEY, CONFIG, GRADE_OPTS);
     expect(client).toEqual(server);
   });
+
+  it('M2d: bundle empties BLOOKET_BONUS_TOPICS; opts.blooketBonusTopics stamps 2.9 online≡offline', () => {
+    // Empty module default is intentional — clients MUST pass bonus via opts
+    // (offline pack / Desk re-derive). Parity fixture includes real bonus 2.9.
+    const src = readFileSync(BUNDLE_PATH, 'utf8');
+    expect(src).toMatch(/const BLOOKET_BONUS_TOPICS = \[\]/);
+    expect(GRADE_OPTS.blooketBonusTopics).toEqual(['2.9']);
+    expect(GRADE_OPTS.blooketPresence).toContain('2.9');
+    expect(GRADE_OPTS.blooketRequired).not.toContain('2.9');
+
+    const server = serverComputeGrade([], ANSWER_KEY, CONFIG, GRADE_OPTS);
+    const client = Engine.computeGrade([], ANSWER_KEY, CONFIG, GRADE_OPTS);
+    expect(client).toEqual(server);
+    const s29 = server.lessons.find((L) => L.lessonKey === '2.9');
+    const c29 = client.lessons.find((L) => L.lessonKey === '2.9');
+    expect(s29).toBeTruthy();
+    expect(s29.hasBlooket).toBe(true);
+    expect(s29.blooketBonus).toBe(true);
+    expect(c29.blooketBonus).toBe(true);
+    const s12 = server.lessons.find((L) => L.lessonKey === '1.2');
+    expect(s12.blooketBonus).toBe(false);
+    expect(s12.hasBlooket).toBe(true);
+
+    // Shared gradebook title is the student-facing contract
+    const gb = serverBuildGradebook(server, {
+      lessonSchedule: GRADE_OPTS.lessonSchedule,
+      section: SECTION,
+      todayStr: TODAY_STR,
+    });
+    const cols = Object.values(gb.quarters || {}).flatMap((q) => q.columns || []);
+    const bl29 = cols.find((c) => c.key === 'BL:2.9');
+    expect(bl29).toBeTruthy();
+    expect(bl29.title).toBe('2.9 Blooket (bonus)');
+  });
 });

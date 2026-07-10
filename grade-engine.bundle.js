@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 951ac4019078
+ * engine-version: 58ebb92bc280
  */
 ;(function (root) {
   'use strict';
@@ -1614,10 +1614,13 @@
     // quizTotals: optional topicKey → gradable-quiz-question count (computeQuizTotals)
     // blooketLessons: optional [topicKey] that HAVE a Blooket → sets hasBlooket per lesson
     // trainerLessons: optional [topicKey] with mapped TI-84 skills → sets hasTrainer per lesson
-    function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = []) {
+    // blooketBonusTopics: optional [topicKey] enrichment (G4/M2d) → sets blooketBonus per lesson
+    //   so teacher dashboards can label bonus vs core; never part of the required Due set.
+    function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = [], blooketBonusTopics = []) {
       const result = [];
       const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
       const trainerSet = new Set(Array.isArray(trainerLessons) ? trainerLessons : []);
+      const bonusSet = new Set(Array.isArray(blooketBonusTopics) ? blooketBonusTopics : []);
     
       // Include every lesson from the schedule (not just those with data).
       const sortedKeys = Object.keys(schedule).sort((a, b) => {
@@ -1668,9 +1671,12 @@
           // Per-lesson Blooket score (0..100), surfaced for the Desk day-grade modal
           // + the grade coach; null when no game/flashcard score attached.
           blooket: lessonResult ? (lessonResult.blooket != null ? lessonResult.blooket : null) : null,
-          // Whether this lesson HAS a Blooket at all (in the make-up denominator), so
+          // Whether this lesson HAS a Blooket at all (presence list), so
           // the coach can tell "Blooket not done yet" apart from "no Blooket exists".
           hasBlooket: blooketSet.has(topicKey),
+          // M2d: enrichment topic (crosswalk bonus / BLOOKET_BONUS_TOPICS). Visible in
+          // teacher dashboards as "bonus"; NEVER counts toward required Due (core 67).
+          blooketBonus: bonusSet.has(topicKey),
           // TI-84 trainer: per-lesson pct (mean over mapped procedures, missing=0;
           // null = untouched) + whether the lesson has mapped calculator skills at
           // all. Display-only today (weight 0) — the Desk 🖩 chip reads these.
@@ -1828,8 +1834,20 @@
           }
         }
         if (g.topics.some((t) => t.hasBlooket)) {
-          cols.push({ key: `BL:${label}`, kind: 'blooket', category: 'Blooket',
-            title: `${label} Blooket`, unit: g.unit, topicKeys });
+          // M2d: teacher-facing bonus label when every Blooket-bearing topic in the
+          // group is enrichment (never-required). Mixed groups stay unlabeled as
+          // required (core presence dominates the column).
+          const blTopics = g.topics.filter((t) => t.hasBlooket);
+          const allBonus = blTopics.length > 0 && blTopics.every((t) => t.blooketBonus);
+          cols.push({
+            key: `BL:${label}`,
+            kind: 'blooket',
+            category: 'Blooket',
+            title: allBonus ? `${label} Blooket (bonus)` : `${label} Blooket`,
+            unit: g.unit,
+            topicKeys,
+            blooketBonus: allBonus,
+          });
         }
       }
     
@@ -2427,8 +2445,21 @@
     
       // ── Phase 6: build the lessons[] array ────────────────────────────────────
       // (quizTotals computed above, reused here.)
+      // M2d: stamp blooketBonus from bonus list (opts override or module default).
+      const blooketBonusTopics =
+        (opts && opts.blooketBonusTopics) ||
+        BLOOKET_BONUS_TOPICS;
       const lessons = schedule
-        ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals, blooketPresence, trainerLessons)
+        ? buildLessonsArray(
+            lessonMap,
+            schedule,
+            undefined,
+            (config && config.gradingWindowStart) || null,
+            quizTotals,
+            blooketPresence,
+            trainerLessons,
+            blooketBonusTopics,
+          )
         : [];
     
       // Stable sorted unit / completion order.
@@ -2460,7 +2491,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "951ac4019078",
+    _engineVersion: "58ebb92bc280",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

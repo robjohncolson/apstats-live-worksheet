@@ -8338,6 +8338,9 @@ function _phase2ReDeriveGrade() {
         blooketLessons: inputs.blooketLessons || inputs.blooketPresence || null,
         blooketPresence: inputs.blooketPresence || inputs.blooketLessons || null,
         blooketRequired: inputs.blooketRequired || null,
+        // M2d: enrichment ids so offline lessons[].blooketBonus + gradebook
+        // "(bonus)" titles match the server (My Gradebook / My Ledger).
+        blooketBonusTopics: inputs.blooketBonusTopics || null,
         // TI-84 trainer map: keeps the offline-derived trainer surface
         // (lessons[].trainer, trainerDue/Done/Todo) identical to the server's.
         // Older cached inputs lack it → null → the strand is simply absent

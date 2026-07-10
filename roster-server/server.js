@@ -91,9 +91,11 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const _sched = lessonSchedule || null;
   const _presence = _gradeCtx.blooketPresence || _gradeCtx.blooketTopics;
   const _required = _gradeCtx.blooketRequired;
+  const _bonus = _gradeCtx.blooketBonusTopics || [];
   const _blooketBundle = {
     blooketPresence: _presence,
     blooketRequired: _required,
+    blooketBonusTopics: _bonus,
     blooketLessons: _presence, // legacy alias = presence
   };
 
