@@ -27,7 +27,13 @@ function studentMeta(r) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountTeacherStudent(app, { db, ledgerDb, loadAnswerKey, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null, loadManifest = null, pollArchiveDb = null }) {
+export function mountTeacherStudent(app, {
+  db, ledgerDb, loadAnswerKey, lessonSchedule, config = PHASE3_CONFIG,
+  worksheetBlankCounts = null, loadManifest = null, pollArchiveDb = null,
+  blooketPresence = null, blooketRequired = null, blooketLessons = null,
+}) {
+  const _presence = blooketPresence || blooketLessons || null;
+  const _required = blooketRequired || null;
 
   // ── GET /teacher/student/:studentId/profile ─────────────────────────────────
   // Returns identity tuple: studentId, username, realName, section, role.
@@ -112,6 +118,9 @@ export function mountTeacherStudent(app, { db, ledgerDb, loadAnswerKey, lessonSc
       lessonSchedule,
       section: roster.section || null,
       worksheetBlankCounts,
+      blooketPresence: _presence || undefined,
+      blooketRequired: _required || undefined,
+      blooketLessons: _presence || undefined,
     });
 
     return res.json({

@@ -35,7 +35,11 @@ import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
 import { mountTrainer } from './trainer.js';
 import { mountDogeWallet } from './doge-wallet.js';
 import { createLiveTrainerDb } from './trainer-db.js';
-import { PHASE3_CONFIG } from './grade-config.js';
+import {
+  ACTIVE_SCHOOL_YEAR,
+  resolveProductionGradeInputs,
+} from './grade-contexts.js';
+// PHASE3_CONFIG is resolved via grade-contexts (M2b'); do not import it here for mounts.
 import { buildWorksheetBlankCounts } from './lesson-grade.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { requireTeacher, getTeacherKey } from './teacher-auth.js';
@@ -57,7 +61,42 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey) {
+/**
+ * @param {*} db
+ * @param {*} ledgerDb
+ * @param {*} loadManifest
+ * @param {*} loadAnswerKey
+ * @param {*} loadSkillMap
+ * @param {*} bkt
+ * @param {*} remediationDb
+ * @param {*} lessonSchedule
+ * @param {*} configOverrides
+ * @param {*} worksheetBlankCounts
+ * @param {*} pollArchiveDb
+ * @param {*} nudgesDbOverride
+ * @param {*} lessonUnlockDbOverride
+ * @param {*} trainerDbOverride
+ * @param {*} worksheetKey
+ * @param {object} [productionGradeInputs] Optional pre-resolved bundle from
+ *   resolveProductionGradeInputs(). When provided (production boot), createApp
+ *   does NOT re-resolve — all seven mounts share this single object. When
+ *   omitted (tests), createApp resolves once for ACTIVE_SCHOOL_YEAR.
+ */
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs) {
+  // Atomic grade-year bundle: resolve ONCE, thread to every grade mount.
+  const _gradeCtx = productionGradeInputs || resolveProductionGradeInputs(ACTIVE_SCHOOL_YEAR);
+  const gradeConfig = configOverrides
+    ? { ..._gradeCtx.config, ...configOverrides }
+    : _gradeCtx.config;
+  const _sched = lessonSchedule || null;
+  const _presence = _gradeCtx.blooketPresence || _gradeCtx.blooketTopics;
+  const _required = _gradeCtx.blooketRequired;
+  const _blooketBundle = {
+    blooketPresence: _presence,
+    blooketRequired: _required,
+    blooketLessons: _presence, // legacy alias = presence
+  };
+
   const app = express();
   app.use(cors());
   // 8mb (vs Express's 100kb default): the trainer-state kanji payload (~90–120 KB) must fit
@@ -918,20 +957,29 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Phase 6: lessonSchedule is passed in for date-driven lesson-weighted quarter
   // grade. If null/missing, /grade degrades gracefully to the old unit-mean logic.
   if (ledgerDb && loadAnswerKey) {
-    // 2026-05-20 hotfix: thread configOverrides so tests can disable the
-    // gradingWindowStart filter (whose default cutoff is in the future for
-    // real-clock tests). Production server doesn't pass overrides → uses
-    // PHASE3_CONFIG as-is.
-    const gradeConfig = configOverrides
-      ? { ...PHASE3_CONFIG, ...configOverrides }
-      : PHASE3_CONFIG;
-    mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
-    mountOfflineInputs(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
+    // Atomic _gradeCtx / gradeConfig / _blooketBundle resolved once at createApp top.
+    mountGrade(app, {
+      verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: _sched, db,
+      config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
+      ..._blooketBundle,
+    });
+    mountOfflineInputs(app, {
+      verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: _sched, db,
+      config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
+      ..._blooketBundle,
+    });
     // OFFLINE_GRADING_MESH Phase 3b — TEACHER-gated full (unredacted) key so the
     // teacher device auto-grades gossiped submissions offline (§7.1). Students never
     // hit this — they get the REDACTED key from /grade/offline-inputs.
-    mountAnswerKey(app, { db, worksheetKey, loadAnswerKey, lessonSchedule: lessonSchedule || null, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
-    mountTranscript(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
+    mountAnswerKey(app, {
+      db, worksheetKey, loadAnswerKey, lessonSchedule: _sched, config: gradeConfig,
+      worksheetBlankCounts: worksheetBlankCounts || null, ..._blooketBundle,
+    });
+    mountTranscript(app, {
+      verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: _sched, db,
+      config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
+      ..._blooketBundle,
+    });
     mountCommits(app, { verifyToken, ledgerDb, db });
   }
 
@@ -948,10 +996,13 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // /mastery). Auth = x-teacher-secret (mirrors /roster/list); reuses pure
   // computeGrade / computeMastery so the math has a single source.
   if (db && ledgerDb && loadAnswerKey) {
-    const classConfig = configOverrides
-      ? { ...PHASE3_CONFIG, ...configOverrides }
-      : PHASE3_CONFIG;
-    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig, worksheetBlankCounts: worksheetBlankCounts || null, verifyToken, resolveUsername: resolveReceiptUsername });
+    mountClass(app, {
+      db, ledgerDb, loadAnswerKey, loadSkillMap, bkt,
+      lessonSchedule: _sched, config: gradeConfig,
+      worksheetBlankCounts: worksheetBlankCounts || null,
+      verifyToken, resolveUsername: resolveReceiptUsername,
+      ..._blooketBundle,
+    });
   }
 
   // ── Teacher Student Console (Phase 1+2A of TEACHER_STUDENT_CONSOLE_SPEC.md) ─
@@ -961,11 +1012,12 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   if (loadAnswerKey) {
     mountTeacherStudent(app, {
       db, ledgerDb, loadAnswerKey,
-      lessonSchedule: lessonSchedule || null,
-      config: configOverrides ? { ...PHASE3_CONFIG, ...configOverrides } : PHASE3_CONFIG,
+      lessonSchedule: _sched,
+      config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,
       loadManifest: loadManifest || null,
       pollArchiveDb: pollArchiveDb || null,
+      ..._blooketBundle,
     });
   }
 
@@ -1015,9 +1067,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountReview(app, {
       db, ledgerDb, nudgesDb,
       loadAnswerKey: loadAnswerKey || null,
-      lessonSchedule: lessonSchedule || null,
-      config: configOverrides ? { ...PHASE3_CONFIG, ...configOverrides } : PHASE3_CONFIG,
+      lessonSchedule: _sched,
+      config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,
+      ..._blooketBundle,
     });
   }
 
@@ -1246,9 +1299,10 @@ if (process.env.NODE_ENV !== 'test') {
     // nudgesDbOverride is undefined. Passing undefined here lets the factory
     // pick it up automatically, so no explicit construction is needed in the
     // production entrypoint.
-    // Phase 6: lesson schedule — synchronous load at boot; fault-tolerant (null
-    // = date filter disabled, /grade still works). Same pattern as remediation-db.
-    const lessonSchedule = loadLiveLessonSchedule();
+    // Resolve production grade inputs ONCE at boot; createApp threads the same
+    // object to all seven mounts (no re-resolve inside).
+    const _prodGrade = resolveProductionGradeInputs(ACTIVE_SCHOOL_YEAR);
+    const lessonSchedule = _prodGrade.lessonSchedule || loadLiveLessonSchedule();
     // W1: worksheet blank counts — synchronous load at boot; fault-tolerant (null
     // = Cws null for all lessons, W/Q renormalize). Same pattern as lesson schedule.
     const worksheetBlankCounts = loadLiveWorksheetBlankCounts();
@@ -1268,7 +1322,8 @@ if (process.env.NODE_ENV !== 'test') {
       undefined,
       undefined,
       undefined,
-      worksheetKey
+      worksheetKey,
+      _prodGrade          // atomic bundle — no second resolve inside createApp
     );
     const PORT = process.env.PORT || 8090;
     app.listen(PORT, () => {

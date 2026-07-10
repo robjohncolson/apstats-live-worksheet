@@ -166,7 +166,13 @@ function currentGradeOf(ledgerRows, answerKey, config, opts) {
 }
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
-export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lessonSchedule, config, worksheetBlankCounts, schoolTz = 'America/New_York' }) {
+export function mountReview(app, {
+  db, ledgerDb, nudgesDb, loadAnswerKey, lessonSchedule, config, worksheetBlankCounts,
+  schoolTz = 'America/New_York',
+  blooketPresence = null, blooketRequired = null, blooketLessons = null,
+}) {
+  const _presence = blooketPresence || blooketLessons || null;
+  const _required = blooketRequired || null;
 
   // Resolve the acting teacher's login_username for the receipt `by` + the mark's
   // teacher_username + the notify sender. Bearer token → that teacher's username;
@@ -285,7 +291,14 @@ export function mountReview(app, { db, ledgerDb, nudgesDb, loadAnswerKey, lesson
         username: r.login_username,
         realName: r.real_name ?? null,
         section: r.section ?? null,
-        currentGrade: currentGradeOf(rows, answerKey, config, { lessonSchedule, section: r.section, worksheetBlankCounts }),
+        currentGrade: currentGradeOf(rows, answerKey, config, {
+          lessonSchedule,
+          section: r.section,
+          worksheetBlankCounts,
+          blooketPresence: _presence || undefined,
+          blooketRequired: _required || undefined,
+          blooketLessons: _presence || undefined,
+        }),
         lastReviewedAt,
         daysSinceReview,
         stale: daysSinceReview !== null && daysSinceReview >= N_DAYS_FLAG,

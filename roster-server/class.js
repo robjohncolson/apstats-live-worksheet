@@ -140,7 +140,13 @@ function friendlyLabel(realName) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null, verifyToken, resolveUsername }) {
+export function mountClass(app, {
+  db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule,
+  config = PHASE3_CONFIG, worksheetBlankCounts = null, verifyToken, resolveUsername,
+  blooketPresence = null, blooketRequired = null, blooketLessons = null,
+}) {
+  const _presence = blooketPresence || blooketLessons || null;
+  const _required = blooketRequired || null;
 
   // ── GET /class/blank/:itemId ────────────────────────────────────────────────
   // STUDENT-accessible (NOT teacher-gated). Returns the requester's SECTION's
@@ -252,6 +258,9 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         lessonSchedule,
         section,
         worksheetBlankCounts,
+        blooketPresence: _presence || undefined,
+        blooketRequired: _required || undefined,
+        blooketLessons: _presence || undefined,
       });
       const trainerRows = ledgerRows.filter(row => row && row.source === 'trainer');
       let trainer = null;

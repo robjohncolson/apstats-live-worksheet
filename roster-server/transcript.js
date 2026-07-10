@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { PHASE3_CONFIG, quarterOfDate } from './grade-config.js';
-import { computeGrade } from './grade.js';
+import { computeGrade, resolveBlooketLists } from './grade.js';
 import { todayInTz } from './lesson-grade.js';
 import { answerKeyMapOrNull, stableLedgerSort } from './scoring.js';
 import { codeHash } from './code-hash.js';
@@ -24,11 +24,18 @@ function sha256Hex(value) {
   return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
-function artifactHash({ answerKeyDoc, lessonSchedule, blooketLessons }) {
+/**
+ * Hash the grade artifacts computeGrade actually used.
+ * Blooket lists are resolved via resolveBlooketLists (same as computeGrade) so a
+ * legacy single blooketLessons mount cannot hash a different required denom.
+ * Exported for the auditable invariance harness (real path, not a copy).
+ */
+export function artifactHash({ answerKeyDoc, lessonSchedule, blooketLessons, blooketPresence, blooketRequired }) {
+  const lists = resolveBlooketLists({ blooketLessons, blooketPresence, blooketRequired });
   const parts = [
     sha256Hex(canonicalizeTranscript(answerKeyDoc || {})),
     sha256Hex(canonicalizeTranscript(lessonSchedule || {})),
-    sha256Hex(canonicalizeTranscript(blooketLessons || [])),
+    sha256Hex(canonicalizeTranscript({ p: lists.blooketPresence, r: lists.blooketRequired })),
   ];
   return sha256Hex(parts.sort().join(''));
 }
@@ -72,8 +79,12 @@ export function mountTranscript(app, {
   db,
   config = PHASE3_CONFIG,
   worksheetBlankCounts = null,
-  blooketLessons = null
+  blooketLessons = null,
+  blooketPresence = null,
+  blooketRequired = null,
 }) {
+  // Resolve once at mount — same effective lists for computeGrade + artHash.
+  const _lists = resolveBlooketLists({ blooketLessons, blooketPresence, blooketRequired });
   app.get('/transcript', async (req, res) => {
     const rawToken = extractToken(req);
     if (!rawToken) return res.status(401).json({ ok: false, error: 'Token required' });
@@ -110,7 +121,8 @@ export function mountTranscript(app, {
         lessonSchedule,
         section: roster.section,
         worksheetBlankCounts,
-        blooketLessons
+        blooketPresence: _lists.blooketPresence,
+        blooketRequired: _lists.blooketRequired,
       });
 
       const gq = currentQuarter(asOfDateNY, config);
@@ -127,7 +139,12 @@ export function mountTranscript(app, {
         gq,
         gradeHash: hashTranscriptGradeProjection(grade),
         cfgHash: sha256Hex(canonicalizeTranscript(resolvedConfig)),
-        artHash: artifactHash({ answerKeyDoc, lessonSchedule, blooketLessons }),
+        artHash: artifactHash({
+          answerKeyDoc,
+          lessonSchedule,
+          blooketPresence: _lists.blooketPresence,
+          blooketRequired: _lists.blooketRequired,
+        }),
         codeHash: codeHash()
       });
 
