@@ -40,6 +40,13 @@ const SRC = resolve(REPO, 'scripts/fixtures/work-manifest-9unit-source.json');
 const CW  = resolve(REPO, '2026-crosswalk.json');
 const OUT = resolve(REPO, arg('--out', 'scripts/fixtures/work-manifest-ced.json'));
 
+/** Testability exports (W-reg): frozen source + live dual-write targets. */
+export const CED_FROZEN_SOURCE = SRC;
+export const CED_LIVE_RELPATHS = [
+  'data/work-manifest.json',
+  'roster-server/data/work-manifest.json',
+];
+
 const manifest = JSON.parse(readFileSync(SRC, 'utf8'));
 const crosswalk = JSON.parse(readFileSync(CW, 'utf8')).map;
 
@@ -200,6 +207,8 @@ console.log(`Wrote ${OUT}`);
 
 // --deploy: write the CLEAN live manifest (audit metadata stripped) to BOTH live
 // paths — the only sanctioned way to refresh the live Do-Now manifest post-P2.
+// WORK_MANIFEST_DEPLOY_ROOT (test-only): redirect writes for W-reg without
+// clobbering the real live copies during the regression suite.
 if (process.argv.includes('--deploy')) {
   const live = {
     generatedFrom: 'work-manifest-ced (P1a) — Fall-2026 5-unit CED Do-Now order; old ids + itemIds preserved; bonus + PCs omitted (PCs live in AP Classroom)',
@@ -208,9 +217,13 @@ if (process.argv.includes('--deploy')) {
     index,
   };
   const liveJson = JSON.stringify(live, null, 1) + '\n';
-  for (const p of ['data/work-manifest.json', 'roster-server/data/work-manifest.json']) {
-    writeFileSync(resolve(REPO, p), liveJson);
-    console.log(`  deployed → ${p}`);
+  const deployRoot = process.env.WORK_MANIFEST_DEPLOY_ROOT
+    ? resolve(process.env.WORK_MANIFEST_DEPLOY_ROOT)
+    : REPO;
+  for (const p of CED_LIVE_RELPATHS) {
+    const abs = resolve(deployRoot, p);
+    writeFileSync(abs, liveJson);
+    console.log(`  deployed → ${abs}`);
   }
 }
 console.log(`  units: ${units.map((u) => u.unit + '(' + u.lessons.length + ')').join(' ')}`);

@@ -53,7 +53,18 @@ const MANIFEST_PATH = resolve(ROOT, 'scripts/fixtures/work-manifest-9unit-source
 // repo-root data/ dir is NOT in the deployed container. Ship a byte-identical
 // copy INSIDE roster-server so loadLiveManifest() can read it in production.
 // See roster-server/README.md "Do Now (DN1)" + the deploy runbook.
+// NOTE: this path is NO LONGER written by THIS builder (W-reg / P2 footgun fix).
+// Live dual copies are only written by build-work-manifest-ced.mjs --deploy.
 const BUNDLED_MANIFEST_PATH = resolve(ROOT, 'roster-server/data/work-manifest.json');
+
+/** Testability export (W-reg): the only path this builder may write. */
+export const WORK_MANIFEST_WRITE_TARGET = MANIFEST_PATH;
+/** Testability export: live Do-Now paths this builder must NEVER write. */
+export const WORK_MANIFEST_LIVE_PATHS = [
+  resolve(ROOT, 'data/work-manifest.json'),
+  resolve(ROOT, 'roster-server/data/work-manifest.json'),
+];
+export const WORK_MANIFEST_FROZEN_9UNIT_SOURCE = MANIFEST_PATH;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Classification
