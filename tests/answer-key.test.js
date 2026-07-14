@@ -69,7 +69,7 @@ describe('generated data/answer-key.json (integration)', () => {
   it('all keys are MCQ with a non-empty single-token answerKey', () => {
     const doc = JSON.parse(readFileSync(p, 'utf8'));
     const entries = Object.entries(doc.answerKey);
-    expect(entries.length).toBeGreaterThan(700);
+    expect(entries.length).toBe(354);
     for (const [, v] of entries) {
       expect(v.type).toBe('multiple-choice');
       expect(typeof v.answerKey).toBe('string');

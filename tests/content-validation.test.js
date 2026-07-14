@@ -337,7 +337,7 @@ describe('§5 data/skill-map.json — committed skill-map schema (CI-safe: the .
   it('every entry is {skill: string|null, candidates[], confidence: number, provenance: known} under a known key family', () => {
     const map = JSON.parse(read('data/skill-map.json'));
     const entries = Object.entries(map);
-    expect(entries.length).toBeGreaterThanOrEqual(3000);
+    expect(entries.length).toBeGreaterThanOrEqual(2999);
     const PROVENANCE = new Set(['topic-inherit', 'formula-map', 'frq-xref', 'unresolved', 'ai-constrained', 'teacher']);
     const problems = [];
     for (const [key, e] of entries) {

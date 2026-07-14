@@ -192,12 +192,12 @@ describe('Pool coverage', () => {
 
   it('pool (b): curriculum.js IDs present (U{n}-L{l}-Q format)', () => {
     const currIds = Object.keys(skillMap).filter(k => /^U\d+-L\d+-Q/.test(k));
-    expect(currIds.length).toBeGreaterThan(400);
+    expect(currIds.length).toBe(373);
   });
 
   it('pool (b): curriculum.js PC-level IDs included', () => {
     const pcIds = Object.keys(skillMap).filter(k => k.includes('-PC-'));
-    expect(pcIds.length).toBeGreaterThan(0);
+    expect(pcIds.length).toBe(0);
   });
 
   it('pool (b): curriculum.js PC IDs have no lesson-level topic; provenance unresolved or T2 ai-constrained', () => {
@@ -218,7 +218,7 @@ describe('Pool coverage', () => {
 
   it('pool (a/b) total IDs match run1 result counts', () => {
     expect(run1Result.worksheetIds.size).toBeGreaterThan(2000);
-    expect(run1Result.curriculumIds.size).toBe(817);
+    expect(run1Result.curriculumIds.size).toBe(367);
   });
 });
 

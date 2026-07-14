@@ -10905,7 +10905,14 @@ function showResourcePanel(inf, dateStr) {
             // Drills deprecated — removed 2026-05
             // W1 honesty: openers with quiz:null (1.1, 2.1, …) — label, don't omit silently
             // or show a dead control. Real quizzes keep the link + Done gate below.
-            if (u.quiz) {
+            if (_cedBonus) {
+                // §7 (CR_SY2627_ATTENUATION_SPEC): "Beyond the Exam" topics were dropped
+                // from the cr quiz bank, so their quiz link would now open an EMPTY quiz.
+                // Suppress it at render time — robust against the Supabase lesson_urls
+                // override, which can still carry a stale bonus quiz URL. Show an honest
+                // label instead. Worksheet/Blooket rows for the topic are unaffected.
+                lessonHtml += '<div style="margin:3px 0"><span style="color:#666;font-size:10px" title="This topic is Beyond the Exam (not on the Fall 2026 exam) — no graded quiz.">No quiz — Beyond the Exam</span></div>';
+            } else if (u.quiz) {
                 // Score chip appended by the _mkGradeChip block below (colored vs the 40% gate).
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:#0000cc;text-decoration:underline">Quiz</a>' + _visitedTag('quiz') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="quiz">' + _doneBtn('quiz') + '</span></div>';
             } else if (u.worksheet) {
