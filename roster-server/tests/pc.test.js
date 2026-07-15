@@ -89,12 +89,24 @@ function fakeLedgerDb(seedRows = []) {
   };
 }
 
-function buildApp(pcDb, rosterDb = fakeRosterDb(), ledgerDb = null) {
+// Fake figures signer: deterministic, no Supabase — attaches a signed URL for the
+// BANK fixture item so the GET test proves figures ride the response.
+function fakeFiguresSigner() {
+  return {
+    async signForItems(ids) {
+      return (Array.isArray(ids) && ids.includes('U1-PC26-MCQ-A-Q01'))
+        ? { 'U1-PC26-MCQ-A-Q01': { stems: ['https://signed/U1-PC26-MCQ-A-Q01_0.png'], choices: {} } }
+        : {};
+    },
+  };
+}
+
+function buildApp(pcDb, rosterDb = fakeRosterDb(), ledgerDb = null, figuresSigner = fakeFiguresSigner()) {
   process.env.ROSTER_TEACHER_SECRET = TEACHER;
   return createApp(
     rosterDb, ledgerDb, fakeLoadManifest, okAnswerKey, okSkillMap, realBkt,
     undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
-    pcDb, // pcDbOverride (17th)
+    pcDb, figuresSigner, // pcDbOverride (17th), figuresSignerOverride (18th)
   );
 }
 
@@ -114,6 +126,8 @@ describe('GET /pc/:unit/:part', () => {
     expect('answer' in item).toBe(false);
     expect('rationaleCorrect' in item).toBe(false);
     expect('rubric' in item).toBe(false);
+    // D1-a: the server attaches signed figure URLs (never the service key/answers).
+    expect(item.figures).toEqual({ stems: ['https://signed/U1-PC26-MCQ-A-Q01_0.png'], choices: {} });
   });
 
   it('locked student -> 403', async () => {

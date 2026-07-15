@@ -34,6 +34,7 @@ import { mountLessonUnlock } from './lesson-unlock.js';
 import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
 import { mountPc } from './pc.js';
 import { createLivePcDb } from './pc-db.js';
+import { createLiveFiguresSigner } from './pc-figures.js';
 import { mountTrainer } from './trainer.js';
 import { mountDogeWallet } from './doge-wallet.js';
 import { createLiveTrainerDb } from './trainer-db.js';
@@ -84,7 +85,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  *   does NOT re-resolve — all seven mounts share this single object. When
  *   omitted (tests), createApp resolves once for ACTIVE_SCHOOL_YEAR.
  */
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs, pcDbOverride) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs, pcDbOverride, figuresSignerOverride) {
   // Atomic grade-year bundle: resolve ONCE, thread to every grade mount.
   const _gradeCtx = productionGradeInputs || resolveProductionGradeInputs(ACTIVE_SCHOOL_YEAR);
   const gradeConfig = configOverrides
@@ -1092,8 +1093,9 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Needs pcDb (pc_bank + pc_unlock). Routes respond 503 "not provisioned —
   // run migration 0029" until the table exists — service stays up.
   const pcDb = (typeof pcDbOverride !== 'undefined') ? pcDbOverride : createLivePcDb();
+  const figuresSigner = (typeof figuresSignerOverride !== 'undefined') ? figuresSignerOverride : createLiveFiguresSigner();
   if (pcDb && db) {
-    mountPc(app, { db, pcDb, ledgerDb });
+    mountPc(app, { db, pcDb, ledgerDb, figuresSigner });
   }
 
   // ── Trainer routes (Desk Roster Alignment §2.2 — tmux-trainer cloud save) ──

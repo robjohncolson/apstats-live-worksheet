@@ -96,7 +96,7 @@ async function teacherUsername(req, db) {
 
 const PART_RE = /^(A|REST)$/;
 
-export function mountPc(app, { db, pcDb, ledgerDb }) {
+export function mountPc(app, { db, pcDb, ledgerDb, figuresSigner }) {
   if (!pcDb) return;
 
   // GET /pc/:unit/:part — unlocked student fetches the questions (answers stripped).
@@ -137,6 +137,17 @@ export function mountPc(app, { db, pcDb, ledgerDb }) {
     if (!bank.data) return res.status(404).json({ ok: false, error: 'no bank for that (unit, part)' });
 
     var items = itemsFromPayload(bank.data.payload, part).map(stripForClient);
+    // Attach short-lived signed figure URLs (PC26 figures live in a private CB
+    // bucket; D1-a keeps them behind this gate — no service key on the client).
+    // One batched sign per request; best-effort — a missing signer/env or a failed
+    // sign just ships items without figures (cr falls back to the [Figure] text).
+    // `id` is whitelisted by stripForClient, so items[].id survives to key the sign.
+    if (figuresSigner) {
+      try {
+        var figMap = await figuresSigner.signForItems(items.map(function (it) { return it.id; }));
+        items.forEach(function (it) { if (figMap && figMap[it.id]) it.figures = figMap[it.id]; });
+      } catch (_) { /* degrade: ship without figures */ }
+    }
     return res.json({ ok: true, unit: unit, part: part, items: items, teacher: isTeacher });
   });
 
