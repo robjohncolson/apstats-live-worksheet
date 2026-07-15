@@ -56,6 +56,7 @@ function mockPcDb({ unlocked = false } = {}) {
     async upsertUnlocks(a) { calls.upsertUnlocks.push(a); return { data: (a.studentUsernames || []).map((u) => ({ student_username: u })), error: null }; },
     async unlockOne(a) { calls.unlockOne.push(a); return { data: { student_username: a.studentUsername }, error: null }; },
     async listActiveForStudent() { return { data: [], error: null }; },
+    async listActiveUnlocks() { return { data: [{ student_username: 'a', unit: 1, part: 'A', unlocked_by: 'teacher', unlocked_at: '2026-09-20T00:00:00Z' }], error: null }; },
   };
 }
 
@@ -72,10 +73,26 @@ class TestServer {
   }
 }
 
-function buildApp(pcDb, rosterDb = fakeRosterDb()) {
+// Minimal in-memory ledgerDb: records insertLedgerRow calls + serves prior rows
+// (for the best-wins floor read in POST /pc/:unit/:part/submit).
+function fakeLedgerDb(seedRows = []) {
+  const rows = seedRows.map((r) => ({ student_id: SID, ...r }));
+  const writes = [];
+  return {
+    _rows: rows, _writes: writes,
+    async getLedgerByStudent(sid) { return { data: rows.filter((r) => r.student_id === sid), error: null }; },
+    async insertLedgerRow(a) {
+      writes.push(a);
+      rows.push({ student_id: a.studentId, source: a.source, item_id: a.itemId, response: a.response, score: a.score, evidence_tier: a.evidenceTier, attempt: a.attempt });
+      return { data: { ledger_id: 'led-' + writes.length }, error: null };
+    },
+  };
+}
+
+function buildApp(pcDb, rosterDb = fakeRosterDb(), ledgerDb = null) {
   process.env.ROSTER_TEACHER_SECRET = TEACHER;
   return createApp(
-    rosterDb, null, fakeLoadManifest, okAnswerKey, okSkillMap, realBkt,
+    rosterDb, ledgerDb, fakeLoadManifest, okAnswerKey, okSkillMap, realBkt,
     undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
     pcDb, // pcDbOverride (17th)
   );
@@ -147,6 +164,130 @@ describe('POST /pc/unlock', () => {
       headers: { authorization: `Bearer ${STUDENT_TOKEN}` },
       body: { studentUsernames: ['a'], unit: 1, part: 'A' },
     });
+    expect(status).toBe(401);
+  });
+});
+
+describe('POST /pc/:unit/:part/submit', () => {
+  it('unlocked student: MCQ scored server-side; pc row written; answer NOT echoed', async () => {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb({ unlocked: true }), fakeRosterDb(), led)); await server.start();
+    const { status, json } = await server.req('POST', '/pc/1/A/submit', {
+      headers: { authorization: `Bearer ${STUDENT_TOKEN}` },
+      body: { responses: [{ itemId: 'U1-PC26-MCQ-A-Q01', response: 'B' }] }, // B is correct
+    });
+    expect(status).toBe(200);
+    expect(json.scored).toEqual([{ itemId: 'U1-PC26-MCQ-A-Q01', score: 1 }]);
+    // security: no answer/rationale/rubric leaks back through the scoring path
+    const blob = JSON.stringify(json);
+    expect(blob).not.toContain('rationale');
+    expect(blob).not.toContain('rubric');
+    expect(led._writes[0]).toMatchObject({ source: 'pc', itemId: 'U1-PC26-MCQ-A-Q01', score: 1, evidenceTier: 'practice', unit: 'U1' });
+  });
+
+  it('wrong answer -> score 0', async () => {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb({ unlocked: true }), fakeRosterDb(), led)); await server.start();
+    const { json } = await server.req('POST', '/pc/1/A/submit', {
+      headers: { authorization: `Bearer ${STUDENT_TOKEN}` },
+      body: { responses: [{ itemId: 'U1-PC26-MCQ-A-Q01', response: 'A' }] },
+    });
+    expect(json.scored[0].score).toBe(0);
+    expect(led._writes[0].score).toBe(0);
+  });
+
+  it('best-wins: a later WRONG retake never lowers a prior correct score', async () => {
+    const led = fakeLedgerDb([{ source: 'pc', item_id: 'U1-PC26-MCQ-A-Q01', score: 1, attempt: 1 }]);
+    server = new TestServer(buildApp(mockPcDb({ unlocked: true }), fakeRosterDb(), led)); await server.start();
+    await server.req('POST', '/pc/1/A/submit', {
+      headers: { authorization: `Bearer ${STUDENT_TOKEN}` },
+      body: { responses: [{ itemId: 'U1-PC26-MCQ-A-Q01', response: 'A' }] }, // wrong now
+    });
+    expect(led._writes[0].score).toBe(1); // floor held: max(0, prior 1)
+  });
+
+  it('locked -> 403', async () => {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb({ unlocked: false }), fakeRosterDb(), led)); await server.start();
+    const { status } = await server.req('POST', '/pc/1/A/submit', {
+      headers: { authorization: `Bearer ${STUDENT_TOKEN}` },
+      body: { responses: [{ itemId: 'U1-PC26-MCQ-A-Q01', response: 'B' }] },
+    });
+    expect(status).toBe(403);
+  });
+
+  it('no token -> 401', async () => {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb({ unlocked: true }), fakeRosterDb(), led)); await server.start();
+    const { status } = await server.req('POST', '/pc/1/A/submit', { body: { responses: [] } });
+    expect(status).toBe(401);
+  });
+});
+
+describe('POST /pc/grade (teacher paper entry)', () => {
+  function rosterWithStudent() {
+    const base = fakeRosterDb();
+    base.findByUsername = async (u) => (u === USERNAME
+      ? { data: { student_id: SID, login_username: USERNAME }, error: null }
+      : { data: null, error: null });
+    return base;
+  }
+
+  it('teacher writes a proctored -PAPER pc row', async () => {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb(), rosterWithStudent(), led)); await server.start();
+    const { status, json } = await server.req('POST', '/pc/grade', {
+      headers: { 'x-teacher-secret': TEACHER },
+      body: { studentUsername: USERNAME, unit: 1, part: 'A', score: 0.9 },
+    });
+    expect(status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(led._writes[0]).toMatchObject({ source: 'pc', itemId: 'U1-PC-A-PAPER', score: 0.9, evidenceTier: 'proctored', unit: 'U1' });
+  });
+
+  it('non-teacher -> 401', async () => {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb(), rosterWithStudent(), led)); await server.start();
+    const { status } = await server.req('POST', '/pc/grade', {
+      headers: { authorization: `Bearer ${STUDENT_TOKEN}` },
+      body: { studentUsername: USERNAME, unit: 1, part: 'A', score: 0.9 },
+    });
+    expect(status).toBe(401);
+  });
+
+  it('score out of range -> 400', async () => {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb(), rosterWithStudent(), led)); await server.start();
+    const { status } = await server.req('POST', '/pc/grade', {
+      headers: { 'x-teacher-secret': TEACHER },
+      body: { studentUsername: USERNAME, unit: 1, part: 'A', score: 5 },
+    });
+    expect(status).toBe(400);
+  });
+
+  it('unknown student -> 404', async () => {
+    const led = fakeLedgerDb();
+    server = new TestServer(buildApp(mockPcDb(), rosterWithStudent(), led)); await server.start();
+    const { status } = await server.req('POST', '/pc/grade', {
+      headers: { 'x-teacher-secret': TEACHER },
+      body: { studentUsername: 'ghost', unit: 1, part: 'A', score: 0.5 },
+    });
+    expect(status).toBe(404);
+  });
+});
+
+describe('GET /pc/unlock/class (teacher makeup board)', () => {
+  it('teacher gets every active unlock across the class', async () => {
+    server = new TestServer(buildApp(mockPcDb())); await server.start();
+    const { status, json } = await server.req('GET', '/pc/unlock/class', { headers: { 'x-teacher-secret': TEACHER } });
+    expect(status).toBe(200);
+    expect(json.unlocks).toHaveLength(1);
+    expect(json.unlocks[0]).toMatchObject({ student_username: 'a', unit: 1, part: 'A' });
+  });
+
+  it('non-teacher -> 401', async () => {
+    server = new TestServer(buildApp(mockPcDb())); await server.start();
+    const { status } = await server.req('GET', '/pc/unlock/class', { headers: { authorization: `Bearer ${STUDENT_TOKEN}` } });
     expect(status).toBe(401);
   });
 });

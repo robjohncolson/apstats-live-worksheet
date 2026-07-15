@@ -23,6 +23,7 @@ import {
   unitOf,
   answerKeyMapOrNull,
   scoreAgainstKey,
+  scorePcRows,
 } from './scoring.js';
 import {
   buildWorksheetBlankCounts,
@@ -158,8 +159,15 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
 
   // ── Q: cr-quiz correctness % per unit (re-scored vs key) ─────────────────
   const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey);
-  // ── PC raw %: proctored Progress Check, re-scored vs key ─────────────────
-  const pcAgg = scoreAgainstKey(bySource('pc'), answerKey);
+  // ── PC raw %: Progress Check — makeup (server-scored vs pc_bank, honors
+  // row.score) OR legacy proctored (re-scored vs key), per-unit best-wins.
+  // GATED: OFF (config.pcTrack.enabled === false) → no PC row touches the grade
+  // (pcRawPct null → P=0 → unitGrade unchanged). Enabled UNLESS explicitly false
+  // so bespoke-config callers/tests keep exercising PC; production ships OFF.
+  const pcEnabled = !(config && config.pcTrack && config.pcTrack.enabled === false);
+  const pcAgg = pcEnabled
+    ? scorePcRows(bySource('pc'), answerKey)
+    : { units: {}, totals: {} };
 
   // ── W: AI-FRQ pct per unit (worksheet fill-ins = completion-only, §5) ────
   const wByUnit = {};       // U# → { sum, n }

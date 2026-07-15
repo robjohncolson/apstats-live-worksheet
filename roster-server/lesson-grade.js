@@ -1077,26 +1077,35 @@ export function computeQuarterV3({
     }
     return !!latest && latest <= todayDateStr;
   }
+  // PC track gate (PC_MAKEUP_PHASE2_GRADE_SPEC.md §C). OFF (config.pcTrack.enabled
+  // === false) → the band loop is skipped entirely, so pcAvg stays null and
+  // combineV3 short-circuits to the Work track. This is what keeps a due-but-
+  // unattempted PC from silently counting as 0 (→ 70%-of-Work cap) the moment
+  // the fall schedule's dates pass, until the teacher flips PC_TRACK_ENABLED.
+  // Enabled UNLESS explicitly false so bespoke-config callers/tests still run PC.
+  const pcEnabled = !(config && config.pcTrack && config.pcTrack.enabled === false);
   const pcVals = [];
   let pcSumPct = 0, pcGradedCount = 0;
-  for (const unitNum of band) {
-    if (!unitPcDue(unitNum)) continue; // pcAvg covers PCs due-by-today only
-    const raw = unitPcData ? unitPcData[unitNum] : null;
-    if (raw != null && Number.isFinite(raw)) {
-      const frac = Math.min(1, Math.max(0, raw / 100)); // clamp out-of-range raw%
-      pcVals.push(frac);
-      pcSumPct += frac * 100;
-      pcGradedCount += 1;
-    } else {
-      pcVals.push(0); // due but no PC attempt
+  if (pcEnabled) {
+    for (const unitNum of band) {
+      if (!unitPcDue(unitNum)) continue; // pcAvg covers PCs due-by-today only
+      const raw = unitPcData ? unitPcData[unitNum] : null;
+      if (raw != null && Number.isFinite(raw)) {
+        const frac = Math.min(1, Math.max(0, raw / 100)); // clamp out-of-range raw%
+        pcVals.push(frac);
+        pcSumPct += frac * 100;
+        pcGradedCount += 1;
+      } else {
+        pcVals.push(0); // due but no PC attempt
+      }
     }
   }
   const pcAvg = pcVals.length ? pcVals.reduce((a, b) => a + b, 0) / pcVals.length : null;
   // pcDue disambiguates pcAvg === null: true once any band unit's PCs are due-by-today
   // (null + pcDue = "due but unattempted"); false = Progress Checks aren't open yet
-  // (~fall), so the "Why so low?" coach must NOT push PC work that doesn't exist.
-  // Additive — no grade math depends on it.
-  const pcDue = band.some(unitPcDue);
+  // (~fall) OR the track is disabled, so the "Why so low?" coach must NOT push PC
+  // work that doesn't count. Additive — no grade math depends on it.
+  const pcDue = pcEnabled && band.some(unitPcDue);
 
   // ── Combine to the quarter grade ──
   const tracks = {

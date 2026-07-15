@@ -92,6 +92,9 @@
     "trainer": {
       "weight": 0,
       "doneThreshold": 80
+    },
+    "pcTrack": {
+      "enabled": false
     }
   },
   "artHash": "205d745b1d963112c9ce056a12b4b52786746fbff73de8b80c322107109f273f",

@@ -1093,7 +1093,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // run migration 0029" until the table exists — service stays up.
   const pcDb = (typeof pcDbOverride !== 'undefined') ? pcDbOverride : createLivePcDb();
   if (pcDb && db) {
-    mountPc(app, { db, pcDb });
+    mountPc(app, { db, pcDb, ledgerDb });
   }
 
   // ── Trainer routes (Desk Roster Alignment §2.2 — tmux-trainer cloud save) ──

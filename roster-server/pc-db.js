@@ -14,6 +14,7 @@ export function createPcDb(client) {
     unlockOne,             // single teacher unlock (makeup) -> { data: row, error }
     isUnlocked,            // (username, unit, part) -> { data: bool, error }
     listActiveForStudent,  // (username) -> { data: rows, error }
+    listActiveUnlocks,     // () -> { data: rows, error }  (teacher class view)
   };
 
   // getBank(unit, part) -> { data: { unit, part, payload }|null, error }
@@ -82,6 +83,15 @@ export function createPcDb(client) {
       .from('pc_unlock')
       .select('unit, part, unlocked_at')
       .eq('student_username', username)
+      .eq('status', 'active');
+  }
+
+  // listActiveUnlocks() -> { data: rows, error } — every active unlock across the
+  // class (the teacher makeup-queue board). Enriched with roster identity by the route.
+  async function listActiveUnlocks() {
+    return client
+      .from('pc_unlock')
+      .select('student_username, unit, part, unlocked_by, unlocked_at')
       .eq('status', 'active');
   }
 }

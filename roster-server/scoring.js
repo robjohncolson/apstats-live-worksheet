@@ -192,3 +192,60 @@ export function scoreAgainstKey(rows, answerKey) {
 
   return { units, totals };
 }
+
+// Score PC rows into a per-unit raw % — the PC-mastery track feeder
+// (PC_MAKEUP_PHASE2_GRADE_SPEC.md §A/§B/§C). Hybrid, so it subsumes the old
+// re-score path AND lights up makeup PCs:
+//   • a finite row.score (0..1) is HONORED verbatim — makeup PCs are graded
+//     server-side against the CB-secure pc_bank (their answers never enter this
+//     public-key path), and this is also how FRQ partial credit (E/P/I → a
+//     fraction) reaches the grade, since re-scoring is binary-only;
+//   • otherwise the row is RE-SCORED (row.response vs the public answer key) —
+//     legacy proctored PC rows whose items ARE in answer-key.json. A null-key
+//     item is ungradable and DROPS from the denominator (unchanged behavior).
+// Best-wins: PAPER rows (item_id …-PAPER) hold a unit-level proctored score and
+// best-win against the online per-item mean (Math.max — a makeup only ever
+// raises). Returns scoreAgainstKey's { units:{ U#:{ pct } }, totals } shape so
+// the computeGrade → unitPcRaw → computeQuarterV3 wire is untouched.
+export function scorePcRows(rows, answerKey = {}) {
+  const online = {}; // unit → { sum, n } of per-item credit
+  const paper = {};  // unit → best paper pct (0..100)
+  for (const row of latestPerItem(rows)) {
+    const itemId = String(row?.item_id || '');
+    if (!itemId) continue;
+    const u = unitOf(itemId, answerKey[itemId]);
+
+    // Per-item credit in [0,1], or null = ungradable (excluded from denominator).
+    let credit = null;
+    const raw = row?.score;
+    if (raw != null && Number.isFinite(Number(raw))) {
+      credit = Math.min(1, Math.max(0, Number(raw)));      // honor server-computed score
+    } else {
+      const keyEntry = answerKey[itemId];
+      if (keyEntry && keyEntry.answerKey != null) {
+        credit = isCorrect(row.response, keyEntry.answerKey) ? 1 : 0; // re-score legacy proctored
+      }
+    }
+    if (credit == null) continue;                          // ungradable → skip
+
+    if (/-PAPER$/i.test(itemId)) {
+      paper[u] = Math.max(paper[u] == null ? 0 : paper[u], credit * 100);
+    } else {
+      const o = online[u] || (online[u] = { sum: 0, n: 0 });
+      o.sum += credit;
+      o.n += 1;
+    }
+  }
+
+  const units = {};
+  for (const u of new Set([...Object.keys(online), ...Object.keys(paper)])) {
+    const onlinePct = online[u] ? (online[u].sum / online[u].n) * 100 : null;
+    const paperPct = paper[u] == null ? null : paper[u];
+    const best = Math.max(
+      onlinePct == null ? -1 : onlinePct,
+      paperPct == null ? -1 : paperPct,
+    );
+    units[u] = { pct: best < 0 ? null : Math.round(best * 10) / 10 };
+  }
+  return { units, totals: {} };
+}

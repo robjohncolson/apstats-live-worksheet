@@ -77,7 +77,12 @@ async function startServer(rows = [], { loadAnswerKey = okAnswerKey, ledgerOpts 
   const studentId = `uuid-grade-${randomBytes(8).toString('hex')}`;
   const token = signToken(studentId);
   const ledgerDb = createFakeLedgerDb(rows.map(r => ({ ...r, student_id: studentId })), ledgerOpts);
-  const app = createApp(createFakeRosterDb(), ledgerDb, fakeLoadManifest, loadAnswerKey);
+  // These tests exercise the PC-mastery feeder, so enable the (production-OFF) PC
+  // track explicitly — configOverrides merges onto the resolved grade config.
+  const app = createApp(
+    createFakeRosterDb(), ledgerDb, fakeLoadManifest, loadAnswerKey,
+    undefined, undefined, undefined, undefined, { pcTrack: { enabled: true } },
+  );
   const server = new TestServer(app);
   await server.start();
   return { server, studentId, token, ledgerDb };

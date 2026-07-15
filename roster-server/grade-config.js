@@ -106,6 +106,22 @@ export const PHASE3_CONFIG = {
   // should also restrict to mastery-tier evidence per the spec before enabling.
   // doneThreshold: what the Desk shows as "trainer done" (display only).
   trainer: { weight: 0, doneThreshold: 80 },
+
+  // ── Progress-Check makeup track (PC_MAKEUP_PHASE2_GRADE_SPEC.md §C) ──────────
+  // enabled=false = INERT: computeGrade skips PC scoring (pcRawPct stays null →
+  // unit P=0, unitGrade unchanged) AND computeQuarterV3 skips the PC band loop
+  // (pcAvg stays null → combineV3 short-circuits to the Work track). The grade is
+  // then byte-identical to the pre-PC engine (pinned by the grade-invariance
+  // test). Env-gated like useV3: set PC_TRACK_ENABLED=true (teacher decision,
+  // ~Sept, once the real calendar is live AND paper PCs are administered +
+  // scored) to let a unit's PC count once that unit's last lesson is due.
+  // ⚠ Enabling makes an un-taken BUT due PC count as 0, which caps that quarter
+  // at 70% of Work (the two-track sub-floor ceiling) — do NOT enable before
+  // paper scores are entered, or every student silently drops when dates pass.
+  // Gate semantics elsewhere: enabled UNLESS explicitly false, so tests with a
+  // bespoke config (no pcTrack) keep exercising PC; production (this OFF default)
+  // is inert until the env flag flips.
+  pcTrack: { enabled: process.env.PC_TRACK_ENABLED === 'true' },
 };
 
 // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
