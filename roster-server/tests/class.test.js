@@ -56,6 +56,25 @@ function createFakeRosterDb(roster, { error = null, uidMap } = {}) {
       return out;
     };
   }
+  // In-memory quarter_grade_snapshot (migration 0030) for the freeze/delta tests:
+  // idempotent (first close of a (student,quarter) wins).
+  const snapStore = [];
+  db._snapStore = snapStore;
+  db.snapshotQuarter = async (rows) => {
+    const inserted = [];
+    for (const r of rows || []) {
+      if (snapStore.some((s) => s.student_id === r.studentId && s.quarter === r.quarter)) continue;
+      const row = {
+        student_id: r.studentId, login_username: r.loginUsername ?? null, quarter: r.quarter,
+        frozen_grade: r.frozenGrade ?? null, frozen_pc_avg: r.frozenPcAvg ?? null,
+        frozen_work_avg: r.frozenWorkAvg ?? null, closed_by: r.closedBy ?? null,
+        frozen_at: new Date().toISOString(),
+      };
+      snapStore.push(row); inserted.push(row);
+    }
+    return { data: inserted, error: null };
+  };
+  db.listQuarterSnapshot = async (quarter) => ({ data: snapStore.filter((s) => s.quarter === quarter), error: null });
   return db;
 }
 
@@ -428,5 +447,94 @@ describe('class endpoints — read-only', () => {
     await srv.get('/class/grades', { 'x-teacher-secret': TEACHER });
     await srv.get('/class/mastery', { 'x-teacher-secret': TEACHER });
     expect(ctx.ledgerDb._store._written).toBeUndefined();
+  });
+});
+
+// ── Quarter close (freeze) + bonus deltas (PC makeup [D]) ─────────────────────
+describe('POST /class/quarter/close + GET /class/quarter/deltas (freeze/delta)', () => {
+  const ROSTER = [{ student_id: 's1', login_username: 'stu_one', real_name: 'One', section: 'P1' }];
+
+  it('non-teacher → 401 (both routes)', async () => {
+    const ctx = await startServer({ roster: ROSTER }); srv = ctx.server;
+    expect((await srv.post('/class/quarter/close', { 'x-teacher-secret': 'bogus' }, { quarter: 'Q1' })).status).toBe(401);
+    expect((await srv.get('/class/quarter/deltas?quarter=Q1', { 'x-teacher-secret': 'bogus' })).status).toBe(401);
+  });
+
+  it('bad quarter → 400', async () => {
+    const ctx = await startServer({ roster: ROSTER }); srv = ctx.server;
+    expect((await srv.post('/class/quarter/close', { 'x-teacher-secret': TEACHER }, { quarter: 'Q9' })).status).toBe(400);
+    expect((await srv.get('/class/quarter/deltas?quarter=nope', { 'x-teacher-secret': TEACHER })).status).toBe(400);
+  });
+
+  it('close freezes each student’s quarter grade + is idempotent (first close wins)', async () => {
+    const ledger = { s1: [makeRow('s1', 'WS-U1L1-r1', 'a', { source: 'frq', unit: 'U1', score: 1 })] };
+    const ctx = await startServer({ roster: ROSTER, ledger }); srv = ctx.server;
+    const r1 = await srv.post('/class/quarter/close', { 'x-teacher-secret': TEACHER }, { quarter: 'Q1' });
+    expect(r1.status).toBe(200);
+    expect(r1.body.frozen).toBe(1);
+    const snap = ctx.rosterDb._snapStore.find((s) => s.student_id === 's1' && s.quarter === 'Q1');
+    expect(snap).toBeTruthy();
+    expect(typeof snap.frozen_grade).toBe('number'); // grade captured at close
+    // idempotent: a 2nd close freezes nobody new
+    const r2 = await srv.post('/class/quarter/close', { 'x-teacher-secret': TEACHER }, { quarter: 'Q1' });
+    expect(r2.body.frozen).toBe(0);
+    expect(r2.body.considered).toBe(1);
+  });
+
+  it('deltas surface a POST-close improvement (current > frozen), positive only', async () => {
+    // freeze with a weak FRQ, then a corrected attempt supersedes → current rises.
+    const ledger = { s1: [makeRow('s1', 'WS-U1L1-r1', 'a', { source: 'frq', unit: 'U1', score: 0 })] };
+    const ctx = await startServer({ roster: ROSTER, ledger }); srv = ctx.server;
+    await srv.post('/class/quarter/close', { 'x-teacher-secret': TEACHER }, { quarter: 'Q1' });
+    const frozen = ctx.rosterDb._snapStore[0].frozen_grade;
+    ctx.ledgerDb._store.s1.push(makeRow('s1', 'WS-U1L1-r1', 'a', { source: 'frq', unit: 'U1', score: 1, attempt: 2 }));
+    const d = await srv.get('/class/quarter/deltas?quarter=Q1', { 'x-teacher-secret': TEACHER });
+    expect(d.status).toBe(200);
+    expect(d.body.deltas).toHaveLength(1);
+    const row = d.body.deltas[0];
+    expect(row.username).toBe('stu_one');
+    expect(row.frozen).toBeCloseTo(frozen, 1);
+    expect(row.current).toBeGreaterThan(row.frozen);
+    expect(row.delta).toBeGreaterThan(0);
+  });
+
+  it('a student NOT frozen for the quarter yields no delta', async () => {
+    const ledger = { s1: [makeRow('s1', 'WS-U1L1-r1', 'a', { source: 'frq', unit: 'U1', score: 1 })] };
+    const ctx = await startServer({ roster: ROSTER, ledger }); srv = ctx.server;
+    const d = await srv.get('/class/quarter/deltas?quarter=Q1', { 'x-teacher-secret': TEACHER });
+    expect(d.status).toBe(200);
+    expect(d.body.deltas).toHaveLength(0);
+  });
+
+  it('503 when the snapshot table is missing (42P01)', async () => {
+    const ctx = await startServer({ roster: ROSTER }); srv = ctx.server;
+    ctx.rosterDb.snapshotQuarter = async () => ({ data: null, error: { code: '42P01', message: 'relation "quarter_grade_snapshot" does not exist' } });
+    const r = await srv.post('/class/quarter/close', { 'x-teacher-secret': TEACHER }, { quarter: 'Q1' });
+    expect(r.status).toBe(503);
+  });
+
+  it('does NOT freeze a student with no grade for the quarter (null-freeze footgun guard)', async () => {
+    const ctx = await startServer({ roster: ROSTER, ledger: {} }); srv = ctx.server; // s1 has no work → null grade
+    const r = await srv.post('/class/quarter/close', { 'x-teacher-secret': TEACHER }, { quarter: 'Q1' });
+    expect(r.status).toBe(200);
+    expect(r.body.considered).toBe(1);
+    expect(r.body.gradeable).toBe(0);
+    expect(r.body.frozen).toBe(0);
+    expect(ctx.rosterDb._snapStore).toHaveLength(0); // no immutable null row trapped
+  });
+
+  it('coerces a STRING frozen_grade (PostgREST numeric serialization) — delta stays numeric', async () => {
+    const ledger = { s1: [makeRow('s1', 'WS-U1L1-r1', 'a', { source: 'frq', unit: 'U1', score: 1 })] };
+    const ctx = await startServer({ roster: ROSTER, ledger }); srv = ctx.server;
+    // Real PostgREST returns a `numeric` column as a STRING; the fake returns a number,
+    // so inject the string shape here to prove the delta math coerces it.
+    ctx.rosterDb.listQuarterSnapshot = async () => ({ data: [{ student_id: 's1', login_username: 'stu_one', quarter: 'Q1', frozen_grade: '10.0' }], error: null });
+    const d = await srv.get('/class/quarter/deltas?quarter=Q1', { 'x-teacher-secret': TEACHER });
+    expect(d.status).toBe(200);
+    expect(d.body.deltas).toHaveLength(1);
+    const row = d.body.deltas[0];
+    expect(typeof row.frozen).toBe('number');   // "10.0" → 10, not a string
+    expect(row.frozen).toBe(10);
+    expect(row.delta).toBeGreaterThan(0);        // current − 10, numeric
   });
 });

@@ -744,6 +744,41 @@
       </div>
     </div>
 
+    <div class="section" id="quarter-close-section">
+      <h2 class="section-title">Quarter Close &amp; Bonus</h2>
+      <div class="hint">
+        At the end of a quarter, <b>Freeze</b> it — this snapshots every student's current
+        quarter grade as the authoritative closed-quarter record (those are the numbers you enter
+        into Schoology). Freezing is one-way per quarter: the FIRST freeze wins. Afterward,
+        <b>Bonus deltas</b> lists anyone whose grade rose since the freeze (e.g. a makeup PC), so
+        you can grant the difference as extra credit in the new quarter. Does not change how any
+        grade computes — it only records + compares.
+      </div>
+      <div class="btn-row">
+        <label>Quarter
+          <select id="qc-quarter">
+            <option value="Q1">Q1</option><option value="Q2">Q2</option>
+            <option value="Q3">Q3</option><option value="Q4">Q4</option>
+          </select>
+        </label>
+        <button class="btn" id="qc-freeze-btn">❄ Freeze this quarter</button>
+        <button class="btn" id="qc-deltas-btn" style="background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)">Show bonus deltas</button>
+        <span class="meta-row" id="qc-meta"></span>
+      </div>
+      <div class="loading-note" id="qc-loading" style="display:none">Working…</div>
+      <div class="table-wrap" id="qc-wrap" style="display:none">
+        <table class="grades">
+          <thead>
+            <tr><th>Student</th><th>Frozen</th><th>Current</th><th>Bonus Δ</th></tr>
+          </thead>
+          <tbody id="qc-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-note" id="qc-empty" style="display:none">
+        No post-close improvements for this quarter yet. Freeze a quarter first, then check back after makeups.
+      </div>
+    </div>
+
   </div>
 
   <!-- Teacher -> Student Console drawer (P1 of TEACHER_STUDENT_CONSOLE_SPEC.md).
@@ -2291,6 +2326,61 @@
     $('pc-unlock-one-btn').addEventListener('click', unlockPcOne);
     $('load-btn').addEventListener('click', loadPcMakeup);
     $('section-filter').addEventListener('change', loadPcMakeup);
+
+    // ── Quarter Close & Bonus (PC makeup [D] freeze/delta) ───────────────────
+    function _qcQuarter() { return $('qc-quarter').value; }
+
+    async function freezeQuarter() {
+      if (!_pcAuthOk()) return;
+      var q = _qcQuarter();
+      var section = $('section-filter').value.trim();
+      if (!confirm('Freeze ' + q + ' for ' + (section || 'ALL sections') + '?\n\nThis snapshots every student\'s CURRENT grade as the closed-quarter record. The first freeze wins — it cannot be undone here.')) return;
+      var btn = $('qc-freeze-btn'); btn.disabled = true; $('qc-loading').style.display = '';
+      var res = await postJson('/class/quarter/close', { quarter: q, section: section || undefined }, teacherSecret());
+      btn.disabled = false; $('qc-loading').style.display = 'none';
+      if (res.status === 503) { showError('Migration pending: run roster-server/migrations/0030_quarter_grade_snapshot.sql.'); return; }
+      if (res.status !== 200 || !res.data || !res.data.ok) { showError('Freeze failed: ' + ((res.data && res.data.error) || ('HTTP ' + res.status))); return; }
+      clearBanners();
+      showInfo('Froze ' + q + ': ' + res.data.frozen + ' newly frozen of ' + res.data.considered + ' student(s).');
+      await loadQuarterDeltas();
+    }
+
+    function renderQuarterDeltas(payload) {
+      var tbody = $('qc-tbody');
+      var rows = (payload && payload.deltas) || [];
+      if (rows.length === 0) { $('qc-wrap').style.display = 'none'; $('qc-empty').style.display = ''; return; }
+      $('qc-empty').style.display = 'none'; $('qc-wrap').style.display = '';
+      tbody.innerHTML = rows.map(function (r) {
+        return '<tr>' +
+          '<td>' + escHtml(r.realName || r.username || '?') + '</td>' +
+          '<td class="mono">' + escHtml(r.frozen) + '</td>' +
+          '<td class="mono">' + escHtml(r.current) + '</td>' +
+          '<td class="mono" style="color:#070;font-weight:bold">+' + escHtml(r.delta) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    async function loadQuarterDeltas() {
+      var secret = teacherSecret();
+      var _hasTok = (typeof window !== 'undefined' && window.rosterClient) ? !!window.rosterClient.token() : false;
+      if (!secret && !_hasTok) return;
+      var q = _qcQuarter();
+      var section = $('section-filter').value.trim();
+      var qs = '?quarter=' + encodeURIComponent(q) + (section ? '&section=' + encodeURIComponent(section) : '');
+      $('qc-loading').style.display = ''; $('qc-wrap').style.display = 'none'; $('qc-empty').style.display = 'none';
+      var res = await fetchJson('/class/quarter/deltas' + qs, secret);
+      $('qc-loading').style.display = 'none';
+      if (res.networkError) { $('qc-meta').textContent = 'Network error: ' + res.networkError; return; }
+      if (res.status === 503) { $('qc-empty').style.display = ''; $('qc-meta').textContent = 'Migration pending: run 0030_quarter_grade_snapshot.sql.'; return; }
+      if (res.status === 401) { showError('Invalid teacher secret'); return; }
+      if (res.status !== 200 || !res.data || !res.data.ok) { $('qc-meta').textContent = 'Failed: ' + ((res.data && res.data.error) || ('HTTP ' + res.status)); return; }
+      renderQuarterDeltas(res.data);
+      $('qc-meta').textContent = (res.data.deltas || []).length + ' bonus delta(s) · ' + (res.data.frozenCount || 0) + ' frozen.';
+    }
+
+    $('qc-freeze-btn').addEventListener('click', freezeQuarter);
+    $('qc-deltas-btn').addEventListener('click', loadQuarterDeltas);
+    $('qc-quarter').addEventListener('change', loadQuarterDeltas);
 
     // Hook remediation refresh onto the same Load triggers (parallel
     // listeners — the existing loadAll handler is left untouched).

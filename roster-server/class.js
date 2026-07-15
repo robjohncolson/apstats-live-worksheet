@@ -322,6 +322,139 @@ export function mountClass(app, {
     });
   });
 
+  // ── Quarter close (freeze) + bonus deltas (PC makeup [D]) ─────────────────────
+  // The freeze/delta pair. Close SNAPSHOTS each student's quarter grade (the
+  // authoritative closed-quarter record the teacher enters into Schoology); deltas
+  // surface post-close improvements (current - frozen) as extra-credit candidates.
+  // Neither changes how grades COMPUTE — the live engine is untouched, so M2b /
+  // the grade-invariance tests are unaffected. Best-wins-at-write (Phase 2 /pc
+  // submit) means the live grade only rises post-close, so a delta is always a
+  // positive bonus candidate, never a drop the freeze would have to shield.
+
+  // Fan computeGrade over the roster → [{ roster, computed }], or { error }.
+  async function fanGrades(section) {
+    let answerKeyDoc;
+    try { answerKeyDoc = await loadAnswerKey(); } catch (_) { return { error: 'answer-key' }; }
+    const answerKey = answerKeyMapOrNull(answerKeyDoc);
+    if (!answerKey) return { error: 'answer-key' };
+    const { rows, error } = await listRoster(db, section, false);
+    if (error) return { error: 'roster' };
+    const fan = await fanLedger(ledgerDb, rows);
+    const graded = fan.map(({ roster, ledgerRows }) => ({
+      roster,
+      computed: computeGrade(ledgerRows, answerKey, config, {
+        lessonSchedule,
+        section: roster && roster.section ? roster.section : null,
+        worksheetBlankCounts,
+        blooketPresence: _presence || undefined,
+        blooketRequired: _required || undefined,
+        blooketLessons: _presence || undefined,
+      }),
+    }));
+    return { graded };
+  }
+
+  // Best-effort acting-teacher name for the closed_by audit field.
+  async function closedByUsername(req) {
+    try {
+      const auth = req.headers['authorization'] || '';
+      const m = /^Bearer\s+(.+)$/i.exec(auth);
+      if (m && typeof verifyToken === 'function') {
+        const sid = verifyToken(m[1].trim());
+        if (sid) { const { data } = await db.findByStudentId(sid); if (data && data.login_username) return data.login_username; }
+      }
+    } catch (_) { /* best-effort */ }
+    return 'teacher';
+  }
+
+  const QUARTER_RE = /^Q[1-4]$/;
+  function isSnapshotMissing(err) {
+    return !!err && (err.code === '42P01' || String(err.message || '').includes('quarter_grade_snapshot'));
+  }
+
+  // POST /class/quarter/close { quarter, section? } — freeze the quarter grade for
+  // every student. Idempotent: the FIRST close of a (student, quarter) wins.
+  app.post('/class/quarter/close', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const body = req.body || {};
+    const quarter = String(body.quarter || '').toUpperCase();
+    if (!QUARTER_RE.test(quarter)) return res.status(400).json({ ok: false, error: 'quarter (Q1..Q4) required' });
+
+    const fg = await fanGrades(body.section);
+    if (fg.error) return res.status(500).json({ ok: false, error: fg.error === 'answer-key' ? 'Answer key unavailable' : 'Database error' });
+
+    const closedBy = await closedByUsername(req);
+    // Only freeze students who actually HAVE a grade for the quarter. Freezing a
+    // null (no work / quarter not started) would trap them at null immutably — so
+    // a mistaken early close is a harmless no-op, and a real close later freezes
+    // each student the first time their grade exists (first-close-wins per row).
+    const snapRows = fg.graded.map(({ roster, computed }) => {
+      const q = computed && computed.quarters && computed.quarters[quarter];
+      return {
+        studentId: roster.student_id,
+        loginUsername: roster.login_username || null,
+        quarter,
+        frozenGrade: q ? (q.quarterGrade ?? null) : null,
+        frozenPcAvg: q ? (q.pcAvg ?? null) : null,
+        frozenWorkAvg: q ? (q.workAvg ?? null) : null,
+        closedBy,
+      };
+    }).filter((r) => r.frozenGrade != null);
+
+    const { data, error } = await db.snapshotQuarter(snapRows);
+    if (error) {
+      if (isSnapshotMissing(error)) return res.status(503).json({ ok: false, error: 'quarter_grade_snapshot not provisioned — run migration 0030' });
+      console.error('POST /class/quarter/close error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    return res.json({ ok: true, quarter, considered: fg.graded.length, gradeable: snapRows.length, frozen: Array.isArray(data) ? data.length : 0 });
+  });
+
+  // GET /class/quarter/deltas?quarter=&section= — per-student current vs frozen,
+  // POSITIVE deltas only (improvement since close), biggest first.
+  app.get('/class/quarter/deltas', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const quarter = String(req.query.quarter || '').toUpperCase();
+    if (!QUARTER_RE.test(quarter)) return res.status(400).json({ ok: false, error: 'quarter (Q1..Q4) required' });
+
+    const snap = await db.listQuarterSnapshot(quarter);
+    if (snap.error) {
+      if (isSnapshotMissing(snap.error)) return res.status(503).json({ ok: false, error: 'quarter_grade_snapshot not provisioned — run migration 0030' });
+      console.error('GET /class/quarter/deltas snapshot error:', snap.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const frozenById = Object.create(null);
+    (snap.data || []).forEach((r) => { if (r && r.student_id) frozenById[r.student_id] = r; });
+
+    const fg = await fanGrades(req.query.section);
+    if (fg.error) return res.status(500).json({ ok: false, error: fg.error === 'answer-key' ? 'Answer key unavailable' : 'Database error' });
+
+    const deltas = fg.graded.map(({ roster, computed }) => {
+      const fr = frozenById[roster.student_id];
+      if (!fr) return null; // not frozen for this quarter
+      const q = computed && computed.quarters && computed.quarters[quarter];
+      const current = q ? (q.quarterGrade ?? null) : null;
+      // PostgREST serializes a `numeric` column as a STRING — coerce explicitly so
+      // the math never rides on implicit string→number coercion.
+      const frozen = fr.frozen_grade == null ? null : Number(fr.frozen_grade);
+      if (current == null || frozen == null || !Number.isFinite(frozen)) return null;
+      const delta = Math.round((current - frozen) * 10) / 10;
+      return {
+        studentId: roster.student_id,
+        realName: roster.real_name || null,
+        username: roster.login_username || null,
+        frozen: Math.round(frozen * 10) / 10,
+        current: Math.round(current * 10) / 10,
+        delta,
+      };
+    }).filter((d) => d && d.delta > 0);
+    deltas.sort((a, b) => b.delta - a.delta);
+
+    // frozenCount scoped to the queried section (how many of THESE students are frozen).
+    const frozenCount = fg.graded.filter((g) => g.roster && frozenById[g.roster.student_id]).length;
+    return res.json({ ok: true, quarter, frozenCount, deltas });
+  });
+
   // -- POST /class/blooket -- teacher-gated Blooket grade import ---------------
   // Body: { lessonKey: "1.2", total: <int>, section?: <str>,
   //         entries: [{ studentId, correct, attempted }] }

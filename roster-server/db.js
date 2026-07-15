@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -418,6 +418,35 @@ export function createDb(client) {
   // { data, error } where data is 1 (minted this call) or 0 (already minted today).
   async function reviewAward(studentId, nyDate) {
     return client.rpc('review_award', { p_sid: studentId, p_date: nyDate });
+  }
+
+  // ── Quarter grade snapshot (migration 0030) — the freeze/delta record ─────────
+  // snapshotQuarter(rows): idempotent bulk freeze. Each row carries { studentId,
+  // loginUsername, quarter, frozenGrade, frozenPcAvg, frozenWorkAvg, closedBy }.
+  // ON CONFLICT DO NOTHING (ignoreDuplicates) → the FIRST close of a (student,
+  // quarter) wins; re-closing never overwrites a frozen grade. .select returns
+  // only the NEWLY inserted rows → the count of students frozen this call.
+  async function snapshotQuarter(rows) {
+    if (!Array.isArray(rows) || !rows.length) return { data: [], error: null };
+    const payload = rows.map((r) => ({
+      student_id:      r.studentId,
+      quarter:         r.quarter,
+      login_username:  r.loginUsername ?? null,
+      frozen_grade:    r.frozenGrade ?? null,
+      frozen_pc_avg:   r.frozenPcAvg ?? null,
+      frozen_work_avg: r.frozenWorkAvg ?? null,
+      closed_by:       r.closedBy ?? null,
+    }));
+    return client.from('quarter_grade_snapshot')
+      .upsert(payload, { onConflict: 'student_id,quarter', ignoreDuplicates: true })
+      .select('*');
+  }
+
+  // All frozen rows for a quarter (powers the teacher freeze/delta card).
+  async function listQuarterSnapshot(quarter) {
+    return client.from('quarter_grade_snapshot')
+      .select('student_id, login_username, quarter, frozen_grade, frozen_pc_avg, frozen_work_avg, closed_by, frozen_at')
+      .eq('quarter', quarter);
   }
 
   // ── Trusted issuers (migration 0026) ──────────────────────────────────────────
