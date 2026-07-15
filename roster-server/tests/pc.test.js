@@ -116,6 +116,15 @@ describe('GET /pc/:unit/:part', () => {
     const { status } = await server.req('GET', '/pc/1/Z', { headers: { authorization: `Bearer ${STUDENT_TOKEN}` } });
     expect(status).toBe(400);
   });
+
+  it('teacher previews WITHOUT unlock (bypass) -> 200, teacher:true, answers still stripped', async () => {
+    server = new TestServer(buildApp(mockPcDb({ unlocked: false }))); await server.start();
+    const { status, json } = await server.req('GET', '/pc/1/A', { headers: { 'x-teacher-secret': TEACHER } });
+    expect(status).toBe(200);
+    expect(json.teacher).toBe(true);
+    expect(json.items).toHaveLength(1);
+    expect('answer' in json.items[0]).toBe(false);
+  });
 });
 
 describe('POST /pc/unlock', () => {

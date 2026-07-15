@@ -81,17 +81,23 @@ export function mountPc(app, { db, pcDb }) {
       return res.status(400).json({ ok: false, error: 'unit (int) + part (A|REST) required' });
     }
 
-    var username = await callerUsername(req, db);
-    if (!username) return res.status(401).json({ ok: false, error: 'unauthorized' });
+    // Teachers may PREVIEW any PC without an unlock (mirrors the view-as pattern
+    // used across the roster's teacher surface). Answers are still stripped —
+    // the preview shows exactly what a student sees.
+    var isTeacher = await requireTeacher(req, db);
+    if (!isTeacher) {
+      var username = await callerUsername(req, db);
+      if (!username) return res.status(401).json({ ok: false, error: 'unauthorized' });
 
-    // The gate: this student must be unlocked for (unit, part).
-    var un = await pcDb.isUnlocked(username, unit, part);
-    if (un.error) {
-      if (un.error.code === '42P01') return res.status(503).json({ ok: false, error: 'pc_unlock not provisioned — run migration 0029' });
-      console.error('GET /pc isUnlocked error:', un.error);
-      return res.status(500).json({ ok: false, error: 'Database error' });
+      // The gate: this student must be unlocked for (unit, part).
+      var un = await pcDb.isUnlocked(username, unit, part);
+      if (un.error) {
+        if (un.error.code === '42P01') return res.status(503).json({ ok: false, error: 'pc_unlock not provisioned — run migration 0029' });
+        console.error('GET /pc isUnlocked error:', un.error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (!un.data) return res.status(403).json({ ok: false, error: 'locked — take the paper PC first' });
     }
-    if (!un.data) return res.status(403).json({ ok: false, error: 'locked — take the paper PC first' });
 
     var bank = await pcDb.getBank(unit, part);
     if (bank.error) {
@@ -102,7 +108,7 @@ export function mountPc(app, { db, pcDb }) {
     if (!bank.data) return res.status(404).json({ ok: false, error: 'no bank for that (unit, part)' });
 
     var items = itemsFromPayload(bank.data.payload, part).map(stripForClient);
-    return res.json({ ok: true, unit: unit, part: part, items: items });
+    return res.json({ ok: true, unit: unit, part: part, items: items, teacher: isTeacher });
   });
 
   // POST /pc/unlock { studentUsernames: [...], unit, part }
