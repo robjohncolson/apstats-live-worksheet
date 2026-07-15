@@ -32,6 +32,8 @@ import { mountNudge } from './nudge.js';
 import { createLiveNudgesDb } from './nudge-db.js';
 import { mountLessonUnlock } from './lesson-unlock.js';
 import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
+import { mountPc } from './pc.js';
+import { createLivePcDb } from './pc-db.js';
 import { mountTrainer } from './trainer.js';
 import { mountDogeWallet } from './doge-wallet.js';
 import { createLiveTrainerDb } from './trainer-db.js';
@@ -82,7 +84,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  *   does NOT re-resolve — all seven mounts share this single object. When
  *   omitted (tests), createApp resolves once for ACTIVE_SCHOOL_YEAR.
  */
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs, pcDbOverride) {
   // Atomic grade-year bundle: resolve ONCE, thread to every grade mount.
   const _gradeCtx = productionGradeInputs || resolveProductionGradeInputs(ACTIVE_SCHOOL_YEAR);
   const gradeConfig = configOverrides
@@ -1084,6 +1086,14 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const lessonUnlockDb = (typeof lessonUnlockDbOverride !== 'undefined') ? lessonUnlockDbOverride : createLiveLessonUnlockDb();
   if (lessonUnlockDb && db) {
     mountLessonUnlock(app, { db, lessonUnlockDb });
+  }
+
+  // ── Progress-Check makeup delivery (PC_MAKEUP_DELIVERY_SPEC.md Phase 1) ──
+  // Needs pcDb (pc_bank + pc_unlock). Routes respond 503 "not provisioned —
+  // run migration 0029" until the table exists — service stays up.
+  const pcDb = (typeof pcDbOverride !== 'undefined') ? pcDbOverride : createLivePcDb();
+  if (pcDb && db) {
+    mountPc(app, { db, pcDb });
   }
 
   // ── Trainer routes (Desk Roster Alignment §2.2 — tmux-trainer cloud save) ──
