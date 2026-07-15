@@ -695,6 +695,55 @@
       </div>
     </div>
 
+    <div class="section" id="pc-makeup-section">
+      <h2 class="section-title">PC Makeup</h2>
+      <div class="hint">
+        After the in-class paper Progress Check, unlock the online makeup for the students who were
+        present — they can retake infinitely to raise the grade (best-wins, only ever raises). Leave
+        absentees locked and unlock each one individually below after their after-school paper makeup.
+        PC scores stay OFF the report grade until <code>PC_TRACK_ENABLED</code> is set for the year.
+      </div>
+      <div class="btn-row">
+        <label>Unit
+          <select id="pc-unit">
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option><option>9</option>
+          </select>
+        </label>
+        <label>Part
+          <select id="pc-part">
+            <option value="A">MCQ Part A (mid-unit)</option>
+            <option value="REST">Rest (MCQ B/C + FRQ)</option>
+          </select>
+        </label>
+        <button class="btn" id="pc-unlock-class-btn">Unlock present class</button>
+        <button class="btn" id="pc-makeup-refresh-btn" style="background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)">Refresh</button>
+        <span class="meta-row" id="pc-makeup-meta"></span>
+      </div>
+      <div class="btn-row">
+        <input id="pc-unlock-username" placeholder="username (single after-school makeup)" style="padding:5px 8px;border:1px solid var(--sg-line);border-radius:4px;min-width:220px">
+        <button class="btn" id="pc-unlock-one-btn" style="background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)">Unlock one</button>
+      </div>
+      <div class="loading-note" id="pc-makeup-loading" style="display:none">Loading PC unlocks...</div>
+      <div class="table-wrap" id="pc-makeup-wrap" style="display:none">
+        <table class="grades">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Unit</th>
+              <th>Part</th>
+              <th>Unlocked by</th>
+              <th>When</th>
+            </tr>
+          </thead>
+          <tbody id="pc-makeup-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-note" id="pc-makeup-empty" style="display:none">
+        No active PC unlocks. Pick a unit + part and click "Unlock present class" after the paper PC.
+      </div>
+    </div>
+
   </div>
 
   <!-- Teacher -> Student Console drawer (P1 of TEACHER_STUDENT_CONSOLE_SPEC.md).
@@ -2109,6 +2158,117 @@
       if (!dryRun) await loadRemediation();
     }
 
+    // ── PC makeup board (PC_MAKEUP_PHASE2_GRADE_SPEC.md §E) ──────────────────
+    // The unlock/block board + the two unlock actions. Consumes the class-scoped
+    // GET /pc/unlock/class (NOT the caller-scoped /pc/unlock/status). Present-
+    // student usernames come from the already-loaded /class/grades payload.
+    function _pcNameMap() {
+      var m = {};
+      var students = (lastGradesPayload && lastGradesPayload.students) || [];
+      students.forEach(function (s) { if (s && s.username) m[s.username] = s.realName || s.username; });
+      return m;
+    }
+
+    function _pcPartLabel(part) {
+      return String(part).toUpperCase() === 'A' ? 'MCQ Part A' : 'Rest (B/C + FRQ)';
+    }
+
+    function renderPcMakeup(payload) {
+      var tbody = $('pc-makeup-tbody');
+      var rows = (payload && payload.unlocks) || [];
+      if (rows.length === 0) {
+        $('pc-makeup-wrap').style.display = 'none';
+        $('pc-makeup-empty').style.display = '';
+        return;
+      }
+      $('pc-makeup-empty').style.display = 'none';
+      $('pc-makeup-wrap').style.display = '';
+      var names = _pcNameMap();
+      var sorted = rows.slice().sort(function (a, b) {
+        return (Number(a.unit) - Number(b.unit)) ||
+          String(a.part).localeCompare(String(b.part)) ||
+          String(names[a.student_username] || a.student_username || '').localeCompare(String(names[b.student_username] || b.student_username || ''));
+      });
+      tbody.innerHTML = sorted.map(function (r) {
+        var uname = r.student_username || '';
+        var name = names[uname] || uname || '?';
+        return '<tr>' +
+          '<td>' + escHtml(name) + '</td>' +
+          '<td class="mono">U' + escHtml(r.unit) + '</td>' +
+          '<td>' + escHtml(_pcPartLabel(r.part)) + '</td>' +
+          '<td class="dim">' + escHtml(r.unlocked_by || '—') + '</td>' +
+          '<td class="dim">' + escHtml(fmtDate(r.unlocked_at)) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    async function loadPcMakeup() {
+      var secret = teacherSecret();
+      var _hasTok = (typeof window !== 'undefined' && window.rosterClient) ? !!window.rosterClient.token() : false;
+      if (!secret && !_hasTok) return;
+      $('pc-makeup-loading').style.display = '';
+      $('pc-makeup-wrap').style.display = 'none';
+      $('pc-makeup-empty').style.display = 'none';
+      var res = await fetchJson('/pc/unlock/class', secret);
+      $('pc-makeup-loading').style.display = 'none';
+      if (res.networkError) { $('pc-makeup-meta').textContent = 'Network error: ' + res.networkError; return; }
+      if (res.status === 503) {
+        $('pc-makeup-empty').style.display = '';
+        $('pc-makeup-meta').textContent = 'Migration pending: run roster-server/migrations/0029_pc_makeup.sql to enable.';
+        return;
+      }
+      if (res.status === 401) { showError('Invalid teacher secret'); return; }
+      if (res.status !== 200 || !res.data || !res.data.ok) {
+        $('pc-makeup-meta').textContent = 'Failed to load /pc/unlock/class: ' + ((res.data && res.data.error) || ('HTTP ' + res.status));
+        return;
+      }
+      renderPcMakeup(res.data);
+      $('pc-makeup-meta').textContent = (res.data.unlocks || []).length + ' active unlock(s).';
+    }
+
+    function _pcUnitPart() {
+      return { unit: parseInt($('pc-unit').value, 10), part: $('pc-part').value };
+    }
+
+    function _pcAuthOk() {
+      var secret = teacherSecret();
+      var _hasTok = (typeof window !== 'undefined' && window.rosterClient) ? !!window.rosterClient.token() : false;
+      if (!secret && !_hasTok) { showError('Enter the teacher secret, or sign in as a teacher via the Desk first.'); return false; }
+      return true;
+    }
+
+    async function unlockPcClass() {
+      if (!_pcAuthOk()) return;
+      var students = (lastGradesPayload && lastGradesPayload.students) || [];
+      var usernames = students.map(function (s) { return s && s.username; }).filter(Boolean);
+      if (usernames.length === 0) { showError('Load the gradebook first so the class roster is available.'); return; }
+      var up = _pcUnitPart();
+      var btn = $('pc-unlock-class-btn'); btn.disabled = true;
+      var res = await postJson('/pc/unlock', { studentUsernames: usernames, unit: up.unit, part: up.part }, teacherSecret());
+      btn.disabled = false;
+      if (res.status === 503) { showError('Migration pending: run 0029_pc_makeup.sql.'); return; }
+      if (res.status !== 200 || !res.data || !res.data.ok) { showError('unlock failed: ' + ((res.data && res.data.error) || ('HTTP ' + res.status))); return; }
+      clearBanners();
+      showInfo('Unlocked ' + (res.data.unlocked != null ? res.data.unlocked : usernames.length) + ' student(s) for U' + up.unit + ' ' + up.part + '. Leave absentees locked — unlock them individually after their paper makeup.');
+      await loadPcMakeup();
+    }
+
+    async function unlockPcOne() {
+      if (!_pcAuthOk()) return;
+      var uname = $('pc-unlock-username').value.trim();
+      if (!uname) { showError('Enter a username to unlock.'); return; }
+      var up = _pcUnitPart();
+      var btn = $('pc-unlock-one-btn'); btn.disabled = true;
+      var res = await postJson('/pc/unlock/student', { studentUsername: uname, unit: up.unit, part: up.part }, teacherSecret());
+      btn.disabled = false;
+      if (res.status === 503) { showError('Migration pending: run 0029_pc_makeup.sql.'); return; }
+      if (res.status !== 200 || !res.data || !res.data.ok) { showError('unlock failed: ' + ((res.data && res.data.error) || ('HTTP ' + res.status))); return; }
+      clearBanners();
+      showInfo('Unlocked ' + uname + ' for U' + up.unit + ' ' + up.part + '.');
+      $('pc-unlock-username').value = '';
+      await loadPcMakeup();
+    }
+
     // Delegated click handler for action buttons in the remediation table.
     document.body.addEventListener('click', function (e) {
       var t = e.target;
@@ -2124,6 +2284,13 @@
     // filter without requiring a full Load round-trip.
     $('remediation-refresh-btn').addEventListener('click', loadRemediation);
     $('section-filter').addEventListener('change', loadRemediation);
+
+    // PC makeup board — same Load/Refresh/section triggers (parallel listeners).
+    $('pc-makeup-refresh-btn').addEventListener('click', loadPcMakeup);
+    $('pc-unlock-class-btn').addEventListener('click', unlockPcClass);
+    $('pc-unlock-one-btn').addEventListener('click', unlockPcOne);
+    $('load-btn').addEventListener('click', loadPcMakeup);
+    $('section-filter').addEventListener('change', loadPcMakeup);
 
     // Hook remediation refresh onto the same Load triggers (parallel
     // listeners — the existing loadAll handler is left untouched).
