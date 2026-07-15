@@ -44,7 +44,7 @@ const SRC =
   + ['d', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule'].map(fnBody).join('\n') + '\n'
   + constArray('SY2627_PACING_B') + ';\n'
   + constArray('SY2627_PACING_E') + ';\n'
-  + 'const def={range:{start:[2026,8,1],end:[2027,3,15]},examDate:[2027,4,14],'
+  + 'const def={range:{start:[2026,8,1],end:[2027,4,15]},examDate:[2027,4,14],'
   + 'periods:{B:{meetsDays:[1,2,4,5]},E:{meetsDays:[1,3,5],doubleDay:3}},'
   + 'daysOff:[[[2026,8,7]],[[2026,9,12]],[[2026,10,11]],[[2026,10,25],[2026,10,27]],'
   + '[[2026,11,23],[2027,0,2]],[[2027,0,18]],[[2027,1,15],[2027,1,19]],[[2027,3,19],[2027,3,23]]],'
@@ -108,6 +108,60 @@ describe('SY26-27 year opener — no tail drop (the +2 cells must not push lesso
     const placed = cellsFor(4).map((c) => c.t + '|' + (c.kind || '') + '|' + (c.n || ''));
     expect(placed).toContain(last.t + '|' + (last.kind || '') + '|' + (last.n || ''));
     expect(cellsFor(4).length).toBeGreaterThanOrEqual(pacingE.length);
+  });
+});
+
+describe('SY26-27 — mid-unit MCQ Part A tiles (Phase 3)', () => {
+  function assertMidUnitAfter(pacing, splitT, unit) {
+    const idx = pacing.findIndex((c) => c.t === splitT);
+    expect(idx).toBeGreaterThan(-1);
+    const next = pacing[idx + 1]; // injected right after the split-point lesson
+    expect(next.t).toBe('U' + unit + '-PCA');
+    expect(next.kind).toBe('pc');
+    expect(next.part).toBe('A');
+    expect(next.u).toBe(unit);
+  }
+
+  it('injects U1-PCA right after 1.6 and U2-PCA right after 4.5 (both periods)', () => {
+    assertMidUnitAfter(pacingB, '1.6', 1);
+    assertMidUnitAfter(pacingB, '4.5', 2);
+    assertMidUnitAfter(pacingE, '1.6', 1);
+    assertMidUnitAfter(pacingE, '4.5', 2);
+  });
+
+  it('exactly U1 + U2 get a mid-unit Part A — U5 (single end-of-unit) gets none', () => {
+    const paTags = (p) => p.filter((c) => c.part === 'A').map((c) => c.t).sort();
+    expect(paTags(pacingB)).toEqual(['U1-PCA', 'U2-PCA']);
+    expect(paTags(pacingE)).toEqual(['U1-PCA', 'U2-PCA']);
+    expect(pacingB.some((c) => c.t === 'U5-PCA')).toBe(false);
+    expect(pacingE.some((c) => c.t === 'U5-PCA')).toBe(false);
+  });
+
+  it('the PCA id is distinct from the baseline/auto PC1 (no collision)', () => {
+    // U{u}-PCA must never be the U{u}-PC1 topic that the baseline + end PC1 share.
+    expect(pacingB.filter((c) => c.t === 'U1-PC1').every((c) => c.part !== 'A')).toBe(true);
+    expect(pacingB.some((c) => c.t === 'U1-PCA' && c.part === 'A')).toBe(true);
+  });
+
+  it('the +2 mid-unit A cells are placed on the real calendar (no tail drop)', () => {
+    for (const col of [3, 4]) {
+      const placed = new Set(cellsFor(col).map((c) => c.t));
+      expect(placed.has('U1-PCA')).toBe(true);
+      expect(placed.has('U2-PCA')).toBe(true);
+    }
+  });
+
+  it('the placed mid-unit A cell carries part:A and renders via the Part-A branch', () => {
+    const cell = cellsFor(3).find((c) => c.t === 'U1-PCA');
+    expect(cell.kind).toBe('pc');
+    expect(cell.part).toBe('A');
+    // htm + cellAria have a dedicated part:'A' branch BEFORE the generic PC branch.
+    const htm = fnBody('htm');
+    expect(htm).toContain("i.kind==='pc'&&i.part==='A')return");
+    expect(htm).toContain('MCQ A');
+    const aria = fnBody('cellAria');
+    expect(aria).toContain("i.kind==='pc'&&i.part==='A')");
+    expect(aria).toContain('MCQ Part A');
   });
 });
 

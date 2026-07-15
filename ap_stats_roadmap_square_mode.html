@@ -9357,6 +9357,13 @@ function d(t,n,u,due,as,db){return{t,n,u,due:due||"",as:as||"",db:db||false}}
 // begins. The pseudo-lesson's `kind` ('poster' / 'pc') drives the
 // distinct red-diamond / yellow-card cell styling in cls() + htm().
 function injectPcPosterEvents(pacing){
+    // Mid-unit MCQ Part A administration points, keyed by unit → the OLD t-id of
+    // the split-point lesson (pacing keys on old ids). The Part-A tile is injected
+    // right AFTER that lesson; the rest (MCQ B/C + FRQ) stays in the end-of-unit
+    // block. U5 is a single end-of-unit administration → no mid-unit A (omitted).
+    // Kept inside the function so the schedule-generator test can run it in
+    // isolation. PC_MAKEUP_PHASE3_SCHEDULE_SPEC.md.
+    const PC_MCQ_A_SPLIT={1:'1.6',2:'4.5'};
     const out=[];
     let prevU=0;
     function appendPcPosterFor(u){
@@ -9369,6 +9376,13 @@ function injectPcPosterEvents(pacing){
         // a u=0 Review block) -- flush the previous unit's Poster + PCs.
         if(prevU>0&&item.u!==prevU)appendPcPosterFor(prevU);
         out.push(item);
+        // Mid-unit MCQ Part A tile, right after the unit's split-point lesson.
+        // Distinct non-dot id (U{u}-PCA, not U{u}-PC1) so the lesson gate ignores
+        // it and it never collides with the baseline/auto PC1 cell. prevU is left
+        // untouched, so the end-of-unit flush still fires exactly once.
+        if(PC_MCQ_A_SPLIT[item.u]===item.t){
+            out.push({t:'U'+item.u+'-PCA',n:'Unit '+item.u+' MCQ Part A',u:item.u,kind:'pc',part:'A'});
+        }
         prevU=item.u;
     }
     // Final flush if the last entry was a real unit.
@@ -9632,7 +9646,7 @@ function generateSchedule(def){
     for(const pid in def.periods){
       const pDef=def.periods[pid];
       if(!pDef.meetsDays.includes(dow)) cells[pid]=NC;
-      else if(queues[pid].length>0){const tp=queues[pid].shift();const cell=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false);if(tp.kind){cell.kind=tp.kind;if(tp.admin)cell.admin=tp.admin}cells[pid]=cell}
+      else if(queues[pid].length>0){const tp=queues[pid].shift();const cell=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false);if(tp.kind){cell.kind=tp.kind;if(tp.admin)cell.admin=tp.admin;if(tp.part)cell.part=tp.part}cells[pid]=cell}
       else cells[pid]=NC;
     }
     result.push([...da,cells.B||NC,cells.E||NC]);
@@ -19506,6 +19520,7 @@ function htm(i,ds){
     if(i===EX)return`<div class="dn">${ds}</div><div class="tl">AP EXAM</div>`;
     if(i===PO)return`<div class="dn">${ds}</div><div class="tl">Done!</div>`;
     if(i===NC||!i)return`<div class="dn" style="opacity:.4">${ds}</div>`;
+    if(i.kind==='pc'&&i.part==='A')return`<div class="dn">${ds}</div><div class="tl">U${i.u} MCQ A</div><div class="tt">Progress Check · Part A</div>`;
     if(i.kind==='pc')return`<div class="dn">${ds}</div><div class="tl">U${i.u} PC ${i.admin||1}/2</div><div class="tt">Progress Check</div>`;
     if(i.kind==='poster')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Poster</div><div class="tt">Gallery walk</div>`;
     if(i.kind==='orientation')return`<div class="dn">${ds}</div><div class="tl">Start Here</div><div class="tt">How grades &amp; makeups work</div>`;
@@ -19523,6 +19538,7 @@ function cellAria(i, ds){
     if(i===EX) return ds + ', AP Statistics Exam';
     if(i===PO) return ds + ', post-exam';
     if(i===NC || !i) return ds;
+    if(i.kind==='pc'&&i.part==='A') return ds + ', Unit ' + i.u + ' MCQ Part A';
     if(i.kind==='pc') return ds + ', Unit ' + i.u + ' Progress Check ' + (i.admin||1) + ' of 2';
     if(i.kind==='poster') return ds + ', Unit ' + i.u + ' Poster gallery walk';
     if(i.kind==='orientation') return ds + ', Start Here — how grades and makeups work';
