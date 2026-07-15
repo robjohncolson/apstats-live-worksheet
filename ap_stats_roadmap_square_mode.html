@@ -12625,8 +12625,14 @@ async function _loadReviewMarksForSelf() {
         var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
         var token = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
         var base = window.ROSTER_SERVICE_URL;
-        var sid = who && who.studentId;
-        if (!who || who.role === 'teacher' || !token || !base || !sid) return;
+        // In teacher VIEW-AS, load the VIEWED student's marks (a teacher token may
+        // read any student's ledger — ledger.js) so the teacher can VERIFY Nightly
+        // Review renders (👁 seen / 💬 comment in My Ledger) without a real student
+        // login. Otherwise students-only: a teacher's own ledger has no review marks.
+        var ctx = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+        var sid = ctx ? ctx.studentId : (who && who.studentId);
+        if (!token || !base || !sid) return;
+        if (!ctx && (!who || who.role === 'teacher')) return;
         var res = await fetch(base + '/ledger/student/' + encodeURIComponent(sid), { headers: { Authorization: 'Bearer ' + token } });
         if (res.status !== 200) return;
         var data = await res.json();
@@ -14520,10 +14526,21 @@ function _paintReviewQueue(host, data) {
 
         var btns = document.createElement('div'); btns.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-top:5px';
         var unseenIds = items.filter(function (i) { return !i.seen; }).map(function (i) { return i.ledgerId; });
-        if (unseenIds.length) {
+        // Gate on the TRUE unseen count (s.unseen), not the rendered ids: the queue
+        // caps the item payload at 80 (MAX_ITEMS_PER_STUDENT), so a heavy student's
+        // unseen TAIL isn't in `items` at all — the button must still appear + reach it.
+        if (s.unseen > 0) {
             var allBtn = document.createElement('button'); allBtn.className = 's7btn'; allBtn.style.cssText = 'font-size:10px;padding:2px 8px;font-weight:bold';
-            allBtn.textContent = '✓ Mark all ' + unseenIds.length + ' seen';
-            allBtn.onclick = function () { _reviewMark({ ledgerIds: unseenIds, comment: ta.value }); };
+            allBtn.textContent = '✓ Mark all ' + s.unseen + ' seen';
+            allBtn.onclick = function () {
+                // No comment → server-side scope:'all' marks EVERY unseen row (up to
+                // 500), so the >80 tail can't be left behind (the bug: the DOM-gathered
+                // ledgerIds only covered the rendered ≤80). A comment stays on the
+                // rendered+pinned rows only (§0.5 — never comment on rows not seen).
+                var c = (ta.value || '').trim();
+                if (c) _reviewMark({ ledgerIds: unseenIds, comment: c });
+                else _reviewMark({ studentId: s.studentId, scope: 'all' });
+            };
             btns.appendChild(allBtn);
             var bySession = {};
             items.forEach(function (i) { if (i.seen) return; var k = (i.sessionId == null ? '?' : i.sessionId); (bySession[k] = bySession[k] || []).push(i.ledgerId); });
