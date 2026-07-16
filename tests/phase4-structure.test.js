@@ -172,8 +172,13 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
       //                    teacher-auth'd, additive; /class/* stays read-only)
       //  - /admin/        (s29 Grade Backup & Recovery card: verify a backup + faithful
       //                    restore — teacher-auth'd, additive; /class/* stays read-only)
+      //  - /pc/unlock     (PC makeup card: teacher unlocks students for a Progress Check
+      //                    makeup — teacher-auth'd, additive; PC_MAKEUP_DELIVERY_SPEC)
+      //  - /class/quarter/ (PC makeup [D]: teacher FREEZES a quarter at close — an
+      //                    idempotent snapshot for the report record. It does NOT change
+      //                    how any grade computes; the read-only INTENT of /class/* holds.)
       // Concatenated paths (postJson('/x/' + act, ...)) capture just the prefix.
-      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/') || t.path.startsWith('/teacher/nudge') || t.path.startsWith('/admin/');
+      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/') || t.path.startsWith('/teacher/nudge') || t.path.startsWith('/admin/') || t.path.startsWith('/pc/unlock') || t.path.startsWith('/class/quarter/');
       expect(ok, `POST to "${t.path}" violates the /class/* read-only intent`).toBe(true);
     }
   });

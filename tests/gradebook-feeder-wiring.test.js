@@ -115,11 +115,19 @@ async function loadWorksheet(file) {
     resources: new LocalLoader(),
     pretendToBeVisual: true,
   });
-  await new Promise((r) => {
-    if (dom.window.document.readyState === 'complete') return r();
-    dom.window.addEventListener('load', r);
-    setTimeout(r, 3000);
-  });
+  // Poll the REAL readiness condition instead of a fixed 3s sleep. Under the full
+  // parallel run the heavy worksheet scripts can take >3s, and the old
+  // `setTimeout(r, 3000)` fallback then resolved on a not-yet-initialised window
+  // — the "empty blank" flake. Ready = document complete AND the feeder global the
+  // tests read (gradebookClient.record) is installed. Bounded well under the 10s
+  // hook timeout, and resolves the instant the page is ready (usually well under 1s).
+  const win = dom.window;
+  const ready = () => win.document.readyState === 'complete'
+    && typeof win.gradebookClient?.record === 'function';
+  const deadline = Date.now() + 8000;
+  while (!ready() && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 25));
+  }
   return dom;
 }
 

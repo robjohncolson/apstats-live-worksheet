@@ -53,6 +53,20 @@ function makeDom(fetchMock, searchString) {
   return dom;
 }
 
+// Poll for an async OUTCOME instead of a fixed sleep. The page's DOMContentLoaded
+// handler → internal 50ms timer → fetch → render can overrun a hardcoded wait
+// under full-suite parallel load, so the old `setTimeout(r, 120)` waits flaked.
+// waitFor resolves the instant the condition holds (usually <50ms) and only spends
+// the full budget on a genuine failure, where the following assertion reports it.
+async function waitFor(fn, { timeout = 3000, interval = 15 } = {}) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try { if (fn()) return true; } catch (_) { /* not ready yet */ }
+    await new Promise((r) => setTimeout(r, interval));
+  }
+  return false; // let the caller's assertion produce the real failure message
+}
+
 // Profile response stub used by several tests.
 var PROFILE_STUB = {
   ok: true,
@@ -104,8 +118,8 @@ describe('?openDrawerFor= behavior', () => {
 
     makeDom(fetchMock, '?openDrawerFor=stu_123');
 
-    // Allow the 50 ms setTimeout to fire plus microtasks.
-    await new Promise(r => setTimeout(r, 100));
+    // Wait until the profile fetch actually fires (handler → 50ms timer → fetch).
+    await waitFor(() => fetchMock.mock.calls.some(c => c[0] && c[0].includes('/teacher/student/stu_123/profile')));
 
     const profileCalls = fetchMock.mock.calls.filter(c => c[0] && c[0].includes('/teacher/student/stu_123/profile'));
     expect(profileCalls.length).toBeGreaterThanOrEqual(1);
@@ -123,9 +137,10 @@ describe('?openDrawerFor= behavior', () => {
     });
 
     const dom = makeDom(fetchMock, '?openDrawerFor=stu_123');
-    await new Promise(r => setTimeout(r, 120));
-
     const document = dom.window.document;
+    // Wait until the drawer actually opens (after the profile fetch resolves + render).
+    await waitFor(() => document.getElementById('tsc-drawer')?.classList.contains('tsc-open'));
+
     const drawer = document.getElementById('tsc-drawer');
     expect(drawer).not.toBeNull();
     expect(drawer.classList.contains('tsc-open')).toBe(true);
@@ -155,15 +170,14 @@ describe('?openDrawerFor= behavior', () => {
     const dom = makeDom(fetchMock, '?openDrawerFor=stu_bad');
     dom.window.console.warn = warnSpy;
 
-    await new Promise(r => setTimeout(r, 120));
+    // Wait until the failure is logged (401 profile → [deeplink] warn).
+    const warnedDeeplink = () => warnSpy.mock.calls.some(c => c[0] && String(c[0]).includes('[deeplink]'));
+    await waitFor(warnedDeeplink);
 
     // Page must not crash -- drawer stays closed.
     const drawer = dom.window.document.getElementById('tsc-drawer');
     expect(drawer.classList.contains('tsc-open')).toBe(false);
-
-    // console.warn must have been called with the deeplink prefix.
-    const warned = warnSpy.mock.calls.some(c => c[0] && String(c[0]).includes('[deeplink]'));
-    expect(warned).toBe(true);
+    expect(warnedDeeplink()).toBe(true);
   });
 
   it('without the query param, no profile fetch fires', async () => {
@@ -208,16 +222,15 @@ describe('?openRemediation=1 behavior', () => {
     // JSDOM parse, so we need to check the button after the fact).
     remBtn.addEventListener('click', clickSpy);
 
-    // Wait for the 50 ms fetchdelay + fetch microtask + 250 ms remediation delay.
-    await new Promise(r => setTimeout(r, 450));
-
-    // The remediation modal should be open OR the button was clicked.
-    const modal = document.getElementById('tsc-remediation-modal');
-    const modalOpen = modal && modal.classList.contains('tsc-modal-open');
-    const btnWasClicked = clickSpy.mock.calls.length > 0;
-
-    // Either the modal opened (full flow), or the click was fired (button wired separately).
-    expect(modalOpen || btnWasClicked).toBe(true);
+    // Wait for the outcome: the remediation modal opens OR the button is clicked
+    // (50ms fetch delay + fetch microtask + 250ms remediation delay — can overrun
+    // a fixed sleep under load).
+    const outcome = () => {
+      const modal = document.getElementById('tsc-remediation-modal');
+      return !!((modal && modal.classList.contains('tsc-modal-open')) || clickSpy.mock.calls.length > 0);
+    };
+    await waitFor(outcome);
+    expect(outcome()).toBe(true);
   });
 
   it('?openRemediation=1 without openDrawerFor does not fire a profile fetch', async () => {

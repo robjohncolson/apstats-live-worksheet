@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 58ebb92bc280
+ * engine-version: 50a04d6182fe
  */
 ;(function (root) {
   'use strict';
@@ -123,6 +123,22 @@
       // should also restrict to mastery-tier evidence per the spec before enabling.
       // doneThreshold: what the Desk shows as "trainer done" (display only).
       trainer: { weight: 0, doneThreshold: 80 },
+    
+      // ── Progress-Check makeup track (PC_MAKEUP_PHASE2_GRADE_SPEC.md §C) ──────────
+      // enabled=false = INERT: computeGrade skips PC scoring (pcRawPct stays null →
+      // unit P=0, unitGrade unchanged) AND computeQuarterV3 skips the PC band loop
+      // (pcAvg stays null → combineV3 short-circuits to the Work track). The grade is
+      // then byte-identical to the pre-PC engine (pinned by the grade-invariance
+      // test). Env-gated like useV3: set PC_TRACK_ENABLED=true (teacher decision,
+      // ~Sept, once the real calendar is live AND paper PCs are administered +
+      // scored) to let a unit's PC count once that unit's last lesson is due.
+      // ⚠ Enabling makes an un-taken BUT due PC count as 0, which caps that quarter
+      // at 70% of Work (the two-track sub-floor ceiling) — do NOT enable before
+      // paper scores are entered, or every student silently drops when dates pass.
+      // Gate semantics elsewhere: enabled UNLESS explicitly false, so tests with a
+      // bespoke config (no pcTrack) keep exercising PC; production (this OFF default)
+      // is inert until the env flag flips.
+      pcTrack: { enabled: process.env.PC_TRACK_ENABLED === 'true' },
     };
     
     // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
@@ -368,7 +384,64 @@
     
       return { units, totals };
     }
-    return { blooketScore: blooketScore, normalizeResponse: normalizeResponse, isCorrect: isCorrect, stableLedgerSort: stableLedgerSort, latestPerItem: latestPerItem, unitOf: unitOf, answerKeyMapOrNull: answerKeyMapOrNull, skillMapValidOrNull: skillMapValidOrNull, scoreAgainstKey: scoreAgainstKey };
+    
+    // Score PC rows into a per-unit raw % — the PC-mastery track feeder
+    // (PC_MAKEUP_PHASE2_GRADE_SPEC.md §A/§B/§C). Hybrid, so it subsumes the old
+    // re-score path AND lights up makeup PCs:
+    //   • a finite row.score (0..1) is HONORED verbatim — makeup PCs are graded
+    //     server-side against the CB-secure pc_bank (their answers never enter this
+    //     public-key path), and this is also how FRQ partial credit (E/P/I → a
+    //     fraction) reaches the grade, since re-scoring is binary-only;
+    //   • otherwise the row is RE-SCORED (row.response vs the public answer key) —
+    //     legacy proctored PC rows whose items ARE in answer-key.json. A null-key
+    //     item is ungradable and DROPS from the denominator (unchanged behavior).
+    // Best-wins: PAPER rows (item_id …-PAPER) hold a unit-level proctored score and
+    // best-win against the online per-item mean (Math.max — a makeup only ever
+    // raises). Returns scoreAgainstKey's { units:{ U#:{ pct } }, totals } shape so
+    // the computeGrade → unitPcRaw → computeQuarterV3 wire is untouched.
+    function scorePcRows(rows, answerKey = {}) {
+      const online = {}; // unit → { sum, n } of per-item credit
+      const paper = {};  // unit → best paper pct (0..100)
+      for (const row of latestPerItem(rows)) {
+        const itemId = String(row?.item_id || '');
+        if (!itemId) continue;
+        const u = unitOf(itemId, answerKey[itemId]);
+    
+        // Per-item credit in [0,1], or null = ungradable (excluded from denominator).
+        let credit = null;
+        const raw = row?.score;
+        if (raw != null && Number.isFinite(Number(raw))) {
+          credit = Math.min(1, Math.max(0, Number(raw)));      // honor server-computed score
+        } else {
+          const keyEntry = answerKey[itemId];
+          if (keyEntry && keyEntry.answerKey != null) {
+            credit = isCorrect(row.response, keyEntry.answerKey) ? 1 : 0; // re-score legacy proctored
+          }
+        }
+        if (credit == null) continue;                          // ungradable → skip
+    
+        if (/-PAPER$/i.test(itemId)) {
+          paper[u] = Math.max(paper[u] == null ? 0 : paper[u], credit * 100);
+        } else {
+          const o = online[u] || (online[u] = { sum: 0, n: 0 });
+          o.sum += credit;
+          o.n += 1;
+        }
+      }
+    
+      const units = {};
+      for (const u of new Set([...Object.keys(online), ...Object.keys(paper)])) {
+        const onlinePct = online[u] ? (online[u].sum / online[u].n) * 100 : null;
+        const paperPct = paper[u] == null ? null : paper[u];
+        const best = Math.max(
+          onlinePct == null ? -1 : onlinePct,
+          paperPct == null ? -1 : paperPct,
+        );
+        units[u] = { pct: best < 0 ? null : Math.round(best * 10) / 10 };
+      }
+      return { units, totals: {} };
+    }
+    return { blooketScore: blooketScore, normalizeResponse: normalizeResponse, isCorrect: isCorrect, stableLedgerSort: stableLedgerSort, latestPerItem: latestPerItem, unitOf: unitOf, answerKeyMapOrNull: answerKeyMapOrNull, skillMapValidOrNull: skillMapValidOrNull, scoreAgainstKey: scoreAgainstKey, scorePcRows: scorePcRows };
   })();
 
   // ── lesson-grade.js ──────────────────────────────────────────────────────
@@ -1452,26 +1525,35 @@
         }
         return !!latest && latest <= todayDateStr;
       }
+      // PC track gate (PC_MAKEUP_PHASE2_GRADE_SPEC.md §C). OFF (config.pcTrack.enabled
+      // === false) → the band loop is skipped entirely, so pcAvg stays null and
+      // combineV3 short-circuits to the Work track. This is what keeps a due-but-
+      // unattempted PC from silently counting as 0 (→ 70%-of-Work cap) the moment
+      // the fall schedule's dates pass, until the teacher flips PC_TRACK_ENABLED.
+      // Enabled UNLESS explicitly false so bespoke-config callers/tests still run PC.
+      const pcEnabled = !(config && config.pcTrack && config.pcTrack.enabled === false);
       const pcVals = [];
       let pcSumPct = 0, pcGradedCount = 0;
-      for (const unitNum of band) {
-        if (!unitPcDue(unitNum)) continue; // pcAvg covers PCs due-by-today only
-        const raw = unitPcData ? unitPcData[unitNum] : null;
-        if (raw != null && Number.isFinite(raw)) {
-          const frac = Math.min(1, Math.max(0, raw / 100)); // clamp out-of-range raw%
-          pcVals.push(frac);
-          pcSumPct += frac * 100;
-          pcGradedCount += 1;
-        } else {
-          pcVals.push(0); // due but no PC attempt
+      if (pcEnabled) {
+        for (const unitNum of band) {
+          if (!unitPcDue(unitNum)) continue; // pcAvg covers PCs due-by-today only
+          const raw = unitPcData ? unitPcData[unitNum] : null;
+          if (raw != null && Number.isFinite(raw)) {
+            const frac = Math.min(1, Math.max(0, raw / 100)); // clamp out-of-range raw%
+            pcVals.push(frac);
+            pcSumPct += frac * 100;
+            pcGradedCount += 1;
+          } else {
+            pcVals.push(0); // due but no PC attempt
+          }
         }
       }
       const pcAvg = pcVals.length ? pcVals.reduce((a, b) => a + b, 0) / pcVals.length : null;
       // pcDue disambiguates pcAvg === null: true once any band unit's PCs are due-by-today
       // (null + pcDue = "due but unattempted"); false = Progress Checks aren't open yet
-      // (~fall), so the "Why so low?" coach must NOT push PC work that doesn't exist.
-      // Additive — no grade math depends on it.
-      const pcDue = band.some(unitPcDue);
+      // (~fall) OR the track is disabled, so the "Why so low?" coach must NOT push PC
+      // work that doesn't count. Additive — no grade math depends on it.
+      const pcDue = pcEnabled && band.some(unitPcDue);
     
       // ── Combine to the quarter grade ──
       const tracks = {
@@ -2051,7 +2133,7 @@
     // (teacher dashboard via class.js fans out computeGrade and reads it).
     
     const { PHASE3_CONFIG, unitNumber, quarterOfUnit, pcRawToP } = __reg["grade-config"];
-    const { latestPerItem, unitOf, answerKeyMapOrNull, scoreAgainstKey } = __reg["scoring"];
+    const { latestPerItem, unitOf, answerKeyMapOrNull, scoreAgainstKey, scorePcRows } = __reg["scoring"];
     const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod } = __reg["lesson-grade"];
     const { buildGradebook } = __reg["gradebook-grid"];
     
@@ -2150,8 +2232,15 @@
     
       // ── Q: cr-quiz correctness % per unit (re-scored vs key) ─────────────────
       const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey);
-      // ── PC raw %: proctored Progress Check, re-scored vs key ─────────────────
-      const pcAgg = scoreAgainstKey(bySource('pc'), answerKey);
+      // ── PC raw %: Progress Check — makeup (server-scored vs pc_bank, honors
+      // row.score) OR legacy proctored (re-scored vs key), per-unit best-wins.
+      // GATED: OFF (config.pcTrack.enabled === false) → no PC row touches the grade
+      // (pcRawPct null → P=0 → unitGrade unchanged). Enabled UNLESS explicitly false
+      // so bespoke-config callers/tests keep exercising PC; production ships OFF.
+      const pcEnabled = !(config && config.pcTrack && config.pcTrack.enabled === false);
+      const pcAgg = pcEnabled
+        ? scorePcRows(bySource('pc'), answerKey)
+        : { units: {}, totals: {} };
     
       // ── W: AI-FRQ pct per unit (worksheet fill-ins = completion-only, §5) ────
       const wByUnit = {};       // U# → { sum, n }
@@ -2491,7 +2580,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "58ebb92bc280",
+    _engineVersion: "50a04d6182fe",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;
