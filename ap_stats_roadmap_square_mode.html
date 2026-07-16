@@ -547,6 +547,13 @@
         #roadmap-status[data-net="offline"] { background: #fff7e0; color: #5f4100; }
         #roadmap-status[data-net="cached"] { background: #eef7ee; color: #1f5f2e; }
         #roadmap-status[data-net="degraded"] { background: #f4f4f4; color: #444; }
+        /* Grade Check-in banner (DESK_GRADE_CHECKIN_SPEC). The [hidden] rule is more
+           specific than the base display:flex, so a hidden banner never flashes. */
+        #grade-checkin-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 8px; }
+        #grade-checkin-banner[hidden] { display: none; }
+        #grade-checkin-banner .s7btn { font-size: 10px; padding: 2px 10px; }
+        #grade-checkin-banner[data-state="due"] #grade-checkin-banner-open { background: #fff7e0; color: #5f4100; }
+        #grade-checkin-banner[data-state="overdue"] #grade-checkin-banner-open { background: #fde6d6; color: #7a3e00; font-weight: bold; }
         .lesson-coach {
             margin: 0 0 8px;
             padding: 6px 8px;
@@ -1937,6 +1944,7 @@
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openTeacherTools==='function')openTeacherTools()" style="font-weight:bold">&#129520; Teacher Tools&#8230;</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openNightlyReview==='function')openNightlyReview()">&#127769; Nightly Review&#8230;<span id="menu-review-badge" class="menu-nudge-badge" hidden>0</span></div>
+            <div class="menu-dd-item" data-sfx id="menu-gradecheckin-item" style="display:none" onclick="closeMenus();if(typeof openGradeCheckin==='function')openGradeCheckin()">&#128200; Grade Check-in&#8230;<span id="menu-gradecheckin-badge" class="menu-nudge-badge" hidden>0</span></div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
         </div>
@@ -2015,6 +2023,13 @@
             </div>
             <div class="legend geneva" id="legend-bar"></div>
             <div id="roadmap-status" class="geneva" role="status" aria-live="polite" hidden></div>
+            <!-- ═══ Grade Check-in banner (DESK_GRADE_CHECKIN_SPEC) — teacher-only, hidden
+                 by default so there is no pre-JS flash; _renderGradeCheckinUI() reveals it
+                 only for a verified teacher when a check-in is due-soon/due/overdue. ═══ -->
+            <div id="grade-checkin-banner" class="geneva" role="status" aria-live="polite" hidden>
+                <button type="button" id="grade-checkin-banner-open" class="s7btn" onclick="if(typeof openGradeCheckin==='function')openGradeCheckin()"><span id="grade-checkin-banner-label">Grade check-in due</span></button>
+                <button type="button" id="grade-checkin-banner-snooze" class="s7btn" onclick="if(typeof _gradeCheckinSnooze==='function')_gradeCheckinSnooze()">Snooze 3 days</button>
+            </div>
             <!-- ═══ Do Now card (DN3a) — server-mediated via /donow; never touches Supabase ═══ -->
             <style>
               #donow-card{margin:8px 0;padding:10px 12px;border:2px solid var(--black);
@@ -2525,6 +2540,23 @@
             <span class="title-text chicago">🌙 Nightly Review</span>
         </div>
         <div class="app-content" id="nightlyreview-content" style="flex-direction:column;overflow:auto;padding:12px;max-height:78vh">
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Grade Check-in ═══ A System 7 window (teacher-only) reminding the teacher to
+     run the private grade-trajectory monitor in the sibling Lesson_planning workspace.
+     No server / migration / grade-engine touch; acknowledgment is browser-local. The
+     overlay inherits the generic .app-overlay backdrop-click + Escape close handlers.
+     See DESK_GRADE_CHECKIN_SPEC.md. -->
+<div class="app-overlay" id="app-gradecheckin-overlay">
+    <div class="app-window" style="width:460px;max-width:94vw;height:auto;max-height:88vh">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="closeGradeCheckin()" title="Close"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">📈 Grade Check-in</span>
+        </div>
+        <div class="app-content" id="gradecheckin-content" style="flex-direction:column;overflow:auto;padding:12px;max-height:80vh" aria-live="polite">
         </div>
     </div>
 </div>
@@ -6943,6 +6975,9 @@ function updateUserRoleUI() {
   teacherMenu.style.display = isTeacher ? '' : 'none';
   // Light up the Teacher-menu "Nightly Review" unseen badge (best-effort, teacher only).
   try { if (isTeacher && typeof _reviewBadgePoll === 'function') _reviewBadgePoll(); } catch (_) {}
+  // Render (teacher) or clear (student/view-as/preview) the Grade Check-in reminder.
+  // Self-gated on _deskIsTeacher(), so calling it unconditionally is safe.
+  try { if (typeof _renderGradeCheckinUI === 'function') _renderGradeCheckinUI(); } catch (_) {}
 }
 
 function openSignInModal() {
@@ -9670,6 +9705,9 @@ function loadYear(yearKey){
   SCHOOLOGY_COURSE_B=def.periods.B.schoologyCourse||'';
   SCHOOLOGY_COURSE_E=def.periods.E.schoologyCourse||'';
   rCD();rCal();rProg();
+  // The calendar (global S) is now generated — recompute the Grade Check-in
+  // periods so a schedule change re-derives due dates (self-gated to teachers).
+  try { if (typeof _renderGradeCheckinUI === 'function') _renderGradeCheckinUI(); } catch (_) {}
   localStorage.setItem('ap-roadmap-year',yearKey);
   var pu=new URL(window.location);
   pu.searchParams.set('year',yearKey);
@@ -14260,6 +14298,7 @@ var _TEACHER_TOOLS = [
     { icon: '📋', label: 'Roster Console', sub: 'enroll · passwords · delete', act: function () { window.open('teacher-roster-console.html', '_blank'); } },
     { icon: '📈', label: 'Gradebook Dashboard', sub: 'class grid · remediation · rewards', act: function () { window.open('teacher-dashboard.html', '_blank'); } },
     { icon: '🌙', label: 'Nightly Review', sub: 'mark seen · comment · reward', act: function () { if (typeof openNightlyReview === 'function') openNightlyReview(); } },
+    { icon: '📈', label: 'Grade Check-in', sub: 'monthly trajectory review', act: function () { if (typeof openGradeCheckin === 'function') openGradeCheckin(); } },
     { icon: '💾', label: 'Download Grade Backup', sub: 'signed · verified · off-Supabase', act: function () { _downloadGradeBackup(); } },
     { icon: '👥', label: 'Live Classroom', sub: 'presence · polls', act: function () { window.open('teacher-classroom.html', '_blank'); } },
     { icon: '🔒', label: 'Unlock Codes', sub: 'unit unlock generator', act: function () { window.open('teacher-code-generator.html', '_blank'); } },
@@ -14306,6 +14345,458 @@ function _paintTeacherTools(host) {
     note.style.cssText = 'font-size:9px;color:#888;margin-top:12px;border-top:1px solid #ccc;padding-top:8px;line-height:1.4';
     note.textContent = '🔒 Roster Console & Dashboard ask for your teacher key (kept only in this browser session). The Roster Console shows student passwords — open it on your own screen.';
     host.appendChild(note);
+}
+
+// ── Grade Check-in (DESK_GRADE_CHECKIN_SPEC.md) ──────────────────────────────
+// A teacher-only, browser-local monthly reminder to run the private grade-
+// trajectory monitor that lives in the sibling Lesson_planning workspace. NO
+// server, migration, grade/ledger/roster, or student-progress touch. Every open/
+// mutate entry point self-gates on _deskIsTeacher(), which already reports false
+// for students, signed-out visitors, view-as, and Preview-as-student — so those
+// states can never see or activate the feature. Stored state is limited to the
+// versioned key below: period keys, completion timestamps, and snooze dates. No
+// private policy value, report data, student field, or absolute path is stored.
+var _GRADE_CHECKIN_KEY = 'apstats_teacher_grade_checkin_v1';
+var _GRADE_CHECKIN_CMD = 'node grade-monitor\\run.mjs';
+var _GC_MS_DAY = 86400000;
+var _GC_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+
+// "Today" at LOCAL midnight, honoring the Desk's apstats_desk_today_override so
+// tests are deterministic. A YYYY-MM-DD override is parsed as a LOCAL date (never
+// UTC-sliced), per the spec's "use local calendar dates" rule.
+function _gradeCheckinToday() {
+  var override = null;
+  try { override = localStorage.getItem('apstats_desk_today_override'); } catch (_) {}
+  if (override) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(override).trim());
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    var p = new Date(override);
+    if (!isNaN(p.getTime())) return new Date(p.getFullYear(), p.getMonth(), p.getDate());
+  }
+  var n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+function _gcMidnight(dt) { return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()); }
+function _gcISO(dt) {
+  return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+}
+// Whole LOCAL days from a to b (b - a); positive = b is in the future.
+function _gcDaysBetween(a, b) {
+  return Math.round((_gcMidnight(b).getTime() - _gcMidnight(a).getTime()) / _GC_MS_DAY);
+}
+// A generated schedule row [y, monthIndex, day, cellB, cellE] is instructional
+// when at least one period cell is a real lesson/review object (from d()), not a
+// string sentinel (NC/OFF/EX/PO). generateSchedule already caps instructional
+// rows before the exam, so the final monthly period naturally stops before it.
+function _gcIsInstructional(row) {
+  if (!row || row.length < 5) return false;
+  return (row[3] && typeof row[3] === 'object') || (row[4] && typeof row[4] === 'object');
+}
+
+// Ordered check-in periods for the active school year. Preseason = the final
+// eligible weekday before def.range.start; one monthly period per calendar month
+// that has instructional days, due on that month's final instructional day.
+// Reads globals (cYear / SCHEDULE_DEFS / S) by default; tests inject via opts.
+function _gradeCheckinPeriods(opts) {
+  opts = opts || {};
+  var yearKey = opts.yearKey || (typeof cYear !== 'undefined' ? cYear : null);
+  var def = opts.def || ((typeof SCHEDULE_DEFS !== 'undefined' && yearKey) ? SCHEDULE_DEFS[yearKey] : null);
+  var sched = opts.S || (typeof S !== 'undefined' ? S : null);
+  if (!yearKey || !def || !def.range || !def.range.start || !Array.isArray(sched) || !sched.length) return [];
+  var periods = [];
+  // Preseason: step back from range.start to the previous weekday (Mon–Fri).
+  try {
+    var start = new Date(def.range.start[0], def.range.start[1], def.range.start[2]);
+    var pre = new Date(start.getTime() - _GC_MS_DAY);
+    var guard = 0;
+    while ((pre.getDay() === 0 || pre.getDay() === 6) && guard++ < 14) {
+      pre = new Date(pre.getTime() - _GC_MS_DAY);
+    }
+    periods.push({ key: yearKey + ':preseason', kind: 'preseason', label: 'Preseason', due: _gcMidnight(pre), dueISO: _gcISO(pre) });
+  } catch (_) {}
+  // Monthly: final instructional day per (year, monthIndex).
+  var lastByMonth = {};
+  for (var i = 0; i < sched.length; i++) {
+    var row = sched[i];
+    if (!_gcIsInstructional(row)) continue;
+    var mk = row[0] + '-' + row[1];
+    var prev = lastByMonth[mk];
+    if (!prev || row[2] > prev[2]) lastByMonth[mk] = row;
+  }
+  Object.keys(lastByMonth).forEach(function (mk) {
+    var r = lastByMonth[mk];
+    var due = new Date(r[0], r[1], r[2]);
+    var mm = String(r[1] + 1).padStart(2, '0');
+    periods.push({
+      key: yearKey + ':' + r[0] + '-' + mm,
+      kind: 'monthly',
+      label: _GC_MONTHS[r[1]] + ' ' + r[0],
+      due: _gcMidnight(due),
+      dueISO: _gcISO(due),
+    });
+  });
+  periods.sort(function (a, b) { return a.due.getTime() - b.due.getTime(); });
+  return periods;
+}
+
+// Keep only STRING-valued entries of a plain object (never an array). Rejects
+// completed[key]=true, arrays, and nested objects that would otherwise read as
+// truthy and silently fabricate a "reviewed" state (spec §5: err toward showing
+// a reminder, never inventing completion).
+function _gcCleanMap(m, validVal) {
+  var out = {};
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return out;
+  Object.keys(m).forEach(function (k) {
+    var v = m[k];
+    if (typeof v === 'string' && validVal(v)) out[k] = v;
+  });
+  return out;
+}
+// A completion timestamp must be a CANONICAL ISO datetime that round-trips
+// exactly (rejects "banana", date-only strings, and trailing junk).
+function _gcValidTimestamp(v) {
+  try { return new Date(v).toISOString() === v; } catch (_) { return false; }
+}
+// A snooze date must be an EXACT YYYY-MM-DD that is also a real calendar date
+// (rejects "2099-12-31junk" via the anchors and "2026-02-30" via round-trip).
+function _gcValidDateOnly(v) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  var p = v.split('-');
+  var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+  return dt.getFullYear() === +p[0] && dt.getMonth() === +p[1] - 1 && dt.getDate() === +p[2];
+}
+// Defensive load: malformed / unavailable storage returns the empty default,
+// which errs toward SHOWING a due reminder rather than fabricating completion.
+function _gradeCheckinLoad() {
+  var base = { v: 1, completed: {}, snoozedUntil: {} };
+  var raw = null;
+  try { raw = localStorage.getItem(_GRADE_CHECKIN_KEY); } catch (_) { return base; }
+  if (!raw) return base;
+  try {
+    var o = JSON.parse(raw);
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return base;
+    base.completed = _gcCleanMap(o.completed, _gcValidTimestamp);        // canonical ISO datetime
+    base.snoozedUntil = _gcCleanMap(o.snoozedUntil, _gcValidDateOnly);   // exact, real YYYY-MM-DD
+  } catch (_) { return base; }
+  return base;
+}
+function _gradeCheckinSave(state) {
+  try {
+    localStorage.setItem(_GRADE_CHECKIN_KEY, JSON.stringify({
+      v: 1,
+      completed: (state && state.completed) || {},
+      snoozedUntil: (state && state.snoozedUntil) || {},
+    }));
+    return true;
+  } catch (_) { return false; }
+}
+
+// The reminder state machine. Surfaces the OLDEST incomplete, not-currently-
+// snoozed period whose window has opened (due within 7 days or overdue), plus how
+// many are outstanding. Snoozed periods hide until their snooze date but are never
+// marked complete; overdue periods persist until reviewed or snoozed.
+function _gradeCheckinStatus(opts) {
+  opts = opts || {};
+  var today = opts.today || _gradeCheckinToday();
+  var periods = opts.periods || _gradeCheckinPeriods(opts);
+  var state = opts.state || _gradeCheckinLoad();
+  var completed = state.completed || {};
+  var snoozed = state.snoozedUntil || {};
+  var out = {
+    period: null, kind: null, state: 'none', label: null, dueISO: null,
+    daysUntil: null, outstandingCount: 0, outstandingKeys: [], pendingKeys: [],
+    last: null, next: null, ready: periods.length > 0,
+  };
+  if (!periods.length) return out;
+
+  function isSnoozed(p) {
+    var s = snoozed[p.key];
+    if (!s) return false;
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s));
+    if (!m) return false;
+    var until = new Date(+m[1], +m[2] - 1, +m[3]);   // suppressed THROUGH this date
+    return _gcMidnight(today).getTime() <= until.getTime();
+  }
+
+  var done = periods.filter(function (p) { return !!completed[p.key]; });
+  if (done.length) {
+    var lastP = done[done.length - 1];   // periods are due-sorted → latest-due completed
+    out.last = { key: lastP.key, label: lastP.label, dueISO: lastP.dueISO };
+  }
+
+  var actionable = periods.filter(function (p) {
+    if (completed[p.key]) return false;
+    if (isSnoozed(p)) return false;
+    return _gcDaysBetween(today, p.due) <= 7;   // due within a week, or overdue
+  });
+  out.outstandingCount = actionable.length;
+  out.outstandingKeys = actionable.map(function (p) { return p.key; });
+  // Every incomplete period whose window is open (due within 7 days or overdue),
+  // INCLUDING ones already snoozed. This is what "Snooze" must re-quiet so a
+  // second snooze extends ALL of them, not just the surfaced (oldest) period.
+  out.pendingKeys = periods.filter(function (p) {
+    return !completed[p.key] && _gcDaysBetween(today, p.due) <= 7;
+  }).map(function (p) { return p.key; });
+
+  var current = actionable.length ? actionable[0] : null;
+  if (!current) {
+    // A snoozed-but-incomplete period whose window is open keeps a first-class
+    // 'snoozed' state: the banner/badge stay hidden (only due-soon/due/overdue are
+    // "live"), but the overlay still shows it accurately and keeps Mark Reviewed /
+    // Snooze reachable — otherwise it would falsely read "All reviewed".
+    var snoozedOpen = periods.filter(function (p) {
+      return !completed[p.key] && isSnoozed(p) && _gcDaysBetween(today, p.due) <= 7;
+    });
+    if (snoozedOpen.length) {
+      var sp = snoozedOpen[0];
+      out.period = sp.key; out.kind = sp.kind; out.label = sp.label; out.dueISO = sp.dueISO;
+      out.daysUntil = _gcDaysBetween(today, sp.due); out.state = 'snoozed';
+      var sidx = periods.indexOf(sp);
+      for (var q = sidx + 1; q < periods.length; q++) {
+        if (!completed[periods[q].key]) { out.next = { key: periods[q].key, label: periods[q].label, dueISO: periods[q].dueISO }; break; }
+      }
+      return out;
+    }
+    var upcoming = periods.filter(function (p) { return !completed[p.key] && _gcDaysBetween(today, p.due) > 7; });
+    if (upcoming.length) {
+      var u = upcoming[0];
+      out.period = u.key; out.kind = u.kind; out.label = u.label; out.dueISO = u.dueISO;
+      out.daysUntil = _gcDaysBetween(today, u.due); out.state = 'upcoming';
+      out.next = { key: u.key, label: u.label, dueISO: u.dueISO };
+    } else {
+      out.state = 'reviewed';   // every period is complete (or snoozed away)
+    }
+    return out;
+  }
+  var du = _gcDaysBetween(today, current.due);
+  out.period = current.key; out.kind = current.kind; out.label = current.label; out.dueISO = current.dueISO;
+  out.daysUntil = du;
+  out.state = du < 0 ? 'overdue' : du === 0 ? 'due' : 'due-soon';
+  var idx = periods.indexOf(current);
+  for (var k = idx + 1; k < periods.length; k++) {
+    if (!completed[periods[k].key]) { out.next = { key: periods[k].key, label: periods[k].label, dueISO: periods[k].dueISO }; break; }
+  }
+  return out;
+}
+
+// Render (teacher) or clear (everyone else) the menu badge + roadmap banner. Safe
+// to call before loadYear() populates S — then status.ready is false and both
+// surfaces stay hidden until loadYear() re-invokes this.
+function _renderGradeCheckinUI() {
+  var banner = document.getElementById('grade-checkin-banner');
+  var badge = document.getElementById('menu-gradecheckin-badge');
+  var item = document.getElementById('menu-gradecheckin-item');
+  var isT = (typeof _deskIsTeacher === 'function') ? _deskIsTeacher() : false;
+  if (!isT) {
+    // Invisible for students, signed-out, view-as, and Preview-as-student — even
+    // though the Teacher menu container itself may stay open (preview keeps it so
+    // the teacher can exit): hide the menu ITEM too, not just the banner/badge.
+    if (banner) { banner.hidden = true; banner.removeAttribute('data-state'); }
+    if (badge) badge.hidden = true;
+    if (item) item.style.display = 'none';
+    // Also close an already-open window if the role drops mid-session (cross-tab
+    // sign-out / entering preview) — otherwise the teacher window stays on screen.
+    var ov = document.getElementById('app-gradecheckin-overlay');
+    if (ov) ov.style.display = 'none';
+    return;
+  }
+  if (item) item.style.display = '';
+  var st = null;
+  try { st = _gradeCheckinStatus(); } catch (_) { st = null; }
+  if (!st || !st.ready) {
+    if (banner) { banner.hidden = true; banner.removeAttribute('data-state'); }
+    if (badge) badge.hidden = true;
+    return;
+  }
+  var live = (st.state === 'due-soon' || st.state === 'due' || st.state === 'overdue');
+  if (badge) {
+    if (live && st.outstandingCount > 0) { badge.textContent = String(st.outstandingCount); badge.hidden = false; }
+    else badge.hidden = true;
+  }
+  if (banner) {
+    if (!live) { banner.hidden = true; banner.removeAttribute('data-state'); }
+    else {
+      banner.setAttribute('data-state', st.state === 'overdue' ? 'overdue' : 'due');
+      var lead = st.state === 'overdue' ? 'Grade check-in overdue'
+               : st.state === 'due' ? 'Grade check-in due today'
+               : 'Grade check-in due soon';
+      var extra = st.outstandingCount > 1 ? ' (' + st.outstandingCount + ' outstanding)' : '';
+      var lbl = document.getElementById('grade-checkin-banner-label');
+      if (lbl) lbl.textContent = '📈 ' + lead + (st.label ? ' — ' + st.label : '') + extra;
+      banner.hidden = false;
+    }
+  }
+}
+
+function openGradeCheckin() {
+  if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
+  var overlay = document.getElementById('app-gradecheckin-overlay');
+  if (!overlay) return;
+  var host = document.getElementById('gradecheckin-content');
+  if (host) _paintGradeCheckin(host);
+  var win = overlay.querySelector('.app-window');
+  if (win) { win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.classList.remove('maximized'); }
+  overlay.style.display = 'block';
+  // Deliberately no icon-usage tracking here: that writes ap-roadmap-icon-usage,
+  // and this feature's storage boundary (spec §5) is the single
+  // apstats_teacher_grade_checkin_v1 key.
+  try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
+}
+function closeGradeCheckin() {
+  try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+  var overlay = document.getElementById('app-gradecheckin-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+function _gcEsc(s) {
+  return (typeof _deskEsc === 'function') ? _deskEsc(s)
+    : String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+}
+function _paintGradeCheckin(host) {
+  host.innerHTML = '';
+  var st = null;
+  try { st = _gradeCheckinStatus(); } catch (_) { st = null; }
+  var stateLabels = { 'upcoming': 'Upcoming', 'due-soon': 'Due soon', 'due': 'Due today', 'overdue': 'Overdue', 'snoozed': 'Snoozed', 'reviewed': 'All reviewed', 'none': '—' };
+
+  var wrap = document.createElement('div');
+  wrap.className = 'geneva';
+  wrap.style.cssText = 'font-size:12px;line-height:1.5;max-width:420px';
+
+  var head = document.createElement('div');
+  head.className = 'chicago';
+  head.style.cssText = 'font-size:14px;margin-bottom:8px';
+  head.textContent = 'Monthly grade-trajectory check-in';
+  wrap.appendChild(head);
+
+  var status = document.createElement('div');
+  status.style.cssText = 'margin-bottom:10px;padding:6px 8px;border:1px solid #000;background:#f4f4f4';
+  var sTxt = (st && st.state) ? (stateLabels[st.state] || st.state) : '—';
+  if (st && st.label && st.state !== 'reviewed') sTxt += ' · ' + st.label;
+  if (st && st.dueISO && st.state !== 'reviewed') sTxt += ' · due ' + st.dueISO;
+  status.textContent = sTxt;
+  wrap.appendChild(status);
+
+  var meta = document.createElement('div');
+  meta.style.cssText = 'font-size:11px;color:#555;margin-bottom:10px';
+  meta.innerHTML = 'Last completed: ' + _gcEsc(st && st.last ? st.last.label : '—')
+    + '<br>Next scheduled: ' + _gcEsc(st && st.next ? (st.next.label + ' (' + st.next.dueISO + ')') : '—');
+  wrap.appendChild(meta);
+
+  var listHead = document.createElement('div');
+  listHead.style.cssText = 'font-weight:bold;margin-bottom:4px';
+  listHead.textContent = 'Each check-in:';
+  wrap.appendChild(listHead);
+  var ol = document.createElement('ol');
+  ol.style.cssText = 'margin:0 0 12px 18px;padding:0;font-size:11px;line-height:1.5';
+  ['Confirm the latest backup verifies.',
+   'Run the grade-trajectory monitor from the Lesson_planning workspace.',
+   'Compare observed participation / feeders against the simulation assumptions.',
+   'Record "no change", or make a separately reviewed private-config change.'
+  ].forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ol.appendChild(li); });
+  wrap.appendChild(ol);
+
+  var cmdRow = document.createElement('div');
+  cmdRow.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap';
+  var code = document.createElement('code');
+  code.style.cssText = 'background:#eee;border:1px solid #ccc;padding:2px 5px;font-size:11px';
+  code.textContent = _GRADE_CHECKIN_CMD;
+  var cmdNote = document.createElement('span');
+  cmdNote.style.cssText = 'font-size:10px;color:#666';
+  cmdNote.textContent = 'run from the Lesson_planning workspace';
+  cmdRow.appendChild(code); cmdRow.appendChild(cmdNote);
+  wrap.appendChild(cmdRow);
+
+  var btns = document.createElement('div');
+  btns.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:4px';
+  function mkBtn(label, fn) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 's7btn';
+    b.style.cssText = 'font-size:11px;padding:3px 10px';
+    b.textContent = label; b.onclick = fn; return b;
+  }
+  btns.appendChild(mkBtn('Copy Run Command', function () { _gradeCheckinCopyCommand(this); }));
+  btns.appendChild(mkBtn('Download Backup', function () { try { if (typeof _downloadGradeBackup === 'function') _downloadGradeBackup(); } catch (_) {} }));
+  if (st && (st.state === 'due-soon' || st.state === 'due' || st.state === 'overdue' || st.state === 'snoozed')) {
+    btns.appendChild(mkBtn('Snooze 3 Days', function () { _gradeCheckinSnooze(); }));
+    btns.appendChild(mkBtn('Mark Reviewed', function () { _gradeCheckinMarkReviewed(); }));
+  }
+  wrap.appendChild(btns);
+
+  var note = document.createElement('div');
+  note.style.cssText = 'font-size:10px;color:#888;margin-top:10px;border-top:1px solid #ccc;padding-top:6px';
+  note.textContent = 'Reviewed status is saved in this browser only — another device may remind again. Download Backup makes a fresh manual backup; it does not update the nightly backup the monitor reads.';
+  wrap.appendChild(note);
+
+  host.appendChild(wrap);
+}
+
+function _gradeCheckinMarkReviewed() {
+  if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
+  var st = null;
+  try { st = _gradeCheckinStatus(); } catch (_) { return; }
+  if (!st || !st.period) return;
+  var state = _gradeCheckinLoad();
+  state.completed[st.period] = new Date().toISOString();
+  if (state.snoozedUntil) delete state.snoozedUntil[st.period];   // completion clears any snooze
+  _gradeCheckinSave(state);
+  try { _renderGradeCheckinUI(); } catch (_) {}
+  var host = document.getElementById('gradecheckin-content');
+  if (host) _paintGradeCheckin(host);
+}
+function _gradeCheckinSnooze() {
+  if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
+  var st = null;
+  try { st = _gradeCheckinStatus(); } catch (_) { return; }
+  if (!st || !st.period) return;
+  // Calendar-field arithmetic (not +72h of ms) so the +3 days is DST-safe: a
+  // fixed-ms add lands one day short across the Nov fall-back (a 25-hour day).
+  var t = _gradeCheckinToday();
+  var until = _gcISO(new Date(t.getFullYear(), t.getMonth(), t.getDate() + 3));
+  // "Snooze 3 Days" quiets the banner, so snooze EVERY open incomplete period —
+  // including ones already snoozed — so a re-snooze extends them all, not just the
+  // surfaced one. (pendingKeys is snooze-independent; outstandingKeys is not.)
+  var keys = (st.pendingKeys && st.pendingKeys.length) ? st.pendingKeys : [st.period];
+  var state = _gradeCheckinLoad();
+  keys.forEach(function (k) { if (k) state.snoozedUntil[k] = until; });
+  _gradeCheckinSave(state);
+  try { _renderGradeCheckinUI(); } catch (_) {}
+  var host = document.getElementById('gradecheckin-content');
+  if (host) _paintGradeCheckin(host);
+}
+function _gradeCheckinCopyCommand(btn) {
+  if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;   // §6: gate every entry point
+  var cmd = _GRADE_CHECKIN_CMD;
+  // Feedback = flash the button to "✓ Copied" (the Desk copy-button idiom); no
+  // dependency on a toast helper. Only fires on a REAL copy, never on failure.
+  function flash() {
+    if (!btn) return;
+    var prev = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(function () { try { btn.textContent = prev; } catch (_) {} }, 1500);
+  }
+  function fallback() {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = cmd; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) {}
+      document.body.removeChild(ta);
+      if (ok) flash();
+    } catch (_) {}
+  }
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Tie feedback + fallback to the promise: a rejection (e.g. document not
+      // focused) must NOT flash success and must still reach the fallback.
+      navigator.clipboard.writeText(cmd).then(flash, fallback);
+      return;
+    }
+  } catch (_) {}
+  fallback();
 }
 
 // ── Nightly Review (NIGHTLY_REVIEW_SPEC.md + NIGHTLY_REVIEW_V2_SPEC.md) ──────
@@ -20513,6 +21004,9 @@ try {
     if (_e && (_e.key === 'apstats_roster.v1' || _e.key === 'apstats_user_role'
                || _e.key === 'apstats_guest_active' || _e.key === null)) {
       try { updateStudentMenu(); } catch (__) {}
+      // Cross-tab sign-out/role change: re-gate the Grade Check-in surfaces so the
+      // banner/badge/menu item hide when this tab is no longer a teacher.
+      try { if (typeof _renderGradeCheckinUI === 'function') _renderGradeCheckinUI(); } catch (__) {}
     }
   });
 } catch (_e) {}
@@ -20561,7 +21055,7 @@ var APP_BUILD = '2026-06-26-l9qf';   // scripts/bump-build.mjs replaces this sta
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) check(); });  // on tab refocus
 })();
 
-setInterval(()=>{rCD();rCal();rProg()},6e4);
+setInterval(()=>{rCD();rCal();rProg();try{if(typeof _renderGradeCheckinUI==='function')_renderGradeCheckinUI()}catch(_){}},6e4);   // minute tick also refreshes the Grade Check-in reminder (due-soon/snooze-expiry crossings without a reload)
 
 /* ── Boot Dismissal (click-to-start after progress bar) ── */
 setTimeout(function() {
