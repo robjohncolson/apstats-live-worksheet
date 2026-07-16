@@ -58,6 +58,15 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// bcrypt work factor. Production stays 12 (BCRYPT_COST unset). Tests set
+// BCRYPT_COST=4 so the auth paths (signup/change-password/PIN hash + verify) stop
+// starving the full parallel run and timing out — the "passes isolated, flakes
+// under load" tax. Clamped to a valid bcrypt range so a bad env can't weaken prod.
+function bcryptCost() {
+  const c = Number(process.env.BCRYPT_COST);
+  return Number.isInteger(c) && c >= 4 && c <= 15 ? c : 12;
+}
+
 // ── App factory (accepts injected db for tests) ───────────────────────────────
 // ledgerDb is optional; defaults to createLiveLedgerDb() in production.
 // Tests pass a fake ledgerDb alongside the fake db.
@@ -195,7 +204,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     // Hash password with bcrypt cost 12 (sole auth path — unchanged).
     let passwordHash;
     try {
-      passwordHash = await bcrypt.hash(password, 12);
+      passwordHash = await bcrypt.hash(password, bcryptCost());
     } catch (err) {
       return res.status(500).json({ ok: false, error: 'Failed to hash password' });
     }
@@ -375,7 +384,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
 
     let passwordHash;
     try {
-      passwordHash = await bcrypt.hash(String(newPassword), 12);
+      passwordHash = await bcrypt.hash(String(newPassword), bcryptCost());
     } catch (err) {
       return res.status(500).json({ ok: false, error: 'Failed to hash password' });
     }
@@ -469,7 +478,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
 
     let passwordHash;
     try {
-      passwordHash = await bcrypt.hash(pin, 12);
+      passwordHash = await bcrypt.hash(pin, bcryptCost());
     } catch (err) {
       return res.status(500).json({ ok: false, error: 'Failed to secure your PIN' });
     }
