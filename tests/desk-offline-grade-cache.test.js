@@ -2,6 +2,13 @@
  * OFFLINE_MODE_SPEC §4.B — offline progress cache contract pins.
  * Source-level checks (matching the desk-grade-outlook fnBody style) that the
  * /grade write-through + offline restore is wired correctly and stays additive.
+ *
+ * PROGRESS_RESET_FIX_SPEC.md (2026-07-21) rewrote renderDoNowGrades's failure
+ * handling (D1/D2): every HTTP-error kind (401/403 auth, other non-ok/{ok:false}/
+ * malformed-JSON server, thrown/unreachable network) now runs the same
+ * evidence-restore branch — not just a thrown fetch. The pins below were
+ * updated to match; see incident-progress-reset-cache-relock.test.js for the
+ * INCIDENT I5 regression coverage this rewrite fixes.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -52,18 +59,21 @@ describe('renderDoNowGrades offline behavior', () => {
     expect(body).toContain('_persistGradeCache(data)');
   });
 
-  it('restores from cache ONLY when offline (a thrown fetch), never on an HTTP error', () => {
-    // offline flag set by the catch (thrown/unreachable fetch)
-    expect(body).toMatch(/catch \(_\) \{ _gradeOffline = true; \}/);
-    // restore gated on that flag (ANDROID Phase 2: re-derive from the local signed
-    // ledger first, falling back to the last cached /grade payload)
-    expect(body).toMatch(/else if \(_gradeOffline\)/);
+  it('restores from cache on EVERY failure kind (auth/server/network), not just a thrown fetch', () => {
+    // PROGRESS_RESET_FIX_SPEC D1/D2: a thrown/unreachable fetch, a 401/403, and
+    // any other non-ok response all set _gradeLoadState = 'unavailable'.
+    expect(body).toMatch(/catch \(_\) \{ _gradeLoadState = 'unavailable'; _gradeLoadError = \{ kind: 'network', status: null \}; \}/);
+    expect(body).toMatch(/res\.status === 401 \|\| res\.status === 403/);
+    // restore gated on the unified 'unavailable' state (ANDROID Phase 2: re-derive
+    // from the local signed ledger first, falling back to the last cached /grade payload)
+    expect(body).toMatch(/else if \(_gradeLoadState === 'unavailable'\)/);
     expect(body).toMatch(/_phase2ReDeriveGrade\(\)\)\s*\|\|\s*_loadGradeCache\(\)/);
-    // an HTTP response that isn't ok does NOT set offline (so 401/500 behave as before)
-    expect(body).toMatch(/if \(!res\) \{ _gradeOffline = true; \}\s*else if \(res\.ok\)/);
   });
 
-  it('still bails when there is neither a live nor a cached payload', () => {
-    expect(body).toContain('if (!data) return;');
+  it('still bails (honestly) when there is neither a live nor a cached payload', () => {
+    // D5: the silent `if (!data) return;` was replaced with a block that
+    // paints the honest-unknown rProg label before returning.
+    expect(body).toMatch(/if \(!data\) \{/);
+    expect(body).toMatch(/if \(typeof rProg === 'function'\) rProg\(\);/);
   });
 });

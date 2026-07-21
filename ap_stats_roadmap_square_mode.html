@@ -2045,6 +2045,14 @@
               @keyframes donowFlash{0%,100%{box-shadow:2px 2px 0 var(--black)}
                 50%{box-shadow:0 0 0 3px #2b6cb0,2px 2px 0 var(--black)}}
               @media (prefers-reduced-motion:reduce){#donow-card.donow-flash{animation:none}}
+              /* PROGRESS_RESET_FIX_SPEC D2 — status banner for a /grade load that isn't
+                 'available' (loading/unavailable). Hidden by default so the healthy and
+                 unknown states never show anything (no visual regression). */
+              #donow-grade-status{margin-top:6px;padding:4px 8px;border:1px solid var(--black);
+                background:#fff7e0;font-family:'Geneva','Helvetica',sans-serif;font-size:10px;
+                display:none;align-items:center;gap:6px;box-shadow:1px 1px 0 var(--black)}
+              #donow-grade-status .s7btn{font-family:'Chicago','Courier New',monospace;
+                font-size:9px;padding:2px 6px}
               /* Q1-Q4 grade outlook strip (2026-05-20) — compact pills under the Do Now message */
               #donow-grades{margin-top:6px;display:none;flex-wrap:wrap;gap:4px}
               #donow-grades .qpill{display:inline-flex;align-items:baseline;gap:3px;
@@ -2082,6 +2090,7 @@
                     <div class="donow-ttl chicago">Do Now</div>
                     <div id="donow-msg" class="geneva">…</div>
                     <div id="donow-grades" class="geneva" aria-label="Quarter grade outlook"></div>
+                    <div id="donow-grade-status" class="geneva" role="status" style="display:none"></div>
                     <div id="donow-helper" class="geneva"></div>
                 </div>
             </div>
@@ -5012,6 +5021,77 @@ function getStudentMarks() {
   catch(e) { return {}; }
 }
 
+// PROGRESS_RESET_FIX_SPEC D6 -- ordered unique identity strings the CURRENT
+// roster session could have written local marks under: the legacy free-text
+// key (if set), the bare rosterClient username, and the synthesized
+// username+'@roster.local' email getStudentEmail() falls back to. Never keys
+// from another identity's session. Fail-open (empty array) on any error.
+function _marksAliasKeys(extraLegacyKey) {
+  var keys = [];
+  try {
+    var legacy = null;
+    try { legacy = localStorage.getItem('apstats_desk_student_email'); } catch (_) {}
+    if (legacy) keys.push(legacy);
+    // Incident review H1 — a caller that JUST overwrote the legacy key (a
+    // sign-in tail writing the new roster username) can pass the PRIOR value
+    // it captured before the write, so a genuine pre-roster free-text-email
+    // marks bucket for THIS transition is still reachable here instead of
+    // permanently stranded (the overwrite above already hid it from `legacy`).
+    if (extraLegacyKey) keys.push(extraLegacyKey);
+    var who = (window.rosterClient && typeof window.rosterClient.current === 'function')
+      ? window.rosterClient.current() : null;
+    if (who && who.username) {
+      keys.push(who.username);
+      keys.push(who.username + '@roster.local');
+    }
+    // de-dupe, preserve order
+    var seen = {}, out = [];
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i] && !seen[keys[i]]) { seen[keys[i]] = true; out.push(keys[i]); }
+    }
+    return out;
+  } catch (_) { return []; }
+}
+
+// PROGRESS_RESET_FIX_SPEC D6 -- one-time-per-identity-per-load, idempotent,
+// additive union of every alias marks bucket into the CURRENT identity's
+// primary bucket ('apstats_desk_marks_' + getStudentEmail()). Existing
+// primary entries always win (never overwritten); alias buckets are never
+// deleted. Skipped entirely in view-as (never write the teacher's bucket
+// from a viewed student). Re-runs (no-ops) if called again for the same
+// identity within the same page load; re-arms on an identity change (e.g.
+// sign-in as a different student on a shared device).
+var _marksAliasMigratedFor = null;
+function _migrateMarksAliases(extraLegacyKey) {
+  try {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return false;
+    var primary = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+    if (!primary) return false;
+    if (_marksAliasMigratedFor === primary) return false; // already ran this identity
+    var primaryKey = 'apstats_desk_marks_' + primary;
+    var primaryMarks;
+    try { primaryMarks = JSON.parse(localStorage.getItem(primaryKey) || '{}'); } catch (_) { primaryMarks = {}; }
+    if (!primaryMarks || typeof primaryMarks !== 'object') primaryMarks = {};
+    var changed = false;
+    var aliases = _marksAliasKeys(extraLegacyKey);
+    for (var i = 0; i < aliases.length; i++) {
+      if (aliases[i] === primary) continue; // union into itself is a no-op
+      var aliasKey = 'apstats_desk_marks_' + aliases[i];
+      var aliasMarks;
+      try { aliasMarks = JSON.parse(localStorage.getItem(aliasKey) || '{}'); } catch (_) { aliasMarks = null; }
+      if (!aliasMarks || typeof aliasMarks !== 'object') continue;
+      for (var k in aliasMarks) {
+        if (!primaryMarks[k]) { primaryMarks[k] = aliasMarks[k]; changed = true; } // existing wins, never overwritten
+      }
+    }
+    if (changed) {
+      try { localStorage.setItem(primaryKey, JSON.stringify(primaryMarks)); } catch (_) { return false; }
+    }
+    _marksAliasMigratedFor = primary; // re-arms only when the identity changes
+    return changed;
+  } catch (_) { return false; }
+}
+
 // CALENDAR_SYNC -- seed local marks from the server's per-resource self-done
 // flag (data.lessons[].selfDone from /donow). Makes the calendar grey-out follow
 // the student's LOGIN, not the browser: a lesson marked Done on ANY device greys
@@ -6336,10 +6416,19 @@ function _isLessonComplete(topic, marks) {
     var cws = (typeof _getCwsForTopic === 'function') ? _getCwsForTopic(topic) : null;
     var blScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(topic) : null;
     var wsGate = (typeof DESK_WORKSHEET_DONE_THRESHOLD === 'number') ? DESK_WORKSHEET_DONE_THRESHOLD : 60;
+    // PROGRESS_RESET_FIX_SPEC D3 -- third disjunct: a durable per-student latch
+    // written only on a live /grade success (see _latchServerComplete). Makes
+    // ledger-qualified completion survive a cold _gradeLessonsCache (the root
+    // cause of the 2026-07-20 incident). typeof-guarded so isolated vm tests
+    // that load this function alone (no _serverCompleteFor injected) keep the
+    // strict local+synced-only behavior.
+    var _sc = (typeof _serverCompleteFor === 'function') ? _serverCompleteFor(topic) : null;
     var wsDone = !!(m[topic + '|worksheet'] && m[topic + '|worksheet'].ts)
-      || (typeof cws === 'number' && cws >= wsGate);
+      || (typeof cws === 'number' && cws >= wsGate)
+      || !!(_sc && _sc.ws);
     var blDone = !!(m[topic + '|blooket'] && m[topic + '|blooket'].ts)
-      || (typeof blScore === 'number' && blScore >= 80);
+      || (typeof blScore === 'number' && blScore >= 80)
+      || !!(_sc && _sc.bl);
     var wsOk = !urls.worksheet || wsDone;
     var blOk = !urls.blooket   || blDone;
     return wsOk && blOk;
@@ -6410,6 +6499,13 @@ function _isLessonUnlocked(topic, lessonDate, prevTopic, today, marks, signedIn)
     // unlock helpers).
     if (typeof _isTopicLessonUnlocked === 'function' && _isTopicLessonUnlocked(topic)) return true;
     if (!prevTopic) return true;         // first lesson in the sequence
+    // PROGRESS_RESET_FIX_SPEC D4 -- indeterminate server state fails OPEN (no
+    // stranding). The server hasn't affirmatively spoken yet (no warm /grade
+    // cache this load AND no durable latch topic on this device) — never
+    // relock a student on silence. typeof-guarded so isolated vm tests that
+    // load this function alone (no _serverEvidencePresent injected) keep the
+    // strict pins.
+    if (typeof _serverEvidencePresent === 'function' && !_serverEvidencePresent()) return true;
     // STRICT sequential (2026-06-16, LESSON_GATE_BUILD §8): a lesson opens ONLY
     // when its predecessor is complete — no date bypass. A past-due lesson stays
     // locked until you finish the one before it, so summer self-pacing advances by
@@ -7083,6 +7179,11 @@ async function submitSignIn() {
     // the legacy student_progress path; clean-start cohort, non-email is harmless).
     var who = (window.rosterClient.current && window.rosterClient.current()) || {};
     var legacyKey = who.username || username;
+    // Incident review H1 — capture the PRIOR legacy value before it's
+    // overwritten below, so a genuine pre-roster free-text-email marks
+    // bucket for THIS transition can still be unioned in by D6's migration.
+    var _priorLegacyEmail = null;
+    try { _priorLegacyEmail = localStorage.getItem('apstats_desk_student_email'); } catch (_) {}
     localStorage.setItem('apstats_desk_student_email', legacyKey);
     try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}   // real sign-in supersedes guest
     registerStudent(legacyKey);
@@ -7093,6 +7194,14 @@ async function submitSignIn() {
     // apstats_user_role cache -- there is no access code anymore.
     updateStudentMenu();
     if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
+    // Incident review B1/B2 — an in-place identity switch (sign-in as a
+    // different student, no reload) must not let the previous student's
+    // in-memory /grade caches or a pending stale-token retry paint under
+    // this new identity's keys.
+    if (typeof _resetGradeStateForIdentitySwitch === 'function') _resetGradeStateForIdentitySwitch();
+    // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
+    // bucket into this freshly-resolved identity before the Do Now refresh.
+    try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
     closeSignInModal();
     // TR2: a teacher-issued default password must be changed before continuing.
     // The welcome + Do Now refresh happen AFTER the new password is set.
@@ -7331,12 +7440,25 @@ async function _nfSubmitPassword() {
     // SUCCESS — mirror submitSignIn()'s post-success block (kept in sync by hand).
     var who = (window.rosterClient.current && window.rosterClient.current()) || {};
     var legacyKey = who.username || r.username;
+    // Incident review H1 — capture the PRIOR legacy value before it's
+    // overwritten below, so a genuine pre-roster free-text-email marks
+    // bucket for THIS transition can still be unioned in by D6's migration.
+    var _priorLegacyEmail = null;
+    try { _priorLegacyEmail = localStorage.getItem('apstats_desk_student_email'); } catch (_) {}
     try { localStorage.setItem('apstats_desk_student_email', legacyKey); } catch (_) {}
     try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}   // a real sign-in supersedes guest
     if (typeof registerStudent === 'function') registerStudent(legacyKey);
     if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
     if (typeof updateStudentMenu === 'function') updateStudentMenu();
     if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
+    // Incident review B1/B2 — an in-place identity switch (sign-in as a
+    // different student, no reload) must not let the previous student's
+    // in-memory /grade caches or a pending stale-token retry paint under
+    // this new identity's keys.
+    if (typeof _resetGradeStateForIdentitySwitch === 'function') _resetGradeStateForIdentitySwitch();
+    // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
+    // bucket into this freshly-resolved identity before the Do Now refresh.
+    try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
     closeNameFinder();
     if (result.mustChangePassword) {
       if (typeof openPwChangeModal === 'function') openPwChangeModal();
@@ -7615,12 +7737,25 @@ function _applySignedUpSession(result) {
     return;
   }
   var legacyKey = who.username || (result && result.username);
+  // Incident review H1 — capture the PRIOR legacy value before it's
+  // overwritten below, so a genuine pre-roster free-text-email marks bucket
+  // for THIS transition can still be unioned in by D6's migration.
+  var _priorLegacyEmail = null;
+  try { _priorLegacyEmail = localStorage.getItem('apstats_desk_student_email'); } catch (_) {}
   try { localStorage.setItem('apstats_desk_student_email', legacyKey); } catch (_) {}
   try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}   // real account supersedes guest
   try { registerStudent(legacyKey); } catch (_) {}
   if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
   try { updateStudentMenu(); } catch (_) {}
   if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
+  // Incident review B1/B2 — an in-place identity switch (sign-up as a new
+  // student, no reload) must not let a previously signed-in student's
+  // in-memory /grade caches or a pending stale-token retry paint under this
+  // new identity's keys.
+  if (typeof _resetGradeStateForIdentitySwitch === 'function') _resetGradeStateForIdentitySwitch();
+  // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
+  // bucket into this freshly-resolved identity before the Do Now refresh.
+  try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
   // Access is granted now — drop the wall and close both modals.
   _signinWallActive = false;
   var su = document.getElementById('signup-overlay'); if (su) su.style.display = 'none';
@@ -8057,6 +8192,47 @@ var _gradeLessonsCache = null;
 var _gradeQuartersCache = null; // latest /grade quarters{} — read by the "Why so low?" coach
 var _gradeGradebookCache = null; // latest /grade gradebook{} — read by the "My Gradebook" modal (Phase 3)
 
+// PROGRESS_RESET_FIX_SPEC D1 — tri-state /grade load state. 'unknown' before
+// the first load ever runs; 'loading' while a fetch is in flight;
+// 'available' only on a live res.ok+json.ok payload; 'unavailable' on ANY
+// failure (auth/server/network — see renderDoNowGrades's classifier). Read
+// by rProg (D5 honest-unknown) and _renderGradeStatus (D2 banner).
+var _gradeLoadState = 'unknown';
+var _gradeLoadError = null;          // null | { kind: 'auth'|'server'|'network', status: number|null }
+var _gradeRetryCount = 0;            // capped auto-retry counter (D2, <=3 per page load)
+var _gradeRetryTimer = null;         // single-flight guard so concurrent calls don't stack retries
+var _gradeLastRenderedState = 'unknown'; // D7: detects an unavailable->available transition
+
+// Incident review follow-up (2026-07-21, findings B1/B2/LANE-C) — an in-place
+// identity switch (sign-in as a different student without an intervening Sign
+// Out / reload) must never let the PREVIOUS student's in-memory /grade state
+// bleed into the new student's gating, greying, or Do Now paint:
+//   - _gradeLessonsCache / _gradeGradebookCache / _gradeQuartersCache are
+//     module-globals keyed by nothing but "the last successful fetch" — they
+//     survive an in-place switch untouched, so _serverEvidencePresent() and
+//     openMyGradebook would read the OLD student's data for the new one.
+//   - _gradeRetryTimer closes over the OLD student's (baseUrl, token); if it
+//     fires after the switch, renderDoNowGrades would persist/latch the OLD
+//     student's grades under the NEW student's identity-scoped keys (both
+//     _gradeCacheKey and _serverCompleteKey resolve the studentId live).
+// Every sign-in tail calls this BEFORE its renderDoNow() so a stale retry is
+// cancelled and the caches start cold for the new identity — a failed load
+// then correctly renders D5's honest-unknown state instead of painting stale
+// data. signOutStudent() already reloads the page (a stronger reset), so it
+// does not need this call.
+function _resetGradeStateForIdentitySwitch() {
+  try {
+    if (_gradeRetryTimer) { clearTimeout(_gradeRetryTimer); _gradeRetryTimer = null; }
+    _gradeRetryCount = 0;
+    _gradeLessonsCache = null;
+    _gradeGradebookCache = null;
+    _gradeQuartersCache = null;
+    _gradeLoadState = 'unknown';
+    _gradeLoadError = null;
+    _gradeLastRenderedState = 'unknown';
+  } catch (_) { /* best-effort */ }
+}
+
 window._summerSchedule = window._summerSchedule || null;
 function _walletLoadSummerSchedule() {
   try {
@@ -8162,11 +8338,104 @@ function _gradeCacheKey() {
     return sid ? ('apstats_grade_cache_v1:' + sid) : null;
   } catch (_) { return null; }
 }
+// PROGRESS_RESET_FIX_SPEC D2 — envelope v2 carries the backend origin so a
+// cache written against a DIFFERENT roster-server (e.g. a dev/staging URL,
+// or a future backend migration) is never trusted as evidence for the
+// current one. Key is unchanged (still identity-scoped + view-as-null).
 function _persistGradeCache(data) {
-  try { var k = _gradeCacheKey(); if (k) localStorage.setItem(k, JSON.stringify({ ts: Date.now(), data: data })); } catch (_) { /* best-effort */ }
+  try {
+    var k = _gradeCacheKey();
+    if (k) localStorage.setItem(k, JSON.stringify({
+      v: 2, origin: (window.ROSTER_SERVICE_URL || ''), savedAt: new Date().toISOString(), data: data
+    }));
+  } catch (_) { /* best-effort */ }
 }
 function _loadGradeCache() {
-  try { var k = _gradeCacheKey(); if (!k) return null; var o = JSON.parse(localStorage.getItem(k) || 'null'); return (o && o.data) || null; } catch (_) { return null; }
+  try {
+    var k = _gradeCacheKey();
+    if (!k) return null;
+    var o = JSON.parse(localStorage.getItem(k) || 'null');
+    if (!o) return null;
+    if (o.v === 2) {
+      // Origin mismatch → reject as evidence, but never delete (Invariant 7):
+      // a later success against the RIGHT origin will overwrite it naturally.
+      if (o.origin !== (window.ROSTER_SERVICE_URL || '')) return null;
+      return o.data || null;
+    }
+    // Legacy bare payload (no envelope version) — grandfathered once; the
+    // next live success rewrites it as v2.
+    return o.data || null;
+  } catch (_) { return null; }
+}
+
+// PROGRESS_RESET_FIX_SPEC D3 — the durable server-completion latch. Written
+// ONLY from a live successful /grade (never from a restored/derived
+// payload), it survives a cold _gradeLessonsCache on this device so
+// ledger-qualified completion (Cws>=60 with no worksheet DESK_DONE row —
+// the normal pattern) is never mistaken for "no work done". Mirrors
+// _gradeCacheKey's view-as/signed-out guards exactly, with its own prefix.
+function _serverCompleteKey() {
+  try {
+    if (typeof window !== 'undefined' && window.__VIEW_AS_STUDENT_ID__) return null;
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return null;
+    var sid = (window.rosterClient && typeof rosterClient.studentId === 'function') ? rosterClient.studentId() : null;
+    return sid ? ('apstats_server_complete_v1:' + sid) : null;
+  } catch (_) { return null; }
+}
+function _persistServerComplete(obj) {
+  try { var k = _serverCompleteKey(); if (k) localStorage.setItem(k, JSON.stringify(obj)); } catch (_) { /* best-effort */ }
+}
+// Monotonic: only ever ADDS a true flag, never clears one. Called only from
+// renderDoNowGrades's live-success branch. Never throws.
+function _latchServerComplete(lessons) {
+  try {
+    var k = _serverCompleteKey();
+    if (!k || !Array.isArray(lessons)) return;
+    var origin = window.ROSTER_SERVICE_URL || '';
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(k) || 'null'); } catch (_) { stored = null; }
+    var obj = (stored && stored.v === 1 && stored.origin === origin)
+      ? stored
+      : { v: 1, origin: origin, updatedAt: null, topics: {} }; // fresh start on version/origin mismatch
+    if (!obj.topics || typeof obj.topics !== 'object') obj.topics = {};
+    var wsGate = (typeof DESK_WORKSHEET_DONE_THRESHOLD === 'number') ? DESK_WORKSHEET_DONE_THRESHOLD : 60;
+    for (var i = 0; i < lessons.length; i++) {
+      var L = lessons[i];
+      if (!L || !L.lessonKey) continue;
+      var t = obj.topics[L.lessonKey] || {};
+      if (typeof L.Cws === 'number' && L.Cws >= wsGate) t.ws = true;
+      if (typeof L.blooket === 'number' && L.blooket >= 80) t.bl = true;
+      obj.topics[L.lessonKey] = t;
+    }
+    obj.updatedAt = new Date().toISOString();
+    _persistServerComplete(obj);
+  } catch (_) { /* fail-safe: a latch write never blocks the render */ }
+}
+// { ws:bool, bl:bool } — false/false on no key / no stored obj / wrong
+// version / wrong origin (fail CLOSED as evidence — never invents credit,
+// and never deletes the stored blob on a mismatch).
+function _serverCompleteFor(topic) {
+  try {
+    var k = _serverCompleteKey();
+    if (!k || !topic) return { ws: false, bl: false };
+    var o = JSON.parse(localStorage.getItem(k) || 'null');
+    if (!o || o.v !== 1 || o.origin !== (window.ROSTER_SERVICE_URL || '')) return { ws: false, bl: false };
+    var t = (o.topics && o.topics[topic]) || {};
+    return { ws: !!t.ws, bl: !!t.bl };
+  } catch (_) { return { ws: false, bl: false }; }
+}
+// True once the server has affirmatively spoken THIS device: either the
+// in-memory /grade cache is warm this load, or the durable latch has at
+// least one topic for the current student. Drives D4's fail-open gate.
+function _serverEvidencePresent() {
+  try {
+    if (Array.isArray(_gradeLessonsCache)) return true;
+    var k = _serverCompleteKey();
+    if (!k) return false;
+    var o = JSON.parse(localStorage.getItem(k) || 'null');
+    if (!o || o.v !== 1 || o.origin !== (window.ROSTER_SERVICE_URL || '')) return false;
+    return !!(o.topics && Object.keys(o.topics).length > 0);
+  } catch (_) { return false; }
 }
 
 // ── ANDROID Phase 2 — on-device ledger merge (ANDROID_PHASE2_LEDGER_MERGE_SPEC) ──
@@ -8402,6 +8671,75 @@ function _phase2ReDeriveGrade() {
   } catch (_) { return Promise.resolve(null); }
 }
 
+// PROGRESS_RESET_FIX_SPEC D2 — status banner for #donow-grade-status. Hidden
+// on 'available'/'unknown' (and always in view-as, mirroring _gradeCacheKey).
+// XSS-safe: built with createElement + textContent, never innerHTML of
+// server-derived text.
+function _renderGradeStatus() {
+  try {
+    var host = document.getElementById('donow-grade-status');
+    if (!host) return;
+    host.innerHTML = '';
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) { host.style.display = 'none'; return; }
+    if (_gradeLoadState !== 'unavailable' || !_gradeLoadError) { host.style.display = 'none'; return; }
+    var msg = document.createElement('span');
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 's7btn';
+    if (_gradeLoadError.kind === 'auth') {
+      msg.textContent = 'Your sign-in needs a refresh — please sign in again. Your work is saved.';
+      btn.textContent = 'Sign in';
+      btn.onclick = function () {
+        if (typeof openSignInModal === 'function') openSignInModal();
+        else if (typeof openNameFinder === 'function') openNameFinder();
+      };
+    } else {
+      msg.textContent = 'Grades are temporarily unavailable — your work is saved.';
+      btn.textContent = 'Retry';
+      btn.onclick = function () {
+        // Incident review (LANE D) — D2 specifies Retry "re-calls
+        // renderDoNowGrades" directly. Wiring this to renderDoNow() instead
+        // left Retry unable to refresh grades on a split-brain outage
+        // (/grade down, /donow healthy but never re-run): renderDoNow only
+        // reaches renderDoNowGrades AFTER a successful /donow fetch.
+        var _rtBase = window.ROSTER_SERVICE_URL || null;
+        var _rtTok = null;
+        try {
+          if (window.rosterClient && typeof window.rosterClient.token === 'function') {
+            _rtTok = window.rosterClient.token();
+          }
+        } catch (_) { _rtTok = null; }
+        if (_rtBase && _rtTok && typeof renderDoNowGrades === 'function') {
+          renderDoNowGrades(_rtBase, _rtTok).catch(function () { /* never throws */ });
+        } else if (typeof renderDoNow === 'function') {
+          renderDoNow(); // fallback: token/baseUrl unresolved — renderDoNow calls renderDoNowGrades itself
+        }
+      };
+    }
+    host.appendChild(msg);
+    host.appendChild(btn);
+    host.style.display = 'flex';
+  } catch (_) { /* status banner is best-effort */ }
+}
+
+// PROGRESS_RESET_FIX_SPEC D2 — capped auto-retry (15s/30s/60s, <=3 per page
+// load) on a server/network failure. Single-flighted via _gradeRetryTimer so
+// concurrent renderDoNowGrades calls (boot + visibilitychange + the 60s
+// repaint interval) never stack retries.
+var GRADE_RETRY_BACKOFF_MS = [15000, 30000, 60000];
+function _scheduleGradeRetry(baseUrl, token) {
+  try {
+    if (_gradeRetryTimer) return;                    // already pending — don't stack
+    if (_gradeRetryCount >= GRADE_RETRY_BACKOFF_MS.length) return; // cap reached
+    var delay = GRADE_RETRY_BACKOFF_MS[_gradeRetryCount];
+    _gradeRetryCount++;
+    _gradeRetryTimer = setTimeout(function () {
+      _gradeRetryTimer = null;
+      if (typeof renderDoNowGrades === 'function') renderDoNowGrades(baseUrl, token);
+    }, delay);
+  } catch (_) { /* retry scheduling is best-effort */ }
+}
+
 async function renderDoNowGrades(baseUrl, token) {
   var host = document.getElementById('donow-grades');
   if (!host) return;
@@ -8416,6 +8754,12 @@ async function renderDoNowGrades(baseUrl, token) {
   if (_wslHost && !_coachPanelOpen()) _wslHost.innerHTML = '';
   _gradeQuartersCache = null;
   if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
+  // PROGRESS_RESET_FIX_SPEC D1 — tri-state entry. _priorState feeds D7's
+  // unavailable->available reconcile check below.
+  var _priorState = _gradeLastRenderedState;
+  _gradeLoadState = 'loading';
+  _gradeLoadError = null;
+  if (typeof _renderGradeStatus === 'function') _renderGradeStatus();
   try {
     // P2 view-as rewrite: in view-as mode, swap to /teacher/student/:id/grade
     // with the teacher's token in the Authorization header. _maybeViewAsFetch
@@ -8425,27 +8769,53 @@ async function renderDoNowGrades(baseUrl, token) {
     var __va = (typeof _maybeViewAsFetch === 'function')
       ? _maybeViewAsFetch('/grade?token=' + encodeURIComponent(token), {})
       : { endpoint: '/grade?token=' + encodeURIComponent(token), headers: {} };
-    // Offline-resilient (OFFLINE_MODE_SPEC §4.B): write-through to localStorage on a
-    // live read; restore the last payload ONLY when the fetch is unreachable
-    // (network/timeout throw), never on an HTTP error (401/500 behave as before).
-    var data = null, _gradeOffline = false;
+    // PROGRESS_RESET_FIX_SPEC D1/D2 — classify EVERY failure kind (not just a
+    // thrown/unreachable fetch): 401/403 -> auth; other non-ok / {ok:false} /
+    // malformed JSON -> server; throw/timeout/null-res -> network. 'available'
+    // ONLY on a live res.ok && json.ok payload.
+    var data = null;
     try {
       var res = (typeof _roadmapFetch === 'function')
         ? await _roadmapFetch(baseUrl + __va.endpoint, { headers: __va.headers }, ROADMAP_FETCH_TIMEOUT_MS)
         : await fetch(baseUrl + __va.endpoint, { headers: __va.headers });
-      if (!res) { _gradeOffline = true; }
-      else if (res.ok) { var _j = await res.json(); if (_j && _j.ok) data = _j; }
-    } catch (_) { _gradeOffline = true; }
+      if (!res) {
+        _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'network', status: null };
+      } else if (res.ok) {
+        var _j = null;
+        try { _j = await res.json(); } catch (_) { _j = null; } // malformed JSON -> server, not network
+        if (_j && _j.ok) { data = _j; _gradeLoadState = 'available'; }
+        else { _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'server', status: res.status }; }
+      } else if (res.status === 401 || res.status === 403) {
+        _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'auth', status: res.status };
+      } else {
+        _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'server', status: res.status };
+      }
+    } catch (_) { _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'network', status: null }; }
     if (data) {
-      _persistGradeCache(data);                 // write-through (skipped in view-as)
+      _persistGradeCache(data);                 // write-through (skipped in view-as, now v2-enveloped)
       _phase2RefreshOnline(baseUrl, token);     // ANDROID Phase 2: refresh local signed-ledger replica + offline-inputs (fire-and-forget)
-    } else if (_gradeOffline) {
-      // ANDROID Phase 2: re-derive from the local signed ledger (verified, fresh,
-      // includes just-finished offline work); fall back to the last cached /grade
-      // blob only if the engine / cached inputs / rows aren't available yet.
+      // D3: live-success-only durable latch — never latched from restored/derived data.
+      if (typeof _latchServerComplete === 'function') _latchServerComplete(data.lessons);
+      _gradeLoadError = null;
+      _gradeRetryCount = 0;
+      if (_gradeRetryTimer) { clearTimeout(_gradeRetryTimer); _gradeRetryTimer = null; }
+    } else if (_gradeLoadState === 'unavailable') {
+      // D2: ALL failure kinds now run the evidence-restore branch (previously
+      // only a thrown/unreachable fetch did). ANDROID Phase 2: re-derive from
+      // the local signed ledger (verified, fresh, includes just-finished
+      // offline work); fall back to the last cached /grade blob otherwise.
+      // The restored payload warms the cache + paints, but load state STAYS
+      // 'unavailable' — it is not a live confirmation.
       data = (await _phase2ReDeriveGrade()) || _loadGradeCache();
+      if (typeof _scheduleGradeRetry === 'function') _scheduleGradeRetry(baseUrl, token);
     }
-    if (!data) return;
+    if (typeof _renderGradeStatus === 'function') _renderGradeStatus();
+    if (!data) {
+      // D5: paint the honest-unknown label instead of leaving "0 of N" stale.
+      if (typeof rProg === 'function') rProg();
+      _gradeLastRenderedState = _gradeLoadState;
+      return;
+    }
     // Cache lessons[] for the per-day click-through (Phase 6).
     // Capture the cold→warm transition BEFORE reassigning: the FIRST successful warm
     // must force a calendar window re-size (see the rCal escalation below).
@@ -8483,7 +8853,13 @@ async function renderDoNowGrades(baseUrl, token) {
     // the one cropped out of the DOM. Subsequent polls keep the flicker-free painter path
     // (fires once per cold→warm transition; a single extra rCal is indistinguishable from
     // the 60s-interval rCal, so a rare lessons-less /grade re-arm is harmless).
-    if (_gradeCacheWasCold && _gradeLessonsCache && typeof rCal === 'function') {
+    // D7 (PROGRESS_RESET_FIX_SPEC): a late success FOLLOWING a prior failure
+    // must reconcile locks + greying in one pass even when the cache was
+    // already warm from an earlier evidence-restore (so _gradeCacheWasCold
+    // alone would miss it). Gated on the actual unavailable->available
+    // transition so a steady 'available' poll never thrashes rCal.
+    var _lateRecovery = (_priorState === 'unavailable' && _gradeLoadState === 'available');
+    if ((_gradeCacheWasCold || _lateRecovery) && _gradeLessonsCache && typeof rCal === 'function') {
       try { rCal(); } catch (_) {}
     } else if (typeof paintLocalDoneCells === 'function') {
       paintLocalDoneCells();
@@ -8491,6 +8867,7 @@ async function renderDoNowGrades(baseUrl, token) {
     // #13: the Unit-Progress done-fill + pace label read the same synced scores —
     // recompute now that the /grade cache is warm (first rCal ran before this).
     if (typeof rProg === 'function') rProg();
+    _gradeLastRenderedState = _gradeLoadState;
     var quarters = data.quarters || {};
     _gradeQuartersCache = quarters; // cache for the "Why so low?" coach
     _gradeGradebookCache = data.gradebook || null; // cache for the "My Gradebook" modal
@@ -20511,6 +20888,24 @@ function rProg(){
             if(_p.total)_pace=_p;
         }
     }catch(_){_pace=null;}
+    // PROGRESS_RESET_FIX_SPEC D5 \u2014 honest-unknown: signed in, zero done lessons,
+    // AND no completion evidence anywhere (no warm /grade cache this load, no
+    // durable server-completion latch) must never render as "0 of N lessons
+    // done" \u2014 that IS the incident symptom. Say so plainly instead. typeof-
+    // guarded so signed-out/legacy vm callers (which don't inject
+    // _serverEvidencePresent / _gradeLoadState) keep the existing pace label.
+    if(_pace){
+        var _noEvidence=_pace.done===0
+            &&(typeof _serverEvidencePresent!=='function'||!_serverEvidencePresent())
+            &&!Array.isArray(_gradeLessonsCache);
+        var _loadState=(typeof _gradeLoadState==='string')?_gradeLoadState:'unknown';
+        if(_noEvidence&&_loadState!=='available'){
+            lb.textContent=(_loadState==='unavailable')
+                ?'Progress temporarily unavailable \u2014 your work is saved.'
+                :'Progress loading\u2026';
+            return;
+        }
+    }
     if(_pace){
         const _f=document.createElement('div');_f.className='prog-fill';
         _f.style.width=Math.round(_pace.done/_pace.total*100)+'%';tk.appendChild(_f);
@@ -20997,6 +21392,28 @@ if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById(
 loadRegistry();
 updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
 updateStudentMenu();
+// PROGRESS_RESET_FIX_SPEC D6 — the roster session is already restored
+// synchronously above; union any bare-username/legacy-email marks bucket
+// into the current identity before loadRegistry's tail renders. No-op when
+// signed out or in view-as; try/catch so a migration failure never blocks boot.
+// Incident review B3 — a sibling same-origin app (worksheet/study guide,
+// which shares apstats_roster.v1) can sign a DIFFERENT roster identity in
+// without ever touching this Desk-only legacy key, leaving it pointed at
+// whoever last signed in ON THE DESK. getStudentEmail() reads the legacy key
+// FIRST, so an un-reconciled legacy key here would make migrate resolve the
+// WRONG primary identity and union the live session's marks into it.
+// Reconcile the legacy key to the live roster session first — exactly what
+// every Desk sign-in tail already does on its own success path — so this
+// boot-time migration only ever unions INTO the identity that's actually
+// signed in right now.
+try {
+  var _bootRosterWho = (window.rosterClient && typeof window.rosterClient.current === 'function')
+    ? window.rosterClient.current() : null;
+  if (_bootRosterWho && _bootRosterWho.username) {
+    localStorage.setItem('apstats_desk_student_email', _bootRosterWho.username);
+  }
+} catch (_) {}
+try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(); } catch (_) {}
 // Cross-tab: refresh the top-bar identity chip when sign-in / guest state changes
 // in another tab (red-team: stale-tab guest state).
 try {
