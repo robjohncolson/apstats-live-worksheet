@@ -1,2 +1,14 @@
+# Vercel static mirror serves the same tree GH Pages does.
+# Exclude only non-web content — anything referenced by a page must stay.
 node_modules
 .git
+.gitnexus
+.claude
+roster-server
+state
+tests
+scripts
+tools/cdp
+*.py
+video-ingest*.mjs
+*.skill

@@ -24,6 +24,13 @@
 # If any of those break with a CORS console error, the failing origin is
 # missing from the list below — add it and redeploy; git revert also works.
 #
+# NOTE (2026-08-07): the course site now ALSO deploys to a Vercel mirror at
+#   https://apstats-live-worksheet.vercel.app   (fallback rail for GH Pages
+# outages; `npx vercel deploy --prod --yes` from the repo root). When this
+# patch is rebased onto current server.js and applied, that origin MUST be in
+# the allowlist too, and item 4 of the post-deploy tests is: the Desk signs in
+# from the Vercel origin.
+#
 --- a/roster-server/server.js
 +++ b/roster-server/server.js
 @@ -48,6 +48,20 @@
