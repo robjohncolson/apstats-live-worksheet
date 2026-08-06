@@ -463,6 +463,21 @@
 
     // ── Rendering ───────────────────────────────────────────────────────
 
+    /**
+     * Build the field-row payload for renderWizard. The active row's
+     * cursorOption (uncommitted choice-row cursor) rides along so the
+     * renderer can draw it next to the committed value when they differ.
+     */
+    function wizardFieldsForRender(wState) {
+      return wState.fields.map(function (f, i) {
+        var out = { label: f.label, displayValue: f.value };
+        if (i === wState.cursorIndex && wState.activeField && wState.activeField.type === 'choice') {
+          out.cursorOption = wState.activeField.cursorOption;
+        }
+        return out;
+      });
+    }
+
     function render() {
       if (!renderer) return;
 
@@ -481,9 +496,7 @@
             var wState = activeWizard.getState();
             renderer.renderWizard({
               title: screen.id,
-              fields: wState.fields.map(function (f) {
-                return { label: f.label, displayValue: f.value };
-              }),
+              fields: wizardFieldsForRender(wState),
               cursorIndex: wState.cursorIndex
             });
           }
@@ -498,12 +511,11 @@
           break;
         case 'editor':
           if (activeWizard) {
+            var eState = activeWizard.getState();
             renderer.renderWizard({
               title: screen.id,
-              fields: activeWizard.getState().fields.map(function (f) {
-                return { label: f.label, displayValue: f.value };
-              }),
-              cursorIndex: activeWizard.getState().cursorIndex
+              fields: wizardFieldsForRender(eState),
+              cursorIndex: eState.cursorIndex
             });
           }
           break;

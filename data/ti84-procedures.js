@@ -1,4 +1,4 @@
-// Generated from ti84-procedures-data.json ? do not edit directly
+// Generated from ti84-procedures-data.json — do not edit directly
 window.TI84_PROCEDURES = {
   "meta": {
     "calculator": "TI-84 Plus CE",
@@ -538,10 +538,11 @@ window.TI84_PROCEDURES = {
         "0:Fcdf(",
         "A:binompdf(",
         "B:binomcdf(",
-        "C:poissonpdf(",
-        "D:poissoncdf(",
-        "E:geometpdf(",
-        "F:geometcdf("
+        "C:invBinom(",
+        "D:poissonpdf(",
+        "E:poissoncdf(",
+        "F:geometpdf(",
+        "G:geometcdf("
       ],
       "cursor": 0,
       "description": "DISTR menu (2ND > VARS). Full menu, ROM-verified OS 5.8.2."
@@ -621,6 +622,179 @@ window.TI84_PROCEDURES = {
       ],
       "cursor": 0,
       "description": "ZOOM menu with ZoomStat available."
+    },
+    {
+      "id": "math-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": [
+        "MATH",
+        "NUM",
+        "CMPLX",
+        "PRB",
+        "FRAC"
+      ],
+      "activeTab": "MATH",
+      "items": [
+        "1:▶Frac",
+        "2:▶Dec",
+        "3:³",
+        "4:³√(",
+        "5:ˣ√",
+        "6:fMin(",
+        "7:fMax(",
+        "8:nDeriv(",
+        "9:fnInt(",
+        "0:summation Σ(",
+        "A:logBASE(",
+        "B:piecewise("
+      ],
+      "cursor": 0,
+      "description": "MATH menu with MATH tab active. PRB is three RIGHT presses away, matching the real calculator."
+    },
+    {
+      "id": "math-num-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": [
+        "MATH",
+        "NUM",
+        "CMPLX",
+        "PRB",
+        "FRAC"
+      ],
+      "activeTab": "NUM",
+      "items": [
+        "1:abs(",
+        "2:round(",
+        "3:iPart(",
+        "4:fPart(",
+        "5:int(",
+        "6:min(",
+        "7:max(",
+        "8:lcm(",
+        "9:gcd(",
+        "0:remainder("
+      ],
+      "cursor": 0,
+      "description": "MATH menu with NUM tab active — one RIGHT from MATH; keep going for PRB."
+    },
+    {
+      "id": "math-cmplx-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": [
+        "MATH",
+        "NUM",
+        "CMPLX",
+        "PRB",
+        "FRAC"
+      ],
+      "activeTab": "CMPLX",
+      "items": [
+        "1:conj(",
+        "2:real(",
+        "3:imag(",
+        "4:angle(",
+        "5:abs(",
+        "6:▶Rect",
+        "7:▶Polar"
+      ],
+      "cursor": 0,
+      "description": "MATH menu with CMPLX tab active — two RIGHTs from MATH; one more for PRB."
+    },
+    {
+      "id": "math-prb-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": [
+        "MATH",
+        "NUM",
+        "CMPLX",
+        "PRB",
+        "FRAC"
+      ],
+      "activeTab": "PRB",
+      "items": [
+        "1:rand",
+        "2:nPr",
+        "3:nCr",
+        "4:!",
+        "5:randInt(",
+        "6:randNorm(",
+        "7:randBin(",
+        "8:randIntNoRep("
+      ],
+      "cursor": 0,
+      "description": "MATH menu with PRB tab active — rand pastes directly; randInt( and randIntNoRep( open wizard prompts."
+    },
+    {
+      "id": "randint-wizard",
+      "type": "wizard",
+      "description": "randInt wizard — lower, upper, n, then Paste composes the command onto the home screen.",
+      "fields": [
+        {
+          "label": "lower",
+          "type": "integer"
+        },
+        {
+          "label": "upper",
+          "type": "integer"
+        },
+        {
+          "label": "n",
+          "type": "integer",
+          "default": "1"
+        },
+        {
+          "label": "Paste",
+          "type": "action-button"
+        }
+      ]
+    },
+    {
+      "id": "randintnorep-wizard",
+      "type": "wizard",
+      "description": "randIntNoRep wizard — lower, upper, n, then Paste composes the command onto the home screen.",
+      "fields": [
+        {
+          "label": "lower",
+          "type": "integer"
+        },
+        {
+          "label": "upper",
+          "type": "integer"
+        },
+        {
+          "label": "n",
+          "type": "integer"
+        },
+        {
+          "label": "Paste",
+          "type": "action-button"
+        }
+      ]
+    },
+    {
+      "id": "math-frac-menu",
+      "type": "menu",
+      "title": "MATH",
+      "tabs": [
+        "MATH",
+        "NUM",
+        "CMPLX",
+        "PRB",
+        "FRAC"
+      ],
+      "activeTab": "FRAC",
+      "items": [
+        "1:n/d",
+        "2:Un/d",
+        "3:▶n/d◀▶Un/d",
+        "4:▶F◀▶D"
+      ],
+      "cursor": 0,
+      "description": "MATH menu with FRAC tab active — one RIGHT past PRB."
     },
     {
       "id": "one-var-stats-wizard",
@@ -2359,15 +2533,19 @@ window.TI84_PROCEDURES = {
             {
               "key": "DOWN",
               "feedback": "Move horizontally first if you want Stats input."
-            },
-            {
-              "key": "ENTER",
-              "feedback": "The editor changes only after the correct input type is highlighted."
             }
           ]
         },
         {
-          "stepNumber": 2,
+          "key": "ENTER",
+          "screen": "t-test-stats-wizard",
+          "highlight": "Inpt: Stats selected",
+          "narration": "Press [enter] to select Stats. Highlighting Stats does not choose it - without this the fields stay in Data mode.",
+          "skillType": "confirmation",
+          "stepNumber": 2
+        },
+        {
+          "stepNumber": 3,
           "key": "LEFT",
           "screen": "t-test-data-wizard",
           "highlight": "Inpt: Data",
@@ -2377,12 +2555,16 @@ window.TI84_PROCEDURES = {
             {
               "key": "DOWN",
               "feedback": "That skips the Inpt selector."
-            },
-            {
-              "key": "ENTER",
-              "feedback": "Highlight Data first, then confirm it."
             }
           ]
+        },
+        {
+          "key": "ENTER",
+          "screen": "t-test-data-wizard",
+          "highlight": "Inpt: Data selected",
+          "narration": "Press [enter] to select Data. Highlighting Data does not choose it - without this the fields stay in Stats mode.",
+          "skillType": "confirmation",
+          "stepNumber": 4
         }
       ]
     },
@@ -2550,10 +2732,6 @@ window.TI84_PROCEDURES = {
             {
               "key": "DOWN",
               "feedback": "That skips the icon row."
-            },
-            {
-              "key": "ENTER",
-              "feedback": "Highlight the correct icon first."
             }
           ]
         },
@@ -2778,10 +2956,6 @@ window.TI84_PROCEDURES = {
             {
               "key": "DOWN",
               "feedback": "Stay on the alternative row until the correct relation is selected."
-            },
-            {
-              "key": "ENTER",
-              "feedback": "Highlight the desired relation before confirming it."
             }
           ]
         },
@@ -3032,12 +3206,21 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "plot1-editor-hist",
           "highlight": "Histogram icon",
-          "narration": "Move across the icons until Histogram is highlighted.",
+          "narration": "Press [right] until the Histogram icon is highlighted - it sits two icons right of Scatter, past xyLine.",
           "skillType": "navigation",
-          "repeatable": true
+          "repeatable": true,
+          "minPresses": 2
         },
         {
           "stepNumber": 7,
+          "key": "ENTER",
+          "screen": "plot1-editor-hist",
+          "highlight": "Histogram icon selected",
+          "narration": "Press [enter] to select Histogram. Highlighting the icon does not choose it - without this the plot stays a scatterplot and ZoomStat draws the wrong graph.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "plot1-editor-hist",
           "highlight": "Xlist",
@@ -3045,7 +3228,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "2ND",
           "screen": "plot1-editor-hist",
           "highlight": "2ND indicator",
@@ -3053,7 +3236,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "1",
           "screen": "plot1-editor-hist",
           "highlight": "Xlist: L1",
@@ -3061,7 +3244,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "plot1-editor-hist",
           "highlight": "Freq",
@@ -3069,7 +3252,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "1",
           "screen": "plot1-editor-hist",
           "highlight": "Freq: 1",
@@ -3077,7 +3260,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "ZOOM",
           "screen": "zoom-menu",
           "highlight": "9:ZoomStat",
@@ -3085,7 +3268,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "9",
           "screen": "histogram-graph",
           "highlight": "Histogram graph",
@@ -3093,7 +3276,7 @@ window.TI84_PROCEDURES = {
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "TRACE",
           "screen": "histogram-trace",
           "highlight": "first bar",
@@ -3101,7 +3284,7 @@ window.TI84_PROCEDURES = {
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "RIGHT",
           "screen": "histogram-trace",
           "highlight": "next bar",
@@ -3193,12 +3376,21 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "plot1-editor-modbox",
           "highlight": "Modified Boxplot icon",
-          "narration": "Move across the icons until the modified boxplot icon is highlighted.",
+          "narration": "Press [right] until the modified boxplot icon is highlighted - it sits three icons right of Scatter.",
           "skillType": "navigation",
-          "repeatable": true
+          "repeatable": true,
+          "minPresses": 3
         },
         {
           "stepNumber": 7,
+          "key": "ENTER",
+          "screen": "plot1-editor-modbox",
+          "highlight": "Modified Boxplot icon selected",
+          "narration": "Press [enter] to select the modified boxplot. Highlighting the icon does not choose it.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "plot1-editor-modbox",
           "highlight": "Xlist",
@@ -3206,7 +3398,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "2ND",
           "screen": "plot1-editor-modbox",
           "highlight": "2ND indicator",
@@ -3214,7 +3406,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "1",
           "screen": "plot1-editor-modbox",
           "highlight": "Xlist: L1",
@@ -3222,7 +3414,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "plot1-editor-modbox",
           "highlight": "Freq",
@@ -3230,7 +3422,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "1",
           "screen": "plot1-editor-modbox",
           "highlight": "Freq: 1",
@@ -3238,7 +3430,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "ZOOM",
           "screen": "zoom-menu",
           "highlight": "9:ZoomStat",
@@ -3246,7 +3438,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "9",
           "screen": "modified-boxplot-graph",
           "highlight": "Modified boxplot graph",
@@ -3254,7 +3446,7 @@ window.TI84_PROCEDURES = {
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "TRACE",
           "screen": "modified-boxplot-trace",
           "highlight": "Med",
@@ -3262,7 +3454,7 @@ window.TI84_PROCEDURES = {
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "RIGHT",
           "screen": "modified-boxplot-trace",
           "highlight": "Q1, Q3, whiskers, or outlier",
@@ -3547,12 +3739,20 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "invnorm-wizard",
           "highlight": "LEFT, CENTER, or RIGHT",
-          "narration": "Move across the tail choices until the desired option is highlighted.",
+          "narration": "Move across the tail choices until the desired option is highlighted (0-2 presses depending on the problem).",
           "skillType": "navigation",
           "repeatable": true
         },
         {
           "stepNumber": 11,
+          "key": "ENTER",
+          "screen": "invnorm-wizard",
+          "highlight": "LEFT, CENTER, or RIGHT selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 12,
           "key": "DOWN",
           "screen": "invnorm-wizard",
           "highlight": "Paste",
@@ -3560,7 +3760,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "ENTER",
           "screen": "home",
           "highlight": "invNorm(...) pasted",
@@ -3568,7 +3768,7 @@ window.TI84_PROCEDURES = {
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "ENTER",
           "screen": "distribution-home-result",
           "highlight": "cutoff value",
@@ -3830,11 +4030,11 @@ window.TI84_PROCEDURES = {
         },
         {
           "stepNumber": 6,
-          "key": "RIGHT",
+          "key": "ENTER",
           "screen": "plot1-editor-scatter",
-          "highlight": "Scatter icon",
-          "narration": "Leave the Type row on the scatter icon.",
-          "skillType": "navigation"
+          "highlight": "Scatter icon selected",
+          "narration": "Press [enter] to select the Scatter icon the cursor already sits on.",
+          "skillType": "confirmation"
         },
         {
           "stepNumber": 7,
@@ -4003,11 +4203,11 @@ window.TI84_PROCEDURES = {
         },
         {
           "stepNumber": 6,
-          "key": "RIGHT",
+          "key": "ENTER",
           "screen": "plot1-editor-resid",
-          "highlight": "Scatter icon",
-          "narration": "Use the scatter icon for the residual plot.",
-          "skillType": "navigation"
+          "highlight": "Scatter icon selected",
+          "narration": "Press [enter] to select the Scatter icon - the residual plot uses the scatter type.",
+          "skillType": "confirmation"
         },
         {
           "stepNumber": 7,
@@ -4157,7 +4357,8 @@ window.TI84_PROCEDURES = {
           "highlight": "A:binompdf(",
           "narration": "Scroll until A:binompdf( is highlighted.",
           "skillType": "navigation",
-          "repeatable": true
+          "repeatable": true,
+          "minPresses": 10
         },
         {
           "stepNumber": 4,
@@ -4292,7 +4493,8 @@ window.TI84_PROCEDURES = {
           "highlight": "B:binomcdf(",
           "narration": "Scroll until B:binomcdf( is highlighted.",
           "skillType": "navigation",
-          "repeatable": true
+          "repeatable": true,
+          "minPresses": 11
         },
         {
           "stepNumber": 4,
@@ -4430,12 +4632,11 @@ window.TI84_PROCEDURES = {
         },
         {
           "stepNumber": 4,
-          "key": "SIN",
+          "key": "COS",
           "screen": "geometpdf-wizard",
-          "highlight": "E:geometpdf(",
-          "narration": "Press [sin] (the E key) to select geometpdf..",
-          "skillType": "confirmation",
-          "repeatable": true
+          "highlight": "F:geometpdf(",
+          "narration": "Press [cos] (the F key) to select geometpdf.",
+          "skillType": "confirmation"
         },
         {
           "stepNumber": 5,
@@ -4543,12 +4744,11 @@ window.TI84_PROCEDURES = {
         },
         {
           "stepNumber": 4,
-          "key": "COS",
+          "key": "TAN",
           "screen": "geometcdf-wizard",
-          "highlight": "F:geometcdf(",
-          "narration": "Press [cos] (the F key) to select geometcdf..",
-          "skillType": "confirmation",
-          "repeatable": true
+          "highlight": "G:geometcdf(",
+          "narration": "Press [tan] (the G key) to select geometcdf.",
+          "skillType": "confirmation"
         },
         {
           "stepNumber": 5,
@@ -4861,12 +5061,20 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "invnorm-wizard",
           "highlight": "LEFT, CENTER, or RIGHT",
-          "narration": "Move across the tail choices until the desired option is highlighted.",
+          "narration": "Move across the tail choices until the desired option is highlighted (0-2 presses depending on the problem).",
           "skillType": "navigation",
           "repeatable": true
         },
         {
           "stepNumber": 11,
+          "key": "ENTER",
+          "screen": "invnorm-wizard",
+          "highlight": "LEFT, CENTER, or RIGHT selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 12,
           "key": "DOWN",
           "screen": "invnorm-wizard",
           "highlight": "Paste",
@@ -4874,7 +5082,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "ENTER",
           "screen": "home",
           "highlight": "invNorm(...) pasted",
@@ -4882,7 +5090,7 @@ window.TI84_PROCEDURES = {
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "ENTER",
           "screen": "distribution-home-result",
           "highlight": "cutoff value",
@@ -5018,14 +5226,10 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "one-propztest-wizard",
           "highlight": "desired alternative",
-          "narration": "Move across the Prop row until the correct alternative is highlighted.",
+          "narration": "Move across the Prop row until the correct alternative is highlighted (0-2 presses depending on the problem).",
           "skillType": "navigation",
           "repeatable": true,
           "commonErrors": [
-            {
-              "key": "ENTER",
-              "feedback": "Check the alternative hypothesis direction first. Arrow [RIGHT] to cycle through ≠p₀, <p₀, >p₀."
-            },
             {
               "key": "DOWN",
               "feedback": "Use [RIGHT] to change the direction, not [DOWN]. DOWN moves to the next field."
@@ -5034,6 +5238,14 @@ window.TI84_PROCEDURES = {
         },
         {
           "stepNumber": 12,
+          "key": "ENTER",
+          "screen": "one-propztest-wizard",
+          "highlight": "desired alternative selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 13,
           "key": "DOWN",
           "screen": "one-propztest-wizard",
           "highlight": "Calculate",
@@ -5041,7 +5253,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "DOWN",
           "screen": "one-propztest-wizard",
           "highlight": "Calculate",
@@ -5049,7 +5261,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "ENTER",
           "screen": "one-propztest-result",
           "highlight": "z line",
@@ -5133,7 +5345,6 @@ window.TI84_PROCEDURES = {
           "highlight": "A:1-PropZInt...",
           "narration": "Press [math] (the A key) to select 1-PropZInt..",
           "skillType": "confirmation",
-          "repeatable": true,
           "commonErrors": [
             {
               "key": "ENTER",
@@ -5342,14 +5553,10 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "two-propztest-wizard",
           "highlight": "desired alternative",
-          "narration": "Move across the p1 and p2 alternatives until the desired relation is highlighted.",
+          "narration": "Move across the p1 and p2 alternatives until the desired relation is highlighted (0-2 presses depending on the problem).",
           "skillType": "navigation",
           "repeatable": true,
           "commonErrors": [
-            {
-              "key": "ENTER",
-              "feedback": "Check the alternative hypothesis direction first. Arrow [RIGHT] to cycle through ≠, <, and >."
-            },
             {
               "key": "DOWN",
               "feedback": "Use [RIGHT] to change the direction, not [DOWN]. DOWN moves to the next field."
@@ -5358,6 +5565,14 @@ window.TI84_PROCEDURES = {
         },
         {
           "stepNumber": 14,
+          "key": "ENTER",
+          "screen": "two-propztest-wizard",
+          "highlight": "desired alternative selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 15,
           "key": "DOWN",
           "screen": "two-propztest-wizard",
           "highlight": "Calculate",
@@ -5365,7 +5580,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "DOWN",
           "screen": "two-propztest-wizard",
           "highlight": "Calculate",
@@ -5373,7 +5588,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 17,
           "key": "ENTER",
           "screen": "two-propztest-result",
           "highlight": "z line",
@@ -5457,7 +5672,6 @@ window.TI84_PROCEDURES = {
           "highlight": "B:2-PropZInt...",
           "narration": "Press [apps] (the B key) to select 2-PropZInt..",
           "skillType": "confirmation",
-          "repeatable": true,
           "commonErrors": [
             {
               "key": "MATH",
@@ -5641,15 +5855,19 @@ window.TI84_PROCEDURES = {
             {
               "key": "DOWN",
               "feedback": "Toggle to Stats first — press [RIGHT] to switch from Data to Stats."
-            },
-            {
-              "key": "ENTER",
-              "feedback": "Press [RIGHT] to switch to Stats. ENTER with Data selected requires raw data in a list."
             }
           ]
         },
         {
-          "stepNumber": 6,
+          "key": "ENTER",
+          "screen": "t-test-stats-wizard",
+          "highlight": "Inpt: Stats selected",
+          "narration": "Press [enter] to select Stats. Highlighting Stats does not choose it - without this the fields stay in Data mode.",
+          "skillType": "confirmation",
+          "stepNumber": 6
+        },
+        {
+          "stepNumber": 7,
           "key": "DOWN",
           "screen": "t-test-stats-wizard",
           "highlight": "First data field",
@@ -5657,7 +5875,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "{μ0}",
           "screen": "t-test-stats-wizard",
           "highlight": "μ0 entered",
@@ -5665,7 +5883,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "DOWN",
           "screen": "t-test-stats-wizard",
           "highlight": "x̄",
@@ -5673,7 +5891,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "{x̄}",
           "screen": "t-test-stats-wizard",
           "highlight": "x̄ entered",
@@ -5681,7 +5899,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "t-test-stats-wizard",
           "highlight": "Sx",
@@ -5689,7 +5907,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "{Sx}",
           "screen": "t-test-stats-wizard",
           "highlight": "Sx entered",
@@ -5697,7 +5915,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "DOWN",
           "screen": "t-test-stats-wizard",
           "highlight": "n",
@@ -5705,7 +5923,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "{n}",
           "screen": "t-test-stats-wizard",
           "highlight": "n entered",
@@ -5713,7 +5931,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "DOWN",
           "screen": "t-test-stats-wizard",
           "highlight": "alternative row",
@@ -5722,21 +5940,29 @@ window.TI84_PROCEDURES = {
           "commonErrors": [
             {
               "key": "ENTER",
-              "feedback": "Check the direction first. [RIGHT] cycles through ≠μ₀, <μ₀, >μ₀."
+              "feedback": "Check the direction first. Move to the alternative row, use [RIGHT] to highlight ≠μ₀, <μ₀, or >μ₀, then [ENTER] to select it."
             }
           ]
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "RIGHT",
           "screen": "t-test-stats-wizard",
           "highlight": "desired alternative",
-          "narration": "Move across the alternatives until the desired relation is highlighted.",
+          "narration": "Move across the alternatives until the desired relation is highlighted (0-2 presses depending on the problem).",
           "skillType": "navigation",
           "repeatable": true
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 17,
+          "key": "ENTER",
+          "screen": "t-test-stats-wizard",
+          "highlight": "desired alternative selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 18,
           "key": "DOWN",
           "screen": "t-test-stats-wizard",
           "highlight": "Calculate",
@@ -5744,7 +5970,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 17,
+          "stepNumber": 19,
           "key": "DOWN",
           "screen": "t-test-data-wizard",
           "highlight": "Calculate",
@@ -5752,7 +5978,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 18,
+          "stepNumber": 20,
           "key": "ENTER",
           "screen": "t-test-result",
           "highlight": "t line",
@@ -5907,12 +6133,20 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "t-test-data-wizard",
           "highlight": "desired alternative",
-          "narration": "Move across the alternatives until the desired relation is highlighted.",
+          "narration": "Move across the alternatives until the desired relation is highlighted (0-2 presses depending on the problem).",
           "skillType": "navigation",
           "repeatable": true
         },
         {
           "stepNumber": 14,
+          "key": "ENTER",
+          "screen": "t-test-data-wizard",
+          "highlight": "desired alternative selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 15,
           "key": "DOWN",
           "screen": "t-test-data-wizard",
           "highlight": "Calculate",
@@ -5920,7 +6154,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "DOWN",
           "screen": "t-test-data-wizard",
           "highlight": "Calculate",
@@ -5928,7 +6162,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 17,
           "key": "ENTER",
           "screen": "t-test-result",
           "highlight": "t line",
@@ -6025,15 +6259,19 @@ window.TI84_PROCEDURES = {
             {
               "key": "DOWN",
               "feedback": "Switch to Stats first — press [RIGHT] to toggle from Data to Stats."
-            },
-            {
-              "key": "ENTER",
-              "feedback": "Toggle to Stats with [RIGHT] first. Data mode requires raw data in a list."
             }
           ]
         },
         {
-          "stepNumber": 6,
+          "key": "ENTER",
+          "screen": "t-interval-stats-wizard",
+          "highlight": "Inpt: Stats selected",
+          "narration": "Press [enter] to select Stats. Highlighting Stats does not choose it - without this the fields stay in Data mode.",
+          "skillType": "confirmation",
+          "stepNumber": 6
+        },
+        {
+          "stepNumber": 7,
           "key": "DOWN",
           "screen": "t-interval-stats-wizard",
           "highlight": "First data field",
@@ -6041,7 +6279,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "{x̄}",
           "screen": "t-interval-stats-wizard",
           "highlight": "x̄ entered",
@@ -6049,7 +6287,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "DOWN",
           "screen": "t-interval-stats-wizard",
           "highlight": "Sx",
@@ -6057,7 +6295,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "{Sx}",
           "screen": "t-interval-stats-wizard",
           "highlight": "Sx entered",
@@ -6065,7 +6303,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "t-interval-stats-wizard",
           "highlight": "n",
@@ -6073,7 +6311,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "{n}",
           "screen": "t-interval-stats-wizard",
           "highlight": "n entered",
@@ -6081,7 +6319,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "DOWN",
           "screen": "t-interval-stats-wizard",
           "highlight": "C-Level",
@@ -6089,7 +6327,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "{C-Level}",
           "screen": "t-interval-stats-wizard",
           "highlight": "C-Level entered",
@@ -6097,7 +6335,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "DOWN",
           "screen": "t-interval-stats-wizard",
           "highlight": "Calculate",
@@ -6105,7 +6343,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "ENTER",
           "screen": "t-interval-result",
           "highlight": "interval line",
@@ -6351,7 +6589,15 @@ window.TI84_PROCEDURES = {
           ]
         },
         {
-          "stepNumber": 6,
+          "key": "ENTER",
+          "screen": "two-samp-ttest-stats-wizard",
+          "highlight": "Inpt: Stats selected",
+          "narration": "Press [enter] to select Stats. Highlighting Stats does not choose it - without this the fields stay in Data mode.",
+          "skillType": "confirmation",
+          "stepNumber": 6
+        },
+        {
+          "stepNumber": 7,
           "key": "{x̄1}",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "x̄1 entered",
@@ -6359,7 +6605,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "Sx1",
@@ -6367,7 +6613,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "{Sx1}",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "Sx1 entered",
@@ -6375,7 +6621,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "n1",
@@ -6383,7 +6629,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "{n1}",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "n1 entered",
@@ -6391,7 +6637,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "x̄2",
@@ -6399,7 +6645,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "{x̄2}",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "x̄2 entered",
@@ -6407,7 +6653,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "Sx2",
@@ -6415,7 +6661,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "{Sx2}",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "Sx2 entered",
@@ -6423,7 +6669,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "n2",
@@ -6431,7 +6677,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 17,
           "key": "{n2}",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "n2 entered",
@@ -6439,7 +6685,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 17,
+          "stepNumber": 18,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "alternative row",
@@ -6447,16 +6693,24 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 18,
+          "stepNumber": 19,
           "key": "RIGHT",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "desired alternative",
-          "narration": "Move across the alternatives until the desired relation is highlighted.",
+          "narration": "Move across the alternatives until the desired relation is highlighted (0-2 presses depending on the problem).",
           "skillType": "navigation",
           "repeatable": true
         },
         {
-          "stepNumber": 19,
+          "stepNumber": 20,
+          "key": "ENTER",
+          "screen": "two-samp-ttest-stats-wizard",
+          "highlight": "desired alternative selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 21,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "Pooled",
@@ -6470,16 +6724,24 @@ window.TI84_PROCEDURES = {
           ]
         },
         {
-          "stepNumber": 20,
+          "stepNumber": 22,
           "key": "RIGHT",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "Pooled: No or Yes",
-          "narration": "Choose whether to pool the variances.",
+          "narration": "Choose whether to pool the variances (0-1 presses depending on the problem - Pooled is only No or Yes).",
           "skillType": "navigation",
           "repeatable": true
         },
         {
-          "stepNumber": 21,
+          "stepNumber": 23,
+          "key": "ENTER",
+          "screen": "two-samp-ttest-stats-wizard",
+          "highlight": "Pooled: No or Yes selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 24,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "Calculate",
@@ -6487,7 +6749,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 22,
+          "stepNumber": 25,
           "key": "DOWN",
           "screen": "two-samp-ttest-stats-wizard",
           "highlight": "Calculate",
@@ -6495,7 +6757,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 23,
+          "stepNumber": 26,
           "key": "ENTER",
           "screen": "two-samp-ttest-result",
           "highlight": "t line",
@@ -6574,7 +6836,29 @@ window.TI84_PROCEDURES = {
           ]
         },
         {
-          "stepNumber": 5,
+          "key": "RIGHT",
+          "screen": "two-samp-tint-stats-wizard",
+          "highlight": "Inpt: Stats",
+          "narration": "Switch Inpt from Data to Stats.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "DOWN",
+              "feedback": "Switch to Stats first - press [RIGHT]."
+            }
+          ],
+          "stepNumber": 5
+        },
+        {
+          "key": "ENTER",
+          "screen": "two-samp-tint-stats-wizard",
+          "highlight": "Inpt: Stats selected",
+          "narration": "Press [enter] to select Stats. Highlighting Stats does not choose it - without this the fields stay in Data mode.",
+          "skillType": "confirmation",
+          "stepNumber": 6
+        },
+        {
+          "stepNumber": 7,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "First data field",
@@ -6582,7 +6866,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 8,
           "key": "{x̄1}",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "x̄1 entered",
@@ -6590,7 +6874,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 9,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "Sx1",
@@ -6598,7 +6882,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 10,
           "key": "{Sx1}",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "Sx1 entered",
@@ -6606,7 +6890,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "n1",
@@ -6614,7 +6898,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 12,
           "key": "{n1}",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "n1 entered",
@@ -6622,7 +6906,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 13,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "x̄2",
@@ -6630,7 +6914,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 14,
           "key": "{x̄2}",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "x̄2 entered",
@@ -6638,7 +6922,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 15,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "Sx2",
@@ -6646,7 +6930,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 16,
           "key": "{Sx2}",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "Sx2 entered",
@@ -6654,7 +6938,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 17,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "n2",
@@ -6662,7 +6946,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 18,
           "key": "{n2}",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "n2 entered",
@@ -6670,7 +6954,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 17,
+          "stepNumber": 19,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "C-Level",
@@ -6678,7 +6962,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 18,
+          "stepNumber": 20,
           "key": "{C-Level}",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "C-Level entered",
@@ -6686,7 +6970,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 19,
+          "stepNumber": 21,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "Pooled",
@@ -6694,16 +6978,24 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 20,
+          "stepNumber": 22,
           "key": "RIGHT",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "Pooled: No or Yes",
-          "narration": "Choose whether to pool the variances.",
+          "narration": "Choose whether to pool the variances (0-1 presses depending on the problem - Pooled is only No or Yes).",
           "skillType": "navigation",
           "repeatable": true
         },
         {
-          "stepNumber": 21,
+          "stepNumber": 23,
+          "key": "ENTER",
+          "screen": "two-samp-tint-stats-wizard",
+          "highlight": "Pooled: No or Yes selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 24,
           "key": "DOWN",
           "screen": "two-samp-tint-stats-wizard",
           "highlight": "Calculate",
@@ -6711,7 +7003,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 22,
+          "stepNumber": 25,
           "key": "ENTER",
           "screen": "two-samp-tint-result",
           "highlight": "interval line",
@@ -6915,8 +7207,7 @@ window.TI84_PROCEDURES = {
           "screen": "chi2gof-wizard",
           "highlight": "D:χ²GOF-Test...",
           "narration": "Press [x⁻¹] (the D key) to select χ²GOF-Test..",
-          "skillType": "confirmation",
-          "repeatable": true
+          "skillType": "confirmation"
         },
         {
           "stepNumber": 6,
@@ -7080,8 +7371,7 @@ window.TI84_PROCEDURES = {
           "screen": "chi2test-wizard",
           "highlight": "C:χ²-Test...",
           "narration": "Press [prgm] (the C key) to select χ²-Test..",
-          "skillType": "confirmation",
-          "repeatable": true
+          "skillType": "confirmation"
         },
         {
           "stepNumber": 6,
@@ -7190,8 +7480,7 @@ window.TI84_PROCEDURES = {
           "screen": "linreg-ttest-wizard",
           "highlight": "F:LinRegTTest...",
           "narration": "Press [cos] (the F key) to select LinRegTTest..",
-          "skillType": "confirmation",
-          "repeatable": true
+          "skillType": "confirmation"
         },
         {
           "stepNumber": 6,
@@ -7268,12 +7557,20 @@ window.TI84_PROCEDURES = {
           "key": "RIGHT",
           "screen": "linreg-ttest-wizard",
           "highlight": "desired alternative",
-          "narration": "Move across the β and ρ choices until the desired relation is highlighted.",
+          "narration": "Move across the β and ρ choices until the desired relation is highlighted (0-2 presses depending on the problem).",
           "skillType": "navigation",
           "repeatable": true
         },
         {
           "stepNumber": 15,
+          "key": "ENTER",
+          "screen": "linreg-ttest-wizard",
+          "highlight": "desired alternative selected",
+          "narration": "Press [enter] to select the highlighted option. Arrow keys only move the cursor inside the row; [enter] commits the choice.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 16,
           "key": "DOWN",
           "screen": "linreg-ttest-wizard",
           "highlight": "RegEQ",
@@ -7281,7 +7578,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 17,
           "key": "VARS",
           "screen": "linreg-ttest-wizard",
           "highlight": "Y-VARS selector",
@@ -7289,7 +7586,7 @@ window.TI84_PROCEDURES = {
           "skillType": "parameter"
         },
         {
-          "stepNumber": 17,
+          "stepNumber": 18,
           "key": "RIGHT",
           "screen": "linreg-ttest-wizard",
           "highlight": "Function menu",
@@ -7297,7 +7594,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 18,
+          "stepNumber": 19,
           "key": "ENTER",
           "screen": "linreg-ttest-wizard",
           "highlight": "Y1",
@@ -7305,7 +7602,7 @@ window.TI84_PROCEDURES = {
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 19,
+          "stepNumber": 20,
           "key": "ENTER",
           "screen": "linreg-ttest-wizard",
           "highlight": "RegEQ: Y1",
@@ -7313,7 +7610,7 @@ window.TI84_PROCEDURES = {
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 20,
+          "stepNumber": 21,
           "key": "DOWN",
           "screen": "linreg-ttest-wizard",
           "highlight": "Calculate",
@@ -7321,7 +7618,7 @@ window.TI84_PROCEDURES = {
           "skillType": "navigation"
         },
         {
-          "stepNumber": 21,
+          "stepNumber": 22,
           "key": "ENTER",
           "screen": "linreg-ttest-result",
           "highlight": "t line",
@@ -7403,8 +7700,7 @@ window.TI84_PROCEDURES = {
           "screen": "linreg-tint-wizard",
           "highlight": "G:LinRegTInt...",
           "narration": "Press [tan] (the G key) to select LinRegTInt..",
-          "skillType": "confirmation",
-          "repeatable": true
+          "skillType": "confirmation"
         },
         {
           "stepNumber": 6,
@@ -7539,6 +7835,392 @@ window.TI84_PROCEDURES = {
         "L1": "numeric",
         "L2": "numeric"
       }
+    },
+    {
+      "id": "randint-sampling",
+      "name": "randIntNoRep (random sample)",
+      "unit": 3,
+      "category": "randomization",
+      "description": "Seed the calculator, then use randIntNoRep(lo,hi,n) to select a simple random sample of n distinct labels.",
+      "prerequisites": [],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "key": "{seed}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type the seed value from the problem.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 2,
+          "key": "STO",
+          "screen": "home",
+          "highlight": "→",
+          "narration": "Press [STO→] to store the seed.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "ENTER",
+              "feedback": "Don't evaluate yet — store the value into rand first with [STO→]."
+            }
+          ]
+        },
+        {
+          "stepNumber": 3,
+          "key": "MATH",
+          "screen": "math-menu",
+          "highlight": "MATH tab",
+          "narration": "Open the MATH menu.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "STAT",
+              "feedback": "[STAT] is for data lists. Random-number commands live under [MATH]."
+            }
+          ]
+        },
+        {
+          "stepNumber": 4,
+          "key": "RIGHT",
+          "screen": "math-num-menu",
+          "highlight": "NUM tab",
+          "narration": "Arrow right — this is NUM, not PRB yet. Keep going.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 5,
+          "key": "RIGHT",
+          "screen": "math-cmplx-menu",
+          "highlight": "CMPLX tab",
+          "narration": "Arrow right again — CMPLX. One more.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 6,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "Third right arrow lands on PRB — the random-number commands.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 7,
+          "key": "1",
+          "screen": "home",
+          "highlight": "1:rand",
+          "narration": "Paste rand — the seed target.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 8,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Store the seed. Now every random draw is reproducible.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 9,
+          "key": "MATH",
+          "screen": "math-menu",
+          "highlight": "MATH tab",
+          "narration": "Back to the MATH menu for the sampling command.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 10,
+          "key": "RIGHT",
+          "screen": "math-num-menu",
+          "highlight": "NUM tab",
+          "narration": "Arrow right toward PRB.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 11,
+          "key": "RIGHT",
+          "screen": "math-cmplx-menu",
+          "highlight": "CMPLX tab",
+          "narration": "Keep going.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 12,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "PRB again.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 13,
+          "key": "8",
+          "screen": "randintnorep-wizard",
+          "highlight": "8:randIntNoRep(",
+          "narration": "Open randIntNoRep — no repeats, because a label can only be selected once in a simple random sample. The calculator prompts for each value.",
+          "skillType": "confirmation",
+          "commonErrors": [
+            {
+              "key": "5",
+              "feedback": "randInt( can repeat labels — a repeated label is not a valid simple random sample. Use 8:randIntNoRep(."
+            }
+          ]
+        },
+        {
+          "stepNumber": 14,
+          "key": "{lo}",
+          "screen": "randintnorep-wizard",
+          "highlight": "lower",
+          "narration": "Type the smallest label.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 15,
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "upper",
+          "narration": "Down to the upper bound.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 16,
+          "key": "{hi}",
+          "screen": "randintnorep-wizard",
+          "highlight": "upper",
+          "narration": "Type the largest label.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 17,
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "n",
+          "narration": "Down to n, the sample size.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 18,
+          "key": "{n}",
+          "screen": "randintnorep-wizard",
+          "highlight": "n",
+          "narration": "Type how many labels to select.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 19,
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "Paste",
+          "narration": "Down to Paste.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 20,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Paste the completed command onto the home screen.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 21,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "result line",
+          "narration": "Your sample: the distinct labels shown. The people or items with these labels are selected.",
+          "skillType": "confirmation"
+        }
+      ]
+    },
+    {
+      "id": "randint-assignment",
+      "name": "randIntNoRep (random assignment)",
+      "unit": 3,
+      "category": "randomization",
+      "description": "Seed the calculator, generate a random ordering of all subjects with randIntNoRep(lo,hi), and assign the first groupSize labels to Treatment A.",
+      "prerequisites": [],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "key": "{seed}",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Type the seed value from the problem.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 2,
+          "key": "STO",
+          "screen": "home",
+          "highlight": "→",
+          "narration": "Press [STO→] to store the seed.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 3,
+          "key": "MATH",
+          "screen": "math-menu",
+          "highlight": "MATH tab",
+          "narration": "Open the MATH menu.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "STAT",
+              "feedback": "[STAT] is for data lists. Random-number commands live under [MATH]."
+            }
+          ]
+        },
+        {
+          "stepNumber": 4,
+          "key": "RIGHT",
+          "screen": "math-num-menu",
+          "highlight": "NUM tab",
+          "narration": "Arrow right — this is NUM, not PRB yet. Keep going.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 5,
+          "key": "RIGHT",
+          "screen": "math-cmplx-menu",
+          "highlight": "CMPLX tab",
+          "narration": "Arrow right again — CMPLX. One more.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 6,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "Third right arrow lands on PRB — the random-number commands.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 7,
+          "key": "1",
+          "screen": "home",
+          "highlight": "1:rand",
+          "narration": "Paste rand — the seed target.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 8,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Store the seed so the assignment is reproducible.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 9,
+          "key": "MATH",
+          "screen": "math-menu",
+          "highlight": "MATH tab",
+          "narration": "Back to the MATH menu.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 10,
+          "key": "RIGHT",
+          "screen": "math-num-menu",
+          "highlight": "NUM tab",
+          "narration": "Arrow right toward PRB.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 11,
+          "key": "RIGHT",
+          "screen": "math-cmplx-menu",
+          "highlight": "CMPLX tab",
+          "narration": "Keep going.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 12,
+          "key": "RIGHT",
+          "screen": "math-prb-menu",
+          "highlight": "PRB tab",
+          "narration": "PRB again.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 13,
+          "key": "8",
+          "screen": "randintnorep-wizard",
+          "highlight": "8:randIntNoRep(",
+          "narration": "Open randIntNoRep — every subject must appear exactly once in the ordering. The calculator prompts for each value.",
+          "skillType": "confirmation",
+          "commonErrors": [
+            {
+              "key": "5",
+              "feedback": "randInt( can repeat a subject — then your groups overlap. Use 8:randIntNoRep(."
+            }
+          ]
+        },
+        {
+          "stepNumber": 14,
+          "key": "{lo}",
+          "screen": "randintnorep-wizard",
+          "highlight": "lower",
+          "narration": "Type the smallest subject label.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 15,
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "upper",
+          "narration": "Down to the upper bound.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 16,
+          "key": "{hi}",
+          "screen": "randintnorep-wizard",
+          "highlight": "upper",
+          "narration": "Type the largest subject label.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 17,
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "n",
+          "narration": "Down to n.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 18,
+          "key": "{n}",
+          "screen": "randintnorep-wizard",
+          "highlight": "n",
+          "narration": "Type the total number of subjects — the full ordering places everyone.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 19,
+          "key": "DOWN",
+          "screen": "randintnorep-wizard",
+          "highlight": "Paste",
+          "narration": "Down to Paste.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 20,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "entry line",
+          "narration": "Paste the completed command onto the home screen.",
+          "skillType": "confirmation"
+        },
+        {
+          "stepNumber": 21,
+          "key": "ENTER",
+          "screen": "home",
+          "highlight": "result line",
+          "narration": "Apply the rule: the FIRST groupSize labels shown go to Treatment A; the rest go to Treatment B.",
+          "skillType": "confirmation"
+        }
+      ]
     }
   ],
   "dag": {

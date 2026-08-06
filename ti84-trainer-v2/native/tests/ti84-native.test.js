@@ -497,8 +497,10 @@ describe('TI84Native Orchestrator', function () {
       expect(calc.getScreen().type).toBe('wizard');
 
       // The wizard opens in Data mode by default. Switch to Stats mode.
-      // Inpt field is first, use RIGHT to switch to Stats
+      // Inpt field is first: RIGHT only highlights Stats (ROM-verified —
+      // choice rows don't commit on LEFT/RIGHT), ENTER commits it.
       calc.pressKey('RIGHT');
+      calc.pressKey('ENTER');
 
       // Now in Stats mode
       var ws = calc.getWizardState();
@@ -996,8 +998,8 @@ describe('TI84Native Orchestrator', function () {
       calc.pressKey('2ND');
       calc.pressKey('VARS');
 
-      // geometcdf is item F (index 15)
-      calc.pressKey('F');
+      // geometcdf is item G (index 16)
+      calc.pressKey('G');
       expect(calc.getScreen().type).toBe('wizard');
       expect(calc.getScreen().id).toBe('geometcdf-wizard');
 

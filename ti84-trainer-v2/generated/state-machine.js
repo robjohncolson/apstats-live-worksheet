@@ -71,8 +71,8 @@ const MENU_SELECTIONS = {
     2: 'invnorm-wizard',
     10: 'binompdf-wizard',
     11: 'binomcdf-wizard',
-    14: 'geometpdf-wizard',
-    15: 'geometcdf-wizard',
+    15: 'geometpdf-wizard',
+    16: 'geometcdf-wizard',
   },
   'stat-plot-menu': {
     0: 'plot1-editor-scatter',
@@ -111,13 +111,6 @@ const GRAPH_FOR_PLOT_EDITOR = {
   'plot1-editor-modbox': 'modified-boxplot-graph',
   'plot1-editor-resid': 'residual-plot-graph',
 };
-
-const PLOT_EDITOR_SEQUENCE = [
-  'plot1-editor-scatter',
-  'plot1-editor-hist',
-  'plot1-editor-modbox',
-  'plot1-editor-resid',
-];
 
 const RESULT_SCROLL_TARGETS = {
   'one-var-stats-result-page1': { DOWN: 'one-var-stats-result-page2' },
@@ -718,8 +711,13 @@ function handleEditor(state, key) {
   if (key === 'LEFT' || key === 'RIGHT') {
     const typeRow = getActiveField(state)?.label.startsWith('Type');
 
-    if (typeRow && key === 'RIGHT') {
-      return cyclePlotEditor(state);
+    // ROM fact: LEFT/RIGHT on the Type row move the on-screen icon cursor and
+    // commit nothing. The editor stays on this screen -- with whatever type
+    // was last confirmed by ENTER -- no matter how many times it's pressed;
+    // only ENTER can commit a different type (and therefore a different
+    // screen, since each type has its own field set).
+    if (typeRow) {
+      return cloneOnSameScreen(state, { secondActive: false });
     }
 
     const choiceResult = cycleChoiceField(state, key);
@@ -1013,17 +1011,6 @@ function actionTargetForState(state) {
   }
 
   return moveToScreen(state, targetScreen, {
-    secondActive: false,
-  });
-}
-
-function cyclePlotEditor(state) {
-  const currentIndex = PLOT_EDITOR_SEQUENCE.indexOf(state.id);
-  const nextIndex = wrapIndex(currentIndex, PLOT_EDITOR_SEQUENCE.length, 1);
-  const nextScreen = PLOT_EDITOR_SEQUENCE[nextIndex];
-
-  return moveToScreen(state, nextScreen, {
-    activeField: state.activeField,
     secondActive: false,
   });
 }

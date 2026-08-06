@@ -176,14 +176,15 @@
   }
 
   /**
-   * Returns true if the field type cycles through options on LEFT/RIGHT.
+   * Returns true if the field type commits on LEFT/RIGHT (cycle-in-place).
+   * 'choice' is handled separately in handleKey — it moves an uncommitted
+   * in-row cursor instead (ROM-verified: LEFT/RIGHT don't commit a choice).
    */
   function isCycleField(type) {
     return type === 'list-selector' ||
            type === 'color-selector' ||
            type === 'equation-selector' ||
            type === 'matrix-selector' ||
-           type === 'choice' ||
            type === 'action-selector';
   }
 
@@ -222,6 +223,7 @@
     var currentWizardId = wizardId;
     var inputMode = null;        // 'Data' | 'Stats' | null
     var cursorIndex = 0;
+    var choiceCursor = 0;        // in-row cursor for the active 'choice' field, uncommitted
     var freshEntry = false;      // true when cursor just moved to a number/integer field
     var activeFields = [];       // current visible field definitions
     var values = {};             // label -> current value string
@@ -370,6 +372,9 @@
       if (cursorIndex < 0) cursorIndex = activeFields.length - 1;
       if (cursorIndex >= activeFields.length) cursorIndex = 0;
 
+      // Leaving a choice row discards its uncommitted in-row cursor (ROM-verified).
+      choiceCursor = 0;
+
       // Set fresh entry flag when entering a number/integer field
       var field = activeFields[cursorIndex];
       if (field && isEntryField(field.type)) {
@@ -383,18 +388,12 @@
       }
     }
 
-    // ── Input mode toggling (Data/Stats) ──
+    // ── Input mode switching (Data/Stats) ──
+    // Called after the Inpt choice field commits a new value on ENTER
+    // (Inpt's own value/committed-vs-cursor bookkeeping is handled by the
+    // generic choice-field path — this only handles the field-set swap).
 
-    function toggleInputMode(direction) {
-      var inptField = activeFields[0];
-      if (!inptField || inptField.label !== 'Inpt') return false;
-
-      var options = inptField.options || ['Data', 'Stats'];
-      var oldMode = inputMode;
-      var newMode = cycleOption(options, inputMode, direction);
-
-      if (newMode === oldMode) return false;
-
+    function applyInputModeChange(newMode) {
       // Preserve current values
       for (var key in values) {
         preservedValues[key] = values[key];
@@ -402,12 +401,6 @@
 
       inputMode = newMode;
       values['Inpt'] = newMode;
-
-      // Restore preserved values
-      var oldValues = {};
-      for (var key2 in values) {
-        oldValues[key2] = values[key2];
-      }
 
       // Rebuild fields for the new mode
       rebuildFieldsForMode(newMode);
@@ -423,12 +416,10 @@
       // Make sure the Inpt value reflects the new mode
       values['Inpt'] = newMode;
 
-      // Keep cursor at index 0 (Inpt field)
+      // ENTER commits and stays on the row (ROM-verified) — Inpt is
+      // always field index 0, so the cursor is already there.
       cursorIndex = 0;
       freshEntry = false;
-
-      fireFieldChange('Inpt', oldMode, newMode);
-      return true;
     }
 
     // ── Key handling ──
@@ -457,13 +448,20 @@
       if (normalizedKey === 'LEFT' || normalizedKey === 'RIGHT') {
         var direction = (normalizedKey === 'RIGHT') ? 1 : -1;
 
-        // Special case: Inpt field toggles Data/Stats
-        if (field.label === 'Inpt' && wizardDef.inputModes) {
-          toggleInputMode(direction);
+        // Choice fields: LEFT/RIGHT move an in-row cursor only — nothing
+        // commits until ENTER. The ROM clamps at the ends, it does not wrap.
+        // Inpt is a plain choice field too (ROM-verified) — no special case.
+        if (field.type === 'choice') {
+          var choiceOptions = getCycleOptions(field);
+          if (choiceOptions && choiceOptions.length > 0) {
+            choiceCursor += direction;
+            if (choiceCursor < 0) choiceCursor = 0;
+            if (choiceCursor >= choiceOptions.length) choiceCursor = choiceOptions.length - 1;
+          }
           return getState();
         }
 
-        // Cycle fields: list-selector, choice, action-selector, etc.
+        // Cycle fields: list-selector, action-selector, etc.
         if (isCycleField(field.type)) {
           var options = getCycleOptions(field);
           if (options && options.length > 0) {
@@ -490,7 +488,28 @@
           return getState();
         }
 
-        // Number/integer/choice/selector fields: move to next field
+        // Choice fields: ENTER commits the option under the in-row cursor
+        // and stays on the row (ROM-verified — it does not advance).
+        if (field.type === 'choice') {
+          var enterOptions = getCycleOptions(field);
+          if (enterOptions && enterOptions.length > 0) {
+            var oldChoiceVal = values[field.label];
+            var newChoiceVal = enterOptions[choiceCursor];
+            values[field.label] = newChoiceVal;
+            if (oldChoiceVal !== newChoiceVal) {
+              fireFieldChange(field.label, oldChoiceVal, newChoiceVal);
+
+              // Inpt is a choice field like any other, but committing a
+              // new value additionally swaps the Data/Stats field set.
+              if (field.label === 'Inpt' && wizardDef.inputModes) {
+                applyInputModeChange(newChoiceVal);
+              }
+            }
+          }
+          return getState();
+        }
+
+        // Number/integer/selector fields: move to next field
         moveCursor(1);
         return getState();
       }
@@ -596,6 +615,23 @@
 
     function getState() {
       var field = activeFields[cursorIndex] || null;
+      var isChoiceField = !!field && field.type === 'choice';
+
+      var activeField = null;
+      if (field) {
+        activeField = {
+          label: field.label,
+          type: field.type,
+          value: values[field.label]
+        };
+        if (isChoiceField) {
+          // In-row cursor position, not yet committed — a future renderer
+          // can draw it; unused elsewhere in this module.
+          var choiceOptions = getCycleOptions(field);
+          activeField.cursorOption = choiceOptions ? choiceOptions[choiceCursor] : null;
+        }
+      }
+
       return {
         wizardId: currentWizardId,
         fields: activeFields.map(function (f) {
@@ -607,14 +643,11 @@
           };
         }),
         cursorIndex: cursorIndex,
-        activeField: field ? {
-          label: field.label,
-          type: field.type,
-          value: values[field.label]
-        } : null,
+        activeField: activeField,
         values: getAllValues(),
         inputMode: inputMode,
-        isEditor: isEditor
+        isEditor: isEditor,
+        choiceCursor: isChoiceField ? choiceCursor : null
       };
     }
 

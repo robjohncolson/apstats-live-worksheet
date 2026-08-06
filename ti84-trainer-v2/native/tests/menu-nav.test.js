@@ -372,6 +372,18 @@ describe('TI84MenuNav', function () {
       expect(selected.targetScreen).toBe('invnorm-wizard');
     });
 
+    it('"0" in distr-menu selects Fcdf (index 9), not binompdf-wizard', function () {
+      var menu = MenuNav.create('distr-menu');
+      var selected = null;
+      menu.onSelect(function (evt) { selected = evt; });
+
+      menu.handleKey('0');
+
+      expect(selected.itemIndex).toBe(9);
+      expect(selected.itemLabel).toBe('0:Fcdf(');
+      expect(selected.targetScreen).toBeNull();
+    });
+
     it('"A" in distr-menu selects binompdf (index 10)', function () {
       var menu = MenuNav.create('distr-menu');
       var selected = null;
@@ -396,7 +408,7 @@ describe('TI84MenuNav', function () {
       expect(selected.targetScreen).toBe('binomcdf-wizard');
     });
 
-    it('"E" in distr-menu selects geometpdf (index 14)', function () {
+    it('"E" in distr-menu selects poissoncdf (index 14)', function () {
       var menu = MenuNav.create('distr-menu');
       var selected = null;
       menu.onSelect(function (evt) { selected = evt; });
@@ -404,11 +416,10 @@ describe('TI84MenuNav', function () {
       menu.handleKey('E');
 
       expect(selected.itemIndex).toBe(14);
-      expect(selected.itemLabel).toBe('E:geometpdf(');
-      expect(selected.targetScreen).toBe('geometpdf-wizard');
+      expect(selected.itemLabel).toBe('E:poissoncdf(');
     });
 
-    it('"F" in distr-menu selects geometcdf (index 15)', function () {
+    it('"F" in distr-menu selects geometpdf (index 15)', function () {
       var menu = MenuNav.create('distr-menu');
       var selected = null;
       menu.onSelect(function (evt) { selected = evt; });
@@ -416,7 +427,19 @@ describe('TI84MenuNav', function () {
       menu.handleKey('F');
 
       expect(selected.itemIndex).toBe(15);
-      expect(selected.itemLabel).toBe('F:geometcdf(');
+      expect(selected.itemLabel).toBe('F:geometpdf(');
+      expect(selected.targetScreen).toBe('geometpdf-wizard');
+    });
+
+    it('"G" in distr-menu selects geometcdf (index 16)', function () {
+      var menu = MenuNav.create('distr-menu');
+      var selected = null;
+      menu.onSelect(function (evt) { selected = evt; });
+
+      menu.handleKey('G');
+
+      expect(selected.itemIndex).toBe(16);
+      expect(selected.itemLabel).toBe('G:geometcdf(');
       expect(selected.targetScreen).toBe('geometcdf-wizard');
     });
 
@@ -431,9 +454,9 @@ describe('TI84MenuNav', function () {
       expect(after.tabs).toBeNull();
     });
 
-    it('has 16 items', function () {
+    it('has 17 items', function () {
       var menu = MenuNav.create('distr-menu');
-      expect(menu.getState().items.length).toBe(16);
+      expect(menu.getState().items.length).toBe(17);
     });
   });
 

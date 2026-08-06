@@ -100,10 +100,11 @@
           '0:Fcdf(',
           'A:binompdf(',
           'B:binomcdf(',
-          'C:poissonpdf(',
-          'D:poissoncdf(',
-          'E:geometpdf(',
-          'F:geometcdf('
+          'C:invBinom(',
+          'D:poissonpdf(',
+          'E:poissoncdf(',
+          'F:geometpdf(',
+          'G:geometcdf('
         ],
         cursor: 0
       },
@@ -376,11 +377,12 @@
       'distr-menu': {
         1:  'normalcdf-wizard',   // 2:normalcdf(
         2:  'invnorm-wizard',     // 3:invNorm(
-        9:  'binompdf-wizard',    // 0 key but index 9 — mapped as "scroll to A" in procedures
+        // index 9 is 0:Fcdf( — no wizard implemented, left unmapped
+        // (out of scope, same as invBinom/Fpdf/poissonpdf/poissoncdf below).
         10: 'binompdf-wizard',    // A:binompdf(
         11: 'binomcdf-wizard',    // B:binomcdf(
-        14: 'geometpdf-wizard',   // E:geometpdf(
-        15: 'geometcdf-wizard'    // F:geometcdf(
+        15: 'geometpdf-wizard',   // F:geometpdf(
+        16: 'geometcdf-wizard'    // G:geometcdf(
       },
 
       'stat-plot-menu': {

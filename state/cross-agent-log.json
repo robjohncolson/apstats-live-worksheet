@@ -3758,15 +3758,26 @@
       "timestamp": "2026-06-17T01:47:52Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "d7740e29c295",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW of uncommitted changes in this repo (git diff HEAD + 2 untracked test files: test",
+      "status": "completed",
+      "duration_seconds": 854.104,
+      "timestamp": "2026-08-06T11:45:01Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 320,
-    "cc_to_codex": 320,
+    "total_calls": 321,
+    "cc_to_codex": 321,
     "codex_to_cc": 0,
-    "completed": 239,
+    "completed": 240,
     "failed": 67,
     "refused": 0,
-    "avg_duration_seconds": 655.534
+    "avg_duration_seconds": 656.153
   }
 }

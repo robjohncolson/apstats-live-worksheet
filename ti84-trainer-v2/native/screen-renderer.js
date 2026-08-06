@@ -347,7 +347,11 @@
         /**
          * Render a wizard form screen.
          * @param {Object} wizardState — { title?, fields[], cursorIndex }
-         *   Each field: { label, displayValue }
+         *   Each field: { label, displayValue, cursorOption? }
+         *   cursorOption is the uncommitted choice-row cursor (ROM:
+         *   LEFT/RIGHT moves it, ENTER commits it into displayValue) —
+         *   only ever set on the active row, and only when it differs
+         *   from displayValue is there anything extra to draw.
          */
         renderWizard: function (wizardState) {
           clearCanvas(ctx);
@@ -379,10 +383,26 @@
               ctx.fillRect(0, y, WIDTH, LINE_H);
               ctx.fillStyle = INVERT_FG;
               ctx.fillText(field.label, LEFT_PAD, y + 4);
+
+              var valX = WIDTH - LEFT_PAD;
               if (field.displayValue !== undefined && field.displayValue !== null) {
                 var valStr = String(field.displayValue);
                 var valW = ctx.measureText(valStr).width;
-                ctx.fillText(valStr, WIDTH - LEFT_PAD - valW, y + 4);
+                valX = WIDTH - LEFT_PAD - valW;
+                ctx.fillText(valStr, valX, y + 4);
+              }
+
+              // Uncommitted choice-row cursor, boxed, left of the committed
+              // value — only drawn when it hasn't been committed yet.
+              if (field.cursorOption !== undefined && field.cursorOption !== null &&
+                  field.cursorOption !== field.displayValue) {
+                var curStr = String(field.cursorOption);
+                var curW = ctx.measureText(curStr).width;
+                var curX = valX - CHAR_W - curW;
+                ctx.fillText(curStr, curX, y + 4);
+                ctx.strokeStyle = INVERT_FG;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(curX - 2, y + 1, curW + 4, LINE_H - 2);
               }
             } else {
               ctx.fillStyle = TEXT_COLOR;

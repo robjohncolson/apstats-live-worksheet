@@ -1871,6 +1871,29 @@
     return Boolean(step?.key && PARAMETER_PATTERN.test(step.key));
   }
 
+  // A repeatable step ("press RIGHT until...") accepts unlimited presses of
+  // its own key and only advances when the student presses the next step's key.
+  function stepIsRepeatable(step) {
+    return Boolean(step?.repeatable);
+  }
+
+  // Does this button press match what `step` expects? Shared by the guided
+  // gate (current step) and the repeatable-step lookahead (next step).
+  function stepMatchesKey(step, buttonId) {
+    if (!step) return false;
+
+    const engineKey = BUTTON_TO_ENGINE[buttonId] ?? buttonId;
+
+    if (stepIsParameter(step)) {
+      return PARAMETER_INPUT_KEYS.has(engineKey);
+    }
+
+    const physKey = resolvePhysicalKey(step);
+    return normalizeStepKey(step.key) === engineKey || physKey === engineKey || physKey === buttonId;
+  }
+
+  const REVERSE_ARROW = { LEFT: 'RIGHT', RIGHT: 'LEFT', UP: 'DOWN', DOWN: 'UP' };
+
   function currentProcedure() {
     return app.walkthrough ? PROCEDURE_BY_ID[app.walkthrough.procedureId] : null;
   }
@@ -1882,6 +1905,80 @@
 
     const procedure = currentProcedure();
     return procedure?.steps[app.walkthrough.routeState.routeIndex] ?? null;
+  }
+
+  function stepAfterCurrent() {
+    if (!app.walkthrough) {
+      return null;
+    }
+
+    return currentProcedure()?.steps[app.walkthrough.routeState.routeIndex + 1] ?? null;
+  }
+
+  function isLastStep() {
+    return app.walkthrough.routeState.routeIndex >= currentProcedure().steps.length - 1;
+  }
+
+  // ROM fact: RIGHT clamps at the last plot-type icon and does not wrap, so an
+  // overshoot on a repeatable step is only recoverable by pressing the reverse arrow.
+  function isRepeatBacktrack(step, buttonId) {
+    if (!stepIsRepeatable(step)) return false;
+
+    const engineKey = BUTTON_TO_ENGINE[buttonId] ?? buttonId;
+    return REVERSE_ARROW[normalizeStepKey(step.key)] === engineKey;
+  }
+
+  // Net presses of the current repeatable step's own key: +1 per accepted
+  // repeat press, -1 per reverse-arrow backtrack, floored at 0. The count is
+  // scoped to routeIndex -- reading or bumping it after routeIndex has moved
+  // on reads as 0, which is the "reset whenever routeIndex changes" rule.
+  function repeatNetPresses() {
+    const walkthrough = app.walkthrough;
+
+    if (!walkthrough || walkthrough.repeatPressIndex !== walkthrough.routeState.routeIndex) {
+      return 0;
+    }
+
+    return walkthrough.repeatPressCount;
+  }
+
+  function bumpRepeatNetPresses(delta) {
+    const walkthrough = app.walkthrough;
+    const routeIndex = walkthrough.routeState.routeIndex;
+    const current = walkthrough.repeatPressIndex === routeIndex ? walkthrough.repeatPressCount : 0;
+
+    walkthrough.repeatPressCount = Math.max(0, current + delta);
+    walkthrough.repeatPressIndex = routeIndex;
+  }
+
+  // Mirrors nextRouteState, but pins routeIndex so a repeated press moves the
+  // screen (e.g. scrolls the DISTR menu) without advancing the walkthrough.
+  function repeatRouteState(buttonId) {
+    const held = app.walkthrough.routeState.routeIndex;
+    const currentScreenId = app.walkthrough.routeState.id;
+    const engineKey = BUTTON_TO_ENGINE[buttonId] ?? buttonId;
+
+    try {
+      const next = transition(app.walkthrough.routeState, engineKey);
+      if (!next) return app.walkthrough.routeState;
+
+      // ROM fact: LEFT/RIGHT on a choice row (the plot Type row) move a
+      // cursor and commit nothing. If the engine's guided-route fallback
+      // still teleported to a different screen -- e.g. jumping straight to
+      // plot1-editor-hist before ENTER commits -- reject it and hold the
+      // screen the student is actually looking at. DOWN-driven scrolls (the
+      // DISTR menu) never hit this: they don't change the screen id at all.
+      if (next.id !== currentScreenId && (engineKey === 'LEFT' || engineKey === 'RIGHT')) {
+        return app.walkthrough.routeState;
+      }
+
+      next.routeId = app.walkthrough.routeState.routeId;
+      next.routeIndex = held;
+      return next;
+    } catch (error) {
+      console.warn('Keeping the authored screen for a repeated step.', error);
+      return app.walkthrough.routeState;
+    }
   }
 
   function currentScreen() {
@@ -2513,6 +2610,10 @@
       return 'Not that key.';
     }
 
+    if (stepIsRepeatable(step)) {
+      return `Blocked. Keep pressing [${displayKey(step.key)}] until the screen matches.`;
+    }
+
     return `Blocked. The next key is [${displayKey(step.key)}].`;
   }
 
@@ -2573,6 +2674,8 @@
       routeState,
       errors: 0,
       hints: 0,
+      repeatPressCount: 0,
+      repeatPressIndex: routeState.routeIndex,
       preparing: true,
       completion: null,
       hintVisible: false,
@@ -3448,19 +3551,35 @@
       return;
     }
 
-    const step = currentStep();
+    let step = currentStep();
 
     if (!step) {
       return;
     }
 
-    const engineKey = BUTTON_TO_ENGINE[buttonId] ?? buttonId;
-    const physKey = resolvePhysicalKey(step);
-    const correct = stepIsParameter(step)
-      ? PARAMETER_INPUT_KEYS.has(engineKey)
-      : normalizeStepKey(step.key) === engineKey || physKey === engineKey || physKey === buttonId;
+    // A repeatable step never advances on its own key. The student leaves it by
+    // pressing the NEXT step's key, so consume it before judging this press --
+    // but only once they've pressed the repeatable key enough times
+    // (minPresses). Otherwise this would be a zero-press advance: e.g. ENTER
+    // on the plot Type row could select Scatter's default instead of the
+    // Histogram icon the student never actually arrowed to.
+    if (stepIsRepeatable(step) && !stepMatchesKey(step, buttonId) && stepMatchesKey(stepAfterCurrent(), buttonId)) {
+      if (repeatNetPresses() < (step.minPresses ?? 0)) {
+        app.banner = `Keep pressing [${displayKey(step.key)}] until the screen matches, then move on.`;
+        render();
+        return;
+      }
 
-    if (!correct) {
+      app.walkthrough.routeState.routeIndex += 1;
+      step = currentStep();
+    }
+
+    // Parameter steps type a whole sample value per press, so repeating one would
+    // retype it; last steps must still advance so the walkthrough can finish.
+    const holdOnStep = stepIsRepeatable(step) && !stepIsParameter(step) && !isLastStep();
+    const accepted = stepMatchesKey(step, buttonId) || isRepeatBacktrack(step, buttonId);
+
+    if (!accepted) {
       if (app.walkthrough.mode === 'recall') {
         app.walkthrough.errors += 1;
       }
@@ -3470,6 +3589,14 @@
       flashButton(buttonId, 'wrong');
       render();
       return;
+    }
+
+    if (holdOnStep) {
+      if (stepMatchesKey(step, buttonId)) {
+        bumpRepeatNetPresses(1);
+      } else if (isRepeatBacktrack(step, buttonId)) {
+        bumpRepeatNetPresses(-1);
+      }
     }
 
     app.busy = true;
@@ -3482,12 +3609,17 @@
         app.banner = `Filled ${token} with ${value}.`;
       } else {
         await app.bridge.sendButton(buttonId);
-        app.banner = app.walkthrough.mode === 'guided'
-          ? 'Correct. Continue with the next step.'
-          : 'Correct. Keep going from memory.';
+        app.banner = holdOnStep
+          ? (app.walkthrough.mode === 'guided'
+              ? `Correct. Keep pressing [${displayKey(step.key)}] until the screen matches, then move on.`
+              : 'Correct. Keep going from memory.')
+          : (app.walkthrough.mode === 'guided'
+              ? 'Correct. Continue with the next step.'
+              : 'Correct. Keep going from memory.');
       }
 
-      app.walkthrough.routeState = nextRouteState(step);
+      // Last-step repeatables (TRACE-RIGHT, matrix ENTER) still advance here; enterResultReviewPhase() below disengages the clutch, so further presses fall through to app.bridge.sendButton at the top of this function.
+      app.walkthrough.routeState = holdOnStep ? repeatRouteState(buttonId) : nextRouteState(step);
       app.walkthrough.hintVisible = false;
       flashButton(buttonId, 'correct');
 
@@ -3523,6 +3655,8 @@
       const token = step.key.slice(1, -1);
       const value = sampleValueForToken(token, app.walkthrough.problem?.values ?? {});
       app.banner = `Hint: use the numeric cluster so the trainer can type ${value} into ${token}.`;
+    } else if (stepIsRepeatable(step)) {
+      app.banner = `Hint: press [${displayKey(step.key)}] until the screen matches, then move on.`;
     } else {
       app.banner = `Hint: press [${displayKey(step.key)}].`;
     }
@@ -4696,10 +4830,19 @@
       lines.push(step.narration);
     }
 
+    let expectText = null;
+    if (stepIsParameter(step)) {
+      expectText = 'numeric entry';
+    } else if (stepIsRepeatable(step)) {
+      expectText = `repeated ${displayKey(step.key)}`;
+    } else if (step) {
+      expectText = displayKey(step.key);
+    }
+
     return {
       lines,
       footer: step && app.walkthrough?.mode !== 'recall'
-        ? `Expect ${stepIsParameter(step) ? 'numeric entry' : displayKey(step.key)}`
+        ? `Expect ${expectText}`
         : procedure.description,
     };
   }

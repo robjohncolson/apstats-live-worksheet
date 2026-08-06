@@ -374,7 +374,7 @@ describe('TI84FormEngine', function () {
   // ── Choice cycling ────────────────────────────────────────────────
 
   describe('Choice cycling', function () {
-    it('RIGHT cycles through alternative hypothesis options', function () {
+    it('RIGHT moves the in-row cursor and commits nothing', function () {
       var wiz = FormEngine.create('one-propztest-wizard');
 
       // Move to prop field (index 3, choice with options)
@@ -389,19 +389,17 @@ describe('TI84FormEngine', function () {
       var firstOption = wiz.getValue('prop');
       expect(firstOption).toBe('\u2260p\u2080');
 
-      // RIGHT cycles to next
-      wiz.handleKey('RIGHT');
-      expect(wiz.getValue('prop')).toBe('<p\u2080');
-
-      wiz.handleKey('RIGHT');
-      expect(wiz.getValue('prop')).toBe('>p\u2080');
-
-      // Wraps back to first
+      // RIGHT moves the in-row cursor but the ROM does not commit until ENTER
       wiz.handleKey('RIGHT');
       expect(wiz.getValue('prop')).toBe('\u2260p\u2080');
+      expect(wiz.getState().choiceCursor).toBe(1);
+
+      wiz.handleKey('RIGHT');
+      expect(wiz.getValue('prop')).toBe('\u2260p\u2080');
+      expect(wiz.getState().choiceCursor).toBe(2);
     });
 
-    it('LEFT cycles in reverse through options', function () {
+    it('LEFT moves the in-row cursor back and clamps at index 0', function () {
       var wiz = FormEngine.create('one-propztest-wizard');
 
       // Move to prop field
@@ -409,12 +407,23 @@ describe('TI84FormEngine', function () {
       wiz.handleKey('DOWN');
       wiz.handleKey('DOWN');
 
-      // LEFT from first option wraps to last
+      // LEFT from index 0 clamps at 0 \u2014 the ROM does not wrap
       wiz.handleKey('LEFT');
-      expect(wiz.getValue('prop')).toBe('>p\u2080');
+      expect(wiz.getState().choiceCursor).toBe(0);
+      expect(wiz.getValue('prop')).toBe('\u2260p\u2080');
+
+      wiz.handleKey('RIGHT');
+      wiz.handleKey('RIGHT');
+      expect(wiz.getState().choiceCursor).toBe(2);
+
+      // One LEFT past index 0 still clamps at 0
+      wiz.handleKey('LEFT');
+      wiz.handleKey('LEFT');
+      wiz.handleKey('LEFT');
+      expect(wiz.getState().choiceCursor).toBe(0);
     });
 
-    it('ENTER on choice field moves to next field (does NOT select)', function () {
+    it('ENTER commits the cursor\'s option and leaves cursorIndex unchanged', function () {
       var wiz = FormEngine.create('one-propztest-wizard');
 
       // Move to prop field (index 3)
@@ -424,25 +433,70 @@ describe('TI84FormEngine', function () {
 
       expect(wiz.getState().cursorIndex).toBe(3);
 
-      wiz.handleKey('ENTER');
-      expect(wiz.getState().cursorIndex).toBe(4);
+      wiz.handleKey('RIGHT'); // move in-row cursor to '<p0'
+      wiz.handleKey('ENTER'); // commit it
+
+      expect(wiz.getValue('prop')).toBe('<p\u2080');
+      expect(wiz.getState().cursorIndex).toBe(3);
     });
 
-    it('Tail field in invnorm cycles LEFT/CENTER/RIGHT', function () {
+    it('discards an uncommitted cursor move when the row is left (RIGHT, DOWN, UP)', function () {
+      var wiz = FormEngine.create('one-propztest-wizard');
+
+      wiz.handleKey('DOWN');
+      wiz.handleKey('DOWN');
+      wiz.handleKey('DOWN'); // prop field, index 3
+
+      expect(wiz.getValue('prop')).toBe('\u2260p\u2080');
+
+      wiz.handleKey('RIGHT'); // move cursor, don't commit
+      wiz.handleKey('DOWN');  // leave the row \u2014 discards the cursor
+      wiz.handleKey('UP');    // come back \u2014 cursor resets to index 0
+
+      expect(wiz.getValue('prop')).toBe('\u2260p\u2080');
+    });
+
+    it('RIGHT clamps at the last option instead of wrapping', function () {
+      var wiz = FormEngine.create('one-propztest-wizard');
+
+      wiz.handleKey('DOWN');
+      wiz.handleKey('DOWN');
+      wiz.handleKey('DOWN'); // prop field, 3 options
+
+      wiz.handleKey('RIGHT');
+      wiz.handleKey('RIGHT');
+      expect(wiz.getState().choiceCursor).toBe(2); // last option
+
+      wiz.handleKey('RIGHT'); // one more RIGHT past the end
+      expect(wiz.getState().choiceCursor).toBe(2); // clamps, does not wrap to 0
+
+      wiz.handleKey('ENTER');
+      expect(wiz.getValue('prop')).toBe('>p\u2080');
+    });
+
+    it('RIGHT+ENTER commits CENTER; RIGHT then DOWN then UP discards and the value is still LEFT', function () {
+      // RIGHT + ENTER commits the option under the cursor
       var wiz = FormEngine.create('invnorm-wizard');
-
-      // Move to Tail field (index 3)
       wiz.handleKey('DOWN');
       wiz.handleKey('DOWN');
       wiz.handleKey('DOWN');
-
       expect(wiz.getValue('Tail')).toBe('LEFT');
 
       wiz.handleKey('RIGHT');
+      wiz.handleKey('ENTER');
       expect(wiz.getValue('Tail')).toBe('CENTER');
 
-      wiz.handleKey('RIGHT');
-      expect(wiz.getValue('Tail')).toBe('RIGHT');
+      // Leaving the row before ENTER discards the moved cursor \u2014 the value
+      // keeps its old (never-committed) default.
+      var wiz2 = FormEngine.create('invnorm-wizard');
+      wiz2.handleKey('DOWN');
+      wiz2.handleKey('DOWN');
+      wiz2.handleKey('DOWN');
+
+      wiz2.handleKey('RIGHT');
+      wiz2.handleKey('DOWN');
+      wiz2.handleKey('UP');
+      expect(wiz2.getValue('Tail')).toBe('LEFT');
     });
   });
 
@@ -664,15 +718,33 @@ describe('TI84FormEngine', function () {
       expect(state.fields[0].value).toBe('Stats');
     });
 
-    it('RIGHT on Inpt toggles Data -> Stats', function () {
+    it('Inpt is an ordinary choice row: RIGHT moves the cursor, ENTER commits', function () {
       var wiz = FormEngine.create('t-test-data-wizard');
 
       expect(wiz.getState().inputMode).toBe('Data');
+      expect(wiz.getState().activeField.type).toBe('choice');
 
       wiz.handleKey('RIGHT');
+      expect(wiz.getState().inputMode).toBe('Data'); // not yet committed
+      expect(wiz.getValue('Inpt')).toBe('Data');
 
+      wiz.handleKey('ENTER');
       expect(wiz.getState().inputMode).toBe('Stats');
       expect(wiz.getValue('Inpt')).toBe('Stats');
+    });
+
+    it('DOWN before ENTER discards the Inpt cursor move \u2014 mode stays Data', function () {
+      var wiz = FormEngine.create('t-test-data-wizard');
+
+      wiz.handleKey('RIGHT'); // move cursor toward Stats, don't commit
+      wiz.handleKey('DOWN');  // leave the row \u2014 discards the cursor
+      wiz.handleKey('UP');    // come back \u2014 cursor resets to index 0
+
+      expect(wiz.getState().inputMode).toBe('Data');
+      expect(wiz.getValue('Inpt')).toBe('Data');
+
+      wiz.handleKey('ENTER'); // cursor is back at index 0 (Data) \u2014 re-commits Data
+      expect(wiz.getState().inputMode).toBe('Data');
     });
 
     it('toggling Data -> Stats changes visible field list', function () {
@@ -688,6 +760,7 @@ describe('TI84FormEngine', function () {
 
       // Switch to Stats
       wiz.handleKey('RIGHT');
+      wiz.handleKey('ENTER');
 
       var statsState = wiz.getState();
       var statsLabels = statsState.fields.map(function (f) { return f.label; });
@@ -709,7 +782,8 @@ describe('TI84FormEngine', function () {
 
       // Switch to Stats
       wiz.handleKey('UP'); // back to Inpt
-      wiz.handleKey('RIGHT'); // toggle to Stats
+      wiz.handleKey('RIGHT'); // move cursor to Stats
+      wiz.handleKey('ENTER'); // commit
 
       // mu0 should still be '5' because it appears in both modes
       expect(wiz.getValue('\u03BC0')).toBe('5');
@@ -720,6 +794,7 @@ describe('TI84FormEngine', function () {
 
       // Switch to Stats
       wiz.handleKey('RIGHT');
+      wiz.handleKey('ENTER');
 
       // Enter x-bar value
       wiz.handleKey('DOWN'); // mu0
@@ -732,10 +807,12 @@ describe('TI84FormEngine', function () {
       wiz.handleKey('UP');
       wiz.handleKey('UP');
       wiz.handleKey('LEFT');
+      wiz.handleKey('ENTER');
       expect(wiz.getState().inputMode).toBe('Data');
 
-      // Switch to Stats again — value should be preserved
+      // Switch to Stats again \u2014 value should be preserved
       wiz.handleKey('RIGHT');
+      wiz.handleKey('ENTER');
       expect(wiz.getValue('x\u0304')).toBe('42');
     });
 
@@ -743,6 +820,7 @@ describe('TI84FormEngine', function () {
       var wiz = FormEngine.create('t-test-data-wizard');
 
       wiz.handleKey('RIGHT');
+      wiz.handleKey('ENTER');
 
       expect(wiz.getState().cursorIndex).toBe(0);
     });
@@ -756,6 +834,7 @@ describe('TI84FormEngine', function () {
       expect(dataLabels).toContain('List');
 
       wiz.handleKey('RIGHT');
+      wiz.handleKey('ENTER');
 
       expect(wiz.getState().inputMode).toBe('Stats');
       var statsLabels = wiz.getState().fields.map(function (f) { return f.label; });
@@ -961,15 +1040,22 @@ describe('TI84FormEngine', function () {
       expect(editor.getValue('Ylist')).toBe('L2');
     });
 
-    it('On/Off cycles between On and Off', function () {
+    it('On/Off: RIGHT moves the cursor, ENTER commits', function () {
       var editor = FormEngine.create('plot1-editor-scatter');
 
       expect(editor.getValue('On/Off')).toBe('On');
 
       editor.handleKey('RIGHT');
+      expect(editor.getValue('On/Off')).toBe('On'); // not yet committed
+
+      editor.handleKey('ENTER');
       expect(editor.getValue('On/Off')).toBe('Off');
 
-      editor.handleKey('RIGHT');
+      // Leave and re-enter the row: the in-row cursor resets to index 0
+      // (On) regardless of the committed value (ROM-verified).
+      editor.handleKey('DOWN');
+      editor.handleKey('UP');
+      editor.handleKey('ENTER');
       expect(editor.getValue('On/Off')).toBe('On');
     });
 
@@ -1041,7 +1127,7 @@ describe('TI84FormEngine', function () {
       expect(labels).toContain('Pooled');
     });
 
-    it('Pooled defaults to No and cycles', function () {
+    it('Pooled: RIGHT moves the cursor, ENTER commits', function () {
       var wiz = FormEngine.create('two-samp-ttest-stats-wizard');
 
       // Navigate to Pooled field
@@ -1057,9 +1143,15 @@ describe('TI84FormEngine', function () {
       expect(wiz.getValue('Pooled')).toBe('No');
 
       wiz.handleKey('RIGHT');
+      expect(wiz.getValue('Pooled')).toBe('No'); // not yet committed
+
+      wiz.handleKey('ENTER');
       expect(wiz.getValue('Pooled')).toBe('Yes');
 
-      wiz.handleKey('RIGHT');
+      // Leave and re-enter the row: the in-row cursor resets to index 0 (No)
+      wiz.handleKey('DOWN');
+      wiz.handleKey('UP');
+      wiz.handleKey('ENTER');
       expect(wiz.getValue('Pooled')).toBe('No');
     });
   });
@@ -1086,7 +1178,9 @@ describe('TI84FormEngine', function () {
 
       expect(wiz.getValue('\u03B2 and \u03C1')).toBe('\u22600');
 
+      // Choice fields commit on ENTER, not on RIGHT alone
       wiz.handleKey('RIGHT');
+      wiz.handleKey('ENTER');
       expect(wiz.getValue('\u03B2 and \u03C1')).toBe('<0');
     });
   });
