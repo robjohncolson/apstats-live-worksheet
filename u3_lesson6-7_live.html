@@ -1159,6 +1159,7 @@
     <div id="aggregateDrawer" class="aggregate-drawer">
         <div class="aggregate-header">
             <div class="aggregate-title" id="aggregateTitle">Class Answers</div>
+            <span style="font-size: 0.7em; color: #999; font-weight: normal;">(Esc to close)</span>
             <button id="aggregateClose" class="aggregate-close" aria-label="Close drawer">×</button>
         </div>
         <div id="aggregateContent" class="aggregate-content">
@@ -1602,15 +1603,17 @@
         }
 
         // ============ AGGREGATE DRAWER ============
+        function closeDrawer() {
+            document.getElementById('aggregateDrawer').classList.remove('open');
+            currentQuestionBlanks = [];
+        }
+
         function ensureDrawer() {
             const drawer = document.getElementById('aggregateDrawer');
             const closeBtn = document.getElementById('aggregateClose');
             if (closeBtn && !closeBtn.dataset.bound) {
                 closeBtn.dataset.bound = 'true';
-                closeBtn.addEventListener('click', () => {
-                    drawer.classList.remove('open');
-                    currentQuestionBlanks = [];
-                });
+                closeBtn.addEventListener('click', closeDrawer);
             }
             return {
                 drawer,
@@ -1618,6 +1621,12 @@
                 contentEl: document.getElementById('aggregateContent')
             };
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('aggregateDrawer').classList.contains('open')) {
+                closeDrawer();
+            }
+        });
 
         function ensureRailwayDefaults() {
             if (typeof window.USE_RAILWAY === 'undefined') {

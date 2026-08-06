@@ -620,7 +620,7 @@
     <!-- Aggregate Drawer -->
     <div id="aggregateDrawer" class="aggregate-drawer">
         <div class="drawer-header">
-            <h3>Class Responses</h3>
+            <h3>Class Responses <span style="font-size: 0.7em; color: #999; font-weight: normal;">(Esc to close)</span></h3>
             <button class="drawer-close" onclick="closeDrawer()">&times;</button>
         </div>
         <div class="drawer-content" id="drawerContent">
@@ -1075,6 +1075,12 @@
             document.getElementById('aggregateDrawer').classList.remove('open');
             currentQuestionBlanks = [];
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('aggregateDrawer').classList.contains('open')) {
+                closeDrawer();
+            }
+        });
 
         function refreshDrawerIfOpen() {
             if (document.getElementById('aggregateDrawer').classList.contains('open') && currentQuestionBlanks.length > 0) {
