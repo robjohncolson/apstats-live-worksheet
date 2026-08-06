@@ -15,7 +15,6 @@ const CI_ONLY_EXCLUDES = [
   'tests/doge-presence-submenu.test.js', // ../curriculum_render
   'tests/disambiguate-skills.test.js',   // working data/skill-map.* (uncommitted)
   'tests/skill-map.test.js',             // working data/skill-map.* (uncommitted)
-  'tests/remaining-feature-contracts.test.js', // untracked wsx.js
 ];
 
 export default defineConfig({

@@ -16,7 +16,12 @@ const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const START = readFileSync(resolve(repo, 'start-here.html'), 'utf8');
 const INDEX = readFileSync(resolve(repo, 'index.html'), 'utf8');
 const TOC = readFileSync(resolve(repo, 'TOC.html'), 'utf8');
-const WSX = readFileSync(resolve(repo, 'wsx.js'), 'utf8');
+// wsx.js is a stale, untracked local scratch extraction (never committed to this
+// repo) that only F034 below depends on. Self-skip that one describe when it's
+// absent instead of failing every test in this file at load time.
+const WSX_PATH = resolve(repo, 'wsx.js');
+const WSX_AVAILABLE = existsSync(WSX_PATH);
+const WSX = WSX_AVAILABLE ? readFileSync(WSX_PATH, 'utf8') : '';
 // Pin the LIVE shipping surfaces (not the dead wsx.js extraction) for features
 // that were only manually documented before the audit.
 const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
@@ -124,7 +129,7 @@ describe('F004 Start Here signed-in progress preview', () => {
   });
 });
 
-describe('F034 AI tutor prompt copy', () => {
+describe.skipIf(!WSX_AVAILABLE)('F034 AI tutor prompt copy', () => {
   it('copies lesson and progress-check tutor prompts from the expected ai-tutor paths', async () => {
     const dom = new JSDOM(
       '<span id="ai-tutor-status"></span><span id="ai-tutor-pc-status"></span>',
