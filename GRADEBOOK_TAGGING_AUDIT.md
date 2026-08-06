@@ -1,5 +1,5 @@
 # Gradebook Tagging Audit — AP Skill Coverage
-<!-- GENERATED: 2026-06-20T22:23:07.852Z -->
+<!-- GENERATED: 2026-08-06T23:24:45.473Z -->
 
 ## Summary
 
@@ -13,8 +13,8 @@
   Skills are inferred from lesson→topic→framework mapping only.
 
 ### Pool (b) — curriculum_render/data/curriculum.js
-- Status: AVAILABLE (C:\Users\rober\Downloads\Projects\school\curriculum_render\data\curriculum.js)
-- Total questions: 817
+- Status: AVAILABLE (/home/mrcolson/repos/curriculum_render/data/curriculum.js)
+- Total questions: 367
 - Questions with AP-skill tags: 0 (0%)
 - AP-skill tagging: **ABSENT** — no skill, apSkill, or skills field on any question.
 
@@ -166,15 +166,15 @@ No gaps detected (all skills covered by at least one pool via topic inference).
 
 | Unit | Total | MCQ | FRQ | Skill-Tagged |
 |------|-------|-----|-----|--------------|
-| U1 | 76 | 72 | 4 | 0 |
-| U2 | 76 | 72 | 3 | 0 |
-| U3 | 52 | 48 | 4 | 0 |
-| U4 | 102 | 99 | 3 | 0 |
-| U5 | 94 | 90 | 4 | 0 |
-| U6 | 145 | 140 | 5 | 0 |
-| U7 | 129 | 125 | 4 | 0 |
-| U8 | 81 | 76 | 5 | 0 |
-| U9 | 62 | 60 | 2 | 0 |
+| U1 | 38 | 36 | 2 | 0 |
+| U2 | 31 | 30 | 0 | 0 |
+| U3 | 26 | 24 | 2 | 0 |
+| U4 | 36 | 36 | 0 | 0 |
+| U5 | 53 | 51 | 2 | 0 |
+| U6 | 84 | 81 | 3 | 0 |
+| U7 | 77 | 75 | 2 | 0 |
+| U8 | 22 | 21 | 1 | 0 |
+| U9 | 0 | 0 | 0 | 0 |
 
 ## FRQ Decompositions — Sub-Skill Coverage
 
@@ -201,19 +201,19 @@ No gaps detected (all skills covered by at least one pool via topic inference).
 | Provenance | All | Certifier (curriculum PC/lesson) | Practice (worksheet/FRQ/probe) |
 |------------|----:|---------------------------------:|-------------------------------:|
 | topic-inherit | 837 | 46 | 791 |
-| ai-constrained | 2412 | 725 | 1687 |
-| unresolved | 181 | 31 | 150 |
+| ai-constrained | 1984 | 307 | 1677 |
+| unresolved | 159 | 9 | 150 |
 | formula-map | 11 | 11 | 0 |
 | frq-xref | 8 | 0 | 8 |
-| **total** | **3449** | **813** | **2636** |
+| **total** | **2999** | **373** | **2626** |
 
-**Confidence buckets:** 1.0: 860 · 0.8-0.99: 2021 · 0.6-0.79: 345 · <0.6: 42 · none: 181
+**Confidence buckets:** 1.0: 860 · 0.8-0.99: 1637 · 0.6-0.79: 306 · <0.6: 37 · none: 159
 
-**CONDITIONAL — diagnostic-ready, certifier pending Sprint T3.** Practice pools are tagged (2478/2636 via topic-inherit + ai-constrained); the diagnostic BKT engine (v2 §3) can consume practice signal now. The **certifier pool** (curriculum.js Progress Check — the proctored grade certifier, decision T-3) still has 31 `unresolved` and 725 `ai-constrained` (not yet teacher-verified). Per spec §6, `unresolved`/un-verified tags **never certify** — they are excluded from the certifying rollup until Sprint T3 flips the spot-reviewed certifier tags to `teacher`. This is the expected post-T2 state ("move toward READY").
+**CONDITIONAL — diagnostic-ready, certifier pending Sprint T3.** Practice pools are tagged (2468/2626 via topic-inherit + ai-constrained); the diagnostic BKT engine (v2 §3) can consume practice signal now. The **certifier pool** (curriculum.js Progress Check — the proctored grade certifier, decision T-3) still has 9 `unresolved` and 307 `ai-constrained` (not yet teacher-verified). Per spec §6, `unresolved`/un-verified tags **never certify** — they are excluded from the certifying rollup until Sprint T3 flips the spot-reviewed certifier tags to `teacher`. This is the expected post-T2 state ("move toward READY").
 
 **Residual before READY (= Sprint T3 scope):**
 1. Teacher spot-review the certifier `ai-constrained` tags (stratified sample) → flip to `teacher`.
-2. Resolve the 31 certifier `unresolved` items (dual-pass disagreements + no-text) from `data/skill-map.review-queue.json`.
+2. Resolve the 9 certifier `unresolved` items (dual-pass disagreements + no-text) from `data/skill-map.review-queue.json`.
 3. Re-run this audit → verdict becomes READY when certifier `unresolved` == 0 and certifier multi-skill tags are `teacher`.
 
 **Biggest coverage gaps:**

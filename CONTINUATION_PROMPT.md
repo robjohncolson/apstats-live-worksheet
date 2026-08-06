@@ -17,6 +17,107 @@
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
 
+---
+
+## ⏭ SESSION 34 (2026-08-07) — **CURRENT. Supersedes the s33 header above.**
+
+**HEAD = `f98be89`** (pushed, `master`). Baseline for this block = `7fc297a` (s33 tip, 2026-07-02).
+curriculum_render HEAD = `d8b7e79` (branch `main`).
+
+> **⚠ HOST MOVED.** Everything now runs on a **Linux box**, not the old Windows machine. The s33
+> header and older sections still cite `C:/Users/rober/...` paths — those are dead. Current reality:
+> repo `/home/mrcolson/repos/apstats-live-worksheet`, cross-agent runner
+> `python3 /home/mrcolson/repos/Agent/runner/cross-agent.py`, sibling repos
+> `/home/mrcolson/repos/curriculum_render` and `/home/mrcolson/repos/ti84-transpile`. The Equation
+> Trainer (`tmux-trainer`) source is **NOT cloned here** — only its deployed URL is reachable.
+> `python` is not on PATH; use `python3`. CLAUDE.md has been corrected to match.
+
+### A. What landed after s33 — July
+
+- **Typecheck hardening, P1-P4 complete** (`80e3c81` P1 grade engine → `00e9b59` CI advisory →
+  `f641e32`/`7ea7168`/`cf87cf0`/`6c6b0cc`/`24a65cf` P2 mesh+receipts, hardened by `021e0dc`+`8e070c3`
+  → `037c555` P3 content validators → `060d147` P4 feeder contract + **BLOCKING** gate).
+  `npm run typecheck` at root and in `roster-server`; `.github/workflows/ci.yml` runs both blocking.
+  No build step added — `@ts-check` + JSDoc only. `TYPECHECK_HARDENING_SPEC.md` marked SHIPPED.
+- **Nightly Review v2 fixes** (`01c1669`) — view-as can now load the VIEWED student's review marks
+  (teacher can verify the seen/comment render without a student login), and "Mark all seen" reaches
+  the >80 tail via server-side `scope:'all'` instead of the DOM-capped 80-item payload.
+  ⚠ **NRv2 itself shipped in s33** (`dbd7c0c`), not here — only the fixes are s34.
+- **Fall-2026 CED reframe / SY2627 Pass 1** — the 9-unit course relabelled to the 5-unit CED across
+  lessons-index, roadmap-data, Desk calendar and mobile launcher (`5500df0` → `6de797e`), a schedule
+  generator on a **SYNTHETIC** fixture (`2a5c261`), Do-Now manifest deploy + pipeline freeze
+  (`669f088`, `3d35034`), Blooket core/bonus split (`01b2cac`, `bb5cc6a`, `0252536`), and
+  **Pass 1 attenuation** (`1b88efa`: answer-key 782→354 MCQ, skill-map regenerated to 367 curriculum
+  ids / 0 PC ids, Desk bonus-quiz suppression; cr side `2c74015`).
+- **PC makeup delivery, [A]-[F] all shipped** — `283ec51` ([A] unlock + [B] token-gated
+  `/pc/:unit/:part`), `000a02e` (teacher preview bypass), `c9d2885` ([D] gated grade wiring +
+  submit/paper/class endpoints), `b19dda7` ([E1] dashboard makeup-queue card), `5dc2939` ([F] mid-unit
+  MCQ Part A calendar tiles), `19048e0` ([D] quarter-close freeze + post-close bonus deltas).
+  cr [C] adapter: `c113c3a`, `f8704ba`, `23adfde`, `259eed4`.
+- **PC26 figures (D1-a)** — `7a53368` (roster-server signs short-lived private-bucket URLs, attached
+  AFTER `stripForClient`) + cr `d8b7e79` (client renders them). **INERT and env-gated**: nothing
+  renders until `PC_FIGURES_SUPABASE_URL` + `PC_FIGURES_SUPABASE_SERVICE_KEY` are set; items ship
+  figure-less with a `[Figure]` fallback.
+- **Desk Grade Check-in** (`cb8ffd4`) — teacher-only monthly reminder, browser-local ack state, invisible
+  and inert for students/view-as/Preview-as-Student. 47 tests. `DESK_GRADE_CHECKIN_SPEC.md` marked SHIPPED.
+- **Incident 2026-07-20 fixed** (`772a26a`, grade-affecting) — the Desk could render an *unknown* grade
+  state as 0%/locked. Fix: tri-state `/grade` load, truthful saved-work banner + retry, evidence restore
+  on every failure kind, durable per-student server-completion latch, gate **fails open** without
+  affirmative server evidence, marks-bucket alias migration, identity-switch state reset. 84 tests.
+  See `INCIDENT_2026-07-20_PROGRESS_RESET.md` + `PROGRESS_RESET_DEPLOYMENT_RUNBOOK.md`.
+- **Test hardening** — `637face` (bcrypt cost env-gated: `BCRYPT_COST=4` in vitest only, prod
+  byte-identical at 12; killed the CPU-starvation flakes), `a79cff8` (fixed a **real** stale
+  `grade-engine.bundle.js` missing `scorePcRows`, plus two jsdom flakies converted from fixed sleeps to
+  condition polls; 0 failures across 3 clean full root runs, 8276 assertions each).
+
+### B. What landed after s33 — August
+
+- **TI-84 guided walkthroughs now match the real ROM** (`edad89f`). Two compounding defects made guided
+  procedures unfollowable: `repeatable: true` was authored on 41 steps but implemented nowhere (so
+  "press RIGHT until…" hard-blocked the 2nd press), and choice rows never pressed ENTER. **Verified
+  empirically on the booted ROM** (OS 5.8.2.0029, headless CEmu + framebuffer diffs): plot-type icons
+  and all wizard choice rows (Inpt/alternative/Tail/Pooled) commit **only on ENTER** — cursor movement
+  commits nothing, so the old histogram flow silently drew a scatterplot. Also closes fix-plan item **A9**.
+- **Vercel mirror activated** (`f98be89`) — `https://apstats-live-worksheet.vercel.app` is now a live
+  fallback rail after a GitHub Actions/Pages outage wedged a trainer fix. **Manual deploy**:
+  `npx vercel deploy --prod --yes` from the repo root. Same tree; `vercel.json` 308-redirects `/` to
+  `mobile-home.html`; `.vercelignore` excludes backend source, tests, tooling. The prepared CORS
+  allowlist patch (`roster-server/docs/cors-allowlist.patch`) now carries the Vercel origin.
+- **Test infra** (`7bbbefb`) — `remaining-feature-contracts` un-excluded from CI; only its F034 block
+  needs the untracked `wsx.js`, and that block now self-skips when the file is absent.
+
+### ⏭ CURRENT OPEN — verified against the tree, top first
+
+1. **SY2627 calendar intake is still BLANK — this is the top blocker.** `sy2627-calendar-intake.md`
+   has every field unfilled (term boundaries, breaks, period model, pacing, review days, SY2526
+   archive decision). Until the user fills it, `topic-schedule.json` stays a **synthetic fixture** and
+   the whole SY2627 schedule → Desk → live-sync chain cannot go to production.
+2. **Migrations `0028_submission_archive`, `0029_pc_makeup`, `0030_quarter_grade_snapshot` have no
+   run-record, and the `pc_bank` rows are not loaded.** (`0027` is recorded USER-RAN ✅; nothing in the
+   repo records 0028-0030 as applied — hit the endpoints to confirm.) `/submissions/archive` 503s without 0028;
+   `/pc/:unit/:part` returns `pc_bank not provisioned — run migration 0029`; `/class/quarter/*` 503s
+   without 0030. The CB-secure PC26 bank must be loaded **out-of-band into private Supabase** — it
+   must never enter this public repo.
+3. **The Windows-box automations are not registered on the Linux host.** `tools/nightly-backup.mjs`
+   ran as Windows Task Scheduler job "APStats Grade Nightly Backup"; the Schoology sync registers via
+   `tools/register_schoology_sync_task.ps1` (`schtasks /Create /TN ApStatsSchoologySync`). PowerShell +
+   `schtasks` do not exist here — both need cron/systemd equivalents or they are silently not running.
+4. **PC FRQ auto-scoring is not built.** `roster-server/pc.js` `scorePcItem` returns `null` for
+   free-response (`type === 'free-response' || 'frq' || item.answer == null`), so FRQ defers to the
+   paper/AI path and a null never wipes a prior score. `PC_MAKEUP_DELIVERY_SPEC.md` §4's FRQ subpart
+   policy (concatenate per lettered part vs explode per subpart) was **never decided**.
+5. **TI-84 matrix entry is still keystroke-only.** `autoFillMatrix` fills `[A]` by simulated keystrokes;
+   `.8xm` matrix transfer was never built (`TI84_TRAINER_SPIKE_RESULT.md`: type 0x02 dimension header
+   never sent). `chi-square-test` is the sole `[A]` target and stays fully keystroke until a separate
+   `.8xm` spike passes the same harness pattern.
+
+Carried forward from s33 and still open: the offline-mesh P3-P4 grade loop is **runtime-untested**
+end-to-end (needs a teacher device + ≥1 student phone over adb; P1-2 were hardware-smoked), the APK
+needs a rebuild to pick up mesh P3-4, and `TEACHER_KEY` on Railway is still the published default
+`apteacher2627`.
+
+---
+
 ## ⏭ SESSION 31 (2026-06-30) — ANDROID Phase 2 (on-device ledger merge) + Phase 3 (P2P gossip) SHIPPED
 
 Continuing the ANDROID_PACKET_APP_SPEC phase ladder (0 video✓ 1 shell✓). All SHIPPED + PUSHED to

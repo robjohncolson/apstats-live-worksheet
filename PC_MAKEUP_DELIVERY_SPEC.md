@@ -2,7 +2,8 @@
 
 **Goal:** deliver the digitized **CB-secure PC26 banks** (U1/U2/U5) as an **online makeup/backup** for the paper Progress Checks — gated behind teacher-controlled per-student unlock, rendered through cr's existing question renderer, best-wins into the PC grade, retakeable until the quarter closes. **Paper stays the primary, proctored instrument.**
 
-**Status:** DRAFT for review. Nothing applied.
+**Status:** SHIPPED — [A]-[F] all landed 2026-07-14/15. roster-server: `283ec51` ([A] unlock + [B] token-gated `/pc/:unit/:part`), `000a02e` (teacher preview bypass), `c9d2885` ([D] gated grade wiring + submit/paper/class endpoints), `b19dda7` ([E1] dashboard makeup-queue card), `7a53368` (D1-a figures: signed private-bucket URLs, **inert until `PC_FIGURES_SUPABASE_URL` + `PC_FIGURES_SUPABASE_SERVICE_KEY` are set**), `19048e0` ([D] quarter-close freeze + post-close bonus deltas). Desk: `5dc2939` ([F] mid-unit MCQ Part A calendar tiles). curriculum_render [C]: `c113c3a`, `f8704ba`, `23adfde`, `259eed4`, `d8b7e79`.
+**Still open:** migrations `0029_pc_makeup` + `0030_quarter_grade_snapshot` must be RUN (endpoints 503 until then), the CB-secure `pc_bank` rows must be loaded out-of-band, and **FRQ auto-scoring is not built** — `scorePcItem` returns `null` for free-response, so FRQ falls through to the paper/AI path (§4's subpart policy was never decided).
 **Depends on:** Pass 1 (shipped ✅) and the FRQ `lead` harmonization (done ✅).
 **Repos:** roster-server (unlock, content, grade, notify), curriculum_render frontend (render adapter), the Desk (scheduling).
 

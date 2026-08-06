@@ -32,7 +32,7 @@ The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 
 |----|--------|
 | `ti84` | `ti84-trainer-v2/standalone.html` (this repo, GH Pages) |
 | `quiz` | `https://robjohncolson.github.io/curriculum_render/` (separate repo) |
-| `formulas` | **Equation Trainer** = `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` — EXTERNAL Vercel app; source lives at `C:/Users/rober/Downloads/Projects/tmux-trainer`, NOT in this repo |
+| `formulas` | **Equation Trainer** = `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` — EXTERNAL Vercel app, NOT in this repo. Its source (`tmux-trainer`) is **not cloned on this machine** — treat the deployed URL as the only available surface |
 
 ### Teacher tools
 
@@ -48,7 +48,7 @@ The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 
 | Service | Purpose |
 |---------|---------|
 | `roster-server/` | Node/Express + Supabase, deployed on Railway: `https://roster-production-12c1.up.railway.app`. Roster/login/self-signup, v3 two-track grade engine (`lesson-grade.js`, `computeQuarterV3`), unified ledger, class gradebook, Do Now, Blooket import, remediation, Live Classroom state. Holds the service-role key + bcrypt. **Auto-deploys on push to master** |
-| curriculum render server | Separate repo; `https://curriculumrender-production.up.railway.app`. Worksheet answer sync + AI grading endpoints (see API Endpoints) |
+| curriculum render server | Separate repo (local clone: `/home/mrcolson/repos/curriculum_render`); `https://curriculumrender-production.up.railway.app`. Worksheet answer sync + AI grading endpoints (see API Endpoints) |
 
 ### Dev & authoring tools
 
@@ -160,6 +160,7 @@ Two Railway backends:
 
 - **GH Pages auto-publishes `master`** — every push goes live at the base URL above.
 - **roster-server/ auto-deploys to Railway on push to master.** Changes there are grade-affecting; flag them explicitly.
+- **Vercel mirror** — `https://apstats-live-worksheet.vercel.app` serves the same tree as a fallback rail when GH Pages is wedged. It is **manual**, not automatic: `npx vercel deploy --prod --yes` from the repo root. `vercel.json` redirects `/` to `mobile-home.html`; `.vercelignore` keeps backend source, tests, and tooling out of the upload.
 - The teacher tests on the **public URL** (local `file://` is not a valid test surface) — commit + push promptly.
 - Commit new assets (images, sounds, fonts) before referencing them in code.
 
@@ -169,8 +170,9 @@ roster-server is called cross-origin by these frontends — they MUST keep worki
 
 - `https://robjohncolson.github.io` — GH Pages: the Desk, worksheets, study guide, and the quiz app (`/curriculum_render/`)
 - `https://tmux-trainer.vercel.app` — the Equation Trainer (external Vercel app, also embedded in the Desk)
+- `https://apstats-live-worksheet.vercel.app` — the Vercel mirror of this repo (GH Pages fallback rail)
 
-`app.use(cors())` in `roster-server/server.js` is **intentionally wildcard-open today**. Do not harden it ad hoc — the prepared hardening path is `roster-server/docs/cors-allowlist.patch` (explicit allowlist with both origins above plus localhost dev origins, with apply/verify instructions in the file header). After applying + deploying, verify the Desk loads, the trainer signs in standalone, and the quiz app works.
+`app.use(cors())` in `roster-server/server.js` is **intentionally wildcard-open today**. Do not harden it ad hoc — the prepared hardening path is `roster-server/docs/cors-allowlist.patch` (explicit allowlist with all three origins above plus localhost dev origins, with apply/verify instructions in the file header). After applying + deploying, verify the Desk loads, the trainer signs in standalone, and the quiz app works.
 
 ## AI Grading Rubric Structure
 
@@ -217,22 +219,22 @@ CC and Codex can invoke each other as subagents via the Agent repo's runner.
 
 **Delegate implementation to Codex:**
 ```bash
-python "C:/Users/rober/Downloads/Projects/Agent/runner/cross-agent.py" \
+python3 /home/mrcolson/repos/Agent/runner/cross-agent.py \
   --direction cc-to-codex \
   --task-type implement \
   --prompt "Your task description" \
-  --working-dir "C:/Users/rober/Downloads/Projects/school/follow-alongs" \
+  --working-dir /home/mrcolson/repos/apstats-live-worksheet \
   --owned-paths "path/to/file.html" \
   --timeout 120
 ```
 
 **Ask CC a design question (from Codex):**
 ```bash
-python "C:/Users/rober/Downloads/Projects/Agent/runner/cross-agent.py" \
+python3 /home/mrcolson/repos/Agent/runner/cross-agent.py \
   --direction codex-to-cc \
   --task-type design-question \
   --prompt "Your question" \
-  --working-dir "C:/Users/rober/Downloads/Projects/school/follow-alongs" \
+  --working-dir /home/mrcolson/repos/apstats-live-worksheet \
   --timeout 60
 ```
 
@@ -242,7 +244,7 @@ When the user asks to delegate work to Codex, use the runner — don't ask the u
 
 ## TI-84 ROM Transpilation
 
-**Moved to its own repo**: `C:/Users/rober/Downloads/Projects/school/ti84-transpile`
+**Moved to its own repo**: `/home/mrcolson/repos/ti84-transpile`
 (GitHub: https://github.com/robjohncolson/ti84-transpile).
 
 This repo (`follow-alongs`) is for the AP Stats worksheets, study guide, and TI-84 trainer (`ti84-trainer-v2/`) only. The ROM transpilation track — `TI-84_Plus_CE/`, browser shell, auto-continuation loop, `CONTINUATION_PROMPT_CODEX.md` — lives in the sibling repo so its commits never republish the student-facing GH Pages site.

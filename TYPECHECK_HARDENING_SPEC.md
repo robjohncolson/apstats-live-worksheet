@@ -1,6 +1,6 @@
 # TYPECHECK_HARDENING_SPEC.md
 
-**Status:** DRAFT for review (Claude + Codex aligned; user to approve before P1).
+**Status:** SHIPPED — §6's P1-P4 all landed 2026-07-02/04. P1 grade engine `80e3c81`; CI wiring `00e9b59` (advisory); P2 mesh/receipts `f641e32`, `7ea7168`, `cf87cf0`, `6c6b0cc`, `24a65cf`, hardening `021e0dc` + `8e070c3`; P3 content validators `037c555`; P4 feeder contract + **blocking** typecheck gate `060d147`. `npm run typecheck` exists at root and in `roster-server`; `.github/workflows/ci.yml` runs both as blocking. §8 (the Lisp seam) remains unbuilt by design.
 **Intent:** Harden the load-bearing *pure logic* with static type-checking and property
 tests — **without adding a runtime build step** and **without touching the 69
 worksheets**. Boring in the best way.

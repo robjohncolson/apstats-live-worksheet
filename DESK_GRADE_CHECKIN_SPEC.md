@@ -1,6 +1,7 @@
 # DESK MONTHLY GRADE CHECK-IN SPEC
 
-> **Status:** proposed. **Owner:** teacher. **Target:**
+> **Status:** SHIPPED 2026-07-16 in `cb8ffd4` (Desk + `tests/desk-grade-checkin.test.js`).
+> **Owner:** teacher. **Target:**
 > `ap_stats_roadmap_square_mode.html`. **Scope:** teacher-only reminder UI and
 > browser-local acknowledgment state. No grading-engine, database, or student
 > behavior changes.

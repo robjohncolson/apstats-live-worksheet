@@ -96,3 +96,4 @@ android-app/plugins/**/build/
 
 # Cloudflare R2 upload credentials (Phase 5 video host) — NEVER commit; local only.
 .r2.env
+.vercel
