@@ -1,7 +1,11 @@
-// pc-figures.js — sign short-lived URLs for the CB-secure PC26 figures
-// (PC_FIGURES_INTEGRATION_SPEC.md, D1-a). The figures live in a PRIVATE Supabase
-// bucket in a DIFFERENT project than roster's own DB, so this uses its OWN client
-// (PC_FIGURES_SUPABASE_URL + PC_FIGURES_SUPABASE_SERVICE_KEY). The token-gated,
+// pc-figures.js — sign short-lived URLs for the CB-secure PC26 figures (D1-a).
+// The figures live in a PRIVATE Supabase bucket in the SAME project as roster's
+// own DB (bzqbhtrurzzavhqbgqrs — the curriculum_render project both share per
+// README decision D-G; teacher-confirmed 2026-08-07). It still uses its OWN
+// client behind separate env vars (PC_FIGURES_SUPABASE_URL +
+// PC_FIGURES_SUPABASE_SERVICE_KEY) so the bucket could move projects without
+// touching roster's DB wiring — in practice both vars take the same values as
+// ROSTER_SUPABASE_URL / ROSTER_SUPABASE_SERVICE_KEY today. The token-gated,
 // server-authoritative GET /pc/:unit/:part attaches the signed URLs to each item
 // → the CollegeBoard figures stay behind the class gate, no service key on the
 // client. Degrades gracefully (null signer / per-file sign failure → item ships

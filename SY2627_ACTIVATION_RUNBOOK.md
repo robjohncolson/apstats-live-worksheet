@@ -294,22 +294,20 @@ short-lived (7-day) URLs for the CB-secure PC figure images sitting in a private
 the client falls back to `[Figure: ...]` text. This is a **soft degrade, not a 503**, so it's easy to
 forget this flip and not notice for a while.
 
-**⚠ Contradiction found in the code — flagging, not resolving:** `pc-figures.js`'s file-header comment
-says the figures bucket lives "in a DIFFERENT project than roster's own DB", but the inline comment on
-the `PC_FIGURES_SUPABASE_URL` line shows the exact same project URL
-(`https://bzqbhtrurzzavhqbgqrs.supabase.co`) that `roster-server/README.md` documents as the
-`ROSTER_SUPABASE_URL` project. The spec both comments cite (`PC_FIGURES_INTEGRATION_SPEC.md`) does not
-exist anywhere in this repo, so there's no third source to resolve which statement is right. **Confirm
-the actual project identity directly in your Supabase dashboard before pasting a key here** — don't
-assume the inline comment's URL is correct just because it's in the code, and don't assume the header
-comment is correct either.
+**✅ Resolved (teacher-confirmed 2026-08-07):** the figures bucket lives in the **same** project as
+roster's DB — `https://bzqbhtrurzzavhqbgqrs.supabase.co` (the shared curriculum_render project, per
+README decision D-G). The stale "DIFFERENT project" header comment in `pc-figures.js` has been
+corrected. **This makes Step 6 trivial:** in Railway, set
+`PC_FIGURES_SUPABASE_URL` = the existing `ROSTER_SUPABASE_URL` value, and
+`PC_FIGURES_SUPABASE_SERVICE_KEY` = the existing `ROSTER_SUPABASE_SERVICE_KEY` value. No new keys
+are needed.
 
 **WHEN:** same time as Step 5 (~Sept). Per the task, the figures already sit in the private bucket — this
 is a pure env flip, no data migration.
 
 **Do this:** Railway → roster-server → Variables tab → add `PC_FIGURES_SUPABASE_URL` and
-`PC_FIGURES_SUPABASE_SERVICE_KEY` (the figures-project URL + its service-role key, from that project's
-Settings → API — after confirming project identity per the caveat above).
+`PC_FIGURES_SUPABASE_SERVICE_KEY`, each set to the value the service already has in
+`ROSTER_SUPABASE_URL` / `ROSTER_SUPABASE_SERVICE_KEY` (same project — see the resolution above).
 
 **VERIFY:**
 ```bash
@@ -428,9 +426,9 @@ Edge before scripting against real assignments").
 
 ## Things flagged, not fixed (verify-before-relying-on-them)
 
-- **`pc-figures.js` project-identity contradiction** (Step 6): the file's header comment and its own
-  inline env-var comment disagree about whether the PC figures bucket is in the same Supabase project as
-  `ROSTER_SUPABASE_URL` or a different one. The spec both cite doesn't exist in the repo to settle it.
+- ~~`pc-figures.js` project-identity contradiction~~ **RESOLVED 2026-08-07**: same project as
+  `ROSTER_SUPABASE_URL` (`bzqbhtrurzzavhqbgqrs`, per README decision D-G + teacher confirmation);
+  the stale header comment in `pc-figures.js` is corrected. Step 6 = copy the two existing values.
 - **Two specs referenced in code comments don't exist in this repo:** `PC_FIGURES_INTEGRATION_SPEC.md`
   (cited in `pc-figures.js`) and `PC_MAKEUP_PHASE2_GRADE_SPEC.md` (cited in `grade-config.js` and
   `lesson-grade.js`). Only `PC_MAKEUP_DELIVERY_SPEC.md` and `OFFLINE_GRADING_MESH_SPEC.md` actually exist
