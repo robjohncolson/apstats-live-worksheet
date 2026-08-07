@@ -6,7 +6,8 @@
     "spec": "ti84-trainer-pattern-recognition-spec.md",
     "procedureCount": 29,
     "confusionPairCount": 26,
-    "canonicalProblemCount": 68
+    "canonicalProblemCount": 68,
+    "frameworkSkillsSource": "data/skill-taxonomy-ced2026.json (18-code Fall-2026 CED taxonomy; W8b, student-facing-surface-implementation-plan.md). frameworkSkills/frameworkSkill values were re-homed from the dead 2019-CED Big-Idea axis (VAR/UNC/DAT) onto that taxonomy's practice codes for every SURVIVING procedure. The 5 REMOVED-from-CED procedures pruned to bonus-only in W8a (geometpdf, geometcdf, chi-square-gof-test, linreg-ttest, linreg-tint) intentionally still carry their OLD dead codes — they are not part of the current CED, so no taxonomy code applies; re-homing them would misrepresent bonus content as currently-tested."
   },
 
   "patternSignatures": {
@@ -18,7 +19,7 @@
       "distributionFamily": "normal",
       "keywords": ["proportion", "percent", "%", "out of", "claimed", "p =", "p >", "p <", "claimed proportion", "hypothesized"],
       "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "difference between"],
-      "frameworkSkills": ["VAR-6.D", "VAR-6.F", "VAR-6.G", "DAT-3.A", "DAT-3.B"],
+      "frameworkSkills": ["3.E", "4.G"],
       "unit": 6
     },
     "one-propzint": {
@@ -29,7 +30,7 @@
       "distributionFamily": "normal",
       "keywords": ["proportion", "percent", "%", "out of", "confidence interval", "estimate", "margin of error"],
       "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "test", "claim", "hypothes"],
-      "frameworkSkills": ["UNC-4.A", "UNC-4.B", "UNC-4.C", "UNC-4.D"],
+      "frameworkSkills": ["3.C", "4.F"],
       "unit": 6
     },
     "two-propztest": {
@@ -40,7 +41,7 @@
       "distributionFamily": "normal",
       "keywords": ["proportion", "percent", "%", "out of", "two groups", "two samples", "difference in proportions", "difference between", "compare"],
       "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "confidence interval", "estimate"],
-      "frameworkSkills": ["VAR-6.H", "VAR-6.I", "VAR-6.J", "VAR-6.K"],
+      "frameworkSkills": ["3.E", "4.G"],
       "unit": 6
     },
     "two-propzint": {
@@ -51,7 +52,7 @@
       "distributionFamily": "normal",
       "keywords": ["proportion", "percent", "%", "out of", "two groups", "two samples", "confidence interval", "estimate the difference", "margin of error"],
       "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "test", "claim", "hypothes"],
-      "frameworkSkills": ["UNC-4.K", "UNC-4.L", "UNC-4.M", "UNC-4.N"],
+      "frameworkSkills": ["3.C", "4.F"],
       "unit": 6
     },
     "t-test-stats": {
@@ -62,7 +63,7 @@
       "distributionFamily": "t",
       "keywords": ["mean", "average", "claimed mean", "hypothesized mean", "sample mean", "x-bar", "standard deviation"],
       "antiKeywords": ["proportion", "percent", "out of", "slope", "regression", "two groups", "two samples"],
-      "frameworkSkills": ["VAR-7.B", "VAR-7.C", "VAR-7.D", "VAR-7.E", "DAT-3.E", "DAT-3.F"],
+      "frameworkSkills": ["3.E", "4.G"],
       "unit": 7
     },
     "t-test-data": {
@@ -73,7 +74,7 @@
       "distributionFamily": "t",
       "keywords": ["mean", "average", "raw data", "data set", "list of values", "sample data"],
       "antiKeywords": ["proportion", "percent", "slope", "two groups", "summary statistics"],
-      "frameworkSkills": ["VAR-7.B", "VAR-7.C", "VAR-7.D", "VAR-7.E", "DAT-3.E", "DAT-3.F"],
+      "frameworkSkills": ["3.E", "4.G"],
       "unit": 7
     },
     "t-interval-stats": {
@@ -84,7 +85,7 @@
       "distributionFamily": "t",
       "keywords": ["mean", "average", "confidence interval", "estimate", "margin of error", "sample mean", "standard deviation"],
       "antiKeywords": ["proportion", "percent", "slope", "two groups", "two samples", "test", "claim", "hypothes"],
-      "frameworkSkills": ["UNC-4.O", "UNC-4.P", "UNC-4.Q", "UNC-4.R"],
+      "frameworkSkills": ["3.C", "4.F"],
       "unit": 7
     },
     "t-interval-data": {
@@ -95,7 +96,7 @@
       "distributionFamily": "t",
       "keywords": ["mean", "average", "confidence interval", "estimate", "raw data", "data set", "list of values"],
       "antiKeywords": ["proportion", "percent", "slope", "two groups", "summary statistics", "test", "claim"],
-      "frameworkSkills": ["UNC-4.O", "UNC-4.P", "UNC-4.Q", "UNC-4.R"],
+      "frameworkSkills": ["3.C", "4.F"],
       "unit": 7
     },
     "two-samp-ttest": {
@@ -106,7 +107,7 @@
       "distributionFamily": "t",
       "keywords": ["two groups", "two samples", "difference in means", "compare means", "independent samples", "group 1", "group 2"],
       "antiKeywords": ["proportion", "percent", "slope", "one sample", "matched pairs", "before and after"],
-      "frameworkSkills": ["VAR-7.F", "VAR-7.G", "VAR-7.H", "VAR-7.I", "DAT-3.G", "DAT-3.H"],
+      "frameworkSkills": ["3.E", "4.G"],
       "unit": 7
     },
     "two-samp-tint": {
@@ -117,7 +118,7 @@
       "distributionFamily": "t",
       "keywords": ["two groups", "two samples", "difference in means", "compare means", "confidence interval", "estimate the difference"],
       "antiKeywords": ["proportion", "percent", "slope", "one sample", "matched pairs", "test", "claim"],
-      "frameworkSkills": ["UNC-4.V", "UNC-4.W", "UNC-4.X", "UNC-4.Y"],
+      "frameworkSkills": ["3.C", "4.F"],
       "unit": 7
     },
     "chi-square-gof-test": {
@@ -139,7 +140,7 @@
       "distributionFamily": "chi-square",
       "keywords": ["two-way table", "association", "independence", "homogeneity", "relationship between", "contingency table", "row", "column"],
       "antiKeywords": ["mean", "slope", "one variable", "single proportion", "goodness of fit"],
-      "frameworkSkills": ["VAR-8.I", "VAR-8.J", "VAR-8.K", "VAR-8.L", "VAR-8.M", "DAT-3.K", "DAT-3.L"],
+      "frameworkSkills": ["3.E", "4.G"],
       "unit": 8
     },
     "linreg-ttest": {
@@ -172,7 +173,7 @@
       "distributionFamily": "none",
       "keywords": ["random sample", "simple random sample", "SRS", "select", "randomly choose", "label", "number the", "seed"],
       "antiKeywords": ["assign", "treatment", "experiment", "compare two", "mean", "proportion", "confidence interval", "hypothesis"],
-      "frameworkSkills": ["DAT-2.C"],
+      "frameworkSkills": ["2.B"],
       "unit": 3
     },
     "randint-assignment": {
@@ -183,7 +184,7 @@
       "distributionFamily": "none",
       "keywords": ["random assignment", "assign", "treatment", "treatment group", "experiment", "volunteers", "randomly allocate", "seed"],
       "antiKeywords": ["select a sample", "survey", "SRS", "estimate", "confidence interval", "hypothesis test"],
-      "frameworkSkills": ["VAR-3.C"],
+      "frameworkSkills": ["2.B"],
       "unit": 3
     },
     "normalcdf": {
@@ -194,7 +195,7 @@
       "distributionFamily": "normal",
       "keywords": ["probability", "proportion", "between", "less than", "greater than", "area", "normal distribution", "mean", "standard deviation"],
       "antiKeywords": ["sample mean", "sampling distribution", "confidence interval", "hypothesis", "binomial", "trials"],
-      "frameworkSkills": ["VAR-2.B", "VAR-6.A"],
+      "frameworkSkills": ["3.C"],
       "unit": 1
     },
     "invnorm": {
@@ -205,7 +206,7 @@
       "distributionFamily": "normal",
       "keywords": ["percentile", "cutoff", "top", "bottom", "what value", "find the score", "boundary", "lowest", "highest"],
       "antiKeywords": ["probability", "proportion of", "how likely", "sampling distribution", "binomial"],
-      "frameworkSkills": ["VAR-2.B", "VAR-6.B"],
+      "frameworkSkills": ["3.C"],
       "unit": 1
     },
     "binompdf": {
@@ -216,7 +217,7 @@
       "distributionFamily": "binomial",
       "keywords": ["exactly", "probability of exactly", "n trials", "success", "failure", "independent trials", "fixed number"],
       "antiKeywords": ["at most", "at least", "fewer than", "more than", "first success", "geometric", "normal distribution"],
-      "frameworkSkills": ["UNC-3.A", "UNC-3.B"],
+      "frameworkSkills": ["3.C", "3.D"],
       "unit": 4
     },
     "binomcdf": {
@@ -227,7 +228,7 @@
       "distributionFamily": "binomial",
       "keywords": ["at most", "at least", "fewer than", "more than", "no more than", "cumulative", "n trials", "success", "failure"],
       "antiKeywords": ["exactly", "first success", "geometric", "normal distribution"],
-      "frameworkSkills": ["UNC-3.A", "UNC-3.B"],
+      "frameworkSkills": ["3.C", "3.D"],
       "unit": 4
     },
     "geometpdf": {
@@ -260,7 +261,7 @@
       "distributionFamily": "normal",
       "keywords": ["sample mean", "sampling distribution", "random sample of size", "probability that the sample mean", "standard error"],
       "antiKeywords": ["individual", "one randomly selected", "percentile", "cutoff", "binomial"],
-      "frameworkSkills": ["UNC-3.Q", "UNC-3.R", "UNC-3.S"],
+      "frameworkSkills": ["3.C", "3.D"],
       "unit": 5
     },
     "invnorm-sampling": {
@@ -271,7 +272,7 @@
       "distributionFamily": "normal",
       "keywords": ["sample mean", "sampling distribution", "cutoff", "percentile of sample means", "what sample mean", "top", "bottom"],
       "antiKeywords": ["individual", "one randomly selected", "probability", "proportion of", "binomial"],
-      "frameworkSkills": ["UNC-3.Q", "UNC-3.R", "UNC-3.S"],
+      "frameworkSkills": ["3.C", "3.D"],
       "unit": 5
     },
     "one-var-stats": {
@@ -282,7 +283,7 @@
       "distributionFamily": null,
       "keywords": ["summary statistics", "mean", "standard deviation", "five-number summary", "quartiles", "median", "describe the distribution"],
       "antiKeywords": ["hypothesis", "confidence interval", "test", "claim", "regression", "slope"],
-      "frameworkSkills": ["UNC-1.D", "UNC-1.E", "UNC-1.F", "UNC-1.G"],
+      "frameworkSkills": ["3.B", "4.C"],
       "unit": 1
     },
     "linreg-a-plus-bx": {
@@ -293,7 +294,7 @@
       "distributionFamily": null,
       "keywords": ["regression equation", "least-squares", "predict", "line of best fit", "correlation", "r-squared", "slope", "y-intercept"],
       "antiKeywords": ["hypothesis", "confidence interval", "significance", "p-value", "test the slope"],
-      "frameworkSkills": ["DAT-1.D", "DAT-1.G", "DAT-1.H"],
+      "frameworkSkills": ["3.B", "4.D"],
       "unit": 2
     },
     "histogram": {
@@ -304,7 +305,7 @@
       "distributionFamily": null,
       "keywords": ["histogram", "shape", "distribution", "frequency", "display the data", "graph the data"],
       "antiKeywords": ["boxplot", "scatterplot", "regression", "two variables"],
-      "frameworkSkills": ["UNC-1.H", "UNC-1.I"],
+      "frameworkSkills": ["3.A", "4.A"],
       "unit": 1
     },
     "modified-boxplot": {
@@ -315,7 +316,7 @@
       "distributionFamily": null,
       "keywords": ["boxplot", "box-and-whisker", "five-number summary", "outliers", "quartiles", "IQR"],
       "antiKeywords": ["histogram", "scatterplot", "regression", "two variables"],
-      "frameworkSkills": ["UNC-1.H", "UNC-1.L"],
+      "frameworkSkills": ["3.A", "4.A"],
       "unit": 1
     },
     "scatterplot": {
@@ -326,7 +327,7 @@
       "distributionFamily": null,
       "keywords": ["scatterplot", "two variables", "relationship", "explanatory", "response", "bivariate"],
       "antiKeywords": ["histogram", "boxplot", "one variable", "residual"],
-      "frameworkSkills": ["UNC-1.S", "DAT-1.A"],
+      "frameworkSkills": ["3.A", "4.A"],
       "unit": 2
     },
     "residual-plot": {
@@ -337,7 +338,7 @@
       "distributionFamily": null,
       "keywords": ["residual", "residual plot", "appropriateness", "linear model", "pattern in residuals"],
       "antiKeywords": ["scatterplot", "histogram", "boxplot", "one variable"],
-      "frameworkSkills": ["DAT-1.E", "DAT-1.F"],
+      "frameworkSkills": ["3.A", "4.D"],
       "unit": 2
     },
     "matrix-entry": {
@@ -348,7 +349,7 @@
       "distributionFamily": null,
       "keywords": ["matrix", "two-way table", "enter data", "rows", "columns", "observed counts"],
       "antiKeywords": [],
-      "frameworkSkills": [],
+      "frameworkSkills": ["3.E"],
       "unit": 8
     }
   },
@@ -523,19 +524,19 @@
       {
         "stem": "A company claims that at least 70% of its customers are satisfied with their service. In a random sample of 200 customers, 126 reported satisfaction. Test the company's claim at the alpha = 0.05 significance level.",
         "values": { "p0": 0.70, "x": 126, "n": 200, "direction": "<" },
-        "frameworkSkill": "VAR-6.G",
+        "frameworkSkill": "3.E",
         "unit": 6
       },
       {
         "stem": "A botanist believes that fewer than 90% of seeds from a certain supplier will germinate. She plants a random sample of 120 seeds and observes that 100 germinate. Is there convincing evidence at alpha = 0.05 to support the botanist's belief?",
         "values": { "p0": 0.90, "x": 100, "n": 120, "direction": "<" },
-        "frameworkSkill": "DAT-3.B",
+        "frameworkSkill": "3.E",
         "unit": 6
       },
       {
         "stem": "Approximately 38% of people in Region W have blood type O positive. A random sample of 100 people from Region X reveals that 45 have blood type O positive. Is there evidence that the proportion in Region X differs from Region W?",
         "values": { "p0": 0.38, "x": 45, "n": 100, "direction": "!=" },
-        "frameworkSkill": "VAR-6.D",
+        "frameworkSkill": "3.E",
         "unit": 6
       }
     ],
@@ -543,19 +544,19 @@
       {
         "stem": "A random sample of 80 adults was selected, and 22 indicated they would support eliminating the penny from circulation. Construct a 99% confidence interval for the true proportion of adults who support this idea.",
         "values": { "x": 22, "n": 80, "cLevel": 0.99 },
-        "frameworkSkill": "UNC-4.D",
+        "frameworkSkill": "3.C",
         "unit": 6
       },
       {
         "stem": "In a random sample of 500 registered voters, 235 said they plan to vote for Candidate A. Construct a 95% confidence interval to estimate the true proportion of voters who support Candidate A.",
         "values": { "x": 235, "n": 500, "cLevel": 0.95 },
-        "frameworkSkill": "UNC-4.C",
+        "frameworkSkill": "3.C",
         "unit": 6
       },
       {
         "stem": "A school librarian sampled 50 students from senior English classes, and 35 had read a certain book. Construct a 90% confidence interval for the proportion of all seniors who have read the book.",
         "values": { "x": 35, "n": 50, "cLevel": 0.90 },
-        "frameworkSkill": "UNC-4.D",
+        "frameworkSkill": "3.C",
         "unit": 6
       }
     ],
@@ -563,19 +564,19 @@
       {
         "stem": "A researcher wants to know whether a new flu vaccine formulation is more effective than the standard one. In a random sample of 250 adults who received the new vaccine, 30 developed the flu. In an independent random sample of 240 adults who received the standard vaccine, 45 developed the flu. Is there convincing evidence at alpha = 0.05 that the proportion who develop the flu is lower for the new vaccine?",
         "values": { "x1": 30, "n1": 250, "x2": 45, "n2": 240, "direction": "<" },
-        "frameworkSkill": "VAR-6.K",
+        "frameworkSkill": "3.E",
         "unit": 6
       },
       {
         "stem": "At East High School, 84 of 150 randomly sampled students support a later start time. At West High School, 99 of 180 randomly sampled students support it. Do the data give convincing evidence at alpha = 0.05 of a difference in the proportions of students who support a later start time at the two schools?",
         "values": { "x1": 84, "n1": 150, "x2": 99, "n2": 180, "direction": "!=" },
-        "frameworkSkill": "VAR-6.H",
+        "frameworkSkill": "3.E",
         "unit": 6
       },
       {
         "stem": "A marketing team tests two versions of a website. Of 400 visitors randomly assigned to version A, 92 made a purchase. Of 380 visitors randomly assigned to version B, 64 made a purchase. Is there convincing evidence at alpha = 0.01 that version A has a higher purchase proportion than version B?",
         "values": { "x1": 92, "n1": 400, "x2": 64, "n2": 380, "direction": ">" },
-        "frameworkSkill": "VAR-6.K",
+        "frameworkSkill": "3.E",
         "unit": 6
       }
     ],
@@ -583,19 +584,19 @@
       {
         "stem": "In a random sample of 120 seniors at a large high school, 78 have a driver's license. In an independent random sample of 110 juniors, 55 have a driver's license. Construct a 95% confidence interval for the difference in the proportions of seniors and juniors who have a driver's license.",
         "values": { "x1": 78, "n1": 120, "x2": 55, "n2": 110, "cLevel": 0.95 },
-        "frameworkSkill": "UNC-4.L",
+        "frameworkSkill": "3.C",
         "unit": 6
       },
       {
         "stem": "A polling organization surveys voters in two regions. In Region A, 210 of 350 randomly sampled voters favor a ballot measure. In Region B, 162 of 300 randomly sampled voters favor it. Construct a 90% confidence interval for the difference in the proportions of voters who favor the measure.",
         "values": { "x1": 210, "n1": 350, "x2": 162, "n2": 300, "cLevel": 0.90 },
-        "frameworkSkill": "UNC-4.K",
+        "frameworkSkill": "3.C",
         "unit": 6
       },
       {
         "stem": "Researchers compared germination rates of two seed treatments. Of 80 seeds given treatment 1, 68 germinated. Of 75 seeds given treatment 2, 54 germinated. Construct a 99% confidence interval to estimate the difference in germination proportions between the two treatments.",
         "values": { "x1": 68, "n1": 80, "x2": 54, "n2": 75, "cLevel": 0.99 },
-        "frameworkSkill": "UNC-4.L",
+        "frameworkSkill": "3.C",
         "unit": 6
       }
     ],
@@ -603,19 +604,19 @@
       {
         "stem": "A cereal manufacturer claims that boxes contain a mean of 500 grams of cereal. A quality inspector takes a random sample of 36 boxes and finds a sample mean of 494 grams with a standard deviation of 18 grams. Is there evidence at alpha = 0.05 that the true mean is less than 500 grams?",
         "values": { "mu0": 500, "xbar": 494, "sx": 18, "n": 36, "direction": "<" },
-        "frameworkSkill": "VAR-7.E",
+        "frameworkSkill": "3.E",
         "unit": 7
       },
       {
         "stem": "A physical therapist claims that a new stretching routine reduces recovery time to less than 10 days. In a random sample of 25 patients, the mean recovery time was 8.9 days with a standard deviation of 3.2 days. Test this claim at alpha = 0.01.",
         "values": { "mu0": 10, "xbar": 8.9, "sx": 3.2, "n": 25, "direction": "<" },
-        "frameworkSkill": "DAT-3.F",
+        "frameworkSkill": "3.E",
         "unit": 7
       },
       {
         "stem": "The FAA mandates that airline pilot response time to a warning signal must average no more than 4.5 seconds. A random sample of 40 pilots had a mean response time of 4.8 seconds with s = 1.1 seconds. At alpha = 0.05, is there evidence the mean exceeds the mandate?",
         "values": { "mu0": 4.5, "xbar": 4.8, "sx": 1.1, "n": 40, "direction": ">" },
-        "frameworkSkill": "DAT-3.E",
+        "frameworkSkill": "3.E",
         "unit": 7
       }
     ],
@@ -623,13 +624,13 @@
       {
         "stem": "A teacher claims the mean score on a standardized test for her class is higher than the national average of 72. She records the following scores from her 12 randomly selected students: 68, 74, 79, 71, 85, 77, 82, 73, 80, 76, 88, 69. Test at alpha = 0.05.",
         "values": { "mu0": 72, "data": [68, 74, 79, 71, 85, 77, 82, 73, 80, 76, 88, 69], "direction": ">" },
-        "frameworkSkill": "VAR-7.E",
+        "frameworkSkill": "3.E",
         "unit": 7
       },
       {
         "stem": "A nutritionist suspects that the mean daily sodium intake for a group of patients exceeds the recommended 2300 mg. She randomly selects 8 patients and records their daily intake: 2450, 2200, 2650, 2100, 2500, 2350, 2800, 2400. Test at alpha = 0.05.",
         "values": { "mu0": 2300, "data": [2450, 2200, 2650, 2100, 2500, 2350, 2800, 2400], "direction": ">" },
-        "frameworkSkill": "DAT-3.F",
+        "frameworkSkill": "3.E",
         "unit": 7
       }
     ],
@@ -637,13 +638,13 @@
       {
         "stem": "A random sample of 45 students at a university had a mean GPA of 3.12 with a standard deviation of 0.48. Construct a 95% confidence interval for the mean GPA of all students at the university.",
         "values": { "xbar": 3.12, "sx": 0.48, "n": 45, "cLevel": 0.95 },
-        "frameworkSkill": "UNC-4.R",
+        "frameworkSkill": "3.C",
         "unit": 7
       },
       {
         "stem": "An engineer measures the tensile strength of 30 randomly selected steel rods and finds a mean of 425 MPa with a standard deviation of 38 MPa. Construct a 99% confidence interval for the true mean tensile strength.",
         "values": { "xbar": 425, "sx": 38, "n": 30, "cLevel": 0.99 },
-        "frameworkSkill": "UNC-4.Q",
+        "frameworkSkill": "3.C",
         "unit": 7
       }
     ],
@@ -651,13 +652,13 @@
       {
         "stem": "A biologist measures the lengths (in cm) of 10 randomly caught fish from a lake: 22.1, 25.3, 19.8, 23.5, 24.7, 21.0, 26.4, 20.2, 23.9, 22.6. Construct a 90% confidence interval for the true mean length of fish in the lake.",
         "values": { "data": [22.1, 25.3, 19.8, 23.5, 24.7, 21.0, 26.4, 20.2, 23.9, 22.6], "cLevel": 0.90 },
-        "frameworkSkill": "UNC-4.R",
+        "frameworkSkill": "3.C",
         "unit": 7
       },
       {
         "stem": "A farmer records the yield (in bushels per acre) for 8 randomly selected plots: 148, 152, 145, 160, 155, 149, 158, 153. Construct a 95% confidence interval for the mean yield per acre.",
         "values": { "data": [148, 152, 145, 160, 155, 149, 158, 153], "cLevel": 0.95 },
-        "frameworkSkill": "UNC-4.R",
+        "frameworkSkill": "3.C",
         "unit": 7
       }
     ],
@@ -665,13 +666,13 @@
       {
         "stem": "A researcher wants to know whether a new teaching method produces different test scores than the traditional method. A random sample of 28 students using the new method had a mean score of 78.5 (s = 9.2), while 32 students using the traditional method had a mean of 73.1 (s = 10.4). Test at alpha = 0.05.",
         "values": { "xbar1": 78.5, "sx1": 9.2, "n1": 28, "xbar2": 73.1, "sx2": 10.4, "n2": 32, "direction": "!=" },
-        "frameworkSkill": "VAR-7.I",
+        "frameworkSkill": "3.E",
         "unit": 7
       },
       {
         "stem": "An agronomist tests whether a new fertilizer increases corn yield. Thirty randomly assigned plots using the new fertilizer yielded a mean of 162 bushels/acre (s = 12.5). Twenty-five plots with the standard fertilizer yielded a mean of 155 bushels/acre (s = 14.1). Test at alpha = 0.05 whether the new fertilizer produces higher yields.",
         "values": { "xbar1": 162, "sx1": 12.5, "n1": 30, "xbar2": 155, "sx2": 14.1, "n2": 25, "direction": ">" },
-        "frameworkSkill": "DAT-3.H",
+        "frameworkSkill": "3.E",
         "unit": 7
       }
     ],
@@ -679,13 +680,13 @@
       {
         "stem": "A health study compares the mean systolic blood pressure of 40 runners (mean 118, s = 10.5) with 35 non-runners (mean 128, s = 14.3). Construct a 95% confidence interval for the difference in mean blood pressure (runners minus non-runners).",
         "values": { "xbar1": 118, "sx1": 10.5, "n1": 40, "xbar2": 128, "sx2": 14.3, "n2": 35, "cLevel": 0.95 },
-        "frameworkSkill": "UNC-4.Y",
+        "frameworkSkill": "3.C",
         "unit": 7
       },
       {
         "stem": "Two brands of batteries are tested. A sample of 20 Brand A batteries has a mean life of 52.4 hours (s = 4.8). A sample of 22 Brand B batteries has a mean life of 48.7 hours (s = 5.1). Construct a 90% confidence interval for the difference in mean battery life.",
         "values": { "xbar1": 52.4, "sx1": 4.8, "n1": 20, "xbar2": 48.7, "sx2": 5.1, "n2": 22, "cLevel": 0.90 },
-        "frameworkSkill": "UNC-4.X",
+        "frameworkSkill": "3.C",
         "unit": 7
       }
     ],
@@ -713,13 +714,13 @@
       {
         "stem": "A survey asked 400 randomly selected adults about their exercise habits (none, moderate, intense) and their stress level (low, high). The results are summarized in a 2x3 table. At alpha = 0.05, test whether stress level is associated with exercise frequency. Observed counts: None/Low: 30, None/High: 70, Moderate/Low: 80, Moderate/High: 60, Intense/Low: 110, Intense/High: 50.",
         "values": { "matrix": [[30, 70], [80, 60], [110, 50]], "rows": 3, "cols": 2, "df": 2 },
-        "frameworkSkill": "DAT-3.L",
+        "frameworkSkill": "3.E",
         "unit": 8
       },
       {
         "stem": "A researcher investigates whether political affiliation is independent of region. A random sample of 600 voters produces a 3x3 contingency table with political party (A, B, C) and region (North, South, West). At alpha = 0.01, test for independence.",
         "values": { "matrix": [[80, 50, 70], [60, 75, 65], [55, 70, 75]], "rows": 3, "cols": 3, "df": 4 },
-        "frameworkSkill": "VAR-8.I",
+        "frameworkSkill": "3.E",
         "unit": 8
       }
     ],
@@ -761,19 +762,19 @@
       {
         "stem": "The distribution of daily processing times at a coffee shop is approximately normal with mean 276 seconds and standard deviation 38 seconds. Find the proportion of orders processed in less than 240 seconds.",
         "values": { "lower": -1e99, "upper": 240, "mu": 276, "sigma": 38 },
-        "frameworkSkill": "VAR-2.B",
+        "frameworkSkill": "3.C",
         "unit": 1
       },
       {
         "stem": "The distribution of customer purchases at a convenience store is approximately normal with mean $15.50 and standard deviation $1.72. Find the proportion of purchases between $14.00 and $16.00.",
         "values": { "lower": 14.00, "upper": 16.00, "mu": 15.50, "sigma": 1.72 },
-        "frameworkSkill": "VAR-6.A",
+        "frameworkSkill": "3.C",
         "unit": 1
       },
       {
         "stem": "The number of daily transactions at a bank is approximately normal with mean 478 and standard deviation 64. What proportion of days have more than 350 transactions?",
         "values": { "lower": 350, "upper": 1e99, "mu": 478, "sigma": 64 },
-        "frameworkSkill": "VAR-2.B",
+        "frameworkSkill": "3.C",
         "unit": 1
       }
     ],
@@ -781,19 +782,19 @@
       {
         "stem": "The distribution of salmon lengths in a river is approximately normal with mean 25.5 inches and standard deviation 3.5 inches. What length separates the longest 10% of salmon from the rest?",
         "values": { "area": 0.90, "mu": 25.5, "sigma": 3.5, "tail": "left" },
-        "frameworkSkill": "VAR-6.B",
+        "frameworkSkill": "3.C",
         "unit": 1
       },
       {
         "stem": "Scores on a college entrance exam are normally distributed with mean 500 and standard deviation 100. What score marks the 25th percentile?",
         "values": { "area": 0.25, "mu": 500, "sigma": 100, "tail": "left" },
-        "frameworkSkill": "VAR-2.B",
+        "frameworkSkill": "3.C",
         "unit": 1
       },
       {
         "stem": "The weight of field mice is approximately normal with mean 25 grams and standard deviation 4 grams. Below what weight are the lightest 5% of mice?",
         "values": { "area": 0.05, "mu": 25, "sigma": 4, "tail": "left" },
-        "frameworkSkill": "VAR-6.B",
+        "frameworkSkill": "3.C",
         "unit": 1
       }
     ],
@@ -801,13 +802,13 @@
       {
         "stem": "A basketball player makes 75% of her free throws. In tonight's game, she shoots 10 free throws. What is the probability she makes exactly 8?",
         "values": { "n": 10, "p": 0.75, "x": 8 },
-        "frameworkSkill": "UNC-3.B",
+        "frameworkSkill": "3.C",
         "unit": 4
       },
       {
         "stem": "A multiple-choice quiz has 15 questions, each with 4 options. If a student guesses randomly on every question, what is the probability of getting exactly 5 correct?",
         "values": { "n": 15, "p": 0.25, "x": 5 },
-        "frameworkSkill": "UNC-3.B",
+        "frameworkSkill": "3.C",
         "unit": 4
       }
     ],
@@ -815,19 +816,19 @@
       {
         "stem": "A basketball player makes 75% of her free throws. In tonight's game, she shoots 10 free throws. What is the probability she makes at most 6?",
         "values": { "n": 10, "p": 0.75, "x": 6 },
-        "frameworkSkill": "UNC-3.B",
+        "frameworkSkill": "3.C",
         "unit": 4
       },
       {
         "stem": "An airline knows that 5% of passengers miss their flight. For a flight with 180 seats, all of which are booked, find the probability that at most 7 passengers miss the flight.",
         "values": { "n": 180, "p": 0.05, "x": 7 },
-        "frameworkSkill": "UNC-3.B",
+        "frameworkSkill": "3.C",
         "unit": 4
       },
       {
         "stem": "A seed company claims a germination rate of 85%. A farmer plants 20 seeds. What is the probability that at least 18 germinate? (Hint: use 1 - binomcdf with x = 17.)",
         "values": { "n": 20, "p": 0.85, "x": 17, "note": "Use 1 - binomcdf(20, 0.85, 17) for P(X >= 18)" },
-        "frameworkSkill": "UNC-3.B",
+        "frameworkSkill": "3.C",
         "unit": 4
       }
     ],
@@ -863,19 +864,19 @@
       {
         "stem": "The distribution of daily processing times at a coffee shop is approximately normal with mean 276 seconds and standard deviation 38 seconds. In a random sample of 25 orders, what is the probability that the sample mean processing time is less than 260 seconds?",
         "values": { "lower": -1e99, "upper": 260, "mu": 276, "sigma_xbar": 7.6, "note": "sigma/sqrt(n) = 38/sqrt(25) = 7.6" },
-        "frameworkSkill": "UNC-3.S",
+        "frameworkSkill": "3.C",
         "unit": 5
       },
       {
         "stem": "The mean number of transactions at a bank is 478 per day with standard deviation 64. For a random sample of 16 days, what is the probability that the sample mean exceeds 500 transactions?",
         "values": { "lower": 500, "upper": 1e99, "mu": 478, "sigma_xbar": 16, "note": "sigma/sqrt(n) = 64/sqrt(16) = 16" },
-        "frameworkSkill": "UNC-3.Q",
+        "frameworkSkill": "3.C",
         "unit": 5
       },
       {
         "stem": "The weight of field mice is approximately normal with mean 25 grams and standard deviation 4 grams. In a random sample of 36 mice, what is the probability that the sample mean weight is between 24 and 26 grams?",
         "values": { "lower": 24, "upper": 26, "mu": 25, "sigma_xbar": 0.667, "note": "sigma/sqrt(n) = 4/sqrt(36) = 0.667" },
-        "frameworkSkill": "UNC-3.R",
+        "frameworkSkill": "3.C",
         "unit": 5
       }
     ],
@@ -883,13 +884,13 @@
       {
         "stem": "The mean height of adult women is 64.5 inches with standard deviation 2.5 inches. For random samples of size 49, what sample mean height separates the top 5% of all possible sample means?",
         "values": { "area": 0.95, "mu": 64.5, "sigma_xbar": 0.357, "tail": "left", "note": "sigma/sqrt(n) = 2.5/sqrt(49) = 0.357" },
-        "frameworkSkill": "UNC-3.S",
+        "frameworkSkill": "3.C",
         "unit": 5
       },
       {
         "stem": "An online store averages 1200 purchases per hour with standard deviation 200. For a random sample of 40 hours, below what sample mean are the lowest 10% of all possible sample means?",
         "values": { "area": 0.10, "mu": 1200, "sigma_xbar": 31.62, "tail": "left", "note": "sigma/sqrt(n) = 200/sqrt(40) = 31.62" },
-        "frameworkSkill": "UNC-3.Q",
+        "frameworkSkill": "3.C",
         "unit": 5
       }
     ],
@@ -897,13 +898,13 @@
       {
         "stem": "A teacher recorded the following test scores: 72, 85, 91, 64, 78, 88, 69, 95, 82, 76. Calculate the mean, standard deviation, five-number summary, and check for outliers.",
         "values": { "data": [72, 85, 91, 64, 78, 88, 69, 95, 82, 76] },
-        "frameworkSkill": "UNC-1.F",
+        "frameworkSkill": "3.B",
         "unit": 1
       },
       {
         "stem": "A biologist recorded the lengths (cm) of 12 randomly caught trout: 28, 32, 25, 36, 29, 31, 34, 27, 30, 33, 26, 35. Calculate summary statistics for this data set.",
         "values": { "data": [28, 32, 25, 36, 29, 31, 34, 27, 30, 33, 26, 35] },
-        "frameworkSkill": "UNC-1.E",
+        "frameworkSkill": "3.B",
         "unit": 1
       }
     ],
@@ -911,13 +912,13 @@
       {
         "stem": "A researcher collected data on study hours (L1) and exam scores (L2) for 10 students. Find the equation of the least-squares regression line and the correlation coefficient. Data in L1: 2, 3, 5, 6, 7, 8, 9, 10, 11, 12. Data in L2: 65, 70, 74, 80, 78, 85, 88, 91, 93, 96.",
         "values": { "xList": "L1", "yList": "L2", "x_values": [2, 3, 5, 6, 7, 8, 9, 10, 11, 12], "y_values": [65, 70, 74, 80, 78, 85, 88, 91, 93, 96] },
-        "frameworkSkill": "DAT-1.G",
+        "frameworkSkill": "3.B",
         "unit": 2
       },
       {
         "stem": "The heights (inches) and shoe sizes for 8 adults are recorded. Find the regression equation. Heights (L1): 62, 65, 67, 69, 70, 72, 74, 76. Shoe sizes (L2): 6, 7, 8, 9, 9.5, 10.5, 11, 12.",
         "values": { "xList": "L1", "yList": "L2", "x_values": [62, 65, 67, 69, 70, 72, 74, 76], "y_values": [6, 7, 8, 9, 9.5, 10.5, 11, 12] },
-        "frameworkSkill": "DAT-1.D",
+        "frameworkSkill": "3.B",
         "unit": 2
       }
     ],
@@ -925,13 +926,13 @@
       {
         "stem": "Create a histogram of the following test scores to examine the shape of the distribution: 72, 85, 91, 64, 78, 88, 69, 95, 82, 76, 55, 83, 90, 67, 74.",
         "values": { "data": [72, 85, 91, 64, 78, 88, 69, 95, 82, 76, 55, 83, 90, 67, 74] },
-        "frameworkSkill": "UNC-1.H",
+        "frameworkSkill": "3.A",
         "unit": 1
       },
       {
         "stem": "A farm records the daily egg production for 20 days: 145, 152, 148, 160, 155, 149, 158, 153, 147, 156, 150, 162, 144, 159, 151, 157, 146, 154, 161, 148. Display the data in a histogram.",
         "values": { "data": [145, 152, 148, 160, 155, 149, 158, 153, 147, 156, 150, 162, 144, 159, 151, 157, 146, 154, 161, 148] },
-        "frameworkSkill": "UNC-1.I",
+        "frameworkSkill": "3.A",
         "unit": 1
       }
     ],
@@ -939,13 +940,13 @@
       {
         "stem": "Construct a modified boxplot for the following car fuel efficiencies (mpg): 22, 25, 28, 30, 31, 33, 34, 36, 38, 42, 55. Identify any outliers.",
         "values": { "data": [22, 25, 28, 30, 31, 33, 34, 36, 38, 42, 55] },
-        "frameworkSkill": "UNC-1.L",
+        "frameworkSkill": "3.A",
         "unit": 1
       },
       {
         "stem": "Display the following commute times (minutes) in a modified boxplot and identify outliers: 8, 12, 15, 18, 20, 22, 24, 25, 27, 30, 32, 35, 58.",
         "values": { "data": [8, 12, 15, 18, 20, 22, 24, 25, 27, 30, 32, 35, 58] },
-        "frameworkSkill": "UNC-1.L",
+        "frameworkSkill": "3.A",
         "unit": 1
       }
     ],
@@ -953,13 +954,13 @@
       {
         "stem": "An ecologist records the number of bird species and the area (acres) of 10 forest fragments. Create a scatterplot with area on the x-axis and species count on the y-axis to explore the relationship.",
         "values": { "xList": "L1", "yList": "L2", "x_values": [5, 8, 12, 15, 18, 22, 26, 30, 35, 40], "y_values": [12, 14, 18, 19, 22, 24, 27, 29, 31, 34] },
-        "frameworkSkill": "DAT-1.A",
+        "frameworkSkill": "3.A",
         "unit": 2
       },
       {
         "stem": "Create a scatterplot of temperature (F) versus ice cream sales ($) for 12 summer days to investigate whether higher temperatures are associated with higher sales.",
         "values": { "xList": "L1", "yList": "L2", "x_values": [72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 94], "y_values": [210, 225, 238, 250, 266, 281, 295, 312, 330, 347, 365, 382] },
-        "frameworkSkill": "UNC-1.S",
+        "frameworkSkill": "3.A",
         "unit": 2
       }
     ],
@@ -967,13 +968,13 @@
       {
         "stem": "After fitting a least-squares regression line to the relationship between study hours and exam scores, create a residual plot to assess whether a linear model is appropriate.",
         "values": { "xList": "L1", "residList": "RESID", "x_values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "y_values": [62, 66, 69, 72, 76, 79, 81, 85, 88, 90] },
-        "frameworkSkill": "DAT-1.F",
+        "frameworkSkill": "3.A",
         "unit": 2
       },
       {
         "stem": "A researcher fitted a linear model for tree height versus diameter. Create a residual plot to determine whether the linear model is appropriate for these data.",
         "values": { "xList": "L1", "residList": "RESID", "x_values": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13], "y_values": [22, 25, 31, 34, 36, 42, 45, 47, 49, 54] },
-        "frameworkSkill": "DAT-1.E",
+        "frameworkSkill": "3.A",
         "unit": 2
       }
     ],
@@ -981,7 +982,7 @@
       {
         "stem": "Enter the following two-way table into Matrix [A] on your calculator so you can run a chi-square test. The table has 3 rows and 2 columns: [[30, 70], [80, 60], [110, 50]].",
         "values": { "rows": 3, "cols": 2, "data": [[30, 70], [80, 60], [110, 50]] },
-        "frameworkSkill": "VAR-8.H",
+        "frameworkSkill": "3.E",
         "unit": 8
       }
     ],
@@ -989,19 +990,19 @@
       {
         "stem": "A counselor wants to interview a simple random sample of 5 of the 30 students in a class. Number the students 1 through 30. Seed your calculator with 42, then use randIntNoRep to select which students are interviewed.",
         "values": { "seed": 42, "lo": 1, "hi": 30, "n": 5 },
-        "frameworkSkill": "DAT-2.C",
+        "frameworkSkill": "2.B",
         "unit": 3
       },
       {
         "stem": "A clinic will audit 6 of its 80 patient files this month. Number the files 1 through 80. Seed your calculator with 7, then select which files get audited.",
         "values": { "seed": 7, "lo": 1, "hi": 80, "n": 6 },
-        "frameworkSkill": "DAT-2.C",
+        "frameworkSkill": "2.B",
         "unit": 3
       },
       {
         "stem": "An inspector must check 4 of the 24 plots in an orchard. Number the plots 1 through 24. Seed your calculator with 15, then select the plots to inspect.",
         "values": { "seed": 15, "lo": 1, "hi": 24, "n": 4 },
-        "frameworkSkill": "DAT-2.C",
+        "frameworkSkill": "2.B",
         "unit": 3
       }
     ],
@@ -1009,13 +1010,13 @@
       {
         "stem": "Twelve volunteers, numbered 1 through 12, will be split evenly between Treatment A and Treatment B. Seed your calculator with 8, generate a random ordering of 1-12 with randIntNoRep, and assign the FIRST 6 numbers to Treatment A.",
         "values": { "seed": 8, "lo": 1, "hi": 12, "n": 12, "groupSize": 6 },
-        "frameworkSkill": "VAR-3.C",
+        "frameworkSkill": "2.B",
         "unit": 3
       },
       {
         "stem": "Ten tomato plants, numbered 1 through 10, are used to test a new fertilizer: 5 plants get the new fertilizer (Treatment A) and 5 get the standard one (Treatment B). Seed your calculator with 23, generate a random ordering of 1-10, and assign the FIRST 5 numbers to Treatment A.",
         "values": { "seed": 23, "lo": 1, "hi": 10, "n": 10, "groupSize": 5 },
-        "frameworkSkill": "VAR-3.C",
+        "frameworkSkill": "2.B",
         "unit": 3
       }
     ]

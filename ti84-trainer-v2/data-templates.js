@@ -6,6 +6,11 @@
 // runtime lands. Generated problems speak the exact values vocabulary that
 // computeExpected/stat-math.js already dispatch on — the template carries
 // inputs only, never answers.
+//
+// Each template's `frameworkSkill` is a Fall-2026 CED code from
+// data/skill-taxonomy-ced2026.json (W8b) — re-homed from the dead 2019-CED
+// Big-Idea axis (VAR/UNC/DAT). All 8 templated procedures survive the
+// Fall-2026 CED, so all 8 get a real taxonomy code.
 (function () {
   // FNV-1a over a string → unsigned 32-bit.
   function fnv1a(str) {
@@ -183,7 +188,7 @@
           },
         },
       ],
-      frameworkSkill: 'VAR-6.G',
+      frameworkSkill: '3.E',
       unit: 6,
     },
 
@@ -229,7 +234,7 @@
           text: 'A greenhouse plants {n} tomato seeds from a new supplier and {x} germinate. Construct a {clpct}% confidence interval for the true germination rate.',
         },
       ],
-      frameworkSkill: 'UNC-4.C',
+      frameworkSkill: '3.C',
       unit: 6,
     },
 
@@ -292,7 +297,7 @@
           },
         },
       ],
-      frameworkSkill: 'VAR-7.E',
+      frameworkSkill: '3.E',
       unit: 7,
     },
 
@@ -337,7 +342,7 @@
           text: 'A rider times {n} random trips on a bus route: mean {xbar} minutes, standard deviation {sx} minutes. Construct a {clpct}% confidence interval for the true mean commute time.',
         },
       ],
-      frameworkSkill: 'UNC-4.R',
+      frameworkSkill: '3.C',
       unit: 7,
     },
 
@@ -396,7 +401,7 @@
           },
         },
       ],
-      frameworkSkill: 'VAR-6.K',
+      frameworkSkill: '3.E',
       unit: 6,
     },
 
@@ -436,7 +441,7 @@
           text: 'Version 1 of an ad was shown to {n1} people and {x1} clicked; Version 2 was shown to {n2} people and {x2} clicked. Construct a {clpct}% confidence interval for the difference in true click rates (Version 1 − Version 2).',
         },
       ],
-      frameworkSkill: 'UNC-4.L',
+      frameworkSkill: '3.C',
       unit: 6,
     },
 
@@ -504,7 +509,7 @@
           },
         },
       ],
-      frameworkSkill: 'VAR-7.I',
+      frameworkSkill: '3.E',
       unit: 7,
     },
 
@@ -556,7 +561,7 @@
           text: 'A commuter times two routes. Route 1: {n1} trips, mean {xbar1} minutes, SD {sx1}. Route 2: {n2} trips, mean {xbar2} minutes, SD {sx2}. Construct a {clpct}% confidence interval for the difference in true mean time (Route 1 − Route 2).',
         },
       ],
-      frameworkSkill: 'UNC-4.X',
+      frameworkSkill: '3.C',
       unit: 7,
     },
   };
