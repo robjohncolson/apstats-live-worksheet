@@ -5,7 +5,7 @@
 // (which keys off itemIds) sees the kept lessons identically.
 //
 // PRESERVATION CLAIM (narrow, per Codex review): every KEPT CORE lesson-activity
-// itemId is preserved verbatim. The source manifest's 3402 itemIds become 2644 in
+// itemId is preserved verbatim. The source manifest's 3402 itemIds become 2641 in
 // the fixture; the 758 difference is INTENTIONAL — 394 bonus-lesson itemIds
 // (dropped: enrichment, off Do-Now) + 364 progress-check itemIds (deferred, below).
 // The generator asserts this accounting and refuses to write on any violation.

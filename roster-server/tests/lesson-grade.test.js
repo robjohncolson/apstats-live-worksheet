@@ -97,6 +97,28 @@ describe('expandLessonKey — combined-worksheet expansion', () => {
     expect(expandLessonKey(4, '6', SAMPLE_SCHEDULE)).toEqual(['4.6']);
   });
 
+  // Bonus-aware expansion (Codex HIGH 2026-08-07: old-3.7 via the shared
+  // 3.6-7 worksheet). Year-aware by construction — SY2526's frozen context
+  // derives an empty bonus set, so historical expansion is unchanged.
+  it('combined key filters bonus members when a bonus set is provided', () => {
+    const result = expandLessonKey(4, '1-2', SAMPLE_SCHEDULE, new Set(['4.2']));
+    expect(result).toEqual(['4.1']);
+  });
+
+  it('combined key keeps legacy expansion when the bonus set is empty', () => {
+    const result = expandLessonKey(4, '1-2', SAMPLE_SCHEDULE, new Set());
+    expect(result.sort()).toEqual(['4.1', '4.2']);
+  });
+
+  it('combined key with ALL members bonus keeps the unfiltered expansion', () => {
+    const result = expandLessonKey(4, '1-2', SAMPLE_SCHEDULE, new Set(['4.1', '4.2']));
+    expect(result.sort()).toEqual(['4.1', '4.2']);
+  });
+
+  it('solo keys ignore the bonus set (bonus credit for direct rows is unchanged)', () => {
+    expect(expandLessonKey(4, '6', SAMPLE_SCHEDULE, new Set(['4.6']))).toEqual(['4.6']);
+  });
+
   it('solo key "1" in unit 1 → ["1.1"]', () => {
     expect(expandLessonKey(1, '1', SAMPLE_SCHEDULE)).toEqual(['1.1']);
   });
@@ -138,6 +160,30 @@ function makeRow(itemId, opts = {}) {
     recorded_at: opts.recorded_at || '2026-01-01T00:00:00Z',
   };
 }
+
+describe('computeLessonGrades — shared-worksheet bonus filter (3.6-7 shape)', () => {
+  const SCHEDULE_367 = {
+    '3.6': { unit: 3, topicKey: '3.6', worksheetKey: '6-7', periods: { B: null, E: null }, combinedWith: ['3.7'] },
+    '3.7': { unit: 3, topicKey: '3.7', worksheetKey: '6-7', periods: { B: null, E: null }, combinedWith: ['3.6'] },
+  };
+  const rows = [
+    { source: 'frq', item_id: 'WS-U3L6-7-reflect1', score: 1, ts: 1 },
+    { source: 'worksheet', item_id: 'WS-U3L6-7-b1', response: 'x', ts: 1 },
+  ];
+  const FRQ_BAND = { E: 100, P: 70, I: 35 };
+
+  it('SY2627 lists (3.7 bonus): rows land in 3.6 only — no resurrected bonus lesson', () => {
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SCHEDULE_367, { bonusTopics: new Set(['3.7']) });
+    expect(map.has('3.6')).toBe(true);
+    expect(map.has('3.7')).toBe(false);
+  });
+
+  it('SY2526-style lists (empty bonus set): historical double expansion preserved', () => {
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SCHEDULE_367, { bonusTopics: new Set() });
+    expect(map.has('3.6')).toBe(true);
+    expect(map.has('3.7')).toBe(true);
+  });
+});
 
 describe('computeLessonGrades — lesson math', () => {
 

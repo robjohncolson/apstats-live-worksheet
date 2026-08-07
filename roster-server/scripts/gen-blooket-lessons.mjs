@@ -5,8 +5,8 @@
  *
  * Shape (M2a / G4 — presence vs required split):
  *   topics         = ALL topicKeys with a non-null blooket URL (presence/UI, 77)
- *   requiredTopics = core subset (crosswalk status "core", 67) — grade Due denominator
- *   bonusTopics    = bonus subset (crosswalk status "bonus", 10) — enrichment, never required
+ *   requiredTopics = core subset (crosswalk status "core", 66) — grade Due denominator
+ *   bonusTopics    = bonus subset (crosswalk status "bonus", 11) — enrichment, never required
  *   allTopics      = alias of topics (77) for explicit audit tooling
  *
  * Presence/UI consumers MUST use topics (or allTopics).

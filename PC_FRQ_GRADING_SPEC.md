@@ -182,7 +182,7 @@ rubric, loads the ungraded `pc` FRQ rows, and POSTs one request per row to
 | ❌ | **Cross-service, cross-Supabase call.** roster-server currently makes no outbound HTTP; adds a failure mode where a cr outage blocks PC grading. |
 | ❌ | **Throughput.** One serialized queue at 2.5 s/call ⇒ 30 students × 2 FRQ = 60 calls ≈ **2.5 minutes minimum**, competing with live worksheet grading during class. |
 | ❌ | **CB-secure content to Groq/DeepSeek** with unconfirmed retention terms. |
-| ❌ | cr's `applyWrongMcqCap` and receipt issuance assume a cr-side student identity; the roster-side call has none. Needs a small cr-side change or a bypass. |
+| ⚠️ | cr grades identity-free (`applyWrongMcqCap` depends only on scenario+answers; `sidFromRequest` is optional and receipt issuance is simply skipped without a sid — verified `railway-server/server.js:671-700`). No cr-side change is needed for grading; identity work arises ONLY if a signed cr receipt is wanted as provenance. *(Corrected per adversarial review 2026-08-07 — do NOT build a bypass or impersonation mechanism for this.)* |
 
 ### Option B — roster-server makes its own Anthropic call
 
@@ -359,15 +359,26 @@ explicitly because U5's MCQ-A lives in its REST bank.
 **Nothing special is required.** An offline FRQ drains into exactly the same
 `score: null` row as an online one. Consequences to record:
 
-- The grading trigger must be **queue-driven, not submit-driven**: "grade every
-  `source:'pc'` row whose `item_id` matches the bank's FRQ set and whose `score`
-  is null", run on demand by the teacher (and/or nightly). A hook inside
-  `/pc/submit` would silently skip every late-synced offline attempt.
+- The grading trigger should be **queue-driven** ("grade every `source:'pc'` row
+  whose `item_id` matches the bank's FRQ set and whose `score` is null", run on
+  demand by the teacher and/or nightly) — for teacher control and batch
+  efficiency, NOT because submit hooks miss replays. *(Corrected 2026-08-07: the
+  offline drain replays through `_postRecord` → `_postPc` → `POST
+  /pc/:unit/:part/submit`, so a submit-path hook WOULD see late-synced attempts;
+  a queue-driven pass is simply the better design.)*
 - **Idempotency:** a drain can replay the same record (the queue deletes only what
   lands). Re-grading an already-graded row must be a no-op or an only-raises
   update — never a duplicate ledger row (the upsert key already prevents that).
-- **Latency is unbounded.** A student can sync days later. That is precisely why
-  **D7** matters: quarter close must not race an un-drained queue.
+- **Latency is unbounded.** A student can sync days later. Two distinct states
+  matter at quarter close (adversarial review 2026-08-07):
+  1. **Synced but ungraded** — a `score: null` row exists server-side; D7's
+     option (c) 409-guard on `/class/quarter/close` can and should catch this.
+  2. **Not yet synced** — the attempt lives only in the client's IndexedDB
+     queue; NO server signal exists, so no close-guard can detect it. If close
+     must wait for these, it needs a server-visible sitting/completion
+     acknowledgement (e.g. the unlock row records "sitting started") or an
+     explicit teacher reconciliation step ("all makeup students synced?") before
+     close. D7's rec (c) covers state 1 only — decide state 2 separately.
 - The `#draft`/proposal path (D4 option b) inherits all of this unchanged.
 
 ---

@@ -3769,15 +3769,29 @@
       "timestamp": "2026-08-06T11:45:01Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "89377f273bfb",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW of three LOCAL commits not yet pushed (range a96b152..HEAD; push = Railway deploy",
+      "status": "completed",
+      "duration_seconds": 911.47,
+      "timestamp": "2026-08-07T01:38:06Z",
+      "files_changed": [
+        "TI84_MATRIX_ENTRY_LOOP_SPEC.md",
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 321,
-    "cc_to_codex": 321,
+    "total_calls": 322,
+    "cc_to_codex": 322,
     "codex_to_cc": 0,
-    "completed": 240,
+    "completed": 241,
     "failed": 67,
     "refused": 0,
-    "avg_duration_seconds": 656.153
+    "avg_duration_seconds": 656.946
   }
 }

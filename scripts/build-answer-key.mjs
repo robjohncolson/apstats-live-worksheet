@@ -107,9 +107,13 @@ export function buildAnswerKey(items, bonusTopics = new Set()) {
 
 function main() {
   const { items, path } = loadCurriculum();
-  const crosswalk = JSON.parse(readFileSync(resolve(__dirname, '..', '2026-crosswalk.json'), 'utf8'));
-  const bonusTopics = new Set(Object.entries(crosswalk.map).filter(([, v]) => v.status === 'bonus').map(([k]) => k));
-  const { answerKey, stats } = buildAnswerKey(items, bonusTopics);
+  // NEVER exclude historically-served topics from the live key: curriculum_quiz
+  // scoring re-derives from the CURRENT key at read time (scoring.js
+  // scoreAgainstKey: missing key -> ungradable -> dropped), and GradeContext
+  // does not freeze the answer key per year — deleting a key would silently
+  // change historical grades (Codex CRITICAL, 2026-08-07). Bonus-topic items
+  // stay keyed; the manifest-subset test exempts crosswalk-bonus topics.
+  const { answerKey, stats } = buildAnswerKey(items);
 
   // Report the ACTUAL source read (loadCurriculum may fall back to the
   // _v2 sibling) so artifact provenance is accurate (Codex MINOR).

@@ -1,6 +1,6 @@
 # AP Statistics Video Crosswalk --- old 9-unit -> Fall 2026 5-unit
 
-_Generated from lessons-index.json, then **VERIFIED against the 5 official Fall-2026 unit guides** (essential-knowledge level). **67 KEEP - 10 BONUS - 0 re-record.** Every new topic is covered by an existing video; the checks found only small supplements + re-tags (Part C), never a missing topic._
+_Generated from lessons-index.json, then **VERIFIED against the 5 official Fall-2026 unit guides** (essential-knowledge level). **66 KEEP - 11 BONUS - 0 re-record** *(was 67/10; old-3.7 re-tagged to bonus 2026-08-07 — see Part C)*. Every new topic is covered by an existing video; the checks found only small supplements + re-tags (Part C), never a missing topic._
 
 ## Part A --- The new course, and which of your videos fills each slot
 
@@ -18,7 +18,7 @@ _Generated from lessons-index.json, then **VERIFIED against the 5 official Fall-
 | **1.10** | Investigative Q & Data Collection | 3.1, 3.2 | collecting-data folds into Unit 1 |
 | **1.11** | Random Sampling | 3.3 |  |
 | **1.12** | Problems with Sampling | 3.4 |  |
-| **1.13** | Experimental Design | 3.5, 3.6, 3.7 | Inference&Experiments folded (light verify) |
+| **1.13** | Experimental Design | 3.5, 3.6 | Inference&Experiments folded; old 3.7 re-tagged to bonus 2026-08-07 (sim-significance is not in 1.13 EK) |
 | **2.1** | Two categorical vars: tables/graphs | 2.1, 2.2 | intro folded |
 | **2.2** | Two categorical vars: summary stats | 2.3 |  |
 | **2.3** | Estimating probabilities (simulation) | 4.1, 4.2 | intro folded |
@@ -68,6 +68,7 @@ _Not deleted --- flag `status: bonus`, render greyed in a "Beyond the Exam" sect
 
 | Old id | Content | Bonus home (end of) | Video file |
 |---|---|---|---|
+| 3.7 | Simulation-based "is the difference real vs chance?" (re-tagged from core 1.13, 2026-08-07) | **new Unit 1** | (shares the 3.6-7 worksheet/video) |
 | 4.12 | Geometric distribution | **new Unit 2** | media/4-12__0__1PVmey_huN37gyeaxXfKMOJRKhdWpPY_N.mp4 |
 | 4.9 | Combining random variables | **new Unit 2** | media/4-9__0__1welWQ8TTKlI1gBl4MrWzsd_NGeXZNanh.mp4 |
 | 8.2 | Chi-square goodness-of-fit | **new Unit 3** | media/8-2__0__1Aup8w5fYTy69zWogOdtsXCO6kl6UNCCT.mp4 |
@@ -81,7 +82,7 @@ _Not deleted --- flag `status: bonus`, render greyed in a "Beyond the Exam" sect
 
 ## Part C --- Verification punch-list (checked against the 5 official unit guides)
 
-**Result: all 67 KEEP mappings hold; all 10 BONUS removals confirmed absent from the new essential knowledge; ZERO topics need a from-scratch re-record.** Items below are *supplements* (a short segment added to a video you keep) or *re-tags* (attribution only, no video work).
+**Result: all 66 KEEP mappings hold; all 11 BONUS removals (incl. the 2026-08-07 3.7 re-tag) confirmed absent from the new essential knowledge; ZERO topics need a from-scratch re-record.** Items below are *supplements* (a short segment added to a video you keep) or *re-tags* (attribution only, no video work).
 
 ### Supplements --- add to the existing KEEP video (ranked by size)
 

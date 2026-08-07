@@ -69,7 +69,7 @@ describe('generated data/answer-key.json (integration)', () => {
   it('all keys are MCQ with a non-empty single-token answerKey', () => {
     const doc = JSON.parse(readFileSync(p, 'utf8'));
     const entries = Object.entries(doc.answerKey);
-    expect(entries.length).toBe(351);
+    expect(entries.length).toBe(354);
     for (const [, v] of entries) {
       expect(v.type).toBe('multiple-choice');
       expect(typeof v.answerKey).toBe('string');
@@ -86,7 +86,12 @@ describe('generated data/answer-key.json (integration)', () => {
       if (Array.isArray(o)) o.forEach(rec);
       else if (o && typeof o === 'object') for (const k in o) { if (/^U\d+-/.test(k)) wmKeys.add(k); rec(o[k]); }
     })(wm);
-    const missing = Object.keys(ak).filter(id => !wmKeys.has(id));
+    // Crosswalk-bonus topics are dropped from the manifest but their keys are
+    // KEPT for historical scoring (see build-answer-key.mjs main()).
+    const crosswalk = JSON.parse(readFileSync(resolve(ROOT, '2026-crosswalk.json'), 'utf8'));
+    const bonus = new Set(Object.entries(crosswalk.map).filter(([, v]) => v.status === 'bonus').map(([k]) => k));
+    const topicOf = (id) => { const m = id.match(/^U(\d+)-L(\d+)-/); return m ? `${m[1]}.${m[2]}` : null; };
+    const missing = Object.keys(ak).filter(id => !wmKeys.has(id) && !bonus.has(topicOf(id)));
     expect(missing).toEqual([]);
   });
 });

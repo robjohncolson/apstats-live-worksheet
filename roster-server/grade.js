@@ -42,7 +42,7 @@ import { fileURLToPath } from 'url';
 
 // Blooket lists from gen-blooket-lessons.mjs (M2a presence/required split):
 //   topics / allTopics     = PRESENCE (has a Blooket) → hasBlooket UI columns
-//   requiredTopics         = REQUIRED denominator (core 67) → blooketDue track
+//   requiredTopics         = REQUIRED denominator (core 66) → blooketDue track
 //   bonusTopics            = enrichment (G4: visible, never required)
 // useV3 path is the primary consumer of the required list (computeQuarterV3);
 // env USE_V3_GRADING=true gates v3 (default false in code). Railway env unverifiable.
@@ -256,6 +256,11 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   // Presence (hasBlooket UI) vs required (Due denominator) — M2a / G4.
   // Shared resolver so transcript artHash / offline clients bind the same lists.
   const { blooketPresence, blooketRequired } = resolveBlooketLists(opts || {});
+  // Bonus = presence minus required. Derived (not a new input) so it is
+  // automatically year-aware AND already bound by artifactHash, which hashes
+  // both source lists. SY2526's freeze has required == presence -> empty set.
+  const _requiredSet = new Set(blooketRequired);
+  const bonusTopicSet = new Set(blooketPresence.filter((t) => !_requiredSet.has(t)));
   // Tests can pass an explicit trainerMap (or null to disable); production uses
   // the baked map. `!== undefined` (not ||) so an explicit null stays null.
   const trainerMap = (opts && opts.trainerMap !== undefined) ? opts.trainerMap : TRAINER_LESSON_MAP;
@@ -265,6 +270,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     worksheetBlankCounts,
     weights: config.lessonFeederWeights || { ws: 1, W: 2, Q: 3 },
     trainerMap,
+    bonusTopics: bonusTopicSet,
   });
 
   // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
@@ -364,7 +370,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
         section,
         unitPcData: unitPcRaw,
         gradingWindowStart: (config && config.gradingWindowStart) || null,
-        blooketLessons: blooketRequired, // REQUIRED denominator only (core 67)
+        blooketLessons: blooketRequired, // REQUIRED denominator only (core 66)
         quizLessons,
         trainerLessons,
       });

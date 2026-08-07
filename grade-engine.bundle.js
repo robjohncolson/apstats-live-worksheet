@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 50a04d6182fe
+ * engine-version: 2bd0b449e4d1
  */
 ;(function (root) {
   'use strict';
@@ -534,7 +534,7 @@
     //
     // schedule: the lessons map from lesson-schedule.json (topicKey → entry).
     // Returns an array of topicKeys (strings), empty if nothing matches.
-    function expandLessonKey(unit, lessonKey, schedule) {
+    function expandLessonKey(unit, lessonKey, schedule, bonusTopics) {
       if (lessonKey === null) return [];
     
       // No schedule (Codex MAJOR 2 fold 2026-05-20): synthesize a topicKey so
@@ -555,6 +555,15 @@
           if (entry && entry.unit === unit && entry.worksheetKey === lessonKey) {
             matches.push(topicKey);
           }
+        }
+        // A shared worksheet must not fan its rows into bonus topics — that
+        // double-weights the worksheet and resurrects the topic as a graded
+        // lesson (Codex HIGH, 2026-08-07: old-3.7 via the 3.6-7 worksheet).
+        // Year-aware by construction: bonus = presence minus required, so the
+        // SY2526 freeze (bonusTopics empty) keeps its historical expansion.
+        if (bonusTopics && bonusTopics.size > 0) {
+          const core = matches.filter((t) => !bonusTopics.has(t));
+          if (core.length > 0) return core;
         }
         return matches;
       }
@@ -652,6 +661,9 @@
     // that is applied at the quarter level in computeQuarterFromLessons.
     function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
       const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
+      const bonusTopics = (opts && opts.bonusTopics instanceof Set)
+        ? opts.bonusTopics
+        : new Set((opts && opts.bonusTopics) || []);
       const weights = (opts && opts.weights) || { ws: 1, W: 2, Q: 3 };
     
       // lessonMap: topicKey → accumulator
@@ -766,7 +778,7 @@
         const { unit, lessonKey } = parsed;
         if (lessonKey === null) continue; // PC items are unit-scoped, skip here
     
-        const topicKeys = expandLessonKey(unit, lessonKey, schedule);
+        const topicKeys = expandLessonKey(unit, lessonKey, schedule, bonusTopics);
         if (!topicKeys.length) continue;
     
         const ts = row.recorded_at || null;
@@ -2142,7 +2154,7 @@
     
     // Blooket lists from gen-blooket-lessons.mjs (M2a presence/required split):
     //   topics / allTopics     = PRESENCE (has a Blooket) → hasBlooket UI columns
-    //   requiredTopics         = REQUIRED denominator (core 67) → blooketDue track
+    //   requiredTopics         = REQUIRED denominator (core 66) → blooketDue track
     //   bonusTopics            = enrichment (G4: visible, never required)
     // useV3 path is the primary consumer of the required list (computeQuarterV3);
     // env USE_V3_GRADING=true gates v3 (default false in code). Railway env unverifiable.
@@ -2329,6 +2341,11 @@
       // Presence (hasBlooket UI) vs required (Due denominator) — M2a / G4.
       // Shared resolver so transcript artHash / offline clients bind the same lists.
       const { blooketPresence, blooketRequired } = resolveBlooketLists(opts || {});
+      // Bonus = presence minus required. Derived (not a new input) so it is
+      // automatically year-aware AND already bound by artifactHash, which hashes
+      // both source lists. SY2526's freeze has required == presence -> empty set.
+      const _requiredSet = new Set(blooketRequired);
+      const bonusTopicSet = new Set(blooketPresence.filter((t) => !_requiredSet.has(t)));
       // Tests can pass an explicit trainerMap (or null to disable); production uses
       // the baked map. `!== undefined` (not ||) so an explicit null stays null.
       const trainerMap = (opts && opts.trainerMap !== undefined) ? opts.trainerMap : TRAINER_LESSON_MAP;
@@ -2338,6 +2355,7 @@
         worksheetBlankCounts,
         weights: config.lessonFeederWeights || { ws: 1, W: 2, Q: 3 },
         trainerMap,
+        bonusTopics: bonusTopicSet,
       });
     
       // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
@@ -2437,7 +2455,7 @@
             section,
             unitPcData: unitPcRaw,
             gradingWindowStart: (config && config.gradingWindowStart) || null,
-            blooketLessons: blooketRequired, // REQUIRED denominator only (core 67)
+            blooketLessons: blooketRequired, // REQUIRED denominator only (core 66)
             quizLessons,
             trainerLessons,
           });
@@ -2580,7 +2598,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "50a04d6182fe",
+    _engineVersion: "2bd0b449e4d1",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

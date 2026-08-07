@@ -86,7 +86,7 @@ export function parseItemLesson(itemId) {
 //
 // schedule: the lessons map from lesson-schedule.json (topicKey → entry).
 // Returns an array of topicKeys (strings), empty if nothing matches.
-export function expandLessonKey(unit, lessonKey, schedule) {
+export function expandLessonKey(unit, lessonKey, schedule, bonusTopics) {
   if (lessonKey === null) return [];
 
   // No schedule (Codex MAJOR 2 fold 2026-05-20): synthesize a topicKey so
@@ -107,6 +107,15 @@ export function expandLessonKey(unit, lessonKey, schedule) {
       if (entry && entry.unit === unit && entry.worksheetKey === lessonKey) {
         matches.push(topicKey);
       }
+    }
+    // A shared worksheet must not fan its rows into bonus topics — that
+    // double-weights the worksheet and resurrects the topic as a graded
+    // lesson (Codex HIGH, 2026-08-07: old-3.7 via the 3.6-7 worksheet).
+    // Year-aware by construction: bonus = presence minus required, so the
+    // SY2526 freeze (bonusTopics empty) keeps its historical expansion.
+    if (bonusTopics && bonusTopics.size > 0) {
+      const core = matches.filter((t) => !bonusTopics.has(t));
+      if (core.length > 0) return core;
     }
     return matches;
   }
@@ -204,6 +213,9 @@ const BLANK_ITEM_PATTERN = /^WS-U(\d+)L([\d-]+)-Q\d+$/;
 // that is applied at the quarter level in computeQuarterFromLessons.
 export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
   const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
+  const bonusTopics = (opts && opts.bonusTopics instanceof Set)
+    ? opts.bonusTopics
+    : new Set((opts && opts.bonusTopics) || []);
   const weights = (opts && opts.weights) || { ws: 1, W: 2, Q: 3 };
 
   // lessonMap: topicKey → accumulator
@@ -318,7 +330,7 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     const { unit, lessonKey } = parsed;
     if (lessonKey === null) continue; // PC items are unit-scoped, skip here
 
-    const topicKeys = expandLessonKey(unit, lessonKey, schedule);
+    const topicKeys = expandLessonKey(unit, lessonKey, schedule, bonusTopics);
     if (!topicKeys.length) continue;
 
     const ts = row.recorded_at || null;
