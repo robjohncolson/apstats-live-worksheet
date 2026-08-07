@@ -1,7 +1,7 @@
 {
   "year": "SY2627",
   "blooketPresenceLen": 77,
-  "blooketRequiredLen": 67,
+  "blooketRequiredLen": 66,
   "schedule_1_1_B": "2026-09-09",
   "frozenConfig": {
     "C": 85,
@@ -97,7 +97,7 @@
       "enabled": false
     }
   },
-  "artHash": "205d745b1d963112c9ce056a12b4b52786746fbff73de8b80c322107109f273f",
+  "artHash": "f13a8667e792e481c9fea7e88dfe8a87cd02cc92c1c608b9b9cf1e6edb611266",
   "grade": {
     "units": {
       "U1": {

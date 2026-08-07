@@ -45,7 +45,7 @@ describe('buildAnswerKey (pure)', () => {
   });
 
   it('counts exclusions correctly', () => {
-    expect(stats).toEqual({ mcq: 3, excludedFreeResponse: 1, excludedResource: 1, excludedNoKey: 2, total: 8 });
+    expect(stats).toEqual({ mcq: 3, excludedFreeResponse: 1, excludedResource: 1, excludedNoKey: 2, excludedBonusTopic: 0, total: 8 });
   });
 
   it('is deterministic + key-sorted', () => {
@@ -69,7 +69,7 @@ describe('generated data/answer-key.json (integration)', () => {
   it('all keys are MCQ with a non-empty single-token answerKey', () => {
     const doc = JSON.parse(readFileSync(p, 'utf8'));
     const entries = Object.entries(doc.answerKey);
-    expect(entries.length).toBe(354);
+    expect(entries.length).toBe(351);
     for (const [, v] of entries) {
       expect(v.type).toBe('multiple-choice');
       expect(typeof v.answerKey).toBe('string');

@@ -68,7 +68,7 @@ describe('W-reg dual live manifests', () => {
     expect(a.equals(b)).toBe(true);
   });
 
-  it('(b) live manifest is 5-unit CED shape (no pc, 2644 index, no bonus lesson ids)', () => {
+  it('(b) live manifest is 5-unit CED shape (no pc, 2641 index, no bonus lesson ids)', () => {
     const m = loadLive();
     expect(m.units).toHaveLength(5);
     const unitIds = m.units.map((u) => u.unit);
@@ -77,8 +77,8 @@ describe('W-reg dual live manifests', () => {
     for (const u of m.units) {
       expect(u.pc).toBeUndefined();
     }
-    expect(Object.keys(m.index || {})).toHaveLength(2644);
-    expect(countItemIds(m)).toBe(2644);
+    expect(Object.keys(m.index || {})).toHaveLength(2641);
+    expect(countItemIds(m)).toBe(2641);
     // No bonus old-ids as lesson entries
     const lessonIds = [];
     for (const u of m.units) {
@@ -163,7 +163,7 @@ describe('W-reg CED deploy reproduces both live copies', () => {
       // Shape smoke on redeployed copy
       const m = JSON.parse(liveA.toString('utf8'));
       expect(m.units).toHaveLength(5);
-      expect(Object.keys(m.index)).toHaveLength(2644);
+      expect(Object.keys(m.index)).toHaveLength(2641);
       for (const u of m.units) expect(u.pc).toBeUndefined();
     } finally {
       try { rmSync(tmp, { recursive: true, force: true }); } catch (_) { /* ignore */ }

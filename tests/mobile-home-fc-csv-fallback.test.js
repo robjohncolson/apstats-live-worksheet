@@ -135,13 +135,13 @@ describe('M2a mobile flashcard ID-only fallback (real helpers + boot order)', ()
 });
 
 describe('M2a blooket presence/required split', () => {
-  it('topics/allTopics=77 presence; requiredTopics=67 core; bonusTopics=10', () => {
+  it('topics/allTopics=77 presence; requiredTopics=66 core; bonusTopics=11', () => {
     const bl = JSON.parse(readFileSync(resolve(repo, 'roster-server/data/blooket-lessons.json'), 'utf8'));
     const xw = JSON.parse(readFileSync(resolve(repo, '2026-crosswalk.json'), 'utf8')).map;
     expect(bl.topics).toHaveLength(77);
     expect(bl.allTopics).toHaveLength(77);
-    expect(bl.requiredTopics).toHaveLength(67);
-    expect(bl.bonusTopics).toHaveLength(10);
+    expect(bl.requiredTopics).toHaveLength(66);
+    expect(bl.bonusTopics).toHaveLength(11);
     expect(bl.requiredTopics.length + bl.bonusTopics.length).toBe(bl.topics.length);
     for (const t of bl.requiredTopics) expect(xw[t].status).toBe('core');
     for (const t of bl.bonusTopics) expect(xw[t].status).toBe('bonus');

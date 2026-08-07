@@ -986,7 +986,8 @@
       "newUnit": 1,
       "newTopic": "1.13",
       "newLabel": "Experimental Design",
-      "oldId": "3.6-7"
+      "oldId": "3.6-7",
+      "mixedBonus": true
      }
     },
     {
@@ -1008,27 +1009,6 @@
       "newTopic": "1.13",
       "newLabel": "Experimental Design",
       "oldId": "3.6"
-     }
-    },
-    {
-     "lesson": "3.7",
-     "activities": [
-      {
-       "activity": "quiz",
-       "source": "curriculum_quiz",
-       "itemIds": [
-        "U3-L7-Q01",
-        "U3-L7-Q02",
-        "U3-L7-Q03"
-       ],
-       "count": 3
-      }
-     ],
-     "ced2026": {
-      "newUnit": 1,
-      "newTopic": "1.13",
-      "newLabel": "Experimental Design",
-      "oldId": "3.7"
      }
     }
    ]
@@ -7469,21 +7449,6 @@
   "U3-L6-Q03": {
    "unit": "U1",
    "lesson": "3.6",
-   "activity": "quiz"
-  },
-  "U3-L7-Q01": {
-   "unit": "U1",
-   "lesson": "3.7",
-   "activity": "quiz"
-  },
-  "U3-L7-Q02": {
-   "unit": "U1",
-   "lesson": "3.7",
-   "activity": "quiz"
-  },
-  "U3-L7-Q03": {
-   "unit": "U1",
-   "lesson": "3.7",
    "activity": "quiz"
   },
   "WS-U2L1-Q1": {

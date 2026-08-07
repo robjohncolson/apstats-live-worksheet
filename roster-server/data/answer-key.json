@@ -1,11 +1,12 @@
 {
   "generatedFrom": "curriculum_render/data/curriculum.js (READ-ONLY)",
-  "generated": "2026-07-14T22:21:51.589Z",
+  "generated": "2026-08-07T01:06:16.059Z",
   "counts": {
-    "mcq": 354,
+    "mcq": 351,
     "excludedFreeResponse": 12,
     "excludedResource": 1,
     "excludedNoKey": 0,
+    "excludedBonusTopic": 3,
     "total": 367
   },
   "answerKey": {
@@ -530,24 +531,6 @@
       "type": "multiple-choice",
       "unit": "3",
       "topic": "3.6"
-    },
-    "U3-L7-Q01": {
-      "answerKey": "A",
-      "type": "multiple-choice",
-      "unit": "3",
-      "topic": "3.7"
-    },
-    "U3-L7-Q02": {
-      "answerKey": "D",
-      "type": "multiple-choice",
-      "unit": "3",
-      "topic": "3.7"
-    },
-    "U3-L7-Q03": {
-      "answerKey": "D",
-      "type": "multiple-choice",
-      "unit": "3",
-      "topic": "3.7"
     },
     "U4-L10-Q01": {
       "answerKey": "A",

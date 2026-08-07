@@ -159,7 +159,7 @@ describe('M2b auditable invariance (resolver path)', () => {
       const actual = gradeViaResolver('SY2627', sc[name]);
       expect(actual.year).toBe('SY2627');
       expect(actual.blooketPresenceLen).toBe(77);
-      expect(actual.blooketRequiredLen).toBe(67);
+      expect(actual.blooketRequiredLen).toBe(66);
       // Presence sample must be non-empty when schedule produces lessons
       if (actual.grade.lessonsCount > 0) {
         expect(actual.grade.hasBlooketSample.length).toBeGreaterThan(0);

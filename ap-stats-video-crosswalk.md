@@ -96,9 +96,10 @@ _Not deleted --- flag `status: bonus`, render greyed in a "Beyond the Exam" sect
 
 ### Re-tags / resequencing --- no video work, attribution only
 
-- **3.15** also sources from old **8.4** (the expected-count *formula* is EK under new 3.15, not 3.14) -- or confirm your old 8.6 video recaps the formula.
-- **2.2** joint-relative-frequency traces to old 2.2; **2.3** long-run-relative-frequency traces to old 4.3 -- content is covered, just cross-attributed a topic away.
-- **5.2 -> 5.5:** r-calculation is now homed under 5.5; new 5.5 frames slope/intercept/r^2 as "calculated using technology," so your by-hand formula coverage becomes optional/bonus, not required.
+- **[RE-TAG DONE 2026-08-07]** Old **3.7** (sim-based "is the treatment difference real vs chance?") stops being **core** under new **1.13** -- College Board moved that content to later formal inference, and it is not in 1.13's EK. Retagged `status: bonus` (`bonusUnit: 1`) in `2026-crosswalk.json` / `lessons-index.json`; prior `migrationNote` history preserved, retag appended. The design content (old 3.5+3.6) still fully covers 1.13 without it. Attribution/status only -- no video re-cut performed.
+- **[RE-TAG DONE 2026-08-07]** **3.15** also sources from old **8.4** (the expected-count *formula* is EK under new 3.15, not 3.14) -- or confirm your old 8.6 video recaps the formula. Attribution recorded via `migrationNote` on old 8.6 in `2026-crosswalk.json` / `lessons-index.json` (old 8.4's existing note already pointed the other way).
+- **[RE-TAG DONE 2026-08-07]** **2.2** joint-relative-frequency traces to old 2.2; **2.3** long-run-relative-frequency traces to old 4.3 -- content is covered, just cross-attributed a topic away. Cross-attribution recorded via `migrationNote` on old 2.2 and old 4.3 in `2026-crosswalk.json` / `lessons-index.json`; primary `newTopic` homes (2.1 and 2.4 respectively) unchanged since the schema carries one newTopic per old id, not a `sources` list.
+- **5.2 -> 5.5:** r-calculation is now homed under 5.5; new 5.5 frames slope/intercept/r^2 as "calculated using technology," so your by-hand formula coverage becomes optional/bonus, not required. *(still open -- not one of the three retags applied 2026-08-07)*
 
 ### Confirmations (the reassuring part)
 

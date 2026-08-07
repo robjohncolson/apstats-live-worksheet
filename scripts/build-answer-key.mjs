@@ -62,14 +62,21 @@ export function deriveUnitTopic(id) {
 }
 
 /** Build the answer-key map + stats. Pure (no I/O) for testability. */
-export function buildAnswerKey(items) {
+export function buildAnswerKey(items, bonusTopics = new Set()) {
   const key = {};
   let mcq = 0;
   let excludedFreeResponse = 0;
   let excludedResource = 0;
   let excludedNoKey = 0;
+  let excludedBonusTopic = 0;
   for (const it of items) {
     if (!it || !it.id) continue;
+    // Bonus topics are dropped from the live work-manifest, so their items
+    // are never served — keying them would break the subset invariant.
+    if (bonusTopics.has(deriveUnitTopic(it.id).topic)) {
+      excludedBonusTopic++;
+      continue;
+    }
     if (it.type === 'multiple-choice') {
       if (it.answerKey == null || String(it.answerKey).trim() === '') {
         excludedNoKey++;
@@ -94,13 +101,15 @@ export function buildAnswerKey(items) {
   for (const k of Object.keys(key).sort()) sorted[k] = key[k];
   return {
     answerKey: sorted,
-    stats: { mcq, excludedFreeResponse, excludedResource, excludedNoKey, total: items.length },
+    stats: { mcq, excludedFreeResponse, excludedResource, excludedNoKey, excludedBonusTopic, total: items.length },
   };
 }
 
 function main() {
   const { items, path } = loadCurriculum();
-  const { answerKey, stats } = buildAnswerKey(items);
+  const crosswalk = JSON.parse(readFileSync(resolve(__dirname, '..', '2026-crosswalk.json'), 'utf8'));
+  const bonusTopics = new Set(Object.entries(crosswalk.map).filter(([, v]) => v.status === 'bonus').map(([k]) => k));
+  const { answerKey, stats } = buildAnswerKey(items, bonusTopics);
 
   // Report the ACTUAL source read (loadCurriculum may fall back to the
   // _v2 sibling) so artifact provenance is accurate (Codex MINOR).
@@ -122,7 +131,7 @@ function main() {
   console.log(
     `Source: ${path}\n` +
     `MCQ answer keys: ${stats.mcq}\n` +
-    `Excluded: free-response ${stats.excludedFreeResponse}, ` +
+    `Excluded: free-response ${stats.excludedFreeResponse}, bonus-topic ${stats.excludedBonusTopic}, ` +
     `resource ${stats.excludedResource}, mc-without-key ${stats.excludedNoKey}\n` +
     `Total curriculum items: ${stats.total}`
   );

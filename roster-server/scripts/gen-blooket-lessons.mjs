@@ -68,11 +68,13 @@ const requiredTopics = topics.filter((t) => crosswalk[t] && crosswalk[t].status 
 const bonusTopics = topics.filter((t) => crosswalk[t] && crosswalk[t].status === 'bonus').sort(topicSort);
 const unknown = topics.filter((t) => !crosswalk[t] || !['core', 'bonus'].includes(crosswalk[t].status));
 
-// Accounting invariants (frozen-source pattern)
+// Accounting invariants (frozen-source pattern). 66/11 since the Part-C
+// retag moved old-3.7 (sim-significance) from core-under-1.13 to bonus —
+// College Board relocated that content to later formal inference.
 const ok =
   topics.length === 77 &&
-  requiredTopics.length === 67 &&
-  bonusTopics.length === 10 &&
+  requiredTopics.length === 66 &&
+  bonusTopics.length === 11 &&
   requiredTopics.length + bonusTopics.length === topics.length &&
   unknown.length === 0;
 

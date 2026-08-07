@@ -84,14 +84,16 @@ describe('M2b grade-contexts registry (durable freeze + honest resolver)', () =>
     expect(prod.config).toEqual(expected);
   });
 
-  it('SY2627 live: presence 77 / required 67 / bonus 10', () => {
+  it('SY2627 live: presence 77 / required 66 / bonus 11', () => {
     const b = getGradeContext('SY2627');
     expect(b.year).toBe('SY2627');
     expect(b.blooketPresence).toHaveLength(77);
-    expect(b.blooketRequired).toHaveLength(67);
-    expect(b.blooketBonusTopics).toHaveLength(10);
+    expect(b.blooketRequired).toHaveLength(66);
+    expect(b.blooketBonusTopics).toHaveLength(11);
     expect(b.blooketTopics).toHaveLength(77);
     expect(b.blooketRequired).not.toContain('2.9');
+    // Part-C retag 2026-08-07: old-3.7 (sim-significance) moved core->bonus.
+    expect(b.blooketRequired).not.toContain('3.7');
     expect(b.blooketPresence).toContain('2.9');
   });
 
@@ -101,7 +103,7 @@ describe('M2b grade-contexts registry (durable freeze + honest resolver)', () =>
     expect(sy25.year).toBe('SY2526');
     expect(sy26.year).toBe('SY2627');
     expect(sy25.blooketRequired).toHaveLength(77);
-    expect(sy26.blooketRequired).toHaveLength(67);
+    expect(sy26.blooketRequired).toHaveLength(66);
     expect(sy25.lessonSchedule['1.1'].periods.B).toBe('2026-09-09');
     expect(sy25.config.useV3).toBe(false);
     sy25.config.C = 1;
