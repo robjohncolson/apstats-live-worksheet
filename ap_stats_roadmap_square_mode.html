@@ -2361,10 +2361,16 @@
     #bf-overlay .bf-feedback{margin-top:8px;font-size:11px;font-style:italic}
     #bf-overlay .bf-result-pass{color:#1f8b3b;font-weight:bold}
     #bf-overlay .bf-result-fail{color:#c83838;font-weight:bold}
+    #resource-body .fc-ready-badge{display:inline-block;margin-left:6px;padding:1px 5px;
+      border:1px solid #777;border-radius:8px;background:#f0f0f0;color:#444;
+      font-size:9px;line-height:1.2;white-space:nowrap}
 </style>
 <div id="bf-overlay" class="dialog-overlay" style="display:none">
     <div class="dialog-box" role="dialog" aria-modal="true" aria-labelledby="bf-header" style="max-width:480px;width:92%;text-align:left;padding:12px 16px">
-        <div id="bf-header" class="chicago" style="font-size:12px;margin-bottom:6px;border-bottom:1px solid var(--black);padding-bottom:6px"></div>
+        <div class="bf-modal-header" style="position:relative;margin-bottom:6px;border-bottom:1px solid var(--black);padding-bottom:6px">
+            <div id="bf-header" class="chicago" style="font-size:12px;padding-right:32px"></div>
+            <button type="button" class="s7btn" aria-label="Close" onclick="closeBlooketFlashcards()" style="position:absolute;right:0;top:-4px;min-width:24px;padding:1px 5px;line-height:18px">✕</button>
+        </div>
         <div id="bf-modepick" style="display:none;margin-bottom:8px"></div>
         <div id="bf-timer" class="geneva" style="display:none;font-size:14px;font-weight:bold;text-align:right;margin-bottom:6px"></div>
         <div id="bf-progress" class="bf-prog geneva" style="margin-bottom:8px"></div>
@@ -2596,6 +2602,7 @@
 <script src="nearby-transport.js"></script>
 <script src="offline-video.js"></script>
 <script src="gradebook-client.js"></script>
+<script src="lib/bkt.js" onerror=""></script>
 <script src="lib/flashcard-srs.js" onerror=""></script>
 <script src="lib/flashcard-store.js" onerror=""></script>
 <script src="lib/flashcard-flags.js" onerror=""></script>
@@ -11377,6 +11384,21 @@ function showResourcePanel(inf, dateStr) {
                     ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Quick check (caps 80%) or the full timed deck (up to 100%)" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
                     : '';
                 var _blDueText = '';
+                if (typeof _fcFlag === 'function' && _fcFlag('readinessBadge')) {
+                    var _blReadinessCsv = (typeof _srsCsvFor === 'function')
+                        ? _srsCsvFor(_stuTopicId)
+                        : null;
+                    var _blReadiness = (typeof _srsReadinessFor === 'function')
+                        ? _srsReadinessFor(_blReadinessCsv)
+                        : null;
+                    if (_blReadiness
+                        && typeof FlashcardSrs !== 'undefined'
+                        && FlashcardSrs
+                        && typeof FlashcardSrs.readinessLabel === 'function') {
+                        var _blReadinessLabel = FlashcardSrs.readinessLabel(_blReadiness);
+                        _blDueText += ' <span class="fc-ready-badge" title="Practice signal — not your grade">' + _blReadinessLabel + ' — practice signal, not your grade</span>';
+                    }
+                }
                 if (typeof _fcFlag === 'function' && _fcFlag('dueTodayDeck')) {
                     var _blDueSummary = (typeof _srsDueSnapshot === 'function')
                         ? _srsDueSnapshot()
@@ -11385,7 +11407,7 @@ function showResourcePanel(inf, dateStr) {
                     var _blDue = _blCsv && _blDueSummary && _blDueSummary.byCsv
                         ? Number(_blDueSummary.byCsv[_blCsv] || 0)
                         : 0;
-                    if (_blDue > 0) _blDueText = ' · ' + _blDue + ' due';
+                    if (_blDue > 0) _blDueText += ' · ' + _blDue + ' due';
                 }
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + _blDueText + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
             }
@@ -11480,6 +11502,24 @@ function showResourcePanel(inf, dateStr) {
 
     if (!html) {
         html = '<div style="color:var(--plat-lo);text-align:center;padding:12px">No linked resources for this day</div>';
+    }
+
+    if (typeof FlashcardStore !== 'undefined'
+        && FlashcardStore
+        && typeof FlashcardStore.createStore === 'function') {
+        var _fcpViewAs = typeof _viewAsContext === 'function' && _viewAsContext();
+        var _fcpDisabled = _fcpViewAs
+            || (typeof window !== 'undefined' && window.__WS_READ_ONLY__);
+        var _fcpDisabledAttr = _fcpDisabled ? ' disabled title="Unavailable while viewing as another student"' : '';
+        html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #aaa">'
+            + '<span class="chicago" style="font-size:10px">Flashcard progress</span>: '
+            + '<button type="button" class="s7btn" style="font-size:9px;padding:1px 5px" onclick="_fcpExport()"'
+            + _fcpDisabledAttr + '>Export</button> &middot; '
+            + '<label class="s7btn" style="font-size:9px;padding:1px 5px' + (_fcpDisabled ? ';opacity:0.55' : '') + '">Import'
+            + '<input type="file" accept="application/json,.json" style="display:none"'
+            + _fcpDisabledAttr
+            + ' onchange="if(this.files&&this.files[0])_fcpImportFile(this.files[0]);this.value=\'\'">'
+            + '</label></div>';
     }
 
     document.getElementById('resource-body').innerHTML = html;
@@ -11690,6 +11730,7 @@ async function studentMark(btn, topicId, artifact) {
 // chain-of-custody check: self-attest and self-reported scores couldn't
 // verify anything; flashcards we control end-to-end can.
 const BLOOKET_PASS_THRESHOLD = 0.80;
+const BLOOKET_RETRY_COOLDOWN_MS = 0; // (changing this needs teacher sign-off — see FLASHCARD_V2_BUILD.md)
 
 function _mayScore() {
     if (typeof _viewAsContext === 'function' && _viewAsContext()) return false;
@@ -11768,12 +11809,18 @@ var _bfState = {
     score: 0,       // right answers so far
     answered: false, // current card already answered?
     finishId: null, // pending early-pass finish beat
+    advanceId: null, // pending correct-answer auto-advance
     finished: false, // once-per-round finish latch
     roundId: null,
     seq: 0,
     cardStart: 0,
     misses: [],
-    perm: []
+    perm: [],
+    primedQnums: [],
+    poolQnums: [],
+    seenQnums: [],
+    allCards: [],
+    lastFinishAt: null
 };
 
 var _rvState = {
@@ -11824,6 +11871,9 @@ function _bfSaveProgress() {
             roundId: _bfState.roundId,
             seq: _bfState.seq,
             misses: Array.isArray(_bfState.misses) ? _bfState.misses : [],
+            primedQnums: Array.isArray(_bfState.primedQnums) ? _bfState.primedQnums : [],
+            poolQnums: Array.isArray(_bfState.poolQnums) ? _bfState.poolQnums : [],
+            seenQnums: Array.isArray(_bfState.seenQnums) ? _bfState.seenQnums : [],
             ts: new Date().toISOString(),
         };
         localStorage.setItem(key, JSON.stringify(saved));
@@ -11889,6 +11939,7 @@ function _bfWorksheetFragmentUrl(topicId, stem) {
 }
 
 var _srsFoldCache = null;
+var _srsReadinessCache = null;
 
 function _srsFoldedState() {
     if (typeof _viewAsContext === 'function' && _viewAsContext()) return null;
@@ -11947,6 +11998,47 @@ function _srsFoldedState() {
             folded: _srsFoldCache.folded,
             todayDay: todayDay
         };
+    } catch (_) {
+        return null;
+    }
+}
+
+function _srsReadinessFor(csv) {
+    if (typeof _fcFlag !== 'function' || !_fcFlag('readinessBadge')) return null;
+    if (!csv) return null;
+    if (typeof FlashcardSrs === 'undefined'
+        || !FlashcardSrs
+        || typeof FlashcardSrs.foldMastery !== 'function') return null;
+    if (typeof window === 'undefined'
+        || !window.BKT
+        || typeof window.BKT.updateMastery !== 'function') return null;
+
+    var foldedState = (typeof _srsFoldedState === 'function') ? _srsFoldedState() : null;
+    if (!foldedState || !Array.isArray(foldedState.log)) return null;
+
+    try {
+        var mastery = null;
+        if (typeof _srsReadinessCache !== 'undefined'
+            && _srsReadinessCache
+            && _srsReadinessCache.email === foldedState.email
+            && _srsReadinessCache.log === foldedState.log) {
+            mastery = _srsReadinessCache.mastery;
+        } else {
+            mastery = FlashcardSrs.foldMastery(foldedState.log, {
+                bkt: window.BKT,
+                todayDay: foldedState.todayDay
+            });
+            if (typeof _srsReadinessCache !== 'undefined') {
+                _srsReadinessCache = {
+                    email: foldedState.email,
+                    log: foldedState.log,
+                    mastery: mastery
+                };
+            }
+        }
+
+        if (!mastery || !mastery.byCsv) return null;
+        return mastery.byCsv[csv] || null;
     } catch (_) {
         return null;
     }
@@ -12112,6 +12204,255 @@ function _srsAppendLog(entries) {
     } catch (_) {}
 }
 
+function _fcpExport() {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) {
+        if (typeof showDialog === 'function') {
+            showDialog('&#128274;', 'Export is unavailable while viewing as another student.', 'OK');
+        }
+        return;
+    }
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    if (typeof FlashcardStore === 'undefined'
+        || !FlashcardStore
+        || typeof FlashcardStore.createStore !== 'function'
+        || typeof localStorage === 'undefined') return;
+
+    var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+    if (!email) {
+        if (typeof showDialog === 'function') showDialog('&#9888;', 'Sign in before exporting flashcard progress.', 'OK');
+        return;
+    }
+
+    try {
+        var store = FlashcardStore.createStore({
+            storage: localStorage,
+            email: email,
+            now: Date.now
+        });
+        if (!store
+            || typeof store.load !== 'function'
+            || typeof store.readSrsLog !== 'function'
+            || typeof store.exportPassport !== 'function') return;
+        var state = store.load();
+        var log = store.readSrsLog();
+        var passport = store.exportPassport(state, log);
+        var blob = new Blob([JSON.stringify(passport, null, 2)], { type: 'application/json' });
+        var link = document.createElement('a');
+        var objectUrl = URL.createObjectURL(blob);
+        var date = new Date().toISOString().slice(0, 10);
+        var safeEmail = String(email).replace(/[^a-z0-9@.+-]/gi, '_');
+        link.href = objectUrl;
+        link.download = 'apstats-flashcards-' + safeEmail + '-' + date + '.json';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 0);
+    } catch (_) {
+        if (typeof showDialog === 'function') showDialog('&#9888;', 'Could not export flashcard progress.', 'OK');
+    }
+}
+
+function _fcpImportFile(file) {
+    if (!file) return Promise.resolve(false);
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) {
+        if (typeof showDialog === 'function') {
+            showDialog('&#128274;', 'Import is unavailable while viewing as another student.', 'OK');
+        }
+        return Promise.resolve(false);
+    }
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return Promise.resolve(false);
+    if (typeof FlashcardStore === 'undefined'
+        || !FlashcardStore
+        || typeof FlashcardStore.createStore !== 'function'
+        || typeof localStorage === 'undefined') return Promise.resolve(false);
+
+    var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+    if (!email) {
+        if (typeof showDialog === 'function') showDialog('&#9888;', 'Sign in before importing flashcard progress.', 'OK');
+        return Promise.resolve(false);
+    }
+
+    var store;
+    try {
+        store = FlashcardStore.createStore({
+            storage: localStorage,
+            email: email,
+            now: Date.now
+        });
+    } catch (_) {
+        if (typeof showDialog === 'function') showDialog('&#9888;', 'Could not open flashcard progress.', 'OK');
+        return Promise.resolve(false);
+    }
+    if (!store
+        || typeof store.previewImport !== 'function'
+        || typeof store.importPassport !== 'function') return Promise.resolve(false);
+
+    var readPromise;
+    if (typeof file.text === 'function') {
+        readPromise = file.text();
+    } else if (typeof FileReader !== 'undefined') {
+        readPromise = new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function () { resolve(String(reader.result || '')); };
+            reader.onerror = function () { reject(reader.error || new Error('read-failed')); };
+            reader.readAsText(file);
+        });
+    } else {
+        if (typeof showDialog === 'function') showDialog('&#9888;', 'This browser cannot read the selected file.', 'OK');
+        return Promise.resolve(false);
+    }
+
+    return Promise.resolve(readPromise).then(function (text) {
+        var preview;
+        try {
+            preview = store.previewImport(text);
+        } catch (_) {
+            preview = null;
+        }
+        if (preview && preview.emailMatches === false) {
+            if (typeof showDialog === 'function') {
+                showDialog('&#128274;', 'This passport belongs to a different student. Import was refused.', 'OK');
+            }
+            return false;
+        }
+        if (!preview || preview.ok !== true) {
+            if (typeof showDialog === 'function') {
+                showDialog('&#9888;', 'That file is not a valid AP Statistics flashcard passport.', 'OK');
+            }
+            return false;
+        }
+        if (typeof showDialog !== 'function' || typeof document === 'undefined') return false;
+
+        var counts = preview.counts || {};
+        showDialog('&#128452;',
+            'Import this flashcard progress?<br><br>'
+            + '<b>' + Number(counts.cards || 0) + '</b> cards &middot; '
+            + '<b>' + Number(counts.logEntries || 0) + '</b> practice records &middot; '
+            + '<b>' + Number(counts.tombstones || 0) + '</b> removed cards',
+            'Import');
+
+        var overlay = document.getElementById('dialog-overlay');
+        var buttons = overlay ? overlay.querySelector('.dialog-btns') : null;
+        var importButton = document.getElementById('dialog-btn');
+        if (!buttons || !importButton) return false;
+
+        var originalImportHandler = importButton.onclick;
+        var cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.className = 's7btn';
+        cancelButton.style.marginRight = '6px';
+        cancelButton.textContent = 'Cancel';
+        buttons.insertBefore(cancelButton, importButton);
+
+        function cleanupConfirm() {
+            importButton.onclick = originalImportHandler;
+            if (cancelButton.parentNode) cancelButton.parentNode.removeChild(cancelButton);
+            if (overlay) overlay.removeEventListener('click', dismissFromOverlay);
+            document.removeEventListener('keydown', dismissFromEscape, true);
+        }
+        function dismissFromOverlay(event) {
+            if (event.target !== overlay) return;
+            cleanupConfirm();
+        }
+        function dismissFromEscape(event) {
+            if (event.key !== 'Escape') return;
+            cleanupConfirm();
+        }
+        cancelButton.onclick = function () {
+            cleanupConfirm();
+            if (typeof closeDialog === 'function') closeDialog();
+        };
+        importButton.onclick = function () {
+            cleanupConfirm();
+            if (typeof closeDialog === 'function') closeDialog();
+            var imported;
+            var currentEmail = null;
+            try {
+                currentEmail = (typeof getStudentEmail === 'function')
+                    ? getStudentEmail()
+                    : null;
+            } catch (_) {
+                currentEmail = null;
+            }
+            var viewAsActive = typeof _viewAsContext === 'function' && _viewAsContext();
+            var readOnly = typeof window !== 'undefined' && window.__WS_READ_ONLY__;
+            if (viewAsActive || readOnly || currentEmail !== email) {
+                if (typeof showDialog === 'function') {
+                    showDialog('&#128274;', 'Could not import flashcard progress.', 'OK');
+                }
+                return;
+            }
+            try {
+                imported = store.importPassport(text);
+            } catch (_) {
+                imported = { ok: false };
+            }
+            if (!imported || imported.ok !== true) {
+                if (typeof showDialog === 'function') {
+                    showDialog('&#9888;', 'Could not import flashcard progress.', 'OK');
+                }
+                return;
+            }
+
+            if (typeof _srsFoldCache !== 'undefined') _srsFoldCache = null;
+            if (typeof _srsReadinessCache !== 'undefined') _srsReadinessCache = null;
+            try {
+                if (typeof sessionStorage !== 'undefined') {
+                    var snapshotKey = sessionStorage.getItem('apstats_fc_due_snapshot');
+                    if (snapshotKey) sessionStorage.removeItem(snapshotKey);
+                    sessionStorage.removeItem('apstats_fc_due_snapshot');
+                }
+            } catch (_) {}
+            if (typeof _fcFlag === 'function'
+                && _fcFlag('dueTodayDeck')
+                && typeof _srsRenderDueChip === 'function'
+                && typeof _srsDueSnapshot === 'function') {
+                var dueHost = document.getElementById('donow-grades');
+                if (dueHost) _srsRenderDueChip(dueHost, _srsDueSnapshot());
+            }
+            if (typeof showDialog === 'function') {
+                showDialog('&#10003;', 'Flashcard progress imported.', 'OK');
+            }
+        };
+        overlay.addEventListener('click', dismissFromOverlay);
+        document.addEventListener('keydown', dismissFromEscape, true);
+        return true;
+    }, function () {
+        if (typeof showDialog === 'function') showDialog('&#9888;', 'Could not read the selected file.', 'OK');
+        return false;
+    });
+}
+
+// Dormant until the teacher enables ap-stats-flashcards in
+// TRAINER_DECK_ALLOWLIST on Railway. Local progress remains authoritative.
+function _srsSyncViaTrainerState() {
+    try {
+        if (typeof _fcFlag !== 'function' || !_fcFlag('flashcardSync')) return;
+        if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+        if (typeof window === 'undefined' || window.__WS_READ_ONLY__) return;
+        if (!window.rosterClient
+            || typeof window.rosterClient.trainerState !== 'function') return;
+
+        var state = null;
+        if (typeof _rvState !== 'undefined' && _rvState && _rvState.folded) {
+            state = _rvState.folded;
+        } else if (typeof _srsFoldedState === 'function') {
+            var foldedState = _srsFoldedState();
+            state = foldedState && foldedState.folded ? foldedState.folded : null;
+        }
+        if (!state) return;
+
+        var request = window.rosterClient.trainerState({
+            deckId: 'ap-stats-flashcards',
+            state: state
+        });
+        if (request && typeof request.catch === 'function') {
+            request.catch(function () {});
+        }
+    } catch (_) {}
+}
+
 function _srsRoundId(surface) {
     var randomPart = Math.floor(Math.random() * 1679616).toString(36);
     while (randomPart.length < 4) randomPart = '0' + randomPart;
@@ -12237,6 +12578,148 @@ function _bfSelectTop10(allCards, csvFilename, tagsForFile) {
     return hard.concat(med, easy, untagged).slice(0, TARGET);
 }
 
+// Full-pool twin of _bfSelectTop10's difficulty ordering. Keep the frozen
+// selector above unchanged; retries need the ordered cards beyond its top 10.
+function _bfOrderByDifficulty(allCards, tagsForFile) {
+    if (!Array.isArray(allCards) || allCards.length === 0) return [];
+    if (!tagsForFile || Object.keys(tagsForFile).length === 0) return allCards.slice();
+    var hard = [];
+    var med = [];
+    var easy = [];
+    var untagged = [];
+    for (var i = 0; i < allCards.length; i++) {
+        var card = allCards[i];
+        var tag = card && card.qnum != null ? tagsForFile[String(card.qnum)] : null;
+        var difficulty = tag && tag.difficulty;
+        if (difficulty === 'hard') hard.push(card);
+        else if (difficulty === 'med') med.push(card);
+        else if (difficulty === 'easy') easy.push(card);
+        else untagged.push(card);
+    }
+    return hard.concat(med, easy, untagged);
+}
+
+function _bfQnums(cards) {
+    if (!Array.isArray(cards)) return [];
+    var qnums = [];
+    for (var i = 0; i < cards.length; i++) {
+        if (!cards[i] || cards[i].qnum == null) continue;
+        qnums.push(cards[i].qnum);
+    }
+    return qnums;
+}
+
+function _bfMergeSeenQnums(seenQnums, cards) {
+    var merged = [];
+    var included = {};
+    var existing = Array.isArray(seenQnums) ? seenQnums : [];
+    var i;
+    for (i = 0; i < existing.length; i++) {
+        var existingKey = String(existing[i]);
+        if (included[existingKey]) continue;
+        included[existingKey] = true;
+        merged.push(existing[i]);
+    }
+    var deck = Array.isArray(cards) ? cards : [];
+    for (i = 0; i < deck.length; i++) {
+        if (!deck[i] || deck[i].qnum == null) continue;
+        var deckKey = String(deck[i].qnum);
+        if (included[deckKey]) continue;
+        included[deckKey] = true;
+        merged.push(deck[i].qnum);
+    }
+    return merged;
+}
+
+// Returns an unshuffled retry deck, or null when there are not enough unseen
+// cards to refill to 10. The caller owns the exact legacy reshuffle fallback.
+function _bfBuildRetryDeck(currentDeck, misses, poolQnums, seenQnums, allCards) {
+    var TARGET = 10;
+    if (!Array.isArray(currentDeck) || currentDeck.length === 0) return null;
+    if (!Array.isArray(allCards) || allCards.length === 0) return null;
+    if (!Array.isArray(poolQnums) || poolQnums.length === 0) return null;
+
+    var cardsByQnum = {};
+    var i;
+    for (i = 0; i < allCards.length; i++) {
+        var poolCard = allCards[i];
+        if (!poolCard || poolCard.qnum == null) continue;
+        cardsByQnum[String(poolCard.qnum)] = poolCard;
+    }
+    for (i = 0; i < currentDeck.length; i++) {
+        var currentCard = currentDeck[i];
+        if (!currentCard || currentCard.qnum == null) continue;
+        cardsByQnum[String(currentCard.qnum)] = currentCard;
+    }
+
+    var retryDeck = [];
+    var included = {};
+    var missedCards = Array.isArray(misses) ? misses : [];
+    for (i = 0; i < missedCards.length; i++) {
+        var miss = missedCards[i];
+        if (!miss || miss.qnum == null) continue;
+        var missKey = String(miss.qnum);
+        if (included[missKey] || !cardsByQnum[missKey]) continue;
+        included[missKey] = true;
+        retryDeck.push(cardsByQnum[missKey]);
+    }
+    if (retryDeck.length >= TARGET) return retryDeck.slice(0, TARGET);
+
+    var seen = {};
+    var previousSeen = Array.isArray(seenQnums) ? seenQnums : [];
+    for (i = 0; i < previousSeen.length; i++) seen[String(previousSeen[i])] = true;
+    for (i = 0; i < currentDeck.length; i++) {
+        if (!currentDeck[i] || currentDeck[i].qnum == null) continue;
+        seen[String(currentDeck[i].qnum)] = true;
+    }
+
+    for (i = 0; i < poolQnums.length; i++) {
+        var qnumKey = String(poolQnums[i]);
+        if (seen[qnumKey] || included[qnumKey] || !cardsByQnum[qnumKey]) continue;
+        included[qnumKey] = true;
+        retryDeck.push(cardsByQnum[qnumKey]);
+        if (retryDeck.length === TARGET) return retryDeck;
+    }
+    return null;
+}
+
+async function _bfLoadAllCardsForRetry() {
+    if (Array.isArray(_bfState.allCards) && _bfState.allCards.length) return true;
+    var topicId = _bfState.topic;
+    var csvPath = (typeof _bfCsvPath === 'function') ? _bfCsvPath(topicId) : null;
+    if (!topicId || !csvPath) return false;
+    try {
+        var response = await fetch(csvPath);
+        if (!response.ok) return false;
+        var text = await response.text();
+        var allCards = _bfRowsToDeck(_bfParseCsv(text));
+        if (!allCards.length || _bfState.topic !== topicId) return false;
+        _bfState.allCards = allCards.slice();
+        if (!Array.isArray(_bfState.poolQnums) || !_bfState.poolQnums.length) {
+            var tags = (typeof _bfLoadDifficultyTags === 'function')
+                ? await _bfLoadDifficultyTags()
+                : {};
+            if (_bfState.topic !== topicId) return false;
+            var filename = csvPath.split('/').pop();
+            var tagsForFile = tags[filename] || tags[csvPath] || {};
+            var ordered = (typeof _bfOrderByDifficulty === 'function')
+                ? _bfOrderByDifficulty(allCards, tagsForFile)
+                : allCards.slice();
+            _bfState.poolQnums = (typeof _bfQnums === 'function')
+                ? _bfQnums(ordered)
+                : ordered.map(function (card) { return card.qnum; });
+        }
+        if (!Array.isArray(_bfState.seenQnums) || !_bfState.seenQnums.length) {
+            _bfState.seenQnums = (typeof _bfMergeSeenQnums === 'function')
+                ? _bfMergeSeenQnums([], _bfState.deck)
+                : [];
+        }
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
 function _bfShuffle(arr) {
     var a = arr.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -12309,6 +12792,12 @@ function _bfKeydownHandler(e) {
             if (nextBtn && nextBtn.style.display !== 'none') {
                 e.preventDefault();
                 nextBtn.click();
+                return;
+            }
+            if (key === 'enter' && nextBtn && nextBtn.style.display === 'none'
+                && _bfState.advanceId !== null) {
+                e.preventDefault();
+                _bfNext();
             }
         }
         return;
@@ -12844,6 +13333,11 @@ function _rvRate(grade) {
     if (!Array.isArray(_rvState.folded.seen)) _rvState.folded.seen = [];
     _rvState.folded.seen.push(String(_rvState.roundId) + '#' + String(logSeq));
     _rvState.store.save(_rvState.folded);
+    if (typeof _fcFlag === 'function'
+        && _fcFlag('flashcardSync')
+        && typeof _srsSyncViaTrainerState === 'function') {
+        _srsSyncViaTrainerState();
+    }
 
     _rvState.ratings += 1;
     _rvState.idx = _rvState.ratings;
@@ -13008,6 +13502,16 @@ async function _bfStartQuick(btn, topicId) {
             : 0;
         _bfState.cardStart = 0;
         _bfState.misses = Array.isArray(resumed.misses) ? resumed.misses.slice() : [];
+        _bfState.primedQnums = Array.isArray(resumed.primedQnums)
+            ? resumed.primedQnums.slice()
+            : [];
+        _bfState.poolQnums = Array.isArray(resumed.poolQnums) ? resumed.poolQnums.slice() : [];
+        var resumedSeen = Array.isArray(resumed.seenQnums) ? resumed.seenQnums.slice() : [];
+        _bfState.seenQnums = (typeof _bfMergeSeenQnums === 'function')
+            ? _bfMergeSeenQnums(resumedSeen, resumed.deck)
+            : resumedSeen;
+        _bfState.allCards = [];
+        _bfState.lastFinishAt = null;
         if (resumed.answered === true) {
             _bfState.idx = (resumed.idx || 0) + 1;
             _bfState.answered = false;
@@ -13042,6 +13546,9 @@ async function _bfStartQuick(btn, topicId) {
         var tags = await _bfLoadDifficultyTags();
         var fileTags = tags[csvPath.split('/').pop()] || tags[csvPath] || {};
         var deck = _bfSelectTop10(allCards, csvPath, fileTags);
+        var orderedCards = (typeof _bfOrderByDifficulty === 'function')
+            ? _bfOrderByDifficulty(allCards, fileTags)
+            : allCards.slice();
         _bfState.topic = topicId;
         _bfState.btn = btn;
         _bfState.deck = _bfShuffle(deck);
@@ -13053,6 +13560,15 @@ async function _bfStartQuick(btn, topicId) {
         _bfState.seq = 0;
         _bfState.cardStart = 0;
         _bfState.misses = [];
+        _bfState.primedQnums = [];
+        _bfState.poolQnums = (typeof _bfQnums === 'function')
+            ? _bfQnums(orderedCards)
+            : orderedCards.map(function (card) { return card.qnum; });
+        _bfState.seenQnums = (typeof _bfMergeSeenQnums === 'function')
+            ? _bfMergeSeenQnums([], deck)
+            : deck.map(function (card) { return card.qnum; });
+        _bfState.allCards = allCards.slice();
+        _bfState.lastFinishAt = null;
         _bfSaveProgress();
     }
     var header = document.getElementById('bf-header');
@@ -13148,7 +13664,7 @@ function _bfAnswer(idx) {
             correct: isRight,
             latencyMs: (now - _bfState.cardStart) || 0,
             wasTimeout: false,
-            missIndex: 0,
+            missIndex: (_bfState.primedQnums && _bfState.primedQnums.indexOf(card.qnum) !== -1) ? 1 : 0,
             ts: now,
             mode: 'quick',
             csv: (typeof _srsCsvFor === 'function') ? _srsCsvFor(topic) : null,
@@ -13204,10 +13720,20 @@ function _bfAnswer(idx) {
         }, 900);   // brief beat so the student sees the feedback
         return;
     }
+    if (isRight) {
+        if (nextBtn) nextBtn.style.display = 'none';
+        _bfState.advanceId = setTimeout(function () {
+            _bfState.advanceId = null;
+            _bfNext();
+        }, 700);
+        return;
+    }
     if (nextBtn) nextBtn.style.display = 'inline-block';
 }
 
 function _bfNext() {
+    if (_bfState.advanceId !== null) clearTimeout(_bfState.advanceId);
+    _bfState.advanceId = null;
     if (_bfState.finishId !== null) clearTimeout(_bfState.finishId);
     _bfState.finishId = null;
     _bfState.idx += 1;
@@ -13222,6 +13748,7 @@ async function _bfFinish() {
     var canScore = (typeof _mayScore !== 'function') || _mayScore();
     var pct = _bfState.deck.length > 0 ? (_bfState.score / _bfState.deck.length) : 0;
     var passed = pct >= BLOOKET_PASS_THRESHOLD;
+    if (!passed) _bfState.lastFinishAt = Date.now();
     var q = document.getElementById('bf-question');
     var c = document.getElementById('bf-choices');
     var p = document.getElementById('bf-progress');
@@ -13305,24 +13832,88 @@ async function _bfFinish() {
             result.appendChild(closeBtn);
         }
         if (!passed) {
-            var retry = document.createElement('button');
-            retry.className = 's7btn s7btn-default';
-            retry.style.marginTop = '8px';
-            retry.textContent = 'Try again (new shuffle)';
-            retry.onclick = function () {
-                _bfState.deck = _bfShuffle(_bfState.deck);
-                _bfState.idx = 0;
-                _bfState.score = 0;
-                _bfState.finished = false;
-                _bfState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
-                _bfState.seq = 0;
-                _bfState.cardStart = 0;
-                _bfState.misses = [];
-                result.style.display = 'none';
-                _bfSaveProgress();   // new shuffle → save so close-mid-retry resumes here
-                _bfRenderCard();
-            };
-            result.appendChild(retry);
+            var retryCooldownMs = 0;
+            if (typeof BLOOKET_RETRY_COOLDOWN_MS !== 'undefined'
+                && BLOOKET_RETRY_COOLDOWN_MS > 0) {
+                retryCooldownMs = BLOOKET_RETRY_COOLDOWN_MS;
+            }
+            var retryWaitMs = retryCooldownMs > 0
+                ? Math.max(0, retryCooldownMs - (Date.now() - _bfState.lastFinishAt))
+                : 0;
+            if (retryWaitMs > 0) {
+                var retryNote = document.createElement('div');
+                retryNote.style.marginTop = '8px';
+                retryNote.textContent = 'Try again in ' + Math.ceil(retryWaitMs / 1000) + 's';
+                result.appendChild(retryNote);
+            } else {
+                var retry = document.createElement('button');
+                retry.className = 's7btn s7btn-default';
+                retry.style.marginTop = '8px';
+                retry.textContent = 'Try again (new shuffle)';
+                retry.onclick = async function () {
+                    retry.disabled = true;
+                    var retryTopic = _bfState.topic;
+                    var retryRoundId = _bfState.roundId;
+                    var redrawDeck = null;
+                    var retainedMissQnums = [];
+                    var redrawEnabled = typeof _fcFlag === 'function'
+                        && _fcFlag('quickRetryRedraw');
+                    if (redrawEnabled && typeof _bfLoadAllCardsForRetry === 'function') {
+                        var allCardsReady = await _bfLoadAllCardsForRetry();
+                        if (allCardsReady && typeof _bfBuildRetryDeck === 'function') {
+                            redrawDeck = _bfBuildRetryDeck(
+                                _bfState.deck,
+                                _bfState.misses,
+                                _bfState.poolQnums,
+                                _bfState.seenQnums,
+                                _bfState.allCards
+                            );
+                        }
+                    }
+                    if (redrawDeck) {
+                        var missedQnums = {};
+                        var retryMisses = Array.isArray(_bfState.misses) ? _bfState.misses : [];
+                        for (var missIdx = 0; missIdx < retryMisses.length; missIdx++) {
+                            var retryMiss = retryMisses[missIdx];
+                            if (!retryMiss || retryMiss.qnum == null) continue;
+                            missedQnums[String(retryMiss.qnum)] = true;
+                        }
+                        for (var redrawIdx = 0; redrawIdx < redrawDeck.length; redrawIdx++) {
+                            var redrawCard = redrawDeck[redrawIdx];
+                            if (!redrawCard || redrawCard.qnum == null) continue;
+                            if (!missedQnums[String(redrawCard.qnum)]) continue;
+                            retainedMissQnums.push(redrawCard.qnum);
+                        }
+                    }
+                    if (_bfState.topic !== retryTopic || _bfState.roundId !== retryRoundId) return;
+                    if (redrawDeck) {
+                        _bfState.primedQnums = retainedMissQnums;
+                        _bfState.deck = _bfShuffle(redrawDeck);
+                        if (typeof _bfMergeSeenQnums === 'function') {
+                            _bfState.seenQnums = _bfMergeSeenQnums(
+                                _bfState.seenQnums,
+                                redrawDeck
+                            );
+                        }
+                    } else {
+                        _bfState.primedQnums = [];
+                        _bfState.deck = _bfShuffle(_bfState.deck);
+                    }
+                    _bfState.idx = 0;
+                    _bfState.score = 0;
+                    _bfState.answered = false;
+                    _bfState.finished = false;
+                    _bfState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
+                    _bfState.seq = 0;
+                    _bfState.cardStart = 0;
+                    _bfState.misses = [];
+                    _bfState.lastFinishAt = null;
+                    result.style.display = 'none';
+                    _bfSaveProgress();   // new shuffle → save so close-mid-retry resumes here
+                    _bfRenderCard();
+                };
+                result.appendChild(retry);
+            }
         }
         result.style.display = 'block';
     }
@@ -13353,6 +13944,8 @@ function _bfCloseUI() {
     if (ov) ov.style.display = 'none';
     if (_bfState.finishId !== null) clearTimeout(_bfState.finishId);
     _bfState.finishId = null;
+    if (_bfState.advanceId !== null) clearTimeout(_bfState.advanceId);
+    _bfState.advanceId = null;
     // Detach keyboard nav listeners (quick + timed) and stop any countdown.
     document.removeEventListener('keydown', _bfKeydownHandler);
     document.removeEventListener('keydown', _ftKeydownHandler);
@@ -13379,6 +13972,11 @@ function _bfCloseUI() {
     _bfState.cardStart = 0;
     _bfState.misses = [];
     _bfState.perm = [];
+    _bfState.primedQnums = [];
+    _bfState.poolQnums = [];
+    _bfState.seenQnums = [];
+    _bfState.allCards = [];
+    _bfState.lastFinishAt = null;
     _ftState.topic = null;
     _ftState.btn = null;
     _ftState.round = null;

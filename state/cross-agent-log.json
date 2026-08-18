@@ -4223,15 +4223,92 @@
       "timestamp": "2026-08-18T06:34:38Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "43adb6af96c9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 633.331,
+      "timestamp": "2026-08-18T06:52:18Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "656996c0b1fa",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 280.529,
+      "timestamp": "2026-08-18T06:57:23Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7280f5d69a81",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 357.295,
+      "timestamp": "2026-08-18T07:04:20Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "d1d3dec81a40",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 665.061,
+      "timestamp": "2026-08-18T07:15:40Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "151b3ce6d6d4",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "P2b REVIEW \u2014 P0/P1/P2a are committed (521ac70, 6cd14ae, 6b3f3b8); review ONLY `git diff HEAD` + untr",
+      "status": "completed",
+      "duration_seconds": 444.171,
+      "timestamp": "2026-08-18T07:23:55Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9705c70b613c",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "P2b REVIEW \u2014 P0/P1/P2a are committed (521ac70, 6cd14ae, 6b3f3b8); review ONLY `git diff HEAD` + untr",
+      "status": "completed",
+      "duration_seconds": 571.038,
+      "timestamp": "2026-08-18T07:26:02Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "31aa00e87169",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 612.415,
+      "timestamp": "2026-08-18T07:37:07Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 360,
-    "cc_to_codex": 360,
+    "total_calls": 367,
+    "cc_to_codex": 367,
     "codex_to_cc": 0,
-    "completed": 273,
+    "completed": 280,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 623.581
+    "avg_duration_seconds": 621.398
   }
 }
