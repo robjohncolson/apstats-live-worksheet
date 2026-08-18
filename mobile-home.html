@@ -167,6 +167,7 @@
      grade row when offline; gradebook-client.js is the same feeder the Desk uses. -->
 <script src="flashcards.js" onerror=""></script>
 <script src="lib/flashcard-flags.js" onerror=""></script>
+<script src="lib/flashcard-sync.js" onerror=""></script>
 <script src="offline-queue.js" onerror=""></script>
 <script src="gradebook-client.js" onerror=""></script>
 <script>
@@ -601,6 +602,7 @@
         if (!result || !result.ok) { if (err) err.textContent = (result && result.error) || 'Sign-in failed. Check your password.'; return; }
         var who = (window.rosterClient.current && window.rosterClient.current()) || {};
         try { localStorage.setItem('apstats_desk_student_email', who.username || r.username); } catch (_) {}
+        try { if (typeof _fcSyncPull === 'function') _fcSyncPull({ force: true }); } catch (_) {}
         closeNameFinder();
         refreshIdentity();
         // Pull this student's signed ledger so their grades are on-device to gossip.
@@ -733,6 +735,7 @@
         if (!result || !result.ok) { if (err) err.textContent = (result && result.error) || 'Signup failed.'; return; }
         var who = (window.rosterClient.current && window.rosterClient.current()) || {};
         try { localStorage.setItem('apstats_desk_student_email', who.username || _suUsername); } catch (_) {}
+        try { if (typeof _fcSyncPull === 'function') _fcSyncPull({ force: true }); } catch (_) {}
         closeNameFinder();
         refreshIdentity();
         // Same post-sign-in flow as the password path: pull the ledger, boot the mesh
@@ -946,6 +949,7 @@
     }
     Promise.resolve(loaded).then(function (flags) {
       _fcFlags = flags;
+      try { if (typeof _fcSyncPull === 'function') _fcSyncPull({ force: true }); } catch (_) {}
     }, function () {
       _fcFlags = null;
     });
@@ -964,6 +968,59 @@
     } catch (_) {}
     return false;
   }
+
+  // ── Cross-device sync of the flashcard PRACTICE log (Supabase via roster-server's
+  // trainer_state row; pure logic in lib/flashcard-sync.js). Mirrors the Desk's
+  // _fcSyncClient / _srsSyncPull / _srsSyncViaTrainerState. Never grade evidence.
+  var _fcSyncInstance = null;
+  function _fcSyncFlagOn() {
+    if (!_fcFlags || !window.FlashcardFlags || typeof window.FlashcardFlags.resolveFlag !== 'function') return false;
+    try {
+      return window.FlashcardFlags.resolveFlag(_fcFlags, 'flashcardSync', {
+        search: location.search, username: _fcStudent(), section: null, storage: localStorage
+      });
+    } catch (_) { return false; }
+  }
+  function _fcSyncAllowed() {
+    if (!_fcSyncFlagOn()) return false;
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return false;
+    if (window.__WS_READ_ONLY__) return false;
+    return true;
+  }
+  function _fcSyncClient() {
+    if (_fcSyncInstance) return _fcSyncInstance;
+    if (!window.FlashcardSync || typeof window.FlashcardSync.createSyncClient !== 'function') return null;
+    if (typeof fetch !== 'function') return null;
+    _fcSyncInstance = window.FlashcardSync.createSyncClient({
+      fetch: function (url, init) { return fetch(url, init); },
+      baseUrl: function () { return (typeof svcUrl === 'function') ? svcUrl() : (window.ROSTER_SERVICE_URL || null); },
+      token: function () {
+        try { return (window.rosterClient && typeof rosterClient.token === 'function') ? rosterClient.token() : null; } catch (_) { return null; }
+      },
+      email: function () { return (typeof _fcEmail === 'function') ? _fcEmail() : null; },
+      storage: localStorage
+    });
+    return _fcSyncInstance;
+  }
+  function _fcSyncPull(opts) {
+    try {
+      if (!_fcSyncAllowed()) return Promise.resolve({ ok: false });
+      var c = _fcSyncClient(); if (!c) return Promise.resolve({ ok: false });
+      return c.pull(opts || {});
+    } catch (_) { return Promise.resolve({ ok: false }); }
+  }
+  function _fcSyncPush() {
+    try { if (!_fcSyncAllowed()) return; var c = _fcSyncClient(); if (c) c.schedulePush(); } catch (_) {}
+  }
+  function _fcSyncFlush() {
+    try { if (!_fcSyncAllowed()) return; var c = _fcSyncClient(); if (c) c.flush(); } catch (_) {}
+  }
+  try {
+    window.addEventListener('pagehide', function () { _fcSyncFlush(); });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') _fcSyncFlush(); else _fcSyncPull();
+    });
+  } catch (_) {}
 
   _fcLoadFlagsOnce();
 
@@ -989,6 +1046,7 @@
       for (var i = 0; i < entries.length; i++) saved.push(entries[i]);
       if (saved.length > 2000) saved = saved.slice(saved.length - 2000);
       localStorage.setItem(key, JSON.stringify(saved));
+      if (typeof _fcSyncPush === 'function') _fcSyncPush();
     } catch (_) {}
   }
 
@@ -1156,6 +1214,7 @@
 
   function openFlashcards(lesson, launcher) {
     if (launcher) _fcLauncher = launcher;
+    try { if (typeof _fcSyncPull === 'function') _fcSyncPull(); } catch (_) {}
     if (!FC) { _fcBodyHtml('<div class="fc-result"><h2>Unavailable</h2><p>Flashcards engine not loaded.</p></div>'); fcoEl() && fcoEl().classList.add('show'); return; }
     var el = fcoEl(); if (!el) return;
     _fcTimerStop(); _fc = null; el.classList.remove('timed');

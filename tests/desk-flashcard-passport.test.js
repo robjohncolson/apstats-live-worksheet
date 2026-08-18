@@ -55,32 +55,59 @@ describe('Desk flashcard passport — static contract', () => {
     expect(body).toMatch(/_srsRenderDueChip\(dueHost, _srsDueSnapshot\(\)\)/);
   });
 
-  it('renders a guarded Flashcard progress row only when FlashcardStore is loaded', () => {
+  it('hides the Flashcard progress row from students — only ?fcPassport=1 AND a teacher-role session renders it', () => {
     const panel = fnBody(DESK, 'showResourcePanel');
+    const hatch = panel.indexOf('_fcpEscapeHatch');
     const guard = panel.indexOf("typeof FlashcardStore !== 'undefined'");
     const label = panel.indexOf('Flashcard progress', guard);
 
-    expect(guard).toBeGreaterThan(-1);
+    expect(hatch).toBeGreaterThan(-1);
+    expect(panel).toMatch(/_fcpWho && _fcpWho\.role === 'teacher'/);
+    expect(panel).toMatch(/\/\[\?&\]fcPassport=1\(\?:&\|\$\)\//);
+    // The row is inside a branch that requires BOTH the hatch and the store.
+    expect(panel).toMatch(/if \(_fcpEscapeHatch\s*\n?\s*&& typeof FlashcardStore !== 'undefined'/);
+    expect(guard).toBeGreaterThan(hatch);
     expect(label).toBeGreaterThan(guard);
-    expect(panel.slice(0, guard)).not.toContain('Flashcard progress');
+    expect(panel.slice(0, hatch)).not.toContain('Flashcard progress');
     expect(panel).toContain('_fcpExport()');
     expect(panel).toContain('_fcpImportFile(this.files[0])');
   });
 
-  it('keeps trainer-state sync dormant, flag-gated, feature-detected, and best-effort', () => {
-    const sync = fnBody(DESK, '_srsSyncViaTrainerState');
-    const rate = fnBody(DESK, '_rvRate');
+  it('syncs practice through lib/flashcard-sync.js: flag-gated, view-as/read-only guarded, best-effort', () => {
+    expect(DESK).toContain('<script src="lib/flashcard-sync.js" onerror=""></script>');
+    const allowed = fnBody(DESK, '_fcSyncAllowed');
+    expect(allowed).toMatch(/_fcFlag\('flashcardSync'\)/);
+    expect(allowed).toMatch(/_viewAsContext\(\)/);
+    expect(allowed).toMatch(/window\.__WS_READ_ONLY__/);
 
-    expect(sync).toMatch(/_fcFlag\('flashcardSync'\)/);
-    expect(sync).toMatch(/typeof window\.rosterClient\.trainerState\s*!==\s*['"]function['"]/);
-    expect(sync).toMatch(/window\.rosterClient\.trainerState\(\{/);
-    expect(sync).toContain("deckId: 'ap-stats-flashcards'");
-    expect(sync).toMatch(/request\.catch\(function \(\) \{\}\)/);
-    expect(rate.indexOf('_rvState.store.save(_rvState.folded)')).toBeGreaterThan(-1);
-    expect(rate.indexOf("_fcFlag('flashcardSync')")).toBeGreaterThan(
-      rate.indexOf('_rvState.store.save(_rvState.folded)')
-    );
-    expect(rate).toMatch(/_srsSyncViaTrainerState\(\)/);
+    const client = fnBody(DESK, '_fcSyncClient');
+    expect(client).toMatch(/FlashcardSync\.createSyncClient\(\{/);
+    expect(client).toMatch(/window\.ROSTER_SERVICE_URL/);
+    expect(client).toMatch(/rosterClient\.token\(\)/);
+    expect(client).toMatch(/getStudentEmail\(\)/);
+    // A remote merge invalidates the fold caches and repaints ONLY the chip.
+    expect(client).toMatch(/_srsFoldCache = null/);
+    expect(client).toMatch(/_srsReadinessCache = null/);
+    expect(client).toMatch(/_srsRenderDueChip\(dueHost, _srsDueSnapshot\(\)\)/);
+    expect(client).not.toMatch(/renderDoNowGrades\(/);
+
+    const push = fnBody(DESK, '_srsSyncViaTrainerState');
+    expect(push).toMatch(/_fcSyncAllowed\(\)/);
+    expect(push).toMatch(/client\.schedulePush\(\)/);
+    const pull = fnBody(DESK, '_srsSyncPull');
+    expect(pull).toMatch(/client\.pull\(/);
+
+    // Hooks: every log write pushes; boot (flags loaded), the three sign-in
+    // tails, and the flashcard picker pull.
+    expect(fnBody(DESK, '_srsAppendLog')).toMatch(/_srsSyncViaTrainerState\(\)/);
+    expect(fnBody(DESK, '_fcLoadFlags')).toMatch(/_srsSyncPull\(\{ force: true \}\)/);
+    expect(fnBody(DESK, 'openBlooketFlashcards')).toMatch(/_srsSyncPull\(\)/);
+    const signInPulls = DESK.match(/localStorage\.setItem\('apstats_desk_student_email', legacyKey\);(?:[^\n]*\n){1,3}[^\n]*_srsSyncPull\(\{ force: true \}\)/g) || [];
+    expect(signInPulls.length).toBe(3);
+    // Page-hide flush.
+    expect(DESK).toMatch(/addEventListener\('pagehide', function \(\) \{\s*if \(typeof _srsSyncFlush === 'function'\) _srsSyncFlush\(\);/);
+    // Review-mode ratings still push through the same helper.
+    expect(fnBody(DESK, '_rvRate')).toMatch(/_srsSyncViaTrainerState\(\)/);
   });
 });
 

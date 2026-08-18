@@ -4300,15 +4300,26 @@
       "timestamp": "2026-08-18T07:37:07Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "925b237d0952",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only \u2014 do NOT edit files, do NOT run tests). Repo: /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 396.305,
+      "timestamp": "2026-08-18T12:27:39Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 367,
-    "cc_to_codex": 367,
+    "total_calls": 368,
+    "cc_to_codex": 368,
     "codex_to_cc": 0,
-    "completed": 280,
+    "completed": 281,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 621.398
+    "avg_duration_seconds": 620.786
   }
 }

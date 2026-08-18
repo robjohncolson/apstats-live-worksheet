@@ -33,7 +33,7 @@
       "urlParam": "fcRedraw"
     },
     "flashcardSync": {
-      "enabled": false,
+      "enabled": true,
       "allowUsernames": [],
       "allowSections": [],
       "urlParam": "fcSync"

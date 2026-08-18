@@ -2606,6 +2606,7 @@
 <script src="lib/flashcard-srs.js" onerror=""></script>
 <script src="lib/flashcard-store.js" onerror=""></script>
 <script src="lib/flashcard-flags.js" onerror=""></script>
+<script src="lib/flashcard-sync.js" onerror=""></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script src="lib/qrcode.min.js"></script>
@@ -7196,6 +7197,7 @@ async function submitSignIn() {
     try { _priorLegacyEmail = localStorage.getItem('apstats_desk_student_email'); } catch (_) {}
     localStorage.setItem('apstats_desk_student_email', legacyKey);
     try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}   // real sign-in supersedes guest
+    try { if (typeof _srsSyncPull === 'function') _srsSyncPull({ force: true }); } catch (_) {}
     registerStudent(legacyKey);
     // 2026-05-20: remember this username for the sign-in dropdown.
     if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
@@ -7457,6 +7459,7 @@ async function _nfSubmitPassword() {
     try { _priorLegacyEmail = localStorage.getItem('apstats_desk_student_email'); } catch (_) {}
     try { localStorage.setItem('apstats_desk_student_email', legacyKey); } catch (_) {}
     try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}   // a real sign-in supersedes guest
+    try { if (typeof _srsSyncPull === 'function') _srsSyncPull({ force: true }); } catch (_) {}
     if (typeof registerStudent === 'function') registerStudent(legacyKey);
     if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
     if (typeof updateStudentMenu === 'function') updateStudentMenu();
@@ -7754,6 +7757,7 @@ function _applySignedUpSession(result) {
   try { _priorLegacyEmail = localStorage.getItem('apstats_desk_student_email'); } catch (_) {}
   try { localStorage.setItem('apstats_desk_student_email', legacyKey); } catch (_) {}
   try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}   // real account supersedes guest
+  try { if (typeof _srsSyncPull === 'function') _srsSyncPull({ force: true }); } catch (_) {}
   try { registerStudent(legacyKey); } catch (_) {}
   if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
   try { updateStudentMenu(); } catch (_) {}
@@ -11504,7 +11508,19 @@ function showResourcePanel(inf, dateStr) {
         html = '<div style="color:var(--plat-lo);text-align:center;padding:12px">No linked resources for this day</div>';
     }
 
-    if (typeof FlashcardStore !== 'undefined'
+    // Flashcard practice now syncs through Supabase (lib/flashcard-sync.js);
+    // the manual Export/Import passport row is a TEACHER-ONLY escape hatch:
+    // ?fcPassport=1 AND a signed-in roster session with role 'teacher'. A
+    // student adding the URL param sees nothing.
+    var _fcpEscapeHatch = false;
+    try {
+        var _fcpWho = (window.rosterClient && typeof window.rosterClient.current === 'function')
+            ? window.rosterClient.current() : null;
+        _fcpEscapeHatch = /[?&]fcPassport=1(?:&|$)/.test(String(location.search || ''))
+            && !!(_fcpWho && _fcpWho.role === 'teacher');
+    } catch (_) {}
+    if (_fcpEscapeHatch
+        && typeof FlashcardStore !== 'undefined'
         && FlashcardStore
         && typeof FlashcardStore.createStore === 'function') {
         var _fcpViewAs = typeof _viewAsContext === 'function' && _viewAsContext();
@@ -11773,6 +11789,7 @@ function _fcLoadFlags() {
                 }
             }
         } catch (_) { /* flag-driven cached repaint is best-effort */ }
+        try { if (typeof _srsSyncPull === 'function') _srsSyncPull({ force: true }); } catch (_) {}
         return _fcFlags;
     }, function () {
         _fcFlags = { flags: {} };
@@ -12196,6 +12213,7 @@ function _srsAppendLog(entries) {
         if (saved.length > 2000) saved = saved.slice(saved.length - 2000);
         localStorage.setItem(key, JSON.stringify(saved));
         if (typeof _srsFoldCache !== 'undefined') _srsFoldCache = null;
+        if (typeof _srsSyncViaTrainerState === 'function') _srsSyncViaTrainerState();
         if (typeof sessionStorage !== 'undefined') {
             var snapshotKey = sessionStorage.getItem('apstats_fc_due_snapshot');
             if (snapshotKey) sessionStorage.removeItem(snapshotKey);
@@ -12426,30 +12444,93 @@ function _fcpImportFile(file) {
 
 // Dormant until the teacher enables ap-stats-flashcards in
 // TRAINER_DECK_ALLOWLIST on Railway. Local progress remains authoritative.
+// ── Cross-device sync of the flashcard PRACTICE log (Supabase via roster-server's
+// existing trainer_state row, deck 'ap-stats-flashcards'). Pure merge/wire logic
+// lives in lib/flashcard-sync.js. Never grade evidence; never throws.
+var _fcSyncClientInstance = null;
+
+function _fcSyncClient() {
+    if (_fcSyncClientInstance) return _fcSyncClientInstance;
+    if (typeof FlashcardSync === 'undefined'
+        || !FlashcardSync
+        || typeof FlashcardSync.createSyncClient !== 'function') return null;
+    if (typeof fetch !== 'function' || typeof localStorage === 'undefined') return null;
+    _fcSyncClientInstance = FlashcardSync.createSyncClient({
+        fetch: function (url, init) { return fetch(url, init); },
+        baseUrl: function () { return window.ROSTER_SERVICE_URL || null; },
+        token: function () {
+            try {
+                return (window.rosterClient && typeof window.rosterClient.token === 'function')
+                    ? window.rosterClient.token() : null;
+            } catch (_) { return null; }
+        },
+        email: function () {
+            return (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+        },
+        storage: localStorage,
+        onLocalChanged: function () {
+            // Another device's practice arrived: drop the fold caches + the
+            // day snapshot, then refresh ONLY the additive chip (never re-run
+            // renderDoNowGrades — its fetch/classify path is incident-pinned).
+            try { _srsFoldCache = null; } catch (_) {}
+            try { _srsReadinessCache = null; } catch (_) {}
+            try {
+                if (typeof sessionStorage !== 'undefined') {
+                    var snapshotKey = sessionStorage.getItem('apstats_fc_due_snapshot');
+                    if (snapshotKey) sessionStorage.removeItem(snapshotKey);
+                }
+            } catch (_) {}
+            try {
+                if (typeof _fcFlag === 'function' && _fcFlag('dueTodayDeck')
+                    && typeof _srsRenderDueChip === 'function'
+                    && typeof _srsDueSnapshot === 'function') {
+                    var dueHost = document.getElementById('donow-grades');
+                    if (dueHost && dueHost.style.display !== 'none') {
+                        _srsRenderDueChip(dueHost, _srsDueSnapshot());
+                    }
+                }
+            } catch (_) {}
+        }
+    });
+    return _fcSyncClientInstance;
+}
+
+// Shared guard: flag on, real student session (not view-as / read-only).
+function _fcSyncAllowed() {
+    if (typeof _fcFlag !== 'function' || !_fcFlag('flashcardSync')) return false;
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return false;
+    if (typeof window === 'undefined' || window.__WS_READ_ONLY__) return false;
+    return true;
+}
+
+// Pull remote practice into local (boot, sign-in, before opening flashcards).
+// Resolves the client's result; never rejects.
+function _srsSyncPull(opts) {
+    try {
+        if (!_fcSyncAllowed()) return Promise.resolve({ ok: false, reason: 'not-allowed' });
+        var client = _fcSyncClient();
+        if (!client) return Promise.resolve({ ok: false, reason: 'no-client' });
+        return client.pull(opts || {});
+    } catch (_) { return Promise.resolve({ ok: false, reason: 'error' }); }
+}
+
+// Debounced push after any local log write. Name kept from P2-D11.
 function _srsSyncViaTrainerState() {
     try {
-        if (typeof _fcFlag !== 'function' || !_fcFlag('flashcardSync')) return;
-        if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
-        if (typeof window === 'undefined' || window.__WS_READ_ONLY__) return;
-        if (!window.rosterClient
-            || typeof window.rosterClient.trainerState !== 'function') return;
+        if (!_fcSyncAllowed()) return;
+        var client = _fcSyncClient();
+        if (!client) return;
+        client.schedulePush();
+    } catch (_) {}
+}
 
-        var state = null;
-        if (typeof _rvState !== 'undefined' && _rvState && _rvState.folded) {
-            state = _rvState.folded;
-        } else if (typeof _srsFoldedState === 'function') {
-            var foldedState = _srsFoldedState();
-            state = foldedState && foldedState.folded ? foldedState.folded : null;
-        }
-        if (!state) return;
-
-        var request = window.rosterClient.trainerState({
-            deckId: 'ap-stats-flashcards',
-            state: state
-        });
-        if (request && typeof request.catch === 'function') {
-            request.catch(function () {});
-        }
+// Page-hide flush so the last few cards are not lost when the tab closes.
+function _srsSyncFlush() {
+    try {
+        if (!_fcSyncAllowed()) return;
+        var client = _fcSyncClient();
+        if (!client) return;
+        client.flush();
     } catch (_) {}
 }
 
@@ -12831,6 +12912,7 @@ async function openBlooketFlashcards(btn, topicId) {
       }
       return;
     }
+    try { if (typeof _srsSyncPull === 'function') _srsSyncPull(); } catch (_) {}
     _bfShowModePicker(btn, topicId);
 }
 
@@ -23288,8 +23370,22 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-18-c32p';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-18-57fr';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
+// Flashcard sync: flush the debounced push when the tab hides / closes, and
+// re-pull (throttled) when it comes back — another device may have practiced.
+try {
+    window.addEventListener('pagehide', function () {
+        if (typeof _srsSyncFlush === 'function') _srsSyncFlush();
+    });
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+            if (typeof _srsSyncFlush === 'function') _srsSyncFlush();
+        } else if (typeof _srsSyncPull === 'function') {
+            _srsSyncPull();
+        }
+    });
+} catch (_) {}
 loadRegistry();
 updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
 updateStudentMenu();
