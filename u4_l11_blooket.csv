@@ -37,6 +37,6 @@ Question #,Question Text,Answer 1,Answer 2,"Answer 3
 30,A binomial variable has n = 100 and p = 0.5. What is its mean?,50,0.5,100,25,30,1,,,,,,,,,,,,,,,,,,
 31,"For n = 100 and p = 0.5, the standard deviation √[100(0.5)(0.5)] equals:",5,25,50,10,30,1,,,,,,,,,,,,,,,,,,
 32,Why can μ = 8.4 cracked screens be a valid mean when no sample has 8.4 people?,"It's an average over many random samples, not one result",The formula is only an estimate,You should round it to 8,It really means 8.4% of people,20,1,,,,,,,,,,,,,,,,,,
-33,"If n doubles and p stays the same, the binomial mean μ = np:",Doubles,Stays the same,Is cut in half,Quadruples,20,1,,,,,,,,,,,,,,,,,,
-34,"If n increases while p stays fixed, the binomial standard deviation:",Increases,Decreases,Stays the same,Becomes negative,20,1,,,,,,,,,,,,,,,,,,
+33,"A binomial setting has n = 40 and p = 0.21. If n changes to 80 with the same p, the mean μ = np:","Doubles","Stays the same","Is cut in half","Quadruples",20,1,,,,,,,,,,,,,,,,,,
+34,"A binomial setting has n = 40 and p = 0.21. If n changes to 80 with the same p, the standard deviation √[np(1-p)]:","Gets larger","Gets smaller","Stays the same","Becomes negative",20,1,,,,,,,,,,,,,,,,,,
 35,"A player makes 80% of free throws. In 30 attempts, the expected number made is:",24,6,0.8,30,30,1,,,,,,,,,,,,,,,,,,

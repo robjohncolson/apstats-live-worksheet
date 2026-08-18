@@ -1048,10 +1048,6 @@
         "difficulty": "easy",
         "rationale": "Key idea: the middle 50% stretches more right."
       },
-      "24": {
-        "difficulty": "easy",
-        "rationale": "Key idea: the middle 50% stretches more left."
-      },
       "25": {
         "difficulty": "med",
         "rationale": "Boxplot idea: a boxplot summarizes values with landmarks."
@@ -1169,10 +1165,6 @@
       "23": {
         "difficulty": "med",
         "rationale": "Key idea: mean and SD."
-      },
-      "24": {
-        "difficulty": "med",
-        "rationale": "Key idea: median and IQR together."
       },
       "25": {
         "difficulty": "hard",
@@ -2506,10 +2498,6 @@
         "difficulty": "easy",
         "rationale": "Key idea: A selected item cannot be chosen again."
       },
-      "5": {
-        "difficulty": "easy",
-        "rationale": "Key idea: A chosen item may be selected again."
-      },
       "6": {
         "difficulty": "easy",
         "rationale": "A census-: A study measuring every subject in the population."
@@ -3362,10 +3350,6 @@
         "difficulty": "hard",
         "rationale": "Probability idea: Impossible - it can never happen."
       },
-      "46": {
-        "difficulty": "hard",
-        "rationale": "Probability idea: Certain - it will always happen."
-      },
       "47": {
         "difficulty": "med",
         "rationale": "The COMPLEMENT of an event A- is The event that A does NOT happen."
@@ -3472,14 +3456,6 @@
         "difficulty": "med",
         "rationale": "Probability idea: TRUE."
       },
-      "13": {
-        "difficulty": "med",
-        "rationale": "Probability idea: FALSE."
-      },
-      "14": {
-        "difficulty": "med",
-        "rationale": "Probability idea: FALSE."
-      },
       "15": {
         "difficulty": "med",
         "rationale": "Probability idea: Impossible to occur."
@@ -3488,10 +3464,6 @@
         "difficulty": "med",
         "rationale": "Probability idea: Certain to occur."
       },
-      "17": {
-        "difficulty": "med",
-        "rationale": "Probability idea: Equally likely."
-      },
       "18": {
         "difficulty": "easy",
         "rationale": "Key idea: FALSE."
@@ -3499,10 +3471,6 @@
       "19": {
         "difficulty": "easy",
         "rationale": "Key idea: TRUE."
-      },
-      "20": {
-        "difficulty": "med",
-        "rationale": "Key idea: FALSE."
       },
       "21": {
         "difficulty": "hard",
@@ -3519,10 +3487,6 @@
       "24": {
         "difficulty": "hard",
         "rationale": "Given that setup, 0.20."
-      },
-      "25": {
-        "difficulty": "hard",
-        "rationale": "Disjoint-events idea: FALSE."
       },
       "26": {
         "difficulty": "hard",
@@ -3545,10 +3509,6 @@
         "rationale": "Given that setup, mutually exclusive."
       },
       "31": {
-        "difficulty": "hard",
-        "rationale": "Given that setup, fALSE."
-      },
-      "32": {
         "difficulty": "hard",
         "rationale": "Given that setup, fALSE."
       },
@@ -3596,17 +3556,9 @@
         "difficulty": "hard",
         "rationale": "Probability idea: TRUE."
       },
-      "44": {
-        "difficulty": "easy",
-        "rationale": "Probability idea: FALSE."
-      },
       "45": {
         "difficulty": "med",
         "rationale": "Key idea: TRUE."
-      },
-      "46": {
-        "difficulty": "med",
-        "rationale": "Key idea: FALSE."
       },
       "47": {
         "difficulty": "hard",
@@ -3620,17 +3572,9 @@
         "difficulty": "easy",
         "rationale": "Key idea: TRUE."
       },
-      "50": {
-        "difficulty": "easy",
-        "rationale": "Key idea: FALSE."
-      },
       "51": {
         "difficulty": "med",
         "rationale": "Key idea: TRUE."
-      },
-      "52": {
-        "difficulty": "hard",
-        "rationale": "After that result, fALSE."
       },
       "53": {
         "difficulty": "hard",
@@ -3660,41 +3604,21 @@
         "difficulty": "med",
         "rationale": "Key idea: TRUE."
       },
-      "60": {
-        "difficulty": "med",
-        "rationale": "Key idea: FALSE."
-      },
       "61": {
         "difficulty": "med",
         "rationale": "Key idea: TRUE."
-      },
-      "62": {
-        "difficulty": "med",
-        "rationale": "Key idea: FALSE."
       },
       "63": {
         "difficulty": "med",
         "rationale": "Key idea: FALSE."
       },
-      "64": {
-        "difficulty": "med",
-        "rationale": "Key idea: TRUE."
-      },
       "65": {
         "difficulty": "hard",
         "rationale": "Disjoint-events idea: FALSE."
       },
-      "66": {
-        "difficulty": "hard",
-        "rationale": "Disjoint-events idea: TRUE."
-      },
       "67": {
         "difficulty": "med",
         "rationale": "Distribution idea: TRUE."
-      },
-      "68": {
-        "difficulty": "med",
-        "rationale": "Distribution idea: FALSE."
       },
       "69": {
         "difficulty": "med",
@@ -3893,10 +3817,6 @@
       "47": {
         "difficulty": "med",
         "rationale": "Key idea: Probabilities."
-      },
-      "48": {
-        "difficulty": "hard",
-        "rationale": "Given that setup, 17."
       },
       "49": {
         "difficulty": "med",
@@ -4181,10 +4101,6 @@
       "5": {
         "difficulty": "easy",
         "rationale": "The MULTIPLICATION RULE for independent events- is P(A and B) = P(A) times P(B)."
-      },
-      "6": {
-        "difficulty": "med",
-        "rationale": "Key idea: Independent."
       },
       "7": {
         "difficulty": "med",
@@ -7902,10 +7818,6 @@
         "difficulty": "med",
         "rationale": "Chi-square idea: A category term that is added into the final chi-square."
       },
-      "6": {
-        "difficulty": "easy",
-        "rationale": "Chi-square idea: The counts fit the model fairly closely overall."
-      },
       "7": {
         "difficulty": "med",
         "rationale": "Chi-square idea: A value less than zero."
@@ -9235,10 +9147,6 @@
       "5": {
         "difficulty": "easy",
         "rationale": "The MULTIPLICATION RULE for independent events- is P(A and B) = P(A) times P(B)."
-      },
-      "6": {
-        "difficulty": "med",
-        "rationale": "Key idea: Independent."
       },
       "7": {
         "difficulty": "med",

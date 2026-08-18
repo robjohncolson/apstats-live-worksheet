@@ -31,7 +31,7 @@ Question #,Question Text,Answer 1,Answer 2,"Answer 3
 24,"For 6 tropical storms, 'exactly 5 become hurricanes' translates to which probability?",P(X = 5),P(X ≥ 5),P(X ≤ 5),P(X = 6),20,1,,,,,,,,,,,,,,,,,,
 25,Which calculator function finds an EXACT binomial probability such as P(X = 5)?,binompdf,binomcdf,normalcdf,invNorm,20,1,,,,,,,,,,,,,,,,,,
 26,"binomcdf(n, p, k) on the calculator computes:",P(X ≤ k),P(X = k),P(X ≥ k),P(X > k),20,1,,,,,,,,,,,,,,,,,,
-27,"Using P(X=5) = C(6,5) · (0.53)^5 · (0.47)^1, the probability is about:",0.118,0.0486,0.53,0.882,30,1,,,,,,,,,,,,,,,,,,
+27,"In the hurricane example, the probability that exactly 5 of the 6 predicted tropical storms become hurricanes is about:","0.118","0.0486","0.882","0.418",30,1,,,,,,,,,,,,,,,,,,
 28,Which scenario is a binomial setting?,Counting heads in 20 flips of a fair coin,Recording the exact height of 20 students,Counting aces when drawing 5 cards from 10 without replacement,Recording the number rolled on each of 20 dice,20,1,,,,,,,,,,,,,,,,,,
 29,"If the probability of success is p = 0.53, the probability of failure is:",0.47,0.53,1.53,0.047,20,1,,,,,,,,,,,,,,,,,,
 30,Rolling a die 10 times and recording the NUMBER rolled fails which binomial condition?,Binary - there are more than two outcomes,Independent trials,Fixed number of trials,Same probability on each trial,20,1,,,,,,,,,,,,,,,,,,

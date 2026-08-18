@@ -1,5 +1,7 @@
 # Blooket Deck Content Review — 2026-08-18
 
+> **Applied 2026-08-18** (commit after 0646fb4): all rewrites, merges and drops below were applied to the CSVs; the two answer-key fixes landed in 0646fb4. Two agent proposals had the key in the wrong slot and were corrected by hand before applying (u8_l5 q2 → "separate samples… across populations"; u6_l9 q16 → "entirely below 0"). Dropped cards keep their numbering gaps (card identity is csv#qnum) and their difficulty tags were pruned.
+
 Generated from `node scripts/lint-blooket-deck.mjs` findings, each checked against the live worksheet the deck derives from. **No deck has been edited.** Each item is a proposal for the teacher.
 
 | | count |

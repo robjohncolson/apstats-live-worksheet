@@ -12,7 +12,6 @@ Question #,Question Text,Answer 1,Answer 2,"Answer 3
 5,If X=1 with P=0.5 and X=2 with P=0.5 then μ=?,1.5,1,2,3,30,1,,,,,,,,,,,,,,,,,,
 6,If X=0 with P=0.25 and X=4 with P=0.75 then μ=?,3,1,2,4,30,1,,,,,,,,,,,,,,,,,,
 7,Expected value is a weighted average weighted by...,Probabilities,Frequencies,Sample sizes,Standard deviations,20,1,,,,,,,,,,,,,,,,,,
-8,If X=10 with P=0.3 and X=20 with P=0.7 then μ=?,17,15,14,30,30,1,,,,,,,,,,,,,,,,,,
 9,The expected value represents the _______ average over many trials.,Long-run,Short-term,Maximum,Minimum,20,1,,,,,,,,,,,,,,,,,,
 10,If X=5 with P=0.4 and X=10 with P=0.6 then E(X)=?,8,7.5,6,15,30,1,,,,,,,,,,,,,,,,,,
 11,What symbol represents standard deviation of X?,σ_X,μ_X,P(X),Var(X),20,1,,,,,,,,,,,,,,,,,,
