@@ -97,3 +97,7 @@ android-app/plugins/**/build/
 # Cloudflare R2 upload credentials (Phase 5 video host) — NEVER commit; local only.
 .r2.env
 .vercel
+
+# Golden-master fixtures derived from REAL student data are LOCAL-ONLY (privacy):
+# the repo is public. Only the synthetic fixture under tests/fixtures/golden-synthetic/ is committed.
+roster-server/tests/fixtures/golden-local/

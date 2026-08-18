@@ -4311,15 +4311,107 @@
       "timestamp": "2026-08-18T12:27:39Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "c880a276f7cd",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **B0** of /home/mrcolson/repos/apstats-live-worksheet/RELIABILITY_BUILD.md",
+      "status": "implemented_unverified",
+      "duration_seconds": 677.85,
+      "timestamp": "2026-08-18T13:12:46Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0f2cdf01ece4",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **A1** of /home/mrcolson/repos/apstats-live-worksheet/RELIABILITY_BUILD.md",
+      "status": "completed",
+      "duration_seconds": 706.355,
+      "timestamp": "2026-08-18T13:13:15Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7880a76f9acd",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **A2** of /home/mrcolson/repos/apstats-live-worksheet/RELIABILITY_BUILD.md",
+      "status": "completed",
+      "duration_seconds": 428.654,
+      "timestamp": "2026-08-18T13:22:44Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "30afa948d998",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **B1** of /home/mrcolson/repos/apstats-live-worksheet/RELIABILITY_BUILD.md",
+      "status": "implemented",
+      "duration_seconds": 512.672,
+      "timestamp": "2026-08-18T13:24:08Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9764f8c96af2",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only \u2014 do NOT edit files; you MAY run `npx vitest run tests/journeys/` to o",
+      "status": "completed",
+      "duration_seconds": 429.001,
+      "timestamp": "2026-08-18T13:37:30Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "645c32c34d82",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only \u2014 do NOT edit files, do NOT run tests). Repo /home/mrcolson/repos/apst",
+      "status": "completed",
+      "duration_seconds": 451.121,
+      "timestamp": "2026-08-18T13:37:52Z",
+      "files_changed": [
+        "node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "e4de78bff345",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **A2b** (review-fix + synthetic oracle) of /home/mrcolson/repos/apstats-li",
+      "status": "implemented",
+      "duration_seconds": 526.362,
+      "timestamp": "2026-08-18T13:49:32Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "cd0ca4d1e575",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing **B1-fix** for /home/mrcolson/repos/apstats-live-worksheet/RELIABILITY_BUILD.md",
+      "status": "implemented",
+      "duration_seconds": 701.617,
+      "timestamp": "2026-08-18T13:52:27Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 368,
-    "cc_to_codex": 368,
+    "total_calls": 376,
+    "cc_to_codex": 376,
     "codex_to_cc": 0,
-    "completed": 281,
+    "completed": 285,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 620.786
+    "avg_duration_seconds": 619.369
   }
 }

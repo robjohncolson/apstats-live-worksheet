@@ -167,6 +167,17 @@ export function generateBundle() {
 ;(function (root) {
   'use strict';
   var __reg = {};
+  // Browser shim: the engine modules read process.env.USE_V3_GRADING /
+  // PC_TRACK_ENABLED at module-eval time. In a browser 'process' is undefined and
+  // the whole bundle would throw at load (window.GradeEngine never defined —
+  // found by tests/journeys/harness.smoke.test.js). Node (tests, server) keeps
+  // its real process; the browser gets an empty env → the same defaults the
+  // server has when those vars are unset (v3 off, PC track off).
+  var process = (typeof root !== 'undefined' && root && root.process && root.process.env)
+    ? root.process
+    : (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)
+      ? globalThis.process
+      : { env: {} };
 
 ${bodies}
   var __api = {
