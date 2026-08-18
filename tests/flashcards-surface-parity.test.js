@@ -12,7 +12,9 @@ const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'u
 const MOBILE = readFileSync(resolve(repo, 'mobile-home.html'), 'utf8');
 const ENGINE = readFileSync(resolve(repo, 'flashcards.js'), 'utf8');
 
-const KNOWN_DIVERGENCES = new Set(['mobile-timed-reveals-on-miss']);
+// 'mobile-timed-reveals-on-miss' was closed by T3.4 (2026-08-18) — see the
+// 'timed-mode miss reveals nothing on either surface' it below.
+const KNOWN_DIVERGENCES = new Set([]);
 const NOW = 2_000_000_000_000;
 const TOPIC = '4.1-2';
 const EMAIL = 'parity@roster.local';
@@ -604,6 +606,27 @@ describe('Desk ⇄ mobile flashcard surface parity', function () {
       .map(function (entry) { return entry.chosenIdx; })).toEqual([-1]);
     expect(result.mobileLog.filter(function (entry) { return entry.wasTimeout; })
       .map(function (entry) { return entry.chosenIdx; })).toEqual([-1]);
+  });
+
+  it('timed-mode miss reveals nothing on either surface (T3.4 closed the mobile divergence)', function () {
+    const desk = makeDeskHarness('full');
+    const mobile = makeMobileHarness('full');
+    const deskCard = desk.ftState.round.deck[desk.api.currentIdx(desk.ftState.round)];
+    const mobileCard = mobile.fcState.round.deck[FC.currentIdx(mobile.fcState.round)];
+
+    desk.api.handleTimed('wrong', 0);
+    mobile.api.resolve('wrong', mobileCard, 0);
+
+    const deskCorrect = desk.dom.window.document.querySelectorAll('#bf-choices button')[deskCard.correctIdx];
+    const mobileCorrect = mobile.dom.window.document.querySelector(
+      '#fc-choices .fc-choice[data-i="' + mobileCard.correctIdx + '"]'
+    );
+    expect(deskCorrect.classList.contains('bf-correct')).toBe(false);
+    expect(mobileCorrect.classList.contains('right')).toBe(false);
+    expect(mobile.dom.window.document.getElementById('fc-feedback').textContent).toMatch(/come back/);
+
+    desk.dom.window.close();
+    mobile.dom.window.close();
   });
 
   KNOWN_DIVERGENCES.forEach(function (divergence) {

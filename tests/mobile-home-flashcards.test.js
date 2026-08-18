@@ -170,6 +170,46 @@ describe('mobile-home — native flashcards (behavioral boot)', () => {
     dom.window.close();
   });
 
+  it('timed mode: a miss does NOT reveal the correct answer (T3.4 Desk parity) and says it will come back', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-full').click();
+    await flush();
+
+    const wrong = win.document.querySelector('#fc-choices .fc-choice[data-i="0"]');
+    const correct = win.document.querySelector('#fc-choices .fc-choice[data-i="1"]');
+    expect(wrong && correct, 'card did not render').toBeTruthy();
+    wrong.click();
+    await flush(1);
+
+    expect(wrong.classList.contains('wrong')).toBe(true);
+    expect(correct.classList.contains('right')).toBe(false);
+    expect(win.document.getElementById('fc-feedback').textContent).toMatch(/come back/);
+    dom.window.close();
+  });
+
+  it('quick mode still reveals the correct answer on a miss (matches Desk _bfAnswer)', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+    await flush();
+
+    const wrong = win.document.querySelector('#fc-choices .fc-choice[data-i="0"]');
+    const correct = win.document.querySelector('#fc-choices .fc-choice[data-i="1"]');
+    expect(wrong && correct, 'card did not render').toBeTruthy();
+    wrong.click();
+    await flush(1);
+
+    expect(correct.classList.contains('right')).toBe(true);
+    dom.window.close();
+  });
+
   it('best-wins: a run that cannot beat the recorded score does not record', async () => {
     const { dom, win, recorded } = bootLauncher({ gradeBlooket: 100 });   // already maxed
     await flush();

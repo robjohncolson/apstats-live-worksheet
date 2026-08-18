@@ -927,6 +927,9 @@
   // write is the same fire-and-forget gradebookClient.record the Desk uses; the
   // best-wins floor here means a weaker re-run never lowers a recorded score.
   var FC = window.Flashcards || null;
+  // T3.4 (2026-08-18): timed-deck misses no longer reveal the answer on mobile
+  // (Desk parity). Flip to true to roll back; _fcResolve reads it typeof-guarded.
+  var FC_MOBILE_REVEAL_ON_MISS = false;
   var _fcTags = null, _fcFlags = null, _fc = null, _fcLauncher = null;
   function fcoEl() { return document.getElementById('fco'); }
   function fcBody() { return document.getElementById('fc-body'); }
@@ -1323,15 +1326,36 @@
     var answeredAt = Date.now();
     var latency = _fc.cardStart ? (answeredAt - _fc.cardStart) : 0;
     var b = fcBody();
+    var correct = (outcome === 'correct');
+    // Timed deck: a missed card comes back later at reduced credit (FC credit
+    // ladder), so revealing the answer mid-round would make the retry trivial —
+    // the Desk (_ftHandle) never reveals; mobile now matches. Quick mode has no
+    // re-queue, so it keeps the reveal like the Desk's _bfAnswer.
+    // FC_MOBILE_REVEAL_ON_MISS (typeof-guarded: the parity harness slices this
+    // function out of the page) is the T3.4 rollback constant.
+    var revealOnMiss = (_fc.mode === 'quick')
+      || (typeof FC_MOBILE_REVEAL_ON_MISS !== 'undefined' && FC_MOBILE_REVEAL_ON_MISS === true);
     Array.prototype.forEach.call(b.querySelectorAll('.fc-choice'), function (btn) {
       var i = parseInt(btn.getAttribute('data-i'), 10);
       btn.setAttribute('disabled', '');
-      if (i === card.correctIdx) btn.classList.add('right');
-      else if (i === choiceIdx) btn.classList.add('wrong');
+      if (i === card.correctIdx && (correct || revealOnMiss)) btn.classList.add('right');
+      else if (i === choiceIdx && !correct) btn.classList.add('wrong');
     });
-    var correct = (outcome === 'correct');
+    var willStrike = false;
+    if (_fc.mode !== 'quick' && !correct && _fc.round && Array.isArray(_fc.round.status)) {
+      var curIdx = FC.currentIdx(_fc.round);
+      var st = curIdx >= 0 ? _fc.round.status[curIdx] : null;
+      willStrike = !!(st && (st.misses + 1 >= 3));
+    }
     var fb = document.getElementById('fc-feedback');
-    if (fb) { fb.textContent = correct ? '✓ Correct' : (outcome === 'timeout' ? '⏱ Time’s up — answer shown' : '✗ Not quite'); fb.style.color = correct ? '#1a7f37' : '#b00020'; }
+    if (fb) {
+      var missText;
+      if (revealOnMiss) missText = (outcome === 'timeout' ? '⏱ Time’s up — answer shown' : '✗ Not quite');
+      else if (outcome === 'timeout') missText = willStrike ? '⏱ Too slow — out (0 for this card)' : '⏱ Too slow — it’ll come back';
+      else missText = willStrike ? '✗ Out (0 for this card)' : '✗ Not quite — it’ll come back';
+      fb.textContent = correct ? '✓ Correct' : missText;
+      fb.style.color = correct ? '#1a7f37' : '#b00020';
+    }
     if (_fc.mode === 'quick') {
       if (correct) _fc.correct += 1;
       else _fcRememberMiss(card);
