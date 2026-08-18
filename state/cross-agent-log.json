@@ -4036,15 +4036,114 @@
       "timestamp": "2026-08-18T04:47:36Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "25e401a10955",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 329.335,
+      "timestamp": "2026-08-18T04:56:43Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "a73a383b9b10",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 347.548,
+      "timestamp": "2026-08-18T04:57:01Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e88154399f03",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 320.925,
+      "timestamp": "2026-08-18T05:02:53Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0311f5a01183",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 389.634,
+      "timestamp": "2026-08-18T05:04:02Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "d68adb598208",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "P1 REVIEW \u2014 the P0 batch is already committed (521ac70); review ONLY the working-tree diff vs HEAD (",
+      "status": "completed",
+      "duration_seconds": 447.398,
+      "timestamp": "2026-08-18T05:11:55Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4e981eab32f7",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "P1 REVIEW \u2014 the P0 batch is already committed (521ac70); review ONLY the working-tree diff vs HEAD (",
+      "status": "completed",
+      "duration_seconds": 451.275,
+      "timestamp": "2026-08-18T05:11:59Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4fab8c3f30a5",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 316.952,
+      "timestamp": "2026-08-18T05:18:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "81455f91f03c",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 336.36,
+      "timestamp": "2026-08-18T05:19:13Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "ccef15f37947",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 264.099,
+      "timestamp": "2026-08-18T05:23:47Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 343,
-    "cc_to_codex": 343,
+    "total_calls": 352,
+    "cc_to_codex": 352,
     "codex_to_cc": 0,
-    "completed": 256,
+    "completed": 265,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 630.601
+    "avg_duration_seconds": 623.578
   }
 }

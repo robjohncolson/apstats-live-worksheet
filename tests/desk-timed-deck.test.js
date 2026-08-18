@@ -179,11 +179,13 @@ describe('Timed deck — UI wiring (static parse)', () => {
 
   it('16: per-card log persists to localStorage apstats_srs_log_<email>', () => {
     const body = fnBody(DESK, '_ftLogToStore');
-    expect(body).toMatch(/apstats_srs_log_/);
-    expect(body).toMatch(/getStudentEmail/);
+    expect(body).toMatch(/_srsAppendLog\s*\(/);
     expect(body).toMatch(/qnum/);
     expect(body).toMatch(/latencyMs/);
     expect(body).toMatch(/wasTimeout/);
+    const appendBody = fnBody(DESK, '_srsAppendLog');
+    expect(appendBody).toMatch(/apstats_srs_log_/);
+    expect(appendBody).toMatch(/getStudentEmail/);
   });
 
   it('17: _ftFinish logs, recaps, and commits the score (best-wins)', () => {

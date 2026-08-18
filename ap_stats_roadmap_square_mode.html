@@ -11683,6 +11683,10 @@ var _bfState = {
     answered: false, // current card already answered?
     finishId: null, // pending early-pass finish beat
     finished: false, // once-per-round finish latch
+    roundId: null,
+    seq: 0,
+    cardStart: 0,
+    misses: []
 };
 
 // 2026-05-20: persist progress per (student, topic) so cancel/close
@@ -11711,6 +11715,9 @@ function _bfSaveProgress() {
             idx: _bfState.idx,
             score: _bfState.score,
             answered: !!_bfState.answered,
+            roundId: _bfState.roundId,
+            seq: _bfState.seq,
+            misses: Array.isArray(_bfState.misses) ? _bfState.misses : [],
             ts: new Date().toISOString(),
         };
         localStorage.setItem(key, JSON.stringify(saved));
@@ -11758,6 +11765,71 @@ function _bfCsvPath(topicId) {
         var key = m[2].replace(/-/g, '_l');
         return 'u' + unit + '_l' + key + '_blooket.csv';
     } catch (_) { return null; }
+}
+
+function _bfWorksheetUrl(topicId) {
+    try {
+        var reg = (typeof getRegistryEntry === 'function') ? getRegistryEntry(topicId) : null;
+        if (!reg || !reg.urls || !reg.urls.worksheet) return null;
+        return reg.urls.worksheet;
+    } catch (_) { return null; }
+}
+
+function _bfWorksheetFragmentUrl(topicId, stem) {
+    var url = (typeof _bfWorksheetUrl === 'function') ? _bfWorksheetUrl(topicId) : null;
+    if (!url) return null;
+    var words = String(stem == null ? '' : stem).trim().split(/\s+/).slice(0, 6).join(' ');
+    return url + '#:~:text=' + encodeURIComponent(words);
+}
+
+function _srsAppendLog(entries) {
+    try {
+        if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+        if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+        var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+        if (!email || !Array.isArray(entries) || entries.length === 0) return;
+        var key = 'apstats_srs_log_' + email;
+        var saved = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!Array.isArray(saved)) saved = [];
+        saved = saved.concat(entries);
+        if (saved.length > 2000) saved = saved.slice(saved.length - 2000);
+        localStorage.setItem(key, JSON.stringify(saved));
+    } catch (_) {}
+}
+
+function _srsRoundId(surface) {
+    var randomPart = Math.floor(Math.random() * 1679616).toString(36);
+    while (randomPart.length < 4) randomPart = '0' + randomPart;
+    return surface + '-' + Date.now() + '-' + randomPart;
+}
+
+function _srsCsvFor(topic) {
+    try {
+        var path = (typeof _bfCsvPath === 'function') ? _bfCsvPath(topic) : null;
+        if (!path) return null;
+        var clean = String(path).split(/[?#]/)[0];
+        var parts = clean.split('/');
+        return parts[parts.length - 1] || null;
+    } catch (_) { return null; }
+}
+
+function _srsStemHash(stem) {
+    try {
+        if (typeof FlashcardSrs !== 'undefined'
+            && FlashcardSrs
+            && typeof FlashcardSrs.stemHash === 'function') {
+            return FlashcardSrs.stemHash(stem);
+        }
+        var normalized = String(stem == null ? '' : stem)
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, ' ');
+        var hash = 5381;
+        for (var i = 0; i < normalized.length; i++) {
+            hash = (((hash << 5) + hash) + normalized.charCodeAt(i)) >>> 0;
+        }
+        return ('00000000' + hash.toString(16)).slice(-8);
+    } catch (_) { return '00001505'; }
 }
 
 // CSV walker that handles quoted fields including embedded newlines + commas.
@@ -11995,12 +12067,25 @@ async function _bfStartQuick(btn, topicId) {
         _bfState.score = resumed.score || 0;
         _bfState.answered = false;
         _bfState.finished = false;
+        var canReuseRoundId = typeof resumed.roundId === 'string'
+            && resumed.roundId.indexOf('desk-') === 0;
+        _bfState.roundId = canReuseRoundId
+            ? resumed.roundId
+            : ((typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null);
+        _bfState.seq = canReuseRoundId
+            && typeof resumed.seq === 'number'
+            && resumed.seq >= 0
+            ? resumed.seq
+            : 0;
+        _bfState.cardStart = 0;
+        _bfState.misses = Array.isArray(resumed.misses) ? resumed.misses.slice() : [];
         if (resumed.answered === true) {
             _bfState.idx = (resumed.idx || 0) + 1;
             _bfState.answered = false;
             var passCount = Math.ceil(BLOOKET_PASS_THRESHOLD * _bfState.deck.length);
             finishOnResume = _bfState.score >= passCount || _bfState.idx >= _bfState.deck.length;
         }
+        if (!canReuseRoundId) _bfSaveProgress();
         isResume = true;
     } else {
         // Fresh load from CSV.
@@ -12035,6 +12120,10 @@ async function _bfStartQuick(btn, topicId) {
         _bfState.score = 0;
         _bfState.answered = false;
         _bfState.finished = false;
+        _bfState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
+        _bfState.seq = 0;
+        _bfState.cardStart = 0;
+        _bfState.misses = [];
         _bfSaveProgress();
     }
     var header = document.getElementById('bf-header');
@@ -12065,6 +12154,7 @@ function _bfRenderCard() {
         return;
     }
     var card = _bfState.deck[_bfState.idx];
+    _bfState.cardStart = Date.now();
     if (p) p.textContent = 'Question ' + (_bfState.idx + 1) + ' of ' + _bfState.deck.length
                          + '  ·  Right so far: ' + _bfState.score
                          + '  ·  Keys: a-d or 1-4 to answer, Enter for next';
@@ -12093,6 +12183,35 @@ function _bfAnswer(idx) {
     var card = _bfState.deck[_bfState.idx];
     var isRight = idx === card.correctIdx;
     if (isRight) _bfState.score += 1;
+    if (!isRight) {
+        if (!Array.isArray(_bfState.misses)) _bfState.misses = [];
+        _bfState.misses.push({
+            qnum: card.qnum,
+            q: card.q,
+            correctAnswer: card.choices[card.correctIdx]
+        });
+    }
+    var now = Date.now();
+    var topic = _bfState.topic;
+    if (typeof _srsAppendLog === 'function') {
+        _srsAppendLog([{
+            topic: topic,
+            qnum: card.qnum,
+            correct: isRight,
+            latencyMs: (now - _bfState.cardStart) || 0,
+            wasTimeout: false,
+            missIndex: 0,
+            ts: now,
+            mode: 'quick',
+            csv: (typeof _srsCsvFor === 'function') ? _srsCsvFor(topic) : null,
+            surface: 'desk',
+            roundId: _bfState.roundId,
+            seq: _bfState.seq++,
+            nChoices: card.choices.length,
+            chosenIdx: idx,
+            stemHash: (typeof _srsStemHash === 'function') ? _srsStemHash(card.q) : null
+        }]);
+    }
     _bfSaveProgress();
     var c = document.getElementById('bf-choices');
     var feedback = document.getElementById('bf-feedback');
@@ -12169,6 +12288,61 @@ async function _bfFinish() {
                 : '✓ Passed (view-only — not recorded).')
             : '✗ Need ≥ 80% to mark Done. Try again.';
         result.appendChild(line2);
+        var misses = Array.isArray(_bfState.misses) ? _bfState.misses : [];
+        var worksheetUrl = (typeof _bfWorksheetUrl === 'function')
+            ? _bfWorksheetUrl(_bfState.topic)
+            : null;
+        if (misses.length) {
+            var recapHeading = document.createElement('div');
+            recapHeading.style.cssText = 'margin:8px 0 4px';
+            recapHeading.textContent = 'Review your misses:';
+            result.appendChild(recapHeading);
+            var recapList = document.createElement('ul');
+            recapList.style.cssText = 'margin:0;padding-left:18px';
+            misses.forEach(function (miss) {
+                var item = document.createElement('li');
+                item.style.marginBottom = '6px';
+                var stem = document.createElement('div');
+                stem.textContent = miss.q;
+                var answer = document.createElement('div');
+                answer.style.color = '#1f8b3b';
+                answer.textContent = 'Answer: ' + miss.correctAnswer;
+                item.appendChild(stem);
+                item.appendChild(answer);
+                var fragmentUrl = worksheetUrl && typeof _bfWorksheetFragmentUrl === 'function'
+                    ? _bfWorksheetFragmentUrl(_bfState.topic, miss.q)
+                    : null;
+                if (fragmentUrl) {
+                    var reviewLink = document.createElement('a');
+                    reviewLink.href = fragmentUrl;
+                    reviewLink.target = '_blank';
+                    reviewLink.rel = 'noopener';
+                    reviewLink.style.cssText = 'display:inline-block;margin-top:2px;font-size:10px;color:#0000cc';
+                    reviewLink.textContent = 'Review in the worksheet ↗';
+                    item.appendChild(reviewLink);
+                }
+                recapList.appendChild(item);
+            });
+            result.appendChild(recapList);
+        } else {
+            var perfect = document.createElement('div');
+            perfect.style.cssText = 'margin-top:8px;color:#1f8b3b';
+            perfect.textContent = 'Perfect — no misses!';
+            result.appendChild(perfect);
+        }
+        var closeBtn = passed ? document.createElement('button') : null;
+        if (closeBtn) {
+            var closeHandled = false;
+            closeBtn.className = 's7btn s7btn-default';
+            closeBtn.style.marginTop = '8px';
+            closeBtn.textContent = 'Close';
+            closeBtn.onclick = function () {
+                if (closeHandled) return;
+                closeHandled = true;
+                if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
+            };
+            result.appendChild(closeBtn);
+        }
         if (!passed) {
             var retry = document.createElement('button');
             retry.className = 's7btn s7btn-default';
@@ -12179,6 +12353,10 @@ async function _bfFinish() {
                 _bfState.idx = 0;
                 _bfState.score = 0;
                 _bfState.finished = false;
+                _bfState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
+                _bfState.seq = 0;
+                _bfState.cardStart = 0;
+                _bfState.misses = [];
                 result.style.display = 'none';
                 _bfSaveProgress();   // new shuffle → save so close-mid-retry resumes here
                 _bfRenderCard();
@@ -12196,8 +12374,11 @@ async function _bfFinish() {
         // re-do (e.g. for practice) starts a fresh shuffle.
         _bfClearProgress(topicId);
         // Brief pause so the student sees the pass message before the modal closes.
+        var finishingRound = _bfState.roundId;
         setTimeout(async function () {
-            _bfCloseUI();   // don't re-save on close; we just cleared.
+            if (finishingRound === _bfState.roundId) {
+                _bfCloseUI();   // don't re-save on close; we just cleared.
+            }
             await _blooketCommit(btn, topicId, score);   // best-wins + grade refresh
         }, 1200);
     }
@@ -12226,10 +12407,15 @@ function _bfCloseUI() {
     _bfState.score = 0;
     _bfState.answered = false;
     _bfState.finished = false;
+    _bfState.roundId = null;
+    _bfState.seq = 0;
+    _bfState.cardStart = 0;
+    _bfState.misses = [];
     _ftState.topic = null;
     _ftState.btn = null;
     _ftState.round = null;
     _ftState.answered = false;
+    _ftState.roundId = null;
 }
 
 function closeBlooketFlashcards() {
@@ -12243,7 +12429,8 @@ function closeBlooketFlashcards() {
     // Cancel path: persist progress before tearing down so a re-open
     // resumes at the same card with the same shuffled deck and score.
     // Skip if the deck is fully traversed (already handled by _bfFinish).
-    if (_bfState.topic && _bfState.idx < (_bfState.deck && _bfState.deck.length || 0)) {
+    if (_bfState.topic && !_bfState.finished
+        && _bfState.idx < (_bfState.deck && _bfState.deck.length || 0)) {
         _bfSaveProgress();
     }
     _bfCloseUI();
@@ -12292,7 +12479,8 @@ const BLOOKET_FULLDECK_SECONDS = 40;
 
 var _ftState = {
     topic: null, btn: null, round: null,
-    answered: false, timerId: null, advanceId: null, remaining: 0, cardStartMs: 0
+    answered: false, timerId: null, advanceId: null, remaining: 0, cardStartMs: 0,
+    roundId: null
 };
 
 // ── Pure round logic (no DOM; unit-tested) ──
@@ -12404,6 +12592,7 @@ async function _ftStart(btn, topicId) {
     if (!allCards.length) { showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK'); return; }
     _ftState.topic = topicId;
     _ftState.btn = btn;
+    _ftState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
     _ftState.round = _ftCreateRound(_bfShuffle(allCards));   // FULL deck — no top-10 trim
     _ftState.answered = false;
     var header = document.getElementById('bf-header');
@@ -12456,12 +12645,12 @@ function _ftAnswer(choiceIdx) {
     var idx = _ftCurrentIdx(round);
     if (idx < 0) return;
     var card = round.deck[idx];
-    _ftHandle(choiceIdx === card.correctIdx ? 'correct' : 'wrong');
+    _ftHandle(choiceIdx === card.correctIdx ? 'correct' : 'wrong', choiceIdx);
 }
 
 // Records the outcome WITHOUT revealing the correct answer (a revealed answer
 // would make the re-queue trivial). Brief feedback, then auto-advance.
-function _ftHandle(outcome) {
+function _ftHandle(outcome, choiceIdx) {
     if (_ftState.answered) return;
     _ftState.answered = true;
     _ftClearTimer();
@@ -12469,7 +12658,9 @@ function _ftHandle(outcome) {
     var round = _ftState.round;
     var c = document.getElementById('bf-choices');
     if (c) { var bs = c.querySelectorAll('button'); for (var i = 0; i < bs.length; i++) bs[i].disabled = true; }
-    var st = round.status[_ftCurrentIdx(round)];
+    var currentIdx = _ftCurrentIdx(round);
+    var st = round.status[currentIdx];
+    var card = round.deck[currentIdx];
     var willStrike = (outcome !== 'correct') && (st.misses + 1 >= 3);
     var feedback = document.getElementById('bf-feedback');
     if (feedback) {
@@ -12478,6 +12669,10 @@ function _ftHandle(outcome) {
             : (willStrike ? '✗ Out (0 for this card)' : '✗ Not quite — it’ll come back');
     }
     _ftRecordOutcome(round, outcome, latency);
+    var last = round.log[round.log.length - 1];
+    last.nChoices = card.choices.length;
+    last.chosenIdx = (outcome === 'timeout') ? -1 : choiceIdx;
+    last.stemHash = (typeof _srsStemHash === 'function') ? _srsStemHash(card.q) : null;
     // Cancellable auto-advance: store the id so _ftClearTimer (close/teardown) can
     // cancel it — a stale fire would render against a null round.
     _ftState.advanceId = setTimeout(function () { _ftState.advanceId = null; _ftRenderCard(); }, 800);
@@ -12562,21 +12757,24 @@ function _ftLogToStore(topic, log) {
     if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
     if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
     try {
-        var email = getStudentEmail();
-        if (!email || !Array.isArray(log) || !log.length) return;
-        var k = 'apstats_srs_log_' + email;
-        var arr = JSON.parse(localStorage.getItem(k) || '[]');
-        if (!Array.isArray(arr)) arr = [];
+        if (!Array.isArray(log) || !log.length) return;
+        if (typeof _srsAppendLog !== 'function') return;
+        var entries = [];
         var stamp = Date.now();
+        var csv = (typeof _srsCsvFor === 'function') ? _srsCsvFor(topic) : null;
+        var roundId = (typeof _ftState !== 'undefined' && _ftState) ? _ftState.roundId : null;
         for (var i = 0; i < log.length; i++) {
-            arr.push({
+            entries.push({
                 topic: topic, qnum: log[i].qnum, correct: log[i].correct,
                 latencyMs: log[i].latencyMs, wasTimeout: log[i].wasTimeout,
-                missIndex: log[i].missIndex, ts: stamp
+                missIndex: log[i].missIndex, ts: stamp,
+                mode: 'full', csv: csv, surface: 'desk', roundId: roundId, seq: i,
+                nChoices: log[i].nChoices, chosenIdx: log[i].chosenIdx,
+                stemHash: log[i].stemHash
             });
         }
-        if (arr.length > 2000) arr = arr.slice(arr.length - 2000);
-        localStorage.setItem(k, JSON.stringify(arr));
+        // _srsAppendLog owns the apstats_srs_log_ + getStudentEmail() write.
+        _srsAppendLog(entries);
     } catch (_) {}
 }
 

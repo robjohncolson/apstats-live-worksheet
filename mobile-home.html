@@ -102,6 +102,10 @@
   #fco .fc-mode.full { background:#e8f1ff; border-color:#bcd6ff; }
   #fco .fc-score { font-size:44px; font-weight:800; margin:8px 0; }
   #fco .fc-score.pass { color:#1a7f37; } #fco .fc-score.fail { color:#b00020; }
+  #fco .fc-recap { text-align:left; margin:14px 0; font-size:14px; line-height:1.4; }
+  #fco .fc-recap ul { margin:6px 0 0; padding-left:20px; }
+  #fco .fc-recap li { margin-bottom:8px; overflow-wrap:anywhere; }
+  #fco .fc-recap .fc-recap-answer, #fco .fc-perfect { color:#1a7f37; }
 </style>
 </head>
 <body>
@@ -928,6 +932,122 @@
   function _fcSetProg(t) { var p = document.getElementById('fc-prog'); if (p) p.textContent = t || ''; }
   function _fcTimerStop() { if (_fc && _fc.timer) { clearInterval(_fc.timer); _fc.timer = null; } }
 
+  function _fcEmail() {
+    try {
+      var legacy = localStorage.getItem('apstats_desk_student_email');
+      if (legacy) return legacy;
+    } catch (_) {}
+    var username = _fcStudent();
+    return username ? (username + '@roster.local') : null;
+  }
+
+  function _fcSrsAppend(entries) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    if (!Array.isArray(entries) || !entries.length) return;
+    try {
+      var email = typeof _fcEmail === 'function' ? _fcEmail() : null;
+      if (!email) return;
+      var key = 'apstats_srs_log_' + email;
+      var saved = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!Array.isArray(saved)) saved = [];
+      for (var i = 0; i < entries.length; i++) saved.push(entries[i]);
+      if (saved.length > 2000) saved = saved.slice(saved.length - 2000);
+      localStorage.setItem(key, JSON.stringify(saved));
+    } catch (_) {}
+  }
+
+  function _fcRoundId() {
+    var suffix = Math.floor(Math.random() * 1679616).toString(36);
+    return 'mobile-' + Date.now() + '-' + ('0000' + suffix).slice(-4);
+  }
+
+  function _fcStemHash(stem) {
+    try {
+      if (window.FlashcardSrs && typeof window.FlashcardSrs.stemHash === 'function') {
+        return window.FlashcardSrs.stemHash(stem);
+      }
+    } catch (_) {}
+    var normalized = String(stem == null ? '' : stem).trim().toLowerCase().replace(/\s+/g, ' ');
+    var hash = 5381;
+    for (var i = 0; i < normalized.length; i++) {
+      hash = (((hash << 5) + hash) + normalized.charCodeAt(i)) >>> 0;
+    }
+    return ('00000000' + hash.toString(16)).slice(-8);
+  }
+
+  function _fcCsvBase(csvPath) {
+    return String(csvPath || '').split('/').pop().split('?')[0];
+  }
+
+  function _fcQuickProgressKey() {
+    var email = _fcEmail();
+    return email ? ('apstats_desk_bf_progress_' + email) : null;
+  }
+
+  function _fcLoadQuickProgress(topic) {
+    var key = _fcQuickProgressKey();
+    if (!key) return null;
+    try {
+      var all = JSON.parse(localStorage.getItem(key) || '{}');
+      var entry = all && all[topic];
+      if (!entry || !Array.isArray(entry.deck) || !entry.deck.length) return null;
+      if ((entry.idx || 0) >= entry.deck.length) return null;
+      return entry;
+    } catch (_) { return null; }
+  }
+
+  function _fcSaveQuickProgress() {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    if (!_fc || _fc.mode !== 'quick' || !_fc.lesson || !_fc.deck.length) return;
+    try {
+      var email = typeof _fcEmail === 'function' ? _fcEmail() : null;
+      if (!email) return;
+      var key = 'apstats_desk_bf_progress_' + email;
+      var all = JSON.parse(localStorage.getItem(key) || '{}');
+      if (!all || typeof all !== 'object' || Array.isArray(all)) all = {};
+      all[String(_fc.lesson.id)] = {
+        deck: _fc.deck,
+        idx: _fc.idx,
+        score: _fc.correct,
+        answered: !!_fc.answered,
+        ts: new Date().toISOString(),
+        roundId: _fc.roundId,
+        seq: _fc.seq,
+        misses: _fc.misses
+      };
+      localStorage.setItem(key, JSON.stringify(all));
+    } catch (_) {}
+  }
+
+  function _fcClearQuickProgress(topic) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    try {
+      var email = typeof _fcEmail === 'function' ? _fcEmail() : null;
+      if (!email) return;
+      var key = 'apstats_desk_bf_progress_' + email;
+      var all = JSON.parse(localStorage.getItem(key) || '{}');
+      if (!all || typeof all !== 'object' || Array.isArray(all)) all = {};
+      delete all[topic];
+      localStorage.setItem(key, JSON.stringify(all));
+    } catch (_) {}
+  }
+
+  function _fcRememberMiss(card) {
+    if (!_fc || !card) return;
+    if (!Array.isArray(_fc.misses)) _fc.misses = [];
+    for (var i = 0; i < _fc.misses.length; i++) {
+      if (_fc.misses[i].qnum === card.qnum) return;
+    }
+    _fc.misses.push({
+      qnum: card.qnum,
+      q: card.q,
+      correctAnswer: card.choices[card.correctIdx]
+    });
+  }
+
   function closeFlashcards() {
     var launcher = _fcLauncher;
     _fcTimerStop(); _fc = null;
@@ -1031,16 +1151,61 @@
     var csv = _fcCsvPath(lesson);
     if (!csv) { _fcBodyHtml('<div class="fc-result"><h2>No deck</h2><p>This lesson has no flashcard deck.</p></div>'); return; }
     _fcBodyHtml('<div class="fc-result"><h2>Loading deck…</h2></div>');
+    var topic = String(lesson && lesson.id);
+    var resumed = mode === 'quick' ? _fcLoadQuickProgress(topic) : null;
+    if (resumed) {
+      var resumedSeq = (typeof resumed.seq === 'number' && isFinite(resumed.seq)) ? Math.max(0, Math.floor(resumed.seq)) : 0;
+      var resumedRoundId = typeof resumed.roundId === 'string' ? resumed.roundId : '';
+      var sameSurfaceRound = resumedRoundId.indexOf('mobile-') === 0;
+      var resumedMisses = [];
+      if (Array.isArray(resumed.misses)) {
+        for (var missIndex = 0; missIndex < resumed.misses.length; missIndex++) {
+          var miss = resumed.misses[missIndex];
+          if (!miss) continue;
+          resumedMisses.push({
+            qnum: miss.qnum,
+            q: miss.q || miss.stem,
+            correctAnswer: miss.correctAnswer
+          });
+        }
+      }
+      _fc = {
+        mode: 'quick', lesson: lesson, deck: resumed.deck,
+        idx: resumed.idx || 0, correct: resumed.score || 0,
+        need: FC.quickPassCount(resumed.deck.length), answered: false, timer: null,
+        csv: _fcCsvBase(csv),
+        roundId: sameSurfaceRound ? resumedRoundId : _fcRoundId(),
+        seq: sameSurfaceRound ? resumedSeq : 0,
+        misses: resumedMisses
+      };
+      if (resumed.answered === true) _fc.idx = (resumed.idx || 0) + 1;
+      if (!sameSurfaceRound) _fcSaveQuickProgress();
+      fcoEl().classList.remove('timed');
+      var resumedTitle = document.getElementById('fc-title');
+      if (resumedTitle) resumedTitle.textContent = '🃏 ' + ((lesson && lesson.label) || ('Topic ' + topic)) + ' (resuming)';
+      if (_fc.correct >= _fc.need || _fc.idx >= _fc.deck.length) _fcFinish();
+      else _fcRender();
+      return;
+    }
     var tagsP = (mode === 'quick') ? _fcLoadTags() : Promise.resolve({});
     Promise.all([_fcLoadDeck(csv), tagsP]).then(function (res) {
       var deck = res[0], tags = res[1] || {};
       if (!deck || !deck.length) { _fcBodyHtml('<div class="fc-result"><h2>Empty deck</h2><p>Could not read cards for this lesson.</p></div>'); return; }
       if (mode === 'quick') {
         var top = FC.selectTop10(deck, tags[csv] || {});
-        _fc = { mode: 'quick', lesson: lesson, deck: FC.shuffle(top), idx: 0, correct: 0, need: FC.quickPassCount(top.length), answered: false, timer: null };
+        _fc = {
+          mode: 'quick', lesson: lesson, deck: FC.shuffle(top), idx: 0, correct: 0,
+          need: FC.quickPassCount(top.length), answered: false, timer: null,
+          csv: _fcCsvBase(csv), roundId: _fcRoundId(), seq: 0, misses: []
+        };
         fcoEl().classList.remove('timed');
+        _fcSaveQuickProgress();
       } else {
-        _fc = { mode: 'full', lesson: lesson, round: FC.createRound(FC.shuffle(deck)), answered: false, timer: null };
+        _fc = {
+          mode: 'full', lesson: lesson, round: FC.createRound(FC.shuffle(deck)),
+          answered: false, timer: null, csv: _fcCsvBase(csv),
+          roundId: _fcRoundId(), seq: 0, misses: []
+        };
         fcoEl().classList.add('timed');
       }
       _fcRender();
@@ -1099,7 +1264,8 @@
   function _fcResolve(outcome, card, choiceIdx) {
     if (!_fc || _fc.answered) return;
     _fc.answered = true;
-    var latency = _fc.cardStart ? (Date.now() - _fc.cardStart) : 0;
+    var answeredAt = Date.now();
+    var latency = _fc.cardStart ? (answeredAt - _fc.cardStart) : 0;
     var b = fcBody();
     Array.prototype.forEach.call(b.querySelectorAll('.fc-choice'), function (btn) {
       var i = parseInt(btn.getAttribute('data-i'), 10);
@@ -1112,16 +1278,46 @@
     if (fb) { fb.textContent = correct ? '✓ Correct' : (outcome === 'timeout' ? '⏱ Time’s up — answer shown' : '✗ Not quite'); fb.style.color = correct ? '#1a7f37' : '#b00020'; }
     if (_fc.mode === 'quick') {
       if (correct) _fc.correct += 1;
+      else _fcRememberMiss(card);
+      _fcSrsAppend([{
+        topic: String(_fc.lesson.id), qnum: card.qnum, correct: correct,
+        latencyMs: latency, wasTimeout: outcome === 'timeout', missIndex: 0,
+        ts: answeredAt, mode: 'quick', csv: _fc.csv, surface: 'mobile',
+        roundId: _fc.roundId, seq: _fc.seq, nChoices: card.choices.length,
+        chosenIdx: choiceIdx, stemHash: _fcStemHash(card.q)
+      }]);
+      _fc.seq += 1;
+      _fcSaveQuickProgress();
       if (_fc.correct >= _fc.need) { setTimeout(function () { _fcFinish(); }, 700); return; }   // early-stop caps at 80%
     } else {
       FC.recordOutcome(_fc.round, outcome, latency);
+      if (!correct) _fcRememberMiss(card);
+      var logged = _fc.round.log[_fc.round.log.length - 1];
+      if (logged) {
+        logged.topic = String(_fc.lesson.id);
+        logged.ts = answeredAt;
+        logged.mode = 'full';
+        logged.csv = _fc.csv;
+        logged.surface = 'mobile';
+        logged.roundId = _fc.roundId;
+        logged.seq = _fc.seq;
+        logged.nChoices = card.choices.length;
+        logged.chosenIdx = choiceIdx;
+        logged.stemHash = _fcStemHash(card.q);
+        _fcSrsAppend([logged]);
+        _fc.seq += 1;
+      }
     }
     var nx = document.getElementById('fc-next'); if (nx) nx.classList.add('show');
   }
 
   function _fcNext() {
     if (!_fc) return;
-    if (_fc.mode === 'quick') _fc.idx += 1;
+    if (_fc.mode === 'quick') {
+      _fc.idx += 1;
+      _fc.answered = false;
+      _fcSaveQuickProgress();
+    }
     _fcRender();
   }
 
@@ -1209,20 +1405,23 @@
     _fcTimerStop();
     if (!_fc) return;
     var lesson = _fc.lesson, topic = String(lesson.id);
+    var mode = _fc.mode;
+    var misses = Array.isArray(_fc.misses) ? _fc.misses.slice() : [];
     var score, passed;
     if (_fc.mode === 'quick') { score = FC.quickScorePct(_fc.correct, _fc.deck.length); passed = FC.quickPassed(_fc.correct, _fc.deck.length); }
     else { score = FC.fullScorePct(_fc.round); passed = score >= (FC.PASS_THRESHOLD * 100); }
     // Quick records only on pass (Desk behavior); the full deck always records its score.
     var doCommit = (_fc.mode === 'quick') ? passed : true;
+    if (_fc.mode === 'quick' && passed) _fcClearQuickProgress(topic);
     fcoEl().classList.remove('timed');
     _fc = null;
 
     function finishCommit() {
       var committed = doCommit ? _fcCommit(topic, score) : { skipped: true };
       Promise.resolve(committed).then(function (c) {
-        _fcRenderResult(lesson, score, passed, c || { ok:false, reason:'error' });
+        _fcRenderResult(lesson, score, passed, c || { ok:false, reason:'error' }, misses, mode);
       }, function () {
-        _fcRenderResult(lesson, score, passed, { ok:false, reason:'error' });
+        _fcRenderResult(lesson, score, passed, { ok:false, reason:'error' }, misses, mode);
       });
     }
     // Desk parity: refresh /grade FIRST so the best-wins floor reflects any higher
@@ -1230,7 +1429,7 @@
     Promise.resolve(loadGrade()).then(finishCommit, finishCommit);
   }
 
-  function _fcRenderResult(lesson, score, passed, committed) {
+  function _fcRenderResult(lesson, score, passed, committed, misses, mode) {
     var note;
     if (committed && committed.skipped && !passed && score < 80) note = 'Reach 80% for the Blooket half of Done — your grade wasn’t lowered.';
     else if (committed && committed.skipped) note = 'Kept your best score — a higher one is already recorded.';
@@ -1241,11 +1440,53 @@
       '<div class="fc-result">' +
         '<h2>' + (passed ? '🎉 Passed!' : 'Keep going') + '</h2>' +
         '<div class="fc-score ' + (passed ? 'pass' : 'fail') + '">' + (Math.round(score * 10) / 10) + '%</div>' +
+        '<div id="fc-recap-slot"></div>' +
         '<p>' + esc(note) + '</p>' +
         '<button class="fc-mode quick" id="fc-again">↻ Try again</button>' +
         '<button class="fc-mode full" id="fc-done">✓ Done</button>' +
       '</div>');
-    document.getElementById('fc-again').onclick = function () { openFlashcards(lesson); };
+    var recapSlot = document.getElementById('fc-recap-slot');
+    if (recapSlot) {
+      var recap = document.createElement('div');
+      recap.className = 'fc-recap';
+      if (Array.isArray(misses) && misses.length) {
+        var heading = document.createElement('strong');
+        heading.textContent = 'Review your misses';
+        recap.appendChild(heading);
+        var list = document.createElement('ul');
+        var worksheetUrl = lesson && lesson.worksheet ? lesson.worksheet : null;
+        for (var i = 0; i < misses.length; i++) {
+          var item = document.createElement('li');
+          var stem = document.createElement('div');
+          var stemText = String(misses[i].q == null ? '' : misses[i].q);
+          stem.textContent = stemText;
+          item.appendChild(stem);
+          var answer = document.createElement('div');
+          answer.className = 'fc-recap-answer';
+          answer.textContent = 'Answer: ' + misses[i].correctAnswer;
+          item.appendChild(answer);
+          if (worksheetUrl) {
+            var fragmentText = stemText.trim().split(/\s+/).slice(0, 6).join(' ');
+            var reviewLink = document.createElement('a');
+            reviewLink.href = worksheetUrl + '#:~:text=' + encodeURIComponent(fragmentText);
+            reviewLink.target = '_blank';
+            reviewLink.rel = 'noopener';
+            reviewLink.textContent = 'Review in the worksheet ↗';
+            item.appendChild(reviewLink);
+          }
+          list.appendChild(item);
+        }
+        recap.appendChild(list);
+      } else {
+        recap.className += ' fc-perfect';
+        recap.textContent = 'Perfect — no misses!';
+      }
+      recapSlot.parentNode.replaceChild(recap, recapSlot);
+    }
+    document.getElementById('fc-again').onclick = function () {
+      if (mode === 'quick' && !passed) _fcClearQuickProgress(String(lesson.id));
+      openFlashcards(lesson);
+    };
     document.getElementById('fc-done').onclick = function () { closeFlashcards(); };
     _fcSetProg('');
   }

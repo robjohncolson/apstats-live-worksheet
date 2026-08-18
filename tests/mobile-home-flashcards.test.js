@@ -49,7 +49,7 @@ const ONE_CARD_CSV = [
   '1,"Q one","alpha","beta","gamma","delta",20,2',   // correctIdx = 1 (data-i="1")
 ].join('\n');
 
-function bootLauncher({ gradeBlooket, indexMissing }) {
+function bootLauncher({ gradeBlooket, indexMissing, deckCsv = ONE_CARD_CSV, legacyEmail }) {
   const recorded = [];
   const lesson = { id: '4.1-2', unit: 4, label: 'Sampling', worksheet: 'u4_lesson1-2_live.html', quiz: null, blooket: 'https://b', videos: [] };
   // The published fallback source: roadmap-data.json (absolute GH-Pages URLs).
@@ -65,13 +65,16 @@ function bootLauncher({ gradeBlooket, indexMissing }) {
       : u.indexOf('/grade') >= 0 ? gradePayload
       : u.indexOf('blooket-difficulty.json') >= 0 ? { tags: {} }
       : null;
-    const text = u.indexOf('_blooket.csv') >= 0 ? ONE_CARD_CSV : '';
+    const text = u.indexOf('_blooket.csv') >= 0 ? deckCsv : '';
     return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body), text: () => Promise.resolve(text) });
   };
   const dom = new JSDOM(HOME, {
     runScripts: 'dangerously',
     url: 'https://x.test/mobile-home.html',
     beforeParse(window) {
+      if (typeof legacyEmail === 'string') {
+        window.localStorage.setItem('apstats_desk_student_email', legacyEmail);
+      }
       window.eval(FLASHCARDS_SRC);                       // window.Flashcards
       window.fetch = fakeFetch;
       window.ROSTER_SERVICE_URL = 'https://api.test';
@@ -281,5 +284,233 @@ describe('mobile-home — native flashcards commit note + accessibility', () => 
     const flashcardsBlock = HOME.slice(start, end);
     expect(flashcardsBlock).toContain('Blooket half of Done');
     expect(flashcardsBlock).not.toMatch(/lesson unlocked|to unlock|enough to unlock/i);
+  });
+});
+
+describe('mobile-home — per-card logging, recap, and quick resume', () => {
+  it('wires the mobile SRS key and roster-local email into quick answer logging', () => {
+    expect(HOME).toContain('function _fcSrsAppend(');
+    expect(HOME).toContain('function _fcEmail(');
+    expect(HOME).toContain("'apstats_srs_log_' + email");
+    expect(HOME).toContain("username + '@roster.local'");
+
+    const resolveAnswer = inlineFunctionSource('_fcResolve');
+    expect(resolveAnswer).toContain('_fcSrsAppend([');
+    expect(resolveAnswer).toContain("mode: 'quick'");
+  });
+
+  it('mirrors the Desk legacy email key for both SRS logging and quick resume', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40, legacyEmail: 'kid' });
+    await flush();
+
+    // _fcEmail lives inside the launcher IIFE — the storage keys below prove its result.
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+    await flush();
+    win.document.querySelector('#fc-choices .fc-choice[data-i="1"]').click();
+
+    expect(win.localStorage.getItem('apstats_srs_log_kid')).not.toBeNull();
+    expect(win.localStorage.getItem('apstats_desk_bf_progress_kid')).not.toBeNull();
+    expect(win.localStorage.getItem('apstats_srs_log_kid@roster.local')).toBeNull();
+    expect(win.localStorage.getItem('apstats_desk_bf_progress_kid@roster.local')).toBeNull();
+    dom.window.close();
+  });
+
+  it('falls back to username@roster.local when the Desk legacy email key is absent', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+
+    expect(win.localStorage.getItem('apstats_desk_student_email')).toBeNull();
+    // (derivation proven by the resume key below)
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+    await flush();
+
+    expect(win.localStorage.getItem('apstats_desk_bf_progress_kid@roster.local')).not.toBeNull();
+    dom.window.close();
+  });
+
+  it('guards mobile storage writers and lets isolated SRS append omit _fcEmail', () => {
+    const guard = "if (typeof _viewAsContext === 'function' && _viewAsContext()) return;\n    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;";
+    for (const name of ['_fcSrsAppend', '_fcSaveQuickProgress', '_fcClearQuickProgress']) {
+      const source = inlineFunctionSource(name);
+      expect(source).toContain(guard);
+      expect(source).toContain("typeof _fcEmail === 'function' ? _fcEmail() : null");
+    }
+
+    const append = Function(`return (${inlineFunctionSource('_fcSrsAppend')});`)();
+    expect(() => append([{ qnum: 1 }])).not.toThrow();
+  });
+
+  it('writes every §3 field after a quick answer', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+    await flush();
+    win.document.querySelector('#fc-choices .fc-choice[data-i="1"]').click();
+
+    const entries = JSON.parse(win.localStorage.getItem('apstats_srs_log_kid@roster.local'));
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      topic: '4.1-2', qnum: 1, correct: true, wasTimeout: false, missIndex: 0,
+      mode: 'quick', csv: 'u4_l1_l2_blooket.csv', surface: 'mobile', seq: 0,
+      nChoices: 4, chosenIdx: 1,
+    });
+    expect(entries[0].latencyMs).toEqual(expect.any(Number));
+    expect(entries[0].ts).toEqual(expect.any(Number));
+    expect(entries[0].roundId).toMatch(/^mobile-\d+-[0-9a-z]{4}$/);
+    expect(entries[0].stemHash).toMatch(/^[0-9a-f]{8}$/);
+    dom.window.close();
+  });
+
+  it('resumes after an answered quick card at the following index', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    const deck = Array.from({ length: 10 }, (_, i) => ({
+      qnum: i + 1, q: `Question ${i + 1}`, choices: ['no', 'yes'], correctIdx: 1,
+    }));
+    win.localStorage.setItem('apstats_desk_bf_progress_kid@roster.local', JSON.stringify({
+      '4.1-2': { deck, idx: 2, score: 2, answered: true, ts: 'now' },
+    }));
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+
+    expect(win.document.getElementById('fc-title').textContent).toContain('(resuming)');
+    expect(win.document.getElementById('fc-prog').textContent).toContain('4 / 10');
+    expect(win.document.querySelector('.fc-q').textContent).toBe('Question 4');
+    dom.window.close();
+  });
+
+  it('finishes an answered saved round immediately when its score is already 80%', async () => {
+    const { dom, win, recorded } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    const deck = Array.from({ length: 10 }, (_, i) => ({
+      qnum: i + 1, q: `Question ${i + 1}`, choices: ['no', 'yes'], correctIdx: 1,
+    }));
+    win.localStorage.setItem('apstats_desk_bf_progress_kid@roster.local', JSON.stringify({
+      '4.1-2': { deck, idx: 7, score: 8, answered: true, ts: 'now' },
+    }));
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+    await flush(3);
+
+    expect(win.document.querySelector('.fc-score').textContent).toContain('80');
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0].score).toBe(80);
+    const progress = JSON.parse(win.localStorage.getItem('apstats_desk_bf_progress_kid@roster.local'));
+    expect(progress['4.1-2']).toBeUndefined();
+    dom.window.close();
+  });
+
+  it('replaces a foreign Desk round id, resets seq, and persists the mobile round', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    const deck = Array.from({ length: 10 }, (_, i) => ({
+      qnum: i + 1, q: `Question ${i + 1}`, choices: ['no', 'yes'], correctIdx: 1,
+    }));
+    win.localStorage.setItem('apstats_desk_bf_progress_kid@roster.local', JSON.stringify({
+      '4.1-2': { deck, idx: 2, score: 2, answered: false, roundId: 'desk-1000-abcd', seq: 7, ts: 'now' },
+    }));
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+
+    const progress = JSON.parse(win.localStorage.getItem('apstats_desk_bf_progress_kid@roster.local'));
+    expect(progress['4.1-2'].roundId).toMatch(/^mobile-\d+-[0-9a-z]{4}$/);
+    expect(progress['4.1-2'].roundId).not.toBe('desk-1000-abcd');
+    expect(progress['4.1-2'].seq).toBe(0);
+    dom.window.close();
+  });
+
+  it('keeps round id and seq when resuming a mobile round', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    const deck = Array.from({ length: 10 }, (_, i) => ({
+      qnum: i + 1, q: `Question ${i + 1}`, choices: ['no', 'yes'], correctIdx: 1,
+    }));
+    win.localStorage.setItem('apstats_desk_bf_progress_kid@roster.local', JSON.stringify({
+      '4.1-2': { deck, idx: 2, score: 2, answered: false, roundId: 'mobile-1000-abcd', seq: 7, ts: 'now' },
+    }));
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+    win.document.querySelector('#fc-choices .fc-choice[data-i="1"]').click();
+
+    const entries = JSON.parse(win.localStorage.getItem('apstats_srs_log_kid@roster.local'));
+    expect(entries[0].roundId).toBe('mobile-1000-abcd');
+    expect(entries[0].seq).toBe(7);
+    dom.window.close();
+  });
+
+  it('normalizes legacy resumed miss stems into q for recap rendering', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    const deck = Array.from({ length: 10 }, (_, i) => ({
+      qnum: i + 1, q: `Question ${i + 1}`, choices: ['no', 'yes'], correctIdx: 1,
+    }));
+    win.localStorage.setItem('apstats_desk_bf_progress_kid@roster.local', JSON.stringify({
+      '4.1-2': {
+        deck, idx: 7, score: 8, answered: true, roundId: 'mobile-1000-abcd', seq: 3, ts: 'now',
+        misses: [{ qnum: 2, stem: 'Legacy missed stem', correctAnswer: 'yes' }],
+      },
+    }));
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+    await flush(3);
+
+    expect(win.document.querySelector('.fc-recap').textContent).toContain('Legacy missed stem');
+    dom.window.close();
+  });
+
+  it('renders both missed stems and correct answers in the result recap', async () => {
+    const twoCardCsv = [
+      '"Blooket","Import Template"',
+      'Question #,Question Text,Answer 1,Answer 2,Answer 3,Answer 4,Time,Correct',
+      '1,"First missed stem","wrong one","right one",,,20,2',
+      '2,"Second missed stem","wrong two","right two",,,20,2',
+    ].join('\n');
+    const { dom, win } = bootLauncher({ gradeBlooket: 40, deckCsv: twoCardCsv });
+    await flush();
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-quick').click();
+    await flush();
+    win.document.querySelector('#fc-choices .fc-choice[data-i="0"]').click();
+    win.document.getElementById('fc-next').click();
+    win.document.querySelector('#fc-choices .fc-choice[data-i="0"]').click();
+    win.document.getElementById('fc-next').click();
+    await flush(3);
+
+    const recap = win.document.querySelector('.fc-recap').textContent;
+    expect(recap).toContain('Review your misses');
+    expect(recap).toContain('First missed stem');
+    expect(recap).toContain('Answer: right one');
+    expect(recap).toContain('Second missed stem');
+    expect(recap).toContain('Answer: right two');
+    const saved = JSON.parse(win.localStorage.getItem('apstats_desk_bf_progress_kid@roster.local'));
+    expect(saved['4.1-2'].misses[0]).toMatchObject({
+      qnum: 1, q: 'First missed stem', correctAnswer: 'right one',
+    });
+    expect(saved['4.1-2'].misses[0]).not.toHaveProperty('stem');
+    const links = Array.from(win.document.querySelectorAll('.fc-recap a'));
+    expect(links).toHaveLength(2);
+    expect(links[0].getAttribute('href')).toContain('u4_lesson1-2_live.html#:~:text=First%20missed%20stem');
+    expect(links[0].getAttribute('target')).toBe('_blank');
+    expect(links[0].getAttribute('rel')).toBe('noopener');
+    dom.window.close();
   });
 });
