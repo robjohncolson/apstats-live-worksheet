@@ -68,18 +68,19 @@
   #fco.show { display:flex; }
   #fco .fc-bar { display:flex; gap:10px; align-items:center; background:var(--blue); color:#fff;
              padding:calc(12px + env(safe-area-inset-top,0)) 16px 12px; }
-  #fco .fc-bar .fc-title { font-size:14px; font-weight:700; }
+  #fco .fc-bar .fc-title { margin:0; font-size:14px; font-weight:700; }
   #fco .fc-bar .fc-prog { font-size:12px; opacity:.9; margin-left:auto; }
   #fco .fc-bar button { background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.35);
              border-radius:8px; padding:8px 12px; font-size:13px; font-weight:600; }
-  #fco .fc-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; max-width:680px;
+  #fco .fc-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; max-width:100%;
              width:100%; margin:0 auto; display:flex; flex-direction:column; }
   #fco .fc-timer { height:5px; background:#dfe3e8; border-radius:3px; overflow:hidden; margin-bottom:14px; display:none; }
   #fco.timed .fc-timer { display:block; }
   #fco .fc-timer > i { display:block; height:100%; width:100%; background:var(--blue); transition:width .95s linear; }
   #fco .fc-q { font-size:17px; font-weight:600; line-height:1.4; margin-bottom:16px; }
-  #fco .fc-choice { display:block; width:100%; text-align:left; padding:14px 16px; margin-bottom:10px; border-radius:10px;
-             border:1px solid var(--line); background:var(--card); font-size:15px; color:var(--ink); font-weight:500; }
+  #fco .fc-choice { display:block; width:100%; max-width:100%; min-height:44px; text-align:left; padding:14px 16px; margin-bottom:10px; border-radius:10px;
+             border:1px solid var(--line); background:var(--card); font-size:15px; color:var(--ink); font-weight:500;
+             white-space:normal; overflow-wrap:anywhere; }
   #fco .fc-choice:active { background:#e9eef4; }
   #fco .fc-choice.right { background:#e9f9ec; border-color:#57b26b; color:#0f7a2e; font-weight:700; }
   #fco .fc-choice.wrong { background:#fdecec; border-color:#e39a9a; color:#b00020; }
@@ -94,6 +95,7 @@
   #fco .fc-pick p, #fco .fc-result p { color:#556; font-size:14px; margin:0 0 20px; line-height:1.4; }
   #fco .fc-mode { display:block; width:100%; padding:18px; margin-bottom:12px; border-radius:12px; border:1px solid var(--line);
              background:var(--card); font-size:16px; font-weight:700; color:var(--ink); }
+  #fco .fc-result .fc-mode { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
   #fco .fc-mode small { display:block; font-weight:500; font-size:12px; color:#667; margin-top:4px; }
   #fco .fc-mode:active { background:#e9eef4; }
   #fco .fc-mode.quick { background:#fff0f5; border-color:#ffc4dd; }
@@ -120,9 +122,9 @@
   <div class="bar"><button onclick="closeVideo()">✕ Close</button><span class="vtitle" id="vtitle"></span></div>
 </div>
 
-<div id="fco" role="dialog" aria-label="Flashcards">
+<div id="fco" role="dialog" aria-modal="true" aria-labelledby="fc-title">
   <div class="fc-bar">
-    <span class="fc-title" id="fc-title">🃏 Flashcards</span>
+    <h2 class="fc-title" id="fc-title">🃏 Flashcards</h2>
     <span class="fc-prog" id="fc-prog"></span>
     <button type="button" onclick="closeFlashcards()">✕ Close</button>
   </div>
@@ -849,7 +851,7 @@
       // feeder) — no longer a deep-link into the Desk. Same deck, same scoring, same
       // BL-…-DESK_DONE grade row.
       var fc = document.createElement('button'); fc.className = 'btn fc'; fc.textContent = '🃏 Flashcards';
-      fc.onclick = function () { openFlashcards(l); };
+      fc.onclick = function (event) { openFlashcards(l, event.currentTarget); };
       btns.appendChild(fc);
     }
     card.appendChild(btns);
@@ -920,15 +922,18 @@
   // write is the same fire-and-forget gradebookClient.record the Desk uses; the
   // best-wins floor here means a weaker re-run never lowers a recorded score.
   var FC = window.Flashcards || null;
-  var _fcTags = null, _fc = null;
+  var _fcTags = null, _fc = null, _fcLauncher = null;
   function fcoEl() { return document.getElementById('fco'); }
   function fcBody() { return document.getElementById('fc-body'); }
   function _fcSetProg(t) { var p = document.getElementById('fc-prog'); if (p) p.textContent = t || ''; }
   function _fcTimerStop() { if (_fc && _fc.timer) { clearInterval(_fc.timer); _fc.timer = null; } }
 
   function closeFlashcards() {
+    var launcher = _fcLauncher;
     _fcTimerStop(); _fc = null;
+    _fcLauncher = null;
     var el = fcoEl(); if (el) el.classList.remove('show', 'timed');
+    try { if (launcher && document.documentElement.contains(launcher)) launcher.focus(); } catch (_) {}
   }
   window.closeFlashcards = closeFlashcards;
 
@@ -994,7 +999,8 @@
   }
   function _fcBodyHtml(html) { var b = fcBody(); if (b) b.innerHTML = html; }
 
-  function openFlashcards(lesson) {
+  function openFlashcards(lesson, launcher) {
+    if (launcher) _fcLauncher = launcher;
     if (!FC) { _fcBodyHtml('<div class="fc-result"><h2>Unavailable</h2><p>Flashcards engine not loaded.</p></div>'); fcoEl() && fcoEl().classList.add('show'); return; }
     var el = fcoEl(); if (!el) return;
     _fcTimerStop(); _fc = null; el.classList.remove('timed');
@@ -1011,7 +1017,7 @@
       _fcBodyHtml(
         '<div class="fc-pick">' +
           '<h2>Choose a mode</h2>' +
-          '<p>Quick check tops out at 80% — enough to unlock. Full deck goes to 100%.</p>' +
+          '<p>Quick check tops out at 80% — the Blooket half of Done (the worksheet 60% is also needed). Full deck goes to 100%.</p>' +
           '<button class="fc-mode quick" id="fc-mode-quick">⚡ Quick check<small>Top 10 cards · pass at 80%</small></button>' +
           '<button class="fc-mode full" id="fc-mode-full">🎯 Full deck<small>Every card · 40s each · up to 100%</small></button>' +
         '</div>');
@@ -1060,7 +1066,7 @@
     var html = '<div class="fc-timer"><i id="fc-timer-bar"></i></div>' +
       '<div class="fc-q">' + esc(card.q) + '</div><div id="fc-choices">';
     card.choices.forEach(function (ch, i) { html += '<button class="fc-choice" data-i="' + i + '">' + esc(ch) + '</button>'; });
-    html += '</div><div class="fc-feedback" id="fc-feedback"></div><button class="fc-next" id="fc-next">Next →</button>';
+    html += '</div><div class="fc-feedback" id="fc-feedback" aria-live="polite"></div><button class="fc-next" id="fc-next">Next →</button>';
     var b = fcBody(); b.innerHTML = html; b.scrollTop = 0;
     Array.prototype.forEach.call(b.querySelectorAll('.fc-choice'), function (btn) {
       btn.onclick = function () { _fcAnswer(parseInt(btn.getAttribute('data-i'), 10)); };
@@ -1068,6 +1074,8 @@
     document.getElementById('fc-next').onclick = function () { _fcNext(); };
     _fc.cardStart = Date.now();
     if (_fc.mode === 'full') _fcStartTimer(card);
+    var firstChoice = b.querySelector('.fc-choice');
+    try { if (firstChoice) firstChoice.focus(); } catch (_) {}
   }
 
   function _fcStartTimer(card) {
@@ -1211,7 +1219,11 @@
 
     function finishCommit() {
       var committed = doCommit ? _fcCommit(topic, score) : { skipped: true };
-      _fcRenderResult(lesson, score, passed, committed);
+      Promise.resolve(committed).then(function (c) {
+        _fcRenderResult(lesson, score, passed, c || { ok:false, reason:'error' });
+      }, function () {
+        _fcRenderResult(lesson, score, passed, { ok:false, reason:'error' });
+      });
     }
     // Desk parity: refresh /grade FIRST so the best-wins floor reflects any higher
     // score recorded on another device, THEN commit (a cold session can't downgrade).
@@ -1220,11 +1232,11 @@
 
   function _fcRenderResult(lesson, score, passed, committed) {
     var note;
-    if (committed && committed.skipped && !passed && score < 80) note = 'Reach 80% to unlock — your grade wasn’t lowered.';
+    if (committed && committed.skipped && !passed && score < 80) note = 'Reach 80% for the Blooket half of Done — your grade wasn’t lowered.';
     else if (committed && committed.skipped) note = 'Kept your best score — a higher one is already recorded.';
     else if (committed && committed.queued) note = 'Saved offline — it’ll sync when you reconnect.';
     else if (committed && committed.ok === false) note = (committed.reason === 'no-identity' || committed.reason === 'no-client') ? 'Sign in to save this to your grade.' : 'Couldn’t save right now — try again when online.';
-    else note = passed ? '🎯 Recorded — lesson unlocked.' : 'Score recorded. Reach 80% to unlock this lesson.';
+    else note = passed ? '🎯 Recorded — that’s the Blooket half of Done (the worksheet 60% is also needed).' : 'Score recorded. Reach 80% for the Blooket half of Done — the worksheet 60% is also needed.';
     _fcBodyHtml(
       '<div class="fc-result">' +
         '<h2>' + (passed ? '🎉 Passed!' : 'Keep going') + '</h2>' +

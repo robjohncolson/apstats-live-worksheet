@@ -1,5 +1,7 @@
 # FLASHCARD_REWORK_BUILD.md — frozen contract (session 103)
 
+> See FLASHCARD_V2_BUILD.md (2026-08-18) for the current contract.
+
 > Goal: cut the Blooket-verification flashcard pool from ~28 per lesson
 > down to a curated top-10 keyed by difficulty (hard → med → easy),
 > with the difficulty tags produced by Codex against each unit's AP
@@ -27,11 +29,9 @@
   same; it's still the source for the live Blooket and the flashcards).
 - No change to `BLOOKET_PASS_THRESHOLD = 0.80` (same threshold,
   smaller pool → miss ≤2 of 10 to pass).
-- No change to `BLOOKET_GATE_MS = 15 * 60 * 1000` (15-min visit gate).
-- No change to `_bfSaveProgress` / `_bfLoadProgress` shape — but
-  EXISTING saved decks may be larger than 10 (resume continues with
-  whatever is in storage; new decks are 10).
-- No change to flashcard scoring math; pct = correct / total.
+- Flashcards launch from an always-available button; there is no visit gate.
+- The resume record grows ADDITIVELY only (`answered`, later `roundId`/`seq`/`misses`);
+  legacy records without those fields resume unchanged.
 - Sacred `curriculum_render/data/curriculum.js` NEVER touched.
 
 ## §3 — Difficulty tagging (Codex job)

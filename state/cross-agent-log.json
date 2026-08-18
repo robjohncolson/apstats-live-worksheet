@@ -3783,15 +3783,268 @@
         "node_modules/.vite/vitest/results.json"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "0305b9943bf7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "failed",
+      "duration_seconds": 0.133,
+      "timestamp": "2026-08-18T04:14:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0305b9943bf7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "failed",
+      "duration_seconds": 0.153,
+      "timestamp": "2026-08-18T04:14:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c4c249c85231",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "failed",
+      "duration_seconds": 0.126,
+      "timestamp": "2026-08-18T04:14:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c4c249c85231",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "failed",
+      "duration_seconds": 0.142,
+      "timestamp": "2026-08-18T04:14:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "728d816270e6",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "failed",
+      "duration_seconds": 0.066,
+      "timestamp": "2026-08-18T04:14:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "577bc518f06d",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "failed",
+      "duration_seconds": 0.044,
+      "timestamp": "2026-08-18T04:14:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7706a7a70ff7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 171.684,
+      "timestamp": "2026-08-18T04:18:40Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "82a4a3bcb517",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 199.956,
+      "timestamp": "2026-08-18T04:19:08Z",
+      "files_changed": [
+        "FLASHCARD_REWORK_BUILD.md",
+        "BLOOKET_MAKEUP_BUILD.md",
+        "FLASHCARD_TIMED_DECK_BUILD.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "4d9b81da805b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 216.299,
+      "timestamp": "2026-08-18T04:19:25Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3cd41a1c47c7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 222.332,
+      "timestamp": "2026-08-18T04:19:31Z",
+      "files_changed": [
+        "lib/flashcard-flags.js",
+        "lib/flashcard-flags.test.js",
+        "data/flashcard-flags.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "da66c82a1334",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 334.976,
+      "timestamp": "2026-08-18T04:21:23Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "d5d866c4798a",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 346.349,
+      "timestamp": "2026-08-18T04:21:35Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "60e95af6a1a7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 417.423,
+      "timestamp": "2026-08-18T04:22:46Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4965863cf490",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 418.246,
+      "timestamp": "2026-08-18T04:22:47Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "283c02739b7e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 276.651,
+      "timestamp": "2026-08-18T04:27:06Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "ee1fa96ef168",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "REVIEWER LENS A \u2014 GRADE PATH + BREAKAGE. Weight your effort on checks 1-4 and 7 (grade path, parity,",
+      "status": "completed",
+      "duration_seconds": 469.072,
+      "timestamp": "2026-08-18T04:35:14Z",
+      "files_changed": [
+        ".pytest_cache/v/cache/nodeids",
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "node_modules/.vite/vitest/results.json",
+        "roster-server/data/skill-map.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "3c319802c073",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "REVIEWER LENS B \u2014 CONTRACT + CONTENT + PURITY. Weight your effort on checks 5-6 plus: the three new ",
+      "status": "completed",
+      "duration_seconds": 712.799,
+      "timestamp": "2026-08-18T04:39:18Z",
+      "files_changed": [
+        ".pytest_cache/v/cache/nodeids",
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "node_modules/.vite/vitest/results.json",
+        "roster-server/data/skill-map.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "685438030085",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 66.578,
+      "timestamp": "2026-08-18T04:42:37Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f876d7e06ba0",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 224.502,
+      "timestamp": "2026-08-18T04:45:15Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "41a00bc83131",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 316.783,
+      "timestamp": "2026-08-18T04:46:47Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3ac494babb1b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing ONE scoped task for the AP Statistics platform repo at /home/mrcolson/repos/aps",
+      "status": "completed",
+      "duration_seconds": 365.147,
+      "timestamp": "2026-08-18T04:47:36Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 322,
-    "cc_to_codex": 322,
+    "total_calls": 343,
+    "cc_to_codex": 343,
     "codex_to_cc": 0,
-    "completed": 241,
-    "failed": 67,
+    "completed": 256,
+    "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 656.946
+    "avg_duration_seconds": 630.601
   }
 }

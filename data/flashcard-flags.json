@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "flags": {
+    "reviewMode": {
+      "enabled": false,
+      "allowUsernames": [],
+      "allowSections": [],
+      "urlParam": "fcReview"
+    },
+    "dueTodayDeck": {
+      "enabled": false,
+      "allowUsernames": [],
+      "allowSections": [],
+      "urlParam": "fcDue"
+    },
+    "choicePermutation": {
+      "enabled": true,
+      "allowUsernames": [],
+      "allowSections": [],
+      "urlParam": "fcPerm",
+      "killSwitchKey": "apstats_fc_perm_off"
+    },
+    "readinessBadge": {
+      "enabled": false,
+      "allowUsernames": [],
+      "allowSections": [],
+      "urlParam": "fcReady"
+    },
+    "quickRetryRedraw": {
+      "enabled": false,
+      "allowUsernames": [],
+      "allowSections": [],
+      "urlParam": "fcRedraw"
+    },
+    "flashcardSync": {
+      "enabled": false,
+      "allowUsernames": [],
+      "allowSections": [],
+      "urlParam": "fcSync"
+    }
+  }
+}

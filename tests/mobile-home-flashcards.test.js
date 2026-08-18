@@ -25,8 +25,8 @@ describe('mobile-home — native flashcards wiring (static)', () => {
 
   it('replaced the Desk deep-link with a native openFlashcards handler', () => {
     expect(HOME, 'stale Desk deep-link still present').not.toContain('?flashcards=');
-    expect(HOME).toContain('fc.onclick = function () { openFlashcards(l); }');
-    expect(HOME).toContain('function openFlashcards(lesson)');
+    expect(HOME).toContain('fc.onclick = function (event) { openFlashcards(l, event.currentTarget); }');
+    expect(HOME).toContain('function openFlashcards(lesson, launcher)');
     expect(HOME).toContain('function closeFlashcards()');
     expect(HOME).toContain('id="fco"');
   });
@@ -83,6 +83,17 @@ function bootLauncher({ gradeBlooket, indexMissing }) {
 }
 const tick = () => new Promise((r) => setTimeout(r, 0));
 async function flush(n = 6) { for (let i = 0; i < n; i++) await tick(); }
+
+async function finishOneCardFullDeck(win) {
+  win.document.querySelector('.btn.fc').click();
+  await flush(2);
+  win.document.getElementById('fc-mode-full').click();
+  await flush();
+  win.document.querySelector('#fc-choices .fc-choice[data-i="1"]').click();
+  await flush(1);
+  win.document.getElementById('fc-next').click();
+  await flush(4);
+}
 
 describe('mobile-home — native flashcards (behavioral boot)', () => {
   it('plays a full deck to 100% and records BL-U4-L1-2-DESK_DONE', async () => {
@@ -150,5 +161,125 @@ describe('mobile-home — native flashcards (behavioral boot)', () => {
     expect(recorded.length).toBe(1);
     expect(recorded[0].itemId).toBe('BL-U4-L1-2-DESK_DONE');        // flashcards work off the fallback too
     dom.window.close();
+  });
+});
+
+function inlineFunctionSource(name) {
+  const start = HOME.indexOf(`function ${name}(`);
+  if (start < 0) throw new Error(`missing inline function ${name}`);
+  const open = HOME.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < HOME.length; i += 1) {
+    if (HOME[i] === '{') depth += 1;
+    if (HOME[i] === '}') depth -= 1;
+    if (depth === 0) return HOME.slice(start, i + 1);
+  }
+  throw new Error(`unterminated inline function ${name}`);
+}
+
+describe('mobile-home — native flashcards commit note + accessibility', () => {
+  it('resolves the commit before rendering while _fcCommit stays synchronous', () => {
+    const finish = inlineFunctionSource('_fcFinish');
+    const commit = inlineFunctionSource('_fcCommit');
+
+    expect(finish).toContain('Promise.resolve(committed).then');
+    expect(HOME).toContain('function _fcCommit(');
+    expect(commit).not.toMatch(/\b(?:async|await)\b/);
+  });
+
+  it('renders the Saved offline note after an asynchronous queued commit', async () => {
+    const { dom, win, recorded } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    win.gradebookClient.record = (payload) => {
+      recorded.push(payload);
+      return Promise.resolve({ ok: true, queued: true });
+    };
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-full').click();
+    await flush();
+    win.document.querySelector('#fc-choices .fc-choice[data-i="1"]').click();
+    await flush(1);
+    win.document.getElementById('fc-next').click();
+    await flush(2);
+
+    expect(recorded).toHaveLength(1);
+    expect(win.document.querySelector('.fc-result p').textContent).toContain('Saved offline');
+    dom.window.close();
+  });
+
+  it('renders the Sign in note after an asynchronous no-identity result', async () => {
+    const { dom, win, recorded } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    win.gradebookClient.record = (payload) => {
+      recorded.push(payload);
+      return Promise.resolve({ ok: false, reason: 'no-identity' });
+    };
+
+    await finishOneCardFullDeck(win);
+
+    expect(recorded).toHaveLength(1);
+    expect(win.document.querySelector('.fc-result p').textContent).toContain('Sign in to save');
+    dom.window.close();
+  });
+
+  it('renders the Couldn’t save note when an asynchronous record rejects', async () => {
+    const { dom, win, recorded } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    win.gradebookClient.record = (payload) => {
+      recorded.push(payload);
+      return Promise.reject(new Error('x'));
+    };
+
+    await expect(finishOneCardFullDeck(win)).resolves.toBeUndefined();
+
+    expect(recorded).toHaveLength(1);
+    expect(win.document.querySelector('.fc-result p').textContent).toContain('Couldn’t save');
+    dom.window.close();
+  });
+
+  it('restores focus to the flashcards launcher when the sheet closes', async () => {
+    const { dom, win } = bootLauncher({ gradeBlooket: 40 });
+    await flush();
+    const launcher = win.document.querySelector('.btn.fc');
+    launcher.focus();
+    launcher.click();
+    await flush(2);
+
+    win.closeFlashcards();
+
+    expect(win.document.activeElement).toBe(launcher);
+    dom.window.close();
+  });
+
+  it('marks the sheet and feedback for assistive tech and keeps choices touch-sized', () => {
+    expect(HOME).toMatch(/<div id="fco"[^>]*role="dialog"[^>]*aria-modal="true"[^>]*aria-labelledby="fc-title"/);
+    expect(HOME).toContain('id="fc-feedback" aria-live="polite"');
+    expect(HOME).toMatch(/#fco \.fc-choice\s*\{[^}]*min-height:\s*44px/);
+  });
+
+  it('keeps the flashcard sheet within a 320 px viewport', () => {
+    const fcoCss = Array.from(HOME.matchAll(/#fco[^}]*}/g), (match) => match[0]).join('\n');
+    expect(fcoCss).toMatch(/#fco \.fc-body\s*\{[^}]*(?:max-width|width):\s*100%/);
+    expect(fcoCss).toMatch(/#fco \.fc-choice\s*\{[^}]*overflow-wrap:\s*anywhere/);
+
+    const widths = Array.from(
+      fcoCss.matchAll(/(?:^|[;{])\s*(?:min-|max-)?width\s*:\s*([0-9.]+)(%|px)/g),
+    );
+    expect(widths.length).toBeGreaterThan(0);
+    widths.forEach((match) => {
+      const value = Number(match[1]);
+      if (match[2] === '%') expect(value).toBeLessThanOrEqual(100);
+      if (match[2] === 'px') expect(value).toBeLessThanOrEqual(320);
+    });
+  });
+
+  it('uses the frozen Blooket-half vocabulary in flashcard student copy', () => {
+    const start = HOME.indexOf('// ── Native flashcards');
+    const end = HOME.indexOf('// Cached grade', start);
+    const flashcardsBlock = HOME.slice(start, end);
+    expect(flashcardsBlock).toContain('Blooket half of Done');
+    expect(flashcardsBlock).not.toMatch(/lesson unlocked|to unlock|enough to unlock/i);
   });
 });

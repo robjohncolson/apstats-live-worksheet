@@ -1,5 +1,7 @@
 # Timed full-deck flashcards — a real Blooket substitute (build spec)
 
+> See FLASHCARD_V2_BUILD.md (2026-08-18) for the current contract.
+
 Decided with the teacher (2026-06-02). Make the Desk flashcards a legitimate, rigorous
 alternative to the in-class Blooket — so a kid who's absent **or** who just can't stand
 Blooket can learn the material and earn the full grade. Lays the foundation for an SRS /
@@ -41,12 +43,10 @@ At the end, show every card that was missed at least once (credit < 1.0), with t
 **correct answer** — the learning payoff, after the grade is already locked.
 
 ## Per-card logging (SRS / BKT foundation — log now, schedule later)
-Every answer records `{ qnum, correct, latencyMs, wasTimeout, missIndex }` (not just the
-final %). v1 stores this with the attempt so a future:
-- **v2 Anki-style SRS** can schedule which cards resurface across sessions, and
-- **v3 BKT** can model P(mastery) per concept and grade on durable understanding,
-
-drop in without a rewrite. (v2/v3 are **out of scope** here.)
+Every full-deck answer records `{ qnum, correct, latencyMs, wasTimeout, missIndex }` (not just the
+final %). As of the V2 build, quick mode and the mobile launcher also write this per-card log with
+the additive fields defined in `FLASHCARD_V2_BUILD.md` §3. The log supports SRS/BKT without changing
+the final-score contract.
 
 ## Grade model change
 `blooket = max(real game score, flashcard score)` — the **better of the two efforts**

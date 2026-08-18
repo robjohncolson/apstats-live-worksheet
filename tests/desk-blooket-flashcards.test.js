@@ -7,10 +7,11 @@
 //
 // @vitest-environment node
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { JSDOM } from 'jsdom';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
@@ -607,5 +608,313 @@ describe('Desk: Blooket flashcard verification', () => {
     });
     handler(ev('a').obj);
     expect(calls.answered).toEqual([0]);
+  });
+
+  // ── 2026-08-18: quick-check answered-snapshot resume integrity ────────────
+  function makeQuickResumeHarness() {
+    const dom = new JSDOM(`<!doctype html><body>
+      <div id="bf-header"></div>
+      <div id="bf-overlay" style="display:block"></div>
+      <div id="bf-result" style="display:none"></div>
+      <div id="bf-choices"></div>
+      <div id="bf-feedback"></div>
+      <button id="bf-next" style="display:none"></button>
+    </body>`, { url: 'https://desk.test/' });
+    const state = {
+      topic: null,
+      btn: null,
+      deck: [],
+      idx: 0,
+      score: 0,
+      answered: false
+    };
+    const timedState = { topic: null, btn: null, round: null, answered: false };
+    const calls = { renderIdxs: [], finishCount: 0, finishPct: null };
+    const source = [
+      fnBody(DESK, '_bfStorageKey'),
+      fnBody(DESK, '_bfSaveProgress'),
+      fnBody(DESK, '_bfLoadProgress'),
+      fnBody(DESK, '_bfAnswer'),
+      fnBody(DESK, '_bfCloseUI'),
+      fnBody(DESK, 'closeBlooketFlashcards'),
+      fnBody(DESK, '_bfStartQuick')
+    ].join('\n');
+    // eslint-disable-next-line no-new-func
+    const makeApi = new Function(
+      'document', 'window', 'location', 'localStorage',
+      'getStudentEmail', '_viewAsContext', '_bfState', '_ftState',
+      '_ftKeydownHandler', '_ftClearTimer', '_bfShowQuizUI',
+      '_bfRenderCard', '_bfFinish', '_bfKeydownHandler',
+      'BLOOKET_PASS_THRESHOLD',
+      source + '\nreturn {' +
+        '_bfSaveProgress: _bfSaveProgress,' +
+        '_bfAnswer: _bfAnswer,' +
+        '_bfStartQuick: _bfStartQuick,' +
+        'closeBlooketFlashcards: closeBlooketFlashcards' +
+      '};'
+    );
+    const api = makeApi(
+      dom.window.document,
+      dom.window,
+      dom.window.location,
+      dom.window.localStorage,
+      function () { return 'student@roster.local'; },
+      function () { return null; },
+      state,
+      timedState,
+      function () {},
+      function () {},
+      function () {},
+      function () { calls.renderIdxs.push(state.idx); },
+      function () {
+        calls.finishCount += 1;
+        calls.finishPct = state.deck.length > 0 ? state.score / state.deck.length : 0;
+      },
+      function () {},
+      0.80
+    );
+    const storageKey = 'apstats_desk_bf_progress_student@roster.local';
+
+    function saveRecord(topic, entry) {
+      const saved = {};
+      saved[topic] = entry;
+      dom.window.localStorage.setItem(storageKey, JSON.stringify(saved));
+    }
+
+    return { api, calls, dom, saveRecord, state, storageKey };
+  }
+
+  function quickDeck(size) {
+    const deck = [];
+    for (let i = 0; i < size; i++) {
+      deck.push({
+        qnum: i + 1,
+        q: 'Question ' + (i + 1),
+        choices: ['Right', 'Wrong'],
+        correctIdx: 0
+      });
+    }
+    return deck;
+  }
+
+  it('55: _bfSaveProgress persists the answered snapshot', () => {
+    const body = fnBody(DESK, '_bfSaveProgress');
+    expect(body).toMatch(/answered\s*:\s*!!_bfState\.answered/);
+  });
+
+  it('56: answer saves after scoring and Next clears answered before saving', () => {
+    const answer = fnBody(DESK, '_bfAnswer');
+    const scoreIdx = answer.indexOf('_bfState.score += 1');
+    const answerSaveIdx = answer.indexOf('_bfSaveProgress()');
+    const domIdx = answer.indexOf("document.getElementById('bf-choices')");
+    expect(scoreIdx).toBeGreaterThan(-1);
+    expect(answerSaveIdx).toBeGreaterThan(scoreIdx);
+    expect(answerSaveIdx).toBeLessThan(domIdx);
+
+    const next = fnBody(DESK, '_bfNext');
+    const advanceIdx = next.indexOf('_bfState.idx += 1');
+    const clearAnsweredIdx = next.indexOf('_bfState.answered = false');
+    const nextSaveIdx = next.indexOf('_bfSaveProgress()');
+    const renderIdx = next.indexOf('_bfRenderCard()');
+    expect(clearAnsweredIdx).toBeGreaterThan(advanceIdx);
+    expect(nextSaveIdx).toBeGreaterThan(clearAnsweredIdx);
+    expect(renderIdx).toBeGreaterThan(nextSaveIdx);
+  });
+
+  it('57: answer then Cancel resumes at the following card without another point', async () => {
+    const harness = makeQuickResumeHarness();
+    harness.state.topic = '4.1';
+    harness.state.btn = {};
+    harness.state.deck = quickDeck(10);
+
+    harness.api._bfAnswer(0);
+    harness.api.closeBlooketFlashcards();
+
+    const saved = JSON.parse(harness.dom.window.localStorage.getItem(harness.storageKey));
+    expect(saved['4.1'].idx).toBe(0);
+    expect(saved['4.1'].score).toBe(1);
+    expect(saved['4.1'].answered).toBe(true);
+
+    await harness.api._bfStartQuick({}, '4.1');
+    expect(harness.state.idx).toBe(1);
+    expect(harness.state.score).toBe(1);
+    expect(harness.state.answered).toBe(false);
+    expect(harness.calls.renderIdxs).toEqual([1]);
+    expect(harness.calls.finishCount).toBe(0);
+  });
+
+  function makeRealQuickTimerHarness() {
+    const dom = new JSDOM(`<!doctype html><body>
+      <div id="bf-overlay" style="display:block"></div>
+      <div id="bf-header"></div>
+      <div id="bf-question"></div>
+      <div id="bf-choices"></div>
+      <div id="bf-progress"></div>
+      <div id="bf-feedback"></div>
+      <button id="bf-next" style="display:none"></button>
+      <div id="bf-result" style="display:none"></div>
+      <div id="bf-modepick"></div>
+      <div id="bf-timer"></div>
+    </body>`, { url: 'https://desk.test/' });
+    const values = new Map();
+    const storage = {
+      getItem(key) { return values.has(key) ? values.get(key) : null; },
+      setItem(key, value) { values.set(key, String(value)); },
+      removeItem(key) { values.delete(key); },
+      clear() { values.clear(); }
+    };
+    const state = {
+      topic: null,
+      btn: null,
+      deck: [],
+      idx: 0,
+      score: 0,
+      answered: false,
+      finishId: null,
+      finished: false
+    };
+    const timedState = { topic: null, btn: null, round: null, answered: false };
+    const commit = vi.fn(async function () {});
+    const rendered = [];
+    const source = [
+      fnBody(DESK, '_bfStorageKey'),
+      fnBody(DESK, '_bfSaveProgress'),
+      fnBody(DESK, '_bfLoadProgress'),
+      fnBody(DESK, '_bfClearProgress'),
+      fnBody(DESK, '_bfAnswer'),
+      fnBody(DESK, '_bfNext'),
+      fnBody(DESK, '_bfFinish'),
+      fnBody(DESK, '_bfCloseUI'),
+      fnBody(DESK, 'closeBlooketFlashcards'),
+      fnBody(DESK, '_bfStartQuick')
+    ].join('\n');
+    // eslint-disable-next-line no-new-func
+    const makeApi = new Function(
+      'document', 'window', 'location', 'localStorage',
+      'getStudentEmail', '_viewAsContext', '_bfState', '_ftState',
+      '_ftKeydownHandler', '_ftClearTimer', '_bfShowQuizUI',
+      '_bfRenderCard', '_bfKeydownHandler', '_blooketCommit', '_mayScore',
+      'BLOOKET_PASS_THRESHOLD', 'setTimeout', 'clearTimeout',
+      source + '\nreturn {' +
+        '_bfAnswer: _bfAnswer,' +
+        '_bfNext: _bfNext,' +
+        '_bfFinish: _bfFinish,' +
+        '_bfSaveProgress: _bfSaveProgress,' +
+        '_bfLoadProgress: _bfLoadProgress,' +
+        '_bfClearProgress: _bfClearProgress,' +
+        '_bfCloseUI: _bfCloseUI,' +
+        'closeBlooketFlashcards: closeBlooketFlashcards,' +
+        '_bfStartQuick: _bfStartQuick' +
+      '};'
+    );
+    const api = makeApi(
+      dom.window.document,
+      dom.window,
+      dom.window.location,
+      storage,
+      function () { return 'x@roster.local'; },
+      function () { return null; },
+      state,
+      timedState,
+      function () {},
+      function () {},
+      function () {},
+      function () { rendered.push(state.idx); },
+      function () {},
+      commit,
+      function () { return true; },
+      0.80,
+      setTimeout,
+      clearTimeout
+    );
+
+    function begin(topic, deck, btn) {
+      state.topic = topic;
+      state.btn = btn;
+      state.deck = deck;
+      state.idx = 0;
+      state.score = 0;
+      state.answered = false;
+      state.finishId = null;
+      state.finished = false;
+    }
+
+    return {
+      api,
+      begin,
+      commit,
+      dom,
+      rendered,
+      state,
+      storage,
+      storageKey: 'apstats_desk_bf_progress_x@roster.local'
+    };
+  }
+
+  it('58: pass timer is canceled on close and resume commits the saved 80% once', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = makeRealQuickTimerHarness();
+      const firstButton = { focus() {} };
+      const resumedButton = { focus() {} };
+      harness.begin('4.1', quickDeck(10), firstButton);
+
+      for (let i = 0; i < 8; i++) {
+        harness.api._bfAnswer(0);
+        if (i < 7) harness.api._bfNext();
+      }
+      expect(harness.state.finishId).not.toBeNull();
+
+      harness.api.closeBlooketFlashcards();
+      expect(harness.state.finishId).toBeNull();
+      await harness.api._bfStartQuick(resumedButton, '4.1');
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(harness.commit).toHaveBeenCalledTimes(1);
+      expect(harness.commit).toHaveBeenCalledWith(resumedButton, '4.1', 80);
+      const saved = JSON.parse(harness.storage.getItem(harness.storageKey) || '{}');
+      expect(saved['4.1']).toBeUndefined();
+    } finally {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
+  it('58b: non-passing answer then Cancel resumes one card ahead without a commit', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = makeRealQuickTimerHarness();
+      harness.begin('4.1', quickDeck(10), { focus() {} });
+
+      harness.api._bfAnswer(1);
+      harness.api.closeBlooketFlashcards();
+      await harness.api._bfStartQuick({ focus() {} }, '4.1');
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(harness.state.idx).toBe(1);
+      expect(harness.state.score).toBe(0);
+      expect(harness.rendered).toEqual([1]);
+      expect(harness.commit).not.toHaveBeenCalled();
+    } finally {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
+  it('59: legacy snapshot without answered resumes at its saved index', async () => {
+    const harness = makeQuickResumeHarness();
+    harness.saveRecord('4.1', {
+      idx: 4,
+      score: 3,
+      deck: quickDeck(10),
+      ts: '2026-08-17T00:00:00.000Z'
+    });
+
+    await harness.api._bfStartQuick({}, '4.1');
+    expect(harness.state.idx).toBe(4);
+    expect(harness.state.score).toBe(3);
+    expect(harness.state.answered).toBe(false);
+    expect(harness.calls.renderIdxs).toEqual([4]);
+    expect(harness.calls.finishCount).toBe(0);
   });
 });

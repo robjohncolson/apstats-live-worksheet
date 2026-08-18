@@ -2350,7 +2350,7 @@
      Student must pass >=80% on a single pass to unlock Done. -->
 <style>
     #bf-overlay .bf-choice{display:block;width:100%;text-align:left;
-      padding:6px 10px;margin:3px 0;font-family:'Geneva',sans-serif;
+      padding:6px 10px;margin:3px 0;min-height:44px;font-family:'Geneva',sans-serif;
       font-size:11px;background:var(--white);border:1px solid var(--black);
       cursor:pointer;border-radius:2px}
     #bf-overlay .bf-choice:hover{background:#eef}
@@ -2363,15 +2363,15 @@
     #bf-overlay .bf-result-fail{color:#c83838;font-weight:bold}
 </style>
 <div id="bf-overlay" class="dialog-overlay" style="display:none">
-    <div class="dialog-box" style="max-width:480px;width:92%;text-align:left;padding:12px 16px">
+    <div class="dialog-box" role="dialog" aria-modal="true" aria-labelledby="bf-header" style="max-width:480px;width:92%;text-align:left;padding:12px 16px">
         <div id="bf-header" class="chicago" style="font-size:12px;margin-bottom:6px;border-bottom:1px solid var(--black);padding-bottom:6px"></div>
         <div id="bf-modepick" style="display:none;margin-bottom:8px"></div>
         <div id="bf-timer" class="geneva" style="display:none;font-size:14px;font-weight:bold;text-align:right;margin-bottom:6px"></div>
         <div id="bf-progress" class="bf-prog geneva" style="margin-bottom:8px"></div>
         <div id="bf-question" class="geneva" style="font-size:13px;margin-bottom:10px;min-height:32px"></div>
         <div id="bf-choices"></div>
-        <div id="bf-feedback" class="bf-feedback geneva"></div>
-        <div id="bf-result" style="display:none;margin-top:12px;padding:8px;border:1px solid var(--black);background:#f8f8f8"></div>
+        <div id="bf-feedback" class="bf-feedback geneva" aria-live="polite"></div>
+        <div id="bf-result" aria-live="polite" style="display:none;margin-top:12px;padding:8px;border:1px solid var(--black);background:#f8f8f8"></div>
         <div style="text-align:right;margin-top:12px">
             <button id="bf-next" class="s7btn s7btn-default" style="display:none" onclick="_bfNext()">Next</button>
             <button class="s7btn" onclick="closeBlooketFlashcards()">Cancel</button>
@@ -11668,6 +11668,12 @@ async function studentMark(btn, topicId, artifact) {
 // verify anything; flashcards we control end-to-end can.
 const BLOOKET_PASS_THRESHOLD = 0.80;
 
+function _mayScore() {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return false;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return false;
+    return true;
+}
+
 var _bfState = {
     topic: null,    // "1.2" etc.
     btn: null,      // the Done button (so we can mutate it on pass)
@@ -11675,6 +11681,8 @@ var _bfState = {
     idx: 0,         // current card index
     score: 0,       // right answers so far
     answered: false, // current card already answered?
+    finishId: null, // pending early-pass finish beat
+    finished: false, // once-per-round finish latch
 };
 
 // 2026-05-20: persist progress per (student, topic) so cancel/close
@@ -11693,6 +11701,7 @@ function _bfSaveProgress() {
     // progress while in view-as mode (the key includes the teacher's email,
     // not the student's, so it'd cross-contaminate the teacher's real tabs).
     if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
     var key = _bfStorageKey();
     if (!key || !_bfState.topic || !Array.isArray(_bfState.deck) || _bfState.deck.length === 0) return;
     try {
@@ -11701,6 +11710,7 @@ function _bfSaveProgress() {
             deck: _bfState.deck,
             idx: _bfState.idx,
             score: _bfState.score,
+            answered: !!_bfState.answered,
             ts: new Date().toISOString(),
         };
         localStorage.setItem(key, JSON.stringify(saved));
@@ -11934,6 +11944,20 @@ function _bfShowModePicker(btn, topicId) {
         intro.style.cssText = 'font-size:12px;margin-bottom:10px';
         intro.textContent = 'How do you want to do this Blooket?';
         mp.appendChild(intro);
+        var statusText = '';
+        var bestScore = null;
+        if (typeof _blooketScoreFor === 'function') bestScore = _blooketScoreFor(topicId);
+        if (typeof bestScore === 'number') statusText = 'Your best so far: ' + bestScore + '%';
+        var resume = null;
+        if (typeof _bfLoadProgress === 'function') resume = _bfLoadProgress(topicId);
+        if (resume !== null) statusText += (statusText ? ' · ' : '') + 'Resume available';
+        if (statusText) {
+            var status = document.createElement('div');
+            status.className = 'geneva';
+            status.style.cssText = 'font-size:11px;margin-bottom:10px;color:#555';
+            status.textContent = statusText;
+            mp.appendChild(status);
+        }
         function modeBtn(titleTxt, descTxt, onPick) {
             var b = document.createElement('button');
             b.className = 's7btn s7btn-default';
@@ -11944,10 +11968,11 @@ function _bfShowModePicker(btn, topicId) {
             b.onclick = onPick;
             return b;
         }
-        mp.appendChild(modeBtn('⚡ Quick check', 'Top 10 cards, untimed. Caps at 80%.',
+        mp.appendChild(modeBtn('⚡ Quick check',
+            'Top 10 cards, untimed, answers shown. Stops when you pass. Caps at 80% — the Blooket half of Done (the worksheet 60% is also needed).',
             function () { _bfStartQuick(btn, topicId); }));
         mp.appendChild(modeBtn('\u{1F3AF} Full deck — timed',
-            'Every card, ' + BLOOKET_FULLDECK_SECONDS + 's each. Earn up to 100% — replaces the in-class Blooket.',
+            'Every card, ' + BLOOKET_FULLDECK_SECONDS + 's each, misses re-queue with no reveal. Earn up to 100% — replaces the in-class Blooket. Only a higher score is ever saved.',
             function () { _ftStart(btn, topicId); }));
     }
     document.getElementById('bf-overlay').style.display = 'block';
@@ -11961,6 +11986,7 @@ async function _bfStartQuick(btn, topicId) {
     // the same card) and skip the CSV fetch entirely.
     var resumed = _bfLoadProgress(topicId);
     var isResume = false;
+    var finishOnResume = false;
     if (resumed) {
         _bfState.topic = topicId;
         _bfState.btn = btn;
@@ -11968,6 +11994,13 @@ async function _bfStartQuick(btn, topicId) {
         _bfState.idx = resumed.idx || 0;
         _bfState.score = resumed.score || 0;
         _bfState.answered = false;
+        _bfState.finished = false;
+        if (resumed.answered === true) {
+            _bfState.idx = (resumed.idx || 0) + 1;
+            _bfState.answered = false;
+            var passCount = Math.ceil(BLOOKET_PASS_THRESHOLD * _bfState.deck.length);
+            finishOnResume = _bfState.score >= passCount || _bfState.idx >= _bfState.deck.length;
+        }
         isResume = true;
     } else {
         // Fresh load from CSV.
@@ -12001,13 +12034,18 @@ async function _bfStartQuick(btn, topicId) {
         _bfState.idx = 0;
         _bfState.score = 0;
         _bfState.answered = false;
+        _bfState.finished = false;
         _bfSaveProgress();
     }
     var header = document.getElementById('bf-header');
     if (header) header.textContent = 'Quick check — ' + topicId + (isResume ? ' (resuming)' : '') + ' (pass ≥ 80%, caps at 80%)';
     _bfShowQuizUI(false);  // hide the picker, show the quiz, no timer
     document.getElementById('bf-result').style.display = 'none';
-    _bfRenderCard();
+    if (finishOnResume) {
+        _bfFinish();
+    } else {
+        _bfRenderCard();
+    }
     document.getElementById('bf-overlay').style.display = 'block';
     // Attach modal-scoped keyboard nav. Detached in _bfCloseUI.
     document.addEventListener('keydown', _bfKeydownHandler);
@@ -12043,6 +12081,10 @@ function _bfRenderCard() {
             })(i);
         }
     }
+    try {
+        var firstChoice = c && c.querySelector('.bf-choice');
+        if (firstChoice && typeof firstChoice.focus === 'function') firstChoice.focus();
+    } catch (_) {}
 }
 
 function _bfAnswer(idx) {
@@ -12051,6 +12093,7 @@ function _bfAnswer(idx) {
     var card = _bfState.deck[_bfState.idx];
     var isRight = idx === card.correctIdx;
     if (isRight) _bfState.score += 1;
+    _bfSaveProgress();
     var c = document.getElementById('bf-choices');
     var feedback = document.getElementById('bf-feedback');
     var nextBtn = document.getElementById('bf-next');
@@ -12075,19 +12118,28 @@ function _bfAnswer(idx) {
     if (_bfState.score >= _passCount) {
         if (feedback) feedback.textContent += '  ✓ That’s a pass!';
         if (nextBtn) nextBtn.style.display = 'none';
-        setTimeout(_bfFinish, 900);   // brief beat so the student sees the feedback
+        _bfState.finishId = setTimeout(function () {
+            _bfState.finishId = null;
+            _bfFinish();
+        }, 900);   // brief beat so the student sees the feedback
         return;
     }
     if (nextBtn) nextBtn.style.display = 'inline-block';
 }
 
 function _bfNext() {
+    if (_bfState.finishId !== null) clearTimeout(_bfState.finishId);
+    _bfState.finishId = null;
     _bfState.idx += 1;
+    _bfState.answered = false;
     _bfSaveProgress();   // persist advance so close/cancel resumes here
     _bfRenderCard();
 }
 
 async function _bfFinish() {
+    if (_bfState.finished) return;
+    _bfState.finished = true;
+    var canScore = (typeof _mayScore !== 'function') || _mayScore();
     var pct = _bfState.deck.length > 0 ? (_bfState.score / _bfState.deck.length) : 0;
     var passed = pct >= BLOOKET_PASS_THRESHOLD;
     var q = document.getElementById('bf-question');
@@ -12112,7 +12164,9 @@ async function _bfFinish() {
         line2.style.marginTop = '6px';
         line2.className = passed ? 'bf-result-pass' : 'bf-result-fail';
         line2.textContent = passed
-            ? '✓ Passed. Marking Done...'
+            ? (canScore
+                ? '✓ Passed. Marking Done...'
+                : '✓ Passed (view-only — not recorded).')
             : '✗ Need ≥ 80% to mark Done. Try again.';
         result.appendChild(line2);
         if (!passed) {
@@ -12124,6 +12178,7 @@ async function _bfFinish() {
                 _bfState.deck = _bfShuffle(_bfState.deck);
                 _bfState.idx = 0;
                 _bfState.score = 0;
+                _bfState.finished = false;
                 result.style.display = 'none';
                 _bfSaveProgress();   // new shuffle → save so close-mid-retry resumes here
                 _bfRenderCard();
@@ -12133,6 +12188,7 @@ async function _bfFinish() {
         result.style.display = 'block';
     }
     if (passed) {
+        if (!canScore) return;
         var btn = _bfState.btn;
         var topicId = _bfState.topic;
         var score = Math.round(pct * 1000) / 10;
@@ -12153,16 +12209,23 @@ async function _bfFinish() {
 function _bfCloseUI() {
     var ov = document.getElementById('bf-overlay');
     if (ov) ov.style.display = 'none';
+    if (_bfState.finishId !== null) clearTimeout(_bfState.finishId);
+    _bfState.finishId = null;
     // Detach keyboard nav listeners (quick + timed) and stop any countdown.
     document.removeEventListener('keydown', _bfKeydownHandler);
     document.removeEventListener('keydown', _ftKeydownHandler);
     _ftClearTimer();
+    try {
+        var returnFocus = _bfState.btn;
+        if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
+    } catch (_) {}
     _bfState.topic = null;
     _bfState.btn = null;
     _bfState.deck = [];
     _bfState.idx = 0;
     _bfState.score = 0;
     _bfState.answered = false;
+    _bfState.finished = false;
     _ftState.topic = null;
     _ftState.btn = null;
     _ftState.round = null;
@@ -12380,6 +12443,10 @@ function _ftRenderCard() {
             })(i);
         }
     }
+    try {
+        var firstChoice = c && c.querySelector('.bf-choice');
+        if (firstChoice && typeof firstChoice.focus === 'function') firstChoice.focus();
+    } catch (_) {}
     _ftStartTimer();
 }
 
@@ -12418,6 +12485,14 @@ function _ftHandle(outcome) {
 
 function _ftKeydownHandler(e) {
     if (!e || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    var ae = document.activeElement;
+    if (ae) {
+        var tag = ae.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (ae.isContentEditable) return;
+    }
+    var ov = document.getElementById('bf-overlay');
+    if (!ov || ov.style.display === 'none') return;
     if (_ftState.answered) return;
     var key = (e.key || '').toLowerCase();
     var idx = -1;
@@ -12441,6 +12516,7 @@ async function _ftFinish() {
     var topic = _ftState.topic, btn = _ftState.btn;
     _ftLogToStore(topic, round.log);   // per-card log (SRS/BKT foundation)
     _ftRenderRecap(round, score);      // "review your misses"
+    if (typeof _mayScore === 'function' && !_mayScore()) return;
     await _blooketCommit(btn, topic, score);   // best-wins + grade refresh
 }
 
@@ -12483,6 +12559,8 @@ function _ftRenderRecap(round, score) {
 // Per-card answer log → localStorage (the SRS / BKT foundation; v2 schedules
 // cross-session, v3 models mastery). Bounded so it can't grow without limit.
 function _ftLogToStore(topic, log) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
     try {
         var email = getStudentEmail();
         if (!email || !Array.isArray(log) || !log.length) return;
@@ -12508,6 +12586,7 @@ function _ftLogToStore(topic, log) {
 // (game OR prior flashcard, via /grade) + a synchronous local best. Then refreshes
 // /grade and re-renders the panel so the score chip updates immediately.
 async function _blooketCommit(btn, topic, score) {
+    if (typeof _mayScore === 'function' && !_mayScore()) return;
     // Refresh /grade FIRST so the best-wins floor sees the latest CROSS-DEVICE
     // score. A stale 2nd-device cache could otherwise let a worse run clobber a
     // better recorded score (the BL row is upserted in place). Re-practicing must
@@ -21442,7 +21521,7 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 // from APP_BUILD (this running build) we show a dismissible "reload" banner.
 // APP_BUILD here and version.json are bumped TOGETHER by scripts/bump-build.mjs
 // (they MUST stay in sync — a test pins build === APP_BUILD — or the nudge loops).
-var APP_BUILD = '2026-06-26-l9qf';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-18-kion';   // scripts/bump-build.mjs replaces this stamp
 (function _wireUpdateNudge(){
   var nudged = false;
   function showBanner(){

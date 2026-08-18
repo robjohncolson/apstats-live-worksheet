@@ -39,6 +39,7 @@ const OUT = resolve(REPO, arg('--out', 'state/w0-host-matrix-results.json'));
 //   FORMULA_*          → ap_stats_roadmap_square_mode.html APP_REGISTRY + Vercel probe
 export const ORIGINS = {
   WS_BASE: 'https://robjohncolson.github.io/apstats-live-worksheet/',
+  WS_MIRROR: 'https://apstats-live-worksheet.vercel.app/',
   CR_BASE: 'https://robjohncolson.github.io/curriculum_render/',
   ROSTER: 'https://roster-production-12c1.up.railway.app',
   RAILWAY_CR_AI: 'https://curriculumrender-production.up.railway.app',
@@ -48,6 +49,7 @@ export const ORIGINS = {
 };
 
 const WS = ORIGINS.WS_BASE.replace(/\/$/, '');
+const WS_MIRROR = ORIGINS.WS_MIRROR.replace(/\/$/, '');
 const CR = ORIGINS.CR_BASE.replace(/\/$/, '');
 
 // Canonical core lesson for dead-end checks (has worksheet + quiz + blooket).
@@ -62,6 +64,7 @@ export const LESSON = {
   quizPagesRelative: `${WS}/quiz/index.html?u=1&l=2`,
   mediaPages: `${WS}/media/1-2__0__1cJ3a5DSlZ0w3vta901HVyADfQ-qKVQcD.mp4`,
   flashcardsCsv: `${WS}/u1_l2_blooket.csv`,
+  flashcardsDeckU1L1: `${WS}/u1_l1_blooket.csv`,
   flashcardsJs: `${WS}/flashcards.js`,
   ti84: `${WS}/ti84-trainer-v2/standalone.html`,
   blooketExternal: 'https://dashboard.blooket.com/set/6a08a5ec93e4e9542dfc82d6',
@@ -75,6 +78,7 @@ export const HTTP_CHECKS = [
   { host: 'GH_Pages_Desk', resource: 'quiz_relative', url: LESSON.quizPagesRelative, note: 'H0 — mobile lessons-index path' },
   { host: 'GH_Pages_Desk', resource: 'video_media', url: LESSON.mediaPages, method: 'HEAD' },
   { host: 'GH_Pages_Desk', resource: 'flashcards_csv', url: LESSON.flashcardsCsv },
+  { host: 'GH_Pages_Desk', resource: 'flashcards_deck_u1_l1', url: LESSON.flashcardsDeckU1L1 },
   { host: 'GH_Pages_Desk', resource: 'flashcards_js', url: LESSON.flashcardsJs },
   { host: 'GH_Pages_Desk', resource: 'formula_n/a_on_this_host', url: null, skip: true },
   { host: 'GH_Pages_Desk', resource: 'ti84', url: LESSON.ti84 },
@@ -86,6 +90,10 @@ export const HTTP_CHECKS = [
   { host: 'GH_Pages_CR', resource: 'quiz_absolute', url: LESSON.quizDeskRegistry, note: 'Desk registry / APP_REGISTRY.quiz' },
   { host: 'GH_Pages_CR', resource: 'quiz_index', url: `${CR}/index.html?u=1&l=2` },
   { host: 'GH_Pages_CR', resource: 'cr_root', url: `${CR}/` },
+
+  // Vercel — mirror of the worksheet tree (fallback rail for GH Pages)
+  { host: 'Vercel_Mirror', resource: 'flashcards_deck_u1_l1', url: `${WS_MIRROR}/u1_l1_blooket.csv` },
+  { host: 'Vercel_Mirror', resource: 'flashcards_js', url: `${WS_MIRROR}/flashcards.js` },
 
   // Vercel — formula surfaces
   { host: 'Vercel_Formula', resource: 'formula_deck', url: ORIGINS.FORMULA_DECK },
@@ -438,6 +446,7 @@ async function main() {
   console.log('W0 student host matrix smoke');
   console.log('Origins are hardcoded from verified code constants (see ORIGINS comment).');
   console.log('WS_BASE=', ORIGINS.WS_BASE);
+  console.log('WS_MIRROR=', ORIGINS.WS_MIRROR);
   console.log('CR_BASE=', ORIGINS.CR_BASE);
   console.log('ROSTER=', ORIGINS.ROSTER);
   console.log('lesson=', LESSON.id);

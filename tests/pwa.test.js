@@ -64,6 +64,18 @@ describe('sw.js cacheStrategyFor', () => {
 });
 
 describe('sw.js contracts', () => {
+  it('pre-caches the mobile flashcard shell and supporting data', () => {
+    const start = SW.indexOf('const CORE = [');
+    const core = SW.slice(start, SW.indexOf('];', start));
+    for (const asset of [
+      'flashcards.js',
+      'mobile-home.html',
+      'data/blooket-difficulty.json',
+      'data/blooket-topic-csv.json',
+    ]) {
+      expect(core).toContain(`'${asset}'`);
+    }
+  });
   it('versioned cache + activate purges old caches + skipWaiting/claim', () => {
     expect(SW).toMatch(/const CACHE = 'apstats-pwa-' \+ BUILD/);
     expect(SW).toContain('self.skipWaiting()');

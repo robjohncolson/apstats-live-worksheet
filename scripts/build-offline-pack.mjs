@@ -47,12 +47,13 @@ const ROOT_FILES = [
   'student-key.js', 'submission-store.js', 'submission-capture.js', 'submission-grader.js',
   // ANDROID Phase 5 — Google Play on-demand video (inert unless window.PLAY_BUILD).
   'video-ondemand.js', 'video-store.js',
-  'railway_client.js', 'railway_config.js', 'roadmap-data.json',
+  'railway_client.js', 'railway_config.js', 'roadmap-data.json', 'flashcards.js',
   'sw.js', 'pwa-register.js', 'manifest.webmanifest', 'icon.svg', 'version.json',
 ];
 const DIRS = ['lib', 'data', 'js', 'ai-tutor', 'ti84-trainer-v2'];
 const WORKSHEET_RE = /^u\d+_lesson.+_live\.html$/;
 const GRADING_RE = /^ai-grading-prompts.*\.js$/;
+const BLOOKET_RE = /_blooket\.csv$/;
 const TRANSCRIPT_RE = /(transcription|transcript|slides)\.txt$/i;
 const UNIT_DIRS = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9'];
 
@@ -204,7 +205,8 @@ function main() {
   const all = readdirSync(REPO);
   const worksheets = all.filter((f) => WORKSHEET_RE.test(f));
   const grading = all.filter((f) => GRADING_RE.test(f));
-  const files = [...ROOT_FILES, ...worksheets, ...grading].filter((f) => existsSync(resolve(REPO, f)));
+  const blooket = all.filter((f) => BLOOKET_RE.test(f));
+  const files = [...ROOT_FILES, ...worksheets, ...grading, ...blooket].filter((f) => existsSync(resolve(REPO, f)));
   const dirs = DIRS.filter((d) => existsSync(resolve(REPO, d)));
   // Prefer the re-encoded media-compressed/ (H.264 CRF23, ~1.3 GB vs ~25 GB; same filenames so
   // media-manifest.json still resolves). Falls back to the raw media/ master. Either is copied
