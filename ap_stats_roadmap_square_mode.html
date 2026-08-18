@@ -2372,7 +2372,7 @@
         <div id="bf-choices"></div>
         <div id="bf-feedback" class="bf-feedback geneva" aria-live="polite"></div>
         <div id="bf-result" aria-live="polite" style="display:none;margin-top:12px;padding:8px;border:1px solid var(--black);background:#f8f8f8"></div>
-        <div style="text-align:right;margin-top:12px">
+        <div id="bf-actions" style="text-align:right;margin-top:12px">
             <button id="bf-next" class="s7btn s7btn-default" style="display:none" onclick="_bfNext()">Next</button>
             <button class="s7btn" onclick="closeBlooketFlashcards()">Cancel</button>
         </div>
@@ -2596,6 +2596,9 @@
 <script src="nearby-transport.js"></script>
 <script src="offline-video.js"></script>
 <script src="gradebook-client.js"></script>
+<script src="lib/flashcard-srs.js" onerror=""></script>
+<script src="lib/flashcard-store.js" onerror=""></script>
+<script src="lib/flashcard-flags.js" onerror=""></script>
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script src="lib/qrcode.min.js"></script>
@@ -8936,6 +8939,15 @@ async function renderDoNowGrades(baseUrl, token) {
       host.appendChild(_trackChip('Work', workAvg, 'Work-engagement track (worksheets, quizzes, Blooket)'));
     }
 
+    if (typeof _fcFlag === 'function' && _fcFlag('dueTodayDeck')) {
+      var _dueTodaySummary = (typeof _srsDueSnapshot === 'function')
+        ? _srsDueSnapshot()
+        : { due: 0 };
+      if (typeof _srsRenderDueChip === 'function') {
+        _srsRenderDueChip(host, _dueTodaySummary);
+      }
+    }
+
     // "how grades work" moved to the Help menu (top bar) — declutter the Do Now.
 
     // "My Gradebook" (the score-by-score breakdown · vs Schoology) folded into the
@@ -11364,7 +11376,18 @@ function showResourcePanel(inf, dateStr) {
                 var _blBtn = _signedIn
                     ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Quick check (caps 80%) or the full timed deck (up to 100%)" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
                     : '';
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
+                var _blDueText = '';
+                if (typeof _fcFlag === 'function' && _fcFlag('dueTodayDeck')) {
+                    var _blDueSummary = (typeof _srsDueSnapshot === 'function')
+                        ? _srsDueSnapshot()
+                        : { due: 0, byCsv: {} };
+                    var _blCsv = (typeof _srsCsvFor === 'function') ? _srsCsvFor(_stuTopicId) : null;
+                    var _blDue = _blCsv && _blDueSummary && _blDueSummary.byCsv
+                        ? Number(_blDueSummary.byCsv[_blCsv] || 0)
+                        : 0;
+                    if (_blDue > 0) _blDueText = ' · ' + _blDue + ' due';
+                }
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + _blDueText + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
             }
         }
 
@@ -11674,6 +11697,69 @@ function _mayScore() {
     return true;
 }
 
+var _fcFlags = { flags: {} };
+var _fcFlagsPromise = null;
+
+function _fcLoadFlags() {
+    if (_fcFlagsPromise) return _fcFlagsPromise;
+    if (typeof FlashcardFlags === 'undefined'
+        || !FlashcardFlags
+        || typeof FlashcardFlags.loadFlags !== 'function') {
+        return null;
+    }
+    var build = (typeof APP_BUILD !== 'undefined' && APP_BUILD) ? APP_BUILD : Date.now();
+    var fetchImpl = (typeof fetch === 'function') ? fetch : null;
+    _fcFlagsPromise = FlashcardFlags.loadFlags(fetchImpl, build).then(function (loaded) {
+        _fcFlags = loaded && loaded.flags ? loaded : { flags: {} };
+        try {
+            var names = Object.keys(_fcFlags.flags || {});
+            var anyEnabled = false;
+            for (var i = 0; i < names.length; i++) {
+                if (_fcFlag(names[i])) {
+                    anyEnabled = true;
+                    break;
+                }
+            }
+            // First-render race: the Do Now grades may already be painted with
+            // empty flags. Refresh ONLY the due chip in place — never re-run
+            // renderDoNowGrades (its fetch/classify path is incident-pinned).
+            if (anyEnabled && _fcFlag('dueTodayDeck')
+                && typeof _srsRenderDueChip === 'function'
+                && typeof _srsDueSnapshot === 'function') {
+                var dueHost = document.getElementById('donow-grades');
+                if (dueHost && dueHost.style.display !== 'none') {
+                    _srsRenderDueChip(dueHost, _srsDueSnapshot());
+                }
+            }
+        } catch (_) { /* flag-driven cached repaint is best-effort */ }
+        return _fcFlags;
+    }, function () {
+        _fcFlags = { flags: {} };
+        return _fcFlags;
+    });
+    return _fcFlagsPromise;
+}
+
+function _fcFlag(name) {
+    if (typeof FlashcardFlags === 'undefined'
+        || !FlashcardFlags
+        || typeof FlashcardFlags.resolveFlag !== 'function') return false;
+    var current = null;
+    try {
+        current = (typeof rosterClient !== 'undefined'
+            && rosterClient
+            && typeof rosterClient.current === 'function')
+            ? rosterClient.current()
+            : null;
+    } catch (_) { current = null; }
+    return FlashcardFlags.resolveFlag(_fcFlags, name, {
+        search: (typeof location !== 'undefined' && location.search) ? location.search : '',
+        username: current && current.username ? current.username : null,
+        section: current && current.section ? current.section : null,
+        storage: (typeof localStorage !== 'undefined') ? localStorage : null
+    });
+}
+
 var _bfState = {
     topic: null,    // "1.2" etc.
     btn: null,      // the Done button (so we can mutate it on pass)
@@ -11686,7 +11772,27 @@ var _bfState = {
     roundId: null,
     seq: 0,
     cardStart: 0,
-    misses: []
+    misses: [],
+    perm: []
+};
+
+var _rvState = {
+    topic: null,
+    btn: null,
+    csv: null,
+    mixed: false,
+    queue: [],
+    idx: 0,
+    ratings: 0,
+    roundId: null,
+    round: null,
+    seq: 0,
+    cardStart: 0,
+    current: null,
+    stage: null,
+    store: null,
+    folded: null,
+    deckCardsByCsv: {}
 };
 
 // 2026-05-20: persist progress per (student, topic) so cancel/close
@@ -11782,6 +11888,209 @@ function _bfWorksheetFragmentUrl(topicId, stem) {
     return url + '#:~:text=' + encodeURIComponent(words);
 }
 
+var _srsFoldCache = null;
+
+function _srsFoldedState() {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return null;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return null;
+    if (typeof FlashcardSrs === 'undefined'
+        || !FlashcardSrs
+        || typeof FlashcardSrs.foldLog !== 'function'
+        || typeof FlashcardSrs.dayIndex !== 'function'
+        || typeof FlashcardStore === 'undefined'
+        || !FlashcardStore
+        || typeof FlashcardStore.createStore !== 'function') return null;
+    if (typeof localStorage === 'undefined') return null;
+
+    var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+    if (!email) return null;
+    var todayDay = FlashcardSrs.dayIndex(Date.now());
+    if (_srsFoldCache && _srsFoldCache.email === email) {
+        return {
+            email: _srsFoldCache.email,
+            store: _srsFoldCache.store,
+            state: _srsFoldCache.state,
+            log: _srsFoldCache.log,
+            folded: _srsFoldCache.folded,
+            todayDay: todayDay
+        };
+    }
+
+    try {
+        var store = FlashcardStore.createStore({
+            storage: localStorage,
+            email: email,
+            now: Date.now
+        });
+        if (!store || typeof store.load !== 'function' || typeof store.readSrsLog !== 'function') {
+            return null;
+        }
+        var state = store.load();
+        var log = store.readSrsLog();
+        var folded = FlashcardSrs.foldLog(log, { state: state });
+        folded.version = state.version;
+        folded.tombstones = state.tombstones || {};
+        folded.updatedAt = state.updatedAt || 0;
+        if (state.extra) folded.extra = state.extra;
+        _srsFoldCache = {
+            email: email,
+            store: store,
+            state: state,
+            log: log,
+            folded: folded
+        };
+        return {
+            email: _srsFoldCache.email,
+            store: _srsFoldCache.store,
+            state: _srsFoldCache.state,
+            log: _srsFoldCache.log,
+            folded: _srsFoldCache.folded,
+            todayDay: todayDay
+        };
+    } catch (_) {
+        return null;
+    }
+}
+
+function _srsCoreDeckPlans() {
+    var plansByCsv = {};
+    var lessons = (typeof REGISTRY !== 'undefined' && REGISTRY && REGISTRY.lessons)
+        ? REGISTRY.lessons
+        : {};
+    var topicIds = Object.keys(lessons);
+    for (var i = 0; i < topicIds.length; i++) {
+        var topicId = topicIds[i];
+        var registryEntry = lessons[topicId] || {};
+        var ced = registryEntry.ced2026 || {};
+        if (registryEntry.status === 'bonus'
+            || registryEntry.status === 'optional'
+            || registryEntry.bonus === true
+            || registryEntry.optional === true
+            || ced.status === 'bonus'
+            || ced.status === 'optional') continue;
+
+        var path = (typeof _bfCsvPath === 'function') ? _bfCsvPath(topicId) : null;
+        var csv = (typeof _srsCsvFor === 'function') ? _srsCsvFor(topicId) : null;
+        if (!csv && path) {
+            var cleanPath = String(path).split(/[?#]/)[0].split('/');
+            csv = cleanPath[cleanPath.length - 1];
+        }
+        if (!path || !csv || plansByCsv[csv]) continue;
+        plansByCsv[csv] = {
+            csv: csv,
+            path: path,
+            topic: topicId,
+            label: ced.newLabel || topicId
+        };
+    }
+    return plansByCsv;
+}
+
+function _srsDueSummary() {
+    if (typeof FlashcardSrs === 'undefined'
+        || !FlashcardSrs
+        || typeof FlashcardSrs.summarize !== 'function'
+        || typeof FlashcardSrs.dueCards !== 'function') return { due: 0 };
+    var foldedState = (typeof _srsFoldedState === 'function') ? _srsFoldedState() : null;
+    if (!foldedState) return { due: 0 };
+
+    var todayDay = FlashcardSrs.dayIndex(Date.now());
+    var plansByCsv = (typeof _srsCoreDeckPlans === 'function') ? _srsCoreDeckPlans() : {};
+    var allCards = foldedState.folded && foldedState.folded.cards
+        ? foldedState.folded.cards
+        : {};
+    var coreCards = {};
+    var cardIds = Object.keys(allCards);
+    for (var c = 0; c < cardIds.length; c++) {
+        var cardId = String(cardIds[c]);
+        var cardSplit = cardId.lastIndexOf('#');
+        if (cardSplit <= 0) continue;
+        if (!plansByCsv[cardId.slice(0, cardSplit)]) continue;
+        coreCards[cardId] = allCards[cardId];
+    }
+    var coreState = { cards: coreCards };
+    var summary = FlashcardSrs.summarize(coreState, todayDay);
+    var dueIds = FlashcardSrs.dueCards(coreState, todayDay);
+    var byCsv = {};
+    for (var i = 0; i < dueIds.length; i++) {
+        var id = String(dueIds[i]);
+        var splitAt = id.lastIndexOf('#');
+        if (splitAt <= 0) continue;
+        var csv = id.slice(0, splitAt);
+        byCsv[csv] = (byCsv[csv] || 0) + 1;
+    }
+    return {
+        due: summary && typeof summary.due === 'number' ? summary.due : dueIds.length,
+        byCsv: byCsv,
+        todayDay: todayDay
+    };
+}
+
+function _srsDueSnapshot() {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return { due: 0 };
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return { due: 0 };
+    var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+    if (!email) return { due: 0 };
+    if (typeof FlashcardSrs === 'undefined'
+        || !FlashcardSrs
+        || typeof FlashcardSrs.dayIndex !== 'function') return { due: 0 };
+
+    var todayDay = FlashcardSrs.dayIndex(Date.now());
+    var snapshotKey = 'apstats_fc_due_snapshot_' + String(todayDay);
+    try {
+        if (typeof sessionStorage !== 'undefined') {
+            var previousKey = sessionStorage.getItem('apstats_fc_due_snapshot');
+            if (previousKey && previousKey !== snapshotKey) {
+                sessionStorage.removeItem(previousKey);
+            }
+            sessionStorage.setItem('apstats_fc_due_snapshot', snapshotKey);
+            var cached = JSON.parse(sessionStorage.getItem(snapshotKey) || 'null');
+            if (cached
+                && cached.email === email
+                && cached.todayDay === todayDay
+                && typeof cached.due === 'number') {
+                return {
+                    due: cached.due,
+                    byCsv: cached.byCsv || {},
+                    todayDay: todayDay
+                };
+            }
+        }
+    } catch (_) {}
+
+    var summary = (typeof _srsDueSummary === 'function') ? _srsDueSummary() : { due: 0 };
+    if (!summary || !summary.byCsv || typeof summary.todayDay !== 'number') return summary || { due: 0 };
+    try {
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(snapshotKey, JSON.stringify({
+                email: email,
+                due: summary.due,
+                byCsv: summary.byCsv,
+                todayDay: todayDay
+            }));
+        }
+    } catch (_) {}
+    return summary;
+}
+
+function _srsRenderDueChip(host, summary) {
+    if (!host) return;
+    // Idempotent: the flags-loaded repaint re-calls this on the same host.
+    var prior = host.querySelector('#fc-due-chip');
+    if (prior && prior.parentNode) prior.parentNode.removeChild(prior);
+    if (!summary || !(summary.due > 0)) return;
+    var chip = document.createElement('button');
+    chip.type = 'button';
+    chip.id = 'fc-due-chip';
+    chip.className = 's7btn chicago';
+    chip.style.cssText = 'font-size:10px;margin-left:8px;align-self:center;padding:2px 7px';
+    chip.textContent = 'Review due (' + summary.due + ')';
+    chip.onclick = function () {
+        if (typeof _rvStartMixed === 'function') _rvStartMixed();
+    };
+    host.appendChild(chip);
+}
+
 function _srsAppendLog(entries) {
     try {
         if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
@@ -11794,6 +12103,12 @@ function _srsAppendLog(entries) {
         saved = saved.concat(entries);
         if (saved.length > 2000) saved = saved.slice(saved.length - 2000);
         localStorage.setItem(key, JSON.stringify(saved));
+        if (typeof _srsFoldCache !== 'undefined') _srsFoldCache = null;
+        if (typeof sessionStorage !== 'undefined') {
+            var snapshotKey = sessionStorage.getItem('apstats_fc_due_snapshot');
+            if (snapshotKey) sessionStorage.removeItem(snapshotKey);
+            sessionStorage.removeItem('apstats_fc_due_snapshot');
+        }
     } catch (_) {}
 }
 
@@ -11931,6 +12246,48 @@ function _bfShuffle(arr) {
     return a;
 }
 
+function _bfMulberry32(seed) {
+    var state = seed >>> 0;
+    return function () {
+        state = (state + 0x6D2B79F5) >>> 0;
+        var t = state;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function _bfPermSeed(email, roundId, qnum) {
+    var text = String(email) + '|' + String(roundId) + '|' + String(qnum);
+    var hash = 5381;
+    for (var i = 0; i < text.length; i++) {
+        hash = (((hash << 5) + hash) + text.charCodeAt(i)) >>> 0;
+    }
+    return hash >>> 0;
+}
+
+function _bfPermutationFor(seed, n) {
+    var permutation = [];
+    for (var i = 0; i < n; i++) permutation.push(i);
+    if (n <= 1) return permutation;
+    var random = _bfMulberry32(seed);
+    for (var j = n - 1; j > 0; j--) {
+        var swapIndex = Math.floor(random() * (j + 1));
+        var value = permutation[j];
+        permutation[j] = permutation[swapIndex];
+        permutation[swapIndex] = value;
+    }
+    return permutation;
+}
+
+function _bfIsPermutationUnsafe(choices) {
+    var list = choices || [];
+    for (var i = 0; i < list.length; i++) {
+        if (/\b(all|none) of (these|the above)\b/i.test(String(list[i]))) return true;
+    }
+    return false;
+}
+
 // 2026-05-20: modal-scoped keyboard nav. Attached on flashcard modal
 // open, detached on close. a-d (or 1-4) → answer that choice
 // immediately. Enter / Space → next card when one is queued.
@@ -11966,8 +12323,11 @@ function _bfKeydownHandler(e) {
     if (idx < 0) return;
     var card = _bfState.deck && _bfState.deck[_bfState.idx];
     if (!card || idx >= card.choices.length) return;
+    var realIdx = (Array.isArray(_bfState.perm) && typeof _bfState.perm[idx] === 'number')
+        ? _bfState.perm[idx]
+        : idx;
     e.preventDefault();
-    _bfAnswer(idx);
+    _bfAnswer(realIdx);
 }
 
 // Entry point (from studentMark): show the mode picker, then route to the
@@ -11999,6 +12359,28 @@ function _bfShowQuizUI(timed) {
         var el = document.getElementById(id); if (el) el.style.display = '';
     });
     var t = document.getElementById('bf-timer'); if (t) t.style.display = timed ? 'block' : 'none';
+}
+
+function _rvRestoreActions() {
+    var actions = document.getElementById('bf-actions');
+    if (!actions) return;
+    while (actions.firstChild) actions.removeChild(actions.firstChild);
+    var next = document.createElement('button');
+    next.id = 'bf-next';
+    next.className = 's7btn s7btn-default';
+    next.style.display = 'none';
+    next.textContent = 'Next';
+    next.onclick = function () {
+        if (typeof _bfNext === 'function') _bfNext();
+    };
+    var cancel = document.createElement('button');
+    cancel.className = 's7btn';
+    cancel.textContent = 'Cancel';
+    cancel.onclick = function () {
+        if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
+    };
+    actions.appendChild(next);
+    actions.appendChild(cancel);
 }
 
 // The mode picker: Quick check (top-10, untimed, caps 80%) vs Full deck (all
@@ -12046,8 +12428,555 @@ function _bfShowModePicker(btn, topicId) {
         mp.appendChild(modeBtn('\u{1F3AF} Full deck — timed',
             'Every card, ' + BLOOKET_FULLDECK_SECONDS + 's each, misses re-queue with no reveal. Earn up to 100% — replaces the in-class Blooket. Only a higher score is ever saved.',
             function () { _ftStart(btn, topicId); }));
+        if (_fcFlag('reviewMode')) {
+            mp.appendChild(modeBtn('🔁 Review due cards (practice — not graded)',
+                'Practice only — nothing is graded. Rate each card so it comes back at the right time.',
+                function () { _rvStart(btn, topicId); }));
+        }
     }
     document.getElementById('bf-overlay').style.display = 'block';
+}
+
+async function _rvStart(btn, topicId) {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    if (typeof FlashcardSrs === 'undefined'
+        || !FlashcardSrs
+        || typeof FlashcardStore === 'undefined'
+        || !FlashcardStore) {
+        if (typeof showDialog === 'function') showDialog('⚠️', 'Review is unavailable right now.', 'OK');
+        return;
+    }
+    var csvPath = (typeof _bfCsvPath === 'function') ? _bfCsvPath(topicId) : null;
+    if (!csvPath) {
+        if (typeof showDialog === 'function') showDialog('⚠️', 'No flashcard deck available for this lesson yet.', 'OK');
+        return;
+    }
+    var text;
+    try {
+        var response = await fetch(csvPath);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        text = await response.text();
+    } catch (_) {
+        if (typeof showDialog === 'function') showDialog('⚠️', 'Could not load the flashcard deck. Try again.', 'OK');
+        return;
+    }
+    var allCards = _bfRowsToDeck(_bfParseCsv(text));
+    if (!allCards.length) {
+        if (typeof showDialog === 'function') showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK');
+        return;
+    }
+    var foldedState = (typeof _srsFoldedState === 'function') ? _srsFoldedState() : null;
+    if (!foldedState) {
+        if (typeof showDialog === 'function') showDialog('⚠️', 'Sign in to review your due cards.', 'OK');
+        return;
+    }
+    var csv = (typeof _srsCsvFor === 'function') ? _srsCsvFor(topicId) : null;
+    if (!csv) {
+        var cleanPath = String(csvPath).split(/[?#]/)[0].split('/');
+        csv = cleanPath[cleanPath.length - 1];
+    }
+    var now = Date.now();
+    var store = foldedState.store;
+    var log = foldedState.log;
+    var folded = foldedState.folded;
+    store.save(folded);
+
+    var prefix = String(csv) + '#';
+    var dueIds = FlashcardSrs.dueCards(folded, FlashcardSrs.dayIndex(now));
+    var cardsByQnum = {};
+    var i;
+    for (i = 0; i < allCards.length; i++) {
+        cardsByQnum[String(allCards[i].qnum)] = allCards[i];
+    }
+    var queue = [];
+    for (i = 0; i < dueIds.length; i++) {
+        if (String(dueIds[i]).indexOf(prefix) !== 0) continue;
+        var dueCard = cardsByQnum[String(dueIds[i]).slice(prefix.length)];
+        if (dueCard) queue.push(dueCard);
+    }
+    queue = queue.slice(0, 20);
+    if (!queue.length) {
+        var missed = {};
+        for (i = 0; i < log.length; i++) {
+            var entry = log[i];
+            if (!entry || entry.csv !== csv || entry.correct !== false) continue;
+            var missedKey = String(entry.qnum);
+            if (missed[missedKey] || !cardsByQnum[missedKey]) continue;
+            missed[missedKey] = true;
+            queue.push(cardsByQnum[missedKey]);
+        }
+    }
+    if (!queue.length) queue = allCards.slice();
+
+    _rvState.topic = topicId;
+    _rvState.btn = btn;
+    _rvState.csv = csv;
+    _rvState.mixed = false;
+    _rvState.queue = queue.slice(0, 20);
+    _rvState.idx = 0;
+    _rvState.ratings = 0;
+    _rvState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
+    _rvState.round = folded;
+    _rvState.seq = 0;
+    _rvState.cardStart = 0;
+    _rvState.current = null;
+    _rvState.stage = 'answer';
+    _rvState.store = store;
+    _rvState.folded = folded;
+    _rvState.deckCardsByCsv = {};
+    _rvState.deckCardsByCsv[csv] = allCards.slice();
+
+    var header = document.getElementById('bf-header');
+    if (header) {
+        while (header.firstChild) header.removeChild(header.firstChild);
+        var title = document.createElement('span');
+        title.textContent = 'Review — ' + topicId + ' (practice, not graded)';
+        var close = document.createElement('button');
+        close.className = 's7btn';
+        close.style.cssText = 'float:right;padding:0 5px;min-width:24px';
+        close.setAttribute('aria-label', 'Close review');
+        close.textContent = '✕';
+        close.onclick = function () {
+            if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
+        };
+        header.appendChild(title);
+        header.appendChild(close);
+    }
+    _bfShowQuizUI(false);
+    var result = document.getElementById('bf-result');
+    if (result) result.style.display = 'none';
+    var overlay = document.getElementById('bf-overlay');
+    if (overlay) overlay.style.display = 'block';
+    _rvRenderCard();
+    document.addEventListener('keydown', _rvKeydownHandler);
+}
+
+async function _rvStartMixed() {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    if (typeof FlashcardSrs === 'undefined'
+        || !FlashcardSrs
+        || typeof FlashcardSrs.dueCards !== 'function') return;
+
+    var foldedState = (typeof _srsFoldedState === 'function') ? _srsFoldedState() : null;
+    if (!foldedState) {
+        if (typeof showDialog === 'function') showDialog('⚠️', 'Sign in to review your due cards.', 'OK');
+        return;
+    }
+    var plansByCsv = (typeof _srsCoreDeckPlans === 'function') ? _srsCoreDeckPlans() : {};
+    var todayDay = FlashcardSrs.dayIndex(Date.now());
+    var orderedDueIds = FlashcardSrs.dueCards(foldedState.folded, todayDay);
+    var allowedDueIds = [];
+    var i;
+    for (i = 0; i < orderedDueIds.length; i++) {
+        var orderedDueId = String(orderedDueIds[i]);
+        var orderedSplit = orderedDueId.lastIndexOf('#');
+        if (orderedSplit <= 0) continue;
+        if (!plansByCsv[orderedDueId.slice(0, orderedSplit)]) continue;
+        allowedDueIds.push(orderedDueId);
+    }
+    var dueIds = allowedDueIds.slice(0, 20);
+    if (!dueIds.length) {
+        if (typeof showDialog === 'function') showDialog('✓', 'No core flashcards are due today.', 'OK');
+        return;
+    }
+
+    var neededCsvs = {};
+    var dueParts = [];
+    for (i = 0; i < dueIds.length; i++) {
+        var dueId = String(dueIds[i]);
+        var splitAt = dueId.lastIndexOf('#');
+        if (splitAt <= 0) continue;
+        var dueCsv = dueId.slice(0, splitAt);
+        neededCsvs[dueCsv] = true;
+        dueParts.push({ csv: dueCsv, qnum: dueId.slice(splitAt + 1) });
+    }
+
+    var plans = Object.keys(plansByCsv).filter(function (csv) {
+        return neededCsvs[csv];
+    }).map(function (csv) {
+        return plansByCsv[csv];
+    });
+    var loaded;
+    try {
+        loaded = await Promise.all(plans.map(function (plan) {
+            return fetch(plan.path).then(function (response) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.text();
+            }).then(function (text) {
+                return { plan: plan, text: text };
+            });
+        }));
+    } catch (_) {
+        if (typeof showDialog === 'function') showDialog('⚠️', 'Could not load the due flashcard decks. Try again.', 'OK');
+        return;
+    }
+
+    var decksByCsv = {};
+    for (i = 0; i < loaded.length; i++) {
+        var loadedDeck = loaded[i];
+        var cards = _bfRowsToDeck(_bfParseCsv(loadedDeck.text));
+        var cardsByQnum = {};
+        var deckCards = [];
+        for (var j = 0; j < cards.length; j++) {
+            var deckCard = {};
+            for (var deckKey in cards[j]) deckCard[deckKey] = cards[j][deckKey];
+            deckCard._rvTopic = loadedDeck.plan.topic;
+            deckCard._rvCsv = loadedDeck.plan.csv;
+            deckCard._rvLabel = loadedDeck.plan.label;
+            cardsByQnum[String(deckCard.qnum)] = deckCard;
+            deckCards.push(deckCard);
+        }
+        decksByCsv[loadedDeck.plan.csv] = {
+            plan: loadedDeck.plan,
+            cards: cardsByQnum,
+            deckCards: deckCards
+        };
+    }
+
+    var queue = [];
+    for (i = 0; i < dueParts.length; i++) {
+        var part = dueParts[i];
+        var deck = decksByCsv[part.csv];
+        var sourceCard = deck && deck.cards[part.qnum];
+        if (!sourceCard) continue;
+        var card = {};
+        for (var key in sourceCard) card[key] = sourceCard[key];
+        card._rvTopic = deck.plan.topic;
+        card._rvCsv = deck.plan.csv;
+        card._rvLabel = deck.plan.label;
+        queue.push(card);
+    }
+    if (!queue.length) {
+        if (typeof showDialog === 'function') showDialog('✓', 'No core flashcards are due today.', 'OK');
+        return;
+    }
+
+    foldedState.store.save(foldedState.folded);
+    _rvState.topic = null;
+    _rvState.btn = null;
+    _rvState.csv = null;
+    _rvState.mixed = true;
+    _rvState.queue = queue;
+    _rvState.idx = 0;
+    _rvState.ratings = 0;
+    _rvState.roundId = (typeof _srsRoundId === 'function') ? _srsRoundId('desk') : null;
+    _rvState.round = foldedState.folded;
+    _rvState.seq = 0;
+    _rvState.cardStart = 0;
+    _rvState.current = null;
+    _rvState.stage = 'answer';
+    _rvState.store = foldedState.store;
+    _rvState.folded = foldedState.folded;
+    _rvState.deckCardsByCsv = {};
+    var loadedCsvs = Object.keys(decksByCsv);
+    for (i = 0; i < loadedCsvs.length; i++) {
+        _rvState.deckCardsByCsv[loadedCsvs[i]] = decksByCsv[loadedCsvs[i]].deckCards.slice();
+    }
+
+    var header = document.getElementById('bf-header');
+    if (header) {
+        while (header.firstChild) header.removeChild(header.firstChild);
+        var title = document.createElement('span');
+        title.textContent = 'Review due — practice, not graded';
+        var close = document.createElement('button');
+        close.className = 's7btn';
+        close.style.cssText = 'float:right;padding:0 5px;min-width:24px';
+        close.setAttribute('aria-label', 'Close review');
+        close.textContent = '✕';
+        close.onclick = function () {
+            if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
+        };
+        header.appendChild(title);
+        header.appendChild(close);
+    }
+    _bfShowQuizUI(false);
+    var result = document.getElementById('bf-result');
+    if (result) result.style.display = 'none';
+    var overlay = document.getElementById('bf-overlay');
+    if (overlay) overlay.style.display = 'block';
+    _rvRenderCard();
+    document.addEventListener('keydown', _rvKeydownHandler);
+}
+
+function _rvRenderCard() {
+    if (!_rvState.queue.length) {
+        _rvFinish();
+        return;
+    }
+    var card = _rvState.queue.shift();
+    delete card._rvCorrect;
+    delete card._rvChosenIdx;
+    _rvState.current = card;
+    _rvState.idx = _rvState.ratings;
+    _rvState.stage = 'answer';
+    _rvState.cardStart = Date.now();
+
+    var feedback = document.getElementById('bf-feedback');
+    var question = document.getElementById('bf-question');
+    var choices = document.getElementById('bf-choices');
+    var progress = document.getElementById('bf-progress');
+    var actions = document.getElementById('bf-actions');
+    if (feedback) feedback.textContent = '';
+    if (question) {
+        question.textContent = '';
+        if (_rvState.mixed && card._rvLabel) {
+            var label = document.createElement('div');
+            label.className = 'geneva';
+            label.style.cssText = 'font-size:10px;color:#666;margin-bottom:5px';
+            label.textContent = card._rvLabel;
+            question.appendChild(label);
+        }
+        var stem = document.createElement('div');
+        stem.textContent = card.q;
+        question.appendChild(stem);
+    }
+    if (progress) {
+        progress.textContent = 'Review ' + (_rvState.ratings + 1)
+            + ' of up to 20 · ' + _rvState.queue.length + ' waiting'
+            + ' · Keys: a-d or 1-4 to answer';
+    }
+    if (actions) while (actions.firstChild) actions.removeChild(actions.firstChild);
+    if (!choices) return;
+    while (choices.firstChild) choices.removeChild(choices.firstChild);
+    for (var i = 0; i < card.choices.length; i++) {
+        (function (choiceIdx) {
+            var choice = document.createElement('button');
+            choice.className = 'bf-choice';
+            choice.textContent = String.fromCharCode(65 + choiceIdx) + '. ' + card.choices[choiceIdx];
+            choice.onclick = function () { _rvAnswer(choiceIdx); };
+            choices.appendChild(choice);
+        })(i);
+    }
+    var unsure = document.createElement('button');
+    unsure.className = 'bf-choice';
+    unsure.textContent = "I'm not sure";
+    unsure.onclick = function () { _rvAnswer(null); };
+    choices.appendChild(unsure);
+    try {
+        var firstChoice = choices.querySelector('.bf-choice');
+        if (firstChoice && typeof firstChoice.focus === 'function') firstChoice.focus();
+    } catch (_) {}
+}
+
+function _rvAnswer(idx) {
+    if (_rvState.stage !== 'answer' || !_rvState.current) return;
+    var card = _rvState.current;
+    var chosenIdx = (typeof idx === 'number') ? idx : -1;
+    var isRight = chosenIdx === card.correctIdx;
+    card._rvCorrect = isRight;
+    card._rvChosenIdx = chosenIdx;
+    _rvState.stage = 'rate';
+
+    var choices = document.getElementById('bf-choices');
+    var feedback = document.getElementById('bf-feedback');
+    if (choices) {
+        var choiceButtons = choices.querySelectorAll('button');
+        for (var i = 0; i < choiceButtons.length; i++) {
+            choiceButtons[i].disabled = true;
+            if (i === card.correctIdx) choiceButtons[i].classList.add('bf-correct');
+            else if (i === chosenIdx) choiceButtons[i].classList.add('bf-wrong');
+        }
+    }
+    if (feedback) {
+        feedback.textContent = isRight
+            ? 'Right. How well did you know it?'
+            : 'Correct answer: ' + String.fromCharCode(65 + card.correctIdx)
+              + '. ' + card.choices[card.correctIdx];
+    }
+
+    var actions = document.getElementById('bf-actions');
+    if (!actions) return;
+    while (actions.firstChild) actions.removeChild(actions.firstChild);
+    var grades = isRight ? ['good', 'easy'] : ['again', 'hard'];
+    var labels = isRight ? ['Good', 'Easy'] : ['Again', 'Hard'];
+    for (var j = 0; j < grades.length; j++) {
+        (function (grade, label) {
+            var rate = document.createElement('button');
+            rate.className = 's7btn s7btn-default';
+            rate.style.marginLeft = '6px';
+            rate.textContent = label;
+            rate.onclick = function () { _rvRate(grade); };
+            actions.appendChild(rate);
+        })(grades[j], labels[j]);
+    }
+}
+
+function _rvRate(grade) {
+    if (_rvState.stage !== 'rate' || !_rvState.current) return;
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return;
+    if (grade !== 'again' && grade !== 'hard' && grade !== 'good' && grade !== 'easy') return;
+    _rvState.stage = 'saving';
+    var card = _rvState.current;
+    var now = Date.now();
+    var logSeq = _rvState.seq++;
+    var entryTopic = (_rvState.mixed && card._rvTopic) ? card._rvTopic : _rvState.topic;
+    var entryCsv = (_rvState.mixed && card._rvCsv) ? card._rvCsv : _rvState.csv;
+    var entry = {
+        topic: entryTopic,
+        qnum: card.qnum,
+        correct: card._rvCorrect === true,
+        latencyMs: (now - _rvState.cardStart) || 0,
+        wasTimeout: false,
+        missIndex: 0,
+        ts: now,
+        mode: 'review',
+        csv: entryCsv,
+        surface: 'desk',
+        roundId: _rvState.roundId,
+        seq: logSeq,
+        nChoices: card.choices.length,
+        chosenIdx: typeof card._rvChosenIdx === 'number' ? card._rvChosenIdx : -1,
+        review: grade,
+        stemHash: (typeof FlashcardSrs.stemHash === 'function') ? FlashcardSrs.stemHash(card.q) : null
+    };
+    if (typeof _srsAppendLog === 'function') _srsAppendLog([entry]);
+
+    var cardId = FlashcardSrs.cardId(entryCsv, card.qnum);
+    var scheduled = _rvState.folded.cards[cardId];
+    if (!scheduled && typeof FlashcardSrs.newCard === 'function') {
+        scheduled = FlashcardSrs.newCard(entry.stemHash);
+    }
+    var today = FlashcardSrs.dayIndex(now);
+    _rvState.folded.cards[cardId] = FlashcardSrs.applyGrade(scheduled, grade, today, now);
+    if (!Array.isArray(_rvState.folded.seen)) _rvState.folded.seen = [];
+    _rvState.folded.seen.push(String(_rvState.roundId) + '#' + String(logSeq));
+    _rvState.store.save(_rvState.folded);
+
+    _rvState.ratings += 1;
+    _rvState.idx = _rvState.ratings;
+    if (grade === 'again') {
+        var queuedIds = {};
+        for (var queueIdx = 0; queueIdx < _rvState.queue.length; queueIdx++) {
+            var queuedCard = _rvState.queue[queueIdx];
+            var queuedCsv = (_rvState.mixed && queuedCard._rvCsv) ? queuedCard._rvCsv : entryCsv;
+            queuedIds[FlashcardSrs.cardId(queuedCsv, queuedCard.qnum)] = true;
+        }
+        var deckCards = _rvState.deckCardsByCsv && _rvState.deckCardsByCsv[entryCsv]
+            ? _rvState.deckCardsByCsv[entryCsv]
+            : [];
+        for (var deckIdx = 0; deckIdx < deckCards.length && _rvState.queue.length < 3; deckIdx++) {
+            var paddingCard = deckCards[deckIdx];
+            var paddingId = FlashcardSrs.cardId(entryCsv, paddingCard.qnum);
+            if (paddingId === cardId || queuedIds[paddingId]) continue;
+            var paddingState = _rvState.folded.cards[paddingId];
+            if (paddingState && paddingState.dueDay <= today) continue;
+            _rvState.queue.push(paddingCard);
+            queuedIds[paddingId] = true;
+        }
+        var insertAt = Math.min(3, _rvState.queue.length);
+        _rvState.queue.splice(insertAt, 0, card);
+    }
+    _rvState.current = null;
+    _rvState.stage = 'answer';
+    if (_rvState.ratings >= 20 || !_rvState.queue.length) {
+        _rvFinish();
+        return;
+    }
+    _rvRenderCard();
+}
+
+function _rvFinish() {
+    _rvState.stage = 'finished';
+    _rvState.current = null;
+    var question = document.getElementById('bf-question');
+    var choices = document.getElementById('bf-choices');
+    var progress = document.getElementById('bf-progress');
+    var feedback = document.getElementById('bf-feedback');
+    var actions = document.getElementById('bf-actions');
+    if (question) question.textContent = '';
+    if (choices) while (choices.firstChild) choices.removeChild(choices.firstChild);
+    if (progress) progress.textContent = '';
+    if (feedback) feedback.textContent = '';
+    if (actions) while (actions.firstChild) actions.removeChild(actions.firstChild);
+
+    var today = null;
+    var nextDueDay = null;
+    if (_rvState.folded
+        && typeof FlashcardSrs !== 'undefined'
+        && FlashcardSrs
+        && typeof FlashcardSrs.dayIndex === 'function') {
+        today = FlashcardSrs.dayIndex(Date.now());
+        var targetCsvs = {};
+        if (_rvState.mixed && _rvState.deckCardsByCsv) {
+            var mixedCsvs = Object.keys(_rvState.deckCardsByCsv);
+            for (var m = 0; m < mixedCsvs.length; m++) targetCsvs[mixedCsvs[m]] = true;
+        } else if (_rvState.csv) {
+            targetCsvs[String(_rvState.csv)] = true;
+        }
+        var scheduledCards = _rvState.folded.cards || {};
+        var scheduledIds = Object.keys(scheduledCards);
+        for (var i = 0; i < scheduledIds.length; i++) {
+            var scheduledId = String(scheduledIds[i]);
+            var splitAt = scheduledId.lastIndexOf('#');
+            if (splitAt <= 0 || !targetCsvs[scheduledId.slice(0, splitAt)]) continue;
+            var dueDay = Number(scheduledCards[scheduledId].dueDay);
+            if (!isFinite(dueDay)) continue;
+            if (nextDueDay === null || dueDay < nextDueDay) nextDueDay = dueDay;
+        }
+    }
+    var nextDueText = 'today';
+    if (today !== null && nextDueDay !== null && nextDueDay > today) {
+        nextDueText = nextDueDay === today + 1
+            ? 'tomorrow'
+            : 'in ' + (nextDueDay - today) + ' days';
+    }
+    var result = document.getElementById('bf-result');
+    if (!result) return;
+    while (result.firstChild) result.removeChild(result.firstChild);
+    var summary = document.createElement('div');
+    summary.className = 'bf-result-pass';
+    summary.textContent = _rvState.ratings + ' reviewed · next due ' + nextDueText;
+    var close = document.createElement('button');
+    close.className = 's7btn s7btn-default';
+    close.style.marginTop = '8px';
+    close.textContent = 'Close';
+    close.onclick = function () {
+        if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
+    };
+    result.appendChild(summary);
+    result.appendChild(close);
+    result.style.display = 'block';
+}
+
+function _rvKeydownHandler(e) {
+    if (!e || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    var active = document.activeElement;
+    if (active) {
+        var tag = active.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (active.isContentEditable) return;
+    }
+    var overlay = document.getElementById('bf-overlay');
+    if (!overlay || overlay.style.display === 'none') return;
+    var key = (e.key || '').toLowerCase();
+    if (key === 'escape') {
+        e.preventDefault();
+        if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
+        return;
+    }
+    if (_rvState.stage === 'rate') {
+        if (key !== '1' && key !== '2') return;
+        var actions = document.getElementById('bf-actions');
+        var rateButtons = actions ? actions.querySelectorAll('button') : [];
+        var rateIdx = parseInt(key, 10) - 1;
+        if (!rateButtons[rateIdx]) return;
+        e.preventDefault();
+        rateButtons[rateIdx].click();
+        return;
+    }
+    if (_rvState.stage !== 'answer' || !_rvState.current) return;
+    var idx = -1;
+    if (key === 'a' || key === 'b' || key === 'c' || key === 'd') {
+        idx = 'abcd'.indexOf(key);
+    } else if (key === '1' || key === '2' || key === '3' || key === '4') {
+        idx = parseInt(key, 10) - 1;
+    }
+    if (idx < 0 || idx >= _rvState.current.choices.length) return;
+    e.preventDefault();
+    _rvAnswer(idx);
 }
 
 // Quick check (top-10, untimed, early-stop 8/10, caps 80%). Unchanged behavior,
@@ -12154,6 +13083,24 @@ function _bfRenderCard() {
         return;
     }
     var card = _bfState.deck[_bfState.idx];
+    var identity = [];
+    for (var identityIdx = 0; identityIdx < card.choices.length; identityIdx++) {
+        identity.push(identityIdx);
+    }
+    var permutationEnabled = typeof _fcFlag === 'function' && _fcFlag('choicePermutation');
+    var permutationUnsafe = typeof _bfIsPermutationUnsafe === 'function'
+        && _bfIsPermutationUnsafe(card.choices);
+    var perm = identity;
+    if (permutationEnabled && !permutationUnsafe
+        && typeof _bfPermutationFor === 'function'
+        && typeof _bfPermSeed === 'function') {
+        var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+        perm = _bfPermutationFor(
+            _bfPermSeed(email, _bfState.roundId, card.qnum),
+            card.choices.length
+        );
+    }
+    _bfState.perm = perm;
     _bfState.cardStart = Date.now();
     if (p) p.textContent = 'Question ' + (_bfState.idx + 1) + ' of ' + _bfState.deck.length
                          + '  ·  Right so far: ' + _bfState.score
@@ -12161,14 +13108,15 @@ function _bfRenderCard() {
     if (q) q.textContent = card.q;
     if (c) {
         while (c.firstChild) c.removeChild(c.firstChild);
-        for (var i = 0; i < card.choices.length; i++) {
-            (function (idx) {
+        for (var i = 0; i < perm.length; i++) {
+            (function (displayIdx, realIdx) {
                 var b = document.createElement('button');
                 b.className = 'bf-choice';
-                b.textContent = String.fromCharCode(65 + idx) + '. ' + card.choices[idx];
-                b.onclick = function () { _bfAnswer(idx); };
+                b.setAttribute('data-i', String(realIdx));
+                b.textContent = String.fromCharCode(65 + displayIdx) + '. ' + card.choices[realIdx];
+                b.onclick = function () { _bfAnswer(realIdx); };
                 c.appendChild(b);
-            })(i);
+            })(i, perm[i]);
         }
     }
     try {
@@ -12209,7 +13157,10 @@ function _bfAnswer(idx) {
             seq: _bfState.seq++,
             nChoices: card.choices.length,
             chosenIdx: idx,
-            stemHash: (typeof _srsStemHash === 'function') ? _srsStemHash(card.q) : null
+            stemHash: (typeof _srsStemHash === 'function') ? _srsStemHash(card.q) : null,
+            displayedPerm: Array.isArray(_bfState.perm)
+                ? _bfState.perm.slice()
+                : card.choices.map(function (_, choiceIdx) { return choiceIdx; })
         }]);
     }
     _bfSaveProgress();
@@ -12219,15 +13170,25 @@ function _bfAnswer(idx) {
     if (c) {
         var btns = c.querySelectorAll('button');
         for (var i = 0; i < btns.length; i++) {
+            var buttonIdx = parseInt(btns[i].getAttribute('data-i'), 10);
             btns[i].disabled = true;
-            if (i === card.correctIdx) btns[i].classList.add('bf-correct');
-            else if (i === idx) btns[i].classList.add('bf-wrong');
+            if (buttonIdx === card.correctIdx) btns[i].classList.add('bf-correct');
+            else if (buttonIdx === idx) btns[i].classList.add('bf-wrong');
         }
     }
     if (feedback) {
+        var correctDisplayIdx = card.correctIdx;
+        if (Array.isArray(_bfState.perm)) {
+            for (var displayIdx = 0; displayIdx < _bfState.perm.length; displayIdx++) {
+                if (_bfState.perm[displayIdx] === card.correctIdx) {
+                    correctDisplayIdx = displayIdx;
+                    break;
+                }
+            }
+        }
         feedback.textContent = isRight
             ? 'Right.'
-            : 'Wrong. Correct answer: ' + String.fromCharCode(65 + card.correctIdx)
+            : 'Wrong. Correct answer: ' + String.fromCharCode(65 + correctDisplayIdx)
               + '. ' + card.choices[card.correctIdx];
     }
     // Early-stop: once enough cards are correct to PASS (>=80% of the deck —
@@ -12395,9 +13356,15 @@ function _bfCloseUI() {
     // Detach keyboard nav listeners (quick + timed) and stop any countdown.
     document.removeEventListener('keydown', _bfKeydownHandler);
     document.removeEventListener('keydown', _ftKeydownHandler);
+    if (typeof _rvKeydownHandler === 'function') {
+        document.removeEventListener('keydown', _rvKeydownHandler);
+    }
     _ftClearTimer();
     try {
         var returnFocus = _bfState.btn;
+        if (typeof _rvState !== 'undefined' && _rvState && _rvState.btn) {
+            returnFocus = _rvState.btn;
+        }
         if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
     } catch (_) {}
     _bfState.topic = null;
@@ -12411,11 +13378,32 @@ function _bfCloseUI() {
     _bfState.seq = 0;
     _bfState.cardStart = 0;
     _bfState.misses = [];
+    _bfState.perm = [];
     _ftState.topic = null;
     _ftState.btn = null;
     _ftState.round = null;
     _ftState.answered = false;
     _ftState.roundId = null;
+    _ftState.perm = [];
+    if (typeof _rvState !== 'undefined' && _rvState) {
+        _rvState.topic = null;
+        _rvState.btn = null;
+        _rvState.csv = null;
+        _rvState.mixed = false;
+        _rvState.queue = [];
+        _rvState.idx = 0;
+        _rvState.ratings = 0;
+        _rvState.roundId = null;
+        _rvState.round = null;
+        _rvState.seq = 0;
+        _rvState.cardStart = 0;
+        _rvState.current = null;
+        _rvState.stage = null;
+        _rvState.store = null;
+        _rvState.folded = null;
+        _rvState.deckCardsByCsv = {};
+    }
+    if (typeof _rvRestoreActions === 'function') _rvRestoreActions();
 }
 
 function closeBlooketFlashcards() {
@@ -12480,7 +13468,7 @@ const BLOOKET_FULLDECK_SECONDS = 40;
 var _ftState = {
     topic: null, btn: null, round: null,
     answered: false, timerId: null, advanceId: null, remaining: 0, cardStartMs: 0,
-    roundId: null
+    roundId: null, perm: []
 };
 
 // ── Pure round logic (no DOM; unit-tested) ──
@@ -12610,6 +13598,24 @@ function _ftRenderCard() {
     _ftState.answered = false;
     var idx = _ftCurrentIdx(round);
     var card = round.deck[idx];
+    var identity = [];
+    for (var identityIdx = 0; identityIdx < card.choices.length; identityIdx++) {
+        identity.push(identityIdx);
+    }
+    var permutationEnabled = typeof _fcFlag === 'function' && _fcFlag('choicePermutation');
+    var permutationUnsafe = typeof _bfIsPermutationUnsafe === 'function'
+        && _bfIsPermutationUnsafe(card.choices);
+    var perm = identity;
+    if (permutationEnabled && !permutationUnsafe
+        && typeof _bfPermutationFor === 'function'
+        && typeof _bfPermSeed === 'function') {
+        var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+        perm = _bfPermutationFor(
+            _bfPermSeed(email, _ftState.roundId, card.qnum),
+            card.choices.length
+        );
+    }
+    _ftState.perm = perm;
     var q = document.getElementById('bf-question');
     var c = document.getElementById('bf-choices');
     var p = document.getElementById('bf-progress');
@@ -12622,14 +13628,15 @@ function _ftRenderCard() {
     if (q) q.textContent = card.q;
     if (c) {
         while (c.firstChild) c.removeChild(c.firstChild);
-        for (var i = 0; i < card.choices.length; i++) {
-            (function (ci) {
+        for (var i = 0; i < perm.length; i++) {
+            (function (displayIdx, realIdx) {
                 var b = document.createElement('button');
                 b.className = 'bf-choice';
-                b.textContent = String.fromCharCode(65 + ci) + '. ' + card.choices[ci];
-                b.onclick = function () { _ftAnswer(ci); };
+                b.setAttribute('data-i', String(realIdx));
+                b.textContent = String.fromCharCode(65 + displayIdx) + '. ' + card.choices[realIdx];
+                b.onclick = function () { _ftAnswer(realIdx); };
                 c.appendChild(b);
-            })(i);
+            })(i, perm[i]);
         }
     }
     try {
@@ -12645,6 +13652,16 @@ function _ftAnswer(choiceIdx) {
     var idx = _ftCurrentIdx(round);
     if (idx < 0) return;
     var card = round.deck[idx];
+    var c = document.getElementById('bf-choices');
+    if (c) {
+        var buttons = c.querySelectorAll('button');
+        for (var i = 0; i < buttons.length; i++) {
+            var buttonIdx = parseInt(buttons[i].getAttribute('data-i'), 10);
+            buttons[i].disabled = true;
+            if (buttonIdx !== choiceIdx) continue;
+            buttons[i].classList.add(choiceIdx === card.correctIdx ? 'bf-correct' : 'bf-wrong');
+        }
+    }
     _ftHandle(choiceIdx === card.correctIdx ? 'correct' : 'wrong', choiceIdx);
 }
 
@@ -12673,6 +13690,9 @@ function _ftHandle(outcome, choiceIdx) {
     last.nChoices = card.choices.length;
     last.chosenIdx = (outcome === 'timeout') ? -1 : choiceIdx;
     last.stemHash = (typeof _srsStemHash === 'function') ? _srsStemHash(card.q) : null;
+    last.displayedPerm = Array.isArray(_ftState.perm)
+        ? _ftState.perm.slice()
+        : card.choices.map(function (_, choiceIndex) { return choiceIndex; });
     // Cancellable auto-advance: store the id so _ftClearTimer (close/teardown) can
     // cancel it — a stale fire would render against a null round.
     _ftState.advanceId = setTimeout(function () { _ftState.advanceId = null; _ftRenderCard(); }, 800);
@@ -12698,8 +13718,11 @@ function _ftKeydownHandler(e) {
     var cur = _ftCurrentIdx(round);
     if (cur < 0) return;
     if (idx >= round.deck[cur].choices.length) return;
+    var realIdx = (Array.isArray(_ftState.perm) && typeof _ftState.perm[idx] === 'number')
+        ? _ftState.perm[idx]
+        : idx;
     e.preventDefault();
-    _ftAnswer(idx);
+    _ftAnswer(realIdx);
 }
 
 async function _ftFinish() {
@@ -12770,7 +13793,8 @@ function _ftLogToStore(topic, log) {
                 missIndex: log[i].missIndex, ts: stamp,
                 mode: 'full', csv: csv, surface: 'desk', roundId: roundId, seq: i,
                 nChoices: log[i].nChoices, chosenIdx: log[i].chosenIdx,
-                stemHash: log[i].stemHash
+                stemHash: log[i].stemHash,
+                displayedPerm: log[i].displayedPerm
             });
         }
         // _srsAppendLog owns the apstats_srs_log_ + getStudentEmail() write.
@@ -21666,6 +22690,8 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
+var APP_BUILD = '2026-08-18-eofv';   // scripts/bump-build.mjs replaces this stamp
+try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 loadRegistry();
 updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
 updateStudentMenu();
@@ -21719,7 +22745,6 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 // from APP_BUILD (this running build) we show a dismissible "reload" banner.
 // APP_BUILD here and version.json are bumped TOGETHER by scripts/bump-build.mjs
 // (they MUST stay in sync — a test pins build === APP_BUILD — or the nudge loops).
-var APP_BUILD = '2026-08-18-kion';   // scripts/bump-build.mjs replaces this stamp
 (function _wireUpdateNudge(){
   var nudged = false;
   function showBanner(){

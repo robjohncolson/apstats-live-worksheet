@@ -139,6 +139,51 @@ describe('flashcards.js === the Desk inline engine (parity)', () => {
     expect(FC.roundScore(mine)).toBe(deskScore(desk));
   });
 
+  it('mulberry32 / permutationFor match the Desk twins across seeds and deck sizes', () => {
+    const deskRandom = deskFn('_bfMulberry32');
+    const deskPermutation = deskFn(
+      '_bfPermutationFor',
+      'var _bfMulberry32=' + fnBody(DESK, '_bfMulberry32') + ';',
+    );
+    for (const seed of [0, 1, 123456789, 0xffffffff]) {
+      const mine = FC.mulberry32(seed);
+      const desk = deskRandom(seed);
+      const mineValues = Array.from({ length: 6 }, () => mine());
+      const deskValues = Array.from({ length: 6 }, () => desk());
+      expect(mineValues).toEqual(deskValues);
+    }
+    for (const [seed, n] of [[0, 0], [1, 1], [17, 2], [42, 4], [0xffffffff, 11]]) {
+      expect(FC.permutationFor(seed, n)).toEqual(deskPermutation(seed, n));
+    }
+  });
+
+  it('permSeed matches _bfPermSeed for several identities and rounds', () => {
+    const deskSeed = deskFn('_bfPermSeed');
+    const cases = [
+      ['kid@roster.local', 'desk-100-abcd', 1],
+      ['student', 'mobile-999-zzzz', 27],
+      ['', '', 0],
+      [null, undefined, '4'],
+    ];
+    for (const args of cases) {
+      expect(FC.permSeed(...args)).toBe(deskSeed(...args));
+    }
+  });
+
+  it('isPermutationUnsafe matches _bfIsPermutationUnsafe', () => {
+    const deskUnsafe = deskFn('_bfIsPermutationUnsafe');
+    const cases = [
+      ['mean', 'median', 'mode'],
+      ['All of these', 'only A'],
+      ['NONE OF THE ABOVE.', 'choice B'],
+      ['all of that', 'none above'],
+      [],
+    ];
+    for (const choices of cases) {
+      expect(FC.isPermutationUnsafe(choices)).toBe(deskUnsafe(choices));
+    }
+  });
+
   it('the Desk still records via the same BL-…-DESK_DONE shape + threshold this engine encodes', () => {
     // Source pins: the Desk builds the item-id and threshold flashcards.js must match.
     expect(DESK).toContain("'-DESK_DONE'");

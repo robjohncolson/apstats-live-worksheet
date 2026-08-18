@@ -166,6 +166,7 @@
      tests/flashcards-engine.test.js. offline-queue.js lets a finished deck queue its
      grade row when offline; gradebook-client.js is the same feeder the Desk uses. -->
 <script src="flashcards.js" onerror=""></script>
+<script src="lib/flashcard-flags.js" onerror=""></script>
 <script src="offline-queue.js" onerror=""></script>
 <script src="gradebook-client.js" onerror=""></script>
 <script>
@@ -926,11 +927,42 @@
   // write is the same fire-and-forget gradebookClient.record the Desk uses; the
   // best-wins floor here means a weaker re-run never lowers a recorded score.
   var FC = window.Flashcards || null;
-  var _fcTags = null, _fc = null, _fcLauncher = null;
+  var _fcTags = null, _fcFlags = null, _fc = null, _fcLauncher = null;
   function fcoEl() { return document.getElementById('fco'); }
   function fcBody() { return document.getElementById('fc-body'); }
   function _fcSetProg(t) { var p = document.getElementById('fc-prog'); if (p) p.textContent = t || ''; }
   function _fcTimerStop() { if (_fc && _fc.timer) { clearInterval(_fc.timer); _fc.timer = null; } }
+
+  function _fcLoadFlagsOnce() {
+    if (!window.FlashcardFlags || typeof window.FlashcardFlags.loadFlags !== 'function') return;
+    var loaded;
+    try {
+      loaded = window.FlashcardFlags.loadFlags(fetch, Date.now());
+    } catch (_) {
+      return;
+    }
+    Promise.resolve(loaded).then(function (flags) {
+      _fcFlags = flags;
+    }, function () {
+      _fcFlags = null;
+    });
+  }
+
+  function _fcChoicePermutationEnabled() {
+    if (!_fcFlags) return false;
+    if (!window.FlashcardFlags || typeof window.FlashcardFlags.resolveFlag !== 'function') return false;
+    try {
+      return window.FlashcardFlags.resolveFlag(_fcFlags, 'choicePermutation', {
+        search: location.search,
+        username: _fcStudent(),
+        section: null,
+        storage: localStorage
+      });
+    } catch (_) {}
+    return false;
+  }
+
+  _fcLoadFlagsOnce();
 
   function _fcEmail() {
     try {
@@ -1222,15 +1254,39 @@
   }
 
   function _fcRender() {
+    _fcRenderCard();
+  }
+
+  function _fcRenderCard() {
     _fcTimerStop();
     var card = _fcCurrentCard();
     if (!card) { _fcFinish(); return; }
     _fc.answered = false;
     if (_fc.mode === 'quick') _fcSetProg((_fc.idx + 1) + ' / ' + _fc.deck.length + ' · ' + _fc.correct + '✓');
     else _fcSetProg(_fc.round.order.length + ' left · ' + _fc.round.total + ' cards');
+    var perm = [];
+    for (var identityIdx = 0; identityIdx < card.choices.length; identityIdx++) {
+      perm.push(identityIdx);
+    }
+    var canPermute = _fcChoicePermutationEnabled()
+      && typeof FC.permutationFor === 'function'
+      && typeof FC.permSeed === 'function'
+      && typeof FC.isPermutationUnsafe === 'function'
+      && !FC.isPermutationUnsafe(card.choices);
+    if (canPermute) {
+      var email = (typeof _fcEmail === 'function') ? _fcEmail() : null;
+      perm = FC.permutationFor(
+        FC.permSeed(email, _fc.roundId, card.qnum),
+        card.choices.length
+      );
+    }
+    _fc.perm = perm;
     var html = '<div class="fc-timer"><i id="fc-timer-bar"></i></div>' +
       '<div class="fc-q">' + esc(card.q) + '</div><div id="fc-choices">';
-    card.choices.forEach(function (ch, i) { html += '<button class="fc-choice" data-i="' + i + '">' + esc(ch) + '</button>'; });
+    for (var displayIdx = 0; displayIdx < perm.length; displayIdx++) {
+      var realIdx = perm[displayIdx];
+      html += '<button class="fc-choice" data-i="' + realIdx + '">' + esc(card.choices[realIdx]) + '</button>';
+    }
     html += '</div><div class="fc-feedback" id="fc-feedback" aria-live="polite"></div><button class="fc-next" id="fc-next">Next →</button>';
     var b = fcBody(); b.innerHTML = html; b.scrollTop = 0;
     Array.prototype.forEach.call(b.querySelectorAll('.fc-choice'), function (btn) {
@@ -1284,7 +1340,10 @@
         latencyMs: latency, wasTimeout: outcome === 'timeout', missIndex: 0,
         ts: answeredAt, mode: 'quick', csv: _fc.csv, surface: 'mobile',
         roundId: _fc.roundId, seq: _fc.seq, nChoices: card.choices.length,
-        chosenIdx: choiceIdx, stemHash: _fcStemHash(card.q)
+        chosenIdx: choiceIdx, stemHash: _fcStemHash(card.q),
+        displayedPerm: Array.isArray(_fc.perm)
+          ? _fc.perm.slice()
+          : card.choices.map(function (_, choiceIndex) { return choiceIndex; })
       }]);
       _fc.seq += 1;
       _fcSaveQuickProgress();
@@ -1304,6 +1363,9 @@
         logged.nChoices = card.choices.length;
         logged.chosenIdx = choiceIdx;
         logged.stemHash = _fcStemHash(card.q);
+        logged.displayedPerm = Array.isArray(_fc.perm)
+          ? _fc.perm.slice()
+          : card.choices.map(function (_, choiceIndex) { return choiceIndex; });
         _fcSrsAppend([logged]);
         _fc.seq += 1;
       }
@@ -1491,14 +1553,22 @@
     _fcSetProg('');
   }
 
-  // Keyboard (desktop testers): Esc closes, 1-4 answers, Enter/Space advances.
+  // Keyboard (desktop testers): Esc closes, 1-4/a-d answer, Enter/Space advances.
   document.addEventListener('keydown', function (e) {
     var el = fcoEl(); if (!el || !el.classList.contains('show')) return;
     if (e.key === 'Escape') { closeFlashcards(); return; }
     if (!_fc) return;
-    if (!_fc.answered && /^[1-4]$/.test(e.key)) {
-      var card = _fcCurrentCard(); var i = parseInt(e.key, 10) - 1;
-      if (card && i < card.choices.length) _fcAnswer(i);
+    var key = String(e.key || '').toLowerCase();
+    var i = /^[1-4]$/.test(key) ? parseInt(key, 10) - 1 : 'abcd'.indexOf(key);
+    if (!_fc.answered && i >= 0) {
+      var card = _fcCurrentCard();
+      if (!card) return;
+      var displayedCount = (_fc.perm && typeof _fc.perm.length === 'number')
+        ? _fc.perm.length
+        : card.choices.length;
+      if (i >= displayedCount) return;
+      var real = (_fc && _fc.perm && _fc.perm[i] != null) ? _fc.perm[i] : i;
+      _fcAnswer(real);
     } else if (_fc.answered && (e.key === 'Enter' || e.key === ' ')) {
       var nx = document.getElementById('fc-next');
       if (nx && nx.classList.contains('show')) { e.preventDefault(); _fcNext(); }

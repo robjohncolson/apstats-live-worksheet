@@ -15,12 +15,14 @@ import { JSDOM } from 'jsdom';
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const HOME = readFileSync(resolve(repo, 'mobile-home.html'), 'utf8');
 const FLASHCARDS_SRC = readFileSync(resolve(repo, 'flashcards.js'), 'utf8');
+const FLASHCARD_FLAGS_SRC = readFileSync(resolve(repo, 'lib/flashcard-flags.js'), 'utf8');
 
 describe('mobile-home — native flashcards wiring (static)', () => {
   it('loads the shared engine + the gradebook feeder (+ offline queue)', () => {
     for (const s of ['flashcards.js', 'gradebook-client.js', 'offline-queue.js']) {
       expect(HOME, `missing <script src="${s}">`).toContain(`src="${s}"`);
     }
+    expect(HOME).toContain('src="lib/flashcard-flags.js" onerror=""');
   });
 
   it('replaced the Desk deep-link with a native openFlashcards handler', () => {
@@ -49,7 +51,35 @@ const ONE_CARD_CSV = [
   '1,"Q one","alpha","beta","gamma","delta",20,2',   // correctIdx = 1 (data-i="1")
 ].join('\n');
 
-function bootLauncher({ gradeBlooket, indexMissing, deckCsv = ONE_CARD_CSV, legacyEmail }) {
+const THREE_CHOICE_CSV = [
+  '"Blooket","Import Template"',
+  'Question #,Question Text,Answer 1,Answer 2,Answer 3,Answer 4,Time,Correct',
+  '1,"Permuted question","wrong zero","wrong one","right two",,20,3',
+].join('\n');
+
+const PERMUTATION_FLAGS = {
+  version: 1,
+  flags: {
+    choicePermutation: {
+      enabled: true,
+      allowUsernames: [],
+      allowSections: [],
+      urlParam: 'fcPerm',
+      killSwitchKey: 'apstats_fc_perm_off',
+    },
+  },
+};
+
+function bootLauncher({
+  gradeBlooket,
+  indexMissing,
+  deckCsv = ONE_CARD_CSV,
+  legacyEmail,
+  flagsData,
+  flagsFetchFails,
+  forcedPermutation,
+  permutationOff,
+}) {
   const recorded = [];
   const lesson = { id: '4.1-2', unit: 4, label: 'Sampling', worksheet: 'u4_lesson1-2_live.html', quiz: null, blooket: 'https://b', videos: [] };
   // The published fallback source: roadmap-data.json (absolute GH-Pages URLs).
@@ -57,6 +87,15 @@ function bootLauncher({ gradeBlooket, indexMissing, deckCsv = ONE_CARD_CSV, lega
   const gradePayload = { ok: true, quarters: [], lessons: [{ topic: '4.1-2', lessonGrade: 55, blooket: gradeBlooket }] };
   const fakeFetch = (url) => {
     const u = String(url);
+    if (u.indexOf('flashcard-flags.json') >= 0) {
+      if (flagsFetchFails) return Promise.reject(new Error('flags unavailable'));
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(flagsData || null),
+        text: () => Promise.resolve(''),
+      });
+    }
     if (indexMissing && u.indexOf('lessons-index.json') >= 0) {
       return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve(null), text: () => Promise.resolve('') });
     }
@@ -72,10 +111,17 @@ function bootLauncher({ gradeBlooket, indexMissing, deckCsv = ONE_CARD_CSV, lega
     runScripts: 'dangerously',
     url: 'https://x.test/mobile-home.html',
     beforeParse(window) {
+      if (permutationOff) {
+        window.localStorage.setItem('apstats_fc_perm_off', '1');
+      }
       if (typeof legacyEmail === 'string') {
         window.localStorage.setItem('apstats_desk_student_email', legacyEmail);
       }
       window.eval(FLASHCARDS_SRC);                       // window.Flashcards
+      window.eval(FLASHCARD_FLAGS_SRC);                  // window.FlashcardFlags
+      if (Array.isArray(forcedPermutation)) {
+        window.Flashcards.permutationFor = (_seed, n) => forcedPermutation.slice(0, n);
+      }
       window.fetch = fakeFetch;
       window.ROSTER_SERVICE_URL = 'https://api.test';
       window.rosterClient = { current: () => ({ username: 'kid' }), token: () => 'tok' };
@@ -163,6 +209,78 @@ describe('mobile-home — native flashcards (behavioral boot)', () => {
 
     expect(recorded.length).toBe(1);
     expect(recorded[0].itemId).toBe('BL-U4-L1-2-DESK_DONE');        // flashcards work off the fallback too
+    dom.window.close();
+  });
+});
+
+describe('mobile-home — choice permutation flags and keyboard', () => {
+  it('maps the first displayed slot to its real choice for scoring and highlighting', async () => {
+    const { dom, win, recorded } = bootLauncher({
+      gradeBlooket: 40,
+      deckCsv: THREE_CHOICE_CSV,
+      flagsData: PERMUTATION_FLAGS,
+      forcedPermutation: [2, 0, 1],
+    });
+    await flush();
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-full').click();
+    await flush();
+
+    const choices = Array.from(win.document.querySelectorAll('#fc-choices .fc-choice'));
+    expect(choices.map((button) => Number(button.getAttribute('data-i')))).toEqual([2, 0, 1]);
+
+    win.document.dispatchEvent(new win.KeyboardEvent('keydown', { key: '1', bubbles: true }));
+
+    const entries = JSON.parse(win.localStorage.getItem('apstats_srs_log_kid@roster.local'));
+    expect(entries[0].chosenIdx).toBe(2);
+    expect(win.document.querySelector('.fc-choice[data-i="2"]').classList.contains('right')).toBe(true);
+
+    win.document.getElementById('fc-next').click();
+    await flush(3);
+
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0].score).toBe(100);
+    dom.window.close();
+  });
+
+  it('fails closed to identity order when the flags fetch fails', async () => {
+    const { dom, win } = bootLauncher({
+      gradeBlooket: 40,
+      deckCsv: THREE_CHOICE_CSV,
+      flagsFetchFails: true,
+      forcedPermutation: [2, 0, 1],
+    });
+    await flush();
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-full').click();
+    await flush();
+
+    const choices = Array.from(win.document.querySelectorAll('#fc-choices .fc-choice'));
+    expect(choices.map((button) => Number(button.getAttribute('data-i')))).toEqual([0, 1, 2]);
+    dom.window.close();
+  });
+
+  it('honors the choice permutation kill switch with identity order', async () => {
+    const { dom, win } = bootLauncher({
+      gradeBlooket: 40,
+      deckCsv: THREE_CHOICE_CSV,
+      flagsData: PERMUTATION_FLAGS,
+      forcedPermutation: [2, 0, 1],
+      permutationOff: true,
+    });
+    await flush();
+
+    win.document.querySelector('.btn.fc').click();
+    await flush(2);
+    win.document.getElementById('fc-mode-full').click();
+    await flush();
+
+    const choices = Array.from(win.document.querySelectorAll('#fc-choices .fc-choice'));
+    expect(choices.map((button) => Number(button.getAttribute('data-i')))).toEqual([0, 1, 2]);
     dom.window.close();
   });
 });
@@ -502,15 +620,21 @@ describe('mobile-home — per-card logging, recap, and quick resume', () => {
     expect(recap).toContain('Second missed stem');
     expect(recap).toContain('Answer: right two');
     const saved = JSON.parse(win.localStorage.getItem('apstats_desk_bf_progress_kid@roster.local'));
-    expect(saved['4.1-2'].misses[0]).toMatchObject({
+    // The quick deck is shuffled per attempt — locate the miss by qnum, not position.
+    const firstMiss = saved['4.1-2'].misses.find(function (m) { return m.qnum === 1; });
+    expect(firstMiss).toMatchObject({
       qnum: 1, q: 'First missed stem', correctAnswer: 'right one',
     });
-    expect(saved['4.1-2'].misses[0]).not.toHaveProperty('stem');
+    expect(firstMiss).not.toHaveProperty('stem');
     const links = Array.from(win.document.querySelectorAll('.fc-recap a'));
     expect(links).toHaveLength(2);
-    expect(links[0].getAttribute('href')).toContain('u4_lesson1-2_live.html#:~:text=First%20missed%20stem');
-    expect(links[0].getAttribute('target')).toBe('_blank');
-    expect(links[0].getAttribute('rel')).toBe('noopener');
+    const hrefs = links.map(function (a) { return a.getAttribute('href'); });
+    expect(hrefs.some(function (h) { return h.indexOf('u4_lesson1-2_live.html#:~:text=First%20missed%20stem') !== -1; })).toBe(true);
+    expect(hrefs.some(function (h) { return h.indexOf('u4_lesson1-2_live.html#:~:text=Second%20missed%20stem') !== -1; })).toBe(true);
+    links.forEach(function (a) {
+      expect(a.getAttribute('target')).toBe('_blank');
+      expect(a.getAttribute('rel')).toBe('noopener');
+    });
     dom.window.close();
   });
 });

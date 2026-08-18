@@ -101,6 +101,48 @@
     return a;
   }
 
+  function mulberry32(seed) {
+    var state = seed >>> 0;
+    return function () {
+      state = (state + 0x6D2B79F5) >>> 0;
+      var t = state;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function permSeed(email, roundId, qnum) {
+    var text = String(email) + '|' + String(roundId) + '|' + String(qnum);
+    var hash = 5381;
+    for (var i = 0; i < text.length; i++) {
+      hash = (((hash << 5) + hash) + text.charCodeAt(i)) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  function permutationFor(seed, n) {
+    var permutation = [];
+    for (var i = 0; i < n; i++) permutation.push(i);
+    if (n <= 1) return permutation;
+    var random = mulberry32(seed);
+    for (var j = n - 1; j > 0; j--) {
+      var swapIndex = Math.floor(random() * (j + 1));
+      var value = permutation[j];
+      permutation[j] = permutation[swapIndex];
+      permutation[swapIndex] = value;
+    }
+    return permutation;
+  }
+
+  function isPermutationUnsafe(choices) {
+    var list = choices || [];
+    for (var i = 0; i < list.length; i++) {
+      if (/\b(all|none) of (these|the above)\b/i.test(String(list[i]))) return true;
+    }
+    return false;
+  }
+
   // A worksheet URL (u{u}_lesson{key}_live.html) → the deck CSV filename
   // (u{u}_l{key}_blooket.csv, with '-'→'_l' for combined lessons). null if no match.
   // (The Desk's _bfCsvPath resolves the worksheet via the registry first; the mobile
@@ -186,6 +228,10 @@
     rowsToDeck: rowsToDeck,
     selectTop10: selectTop10,
     shuffle: shuffle,
+    mulberry32: mulberry32,
+    permSeed: permSeed,
+    permutationFor: permutationFor,
+    isPermutationUnsafe: isPermutationUnsafe,
     csvPathFromWorksheet: csvPathFromWorksheet,
     quickPassCount: quickPassCount,
     quickScorePct: quickScorePct,

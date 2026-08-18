@@ -69,9 +69,13 @@ describe('sw.js contracts', () => {
     const core = SW.slice(start, SW.indexOf('];', start));
     for (const asset of [
       'flashcards.js',
+      'lib/flashcard-srs.js',
+      'lib/flashcard-store.js',
+      'lib/flashcard-flags.js',
       'mobile-home.html',
       'data/blooket-difficulty.json',
       'data/blooket-topic-csv.json',
+      'data/flashcard-flags.json',
     ]) {
       expect(core).toContain(`'${asset}'`);
     }

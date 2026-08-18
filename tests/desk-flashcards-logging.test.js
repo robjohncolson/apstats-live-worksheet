@@ -178,8 +178,9 @@ describe('Desk flashcard per-card logging — executed behavior', () => {
       seq: 0,
       cardStart: 1000
     };
-    const choices = [0, 1].map(function () {
-      return { disabled: false, classList: { add() {} } };
+    const choices = [0, 1].map(function (i) {
+      // data-i = real choice index (P2-D7 permutation renders by data-i, not position)
+      return { disabled: false, classList: { add() {} }, getAttribute(name) { return name === 'data-i' ? String(i) : null; } };
     });
     const elements = {
       'bf-choices': { querySelectorAll() { return choices; } },
@@ -221,7 +222,8 @@ describe('Desk flashcard per-card logging — executed behavior', () => {
       seq: 0,
       nChoices: 2,
       chosenIdx: 1,
-      stemHash: 'feedbeef'
+      stemHash: 'feedbeef',
+      displayedPerm: [0, 1]   // identity when permutation is off / no perm on state (P2-D7, additive §3 field)
     }]);
     expect(state.seq).toBe(1);
   });
