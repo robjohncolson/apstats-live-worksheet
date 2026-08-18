@@ -239,9 +239,9 @@ describe('Score color thresholds (executed) + one chip per row', () => {
   });
 });
 
-describe('Best-wins commit (re-practice never lowers the grade)', () => {
-  // moved to journeys/j5-timed-deck.journey.test.js — J5 Full timed deck rejects a lower re-run and posts one higher best (supersedes desk-timed-deck it 17 “_ftFinish logs, recaps, and commits the score (best-wins)” and it 24 “_blooketCommit only saves a NEW best + refreshes /grade BEFORE the floor”)
-});
+// 'Best-wins commit (re-practice never lowers the grade)' its 17 and 24 moved to
+// journeys/j5-timed-deck.journey.test.js — J5 Full timed deck rejects a lower re-run
+// and posts one higher best.
 
 describe('Review folds — null-round crash guard + cancellable advance', () => {
   it('25: _ftFinish bails on a null round (closed mid auto-advance)', () => {
