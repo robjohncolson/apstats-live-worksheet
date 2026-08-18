@@ -507,12 +507,12 @@ function makeWaitFor(fakeClock, flush) {
  *
  * Useful options: `roster` (a createFakeRoster result or initial state), `now`,
  * `randomSeed`, `fakeTimers`, `flags`, `supabase`, `curriculum`, `localStorage`,
- * `sessionStorage`, `readOnly`, and `viewAs`.
+ * `sessionStorage`, `url`, `readOnly`, and `viewAs`.
  */
 export async function bootDesk(opts = {}) {
   const startedAt = globalThis.performance.now();
   const unhandled = [];
-  const requests = [];
+  const requests = Array.isArray(opts.requestLog) ? opts.requestLog : [];
   const resources = [];
   const consoleErrors = [];
   const consoleWarnings = [];
@@ -525,7 +525,7 @@ export async function bootDesk(opts = {}) {
     ? opts.roster
     : createFakeRoster(opts.roster || {});
   const viewAsContext = normalizeViewAs(opts.viewAs, roster);
-  const url = new URL(DESK_URL);
+  const url = new URL(opts.url || DESK_URL, DESK_URL);
   if (viewAsContext) url.searchParams.set('viewAsUserId', viewAsContext.studentId);
 
   const virtualConsole = new VirtualConsole();
@@ -648,14 +648,16 @@ export async function bootDesk(opts = {}) {
     dom.window.close();
   };
 
-  const reboot = async () => {
+  const reboot = async (nextOpts = {}) => {
     if (tornDown) throw new Error('Cannot reboot a torn-down Desk harness');
     const localStorage = snapshotStorage(dom.window.localStorage);
     const sessionStorage = snapshotStorage(dom.window.sessionStorage);
     teardown();
     return bootDesk({
       ...opts,
+      ...nextOpts,
       roster,
+      requestLog: requests,
       localStorage,
       sessionStorage,
     });

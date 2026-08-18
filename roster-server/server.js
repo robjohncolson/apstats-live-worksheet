@@ -176,7 +176,11 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // ── GET /health ─────────────────────────────────────────────────────────────
   // FROZEN CONTRACT 2: → 200 { ok:true, service:"roster", time:"<iso>" }
   app.get('/health', (_req, res) => {
-    res.json({ ok: true, service: 'roster', time: new Date().toISOString(), receipts: getReceiptHealth() });
+    res.json({
+      ok: true, service: 'roster', time: new Date().toISOString(), receipts: getReceiptHealth(),
+      // Deploy verification: Railway injects the deployed commit; null elsewhere.
+      commit: process.env.RAILWAY_GIT_COMMIT_SHA || null,
+    });
   });
 
   async function resolveReceiptUsername(studentId) {

@@ -45,6 +45,15 @@ const STATIC_ROUTE_KEYS = new Set([
   'GET /class/grades',
 ]);
 
+const TRAINER_DECK_ID_RE = /^[a-z0-9-]{1,64}$/;
+const TRAINER_STATE_MAX_CHARS = 262_144;
+const DEFAULT_TRAINER_DECK_ALLOWLIST = [
+  'ap-stats-formulas',
+  'joyo-kanji',
+  'jlpt-n5',
+  'formula-lab',
+];
+
 function isStaticRoute(method, path) {
   if (STATIC_ROUTE_KEYS.has(`${method} ${path}`)) return true;
   if (method === 'GET' && /^\/roster\/section\/[^/]+$/.test(path)) return true;
@@ -188,6 +197,12 @@ export function createFakeRoster(initial = {}) {
     ledgerRecords: [],
     ledgerByStudentId: initial.ledgerByStudentId || new Map(),
     trainerStates: initial.trainerStates || new Map(),
+    trainerAllowlist: new Set(
+      initial.trainerAllowlist
+        || initial.trainerDeckAllowlist
+        || DEFAULT_TRAINER_DECK_ALLOWLIST,
+    ),
+    trainerWriteSequence: Number(initial.trainerWriteSequence) || 0,
     grades: initial.grades ?? initial.grade ?? {},
     donow: initial.donow ?? {},
     classData: initial.classData || {},
@@ -208,6 +223,13 @@ export function createFakeRoster(initial = {}) {
       return this.userByUsername(username)?.password || null;
     },
   };
+
+  function nextTrainerUpdatedAt() {
+    const base = Date.parse(state.now);
+    const updatedAt = new Date(base + state.trainerWriteSequence).toISOString();
+    state.trainerWriteSequence += 1;
+    return updatedAt;
+  }
 
   function handles(method, path) {
     const routeKey = `${String(method).toUpperCase()} ${path}`;
@@ -374,26 +396,61 @@ export function createFakeRoster(initial = {}) {
     }
 
     if (/^(GET|PUT|PATCH)$/.test(method) && url.pathname.startsWith('/trainer/state/')) {
-      const user = resolveRequestUser(state, url, request);
-      if (!user) return jsonResponse({ ok: false, error: 'unauthorized' }, 401);
       const deckId = decodeURIComponent(url.pathname.slice('/trainer/state/'.length));
+      if (!TRAINER_DECK_ID_RE.test(deckId)) {
+        return jsonResponse({ ok: false, error: 'bad deckId' }, 400);
+      }
+
+      if (method === 'GET') {
+        const auth = request.headers.authorization || '';
+        const bearer = /^Bearer\s+(.+)$/i.exec(auth)?.[1]?.trim() || null;
+        const user = bearer
+          ? state.users.find((candidate) => state.tokenFor(candidate) === bearer)
+          : null;
+        if (!user) return jsonResponse({ ok: false, error: 'forbidden' }, 401);
+
+        const key = `${user.studentId}:${deckId}`;
+        const current = state.trainerStates.get(key) || null;
+        if (!current) return jsonResponse({ ok: true, found: false });
+        return jsonResponse({
+          ok: true,
+          found: true,
+          state: current.state,
+          updatedAt: current.updatedAt,
+        });
+      }
+
+      if (!state.trainerAllowlist.has(deckId)) {
+        return jsonResponse({ ok: false, error: 'unknown deck' }, 400);
+      }
+
+      const writeToken = body && body.token;
+      const user = writeToken
+        ? state.users.find((candidate) => state.tokenFor(candidate) === writeToken)
+        : null;
+      if (!user) return jsonResponse({ ok: false, error: 'invalid token' }, 401);
       const key = `${user.studentId}:${deckId}`;
       const current = state.trainerStates.get(key) || null;
-      if (method === 'GET') {
-        if (!current) return jsonResponse({ ok: true, found: false });
-        return jsonResponse({ ok: true, found: true, state: current.state, updatedAt: current.updatedAt });
-      }
       if (method === 'PUT') {
+        if (!body?.state || typeof body.state !== 'object') {
+          return jsonResponse({ ok: false, error: 'state object is required' }, 400);
+        }
+        if (JSON.stringify(body.state).length > TRAINER_STATE_MAX_CHARS) {
+          return jsonResponse({ ok: false, error: 'state too large' }, 413);
+        }
         if (current && body.baseUpdatedAt !== current.updatedAt) {
           return jsonResponse({ ok: false, error: 'stale', updatedAt: current.updatedAt }, 409);
         }
-        const updatedAt = new Date(state.now).toISOString();
-        state.trainerStates.set(key, { state: body.state || {}, updatedAt });
+        const updatedAt = nextTrainerUpdatedAt();
+        state.trainerStates.set(key, { state: body.state, updatedAt });
         return jsonResponse({ ok: true, updatedAt });
       }
       if (method === 'PATCH') {
-        const updatedAt = new Date(state.now).toISOString();
-        const nextState = mergeTrainerState(current && current.state, body.delta || {});
+        if (!body?.delta || typeof body.delta !== 'object') {
+          return jsonResponse({ ok: false, error: 'delta object is required' }, 400);
+        }
+        const updatedAt = nextTrainerUpdatedAt();
+        const nextState = mergeTrainerState(current && current.state, body.delta);
         state.trainerStates.set(key, { state: nextState, updatedAt });
         return jsonResponse({ ok: true, updatedAt });
       }

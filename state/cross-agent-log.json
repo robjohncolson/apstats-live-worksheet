@@ -4485,15 +4485,78 @@
       "timestamp": "2026-08-18T14:37:49Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "27825f95bb47",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **B3** (journeys J7\u2013J9) of /home/mrcolson/repos/apstats-live-worksheet/REL",
+      "status": "blocked",
+      "duration_seconds": 372.887,
+      "timestamp": "2026-08-18T14:48:40Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e6b8b4fb21a1",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **B3** (journeys J7\u2013J9) of /home/mrcolson/repos/apstats-live-worksheet/REL",
+      "status": "partially_implemented_blocked",
+      "duration_seconds": 553.147,
+      "timestamp": "2026-08-18T15:14:05Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4e1a056691d1",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing **B3b = journey J9** for /home/mrcolson/repos/apstats-live-worksheet/RELIABILIT",
+      "status": "completed",
+      "duration_seconds": 343.244,
+      "timestamp": "2026-08-18T15:21:41Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "a7ebe30b464c",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only \u2014 do NOT edit; you MAY run `npx vitest run tests/journeys/`). Repo /ho",
+      "status": "completed",
+      "duration_seconds": 363.591,
+      "timestamp": "2026-08-18T15:29:27Z",
+      "files_changed": [
+        ".pytest_cache/v/cache/nodeids",
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "node_modules/.vite/vitest/results.json",
+        "roster-server/data/skill-map.json",
+        "roster-server/node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "20cd24d146f9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing **B3-fix** for /home/mrcolson/repos/apstats-live-worksheet/RELIABILITY_BUILD.md",
+      "status": "completed",
+      "duration_seconds": 461.49,
+      "timestamp": "2026-08-18T15:39:24Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 382,
-    "cc_to_codex": 382,
+    "total_calls": 387,
+    "cc_to_codex": 387,
     "codex_to_cc": 0,
-    "completed": 289,
+    "completed": 292,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 618.615
+    "avg_duration_seconds": 616.034
   }
 }
