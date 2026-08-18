@@ -2,13 +2,13 @@
   "version": 1,
   "flags": {
     "reviewMode": {
-      "enabled": false,
+      "enabled": true,
       "allowUsernames": [],
       "allowSections": [],
       "urlParam": "fcReview"
     },
     "dueTodayDeck": {
-      "enabled": false,
+      "enabled": true,
       "allowUsernames": [],
       "allowSections": [],
       "urlParam": "fcDue"
@@ -21,13 +21,13 @@
       "killSwitchKey": "apstats_fc_perm_off"
     },
     "readinessBadge": {
-      "enabled": false,
+      "enabled": true,
       "allowUsernames": [],
       "allowSections": [],
       "urlParam": "fcReady"
     },
     "quickRetryRedraw": {
-      "enabled": false,
+      "enabled": true,
       "allowUsernames": [],
       "allowSections": [],
       "urlParam": "fcRedraw"
