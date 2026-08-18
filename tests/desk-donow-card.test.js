@@ -72,29 +72,15 @@ describe('DN3a — Do Now card markup', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('DN3a — wiring', () => {
-  it('renderDoNow fetches /donow with a Bearer token (D7 server-mediated)', () => {
-    const b = fnBody(html, 'renderDoNow');
-    expect(b).toMatch(/ROSTER_SERVICE_URL/);
-    expect(b).toMatch(/\/donow/);
-    expect(b).toMatch(/Authorization['"]\s*:\s*['"]Bearer '/);
-    expect(b).toMatch(/rosterClient\.token\(\)/);
-  });
+  // moved to journeys/j1-signin-donow.journey.test.js — J1 sign-in renders fake /grade values and sign-out clears the identity chip (supersedes desk-donow-card “renderDoNow fetches /donow with a Bearer token” and post-sign-in refresh pins)
 
   it('renderDoNow makes ZERO direct Supabase calls (D7)', () => {
     const b = fnBody(html, 'renderDoNow');
     expect(b).not.toMatch(/SUPABASE_URL|supabase/i);
   });
 
-  it('is invoked at init, after sign-in, and on visibilitychange', () => {
-    // 1 definition + 3 call sites + (comment mentions allowed)
-    expect((html.match(/renderDoNow\(\)/g) || []).length).toBeGreaterThanOrEqual(3);
-    expect(html).toMatch(/visibilitychange['"]\s*,\s*function\s*\(\s*\)\s*\{\s*\n?\s*if\s*\(\s*!document\.hidden\s*\)\s*renderDoNow\(\)/);
-  });
-
-  it('the submitSignIn (DN2c) call to renderDoNow is typeof-guarded (decoupled)', () => {
-    const b = fnBody(html, 'submitSignIn');
-    expect(b).toMatch(/typeof\s+renderDoNow\s*===\s*'function'\s*\)\s*renderDoNow\(\)/);
-  });
+  // moved to journeys/j1-signin-donow.journey.test.js — J1 sign-in renders fake /grade values and sign-out clears the identity chip (supersedes desk-donow-card “renderDoNow fetches /donow with a Bearer token” and post-sign-in refresh pins)
+  // moved to journeys/j1-signin-donow.journey.test.js — J1 sign-in renders fake /grade values and sign-out clears the identity chip (supersedes desk-donow-card “renderDoNow fetches /donow with a Bearer token” and post-sign-in refresh pins)
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

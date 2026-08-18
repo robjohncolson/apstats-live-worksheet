@@ -1,6 +1,6 @@
 # RELIABILITY_BUILD — grade golden master + Desk journey harness
 
-Frozen contract (2026-08-18). Overseer: Claude. Implementers: Codex (gpt-5.6-sol) via
+Frozen contract (2026-08-18). **Status 2026-08-19: COMPLETE** — A1–A4 and B0–B4 shipped (a0e81f7, 2d530a8, 1d15756, + B4 commit); see RELIABILITY_PIN_CONVERSION.md and roster-server/docs/{golden-master,answer-key-freeze}.md. Overseer: Claude. Implementers: Codex (gpt-5.6-sol) via
 the Agent runner, one task at a time per track. Two independent adversarial Codex
 reviews per phase. Overseer runs all three suites and commits/pushes each green phase.
 

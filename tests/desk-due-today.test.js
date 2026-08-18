@@ -22,19 +22,7 @@ function fnBody(src, name) {
 }
 
 describe('Desk due-today deck — static contract', () => {
-  it('renders the chip only behind dueTodayDeck in renderDoNowGrades, never renderDoNow', () => {
-    const grades = fnBody(DESK, 'renderDoNowGrades');
-    const gate = grades.indexOf("_fcFlag('dueTodayDeck')");
-    const route = grades.indexOf('_srsRenderDueChip', gate);
-    expect(gate).toBeGreaterThan(-1);
-    expect(route).toBeGreaterThan(gate);
-    expect(fnBody(DESK, '_srsRenderDueChip')).toContain('Review due (');
-
-    const doNow = fnBody(DESK, 'renderDoNow');
-    expect(doNow).not.toContain('dueTodayDeck');
-    expect(doNow).not.toContain('_srsRenderDueChip');
-    expect(doNow).not.toContain('_rvStartMixed');
-  });
+  // moved to journeys/j6-review-mode.journey.test.js — J6 all-ON flags show the due chip and Review; Good updates the folded store, advances, and Again stays practice-only (supersedes desk-due-today “renders the chip only behind dueTodayDeck in renderDoNowGrades” and desk-review-mode “adds the Review button only inside the reviewMode flag gate” / “logs one good review entry, applies it, saves, and advances”)
 
   it('adds the per-csv due suffix immediately after the Blooket score chip', () => {
     const panel = fnBody(DESK, 'showResourcePanel');

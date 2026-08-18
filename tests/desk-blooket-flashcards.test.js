@@ -697,51 +697,9 @@ describe('Desk: Blooket flashcard verification', () => {
     return deck;
   }
 
-  it('55: _bfSaveProgress persists the answered snapshot', () => {
-    const body = fnBody(DESK, '_bfSaveProgress');
-    expect(body).toMatch(/answered\s*:\s*!!_bfState\.answered/);
-  });
-
-  it('56: answer saves after scoring and Next clears answered before saving', () => {
-    const answer = fnBody(DESK, '_bfAnswer');
-    const scoreIdx = answer.indexOf('_bfState.score += 1');
-    const answerSaveIdx = answer.indexOf('_bfSaveProgress()');
-    const domIdx = answer.indexOf("document.getElementById('bf-choices')");
-    expect(scoreIdx).toBeGreaterThan(-1);
-    expect(answerSaveIdx).toBeGreaterThan(scoreIdx);
-    expect(answerSaveIdx).toBeLessThan(domIdx);
-
-    const next = fnBody(DESK, '_bfNext');
-    const advanceIdx = next.indexOf('_bfState.idx += 1');
-    const clearAnsweredIdx = next.indexOf('_bfState.answered = false');
-    const nextSaveIdx = next.indexOf('_bfSaveProgress()');
-    const renderIdx = next.indexOf('_bfRenderCard()');
-    expect(clearAnsweredIdx).toBeGreaterThan(advanceIdx);
-    expect(nextSaveIdx).toBeGreaterThan(clearAnsweredIdx);
-    expect(renderIdx).toBeGreaterThan(nextSaveIdx);
-  });
-
-  it('57: answer then Cancel resumes at the following card without another point', async () => {
-    const harness = makeQuickResumeHarness();
-    harness.state.topic = '4.1';
-    harness.state.btn = {};
-    harness.state.deck = quickDeck(10);
-
-    harness.api._bfAnswer(0);
-    harness.api.closeBlooketFlashcards();
-
-    const saved = JSON.parse(harness.dom.window.localStorage.getItem(harness.storageKey));
-    expect(saved['4.1'].idx).toBe(0);
-    expect(saved['4.1'].score).toBe(1);
-    expect(saved['4.1'].answered).toBe(true);
-
-    await harness.api._bfStartQuick({}, '4.1');
-    expect(harness.state.idx).toBe(1);
-    expect(harness.state.score).toBe(1);
-    expect(harness.state.answered).toBe(false);
-    expect(harness.calls.renderIdxs).toEqual([1]);
-    expect(harness.calls.finishCount).toBe(0);
-  });
+  // moved to journeys/j4-quick-check.journey.test.js — J4 resumes answered snapshots without score inflation and commits one 8/10 Quick check (supersedes desk-blooket-flashcards it 55 “_bfSaveProgress persists the answered snapshot”, it 56 “answer saves after scoring and Next clears answered before saving”, it 57 “answer then Cancel resumes at the following card without another point”, it 58 “pass timer is canceled on close and resume commits the saved 80% once”, and it 58b “non-passing answer then Cancel resumes one card ahead without a commit”)
+  // moved to journeys/j4-quick-check.journey.test.js — J4 resumes answered snapshots without score inflation and commits one 8/10 Quick check (supersedes desk-blooket-flashcards it 55 “_bfSaveProgress persists the answered snapshot”, it 56 “answer saves after scoring and Next clears answered before saving”, it 57 “answer then Cancel resumes at the following card without another point”, it 58 “pass timer is canceled on close and resume commits the saved 80% once”, and it 58b “non-passing answer then Cancel resumes one card ahead without a commit”)
+  // moved to journeys/j4-quick-check.journey.test.js — J4 resumes answered snapshots without score inflation and commits one 8/10 Quick check (supersedes desk-blooket-flashcards it 55 “_bfSaveProgress persists the answered snapshot”, it 56 “answer saves after scoring and Next clears answered before saving”, it 57 “answer then Cancel resumes at the following card without another point”, it 58 “pass timer is canceled on close and resume commits the saved 80% once”, and it 58b “non-passing answer then Cancel resumes one card ahead without a commit”)
 
   function makeRealQuickTimerHarness() {
     const dom = new JSDOM(`<!doctype html><body>
@@ -851,70 +809,7 @@ describe('Desk: Blooket flashcard verification', () => {
     };
   }
 
-  it('58: pass timer is canceled on close and resume commits the saved 80% once', async () => {
-    vi.useFakeTimers();
-    try {
-      const harness = makeRealQuickTimerHarness();
-      const firstButton = { focus() {} };
-      const resumedButton = { focus() {} };
-      harness.begin('4.1', quickDeck(10), firstButton);
-
-      for (let i = 0; i < 8; i++) {
-        harness.api._bfAnswer(0);
-        if (i < 7) harness.api._bfNext();
-      }
-      expect(harness.state.finishId).not.toBeNull();
-
-      harness.api.closeBlooketFlashcards();
-      expect(harness.state.finishId).toBeNull();
-      await harness.api._bfStartQuick(resumedButton, '4.1');
-      await vi.advanceTimersByTimeAsync(3000);
-
-      expect(harness.commit).toHaveBeenCalledTimes(1);
-      expect(harness.commit).toHaveBeenCalledWith(resumedButton, '4.1', 80);
-      const saved = JSON.parse(harness.storage.getItem(harness.storageKey) || '{}');
-      expect(saved['4.1']).toBeUndefined();
-    } finally {
-      vi.clearAllTimers();
-      vi.useRealTimers();
-    }
-  });
-
-  it('58b: non-passing answer then Cancel resumes one card ahead without a commit', async () => {
-    vi.useFakeTimers();
-    try {
-      const harness = makeRealQuickTimerHarness();
-      harness.begin('4.1', quickDeck(10), { focus() {} });
-
-      harness.api._bfAnswer(1);
-      harness.api.closeBlooketFlashcards();
-      await harness.api._bfStartQuick({ focus() {} }, '4.1');
-      await vi.advanceTimersByTimeAsync(3000);
-
-      expect(harness.state.idx).toBe(1);
-      expect(harness.state.score).toBe(0);
-      expect(harness.rendered).toEqual([1]);
-      expect(harness.commit).not.toHaveBeenCalled();
-    } finally {
-      vi.clearAllTimers();
-      vi.useRealTimers();
-    }
-  });
-
-  it('59: legacy snapshot without answered resumes at its saved index', async () => {
-    const harness = makeQuickResumeHarness();
-    harness.saveRecord('4.1', {
-      idx: 4,
-      score: 3,
-      deck: quickDeck(10),
-      ts: '2026-08-17T00:00:00.000Z'
-    });
-
-    await harness.api._bfStartQuick({}, '4.1');
-    expect(harness.state.idx).toBe(4);
-    expect(harness.state.score).toBe(3);
-    expect(harness.state.answered).toBe(false);
-    expect(harness.calls.renderIdxs).toEqual([4]);
-    expect(harness.calls.finishCount).toBe(0);
-  });
+  // moved to journeys/j4-quick-check.journey.test.js — J4 resumes answered snapshots without score inflation and commits one 8/10 Quick check (supersedes desk-blooket-flashcards it 55 “_bfSaveProgress persists the answered snapshot”, it 56 “answer saves after scoring and Next clears answered before saving”, it 57 “answer then Cancel resumes at the following card without another point”, it 58 “pass timer is canceled on close and resume commits the saved 80% once”, and it 58b “non-passing answer then Cancel resumes one card ahead without a commit”)
+  // moved to journeys/j4-quick-check.journey.test.js — J4 resumes answered snapshots without score inflation and commits one 8/10 Quick check (supersedes desk-blooket-flashcards it 55 “_bfSaveProgress persists the answered snapshot”, it 56 “answer saves after scoring and Next clears answered before saving”, it 57 “answer then Cancel resumes at the following card without another point”, it 58 “pass timer is canceled on close and resume commits the saved 80% once”, and it 58b “non-passing answer then Cancel resumes one card ahead without a commit”)
+  // moved to journeys/j4-quick-check.journey.test.js — J4 opens a legacy snapshot without answered at its saved card (supersedes desk-blooket-flashcards it 59 “legacy snapshot without answered resumes at its saved index”)
 });

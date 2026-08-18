@@ -41,21 +41,7 @@ function makeCtx(email) {
 }
 
 describe('_hydrateMarksFromDonow — cross-device grey-out sync', () => {
-  it('seeds per-resource <topic>|<artifact> marks from selfDoneArtifacts', () => {
-    const { win, hydrate } = makeCtx('s@roster.local');
-    const changed = hydrate({ lessons: [
-      { lesson: '1.1', selfDone: true, selfDoneArtifacts: ['worksheet', 'blooket'] },
-      { lesson: '1.2', selfDone: true, selfDoneArtifacts: ['quiz'] },
-      { lesson: '1.3', selfDone: false, selfDoneArtifacts: [] },
-    ] });
-    expect(changed).toBe(true);
-    const marks = JSON.parse(win.localStorage.getItem(KEY('s@roster.local')));
-    expect(marks['1.1|worksheet'] && marks['1.1|worksheet'].ts).toBeTruthy(); // greys + worksheet Done "Completed"
-    expect(marks['1.1|blooket'] && marks['1.1|blooket'].ts).toBeTruthy();     // blooket flashcards "Completed" cross-device
-    expect(marks['1.2|quiz'] && marks['1.2|quiz'].ts).toBeTruthy();
-    expect(marks['1.1|server']).toBeUndefined(); // per-artifact, not the generic fallback
-    expect(marks['1.3|worksheet']).toBeUndefined(); // not self-done → not seeded
-  });
+  // moved to journeys/j2-shared-device.journey.test.js — J2 reloads a shared device across A → B → A without leaking marks, due chip, or SRS state, then hydrates a fresh marks bucket from /donow (supersedes desk-calendar-sync per-student visibility and selfDone hydration behavior)
 
   it('falls back to <topic>|server when selfDoneArtifacts is absent (older payload)', () => {
     const { win, hydrate } = makeCtx('s@roster.local');
@@ -132,9 +118,7 @@ describe('_hydrateMarksFromDonow — wiring + key format', () => {
 });
 
 describe('worksheet Done gate — 60% threshold + cross-device', () => {
-  it('DESK_WORKSHEET_DONE_THRESHOLD is 60 (was an 80% gate)', () => {
-    expect(DESK).toMatch(/var DESK_WORKSHEET_DONE_THRESHOLD = 60;/);
-  });
+  // moved to journeys/j3-worksheet-done.journey.test.js — J3 worksheet Done is disabled at 59% but at 60% posts one exact WS-…-DESK_DONE payload and updates the tile (supersedes desk-calendar-sync 60% gate pin)
 
   it('_doneBtn gates the worksheet on the Desk threshold, not the worksheet 80% eligible flag', () => {
     const body = extractFn(DESK, '_doneBtn');

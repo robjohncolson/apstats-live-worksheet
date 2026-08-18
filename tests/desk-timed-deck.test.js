@@ -188,12 +188,7 @@ describe('Timed deck — UI wiring (static parse)', () => {
     expect(appendBody).toMatch(/getStudentEmail/);
   });
 
-  it('17: _ftFinish logs, recaps, and commits the score (best-wins)', () => {
-    const body = fnBody(DESK, '_ftFinish');
-    expect(body).toMatch(/_ftLogToStore/);
-    expect(body).toMatch(/_ftRenderRecap/);
-    expect(body).toMatch(/_blooketCommit\s*\(\s*btn\s*,\s*topic\s*,\s*score\s*\)/);
-  });
+  // moved to journeys/j5-timed-deck.journey.test.js — J5 Full timed deck rejects a lower re-run and posts one higher best (supersedes desk-timed-deck it 17 “_ftFinish logs, recaps, and commits the score (best-wins)” and it 24 “_blooketCommit only saves a NEW best + refreshes /grade BEFORE the floor”)
 
   it('18: _ftStart uses the FULL deck (no top-10 trim) and attaches its own keydown', () => {
     const body = fnBody(DESK, '_ftStart');
@@ -245,21 +240,7 @@ describe('Score color thresholds (executed) + one chip per row', () => {
 });
 
 describe('Best-wins commit (re-practice never lowers the grade)', () => {
-  it('24: _blooketCommit only saves a NEW best + refreshes /grade BEFORE the floor', () => {
-    expect(DESK).toMatch(/async\s+function\s+_blooketCommit\s*\(/);
-    const body = fnBody(DESK, '_blooketCommit');
-    expect(body).toMatch(/score\s*>\s*floor/);                       // gate on a new best
-    expect(body).toMatch(/_blooketScoreFor/);                        // floor includes the displayed /grade score
-    expect(body).toMatch(/m\.score/);                                // + the synchronous local last-saved best
-    expect(body).toMatch(/_studentMarkSave\s*\(\s*btn\s*,\s*topic\s*,\s*['"]blooket['"]/);
-    expect(body).toMatch(/showResourcePanel/);                       // re-render the panel (conversion fix)
-    // The fix: refresh /grade BEFORE computing the floor so a stale cross-device
-    // cache can't let a worse run clobber a better score.
-    const refreshIdx = body.indexOf('_refreshGrade()');
-    const floorIdx = body.indexOf('score > floor');
-    expect(refreshIdx, 'a refresh call exists').toBeGreaterThan(-1);
-    expect(refreshIdx, 'refresh precedes the floor decision').toBeLessThan(floorIdx);
-  });
+  // moved to journeys/j5-timed-deck.journey.test.js — J5 Full timed deck rejects a lower re-run and posts one higher best (supersedes desk-timed-deck it 17 “_ftFinish logs, recaps, and commits the score (best-wins)” and it 24 “_blooketCommit only saves a NEW best + refreshes /grade BEFORE the floor”)
 });
 
 describe('Review folds — null-round crash guard + cancellable advance', () => {

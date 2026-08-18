@@ -4548,15 +4548,26 @@
       "timestamp": "2026-08-18T15:39:24Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "56b3e666801d",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **B4** (pin conversion) of /home/mrcolson/repos/apstats-live-worksheet/REL",
+      "status": "completed",
+      "duration_seconds": 467.481,
+      "timestamp": "2026-08-18T15:53:04Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 387,
-    "cc_to_codex": 387,
+    "total_calls": 388,
+    "cc_to_codex": 388,
     "codex_to_cc": 0,
-    "completed": 292,
+    "completed": 293,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 616.034
+    "avg_duration_seconds": 615.651
   }
 }

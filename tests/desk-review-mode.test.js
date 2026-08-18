@@ -51,17 +51,7 @@ describe('Desk review mode — static contract', () => {
     expect(bootFlags).toBeLessThan(bootRegistry);
   });
 
-  it('adds the Review button only inside the reviewMode flag gate', () => {
-    const body = fnBody(DESK, '_bfShowModePicker');
-    const gate = body.indexOf("if (_fcFlag('reviewMode'))");
-    const button = body.indexOf('🔁 Review due cards');
-    const route = body.indexOf('_rvStart(btn, topicId)');
-    expect(gate).toBeGreaterThan(-1);
-    expect(button).toBeGreaterThan(gate);
-    expect(route).toBeGreaterThan(button);
-    expect(body.slice(0, gate)).not.toContain('🔁 Review due cards');
-    expect(body).toContain('🔁 Review due cards (practice — not graded)');
-  });
+  // moved to journeys/j6-review-mode.journey.test.js — J6 all-ON flags show the due chip and Review; Good updates the folded store, advances, and Again stays practice-only (supersedes desk-due-today “renders the chip only behind dueTodayDeck in renderDoNowGrades” and desk-review-mode “adds the Review button only inside the reviewMode flag gate” / “logs one good review entry, applies it, saves, and advances”)
 
   it('keeps every review function free of grading and completion tokens', () => {
     const forbidden = /_blooketCommit|_studentMarkSave|gradebookClient|recordProgress|DESK_DONE|_bfSaveProgress|_bfClearProgress/;
@@ -181,24 +171,7 @@ describe('Desk review mode — executed rating flow', () => {
     expect(state.queue.map((card) => card.qnum)).toEqual([7]);
   });
 
-  it('logs one good review entry, applies it, saves, and advances', () => {
-    const h = rateHarness();
-    h.rate('good');
-    expect(h.append).toHaveBeenCalledTimes(1);
-    expect(h.append.mock.calls[0][0]).toHaveLength(1);
-    expect(h.append.mock.calls[0][0][0]).toMatchObject({
-      topic: '4.1', qnum: 7, correct: true, latencyMs: 800,
-      mode: 'review', csv: 'u4_l1_l2_blooket.csv', surface: 'desk',
-      roundId: 'desk-1000-abcd', seq: 0, nChoices: 2, chosenIdx: 0,
-      review: 'good'
-    });
-    expect(h.applied).toHaveBeenCalledWith(expect.anything(), 'good', 42, 2000);
-    expect(h.save).toHaveBeenCalledTimes(1);
-    expect(h.state.ratings).toBe(1);
-    expect(h.state.seq).toBe(1);
-    expect(h.render).toHaveBeenCalledTimes(1);
-    expect(h.finish).not.toHaveBeenCalled();
-  });
+  // moved to journeys/j6-review-mode.journey.test.js — J6 all-ON flags show the due chip and Review; Good updates the folded store, advances, and Again stays practice-only (supersedes desk-due-today “renders the chip only behind dueTodayDeck in renderDoNowGrades” and desk-review-mode “adds the Review button only inside the reviewMode flag gate” / “logs one good review entry, applies it, saves, and advances”)
 
   it('re-queues Again after a three-card gap', () => {
     const h = rateHarness();
