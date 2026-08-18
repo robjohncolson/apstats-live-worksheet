@@ -73,6 +73,13 @@ async function openWorksheet(harness) {
   );
 }
 
+async function settleRoster(harness) {
+  await harness.flush(6);
+  await harness.waitFor(() => harness.roster.state.inflight === 0, {
+    message: 'fake-roster requests did not settle',
+  });
+}
+
 describe('Desk journey J3', () => {
   it('J3 keeps worksheet Done disabled at the 59% lower boundary', async () => {
     const harness = await bootDesk({
@@ -87,6 +94,7 @@ describe('Desk journey J3', () => {
       expect(done).toBeTruthy();
       expect(done.disabled, 'Cws=59 must stay below the real worksheet gate').toBe(true);
       expect(done.textContent).toBe('Done (59%)');
+      await settleRoster(harness);
       expect(harness.roster.state.ledgerRecords).toEqual([]);
     } finally {
       harness.teardown();
@@ -120,6 +128,7 @@ describe('Desk journey J3', () => {
           `#resource-body .worksheet-done-slot[data-topic="${TOPIC}"] button`,
         )?.textContent.includes('Completed')
       ), { message: 'worksheet completion did not render' });
+      await settleRoster(harness);
 
       expect(ledgerRequest.headers['content-type']).toBe('application/json');
       expect(ledgerRequest.body.token).toBe('token:alpha_otter');

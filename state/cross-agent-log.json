@@ -4403,15 +4403,97 @@
       "timestamp": "2026-08-18T13:52:27Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "db4e5810fee6",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **B2** (journeys J4\u2013J6) of /home/mrcolson/repos/apstats-live-worksheet/REL",
+      "status": "implemented",
+      "duration_seconds": 759.557,
+      "timestamp": "2026-08-18T14:10:42Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "42cc0ce166ee",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing task **A4** (answer-key freeze) of /home/mrcolson/repos/apstats-live-worksheet/",
+      "status": "completed",
+      "duration_seconds": 823.154,
+      "timestamp": "2026-08-18T14:11:46Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f70b9d140721",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only \u2014 do NOT edit; you MAY run `npx vitest run tests/journeys/`). Repo /ho",
+      "status": "completed",
+      "duration_seconds": 404.304,
+      "timestamp": "2026-08-18T14:27:12Z",
+      "files_changed": [
+        ".pytest_cache/v/cache/nodeids",
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "node_modules/.vite/vitest/results.json",
+        "roster-server/data/skill-map.json",
+        "roster-server/node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "4985539e49ce",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only \u2014 do NOT edit; you MAY run `cd roster-server && npx vitest run tests/g",
+      "status": "completed",
+      "duration_seconds": 462.685,
+      "timestamp": "2026-08-18T14:28:11Z",
+      "files_changed": [
+        ".pytest_cache/v/cache/nodeids",
+        "GRADEBOOK_TAGGING_AUDIT.md",
+        "data/skill-map.js",
+        "data/skill-map.json",
+        "node_modules/.vite/vitest/results.json",
+        "roster-server/data/skill-map.json",
+        "roster-server/node_modules/.vite/vitest/results.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "31e3ce9736cb",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing **A4-fix** for /home/mrcolson/repos/apstats-live-worksheet/RELIABILITY_BUILD.md",
+      "status": "completed",
+      "duration_seconds": 477.15,
+      "timestamp": "2026-08-18T14:37:25Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "de6be1086976",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing **B2-fix** for /home/mrcolson/repos/apstats-live-worksheet/RELIABILITY_BUILD.md",
+      "status": "implemented",
+      "duration_seconds": 501.232,
+      "timestamp": "2026-08-18T14:37:49Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 376,
-    "cc_to_codex": 376,
+    "total_calls": 382,
+    "cc_to_codex": 382,
     "codex_to_cc": 0,
-    "completed": 285,
+    "completed": 289,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 619.369
+    "avg_duration_seconds": 618.615
   }
 }

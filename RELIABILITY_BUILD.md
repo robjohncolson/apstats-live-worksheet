@@ -80,8 +80,12 @@ Output files (all committed):
   rewrites `expected.json`; the test never writes files.
 
 ### 1.4 A4 — answer-key freeze (only after A1–A3 are green + committed)
-Today `curriculum_quiz` credit re-derives from the CURRENT `data/answer-key.json` at
-read time (`GradeContext` freezes config/schedule/blooket, not the key). Change:
+Status (2026-08-18): **implemented in commit `<pending>`; deployed when the
+overseer pushes.**
+
+Before A4, `curriculum_quiz` credit re-derived from the CURRENT
+`data/answer-key.json` at read time (`GradeContext` froze
+config/schedule/blooket, not the key). Change:
 - `grade-contexts.js`: the SY2627 context carries a frozen answer-key document
   (`freezeDir()/answer-key.SY2627.json`, validated like the other freezes) and
   `resolveProductionGradeInputs` returns it; `createApp` prefers the context's key

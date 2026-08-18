@@ -97,6 +97,14 @@ function bcryptCost() {
 export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs, pcDbOverride, figuresSignerOverride) {
   // Atomic grade-year bundle: resolve ONCE, thread to every grade mount.
   const _gradeCtx = productionGradeInputs || resolveProductionGradeInputs(ACTIVE_SCHOOL_YEAR);
+  // Only an explicitly supplied production bundle activates the yearly key.
+  // Tests that inject loadAnswerKey without a bundle retain their fixture loader.
+  const _frozenGradingAnswerKey = productionGradeInputs?.answerKey
+    ? JSON.parse(JSON.stringify(productionGradeInputs.answerKey))
+    : null;
+  const _gradingLoadAnswerKey = _frozenGradingAnswerKey
+    ? async () => _frozenGradingAnswerKey
+    : loadAnswerKey;
   const gradeConfig = configOverrides
     ? { ..._gradeCtx.config, ...configOverrides }
     : _gradeCtx.config;
@@ -955,7 +963,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Mounts GET /rollup (cr-quiz feeder per-unit correctness rollup).
   // ledgerDb + loadAnswerKey injected; tests pass fakes.
   if (ledgerDb && loadAnswerKey) {
-    mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey });
+    mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey });
   }
 
   // ── DOGE Effort Wallet (DOGE_WALLET_SPEC Phase 2 additive) ───────────────────
@@ -973,12 +981,12 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   if (ledgerDb && loadAnswerKey) {
     // Atomic _gradeCtx / gradeConfig / _blooketBundle resolved once at createApp top.
     mountGrade(app, {
-      verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: _sched, db,
+      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, db,
       config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
       ..._blooketBundle,
     });
     mountOfflineInputs(app, {
-      verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: _sched, db,
+      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, db,
       config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
       ..._blooketBundle,
     });
@@ -990,7 +998,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       worksheetBlankCounts: worksheetBlankCounts || null, ..._blooketBundle,
     });
     mountTranscript(app, {
-      verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: _sched, db,
+      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, db,
       config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
       ..._blooketBundle,
     });
@@ -1001,7 +1009,9 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Mounts GET /mastery (BKT over skill-map tags; weak-skill flag at θ).
   // Needs the bundled skill-map loader + the AS-IS bkt engine; tests inject fakes.
   if (ledgerDb && loadAnswerKey && loadSkillMap && bkt) {
-    mountMastery(app, { verifyToken, ledgerDb, loadAnswerKey, loadSkillMap, bkt });
+    mountMastery(app, {
+      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, loadSkillMap, bkt,
+    });
   }
 
   // ── Class routes (Phase 4a additive — teacher-gated class aggregation) ──────
@@ -1011,7 +1021,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // computeGrade / computeMastery so the math has a single source.
   if (db && ledgerDb && loadAnswerKey) {
     mountClass(app, {
-      db, ledgerDb, loadAnswerKey, loadSkillMap, bkt,
+      db, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, loadSkillMap, bkt,
       lessonSchedule: _sched, config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,
       verifyToken, resolveUsername: resolveReceiptUsername,
@@ -1025,7 +1035,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Phase 2A adds /donow (needs loadManifest) and /poll-archive (needs pollArchiveDb).
   if (loadAnswerKey) {
     mountTeacherStudent(app, {
-      db, ledgerDb, loadAnswerKey,
+      db, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey,
       lessonSchedule: _sched,
       config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,
@@ -1047,7 +1057,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       remediationDb,
       db,
       ledgerDb,
-      loadAnswerKey,
+      loadAnswerKey: _gradingLoadAnswerKey,
       loadSkillMap,
       bkt,
     });
@@ -1080,7 +1090,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   if (db && ledgerDb) {
     mountReview(app, {
       db, ledgerDb, nudgesDb,
-      loadAnswerKey: loadAnswerKey || null,
+      loadAnswerKey: _gradingLoadAnswerKey || null,
       lessonSchedule: _sched,
       config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,

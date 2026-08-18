@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import {
   writeFileSync, unlinkSync, existsSync, mkdirSync, cpSync, rmSync, readFileSync,
 } from 'node:fs';
@@ -16,14 +16,19 @@ import {
   validateBlooketFreeze,
   validateConfigFreeze,
   validateScheduleFreeze,
+  validateAnswerKeyFreeze,
+  loadAnswerKeySy2627,
 } from '../grade-contexts.js';
 import { PHASE3_CONFIG } from '../grade-config.js';
+import { keyVersionHash } from '../grade-answer-key.js';
+import { bootGoldenApp } from './golden/boot.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const realData = resolve(here, '../data');
 const freezeBlooket = resolve(realData, 'blooket-lessons.sy2526-freeze.json');
 const freezeSched = resolve(realData, 'lesson-schedule.sy2526-freeze.json');
 const freezeCfg = resolve(realData, 'grade-config.sy2526-freeze.json');
+const freezeAnswerKey = resolve(realData, 'answer-key.SY2627.json');
 
 const FREEZE_FILES = [
   'blooket-lessons.sy2526-freeze.json',
@@ -34,11 +39,20 @@ const FREEZE_FILES = [
 describe('M2b grade-contexts registry (durable freeze + honest resolver)', () => {
   const prevEnv = process.env.LESSON_SCHEDULE_PATH;
   const prevFreeze = process.env.GRADE_FREEZE_DIR;
+  const prevAnswerKeyPath = process.env.ANSWER_KEY_PATH;
+  const prevVitest = process.env.VITEST;
+  const prevNodeEnv = process.env.NODE_ENV;
   afterEach(() => {
     if (prevEnv === undefined) delete process.env.LESSON_SCHEDULE_PATH;
     else process.env.LESSON_SCHEDULE_PATH = prevEnv;
     if (prevFreeze === undefined) delete process.env.GRADE_FREEZE_DIR;
     else process.env.GRADE_FREEZE_DIR = prevFreeze;
+    if (prevAnswerKeyPath === undefined) delete process.env.ANSWER_KEY_PATH;
+    else process.env.ANSWER_KEY_PATH = prevAnswerKeyPath;
+    if (prevVitest === undefined) delete process.env.VITEST;
+    else process.env.VITEST = prevVitest;
+    if (prevNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = prevNodeEnv;
   });
 
   it('ACTIVE_SCHOOL_YEAR is SY2627 (G8)', () => {
@@ -53,12 +67,16 @@ describe('M2b grade-contexts registry (durable freeze + honest resolver)', () =>
     expect(existsSync(freezeBlooket)).toBe(true);
     expect(existsSync(freezeSched)).toBe(true);
     expect(existsSync(freezeCfg)).toBe(true);
+    expect(existsSync(freezeAnswerKey)).toBe(true);
   });
 
   it('committed freezes pass strict validators', () => {
     validateBlooketFreeze(JSON.parse(readFileSync(freezeBlooket, 'utf8')));
     validateConfigFreeze(JSON.parse(readFileSync(freezeCfg, 'utf8')));
     validateScheduleFreeze(JSON.parse(readFileSync(freezeSched, 'utf8')));
+    validateAnswerKeyFreeze(JSON.parse(readFileSync(freezeAnswerKey, 'utf8')));
+    // Frozen-vs-live map parity was a one-time A4 release fact. The golden
+    // master guards grade parity; this suite must not require ongoing equality.
   });
 
   it('SY2526 loads DURABLE freeze: 77 presence=required, schedule 1.1 B=2026-09-09, useV3 from freeze', () => {
@@ -84,7 +102,7 @@ describe('M2b grade-contexts registry (durable freeze + honest resolver)', () =>
     expect(prod.config).toEqual(expected);
   });
 
-  it('SY2627 live: presence 77 / required 66 / bonus 11', () => {
+  it('SY2627 uses its frozen answer key with live presence 77 / required 66 / bonus 11', () => {
     const b = getGradeContext('SY2627');
     expect(b.year).toBe('SY2627');
     expect(b.blooketPresence).toHaveLength(77);
@@ -95,6 +113,9 @@ describe('M2b grade-contexts registry (durable freeze + honest resolver)', () =>
     // Part-C retag 2026-08-07: old-3.7 (sim-significance) moved core->bonus.
     expect(b.blooketRequired).not.toContain('3.7');
     expect(b.blooketPresence).toContain('2.9');
+    expect(b.answerKey).toEqual(JSON.parse(readFileSync(freezeAnswerKey, 'utf8')));
+    expect(b.answerKeyHash).toBe(keyVersionHash(b.answerKey.answerKey, {}));
+    expect(Object.isFrozen(b.answerKey)).toBe(true);
   });
 
   it('resolveProductionGradeInputs(year) returns THAT year (not always live)', () => {
@@ -102,6 +123,9 @@ describe('M2b grade-contexts registry (durable freeze + honest resolver)', () =>
     const sy26 = resolveProductionGradeInputs('SY2627');
     expect(sy25.year).toBe('SY2526');
     expect(sy26.year).toBe('SY2627');
+    expect(sy25.answerKey).toBeNull();
+    expect(sy25.answerKeyHash).toBeNull();
+    expect(sy26.answerKeyHash).toBe(keyVersionHash(sy26.answerKey.answerKey, {}));
     expect(sy25.blooketRequired).toHaveLength(77);
     expect(sy26.blooketRequired).toHaveLength(66);
     expect(sy25.lessonSchedule['1.1'].periods.B).toBe('2026-09-09');
@@ -109,6 +133,83 @@ describe('M2b grade-contexts registry (durable freeze + honest resolver)', () =>
     sy25.config.C = 1;
     expect(PHASE3_CONFIG.C).toBe(85);
     expect(resolveProductionGradeInputs('SY2526').config.C).toBe(85);
+    const original = sy26.answerKey.answerKey['U1-L2-Q01'].answerKey;
+    sy26.answerKey.answerKey['U1-L2-Q01'].answerKey = 'changed';
+    expect(resolveProductionGradeInputs('SY2627').answerKey.answerKey['U1-L2-Q01'].answerKey)
+      .toBe(original);
+  });
+
+  it('missing active-year answer-key freeze throws outside the test environment', () => {
+    const missingPath = resolve(
+      here,
+      'fixtures/_tmp-missing-answer-key-' + Date.now() + '-' + Math.random().toString(16).slice(2),
+    );
+    delete process.env.GRADE_FREEZE_DIR;
+    delete process.env.VITEST;
+    process.env.NODE_ENV = 'production';
+
+    expect(() => loadAnswerKeySy2627(missingPath))
+      .toThrow(/SY2627 freeze missing: answer-key/i);
+  });
+
+  it('missing SY2627 answer-key freeze falls back in tests and logs once', () => {
+    const tmpDir = resolve(
+      here,
+      'fixtures/_tmp-answer-key-fallback-' + Date.now() + '-' + Math.random().toString(16).slice(2),
+    );
+    const livePath = resolve(tmpDir, 'live-answer-key.json');
+    const liveDoc = {
+      generatedFrom: 'fallback-test',
+      answerKey: {
+        'U1-L2-Q01': { answerKey: 'B', type: 'multiple-choice', unit: '1', topic: '1.2' },
+      },
+    };
+    mkdirSync(tmpDir, { recursive: true });
+    writeFileSync(livePath, JSON.stringify(liveDoc), 'utf8');
+    process.env.GRADE_FREEZE_DIR = tmpDir;
+    process.env.ANSWER_KEY_PATH = livePath;
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      const first = resolveProductionGradeInputs('SY2627');
+      const second = resolveProductionGradeInputs('SY2627');
+      expect(first.answerKey).toEqual(liveDoc);
+      expect(first.answerKeyHash).toBe(keyVersionHash(liveDoc.answerKey, {}));
+      expect(second.answerKey).toEqual(liveDoc);
+      expect(warning).toHaveBeenCalledTimes(1);
+      expect(warning.mock.calls[0][0]).toMatch(/answer-key freeze missing/i);
+    } finally {
+      warning.mockRestore();
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    ['test', true],
+    ['production', false],
+  ])('malformed SY2627 answer-key freeze throws in %s', (_label, testEnv) => {
+    const tmpDir = resolve(
+      here,
+      'fixtures/_tmp-answer-key-malformed-' + Date.now() + '-' + Math.random().toString(16).slice(2),
+    );
+    const malformedPath = resolve(tmpDir, 'answer-key.SY2627.json');
+    mkdirSync(tmpDir, { recursive: true });
+    writeFileSync(malformedPath, '{not-json', 'utf8');
+    delete process.env.GRADE_FREEZE_DIR;
+    if (testEnv) {
+      process.env.VITEST = 'true';
+      process.env.NODE_ENV = 'test';
+    } else {
+      delete process.env.VITEST;
+      process.env.NODE_ENV = 'production';
+    }
+
+    try {
+      expect(() => loadAnswerKeySy2627(malformedPath))
+        .toThrow(/SY2627 freeze malformed: answer-key/i);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 
   it('LESSON_SCHEDULE_PATH env wins for SY2627 via resolveProductionGradeInputs itself', () => {
@@ -143,6 +244,17 @@ describe('M2b grade-contexts registry (durable freeze + honest resolver)', () =>
 });
 
 describe('M2b strict freeze validators (unit)', () => {
+  it('answer key: empty map throws', () => {
+    expect(() => validateAnswerKeyFreeze({ generatedFrom: 'x', answerKey: {} }))
+      .toThrow(/non-empty/i);
+  });
+
+  it('answer key: generatedFrom is required', () => {
+    expect(() => validateAnswerKeyFreeze({
+      answerKey: { Q1: { answerKey: 'A' } },
+    })).toThrow(/generatedFrom/i);
+  });
+
   it('blooket: 1 topic throws', () => {
     expect(() => validateBlooketFreeze({
       topics: ['1.1'],
@@ -348,5 +460,89 @@ describe('M2b GRADE_FREEZE_DIR production gating', () => {
     process.env.NODE_ENV = 'production';
     // No override set → committed path, no throw
     expect(freezeDir()).toBe(realData);
+  });
+});
+
+describe('A4 createApp answer-key freeze', () => {
+  const quizId = 'U1-L2-Q01';
+  let app;
+
+  afterEach(async () => {
+    if (app) await app.close();
+    app = null;
+  });
+
+  function quizCredit(body) {
+    for (const lesson of body.lessons || []) {
+      const item = (lesson.items?.quiz || []).find((entry) => entry.itemId === quizId);
+      if (item) return item.credit;
+    }
+    return undefined;
+  }
+
+  async function bootCase(withFrozenKey) {
+    const productionGradeInputs = resolveProductionGradeInputs('SY2627');
+    const liveDoc = structuredClone(productionGradeInputs.answerKey);
+    const correct = liveDoc.answerKey[quizId].answerKey;
+    if (!withFrozenKey) {
+      delete productionGradeInputs.answerKey;
+      delete productionGradeInputs.answerKeyHash;
+    }
+
+    const studentsDoc = {
+      asOf: '2026-10-15',
+      students: [{
+        id: 'answer-key-freeze-student',
+        section: 'PeriodB',
+        reviews: [],
+        records: [{
+          student_id: 'answer-key-freeze-student',
+          source: 'curriculum_quiz',
+          item_id: quizId,
+          unit: 'U1',
+          topic: null,
+          skill: null,
+          score: null,
+          response: String(correct).toLowerCase(),
+          evidence_tier: 'practice',
+          attempt: 1,
+          recorded_at: '2026-10-14T16:00:00.000Z',
+          graded_at: '2026-10-14T16:00:00.000Z',
+        }],
+      }],
+    };
+    const inputs = {
+      answerKey: liveDoc,
+      productionGradeInputs,
+      // The lessons[] array (where quiz credit is visible) needs the schedule.
+      lessonSchedule: productionGradeInputs.lessonSchedule,
+      worksheetBlankCounts: null,
+      worksheetKey: null,
+    };
+    app = await bootGoldenApp({
+      studentsDoc,
+      inputs,
+      configOverrides: { gradingWindowStart: null },
+      inProcess: true,
+    });
+    return liveDoc;
+  }
+
+  it('keeps quiz credit after the live answer-key document changes', async () => {
+    const liveDoc = await bootCase(true);
+    expect(quizCredit(await app.getStudentGrade('answer-key-freeze-student'))).toBe(1);
+
+    liveDoc.answerKey[quizId].answerKey = '__changed__';
+
+    expect(quizCredit(await app.getStudentGrade('answer-key-freeze-student'))).toBe(1);
+  });
+
+  it('keeps the legacy live-loader behavior when no frozen key is supplied', async () => {
+    const liveDoc = await bootCase(false);
+    expect(quizCredit(await app.getStudentGrade('answer-key-freeze-student'))).toBe(1);
+
+    liveDoc.answerKey[quizId].answerKey = '__changed__';
+
+    expect(quizCredit(await app.getStudentGrade('answer-key-freeze-student'))).toBe(0);
   });
 });

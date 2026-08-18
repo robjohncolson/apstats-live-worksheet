@@ -14,6 +14,11 @@ import {
   CONFIG, ANSWER_KEY, GRADE_OPTS, ARCHETYPES, materialize,
 } from './fixtures/sim-world.js';
 
+const FROZEN_ANSWER_KEY_DOC = Object.freeze({
+  generatedFrom: 'grade-offline-inputs test freeze',
+  answerKey: ANSWER_KEY,
+});
+
 describe('buildRedactedKey — parity with the real key', () => {
   // Every archetype: the grade computed from the redacted key must equal the
   // grade from the real key. Run with includePc (redactPc:false) so the PC track
@@ -88,7 +93,7 @@ describe('GET /grade/offline-inputs route', () => {
     mountOfflineInputs(app, {
       verifyToken: (t) => (t === 'good' ? 'stu_1' : null),
       ledgerDb: { getLedgerByStudent: async () => ({ data: rows }) },
-      loadAnswerKey: async () => ({ answerKey: ANSWER_KEY }),
+      loadAnswerKey: async () => FROZEN_ANSWER_KEY_DOC,
       lessonSchedule: GRADE_OPTS.lessonSchedule,
       db: { findByStudentId: async () => ({ data: { section: 'PeriodB' } }) },
       config: CONFIG,
@@ -118,7 +123,7 @@ describe('GET /grade/offline-inputs route', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns redacted inputs for a valid token', async () => {
+  it('returns redacted inputs from the frozen answer-key document', async () => {
     const res = await get('/grade/offline-inputs?token=good');
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);

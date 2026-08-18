@@ -183,6 +183,7 @@ export function createFakeRoster(initial = {}) {
   const state = {
     users,
     requests: [],
+    inflight: 0,
     unhandledRequests: [],
     ledgerRecords: [],
     ledgerByStudentId: initial.ledgerByStudentId || new Map(),
@@ -217,34 +218,36 @@ export function createFakeRoster(initial = {}) {
   }
 
   async function fetch(input, init = {}) {
-    const rawUrl = typeof input === 'string' || input instanceof URL ? String(input) : input.url;
-    const url = new URL(rawUrl, 'https://roster.test');
-    const method = String(init.method || (input && input.method) || 'GET').toUpperCase();
-    const body = await requestBody(input, init);
-    const headers = requestHeaders(input, init);
-    const request = { method, url: url.href, path: url.pathname, headers, body };
-    state.requests.push(request);
+    state.inflight += 1;
+    try {
+      const rawUrl = typeof input === 'string' || input instanceof URL ? String(input) : input.url;
+      const url = new URL(rawUrl, 'https://roster.test');
+      const method = String(init.method || (input && input.method) || 'GET').toUpperCase();
+      const body = await requestBody(input, init);
+      const headers = requestHeaders(input, init);
+      const request = { method, url: url.href, path: url.pathname, headers, body };
+      state.requests.push(request);
 
-    const routeKey = `${method} ${url.pathname}`;
-    if (!handles(method, url.pathname)) {
-      state.unhandledRequests.push(request);
-      return jsonResponse(
-        { ok: false, error: 'not-found' },
-        404,
-        { 'X-Journey-Unhandled': 'true' },
-      );
-    }
+      const routeKey = `${method} ${url.pathname}`;
+      if (!handles(method, url.pathname)) {
+        state.unhandledRequests.push(request);
+        return jsonResponse(
+          { ok: false, error: 'not-found' },
+          404,
+          { 'X-Journey-Unhandled': 'true' },
+        );
+      }
 
-    const failure = state.failures[routeKey];
-    if (failure) {
-      if (failure === 'network') throw new TypeError(`Fake network failure: ${routeKey}`);
-      if (typeof failure === 'function') return responseFromOverride(failure, request, state);
-      const status = typeof failure === 'number' ? failure : 503;
-      return jsonResponse({ ok: false, error: 'scripted-failure' }, status);
-    }
+      const failure = state.failures[routeKey];
+      if (failure) {
+        if (failure === 'network') throw new TypeError(`Fake network failure: ${routeKey}`);
+        if (typeof failure === 'function') return await responseFromOverride(failure, request, state);
+        const status = typeof failure === 'number' ? failure : 503;
+        return jsonResponse({ ok: false, error: 'scripted-failure' }, status);
+      }
 
-    const override = state.routes[routeKey];
-    if (override !== undefined) return responseFromOverride(override, request, state);
+      const override = state.routes[routeKey];
+      if (override !== undefined) return await responseFromOverride(override, request, state);
 
     if (method === 'POST' && url.pathname === '/roster/verify') {
       const user = state.userByUsername(body && body.username);
@@ -405,12 +408,15 @@ export function createFakeRoster(initial = {}) {
       return jsonResponse(configured || { ok: true, students: [], items: [], reviews: [] });
     }
 
-    state.unhandledRequests.push(request);
-    return jsonResponse(
-      { ok: false, error: 'not-found' },
-      404,
-      { 'X-Journey-Unhandled': 'true' },
-    );
+      state.unhandledRequests.push(request);
+      return jsonResponse(
+        { ok: false, error: 'not-found' },
+        404,
+        { 'X-Journey-Unhandled': 'true' },
+      );
+    } finally {
+      state.inflight -= 1;
+    }
   }
 
   return { state, fetch, handles };

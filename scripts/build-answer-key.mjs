@@ -107,12 +107,11 @@ export function buildAnswerKey(items, bonusTopics = new Set()) {
 
 function main() {
   const { items, path } = loadCurriculum();
-  // NEVER exclude historically-served topics from the live key: curriculum_quiz
-  // scoring re-derives from the CURRENT key at read time (scoring.js
-  // scoreAgainstKey: missing key -> ungradable -> dropped), and GradeContext
-  // does not freeze the answer key per year — deleting a key would silently
-  // change historical grades (Codex CRITICAL, 2026-08-07). Bonus-topic items
-  // stay keyed; the manifest-subset test exempts crosswalk-bonus topics.
+  // NEVER exclude historically-served topics from the live key: current-year
+  // clients use it, and each new school-year grading freeze is cut from it.
+  // GradeContext keeps committed per-year freezes forever, while deleting a live
+  // key would make the next freeze incomplete. Bonus-topic items stay keyed; the
+  // manifest-subset test exempts crosswalk-bonus topics.
   const { answerKey, stats } = buildAnswerKey(items);
 
   // Report the ACTUAL source read (loadCurriculum may fall back to the

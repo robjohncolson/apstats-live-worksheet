@@ -10,6 +10,11 @@ The committed oracle is synthetic. The real-data oracle is an optional,
 local-only teacher-machine check. The test never reads production data, contacts
 the network, or writes fixtures.
 
+Answer-key freeze status: **implemented in commit `<pending>`; deployed when the
+overseer pushes.** Once deployed, production grading uses a per-school-year
+frozen answer key. Client answer-key endpoints continue to serve the live
+document.
+
 ## Committed synthetic oracle
 
 Regenerate the deterministic, commit-safe fixture from `roster-server/`:

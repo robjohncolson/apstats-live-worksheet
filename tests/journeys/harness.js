@@ -320,6 +320,18 @@ function createWebSocketStub(window, sockets) {
   };
 }
 
+function mergeFlashcardFlags(body, overrides) {
+  if (!overrides || typeof overrides !== 'object') return body;
+
+  const document = JSON.parse(String(body));
+  const diskFlags = document.flags || {};
+  const flags = { ...diskFlags };
+  for (const [name, override] of Object.entries(overrides)) {
+    flags[name] = { ...(diskFlags[name] || {}), ...(override || {}) };
+  }
+  return JSON.stringify({ ...document, flags });
+}
+
 function makeFetchRouter({ requests, unhandled, roster, opts }) {
   const pageOrigin = new URL(DESK_URL).origin;
   const rosterOrigin = new URL(ROSTER_URL).origin;
@@ -337,7 +349,10 @@ function makeFetchRouter({ requests, unhandled, roster, opts }) {
       const absolutePath = resolve(REPO_ROOT, repoPath);
       const insideRepo = absolutePath.startsWith(REPO_ROOT + sep);
       if (insideRepo && isFetchableRepoFile(repoPath) && existsSync(absolutePath) && statSync(absolutePath).isFile()) {
-        const body = await readFile(absolutePath);
+        let body = await readFile(absolutePath);
+        if (repoPath === 'data/flashcard-flags.json') {
+          body = mergeFlashcardFlags(body, opts.flags);
+        }
         return new Response(body, { status: 200, headers: { 'Content-Type': mimeFor(absolutePath) } });
       }
     }
@@ -444,7 +459,11 @@ function makeFlush(fakeClock) {
     for (let index = 0; index < n; index += 1) {
       await Promise.resolve();
       if (fakeClock) fakeClock.runPending();
-      else await new Promise((resolveTick) => HOST_SET_TIMEOUT(resolveTick, 0));
+      // ALWAYS yield one host macrotask: the fetch router reads repo files from
+      // disk (real libuv I/O) even when the Desk's clock is fake — without this
+      // yield a fake-timer journey spins forever waiting for a CSV that can never
+      // resolve. HOST_SET_TIMEOUT is the real Node timer, untouched by the fake clock.
+      await new Promise((resolveTick) => HOST_SET_TIMEOUT(resolveTick, 0));
     }
   };
 }
@@ -453,7 +472,10 @@ function makeWaitFor(fakeClock, flush) {
   return async function waitFor(predicate, options = {}) {
     if (typeof predicate !== 'function') throw new TypeError('waitFor requires a predicate function');
     const timeoutMs = options.timeoutMs ?? 1_000;
-    const pollIntervalMs = options.pollIntervalMs ?? 5;
+    // Under the fake clock each poll costs one real host yield, so step the
+    // fake clock in 25 ms increments (deterministic; a 700 ms UI delay = 28 polls
+    // instead of 140). Real-timer journeys keep the fine 5 ms poll.
+    const pollIntervalMs = options.pollIntervalMs ?? (fakeClock ? 25 : 5);
     const message = options.message || 'Harness condition was not met';
     const startedAt = globalThis.performance.now();
     let fakeElapsedMs = 0;
@@ -484,7 +506,7 @@ function makeWaitFor(fakeClock, flush) {
  * Boot the checked-in Desk document with its real scripts and UI.
  *
  * Useful options: `roster` (a createFakeRoster result or initial state), `now`,
- * `randomSeed`, `fakeTimers`, `supabase`, `curriculum`, `localStorage`,
+ * `randomSeed`, `fakeTimers`, `flags`, `supabase`, `curriculum`, `localStorage`,
  * `sessionStorage`, `readOnly`, and `viewAs`.
  */
 export async function bootDesk(opts = {}) {

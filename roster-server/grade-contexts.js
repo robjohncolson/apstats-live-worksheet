@@ -14,6 +14,7 @@ import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { PHASE3_CONFIG } from './grade-config.js';
+import { keyVersionHash } from './grade-answer-key.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
@@ -23,6 +24,8 @@ const SY2526_BLOOKET_COUNT = 77;
 /** Pre-M2a lesson-schedule key count (server production snapshot). */
 const SY2526_SCHEDULE_MIN_KEYS = 70;
 const SY2526_SCHEDULE_EXPECTED_KEYS = 77;
+const SY2627_ANSWER_KEY_FREEZE = 'answer-key.SY2627.json';
+let didWarnAnswerKeyFallback = false;
 
 /** @typedef {'SY2526'|'SY2627'} SchoolYear */
 
@@ -37,6 +40,8 @@ export const ACTIVE_SCHOOL_YEAR = /** @type {SchoolYear} */ ('SY2627');
  * @property {string[]} blooketRequired   // Due denominator
  * @property {string[]} blooketBonusTopics
  * @property {string[]} blooketTopics     // alias of blooketPresence (back-compat)
+ * @property {object|null} answerKey
+ * @property {string|null} answerKeyHash
  */
 
 function deepFreeze(o) {
@@ -313,6 +318,38 @@ export function validateScheduleFreeze(doc) {
   }
 }
 
+/**
+ * Frozen answer-key document consumed by every server-side grading path.
+ * @param {any} doc
+ */
+export function validateAnswerKeyFreeze(doc) {
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) {
+    throw new Error('SY2627 freeze invalid: answer-key must be a JSON object');
+  }
+  if (typeof doc.generatedFrom !== 'string' || !doc.generatedFrom.trim()) {
+    throw new Error('SY2627 freeze invalid: answer-key.generatedFrom required');
+  }
+  if (!doc.answerKey || typeof doc.answerKey !== 'object' || Array.isArray(doc.answerKey)) {
+    throw new Error('SY2627 freeze invalid: answer-key.answerKey must be an object');
+  }
+  const ids = Object.keys(doc.answerKey);
+  if (ids.length === 0) {
+    throw new Error('SY2627 freeze invalid: answer-key.answerKey must be non-empty');
+  }
+  for (const id of ids) {
+    const entry = doc.answerKey[id];
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error('SY2627 freeze invalid: answer-key entry ' + id + ' must be an object');
+    }
+    const value = entry.answerKey;
+    if (value !== null && typeof value !== 'string' && typeof value !== 'number') {
+      throw new Error(
+        'SY2627 freeze invalid: answer-key entry ' + id + '.answerKey must be string, number, or null',
+      );
+    }
+  }
+}
+
 /** Legacy schedule priority: env → bundled → repo-root (server.js contract). */
 export function loadLessonScheduleWithPriority() {
   if (process.env.LESSON_SCHEDULE_PATH) {
@@ -334,6 +371,57 @@ export function loadLessonScheduleWithPriority() {
     return doc.lessons;
   }
   return null;
+}
+
+function resolveLiveAnswerKeyPath() {
+  if (process.env.ANSWER_KEY_PATH) return process.env.ANSWER_KEY_PATH;
+  const bundled = resolve(__dirname, 'data', 'answer-key.json');
+  if (existsSync(bundled)) return bundled;
+  return resolve(REPO_ROOT, 'data', 'answer-key.json');
+}
+
+function loadAnswerKeyDocLive() {
+  const absPath = resolveLiveAnswerKeyPath();
+  let doc;
+  try {
+    doc = JSON.parse(readFileSync(absPath, 'utf8'));
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    throw new Error('SY2627 live answer-key fallback unavailable (' + absPath + '): ' + msg);
+  }
+  validateAnswerKeyFreeze(doc);
+  return doc;
+}
+
+/**
+ * Load the SY2627 answer-key freeze.
+ * The optional path keeps the production/test failure policy directly testable.
+ * @param {string} [absPath]
+ */
+export function loadAnswerKeySy2627(absPath = freezePath(SY2627_ANSWER_KEY_FREEZE)) {
+  if (!existsSync(absPath)) {
+    if (ACTIVE_SCHOOL_YEAR === 'SY2627' && !isTestEnv()) {
+      throw new Error('SY2627 freeze missing: answer-key (' + absPath + ')');
+    }
+    if (!didWarnAnswerKeyFallback) {
+      didWarnAnswerKeyFallback = true;
+      console.warn(
+        '[grade-contexts] SY2627 answer-key freeze missing; using live answer key for this boot:',
+        absPath,
+      );
+    }
+    return loadAnswerKeyDocLive();
+  }
+
+  let doc;
+  try {
+    doc = JSON.parse(readFileSync(absPath, 'utf8'));
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    throw new Error('SY2627 freeze malformed: answer-key (' + absPath + '): ' + msg);
+  }
+  validateAnswerKeyFreeze(doc);
+  return doc;
 }
 
 function loadBlooketDocLive() {
@@ -400,10 +488,13 @@ function buildContext(year) {
       blooketRequired: bl.required,
       blooketBonusTopics: bl.bonus,
       blooketTopics: bl.presence,
+      answerKey: null,
+      answerKeyHash: null,
     });
   }
   // SY2627 live
   const bl = splitBlooket(loadBlooketDocLive());
+  const answerKey = loadAnswerKeySy2627();
   return deepFreeze({
     year: /** @type {SchoolYear} */ ('SY2627'),
     config: loadConfigSy2627(),
@@ -412,6 +503,8 @@ function buildContext(year) {
     blooketRequired: bl.required,
     blooketBonusTopics: bl.bonus,
     blooketTopics: bl.presence,
+    answerKey,
+    answerKeyHash: keyVersionHash(answerKey.answerKey, {}),
   });
 }
 
@@ -454,5 +547,9 @@ export function resolveProductionGradeInputs(year = ACTIVE_SCHOOL_YEAR) {
     blooketBonusTopics: ctx.blooketBonusTopics.slice(),
     // back-compat alias
     blooketTopics: ctx.blooketPresence.slice(),
+    answerKey: ctx.answerKey
+      ? JSON.parse(JSON.stringify(ctx.answerKey))
+      : null,
+    answerKeyHash: ctx.answerKeyHash,
   };
 }
