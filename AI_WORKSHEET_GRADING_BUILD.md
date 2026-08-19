@@ -121,3 +121,58 @@ Adversarial review of the coverage fold found real gaps; all addressed:
 Residual leaks: students who never reopen a worksheet keep historical null rows (needs a
 teacher-side batch regrade — PC_FRQ_GRADING_SPEC.md); answers under 20 characters are never graded.
 
+## Server-independent regrade job
+
+`tools/frq-regrade-manifest.mjs` derives the worksheet/prompt contract directly from all 69 live
+worksheets and writes the committed `data/frq-regrade-manifest.json`. The batch job reads
+`~/grade-backups/config.json` (`rosterUrl` and `teacherKey`), pulls `/admin/snapshot`, and only
+selects existing `source:'frq'` rows whose score is null, response is at least 20 trimmed
+characters, manifest item ID is exact, and recorded age is at least 10 minutes. It is sequential
+and starts at most 20 grader calls per minute. It never prints response text.
+
+Exact commands, from the repository root:
+
+```bash
+node tools/frq-regrade-manifest.mjs
+node tools/regrade-ungraded-frqs.mjs --dry-run
+node tools/regrade-ungraded-frqs.mjs --apply
+node tools/regrade-ungraded-frqs.mjs --dry-run --student USERNAME
+node tools/regrade-ungraded-frqs.mjs --apply --student USERNAME --limit 10
+```
+
+Dry-run is the default and makes no grader calls. Apply mode posts validated E/P/I scores to the
+teacher-gated `/ledger/frq-regrade` route with provenance `ai-batch`; the route never creates a row
+and its FRQ floor can only hold or raise the stored score. Every run prints `found`, `graded`,
+`applied`, `floorHeld`, and `failed`, then appends the same privacy-safe summary as one JSON line to
+`~/grade-backups/frq-regrade.log`. A grader HTTP 5xx makes the process exit non-zero.
+
+The overseer installs `~/.config/systemd/user/apstats-frq-regrade.service` with exactly:
+
+```ini
+[Unit]
+Description=AP Stats hourly server-independent FRQ regrade
+[Service]
+Type=oneshot
+ExecStart=/home/mrcolson/.nvm/versions/node/v24.16.0/bin/node /home/mrcolson/repos/apstats-live-worksheet/tools/regrade-ungraded-frqs.mjs --apply --config /home/mrcolson/grade-backups/config.json
+WorkingDirectory=/home/mrcolson/repos/apstats-live-worksheet
+```
+
+And `~/.config/systemd/user/apstats-frq-regrade.timer` with exactly:
+
+```ini
+[Unit]
+Description=Hourly AP Stats server-independent FRQ regrade
+[Timer]
+OnCalendar=hourly
+Persistent=true
+[Install]
+WantedBy=timers.target
+```
+
+Enable it with:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now apstats-frq-regrade.timer
+systemctl --user list-timers apstats-frq-regrade.timer
+```
