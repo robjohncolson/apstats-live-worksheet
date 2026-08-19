@@ -6,16 +6,16 @@
 <title>Welcome to AP Statistics — Start Here</title>
 <style>
   :root {
-    --bg: #f7f8fa;
-    --card: #ffffff;
-    --ink: #1a2332;
-    --muted: #5b6b80;
-    --accent: #2c5aa0;
-    --accent-hover: #1e4280;
-    --border: #e1e5eb;
-    --promise: #fff8e6;
-    --promise-border: #e8d39a;
-    --flag: #fff3cd;
+    --bg: #E5E3D2;
+    --card: #F7F5EE;
+    --ink: #161616;
+    --muted: #6E6C62;
+    --accent: #A8330A;
+    --accent-hover: #FF5B19;
+    --border: #A9A79A;
+    --promise: #F1EBC4;
+    --promise-border: #C9B97A;
+    --flag: #AECACD;
   }
   * { box-sizing: border-box; }
   body {
@@ -30,14 +30,15 @@
 
   /* Hero */
   .hero {
-    background: linear-gradient(135deg, #2c5aa0 0%, #1e4280 100%);
-    color: #fff;
+    background: #161616;
+    color: #E5E3D2;
+    border-bottom: 4px solid #FF5B19;
     border-radius: 12px;
     padding: 2.5rem 2rem;
     margin-bottom: 1.75rem;
   }
   .hero h1 { margin: 0 0 0.5rem; font-size: 2rem; line-height: 1.2; }
-  .hero p { margin: 0; color: #d8e2f2; font-size: 1.05rem; }
+  .hero p { margin: 0; color: #D3D1C2; font-size: 1.05rem; }
 
   section {
     background: var(--card);
@@ -69,9 +70,9 @@
   .promise {
     background: var(--promise);
     border: 1px solid var(--promise-border);
-    border-left: 5px solid #d9a521;
+    border-left: 5px solid #FF5B19;
   }
-  .promise h2 { color: #8a6400; }
+  .promise h2 { color: #161616; }
   .promise ul { margin: 0.5rem 0 0; padding-left: 1.2rem; }
   .promise li { margin: 0.6rem 0; }
 
@@ -99,8 +100,8 @@
     margin: 0.75rem 0 0.5rem;
   }
   .step {
-    background: #eef3fb;
-    border: 1px solid #cdddf2;
+    background: #F3F1E8;
+    border: 1px solid #A9A79A;
     color: var(--accent);
     border-radius: 999px;
     padding: 0.45rem 0.95rem;
@@ -128,8 +129,8 @@
   ol.steps { margin: 0.5rem 0 0; padding-left: 1.3rem; }
   ol.steps li { margin: 0.55rem 0; }
   .lowstakes {
-    background: #eef7ef;
-    border: 1px solid #c9e3cc;
+    background: #DEF0D3;
+    border: 1px solid #8FB893;
     border-radius: 8px;
     padding: 0.8rem 1rem;
     margin: 0 0 1rem;
@@ -186,7 +187,7 @@
   /* "Where you stand" — live grade render (signed-in students only) */
   .wys-loading { color: var(--muted); font-style: italic; }
   .wys-signed-out {
-    background: #f4f7fc;
+    background: #F3F1E8;
     border: 1px dashed var(--border);
     border-radius: 8px;
     padding: 1rem 1.1rem;
@@ -225,7 +226,7 @@
     border: 1px solid var(--border);
     border-radius: 9px;
     padding: 0.8rem 1rem;
-    background: #fbfcfe;
+    background: #F7F5EE;
   }
   .wys-unit h3 {
     margin: 0 0 0.35rem;
@@ -260,7 +261,7 @@
   .gp {
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: #fbfcfe;
+    background: #F7F5EE;
     margin: 1rem 0 0.5rem;
     overflow: hidden;
   }
@@ -268,7 +269,7 @@
     display: flex;
     gap: 0.25rem;
     padding: 0.55rem 0.6rem 0;
-    background: #eef3fb;
+    background: #F3F1E8;
     border-bottom: 1px solid var(--border);
     flex-wrap: wrap;
   }
@@ -285,7 +286,7 @@
     border-radius: 7px 7px 0 0;
     cursor: pointer;
   }
-  .gp-tab:hover { background: #e2ebf8; }
+  .gp-tab:hover { background: #DEDDD3; }
   .gp-tab[aria-selected="true"] {
     background: var(--card);
     border-color: var(--border);
@@ -332,8 +333,8 @@
   }
   .gp-preset {
     appearance: none;
-    border: 1px solid #cdddf2;
-    background: #eef3fb;
+    border: 1px solid #A9A79A;
+    background: #F3F1E8;
     color: var(--accent);
     font: inherit;
     font-size: 0.85rem;
@@ -342,7 +343,7 @@
     border-radius: 999px;
     cursor: pointer;
   }
-  .gp-preset:hover { background: #e2ebf8; }
+  .gp-preset:hover { background: #DEDDD3; }
   .gp-preset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* Live result block */
@@ -373,9 +374,9 @@
     font-weight: 600;
     color: var(--ink);
   }
-  .gp-branch.warn { color: #8a6400; }
+  .gp-branch.warn { color: #A8330A; }
   .gp-branch .gp-win {
-    background: #e8f5ea;
+    background: #DEF0D3;
     border-radius: 4px;
     padding: 0 0.3rem;
   }
@@ -405,7 +406,7 @@
   .gp-bar-track {
     width: 38px;
     height: 100%;
-    background: #eef3fb;
+    background: #F3F1E8;
     border: 1px solid var(--border);
     border-radius: 5px 5px 0 0;
     position: relative;
@@ -419,7 +420,7 @@
     border-radius: 4px 4px 0 0;
     transition: height 0.18s ease;
   }
-  .gp-bar-fill.low { background: #d9a521; }
+  .gp-bar-fill.low { background: #FF5B19; }
   .gp-bar-name {
     font-size: 0.8rem;
     font-weight: 600;
@@ -430,7 +431,7 @@
   .gp-floor {
     position: absolute;
     left: 0; right: 0;
-    border-top: 2px dashed #c0392b;
+    border-top: 2px dashed #B03A2E;
     pointer-events: none;
   }
   .gp-floor span {
@@ -439,7 +440,7 @@
     top: -1.05rem;
     font-size: 0.72rem;
     font-weight: 700;
-    color: #c0392b;
+    color: #B03A2E;
     background: var(--card);
     padding: 0 0.25rem;
   }
@@ -510,7 +511,7 @@
   .gp-video {
     border: 2px dashed var(--accent);
     border-radius: 10px;
-    background: #f4f7fc;
+    background: #F3F1E8;
     text-align: center;
     padding: 1.6rem 1.2rem;
     margin: 1.1rem 0 0;
@@ -1057,7 +1058,7 @@
         pill.appendChild(el('br'));
         var ceilEl = el('small', { html: '&uarr; ' + ceiling });
         ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' unit' + ((total - graded) === 1 ? '' : 's') + ' in ' + qKey);
-        ceilEl.style.color = '#1f8b3b';
+        ceilEl.style.color = '#25663F';
         ceilEl.style.fontSize = '0.85em';
         pill.appendChild(ceilEl);
       }

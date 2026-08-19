@@ -8,18 +8,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#161616">
   <title>AP Stats — Teacher Dashboard</title>
   <style>
     :root {
-      --sg-bg: #f7f2e8;
-      --sg-text: #2a2520;
-      --sg-accent: #7a4a1f;
-      --sg-bar-track: #e2d6c0;
-      --sg-bg-card: #ffffff;
-      --sg-border: #d8ccb0;
-      --sg-text-dim: #5a5045;
-      --sg-low: #c0392b;
-      --sg-high: #2e7d32;
+      --sg-bg: #E5E3D2;        /* Tango: platinum */
+      --sg-text: #161616;
+      --sg-accent: #A8330A;    /* ink-tangerine */
+      --sg-bar-track: #D3D1C2;
+      --sg-bg-card: #F7F5EE;
+      --sg-border: #A9A79A;
+      --sg-text-dim: #6E6C62;
+      --sg-low: #B03A2E;
+      --sg-high: #25663F;
       --heat-green: #c8e6c9;
       --heat-yellow: #fff3a3;
       --heat-orange: #ffcc80;
@@ -35,7 +36,7 @@
     }
     .page-header {
       background: var(--sg-bg-card);
-      border-bottom: 1px solid var(--sg-border);
+      border-bottom: 3px solid #FF5B19;   /* Tango accent rule */
       padding: 16px 24px;
       display: flex;
       align-items: baseline;
@@ -410,13 +411,13 @@
       padding: 6px 10px;
       font: inherit; font-size: 0.82rem;
       background: var(--sg-bg, #fff);
-      color: var(--sg-accent, #7a4a1f);
-      border: 1px solid var(--sg-border, #d8ccb0);
+      color: var(--sg-accent, #A8330A);
+      border: 1px solid var(--sg-border, #A9A79A);
       border-radius: 4px;
       cursor: pointer;
       width: 100%;
     }
-    .tsc-nudges-older:hover { background: var(--sg-bg-card, #ffffff); border-color: var(--sg-accent, #7a4a1f); }
+    .tsc-nudges-older:hover { background: var(--sg-bg-card, #ffffff); border-color: var(--sg-accent, #A8330A); }
     .tsc-nudges-older[disabled] { opacity: 0.55; cursor: not-allowed; }
   </style>
 </head>
@@ -927,13 +928,13 @@
         ? window.rosterClient.current() : null;
       if (session && session.role === 'teacher') {
         el.textContent = 'Signed in as ' + session.realName + ' (teacher) — secret is optional.';
-        el.style.color = '#2e7d32';
+        el.style.color = '#25663F';
       } else if (session) {
         el.textContent = '(signed in as student — enter the teacher secret above)';
-        el.style.color = '#5a5045';
+        el.style.color = '#6E6C62';
       } else {
         el.textContent = 'Optional when signed in as a teacher via the Desk.';
-        el.style.color = '#5a5045';
+        el.style.color = '#6E6C62';
       }
     }
 
@@ -1939,8 +1940,8 @@
     $('load-btn').addEventListener('click', loadAll);
 
     // ===== Grade Backup & Recovery (download / verify / restore) =====
-    function backupStatus(msg, color) { var el = $('backup-status'); if (el) { el.textContent = msg; el.style.color = color || '#5a5045'; } }
-    function restoreStatus(msg, color) { var el = $('backup-restore-status'); if (el) { el.textContent = msg; el.style.color = color || '#5a5045'; } }
+    function backupStatus(msg, color) { var el = $('backup-status'); if (el) { el.textContent = msg; el.style.color = color || '#6E6C62'; } }
+    function restoreStatus(msg, color) { var el = $('backup-restore-status'); if (el) { el.textContent = msg; el.style.color = color || '#6E6C62'; } }
     function fmtReport(rep) {
       if (!rep) return 'no report';
       var t = rep.totals || {};

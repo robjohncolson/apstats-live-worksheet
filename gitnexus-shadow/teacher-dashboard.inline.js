@@ -883,6 +883,7 @@
 
 
 
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -927,13 +928,13 @@
         ? window.rosterClient.current() : null;
       if (session && session.role === 'teacher') {
         el.textContent = 'Signed in as ' + session.realName + ' (teacher) — secret is optional.';
-        el.style.color = '#2e7d32';
+        el.style.color = '#25663F';
       } else if (session) {
         el.textContent = '(signed in as student — enter the teacher secret above)';
-        el.style.color = '#5a5045';
+        el.style.color = '#6E6C62';
       } else {
         el.textContent = 'Optional when signed in as a teacher via the Desk.';
-        el.style.color = '#5a5045';
+        el.style.color = '#6E6C62';
       }
     }
 
@@ -1939,8 +1940,8 @@
     $('load-btn').addEventListener('click', loadAll);
 
     // ===== Grade Backup & Recovery (download / verify / restore) =====
-    function backupStatus(msg, color) { var el = $('backup-status'); if (el) { el.textContent = msg; el.style.color = color || '#5a5045'; } }
-    function restoreStatus(msg, color) { var el = $('backup-restore-status'); if (el) { el.textContent = msg; el.style.color = color || '#5a5045'; } }
+    function backupStatus(msg, color) { var el = $('backup-status'); if (el) { el.textContent = msg; el.style.color = color || '#6E6C62'; } }
+    function restoreStatus(msg, color) { var el = $('backup-restore-status'); if (el) { el.textContent = msg; el.style.color = color || '#6E6C62'; } }
     function fmtReport(rep) {
       if (!rep) return 'no report';
       var t = rep.totals || {};

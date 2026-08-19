@@ -171,6 +171,10 @@
 
 
 
+
+
+
+
 (function () {
   var main = document.getElementById('main');
   var UNIT_NAMES = {
@@ -230,7 +234,7 @@
   function dlMsg(msg) {
     if (!_dlbar) {
       _dlbar = document.createElement('div');
-      _dlbar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#0b5cad;color:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0));font-size:13px;text-align:center;z-index:55';
+      _dlbar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#161616;color:#E5E3D2;border-top:3px solid #FF5B19;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0));font-size:13px;text-align:center;z-index:55';
       document.body.appendChild(_dlbar);
     }
     _dlbar.textContent = msg; _dlbar.style.display = 'block';
@@ -480,21 +484,21 @@
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,20,35,.55);display:none;align-items:center;justify-content:center;z-index:100001;padding:16px';
     ov.innerHTML =
       '<style>'
-      + '#namefinder-overlay .nf-card{background:#fff;border-radius:16px;max-width:460px;width:100%;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0));box-shadow:0 12px 40px rgba(0,0,0,.35);text-align:center;font-family:-apple-system,Roboto,"Segoe UI",sans-serif}'
-      + '#namefinder-overlay .nf-title{font-size:16px;font-weight:800;color:#0b5cad;margin-bottom:2px}'
+      + '#namefinder-overlay .nf-card{background:#F7F5EE;border-radius:16px;max-width:460px;width:100%;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0));box-shadow:0 12px 40px rgba(0,0,0,.35);text-align:center;font-family:-apple-system,Roboto,"Segoe UI",sans-serif}'
+      + '#namefinder-overlay .nf-title{font-size:16px;font-weight:800;color:#161616;margin-bottom:2px}'
       + '#namefinder-overlay .nf-count{font-size:11px;color:#667;margin-bottom:12px}'
       + '#namefinder-overlay .nf-diamond{display:flex;flex-direction:column;align-items:center;gap:8px;margin:4px 0}'
       + '#namefinder-overlay .nf-row{display:flex;gap:8px;justify-content:center;width:100%}'
-      + '#namefinder-overlay .nf-tile{flex:1;min-width:120px;max-width:200px;min-height:64px;border:1.5px solid #bcd6ff;background:#eaf2ff;border-radius:12px;cursor:pointer;padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#12325a}'
-      + '#namefinder-overlay .nf-tile:active{background:#d6e6ff}'
+      + '#namefinder-overlay .nf-tile{flex:1;min-width:120px;max-width:200px;min-height:64px;border:1.5px solid #7FA5A9;background:#AECACD;border-radius:12px;cursor:pointer;padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#161616}'
+      + '#namefinder-overlay .nf-tile:active{background:#9BBFC3}'
       + '#namefinder-overlay .nf-arrow{font-size:20px;line-height:1}'
       + '#namefinder-overlay .nf-label{font-size:14px;font-weight:700;margin-top:3px}'
       + '#namefinder-overlay .nf-sub{font-size:9px;color:#5a6b82;margin-top:2px}'
       + '#namefinder-overlay .nf-foot{font-size:12px;color:#667;margin-top:12px}'
-      + '#namefinder-overlay .nf-foot a{color:#0b5cad;text-decoration:none}'
-      + '#namefinder-overlay input{width:100%;max-width:260px;font-size:16px;padding:11px;border:1.5px solid #bcd6ff;border-radius:10px;box-sizing:border-box}'
-      + '#namefinder-overlay .nf-go{margin-top:12px;background:#0b5cad;color:#fff;border:0;border-radius:10px;padding:12px 22px;font-size:15px;font-weight:700;min-width:150px}'
-      + '#namefinder-overlay .nf-err{color:#cc0000;font-size:11px;margin-top:6px;min-height:13px}'
+      + '#namefinder-overlay .nf-foot a{color:#A8330A;text-decoration:none}'
+      + '#namefinder-overlay input{width:100%;max-width:260px;font-size:16px;padding:11px;border:1.5px solid #A9A79A;border-radius:10px;box-sizing:border-box}'
+      + '#namefinder-overlay .nf-go{margin-top:12px;background:#FF5B19;color:#161616;border:0;border-radius:10px;padding:12px 22px;font-size:15px;font-weight:700;min-width:150px}'
+      + '#namefinder-overlay .nf-err{color:#B03A2E;font-size:11px;margin-top:6px;min-height:13px}'
       + '</style>'
       + '<div class="nf-card" role="dialog" aria-label="Sign in"><div id="nf-content"></div></div>';
     ov.addEventListener('click', function (e) { if (e.target === ov) closeNameFinder(); });
@@ -1413,7 +1417,7 @@
       else if (outcome === 'timeout') missText = willStrike ? '⏱ Too slow — out (0 for this card)' : '⏱ Too slow — it’ll come back';
       else missText = willStrike ? '✗ Out (0 for this card)' : '✗ Not quite — it’ll come back';
       fb.textContent = correct ? '✓ Correct' : missText;
-      fb.style.color = correct ? '#1a7f37' : '#b00020';
+      fb.style.color = correct ? '#25663F' : '#B03A2E';
     }
     if (_fc.mode === 'quick') {
       if (correct) _fc.correct += 1;

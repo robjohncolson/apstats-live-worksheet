@@ -20,8 +20,8 @@ const ANCHOR = /(<span [^>]*id="scoreDisplay"[^>]*><\/span>[ \t]*\r?\n[ \t]*<\/d
 
 const HINT =
   '<div class="revise-hint" style="margin:8px 0 12px;padding:7px 11px;'
-  + 'background:#fffbe6;border:1px solid #e6d98a;border-radius:6px;'
-  + 'font-size:12px;color:#5c4f00;line-height:1.55;max-width:680px">'
+  + 'background:#F3F1E8;border:1px solid #A9A79A;border-left:4px solid #FF5B19;border-radius:6px;'
+  + 'font-size:12px;color:#161616;line-height:1.55;max-width:680px">'
   + '&#8635; <b>Already did this one?</b> It stays open even after it&rsquo;s checked off &mdash; '
   + 'just change any answer and click <b>&#10003; Check Answers</b> again (no need to Reset). '
   + '<b>&#10024; Grade with AI</b> only ever <i>raises</i> your grade. '

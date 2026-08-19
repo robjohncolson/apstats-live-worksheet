@@ -12,18 +12,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#161616">
   <title>AP Stats - Live Classroom</title>
   <style>
     :root {
-      --sg-bg: #f7f2e8;
-      --sg-text: #2a2520;
-      --sg-accent: #7a4a1f;
-      --sg-bar-track: #e2d6c0;
-      --sg-bg-card: #ffffff;
-      --sg-border: #d8ccb0;
-      --sg-text-dim: #5a5045;
-      --sg-low: #c0392b;
-      --sg-high: #2e7d32;
+      --sg-bg: #E5E3D2;        /* Tango: platinum */
+      --sg-text: #161616;
+      --sg-accent: #A8330A;    /* ink-tangerine */
+      --sg-bar-track: #D3D1C2;
+      --sg-bg-card: #F7F5EE;
+      --sg-border: #A9A79A;
+      --sg-text-dim: #6E6C62;
+      --sg-low: #B03A2E;
+      --sg-high: #25663F;
     }
     * { box-sizing: border-box; }
     body {
@@ -35,7 +36,7 @@
     }
     .page-header {
       background: var(--sg-bg-card);
-      border-bottom: 1px solid var(--sg-border);
+      border-bottom: 3px solid #FF5B19;   /* Tango accent rule */
       padding: 16px 24px;
       display: flex;
       align-items: baseline;
@@ -192,7 +193,7 @@
       border: 1px solid var(--sg-border);
       transition: background 0.3s;
     }
-    .greenlight-dot.on { background: #2e7d32; border-color: #2e7d32; }
+    .greenlight-dot.on { background: #25663F; border-color: #25663F; }
 
     /* --- v1b: checked-in panel --- */
     .checkin-panel {
@@ -380,7 +381,7 @@
     .avatar-popup .ap-close {
       position: absolute; top: 6px; right: 8px;
       background: transparent; border: 0; cursor: pointer;
-      font-size: 18px; line-height: 1; color: var(--sg-text-dim, #5a5045);
+      font-size: 18px; line-height: 1; color: var(--sg-text-dim, #6E6C62);
       padding: 0 4px;
     }
     .avatar-popup .ap-header {
@@ -390,7 +391,7 @@
       padding-bottom: 6px;
     }
     .avatar-popup .ap-name { color: var(--sg-accent, #92400e); font-size: 0.92rem; }
-    .avatar-popup .ap-meta { color: var(--sg-text-dim, #5a5045); font-size: 0.78rem; }
+    .avatar-popup .ap-meta { color: var(--sg-text-dim, #6E6C62); font-size: 0.78rem; }
     .avatar-popup .ap-actions { display: grid; gap: 4px; }
     .avatar-popup .ap-action {
       text-align: left; padding: 6px 10px;
@@ -411,7 +412,7 @@
     /* Form inputs (shared across the 3 inline views). */
     .avatar-popup .ap-view { display: grid; gap: 6px; }
     .avatar-popup .ap-form-label {
-      font-size: 0.78rem; color: var(--sg-text-dim, #5a5045);
+      font-size: 0.78rem; color: var(--sg-text-dim, #6E6C62);
       margin-top: 4px;
     }
     .avatar-popup .ap-form-input {
@@ -422,7 +423,7 @@
     .avatar-popup .ap-form-input:invalid { border-color: #b91c1c; }
     .avatar-popup .ap-form-status {
       min-height: 18px; font-size: 0.78rem;
-      color: var(--sg-text-dim, #5a5045);
+      color: var(--sg-text-dim, #6E6C62);
     }
     .avatar-popup .ap-form-status.is-error { color: #b91c1c; }
     .avatar-popup .ap-form-status.is-success { color: #15803d; }
@@ -2609,7 +2610,7 @@
         html += '<div style="margin:8px 0;">'
           + '<strong>' + _escHtml(sec.section) + '</strong>'
           + ' &mdash; ' + onlineCount + ' online'
-          + (sec.live ? ' <span style="color:#c0392b;font-weight:bold">[LIVE]</span>' : '')
+          + (sec.live ? ' <span style="color:#B03A2E;font-weight:bold">[LIVE]</span>' : '')
           + '<ul style="margin:4px 0 0 18px;padding:0;font-size:0.88rem;color:var(--sg-text-dim);">';
         for (var k = 0; k < sec.members.length; k++) {
           var m = sec.members[k];

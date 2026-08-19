@@ -75,11 +75,11 @@ const WALL_BLOCK_LF =
         var ov = document.createElement('div');
         ov.id = 'ws-signin-wall';
         ov.style.cssText = 'position:fixed;inset:0;z-index:99999;'
-            + 'background:#eceff1;display:flex;align-items:center;'
+            + 'background:#E5E3D2;display:flex;align-items:center;'
             + 'justify-content:center;font-family:Geneva,Verdana,sans-serif;';
         var box = document.createElement('div');
         box.style.cssText = 'max-width:380px;margin:16px;padding:22px 26px;'
-            + 'background:#fff;border:1px solid #999;border-radius:8px;'
+            + 'background:#F7F5EE;border:1px solid #161616;border-radius:8px;'
             + 'text-align:center;box-shadow:0 6px 24px rgba(0,0,0,0.25);';
         var h = document.createElement('div');
         h.textContent = '🔒 Sign in to open this worksheet';
@@ -91,8 +91,8 @@ const WALL_BLOCK_LF =
         var a = document.createElement('a');
         a.href = 'ap_stats_roadmap_square_mode.html';
         a.textContent = 'Open the Desk to sign in';
-        a.style.cssText = 'display:inline-block;padding:7px 16px;background:#0000cc;'
-            + 'color:#fff;text-decoration:none;border-radius:5px;font-size:12px;';
+        a.style.cssText = 'display:inline-block;padding:7px 16px;background:#FF5B19;'
+            + 'color:#161616;font-weight:bold;text-decoration:none;border-radius:5px;font-size:12px;';
         box.appendChild(h); box.appendChild(p); box.appendChild(a);
         ov.appendChild(box);
         document.body.appendChild(ov);

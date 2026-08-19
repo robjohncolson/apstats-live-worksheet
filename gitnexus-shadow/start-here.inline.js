@@ -731,6 +731,7 @@
 
 
 
+
     (function () {
       'use strict';
 
@@ -1057,7 +1058,7 @@
         pill.appendChild(el('br'));
         var ceilEl = el('small', { html: '&uarr; ' + ceiling });
         ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' unit' + ((total - graded) === 1 ? '' : 's') + ' in ' + qKey);
-        ceilEl.style.color = '#1f8b3b';
+        ceilEl.style.color = '#25663F';
         ceilEl.style.fontSize = '0.85em';
         pill.appendChild(ceilEl);
       }

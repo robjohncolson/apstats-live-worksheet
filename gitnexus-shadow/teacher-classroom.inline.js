@@ -891,6 +891,7 @@
 
 
 
+
     // ===== identity helpers =====
 
     function currentSession() {
@@ -2609,7 +2610,7 @@
         html += '<div style="margin:8px 0;">'
           + '<strong>' + _escHtml(sec.section) + '</strong>'
           + ' &mdash; ' + onlineCount + ' online'
-          + (sec.live ? ' <span style="color:#c0392b;font-weight:bold">[LIVE]</span>' : '')
+          + (sec.live ? ' <span style="color:#B03A2E;font-weight:bold">[LIVE]</span>' : '')
           + '<ul style="margin:4px 0 0 18px;padding:0;font-size:0.88rem;color:var(--sg-text-dim);">';
         for (var k = 0; k < sec.members.length; k++) {
           var m = sec.members[k];
