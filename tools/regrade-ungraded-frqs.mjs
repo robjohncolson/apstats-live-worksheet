@@ -330,7 +330,14 @@ export function parseArgs(argv) {
   return options;
 }
 
-export function loadConfig(configPath = DEFAULT_CONFIG_PATH) {
+// Config comes from ~/grade-backups/config.json on the teacher's box, or from
+// APSTATS_ROSTER_URL / APSTATS_TEACHER_KEY in the environment (the hourly GitHub
+// Actions sweep, .github/workflows/frq-regrade.yml). Env wins when both are set,
+// so the Actions runner never depends on a file.
+export function loadConfig(configPath = DEFAULT_CONFIG_PATH, env = process.env) {
+  const fromEnv = { rosterUrl: env.APSTATS_ROSTER_URL, teacherKey: env.APSTATS_TEACHER_KEY };
+  if (fromEnv.rosterUrl && fromEnv.teacherKey) return fromEnv;
+
   const config = JSON.parse(readFileSync(configPath, 'utf8'));
   if (!config.rosterUrl || !config.teacherKey) {
     throw new Error(`${configPath}: rosterUrl and teacherKey are required`);

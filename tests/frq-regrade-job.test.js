@@ -273,3 +273,26 @@ describe('regrade job HTTP flow', () => {
     expect(result.exitCode).toBe(1);
   });
 });
+
+describe('config sources (GitHub Actions hourly sweep)', () => {
+  it('env APSTATS_ROSTER_URL / APSTATS_TEACHER_KEY wins over the config file', async () => {
+    const { loadConfig } = await import('../tools/regrade-ungraded-frqs.mjs');
+    const config = loadConfig('/nonexistent/config.json', {
+      APSTATS_ROSTER_URL: 'https://roster.example',
+      APSTATS_TEACHER_KEY: 'k',
+    });
+    expect(config).toEqual({ rosterUrl: 'https://roster.example', teacherKey: 'k' });
+  });
+  it('falls back to the file when the env pair is incomplete', async () => {
+    const { loadConfig } = await import('../tools/regrade-ungraded-frqs.mjs');
+    expect(() => loadConfig('/nonexistent/config.json', { APSTATS_ROSTER_URL: 'x' })).toThrow();
+  });
+  it('the workflow is hourly, gated on the secret, and calls the job with --apply', () => {
+    const yml = readFileSync(resolve(ROOT, '.github/workflows/frq-regrade.yml'), 'utf8');
+    expect(yml).toMatch(/cron: '37 \* \* \* \*'/);
+    expect(yml).toMatch(/APSTATS_TEACHER_KEY: \$\{\{ secrets\.APSTATS_TEACHER_KEY \}\}/);
+    expect(yml).toMatch(/if \[ -z "\$APSTATS_TEACHER_KEY" \]; then/);
+    expect(yml).toMatch(/node tools\/regrade-ungraded-frqs\.mjs --apply/);
+    expect(yml).toMatch(/concurrency:\s*\n\s*group: frq-regrade/);
+  });
+});

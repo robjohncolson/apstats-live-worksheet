@@ -1,0 +1,54 @@
+name: FRQ regrade sweep
+
+# Hourly safety net for worksheet reflections that were saved but never graded
+# (frq-grading-system: client auto-grade → server floor → THIS sweep). The same job
+# runs on the teacher's box as a systemd timer; this copy runs here so a grade never
+# depends on that machine being on. Reads the rubrics from the checkout, grades via
+# the curriculum-render grader, writes through roster-server's floor-respecting
+# /ledger/frq-regrade (never lowers a grade).
+#
+# Needs ONE repository secret: APSTATS_TEACHER_KEY (roster-server's TEACHER_KEY).
+# Without it the run exits 0 with a notice — nothing fails, nothing is graded.
+
+on:
+  schedule:
+    - cron: '37 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (report only, no grades written)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: frq-regrade
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APSTATS_ROSTER_URL: https://roster-production-12c1.up.railway.app
+      APSTATS_TEACHER_KEY: ${{ secrets.APSTATS_TEACHER_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci          # the manifest evaluator needs jsdom
+      - name: Sweep ungraded FRQ rows
+        run: |
+          if [ -z "$APSTATS_TEACHER_KEY" ]; then
+            echo "::notice::APSTATS_TEACHER_KEY secret not set — sweep skipped (add it under Settings → Secrets → Actions)."
+            exit 0
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            node tools/regrade-ungraded-frqs.mjs
+          else
+            node tools/regrade-ungraded-frqs.mjs --apply
+          fi
