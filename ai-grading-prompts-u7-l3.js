@@ -85,11 +85,11 @@ window.RUBRICS_U7L3 = {
         expectedElements: [
             { id: "inside-plausible", description: "Explains that a claimed mean inside the interval is a plausible value for the population mean", required: true },
             { id: "no-evidence-against", description: "States that if the claimed value is inside the interval, there is not convincing evidence against that claim", required: true },
-            { id: "sugar-interval", description: "Uses the powdered sugar example with 907 inside the interval 900.92 to 912.68", required: true },
+            { id: "sugar-interval", description: "Uses the powdered sugar example to explain that 907 is inside its confidence interval (exact endpoints are not required)", required: true },
             { id: "sugar-conclusion", description: "Concludes there is not convincing evidence that the powdered sugar bags are underfilled", required: true },
             { id: "all-above-logic", description: "Explains that if the entire interval is above the comparison value, the data support a greater-than claim", required: true },
             { id: "unit-conversion", description: "Notes that 2 scoops per second must be converted to 60 scoops per 30 seconds", required: true },
-            { id: "crab-example", description: "Uses the fiddler crab interval 65.89 to 69.41 and notes it is entirely above 60", required: true },
+            { id: "crab-example", description: "Uses the fiddler crab example to explain that its interval is entirely above 60 scoops per 30 seconds (exact endpoints are not required)", required: true },
             { id: "crab-conclusion", description: "Concludes there is convincing evidence the mean feeding rate is greater than 2 scoops per second", required: true }
         ],
         scoringGuide: {

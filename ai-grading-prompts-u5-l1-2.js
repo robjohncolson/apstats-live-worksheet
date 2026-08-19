@@ -74,7 +74,7 @@ const RUBRICS_U5L12 = {
             { id: "normal-justification", description: "Notes that X-Y is approximately normal because both X and Y are independently normal", required: false }
         ],
         scoringGuide: {
-            E: "Correctly answers all three parts with Z-score work shown, correctly finds parameters of the difference distribution (especially adding variances), and interprets the probability that Brand Y weighs more.",
+            E: "Correctly answers all three parts, shows the requested Z-score work, correctly finds the parameters of the difference distribution (especially adding variances), and obtains the correct probability that Brand Y weighs more.",
             P: "Gets 2 of 3 parts substantially correct, or gets all parts but with minor errors (e.g., subtracting SDs instead of adding variances, or rounding errors).",
             I: "Gets fewer than 2 parts correct, shows fundamental misunderstanding of linear combinations or Z-score calculations, or provides minimal work."
         },

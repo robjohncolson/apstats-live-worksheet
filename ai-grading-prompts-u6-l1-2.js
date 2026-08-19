@@ -50,7 +50,7 @@ const RUBRICS_U6L12 = {
             { id: "interpretation", description: "Interprets: We are 95% confident that the true proportion of all students at this school who have received the flu vaccine is between approximately 0.563 and 0.717", required: true }
         ],
         scoringGuide: {
-            E: "Correctly verifies all three conditions with calculations in context, computes the CI with correct SE and z*, and provides a proper interpretation referencing the sample and population.",
+            E: "Correctly verifies all three conditions with calculations in context, computes the confidence interval with the correct standard error and z*, and gives a proper interpretation naming the population proportion of all students at the school who have received the flu vaccine.",
             P: "Verifies conditions but missing calculations (e.g., just says 'random sample' without referencing the problem), or has minor calculation errors, or interpretation lacks context.",
             I: "Skips condition verification, makes fundamental calculation errors, or provides no interpretation or an incorrect interpretation."
         },

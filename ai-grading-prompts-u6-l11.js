@@ -90,7 +90,7 @@ window.RUBRICS_U6L11 = {
             { id: "p-value", description: "States the p-value as 0.0122", required: true },
             { id: "right-tail-justification", description: "Explains that the p-value is a right-tail probability because the alternative is p1 > p2", required: true },
             { id: "p-value-interpretation", description: "Interprets the p-value by assuming the null hypothesis is true and describing the probability of getting a difference of 0.134 or greater by chance alone in the random assignment", required: true },
-            { id: "context-language", description: "Uses context about azithromycin and placebo cure proportions for patients like those in the study", required: false }
+            { id: "context-language", description: "Uses the context of azithromycin and placebo cure proportions for patients like those in the study", required: true }
         ],
         scoringGuide: {
             E: "Response correctly gives the pooled proportion, z statistic, and p-value, explains the right-tail choice, and interprets the p-value in context under the null hypothesis",

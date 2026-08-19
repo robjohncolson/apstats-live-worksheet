@@ -88,7 +88,7 @@ window.RUBRICS_U6L7 = {
             { id: "power-meaning", description: "Explains in context that if the true proportion who would choose the green cup is 0.64, there is an 0.80 probability of finding convincing evidence that more than 50% of students would choose the green cup", required: true },
             { id: "beta-value", description: "Finds the probability of a Type II error as 1 - 0.80 = 0.20", required: true },
             { id: "increase-power", description: "Names at least one valid way to increase power, such as increasing sample size, increasing alpha, or decreasing standard error", required: true },
-            { id: "not-h0-probability", description: "Does not confuse power with the probability that H0 is false or the probability that the study is correct", required: true },
+            { id: "not-h0-probability", description: "Does not confuse power with the probability that H0 is false or the probability that the study is correct", required: false },
             { id: "factor-explanation", description: "Briefly explains why the named change increases the chance of rejecting a false H0", required: false }
         ],
         scoringGuide: {
