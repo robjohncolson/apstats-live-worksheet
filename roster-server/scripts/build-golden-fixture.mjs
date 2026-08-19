@@ -421,6 +421,15 @@ async function main() {
     outputs['expected.json'] = expected;
   }
 
+  // Production runs with USE_V3_GRADING=true (Railway). The frozen config captured
+  // here decides the oracle's shape, so say what was captured — loudly.
+  {
+    const cfg = (inputs.productionGradeInputs && inputs.productionGradeInputs.config) || {};
+    const useV3 = cfg.useV3 === true;
+    const pc = !!(cfg.pcTrack && cfg.pcTrack.enabled);
+    console.log(`Captured config flags: useV3=${useV3} pcTrack.enabled=${pc}`);
+    if (!useV3) console.warn('WARNING: useV3=false captured — production runs USE_V3_GRADING=true; rebuild with `USE_V3_GRADING=true node scripts/build-golden-fixture.mjs --accept` for a production-shaped oracle.');
+  }
   privacySelfCheck(outputs, snapshot);
   await mkdir(outDir, { recursive: true });
   await writeJsonAtomic(resolve(outDir, 'students.json'), studentsDoc);

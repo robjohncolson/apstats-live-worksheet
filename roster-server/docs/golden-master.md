@@ -102,3 +102,17 @@ no records, its records are U1-only, it has one section, no reviews, and its V3
 and PC result fields are null/inert. It remains useful as a local historical
 regression sample, but it is not the committed coverage oracle and must not be
 described as broad grade-path coverage.
+
+## Production flags (important)
+
+Railway runs roster-server with `USE_V3_GRADING=true` (and `PC_TRACK_ENABLED` unset until the
+first Progress Check is scored). The builder captures the config *of the shell it runs in*, so
+build the local oracle with the same flags or its grades are not production-shaped:
+
+```
+cd roster-server && USE_V3_GRADING=true node scripts/build-golden-fixture.mjs --accept
+```
+
+The builder prints `Captured config flags: useV3=… pcTrack.enabled=…` and warns when useV3 is
+off. When `PC_TRACK_ENABLED` is flipped on in production, rebuild with it set too.
+

@@ -85,6 +85,11 @@ If you already have a per-topic date list (topic → date per period), send that
 
 ---
 
+## 4b. September env flips (Railway, teacher) — status 2026-08-19
+- `PC_FIGURES_SUPABASE_URL/_SERVICE_KEY` — SET ✓. `TRAINER_DECK_ALLOWLIST` includes `ap-stats-flashcards` ✓. `USE_V3_GRADING=true` ✓ (production is V3; build the local golden oracle with the same flag).
+- `TEACHER_KEY` — rotate off the published default (then update `~/grade-backups/config.json` teacherKey).
+- `PC_TRACK_ENABLED=true` — **only after the first paper PC is scored** (SY2627_ACTIVATION_RUNBOOK.md Step 5); flipping early caps unscored students at 70% of Work. Rebuild the local oracle with the flag afterwards.
+
 ## 5. Open decisions (teacher)
 
 - Keep old-id keys internally for SY2627 (spec's recommendation: yes — no history rewrite)?
