@@ -153,17 +153,22 @@
   // through: explicit globals -> shared rosterClient identity -> stable guest
   // identity. So a signed-out student still appears (tagged Guest_) and their
   // work is tracked under one migratable name.
+  // 2026-08-19: the ROSTER identity is the canonical presence name on every
+  // surface (it used to come AFTER the typed legacy name here, while the Desk
+  // announced the roster name — so one student showed up several times in
+  // "Online Now", differently capitalized). The Desk's list also folds
+  // case-variants of one identity into a single row.
   function _presenceUsername() {
-      var u = (window.currentUsername || localStorage.getItem('consensusUsername') || '').trim();
-      // Guests are retired (2026-06-25): never announce a Guest_ alias (e.g. a stale
-      // consensusUsername left by an old guest session) into presence.
-      if (u && !/^Guest_/i.test(u)) return u;
       try {
           if (window.rosterClient && typeof window.rosterClient.current === 'function') {
               var who = window.rosterClient.current();
               if (who && who.username) return String(who.username).trim();
           }
       } catch (e) {}
+      var u = (window.currentUsername || localStorage.getItem('consensusUsername') || '').trim();
+      // Guests are retired (2026-06-25): never announce a Guest_ alias (e.g. a stale
+      // consensusUsername left by an old guest session) into presence.
+      if (u && !/^Guest_/i.test(u)) return u;
       // No getGuestIdentity fallback — a signed-out visitor gets no presence identity,
       // so they never appear as Guest_ to the class.
       return '';

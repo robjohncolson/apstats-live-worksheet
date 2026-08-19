@@ -4707,15 +4707,26 @@
       "timestamp": "2026-08-19T09:58:07Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "510d3b79c34b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "completed",
+      "duration_seconds": 277.418,
+      "timestamp": "2026-08-19T10:03:54Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 400,
-    "cc_to_codex": 400,
+    "total_calls": 401,
+    "cc_to_codex": 401,
     "codex_to_cc": 0,
-    "completed": 303,
+    "completed": 304,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 626.535
+    "avg_duration_seconds": 625.665
   }
 }

@@ -204,6 +204,28 @@ function loadDoge({ teacher = false, gameOpen = false } = {}) {
   return { D, calls, sb: sandbox.studyBreak, dd: () => document.getElementById('doge-dropdown').innerHTML };
 }
 
+describe('D0. DogePresence render — identity-aware rows (2026-08-19)', () => {
+  it('folds differently-cased copies of one student into ONE row and keeps the first spelling', () => {
+    const { D, dd } = loadDoge();
+    D.players = ['date_tiger', 'Date_Tiger', 'DATE_TIGER', 'Ana_Fox'];
+    D.locations = { Date_Tiger: { surface: 'worksheet', lesson: 'U1 L2', onDesk: false }, Ana_Fox: { surface: 'desk', lesson: null, onDesk: true } };
+    D.renderDropdown();
+    const html = dd();
+    expect(html).toContain('Online Now (3)');                 // me + 2 distinct peers
+    expect((html.match(/toggleRow\(/g) || []).length).toBe(2);
+    expect(html).toContain('date_tiger');
+    expect(html).not.toContain('DATE_TIGER');
+    expect(html).toContain('>Worksheet<');                    // location found case-insensitively
+  });
+  it('never lists yourself among the peers, whatever the casing', () => {
+    const { D, dd } = loadDoge();
+    D.players = ['me_self', 'ME_SELF', 'Ana_Fox'];
+    D.renderDropdown();
+    expect(dd()).toContain('Online Now (2)');
+    expect((dd().match(/toggleRow\(/g) || []).length).toBe(1);
+  });
+});
+
 describe('D. DogePresence render — location chips', () => {
   it('a student sees the COARSE bucket (Worksheet), not the lesson', () => {
     const { D, dd } = loadDoge({ teacher: false });

@@ -874,6 +874,15 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             z-index: 300;
         }
+        /* Overlay stacking order (2026-08-19). All overlays share .dialog-overlay,
+           so DOM order used to decide who is on top — and #bf-overlay sits BEFORE
+           #resource-overlay in the markup, so "Do flashcards" opened BEHIND the
+           day panel. Explicit tiers: day panel (base) < flashcards/quiz/review
+           (320) < alerts + sign-in/signup/password (340+). */
+        #resource-overlay { z-index: 300; }
+        #bf-overlay, #day-grade-overlay, #grade-help-overlay, #my-gradebook-overlay, #my-receipts-overlay, #donow-bump-overlay { z-index: 320; }
+        #dialog-overlay { z-index: 340; }
+        #signin-overlay, #signup-overlay, #pwchange-overlay { z-index: 350; }
         .dialog-box {
             position: absolute;
             top: 50%; left: 50%;
@@ -21772,12 +21781,36 @@ const DogePresence = {
             // without one — no one ever appears as Guest_ in "Online Now".
             var roster = null;
             try { roster = (window.rosterClient && rosterClient.current && rosterClient.current()) || null; } catch (e) {}
-            this.username = (roster && roster.username)
+            var raw = (roster && roster.username)
                 || localStorage.getItem('student-name')
                 || localStorage.getItem('username')
                 || null;
+            this.username = raw ? String(raw).trim() : null;
         }
         return this.username;
+    },
+    // Identity-aware peer list: ONE row per person. The feed can carry the same
+    // student under differently-cased names (a worksheet announcing a typed legacy
+    // name vs the Desk announcing the roster id); fold them case-insensitively,
+    // keep the first-seen spelling for display, never list yourself.
+    _peers() {
+        const meKey = String(this.getUsername() || '').trim().toLowerCase();
+        const seen = new Set();
+        const out = [];
+        (this.players || []).forEach(p => {
+            const key = String(p || '').trim().toLowerCase();
+            if (!key || key === meKey || seen.has(key)) return;
+            seen.add(key);
+            out.push(p);
+        });
+        return out;
+    },
+    _locationFor(p) {
+        if (p == null) return null;
+        if (this.locations[p]) return this.locations[p];
+        const key = String(p).trim().toLowerCase();
+        for (const k in this.locations) { if (String(k).trim().toLowerCase() === key) return this.locations[k]; }
+        return null;
     },
 
     toggle() {
@@ -21830,12 +21863,13 @@ const DogePresence = {
             const myLabel = myReal
                 ? `<strong>${_deskEsc(myReal)}</strong> <span style="opacity:.55;font-size:.85em">${_deskEsc(me)}</span>`
                 : _deskEsc(me);
-            html = `<div class="doge-dd-header">Online Now (${this.players.length + 1})</div>`;
+            const peers = this._peers();
+            html = `<div class="doge-dd-header">Online Now (${peers.length + 1})</div>`;
             html += `<div class="doge-dd-self">`
                   + `<span class="doge-dd-name">${myLabel} <span style="opacity:.6;font-style:italic">(you)</span></span>`
-                  + this._locationChip(this.locations[me] || { surface: 'desk', lesson: null, onDesk: true }, teacher)
+                  + this._locationChip(this._locationFor(me) || { surface: 'desk', lesson: null, onDesk: true }, teacher)
                   + `</div>`;
-            this.players.forEach(p => {
+            peers.forEach(p => {
                 const real = DeskRoster.realName(p);
                 let label;
                 if (real) {
@@ -21845,7 +21879,7 @@ const DogePresence = {
                 } else {
                     label = _deskEsc(p);
                 }
-                const loc = this.locations[p] || null;
+                const loc = this._locationFor(p);
                 const expanded = (this.expandedRow === p);
                 // XSS-safe username for an onclick="" attribute: usernames come from the
                 // UNAUTHENTICATED presence WS (server only .trim()s them), so they are untrusted.
@@ -21863,7 +21897,7 @@ const DogePresence = {
                 // submenu lives in the dropdown markup so a presence re-render keeps it open.
                 if (expanded) html += this._submenuHtml(p, loc, pArg);
             });
-            if (this.players.length === 0) html += '<div class="doge-dd-empty">No classmates online yet</div>';
+            if (peers.length === 0) html += '<div class="doge-dd-empty">No classmates online yet</div>';
         }
         html += '<div class="doge-dd-sep"></div>';
         if (/^guest_/i.test(String(DogePresence.getUsername()))) {
@@ -23376,7 +23410,7 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-bdz5';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-wza8';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Flashcard sync: flush the debounced push when the tab hides / closes, and
 // re-pull (throttled) when it comes back — another device may have practiced.
