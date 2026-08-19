@@ -67,7 +67,7 @@ window.RUBRICS_U6L5 = {
             { id: "assumes-h0-true", description: "Explains that the p-value assumes H0 IS true from the start (it is a conditional probability given H0 is true)", required: true },
             { id: "correct-interpretation", description: "Provides a correct interpretation: assuming 50% of all students would choose the green cup, there is a 0.1357 probability of getting a sample proportion of 0.60 or greater by chance alone in a random sample of 30 students", required: true },
             { id: "as-extreme-or-more", description: "Uses 'as extreme as or more extreme' or 'or greater' language (not just 'exactly 0.60')", required: true },
-            { id: "by-chance-alone", description: "Includes the phrase 'by chance alone' in the interpretation", required: false }
+            { id: "by-chance-alone", description: "States that the probability describes what could occur by chance alone under the null model", required: true }
         ],
         scoringGuide: {
             E: "Response clearly identifies why 'probability that H0 is true' is wrong, explains that the p-value assumes H0 is true, and provides a correct contextual interpretation with 'or greater' and 'by chance alone'",
@@ -116,8 +116,8 @@ window.RUBRICS_U6L5 = {
             { id: "one-sided-left", description: "Recognizes this is a one-sided test (Ha: p < 0.10) and finds area in the left tail only, not both tails", required: true },
             { id: "correct-interpretation", description: "Interprets the p-value: Assuming 10% of all students at the university are left-handed, there is approximately a 0.0516 probability of getting a sample proportion of 0.06 or less by chance alone in a random sample of 150 students", required: true },
             { id: "assumes-h0", description: "Interpretation includes the assumption that H0 is true", required: true },
-            { id: "or-more-extreme", description: "Interpretation includes 'or less' / 'or more extreme' language", required: false },
-            { id: "by-chance-alone", description: "Interpretation includes 'by chance alone'", required: false }
+            { id: "or-more-extreme", description: "Interpretation includes 'or less' / 'or more extreme' language", required: true },
+            { id: "by-chance-alone", description: "Interpretation includes 'by chance alone'", required: true }
         ],
         scoringGuide: {
             E: "Response correctly calculates z approximately -1.63 using p0 = 0.10, finds the left-tail p-value approximately 0.0516, and provides a correct contextual interpretation that assumes H0 is true and includes 'or less' and 'by chance alone'",

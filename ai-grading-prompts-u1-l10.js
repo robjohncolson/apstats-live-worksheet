@@ -84,11 +84,11 @@ window.RUBRICS_U1L10 = {
             { id: 'area-between', description: 'Explains that area between two values is found by calculating two z-scores and subtracting two left-tail areas', required: true },
             { id: 'backward-process', description: 'Explains that backward problems use the target area to find a z-score first and then solve for the original value with the mean and standard deviation', required: true },
             { id: 'zscore-language', description: 'Uses z-score language such as area to the left, z-score, mean, or standard deviation', required: true },
-            { id: 'context', description: 'Uses normal-distribution context such as the blood-pressure examples from class', required: true },
+            { id: 'context', description: 'Uses normal-distribution context such as the blood-pressure examples from class', required: false },
             { id: 'example-values', description: 'May mention examples like 0.0668 for above 125, 0.13 between 120 and 129, or z = 1.28 and x = 122.8 for the highest 10%', required: false }
         ],
         scoringGuide: {
-            E: 'Response accurately explains all three Table A strategies and correctly connects them to z-scores and the normal-distribution context.',
+            E: 'Response accurately explains all three Table A strategies and correctly connects them to z-scores; a correct contextual example may strengthen the explanation but is not required.',
             P: 'Response explains some of the Table A process correctly but leaves out one problem type, weakens the connection to z-scores, or uses thin context.',
             I: 'Response does not correctly explain how to use Table A and z-scores for these normal-distribution problems.'
         },

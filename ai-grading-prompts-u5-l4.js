@@ -46,7 +46,7 @@ window.RUBRICS_U5L4 = {
         expectedElements: [
             { id: "unbiased-means-on-average", description: "Explains that 'unbiased' means the average across ALL possible samples equals the parameter, not that any single sample is correct", required: true },
             { id: "single-sample-can-miss", description: "Acknowledges that individual samples can be far from the parameter — unbiased does NOT guarantee accuracy for one sample", required: true },
-            { id: "centered-at-parameter", description: "Describes the sampling distribution as centered at mu — misses are equally likely on both sides", required: true },
+            { id: "centered-at-parameter", description: "Describes the sampling distribution as centered at μ, so the estimator has no systematic tendency to overestimate or underestimate", required: true },
             { id: "variability-is-natural", description: "Mentions that variability from sample to sample is expected and natural", required: false },
             { id: "uses-example", description: "References the Weimaraner example (2.3 vs 5) to illustrate the concept", required: false }
         ],
@@ -70,7 +70,7 @@ window.RUBRICS_U5L4 = {
             { id: "mean-not-equal-parameter", description: "States that the mean of all sample ranges (7.8) does not equal the population range (10), so it's biased", required: true },
             { id: "direction-of-bias", description: "Explains that the sample range systematically underestimates — it tends to be LESS than the population range", required: true },
             { id: "why-one-direction", description: "Explains WHY: a sample can never have a range larger than the population range (can't get values outside population boundaries), so sample ranges can only be ≤ population range", required: true },
-            { id: "overestimation-possible", description: "Addresses whether overestimation is possible for a different statistic (yes, in principle a different statistic could systematically overestimate)", required: false },
+            { id: "overestimation-possible", description: "Explains that a different estimator can be biased upward if its sampling distribution is centered above the parameter, so it systematically overestimates", required: true },
             { id: "dot-plot-reference", description: "References the dot plot clustering to the left of 10", required: false }
         ],
         scoringGuide: {

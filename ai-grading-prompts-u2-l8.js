@@ -103,7 +103,7 @@ window.RUBRICS_U2L8 = {
         expectedElements: [
             { id: 'r-squared-meaning', description: 'States that r squared is the proportion or percent of variation in the response variable explained by the explanatory variable in the model', required: true },
             { id: 'context-interpretation', description: 'Interprets the example by saying 90.3% of the variation in exam questions correct is explained by the linear relationship with attendance', required: true },
-            { id: 'r-squared-equals-r-squared', description: 'States that r squared equals the correlation squared', required: true },
+            { id: 'r-squared-equals-r-squared', description: 'States that r squared equals the correlation squared', required: false },
             { id: 'output-slope', description: 'Explains that the slope is the coefficient of the explanatory variable in computer output', required: true },
             { id: 'output-intercept', description: 'Explains that the y-intercept is the constant in computer output', required: true },
             { id: 'strength-note', description: 'May mention that larger r squared values indicate a stronger relationship', required: false }

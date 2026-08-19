@@ -68,7 +68,7 @@ const REFLECTION_RUBRICS_U4L345 = {
     expectedElements: [
       { id: "long-run-interpretation", description: "If we randomly select many albums, about 20% would be jazz", required: true },
       { id: "relative-frequency", description: "Probability represents relative frequency in long run / repeated selections", required: true },
-      { id: "generalizability", description: "Percentage/probability generalizes to any sample size, not just 2105", required: true },
+      { id: "generalizability", description: "Explains that the proportion communicates an approximate long-run rate and can support predictions over many future selections, unlike a raw count tied to the 2,105 observed sales", required: true },
       { id: "prediction-utility", description: "Can make predictions about future selections or different sample sizes", required: false },
       { id: "with-replacement", description: "With replacement maintains the probability for each selection", required: false }
     ],
@@ -127,7 +127,7 @@ const REFLECTION_RUBRICS_U4L345 = {
     commonMistakes: [
       "Not mentioning that both the numerator AND denominator change",
       "Saying probabilities are always the same regardless of replacement",
-      "Confusing independence with sampling with replacement",
+      "Claiming the draws are independent without explaining that replacement restores the original 4-red-out-of-10 composition and keeps the second-draw probability unchanged.",
       "Not connecting 'conditional probability' to the concept of changing composition"
     ],
     contextFromVideo: `From Topic 4.5: "So, the chance that the first marble is fully red is going to be 4 out of 10. But what about the second marble being fully red? It is going to depend on what the first marble was, and so because of that, then we say that the probability of the second marble is conditional on the status of whatever the first marble that was selected." "What if the first marble is red? Now what's my likelihood of getting an all red? It changes to 3 out of 9."`
@@ -143,10 +143,10 @@ const REFLECTION_RUBRICS_U4L345 = {
       { id: "not-mutually-exclusive", description: "Freshman and Math are NOT mutually exclusive because their intersection is not zero (45 students are both)", required: true },
       { id: "conditional-freshman", description: "P(Math | Freshman) = 45/100 = 0.45 or 45%", required: true },
       { id: "conditional-sophomore", description: "P(Math | Sophomore) = 60/100 = 0.60 or 60%", required: true },
-      { id: "comparison", description: "Notes that sophomores are more likely to prefer Math than freshmen (optional but good)", required: false }
+      { id: "comparison", description: "Interprets the comparison: sophomores in this survey were more likely to prefer Math than freshmen (60% versus 45%)", required: true }
     ],
     scoringGuide: {
-      E: "All calculations correct, interprets P(Math), correctly explains why not mutually exclusive, and calculates both conditional probabilities",
+      E: "All calculations are correct, P(Math) is interpreted, non-mutual-exclusivity is explained, and the two conditional probabilities are compared in context.",
       P: "Most calculations correct but missing interpretation OR makes one computational error OR incomplete explanation of mutual exclusivity",
       I: "Multiple errors in probability calculations OR fundamentally misunderstands mutually exclusive or conditional probability"
     },

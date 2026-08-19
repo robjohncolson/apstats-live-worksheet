@@ -107,7 +107,7 @@ window.RUBRICS_U9L3 = {
         questionText: 'Use the 2019 real estate agent example to describe the confidence interval for slope from start to finish. Define the parameter and identify the procedure, state the sample slope, degrees of freedom, critical value, and standard error, report the margin of error and final interval, interpret the interval in context, and explain whether the interval contradicts the agent\'s belief about a $2,000 decrease per mile and why.',
         expectedElements: [
             { id: 'parameter', description: 'Defines the parameter as the slope of the population regression line for predicting selling price from distance from the city center for all three-bedroom houses near this city', required: true },
-            { id: 'procedure', description: 'Identifies the procedure as a one-sample t interval for the slope beta and notes that conditions are assumed met', required: true },
+            { id: 'procedure', description: 'Identifies the procedure as a t-interval for the slope of a population regression line and notes that conditions are assumed met', required: true },
             { id: 'b-df-tstar', description: 'Gives b = -2.158, df = 18, and t* = 2.101', required: true },
             { id: 'se-and-me', description: 'Reports the standard error 0.149 and the margin of error 0.313', required: true },
             { id: 'final-interval', description: 'Gives the final interval -2.471 to -1.845', required: true },

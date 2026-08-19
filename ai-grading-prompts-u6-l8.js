@@ -70,9 +70,9 @@ window.RUBRICS_U6L8 = {
         expectedElements: [
             { id: "procedure-name", description: "Identifies the correct procedure as a two-sample z-interval for a difference in proportions", required: true },
             { id: "independence", description: "Explains that the data come from two independent random samples, one from each park", required: true },
-            { id: "ten-percent", description: "States that the 10% condition is reasonable because the parks are large so 210 and 190 are no more than 10% of the tree populations", required: true },
+            { id: "ten-percent", description: "States that the 10% condition requires Park A to contain at least 2,100 trees and Park B at least 1,900 trees; the word 'large' makes this plausible but does not provide exact totals", required: true },
             { id: "large-counts", description: "Checks the large counts condition using 42, 168, 30, and 160, and notes that all are at least 10", required: true },
-            { id: "conclusion", description: "Concludes that the conditions are met and the interval procedure is appropriate", required: true },
+            { id: "conclusion", description: "Concludes that the two-sample z-interval is appropriate provided the stated 10% population-size requirements hold", required: true },
             { id: "context-language", description: "Uses the park and leaf-damage context rather than only giving abstract definitions", required: false }
         ],
         scoringGuide: {

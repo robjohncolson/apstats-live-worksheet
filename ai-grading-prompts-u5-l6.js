@@ -108,11 +108,11 @@ window.RUBRICS_U5L6 = {
             { id: "mean-calculation", description: "Calculates mean = 0.58 - 0.45 = 0.13", required: true },
             { id: "mean-interpretation", description: "Interprets mean in context: for all random samples of these sizes, the differences in sample proportions of support will have a mean of about 0.13", required: true },
             { id: "sd-calculation", description: "Calculates SD = sqrt[0.58(0.42)/100 + 0.45(0.55)/80] ≈ 0.074", required: true },
-            { id: "sd-interpretation", description: "Interprets SD: the differences typically vary by about 0.074 from the true difference of 0.13", required: false },
+            { id: "sd-interpretation", description: "Interprets SD: the differences typically vary by about 0.074 from the true difference of 0.13", required: true },
             { id: "large-counts-check", description: "Checks all four: 100(0.58)=58, 100(0.42)=42, 80(0.45)=36, 80(0.55)=44 — all >= 10, so approximately normal", required: true },
             { id: "z-score", description: "Calculates z = (0 - 0.13) / 0.074 ≈ -1.76", required: true },
             { id: "probability", description: "Finds P(p-hat_1 - p-hat_2 < 0) ≈ 0.039 using Table A or technology", required: true },
-            { id: "unusual-conclusion", description: "Concludes this IS somewhat unusual — only about 3.9% of sample pairs would show City 2 with equal or more support", required: false }
+            { id: "unusual-conclusion", description: "Concludes this IS somewhat unusual — only about 3.9% of sample pairs would show City 2 with equal or more support", required: true }
         ],
         scoringGuide: {
             E: "Response correctly calculates mean (0.13) and SD (≈0.074) with context interpretations, checks all four Large Counts products, calculates z-score (≈-1.76), finds probability (≈0.039), and interprets whether it's unusual",

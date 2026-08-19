@@ -136,6 +136,7 @@ window.RUBRICS_U7L2 = {
         expectedElements: [
             { id: "procedure", description: "Identifies the procedure as a one-sample t-interval for a population mean", required: true },
             { id: "random-sample", description: "States that the crabs came from a random sample", required: true },
+            { id: "ten-percent", description: "States that it is reasonable that 40 crabs is no more than 10% of all fiddler crabs of this species", required: true },
             { id: "large-sample", description: "Uses n = 40 to justify the large-sample shape condition", required: true },
             { id: "degrees-freedom", description: "Computes or states df = 39", required: true },
             { id: "critical-value", description: "States the 90% technology critical value t* = 1.685", required: true },

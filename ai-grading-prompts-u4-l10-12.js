@@ -67,10 +67,10 @@ const REFLECTION_RUBRICS_U4L1012 = {
       { id: "geometric-identification", description: "Correctly identifies geometric for the second scenario (counting trials to first success)", required: true },
       { id: "geometric-parameters", description: "States geometric parameter: p = 0.30", required: true },
       { id: "geometric-setup", description: "Sets up calculation: P(X=3) = (0.70)^2 · (0.30)", required: true },
-      { id: "distinction-explanation", description: "Explains key distinction: binomial has fixed n; geometric counts until first success", required: true }
+      { id: "distinction-explanation", description: "Explains that both scenarios have binary outcomes, independent trials, and constant p = 0.30; binomial fixes n = 10 and counts successes, while geometric counts trials until the first success", required: true }
     ],
     scoringGuide: {
-      E: "Correctly identifies both distributions with parameters AND sets up both formulas AND explains the key distinction (fixed n vs counting to first success)",
+      E: "Correctly identifies both distributions with parameters, sets up both formulas, and explains that both use binary outcomes, independent trials, and constant p = 0.30, while binomial fixes n = 10 and geometric counts trials until the first success",
       P: "Correctly handles one distribution but not the other, OR missing setup for one, OR weak/missing explanation of distinction",
       I: "Confuses binomial and geometric OR major errors in parameters OR missing critical components of both setups"
     },
@@ -96,12 +96,12 @@ const REFLECTION_RUBRICS_U4L1012 = {
       { id: "part-c-geometric", description: "Part (c): Identifies geometric with p=0.40", required: true },
       { id: "part-c-calculation", description: "Part (c): P(X=4) = (0.60)^3 · (0.40) ≈ 0.0864", required: true },
       { id: "part-d-mean", description: "Part (d): μ = 1/p = 1/0.40 = 2.5 hurricanes", required: true },
-      { id: "part-d-interpretation", description: "Part (d): Interprets as 'on average' how many hurricanes form before one makes landfall", required: true }
+      { id: "part-d-interpretation", description: "Part (d): Over many such sequences, the first landfall occurs on about the 2.5th hurricane on average, counting the hurricane that makes landfall", required: true }
     ],
     scoringGuide: {
-      E: "All four parts correct with proper setup, calculations, and interpretations in context",
-      P: "3 parts substantially correct OR all parts attempted but with minor errors (calculation mistakes, weak interpretations)",
-      I: "Fewer than 3 parts correct OR major conceptual errors (wrong distribution choice) OR missing interpretations for both b and d"
+      E: "All four parts are substantially correct with appropriate calculations and interpretations",
+      P: "Two or three parts are substantially correct, or all four are attempted with limited calculation or interpretation errors",
+      I: "Fewer than two parts are substantially correct or the response shows a fundamental inability to distinguish binomial from geometric settings"
     },
     commonMistakes: [
       "Using geometric for part (a) or binomial for part (c)",

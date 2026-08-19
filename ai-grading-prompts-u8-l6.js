@@ -130,7 +130,7 @@ window.RUBRICS_U8L6 = {
             { id: 'small-pvalue', description: 'States that if the p-value is less than or equal to alpha, reject the null hypothesis and say there is convincing statistical evidence for the alternative in context', required: true },
             { id: 'school-conclusion', description: 'Uses the school example: p-value 0.062 is greater than 0.05, so fail to reject and conclude there is not convincing statistical evidence of a difference in school-type distributions from 2019 to 2020', required: true },
             { id: 'employment-conclusion', description: 'Uses the employment example: p-value 0.0008 is less than or equal to 0.01, so reject and conclude there is convincing statistical evidence of an association between education level and employment status', required: true },
-            { id: 'follow-up-analysis', description: 'Explains that follow-up analysis looks for the largest contribution, and in the employment example the largest contribution is 8.30 because the observed unemployed with no high school diploma count is much higher than expected', required: true }
+            { id: 'follow-up-analysis', description: 'Explains that follow-up analysis examines the largest cell contribution to identify which cells most strongly explain the chi-square result; may use the employment example as illustration', required: true }
         ],
         scoringGuide: {
             E: 'Response correctly explains both p-value interpretation and statistical conclusion templates and accurately applies them to the school and employment examples, including follow-up analysis.',
@@ -148,7 +148,7 @@ window.RUBRICS_U8L6 = {
     },
 
     exitTicket: {
-        questionText: 'Use the schizophrenia age-group and gender example to describe a complete chi-square test for independence. Identify the procedure and why it fits, state H0 and Ha in context, state alpha = 0.05 if not given, verify the random sample condition, the 10 percent condition, and that all expected counts are at least 5, report chi-square = 10.884, df = 3, and p-value = 0.012, then state the decision and conclusion in context. You may also mention calculator support with matrix A, matrix B, and chi-square test.',
+        questionText: 'Use the schizophrenia age-group and gender example to describe a complete chi-square test for independence. (a) Identify the correct procedure and explain why it fits this setting. (b) State H0 and Ha in context. (c) State the significance level used if none is given, and verify the three conditions using the random sample of 207 people, the 10% condition, and expected counts at least 5. (d) Report the chi-square statistic, degrees of freedom, and p-value. (e) State the decision and conclusion in context, and explain one way technology can help carry out the test.',
         expectedElements: [
             { id: 'procedure', description: 'Identifies the procedure as a chi-square test for independence because the problem asks about association between two categorical variables in one random sample', required: true },
             { id: 'null-hypothesis', description: 'States the null hypothesis that age group at diagnosis and gender are independent or not associated for the population of people currently being treated for schizophrenia', required: true },
@@ -158,7 +158,7 @@ window.RUBRICS_U8L6 = {
             { id: 'statistic-and-df', description: 'Reports the chi-square statistic 10.884 and degrees of freedom 3', required: true },
             { id: 'p-value', description: 'Reports the p-value of 0.012', required: true },
             { id: 'decision-and-conclusion', description: 'States that because 0.012 is less than 0.05 we reject the null hypothesis and conclude there is convincing statistical evidence of an association between age group at diagnosis and gender for the population currently being treated for schizophrenia', required: true },
-            { id: 'calculator', description: 'May mention that a calculator can run chi-square test after observed counts are entered in matrix A and that expected counts are stored in matrix B', required: false },
+            { id: 'calculator', description: 'Explains one way technology helps, such as using a chi-square test with observed counts in matrix A and reading expected counts from matrix B', required: true },
             { id: 'interpretation-note', description: 'May mention that a p-value interpretation is not required unless the question specifically asks for it', required: false }
         ],
         scoringGuide: {

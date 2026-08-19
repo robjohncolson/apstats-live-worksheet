@@ -52,11 +52,11 @@ window.RUBRICS_U1L7 = {
         questionText: 'Explain what the mean, median, and IQR tell you about the Flint lead-level data. Use context and include at least one numerical value from the lesson.',
         expectedElements: [
             { id: 'mean-interpretation', description: 'Explains that the mean describes the average Flint lead level and may reference 7.31 parts per billion', required: true },
-            { id: 'median-interpretation', description: 'Explains that the median is 3 parts per billion and means about half the lead levels are below 3 and about half are above 3', required: true },
-            { id: 'iqr-interpretation', description: 'Explains that the IQR is 5 parts per billion or that the middle 50% of Flint lead levels run from Q1 = 2 to Q3 = 7', required: true },
+            { id: 'median-interpretation', description: 'Explains that the median is the middle ordered value and may note that at least half the Flint lead levels are at or below 3 parts per billion and at least half are at or above 3 parts per billion', required: true },
+            { id: 'iqr-interpretation', description: 'Explains that the IQR describes the spread of the middle 50% of Flint lead levels and may reference IQR 5, Q1 2, or Q3 7', required: true },
             { id: 'context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: true },
             { id: 'center-vs-variability', description: 'Distinguishes that mean and median describe center while IQR describes variability', required: true },
-            { id: 'numerical-detail', description: 'Includes more than one correct numerical detail from the lesson', required: false }
+            { id: 'numerical-detail', description: 'Includes at least one correct numerical value from the lesson, such as mean 7.31, median 3, IQR 5, Q1 2, or Q3 7', required: true }
         ],
         scoringGuide: {
             E: 'Response clearly explains what the mean, median, and IQR say about the Flint data and uses correct context.',

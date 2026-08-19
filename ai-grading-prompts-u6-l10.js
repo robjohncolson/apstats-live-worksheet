@@ -118,7 +118,7 @@ window.RUBRICS_U6L10 = {
             { id: "procedure-name", description: "Identifies the method as a two-sample z-test for a difference in population proportions", required: true },
             { id: "pooled-proportion", description: "Computes pooled proportion as p-hat-c = (78 + 66)/(120 + 120) = 144/240 = 0.60", required: true },
             { id: "expected-counts", description: "Checks expected counts using pooled proportion: 120(0.60)=72, 120(0.40)=48 for each group, all at least 10", required: true },
-            { id: "conditions-conclusion", description: "Concludes conditions are met by citing random samples, 10% condition, and large counts", required: true },
+            { id: "conditions-conclusion", description: "Concludes conditions are met by noting that the two random samples are from separate app groups and are treated as independent, citing the given 10% condition, and verifying the pooled expected counts", required: true },
             { id: "parameter-focus", description: "Keeps hypotheses in terms of parameters rather than sample statistics", required: false }
         ],
         scoringGuide: {

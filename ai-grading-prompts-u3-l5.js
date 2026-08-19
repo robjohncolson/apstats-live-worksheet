@@ -80,7 +80,7 @@ window.RUBRICS_U3L5 = {
         questionText: 'Explain the difference between a completely randomized design and a randomized block design. Include what blocking does and how treatments are assigned in each design.',
         expectedElements: [
             { id: 'crd-definition', description: 'Defines a completely randomized design as assigning treatments completely at random to all experimental units', required: true },
-            { id: 'randomization-benefit', description: 'Explains that randomization helps balance confounding or uncontrolled variables between treatment groups', required: true },
+            { id: 'randomization-benefit', description: 'May explain that random assignment helps balance confounding or uncontrolled variables between treatment groups', required: false },
             { id: 'block-definition', description: 'Defines a randomized block design as first grouping similar units into blocks based on a blocking variable', required: true },
             { id: 'within-block-randomization', description: 'Explains that treatments are randomly assigned within each block', required: true },
             { id: 'blocking-purpose', description: 'Explains that blocking helps separate variability due to the blocking variable from treatment differences', required: true },

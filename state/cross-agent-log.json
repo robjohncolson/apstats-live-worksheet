@@ -4663,15 +4663,59 @@
       "timestamp": "2026-08-19T08:08:39Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "a8ba038d36e9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "completed",
+      "duration_seconds": 286.927,
+      "timestamp": "2026-08-19T09:55:42Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1f243b867b4b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "partial",
+      "duration_seconds": 310.033,
+      "timestamp": "2026-08-19T09:56:04Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f01cd3185ea5",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "completed",
+      "duration_seconds": 335.373,
+      "timestamp": "2026-08-19T09:56:30Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "01c45e13f99e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "completed_with_omission",
+      "duration_seconds": 432.271,
+      "timestamp": "2026-08-19T09:58:07Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 396,
-    "cc_to_codex": 396,
+    "total_calls": 400,
+    "cc_to_codex": 400,
     "codex_to_cc": 0,
-    "completed": 301,
+    "completed": 303,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 629.418
+    "avg_duration_seconds": 626.535
   }
 }

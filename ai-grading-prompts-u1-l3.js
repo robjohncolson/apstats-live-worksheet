@@ -70,7 +70,7 @@ window.RUBRICS_U1L3 = {
             { id: 'use-counts-or-percentages', description: 'Explains that counts, proportions, or percentages from the table are used to test a claim', required: true },
             { id: 'specific-example', description: 'Uses a correct example from the lesson, such as fly plus telepathy equaling 50 percent or can\'t say drug unfamiliar being 8.5 percent', required: true },
             { id: 'claim-judgment', description: 'States whether the claim is supported or not supported and why the numbers justify that decision', required: true },
-            { id: 'majority-threshold', description: 'May mention a benchmark such as majority meaning at least 50 percent or over one-third meaning above about 33 percent', required: false }
+            { id: 'majority-threshold', description: 'May mention a benchmark such as majority meaning more than 50 percent or over one-third meaning above about 33 percent', required: false }
         ],
         scoringGuide: {
             E: 'Response explains that table values justify claims and uses a correct lesson example to show why a statement is true or not supported.',
@@ -103,7 +103,7 @@ window.RUBRICS_U1L3 = {
         commonMistakes: [
             'Treating 18 students as a majority without comparing to the total of 40',
             'Giving counts instead of relative frequencies for chips or yogurt',
-            'Forgetting that majority means at least 50 percent',
+            'Forgetting that a majority means more than 50 percent',
             'Explaining the numbers without tying them to the lunch-side context'
         ],
         contextFromVideo: 'The lesson emphasizes that a frequency table gives counts, a relative frequency table gives proportions or percentages, and those values are used to justify claims such as whether a majority chose a category.'

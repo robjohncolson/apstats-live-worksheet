@@ -114,15 +114,15 @@ const REFLECTION_RUBRICS = {
   "reflect55": {
     questionText: "In a study comparing two medications, researchers found a statistically significant difference (p = 0.02). What does this mean, and what can we conclude about causation?",
     expectedElements: [
-      { id: "significance-meaning", description: "p = 0.02 means only 2% chance of seeing this difference by random chance alone", required: true },
-      { id: "not-by-chance", description: "Difference is unlikely to be due to chance variation", required: true },
+      { id: "significance-meaning", description: "Assuming no true treatment difference, p = 0.02 means there is a 2% probability of obtaining a difference at least as extreme as the observed one from chance variation alone", required: true },
+      { id: "not-by-chance", description: "Concludes that the observed difference is statistically significant, or unlikely under a no-difference chance model", required: false },
       { id: "causation-requirement", description: "Can conclude causation IF random assignment was used", required: true },
       { id: "random-assignment-check", description: "Need to verify study used random assignment to treatments", required: false }
     ],
     scoringGuide: {
-      E: "Correct interpretation of p-value AND connects to causation with random assignment caveat",
-      P: "Partial interpretation (e.g., just 'not by chance' without p-value meaning) OR missing causation connection",
-      I: "Misinterprets p-value OR wrong conclusion about causation"
+      E: "Correctly interprets p = 0.02 under a no-difference chance model and states that a causal conclusion requires random assignment",
+      P: "Correctly addresses either statistical significance or the random-assignment requirement for causation, but not both, or makes a minor imprecision",
+      I: "Correctly addresses neither component or shows a fundamental misunderstanding of both significance and causation"
     },
     commonMistakes: [
       "Saying p = 0.02 means 2% chance the null hypothesis is true",
@@ -136,14 +136,14 @@ const REFLECTION_RUBRICS = {
   "reflect56": {
     questionText: "Under what two conditions can the results of an experiment be generalized to a larger population?",
     expectedElements: [
-      { id: "random-selection", description: "Random selection of experimental units from population", required: true },
+      { id: "random-selection", description: "Random selection of experimental units from population", required: false },
       { id: "representative-sample", description: "OR experimental units are representative of the population", required: true },
       { id: "population-specification", description: "Results generalize to population from which sample was drawn", required: false }
     ],
     scoringGuide: {
-      E: "Both conditions: random selection AND/OR representative sample",
-      P: "Only one condition mentioned clearly",
-      I: "Neither condition OR confuses with conditions for causation"
+      E: "States that experimental units must be representative of the larger population; may explain that random selection helps achieve representativeness",
+      P: "Mentions random selection or representativeness but does not clearly connect it to the population to which results generalize",
+      I: "Gives no valid basis for generalization or confuses generalization with random assignment and causation"
     },
     commonMistakes: [
       "Confusing generalization with causation (mentioning random assignment)",

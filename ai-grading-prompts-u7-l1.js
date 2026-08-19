@@ -55,7 +55,7 @@ window.RUBRICS_U7L1 = {
         expectedElements: [
             { id: "evidence-statistic", description: "Identifies the evidence as the observed positive difference in sample means", required: true },
             { id: "observed-value", description: "States that the observed difference was $12.49, or notes that 22.04 is greater than 9.55", required: true },
-            { id: "expected-zero", description: "Explains that if wording made no difference, the expected difference in means would be 0", required: true },
+            { id: "expected-zero", description: "May explain that if wording made no difference, the expected difference in means would be 0", required: false },
             { id: "chance-explanation", description: "Describes explanation 1 as no real wording effect with the observed difference caused by chance variation in random assignment", required: true },
             { id: "treatment-explanation", description: "Describes explanation 2 as the bonus wording causing students to spend more on average", required: true },
             { id: "context", description: "Keeps the explanation in the context of the bonus vs. rebate college student study", required: true }

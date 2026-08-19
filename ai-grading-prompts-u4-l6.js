@@ -46,15 +46,15 @@ const REFLECTION_RUBRICS_U4L6 = {
       { id: "independent-def", description: "Independent: knowing one occurred doesn't change probability of other (P(A|B) = P(A))", required: true },
       { id: "mutually-exclusive-def", description: "Mutually exclusive: events cannot occur together (P(A and B) = 0)", required: true },
       { id: "cannot-be-both", description: "Events with non-zero probabilities cannot be both independent AND mutually exclusive", required: true },
-      { id: "reasoning", description: "Explains why: if mutually exclusive with P(A),P(B)>0, then P(A and B)=0, but independence requires P(A and B)=P(A)·P(B)>0", required: false }
+      { id: "reasoning", description: "Explains that for positive-probability events, mutual exclusivity gives P(A and B)=0 while independence would require P(A and B)=P(A)P(B)>0", required: true }
     ],
     scoringGuide: {
       E: "Correctly defines both concepts AND explains that events (with P>0) cannot be both, with valid reasoning",
       P: "Defines both concepts but reasoning about whether they can be both is incomplete or missing",
-      I: "Confuses the two concepts OR incorrectly claims events can be both independent and mutually exclusive"
+      I: "Confuses the concepts or incorrectly claims that two events with positive probabilities can be both independent and mutually exclusive."
     },
     commonMistakes: [
-      "Confusing independent with mutually exclusive",
+      "Claiming two positive-probability events can be both independent and mutually exclusive.",
       "Thinking independent means the events don't affect each other so they can't happen together",
       "Not recognizing that P(A and B) = 0 for mutually exclusive but P(A)·P(B) > 0 creates a contradiction"
     ],

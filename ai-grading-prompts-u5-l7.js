@@ -55,7 +55,7 @@ window.RUBRICS_U5L7 = {
             { id: "mean-similarity", description: "Explains that both sampling distributions have means equal to the population parameter (mu_x-bar = mu, mu_p-hat = p)", required: true },
             { id: "sd-similarity", description: "Explains that both SDs decrease as sample size increases — both have n in the denominator (sigma/sqrt(n) for means, sqrt(p(1-p)/n) for proportions)", required: true },
             { id: "normality-difference", description: "Correctly states the different normality conditions: for x-bar, population normal OR n >= 30; for p-hat, Large Counts condition (np >= 10 and n(1-p) >= 10)", required: true },
-            { id: "why-different", description: "Offers reasoning for why conditions differ — e.g., proportions come from categorical (binary) data with a fixed shape, while means can come from any population shape", required: false },
+            { id: "why-different", description: "Offers a reasonable explanation for the different conditions, such as proportions arising from binary outcomes while sample means can originate from populations of many shapes", required: true },
             { id: "both-unbiased", description: "Notes that both statistics are unbiased estimators of their respective parameters", required: false }
         ],
         scoringGuide: {
@@ -101,11 +101,11 @@ window.RUBRICS_U5L7 = {
             { id: "mean-calculation", description: "Calculates mean = mu = 64 inches", required: true },
             { id: "mean-interpretation", description: "Interprets: for all random samples of 36 women, the sample mean heights will have a mean of 64 inches", required: true },
             { id: "sd-calculation", description: "Calculates SD = 3/sqrt(36) = 3/6 = 0.5 inches", required: true },
-            { id: "sd-interpretation", description: "Interprets: the sample mean heights will typically vary by about 0.5 inches from the population mean of 64 inches", required: false },
+            { id: "sd-interpretation", description: "Interprets: the sample mean heights will typically vary by about 0.5 inches from the population mean of 64 inches", required: true },
             { id: "normality-justification", description: "States the population is normally distributed, so the sampling distribution is also normal (could also note n >= 30 applies as a second reason)", required: true },
             { id: "z-score", description: "Calculates z = (65 - 64) / 0.5 = 2.00", required: true },
             { id: "probability", description: "Finds P(x-bar >= 65) = P(z >= 2.00) ≈ 0.0228", required: true },
-            { id: "unusual-conclusion", description: "Concludes this is unusual — only about 2.28% of samples would produce a mean of 65+ inches", required: false }
+            { id: "unusual-conclusion", description: "Concludes this is unusual — only about 2.28% of samples would produce a mean of 65+ inches", required: true }
         ],
         scoringGuide: {
             E: "Response correctly calculates mean (64) and SD (0.5) with context interpretations using units (inches), justifies normality, calculates z-score (2.00), finds probability (≈0.0228), and interprets whether it's unusual",

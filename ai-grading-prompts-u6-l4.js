@@ -58,12 +58,12 @@ window.RUBRICS_U6L4 = {
         expectedElements: [
             { id: "identify-procedure", description: "Identifies the correct procedure as a one-sample z test for a population proportion", required: true },
             { id: "random-condition", description: "States that the random condition is met because the sample of 120 adults is selected at random", required: true },
-            { id: "ten-percent-condition", description: "Checks the 10% condition by noting that 120 must be no more than 10% of the town's adult population, or equivalently assuming the town has at least 1200 adults", required: true },
+            { id: "ten-percent-condition", description: "States that the 10% condition cannot be verified without the town's adult population size and that it would be met if the town has at least 1,200 adults", required: true },
             { id: "large-counts", description: "Checks large counts using the null value: 120(0.35) = 42 and 120(0.65) = 78, both at least 10", required: true },
             { id: "use-p-zero", description: "Explains that the large counts check uses 0.35 because significance tests assume the null hypothesis is true, so the check uses p0 rather than p-hat", required: true }
         ],
         scoringGuide: {
-            E: "Correctly identifies the one-sample z test, verifies all three conditions with appropriate calculations or assumptions, and explains why the large counts condition uses the null value 0.35.",
+            E: "Correctly identifies the one-sample z test, verifies the random and large-counts conditions, states the conditional requirement for the 10% condition, and explains why the large-counts check uses the null value 0.35.",
             P: "Identifies the procedure and most conditions correctly but is incomplete on one part, such as not explaining the 10% assumption clearly or forgetting why p0 is used in the large counts check.",
             I: "Chooses the wrong procedure, fails to verify the conditions correctly, or uses the sample proportion instead of the null value in the large counts condition."
         },
@@ -84,9 +84,9 @@ window.RUBRICS_U6L4 = {
             { id: "state-hypotheses", description: "States the hypotheses correctly as H0: p = 0.65 and Ha: p < 0.65", required: true },
             { id: "identify-procedure", description: "Identifies the procedure as a one-sample z test for a population proportion", required: true },
             { id: "check-random", description: "Checks the random condition using the fact that the principal randomly selected 90 students", required: true },
-            { id: "check-ten-percent", description: "Checks the 10% condition by noting that 90 must be at most 10% of the school's student population, or assuming the school has at least 900 students", required: true },
+            { id: "check-ten-percent", description: "States that the 10% condition cannot be verified from the information given and would hold if the school has at least 900 students", required: true },
             { id: "check-large-counts", description: "Checks large counts using the null value: 90(0.65) = 58.5 and 90(0.35) = 31.5, both at least 10", required: true },
-            { id: "proceed-and-parameter", description: "Concludes that it is appropriate to proceed because the conditions are met and explains that p-hat should not appear in the hypotheses because hypotheses are about the population proportion p, not the sample statistic", required: true }
+            { id: "proceed-and-parameter", description: "Concludes that the test may proceed if the school has at least 900 students, since the other conditions are met, and explains that hypotheses use the population proportion p rather than the sample statistic p̂", required: true }
         ],
         scoringGuide: {
             E: "Correctly sets up the full test: defines the parameter, states both hypotheses, identifies the one-sample z test, verifies all conditions using p0 = 0.65, and explains both why the test can proceed and why p-hat does not belong in the hypotheses.",

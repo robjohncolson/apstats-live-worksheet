@@ -92,7 +92,7 @@ window.RUBRICS_U8L2 = {
             { id: "procedure-identification", description: "Identifies chi-square GOF test as appropriate for one categorical variable with one sample", required: true },
             { id: "random-condition", description: "States data must come from a random sample or randomized experiment", required: true },
             { id: "ten-percent-condition", description: "States the sample must be ≤ 10% of the population when sampling without replacement", required: true },
-            { id: "large-counts-condition", description: "States that all expected counts must be greater than 5", required: true },
+            { id: "large-counts-condition", description: "States that all expected counts must be at least 5", required: true },
             { id: "expected-count-formula", description: "May explain that expected counts are found by multiplying null proportions by sample size", required: false },
             { id: "parameters-not-statistics", description: "May note that hypotheses are about population parameters, never sample statistics like p-hat", required: false }
         ],

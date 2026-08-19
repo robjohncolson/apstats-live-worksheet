@@ -70,7 +70,7 @@ window.RUBRICS_U7L6 = {
             { id: "procedure-match", description: "Explains that two groups with quantitative data and a confidence interval for a difference in population means leads to a 2-sample t-interval", required: true },
             { id: "independence", description: "States that independence requires two independent random samples or a randomized experiment", required: true },
             { id: "ten-percent", description: "States that when sampling without replacement, each sample should be no more than 10% of its respective population", required: true },
-            { id: "normal-condition", description: "Explains that both sample sizes must be greater than 30 or both samples should come from approximately normal populations, and if samples are small there should be no extreme skewness or outliers", required: true },
+            { id: "normal-condition", description: "Explains that both sample sizes must be at least 30, or otherwise both sample distributions should be free from extreme skewness and outliers", required: true },
             { id: "spider-example", description: "Uses the spider example to note random samples of 14 females and 14 males and that the histograms were roughly unimodal and symmetric", required: true },
             { id: "slow-internet-assignment", description: "Uses the slow-internet example to explain that random assignment satisfies the first condition", required: true },
             { id: "slow-internet-shape", description: "Explains that the slow-internet example fails because of clear skewness and an outlier, and that you cannot just combine the groups into 36", required: true },

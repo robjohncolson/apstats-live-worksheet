@@ -68,9 +68,7 @@ window.RUBRICS_U1L6 = {
     reflect2: {
         questionText: 'Explain what unusual features you should look for when describing a quantitative distribution. Use at least two terms from the lesson and connect one of them to the Flint data.',
         expectedElements: [
-            { id: 'outlier-definition', description: 'Explains that outliers are unusually high or low values that do not fit with the rest of the data', required: true },
-            { id: 'gap-definition', description: 'Explains that a gap is a region where no observed data values appear', required: true },
-            { id: 'cluster-definition', description: 'Explains that clusters are concentrations of values, often separated by gaps', required: true },
+            { id: 'two-unusual-features', description: 'Correctly explains any two of these lesson terms: outlier, gap, and cluster', required: true },
             { id: 'flint-connection', description: 'Connects at least one unusual feature to the Flint data, such as the cluster from 0 to 10, the gap from 42 to 104, or the high outlier', required: true },
             { id: 'distribution-description-role', description: 'States that unusual features are one of the important characteristics in a full distribution description', required: true },
             { id: 'gaps-clusters-together', description: 'May mention that gaps and clusters often appear together', required: false }

@@ -110,7 +110,7 @@ const REFLECTION_RUBRICS_U4L3 = {
     expectedElements: [
       { id: "long-run-interpretation", description: "If we randomly select many albums, about 20% would be jazz", required: true },
       { id: "relative-frequency", description: "Probability represents relative frequency in long run / repeated selections", required: true },
-      { id: "generalizability", description: "Percentage/probability generalizes to any sample size, not just 2105", required: true },
+      { id: "generalizability", description: "Explains that the proportion communicates an approximate long-run rate and can support predictions over many future selections, unlike a raw count tied to the 2,105 observed sales", required: true },
       { id: "prediction-utility", description: "Can make predictions about future selections or different sample sizes", required: false },
       { id: "with-replacement", description: "With replacement maintains the probability for each selection", required: false }
     ],

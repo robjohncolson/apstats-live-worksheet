@@ -73,7 +73,7 @@ window.RUBRICS_U2L9 = {
         expectedElements: [
             { id: 'nonlinear-trigger', description: 'Explains that transformation should be considered when the scatterplot or residual plot suggests a nonlinear pattern', required: true },
             { id: 'purpose-of-transform', description: 'States that the goal is to make the relationship more linear so a linear model fits better', required: true },
-            { id: 'log-skew', description: 'Explains that a log transformation can reduce right skew or make large values less extreme', required: true },
+            { id: 'log-skew', description: 'Explains that a log transformation can reduce right skew or make large values less extreme', required: false },
             { id: 'residual-evidence', description: 'States that the transformed model is better if the residual plot looks more random and centered around zero', required: true },
             { id: 'r-squared-evidence', description: 'States that a higher r squared or an r squared closer to 1 supports the transformed model', required: true },
             { id: 'numeric-example', description: 'May mention the example where r squared improved from 46.6% to 71.1%', required: false }

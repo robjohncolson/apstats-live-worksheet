@@ -60,7 +60,7 @@ window.RUBRICS_U5L8 = {
             { id: "sd-decrease-with-n", description: "Notes that both SDs decrease as sample sizes increase", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly identifies similarities in mean formulas (difference in parameters) and SD formulas (additive structure, both decrease with n), and correctly contrasts the normality conditions",
+            E: "Response correctly identifies the similarity in the mean formulas (each is a difference in population parameters), the additive variance structure of the SD formulas, and correctly contrasts the normality conditions.",
             P: "Response identifies some similarities or differences but misses key comparisons, or confuses which normality conditions apply to which statistic",
             I: "Response shows fundamental confusion between the two distributions, or provides no meaningful comparison"
         },
@@ -79,7 +79,7 @@ window.RUBRICS_U5L8 = {
             { id: "sd-decreases", description: "Explains that increasing both sample sizes from 6 to 60 would make the SD of the sampling distribution smaller (denominators in the SD formula get larger)", required: true },
             { id: "z-increases", description: "Explains that a smaller SD means the same difference of 0.2 (numerator of z-score stays 1.2 - 1 = 0.2) is divided by a smaller number, making the z-score larger", required: true },
             { id: "probability-decreases", description: "Correctly predicts that a larger z-score means the probability P(x-bar_1 - x-bar_2 > 1.2) would decrease (smaller tail area)", required: true },
-            { id: "unusual-prediction", description: "Concludes that with larger samples, a difference of 1.2 oz would likely become unusual", required: false },
+            { id: "unusual-prediction", description: "Concludes that with both sample sizes increased to 60, a difference of 1.2 ounces would become unusual because its tail probability becomes small", required: true },
             { id: "formula-reasoning", description: "References the SD formula: sqrt(sigma_1^2/n_1 + sigma_2^2/n_2) — dividing by larger n values reduces each term", required: false }
         ],
         scoringGuide: {
@@ -102,11 +102,11 @@ window.RUBRICS_U5L8 = {
             { id: "mean-calculation", description: "Calculates mean = 50 - 45 = 5 mm", required: true },
             { id: "mean-interpretation", description: "Interprets: for all random samples of 16 acorns from each species, the differences in sample mean lengths will have a mean of 5 mm", required: true },
             { id: "sd-calculation", description: "Calculates SD = sqrt(16/16 + 9/16) = sqrt(1 + 0.5625) = sqrt(1.5625) = 1.25 mm", required: true },
-            { id: "sd-interpretation", description: "Interprets: the differences in sample mean lengths will typically vary by about 1.25 mm from the true mean difference of 5 mm", required: false },
+            { id: "sd-interpretation", description: "Interprets: the differences in sample mean lengths will typically vary by about 1.25 mm from the true mean difference of 5 mm", required: true },
             { id: "normality-justification", description: "States both population distributions are approximately normal, so the sampling distribution of x-bar_1 - x-bar_2 is also approximately normal", required: true },
             { id: "z-score", description: "Calculates z = (7.5 - 5) / 1.25 = 2.00", required: true },
             { id: "probability", description: "Finds P(x-bar_1 - x-bar_2 > 7.5) = P(z > 2.00) ≈ 0.0228", required: true },
-            { id: "unusual-conclusion", description: "Concludes this is unusual — only about 2.28% of samples would produce a difference of 7.5+ mm", required: false }
+            { id: "unusual-conclusion", description: "Concludes this is unusual — only about 2.28% of samples would produce a difference of 7.5+ mm", required: true }
         ],
         scoringGuide: {
             E: "Response correctly calculates mean (5 mm), SD (1.25 mm), interprets both with context and units, justifies normality, calculates z = 2.00, finds probability ≈ 0.0228, and concludes it is unusual",

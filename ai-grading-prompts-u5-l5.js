@@ -76,11 +76,11 @@ window.RUBRICS_U5L5 = {
             { id: "sd-in-context", description: "Interprets sigma_p-hat = 0.065 in context: sample proportions of students with driver's licenses typically vary by about 0.065 from the population proportion of 0.30", required: true },
             { id: "references-all-samples", description: "References 'all random samples of size 50 from this population' — not just one sample", required: true },
             { id: "uses-typically", description: "Uses language like 'typically' or 'on average' when describing the variability", required: true },
-            { id: "importance-connection", description: "Connects to why this matters: knowing typical variability helps build confidence intervals or assess whether a result is unusual", required: false },
+            { id: "importance-connection", description: "Explains that knowing typical sample-to-sample variability helps judge how close a statistic may be to the truth and supports later confidence intervals or significance tests.", required: true },
             { id: "not-single-sample", description: "Distinguishes that the standard deviation describes sample-to-sample variation, not variation within a single sample", required: false }
         ],
         scoringGuide: {
-            E: "Response interprets sigma_p-hat = 0.065 in context (driver's license proportions), references all possible samples of this size, and uses 'typically' or 'on average.' Bonus for connecting to confidence intervals or significance tests.",
+            E: "Response correctly interprets σ_p̂ = 0.065 in the driver's-license context, refers to random samples of size 50, uses typical-variation language, and explains why knowing this variability is useful for statistical inference.",
             P: "Response gives a partially correct interpretation — mentions variability but is missing context, doesn't reference all possible samples, or doesn't use 'typically/on average'",
             I: "Response shows fundamental misunderstanding — confuses standard deviation of sampling distribution with population SD, or provides a vague or incorrect interpretation"
         },
@@ -127,7 +127,7 @@ window.RUBRICS_U5L5 = {
             { id: "shape-conditions", description: "Checks Large Counts: np = 200(0.05) = 10 >= 10 and n(1-p) = 200(0.95) = 190 >= 10, so approximately normal", required: true },
             { id: "z-score", description: "Calculates z = (0.08 - 0.05) / 0.0154 ≈ 1.95", required: true },
             { id: "probability-interpretation", description: "Finds P(p-hat >= 0.08) ≈ 0.026 (about 2.6%) and interprets: this would be somewhat unusual if p truly equals 0.05, suggesting the inspector might have reason for concern", required: true },
-            { id: "ten-percent-condition", description: "Mentions the 10% condition (200 < 10% of all bulbs produced)", required: false }
+            { id: "ten-percent-condition", description: "Notes that the 10% condition cannot be verified from the information given; it holds if the relevant population contains at least 2,000 bulbs (or it is reasonable to assume production is that large)", required: false }
         ],
         scoringGuide: {
             E: "Response correctly describes the sampling distribution (shape with condition check, center = 0.05, spread ≈ 0.0154), calculates z ≈ 1.95, finds the probability, and provides a well-reasoned conclusion about whether the inspector should be concerned",

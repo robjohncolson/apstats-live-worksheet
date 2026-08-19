@@ -66,7 +66,7 @@ VIDEO 2 - Checking conditions for chi-square tests (~7 min):
 // Rubrics for each reflection question
 window.RUBRICS_U8L5 = {
     reflect1: {
-        questionText: 'Explain how you choose between a chi-square test for homogeneity and a chi-square test for independence. Include the study goal, how the data are collected, comparing distributions across multiple populations or treatments versus checking association between two categorical variables, the school example as homogeneity with two separate random samples, and the employment example as independence with one random sample of 2,000 adults.',
+        questionText: 'Explain how you decide whether a two-way table calls for a chi-square test for homogeneity or a chi-square test for independence. Include comparing distributions across multiple populations or treatments, independent random samples or a randomized experiment, one single random sample, association between two categorical variables, the school example as homogeneity, and the employment example as independence.',
         expectedElements: [
             { id: 'goal-matters', description: 'Explains that the choice of test depends on the goal of the study and how the data were collected', required: true },
             { id: 'homogeneity-purpose', description: 'States that homogeneity is used to compare distributions of one categorical variable across multiple populations or treatment groups', required: true },
@@ -93,21 +93,21 @@ window.RUBRICS_U8L5 = {
     },
 
     reflect2: {
-        questionText: 'Explain how to write null and alternative hypotheses and how to check conditions for the chi-square tests in Topic 8.5. Include no difference in distribution for homogeneity, no association or independence for independence, the fact that no parameter is defined, why the homogeneity alternative is many-sided, the 10% condition, the rule that all expected counts must be greater than 5, and the reminder to check expected rather than observed counts.',
+        questionText: 'Explain how to write null and alternative hypotheses and verify the conditions for these chi-square tests. Include no difference in distributions versus difference for homogeneity, no association or independent versus association or not independent for independence, the fact that no parameter needs to be defined, the 10% condition, and the rule that all expected counts must be at least 5.',
         expectedElements: [
             { id: 'homogeneity-hypotheses', description: 'States that for homogeneity the null says no difference in distributions and the alternative says there is a difference in distributions', required: true },
             { id: 'independence-hypotheses', description: 'States that for independence the null says no association or that the variables are independent, and the alternative says there is an association or that the variables are not independent', required: true },
             { id: 'no-parameter', description: 'Explains that these chi-square hypotheses do not define a single numerical parameter', required: true },
-            { id: 'many-sided', description: 'Explains that the homogeneity alternative is many-sided because several category proportions could be higher or lower', required: true },
-            { id: 'design-condition', description: 'States the data-collection condition: stratified random sample or randomized experiment for homogeneity, single random sample for independence', required: true },
+            { id: 'many-sided', description: 'Explains that the homogeneity alternative is many-sided because several category proportions could be higher or lower', required: false },
+            { id: 'design-condition', description: 'States that homogeneity uses independent random samples from the populations or groups, or multiple groups from a randomized experiment, while independence uses one random sample', required: true },
             { id: 'ten-percent', description: 'States the 10% condition when sampling without replacement', required: true },
-            { id: 'expected-counts', description: 'States that all expected counts must be greater than 5', required: true },
-            { id: 'expected-not-observed', description: 'States that expected counts, not observed counts, are checked', required: true },
+            { id: 'expected-counts', description: 'States that all expected counts must be at least 5', required: true },
+            { id: 'expected-not-observed', description: 'States that expected counts, not observed counts, are checked', required: false },
             { id: 'school-minimum', description: 'May mention that the smallest expected count in the school example is 14.8', required: false },
             { id: 'conditions-met', description: 'May explicitly conclude that the conditions are met in both lesson examples', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly states the hypothesis language for both chi-square tests and clearly explains the full set of conditions, including the 10% rule and checking expected counts greater than 5.',
+            E: 'Response correctly states the hypothesis language for both chi-square tests and clearly explains the full set of conditions, including the 10% rule and checking expected counts at least 5.',
             P: 'Response shows the general hypothesis and condition ideas but misses one major element such as the no-parameter point, the many-sided explanation, or one of the three conditions.',
             I: 'Response gives incorrect hypothesis language, confuses observed and expected counts, or does not explain the chi-square conditions accurately.'
         },
@@ -122,32 +122,30 @@ window.RUBRICS_U8L5 = {
     },
 
     exitTicket: {
-        questionText: 'Use the two lesson contexts to explain the full setup for a chi-square test. (a) For the school-type-by-year study, identify the correct test and explain why. (b) State H0 and Ha for the school study. (c) Verify the three conditions for the school study using two independent random samples, the sample sizes 320 and 214, and the smallest expected count 14.8. (d) For the education-level-by-employment study, identify the correct test and explain why. (e) State H0 and Ha for the adult study, then verify the conditions using one random sample of 2,000 adults, the 10% condition, and the fact that all expected counts are greater than 5.',
+        questionText: 'Use the two lesson contexts to set up chi-square inference. (a) For the school-type-by-year study, identify the appropriate chi-square test and explain why the data collection supports it. (b) State H0 and Ha for the school study. (c) For the education-by-employment study, identify the appropriate chi-square test and explain why. (d) State H0 and Ha for the employment study. (e) State the three conditions for chi-square homogeneity or independence tests and explain why expected counts, not observed counts, are checked in the third condition.',
         expectedElements: [
-            { id: 'school-test', description: 'Identifies the school study as a chi-square test for homogeneity because it compares distributions across two years with separate random samples', required: true },
-            { id: 'school-hypotheses', description: 'States the school-study hypotheses as no difference in distribution versus a difference in distribution of school type from 2019 to 2020', required: true },
-            { id: 'school-condition-1', description: 'Checks that the school study used two independent random samples, which satisfies the design condition for homogeneity', required: true },
-            { id: 'school-condition-2', description: 'Checks the 10% condition for the school sample sizes 320 and 214', required: true },
-            { id: 'school-condition-3', description: 'Checks that the smallest expected count is 14.8, so all expected counts are greater than 5', required: true },
-            { id: 'employment-test', description: 'Identifies the adult study as a chi-square test for independence because one random sample of 2000 adults was used to study association between two variables', required: true },
-            { id: 'employment-hypotheses', description: 'States the adult-study hypotheses as no association or independence versus association or not independent between education level and employment status', required: true },
-            { id: 'employment-conditions', description: 'Checks the adult-study conditions using one random sample, the 10% condition, and the fact that all expected counts are greater than 5', required: true },
-            { id: 'expected-not-observed', description: 'May state that expected counts, not observed counts, are the values used in the third condition', required: false },
-            { id: 'conditions-met', description: 'May explicitly conclude that the conditions are met in both contexts', required: false }
+            { id: 'school-test', description: 'Identifies the school study as a chi-square test for homogeneity because it compares school-type distributions across two years using separate random samples', required: true },
+            { id: 'school-hypotheses', description: 'States H0 as no difference in school-type distributions between years and Ha as a difference in distributions', required: true },
+            { id: 'employment-test', description: 'Identifies the education-by-employment study as a chi-square test for independence because two categorical variables were measured on one random sample', required: true },
+            { id: 'employment-hypotheses', description: 'States H0 as no association/independence between education and employment status and Ha as an association/not independent', required: true },
+            { id: 'design-condition', description: 'States the appropriate random-sampling or randomized-experiment condition: independent random samples or treatment groups for homogeneity, and one random sample for independence', required: true },
+            { id: 'ten-percent', description: 'States the 10% condition when sampling without replacement', required: true },
+            { id: 'large-counts', description: 'States that all expected cell counts must be at least 5', required: true },
+            { id: 'expected-not-observed', description: 'Explains that expected counts are checked because the chi-square approximation is evaluated under the null model, which determines the expected counts', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies both procedures, states the matching hypotheses, and verifies all three conditions for each context using the lesson details.',
-            P: 'Response gets most of the setup right but misses one major piece such as a hypothesis pair, a condition check, or the reason one test is homogeneity while the other is independence.',
-            I: 'Response misidentifies one or both chi-square procedures, gives incorrect hypotheses, or does not verify the conditions correctly.'
+            E: 'Response correctly identifies and justifies both procedures, states both contextual hypothesis pairs, and accurately explains all three conditions including why expected counts are checked.',
+            P: 'Response correctly handles most of the two setups but omits or weakly explains one procedure, hypothesis pair, or condition idea.',
+            I: 'Response substantially confuses homogeneity with independence and does not provide usable hypotheses or conditions.'
         },
         commonMistakes: [
             'Calling the school study independence instead of homogeneity',
-            'Calling the adult study homogeneity instead of independence',
-            'Writing the null as there is a difference or there is an association',
-            'Forgetting to use the specific condition details 320, 214, 14.8, or the one random sample of 2000 adults',
-            'Leaving out one of the three chi-square conditions'
+            'Calling the employment study homogeneity instead of independence',
+            'Reversing the null and alternative language',
+            'Checking observed rather than expected counts',
+            'Using greater than 5 instead of at least 5'
         ],
-        contextFromVideo: 'The exit ticket combines both lesson examples: choose the correct chi-square test, write the hypothesis language, and verify the three conditions using the specific details from each context.'
+        contextFromVideo: 'The worksheet contrasts the school homogeneity study with the education-by-employment independence study and asks for the shared design, 10%, and expected-count conditions.'
     }
 };
 

@@ -64,7 +64,7 @@ window.RUBRICS_U5L3 = {
             { id: "probability-meaning", description: "Explains that 0.012 means only 1.2% of random reallocations produced a difference as extreme as 1.69", required: true },
             { id: "chance-alone-interpretation", description: "Connects to 'by chance alone' - if treatment had no effect, we'd rarely see this result", required: true },
             { id: "evidence-for-effect", description: "Explains that small probability means the result is unlikely due to chance, suggesting treatment is effective", required: true },
-            { id: "larger-probability-contrast", description: "Explains that 0.30 would mean result is common under chance, not providing evidence of effectiveness", required: false },
+            { id: "larger-probability-contrast", description: "Explains that 0.30 would mean a result at least this extreme is fairly common under chance alone and would not provide convincing evidence that melatonin is effective", required: true },
             { id: "context", description: "Uses context of melatonin/sleep hours in explanation", required: false }
         ],
         scoringGuide: {

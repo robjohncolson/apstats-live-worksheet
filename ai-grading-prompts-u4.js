@@ -96,7 +96,7 @@ const REFLECTION_RUBRICS_U4 = {
       { id: "trial-definition", description: "One trial = generating 5 random numbers (one per question)", required: true },
       { id: "recording", description: "Count how many of the 5 are 'correct' in each trial", required: true },
       { id: "success-criterion", description: "Success = 3 or more correct out of 5", required: true },
-      { id: "many-trials", description: "Repeat for many trials and calculate proportion of successes", required: false }
+      { id: "many-trials", description: "Repeat the five-question trial many times and use the proportion with at least 3 correct as the probability estimate", required: true }
     ],
     scoringGuide: {
       E: "Correct digit assignment reflecting 25% probability, defines trial as 5 numbers, records count ≥3, mentions repeating",

@@ -61,7 +61,7 @@ const REFLECTION_RUBRICS_U4L78 = {
       { id: "continuous-definition", description: "Continuous = infinite values in an interval (no gaps)", required: true },
       { id: "discrete-example", description: "Provides a valid original example of a discrete random variable", required: true },
       { id: "continuous-example", description: "Provides a valid original example of a continuous random variable", required: true },
-      { id: "example-justification", description: "Explains WHY each example fits its category", required: false }
+      { id: "example-justification", description: "Explains why the discrete example has countable separated values and why the continuous example can take any value in an interval", required: true }
     ],
     scoringGuide: {
       E: "Correctly defines both types AND gives valid original examples with reasonable justification",
@@ -110,10 +110,10 @@ const REFLECTION_RUBRICS_U4L78 = {
       { id: "distribution-format", description: "Creates clear probability distribution table or list", required: true },
       { id: "expected-value", description: "Calculates E(X) = (1/6)(8) + (1/6)(1) + (4/6)(-2) = $0.17 (approximately)", required: true },
       { id: "fair-game-interpretation", description: "Interprets: positive expected value means game favors player; not 'fair' from carnival's perspective", required: true },
-      { id: "long-run-context", description: "Explains expected value in terms of long-run average", required: false }
+      { id: "long-run-context", description: "Explains that over many plays the player's net profit would average about +$0.17 per play", required: true }
     ],
     scoringGuide: {
-      E: "Correct net profits, correct probabilities, accurate expected value (~$0.17), and correct interpretation of fairness",
+      E: "Correct net profits, probabilities, distribution, and expected value; interprets +$0.17 as a long-run average and concludes the game is not fair because the expected net profit is not 0.",
       P: "Minor calculation error OR correct math but weak interpretation OR missing one component (distribution vs. interpretation)",
       I: "Fundamental error in net profit calculation OR major probability error OR misunderstands 'fair game' concept"
     },

@@ -39,8 +39,7 @@ window.RUBRICS_U1L8 = {
         questionText: 'Explain how the five-number summary appears in the box plot for the Flint lead-level data. Include at least two numerical values from the lesson and mention the box, whiskers, or outliers.',
         expectedElements: [
             { id: 'five-number-summary', description: 'Identifies that the five-number summary is the minimum, Q1, median, Q3, and maximum', required: true },
-            { id: 'box-and-median', description: 'Explains that the box runs from Q1 to Q3 and that the median is marked inside the box', required: true },
-            { id: 'whiskers-or-outliers', description: 'Explains that whiskers extend to the most extreme non-outliers or that outliers are plotted separately', required: true },
+            { id: 'boxplot-feature', description: 'Correctly explains at least one requested box-plot feature: the box runs from Q1 to Q3 with the median inside it, whiskers extend to the most extreme non-outliers, or outliers are plotted separately', required: true },
             { id: 'flint-context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: true },
             { id: 'numerical-details', description: 'Includes at least two correct numerical values such as 0, 2, 3, 7, 13, or 104', required: true },
             { id: 'quartile-meaning', description: 'May explain that the box plot splits the data into quartiles or that each section contains 25% of the data', required: false }

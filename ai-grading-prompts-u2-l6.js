@@ -53,7 +53,7 @@ window.RUBRICS_U2L6 = {
             { id: 'plug-in-x', description: 'Explains that you substitute the explanatory-variable value for x in the regression equation', required: true },
             { id: 'slope-and-intercept', description: 'Explains that you multiply the slope by x and combine it with the y-intercept to get ŷ', required: true },
             { id: 'predicted-response', description: 'States that ŷ is the predicted response rather than an exact observed value', required: true },
-            { id: 'decimal-possible', description: 'Explains that the result can be a decimal because it is a model prediction, not an actual count or exact data value', required: true },
+            { id: 'decimal-possible', description: 'Explains that the result can be a decimal because it is a model prediction, not an actual count or exact data value', required: false },
             { id: 'variability-idea', description: 'May mention that data have variability, so the model is estimating rather than giving exact values', required: false }
         ],
         scoringGuide: {

@@ -58,9 +58,9 @@ const REFLECTION_RUBRICS_U4L9 = {
       { id: "conceptual-explanation", description: "Explains WHY variances add (uncertainty/variability increases when combining)", required: false }
     ],
     scoringGuide: {
-      E: "Correctly identifies the error (adding SDs), states variance rule, and calculates σ(X+Y) = 5",
-      P: "Identifies the error OR gives correct answer, but missing one key component or explanation is incomplete",
-      I: "Does not identify the error OR gives wrong answer OR shows same misconception as the student"
+      E: "Identifies that SDs were added incorrectly, states that independent variances add, and obtains 5",
+      P: "Uses the correct variance-addition method but makes a minor arithmetic error, or obtains 5 with an incomplete explanation",
+      I: "Adds the standard deviations directly or otherwise shows no correct variance-based method"
     },
     commonMistakes: [
       "Agreeing with the student that 3 + 4 = 7 is correct",

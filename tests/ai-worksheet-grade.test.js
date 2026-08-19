@@ -984,3 +984,77 @@ describe('FRQ coverage — review hardening (stale verdicts, malformed verdicts,
     }
   });
 });
+
+describe('FRQ batch grading (2026-08-19) — one /api/ai/grade-batch call when the page exposes its prompt builder', () => {
+  function withBatchPage(fn) {
+    // Simulate a page: a builder + lesson context on window, a gradeReflection whose source carries the topic.
+    window.buildReflectionPromptU6L12 = (id, ans) => 'PROMPT[' + id + ']:' + ans;
+    window.LESSON_CONTEXT_U6L12 = 'ctx';
+    const savedGlobal = globalThis.gradeReflection;
+    return Promise.resolve().then(fn).finally(() => {
+      delete window.buildReflectionPromptU6L12; delete window.LESSON_CONTEXT_U6L12;
+      if (savedGlobal) globalThis.gradeReflection = savedGlobal;
+    });
+  }
+  it('grades 3 reflections with ONE batch request; per-item grader is not called', async () => {
+    await withBatchPage(async () => {
+      addTextarea('reflect1', 'A sufficiently long first reflection answer typed by the student.');
+      addTextarea('reflect2', 'A sufficiently long second reflection answer typed by the student.');
+      addTextarea('exitTicket', 'A sufficiently long exit ticket answer typed by the student today.');
+      installShippedFlow();
+      // gradeReflection source must carry the topic literal the block looks for.
+      globalThis.gradeReflection = mocks.gradeReflection;
+      mocks.gradeReflection.toString = () => "async function gradeReflection(q,a){ fetch(x,{body:JSON.stringify({scenario:{topic: 'AP Statistics - Topic 6.1: test'}})}) }";
+      window.RAILWAY_SERVER_URL = 'https://cr.test';
+      mocks.fetch.mockImplementation(async (url, init) => {
+        if (String(url).endsWith('/api/ai/grade-batch')) {
+          const body = JSON.parse(init.body);
+          expect(body.items.map((i) => i.questionId)).toEqual(['reflect1', 'reflect2', 'exitTicket']);
+          expect(body.items[0].prompt).toMatch(/^PROMPT\[reflect1\]:/);
+          expect(body.scenario.topic).toBe('AP Statistics - Topic 6.1: test');
+          const results = {};
+          for (const it of body.items) results[it.questionId] = { score: it.questionId === 'reflect2' ? 'P' : 'E', feedback: 'ok', matched: ['a'], missing: it.questionId === 'reflect2' ? ['x'] : [] };
+          return { ok: true, status: 200, json: async () => ({ results }) };
+        }
+        return okFetch([]);
+      });
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      await window.aiGradeWorksheet({ manual: false });
+      expect(mocks.gradeReflection).not.toHaveBeenCalled();
+      const recorded = mocks.recordReflectionToGradebook.mock.calls.map((c) => [c[0], c[2]]);
+      expect(recorded).toEqual(expect.arrayContaining([['reflect1', 'E'], ['reflect2', 'P'], ['exitTicket', 'E']]));
+      expect(recorded).toHaveLength(3);
+    });
+  });
+  it('an item the batch omitted falls back to the per-item grader', async () => {
+    await withBatchPage(async () => {
+      addTextarea('reflect1', 'A sufficiently long first reflection answer typed by the student.');
+      addTextarea('reflect2', 'A sufficiently long second reflection answer typed by the student.');
+      installShippedFlow();
+      globalThis.gradeReflection = mocks.gradeReflection;
+      mocks.gradeReflection.toString = () => "topic: 'T'";
+      window.RAILWAY_SERVER_URL = 'https://cr.test';
+      mocks.fetch.mockImplementation(async (url) => {
+        if (String(url).endsWith('/api/ai/grade-batch')) return { ok: true, status: 200, json: async () => ({ results: { reflect1: { score: 'E', feedback: 'ok', matched: [], missing: [] } } }) };
+        return okFetch([]);
+      });
+      mocks.gradeReflection.mockResolvedValue({ score: 'P', feedback: 'ok', missing: ['x'] });
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      await window.aiGradeWorksheet({ manual: false });
+      expect(mocks.gradeReflection).toHaveBeenCalledTimes(1);
+      expect(mocks.gradeReflection.mock.calls[0][0]).toBe('reflect2');
+      expect(mocks.recordReflectionToGradebook.mock.calls.map((c) => [c[0], c[2]])).toEqual(expect.arrayContaining([['reflect1', 'E'], ['reflect2', 'P']]));
+    });
+  });
+  it('without a discoverable builder (no topic), the per-item path runs as before', async () => {
+    addTextarea('reflect1', 'A sufficiently long first reflection answer typed by the student.');
+    addTextarea('reflect2', 'A sufficiently long second reflection answer typed by the student.');
+    installShippedFlow();
+    mocks.fetch.mockResolvedValue(okFetch([]));
+    mocks.fetchPrior.mockResolvedValue(new Map());
+    mocks.gradeReflection.mockResolvedValue({ score: 'E', feedback: 'ok', matched: ['a'], missing: [] });
+    await window.aiGradeWorksheet({ manual: false });
+    expect(mocks.gradeReflection).toHaveBeenCalledTimes(2);
+    expect(mocks.fetch.mock.calls.some((c) => String(c[0]).endsWith('/api/ai/grade-batch'))).toBe(false);
+  });
+});

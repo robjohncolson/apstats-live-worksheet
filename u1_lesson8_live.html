@@ -1919,6 +1919,57 @@
                 } catch (_) {}
                 return null;
             }
+            // -- BATCH grading (2026-08-19): one model call for all reflections
+            //    (POST /api/ai/grade-batch) when the page's own prompt builder is
+            //    discoverable — window.buildReflectionPrompt<SUFFIX> + LESSON_CONTEXT_<SUFFIX>
+            //    + the 'topic' string inside the page's gradeReflection. Otherwise the
+            //    per-item path below runs unchanged. Results are cached per (id, answer)
+            //    and consumed by the per-item loop, so every guard stays in one place.
+            function _aiBatchBits() {
+                try {
+                    if (!window.RAILWAY_SERVER_URL || typeof fetch !== 'function') return null;
+                    var builderKey = null, ctxKey = null, topic = null;
+                    var keys = Object.keys(window);
+                    for (var i = 0; i < keys.length; i++) {
+                        if (/^buildReflectionPrompt[A-Za-z0-9_]*$/.test(keys[i]) && typeof window[keys[i]] === 'function') { if (builderKey) return null; builderKey = keys[i]; }
+                        if (/^LESSON_CONTEXT_[A-Za-z0-9_]+$/.test(keys[i])) { if (ctxKey) return null; ctxKey = keys[i]; }
+                    }
+                    if (!builderKey) return null;
+                    if (typeof gradeReflection === 'function') {
+                        var m = /topic:\s*'([^']*)'/.exec(String(gradeReflection));
+                        if (m) topic = m[1];
+                    }
+                    if (!topic) return null;
+                    return { builder: window[builderKey], lessonContext: ctxKey ? window[ctxKey] : undefined, topic: topic };
+                } catch (_) { return null; }
+            }
+            var _aiBatchCache = {};   // id → { answer, result }
+            async function _aiBatchGrade(items) {
+                var bits = _aiBatchBits();
+                if (!bits || !items || items.length < 2) return false;
+                var payload = [];
+                for (var i = 0; i < items.length; i++) {
+                    var prompt = null;
+                    try { prompt = bits.builder(items[i].id, items[i].answer); } catch (_) { prompt = null; }
+                    if (!prompt) return false;   // any unbuildable prompt → per-item path for all
+                    payload.push({ questionId: items[i].id, prompt: prompt, answer: items[i].answer });
+                }
+                try {
+                    var r = await fetch(window.RAILWAY_SERVER_URL + '/api/ai/grade-batch', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ scenario: { topic: bits.topic, lessonContext: bits.lessonContext }, items: payload })
+                    });
+                    if (!r.ok) return false;
+                    var j = await r.json();
+                    var results = (j && j.results) || {};
+                    var got = 0;
+                    for (var k = 0; k < items.length; k++) {
+                        var res = results[items[k].id];
+                        if (res && !res.error && _aiVerdictRank(res.score) !== undefined) { _aiBatchCache[items[k].id] = { answer: items[k].answer, result: res }; got++; }
+                    }
+                    return got > 0;
+                } catch (_) { return false; }
+            }
             async function _aiGradeFrqs(manual) {
                 if (!_aiGraderFn()) return 0;   // no grader available on this worksheet
                 var refs = _aiReflectionTextareas();
@@ -1929,6 +1980,20 @@
                 var prior = await _aiFetchPriorScores();             // the persisted floor
                 _aiSeedFrqFloor(prior);
                 var upgrades = 0;
+                // Pre-pass: which of these actually need a grader call (same dedup
+                // rule as the loop) → one batch call, results cached for the loop.
+                var candidates = [];
+                for (var c = 0; c < gradable.length; c++) {
+                    var cta = gradable[c];
+                    var cAnswer = (cta.value || '').trim();
+                    var cPrev = (typeof gradingState !== 'undefined' && gradingState) ? gradingState.get(cta.id) : null;
+                    if (cPrev && cPrev.result && cPrev.result.score && (cPrev.originalAnswer || '').trim() === cAnswer) continue;
+                    candidates.push({ id: cta.id, answer: cAnswer });
+                }
+                if (candidates.length >= 2) {
+                    for (var b = 0; b < candidates.length; b++) _aiShowWaiting(candidates[b].id);
+                    try { await _aiBatchGrade(candidates); } catch (_) {}
+                }
                 for (var i = 0; i < gradable.length; i++) {
                     var ta = gradable[i];
                     var answer = (ta.value || '').trim();
@@ -1942,7 +2007,10 @@
                     if (itemId && (itemId in _aiFrqFloor)) floor = Math.max(floor, _aiFrqFloor[itemId]);
                     _aiShowWaiting(ta.id);
                     try {
-                        var result = await _aiGradeWithRetry(ta.id, answer);
+                        var cached = _aiBatchCache[ta.id];
+                        var result = (cached && cached.answer === answer) ? cached.result : null;
+                        if (cached) delete _aiBatchCache[ta.id];
+                        if (!result) result = await _aiGradeWithRetry(ta.id, answer);
                         if (!result || !result.score) {
                             _aiRememberUngraded(ta.id, true);
                             _aiClearWaiting(ta.id, '⚠️ Couldn’t reach the grader — saved; it will be graded automatically (we retry, and a background check runs every hour).');

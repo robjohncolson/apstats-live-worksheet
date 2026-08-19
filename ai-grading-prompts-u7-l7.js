@@ -71,7 +71,7 @@ VIDEO 4 - Confidence Level and Final AP Takeaways (~7 min):
 // Rubrics for each reflection question
 window.RUBRICS_U7L7 = {
     reflect1: {
-        questionText: "Explain how to correctly interpret a confidence interval for a difference of two means. Use the Argiope spider interval (7.956, 12.129) to give a valid interpretation, explain why the subtraction order matters, and describe two incorrect interpretations students should avoid.",
+        questionText: "Explain how to correctly interpret a confidence interval for the difference of two population means. Use the spider example to discuss the general interpretation template, the direction of subtraction, why the interval must describe a parameter instead of a sample, and two incorrect interpretations students should avoid.",
         expectedElements: [
             { id: "general-template", description: "States that we are C% confident that the interval captures the true population difference being estimated", required: true },
             { id: "spider-context", description: "Uses the spider context and identifies the parameter as the true difference in mean body lengths of female and male Argiope spiders", required: true },
@@ -98,7 +98,7 @@ window.RUBRICS_U7L7 = {
     },
 
     reflect2: {
-        questionText: "Explain how a confidence interval can be used to justify or fail to justify a claim about a difference in means. Compare the spider interval (7.956, 12.129) and the fire-station interval (-2.37, 0.37), and explain the role of 0 as a plausible value.",
+        questionText: "Explain how to use a confidence interval to justify or not justify a claim about two population means. Use the spider interval, the restaurant interval (-9.3, 3.2), and the fire-station interval (-2.37, 0.37) to discuss what it means when 0 is or is not in the interval and how to state the conclusion correctly.",
         expectedElements: [
             { id: "zero-means-no-difference", description: "Explains that 0 represents no difference between the two population means", required: true },
             { id: "spider-support", description: "Explains that 0 is not in the spider interval, so 0 is not plausible and the interval supports the claim that female spiders are larger on average", required: true },
@@ -106,7 +106,7 @@ window.RUBRICS_U7L7 = {
             { id: "firestation-no-support", description: "Explains that 0 is in the fire-station interval, so no difference is plausible and the interval does not support the council member's belief of different mean response times", required: true },
             { id: "contextual-conclusion", description: "Makes both conclusions in context rather than as abstract rules only", required: true },
             { id: "do-not-say-wrong", description: "Notes that when 0 is in the interval you should not say the council member is wrong, only that the interval does not support the claim", required: true },
-            { id: "restaurant-connection", description: "May connect the same 0-in-interval reasoning to the restaurant container example", required: false },
+            { id: "restaurant-connection", description: "Explains that 0 is in the restaurant interval (-9.3, 3.2), so no difference is plausible and there is not convincing evidence of a difference between foam and plastic container mean temperatures", required: true },
             { id: "plausible-language", description: "Uses the language of plausible or not plausible values for the parameter", required: false }
         ],
         scoringGuide: {
@@ -125,7 +125,7 @@ window.RUBRICS_U7L7 = {
     },
 
     exitTicket: {
-        questionText: "A random sample of 50 calls from the northern fire station had a mean response time of 4.3 minutes with a standard deviation of 3.7 minutes. A random sample of 50 calls from the southern fire station had a mean response time of 5.3 minutes with a standard deviation of 3.2 minutes. A calculator produced the 95% confidence interval (-2.37, 0.37) for (mu_N - mu_S). (a) Define the parameter and identify the correct confidence interval procedure. (b) Explain why the conditions are met, including random sampling, the 10% condition, and the large-sample condition. (c) Interpret the interval in context and explain whether it supports the council member's belief that the two fire stations have different mean response times. (d) Briefly interpret the meaning of the 95% confidence level for this procedure.",
+        questionText: "A town council member believes the two fire stations have different mean response times. Random samples of 50 calls from the northern and southern fire stations were selected. The summary statistics were x-bar_N = 4.3 minutes, s_N = 3.7 minutes, x-bar_S = 5.3 minutes, and s_S = 3.2 minutes. A calculator produced the 95% confidence interval (-2.37, 0.37) for (northern - southern). (a) Define the parameter and identify the correct confidence interval procedure. (b) Explain why the conditions are met and interpret the interval in context. (c) State whether the interval supports the council member's belief, and explain your answer using 0. (d) Interpret the meaning of the 95% confidence level for this interval.",
         expectedElements: [
             { id: "parameter", description: "Defines the parameter as mu_N - mu_S, the true difference in mean response times for calls from the northern and southern fire stations", required: true },
             { id: "procedure", description: "Identifies the correct procedure as a 2-sample t-interval for a difference in population means", required: true },
