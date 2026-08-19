@@ -334,8 +334,9 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                     var floor = (prevScore && _AI_FRQ_RANK[prevScore] !== undefined) ? _AI_FRQ_RANK[prevScore] : -1;
                     if (itemId && (itemId in _aiFrqFloor)) floor = Math.max(floor, _aiFrqFloor[itemId]);
                     try {
-                        var result = await gradeReflection(ta.id, answer);
-                        if (!result || !result.score) continue;
+                        var result = await _aiGradeWithRetry(ta.id, answer);
+                        if (!result || !result.score) { _aiRememberUngraded(ta.id, true); continue; }
+                        _aiRememberUngraded(ta.id, false);
                         // The worksheet's "enriched pass" rule: a P with nothing
                         // missing is really an E.
                         if (result.score === 'P' && Array.isArray(result.missing) && result.missing.length === 0) {
@@ -372,13 +373,11 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                         var newRank = _aiVerdictRank(result.score);
                         if (newRank === undefined) continue;
                         if (newRank <= floor) { _aiRememberFrqText(ta.id, answer); continue; }   // never downgrade; remember text so we don't re-call
-                        // AUTO path: never persist a FIRST-EVER "I" — the student
-                        // didn't ask to grade this; just show it + remember it.
-                        if (!manual && floor < 0 && newRank === 0) {
-                            if (typeof showFeedback === 'function') showFeedback(ta.id, result);
-                            _aiRememberFrqText(ta.id, answer);
-                            continue;
-                        }
+                        // 2026-08-19 (FRQ coverage): a FIRST-EVER "I" IS persisted on
+                        // the auto path too. Every FRQ record path is floored (a later
+                        // pass can only RAISE), so recording it is grade-safe — while
+                        // not recording it left the row ungraded (score null) forever:
+                        // 44% of all worksheet FRQ rows in the 2026-08-17 snapshot.
                         if (typeof gradingState !== 'undefined' && gradingState) {
                             gradingState.set(ta.id, {
                                 result: result, originalAnswer: answer,
@@ -578,12 +577,105 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                 };
             }
 
+            // -- FRQ coverage (2026-08-19): every answered reflection must end up
+            //    graded. Three leaks closed here: (1) grading only ran on a button
+            //    press → also grade on textarea BLUR / 10 s idle / page hide;
+            //    (2) failures were swallowed → bounded retry + remembered in
+            //    localStorage so the next load re-runs them; (3) on load, any
+            //    prior FRQ row with text but no score is graded automatically.
+            var _AI_FRQ_RETRY_DELAYS = [2000, 5000];
+            async function _aiGradeWithRetry(taId, answer) {
+                var lastErr = null;
+                for (var attempt = 0; attempt <= _AI_FRQ_RETRY_DELAYS.length; attempt++) {
+                    try {
+                        var r = await gradeReflection(taId, answer);
+                        if (r && r.score) return r;
+                        lastErr = new Error('empty verdict');
+                    } catch (e) { lastErr = e; }
+                    if (attempt < _AI_FRQ_RETRY_DELAYS.length) {
+                        await new Promise(function (res) { setTimeout(res, _AI_FRQ_RETRY_DELAYS[attempt]); });
+                    }
+                }
+                if (lastErr) console.warn('[ai-frq] grading failed after retries:', taId, lastErr && lastErr.message);
+                return null;
+            }
+            function _aiUngradedKey() {
+                var prefix = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : null;
+                return prefix ? ('apstats_frq_ungraded_' + prefix) : null;
+            }
+            function _aiRememberUngraded(taId, pending) {
+                try {
+                    var k = _aiUngradedKey(); if (!k) return;
+                    var list = JSON.parse(localStorage.getItem(k) || '[]');
+                    if (!Array.isArray(list)) list = [];
+                    var i = list.indexOf(taId);
+                    if (pending && i < 0) list.push(taId);
+                    if (!pending && i >= 0) list.splice(i, 1);
+                    if (list.length) localStorage.setItem(k, JSON.stringify(list)); else localStorage.removeItem(k);
+                } catch (_) {}
+            }
+            function _aiHasUngradedPending() {
+                try { var k = _aiUngradedKey(); return !!(k && JSON.parse(localStorage.getItem(k) || '[]').length); } catch (_) { return false; }
+            }
+            var _aiIdleTimer = null;
+            function _aiScheduleAutoGrade(delayMs) {
+                if (_aiIdleTimer) clearTimeout(_aiIdleTimer);
+                _aiIdleTimer = setTimeout(function () {
+                    _aiIdleTimer = null;
+                    try { if (window.aiGradeWorksheet) window.aiGradeWorksheet({ manual: false }); } catch (_) {}
+                }, delayMs);
+            }
+            function _aiWireFrqTriggers() {
+                _aiReflectionTextareas().forEach(function (ta) {
+                    if (!ta || ta.dataset.aiFrqWired === '1') return;
+                    ta.dataset.aiFrqWired = '1';
+                    ta.addEventListener('input', function () {
+                        if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(10000);   // 10 s idle
+                    });
+                    ta.addEventListener('blur', function () {
+                        if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(800);     // leaving the box
+                    });
+                });
+                try {
+                    document.addEventListener('visibilitychange', function () {
+                        if (document.visibilityState === 'hidden') _aiScheduleAutoGrade(0);
+                    });
+                    window.addEventListener('pagehide', function () { _aiScheduleAutoGrade(0); });
+                } catch (_) {}
+            }
+            // On load: any prior FRQ row with text but no score (or a remembered
+            // failure) → grade it now (hash/single-flight guarded like every pass).
+            function _aiRegradeUngradedPrior(prior) {
+                try {
+                    var need = _aiHasUngradedPending();
+                    if (!need && prior && typeof prior.forEach === 'function') {
+                        var prefix = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : '';
+                        prior.forEach(function (entry, itemId) {
+                            if (need) return;
+                            if (!prefix || String(itemId).indexOf(prefix + '-') !== 0) return;
+                            var taId = String(itemId).slice(prefix.length + 1);
+                            var ta = document.getElementById(taId);
+                            if (!ta || ta.tagName !== 'TEXTAREA') return;
+                            var text = (entry && typeof entry.response === 'string') ? entry.response : '';
+                            if (text.trim().length >= 20 && (entry.score === null || entry.score === undefined)) need = true;
+                        });
+                    }
+                    if (need) _aiScheduleAutoGrade(1500);   // after hydration has filled the textareas
+                } catch (_) {}
+            }
+
             // -- on load: restore AI-credit flags + greens from the ledger (so a
             //    post-reload blur can't clobber them) and seed the FRQ floor (so
             //    the legacy button can't downgrade before any AI pass runs).
             function _aiOnLoad() {
                 try { _aiRestoreBlankCredits(); } catch (_) {}
-                try { _aiFetchPriorScores().then(_aiSeedFrqFloor); } catch (_) {}
+                try { _aiWireFrqTriggers(); } catch (_) {}
+                try {
+                    _aiFetchPriorScores().then(function (prior) {
+                        _aiSeedFrqFloor(prior);
+                        _aiRegradeUngradedPrior(prior);
+                    });
+                } catch (_) {}
             }
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function () { setTimeout(_aiOnLoad, 600); });
@@ -761,6 +853,29 @@ export function buildScriptBlock(eol) {
   return block.split('\n').join(eol || '\n');
 }
 
+// Replace an already-wired block with the CURRENT INJECTED_JS (idempotent:
+// returns changed:false when the block is already current). The block is the
+// exact `<script>` + INJECTED_JS + `</script>` buildScriptBlock emits, so we
+// locate it by its first line and the next `</script>`.
+export const BLOCK_FIRST_LINE = '// ==================== AI WORKSHEET GRADING (semantic blanks + folded FRQ) ====================';
+export function rewireHtml(raw) {
+  if (typeof raw !== 'string') return { changed: false, html: raw, reason: 'not-a-string' };
+  if (!raw.includes(SENTINEL)) return { changed: false, html: raw, reason: 'not-wired' };
+  const eol = raw.includes('\r\n') ? '\r\n' : '\n';
+  const first = raw.indexOf(BLOCK_FIRST_LINE);
+  if (first < 0) return { changed: false, html: raw, reason: 'block-start-not-found' };
+  const scriptOpen = raw.lastIndexOf('<script>', first);
+  const scriptClose = raw.indexOf('</script>', first);
+  if (scriptOpen < 0 || scriptClose < 0) return { changed: false, html: raw, reason: 'block-bounds-not-found' };
+  const lineStart = raw.lastIndexOf('\n', scriptOpen) + 1;
+  const before = raw.slice(0, lineStart);
+  const after = raw.slice(scriptClose + '</script>'.length);
+  const fresh = buildScriptBlock(eol);
+  const html = before + fresh + after;
+  if (html === raw) return { changed: false, html: raw, reason: 'already-current' };
+  return { changed: true, html, reason: 'rewired' };
+}
+
 // ---------------------------------------------------------------------------
 // Pure wiring of one HTML string. Returns { changed, html, reason }.
 // ---------------------------------------------------------------------------
@@ -813,6 +928,7 @@ export function wireHtml(raw) {
 // ---------------------------------------------------------------------------
 function main(argv) {
   const apply = argv.includes('--apply');
+  const rewire = argv.includes('--rewire');
   const named = argv.filter((a) => !a.startsWith('--'));
 
   let files;
@@ -830,10 +946,12 @@ function main(argv) {
   for (const f of files) {
     const p = path.join(ROOT, f);
     const raw = fs.readFileSync(p, 'utf8');
-    const res = wireHtml(raw);
-    if (res.reason === 'already-wired') {
+    // --rewire: replace an existing block with the current INJECTED_JS (used
+    // whenever the block source changes; idempotent).
+    const res = rewire ? rewireHtml(raw) : wireHtml(raw);
+    if (res.reason === 'already-wired' || res.reason === 'already-current') {
       already++;
-      console.log(`  = already wired: ${f}`);
+      console.log(`  = ${res.reason}: ${f}`);
       continue;
     }
     if (!res.changed) {

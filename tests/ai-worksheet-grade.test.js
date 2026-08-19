@@ -409,8 +409,8 @@ describe('GUARD 2 — every FRQ record path is upgrade-only (covers the legacy b
   });
 });
 
-describe('FRQ fold — fresh-I suppression on the AUTO path (#10)', () => {
-  it('auto (Done) path does NOT persist a first-ever I for an ungraded FRQ', async () => {
+describe('FRQ coverage — a first-ever I IS persisted on the AUTO path (2026-08-19; was #10 suppression)', () => {
+  it('auto (Done) path persists a first-ever I for an ungraded FRQ (floored, so it can only be raised later)', async () => {
     addTextarea('reflect1', 'A sufficiently long but weak reflection answer goes here now.');
     installShippedFlow();
     mocks.fetch.mockResolvedValue(okFetch([]));
@@ -419,8 +419,21 @@ describe('FRQ fold — fresh-I suppression on the AUTO path (#10)', () => {
 
     await window.aiGradeWorksheet({ manual: false });
 
-    expect(mocks.recordReflectionToGradebook).not.toHaveBeenCalled();
-    expect(mocks.showFeedback).toHaveBeenCalled(); // student still sees the feedback
+    expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'I');
+    expect(mocks.showFeedback).toHaveBeenCalled();
+  });
+
+  it('a later pass that returns P raises the persisted I (floor is monotone)', async () => {
+    addTextarea('reflect1', 'A sufficiently long but weak reflection answer goes here now.');
+    installShippedFlow();
+    mocks.fetch.mockResolvedValue(okFetch([]));
+    mocks.fetchPrior.mockResolvedValue(new Map());
+    mocks.gradeReflection.mockResolvedValueOnce({ score: 'I', feedback: 'weak' });
+    await window.aiGradeWorksheet({ manual: false });
+    document.getElementById('reflect1').value = 'A sufficiently long and now much better reflection answer goes here.';
+    mocks.gradeReflection.mockResolvedValueOnce({ score: 'P', feedback: 'better', missing: ['x'] });
+    await window.aiGradeWorksheet({ manual: false });
+    expect(mocks.recordReflectionToGradebook.mock.calls.map((c) => c[2])).toEqual(['I', 'P']);
   });
 
   it('MANUAL re-check DOES persist a first-ever I (the student asked)', async () => {
@@ -650,8 +663,9 @@ describe('INJECTED_JS invariants (load-bearing)', () => {
   it('blanks endpoint only fires when something is upgradeable (#8)', () => {
     expect(INJECTED_JS).toMatch(/Object\.keys\(actMap\)\.length/);
   });
-  it('auto path never persists a fresh I (#10)', () => {
-    expect(INJECTED_JS).toMatch(/!manual && floor < 0 && newRank === 0/);
+  it('auto path PERSISTS a fresh I (2026-08-19 FRQ coverage; the #10 suppression is gone)', () => {
+    expect(INJECTED_JS).not.toMatch(/!manual && floor < 0 && newRank === 0/);
+    expect(INJECTED_JS).toMatch(/FIRST-EVER "I" IS persisted/);
   });
   it('folds the "polish" pass into the one button (manual only)', () => {
     expect(INJECTED_JS).toMatch(/fetchEnrichedAnswer/);
@@ -770,5 +784,114 @@ describe('buildScriptBlock', () => {
     expect(block.startsWith('    <script>')).toBe(true);
     expect(block.trimEnd().endsWith('</script>')).toBe(true);
     expect(block).toContain('aiGradeWorksheet');
+  });
+});
+
+describe('FRQ coverage — retry, triggers, on-load regrade (2026-08-19)', () => {
+  it('retries a failing gradeReflection (2 retries) and records the eventual verdict', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', 'A sufficiently long reflection answer that the grader flakes on at first.');
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      mocks.gradeReflection
+        .mockRejectedValueOnce(new Error('timeout'))
+        .mockRejectedValueOnce(new Error('timeout'))
+        .mockResolvedValueOnce({ score: 'P', feedback: 'ok', missing: ['x'] });
+      const run = window.aiGradeWorksheet({ manual: false });
+      await vi.advanceTimersByTimeAsync(2000);
+      await vi.advanceTimersByTimeAsync(5000);
+      await run;
+      expect(mocks.gradeReflection).toHaveBeenCalledTimes(3);
+      expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'P');
+      expect(localStorage.getItem('apstats_frq_ungraded_WS-U6L1-2')).toBeNull();
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('remembers an FRQ that failed all retries and regrades it on the next load', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', 'A sufficiently long reflection answer whose grading is down for now.');
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      mocks.gradeReflection.mockRejectedValue(new Error('down'));
+      const run = window.aiGradeWorksheet({ manual: false });
+      await vi.advanceTimersByTimeAsync(2000);
+      await vi.advanceTimersByTimeAsync(5000);
+      await run;
+      expect(JSON.parse(localStorage.getItem('apstats_frq_ungraded_WS-U6L1-2'))).toEqual(['reflect1']);
+      expect(mocks.recordReflectionToGradebook).not.toHaveBeenCalled();
+
+      // "Next load": reinstall the flow; the on-load hook sees the pending list and grades.
+      mocks.gradeReflection.mockReset();
+      mocks.gradeReflection.mockResolvedValue({ score: 'E', feedback: 'good', matched: ['a'], missing: [] });
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      await vi.advanceTimersByTimeAsync(600);    // _aiOnLoad delay
+      await vi.advanceTimersByTimeAsync(1500);   // scheduled auto grade
+      await vi.advanceTimersByTimeAsync(10);
+      expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'E');
+      expect(localStorage.getItem('apstats_frq_ungraded_WS-U6L1-2')).toBeNull();
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('on load, a prior FRQ row with text but no score is graded automatically', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', 'A restored reflection answer that was saved as a draft and never graded.');
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map([
+        ['WS-U6L1-2-reflect1', { response: 'A restored reflection answer that was saved as a draft and never graded.', score: null }],
+      ]));
+      mocks.gradeReflection.mockResolvedValue({ score: 'P', feedback: 'ok', missing: ['x'] });
+      await vi.advanceTimersByTimeAsync(600);
+      await vi.advanceTimersByTimeAsync(1500);
+      await vi.advanceTimersByTimeAsync(10);
+      expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'P');
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('typing then leaving the textarea (blur) triggers an auto grade without any button', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', '');
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      mocks.gradeReflection.mockResolvedValue({ score: 'E', feedback: 'good', matched: ['a'], missing: [] });
+      await vi.advanceTimersByTimeAsync(600);   // on-load wiring
+      const ta = document.getElementById('reflect1');
+      ta.value = 'A sufficiently long reflection answer typed by the student right now.';
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      ta.dispatchEvent(new Event('blur'));
+      await vi.advanceTimersByTimeAsync(800);
+      await vi.advanceTimersByTimeAsync(10);
+      expect(mocks.gradeReflection).toHaveBeenCalledTimes(1);
+      expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'E');
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('10 s of idle after typing triggers an auto grade', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', '');
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      mocks.gradeReflection.mockResolvedValue({ score: 'E', feedback: 'good', matched: ['a'], missing: [] });
+      await vi.advanceTimersByTimeAsync(600);
+      const ta = document.getElementById('reflect1');
+      ta.value = 'A sufficiently long reflection answer typed by the student right now.';
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(9000);
+      expect(mocks.gradeReflection).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1100);
+      await vi.advanceTimersByTimeAsync(10);
+      expect(mocks.gradeReflection).toHaveBeenCalledTimes(1);
+    } finally { vi.useRealTimers(); }
   });
 });

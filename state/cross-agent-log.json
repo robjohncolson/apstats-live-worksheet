@@ -4559,15 +4559,37 @@
       "timestamp": "2026-08-18T15:53:04Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "e4983bc73867",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "Reply with exactly: RUNNER_OK",
+      "status": "completed",
+      "duration_seconds": 20.365,
+      "timestamp": "2026-08-19T06:17:18Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3a73910f020e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing the **DATA LINEAGE MANIFEST** for /home/mrcolson/repos/apstats-live-worksheet. ",
+      "status": "completed",
+      "duration_seconds": 656.55,
+      "timestamp": "2026-08-19T06:29:56Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 388,
-    "cc_to_codex": 388,
+    "total_calls": 390,
+    "cc_to_codex": 390,
     "codex_to_cc": 0,
-    "completed": 293,
+    "completed": 295,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 615.651
+    "avg_duration_seconds": 614.23
   }
 }

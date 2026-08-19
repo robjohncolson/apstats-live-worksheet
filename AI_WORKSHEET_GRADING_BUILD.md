@@ -85,3 +85,23 @@ One batched call grades the WHOLE worksheet's blanks coherently.
 ## Rollout
 `node scripts/wire-ai-worksheet-grade.mjs` (dry-run) → verify on u6_lesson1-2 + u8_lesson1 →
 `--apply` to all 69 → commit follow-alongs + curriculum_render separately (own paths only).
+
+## 2026-08-19 — FRQ coverage fold (every answered reflection gets graded)
+
+Finding: 44% of `source:'frq'` rows in the 2026-08-17 ledger snapshot had `score = null`
+(answer saved as a draft, never graded). Causes and fixes, all in `INJECTED_JS`
+(`scripts/wire-ai-worksheet-grade.mjs`, re-applied to all 69 worksheets with `--rewire --apply`):
+
+1. Grading ran only on "Check Answers"/"Grade with AI" → now also on textarea **blur**
+   (0.8 s), **10 s idle** after typing, and page hide (all through the same hash/single-flight
+   `aiGradeWorksheet({manual:false})`).
+2. The auto path refused to persist a first-ever **I** (#10) → it now persists it. Every FRQ
+   record path is floored, so a later pass can only raise; not recording left the row null.
+3. Grader failures were swallowed → `_aiGradeWithRetry` (2 retries, 2 s / 5 s), failures
+   remembered in `localStorage apstats_frq_ungraded_<prefix>` and re-run on the next load.
+4. On load, any prior FRQ row with ≥ 20 chars of text and no score is graded automatically
+   (`_aiRegradeUngradedPrior`) — this back-fills historical nulls as students revisit.
+
+Not covered: students who never reopen a worksheet keep their historical null rows; a
+teacher-side batch regrade needs a server write path (see PC_FRQ_GRADING_SPEC.md §3/§9).
+
