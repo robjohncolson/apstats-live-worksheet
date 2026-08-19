@@ -41,9 +41,9 @@ describe('Desk readiness badge — static contract', () => {
     expect(lookup).toBeGreaterThan(gate);
     expect(badge).toBeGreaterThan(lookup);
     expect(panel.slice(0, gate)).not.toContain('class="fc-ready-badge"');
-    expect(panel).toContain('title="Practice signal — not your grade"');
+    expect(panel).toContain('title="Flashcard readiness: a practice signal, not your grade"');
     expect(panel).toMatch(
-      /class="fc-ready-badge"[^>]*>'\s*\+\s*_blReadinessLabel\s*\+\s*' — practice signal, not your grade<\/span>/
+      /class="fc-ready-badge" title="[^"]*practice signal, not your grade"[^>]*>'\s*\+\s*_blReadinessLabel\s*\+\s*'<\/span>/
     );
     expect(row).toBeGreaterThan(badge);
   });

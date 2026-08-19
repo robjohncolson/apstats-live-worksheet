@@ -11400,7 +11400,7 @@ function showResourcePanel(inf, dateStr) {
                         && FlashcardSrs
                         && typeof FlashcardSrs.readinessLabel === 'function') {
                         var _blReadinessLabel = FlashcardSrs.readinessLabel(_blReadiness);
-                        _blDueText += ' <span class="fc-ready-badge" title="Practice signal — not your grade">' + _blReadinessLabel + ' — practice signal, not your grade</span>';
+                        _blDueText += ' <span class="fc-ready-badge" title="Flashcard readiness: a practice signal, not your grade">' + _blReadinessLabel + '</span>';
                     }
                 }
                 if (typeof _fcFlag === 'function' && _fcFlag('dueTodayDeck')) {
@@ -12999,7 +12999,7 @@ function _bfShowModePicker(btn, topicId) {
             'Top 10 cards, untimed, answers shown. Stops when you pass. Caps at 80% — the Blooket half of Done (the worksheet 60% is also needed).',
             function () { _bfStartQuick(btn, topicId); }));
         mp.appendChild(modeBtn('\u{1F3AF} Full deck — timed',
-            'Every card, ' + BLOOKET_FULLDECK_SECONDS + 's each, misses re-queue with no reveal. Earn up to 100% — replaces the in-class Blooket. Only a higher score is ever saved.',
+            'Every card, ' + BLOOKET_FULLDECK_SECONDS + 's each; misses come back. Earn up to 100% — replaces the in-class Blooket.',
             function () { _ftStart(btn, topicId); }));
         if (_fcFlag('reviewMode')) {
             mp.appendChild(modeBtn('🔁 Review due cards (practice — not graded)',
@@ -23376,7 +23376,7 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-6adg';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-bdz5';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Flashcard sync: flush the debounced push when the tab hides / closes, and
 // re-pull (throttled) when it comes back — another device may have practiced.
