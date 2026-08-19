@@ -1,4 +1,4 @@
-// gitnexus-shadow.test.js — the tracked .gitnexus-shadow/*.inline.js files must be
+// gitnexus-shadow.test.js — the tracked gitnexus-shadow/*.inline.js files must be
 // exactly what scripts/gitnexus-shadow.mjs derives from the current HTML apps
 // (line-preserving), or GitNexus impact analysis on the Desk goes stale.
 // Regenerate: `npm run gitnexus:shadow` (or `npm run gitnexus:analyze`).
@@ -32,10 +32,10 @@ describe('shadowOf (pure)', () => {
 
 describe('tracked shadows are fresh', () => {
   for (const rel of SHADOWED_APPS) {
-    it(`${rel} → .gitnexus-shadow/${shadowFileName(rel)} matches the current HTML (line-preserving)`, () => {
+    it(`${rel} → gitnexus-shadow/${shadowFileName(rel)} matches the current HTML (line-preserving)`, () => {
       const src = resolve(repo, rel);
       if (!existsSync(src)) return;   // app removed: shadow list should be updated, but do not fail unrelated runs
-      const shadowPath = resolve(repo, '.gitnexus-shadow', shadowFileName(rel));
+      const shadowPath = resolve(repo, 'gitnexus-shadow', shadowFileName(rel));
       expect(existsSync(shadowPath), `missing shadow — run npm run gitnexus:shadow`).toBe(true);
       const html = readFileSync(src, 'utf8');
       const expected = shadowOf(html).split('\n');

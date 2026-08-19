@@ -4,7 +4,7 @@
 // GitNexus registers .html files but never parses their inline <script> blocks, so
 // nothing inside the Desk (ap_stats_roadmap_square_mode.html, ~23k lines) resolves as
 // a symbol: `gitnexus context _blooketCommit` → "not found". This script writes a
-// LINE-PRESERVING JavaScript shadow of each app into .gitnexus-shadow/ (gitignored):
+// LINE-PRESERVING JavaScript shadow of each app into gitnexus-shadow/ (gitignored):
 // every line outside an inline <script>…</script> becomes an empty line, so any
 // symbol GitNexus reports at shadow line N is at line N of the real HTML file.
 // External <script src> tags are skipped (those files are indexed on their own).
@@ -17,7 +17,7 @@ import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT_DIR = resolve(ROOT, '.gitnexus-shadow');
+const OUT_DIR = resolve(ROOT, 'gitnexus-shadow');
 
 // Single-file apps whose inline JS should be indexable. Add here when a new
 // HTML app appears; worksheets (u*_lesson*_live.html) are generated and excluded.
@@ -93,7 +93,7 @@ function main() {
     writeFileSync(resolve(OUT_DIR, shadowFileName(rel)), lines.join('\n'), 'utf8');
     written += 1;
   }
-  console.log(`[gitnexus-shadow] wrote ${written} shadow file(s) to .gitnexus-shadow/`);
+  console.log(`[gitnexus-shadow] wrote ${written} shadow file(s) to gitnexus-shadow/`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
