@@ -105,16 +105,18 @@
         "units": [
           1,
           2,
-          3
+          3,
+          4
         ],
         "unitGrades": {
           "U1": null,
           "U2": null,
-          "U3": null
+          "U3": null,
+          "U4": null
         },
         "quarterGrade": 0,
         "unitsGraded": 0,
-        "unitsTotal": 3,
+        "unitsTotal": 4,
         "ceiling": 100,
         "lessonsDue": 23,
         "lessonsGraded": 0,
@@ -136,16 +138,20 @@
       },
       "Q2": {
         "units": [
-          4,
-          5
+          5,
+          6,
+          7,
+          8
         ],
         "unitGrades": {
-          "U4": null,
-          "U5": null
+          "U5": null,
+          "U6": null,
+          "U7": null,
+          "U8": null
         },
         "quarterGrade": null,
         "unitsGraded": 0,
-        "unitsTotal": 2,
+        "unitsTotal": 4,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
@@ -167,16 +173,14 @@
       },
       "Q3": {
         "units": [
-          6,
-          7
+          9
         ],
         "unitGrades": {
-          "U6": null,
-          "U7": null
+          "U9": null
         },
         "quarterGrade": null,
         "unitsGraded": 0,
-        "unitsTotal": 2,
+        "unitsTotal": 1,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
@@ -197,17 +201,11 @@
         "trainerTodo": []
       },
       "Q4": {
-        "units": [
-          8,
-          9
-        ],
-        "unitGrades": {
-          "U8": null,
-          "U9": null
-        },
+        "units": [],
+        "unitGrades": {},
         "quarterGrade": null,
         "unitsGraded": 0,
-        "unitsTotal": 2,
+        "unitsTotal": 0,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,

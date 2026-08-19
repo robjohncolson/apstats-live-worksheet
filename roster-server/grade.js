@@ -34,6 +34,7 @@ import {
   computeQuizTotals,
   todayInTz,
   sectionToPeriod,
+  deriveQuarterBands,
 } from './lesson-grade.js';
 import { buildGradebook } from './gradebook-grid.js';
 import { readFileSync } from 'fs';
@@ -295,8 +296,15 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
 
   // ── Per-quarter lesson-weighted grade ─────────────────────────────────────
   const quarters = {};
+  // Unit bands are DERIVED from the schedule dates (deriveQuarterBands) so the
+  // unit roll-up, the P_quarter mean, the gradebook columns and the dashboard's
+  // quarter labels all follow the same date logic that already assigns lessons
+  // to quarters (quarterOfLesson). The static config list is only the fallback.
+  const _quarterBands = deriveQuarterBands(
+    config, schedule, sectionToPeriod(section), (config && config.gradingWindowStart) || null,
+  );
   for (const qKey of Object.keys(config.quarters)) {
-    const band = config.quarters[qKey].units;
+    const band = _quarterBands[qKey] || config.quarters[qKey].units;
     const pcAnchor = config.quarters[qKey].pcAnchor;
 
     // Unit-level data (UNCHANGED — teacher dashboard reads this).

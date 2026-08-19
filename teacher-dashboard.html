@@ -583,10 +583,13 @@
       <h2 class="section-title">Gradebook <span class="dim" style="font-size:0.8rem">(1:1 Schoology — component grid)</span></h2>
       <div class="gb-quarter-bar" id="gb-quarter-bar">
         <span class="hint" style="margin-right:4px">Quarter:</span>
-        <button class="gb-qbtn" id="gb-q-Q1" data-q="Q1">Q1 · U1–3</button>
-        <button class="gb-qbtn" id="gb-q-Q2" data-q="Q2">Q2 · U4–5</button>
-        <button class="gb-qbtn" id="gb-q-Q3" data-q="Q3">Q3 · U6–7</button>
-        <button class="gb-qbtn" id="gb-q-Q4" data-q="Q4">Q4 · U8–9</button>
+        <!-- Labels are filled by gbQuarterLabels() from the payload's DERIVED unit
+             bands (server deriveQuarterBands: units follow schedule dates), so the
+             buttons can never disagree with how the engine buckets lessons. -->
+        <button class="gb-qbtn" id="gb-q-Q1" data-q="Q1">Q1</button>
+        <button class="gb-qbtn" id="gb-q-Q2" data-q="Q2">Q2</button>
+        <button class="gb-qbtn" id="gb-q-Q3" data-q="Q3">Q3</button>
+        <button class="gb-qbtn" id="gb-q-Q4" data-q="Q4">Q4</button>
       </div>
       <div class="hint" id="gb-scope" style="margin:2px 0 6px"></div>
       <div class="table-wrap" id="gb-wrap" style="display:none; max-height:70vh; overflow:auto">
@@ -1011,6 +1014,12 @@
     var lastGradesPayload = null;
     var lastPacingPayload = null;   // /class/grades?includeStaff=1 — pacing includes teacher/test accounts
     var currentQuarter = 'Q1';
+    // Prefetch the CED-2026 relabel map; re-render the grid once it lands.
+    try {
+      gbLoadCed2026().then(function () {
+        try { if (typeof lastGradesPayload !== 'undefined' && lastGradesPayload) renderGradebook(lastGradesPayload); } catch (_) {}
+      });
+    } catch (_) {}
 
     // ── Pacing overview: per-student readiness color (shared wallet_logic.js) ──
     var _summerScheduleData = null;
@@ -1505,10 +1514,73 @@
 
     // Compact header label: the part after the key prefix (FA:1.1 -> "1.1",
     // QUIZ:1.2 -> "1.2", PC:U1 -> "U1"). Full title lives in the th tooltip.
+    // "U1–4" style range text for a derived unit band ([] → "—").
+    function gbUnitRange(units) {
+      var u = (Array.isArray(units) ? units.slice() : []).filter(function (n) { return Number.isFinite(n); }).sort(function (a, b) { return a - b; });
+      if (!u.length) return '—';
+      var contiguous = u.every(function (n, i) { return i === 0 || n === u[i - 1] + 1; });
+      if (u.length === 1) return 'U' + u[0];
+      return contiguous ? ('U' + u[0] + '–' + u[u.length - 1]) : ('U' + u.join(','));
+    }
+
+    // Quarter buttons: label from the payload's derived bands (any student's
+    // grade carries quarters[q].units; they are identical class-wide for a period).
+    function gbQuarterLabels(students) {
+      var sample = null;
+      (students || []).some(function (st) { if (st && st.quarters) { sample = st.quarters; return true; } return false; });
+      QUARTERS.forEach(function (q) {
+        var b = $('gb-q-' + q);
+        if (!b) return;
+        var units = sample && sample[q] ? sample[q].units : null;
+        b.textContent = units ? (q + ' · ' + gbUnitRange(units)) : q;
+        b.title = units ? ('Units whose scheduled lessons end inside ' + q + ' (derived from the schedule dates)') : '';
+      });
+    }
+
+    // CED-2026 topic relabel (the same mapping the Desk uses): old topic key
+    // ("4.1") → { key: "2.3", label: "…" } from roadmap-data.json ced2026.
+    // Loaded once, best-effort; columns fall back to the old key when absent.
+    var _ced2026ByOldKey = null;
+    function gbLoadCed2026() {
+      if (_ced2026ByOldKey) return Promise.resolve(_ced2026ByOldKey);
+      if (typeof fetch !== 'function') { _ced2026ByOldKey = {}; return Promise.resolve(_ced2026ByOldKey); }
+      return fetch('roadmap-data.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (rd) {
+          var map = {};
+          var lessons = rd && rd.lessons ? rd.lessons : {};
+          Object.keys(lessons).forEach(function (oldKey) {
+            var c = lessons[oldKey] && lessons[oldKey].ced2026;
+            if (c && c.newTopic) map[oldKey] = { key: String(c.newTopic), label: c.newLabel || '', status: c.status || '' };
+          });
+          _ced2026ByOldKey = map;
+          return map;
+        })
+        .catch(function () { _ced2026ByOldKey = {}; return _ced2026ByOldKey; });
+    }
+    function gbCedFor(topicKey) {
+      return (_ced2026ByOldKey && _ced2026ByOldKey[String(topicKey)]) || null;
+    }
+
+    // Short column header. Prefer the CED-2026 topic key (like the Desk); the
+    // old key stays in the hover title. Combined worksheets ("4.1-2") map by
+    // their first topic.
     function gbShortTitle(col) {
       var k = String(col.key || '');
       var i = k.indexOf(':');
-      return i >= 0 ? k.slice(i + 1) : (col.title || k);
+      var tail = i >= 0 ? k.slice(i + 1) : (col.title || k);
+      var firstTopic = (Array.isArray(col.topicKeys) && col.topicKeys.length) ? col.topicKeys[0] : null;
+      var ced = firstTopic ? gbCedFor(firstTopic) : null;
+      if (!ced) return tail;
+      var suffix = tail.replace(/^[\d.\-]+/, '');   // keep any "(bonus)"-style suffix
+      return ced.key + suffix;
+    }
+    function gbColumnHover(col) {
+      var firstTopic = (Array.isArray(col.topicKeys) && col.topicKeys.length) ? col.topicKeys[0] : null;
+      var ced = firstTopic ? gbCedFor(firstTopic) : null;
+      var base = String(col.title || col.key || '');
+      if (!ced) return base;
+      return 'CED-2026 ' + ced.key + (ced.label ? ' — ' + ced.label : '') + '  (was ' + base + ')';
     }
 
     function renderGradebook(payload) {
@@ -1521,7 +1593,8 @@
       var students = (payload && payload.students) || [];
       var qk = currentQuarter;
 
-      // Reflect the active quarter button.
+      // Reflect the active quarter button + derived band labels.
+      gbQuarterLabels(students);
       QUARTERS.forEach(function (q) {
         var b = $('gb-q-' + q);
         if (b) b.classList.toggle('active', q === qk);
@@ -1581,7 +1654,7 @@
       // Row 2: per-column titles + the two total headers.
       var titleRow = '<tr>';
       orderedCols.forEach(function (c) {
-        titleRow += '<th class="gb-col gb-cat-' + GB_CAT_SLUG[c.category] + '" title="' + escHtml(c.title) + '">' +
+        titleRow += '<th class="gb-col gb-cat-' + GB_CAT_SLUG[c.category] + '" title="' + escHtml(gbColumnHover(c)) + '">' +
           escHtml(gbShortTitle(c)) + '</th>';
       });
       titleRow += '<th class="gb-tot-h">Schoology</th><th class="gb-tot-h">v3</th></tr>';

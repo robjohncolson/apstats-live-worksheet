@@ -577,6 +577,69 @@ export function quarterOfLesson(entry, period, config) {
   return quarterOfUnit(entry && entry.unit, config);
 }
 
+// ── deriveQuarterBands ────────────────────────────────────────────────────────
+//
+// Which UNITS belong to which quarter, derived from the SCHEDULE DATES — the
+// same date logic quarterOfLesson uses for lessons — instead of the static
+// config.quarters[q].units list. Rule: a unit belongs to the quarter of its
+// LATEST in-window scheduled lesson date for the student's period (a unit's
+// PC / roll-up lands where the unit finishes; mirrors unitPcDue). Units with
+// no usable date keep their configured quarter (graceful fallback), and a
+// missing/malformed schedule returns the configured bands unchanged. Every
+// unit appears in exactly one quarter; each band is sorted numerically.
+//
+//   config             -- PHASE3_CONFIG-shaped ({ quarters: { Q1: { units, start, end } } })
+//   schedule           -- topicKey → { unit, periods: { B, E } } (or null)
+//   period             -- 'B' | 'E' | null (from sectionToPeriod)
+//   gradingWindowStart -- cohort window start (or null): stale prior-cohort dates ignored
+// Returns { Q1: number[], Q2: number[], ... } for every key in config.quarters.
+export function deriveQuarterBands(config, schedule, period, gradingWindowStart) {
+  const quarterKeys = Object.keys((config && config.quarters) || {});
+  const configured = {};
+  for (const q of quarterKeys) {
+    const u = config.quarters[q] && Array.isArray(config.quarters[q].units) ? config.quarters[q].units : [];
+    configured[q] = u.slice();
+  }
+  if (!schedule || typeof schedule !== 'object') return configured;
+
+  // Latest in-window date per unit for this period.
+  const latestByUnit = new Map();
+  for (const entry of Object.values(schedule)) {
+    if (!entry || !Number.isFinite(Number(entry.unit))) continue;
+    const unitNum = Number(entry.unit);
+    const periods = (entry.periods && typeof entry.periods === 'object') ? entry.periods : {};
+    const b = periods.B == null ? null : periods.B;
+    const e = periods.E == null ? null : periods.E;
+    if (gradingWindowStart && !(b == null && e == null)) {
+      const bIn = b != null && b >= gradingWindowStart;
+      const eIn = e != null && e >= gradingWindowStart;
+      if (!bIn && !eIn) continue; // stale prior-cohort entry
+    }
+    const d = period ? (periods[period] || null) : (b || e || null);
+    if (!d || typeof d !== 'string') continue;
+    const prev = latestByUnit.get(unitNum);
+    if (!prev || d > prev) latestByUnit.set(unitNum, d);
+  }
+
+  const bands = {};
+  for (const q of quarterKeys) bands[q] = [];
+  const placed = new Set();
+  for (const [unitNum, d] of latestByUnit) {
+    const q = quarterOfDate(d, config);
+    if (!q || !bands[q]) continue;
+    bands[q].push(unitNum);
+    placed.add(unitNum);
+  }
+  // Fallback: configured units the schedule could not place keep their quarter.
+  for (const q of quarterKeys) {
+    for (const unitNum of configured[q]) {
+      if (!placed.has(unitNum)) { bands[q].push(unitNum); placed.add(unitNum); }
+    }
+  }
+  for (const q of quarterKeys) bands[q].sort((a, b) => a - b);
+  return bands;
+}
+
 // ── computeQuarterFromLessons ─────────────────────────────────────────────────
 //
 // F2 (quarters-by-date): the quarter a lesson belongs to is date-driven.
@@ -1077,7 +1140,9 @@ export function computeQuarterV3({
   //                      recorded-but-not-due PC with no due work would bypass
   //                      the 70% single-track ceiling. (Once a PC is due, that
   //                      unit's lessons are due too, so the floor engages.)
-  const band = (config.quarters[quarterKey] && config.quarters[quarterKey].units) || [];
+  // Date-derived unit band (deriveQuarterBands) — the static config list is
+  // only the fallback for units the schedule cannot place.
+  const band = deriveQuarterBands(config, schedule, period, gradingWindowStart)[quarterKey] || [];
   function unitPcDue(unitNum) {
     let latest = null;
     for (const [, entry] of Object.entries(schedule)) {

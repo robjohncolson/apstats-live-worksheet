@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 2bd0b449e4d1
+ * engine-version: b1f7a4c88604
  */
 ;(function (root) {
   'use strict';
@@ -1036,6 +1036,69 @@
       return quarterOfUnit(entry && entry.unit, config);
     }
     
+    // ── deriveQuarterBands ────────────────────────────────────────────────────────
+    //
+    // Which UNITS belong to which quarter, derived from the SCHEDULE DATES — the
+    // same date logic quarterOfLesson uses for lessons — instead of the static
+    // config.quarters[q].units list. Rule: a unit belongs to the quarter of its
+    // LATEST in-window scheduled lesson date for the student's period (a unit's
+    // PC / roll-up lands where the unit finishes; mirrors unitPcDue). Units with
+    // no usable date keep their configured quarter (graceful fallback), and a
+    // missing/malformed schedule returns the configured bands unchanged. Every
+    // unit appears in exactly one quarter; each band is sorted numerically.
+    //
+    //   config             -- PHASE3_CONFIG-shaped ({ quarters: { Q1: { units, start, end } } })
+    //   schedule           -- topicKey → { unit, periods: { B, E } } (or null)
+    //   period             -- 'B' | 'E' | null (from sectionToPeriod)
+    //   gradingWindowStart -- cohort window start (or null): stale prior-cohort dates ignored
+    // Returns { Q1: number[], Q2: number[], ... } for every key in config.quarters.
+    function deriveQuarterBands(config, schedule, period, gradingWindowStart) {
+      const quarterKeys = Object.keys((config && config.quarters) || {});
+      const configured = {};
+      for (const q of quarterKeys) {
+        const u = config.quarters[q] && Array.isArray(config.quarters[q].units) ? config.quarters[q].units : [];
+        configured[q] = u.slice();
+      }
+      if (!schedule || typeof schedule !== 'object') return configured;
+    
+      // Latest in-window date per unit for this period.
+      const latestByUnit = new Map();
+      for (const entry of Object.values(schedule)) {
+        if (!entry || !Number.isFinite(Number(entry.unit))) continue;
+        const unitNum = Number(entry.unit);
+        const periods = (entry.periods && typeof entry.periods === 'object') ? entry.periods : {};
+        const b = periods.B == null ? null : periods.B;
+        const e = periods.E == null ? null : periods.E;
+        if (gradingWindowStart && !(b == null && e == null)) {
+          const bIn = b != null && b >= gradingWindowStart;
+          const eIn = e != null && e >= gradingWindowStart;
+          if (!bIn && !eIn) continue; // stale prior-cohort entry
+        }
+        const d = period ? (periods[period] || null) : (b || e || null);
+        if (!d || typeof d !== 'string') continue;
+        const prev = latestByUnit.get(unitNum);
+        if (!prev || d > prev) latestByUnit.set(unitNum, d);
+      }
+    
+      const bands = {};
+      for (const q of quarterKeys) bands[q] = [];
+      const placed = new Set();
+      for (const [unitNum, d] of latestByUnit) {
+        const q = quarterOfDate(d, config);
+        if (!q || !bands[q]) continue;
+        bands[q].push(unitNum);
+        placed.add(unitNum);
+      }
+      // Fallback: configured units the schedule could not place keep their quarter.
+      for (const q of quarterKeys) {
+        for (const unitNum of configured[q]) {
+          if (!placed.has(unitNum)) { bands[q].push(unitNum); placed.add(unitNum); }
+        }
+      }
+      for (const q of quarterKeys) bands[q].sort((a, b) => a - b);
+      return bands;
+    }
+    
     // ── computeQuarterFromLessons ─────────────────────────────────────────────────
     //
     // F2 (quarters-by-date): the quarter a lesson belongs to is date-driven.
@@ -1536,7 +1599,9 @@
       //                      recorded-but-not-due PC with no due work would bypass
       //                      the 70% single-track ceiling. (Once a PC is due, that
       //                      unit's lessons are due too, so the floor engages.)
-      const band = (config.quarters[quarterKey] && config.quarters[quarterKey].units) || [];
+      // Date-derived unit band (deriveQuarterBands) — the static config list is
+      // only the fallback for units the schedule cannot place.
+      const band = deriveQuarterBands(config, schedule, period, gradingWindowStart)[quarterKey] || [];
       function unitPcDue(unitNum) {
         let latest = null;
         for (const [, entry] of Object.entries(schedule)) {
@@ -1799,7 +1864,7 @@
     
       return result;
     }
-    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray };
+    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands };
   })();
 
   // ── gradebook-grid.js ──────────────────────────────────────────────────────
@@ -2157,7 +2222,7 @@
     
     const { PHASE3_CONFIG, unitNumber, quarterOfUnit, pcRawToP } = __reg["grade-config"];
     const { latestPerItem, unitOf, answerKeyMapOrNull, scoreAgainstKey, scorePcRows } = __reg["scoring"];
-    const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod } = __reg["lesson-grade"];
+    const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands } = __reg["lesson-grade"];
     const { buildGradebook } = __reg["gradebook-grid"];
     
     
@@ -2391,8 +2456,15 @@
     
       // ── Per-quarter lesson-weighted grade ─────────────────────────────────────
       const quarters = {};
+      // Unit bands are DERIVED from the schedule dates (deriveQuarterBands) so the
+      // unit roll-up, the P_quarter mean, the gradebook columns and the dashboard's
+      // quarter labels all follow the same date logic that already assigns lessons
+      // to quarters (quarterOfLesson). The static config list is only the fallback.
+      const _quarterBands = deriveQuarterBands(
+        config, schedule, sectionToPeriod(section), (config && config.gradingWindowStart) || null,
+      );
       for (const qKey of Object.keys(config.quarters)) {
-        const band = config.quarters[qKey].units;
+        const band = _quarterBands[qKey] || config.quarters[qKey].units;
         const pcAnchor = config.quarters[qKey].pcAnchor;
     
         // Unit-level data (UNCHANGED — teacher dashboard reads this).
@@ -2609,7 +2681,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "2bd0b449e4d1",
+    _engineVersion: "b1f7a4c88604",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;
