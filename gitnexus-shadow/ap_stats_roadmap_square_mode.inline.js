@@ -2612,6 +2612,19 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -23434,6 +23447,27 @@ try {
             try { if (typeof rCal === 'function') rCal(); } catch (_) {}
         }, 250);
     });
+} catch (_) {}
+// Sticky core (layout P4): keep --donow-h / --calnav-h equal to the rendered
+// heights of the Do Now card (plus its 8px bottom margin) and the calendar nav so
+// the sticky bands stack cleanly. 0 while the card is hidden (signed out).
+try {
+    var _stickyCard = document.getElementById('donow-card');
+    var _stickyNav = document.querySelector('.cal-nav');
+    var _stickyMeasure = function () {
+        var root = document.documentElement;
+        var cardH = _stickyCard && _stickyCard.offsetHeight ? _stickyCard.offsetHeight + 8 : 0;
+        var navH = _stickyNav ? _stickyNav.offsetHeight : 0;
+        root.style.setProperty('--donow-h', cardH + 'px');
+        root.style.setProperty('--calnav-h', navH + 'px');
+    };
+    if (typeof ResizeObserver === 'function') {
+        var _stickyRO = new ResizeObserver(_stickyMeasure);
+        if (_stickyCard) _stickyRO.observe(_stickyCard);
+        if (_stickyNav) _stickyRO.observe(_stickyNav);
+    }
+    window.addEventListener('resize', _stickyMeasure);
+    _stickyMeasure();
 } catch (_) {}
 // Flashcard sync: flush the debounced push when the tab hides / closes, and
 // re-pull (throttled) when it comes back — another device may have practiced.

@@ -157,8 +157,21 @@
             padding: 1px;
             position: relative;
             border-radius: 2px;
-            overflow: hidden;
+            /* clip, not hidden: `hidden` makes this box the scroll container for every
+               descendant, which silently disables position:sticky on the Do Now card
+               and calendar header below (they must stick to the viewport). */
+            overflow: clip;
         }
+
+        /* ── Sticky core (layout P4) ─────────────────────
+           The Do Now card, the calendar nav and the day header stay pinned under the
+           menu bar while the rest of the window scrolls. DOM order is unchanged.
+           --donow-h / --calnav-h are measured by a ResizeObserver (see the boot
+           script) so the three bands stack without overlap. */
+        #donow-card { position: sticky; top: 21px; z-index: 40; }
+        .cal-nav { position: sticky; top: calc(21px + var(--donow-h, 0px)); z-index: 39; }
+        .hdr-row { position: sticky; top: calc(21px + var(--donow-h, 0px) + var(--calnav-h, 0px)); z-index: 39; background: var(--platinum); }
+        #donow-helper .wsl-panel { max-height: 30vh; overflow-y: auto; }   /* an open coach panel never eats the fold */
 
         /* ── Title Bar ──────────────────────────────── */
         .title-bar {
@@ -23434,6 +23447,27 @@ try {
             try { if (typeof rCal === 'function') rCal(); } catch (_) {}
         }, 250);
     });
+} catch (_) {}
+// Sticky core (layout P4): keep --donow-h / --calnav-h equal to the rendered
+// heights of the Do Now card (plus its 8px bottom margin) and the calendar nav so
+// the sticky bands stack cleanly. 0 while the card is hidden (signed out).
+try {
+    var _stickyCard = document.getElementById('donow-card');
+    var _stickyNav = document.querySelector('.cal-nav');
+    var _stickyMeasure = function () {
+        var root = document.documentElement;
+        var cardH = _stickyCard && _stickyCard.offsetHeight ? _stickyCard.offsetHeight + 8 : 0;
+        var navH = _stickyNav ? _stickyNav.offsetHeight : 0;
+        root.style.setProperty('--donow-h', cardH + 'px');
+        root.style.setProperty('--calnav-h', navH + 'px');
+    };
+    if (typeof ResizeObserver === 'function') {
+        var _stickyRO = new ResizeObserver(_stickyMeasure);
+        if (_stickyCard) _stickyRO.observe(_stickyCard);
+        if (_stickyNav) _stickyRO.observe(_stickyNav);
+    }
+    window.addEventListener('resize', _stickyMeasure);
+    _stickyMeasure();
 } catch (_) {}
 // Flashcard sync: flush the debounced push when the tab hides / closes, and
 // re-pull (throttled) when it comes back — another device may have practiced.

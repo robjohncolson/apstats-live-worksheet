@@ -451,3 +451,31 @@ describe('Window redesign -- summer-aware next-up', () => {
     expect(s.__n(s.__o(), { '1.1|worksheet': { ts: 'y' } })).toBe('1.2');
   });
 });
+
+describe('Sticky core (layout P4, 2026-08-19)', () => {
+  // The Do Now card, calendar nav and day header pin under the menu bar while the
+  // rest of the window scrolls. DOM order is unchanged — only CSS + a measurer.
+  const styleBlock = html.slice(0, html.indexOf('</style>'));
+  it('the Mac window clips instead of hiding overflow (hidden would disable sticky)', () => {
+    const macWindow = /\.mac-window\s*\{[^}]*\}/.exec(styleBlock)[0];
+    expect(macWindow).toMatch(/overflow:\s*clip/);
+    expect(macWindow).not.toMatch(/overflow:\s*hidden/);
+  });
+  it('Do Now card, cal-nav and hdr-row are sticky and stack via measured offsets', () => {
+    expect(styleBlock).toMatch(/#donow-card\s*\{\s*position:\s*sticky;\s*top:\s*21px/);
+    expect(styleBlock).toMatch(/\.cal-nav\s*\{\s*position:\s*sticky;\s*top:\s*calc\(21px \+ var\(--donow-h, 0px\)\)/);
+    expect(styleBlock).toMatch(/\.hdr-row\s*\{\s*position:\s*sticky;\s*top:\s*calc\(21px \+ var\(--donow-h, 0px\) \+ var\(--calnav-h, 0px\)\)/);
+  });
+  it('an open coach panel is capped so it cannot eat the fold', () => {
+    expect(styleBlock).toMatch(/#donow-helper \.wsl-panel\s*\{\s*max-height:\s*30vh;\s*overflow-y:\s*auto/);
+  });
+  it('the measurer publishes --donow-h (card + 8px margin, 0 when hidden) and --calnav-h', () => {
+    expect(html).toMatch(/_stickyCard\.offsetHeight \? _stickyCard\.offsetHeight \+ 8 : 0/);
+    expect(html).toMatch(/setProperty\('--donow-h'/);
+    expect(html).toMatch(/setProperty\('--calnav-h'/);
+    expect(html).toMatch(/new ResizeObserver\(_stickyMeasure\)/);
+  });
+  it('the Do Now card still precedes the calendar in DOM order', () => {
+    expect(html.indexOf('id="donow-card"')).toBeLessThan(html.indexOf('class="cal-outer geneva"'));
+  });
+});
