@@ -9,6 +9,7 @@
 // Without this, a check_violation surfaces as a generic 500 "Database error"
 // and the writer dies silently (how study_guide_diagnostic was lost for weeks).
 import { issueLedgerReceipt, recordReceiptPersistFailure, verifyReviewGrant } from './receipts.js';
+import { requireTeacher } from './teacher-auth.js';
 
 let receiptPersistenceNotProvisionedLogged = false;
 
@@ -225,6 +226,72 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
       }
     }
 
+    return res.json(body);
+  });
+
+  // ── POST /ledger/frq-regrade (teacher-gated) ───────────────────────────────
+  // FRQ COVERAGE (2026-08-19): apply an AI/teacher verdict to an EXISTING
+  // worksheet-reflection row that was left ungraded (score null) or graded low —
+  // the server-side half of "every answered reflection gets graded" that does not
+  // depend on the student's browser ever reloading. Body:
+  //   { studentId, itemId, score (1 | 0.5 | 0), attempt? = 1, provenance? }
+  // Rules: the row MUST already exist for (student, 'frq', item, attempt) — this
+  // route never creates rows and never changes response text; the FRQ floor
+  // applies (a lower score never replaces a higher one). Same receipt path as a
+  // normal write. Auth: x-teacher-secret or a teacher-role token.
+  //   → 200 { ok:true, applied:true|false, ledgerId, score }   applied=false when the floor held
+  //   → 400 bad body · 401 · 404 no such frq row
+  app.post('/ledger/frq-regrade', async (req, res) => {
+    if (!await requireTeacher(req, rosterDb)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const { studentId, itemId, score, attempt, provenance } = req.body || {};
+    if (!studentId || !itemId) return res.status(400).json({ ok: false, error: 'studentId and itemId are required' });
+    const incoming = Number(score);
+    if (!(incoming === 1 || incoming === 0.5 || incoming === 0)) {
+      return res.status(400).json({ ok: false, error: 'score must be 1, 0.5 or 0' });
+    }
+    const attemptNo = attempt ?? 1;
+    let existing = null;
+    try {
+      const { data: rows } = await db.getLedgerByStudent(studentId, { prefix: itemId });
+      existing = Array.isArray(rows)
+        ? rows.find((r) => r && r.item_id === itemId && r.source === 'frq' && Number(r.attempt ?? 1) === Number(attemptNo))
+        : null;
+    } catch (_) { existing = null; }
+    if (!existing) return res.status(404).json({ ok: false, error: 'no such frq row' });
+    const stored = (existing.score === null || existing.score === undefined) ? null : Number(existing.score);
+    if (stored !== null && Number.isFinite(stored) && incoming <= stored) {
+      return res.json({ ok: true, applied: false, ledgerId: existing.ledger_id, score: stored });
+    }
+    const { data, error } = await db.insertLedgerRow({
+      studentId,
+      source: 'frq',
+      itemId,
+      unit: existing.unit,
+      topic: existing.topic,
+      skill: existing.skill,
+      response: existing.response,
+      score: incoming,
+      evidenceTier: existing.evidence_tier || 'practice',
+      attempt: attemptNo
+    });
+    if (error) {
+      console.error('Ledger frq-regrade error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const body = { ok: true, applied: true, ledgerId: data.ledger_id, score: incoming };
+    const username = await resolveReceiptUsername(resolveUsername, studentId);
+    const receipt = issueLedgerReceipt({
+      studentId, username, source: 'frq', itemId, score: incoming, attempt: attemptNo,
+      evidenceTier: data.evidence_tier, response: existing.response,
+      gradingProvenance: provenance ? String(provenance).slice(0, 32) : 'ai-batch'
+    });
+    if (receipt) body.receipt = receipt;
+    if (receipt && data.ledger_id && db && typeof db.updateLedgerReceipt === 'function') {
+      try {
+        const persistResult = await db.updateLedgerReceipt(data.ledger_id, { receiptId: receipt.receiptId, receiptCompact: receipt.compact });
+        if (persistResult && persistResult.error) handleReceiptPersistenceError(persistResult.error, data.ledger_id);
+      } catch (err) { handleReceiptPersistenceError(err, data.ledger_id); }
+    }
     return res.json(body);
   });
 

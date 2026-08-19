@@ -246,6 +246,44 @@ describe('POST /ledger/record', () => {
     expect(ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4L1-Q9|1`).score).toBe(0);
   });
 
+  // ── POST /ledger/frq-regrade (teacher-gated) ───────────────────────────────
+  function regrade(body, headers = {}) {
+    return srv.request('POST', '/ledger/frq-regrade', { body, headers });
+  }
+  const TEACHER = { 'x-teacher-secret': process.env.TEACHER_KEY || 'apteacher2627' };
+
+  it('frq-regrade: 401 without teacher auth', async () => {
+    const r = await regrade({ studentId: validStudentId, itemId: 'WS-U4L1-reflect1', score: 1 });
+    expect(r.status).toBe(401);
+  });
+
+  it('frq-regrade: 404 when the row does not exist (never creates rows)', async () => {
+    const r = await regrade({ studentId: validStudentId, itemId: 'WS-U4L1-reflect9', score: 1 }, TEACHER);
+    expect(r.status).toBe(404);
+    expect(ledgerDb.store.has(`${validStudentId}|frq|WS-U4L1-reflect9|1`)).toBe(false);
+  });
+
+  it('frq-regrade: grades a null row, keeps its response, floors a lower regrade, raises a higher one', async () => {
+    await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'my reflection text', score: undefined });
+    let r = await regrade({ studentId: validStudentId, itemId: 'WS-U4L1-reflect1', score: 0.5 }, TEACHER);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: true, applied: true, score: 0.5 });
+    expect(frqRow().score).toBe(0.5);
+    expect(frqRow().response).toBe('my reflection text');
+    r = await regrade({ studentId: validStudentId, itemId: 'WS-U4L1-reflect1', score: 0 }, TEACHER);
+    expect(r.body).toMatchObject({ ok: true, applied: false, score: 0.5 });
+    expect(frqRow().score).toBe(0.5);
+    r = await regrade({ studentId: validStudentId, itemId: 'WS-U4L1-reflect1', score: 1 }, TEACHER);
+    expect(r.body).toMatchObject({ ok: true, applied: true, score: 1 });
+    expect(frqRow().score).toBe(1);
+  });
+
+  it('frq-regrade: rejects scores outside {1, 0.5, 0}', async () => {
+    await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'text', score: undefined });
+    const r = await regrade({ studentId: validStudentId, itemId: 'WS-U4L1-reflect1', score: 0.7 }, TEACHER);
+    expect(r.status).toBe(400);
+  });
+
   // ── Happy path ──────────────────────────────────────────────────────────────
 
   it('verifyReviewGrant accepts a grant signed by the configured quiz public key', () => {
