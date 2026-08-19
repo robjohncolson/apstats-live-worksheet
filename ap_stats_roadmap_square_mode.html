@@ -7128,7 +7128,7 @@ function openSignInModal() {
   var cancelBtn = document.getElementById('signin-cancel-btn');
   if (cancelBtn) cancelBtn.style.display = _signinWallActive ? 'none' : '';
   ov.style.display = 'block';
-  MacSFX.play('sosumi', 0.5);
+  // (no beep — a modal opening is not an alert; 2026-08-19)
   setTimeout(function(){ if (uInp) uInp.focus(); }, 50);
 }
 
@@ -7308,7 +7308,7 @@ async function openNameFinder() {
   _nfLo = 0; _nfHi = _nfRoster.length - 1; _nfStack = []; _nfPicked = null;
   _nfEnsureOverlay();
   document.getElementById('namefinder-overlay').style.display = 'flex';
-  if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('sosumi', 0.4);
+  // (no beep — routine modal open; 2026-08-19)
   _nfRenderDial();
 }
 window.openNameFinder = openNameFinder;
@@ -7631,7 +7631,7 @@ async function openSignupModal() {
   // list from the server afterwards, in the background.
   _renderSignupSections(_signupSections);
   ov.style.display = 'block';
-  try { MacSFX.play('sosumi', 0.5); } catch (_) {}
+  // (no beep — routine modal open; 2026-08-19)
   setTimeout(function () { var n = document.getElementById('signup-realname'); if (n) n.focus(); }, 50);
   try {
     if (window.rosterClient && typeof window.rosterClient.openSections === 'function') {
@@ -11595,7 +11595,9 @@ function showResourcePanel(inf, dateStr) {
     // 2026-05-20: removed the [a][b]/[1][2][3] letter+number badges and the
     // modal-scoped keyboard handler. The decoration was visually noisy and
     // the two-step letter-then-number UX felt strange. Mouse-only now.
-    MacSFX.play('sosumi', 0.5);
+    // 2026-08-19: no beep — opening a lesson panel is routine navigation, and
+    // the sosumi on every tile click was the main source of "beeping left and
+    // right". Alert dialogs still beep (see showDialog).
 }
 
 var _lastResourcePanel = null;
@@ -18412,7 +18414,11 @@ function showDialog(icon, msg, btnText, sfx) {
     document.getElementById('dialog-msg').innerHTML = msg;
     document.getElementById('dialog-btn').textContent = btnText || 'OK';
     document.getElementById('dialog-overlay').style.display = 'block';
-    MacSFX.play(sfx || 'sosumi', 0.5);
+    // Beep only when the dialog is an ALERT (warning / lock / error icons) or a
+    // caller asks for a specific sound. Success and info dialogs are silent —
+    // 2026-08-19: the default sosumi on every dialog was rampant during normal use.
+    var _alertIcon = /\u26A0|&#9888;|\uD83D\uDD12|&#128274;|\u274C|&#10060;|\u26D4|&#9940;|\uD83D\uDEAB|&#128683;/.test(String(icon || ''));
+    if (sfx || _alertIcon) MacSFX.play(sfx || 'sosumi', 0.5);
 }
 function closeDialog() {
     MacSFX.play('click', 0.3);
@@ -21131,7 +21137,7 @@ function _showTrainerToast(msg) {
             _trainerToastEl = null;
             _trainerToastTimer = null;
         }, 4000);
-        if (typeof MacSFX !== 'undefined') MacSFX.play('sosumi', 0.25);
+        // (no beep for a passive toast; 2026-08-19)
     } catch (e) {}
 }
 
@@ -23370,7 +23376,7 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-18-57fr';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-6adg';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Flashcard sync: flush the debounced push when the tab hides / closes, and
 // re-pull (throttled) when it comes back — another device may have practiced.
