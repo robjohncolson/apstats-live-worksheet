@@ -256,7 +256,7 @@ Do not re-add transpile work here. If a transpile session needs something from t
 
 This project is indexed by GitNexus as **apstats-live-worksheet** (18237 symbols, 35002 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
-> Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
+> Index stale? Run **`npm run gitnexus:analyze`** (not the bare analyzer): it first regenerates `gitnexus-shadow/*.inline.js` — line-preserving JS shadows of the single-file HTML apps (the Desk, mobile-home, teacher pages), because GitNexus never parses inline `<script>` — then indexes with `GITNEXUS_MAX_FILE_SIZE=4096` so the 1.1 MB Desk is included. Desk symbols resolve under `gitnexus-shadow/ap_stats_roadmap_square_mode.inline.js` at the SAME line numbers as the HTML (GitNexus lines are 0-based: add 1). Two repos are indexed on this machine → pass `--repo apstats-live-worksheet` on the CLI. `tests/gitnexus-shadow.test.js` fails when a shadow is stale — run `npm run gitnexus:shadow` after editing an app.
 
 ## Always Do
 
