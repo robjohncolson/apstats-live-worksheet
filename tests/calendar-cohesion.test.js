@@ -386,7 +386,8 @@ describe('Window redesign -- dynamic sizing', () => {
     const b = fnBody(html, 'rCal');
     expect(b).toMatch(/let\s+CAL_FOCUS_WEEKS\s*=\s*2/);
     expect(b).toMatch(/CAL_MIN_WEEKS\s*=\s*1/);
-    expect(b).toMatch(/CAL_MAX_WEEKS\s*=\s*\d+/);
+    // 2026-08-19: the cap is viewport-aware (2 weeks on short screens, else 4).
+    expect(b).toMatch(/CAL_MAX_WEEKS\s*=\s*(\d+|_calShort \? 2 : 4)/);
   });
   it('rCal sizes toward the next-up week and publishes the step width', () => {
     const b = fnBody(html, 'rCal');

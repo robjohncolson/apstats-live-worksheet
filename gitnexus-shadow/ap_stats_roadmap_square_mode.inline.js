@@ -2629,6 +2629,36 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -22627,7 +22657,12 @@ function rCal(){
     //        clamped [CAL_MIN_WEEKS, CAL_MAX_WEEKS]. Weekly summer cadence → ~1-3 weeks,
     //        no empty trailing weeks; a next-up beyond the cap stays reachable by the arrows.
     let CAL_FOCUS_WEEKS = 2;
-    const CAL_MIN_WEEKS = 1, CAL_MAX_WEEKS = 4;
+    // 2026-08-19 (screen-size aware): on short viewports (Chromebook at 125%
+    // zoom ≈ 525 CSS px tall) a 4-week window pushes the next-up row below the
+    // fold — cap at 2 weeks there; the arrows still reach everything. Re-rendered
+    // on resize (debounced) below.
+    const _calShort = (typeof window !== 'undefined' && window.innerHeight && window.innerHeight < 600);
+    const CAL_MIN_WEEKS = 1, CAL_MAX_WEEKS = _calShort ? 2 : 4;
     const _origLen = W.length;
     let _displayStart = 0;
     if (_origLen > CAL_FOCUS_WEEKS) {
@@ -23410,8 +23445,22 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-wza8';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-8hhl';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
+// Screen-size aware calendar: re-render when the viewport crosses the short/tall
+// threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
+try {
+    var _calResizeTimer = null, _calWasShort = window.innerHeight < 600;
+    window.addEventListener('resize', function () {
+        if (_calResizeTimer) clearTimeout(_calResizeTimer);
+        _calResizeTimer = setTimeout(function () {
+            var nowShort = window.innerHeight < 600;
+            if (nowShort === _calWasShort) return;
+            _calWasShort = nowShort;
+            try { if (typeof rCal === 'function') rCal(); } catch (_) {}
+        }, 250);
+    });
+} catch (_) {}
 // Flashcard sync: flush the debounced push when the tab hides / closes, and
 // re-pull (throttled) when it comes back — another device may have practiced.
 try {

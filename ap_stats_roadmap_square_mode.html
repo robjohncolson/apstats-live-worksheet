@@ -1173,6 +1173,36 @@
             .cd-box { padding: 3px 6px; min-width: 60px; } .cd-box .num { font-size: 14px; }
         }
 
+        /* ── Screen-size awareness (2026-08-19) ───────────────────────────
+           The only breakpoint used to be 700px. A Chromebook at 125% zoom is a
+           ~1093×525 CSS-px viewport: the fold landed at the bottom of the 2nd
+           calendar row, the wallet icon sat on Friday's column, and the pico-park
+           strip + decorations pushed the next-up row off screen. Rules below hide
+           DECORATION only (nodes stay in the DOM; tests pin their markup) and keep
+           the core — Do Now grades, calendar, lesson panel — visible first. */
+        @media (max-width: 1280px) {
+            .app-icon { display: none; }                       /* wallet icon overlapped the calendar */
+            .menu-bar { flex-wrap: nowrap; overflow: hidden; }
+            .menu-item { flex: 0 0 auto; }
+            #menu-identity { overflow: hidden; text-overflow: ellipsis; max-width: 14ch; }
+            .menu-clock { display: none; }                     /* the OS shows a clock */
+        }
+        @media (max-height: 820px) {
+            .info-bar { display: none; }                       /* static labels */
+            .per-tog { display: none; }                        /* single inert period button */
+            .prog-area h3 { display: none; }
+            .cd-strip { margin: 4px 0 6px; gap: 6px; }
+            .cd-box { padding: 3px 8px; }
+            #resource-body { max-height: min(60vh, 420px); }
+        }
+        @media (max-height: 760px) {
+            #classroom-board-mount, #classroom-board-controls { display: none; }   /* pico-park strip (~240px) */
+            #donow-helper { display: none; }                   /* coach panel; grades stay */
+            #donow-grades { gap: 2px; }
+            .dc { min-height: clamp(38px, 6.5vh, 50px); }
+        }
+        .game-window { width: min(432px, 96vw); max-height: 96vh; overflow: auto; }
+
         /* ── Boot Overlay ──────────────────────────── */
         #boot-overlay {
             position: fixed; inset: 0; z-index: 9999;
@@ -2396,7 +2426,7 @@
 
 <!-- ═══ Resource Panel ═══ -->
 <div id="resource-overlay" class="dialog-overlay" style="display:none" onclick="if(event.target===this)closeResourcePanel()">
-    <div class="dialog-box" style="max-width:340px;width:90%;text-align:left;padding:12px 16px">
+    <div class="dialog-box" style="max-width:min(560px,92vw);width:90%;text-align:left;padding:12px 16px">
         <div id="resource-header" class="chicago" style="font-size:12px;margin-bottom:8px;border-bottom:1px solid var(--black);padding-bottom:6px"></div>
         <div id="resource-body" class="geneva" style="font-size:11px;max-height:60vh;overflow-y:auto"></div>
         <div style="text-align:right;margin-top:10px">
@@ -22627,7 +22657,12 @@ function rCal(){
     //        clamped [CAL_MIN_WEEKS, CAL_MAX_WEEKS]. Weekly summer cadence → ~1-3 weeks,
     //        no empty trailing weeks; a next-up beyond the cap stays reachable by the arrows.
     let CAL_FOCUS_WEEKS = 2;
-    const CAL_MIN_WEEKS = 1, CAL_MAX_WEEKS = 4;
+    // 2026-08-19 (screen-size aware): on short viewports (Chromebook at 125%
+    // zoom ≈ 525 CSS px tall) a 4-week window pushes the next-up row below the
+    // fold — cap at 2 weeks there; the arrows still reach everything. Re-rendered
+    // on resize (debounced) below.
+    const _calShort = (typeof window !== 'undefined' && window.innerHeight && window.innerHeight < 600);
+    const CAL_MIN_WEEKS = 1, CAL_MAX_WEEKS = _calShort ? 2 : 4;
     const _origLen = W.length;
     let _displayStart = 0;
     if (_origLen > CAL_FOCUS_WEEKS) {
@@ -23410,8 +23445,22 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-wza8';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-8hhl';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
+// Screen-size aware calendar: re-render when the viewport crosses the short/tall
+// threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
+try {
+    var _calResizeTimer = null, _calWasShort = window.innerHeight < 600;
+    window.addEventListener('resize', function () {
+        if (_calResizeTimer) clearTimeout(_calResizeTimer);
+        _calResizeTimer = setTimeout(function () {
+            var nowShort = window.innerHeight < 600;
+            if (nowShort === _calWasShort) return;
+            _calWasShort = nowShort;
+            try { if (typeof rCal === 'function') rCal(); } catch (_) {}
+        }, 250);
+    });
+} catch (_) {}
 // Flashcard sync: flush the debounced push when the tab hides / closes, and
 // re-pull (throttled) when it comes back — another device may have practiced.
 try {
