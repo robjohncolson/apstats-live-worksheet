@@ -207,6 +207,45 @@ describe('POST /ledger/record', () => {
     });
   }
 
+  // ── FRQ durable floor (2026-08-19) ─────────────────────────────────────────
+  // Drafts (score undefined) never null a stored grade; a weaker regrade never
+  // lowers it; a stronger one raises it. Other sources are untouched.
+
+  function frqRow() {
+    const key = `${validStudentId}|frq|WS-U4L1-reflect1|1`;
+    return ledgerDb.store.get(key);
+  }
+
+  it('FRQ floor: a draft save after a graded write keeps the stored score (text still updates)', async () => {
+    let r = await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'first answer text', score: 1 });
+    expect(r.status).toBe(200);
+    r = await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'edited draft text', score: undefined });
+    expect(r.status).toBe(200);
+    expect(frqRow().score).toBe(1);
+    expect(frqRow().response).toBe('edited draft text');
+  });
+
+  it('FRQ floor: a weaker regrade never lowers; a stronger one raises', async () => {
+    await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'a', score: 0.5 });
+    await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'b', score: 0 });
+    expect(frqRow().score).toBe(0.5);
+    await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'c', score: 1 });
+    expect(frqRow().score).toBe(1);
+  });
+
+  it('FRQ floor: a first-ever null then a first grade records normally', async () => {
+    await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'draft', score: undefined });
+    expect(frqRow().score).toBeNull();
+    await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'draft', score: 0 });
+    expect(frqRow().score).toBe(0);
+  });
+
+  it('FRQ floor does not apply to worksheet rows (verbatim rescore semantics unchanged)', async () => {
+    await record({ source: 'worksheet', itemId: 'WS-U4L1-Q9', response: { answer: 'x' }, score: 1 });
+    await record({ source: 'worksheet', itemId: 'WS-U4L1-Q9', response: { answer: 'y' }, score: 0 });
+    expect(ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4L1-Q9|1`).score).toBe(0);
+  });
+
   // ── Happy path ──────────────────────────────────────────────────────────────
 
   it('verifyReviewGrant accepts a grant signed by the configured quiz public key', () => {

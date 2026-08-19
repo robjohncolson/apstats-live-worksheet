@@ -795,17 +795,16 @@ describe('FRQ coverage — retry, triggers, on-load regrade (2026-08-19)', () =>
       installShippedFlow();
       mocks.fetch.mockResolvedValue(okFetch([]));
       mocks.fetchPrior.mockResolvedValue(new Map());
+      localStorage.setItem('apstats_desk_student_email', 'kid');
       mocks.gradeReflection
-        .mockRejectedValueOnce(new Error('timeout'))
         .mockRejectedValueOnce(new Error('timeout'))
         .mockResolvedValueOnce({ score: 'P', feedback: 'ok', missing: ['x'] });
       const run = window.aiGradeWorksheet({ manual: false });
-      await vi.advanceTimersByTimeAsync(2000);
       await vi.advanceTimersByTimeAsync(5000);
       await run;
-      expect(mocks.gradeReflection).toHaveBeenCalledTimes(3);
+      expect(mocks.gradeReflection).toHaveBeenCalledTimes(2);   // one bounded retry
       expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'P');
-      expect(localStorage.getItem('apstats_frq_ungraded_WS-U6L1-2')).toBeNull();
+      expect(localStorage.getItem('apstats_frq_ungraded_kid_WS-U6L1-2')).toBeNull();
     } finally { vi.useRealTimers(); }
   });
 
@@ -813,15 +812,15 @@ describe('FRQ coverage — retry, triggers, on-load regrade (2026-08-19)', () =>
     vi.useFakeTimers();
     try {
       addTextarea('reflect1', 'A sufficiently long reflection answer whose grading is down for now.');
+      localStorage.setItem('apstats_desk_student_email', 'kid');
       installShippedFlow();
       mocks.fetch.mockResolvedValue(okFetch([]));
       mocks.fetchPrior.mockResolvedValue(new Map());
       mocks.gradeReflection.mockRejectedValue(new Error('down'));
       const run = window.aiGradeWorksheet({ manual: false });
-      await vi.advanceTimersByTimeAsync(2000);
       await vi.advanceTimersByTimeAsync(5000);
       await run;
-      expect(JSON.parse(localStorage.getItem('apstats_frq_ungraded_WS-U6L1-2'))).toEqual(['reflect1']);
+      expect(JSON.parse(localStorage.getItem('apstats_frq_ungraded_kid_WS-U6L1-2'))).toEqual(['reflect1']);
       expect(mocks.recordReflectionToGradebook).not.toHaveBeenCalled();
 
       // "Next load": reinstall the flow; the on-load hook sees the pending list and grades.
@@ -834,8 +833,8 @@ describe('FRQ coverage — retry, triggers, on-load regrade (2026-08-19)', () =>
       await vi.advanceTimersByTimeAsync(1500);   // scheduled auto grade
       await vi.advanceTimersByTimeAsync(10);
       expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'E');
-      expect(localStorage.getItem('apstats_frq_ungraded_WS-U6L1-2')).toBeNull();
-    } finally { vi.useRealTimers(); }
+      expect(localStorage.getItem('apstats_frq_ungraded_kid_WS-U6L1-2')).toBeNull();
+    } finally { vi.useRealTimers(); localStorage.removeItem('apstats_desk_student_email'); }
   });
 
   it('on load, a prior FRQ row with text but no score is graded automatically', async () => {
@@ -875,7 +874,7 @@ describe('FRQ coverage — retry, triggers, on-load regrade (2026-08-19)', () =>
     } finally { vi.useRealTimers(); }
   });
 
-  it('10 s of idle after typing triggers an auto grade', async () => {
+  it('20 s of idle after typing triggers an auto grade', async () => {
     vi.useFakeTimers();
     try {
       addTextarea('reflect1', '');
@@ -887,11 +886,101 @@ describe('FRQ coverage — retry, triggers, on-load regrade (2026-08-19)', () =>
       const ta = document.getElementById('reflect1');
       ta.value = 'A sufficiently long reflection answer typed by the student right now.';
       ta.dispatchEvent(new Event('input', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(9000);
+      await vi.advanceTimersByTimeAsync(19000);
       expect(mocks.gradeReflection).not.toHaveBeenCalled();
       await vi.advanceTimersByTimeAsync(1100);
       await vi.advanceTimersByTimeAsync(10);
       expect(mocks.gradeReflection).toHaveBeenCalledTimes(1);
     } finally { vi.useRealTimers(); }
+  });
+});
+
+describe('FRQ coverage — review hardening (stale verdicts, malformed verdicts, budget, inline grader)', () => {
+  it('a verdict that arrives after the student kept typing is neither shown nor recorded; a trailing pass grades the new text', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', 'A sufficiently long first version of the reflection answer here.');
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      let resolveFirst;
+      mocks.gradeReflection.mockImplementationOnce(() => new Promise((res) => { resolveFirst = res; }));
+      const run = window.aiGradeWorksheet({ manual: false });
+      await vi.advanceTimersByTimeAsync(10);
+      // Student keeps typing while the grader is slow.
+      document.getElementById('reflect1').value = 'A sufficiently long SECOND version of the reflection answer here, longer.';
+      resolveFirst({ score: 'I', feedback: 'weak (for the old text)' });
+      await run;
+      expect(mocks.recordReflectionToGradebook).not.toHaveBeenCalled();
+      expect(mocks.showFeedback).not.toHaveBeenCalled();
+      // Trailing pass (1.5 s) grades the current text.
+      mocks.gradeReflection.mockResolvedValueOnce({ score: 'E', feedback: 'good', matched: ['a'], missing: [] });
+      await vi.advanceTimersByTimeAsync(1600);
+      await vi.advanceTimersByTimeAsync(10);
+      expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.stringContaining('SECOND'), 'E');
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('a malformed truthy verdict ("maybe") is not a success: retried once, then remembered as ungraded', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', 'A sufficiently long reflection answer with a flaky grader today.');
+      localStorage.setItem('apstats_desk_student_email', 'kid');
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      mocks.gradeReflection.mockResolvedValue({ score: 'maybe', feedback: '?' });
+      const run = window.aiGradeWorksheet({ manual: false });
+      await vi.advanceTimersByTimeAsync(5000);
+      await run;
+      expect(mocks.gradeReflection).toHaveBeenCalledTimes(2);
+      expect(mocks.recordReflectionToGradebook).not.toHaveBeenCalled();
+      expect(JSON.parse(localStorage.getItem('apstats_frq_ungraded_kid_WS-U6L1-2'))).toEqual(['reflect1']);
+    } finally { vi.useRealTimers(); localStorage.removeItem('apstats_desk_student_email'); }
+  });
+
+  it('auto passes are budgeted (6 per 10 min); manual passes are not', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', '');
+      installShippedFlow();
+      mocks.fetch.mockResolvedValue(okFetch([]));
+      mocks.fetchPrior.mockResolvedValue(new Map());
+      mocks.gradeReflection.mockImplementation(async (id, text) => ({ score: 'P', feedback: 'ok', missing: ['x'] }));
+      await vi.advanceTimersByTimeAsync(600);
+      const ta = document.getElementById('reflect1');
+      for (let i = 1; i <= 8; i += 1) {
+        ta.value = 'A sufficiently long reflection answer, distinct revision number ' + i + ' of many.';
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+        ta.dispatchEvent(new Event('blur'));
+        await vi.advanceTimersByTimeAsync(900);
+        await vi.advanceTimersByTimeAsync(10);
+      }
+      expect(mocks.gradeReflection.mock.calls.length).toBeLessThanOrEqual(6);
+      const before = mocks.gradeReflection.mock.calls.length;
+      ta.value = 'A sufficiently long reflection answer, the manual final revision of many.';
+      await window.aiGradeWorksheet({ manual: true });
+      expect(mocks.gradeReflection.mock.calls.length).toBe(before + 1);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('a worksheet without a global gradeReflection but with a ReflectionGrader instance is graded through the adapter', async () => {
+    addTextarea('reflect1', 'A sufficiently long reflection answer on the inline-grader worksheet.');
+    installShippedFlow();
+    mocks.fetch.mockResolvedValue(okFetch([]));
+    mocks.fetchPrior.mockResolvedValue(new Map());
+    // Simulate u3_lesson6-7: no global gradeReflection; a window.reflectionGrader instance instead.
+    const inline = { gradeReflection: vi.fn(async () => ({ score: 'E', feedback: 'good', matched: ['a'], missing: [] })) };
+    const savedGlobal = globalThis.gradeReflection;
+    delete globalThis.gradeReflection;
+    window.reflectionGrader = inline;
+    try {
+      await window.aiGradeWorksheet({ manual: false });
+      expect(inline.gradeReflection).toHaveBeenCalledTimes(1);
+      expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'E');
+    } finally {
+      delete window.reflectionGrader;
+      if (savedGlobal) globalThis.gradeReflection = savedGlobal;
+    }
   });
 });

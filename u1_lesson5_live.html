@@ -1915,8 +1915,20 @@
                 gradingState.set(taId, keep);
             }
             // Returns the number of FRQs whose grade was RAISED (for the toast).
+            // Uniform grader: most worksheets expose a global gradeReflection(id, text);
+            // the inline-grader worksheets (u3_lesson6-7) expose a ReflectionGrader
+            // instance instead — same call shape, same {score, feedback, matched, missing}.
+            function _aiGraderFn() {
+                if (typeof gradeReflection === 'function') return gradeReflection;
+                try {
+                    var inst = (typeof reflectionGrader !== 'undefined' && reflectionGrader) ? reflectionGrader
+                        : (window.reflectionGrader || null);
+                    if (inst && typeof inst.gradeReflection === 'function') return inst.gradeReflection.bind(inst);
+                } catch (_) {}
+                return null;
+            }
             async function _aiGradeFrqs(manual) {
-                if (typeof gradeReflection !== 'function') return 0;   // some worksheets grade FRQs inline
+                if (!_aiGraderFn()) return 0;   // no grader available on this worksheet
                 var refs = _aiReflectionTextareas();
                 var gradable = refs.filter(function (ta) {
                     return ta && ta.id && (ta.value || '').trim().length >= 20;
@@ -1939,6 +1951,10 @@
                     try {
                         var result = await _aiGradeWithRetry(ta.id, answer);
                         if (!result || !result.score) { _aiRememberUngraded(ta.id, true); continue; }
+                        // Stale verdict: the student kept typing while we waited. Do not
+                        // show or record a grade for text that no longer exists; a
+                        // trailing pass will grade the current text.
+                        if ((ta.value || '').trim() !== answer) { _aiScheduleAutoGrade(1500); continue; }
                         _aiRememberUngraded(ta.id, false);
                         // The worksheet's "enriched pass" rule: a P with nothing
                         // missing is really an E.
@@ -2186,14 +2202,18 @@
             //    (2) failures were swallowed → bounded retry + remembered in
             //    localStorage so the next load re-runs them; (3) on load, any
             //    prior FRQ row with text but no score is graded automatically.
-            var _AI_FRQ_RETRY_DELAYS = [2000, 5000];
+            var _AI_FRQ_RETRY_DELAYS = [5000];   // one bounded retry — the grader is a shared serialized queue
             async function _aiGradeWithRetry(taId, answer) {
                 var lastErr = null;
+                var grader = _aiGraderFn();
+                if (!grader) return null;
                 for (var attempt = 0; attempt <= _AI_FRQ_RETRY_DELAYS.length; attempt++) {
                     try {
-                        var r = await gradeReflection(taId, answer);
-                        if (r && r.score) return r;
-                        lastErr = new Error('empty verdict');
+                        var r = await grader(taId, answer);
+                        // Success ONLY for a valid E/P/I verdict (a truthy junk score must not
+                        // clear the pending state and then be silently skipped downstream).
+                        if (r && _aiVerdictRank(r.score) !== undefined) return r;
+                        lastErr = new Error('invalid verdict: ' + (r && r.score));
                     } catch (e) { lastErr = e; }
                     if (attempt < _AI_FRQ_RETRY_DELAYS.length) {
                         await new Promise(function (res) { setTimeout(res, _AI_FRQ_RETRY_DELAYS[attempt]); });
@@ -2202,9 +2222,19 @@
                 if (lastErr) console.warn('[ai-frq] grading failed after retries:', taId, lastErr && lastErr.message);
                 return null;
             }
+            // Scoped to the signed-in student (shared devices) — no identity → no memory.
+            function _aiStudentKey() {
+                try {
+                    var who = (window.rosterClient && typeof window.rosterClient.current === 'function') ? window.rosterClient.current() : null;
+                    if (who && who.username) return String(who.username);
+                    var legacy = localStorage.getItem('apstats_desk_student_email');
+                    return legacy ? String(legacy) : null;
+                } catch (_) { return null; }
+            }
             function _aiUngradedKey() {
                 var prefix = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : null;
-                return prefix ? ('apstats_frq_ungraded_' + prefix) : null;
+                var who = _aiStudentKey();
+                return (prefix && who) ? ('apstats_frq_ungraded_' + who + '_' + prefix) : null;
             }
             function _aiRememberUngraded(taId, pending) {
                 try {
@@ -2221,10 +2251,25 @@
                 try { var k = _aiUngradedKey(); return !!(k && JSON.parse(localStorage.getItem(k) || '[]').length); } catch (_) { return false; }
             }
             var _aiIdleTimer = null;
+            // Auto-pass budget: at most 6 automatic passes per 10 minutes per page
+            // (manual passes are never budgeted). Keeps a whole class from stampeding
+            // the shared grader; the hash guard already skips unchanged content.
+            var _AI_AUTO_BUDGET = { max: 6, windowMs: 600000, stamps: [] };
+            function _aiAutoBudgetOk() {
+                var now = Date.now();
+                _AI_AUTO_BUDGET.stamps = _AI_AUTO_BUDGET.stamps.filter(function (t) { return now - t < _AI_AUTO_BUDGET.windowMs; });
+                if (_AI_AUTO_BUDGET.stamps.length >= _AI_AUTO_BUDGET.max) return false;
+                _AI_AUTO_BUDGET.stamps.push(now);
+                return true;
+            }
             function _aiScheduleAutoGrade(delayMs) {
                 if (_aiIdleTimer) clearTimeout(_aiIdleTimer);
                 _aiIdleTimer = setTimeout(function () {
                     _aiIdleTimer = null;
+                    // A pass is already running → trail: try again shortly (content
+                    // that changed mid-pass must not be left ungraded).
+                    if (window._aiGradeBusy) { _aiScheduleAutoGrade(3000); return; }
+                    if (!_aiAutoBudgetOk()) return;
                     try { if (window.aiGradeWorksheet) window.aiGradeWorksheet({ manual: false }); } catch (_) {}
                 }, delayMs);
             }
@@ -2233,7 +2278,7 @@
                     if (!ta || ta.dataset.aiFrqWired === '1') return;
                     ta.dataset.aiFrqWired = '1';
                     ta.addEventListener('input', function () {
-                        if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(10000);   // 10 s idle
+                        if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(20000);   // 20 s idle
                     });
                     ta.addEventListener('blur', function () {
                         if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(800);     // leaving the box
@@ -2263,8 +2308,30 @@
                             if (text.trim().length >= 20 && (entry.score === null || entry.score === undefined)) need = true;
                         });
                     }
-                    if (need) _aiScheduleAutoGrade(1500);   // after hydration has filled the textareas
+                    if (need) _aiScheduleWhenHydrated(prior, 0);
                 } catch (_) {}
+            }
+            // Grade only when the DOM holds the exact prior text (hydration finished);
+            // re-check a few times, then give up quietly (the next blur/idle covers it).
+            function _aiScheduleWhenHydrated(prior, tries) {
+                setTimeout(function () {
+                    var ready = true;
+                    try {
+                        var prefix = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : '';
+                        if (prior && typeof prior.forEach === 'function') {
+                            prior.forEach(function (entry, itemId) {
+                                if (!prefix || String(itemId).indexOf(prefix + '-') !== 0) return;
+                                if (!entry || (entry.score !== null && entry.score !== undefined)) return;
+                                var ta = document.getElementById(String(itemId).slice(prefix.length + 1));
+                                if (!ta || ta.tagName !== 'TEXTAREA') return;
+                                var text = (typeof entry.response === 'string') ? entry.response.trim() : '';
+                                if (text.length >= 20 && (ta.value || '').trim() !== text) ready = false;
+                            });
+                        }
+                    } catch (_) {}
+                    if (ready) { _aiScheduleAutoGrade(0); return; }
+                    if (tries < 3) _aiScheduleWhenHydrated(prior, tries + 1);
+                }, 1500);
             }
 
             // -- on load: restore AI-credit flags + greens from the ledger (so a

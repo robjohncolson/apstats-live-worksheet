@@ -74,15 +74,47 @@ async function callerIdentity(req, db) {
   } catch (_) { return null; }
 }
 
+// FRQ vs MCQ is an EXPLICIT property of a bank item, never inferred from a
+// missing key. 'frq' when item.type says free-response/frq or the id carries
+// -FRQ-; 'mcq' when type says multiple-choice/mcq or the id carries -MCQ-;
+// otherwise 'unknown'. (2026-08-19: previously `answer == null` silently made an
+// item an FRQ, so an MCQ with a missing key scored null and vanished from the
+// PC denominator with no error anywhere.)
+export function classifyPcItem(item) {
+  if (!item) return 'unknown';
+  var type = String(item.type || '').toLowerCase();
+  var id = String(item.id || '');
+  if (type === 'free-response' || type === 'frq' || /-FRQ-/.test(id)) return 'frq';
+  if (type === 'multiple-choice' || type === 'mcq' || /-MCQ-/.test(id)) return 'mcq';
+  return 'unknown';
+}
+
+// True when an MCQ item cannot be auto-scored because its key is missing —
+// a BANK DEFECT (the loader refuses such banks; this is the runtime backstop).
+export function isPcBankDefect(item) {
+  return classifyPcItem(item) === 'mcq' && (item.answer === null || item.answer === undefined || item.answer === '');
+}
+
+var _pcDefectLogged = {};
 // Score ONE submitted response against a CB-secure bank item → credit in [0,1],
 // or null when it can't be auto-scored (FRQ → the paper/AI path). MCQ is exact
-// match (isCorrect mirrors cr's checkIfAnswerCorrect); an item with no `answer`
-// (FRQ, rubric-only) is treated as un-auto-scorable.
-function scorePcItem(item, response) {
+// match (isCorrect mirrors cr's checkIfAnswerCorrect). An MCQ WITHOUT a key or
+// an item of unknown type still returns null (nothing else is honest) but is
+// logged loudly, once per item, as a bank defect — never silently treated as FRQ.
+export function scorePcItem(item, response) {
   if (!item) return null;
-  var type = String(item.type || '').toLowerCase();
-  var isFrq = type === 'free-response' || type === 'frq' || item.answer == null;
-  if (isFrq) return null;
+  var kind = classifyPcItem(item);
+  if (kind === 'frq') return null;
+  if (kind === 'unknown' || isPcBankDefect(item)) {
+    var key = String(item.id || '?');
+    if (!_pcDefectLogged[key]) {
+      _pcDefectLogged[key] = true;
+      console.error('[pc] BANK DEFECT — cannot auto-score item ' + key + ': ' +
+        (kind === 'unknown' ? 'type is neither MCQ nor FRQ' : 'MCQ has no answer key') +
+        ' (score=null; fix the bank, see roster-server/scripts/load-pc-bank.mjs validation)');
+    }
+    return null;
+  }
   return isCorrect(response, item.answer) ? 1 : 0;
 }
 

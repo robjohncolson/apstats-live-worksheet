@@ -105,3 +105,19 @@ Finding: 44% of `source:'frq'` rows in the 2026-08-17 ledger snapshot had `score
 Not covered: students who never reopen a worksheet keep their historical null rows; a
 teacher-side batch regrade needs a server write path (see PC_FRQ_GRADING_SPEC.md §3/§9).
 
+### 2026-08-19 review hardening (same day)
+Adversarial review of the coverage fold found real gaps; all addressed:
+- **Server floor** (`roster-server/ledger.js` `/ledger/record`, `source:'frq'` only): a draft
+  (score undefined) never nulls a stored grade; a lower regrade never lowers it. This closes a
+  pre-existing hazard (an edit after grading nulled the ledger score) that the auto path made
+  reachable. Grade math untouched.
+- Stale verdicts (student kept typing while the grader ran) are neither shown nor recorded; a
+  trailing pass grades the current text. Busy passes re-schedule instead of dropping.
+- One bounded retry (5 s), E/P/I validated before success; malformed verdicts are remembered as
+  ungraded. Auto passes budgeted to 6 per 10 min per page; idle trigger 20 s.
+- Recovery memory is student-scoped (`apstats_frq_ungraded_<username>_<prefix>`); on-load regrade
+  waits until the textarea holds the exact prior text (hydration), up to 3 checks.
+- Inline-grader worksheets (u3_lesson6-7's `ReflectionGrader` instance) are covered via an adapter.
+Residual leaks: students who never reopen a worksheet keep historical null rows (needs a
+teacher-side batch regrade — PC_FRQ_GRADING_SPEC.md); answers under 20 characters are never graded.
+

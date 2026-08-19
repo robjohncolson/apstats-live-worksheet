@@ -55,8 +55,39 @@ function buildRows() {
   return rows;
 }
 
+// FRQ/MCQ typing is explicit; an MCQ without a key is a defect that would score
+// null at runtime and silently drop out of the PC denominator. Refuse to upload
+// such a bank (pass --force to override, deliberately).
+export function validateBankItems(rows) {
+  const defects = [];
+  for (const r of rows) {
+    for (const item of (r.payload && r.payload.items) || []) {
+      const id = String(item && item.id || '(no id)');
+      const type = String(item && item.type || '').toLowerCase();
+      const isFrq = type === 'free-response' || type === 'frq' || /-FRQ-/.test(id);
+      const isMcq = type === 'multiple-choice' || type === 'mcq' || /-MCQ-/.test(id);
+      if (!isFrq && !isMcq) { defects.push(`U${r.unit} ${r.part} ${id}: type "${item && item.type}" is neither MCQ nor FRQ`); continue; }
+      if (isFrq && isMcq) { defects.push(`U${r.unit} ${r.part} ${id}: type and id disagree (FRQ vs MCQ)`); continue; }
+      if (isMcq && (item.answer === null || item.answer === undefined || item.answer === '')) {
+        defects.push(`U${r.unit} ${r.part} ${id}: MCQ has no answer key`);
+      }
+      if (isFrq && item.answer != null && item.answer !== '') {
+        defects.push(`U${r.unit} ${r.part} ${id}: FRQ carries an MCQ-style answer (should be rubric/solution only)`);
+      }
+    }
+  }
+  return defects;
+}
+
 async function main() {
   const rows = buildRows();
+  const defects = validateBankItems(rows);
+  if (defects.length) {
+    console.error(`BANK DEFECTS (${defects.length}) — FRQ/MCQ typing must be explicit and MCQs must be keyed:`);
+    defects.forEach((d) => console.error('  - ' + d));
+    if (!args.includes('--force')) { console.error('Refusing to upload. Fix the bank or pass --force.'); process.exit(2); }
+    console.warn('--force: uploading despite defects.');
+  }
   console.log('Rows to upsert (unit/part/count):');
   for (const r of rows) console.log(`  U${r.unit} ${r.part}: ${r.payload.items.length} items`);
   if (DRY) { console.log('\n--dry-run: nothing written.'); return; }
@@ -72,4 +103,6 @@ async function main() {
   console.log(`\nOK — upserted ${rows.length} pc_bank rows.`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// Only run when invoked directly (tests import validateBankItems).
+const _direct = (() => { try { return process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url); } catch (_) { return false; } })();
+if (_direct) main().catch((e) => { console.error(e); process.exit(1); });

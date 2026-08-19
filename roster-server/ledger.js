@@ -137,6 +137,33 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
       effectiveScore = payload.credit;
     }
 
+    // FRQ durable floor (2026-08-19). Worksheet reflections are written by three
+    // client paths: DRAFT saves (score undefined) while typing, GRADED writes
+    // (E/P/I → 1/0.5/0) from the AI pass, and appeals. The upsert key is
+    // (student, source, item, attempt), so a draft after a grade used to NULL the
+    // stored score, and a later weaker regrade could lower it. Every client path
+    // already promises "never downgrade" in memory; this makes it durable:
+    //   - a null/undefined incoming score never replaces a stored number
+    //     (the response text still updates — drafts keep flowing);
+    //   - a lower incoming score never replaces a higher stored one.
+    // Grade math is untouched (this only decides what the row holds).
+    if (source === 'frq' && typeof db.getLedgerByStudent === 'function') {
+      try {
+        const attemptNo = attempt ?? 1;
+        const { data: rows } = await db.getLedgerByStudent(studentId, { prefix: itemId });
+        const existing = Array.isArray(rows)
+          ? rows.find((r) => r && r.item_id === itemId && r.source === 'frq' && Number(r.attempt ?? 1) === Number(attemptNo))
+          : null;
+        const stored = existing && existing.score !== null && existing.score !== undefined ? Number(existing.score) : null;
+        if (stored !== null && Number.isFinite(stored)) {
+          const incoming = (effectiveScore === null || effectiveScore === undefined || effectiveScore === '') ? null : Number(effectiveScore);
+          if (incoming === null || !Number.isFinite(incoming) || incoming < stored) {
+            effectiveScore = stored;   // floor holds; the response text is still refreshed
+          }
+        }
+      } catch (_) { /* best-effort: a read failure must never block the write */ }
+    }
+
     // Derive evidence_tier server-side (decision L-C).
     // Any client-supplied evidenceTier in the body is IGNORED.
     const proctorSecret = process.env.ROSTER_PROCTOR_SECRET;
