@@ -1203,56 +1203,7 @@
         }
         .game-window { width: min(432px, 96vw); max-height: 96vh; overflow: auto; }
 
-        /* ── Boot Overlay ──────────────────────────── */
-        #boot-overlay {
-            position: fixed; inset: 0; z-index: 9999;
-            background-color: #555566;
-            background-image: url("data:image/svg+xml,%3Csvg width='2' height='2' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='1' height='1' fill='%23666677'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23666677'/%3E%3C/svg%3E");
-            image-rendering: pixelated;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 1; transition: opacity 0.6s ease;
-        }
-        #boot-overlay.fade-out { opacity: 0; }
-        .boot-monitor {
-            width: 280px;
-            background: var(--platinum);
-            border-radius: 8px;
-            padding: 28px 24px 22px;
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-            box-shadow:
-                inset 1px 1px 0 0 var(--plat-hi),
-                inset -1px -1px 0 0 var(--plat-lo),
-                2px 2px 6px rgba(0,0,0,0.35);
-        }
-        .boot-sprite {
-            width: 80px; height: 98px;
-            background: url('sprite.png') -168px 0;
-            background-size: 920px 200px;
-            filter: grayscale(1) brightness(0.7) sepia(0.3) hue-rotate(220deg);
-            animation: boot-walk 0.48s step-end infinite;
-        }
-        @keyframes boot-walk {
-            0%  { background-position: -168px 0; }
-            25% { background-position: -252px 0; }
-            50% { background-position: -336px 0; }
-            75% { background-position: -420px 0; }
-        }
-        .boot-title { font-size: 14px; letter-spacing: 1px; margin-top: 2px; }
-        .boot-status { font-size: 11px; color: var(--plat-lo); }
-        .boot-progress-track {
-            width: 180px; height: 12px;
-            background: var(--white);
-            border: 1px solid var(--plat-lo);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .boot-progress-fill {
-            height: 100%;
-            background: var(--plat-lo);
-            width: 0;
-            animation: boot-fill 1s linear forwards;
-        }
-        @keyframes boot-fill { to { width: 100%; } }
+        /* (Boot overlay CSS removed 2026-08-19 — splash + chime retired.) */
 
         /* ── Doge Presence ── */
         #doge-presence {
@@ -1884,15 +1835,6 @@
       <button type="button" class="tnm-cancel" id="tnm-cancel">Cancel</button>
       <button type="button" class="tnm-send" id="tnm-send">Send</button>
     </div>
-  </div>
-</div>
-
-<div id="boot-overlay">
-  <div class="boot-monitor">
-    <div class="boot-sprite"></div>
-    <div class="boot-title chicago">The Desk</div>
-    <div class="boot-status geneva">Starting up...</div>
-    <div class="boot-progress-track"><div class="boot-progress-fill"></div></div>
   </div>
 </div>
 
@@ -18425,12 +18367,7 @@ MacSFX.init();
 _renderSoundIcon();
 
 /* ── Boot Chime (preload, plays on click-to-dismiss) ── */
-var _bootChime = null;
-(function() {
-    if (MacSFX.muted) return;
-    _bootChime = new Audio('Mac-OS-Sounds/StartupPowerMac.wav');
-    _bootChime.preload = 'auto';
-})();
+var _bootChime = null;   // startup chime retired 2026-08-19 (kept as a null for old call sites)
 
 /* Update View menu checkmarks */
 function updateViewMenu() {
@@ -23445,7 +23382,7 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-8hhl';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-i052';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
@@ -23559,39 +23496,32 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 
 setInterval(()=>{rCD();rCal();rProg();try{if(typeof _renderGradeCheckinUI==='function')_renderGradeCheckinUI()}catch(_){}},6e4);   // minute tick also refreshes the Grade Check-in reminder (due-soon/snooze-expiry crossings without a reload)
 
-/* ── Boot Dismissal (click-to-start after progress bar) ── */
+/* ── Sign-in wall on load (2026-08-19: the boot splash + click-to-start + startup
+   chime were removed — one extra click and a noise before every visit, several
+   times a day; the sign-in wall right behind it is the real start). The overlay
+   element, if still present in older markup, is removed immediately. ── */
 setTimeout(function() {
-    var boot = document.getElementById('boot-overlay');
-    if (!boot) return;
-    var status = boot.querySelector('.boot-status');
-    if (status) { status.textContent = 'Click to start'; status.style.cursor = 'pointer'; }
-    boot.style.cursor = 'pointer';
-    boot.addEventListener('click', function() {
-        if (_bootChime) _bootChime.play().catch(function() {});
-        boot.classList.add('fade-out');
-        boot.addEventListener('transitionend', function() { boot.remove(); });
-        // No-guest-mode wall (SIGNIN_WALL_BUILD.md §2): once the boot splash
-        // is dismissed, require sign-in before any material is reachable.
-        // First-load → signup; returning-but-signed-out → sign-in. A brand-new
-        // device has no sign-in history (_loadKnownUsers empty), so new students
-        // who open tomorrow's link land straight on "Create your account".
-        try {
-          // Guests are retired (2026-06-25): evict any stale guest flag so a device
-          // that previously chose "guest" is re-gated to a real sign-in / self-signup.
-          try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}
-          if (!_deskAccessGranted()) {
-            var _firstTime = (typeof _loadKnownUsers === 'function' && _loadKnownUsers().length === 0);
-            // Pre-enrolled roster: the combo-lock NAME FINDER is the primary
-            // sign-in for everyone (find your name -> password). If that module is
-            // unavailable, first-time devices fall back to signup and returning
-            // devices fall back to manual sign-in.
-            if (typeof openNameFinder === 'function') openNameFinder();
-            else if (_firstTime && typeof openSignupModal === 'function') openSignupModal();
-            else openSignInModal();
-          }
-        } catch (_) {}
-    });
-}, 1000);
+    try { var boot = document.getElementById('boot-overlay'); if (boot) boot.remove(); } catch (_) {}
+    // No-guest-mode wall (SIGNIN_WALL_BUILD.md §2): require sign-in before any
+    // material is reachable. First-load → signup; returning-but-signed-out →
+    // sign-in. A brand-new device has no sign-in history (_loadKnownUsers empty),
+    // so new students who open tomorrow's link land straight on "Create your account".
+    try {
+      // Guests are retired (2026-06-25): evict any stale guest flag so a device
+      // that previously chose "guest" is re-gated to a real sign-in / self-signup.
+      try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}
+      if (!_deskAccessGranted()) {
+        var _firstTime = (typeof _loadKnownUsers === 'function' && _loadKnownUsers().length === 0);
+        // Pre-enrolled roster: the combo-lock NAME FINDER is the primary
+        // sign-in for everyone (find your name -> password). If that module is
+        // unavailable, first-time devices fall back to signup and returning
+        // devices fall back to manual sign-in.
+        if (typeof openNameFinder === 'function') openNameFinder();
+        else if (_firstTime && typeof openSignupModal === 'function') openSignupModal();
+        else openSignInModal();
+      }
+    } catch (_) {}
+}, 250);
 </script>
 </body>
 </html>

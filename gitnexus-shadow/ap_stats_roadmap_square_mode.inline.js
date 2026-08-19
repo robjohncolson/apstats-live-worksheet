@@ -2601,64 +2601,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -18425,12 +18367,7 @@ MacSFX.init();
 _renderSoundIcon();
 
 /* ── Boot Chime (preload, plays on click-to-dismiss) ── */
-var _bootChime = null;
-(function() {
-    if (MacSFX.muted) return;
-    _bootChime = new Audio('Mac-OS-Sounds/StartupPowerMac.wav');
-    _bootChime.preload = 'auto';
-})();
+var _bootChime = null;   // startup chime retired 2026-08-19 (kept as a null for old call sites)
 
 /* Update View menu checkmarks */
 function updateViewMenu() {
@@ -23445,7 +23382,7 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-8hhl';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-i052';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
@@ -23559,39 +23496,32 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 
 setInterval(()=>{rCD();rCal();rProg();try{if(typeof _renderGradeCheckinUI==='function')_renderGradeCheckinUI()}catch(_){}},6e4);   // minute tick also refreshes the Grade Check-in reminder (due-soon/snooze-expiry crossings without a reload)
 
-/* ── Boot Dismissal (click-to-start after progress bar) ── */
+/* ── Sign-in wall on load (2026-08-19: the boot splash + click-to-start + startup
+   chime were removed — one extra click and a noise before every visit, several
+   times a day; the sign-in wall right behind it is the real start). The overlay
+   element, if still present in older markup, is removed immediately. ── */
 setTimeout(function() {
-    var boot = document.getElementById('boot-overlay');
-    if (!boot) return;
-    var status = boot.querySelector('.boot-status');
-    if (status) { status.textContent = 'Click to start'; status.style.cursor = 'pointer'; }
-    boot.style.cursor = 'pointer';
-    boot.addEventListener('click', function() {
-        if (_bootChime) _bootChime.play().catch(function() {});
-        boot.classList.add('fade-out');
-        boot.addEventListener('transitionend', function() { boot.remove(); });
-        // No-guest-mode wall (SIGNIN_WALL_BUILD.md §2): once the boot splash
-        // is dismissed, require sign-in before any material is reachable.
-        // First-load → signup; returning-but-signed-out → sign-in. A brand-new
-        // device has no sign-in history (_loadKnownUsers empty), so new students
-        // who open tomorrow's link land straight on "Create your account".
-        try {
-          // Guests are retired (2026-06-25): evict any stale guest flag so a device
-          // that previously chose "guest" is re-gated to a real sign-in / self-signup.
-          try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}
-          if (!_deskAccessGranted()) {
-            var _firstTime = (typeof _loadKnownUsers === 'function' && _loadKnownUsers().length === 0);
-            // Pre-enrolled roster: the combo-lock NAME FINDER is the primary
-            // sign-in for everyone (find your name -> password). If that module is
-            // unavailable, first-time devices fall back to signup and returning
-            // devices fall back to manual sign-in.
-            if (typeof openNameFinder === 'function') openNameFinder();
-            else if (_firstTime && typeof openSignupModal === 'function') openSignupModal();
-            else openSignInModal();
-          }
-        } catch (_) {}
-    });
-}, 1000);
+    try { var boot = document.getElementById('boot-overlay'); if (boot) boot.remove(); } catch (_) {}
+    // No-guest-mode wall (SIGNIN_WALL_BUILD.md §2): require sign-in before any
+    // material is reachable. First-load → signup; returning-but-signed-out →
+    // sign-in. A brand-new device has no sign-in history (_loadKnownUsers empty),
+    // so new students who open tomorrow's link land straight on "Create your account".
+    try {
+      // Guests are retired (2026-06-25): evict any stale guest flag so a device
+      // that previously chose "guest" is re-gated to a real sign-in / self-signup.
+      try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}
+      if (!_deskAccessGranted()) {
+        var _firstTime = (typeof _loadKnownUsers === 'function' && _loadKnownUsers().length === 0);
+        // Pre-enrolled roster: the combo-lock NAME FINDER is the primary
+        // sign-in for everyone (find your name -> password). If that module is
+        // unavailable, first-time devices fall back to signup and returning
+        // devices fall back to manual sign-in.
+        if (typeof openNameFinder === 'function') openNameFinder();
+        else if (_firstTime && typeof openSignupModal === 'function') openSignupModal();
+        else openSignInModal();
+      }
+    } catch (_) {}
+}, 250);
 
 
 
