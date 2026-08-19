@@ -20979,7 +20979,20 @@ function _renderTi84SkillBtn() {
         var frame = document.getElementById('app-ti84-frame');
         // Force the deep link even if the trainer iframe was opened earlier
         // with a stale (or bare) URL — openApp only sets src when empty.
-        if (app && frame) frame.src = appLaunchUrl(app, 'ti84');
+        if (app && frame) {
+            var launchUrl = appLaunchUrl(app, 'ti84');
+            try {
+                var launchTarget = new URL(launchUrl, window.location.href);
+                if (typeof frame.contentWindow !== 'undefined' && frame.contentWindow &&
+                    new URL(frame.src, window.location.href).pathname === launchTarget.pathname) {
+                    frame.contentWindow.location.hash = launchTarget.hash;
+                } else {
+                    frame.src = launchUrl;
+                }
+            } catch (_) {
+                frame.src = launchUrl.replace(/(#|$)/, (launchUrl.indexOf('?') < 0 ? '?' : '&') + 'deskNav=' + Date.now() + '$1');
+            }
+        }
         if (typeof openApp === 'function') openApp('ti84');
     };
     body.appendChild(btn);
@@ -20992,7 +21005,20 @@ function _renderTi84SkillBtn() {
 function _openTi84ForTopic(topic) {
     var app = APP_REGISTRY && APP_REGISTRY.ti84;
     var frame = document.getElementById('app-ti84-frame');
-    if (app && frame && topic) frame.src = app.url + '#topic=' + topic + '&source=desk';
+    if (app && frame && topic) {
+        var topicUrl = app.url + '#topic=' + topic + '&source=desk';
+        try {
+            var topicTarget = new URL(topicUrl, window.location.href);
+            if (typeof frame.contentWindow !== 'undefined' && frame.contentWindow &&
+                new URL(frame.src, window.location.href).pathname === topicTarget.pathname) {
+                frame.contentWindow.location.hash = topicTarget.hash;
+            } else {
+                frame.src = topicUrl;
+            }
+        } catch (_) {
+            frame.src = topicUrl.replace(/(#|$)/, (topicUrl.indexOf('?') < 0 ? '?' : '&') + 'deskNav=' + Date.now() + '$1');
+        }
+    }
     if (typeof openApp === 'function') openApp('ti84');
 }
 
@@ -23382,7 +23408,7 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-i052';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-4whx';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

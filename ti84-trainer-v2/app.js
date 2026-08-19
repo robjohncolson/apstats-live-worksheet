@@ -301,6 +301,33 @@
     MINUS: '-',
   };
   const DIGIT_BUTTON_IDS = ['ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+  const KEYBOARD_TO_BUTTON = {
+    '0': 'ZERO',
+    '1': 'ONE',
+    '2': 'TWO',
+    '3': 'THREE',
+    '4': 'FOUR',
+    '5': 'FIVE',
+    '6': 'SIX',
+    '7': 'SEVEN',
+    '8': 'EIGHT',
+    '9': 'NINE',
+    '.': 'DECIMAL',
+    '_': 'NEGATIVE',
+    '(-)': 'NEGATIVE',
+    '+': 'PLUS',
+    '-': 'MINUS',
+    '*': 'MULTIPLY',
+    '/': 'DIVIDE',
+    '^': 'POWER',
+    Enter: 'ENTER',
+    Backspace: 'DEL',
+    Escape: 'CLEAR',
+    ArrowUp: 'UP',
+    ArrowDown: 'DOWN',
+    ArrowLeft: 'LEFT',
+    ArrowRight: 'RIGHT',
+  };
 
   const { createState, createRouteState, transition } = machine;
   const { createBackend } = backendApi;
@@ -596,6 +623,7 @@
     optionsDialogOpen: false,
     importOffer: null,
     practice: null,
+    hashNavigationId: 0,
     clutch: {
       engaged: true,
       phase: 'idle',
@@ -2692,9 +2720,14 @@
     app.busy = true;
     app.banner = 'Resetting the calculator to HOME before the walkthrough starts.';
     render();
+    const activeWalkthrough = app.walkthrough;
 
     try {
       await app.bridge.prepareHome();
+
+      if (app.walkthrough !== activeWalkthrough) {
+        return;
+      }
 
       if (hasDataTarget(dataTarget)) {
         // Always show data setup phase — let the student confirm or re-enter.
@@ -2706,7 +2739,14 @@
       seedNativeLists(problem, procedure);
       seedNativeMatrices(problem);
     } catch (error) {
+      if (app.walkthrough !== activeWalkthrough) {
+        return;
+      }
       console.warn('Failed to prepare the calculator home screen.', error);
+    }
+
+    if (app.walkthrough !== activeWalkthrough) {
+      return;
     }
 
     startProcedurePhase(procedurePhaseBanner());
@@ -2906,7 +2946,11 @@
         procedureId: walkthrough.procedureId,
         quality,
         mode: walkthrough.mode,
-        inputMode: app.persisted.physicalMode ? 'physical' : 'emulator',
+        inputMode: app.persisted.physicalMode
+          ? 'physical'
+          : app.bridge?.isRealEmulator?.()
+            ? 'emulator'
+            : 'mock',
         hints: walkthrough.hints,
         errors: walkthrough.errors,
       },
@@ -3526,11 +3570,17 @@
       return;
     }
 
+    const activeWalkthrough = app.walkthrough;
+
     if (!app.clutch.engaged) {
       app.busy = true;
 
       try {
         await app.bridge.sendButton(buttonId);
+
+        if (app.walkthrough !== activeWalkthrough) {
+          return;
+        }
 
         if (app.clutch.phase === 'data-setup') {
           trackDataSetupInput(buttonId);
@@ -3564,7 +3614,9 @@
     // on the plot Type row could select Scatter's default instead of the
     // Histogram icon the student never actually arrowed to.
     if (stepIsRepeatable(step) && !stepMatchesKey(step, buttonId) && stepMatchesKey(stepAfterCurrent(), buttonId)) {
-      if (repeatNetPresses() < (step.minPresses ?? 0)) {
+      const minimumPresses = step.minPresses ?? (stepIsParameter(step) ? 1 : 0);
+
+      if (repeatNetPresses() < minimumPresses) {
         app.banner = `Keep pressing [${displayKey(step.key)}] until the screen matches, then move on.`;
         render();
         return;
@@ -3606,9 +3658,19 @@
         const token = step.key.slice(1, -1);
         const value = sampleValueForToken(token, app.walkthrough.problem?.values ?? {});
         await app.bridge.typeValue(value);
+
+        if (app.walkthrough !== activeWalkthrough) {
+          return;
+        }
+
         app.banner = `Filled ${token} with ${value}.`;
       } else {
         await app.bridge.sendButton(buttonId);
+
+        if (app.walkthrough !== activeWalkthrough) {
+          return;
+        }
+
         app.banner = holdOnStep
           ? (app.walkthrough.mode === 'guided'
               ? `Correct. Keep pressing [${displayKey(step.key)}] until the screen matches, then move on.`
@@ -4132,7 +4194,7 @@
       .join(' ');
 
     return `
-      <button type="button" class="${className}" data-key="${buttonId}" ${disabled}>
+      <button type="button" class="${className}" data-key="${buttonId}" aria-label="${escapeHtml(meta.label)}" ${disabled}>
         ${meta.secondary ? `<span class="key-secondary">${meta.secondary}</span>` : ''}
         ${meta.alpha ? `<span class="key-alpha-label">${meta.alpha}</span>` : ''}
         <span class="key-label">${meta.label}</span>
@@ -4734,8 +4796,11 @@
           <button type="button" class="titlebar-button" data-action="open-options-dialog">Options</button>
         </header>
 
-        <section class="banner-row">
+        <section class="banner-row" role="status" aria-live="polite" aria-atomic="true">
           <span class="banner-message">${app.banner}</span>
+          ${!app.persisted.physicalMode && bridgeStatusTone() === 'offline'
+            ? '<button type="button" class="mac-button" data-action="retry-bridge">Try again</button>'
+            : ''}
           ${renderScaleControls()}
         </section>
 
@@ -5014,6 +5079,13 @@
         render();
         await ensureBridgeInitStarted();
         break;
+      case 'retry-bridge':
+        app.bridgeInitStarted = false;
+        app.bridgeInitPromise = null;
+        app.banner = 'Trying calculator firmware again…';
+        render();
+        await ensureBridgeInitStarted();
+        break;
       case 'close-rom-dialog':
         app.romDialogOpen = false;
         render();
@@ -5125,19 +5197,43 @@
     }
   }
 
+  function isTextEntryTarget(target) {
+    return Boolean(target?.closest?.('input, textarea, select, [contenteditable="true"], .answer-input, [data-answer-key]'));
+  }
+
+  function keyboardButtonId(event) {
+    if (event.code === 'NumpadSubtract') {
+      return 'NEGATIVE';
+    }
+
+    return KEYBOARD_TO_BUTTON[event.key] ?? null;
+  }
+
   function handleKeydown(event) {
-    if (event.key !== 'Enter' || !event.target?.classList?.contains('answer-input')) {
+    if (event.key === 'Enter' && event.target?.classList?.contains('answer-input')) {
+      event.preventDefault();
+
+      if (app.handheldCheck) {
+        checkHandheld();
+        return;
+      }
+
+      checkAnswerVerification();
+      return;
+    }
+
+    if (isTextEntryTarget(event.target)) {
+      return;
+    }
+
+    const buttonId = keyboardButtonId(event);
+
+    if (!buttonId) {
       return;
     }
 
     event.preventDefault();
-
-    if (app.handheldCheck) {
-      checkHandheld();
-      return;
-    }
-
-    checkAnswerVerification();
+    void pressButton(buttonId);
   }
 
   function bindEvents() {
@@ -5204,12 +5300,16 @@
   // Honor '#topic=6.4' / '#procedure=one-propztest' deep links (from the
   // Desk lesson tiles). Topics resolve through the curated lesson map; any
   // failure falls through to the regular trainer with a banner.
-  async function applyPracticeHash() {
+  async function applyPracticeHash(navigationId = app.hashNavigationId) {
     const hash = window.location.hash ?? '';
     const source = /[#&]source=(\w+)/.exec(hash)?.[1] ?? null;
 
     const procedureMatch = /[#&]procedure=([\w-]+)/.exec(hash);
     if (procedureMatch) {
+      if (navigationId !== app.hashNavigationId) {
+        return;
+      }
+
       const procedureId = procedureMatch[1];
       if (PROCEDURE_BY_ID[procedureId]) {
         app.practice = { topicKey: null, source, queue: [procedureId], index: 0, stage: 'idle' };
@@ -5231,6 +5331,11 @@
       const response = await fetch('../data/ti84-lesson-map.json');
       const map = await response.json();
       const queue = (map.lessons?.[topicKey] ?? []).filter((id) => PROCEDURE_BY_ID[id]);
+
+      if (navigationId !== app.hashNavigationId) {
+        return;
+      }
+
       if (queue.length) {
         app.practice = { topicKey, source, queue, index: 0, stage: 'idle' };
         app.banner = `Lesson ${topicKey} calculator skill ready — press Start Session.`;
@@ -5238,10 +5343,40 @@
         app.banner = `No calculator skill mapped for lesson ${topicKey} yet — showing the regular trainer.`;
       }
     } catch (error) {
+      if (navigationId !== app.hashNavigationId) {
+        return;
+      }
+
       console.warn('[practice] lesson map unavailable — regular trainer', error);
       app.banner = "Couldn't load the lesson map — showing the regular trainer.";
     }
     render();
+  }
+
+  function resetForHashNavigation() {
+    resetClutchState();
+    app.practice = null;
+    app.question = null;
+    app.branchIntro = null;
+    app.walkthrough = null;
+    app.sessionResult = null;
+    app.handheldCheck = null;
+    app.busy = false;
+    app.choiceFlash = null;
+    app.flashKeyId = null;
+    app.flashKind = null;
+    app.filterUnit = 'all';
+    app.banner = 'Pick a problem, choose the right procedure, and we drill the keys.';
+  }
+
+  async function handleHashChange() {
+    app.hashNavigationId += 1;
+    const navigationId = app.hashNavigationId;
+
+    resetForHashNavigation();
+    applyUnitHash();
+    render();
+    await applyPracticeHash(navigationId);
   }
 
   async function init() {
@@ -5264,6 +5399,14 @@
 
   window.addEventListener('beforeunload', () => {
     app.bridge?.destroy();
+  });
+
+  window.addEventListener('hashchange', () => {
+    // Only a NEW navigation target (#topic=/#unit=) re-applies state. Clearing
+    // the hash, or a bare '#', must not reset a walkthrough in progress.
+    const h = String(window.location.hash || '');
+    if (!/(^|[#&?])(topic|unit)=/.test(h)) return;
+    void handleHashChange();
   });
 
   // Identity-change triggers (spec §1): another tab signing in/out writes the

@@ -65,6 +65,14 @@ beforeEach(() => {
 });
 
 describe('MATH▸PRB command substrate (literal keys, mock mode)', () => {
+  it('pressing 2ND twice cancels the modifier', () => {
+    press(native, '2ND');
+    expect(native.save().secondActive).toBe(true);
+
+    press(native, '2ND');
+    expect(native.save().secondActive).toBe(false);
+  });
+
   it('MATH tab order matches the real calculator: NUM, CMPLX, then PRB', () => {
     press(native, 'MATH');
     expect(native.getScreen().id).toBe('math-menu');

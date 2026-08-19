@@ -725,7 +725,7 @@
 
       // 1c. Handle 2ND modifier
       if (key === '2ND') {
-        secondActive = true;
+        secondActive = !secondActive;
         return;
       }
 

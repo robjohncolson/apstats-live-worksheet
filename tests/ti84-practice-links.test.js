@@ -118,6 +118,21 @@ describe('practice deep links', () => {
     expect(document.getElementById('app').querySelector(`[data-procedure-id="${first}"]`)).toBeTruthy();
   });
 
+  it('hashchange aborts the old question and re-applies the new topic', async () => {
+    await bootTrainer({ hash: '#topic=7.2&source=desk', mapResponse: LESSON_MAP });
+    await click('[data-action="start-session"]');
+    expect(document.getElementById('app').querySelector('[data-procedure-id="t-interval-stats"]')).toBeTruthy();
+
+    window.history.replaceState(null, '', '#topic=8.5&source=desk');
+    window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+    await flush(60);
+
+    expect(appHtml()).toContain('Lesson 8.5 calculator skill ready');
+    expect(appHtml()).not.toContain('t-interval-stats');
+    await click('[data-action="start-session"]');
+    expect(document.getElementById('app').querySelector('[data-procedure-id="matrix-entry"]')).toBeTruthy();
+  });
+
   it('#topic= with no mapping falls through with a banner', async () => {
     await bootTrainer({ hash: '#topic=1.1', mapResponse: LESSON_MAP });
     expect(appHtml()).toContain('No calculator skill mapped for lesson 1.1');
@@ -135,6 +150,50 @@ describe('practice deep links', () => {
     await bootTrainer();
     expect(appHtml()).not.toContain('practice ready');
     expect(document.getElementById('app').querySelector('[data-action="start-session"]')).toBeTruthy();
+  });
+});
+
+describe('calculator keyboard shortcuts', () => {
+  const appSrc = sources.app;
+  const extract = (name) => {
+    const match = appSrc.match(new RegExp(`  function ${name}\\([\\s\\S]*?\\n  \\}`));
+    if (!match) throw new Error(`Could not extract ${name}`);
+    return match[0];
+  };
+  const keyMap = appSrc.match(/  const KEYBOARD_TO_BUTTON = \{[\s\S]*?\n  \};/)[0];
+
+  function buildHandler(pressButton = vi.fn()) {
+    const handler = new Function(
+      'app', 'pressButton', 'checkHandheld', 'checkAnswerVerification',
+      `${keyMap}\n${extract('isTextEntryTarget')}\n${extract('keyboardButtonId')}\n${extract('handleKeydown')}\nreturn handleKeydown;`,
+    )({ handheldCheck: null }, pressButton, vi.fn(), vi.fn());
+    return { handler, pressButton };
+  }
+
+  it.each([
+    ['7', 'Digit7', 'SEVEN'],
+    ['Enter', 'Enter', 'ENTER'],
+    ['Backspace', 'Backspace', 'DEL'],
+    ['ArrowLeft', 'ArrowLeft', 'LEFT'],
+    ['_', 'Minus', 'NEGATIVE'],
+    ['-', 'Minus', 'MINUS'],
+  ])('maps %s to the calculator %s key', (key, code, expectedButton) => {
+    const { handler, pressButton } = buildHandler();
+    const preventDefault = vi.fn();
+
+    handler({ key, code, target: document.body, preventDefault });
+
+    expect(preventDefault).toHaveBeenCalledOnce();
+    expect(pressButton).toHaveBeenCalledWith(expectedButton);
+  });
+
+  it.each(['input', 'textarea'])('does not route calculator keys while focus is in a %s', (tagName) => {
+    const { handler, pressButton } = buildHandler();
+    const target = document.createElement(tagName);
+
+    handler({ key: '7', code: 'Digit7', target, preventDefault: vi.fn() });
+
+    expect(pressButton).not.toHaveBeenCalled();
   });
 });
 

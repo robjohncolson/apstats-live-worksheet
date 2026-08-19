@@ -309,3 +309,25 @@ describe('repeatable step: recall mode', () => {
     expect(appHtml()).not.toContain('The next key is');
   });
 });
+
+describe('repeatable matrix parameter step', () => {
+  it('does not let ENTER complete step 10 before any cell value was entered', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await click('[data-action="data-setup-done"]');
+
+    for (const buttonId of [
+      '2ND', 'X_INVERSE', 'RIGHT', 'RIGHT', 'ENTER',
+      'ONE', 'ENTER', 'ONE', 'ENTER',
+    ]) {
+      await click(`[data-key="${buttonId}"]`);
+    }
+
+    expect(noteText()).toBe('Step 10 of 11');
+    await click('[data-key="ENTER"]');
+
+    expect(noteText()).toBe('Step 10 of 11');
+    expect(bannerText()).toContain('Keep pressing');
+    expect(appHtml()).not.toContain('Walkthrough complete');
+  });
+});

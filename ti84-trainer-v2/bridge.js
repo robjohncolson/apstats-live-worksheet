@@ -550,10 +550,40 @@
       setStatus('downloading-rom', 'Downloading calculator firmware…', { progress: 0 });
       drawMockFrame();
 
-      const response = await fetch(romUrl);
+      let response = null;
+      let downloadError = null;
 
-      if (!response.ok) {
-        throw new Error(`Supabase returned ${response.status} ${response.statusText}.`);
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 30_000);
+
+        if (attempt > 1) {
+          setStatus('downloading-rom', 'Retrying calculator firmware download…', { progress: 0 });
+          state.mockFooter = 'Retry 2 of 2';
+          drawMockFrame();
+        }
+
+        try {
+          response = await fetch(romUrl, { signal: controller.signal });
+
+          if (!response.ok) {
+            throw new Error(`Supabase returned ${response.status} ${response.statusText}.`);
+          }
+
+          downloadError = null;
+          break;
+        } catch (error) {
+          response = null;
+          downloadError = error?.name === 'AbortError'
+            ? new Error('Calculator firmware download timed out after 30 seconds.')
+            : error;
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
+      }
+
+      if (!response) {
+        throw downloadError ?? new Error('Calculator firmware download failed.');
       }
 
       const totalBytes = Number.parseInt(response.headers.get('content-length') || '', 10);
