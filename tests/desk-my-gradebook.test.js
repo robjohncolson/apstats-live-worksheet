@@ -178,9 +178,9 @@ describe('Desk My Gradebook modal', () => {
   it('_gradeBand maps scores to the grade-rules bands (40 floor / 70 cap)', () => {
     if (!loaded) { expect(true).toBe(true); return; }
     expect(win._gradeBand(95).fg).toBe('#0a6b2e');   // deep green 90+
-    expect(win._gradeBand(84).fg).toBe('#1f8b3b');   // green 70-89 (clears cap)
+    expect(win._gradeBand(84).fg).toBe('#25663F');   // green 70-89 (clears cap)
     expect(win._gradeBand(55).fg).toBe('#9a6a00');   // amber 40-69
-    expect(win._gradeBand(30).fg).toBe('#c0392b');   // red < 40 (below floor)
+    expect(win._gradeBand(30).fg).toBe('#B03A2E');   // red < 40 (below floor)
     expect(win._gradeBand(null)).toBeNull();
   });
 

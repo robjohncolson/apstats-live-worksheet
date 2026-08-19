@@ -146,9 +146,9 @@ describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () =>
     expect(html).toMatch(/\.dc-localdone:not\(\.cell-today\):not\(\.cal-current\)\s*\{[^}]*grayscale[^}]*opacity/);
   });
   // A2: .dc-done and .dc-localdone both DEFINE a box-shadow ring in green #1f8b3b
-  it('A2 -- .dc-done and .dc-localdone both have a box-shadow green ring (#1f8b3b)', () => {
-    expect(html).toMatch(/\.dc-done\s*\{[^}]*box-shadow[^}]*#1f8b3b/);
-    expect(html).toMatch(/\.dc-localdone\s*\{[^}]*box-shadow[^}]*#1f8b3b/);
+  it('A2 -- .dc-done and .dc-localdone both have a box-shadow green ring (var(--ok))', () => {
+    expect(html).toMatch(/\.dc-done\s*\{[^}]*box-shadow[^}]*var\(--ok\)/);
+    expect(html).toMatch(/\.dc-localdone\s*\{[^}]*box-shadow[^}]*var\(--ok\)/);
   });
   // A3: .dc-partial and .dc-localpartial both DEFINE a box-shadow ring in amber #d99a00
   it('A3 -- .dc-partial and .dc-localpartial both have a box-shadow amber ring (#d99a00)', () => {
@@ -156,8 +156,8 @@ describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () =>
     expect(html).toMatch(/\.dc-localpartial\s*\{[^}]*box-shadow[^}]*#d99a00/);
   });
   // A4: .cal-current uses synthwave magenta #ff2e97, a box-shadow, AND animation: calCurrentPulse
-  it('A4 -- .cal-current has #ff2e97, box-shadow, and animation: calCurrentPulse', () => {
-    expect(html).toMatch(/\.cal-current\s*\{[^}]*#ff2e97/s);
+  it('A4 -- .cal-current has var(--accent), box-shadow, and animation: calCurrentPulse', () => {
+    expect(html).toMatch(/\.cal-current\s*\{[^}]*var\(--accent\)/s);
     expect(html).toMatch(/\.cal-current\s*\{[^}]*box-shadow/s);
     expect(html).toMatch(/\.cal-current\s*\{[^}]*animation:\s*calCurrentPulse/s);
   });

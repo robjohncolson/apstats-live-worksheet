@@ -2601,6 +2601,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -5314,7 +5325,7 @@ function _wireViewAsWorksheetLinks() {
 function _showViewAsToast(msg) {
   try {
     var t = document.createElement('div');
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fef3c7;color:#78350f;padding:10px 16px;border:1px solid #fbbf24;border-radius:6px;z-index:9999;font:13px system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.18);';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--platinum);color:#78350f;padding:10px 16px;border:1px solid #fbbf24;border-radius:6px;z-index:9999;font:13px system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.18);';
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(function () { try { t.remove(); } catch (_) {} }, 3000);
@@ -6659,7 +6670,7 @@ function _lessonHasTrainer(topicId) {
 function _scoreColor(score, gate) {
   if (typeof score !== 'number' || !isFinite(score)) return null;
   var n = Math.round(score);
-  return n >= 100 ? '#1f8b3b' : (n >= gate ? '#b8860b' : '#c0392b');
+  return n >= 100 ? '#25663F' : (n >= gate ? '#b8860b' : '#B03A2E');
 }
 
 // Colored, always-on score chip (HTML string) — used for the Blooket row (the
@@ -11267,7 +11278,7 @@ function showResourcePanel(inf, dateStr) {
             var key = _stuTopicId + '|' + artifact;
             var entry = _marks[key] || {};
             if (!entry.visitedAt) return '';
-            return ' <span style="font-size:9px;color:#1f8b3b;margin-left:4px" title="Opened ' + new Date(entry.visitedAt).toLocaleString() + '">&#10003; visited</span>';
+            return ' <span style="font-size:9px;color:var(--ok);margin-left:4px" title="Opened ' + new Date(entry.visitedAt).toLocaleString() + '">&#10003; visited</span>';
         }
         // Video shows only a "visited" tag (via _visitedTag('video')) — never a
         // "done"/"Completed" mark, since there's no way to verify a video was
@@ -11302,16 +11313,16 @@ function showResourcePanel(inf, dateStr) {
                     var _ovFile = (window.OFFLINE_MODE && window.OfflineVideo && typeof OfflineVideo.localFor === 'function')
                         ? (OfflineVideo.localFor(v.url) || OfflineVideo.localFor(v.altUrl)) : null;
                     if (_ovFile) {
-                        lessonHtml += '<a href="#" onclick="OfflineVideo.open(' + _deskEsc(JSON.stringify(_ovFile)) + ',' + _deskEsc(JSON.stringify('Video ' + (i + 1))) + ');return false;" style="color:#0000cc;text-decoration:underline">▶ Video ' + (i + 1) + ' (offline)</a>';
+                        lessonHtml += '<a href="#" onclick="OfflineVideo.open(' + _deskEsc(JSON.stringify(_ovFile)) + ',' + _deskEsc(JSON.stringify('Video ' + (i + 1))) + ');return false;" style="color:var(--accent-ink);text-decoration:underline">▶ Video ' + (i + 1) + ' (offline)</a>';
                     } else if (_apAvail) {
                         // Standard render: AP Classroom primary + Drive alt secondary.
-                        lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline">Video ' + (i + 1) + '</a>';
-                        if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline;font-size:9px">(alt)</a>';
+                        lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline">Video ' + (i + 1) + '</a>';
+                        if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline;font-size:9px">(alt)</a>';
                     } else if (v.altUrl) {
                         // Pre-cohort: Drive alt copy is the primary (and only) link.
                         // Renders as plain "Video N" so the student doesn't need to
                         // know about AP Classroom at all.
-                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline" title="Drive copy — AP Classroom available when school starts">Video ' + (i + 1) + '</a>';
+                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Drive copy — AP Classroom available when school starts">Video ' + (i + 1) + '</a>';
                     } else {
                         // Pre-cohort with no Drive copy: show locked placeholder.
                         lessonHtml += '<span style="color:#888;text-decoration:line-through;cursor:not-allowed" title="Available when school starts (' + SCHOOL_YEAR_START + ')">Video ' + (i + 1) + ' (locked until ' + SCHOOL_YEAR_START + ')</span>';
@@ -11322,7 +11333,7 @@ function showResourcePanel(inf, dateStr) {
             }
             if (r.pdfs && r.pdfs.length) {
                 r.pdfs.forEach(p => {
-                    lessonHtml += '<div style="margin:3px 0"><a href="' + p.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">' + p.label + '</a></div>';
+                    lessonHtml += '<div style="margin:3px 0"><a href="' + p.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">' + p.label + '</a></div>';
                 });
             }
         }
@@ -11333,7 +11344,7 @@ function showResourcePanel(inf, dateStr) {
             if (u.worksheet) {
                 // Score chip is appended by the persistent _mkGradeChip block below
                 // (colored vs the 60% gate) — no inline chip here, to avoid a duplicate.
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + '<span class="worksheet-done-slot" data-topic="' + _stuTopicId + '">' + _doneBtn('worksheet', u.worksheet) + '</span></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:var(--accent-ink);text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + '<span class="worksheet-done-slot" data-topic="' + _stuTopicId + '">' + _doneBtn('worksheet', u.worksheet) + '</span></div>';
             }
             // Drills deprecated — removed 2026-05
             // W1 honesty: openers with quiz:null (1.1, 2.1, …) — label, don't omit silently
@@ -11347,7 +11358,7 @@ function showResourcePanel(inf, dateStr) {
                 lessonHtml += '<div style="margin:3px 0"><span style="color:#666;font-size:10px" title="This topic is Beyond the Exam (not on the Fall 2026 exam) — no graded quiz.">No quiz — Beyond the Exam</span></div>';
             } else if (u.quiz) {
                 // Score chip appended by the _mkGradeChip block below (colored vs the 40% gate).
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:#0000cc;text-decoration:underline">Quiz</a>' + _visitedTag('quiz') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="quiz">' + _doneBtn('quiz') + '</span></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:var(--accent-ink);text-decoration:underline">Quiz</a>' + _visitedTag('quiz') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="quiz">' + _doneBtn('quiz') + '</span></div>';
             } else if (u.worksheet) {
                 lessonHtml += '<div style="margin:3px 0"><span style="color:#666;font-size:10px" title="This lesson has a worksheet only (no graded quiz).">Worksheet only — no quiz</span></div>';
             }
@@ -11394,7 +11405,7 @@ function showResourcePanel(inf, dateStr) {
                         : 0;
                     if (_blDue > 0) _blDueText += ' · ' + _blDue + ' due';
                 }
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + _blDueText + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:var(--accent-ink);text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + _blDueText + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
             }
         }
 
@@ -11406,7 +11417,7 @@ function showResourcePanel(inf, dateStr) {
         // no gate — _isLessonComplete never reads trainer.
         if (typeof _lessonHasTrainer === 'function' && _lessonHasTrainer(_stuTopicId)) {
             var _tiScore = (typeof _trainerScoreFor === 'function') ? _trainerScoreFor(_stuTopicId) : null;
-            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:#0000cc;text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '</div>';
+            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:var(--accent-ink);text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '</div>';
         }
 
         // Phase 5: AI-tutor copy button (per-lesson artifact in ai-tutor/u{U}_l{L}.md).
@@ -11430,7 +11441,7 @@ function showResourcePanel(inf, dateStr) {
             if (_rp && _rp.syncStatus) _rpSyncs.push(_rp.syncStatus);
         }
         if (_rpFolder) {
-            lessonHtml += '<div style="margin:3px 0"><a href="' + _rpFolder + '" target="_blank" style="color:#0000cc;text-decoration:underline">View on Schoology</a></div>';
+            lessonHtml += '<div style="margin:3px 0"><a href="' + _rpFolder + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">View on Schoology</a></div>';
         }
         if (_rpSyncs.length) {
             var _rpAllPosted = _rpSyncs.every(function(s) { return s === 'posted' || s === 'taught'; });
@@ -11453,7 +11464,7 @@ function showResourcePanel(inf, dateStr) {
             if (!r) continue;
             if (item.type === 'quiz' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    dueHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
+                    dueHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
                 });
             }
         }
@@ -11471,12 +11482,12 @@ function showResourcePanel(inf, dateStr) {
             if (!r) continue;
             if (item.type === 'drill' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">Drill: ' + (b.title || 'Practice') + '</a></div>';
+                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Drill: ' + (b.title || 'Practice') + '</a></div>';
                 });
             }
             if (item.type === 'quiz' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
+                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
                 });
             }
         }
@@ -13858,7 +13869,7 @@ async function _bfFinish() {
                 var stem = document.createElement('div');
                 stem.textContent = miss.q;
                 var answer = document.createElement('div');
-                answer.style.color = '#1f8b3b';
+                answer.style.color = '#25663F';
                 answer.textContent = 'Answer: ' + miss.correctAnswer;
                 item.appendChild(stem);
                 item.appendChild(answer);
@@ -13870,7 +13881,7 @@ async function _bfFinish() {
                     reviewLink.href = fragmentUrl;
                     reviewLink.target = '_blank';
                     reviewLink.rel = 'noopener';
-                    reviewLink.style.cssText = 'display:inline-block;margin-top:2px;font-size:10px;color:#0000cc';
+                    reviewLink.style.cssText = 'display:inline-block;margin-top:2px;font-size:10px;color:var(--accent-ink)';
                     reviewLink.textContent = 'Review in the worksheet ↗';
                     item.appendChild(reviewLink);
                 }
@@ -13879,7 +13890,7 @@ async function _bfFinish() {
             result.appendChild(recapList);
         } else {
             var perfect = document.createElement('div');
-            perfect.style.cssText = 'margin-top:8px;color:#1f8b3b';
+            perfect.style.cssText = 'margin-top:8px;color:var(--ok)';
             perfect.textContent = 'Perfect — no misses!';
             result.appendChild(perfect);
         }
@@ -14209,7 +14220,7 @@ function _ftRenderTimer() {
     t.style.display = 'block';
     var s = Math.max(0, _ftState.remaining);
     t.textContent = '⏱ ' + s + 's';
-    t.style.color = s <= 10 ? '#c0392b' : '#333';
+    t.style.color = s <= 10 ? '#B03A2E' : '#333';
 }
 function _ftStartTimer() {
     _ftClearTimer();
@@ -14424,13 +14435,13 @@ function _ftRenderRecap(round, score) {
         misses.forEach(function (m) {
             var li = document.createElement('li'); li.style.marginBottom = '4px';
             var qd = document.createElement('div'); qd.textContent = m.q;
-            var ad = document.createElement('div'); ad.style.color = '#1f8b3b';
+            var ad = document.createElement('div'); ad.style.color = '#25663F';
             ad.textContent = 'Answer: ' + m.correctAnswer + (m.struck ? '  (out — 0 credit)' : '');
             li.appendChild(qd); li.appendChild(ad); ul.appendChild(li);
         });
         result.appendChild(ul);
     } else {
-        var perfect = document.createElement('div'); perfect.style.color = '#1f8b3b';
+        var perfect = document.createElement('div'); perfect.style.color = '#25663F';
         perfect.textContent = 'Perfect — no misses!';
         result.appendChild(perfect);
     }
@@ -14768,7 +14779,7 @@ function renderMyReceipts() {
         verify.href = url;
         verify.target = '_blank';
         verify.rel = 'noopener';
-        verify.style.cssText = 'color:#0000cc;text-decoration:underline';
+        verify.style.cssText = 'color:var(--accent-ink);text-decoration:underline';
         verify.textContent = 'Verify ✓';
         actions.appendChild(verify);
         actions.appendChild(document.createTextNode(' '));
@@ -17881,9 +17892,9 @@ function _colScheduledDate(col, dateMap) {
 function _gradeBand(v) {
     if (typeof v !== 'number' || isNaN(v)) return null;
     if (v >= 90) return { fg: '#0a6b2e', bg: '#d4efdd' };  // deep green
-    if (v >= 70) return { fg: '#1f8b3b', bg: '#e6f6ec' };  // green — clears the 70% cap
+    if (v >= 70) return { fg: '#25663F', bg: '#e6f6ec' };  // green — clears the 70% cap
     if (v >= 40) return { fg: '#9a6a00', bg: '#fbeecb' };  // amber — above floor, below cap
-    return { fg: '#c0392b', bg: '#fbe2de' };               // red — below the 40% floor
+    return { fg: '#B03A2E', bg: '#fbe2de' };               // red — below the 40% floor
 }
 
 // "Jun 4" style short date, reusing the Desk's MN month names when present.
@@ -17985,7 +17996,7 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     line1.appendChild(sch);
     if (rc.delta != null && Math.abs(rc.delta) >= 0.1) {
         var d = document.createElement('span');
-        d.style.cssText = 'margin-left:8px;font-size:10px;color:' + (rc.delta > 0 ? '#1f8b3b' : '#c83838');
+        d.style.cssText = 'margin-left:8px;font-size:10px;color:' + (rc.delta > 0 ? '#25663F' : '#B03A2E');
         d.textContent = '(Δ ' + (rc.delta > 0 ? '+' : '') + (Math.round(rc.delta * 10) / 10).toFixed(1) + ')';
         line1.appendChild(d);
     }
@@ -18018,7 +18029,7 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
         // Flag a category below the 40% floor (the line that caps the grade).
         if (typeof ca[cat] === 'number' && ca[cat] < 40) {
             var flag = document.createElement('span');
-            flag.style.cssText = 'color:#c0392b;font-size:9px;font-weight:bold;margin-left:6px';
+            flag.style.cssText = 'color:var(--bad);font-size:9px;font-weight:bold;margin-left:6px';
             flag.textContent = '⚠ below the 40% floor';
             hl.appendChild(flag);
         }
@@ -21725,7 +21736,7 @@ async function _walletShowSessionQR(group, host, btn) {
             var deep = _ledgerB64url(JSON.stringify({ v: 1, m: c.manifest, r: c.receipts }));
             var verifyUrl = 'https://robjohncolson.github.io/curriculum_render/verify.html#commit=' + deep;
             return '<div style="border:1px solid #ddd;border-radius:6px;padding:6px;margin:4px 0">'
-                + '<div style="font-size:10px;color:#555">Commit #' + c.seq + ' · ' + c.cnt + ' item' + (c.cnt === 1 ? '' : 's') + (c.manifest ? '' : ' · <span style="color:#c0392b">unsigned</span>') + '</div>'
+                + '<div style="font-size:10px;color:#555">Commit #' + c.seq + ' · ' + c.cnt + ' item' + (c.cnt === 1 ? '' : 's') + (c.manifest ? '' : ' · <span style="color:var(--bad)">unsigned</span>') + '</div>'
                 + '<div style="display:flex;gap:6px;align-items:flex-start;margin-top:4px">'
                 + '<button class="commit-qr-btn" data-deep="' + deep + '" onclick="_commitShowQR(this)" style="font-size:10px;padding:2px 6px;cursor:pointer">Show QR</button>'
                 + '<a href="' + _deskEsc(verifyUrl) + '" target="_blank" rel="noopener" style="font-size:10px">Verify</a>'
@@ -21868,7 +21879,7 @@ const DogePresence = {
                 if (real) {
                     label = `<strong>${_deskEsc(real)}</strong> <span style="opacity:.55;font-size:.85em">${_deskEsc(p)}</span>`;
                 } else if (DeskRoster.isGuest(p)) {
-                    label = `${_deskEsc(p)} <span style="color:#c0392b" title="Not signed in to the roster">&#10067;</span>`;
+                    label = `${_deskEsc(p)} <span style="color:var(--bad)" title="Not signed in to the roster">&#10067;</span>`;
                 } else {
                     label = _deskEsc(p);
                 }
@@ -23408,7 +23419,7 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-4whx';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-szw9';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

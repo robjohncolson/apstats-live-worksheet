@@ -211,9 +211,9 @@ describe('Score color thresholds (executed) + one chip per row', () => {
   }
   it('20: below gate → red; gate..99 → amber; 100 → green; null → null', () => {
     const col = colorFn();
-    expect(col(50, 80)).toBe('#c0392b');   // red — below the 80% gate
+    expect(col(50, 80)).toBe('#B03A2E');   // red — below the 80% gate
     expect(col(85, 80)).toBe('#b8860b');   // amber — passing, not perfect
-    expect(col(100, 80)).toBe('#1f8b3b');  // green — perfected
+    expect(col(100, 80)).toBe('#25663F');  // green — perfected
     expect(col(null, 80)).toBe(null);      // no score
     expect(col(40, 40)).toBe('#b8860b');   // exactly at the gate → amber, not red
   });
@@ -221,7 +221,7 @@ describe('Score color thresholds (executed) + one chip per row', () => {
     // eslint-disable-next-line no-new-func
     const fn = new Function(fnBody(DESK, '_scoreColor') + '\nreturn (' + fnBody(DESK, '_scoreChip') + ');')();
     expect(fn(86.7, 80)).toMatch(/>87%<\/span>/);
-    expect(fn(50, 80)).toMatch(/#c0392b/);
+    expect(fn(50, 80)).toMatch(/#B03A2E/);
     expect(fn(null, 80)).toBe('');
   });
   it('22: both chip renderers color via the shared _scoreColor (single source)', () => {

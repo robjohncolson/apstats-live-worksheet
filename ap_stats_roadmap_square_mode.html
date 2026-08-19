@@ -7,31 +7,42 @@
     <!-- PWA (OFFLINE_MODE_SPEC §4.G): installable + offline shell via sw.js -->
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="icon.svg">
-    <meta name="theme-color" content="#1d2b53">
+    <meta name="theme-color" content="#161616">
     <style>
         :root {
-            --platinum: #DDDDDD;
-            --plat-hi: #e8ecf2;
-            --plat-lo: #8890a0;
-            --bevel-hi: #dde4ee;
-            --bevel-mid: #8890a0;
-            --bevel-lo: #555577;
-            --chrome-border: #333366;
-            --stripe-dark: #AAAAAA;
-            --black: #000000;
-            --white: #FFFFFF;
-            --u1: #FFD5D5;  --u1-t: #000000;
-            --u2: #FFE8CC;  --u2-t: #000000;
-            --u3: #FFFFCC;  --u3-t: #000000;
-            --u4: #D5FFD5;  --u4-t: #000000;
-            --u5: #D5D5FF;  --u5-t: #000000;
-            --u6: #CCCCFF;  --u6-t: #000000;
-            --u7: #CCFFFF;  --u7-t: #000000;
-            --u8: #FFCC99;  --u8-t: #000000;
-            --u9: #CCFFCC;  --u9-t: #000000;
-            --rev: #FFFFCC; --rev-t: #000000;
-            --exam-bg: #000000; --exam-t: #FFFFFF;
-            --off-bg: #FFFFFF; --off-t: #000000;
+            /* ── Tango theme (2026-08-19): Platinum / Charcoal / Tangerine / Powder Blue ──
+               The Desk's System-7 chrome is now the warm Platinum with Charcoal ink;
+               Tangerine is the ONE accent (fills only — its text form is --accent-ink);
+               Powder Blue is the secondary surface; correct/incorrect stay green/red
+               but muted to sit with the set. Unit tints are mixed ~55% toward platinum. */
+            --platinum: #E5E3D2;
+            --plat-hi: #F3F1E8;
+            --plat-lo: #A9A79A;
+            --bevel-hi: #F3F1E8;
+            --bevel-mid: #A9A79A;
+            --bevel-lo: #6E6C62;
+            --chrome-border: #161616;
+            --stripe-dark: #161616;
+            --black: #161616;
+            --white: #F7F5EE;
+            --accent: #FF5B19;        /* Tangerine Tango — fills only */
+            --accent-ink: #A8330A;    /* readable tangerine for links/text (5.2:1 on platinum) */
+            --second: #AECACD;        /* Powder Blue — secondary surfaces */
+            --ok: #25663F;            /* muted green: done / correct */
+            --bad: #B03A2E;           /* muted red: late / incorrect */
+            --desk-bg: #161616;       /* desktop behind the window */
+            --u1: #F1DDD3;  --u1-t: #161616;
+            --u2: #F1E5CF;  --u2-t: #161616;
+            --u3: #F1F0CF;  --u3-t: #161616;
+            --u4: #DEF0D3;  --u4-t: #161616;
+            --u5: #DEDDE6;  --u5-t: #161616;
+            --u6: #DAD9E6;  --u6-t: #161616;
+            --u7: #DAF0E6;  --u7-t: #161616;
+            --u8: #F1D9B8;  --u8-t: #161616;
+            --u9: #DAF0CF;  --u9-t: #161616;
+            --rev: #F1F0CF; --rev-t: #161616;
+            --exam-bg: #161616; --exam-t: #E5E3D2;
+            --off-bg: #F7F5EE; --off-t: #161616;
             /* Calendar cell dim levels — one place to retune how far each
                de-emphasized cell recedes (past day / locked lesson / done lesson). */
             --cell-past-dim: 0.5;
@@ -50,8 +61,8 @@
             font-size: 10px;
             color: var(--black);
             min-height: 100vh;
-            background-color: #555566;
-            background-image: url("data:image/svg+xml,%3Csvg width='2' height='2' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='1' height='1' fill='%23666677'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23666677'/%3E%3C/svg%3E");
+            background-color: var(--desk-bg);
+            background-image: url("data:image/svg+xml,%3Csvg width='2' height='2' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='1' height='1' fill='%23222220'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23222220'/%3E%3C/svg%3E");
             image-rendering: pixelated;
         }
         .chicago { font-family: 'Chicago', 'Arial', sans-serif; font-weight: normal; }
@@ -527,7 +538,7 @@
             font-size: 10px; line-height: 1; vertical-align: middle; overflow: hidden;
         }
         /* show the next-up MAGENTA / gold-ahead identity in the key WITHOUT the idle pulse */
-        .legend-states .cal-current { animation: none; box-shadow: inset 0 0 0 2px #ff2e97; outline: none; }
+        .legend-states .cal-current { animation: none; box-shadow: inset 0 0 0 2px var(--accent); outline: none; }
         /* inset-only in the key (the live .dc-ahead's outer glow would bleed past the 14px swatch) */
         .legend-states .dc-ahead { animation: none; box-shadow: inset 0 0 0 3px #d4af00; }
         .legend-states .legend-st > * { cursor: inherit; }   /* dots are non-interactive in the key */
@@ -538,13 +549,13 @@
             margin: 6px 0 8px;
             padding: 5px 8px;
             border: 1px solid var(--black);
-            background: #fff7e0;
+            background: var(--second);
             box-shadow: 1px 1px 0 var(--black);
             font-size: 10px;
             line-height: 1.35;
-            color: #5f4100;
+            color: var(--black);
         }
-        #roadmap-status[data-net="offline"] { background: #fff7e0; color: #5f4100; }
+        #roadmap-status[data-net="offline"] { background: var(--second); color: var(--black); }
         #roadmap-status[data-net="cached"] { background: #eef7ee; color: #1f5f2e; }
         #roadmap-status[data-net="degraded"] { background: #f4f4f4; color: #444; }
         /* Grade Check-in banner (DESK_GRADE_CHECKIN_SPEC). The [hidden] rule is more
@@ -552,7 +563,7 @@
         #grade-checkin-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 8px; }
         #grade-checkin-banner[hidden] { display: none; }
         #grade-checkin-banner .s7btn { font-size: 10px; padding: 2px 10px; }
-        #grade-checkin-banner[data-state="due"] #grade-checkin-banner-open { background: #fff7e0; color: #5f4100; }
+        #grade-checkin-banner[data-state="due"] #grade-checkin-banner-open { background: var(--second); color: var(--black); }
         #grade-checkin-banner[data-state="overdue"] #grade-checkin-banner-open { background: #fde6d6; color: #7a3e00; font-weight: bold; }
         .lesson-coach {
             margin: 0 0 8px;
@@ -686,7 +697,7 @@
         .cell-post { background: var(--white); color: var(--black); }
         /* Grading Model v3 (s121): PC tiles (red) + Poster tiles (yellow). */
         .cell-pc {
-            background: #c0392b; color: #fff;
+            background: var(--bad); color: #fff;
             background-image: linear-gradient(135deg, transparent 0, transparent 6px, rgba(255,255,255,0.18) 6px, rgba(255,255,255,0.18) 7px, transparent 7px);
             background-size: 12px 12px;
         }
@@ -722,8 +733,8 @@
            Preview-as-student, where /donow returns the teacher's empty ledger. */
         .dc-partial { box-shadow: inset 0 0 0 3px #d99a00; }
         .dc-localpartial { box-shadow: inset 0 0 0 3px #d99a00; }
-        .dc-done { box-shadow: inset 0 0 0 3px #1f8b3b; }
-        .dc-localdone { box-shadow: inset 0 0 0 3px #1f8b3b; }
+        .dc-done { box-shadow: inset 0 0 0 3px var(--ok); }
+        .dc-localdone { box-shadow: inset 0 0 0 3px var(--ok); }
         .dc-ahead { box-shadow: inset 0 0 0 3px #d4af00, 0 0 7px 1px #ffcf33;
                     animation: dcAheadPulse 1.8s ease-in-out infinite; }
         @keyframes dcAheadPulse {
@@ -759,22 +770,22 @@
         .cal-current::after { content: '\25B6'; }                                           /* ▶ next up */
         .cal-current {
             z-index: 3;
-            outline: 2px solid #0ff0fc; outline-offset: -2px;
-            box-shadow: inset 0 0 0 3px #ff2e97,
-                        inset 0 0 11px 2px rgba(255, 46, 151, 0.55),
-                        0 0 9px 2px #ff2e97,
-                        0 0 17px 5px rgba(15, 240, 252, 0.5);
+            outline: 2px solid var(--accent); outline-offset: -2px;
+            box-shadow: inset 0 0 0 3px var(--accent),
+                        inset 0 0 11px 2px rgba(255, 91, 25, 0.45),
+                        0 0 9px 2px var(--accent),
+                        0 0 17px 5px rgba(255, 91, 25, 0.35);
             animation: calCurrentPulse 1.5s ease-in-out infinite;
         }
         @keyframes calCurrentPulse {
-          0%,100% { box-shadow: inset 0 0 0 3px #ff2e97,
-                                inset 0 0 8px 1px rgba(255, 46, 151, 0.45),
-                                0 0 7px 1px #ff2e97,
-                                0 0 13px 3px rgba(15, 240, 252, 0.4); }
-          50%     { box-shadow: inset 0 0 0 3px #ff2e97,
-                                inset 0 0 13px 3px rgba(255, 46, 151, 0.7),
-                                0 0 12px 3px #ff2e97,
-                                0 0 22px 7px rgba(15, 240, 252, 0.62); }
+          0%,100% { box-shadow: inset 0 0 0 3px var(--accent),
+                                inset 0 0 8px 1px rgba(255, 91, 25, 0.35),
+                                0 0 7px 1px var(--accent),
+                                0 0 13px 3px rgba(255, 91, 25, 0.28); }
+          50%     { box-shadow: inset 0 0 0 3px var(--accent),
+                                inset 0 0 13px 3px rgba(255, 91, 25, 0.55),
+                                0 0 12px 3px var(--accent),
+                                0 0 22px 7px rgba(255, 91, 25, 0.45); }
         }
         @media (prefers-reduced-motion: reduce) { .cal-current { animation: none; } }
         /* One ring per cell (#16): a TODAY cell keeps its crisp 2px frame and lets the
@@ -789,12 +800,12 @@
            setCalcurStyle() sets body[data-calcur] + persists the pick in localStorage. */
         body[data-calcur="tone"] .cal-current {
             outline: none;
-            box-shadow: inset 0 0 0 3px #ff2e97, 0 0 6px 1px rgba(255,46,151,0.5);
+            box-shadow: inset 0 0 0 3px var(--accent), 0 0 6px 1px rgba(255,91,25,0.45);
             animation: calCurrentTone 2.2s ease-in-out infinite;
         }
         @keyframes calCurrentTone {
-          0%,100% { box-shadow: inset 0 0 0 3px #ff2e97, 0 0 5px 0 rgba(255,46,151,0.4); }
-          50%     { box-shadow: inset 0 0 0 3px #ff2e97, 0 0 9px 2px rgba(255,46,151,0.6); }
+          0%,100% { box-shadow: inset 0 0 0 3px var(--accent), 0 0 5px 0 rgba(255,91,25,0.35); }
+          50%     { box-shadow: inset 0 0 0 3px var(--accent), 0 0 9px 2px rgba(255,91,25,0.5); }
         }
         body[data-calcur="gold"] .cal-current {
             outline: none;
@@ -1306,8 +1317,8 @@
         #update-nudge {
             position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
             z-index: 100050; display: flex; align-items: center; gap: 10px;
-            background: #fff7e0; border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
-            padding: 7px 10px; font-size: 12px; color: #5f4100; max-width: 92vw;
+            background: var(--second); border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
+            padding: 7px 10px; font-size: 12px; color: var(--black); max-width: 92vw;
         }
         #update-nudge .s7btn { font-size: 11px; padding: 2px 8px; }
         .doge-dd-item.doge-dd-open { background: var(--platinum); color: var(--black); }
@@ -1539,12 +1550,12 @@
         /* Teacher -> Student Console view-as banner (P2 of TEACHER_STUDENT_CONSOLE_SPEC.md) */
         #view-as-banner {
           position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
-          background: #d97706; color: #fff;
+          background: var(--accent); color: #fff;
           font: 13px "Geneva", "Lucida Grande", system-ui, sans-serif;
           letter-spacing: 0.04em;
           padding: 8px 14px;
           display: flex; align-items: center; gap: 12px;
-          border-bottom: 2px solid #92400e;
+          border-bottom: 2px solid var(--accent-ink);
           box-shadow: 0 2px 0 rgba(0,0,0,0.18);
         }
         #view-as-banner .vab-label { font-weight: 800; letter-spacing: 0.12em; opacity: 0.95; font-size: 11px; }
@@ -1552,18 +1563,18 @@
         #view-as-banner .vab-meta { opacity: 0.85; font-size: 12px; }
         #view-as-banner .vab-readonly {
           margin-left: auto;
-          background: #92400e; color: #fff;
+          background: var(--accent-ink); color: #fff;
           padding: 2px 8px; border-radius: 3px;
           font-weight: 700; font-size: 11px; letter-spacing: 0.1em;
         }
         #view-as-banner .vab-exit {
-          background: #fff; color: #92400e; border: 1px solid #fff;
+          background: #fff; color: var(--accent-ink); border: 1px solid #fff;
           padding: 3px 12px; border-radius: 3px;
           font: inherit; font-weight: 700; cursor: pointer;
         }
         #view-as-banner .vab-exit:hover { background: #fed7aa; }
         #view-as-banner .vab-override {
-          background: #fef3c7; color: #92400e; border: 1px solid #fff;
+          background: var(--platinum); color: var(--accent-ink); border: 1px solid #fff;
           padding: 3px 12px; border-radius: 3px;
           font: inherit; font-weight: 700; cursor: pointer;
         }
@@ -1584,18 +1595,18 @@
           transform: translate(-50%, -50%);
           width: 360px; max-width: 92vw;
           background: #fffbe6; color: #2a2520;
-          border: 1px solid #d97706; border-radius: 8px;
+          border: 1px solid var(--accent); border-radius: 8px;
           box-shadow: 0 8px 32px rgba(0,0,0,0.32);
           padding: 18px 20px;
           font: 14px "Geneva", "Lucida Grande", system-ui, sans-serif;
         }
-        #override-gate-modal h3 { margin: 0 0 8px; color: #92400e; font-size: 1.05rem; }
+        #override-gate-modal h3 { margin: 0 0 8px; color: var(--accent-ink); font-size: 1.05rem; }
         #override-gate-modal .ogm-desc { margin: 0 0 12px; font-size: 0.88rem; line-height: 1.4; }
-        #override-gate-modal label { display: block; font-weight: 700; font-size: 0.82rem; margin: 8px 0 4px; color: #92400e; }
+        #override-gate-modal label { display: block; font-weight: 700; font-size: 0.82rem; margin: 8px 0 4px; color: var(--accent-ink); }
         #override-gate-modal input[type="text"],
         #override-gate-modal textarea {
           width: 100%; box-sizing: border-box;
-          border: 1px solid #d97706; border-radius: 4px;
+          border: 1px solid var(--accent); border-radius: 4px;
           padding: 6px; font: inherit;
         }
         #override-gate-modal .ogm-status { margin: 8px 0; min-height: 18px; font-size: 0.85rem; color: #6a1b1b; }
@@ -1603,9 +1614,9 @@
         #override-gate-modal .ogm-cancel, #override-gate-modal .ogm-confirm {
           padding: 6px 14px; border-radius: 4px; font: inherit; font-weight: 700; cursor: pointer;
         }
-        #override-gate-modal .ogm-cancel { background: #fff; color: #92400e; border: 1px solid #d97706; }
-        #override-gate-modal .ogm-confirm { background: #d97706; color: #fff; border: 0; }
-        #override-gate-modal .ogm-confirm:hover { background: #92400e; }
+        #override-gate-modal .ogm-cancel { background: #fff; color: var(--accent-ink); border: 1px solid var(--accent); }
+        #override-gate-modal .ogm-confirm { background: var(--accent); color: #fff; border: 0; }
+        #override-gate-modal .ogm-confirm:hover { background: var(--accent-ink); }
         #override-gate-modal .ogm-confirm:disabled { background: #e5d3a8; cursor: not-allowed; }
 
         /* Pre-hydration body hide (Codex BLOCKER fold P2): when the page loads
@@ -1628,7 +1639,7 @@
         .nudge-toast {
           pointer-events: auto;
           background: #fffbe6; color: #2a2520;
-          border: 1px solid #d97706; border-radius: 8px;
+          border: 1px solid var(--accent); border-radius: 8px;
           box-shadow: 0 6px 20px rgba(0,0,0,0.22);
           padding: 12px 14px;
           font: 13px "Geneva", "Lucida Grande", system-ui, sans-serif;
@@ -1641,21 +1652,21 @@
           to   { transform: translateX(0);    opacity: 1; }
         }
         .nudge-toast .nt-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-        .nudge-toast .nt-from-label { color: #92400e; font-weight: 700; letter-spacing: 0.08em; font-size: 10px; }
-        .nudge-toast .nt-from-name { color: #92400e; }
-        .nudge-toast .nt-close { margin-left: auto; background: transparent; border: 0; font-size: 18px; cursor: pointer; color: #92400e; line-height: 1; padding: 0 4px; }
+        .nudge-toast .nt-from-label { color: var(--accent-ink); font-weight: 700; letter-spacing: 0.08em; font-size: 10px; }
+        .nudge-toast .nt-from-name { color: var(--accent-ink); }
+        .nudge-toast .nt-close { margin-left: auto; background: transparent; border: 0; font-size: 18px; cursor: pointer; color: var(--accent-ink); line-height: 1; padding: 0 4px; }
         .nudge-toast .nt-text { margin: 4px 0 8px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
         .nudge-toast .nt-reply { display: flex; gap: 6px; }
         .nudge-toast .nt-reply textarea {
           flex: 1; resize: vertical; min-height: 36px; max-height: 80px;
-          border: 1px solid #d97706; border-radius: 4px; padding: 6px;
+          border: 1px solid var(--accent); border-radius: 4px; padding: 6px;
           font: inherit; box-sizing: border-box;
         }
         .nudge-toast .nt-send {
-          padding: 6px 10px; background: #d97706; color: #fff;
+          padding: 6px 10px; background: var(--accent); color: #fff;
           border: 0; border-radius: 4px; cursor: pointer; font: inherit; font-weight: 700;
         }
-        .nudge-toast .nt-send:hover { background: #92400e; }
+        .nudge-toast .nt-send:hover { background: var(--accent-ink); }
         .nudge-toast .nt-send:disabled { background: #e5d3a8; cursor: not-allowed; }
 
         /* P13: student DM modal (TEACHER_STUDENT_CONSOLE_SPEC.md section 15). */
@@ -2020,8 +2031,8 @@
               #donow-card .donow-body{flex:1 1 auto;min-width:0}
               #donow-card .donow-ttl{font-size:11px;margin-bottom:2px}
               #donow-card #donow-msg{font-size:12px}
-              #donow-card.donow-done{background:#e6f5e6}
-              #donow-card.donow-signin{background:#fff7e0}
+              #donow-card.donow-done{background:var(--second)}
+              #donow-card.donow-signin{background:var(--second)}
               #donow-card.donow-flash{animation:donowFlash .8s ease-in-out 2}
               @keyframes donowFlash{0%,100%{box-shadow:2px 2px 0 var(--black)}
                 50%{box-shadow:0 0 0 3px #2b6cb0,2px 2px 0 var(--black)}}
@@ -2042,7 +2053,7 @@
                 box-shadow:1px 1px 0 var(--black)}
               #donow-grades .qpill .qkey{font-weight:bold}
               #donow-grades .qpill .qgrade{}
-              #donow-grades .qpill .qceil{color:#1f8b3b;font-size:9px}
+              #donow-grades .qpill .qceil{color:var(--ok);font-size:9px}
               #donow-grades .qpill.empty{color:var(--plat-lo);background:#fff}
               /* "Why so low?" grade coach (2026-06-01) — instant facts + optional AI follow-up */
               #donow-helper{margin-top:6px;font-size:11px}
@@ -2276,7 +2287,7 @@
             <p style="margin:0 0 6px">You need at least about <b>40% on each</b> side, or your grade is <b>capped at 70%</b>. Clear that low bar and you keep the higher of the two &mdash; either track can reach 100%.</p>
             <p style="margin:0 0 6px">The <b>&uarr;</b> next to a quarter is your <b>ceiling</b> &mdash; the best grade you can still reach if you ace what's left.</p>
             <p style="margin:0 0 6px">This is your <b>live grade</b> &mdash; it updates the moment you finish something, so it's usually <b>a step ahead of Schoology</b>'s once-a-day sync. Schoology shows a <b>report-card version</b> that's blended a little differently, so the two can differ slightly &mdash; tap <b>&#128202; My Gradebook</b> to see both side by side and why.</p>
-            <p style="margin:6px 0 0"><a href="start-here.html#how-your-grade" target="_blank" rel="noopener" style="color:#0000cc;text-decoration:underline">Full explanation &rarr;</a></p>
+            <p style="margin:6px 0 0"><a href="start-here.html#how-your-grade" target="_blank" rel="noopener" style="color:var(--accent-ink);text-decoration:underline">Full explanation &rarr;</a></p>
         </div>
         <div style="text-align:right;margin-top:10px">
             <button class="s7btn s7btn-default" onclick="closeGradeHelp()">OK</button>
@@ -2335,13 +2346,13 @@
       font-size:11px;background:var(--white);border:1px solid var(--black);
       cursor:pointer;border-radius:2px}
     #bf-overlay .bf-choice:hover{background:#eef}
-    #bf-overlay .bf-choice.bf-correct{background:#d8f5d8;border-color:#1f8b3b}
-    #bf-overlay .bf-choice.bf-wrong{background:#ffd8d8;border-color:#c83838}
+    #bf-overlay .bf-choice.bf-correct{background:#d8f5d8;border-color:var(--ok)}
+    #bf-overlay .bf-choice.bf-wrong{background:#ffd8d8;border-color:var(--bad)}
     #bf-overlay .bf-choice:disabled{cursor:default}
     #bf-overlay .bf-prog{font-size:10px;color:#666}
     #bf-overlay .bf-feedback{margin-top:8px;font-size:11px;font-style:italic}
-    #bf-overlay .bf-result-pass{color:#1f8b3b;font-weight:bold}
-    #bf-overlay .bf-result-fail{color:#c83838;font-weight:bold}
+    #bf-overlay .bf-result-pass{color:var(--ok);font-weight:bold}
+    #bf-overlay .bf-result-fail{color:var(--bad);font-weight:bold}
     #resource-body .fc-ready-badge{display:inline-block;margin-left:6px;padding:1px 5px;
       border:1px solid #777;border-radius:8px;background:#f0f0f0;color:#444;
       font-size:9px;line-height:1.2;white-space:nowrap}
@@ -5314,7 +5325,7 @@ function _wireViewAsWorksheetLinks() {
 function _showViewAsToast(msg) {
   try {
     var t = document.createElement('div');
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fef3c7;color:#78350f;padding:10px 16px;border:1px solid #fbbf24;border-radius:6px;z-index:9999;font:13px system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.18);';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--platinum);color:#78350f;padding:10px 16px;border:1px solid #fbbf24;border-radius:6px;z-index:9999;font:13px system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.18);';
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(function () { try { t.remove(); } catch (_) {} }, 3000);
@@ -6659,7 +6670,7 @@ function _lessonHasTrainer(topicId) {
 function _scoreColor(score, gate) {
   if (typeof score !== 'number' || !isFinite(score)) return null;
   var n = Math.round(score);
-  return n >= 100 ? '#1f8b3b' : (n >= gate ? '#b8860b' : '#c0392b');
+  return n >= 100 ? '#25663F' : (n >= gate ? '#b8860b' : '#B03A2E');
 }
 
 // Colored, always-on score chip (HTML string) — used for the Blooket row (the
@@ -11267,7 +11278,7 @@ function showResourcePanel(inf, dateStr) {
             var key = _stuTopicId + '|' + artifact;
             var entry = _marks[key] || {};
             if (!entry.visitedAt) return '';
-            return ' <span style="font-size:9px;color:#1f8b3b;margin-left:4px" title="Opened ' + new Date(entry.visitedAt).toLocaleString() + '">&#10003; visited</span>';
+            return ' <span style="font-size:9px;color:var(--ok);margin-left:4px" title="Opened ' + new Date(entry.visitedAt).toLocaleString() + '">&#10003; visited</span>';
         }
         // Video shows only a "visited" tag (via _visitedTag('video')) — never a
         // "done"/"Completed" mark, since there's no way to verify a video was
@@ -11302,16 +11313,16 @@ function showResourcePanel(inf, dateStr) {
                     var _ovFile = (window.OFFLINE_MODE && window.OfflineVideo && typeof OfflineVideo.localFor === 'function')
                         ? (OfflineVideo.localFor(v.url) || OfflineVideo.localFor(v.altUrl)) : null;
                     if (_ovFile) {
-                        lessonHtml += '<a href="#" onclick="OfflineVideo.open(' + _deskEsc(JSON.stringify(_ovFile)) + ',' + _deskEsc(JSON.stringify('Video ' + (i + 1))) + ');return false;" style="color:#0000cc;text-decoration:underline">▶ Video ' + (i + 1) + ' (offline)</a>';
+                        lessonHtml += '<a href="#" onclick="OfflineVideo.open(' + _deskEsc(JSON.stringify(_ovFile)) + ',' + _deskEsc(JSON.stringify('Video ' + (i + 1))) + ');return false;" style="color:var(--accent-ink);text-decoration:underline">▶ Video ' + (i + 1) + ' (offline)</a>';
                     } else if (_apAvail) {
                         // Standard render: AP Classroom primary + Drive alt secondary.
-                        lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline">Video ' + (i + 1) + '</a>';
-                        if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline;font-size:9px">(alt)</a>';
+                        lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline">Video ' + (i + 1) + '</a>';
+                        if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline;font-size:9px">(alt)</a>';
                     } else if (v.altUrl) {
                         // Pre-cohort: Drive alt copy is the primary (and only) link.
                         // Renders as plain "Video N" so the student doesn't need to
                         // know about AP Classroom at all.
-                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline" title="Drive copy — AP Classroom available when school starts">Video ' + (i + 1) + '</a>';
+                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Drive copy — AP Classroom available when school starts">Video ' + (i + 1) + '</a>';
                     } else {
                         // Pre-cohort with no Drive copy: show locked placeholder.
                         lessonHtml += '<span style="color:#888;text-decoration:line-through;cursor:not-allowed" title="Available when school starts (' + SCHOOL_YEAR_START + ')">Video ' + (i + 1) + ' (locked until ' + SCHOOL_YEAR_START + ')</span>';
@@ -11322,7 +11333,7 @@ function showResourcePanel(inf, dateStr) {
             }
             if (r.pdfs && r.pdfs.length) {
                 r.pdfs.forEach(p => {
-                    lessonHtml += '<div style="margin:3px 0"><a href="' + p.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">' + p.label + '</a></div>';
+                    lessonHtml += '<div style="margin:3px 0"><a href="' + p.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">' + p.label + '</a></div>';
                 });
             }
         }
@@ -11333,7 +11344,7 @@ function showResourcePanel(inf, dateStr) {
             if (u.worksheet) {
                 // Score chip is appended by the persistent _mkGradeChip block below
                 // (colored vs the 60% gate) — no inline chip here, to avoid a duplicate.
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + '<span class="worksheet-done-slot" data-topic="' + _stuTopicId + '">' + _doneBtn('worksheet', u.worksheet) + '</span></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:var(--accent-ink);text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + '<span class="worksheet-done-slot" data-topic="' + _stuTopicId + '">' + _doneBtn('worksheet', u.worksheet) + '</span></div>';
             }
             // Drills deprecated — removed 2026-05
             // W1 honesty: openers with quiz:null (1.1, 2.1, …) — label, don't omit silently
@@ -11347,7 +11358,7 @@ function showResourcePanel(inf, dateStr) {
                 lessonHtml += '<div style="margin:3px 0"><span style="color:#666;font-size:10px" title="This topic is Beyond the Exam (not on the Fall 2026 exam) — no graded quiz.">No quiz — Beyond the Exam</span></div>';
             } else if (u.quiz) {
                 // Score chip appended by the _mkGradeChip block below (colored vs the 40% gate).
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:#0000cc;text-decoration:underline">Quiz</a>' + _visitedTag('quiz') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="quiz">' + _doneBtn('quiz') + '</span></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:var(--accent-ink);text-decoration:underline">Quiz</a>' + _visitedTag('quiz') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="quiz">' + _doneBtn('quiz') + '</span></div>';
             } else if (u.worksheet) {
                 lessonHtml += '<div style="margin:3px 0"><span style="color:#666;font-size:10px" title="This lesson has a worksheet only (no graded quiz).">Worksheet only — no quiz</span></div>';
             }
@@ -11394,7 +11405,7 @@ function showResourcePanel(inf, dateStr) {
                         : 0;
                     if (_blDue > 0) _blDueText += ' · ' + _blDue + ' due';
                 }
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + _blDueText + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:var(--accent-ink);text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + _blDueText + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
             }
         }
 
@@ -11406,7 +11417,7 @@ function showResourcePanel(inf, dateStr) {
         // no gate — _isLessonComplete never reads trainer.
         if (typeof _lessonHasTrainer === 'function' && _lessonHasTrainer(_stuTopicId)) {
             var _tiScore = (typeof _trainerScoreFor === 'function') ? _trainerScoreFor(_stuTopicId) : null;
-            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:#0000cc;text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '</div>';
+            lessonHtml += '<div style="margin:3px 0"><a href="#" onclick="_openTi84ForTopic(\'' + _stuTopicId + '\');return false;" style="color:var(--accent-ink);text-decoration:underline">🖩 Calculator Skill</a>' + _scoreChip(_tiScore, 80) + '</div>';
         }
 
         // Phase 5: AI-tutor copy button (per-lesson artifact in ai-tutor/u{U}_l{L}.md).
@@ -11430,7 +11441,7 @@ function showResourcePanel(inf, dateStr) {
             if (_rp && _rp.syncStatus) _rpSyncs.push(_rp.syncStatus);
         }
         if (_rpFolder) {
-            lessonHtml += '<div style="margin:3px 0"><a href="' + _rpFolder + '" target="_blank" style="color:#0000cc;text-decoration:underline">View on Schoology</a></div>';
+            lessonHtml += '<div style="margin:3px 0"><a href="' + _rpFolder + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">View on Schoology</a></div>';
         }
         if (_rpSyncs.length) {
             var _rpAllPosted = _rpSyncs.every(function(s) { return s === 'posted' || s === 'taught'; });
@@ -11453,7 +11464,7 @@ function showResourcePanel(inf, dateStr) {
             if (!r) continue;
             if (item.type === 'quiz' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    dueHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
+                    dueHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
                 });
             }
         }
@@ -11471,12 +11482,12 @@ function showResourcePanel(inf, dateStr) {
             if (!r) continue;
             if (item.type === 'drill' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">Drill: ' + (b.title || 'Practice') + '</a></div>';
+                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Drill: ' + (b.title || 'Practice') + '</a></div>';
                 });
             }
             if (item.type === 'quiz' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
+                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
                 });
             }
         }
@@ -13858,7 +13869,7 @@ async function _bfFinish() {
                 var stem = document.createElement('div');
                 stem.textContent = miss.q;
                 var answer = document.createElement('div');
-                answer.style.color = '#1f8b3b';
+                answer.style.color = '#25663F';
                 answer.textContent = 'Answer: ' + miss.correctAnswer;
                 item.appendChild(stem);
                 item.appendChild(answer);
@@ -13870,7 +13881,7 @@ async function _bfFinish() {
                     reviewLink.href = fragmentUrl;
                     reviewLink.target = '_blank';
                     reviewLink.rel = 'noopener';
-                    reviewLink.style.cssText = 'display:inline-block;margin-top:2px;font-size:10px;color:#0000cc';
+                    reviewLink.style.cssText = 'display:inline-block;margin-top:2px;font-size:10px;color:var(--accent-ink)';
                     reviewLink.textContent = 'Review in the worksheet ↗';
                     item.appendChild(reviewLink);
                 }
@@ -13879,7 +13890,7 @@ async function _bfFinish() {
             result.appendChild(recapList);
         } else {
             var perfect = document.createElement('div');
-            perfect.style.cssText = 'margin-top:8px;color:#1f8b3b';
+            perfect.style.cssText = 'margin-top:8px;color:var(--ok)';
             perfect.textContent = 'Perfect — no misses!';
             result.appendChild(perfect);
         }
@@ -14209,7 +14220,7 @@ function _ftRenderTimer() {
     t.style.display = 'block';
     var s = Math.max(0, _ftState.remaining);
     t.textContent = '⏱ ' + s + 's';
-    t.style.color = s <= 10 ? '#c0392b' : '#333';
+    t.style.color = s <= 10 ? '#B03A2E' : '#333';
 }
 function _ftStartTimer() {
     _ftClearTimer();
@@ -14424,13 +14435,13 @@ function _ftRenderRecap(round, score) {
         misses.forEach(function (m) {
             var li = document.createElement('li'); li.style.marginBottom = '4px';
             var qd = document.createElement('div'); qd.textContent = m.q;
-            var ad = document.createElement('div'); ad.style.color = '#1f8b3b';
+            var ad = document.createElement('div'); ad.style.color = '#25663F';
             ad.textContent = 'Answer: ' + m.correctAnswer + (m.struck ? '  (out — 0 credit)' : '');
             li.appendChild(qd); li.appendChild(ad); ul.appendChild(li);
         });
         result.appendChild(ul);
     } else {
-        var perfect = document.createElement('div'); perfect.style.color = '#1f8b3b';
+        var perfect = document.createElement('div'); perfect.style.color = '#25663F';
         perfect.textContent = 'Perfect — no misses!';
         result.appendChild(perfect);
     }
@@ -14768,7 +14779,7 @@ function renderMyReceipts() {
         verify.href = url;
         verify.target = '_blank';
         verify.rel = 'noopener';
-        verify.style.cssText = 'color:#0000cc;text-decoration:underline';
+        verify.style.cssText = 'color:var(--accent-ink);text-decoration:underline';
         verify.textContent = 'Verify ✓';
         actions.appendChild(verify);
         actions.appendChild(document.createTextNode(' '));
@@ -17881,9 +17892,9 @@ function _colScheduledDate(col, dateMap) {
 function _gradeBand(v) {
     if (typeof v !== 'number' || isNaN(v)) return null;
     if (v >= 90) return { fg: '#0a6b2e', bg: '#d4efdd' };  // deep green
-    if (v >= 70) return { fg: '#1f8b3b', bg: '#e6f6ec' };  // green — clears the 70% cap
+    if (v >= 70) return { fg: '#25663F', bg: '#e6f6ec' };  // green — clears the 70% cap
     if (v >= 40) return { fg: '#9a6a00', bg: '#fbeecb' };  // amber — above floor, below cap
-    return { fg: '#c0392b', bg: '#fbe2de' };               // red — below the 40% floor
+    return { fg: '#B03A2E', bg: '#fbe2de' };               // red — below the 40% floor
 }
 
 // "Jun 4" style short date, reusing the Desk's MN month names when present.
@@ -17985,7 +17996,7 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     line1.appendChild(sch);
     if (rc.delta != null && Math.abs(rc.delta) >= 0.1) {
         var d = document.createElement('span');
-        d.style.cssText = 'margin-left:8px;font-size:10px;color:' + (rc.delta > 0 ? '#1f8b3b' : '#c83838');
+        d.style.cssText = 'margin-left:8px;font-size:10px;color:' + (rc.delta > 0 ? '#25663F' : '#B03A2E');
         d.textContent = '(Δ ' + (rc.delta > 0 ? '+' : '') + (Math.round(rc.delta * 10) / 10).toFixed(1) + ')';
         line1.appendChild(d);
     }
@@ -18018,7 +18029,7 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
         // Flag a category below the 40% floor (the line that caps the grade).
         if (typeof ca[cat] === 'number' && ca[cat] < 40) {
             var flag = document.createElement('span');
-            flag.style.cssText = 'color:#c0392b;font-size:9px;font-weight:bold;margin-left:6px';
+            flag.style.cssText = 'color:var(--bad);font-size:9px;font-weight:bold;margin-left:6px';
             flag.textContent = '⚠ below the 40% floor';
             hl.appendChild(flag);
         }
@@ -21725,7 +21736,7 @@ async function _walletShowSessionQR(group, host, btn) {
             var deep = _ledgerB64url(JSON.stringify({ v: 1, m: c.manifest, r: c.receipts }));
             var verifyUrl = 'https://robjohncolson.github.io/curriculum_render/verify.html#commit=' + deep;
             return '<div style="border:1px solid #ddd;border-radius:6px;padding:6px;margin:4px 0">'
-                + '<div style="font-size:10px;color:#555">Commit #' + c.seq + ' · ' + c.cnt + ' item' + (c.cnt === 1 ? '' : 's') + (c.manifest ? '' : ' · <span style="color:#c0392b">unsigned</span>') + '</div>'
+                + '<div style="font-size:10px;color:#555">Commit #' + c.seq + ' · ' + c.cnt + ' item' + (c.cnt === 1 ? '' : 's') + (c.manifest ? '' : ' · <span style="color:var(--bad)">unsigned</span>') + '</div>'
                 + '<div style="display:flex;gap:6px;align-items:flex-start;margin-top:4px">'
                 + '<button class="commit-qr-btn" data-deep="' + deep + '" onclick="_commitShowQR(this)" style="font-size:10px;padding:2px 6px;cursor:pointer">Show QR</button>'
                 + '<a href="' + _deskEsc(verifyUrl) + '" target="_blank" rel="noopener" style="font-size:10px">Verify</a>'
@@ -21868,7 +21879,7 @@ const DogePresence = {
                 if (real) {
                     label = `<strong>${_deskEsc(real)}</strong> <span style="opacity:.55;font-size:.85em">${_deskEsc(p)}</span>`;
                 } else if (DeskRoster.isGuest(p)) {
-                    label = `${_deskEsc(p)} <span style="color:#c0392b" title="Not signed in to the roster">&#10067;</span>`;
+                    label = `${_deskEsc(p)} <span style="color:var(--bad)" title="Not signed in to the roster">&#10067;</span>`;
                 } else {
                     label = _deskEsc(p);
                 }
@@ -23408,7 +23419,7 @@ function _mountClassroomBoard(){
 uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-19-4whx';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-08-19-szw9';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

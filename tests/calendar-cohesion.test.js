@@ -62,7 +62,7 @@ describe('Item 1 -- legend decodes overlay states (not just unit colors)', () =>
   });
   it('the cal-current swatch shows the magenta identity WITHOUT the pulsing bloom', () => {
     expect(html).toMatch(/\.legend-states \.cal-current\s*\{[^}]*animation:\s*none/);
-    expect(html).toMatch(/\.legend-states \.cal-current\s*\{[^}]*#ff2e97/);
+    expect(html).toMatch(/\.legend-states \.cal-current\s*\{[^}]*var\(--accent\)/);
     expect(html).toMatch(/\.legend-states \.dc-ahead\s*\{[^}]*animation:\s*none/);
   });
   it('the legend-states key is collapsed by default (no [open] attr in the markup)', () => {
