@@ -4729,15 +4729,26 @@
       "timestamp": "2026-08-19T11:45:35Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "1942577d0801",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing **TI-84 trainer phase 2** in /home/mrcolson/repos/apstats-live-worksheet. You M",
+      "status": "partial",
+      "duration_seconds": 369.416,
+      "timestamp": "2026-08-19T11:58:33Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 402,
-    "cc_to_codex": 402,
+    "total_calls": 403,
+    "cc_to_codex": 403,
     "codex_to_cc": 0,
     "completed": 304,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 625.73
+    "avg_duration_seconds": 625.094
   }
 }

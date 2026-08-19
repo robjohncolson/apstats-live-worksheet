@@ -2908,11 +2908,6 @@
   }
 
   function recordTrainerAttempt(walkthrough) {
-    // Practice sessions record no attempt rows; verified handheld mastery
-    // still records through its own path.
-    if (app.practice) {
-      return;
-    }
     if (typeof window.gradebookClient?.record !== 'function') {
       return false;
     }
@@ -2927,14 +2922,42 @@
 
     const procedure = PROCEDURE_BY_ID[walkthrough.procedureId];
     const track2 = ensureProcedureRecord(walkthrough.procedureId).track2;
-    const quality = track2.lastQuality ?? 0;
-    const score = Math.max(track2.bestScore ?? 0, quality / 5);
+    const quality = app.practice
+      ? walkthrough.mode === 'guided'
+        ? 4
+        : recallQuality(walkthrough.errors ?? 0, walkthrough.hints ?? 0)
+      : track2.lastQuality ?? 0;
+    const hasVerification = Boolean(
+      VERIFICATION_FIELDS[walkthrough.procedureId]
+      ?? PROPERTY_FIELDS[walkthrough.procedureId],
+    );
+    const inputMode = app.persisted.physicalMode
+      ? 'physical'
+      : app.bridge?.isRealEmulator?.()
+        ? 'emulator'
+        : 'mock';
+    const selfAttest = !app.practice && inputMode === 'physical' && !hasVerification;
 
-    if (app.persisted.physicalMode && !walkthrough.answerVerified) {
+    if (!app.practice && inputMode === 'physical' && !walkthrough.answerVerified && !selfAttest) {
       return false;
     }
 
-    track2.bestScore = score;
+    if (!app.practice && inputMode === 'mock' && !hasVerification) {
+      return false;
+    }
+
+    // Teacher decision (2026-08-19): a physical, self-attested completion of
+    // an unverifiable graph/utility procedure earns 60% credit.
+    const earnedScore = selfAttest ? 0.6 : quality / 5;
+    const practiceBest = app.practice?.recordedScores?.[walkthrough.procedureId] ?? 0;
+    const score = Math.max(track2.bestScore ?? 0, practiceBest, earnedScore);
+
+    if (app.practice) {
+      app.practice.recordedScores ??= {};
+      app.practice.recordedScores[walkthrough.procedureId] = score;
+    } else {
+      track2.bestScore = score;
+    }
 
     // Fire-and-forget roster ledger write; attempt stays 1 so re-practice
     // upserts the same row (latest state per procedure).
@@ -2945,12 +2968,9 @@
       response: {
         procedureId: walkthrough.procedureId,
         quality,
-        mode: walkthrough.mode,
-        inputMode: app.persisted.physicalMode
-          ? 'physical'
-          : app.bridge?.isRealEmulator?.()
-            ? 'emulator'
-            : 'mock',
+        mode: app.practice ? 'practice' : walkthrough.mode,
+        inputMode,
+        ...(selfAttest ? { selfAttest: true } : {}),
         hints: walkthrough.hints,
         errors: walkthrough.errors,
       },
@@ -3006,9 +3026,9 @@
 
     resetClutchState();
 
-    // Desk-launched practice: no SRS outcome, no attempt row — the dispatcher
-    // chains the handheld check next. Branch bookkeeping is question-local
-    // state (not SRS), so branches still return to the original question.
+    // Desk-launched practice records a visible trainer row but no SRS outcome;
+    // the dispatcher chains the handheld check next. Branch bookkeeping is
+    // question-local state (not SRS), so branches return to the original question.
     if (app.practice) {
       if (walkthrough.sourceKind === 'branch') {
         const question = walkthrough.sourceQuestion;
@@ -3030,6 +3050,7 @@
         return;
       }
 
+      recordTrainerAttempt(walkthrough);
       app.question = null;
       app.walkthrough = null;
       app.branchIntro = null;
@@ -3181,7 +3202,7 @@
     app.handheldCheck.values = values;
   }
 
-  function recordHandheldMastery(procedureId) {
+  function recordHandheldMastery(procedureId, { selfAttest = false } = {}) {
     if (typeof window.gradebookClient?.record !== 'function') {
       return;
     }
@@ -3192,8 +3213,15 @@
 
     const procedure = PROCEDURE_BY_ID[procedureId];
     const track2 = ensureProcedureRecord(procedureId).track2;
-    const score = Math.max(track2.bestScore ?? 0, 1); // verified on real hardware
+    const practiceBest = app.practice?.recordedScores?.[procedureId] ?? 0;
+    const earnedScore = selfAttest ? 0.6 : 1;
+    const score = Math.max(track2.bestScore ?? 0, practiceBest, earnedScore);
     track2.bestScore = score;
+
+    if (app.practice) {
+      app.practice.recordedScores ??= {};
+      app.practice.recordedScores[procedureId] = score;
+    }
 
     window.gradebookClient.record({
       source: 'trainer',
@@ -3203,7 +3231,8 @@
         procedureId,
         event: 'handheld-mastery',
         inputMode: 'physical',
-        verified: true,
+        verified: !selfAttest,
+        ...(selfAttest ? { selfAttest: true } : {}),
       },
       score,
       attempt: 1,
@@ -3228,7 +3257,7 @@
     });
   }
 
-  function finishHandheldMastery(procedureId, { recordCredit }) {
+  function finishHandheldMastery(procedureId, { recordCredit, selfAttest = false }) {
     const record = ensureProcedureRecord(procedureId);
     const track2 = record.track2;
     track2.handheldPassed = true;
@@ -3256,7 +3285,7 @@
     render();
 
     if (recordCredit) {
-      recordHandheldMastery(procedureId);
+      recordHandheldMastery(procedureId, { selfAttest });
     }
   }
 
@@ -3354,8 +3383,9 @@
       return;
     }
 
-    // Graph/utility procedures have no numeric result to verify — self-attested.
-    finishHandheldMastery(check.procedureId, { recordCredit: false });
+    // Graph/utility procedures have no numeric result to verify. Teacher
+    // decision (2026-08-19): self-attested physical completion earns 60%.
+    finishHandheldMastery(check.procedureId, { recordCredit: true, selfAttest: true });
   }
 
   function skipHandheld() {

@@ -2,7 +2,8 @@
 // §2, step 2): #procedure=/#topic= start a scoped practice session, every
 // failure path falls through to the regular trainer with a banner, and
 // practice NEVER moves SRS state (Codex's strict rule — guards verified by
-// extraction). Full-queue completion + lessonPractice recording is covered
+// extraction) while still writing a visible trainer ledger row. Full-queue
+// completion + lessonPractice recording is covered
 // by the manual smoke (driving a whole walkthrough needs a keypad bot).
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import fs from 'node:fs';
@@ -215,14 +216,80 @@ describe('practice never moves SRS state (extraction guards)', () => {
     expect(ensureProcedureRecord).not.toHaveBeenCalled();
   });
 
-  it('recordTrainerAttempt is a no-op in practice mode', () => {
-    const record = vi.fn();
+  it('recordTrainerAttempt writes a practice ledger row without moving track2', () => {
+    const record = vi.fn(() => Promise.resolve({ ok: true }));
+    const track2 = { lastQuality: 1, bestScore: 0.9, repetitions: 7 };
+    const before = structuredClone(track2);
     const fn = new Function(
-      'app', 'window',
+      'app', 'window', 'PROCEDURE_BY_ID', 'ensureProcedureRecord',
+      'VERIFICATION_FIELDS', 'PROPERTY_FIELDS', 'recallQuality',
       `${extract('recordTrainerAttempt')}\nreturn recordTrainerAttempt;`,
-    )({ practice: { queue: [] } }, { gradebookClient: { record } });
-    fn({ procedureId: 'one-propztest' });
-    expect(record).not.toHaveBeenCalled();
+    )(
+      {
+        practice: { queue: [] },
+        persisted: { physicalMode: false },
+        bridge: { isRealEmulator: () => false },
+        sessionResult: null,
+      },
+      {
+        gradebookClient: { record },
+        rosterClient: { current: () => ({ studentId: 'TEST1' }) },
+      },
+      { 'one-propztest': { unit: 6 } },
+      () => ({ track2 }),
+      {},
+      {},
+      vi.fn(() => 3),
+    );
+
+    fn({ procedureId: 'one-propztest', mode: 'guided', hints: 0, errors: 0 });
+
+    expect(record).toHaveBeenCalledOnce();
+    expect(record.mock.calls[0][0]).toMatchObject({
+      source: 'trainer',
+      itemId: 'TI84-one-propztest',
+      unit: 'U6',
+      response: { mode: 'practice', quality: 4 },
+      score: 0.9,
+      attempt: 1,
+    });
+    expect(track2).toEqual(before);
+  });
+
+  it('credits an unverifiable real-emulator walkthrough but not mock mode', () => {
+    function invoke(realEmulator) {
+      const record = vi.fn(() => Promise.resolve({ ok: true }));
+      const track2 = { lastQuality: 4, bestScore: 0 };
+      const fn = new Function(
+        'app', 'window', 'PROCEDURE_BY_ID', 'ensureProcedureRecord',
+        'VERIFICATION_FIELDS', 'PROPERTY_FIELDS', 'recallQuality',
+        `${extract('recordTrainerAttempt')}\nreturn recordTrainerAttempt;`,
+      )(
+        {
+          practice: null,
+          persisted: { physicalMode: false },
+          bridge: { isRealEmulator: () => realEmulator },
+          sessionResult: null,
+        },
+        {
+          gradebookClient: { record },
+          rosterClient: { current: () => ({ studentId: 'TEST1' }) },
+        },
+        { histogram: { unit: 1 } },
+        () => ({ track2 }),
+        {},
+        {},
+        vi.fn(),
+      );
+      fn({ procedureId: 'histogram', mode: 'guided', hints: 0, errors: 0 });
+      return record;
+    }
+
+    expect(invoke(true).mock.calls[0][0]).toMatchObject({
+      response: { inputMode: 'emulator', quality: 4 },
+      score: 0.8,
+    });
+    expect(invoke(false)).not.toHaveBeenCalled();
   });
 
   it('completeWalkthrough has a practice early-return before the SRS outcome call', () => {

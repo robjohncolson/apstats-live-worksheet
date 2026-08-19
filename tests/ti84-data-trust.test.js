@@ -1,6 +1,6 @@
 // Pins the TI-84 trainer data-trust core (2026-06-12):
 //  - recall mode never reveals the next key (panel, narration bar, mock footer, wrong-press)
-//  - physical mode records to the gradebook only after answer verification
+//  - physical mode records verified answers or teacher-approved self-attestation
 //  - recorded score is raise-only; payload carries response.inputMode
 //  - cancelled wrong Track-1 guesses cost the same quality as a completed branch
 //  - gradebook-client distinguishes auth / server / network failure reasons
@@ -245,7 +245,7 @@ describe('recall mode answer gating', () => {
 });
 
 describe('physical-mode recording policy', () => {
-  it('records nothing for an unverifiable physical completion, but local SM-2 still updates', async () => {
+  it('records 60% for an unverifiable self-attested physical completion', async () => {
     const record = vi.fn(() => Promise.resolve({ ok: true }));
     await bootTrainer({
       records: { 'matrix-entry': dueRecord('guided') },
@@ -257,9 +257,15 @@ describe('physical-mode recording policy', () => {
     await flush(50);
 
     expect(appHtml()).toContain('Session Update');
-    expect(record).not.toHaveBeenCalled();
-    // Local SM-2 state still advanced even though nothing was recorded.
+    expect(record).toHaveBeenCalledTimes(1);
+    expect(record.mock.calls[0][0]).toMatchObject({
+      source: 'trainer',
+      itemId: 'TI84-matrix-entry',
+      response: { inputMode: 'physical', selfAttest: true },
+      score: 0.6,
+    });
     expect(persisted().records['matrix-entry'].track2.lastReview).not.toBe(PAST_ISO);
+    expect(persisted().records['matrix-entry'].track2.bestScore).toBe(0.6);
   });
 
   it('records a verified physical completion with inputMode physical and a raise-only score', async () => {
