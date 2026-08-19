@@ -2623,8 +2623,6 @@
 
 
 
-
-
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -10437,6 +10435,33 @@ function closeMenus() {
     document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('menu-open'));
     openMenuId = null;
 }
+// Menu polish (2026-08-20): every item does something. Check-marks reflect live state.
+function _renderMenuChecks() {
+    var sound = document.getElementById('menu-sound-toggle');
+    if (sound) {
+        var muted = !!(typeof MacSFX !== 'undefined' && MacSFX.muted);
+        sound.textContent = (muted ? '\u2003' : '\u2713') + ' Sound';
+    }
+}
+function _menuShowDoNow() {
+    var card = document.getElementById('donow-card');
+    if (!card || card.style.display === 'none') { openSignInModal(); return; }
+    try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) { card.scrollIntoView(); }
+    card.classList.add('donow-flash');
+    setTimeout(function () { card.classList.remove('donow-flash'); }, 1600);
+}
+function _menuAbout() {
+    var build = (typeof APP_BUILD === 'string') ? APP_BUILD : '';
+    var who = null;
+    try { who = (window.rosterClient && rosterClient.current && rosterClient.current()) || null; } catch (_) {}
+    showDialog('\uD83D\uDDA5\uFE0F',
+        'AP Statistics Desk \u2014 build ' + build
+        + (who ? '\nSigned in as ' + who.username : '\nNot signed in')
+        + '\nIf something looks wrong, tell the teacher the build number.',
+        'OK');
+}
+// Esc closes any open menu; the menus are mouse/touch driven otherwise.
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && openMenuId) closeMenus(); });
 
 /* ═══ RESOURCE LINKS ═══ */
 const RESOURCES = {
@@ -18384,11 +18409,13 @@ function _renderSoundIcon() {
 function _toggleSound() {
     try { if (typeof MacSFX !== 'undefined') { MacSFX.init(); MacSFX.toggleMute(); } } catch (_) {}
     _renderSoundIcon();
+    try { _renderMenuChecks(); } catch (_) {}
 }
 try { window._toggleSound = _toggleSound; window._renderSoundIcon = _renderSoundIcon; window._soundIconSVG = _soundIconSVG; } catch (_) {}
 
 MacSFX.init();
 _renderSoundIcon();
+try { _renderMenuChecks(); } catch (_) {}
 
 /* ── Boot Chime (preload, plays on click-to-dismiss) ── */
 var _bootChime = null;   // startup chime retired 2026-08-19 (kept as a null for old call sites)

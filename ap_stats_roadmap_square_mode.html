@@ -1866,52 +1866,46 @@
 <div class="menu-bar chicago" id="menubar">
     <span class="menu-apple" data-menu="apple" id="menu-apple"><canvas id="menu-sprite" width="13" height="16" style="width:13px;height:16px;vertical-align:middle;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer"></canvas></span>
     <span class="menu-item" data-menu="file">File
-        <div class="menu-dropdown" id="menu-file">
-            <div class="menu-dd-item disabled">New <span class="shortcut">&#8984;N</span></div>
-            <div class="menu-dd-item disabled">Open... <span class="shortcut">&#8984;O</span></div>
+        <div class="menu-dropdown" id="menu-file" role="menu">
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();_menuShowDoNow()">&#128204; Show my Do Now</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()">&#128272; My Ledger</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item disabled">Close <span class="shortcut">&#8984;W</span></div>
-            <div class="menu-dd-item disabled">Save <span class="shortcut">&#8984;S</span></div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="_pwaInstall()">Install App...</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="_pwaInstall()">Install App...</div>
+            <div class="menu-dd-item" role="menuitem" id="menu-message-teacher" onclick="_openStudentDmModal();closeMenus()">&#9993;&#65039; Message teacher...<span id="menu-message-teacher-badge" class="menu-nudge-badge" hidden>0</span></div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" id="menu-message-teacher" onclick="_openStudentDmModal();closeMenus()">Message teacher...<span id="menu-message-teacher-badge" class="menu-nudge-badge" hidden>0</span></div>
-            <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="showDialog('&#9888;&#65039;','You can check out any time you like, but you can never leave. The AP Exam is May 7.','I Accept My Fate','crash')">Quit</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="showDialog('&#9888;&#65039;','You can check out any time you like, but you can never leave. The AP Exam is May 7.','I Accept My Fate','crash')">Quit</div>
         </div>
     </span>
     <span class="menu-item" data-menu="edit">Edit
-        <div class="menu-dropdown" id="menu-edit">
-            <div class="menu-dd-item disabled">Undo <span class="shortcut">&#8984;Z</span></div>
+        <div class="menu-dropdown" id="menu-edit" role="menu">
+            <div class="menu-dd-item" role="menuitem" id="menu-sound-toggle" data-sfx onclick="closeMenus();_toggleSound();_renderMenuChecks()">Sound</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx id="menu-change-password" onclick="closeMenus();changeMyPassword()">&#128273; Change Password...</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item disabled">Cut <span class="shortcut">&#8984;X</span></div>
-            <div class="menu-dd-item disabled">Copy <span class="shortcut">&#8984;C</span></div>
-            <div class="menu-dd-item disabled">Paste <span class="shortcut">&#8984;V</span></div>
-            <div class="menu-dd-item disabled">Clear</div>
-            <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="showDialog('&#9999;&#65039;','Sorry, you cannot edit the laws of statistics. They edit you.','Fair Enough')">Edit Statistics...</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="showDialog('&#9999;&#65039;','Sorry, you cannot edit the laws of statistics. They edit you.','Fair Enough')">Edit Statistics...</div>
         </div>
     </span>
     <span class="menu-item" data-menu="view">View
-        <div class="menu-dropdown" id="menu-view">
-            <div class="menu-dd-item" id="menu-period-x" onclick="setP('E');closeMenus()">&#10003; Period X &#8212; actual periods TBD</div>
-            <!-- Period B/E hidden until periods are assigned: setP('B')/setP('E') still work internally -->
+        <div class="menu-dropdown" id="menu-view" role="menu">
+            <div class="menu-dd-item" role="menuitem" id="menu-period-x" onclick="setP('E');closeMenus()">&#10003; Period X &#8212; actual periods TBD</div>
+            <!-- Period E item hidden until periods are assigned -->
             <div class="menu-dd-sep"></div>
-            <!-- DN3c / D5: one school-year calendar — year switching removed -->
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();if(typeof calToday==='function')calToday()">&#128197; Jump to Today</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();if(typeof calStep==='function')calStep(-1)">&#9664; Earlier Weeks</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();if(typeof calStep==='function')calStep(1)">&#9654; Later Weeks</div>
+            <div class="menu-dd-sep"></div>
             <div class="menu-dd-item disabled" title="One school-year calendar (Sept 2026 → AP Exam). Do work early and watch the calendar fill in ahead.">&#128197; Full Year 2026–27</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="showDialog('&#128202;','You are viewing it right now. What more do you want?','Good Point')">by Icon</div>
-            <div class="menu-dd-item disabled">by Name</div>
-            <div class="menu-dd-item disabled">by Date</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="showDialog('&#128202;','You are viewing it right now. What more do you want?','Good Point')">by Icon</div>
         </div>
     </span>
-    <span class="menu-item" data-menu="label">Label
-        <div class="menu-dropdown" id="menu-label">
-            <div class="menu-dd-item" data-sfx onclick="showDialog('&#127937;','Label applied: &quot;Will Definitely Pass&quot;','&#128079; Thanks')">&#9632; Essential</div>
-            <div class="menu-dd-item" data-sfx onclick="showDialog('&#128293;','Label applied: &quot;Kinda Important&quot;','Got It')">&#9632; Hot</div>
-            <div class="menu-dd-item" data-sfx onclick="showDialog('&#129398;','Label applied: &quot;Review While Napping&quot;','Zzz OK')">&#9632; Cool</div>
+    <span class="menu-item" data-menu="go">Go
+        <div class="menu-dropdown" id="menu-go" role="menu">
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();window.open('start-here.html','_blank','noopener')">&#127793; Start Here (orientation)</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();window.open('TOC.html','_blank','noopener')">&#128218; All Worksheets</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();window.open('study_guide_diagnostic.html','_blank','noopener')">&#129517; Study Guide (diagnostic)</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item disabled">Remove Label</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();window.open('mobile-home.html','_blank','noopener')">&#128241; Phone Launcher</div>
         </div>
     </span>
     <span class="menu-item" data-menu="apps">Apps
@@ -1935,7 +1929,7 @@
             <div class="menu-dd-item disabled" id="menu-student-status">Not signed in</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openSignInModal()">&#128100; Sign In...</div>
-            <div class="menu-dd-item" data-sfx id="menu-change-password" onclick="closeMenus();changeMyPassword()">&#128273; Change Password...</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();changeMyPassword()">&#128273; Change Password...</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();signOutStudent()">&#128100; Sign Out</div>
         </div>
     </span>
@@ -1963,8 +1957,12 @@
         </div>
     </span>
     <span class="menu-item" data-menu="help">Help
-        <div class="menu-dropdown" id="menu-help">
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openGradeHelp==='function')openGradeHelp()">&#9432; How grades work</div>
+        <div class="menu-dropdown" id="menu-help" role="menu">
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();if(typeof openGradeHelp==='function')openGradeHelp()">&#9432; How grades work</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();window.open('start-here.html','_blank','noopener')">&#127793; Start Here guide</div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();_openStudentDmModal()">&#9993;&#65039; Ask the teacher...</div>
+            <div class="menu-dd-sep"></div>
+            <div class="menu-dd-item" role="menuitem" data-sfx onclick="closeMenus();_menuAbout()">About the Desk...</div>
         </div>
     </span>
     <span class="menu-spacer"></span>
@@ -10437,6 +10435,33 @@ function closeMenus() {
     document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('menu-open'));
     openMenuId = null;
 }
+// Menu polish (2026-08-20): every item does something. Check-marks reflect live state.
+function _renderMenuChecks() {
+    var sound = document.getElementById('menu-sound-toggle');
+    if (sound) {
+        var muted = !!(typeof MacSFX !== 'undefined' && MacSFX.muted);
+        sound.textContent = (muted ? '\u2003' : '\u2713') + ' Sound';
+    }
+}
+function _menuShowDoNow() {
+    var card = document.getElementById('donow-card');
+    if (!card || card.style.display === 'none') { openSignInModal(); return; }
+    try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) { card.scrollIntoView(); }
+    card.classList.add('donow-flash');
+    setTimeout(function () { card.classList.remove('donow-flash'); }, 1600);
+}
+function _menuAbout() {
+    var build = (typeof APP_BUILD === 'string') ? APP_BUILD : '';
+    var who = null;
+    try { who = (window.rosterClient && rosterClient.current && rosterClient.current()) || null; } catch (_) {}
+    showDialog('\uD83D\uDDA5\uFE0F',
+        'AP Statistics Desk \u2014 build ' + build
+        + (who ? '\nSigned in as ' + who.username : '\nNot signed in')
+        + '\nIf something looks wrong, tell the teacher the build number.',
+        'OK');
+}
+// Esc closes any open menu; the menus are mouse/touch driven otherwise.
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && openMenuId) closeMenus(); });
 
 /* ═══ RESOURCE LINKS ═══ */
 const RESOURCES = {
@@ -18384,11 +18409,13 @@ function _renderSoundIcon() {
 function _toggleSound() {
     try { if (typeof MacSFX !== 'undefined') { MacSFX.init(); MacSFX.toggleMute(); } } catch (_) {}
     _renderSoundIcon();
+    try { _renderMenuChecks(); } catch (_) {}
 }
 try { window._toggleSound = _toggleSound; window._renderSoundIcon = _renderSoundIcon; window._soundIconSVG = _soundIconSVG; } catch (_) {}
 
 MacSFX.init();
 _renderSoundIcon();
+try { _renderMenuChecks(); } catch (_) {}
 
 /* ── Boot Chime (preload, plays on click-to-dismiss) ── */
 var _bootChime = null;   // startup chime retired 2026-08-19 (kept as a null for old call sites)
