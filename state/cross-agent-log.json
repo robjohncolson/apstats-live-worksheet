@@ -4602,15 +4602,76 @@
         "roster-server/tests/pc-item-typing.test.js"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "f0409f3d8e25",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "completed",
+      "duration_seconds": 388.557,
+      "timestamp": "2026-08-19T07:19:26Z",
+      "files_changed": [
+        "/tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71-ed3260706d6b/scratchpad/rubric-out/RA1.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "de7f9aceaa93",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "completed",
+      "duration_seconds": 2540.977,
+      "timestamp": "2026-08-19T07:55:19Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "6ef1a226074d",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "completed",
+      "duration_seconds": 2565.879,
+      "timestamp": "2026-08-19T07:55:44Z",
+      "files_changed": [
+        "/tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71-ed3260706d6b/scratchpad/rubric-out/RA3.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "2e69312c5d7c",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "Read and follow /tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71",
+      "status": "completed",
+      "duration_seconds": 2787.452,
+      "timestamp": "2026-08-19T07:59:25Z",
+      "files_changed": [
+        "/tmp/claude-1001/-home-mrcolson-repos-apstats-live-worksheet/9af384e7-02c1-44f6-8c71-ed3260706d6b/scratchpad/rubric-out/RA4.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "79848e5bed37",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing the **server-independent FRQ regrade job** for /home/mrcolson/repos/apstats-liv",
+      "status": "completed",
+      "duration_seconds": 868.529,
+      "timestamp": "2026-08-19T08:08:39Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 391,
-    "cc_to_codex": 391,
+    "total_calls": 396,
+    "cc_to_codex": 396,
     "codex_to_cc": 0,
-    "completed": 296,
+    "completed": 301,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 614.062
+    "avg_duration_seconds": 629.418
   }
 }

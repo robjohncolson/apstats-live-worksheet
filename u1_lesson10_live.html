@@ -1958,13 +1958,19 @@
                     var prevScore = (prev && prev.result && prev.result.score) ? prev.result.score : null;
                     var floor = (prevScore && _AI_FRQ_RANK[prevScore] !== undefined) ? _AI_FRQ_RANK[prevScore] : -1;
                     if (itemId && (itemId in _aiFrqFloor)) floor = Math.max(floor, _aiFrqFloor[itemId]);
+                    _aiShowWaiting(ta.id);
                     try {
                         var result = await _aiGradeWithRetry(ta.id, answer);
-                        if (!result || !result.score) { _aiRememberUngraded(ta.id, true); continue; }
+                        if (!result || !result.score) {
+                            _aiRememberUngraded(ta.id, true);
+                            _aiClearWaiting(ta.id, '⚠️ Couldn’t reach the grader — saved; it will be graded automatically (we retry, and a background check runs every hour).');
+                            continue;
+                        }
+                        _aiClearWaiting(ta.id);
                         // Stale verdict: the student kept typing while we waited. Do not
                         // show or record a grade for text that no longer exists; a
                         // trailing pass will grade the current text.
-                        if ((ta.value || '').trim() !== answer) { _aiScheduleAutoGrade(1500); continue; }
+                        if ((ta.value || '').trim() !== answer) { _aiClearWaiting(ta.id); _aiScheduleAutoGrade(1500); continue; }
                         _aiRememberUngraded(ta.id, false);
                         // The worksheet's "enriched pass" rule: a P with nothing
                         // missing is really an E.
@@ -2017,18 +2023,86 @@
                         if (typeof showFeedback === 'function') showFeedback(ta.id, result);
                         if (typeof recordReflectionToGradebook === 'function') recordReflectionToGradebook(ta.id, answer, result.score);
                         if (floor >= 0) upgrades++;   // an actual RAISE over a prior grade (not a first-ever grade)
-                    } catch (_) { /* soft-fail per FRQ */ }
+                    } catch (_) { _aiClearWaiting(ta.id, '⚠️ Grading hit an error — saved; it will be retried automatically.'); }
                 }
                 return upgrades;
             }
 
             // -- UI: button busy state + toast -------------------------------
+            // -- honest wait status (2026-08-19): the grader is a shared queue; while a
+            //    reflection waits, show "Queued · N ahead · ~Xs" / "Grading…" under it
+            //    (from the server's /api/ai/status estimatedWaitMs), so a 30–60 s wait
+            //    during class reads as expected, not broken. Removed when the verdict
+            //    (or a failure note) lands.
+            var _aiEtaCache = { at: 0, waitMs: null, ahead: 0 };
+            async function _aiFetchEta() {
+                try {
+                    if (!window.RAILWAY_SERVER_URL || typeof fetch !== 'function') return null;
+                    if (Date.now() - _aiEtaCache.at < 4000) return _aiEtaCache;
+                    var r = await fetch(window.RAILWAY_SERVER_URL + '/api/ai/status', { cache: 'no-store' });
+                    if (!r.ok) return null;
+                    var j = await r.json();
+                    var q = (j && j.queue) || {};
+                    _aiEtaCache = {
+                        at: Date.now(),
+                        waitMs: (typeof q.estimatedWaitMs === 'number') ? q.estimatedWaitMs : null,
+                        ahead: ((q.queueLength || 0) + (q.inFlight || 0))
+                    };
+                    return _aiEtaCache;
+                } catch (_) { return null; }
+            }
+            function _aiEtaText(eta) {
+                if (!eta || eta.waitMs == null) return 'Grading…';
+                var s = Math.max(3, Math.round(eta.waitMs / 1000));
+                var ahead = eta.ahead > 0 ? (eta.ahead + ' ahead · ') : '';
+                return (eta.ahead > 0 ? 'Queued · ' : 'Grading… ') + ahead + '~' + s + ' s';
+            }
+            function _aiStatusEl(taId, create) {
+                var ta = document.getElementById(taId);
+                if (!ta) return null;
+                var id = taId + '-ai-status';
+                var el = document.getElementById(id);
+                if (!el && create) {
+                    el = document.createElement('div');
+                    el.id = id;
+                    el.className = 'ai-wait-status';
+                    el.setAttribute('aria-live', 'polite');
+                    el.style.cssText = 'font-size:12px;color:#555;margin:4px 0 2px;display:flex;gap:6px;align-items:center';
+                    ta.insertAdjacentElement('afterend', el);
+                }
+                return el;
+            }
+            var _aiStatusTimers = {};
+            function _aiShowWaiting(taId) {
+                var el = _aiStatusEl(taId, true);
+                if (!el) return;
+                function paint(eta) { el.textContent = '⏳ ' + _aiEtaText(eta); }
+                paint(_aiEtaCache.waitMs != null ? _aiEtaCache : null);
+                _aiFetchEta().then(paint).catch(function () {});
+                if (_aiStatusTimers[taId]) clearInterval(_aiStatusTimers[taId]);
+                _aiStatusTimers[taId] = setInterval(function () {
+                    _aiFetchEta().then(function (eta) { if (eta) paint(eta); }).catch(function () {});
+                }, 5000);
+            }
+            function _aiClearWaiting(taId, note) {
+                if (_aiStatusTimers[taId]) { clearInterval(_aiStatusTimers[taId]); delete _aiStatusTimers[taId]; }
+                var el = _aiStatusEl(taId, false);
+                if (!el) return;
+                if (note) { el.textContent = note; return; }
+                try { el.remove(); } catch (_) {}
+            }
+
             function _aiSetBusy(busy) {
                 try {
                     var btn = document.querySelector('.btn-ai-recheck');
                     if (!btn) return;
                     btn.disabled = busy;
                     btn.innerHTML = busy ? '✨ grading…' : '✨ Grade with AI';
+                    if (busy) {
+                        _aiFetchEta().then(function (eta) {
+                            if (eta && eta.waitMs != null && btn.disabled) btn.innerHTML = '✨ grading… ~' + Math.max(3, Math.round(eta.waitMs / 1000)) + ' s';
+                        }).catch(function () {});
+                    }
                 } catch (_) {}
             }
 

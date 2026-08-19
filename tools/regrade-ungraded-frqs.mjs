@@ -235,7 +235,9 @@ export async function runRegradeJob(options) {
       if (graderResponse.status >= 500 && graderResponse.status <= 599) summary.grader5xx = true;
       if (!graderResponse.ok) {
         summary.failed += 1;
-        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId });
+        let snippet = '';
+        try { snippet = String(await graderResponse.text()).slice(0, 160).replace(/\s+/g, ' '); } catch (_) {}
+        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, reason: `grader HTTP ${graderResponse.status} ${snippet}` });
         continue;
       }
 
@@ -243,7 +245,7 @@ export async function runRegradeJob(options) {
       const score = verdictToScore(result);
       if (score === null) {
         summary.failed += 1;
-        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId });
+        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, reason: `unusable verdict: ${JSON.stringify(result && result.score)} (${String(result && result.feedback || '').slice(0, 80)})` });
         continue;
       }
       summary.graded += 1;
@@ -258,7 +260,7 @@ export async function runRegradeJob(options) {
       });
       if (!regradeResponse.ok) {
         summary.failed += 1;
-        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, score });
+        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, score, reason: `regrade HTTP ${regradeResponse.status}` });
         continue;
       }
 
@@ -370,7 +372,7 @@ export async function main(argv = process.argv.slice(2)) {
       } else if (event.type === 'floor-held') {
         console.log(`Floor held ${event.username} ${event.itemId} score=${event.score}`);
       } else {
-        console.error(`Failed ${event.username} ${event.itemId}${event.score === undefined ? '' : ` score=${event.score}`}`);
+        console.error(`Failed ${event.username} ${event.itemId}${event.score === undefined ? '' : ` score=${event.score}`}${event.reason ? ` — ${event.reason}` : ''}`);
       }
     },
   });
