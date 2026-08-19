@@ -101,3 +101,4 @@ android-app/plugins/**/build/
 # Golden-master fixtures derived from REAL student data are LOCAL-ONLY (privacy):
 # the repo is public. Only the synthetic fixture under tests/fixtures/golden-synthetic/ is committed.
 roster-server/tests/fixtures/golden-local/
+

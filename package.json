@@ -8,7 +8,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "gitnexus:shadow": "node scripts/gitnexus-shadow.mjs",
+    "gitnexus:analyze": "node scripts/gitnexus-shadow.mjs && GITNEXUS_MAX_FILE_SIZE=4096 npx gitnexus analyze --force"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
