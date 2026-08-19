@@ -1,6 +1,6 @@
 # TI-84 Trainer — matrix-entry cell loop
 
-**Status: DRAFT — not yet implemented**
+**Status: IMPLEMENTED 2026-08-20 (Option B) — four adversarial review rounds; residual R1 (ROM edit-context after DEL/CLEAR) handled conservatively by blocking arrows while `romEditOpen`; ROM checklist §10 still unverified on hardware**
 
 Closes the known gap in `TI84_TRAINER_FIX_PLAN.md:74` ("matrix-entry repeat loop guides only the first cell").
 Scope: `matrix-entry` (U8) and the `enter-matrix` micro-skill it shares with `chi-square-test`.

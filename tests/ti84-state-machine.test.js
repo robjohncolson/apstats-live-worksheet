@@ -140,4 +140,28 @@ describe('structural transitions', () => {
     expect(keys).toContain('STAT');
     expect(keys).toContain('2ND');
   });
+
+  it('wraps matrix ENTER to the first column of the next row', () => {
+    const state = createState('matrix-editor-a-values', {
+      rows: 2,
+      cols: 3,
+      matrixRow: 0,
+      matrixCol: 2,
+    });
+    const next = transition(state, 'ENTER');
+
+    expect(next?.matrixCursor).toEqual({ row: 1, col: 0 });
+  });
+
+  it('clamps matrix ENTER at the last cell', () => {
+    const state = createState('matrix-editor-a-values', {
+      rows: 2,
+      cols: 3,
+      matrixRow: 1,
+      matrixCol: 2,
+    });
+    const next = transition(state, 'ENTER');
+
+    expect(next?.matrixCursor).toEqual({ row: 1, col: 2 });
+  });
 });

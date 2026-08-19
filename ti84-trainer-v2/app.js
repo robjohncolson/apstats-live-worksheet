@@ -85,9 +85,11 @@
         return true;
       },
 
-      async typeValue(value) {
-        syncValueToNative(value);
-        await cemu.typeValue(value);
+      // options.clearField:false keeps the matrix-cell loop from sending a stray
+      // CLEAR that would exit the ROM's matrix editor mid-loop.
+      async typeValue(value, options = {}) {
+        syncValueToNative(value, options);
+        await cemu.typeValue(value, options);
         return true;
       },
 
@@ -528,6 +530,16 @@
     '(',
     ')',
   ]);
+  const MATRIX_CELL_INPUT_KEYS = new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '(-)']);
+  const MATRIX_CELL_INPUT_BUTTONS = new Set([
+    'ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE',
+    'SIX', 'SEVEN', 'EIGHT', 'NINE', 'DECIMAL', 'NEGATIVE',
+  ]);
+  const MATRIX_LOOP_ARROW_KEYS = new Set(['UP', 'DOWN', 'LEFT', 'RIGHT']);
+  const MATRIX_LOOP_VALUE = 'matrix-cells';
+  const MATRIX_LOOP_COMMIT = 'matrix-cells-commit';
+  const MATRIX_LOOP_INTERRUPTION_BANNER = "Guidance stopped mid-table — this attempt won't be scored. Restart the walkthrough to try again.";
+  const MATRIX_LOOP_MODE_SWITCH_BANNER = 'Finish or restart the table before switching calculators.';
 
   const DEFAULT_VALUE_SAMPLES = {
     value: '12',
@@ -2041,6 +2053,11 @@
   }
 
   function sampleValueForToken(token, problemValues = {}) {
+    if (String(token).toLowerCase() === 'cell value') {
+      const matrixLoop = app.walkthrough?.matrixLoop;
+      return matrixLoop ? formatCalculatorValue(matrixLoop.grid[matrixLoop.cursor.row][matrixLoop.cursor.col]) : null;
+    }
+
     const aliases = TOKEN_ALIASES[token] ?? [token];
 
     for (const alias of aliases) {
@@ -2067,6 +2084,265 @@
     }
 
     return `${value}`;
+  }
+
+  function stepIsMatrixLoop(step) {
+    return step?.loop === MATRIX_LOOP_VALUE || step?.loop === MATRIX_LOOP_COMMIT;
+  }
+
+  function matrixLoopStepActive() {
+    return Boolean(app.walkthrough?.matrixLoop && stepIsMatrixLoop(currentStep()));
+  }
+
+  function matrixLoopModeSwitchLocked() {
+    return matrixLoopStepActive() && app.walkthrough.inputModeAtStart === 'screen';
+  }
+
+  function interruptActiveMatrixLoop() {
+    if (!matrixLoopStepActive()) {
+      return false;
+    }
+
+    app.walkthrough.matrixLoopTainted = true;
+    app.clutch.engaged = false;
+    app.banner = MATRIX_LOOP_INTERRUPTION_BANNER;
+    return true;
+  }
+
+  function matrixLoopDefinition(procedure) {
+    const valueStepIndex = procedure?.steps?.findIndex((step) => step.loop === MATRIX_LOOP_VALUE) ?? -1;
+
+    if (valueStepIndex < 0) {
+      return null;
+    }
+
+    const commitStepIndex = valueStepIndex + 1;
+    const valueStep = procedure.steps[valueStepIndex];
+    const commitStep = procedure.steps[commitStepIndex];
+
+    if (commitStep?.loop !== MATRIX_LOOP_COMMIT) {
+      console.warn('Skipping the matrix cell loop for ' + procedure.id + ': the commit marker is missing.');
+      return null;
+    }
+
+    return {
+      name: valueStep.loopMatrix ?? '[A]',
+      valueStepIndex,
+      commitStepIndex,
+    };
+  }
+
+  function matrixGridFromValues(values) {
+    for (const source of ['data', 'matrix', 'observed']) {
+      const grid = values?.[source];
+
+      if (Array.isArray(grid) && Array.isArray(grid[0])) {
+        return { grid, source };
+      }
+    }
+
+    return null;
+  }
+
+  function createMatrixLoop(procedure, problem) {
+    const definition = matrixLoopDefinition(procedure);
+
+    if (!definition) {
+      return null;
+    }
+
+    const values = problem?.values ?? {};
+    const resolved = matrixGridFromValues(values);
+
+    if (!resolved) {
+      console.warn('Skipping the matrix cell loop for ' + procedure.id + ': no 2-D data, matrix, or observed grid was found.');
+      return null;
+    }
+
+    const rows = resolved.grid.length;
+    const cols = resolved.grid[0]?.length ?? 0;
+    const rectangular = rows > 0 && cols > 0
+      && resolved.grid.every((row) => Array.isArray(row) && row.length === cols);
+
+    if (!rectangular) {
+      console.warn('Skipping the matrix cell loop for ' + procedure.id + ': values.' + resolved.source + ' is not a rectangular grid.');
+      return null;
+    }
+
+    const authoredRows = Number(values.rows);
+    const authoredCols = Number(values.cols);
+    const dimensionsDisagree = (Number.isFinite(authoredRows) && authoredRows !== rows)
+      || (Number.isFinite(authoredCols) && authoredCols !== cols);
+
+    if (dimensionsDisagree) {
+      console.warn(
+        'Matrix dimensions disagree for ' + procedure.id + '; using the '
+          + rows + 'x' + cols + ' shape from values.' + resolved.source + '.',
+      );
+    }
+
+    return {
+      ...definition,
+      rows,
+      cols,
+      grid: resolved.grid.map((row) => row.slice()),
+      cursor: { row: 0, col: 0 },
+      filled: new Set(),
+      buffer: '',
+      cellErrors: new Map(),
+      loopErrors: 0,
+      lastClearPressed: false,
+      // The ROM can remain in edit mode after its visible buffer is cleared.
+      romEditOpen: false,
+    };
+  }
+
+  function matrixCellKey(loop) {
+    return loop.cursor.row + ',' + loop.cursor.col;
+  }
+
+  function matrixCellOrdinal(loop) {
+    return loop.cursor.row * loop.cols + loop.cursor.col;
+  }
+
+  function matrixCellValue(loop) {
+    return loop.grid[loop.cursor.row][loop.cursor.col];
+  }
+
+  function syncMatrixLoopRoute(loop, routeIndex = loop.valueStepIndex) {
+    app.walkthrough.routeState = {
+      ...app.walkthrough.routeState,
+      id: 'matrix-editor-a-values',
+      routeIndex,
+      matrixDimensions: { rows: loop.rows, cols: loop.cols },
+      matrixCursor: { ...loop.cursor },
+    };
+  }
+
+  function setMatrixLoopCursor(loop, ordinal) {
+    const lastOrdinal = loop.rows * loop.cols - 1;
+    const nextOrdinal = Math.max(0, Math.min(ordinal, lastOrdinal));
+    loop.cursor = {
+      row: Math.floor(nextOrdinal / loop.cols),
+      col: nextOrdinal % loop.cols,
+    };
+  }
+
+  function moveMatrixLoopCursor(loop, engineKey) {
+    const rowDelta = engineKey === 'UP' ? -1 : engineKey === 'DOWN' ? 1 : 0;
+    const colDelta = engineKey === 'LEFT' ? -1 : engineKey === 'RIGHT' ? 1 : 0;
+    loop.cursor = {
+      row: Math.max(0, Math.min(loop.cursor.row + rowDelta, loop.rows - 1)),
+      col: Math.max(0, Math.min(loop.cursor.col + colDelta, loop.cols - 1)),
+    };
+  }
+
+  function matrixArrowStaysInGrid(loop, engineKey) {
+    if (engineKey === 'UP') {
+      return loop.cursor.row > 0;
+    }
+
+    if (engineKey === 'DOWN') {
+      return loop.cursor.row < loop.rows - 1;
+    }
+
+    if (engineKey === 'LEFT') {
+      return loop.cursor.col > 0;
+    }
+
+    return loop.cursor.col < loop.cols - 1;
+  }
+
+  function matrixInputCharacter(engineKey) {
+    return engineKey === '(-)' ? '-' : engineKey;
+  }
+
+  function normalizedMatrixValue(value) {
+    const text = String(value ?? '').trim();
+    const numericValue = Number(text);
+
+    if (text && Number.isFinite(numericValue)) {
+      return formatCalculatorValue(numericValue);
+    }
+
+    return formatCalculatorValue(text);
+  }
+
+  function matrixValuesMatch(actual, expected) {
+    return normalizedMatrixValue(actual) === normalizedMatrixValue(expected);
+  }
+
+  function findMatrixCellForValue(loop, value) {
+    for (let row = 0; row < loop.rows; row += 1) {
+      for (let col = 0; col < loop.cols; col += 1) {
+        if ((row !== loop.cursor.row || col !== loop.cursor.col)
+          && matrixValuesMatch(value, loop.grid[row][col])) {
+          return { row, col };
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function recordMatrixCellError(loop) {
+    if (app.walkthrough.mode !== 'recall') {
+      return;
+    }
+
+    const key = matrixCellKey(loop);
+    const previousErrors = loop.cellErrors.get(key) ?? 0;
+    loop.cellErrors.set(key, previousErrors + 1);
+
+    if (previousErrors > 0 || loop.loopErrors >= 2) {
+      return;
+    }
+
+    loop.loopErrors += 1;
+    app.walkthrough.errors += 1;
+  }
+
+  function wrongMatrixCellFeedback(loop, enteredValue) {
+    const otherCell = findMatrixCellForValue(loop, enteredValue);
+    const currentCell = '(' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1) + ')';
+
+    if (otherCell) {
+      return "That's the value for (" + (otherCell.row + 1) + ',' + (otherCell.col + 1)
+        + '). The cursor is on ' + currentCell + '.';
+    }
+
+    return 'That value does not match cell ' + currentCell + '. Try that cell again.';
+  }
+
+  function matrixLoopProgress(loop) {
+    return 'cell ' + (matrixCellOrdinal(loop) + 1) + ' of ' + (loop.rows * loop.cols);
+  }
+
+  function skipUnavailableMatrixLoop() {
+    const procedure = currentProcedure();
+    const definition = matrixLoopDefinition(procedure);
+
+    if (!definition) {
+      return;
+    }
+
+    const commitStep = procedure.steps[definition.commitStepIndex];
+    app.walkthrough.routeState = {
+      ...app.walkthrough.routeState,
+      id: commitStep.screen,
+      routeIndex: definition.commitStepIndex,
+    };
+    app.walkthrough.routeState = nextRouteState(commitStep);
+    app.walkthrough.hintVisible = false;
+
+    if (app.walkthrough.routeState.routeIndex >= procedure.steps.length) {
+      enterResultReviewPhase();
+      return;
+    }
+
+    app.banner = 'Matrix data is unavailable, so the cell-entry loop was skipped.';
+    updateMockCanvas();
+    render();
   }
 
   function pairedDataProcedure(procedureId) {
@@ -2597,6 +2873,20 @@
       return new Set();
     }
 
+    const matrixLoop = app.walkthrough?.matrixLoop;
+
+    if (matrixLoop && stepIsMatrixLoop(step)) {
+      if (!matrixLoop.buffer) {
+        return new Set(MATRIX_CELL_INPUT_BUTTONS);
+      }
+
+      if (matrixValuesMatch(matrixLoop.buffer, matrixCellValue(matrixLoop))) {
+        return new Set(['ENTER']);
+      }
+
+      return new Set(['DEL', 'CLEAR']);
+    }
+
     if (stepIsParameter(step)) {
       return new Set([
         'ZERO',
@@ -2692,18 +2982,23 @@
     const record = ensureProcedureRecord(procedureId).track2;
     const procedure = PROCEDURE_BY_ID[procedureId];
     const dataTarget = buildDataTarget(procedure, problem);
+    const matrixLoop = createMatrixLoop(procedure, problem);
 
     resetClutchState();
     app.walkthrough = {
       procedureId,
       problem,
       sourceKind: options.sourceKind ?? 'question',
+      inputModeAtStart: app.persisted.physicalMode ? 'physical' : 'screen',
       mode: modeForWalkthrough(record, options.sourceKind ?? 'question', options.branchCount ?? 0),
       routeState,
       errors: 0,
       hints: 0,
       repeatPressCount: 0,
       repeatPressIndex: routeState.routeIndex,
+      matrixLoop,
+      matrixLoopUnavailable: Boolean(matrixLoopDefinition(procedure) && !matrixLoop),
+      matrixLoopTainted: false,
       preparing: true,
       completion: null,
       hintVisible: false,
@@ -2851,7 +3146,32 @@
     sm2(quality, track1);
   }
 
+  function walkthroughIsUnscored(walkthrough) {
+    return Boolean(walkthrough.matrixLoopUnavailable || walkthrough.matrixLoopTainted);
+  }
+
+  function unscoredWalkthroughSummary(walkthrough) {
+    if (walkthrough.matrixLoopTainted) {
+      return {
+        headline: 'Table entry interrupted',
+        detail: 'Guidance was interrupted mid-table, so this attempt was not scored. Restart to try again.',
+      };
+    }
+
+    return {
+      headline: 'Matrix data unavailable',
+      detail: 'This problem could not be scored because its matrix values were unavailable. Try another problem.',
+    };
+  }
+
   function applyTrack2Outcome(walkthrough) {
+    if (walkthroughIsUnscored(walkthrough)) {
+      return {
+        ...unscoredWalkthroughSummary(walkthrough),
+        unscored: true,
+      };
+    }
+
     const track2 = ensureProcedureRecord(walkthrough.procedureId).track2;
     const reviewDate = todayIso();
 
@@ -2870,20 +3190,27 @@
       };
     }
 
+    const matrixLoopFailed = (walkthrough.matrixLoop?.loopErrors ?? 0) >= 2;
     const quality = recallQuality(walkthrough.errors, walkthrough.hints);
-    sm2(quality, track2);
+    // Matrix-loop misses are capped at quality 3 for reporting, but two
+    // distinct missed cells are still a failed recall for scheduling.
+    const schedulingQuality = matrixLoopFailed ? Math.min(quality, 2) : quality;
+    sm2(schedulingQuality, track2);
     track2.lastReview = reviewDate;
     track2.lastQuality = quality;
     track2.lastErrors = walkthrough.errors;
     track2.lastHints = walkthrough.hints;
 
-    if (walkthrough.errors >= 3 || walkthrough.hints >= 2) {
+    if (walkthrough.errors >= 3 || walkthrough.hints >= 2 || matrixLoopFailed) {
       track2.mode = 'guided';
+      track2.awaitingHandheld = false;
       track2.interval = 0;
       track2.nextReview = reviewDate;
       return {
         headline: `${PROCEDURE_BY_ID[walkthrough.procedureId].name} demoted`,
-        detail: 'Recall was too shaky, so the next pass returns to guided mode.',
+        detail: matrixLoopFailed
+          ? 'Two matrix cells were missed, so the next pass returns to guided mode.'
+          : 'Recall was too shaky, so the next pass returns to guided mode.',
       };
     }
 
@@ -2908,6 +3235,10 @@
   }
 
   function recordTrainerAttempt(walkthrough) {
+    if (walkthroughIsUnscored(walkthrough)) {
+      return false;
+    }
+
     if (typeof window.gradebookClient?.record !== 'function') {
       return false;
     }
@@ -3025,6 +3356,33 @@
     }
 
     resetClutchState();
+
+    // Unscored attempts (missing grid / interrupted table) never reach SRS or the
+    // ledger — recordTrainerAttempt is a no-op for them, applyTrack2Outcome is not called.
+    if (walkthroughIsUnscored(walkthrough)) {
+      const unscoredSummary = unscoredWalkthroughSummary(walkthrough);
+      recordTrainerAttempt(walkthrough);
+
+      if (app.practice) {
+        app.practice.stage = 'idle';
+      }
+
+      app.question = null;
+      app.walkthrough = null;
+      app.branchIntro = null;
+      app.sessionResult = {
+        headline: unscoredSummary.headline,
+        detail: unscoredSummary.detail,
+        actionLabel: 'Try another problem',
+        action: 'next-item',
+      };
+      app.banner = walkthrough.matrixLoopTainted
+        ? 'No score was recorded. Restart the walkthrough to try again.'
+        : 'No score was recorded. Try another matrix-entry problem.';
+      savePersisted();
+      render();
+      return;
+    }
 
     // Desk-launched practice records a visible trainer row but no SRS outcome;
     // the dispatcher chains the handheld check next. Branch bookkeeping is
@@ -3637,6 +3995,16 @@
       return;
     }
 
+    if (stepIsMatrixLoop(step)) {
+      if (!app.walkthrough.matrixLoop) {
+        skipUnavailableMatrixLoop();
+        return;
+      }
+
+      await handleMatrixLoopButton(buttonId, step, activeWalkthrough);
+      return;
+    }
+
     // A repeatable step never advances on its own key. The student leaves it by
     // pressing the NEXT step's key, so consume it before judging this press --
     // but only once they've pressed the repeatable key enough times
@@ -3728,6 +4096,245 @@
     }
   }
 
+  async function handleMatrixLoopButton(buttonId, step, activeWalkthrough) {
+    const loop = app.walkthrough.matrixLoop;
+    const engineKey = BUTTON_TO_ENGINE[buttonId] ?? buttonId;
+    const isCellInput = MATRIX_CELL_INPUT_KEYS.has(engineKey);
+    const isArrow = MATRIX_LOOP_ARROW_KEYS.has(engineKey);
+    const isLoopControl = isCellInput || isArrow || engineKey === 'ENTER'
+      || engineKey === 'DEL' || engineKey === 'CLEAR';
+
+    if (!isLoopControl) {
+      recordMatrixCellError(loop);
+      app.walkthrough.hintVisible = false;
+      app.banner = wrongFeedback(step, buttonId);
+      flashButton(buttonId, 'wrong');
+      render();
+      return;
+    }
+
+    if (app.walkthrough.mode === 'guided' && isCellInput && loop.buffer !== '') {
+      app.walkthrough.hintVisible = false;
+      app.banner = 'This cell already has a guided value. Press [ENTER], [DEL], or [CLEAR] before typing again.';
+      flashButton(buttonId, 'wrong');
+      render();
+      return;
+    }
+
+    if (engineKey === 'DEL' && loop.buffer === '') {
+      app.banner = 'There is nothing to delete in this cell.';
+      render();
+      return;
+    }
+
+    if (engineKey === 'ENTER') {
+      const enteredValue = loop.buffer;
+      const cellKey = matrixCellKey(loop);
+
+      if (enteredValue === '' && loop.filled.has(cellKey)) {
+        const storedValue = formatCalculatorValue(matrixCellValue(loop));
+        app.banner = 'Cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1)
+          + ') already holds ' + storedValue + ' — retype it to change it, or arrow to another cell.';
+        render();
+        return;
+      }
+
+      const correct = enteredValue !== '' && matrixValuesMatch(enteredValue, matrixCellValue(loop));
+
+      if (!correct) {
+        const feedback = enteredValue
+          ? wrongMatrixCellFeedback(loop, enteredValue)
+          : 'Enter a value for cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1)
+            + ') before pressing [ENTER].';
+
+        if (enteredValue !== '') {
+          app.busy = true;
+
+          try {
+            await app.bridge.sendButton('CLEAR');
+
+            if (app.walkthrough !== activeWalkthrough) {
+              return;
+            }
+
+            loop.filled.delete(cellKey);
+            recordMatrixCellError(loop);
+            loop.buffer = '';
+            loop.lastClearPressed = true;
+            syncMatrixLoopRoute(loop);
+            app.walkthrough.hintVisible = false;
+            app.banner = feedback;
+            flashButton(buttonId, 'wrong');
+          } catch (error) {
+            app.banner = error.message;
+          } finally {
+            app.busy = false;
+            updateMockCanvas();
+            render();
+          }
+
+          return;
+        }
+
+        recordMatrixCellError(loop);
+        app.walkthrough.hintVisible = false;
+        app.banner = feedback;
+        flashButton(buttonId, 'wrong');
+        updateMockCanvas();
+        render();
+        return;
+      }
+    }
+
+    // Arrows stay local while the ROM may be editing a cell: with digits pending
+    // the ROM would move its edit cursor; after DEL/CLEAR emptied the buffer the
+    // ROM may still be in editing context (spec §10 — unverified), so block too.
+    if (isArrow && loop.romEditOpen) {
+      app.banner = loop.buffer
+        ? 'Press ENTER to store this cell first (or CLEAR to start over).'
+        : 'Type the value for this cell and press ENTER before moving.';
+      render();
+      return;
+    }
+
+    if (isArrow && !matrixArrowStaysInGrid(loop, engineKey)) {
+      app.banner = "You're at the edge of the table.";
+      render();
+      return;
+    }
+
+    app.busy = true;
+
+    try {
+      if (isCellInput) {
+        // Set this before the async call: the native/ROM key may be accepted
+        // even if the bridge later rejects its completion promise.
+        loop.romEditOpen = true;
+
+        if (app.walkthrough.mode === 'guided') {
+          const value = formatCalculatorValue(matrixCellValue(loop));
+          await app.bridge.typeValue(value, { clearField: false });
+
+          if (app.walkthrough !== activeWalkthrough) {
+            return;
+          }
+
+          loop.buffer = value;
+          app.banner = 'Filled cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1)
+            + ') with ' + value + '.';
+        } else {
+          await app.bridge.sendButton(buttonId);
+
+          if (app.walkthrough !== activeWalkthrough) {
+            return;
+          }
+
+          loop.buffer += matrixInputCharacter(engineKey);
+          app.banner = 'Entering cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1)
+            + '). Press [ENTER] when ready.';
+        }
+
+        loop.lastClearPressed = false;
+        syncMatrixLoopRoute(loop, loop.commitStepIndex);
+        app.walkthrough.hintVisible = false;
+        flashButton(buttonId, 'correct');
+        return;
+      }
+
+      if (engineKey === 'DEL') {
+        await app.bridge.sendButton(buttonId);
+
+        if (app.walkthrough !== activeWalkthrough) {
+          return;
+        }
+
+        loop.buffer = loop.buffer.slice(0, -1);
+
+        loop.lastClearPressed = false;
+        syncMatrixLoopRoute(loop, loop.buffer ? loop.commitStepIndex : loop.valueStepIndex);
+        app.banner = 'Editing cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1) + ').';
+        return;
+      }
+
+      if (engineKey === 'CLEAR') {
+        const exitsEditor = loop.lastClearPressed && loop.buffer === '';
+        await app.bridge.sendButton(buttonId);
+
+        if (app.walkthrough !== activeWalkthrough) {
+          return;
+        }
+
+        loop.buffer = '';
+        syncMatrixLoopRoute(loop);
+
+        if (exitsEditor) {
+          interruptActiveMatrixLoop();
+          return;
+        }
+
+        loop.lastClearPressed = true;
+        app.banner = 'Cleared cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1) + ').';
+        return;
+      }
+
+      if (isArrow) {
+        await app.bridge.sendButton(buttonId);
+
+        if (app.walkthrough !== activeWalkthrough) {
+          return;
+        }
+
+        moveMatrixLoopCursor(loop, engineKey);
+        loop.buffer = '';
+        loop.lastClearPressed = false;
+        syncMatrixLoopRoute(loop);
+        app.banner = 'Cursor moved to cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1) + ').';
+        return;
+      }
+
+      syncMatrixLoopRoute(loop, loop.commitStepIndex);
+      await app.bridge.sendButton(buttonId);
+
+      if (app.walkthrough !== activeWalkthrough) {
+        return;
+      }
+
+      const committedRow = loop.cursor.row;
+      const committedCol = loop.cursor.col;
+      loop.filled.add(matrixCellKey(loop));
+      loop.buffer = '';
+      loop.lastClearPressed = false;
+      loop.romEditOpen = false;
+      app.walkthrough.hintVisible = false;
+      flashButton(buttonId, 'correct');
+
+      if (loop.filled.size === loop.rows * loop.cols) {
+        const commitStep = currentProcedure().steps[loop.commitStepIndex];
+        app.walkthrough.routeState = nextRouteState(commitStep);
+
+        if (app.walkthrough.routeState.routeIndex >= currentProcedure().steps.length) {
+          enterResultReviewPhase();
+          return;
+        }
+      } else {
+        app.walkthrough.routeState = repeatRouteState(buttonId);
+        setMatrixLoopCursor(loop, matrixCellOrdinal(loop) + 1);
+        syncMatrixLoopRoute(loop);
+      }
+
+      app.banner = app.walkthrough.mode === 'guided'
+        ? 'Stored cell (' + (committedRow + 1) + ',' + (committedCol + 1)
+          + '). Continue with the next cell.'
+        : 'Correct. Keep going from memory.';
+    } catch (error) {
+      app.banner = error.message;
+    } finally {
+      app.busy = false;
+      updateMockCanvas();
+      render();
+    }
+  }
+
   function showHint() {
     if (!app.walkthrough || app.walkthrough.mode !== 'recall' || app.walkthrough.preparing || app.clutch.phase !== 'procedure') {
       return;
@@ -3743,7 +4350,12 @@
     app.walkthrough.errors += 1;
     app.walkthrough.hintVisible = true;
 
-    if (stepIsParameter(step)) {
+    if (stepIsMatrixLoop(step) && app.walkthrough.matrixLoop) {
+      const loop = app.walkthrough.matrixLoop;
+      const value = formatCalculatorValue(matrixCellValue(loop));
+      app.banner = 'Hint: cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1)
+        + ') is ' + value + '.';
+    } else if (stepIsParameter(step)) {
       const token = step.key.slice(1, -1);
       const value = sampleValueForToken(token, app.walkthrough.problem?.values ?? {});
       app.banner = `Hint: use the numeric cluster so the trainer can type ${value} into ${token}.`;
@@ -3772,6 +4384,12 @@
   }
 
   async function togglePhysicalMode() {
+    if (matrixLoopModeSwitchLocked()) {
+      app.banner = MATRIX_LOOP_MODE_SWITCH_BANNER;
+      render();
+      return;
+    }
+
     const next = !app.persisted.physicalMode;
     app.persisted.physicalMode = next;
     app.optionsDialogOpen = false;
@@ -3797,6 +4415,42 @@
       return;
     }
 
+    if (stepIsMatrixLoop(step)) {
+      const loop = app.walkthrough.matrixLoop;
+      const definition = loop ?? matrixLoopDefinition(currentProcedure());
+
+      if (!definition) {
+        skipUnavailableMatrixLoop();
+        return;
+      }
+
+      if (loop) {
+        for (let row = 0; row < loop.rows; row += 1) {
+          for (let col = 0; col < loop.cols; col += 1) {
+            loop.filled.add(row + ',' + col);
+          }
+        }
+      }
+
+      const commitStep = currentProcedure().steps[definition.commitStepIndex];
+      app.walkthrough.routeState = {
+        ...app.walkthrough.routeState,
+        id: commitStep.screen,
+        routeIndex: definition.commitStepIndex,
+      };
+      app.walkthrough.routeState = nextRouteState(commitStep);
+      app.walkthrough.hintVisible = false;
+
+      if (app.walkthrough.routeState.routeIndex >= currentProcedure().steps.length) {
+        enterResultReviewPhase();
+        return;
+      }
+
+      app.banner = 'Nice. Next step ready.';
+      render();
+      return;
+    }
+
     app.walkthrough.routeState = nextRouteState(step);
     app.walkthrough.hintVisible = false;
 
@@ -3811,6 +4465,21 @@
 
   function physicalBack() {
     if (!app.walkthrough || app.walkthrough.preparing) {
+      return;
+    }
+
+    const step = currentStep();
+    const loop = app.walkthrough.matrixLoop;
+
+    if (loop && stepIsMatrixLoop(step) && matrixCellOrdinal(loop) > 0) {
+      setMatrixLoopCursor(loop, matrixCellOrdinal(loop) - 1);
+      loop.buffer = '';
+      loop.lastClearPressed = false;
+      syncMatrixLoopRoute(loop);
+      app.walkthrough.hintVisible = false;
+      app.banner = 'Stepped back to cell (' + (loop.cursor.row + 1) + ',' + (loop.cursor.col + 1) + ').';
+      updateMockCanvas();
+      render();
       return;
     }
 
@@ -4065,6 +4734,10 @@
     const totalSteps = procedure.steps.length;
     const stepInfo = walkthrough ? `Step ${Math.min(stepNumber, totalSteps)}/${totalSteps}` : '';
     const phase = app.clutch.phase;
+    const matrixLoop = walkthrough.matrixLoop;
+    const matrixProgress = phase === 'procedure' && matrixLoop && stepIsMatrixLoop(step)
+      ? '<p class="panel-note matrix-loop-progress">' + matrixLoopProgress(matrixLoop) + '</p>'
+      : '';
     let copy = walkthrough.preparing ? 'Resetting the calculator to HOME…' : step?.narration ?? 'Walkthrough complete.';
     let note = walkthrough.preparing ? 'The trainer clears back to HOME before the first step.' : `Step ${Math.min(stepNumber, totalSteps)} of ${totalSteps}`;
     let clutchPanel = '';
@@ -4104,6 +4777,7 @@
         <div class="walkthrough-copy">
           <p>${copy}</p>
           <p class="panel-note">${note}</p>
+          ${matrixProgress}
         </div>
         ${clutchPanel}
       </section>
@@ -4317,6 +4991,13 @@
       return '';
     }
 
+    if (stepIsMatrixLoop(step)) {
+      const loop = app.walkthrough?.matrixLoop;
+      return loop
+        ? 'Enter the ' + loop.rows + 'x' + loop.cols + ' table into ' + loop.name
+        : 'Matrix data unavailable';
+    }
+
     if (stepIsParameter(step)) {
       const token = step.key.slice(1, -1);
       const value = sampleValueForToken(token, app.walkthrough?.problem?.values ?? {});
@@ -4324,6 +5005,54 @@
     }
 
     return displayKey(step.key);
+  }
+
+  function renderPhysicalMatrixLoopCard(step, totalSteps) {
+    const walkthrough = app.walkthrough;
+    const loop = app.walkthrough.matrixLoop;
+
+    if (walkthrough.mode === 'recall' && !walkthrough.hintVisible) {
+      const recallPrompt = recallNeutralPrompt(walkthrough, totalSteps)
+        .replace('what comes next?', 'do the next step on your calculator.');
+
+      return [
+        '<div class="physical-card physical-matrix-loop">',
+        '<div class="physical-card-header">',
+        '<p class="panel-kicker">Step ' + (loop.valueStepIndex + 1) + ' of ' + totalSteps + '</p>',
+        '<p class="physical-procedure-name">' + currentProcedure().name + '</p>',
+        '</div>',
+        '<p class="physical-narration">' + recallPrompt + '</p>',
+        '<div class="physical-actions">',
+        '<button type="button" class="mac-button" data-action="physical-back">&larr; Back</button>',
+        '<button type="button" class="mac-button primary" data-action="physical-advance">I did it &rarr;</button>',
+        '</div>',
+        '</div>',
+      ].join('');
+    }
+
+    const matrixCells = loop.grid.map((row, rowIndex) => {
+      const cells = row.map((value, colIndex) => (
+        '<span class="physical-expect-value">(' + (rowIndex + 1) + ',' + (colIndex + 1) + ') '
+          + escapeHtml(formatCalculatorValue(value)) + '</span>'
+      )).join('');
+      return '<div class="physical-expect">' + cells + '</div>';
+    }).join('');
+
+    return [
+      '<div class="physical-card physical-matrix-loop">',
+      '<div class="physical-card-header">',
+      '<p class="panel-kicker">Step ' + (loop.valueStepIndex + 1) + ' of ' + totalSteps + '</p>',
+      '<p class="physical-procedure-name">' + currentProcedure().name + '</p>',
+      '</div>',
+      '<h3>' + physicalKeyLabel(step) + '</h3>',
+      '<p class="physical-narration">Enter every value at the matching row and column coordinate, then continue once.</p>',
+      matrixCells,
+      '<div class="physical-actions">',
+      '<button type="button" class="mac-button" data-action="physical-back">&larr; Back</button>',
+      '<button type="button" class="mac-button primary" data-action="physical-advance">Table entered &rarr;</button>',
+      '</div>',
+      '</div>',
+    ].join('');
   }
 
   function renderPhysicalStepCard() {
@@ -4388,6 +5117,10 @@
       `;
     }
 
+    if (walkthrough.matrixLoop && stepIsMatrixLoop(step)) {
+      return renderPhysicalMatrixLoopCard(step, totalSteps);
+    }
+
     const keyLabel = physicalKeyLabel(step);
     const recallPrompt = recallNeutralPrompt(walkthrough, totalSteps).replace('what comes next?', 'do the next step on your calculator.');
     const highlight = step.highlight || '';
@@ -4431,6 +5164,8 @@
   }
 
   function renderPhysicalColumn() {
+    const modeSwitchDisabled = matrixLoopModeSwitchLocked() ? 'disabled' : '';
+
     return `
       <section class="panel calc-panel physical-panel">
         <div class="calc-top">
@@ -4449,7 +5184,7 @@
         ${renderPhysicalStepCard()}
 
         <div class="physical-mode-switch">
-          <button type="button" class="mac-button" data-action="toggle-physical-mode">Use the on-screen calculator</button>
+          <button type="button" class="mac-button" data-action="toggle-physical-mode" ${modeSwitchDisabled}>Use the on-screen calculator</button>
           <button type="button" class="mac-button" data-action="open-options-dialog">Options</button>
         </div>
       </section>
@@ -4499,6 +5234,8 @@
     const hintAttrs = mobile ? 'title="Hint" aria-label="Hint"' : '';
     const pauseAttrs = mobile ? 'title="Pause guidance" aria-label="Pause guidance"' : '';
     const resumeAttrs = mobile ? 'title="Resume guidance" aria-label="Resume guidance"' : '';
+    const pauseDisabled = walkthrough?.matrixLoop && stepIsMatrixLoop(step) ? 'disabled' : '';
+    const modeSwitchDisabled = matrixLoopModeSwitchLocked() ? 'disabled' : '';
 
     return `
       <section class="panel calc-panel">
@@ -4551,12 +5288,12 @@
           </div>
           <div class="button-row compact">
             <button type="button" class="mac-button" data-action="open-rom-dialog" ${firmwareAttrs}>${firmwareLabel}</button>
-            <button type="button" class="mac-button" data-action="toggle-physical-mode" title="Follow along on a real TI-84 instead of the emulator">${mobile ? '📱' : 'Real TI-84'}</button>
+            <button type="button" class="mac-button" data-action="toggle-physical-mode" title="Follow along on a real TI-84 instead of the emulator" ${modeSwitchDisabled}>${mobile ? '📱' : 'Real TI-84'}</button>
             <button type="button" class="mac-button" data-action="restart-walkthrough" ${restartAttrs} ${!walkthrough ? 'disabled' : ''}>${restartLabel}</button>
             <button type="button" class="mac-button" data-action="show-hint" ${hintAttrs} ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>${hintLabel}</button>
             ${walkthrough && app.clutch.phase === 'procedure'
               ? app.clutch.engaged
-                ? `<button type="button" class="mac-button" data-action="pause-guidance" ${pauseAttrs}>${pauseLabel}</button>`
+                ? `<button type="button" class="mac-button" data-action="pause-guidance" ${pauseAttrs} ${pauseDisabled}>${pauseLabel}</button>`
                 : `<button type="button" class="mac-button primary" data-action="resume-guidance" ${resumeAttrs}>${resumeLabel}</button>`
               : ''}
           </div>
@@ -4706,6 +5443,7 @@
     }
 
     const physical = app.persisted.physicalMode;
+    const modeSwitchDisabled = matrixLoopModeSwitchLocked() ? 'disabled' : '';
     const toggleLabel = physical ? 'Switch to on-screen emulator' : 'Switch to real calculator mode';
     const toggleHint = physical
       ? 'Use the built-in WASM emulator instead (requires network + firmware).'
@@ -4726,7 +5464,7 @@
               <span class="dialog-note">Manage the cached WASM calculator ROM.</span>
             </div>
             <div class="options-row">
-              <button type="button" class="mac-button" data-action="toggle-physical-mode">${toggleLabel}</button>
+              <button type="button" class="mac-button" data-action="toggle-physical-mode" ${modeSwitchDisabled}>${toggleLabel}</button>
               <span class="dialog-note">${toggleHint}</span>
             </div>
             <div class="button-row">
@@ -4745,6 +5483,7 @@
 
     const manualSelectionAvailable = app.bridge?.supportsManualRomSelection?.()
       ?? app.bridgeStatus.manualSelectionAvailable;
+    const backendChangeDisabled = matrixLoopStepActive() ? 'disabled' : '';
     const romName = app.bridgeStatus.romMeta?.name;
     const detail = app.bridge?.isRealEmulator?.()
       ? `Calculator firmware is loaded${romName ? ` from ${romName}` : ''}.`
@@ -4769,17 +5508,17 @@
             </p>
             ${romName ? `<p class="dialog-note">Cached firmware: ${romName}</p>` : ''}
             ${manualSelectionAvailable
-              ? '<input id="rom-file-input" type="file" accept=".rom,.bin,application/octet-stream">'
+              ? `<input id="rom-file-input" type="file" accept=".rom,.bin,application/octet-stream" ${backendChangeDisabled}>`
               : ''}
             <div class="button-row">
               ${manualSelectionAvailable
                 ? `
-                  <button type="button" class="mac-button primary" data-action="choose-rom">
+                  <button type="button" class="mac-button primary" data-action="choose-rom" ${backendChangeDisabled}>
                     Choose local ROM
                   </button>
                 `
                 : ''}
-              <button type="button" class="mac-button" data-action="clear-rom">
+              <button type="button" class="mac-button" data-action="clear-rom" ${backendChangeDisabled}>
                 Clear cached firmware
               </button>
               <button type="button" class="mac-button" data-action="close-rom-dialog">
@@ -4829,7 +5568,7 @@
         <section class="banner-row" role="status" aria-live="polite" aria-atomic="true">
           <span class="banner-message">${app.banner}</span>
           ${!app.persisted.physicalMode && bridgeStatusTone() === 'offline'
-            ? '<button type="button" class="mac-button" data-action="retry-bridge">Try again</button>'
+            ? `<button type="button" class="mac-button" data-action="retry-bridge" ${matrixLoopStepActive() ? 'disabled' : ''}>Try again</button>`
             : ''}
           ${renderScaleControls()}
         </section>
@@ -4887,6 +5626,32 @@
     const procedure = currentProcedure();
     const screen = currentScreen();
     const step = currentStep();
+    const matrixLoop = app.walkthrough?.matrixLoop;
+
+    if (matrixLoop && stepIsMatrixLoop(step)) {
+      const lines = ['MATRIX' + matrixLoop.name + '  ' + matrixLoop.rows + 'x' + matrixLoop.cols];
+
+      matrixLoop.grid.forEach((row, rowIndex) => {
+        const cells = row.map((value, colIndex) => {
+          const key = rowIndex + ',' + colIndex;
+          const active = rowIndex === matrixLoop.cursor.row && colIndex === matrixLoop.cursor.col;
+          const filled = matrixLoop.filled.has(key);
+          const displayValue = filled ? formatCalculatorValue(value) : '.';
+
+          if (!active) {
+            return displayValue;
+          }
+
+          return '[' + (matrixLoop.buffer || (filled ? displayValue : '__')) + ']';
+        });
+        lines.push('[ ' + cells.join('   ') + ' ]');
+      });
+
+      return {
+        lines,
+        footer: 'Expect cell (' + (matrixLoop.cursor.row + 1) + ',' + (matrixLoop.cursor.col + 1) + ')',
+      };
+    }
 
     if (!procedure || !screen) {
       return {
@@ -5075,6 +5840,12 @@
         break;
       }
       case 'pause-guidance':
+        if (app.walkthrough?.matrixLoop && stepIsMatrixLoop(currentStep())) {
+          app.banner = 'Finish the table before pausing guidance.';
+          render();
+          break;
+        }
+
         app.clutch.engaged = false;
         app.banner = 'Guidance paused. Keys go straight to the calculator — fix your entry, then click Resume.';
         render();
@@ -5110,6 +5881,11 @@
         await ensureBridgeInitStarted();
         break;
       case 'retry-bridge':
+        if (interruptActiveMatrixLoop()) {
+          render();
+          break;
+        }
+
         app.bridgeInitStarted = false;
         app.bridgeInitPromise = null;
         app.banner = 'Trying calculator firmware again…';
@@ -5139,10 +5915,20 @@
         render();
         break;
       case 'choose-rom': {
+        if (interruptActiveMatrixLoop()) {
+          render();
+          break;
+        }
+
         document.getElementById('rom-file-input')?.click();
         break;
       }
       case 'clear-rom':
+        if (interruptActiveMatrixLoop()) {
+          render();
+          break;
+        }
+
         try {
           await app.bridge.clearStoredRom();
           clearListMemory();
@@ -5170,6 +5956,11 @@
     }
 
     if (event.target.id === 'rom-file-input') {
+      if (interruptActiveMatrixLoop()) {
+        render();
+        return;
+      }
+
       const file = event.target.files?.[0];
 
       if (!file) {
@@ -5294,10 +6085,19 @@
       return app.bridgeInitPromise;
     }
 
+    const interruptedWalkthrough = matrixLoopStepActive() ? app.walkthrough : null;
+
+    if (interruptedWalkthrough) {
+      interruptActiveMatrixLoop();
+      render();
+    }
+
     app.bridgeInitStarted = true;
     app.bridgeInitPromise = app.bridge.init().then(() => {
       app.bridgeStatus = app.bridge.getStatus();
-      if (app.bridgeStatus.code === 'needs-rom' && app.bridgeStatus.manualSelectionAvailable) {
+      if (interruptedWalkthrough && app.walkthrough === interruptedWalkthrough) {
+        app.banner = MATRIX_LOOP_INTERRUPTION_BANNER;
+      } else if (app.bridgeStatus.code === 'needs-rom' && app.bridgeStatus.manualSelectionAvailable) {
         app.romDialogOpen = true;
         app.banner = 'Firmware auto-download is not configured. Choose a local ROM file to boot CEmu during development.';
       } else if (bridgeStatusTone() === 'offline') {

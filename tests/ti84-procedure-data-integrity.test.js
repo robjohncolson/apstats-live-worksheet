@@ -261,6 +261,51 @@ describe('deterministic repeatable steps carry the expected minPresses', () => {
   }
 });
 
+describe('matrix cell loop markers', () => {
+  for (const [collectionName, items] of collections) {
+    for (const proc of items) {
+      proc.steps.forEach((step, i) => {
+        if (!step.loop) {
+          return;
+        }
+
+        it(collectionName + '/' + proc.id + ' step ' + i + ' has a valid matrix loop pair', () => {
+          if (step.loop === 'matrix-cells') {
+            expect(step.key).toBe('{cell value}');
+            expect(step.loopMatrix).toBe('[A]');
+            expect(proc.steps[i + 1]?.key).toBe('ENTER');
+            expect(proc.steps[i + 1]?.loop).toBe('matrix-cells-commit');
+            expect(proc.steps[i + 1]?.screen).toBe(step.screen);
+            return;
+          }
+
+          expect(step.loop).toBe('matrix-cells-commit');
+          expect(step.key).toBe('ENTER');
+          expect(step.loopMatrix).toBeUndefined();
+          expect(proc.steps[i - 1]?.key).toBe('{cell value}');
+          expect(proc.steps[i - 1]?.loop).toBe('matrix-cells');
+        });
+      });
+    }
+  }
+
+  it('marks the procedure and micro-skill consistently', () => {
+    const procedure = data.procedures.find((item) => item.id === 'matrix-entry');
+    const microSkill = data.microSkills.find((item) => item.id === 'enter-matrix');
+
+    for (const item of [procedure, microSkill]) {
+      expect(item.steps.at(-2).loop).toBe('matrix-cells');
+      expect(item.steps.at(-2).loopMatrix).toBe('[A]');
+      expect(item.steps.at(-1).loop).toBe('matrix-cells-commit');
+    }
+  });
+
+  it('matrix-entry has no dataRequirements setup phase', () => {
+    const procedure = data.procedures.find((item) => item.id === 'matrix-entry');
+    expect(procedure.dataRequirements).toBeUndefined();
+  });
+});
+
 // Codex F9(d) / F8: data/ti84-procedures.js is a hand-shipped browser wrapper
 // consumed by the PUBLIC study_guide_diagnostic.html. It has no build step,
 // so it silently drifts from ti84-procedures-data.json unless something

@@ -246,7 +246,7 @@ export function createState(screenId = 'home', options = {}) {
     state.onHeader = options.onHeader ?? false;
   }
 
-  if (screenId === 'matrix-editor-a-dims') {
+  if (screenId === 'matrix-editor-a-dims' || screenId === 'matrix-editor-a-values') {
     state.matrixDimensions = {
       rows: options.rows ?? '',
       cols: options.cols ?? '',
@@ -827,8 +827,17 @@ function handleMatrixValueEditor(state, key) {
   }
 
   if (key === 'ENTER') {
+    const rows = Math.max(1, Number.parseInt(state.matrixDimensions?.rows, 10) || 1);
+    const cols = Math.max(1, Number.parseInt(state.matrixDimensions?.cols, 10) || 1);
+    const row = clampIndex(state.matrixCursor.row, 0, rows - 1);
+    const col = clampIndex(state.matrixCursor.col, 0, cols - 1);
+    const atLastCell = row === rows - 1 && col === cols - 1;
+    const nextRow = atLastCell ? row : col === cols - 1 ? row + 1 : row;
+    const nextCol = atLastCell ? col : col === cols - 1 ? 0 : col + 1;
+
     return cloneOnSameScreen(state, {
-      matrixCol: state.matrixCursor.col + 1,
+      matrixRow: nextRow,
+      matrixCol: nextCol,
       secondActive: false,
     });
   }

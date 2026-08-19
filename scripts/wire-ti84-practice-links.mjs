@@ -14,7 +14,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(SCRIPT_DIR, '..');
 export const SENTINEL = 'TI84_PRACTICE_LINK_WIRED';
-export const SKIPPED_TOPICS = new Set(['8.5']);
+// 8.5 (matrix-entry, chi-square-test) was held until the matrix cell loop shipped (2026-08-19).
+export const SKIPPED_TOPICS = new Set();
 export const WORKSHEET_RE = /^u(\d+)_lesson(\d+(?:-\d+)*)_live\.html$/;
 
 function topicParts(topic) {
@@ -159,7 +160,7 @@ export function main(argv = process.argv.slice(2)) {
   }
 
   console.log(
-    `${apply ? 'Applied' : 'Dry run'}: ${changed} changed, ${unchanged} unchanged; skipped 8.5 (matrix loop).`,
+    `${apply ? 'Applied' : 'Dry run'}: ${changed} changed, ${unchanged} unchanged; skipped ${SKIPPED_TOPICS.size ? [...SKIPPED_TOPICS].join(', ') : 'none'}.`,
   );
 }
 

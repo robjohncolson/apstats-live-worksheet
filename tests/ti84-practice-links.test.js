@@ -222,7 +222,7 @@ describe('practice never moves SRS state (extraction guards)', () => {
     const before = structuredClone(track2);
     const fn = new Function(
       'app', 'window', 'PROCEDURE_BY_ID', 'ensureProcedureRecord',
-      'VERIFICATION_FIELDS', 'PROPERTY_FIELDS', 'recallQuality',
+      'VERIFICATION_FIELDS', 'PROPERTY_FIELDS', 'recallQuality', 'walkthroughIsUnscored',
       `${extract('recordTrainerAttempt')}\nreturn recordTrainerAttempt;`,
     )(
       {
@@ -240,6 +240,7 @@ describe('practice never moves SRS state (extraction guards)', () => {
       {},
       {},
       vi.fn(() => 3),
+      () => false,
     );
 
     fn({ procedureId: 'one-propztest', mode: 'guided', hints: 0, errors: 0 });
@@ -262,7 +263,7 @@ describe('practice never moves SRS state (extraction guards)', () => {
       const track2 = { lastQuality: 4, bestScore: 0 };
       const fn = new Function(
         'app', 'window', 'PROCEDURE_BY_ID', 'ensureProcedureRecord',
-        'VERIFICATION_FIELDS', 'PROPERTY_FIELDS', 'recallQuality',
+        'VERIFICATION_FIELDS', 'PROPERTY_FIELDS', 'recallQuality', 'walkthroughIsUnscored',
         `${extract('recordTrainerAttempt')}\nreturn recordTrainerAttempt;`,
       )(
         {
@@ -280,6 +281,7 @@ describe('practice never moves SRS state (extraction guards)', () => {
         {},
         {},
         vi.fn(),
+        () => false,
       );
       fn({ procedureId: 'histogram', mode: 'guided', hints: 0, errors: 0 });
       return record;

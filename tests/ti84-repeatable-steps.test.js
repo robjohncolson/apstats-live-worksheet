@@ -52,10 +52,14 @@ let mockScreen;
 // now records its argument so tests can assert every repeated press reached
 // the emulator, not just that the UI didn't block it.)
 let sentButtons;
+let typedValues;
+let typedOptions;
 
 function stubCemuBridge() {
   mockScreen = { lines: null, footer: null };
   sentButtons = [];
+  typedValues = [];
+  typedOptions = [];
   return {
     async init() { return false; },
     getStatus() { return { code: 'offline', detail: 'test stub' }; },
@@ -63,7 +67,10 @@ function stubCemuBridge() {
     setMockLines(lines, footer) { mockScreen.lines = lines; mockScreen.footer = footer; },
     async sendButton(buttonId) { sentButtons.push(buttonId); },
     async prepareHome() {},
-    async typeValue() {},
+    async typeValue(value, options) {
+      typedValues.push(String(value));
+      typedOptions.push(options);
+    },
     mountCanvas() {},
     destroy() {},
     async selectRomFile() { throw new Error('not supported in tests'); },
@@ -310,24 +317,484 @@ describe('repeatable step: recall mode', () => {
   });
 });
 
-describe('repeatable matrix parameter step', () => {
-  it('does not let ENTER complete step 10 before any cell value was entered', async () => {
+async function advanceToMatrixCellLoop() {
+  for (const buttonId of [
+    '2ND', 'X_INVERSE', 'RIGHT', 'RIGHT', 'ENTER',
+    'ONE', 'ENTER', 'ONE', 'ENTER',
+  ]) {
+    await click('[data-key="' + buttonId + '"]');
+  }
+}
+
+async function enterGuidedMatrixCell() {
+  await click('[data-key="ONE"]');
+  await click('[data-key="ENTER"]');
+}
+
+const MATRIX_DIGIT_BUTTON = {
+  0: 'ZERO',
+  1: 'ONE',
+  2: 'TWO',
+  3: 'THREE',
+  4: 'FOUR',
+  5: 'FIVE',
+  6: 'SIX',
+  7: 'SEVEN',
+  8: 'EIGHT',
+  9: 'NINE',
+};
+
+async function enterRecallMatrixCell(value) {
+  for (const digit of String(value)) {
+    await click('[data-key="' + MATRIX_DIGIT_BUTTON[digit] + '"]');
+  }
+
+  await click('[data-key="ENTER"]');
+}
+
+async function finishMatrixReview() {
+  expect(noteText()).toBe('Result review mode');
+  await click('[data-action="finish-review"]');
+  await waitFor(() => appHtml().includes('Session Update'), 'the matrix session result');
+}
+
+async function advancePhysicalToMatrixCellLoop() {
+  for (let step = 0; step < 9; step += 1) {
+    await click('[data-action="physical-advance"]');
+  }
+}
+
+describe('matrix-entry cell loop', () => {
+  it('types all six canonical cells in row-major order', async () => {
     await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
     await startWalkthroughFor('matrix-entry');
-    await click('[data-action="data-setup-done"]');
+    await advanceToMatrixCellLoop();
 
-    for (const buttonId of [
-      '2ND', 'X_INVERSE', 'RIGHT', 'RIGHT', 'ENTER',
-      'ONE', 'ENTER', 'ONE', 'ENTER',
-    ]) {
-      await click(`[data-key="${buttonId}"]`);
+    for (let cell = 0; cell < 6; cell += 1) {
+      await enterGuidedMatrixCell();
     }
+
+    expect(typedValues).toEqual(['3', '2', '30', '70', '80', '60', '110', '50']);
+    expect(typedOptions.slice(2)).toEqual(Array(6).fill({ clearField: false }));
+    expect(noteText()).toBe('Result review mode');
+  });
+
+  it('does not enter result review before the sixth cell is committed', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+
+    for (let cell = 0; cell < 5; cell += 1) {
+      await enterGuidedMatrixCell();
+      expect(noteText(), 'after cell ' + (cell + 1)).not.toBe('Result review mode');
+    }
+
+    await enterGuidedMatrixCell();
+    expect(noteText()).toBe('Result review mode');
+  });
+
+  it('does not advance when ENTER is pressed with an empty cell buffer', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
 
     expect(noteText()).toBe('Step 10 of 11');
     await click('[data-key="ENTER"]');
 
     expect(noteText()).toBe('Step 10 of 11');
-    expect(bannerText()).toContain('Keep pressing');
+    expect(bannerText()).toContain('Enter a value for cell (1,1)');
     expect(appHtml()).not.toContain('Walkthrough complete');
+  });
+
+  it('uses 30 for the first cell and never falls back to the sample value 5', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+
+    await click('[data-key="ONE"]');
+
+    expect(typedValues).toEqual(['3', '2', '30']);
+    expect(typedValues).not.toContain('5');
+  });
+
+  it('sends CLEAR before resetting a rejected recall value', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('recall') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+
+    await click('[data-key="NINE"]');
+    const sentBeforeCommit = sentButtons.length;
+    await click('[data-key="ENTER"]');
+
+    expect(sentButtons.slice(sentBeforeCommit)).toEqual(['CLEAR']);
+    expect(bannerText()).toContain('does not match cell (1,1)');
+    expect(appHtml()).toContain('cell 1 of 6');
+
+    await enterRecallMatrixCell(30);
+
+    expect(sentButtons.slice(sentBeforeCommit)).toEqual(['CLEAR', 'THREE', 'ZERO', 'ENTER']);
+    expect(appHtml()).toContain('cell 2 of 6');
+  });
+
+  it('keeps guided edits synchronized and blocks a second auto-type', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+
+    await click('[data-key="ONE"]');
+    const typedAfterFirstValue = [...typedValues];
+    const sentBeforeEdit = sentButtons.length;
+
+    await click('[data-key="TWO"]');
+
+    expect(typedValues).toEqual(typedAfterFirstValue);
+    expect(sentButtons.slice(sentBeforeEdit)).toEqual([]);
+    expect(bannerText()).toContain('Press [ENTER], [DEL], or [CLEAR]');
+
+    await click('[data-key="DEL"]');
+    await click('[data-key="ENTER"]');
+
+    expect(sentButtons.slice(sentBeforeEdit)).toEqual(['DEL', 'CLEAR']);
+    expect(bannerText()).toContain('does not match cell (1,1)');
+    expect(appHtml()).toContain('cell 1 of 6');
+  });
+
+  it('suggests ENTER only when the visible matrix buffer matches the current cell', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+
+    await click('[data-key="ONE"]');
+    expect(typedValues.at(-1)).toBe('30');
+    expect(document.querySelector('[data-key="ENTER"]').classList.contains('suggested')).toBe(true);
+
+    await click('[data-key="DEL"]');
+
+    expect(document.querySelector('[data-key="ENTER"]').classList.contains('suggested')).toBe(false);
+    expect(document.querySelector('[data-key="DEL"]').classList.contains('suggested')).toBe(true);
+    expect(document.querySelector('[data-key="CLEAR"]').classList.contains('suggested')).toBe(true);
+    expect(document.querySelector('[data-key="THREE"]').classList.contains('suggested')).toBe(false);
+  });
+
+  it('blocks empty ENTER on a filled cell but allows a free correct retype', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('recall') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+
+    await enterRecallMatrixCell(30);
+    await click('[data-key="LEFT"]');
+    const sentBeforeRecommit = sentButtons.length;
+    await click('[data-key="ENTER"]');
+
+    expect(sentButtons.slice(sentBeforeRecommit)).toEqual([]);
+    expect(appHtml()).toContain('cell 1 of 6');
+    expect(bannerText()).toBe('Cell (1,1) already holds 30 — retype it to change it, or arrow to another cell.');
+
+    await enterRecallMatrixCell(30);
+
+    expect(sentButtons.slice(sentBeforeRecommit)).toEqual(['THREE', 'ZERO', 'ENTER']);
+    expect(appHtml()).toContain('cell 2 of 6');
+    expect(bannerText()).toBe('Correct. Keep going from memory.');
+
+    for (const value of [70, 80, 60, 110, 50]) {
+      await enterRecallMatrixCell(value);
+    }
+
+    await finishMatrixReview();
+
+    expect(persisted().records['matrix-entry'].track2.lastErrors).toBe(0);
+  });
+
+  it('blocks every arrow while a cell edit is in progress without suggesting one', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+
+    await click('[data-key="ONE"]');
+    const sentBeforeArrows = sentButtons.length;
+
+    for (const arrow of ['UP', 'DOWN', 'LEFT', 'RIGHT']) {
+      const arrowButton = document.querySelector('[data-key="' + arrow + '"]');
+      expect(arrowButton.classList.contains('suggested')).toBe(false);
+      await click('[data-key="' + arrow + '"]');
+      expect(bannerText()).toBe('Press ENTER to store this cell first (or CLEAR to start over).');
+    }
+
+    expect(sentButtons.slice(sentBeforeArrows)).toEqual([]);
+    expect(document.querySelector('[data-key="ENTER"]').classList.contains('suggested')).toBe(true);
+    expect(appHtml()).toContain('cell 1 of 6');
+
+    await click('[data-key="ENTER"]');
+
+    expect(sentButtons.slice(sentBeforeArrows)).toEqual(['ENTER']);
+    expect(appHtml()).toContain('cell 2 of 6');
+  });
+
+  it('keeps ROM edit context after DEL or CLEAR empties the visible buffer', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('recall') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+    const sentBeforeEdit = sentButtons.length;
+
+    await click('[data-key="THREE"]');
+    await click('[data-key="DEL"]');
+    await click('[data-key="RIGHT"]');
+
+    expect(sentButtons.slice(sentBeforeEdit)).toEqual(['THREE', 'DEL']);
+    expect(bannerText()).toBe('Type the value for this cell and press ENTER before moving.');
+
+    await click('[data-key="DEL"]');
+    expect(sentButtons.slice(sentBeforeEdit)).toEqual(['THREE', 'DEL']);
+
+    await click('[data-key="CLEAR"]');
+    await click('[data-key="RIGHT"]');
+
+    expect(sentButtons.slice(sentBeforeEdit)).toEqual(['THREE', 'DEL', 'CLEAR']);
+    expect(bannerText()).toBe('Type the value for this cell and press ENTER before moving.');
+
+    await click('[data-key="THREE"]');
+    await click('[data-key="ZERO"]');
+    await click('[data-key="ENTER"]');
+    await click('[data-key="LEFT"]');
+    const sentBeforeRight = sentButtons.length;
+    await click('[data-key="RIGHT"]');
+
+    expect(sentButtons.slice(sentBeforeRight)).toEqual(['RIGHT']);
+  });
+
+  it('forwards only arrows whose destination stays inside the matrix grid', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+    const sentBeforeArrows = sentButtons.length;
+
+    await click('[data-key="UP"]');
+    expect(bannerText()).toBe("You're at the edge of the table.");
+    await click('[data-key="LEFT"]');
+    expect(bannerText()).toBe("You're at the edge of the table.");
+
+    await click('[data-key="RIGHT"]');
+    await click('[data-key="RIGHT"]');
+    expect(bannerText()).toBe("You're at the edge of the table.");
+
+    await click('[data-key="DOWN"]');
+    await click('[data-key="DOWN"]');
+    await click('[data-key="DOWN"]');
+    expect(bannerText()).toBe("You're at the edge of the table.");
+
+    await click('[data-key="LEFT"]');
+    await click('[data-key="LEFT"]');
+
+    expect(sentButtons.slice(sentBeforeArrows)).toEqual(['RIGHT', 'DOWN', 'DOWN', 'LEFT']);
+    expect(bannerText()).toBe("You're at the edge of the table.");
+    expect(appHtml()).toContain('cell 5 of 6');
+    expect(mockScreen.footer).toBe('Expect cell (3,1)');
+  });
+
+  it('disables manual guidance pause throughout an active matrix loop', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+    const sentBeforePause = sentButtons.length;
+    const pauseButton = document.querySelector('[data-action="pause-guidance"]');
+
+    expect(pauseButton.disabled).toBe(true);
+    await click('[data-action="pause-guidance"]');
+
+    expect(sentButtons.length).toBe(sentBeforePause);
+    expect(bannerText()).toBe('Finish the table before pausing guidance.');
+    expect(document.querySelector('[data-action="pause-guidance"]').disabled).toBe(true);
+    expect(document.querySelector('[data-action="resume-guidance"]')).toBeNull();
+    expect(appHtml()).toContain('cell 1 of 6');
+  });
+
+  it('locks a screen-started matrix loop to the on-screen calculator until restart', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('guided') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+    const sentBeforeToggle = [...sentButtons];
+    const typedBeforeToggle = [...typedValues];
+
+    expect(document.querySelector('[data-action="toggle-physical-mode"]').disabled).toBe(true);
+    await click('[data-action="toggle-physical-mode"]');
+
+    expect(persisted().physicalMode).toBe(false);
+    expect(bannerText()).toBe('Finish or restart the table before switching calculators.');
+    expect(sentButtons).toEqual(sentBeforeToggle);
+    expect(typedValues).toEqual(typedBeforeToggle);
+    expect(mockScreen.lines.join(' ')).not.toMatch(/\b30\b/);
+    expect(appHtml()).toContain('cell 1 of 6');
+
+    await click('[data-action="restart-walkthrough"]');
+    await waitFor(walkthroughStarted, 'the restarted matrix walkthrough');
+
+    expect(document.querySelector('[data-action="toggle-physical-mode"]').disabled).toBe(false);
+    await click('[data-action="toggle-physical-mode"]');
+    expect(persisted().physicalMode).toBe(true);
+    expect(document.querySelector('.physical-panel')).not.toBeNull();
+  });
+
+  it('taints a direct firmware retry during the loop and leaves SRS and ledger untouched', async () => {
+    const recordAttempt = vi.fn(() => Promise.resolve({ ok: true }));
+    await bootTrainer({
+      records: { 'matrix-entry': dueRecord('guided') },
+      recordFn: recordAttempt,
+    });
+    const recordBefore = JSON.parse(JSON.stringify(persisted().records['matrix-entry']));
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+    const sentBeforeRetry = [...sentButtons];
+
+    expect(document.querySelector('[data-action="retry-bridge"]').disabled).toBe(true);
+    await click('[data-action="retry-bridge"]');
+
+    expect(sentButtons).toEqual(sentBeforeRetry);
+    expect(bannerText()).toBe("Guidance stopped mid-table — this attempt won't be scored. Restart the walkthrough to try again.");
+    expect(document.querySelector('[data-action="resume-guidance"]')).not.toBeNull();
+
+    await click('[data-action="resume-guidance"]');
+    for (let cell = 0; cell < 6; cell += 1) {
+      await enterGuidedMatrixCell();
+    }
+    await finishMatrixReview();
+
+    expect(recordAttempt).not.toHaveBeenCalled();
+    const recordAfter = persisted().records['matrix-entry'];
+    expect(recordAfter.track1).toMatchObject(recordBefore.track1);
+    expect(recordAfter.track2).toMatchObject(recordBefore.track2);
+    expect(recordAfter.track2.bestScore).toBe(recordBefore.track2.bestScore ?? 0);
+    expect(appHtml()).toContain('Table entry interrupted');
+  });
+
+  it('preserves CLEAR history across a blocked ENTER and finishes a forced pause unscored', async () => {
+    const recordAttempt = vi.fn(() => Promise.resolve({ ok: true }));
+    await bootTrainer({
+      records: { 'matrix-entry': dueRecord('recall') },
+      recordFn: recordAttempt,
+    });
+    const recordBefore = JSON.parse(JSON.stringify(persisted().records['matrix-entry']));
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+    const sentBeforeAttempt = sentButtons.length;
+
+    await click('[data-key="NINE"]');
+    await click('[data-key="ENTER"]');
+    await click('[data-key="ENTER"]');
+
+    expect(sentButtons.slice(sentBeforeAttempt)).toEqual(['NINE', 'CLEAR']);
+    expect(bannerText()).toContain('Enter a value for cell (1,1)');
+    expect(document.querySelector('[data-action="pause-guidance"]').disabled).toBe(true);
+
+    await click('[data-key="CLEAR"]');
+
+    expect(sentButtons.slice(sentBeforeAttempt)).toEqual(['NINE', 'CLEAR', 'CLEAR']);
+    expect(bannerText()).toBe("Guidance stopped mid-table — this attempt won't be scored. Restart the walkthrough to try again.");
+    expect(document.querySelector('[data-action="pause-guidance"]')).toBeNull();
+    expect(document.querySelector('[data-action="resume-guidance"]')).not.toBeNull();
+
+    await click('[data-action="resume-guidance"]');
+    for (const value of [30, 70, 80, 60, 110, 50]) {
+      await enterRecallMatrixCell(value);
+    }
+
+    expect(noteText()).toBe('Result review mode');
+    await click('[data-action="toggle-physical-mode"]');
+    await click('[data-action="finish-review"]');
+    await waitFor(() => appHtml().includes('Session Update'), 'the interrupted matrix result');
+
+    expect(recordAttempt).not.toHaveBeenCalled();
+    const recordAfter = persisted().records['matrix-entry'];
+    expect(recordAfter.track1).toMatchObject(recordBefore.track1);
+    expect(recordAfter.track2).toMatchObject(recordBefore.track2);
+    expect(recordAfter.track2.bestScore).toBe(recordBefore.track2.bestScore ?? 0);
+    expect(appHtml()).toContain('Table entry interrupted');
+    expect(appHtml()).toContain('Guidance was interrupted mid-table, so this attempt was not scored. Restart to try again.');
+  });
+
+  it('demotes recall after two distinct missed matrix cells without promoting SM-2', async () => {
+    await bootTrainer({ records: { 'matrix-entry': dueRecord('recall') } });
+    await startWalkthroughFor('matrix-entry');
+    await advanceToMatrixCellLoop();
+
+    await enterRecallMatrixCell(9);
+    await enterRecallMatrixCell(30);
+    await enterRecallMatrixCell(9);
+    await enterRecallMatrixCell(70);
+
+    for (const value of [80, 60, 110, 50]) {
+      await enterRecallMatrixCell(value);
+    }
+
+    await finishMatrixReview();
+
+    const record = persisted().records['matrix-entry'].track2;
+    expect(record.lastErrors).toBe(2);
+    expect(record.lastQuality).toBe(3);
+    expect(record.repetitions).toBe(0);
+    expect(record.mode).toBe('guided');
+    expect(record.awaitingHandheld).not.toBe(true);
+    expect(appHtml()).toContain('Two matrix cells were missed');
+    expect(appHtml()).not.toContain('recall passed');
+  });
+
+  it('does not score or record a matrix problem whose grid is unavailable', async () => {
+    const recordAttempt = vi.fn(() => Promise.resolve({ ok: true }));
+    await bootTrainer({
+      records: { 'matrix-entry': dueRecord('recall') },
+      physicalMode: true,
+      recordFn: recordAttempt,
+    });
+    const matrixProblem = window.TI84V2PatternsData.canonicalProblems['matrix-entry'][0];
+    matrixProblem.values = { rows: 3, cols: 2 };
+    matrixProblem.stem = 'Enter an unavailable 3 by 2 table into Matrix [A].';
+    const recordBefore = JSON.parse(JSON.stringify(persisted().records['matrix-entry']));
+
+    await startWalkthroughFor('matrix-entry');
+    await advancePhysicalToMatrixCellLoop();
+    await click('[data-action="physical-advance"]');
+    await finishMatrixReview();
+
+    expect(recordAttempt).not.toHaveBeenCalled();
+    // SRS untouched: every seeded field keeps its value (normalization may add
+    // default flags like awaitingHandheld:false and the `gen` bookkeeping slot).
+    const recordAfter = persisted().records['matrix-entry'];
+    expect(recordAfter.track1).toMatchObject(recordBefore.track1);
+    expect(recordAfter.track2).toMatchObject(recordBefore.track2);
+    expect(recordAfter.track2.awaitingHandheld).toBe(false);
+    expect(recordAfter.track2.bestScore).toBe(recordBefore.track2.bestScore ?? 0);
+    expect(appHtml()).toContain('Matrix data unavailable');
+    expect(appHtml()).toContain('Try another problem');
+  });
+
+  // Physical mode has no hint button (hints live in the emulator action bar), so a
+  // recall card stays neutral for the whole loop; guided shows the full table.
+  it('keeps the physical recall matrix card neutral, and shows the table in guided', async () => {
+    await bootTrainer({
+      records: { 'matrix-entry': dueRecord('recall') },
+      physicalMode: true,
+    });
+    await startWalkthroughFor('matrix-entry');
+    await advancePhysicalToMatrixCellLoop();
+
+    const neutralCard = document.querySelector('.physical-matrix-loop').innerHTML;
+    expect(neutralCard).toContain('do the next step on your calculator');
+    expect(neutralCard).toContain('I did it');
+    expect(neutralCard).not.toContain('Enter the 3x2 table into [A]');
+    expect(neutralCard).not.toContain('(1,1) 30');
+    expect(neutralCard).not.toContain('Table entered');
+    expect(neutralCard).not.toContain('Type 5');
+
+    await bootTrainer({
+      records: { 'matrix-entry': dueRecord('guided') },
+      physicalMode: true,
+    });
+    await startWalkthroughFor('matrix-entry');
+    await advancePhysicalToMatrixCellLoop();
+
+    const guidedCard = document.querySelector('.physical-matrix-loop').innerHTML;
+    expect(guidedCard).toContain('Enter the 3x2 table into [A]');
+    expect(guidedCard).toContain('(1,1) 30');
+    expect(guidedCard).toContain('Table entered');
+    expect(guidedCard).not.toContain('Type 5');
   });
 });

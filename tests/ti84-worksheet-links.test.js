@@ -53,7 +53,8 @@ describe('TI-84 worksheet practice-link sync', () => {
       const [{ link }] = occurrences.get(topic);
       expect(link.bonus).toBe(Object.hasOwn(lessonMap.bonus ?? {}, topic));
     }
-    expect(occurrences.has('8.5')).toBe(false);
+    // 8.5 joined the wired set once the matrix cell loop shipped (2026-08-19).
+    expect(occurrences.get('8.5')).toHaveLength(1);
   });
 
   it('emits parseable trainer URLs whose topics exist in the map', () => {

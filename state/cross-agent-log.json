@@ -4740,15 +4740,95 @@
       "timestamp": "2026-08-19T11:58:33Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "bc93817df9f4",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the TI-84 trainer matrix-entry cell loop \u2014 Option B of the spec at\nTI84_MATRIX_ENTRY_LOOP_",
+      "status": "completed",
+      "duration_seconds": 1061.499,
+      "timestamp": "2026-08-19T14:04:56Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "22716d5f688e",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only). The uncommitted working-tree diff in this repo implements\nTI84_MATRI",
+      "status": "completed",
+      "duration_seconds": 550.087,
+      "timestamp": "2026-08-19T14:18:39Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c04015cd316f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Fix ALL SIX findings from the adversarial review of your matrix-entry cell loop implementation\n(unco",
+      "status": "completed",
+      "duration_seconds": 470.141,
+      "timestamp": "2026-08-19T14:27:41Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b8e2c3dc79dc",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW ROUND 2 (read-only). Same change as before: the uncommitted working-tree\ndiff (`g",
+      "status": "completed",
+      "duration_seconds": 582.601,
+      "timestamp": "2026-08-19T14:40:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "79674cbcc315",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Round-3 fixes for your matrix-entry cell loop (uncommitted working tree; ti84-trainer-v2/app.js,\ntes",
+      "status": "completed",
+      "duration_seconds": 392.531,
+      "timestamp": "2026-08-19T14:49:43Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f1b113bca660",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW ROUND 3 (read-only) \u2014 matrix-entry cell loop, uncommitted `git diff`\n(ti84-traine",
+      "status": "completed",
+      "duration_seconds": 421.223,
+      "timestamp": "2026-08-19T14:59:21Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "77ccb41a1c33",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Round-4 fixes for your matrix-entry cell loop (uncommitted working tree; ti84-trainer-v2/app.js,\ntes",
+      "status": "completed",
+      "duration_seconds": 423.382,
+      "timestamp": "2026-08-19T15:07:07Z",
+      "files_changed": [
+        "ti84-trainer-v2/app.js",
+        "tests/ti84-repeatable-steps.test.js"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 403,
-    "cc_to_codex": 403,
+    "total_calls": 410,
+    "cc_to_codex": 410,
     "codex_to_cc": 0,
-    "completed": 304,
+    "completed": 311,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 625.094
+    "avg_duration_seconds": 623.937
   }
 }

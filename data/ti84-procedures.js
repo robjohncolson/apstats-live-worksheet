@@ -2677,7 +2677,9 @@ window.TI84_PROCEDURES = {
           "highlight": "current matrix cell",
           "narration": "Enter the value in the current cell.",
           "skillType": "parameter",
-          "repeatable": true
+          "repeatable": true,
+          "loop": "matrix-cells",
+          "loopMatrix": "[A]"
         },
         {
           "stepNumber": 11,
@@ -2686,7 +2688,8 @@ window.TI84_PROCEDURES = {
           "highlight": "next matrix cell",
           "narration": "Store the value and move to the next cell.",
           "skillType": "confirmation",
-          "repeatable": true
+          "repeatable": true,
+          "loop": "matrix-cells-commit"
         }
       ]
     },
@@ -7121,7 +7124,9 @@ window.TI84_PROCEDURES = {
           "highlight": "current cell",
           "narration": "Enter each observed count cell by cell.",
           "skillType": "parameter",
-          "repeatable": true
+          "repeatable": true,
+          "loop": "matrix-cells",
+          "loopMatrix": "[A]"
         },
         {
           "stepNumber": 11,
@@ -7130,13 +7135,10 @@ window.TI84_PROCEDURES = {
           "highlight": "next cell",
           "narration": "Store the entry and move to the next cell.",
           "skillType": "confirmation",
-          "repeatable": true
+          "repeatable": true,
+          "loop": "matrix-cells-commit"
         }
-      ],
-      "dataRequirements": {
-        "L1": "numeric",
-        "L2": "numeric"
-      }
+      ]
     },
     {
       "id": "chi-square-gof-test",
