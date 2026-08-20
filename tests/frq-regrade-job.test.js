@@ -11,13 +11,21 @@ import {
   buildGraderRequest,
   buildPrompt,
   buildRegradeRequest,
+  classifyUngradedFrqRows,
+  loadRubricBundle,
+  MINIMUM_ROW_AGE_MS,
   runRegradeJob,
   selectUngradedFrqRows,
   verdictToScore,
 } from '../tools/regrade-ungraded-frqs.mjs';
+import { buildServerReflectionPrompt } from '../roster-server/frq-prompt.js';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const NOW = Date.parse('2026-08-19T12:00:00.000Z');
+const REGISTRY = JSON.parse(readFileSync(
+  resolve(ROOT, 'roster-server/data/frq-rubrics.SY2627.json'),
+  'utf8',
+));
 
 function deriveRealWorksheet(filename) {
   const html = readFileSync(resolve(ROOT, filename), 'utf8');
@@ -45,6 +53,31 @@ function snapshotWith(records) {
       bundle: { records },
     }],
   };
+}
+
+function eligibleRecord(overrides = {}) {
+  return {
+    source: 'frq',
+    itemId: 'WS-U1L2-reflect1',
+    score: null,
+    response: 'This old response is long enough to send to the grader.',
+    recorded_at: '2026-08-19T11:30:00.000Z',
+    ...overrides,
+  };
+}
+
+function runApplyJob(fetchMock, options = {}) {
+  return runRegradeJob({
+    config: { rosterUrl: 'https://roster.test', teacherKey: 'teacher-secret' },
+    registry: options.registry || REGISTRY,
+    railwayServerUrl: 'https://grader.test',
+    apply: true,
+    fetchImpl: fetchMock,
+    now: NOW,
+    rootDir: ROOT,
+    rateLimiter: { wait: vi.fn().mockResolvedValue(undefined) },
+    onEvent: options.onEvent,
+  });
 }
 
 describe('FRQ regrade manifest', () => {
@@ -95,8 +128,20 @@ describe('FRQ regrade manifest', () => {
     const { entry, promptsSource } = deriveRealWorksheet('u1_lesson2_live.html');
     const { window } = evaluatePromptsSource(promptsSource, entry.promptsFile);
     const answer = 'Zip codes label locations instead of measuring a numerical quantity.';
-    expect(buildPrompt(entry, 'reflect2', answer, window))
+    expect(buildPrompt(REGISTRY, entry.prefix, 'reflect2', answer))
       .toBe(window.buildReflectionPromptU1L2('reflect2', answer));
+  });
+
+  it('loads the committed bundle without evaluating page prompt code', () => {
+    const loaded = loadRubricBundle(ROOT);
+    expect(loaded.registry).toEqual(REGISTRY);
+    expect(loaded.railwayServerUrl).toBe(
+      'https://curriculumrender-production.up.railway.app',
+    );
+
+    const jobSource = readFileSync(resolve(ROOT, 'tools/regrade-ungraded-frqs.mjs'), 'utf8');
+    expect(jobSource).not.toContain('evaluatePromptsSource');
+    expect(jobSource).not.toContain('loadPromptWindow');
   });
 });
 
@@ -112,12 +157,14 @@ describe('pure regrade job decisions', () => {
   });
 
   it('selects only old, long, null-score FRQs with an exact manifest itemId', () => {
-    const worksheet = {
-      filename: 'u1_lesson2_live.html',
-      prefix: 'WS-U1L2',
-      textareaIds: ['reflect1', 'reflect2'],
+    const registry = {
+      worksheets: {
+        'WS-U1L2': {
+          filename: 'u1_lesson2_live.html',
+          items: { reflect1: {}, reflect2: {} },
+        },
+      },
     };
-    const manifest = { worksheets: [worksheet] };
     const old = '2026-08-19T11:30:00.000Z';
     const young = '2026-08-19T11:55:00.000Z';
     const long = 'This response is definitely at least twenty characters.';
@@ -131,11 +178,58 @@ describe('pure regrade job decisions', () => {
       { source: 'worksheet', itemId: 'WS-U1L2-reflect1', score: null, response: long, recorded_at: old },
     ];
 
-    const selected = selectUngradedFrqRows(snapshotWith(records), manifest, { now: NOW });
+    const selected = selectUngradedFrqRows(snapshotWith(records), registry, { now: NOW });
     expect(selected.map((row) => row.itemId)).toEqual([
       'WS-U1L2-reflect1',
       'WS-U1L2-reflect2',
     ]);
+  });
+
+  it('requires a finite timestamp and honors the exact ten-minute boundary', () => {
+    const registry = {
+      worksheets: {
+        'WS-U1L2': {
+          filename: 'u1_lesson2_live.html',
+          items: { reflect1: {} },
+        },
+      },
+    };
+    const exactlyTenMinutes = new Date(NOW - MINIMUM_ROW_AGE_MS).toISOString();
+    const justUnderTenMinutes = new Date(NOW - MINIMUM_ROW_AGE_MS + 1).toISOString();
+    const classified = classifyUngradedFrqRows(snapshotWith([
+      eligibleRecord({ recorded_at: undefined }),
+      eligibleRecord({ recorded_at: 'not-a-timestamp' }),
+      eligibleRecord({ recorded_at: exactlyTenMinutes }),
+      eligibleRecord({ recorded_at: justUnderTenMinutes }),
+    ]), registry, { now: NOW });
+
+    expect(classified.candidates.map((row) => row.record.recorded_at)).toEqual([
+      exactlyTenMinutes,
+    ]);
+    expect(classified.invalidTimestamps).toHaveLength(2);
+    expect(classified.unknownItems).toHaveLength(0);
+  });
+
+  it('classifies extra-hyphen and page-only item IDs as unknown without response text', () => {
+    const registry = {
+      worksheets: {
+        'WS-U1L2': {
+          filename: 'u1_lesson2_live.html',
+          items: { reflect1: {} },
+        },
+      },
+    };
+    const classified = classifyUngradedFrqRows(snapshotWith([
+      eligibleRecord({ itemId: 'WS-U4L1-2-Q1' }),
+      eligibleRecord({ itemId: 'WS-U1L2-reflectNew' }),
+    ]), registry, { now: NOW });
+
+    expect(classified.candidates).toHaveLength(0);
+    expect(classified.unknownItems.map((row) => row.itemId)).toEqual([
+      'WS-U4L1-2-Q1',
+      'WS-U1L2-reflectNew',
+    ]);
+    expect(classified.unknownItems.every((row) => !Object.hasOwn(row, 'response'))).toBe(true);
   });
 
   it('builds the exact grader and roster request shapes', () => {
@@ -175,11 +269,7 @@ describe('pure regrade job decisions', () => {
 
 describe('regrade job HTTP flow', () => {
   it('uses mocked snapshot, grader, and roster calls without network access', async () => {
-    const { entry } = deriveRealWorksheet('u1_lesson2_live.html');
-    const manifest = {
-      railwayServerUrl: 'https://grader.test',
-      worksheets: [entry],
-    };
+    const entry = REGISTRY.worksheets['WS-U1L2'];
     const studentAnswer = 'The values are labels for locations, not measurements that should be averaged.';
     const snapshot = snapshotWith([{
       source: 'frq',
@@ -199,7 +289,8 @@ describe('regrade job HTTP flow', () => {
 
     const result = await runRegradeJob({
       config: { rosterUrl: 'https://roster.test/', teacherKey: 'teacher-secret' },
-      manifest,
+      registry: REGISTRY,
+      railwayServerUrl: 'https://grader.test',
       apply: true,
       now: NOW,
       rootDir: ROOT,
@@ -225,6 +316,10 @@ describe('regrade job HTTP flow', () => {
       },
       answers: { answer: studentAnswer },
     });
+    expect(JSON.parse(graderOptions.body).prompt).toBe(
+      buildServerReflectionPrompt(REGISTRY, 'WS-U1L2', 'reflect2', studentAnswer),
+    );
+    expect(JSON.parse(graderOptions.body).scenario.lessonContext).toEqual(entry.lessonContext);
 
     const [rosterUrl, rosterOptions] = fetchMock.mock.calls[2];
     expect(rosterUrl).toBe('https://roster.test/ledger/frq-regrade');
@@ -235,14 +330,15 @@ describe('regrade job HTTP flow', () => {
       score: 1,
       provenance: 'ai-batch',
     });
+    expect(result.exitCode).toBe(0);
   });
 
   it('makes only the snapshot call in default dry-run mode', async () => {
-    const { entry } = deriveRealWorksheet('u1_lesson2_live.html');
     const fetchMock = vi.fn().mockResolvedValue(response(200, snapshotWith([])));
     const result = await runRegradeJob({
       config: { rosterUrl: 'https://roster.test', teacherKey: 'teacher-secret' },
-      manifest: { railwayServerUrl: 'https://grader.test', worksheets: [entry] },
+      registry: REGISTRY,
+      railwayServerUrl: 'https://grader.test',
       fetchImpl: fetchMock,
       now: NOW,
     });
@@ -251,7 +347,6 @@ describe('regrade job HTTP flow', () => {
   });
 
   it('returns a non-zero exit code when the grader returns 5xx', async () => {
-    const { entry } = deriveRealWorksheet('u1_lesson2_live.html');
     const long = 'This old response is long enough to send to the grader.';
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(response(200, snapshotWith([{
@@ -262,7 +357,8 @@ describe('regrade job HTTP flow', () => {
 
     const result = await runRegradeJob({
       config: { rosterUrl: 'https://roster.test', teacherKey: 'teacher-secret' },
-      manifest: { railwayServerUrl: 'https://grader.test', worksheets: [entry] },
+      registry: REGISTRY,
+      railwayServerUrl: 'https://grader.test',
       apply: true,
       fetchImpl: fetchMock,
       now: NOW,
@@ -271,6 +367,118 @@ describe('regrade job HTTP flow', () => {
     });
     expect(result.summary).toMatchObject({ failed: 1, grader5xx: true });
     expect(result.exitCode).toBe(1);
+  });
+
+  it('returns a non-zero exit code when the grader returns 4xx', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([eligibleRecord()])))
+      .mockResolvedValueOnce(response(400, { error: 'bad request' }));
+
+    const result = await runApplyJob(fetchMock);
+    expect(result.summary).toMatchObject({ failed: 1, grader5xx: false });
+    expect(result.exitCode).toBe(1);
+  });
+
+  it.each([
+    ['an unusable verdict', response(200, { score: 'unknown' })],
+    ['an unparseable verdict', {
+      status: 200,
+      ok: true,
+      async json() { throw new Error('invalid JSON'); },
+    }],
+  ])('returns a non-zero exit code for %s', async (_name, graderResponse) => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([eligibleRecord()])))
+      .mockResolvedValueOnce(graderResponse);
+
+    const result = await runApplyJob(fetchMock);
+    expect(result.summary.failed).toBe(1);
+    expect(result.exitCode).toBe(1);
+  });
+
+  it('returns a non-zero exit code when prompt construction throws', async () => {
+    const registry = structuredClone(REGISTRY);
+    const item = registry.worksheets['WS-U1L2'].items.reflect1;
+    const promptBeforeAnswer = item.promptBeforeAnswer;
+    let reads = 0;
+    Object.defineProperty(item, 'promptBeforeAnswer', {
+      enumerable: true,
+      get() {
+        reads += 1;
+        if (reads === 1) return promptBeforeAnswer;
+        throw new Error('synthetic prompt build failure');
+      },
+    });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([eligibleRecord()])));
+
+    const result = await runApplyJob(fetchMock, { registry });
+    expect(result.summary.failed).toBe(1);
+    expect(result.exitCode).toBe(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([400, 500])('returns a non-zero exit code when roster apply returns HTTP %i', async (status) => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([eligibleRecord()])))
+      .mockResolvedValueOnce(response(200, { score: 'E' }))
+      .mockResolvedValueOnce(response(status, { error: 'apply failed' }));
+
+    const result = await runApplyJob(fetchMock);
+    expect(result.summary.failed).toBe(1);
+    expect(result.exitCode).toBe(1);
+  });
+
+  it('returns a non-zero exit code for a malformed apply response', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([eligibleRecord()])))
+      .mockResolvedValueOnce(response(200, { score: 'E' }))
+      .mockResolvedValueOnce(response(200, { ok: true }));
+
+    const result = await runApplyJob(fetchMock);
+    expect(result.summary.failed).toBe(1);
+    expect(result.exitCode).toBe(1);
+  });
+
+  it('reports an unknown item without grading it and returns a non-zero exit code', async () => {
+    const itemId = 'WS-U4L1-2-Q1';
+    const events = [];
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([eligibleRecord({ itemId })])));
+
+    const result = await runApplyJob(fetchMock, { onEvent: (event) => events.push(event) });
+    expect(result.summary).toMatchObject({ found: 0, failed: 0, unknownItems: 1 });
+    expect(result.exitCode).toBe(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(events).toEqual([{
+      type: 'unknown-item',
+      username: 'amy',
+      itemId,
+      reason: 'itemId is not present in the FRQ rubric bundle',
+    }]);
+    expect(events[0]).not.toHaveProperty('response');
+  });
+
+  it('loudly quarantines malformed timestamps and returns a non-zero exit code', async () => {
+    const events = [];
+    const fetchMock = vi.fn().mockResolvedValueOnce(response(200, snapshotWith([
+      eligibleRecord({ recorded_at: undefined }),
+      eligibleRecord({ recorded_at: 'invalid' }),
+    ])));
+
+    const result = await runApplyJob(fetchMock, { onEvent: (event) => events.push(event) });
+    expect(result.summary).toMatchObject({
+      found: 0,
+      failed: 0,
+      unknownItems: 0,
+      invalidTimestamps: 2,
+    });
+    expect(result.exitCode).toBe(1);
+    expect(events.map((event) => event.type)).toEqual([
+      'invalid-timestamp',
+      'invalid-timestamp',
+    ]);
+    expect(events.every((event) => !Object.hasOwn(event, 'response'))).toBe(true);
   });
 });
 

@@ -1,16 +1,24 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { evaluatePromptsSource } from './frq-regrade-manifest.mjs';
+import {
+  buildServerReflectionPrompt,
+  loadFrqRubricRegistry,
+  validateFrqRubricRegistry,
+} from '../roster-server/frq-prompt.js';
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 const ROOT = resolve(dirname(THIS_FILE), '..');
 const DEFAULT_CONFIG_PATH = join(homedir(), 'grade-backups', 'config.json');
 const DEFAULT_LOG_PATH = join(homedir(), 'grade-backups', 'frq-regrade.log');
-const DEFAULT_MANIFEST_PATH = resolve(ROOT, 'data/frq-regrade-manifest.json');
+const FIXED_SAMPLE_ANSWER = '__APSTATS_FRQ_SAMPLE_7f4c5e2d91b8436aa76f0d39c821e5b7__';
+const EXPECTED_WORKSHEET_COUNT = 69;
+const EXPECTED_ITEM_COUNT = 212;
+const MAX_RUBRIC_BUNDLE_BYTES = Math.floor(1.5 * 1024 * 1024);
 export const MINIMUM_ROW_AGE_MS = 10 * 60 * 1_000;
 export const GRADER_INTERVAL_MS = 60_000 / 20;
 
@@ -27,21 +35,32 @@ function parseRecordedTime(record) {
 
 export function indexManifest(manifest) {
   const byItemId = new Map();
-  for (const worksheet of manifest.worksheets || []) {
-    for (const textareaId of worksheet.textareaIds || []) {
-      const itemId = `${worksheet.prefix}-${textareaId}`;
+  for (const [prefix, worksheet] of Object.entries(manifest.worksheets || {})) {
+    for (const textareaId of Object.keys(worksheet.items || {})) {
+      const itemId = `${prefix}-${textareaId}`;
       if (byItemId.has(itemId)) throw new Error(`duplicate manifest itemId: ${itemId}`);
-      byItemId.set(itemId, { worksheet, textareaId });
+      byItemId.set(itemId, { prefix, worksheet, textareaId });
     }
   }
   return byItemId;
 }
 
-export function selectUngradedFrqRows(snapshot, manifest, options = {}) {
+function redactedRow(student, record, itemId) {
+  return {
+    studentId: student.studentId,
+    username: student.username,
+    itemId,
+    attempt: record.attempt ?? 1,
+  };
+}
+
+export function classifyUngradedFrqRows(snapshot, manifest, options = {}) {
   const now = options.now ?? Date.now();
   const minimumAgeMs = options.minimumAgeMs ?? MINIMUM_ROW_AGE_MS;
   const byItemId = indexManifest(manifest);
-  const selected = [];
+  const candidates = [];
+  const unknownItems = [];
+  const invalidTimestamps = [];
 
   for (const student of snapshot.students || []) {
     if (options.student && student.username !== options.student) continue;
@@ -52,18 +71,26 @@ export function selectUngradedFrqRows(snapshot, manifest, options = {}) {
       if (typeof record.response !== 'string' || record.response.trim().length < 20) continue;
 
       const itemId = record.itemId ?? record.item_id;
-      const match = byItemId.get(itemId);
-      if (!match) continue;
-
       const recordedAt = parseRecordedTime(record);
-      if (Number.isFinite(recordedAt) && now - recordedAt < minimumAgeMs) continue;
+      if (!Number.isFinite(recordedAt)) {
+        invalidTimestamps.push(redactedRow(student, record, itemId));
+        continue;
+      }
+      if (now - recordedAt < minimumAgeMs) continue;
 
-      selected.push({
+      const match = byItemId.get(itemId);
+      if (!match) {
+        unknownItems.push(redactedRow(student, record, itemId));
+        continue;
+      }
+
+      candidates.push({
         studentId: student.studentId,
         username: student.username,
         itemId,
         response: record.response,
         attempt: record.attempt ?? 1,
+        prefix: match.prefix,
         worksheet: match.worksheet,
         textareaId: match.textareaId,
         record,
@@ -71,7 +98,11 @@ export function selectUngradedFrqRows(snapshot, manifest, options = {}) {
     }
   }
 
-  return selected;
+  return { candidates, unknownItems, invalidTimestamps };
+}
+
+export function selectUngradedFrqRows(snapshot, manifest, options = {}) {
+  return classifyUngradedFrqRows(snapshot, manifest, options).candidates;
 }
 
 export const selectEligibleRows = selectUngradedFrqRows;
@@ -85,16 +116,8 @@ export function verdictToScore(verdict, missing) {
   return { E: 1, P: 0.5, I: 0 }[letter];
 }
 
-export function buildPrompt(worksheet, textareaId, response, promptWindow) {
-  const builder = promptWindow[worksheet.builderName];
-  if (typeof builder !== 'function') {
-    throw new Error(`${worksheet.promptsFile}: ${worksheet.builderName} is not a function`);
-  }
-  const prompt = builder(textareaId, response);
-  if (typeof prompt !== 'string' || !prompt) {
-    throw new Error(`${worksheet.filename}: prompt builder returned no prompt for ${textareaId}`);
-  }
-  return prompt;
+export function buildPrompt(registry, prefix, textareaId, response) {
+  return buildServerReflectionPrompt(registry, prefix, textareaId, response);
 }
 
 export function buildGraderRequest(worksheet, textareaId, response, prompt, lessonContext) {
@@ -140,12 +163,97 @@ function delay(milliseconds) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
 }
 
-function loadPromptWindow(rootDir, worksheet, cache) {
-  if (cache.has(worksheet.promptsFile)) return cache.get(worksheet.promptsFile);
-  const source = readFileSync(resolve(rootDir, worksheet.promptsFile), 'utf8');
-  const { window } = evaluatePromptsSource(source, worksheet.promptsFile);
-  cache.set(worksheet.promptsFile, window);
-  return window;
+function addDigestPart(hash, label, value) {
+  const bytes = Buffer.from(value, 'utf8');
+  hash.update(`${Buffer.byteLength(label, 'utf8')}:${label}:${bytes.length}:`);
+  hash.update(bytes);
+}
+
+function computeCurrentSourceDigest(rootDir, manifestSource, manifest) {
+  const hash = createHash('sha256');
+  addDigestPart(hash, 'data/frq-regrade-manifest.json', manifestSource);
+  const promptsFiles = [...new Set(
+    (manifest.worksheets || []).map((worksheet) => worksheet.promptsFile),
+  )].sort((left, right) => left.localeCompare(right));
+
+  for (const promptsFile of promptsFiles) {
+    const source = readFileSync(resolve(rootDir, promptsFile), 'utf8');
+    addDigestPart(hash, promptsFile, source);
+  }
+  return `sha256:${hash.digest('hex')}`;
+}
+
+function assertBundleCounts(registry, bundleBytes) {
+  const worksheetCount = Object.keys(registry.worksheets).length;
+  const itemCount = indexManifest(registry).size;
+  if (worksheetCount !== EXPECTED_WORKSHEET_COUNT) {
+    throw new Error(
+      `invalid FRQ rubric bundle: expected ${EXPECTED_WORKSHEET_COUNT} worksheets, found ${worksheetCount}`,
+    );
+  }
+  if (itemCount !== EXPECTED_ITEM_COUNT) {
+    throw new Error(
+      `invalid FRQ rubric bundle: expected ${EXPECTED_ITEM_COUNT} items, found ${itemCount}`,
+    );
+  }
+  if (bundleBytes > MAX_RUBRIC_BUNDLE_BYTES) {
+    throw new Error(
+      `invalid FRQ rubric bundle: ${bundleBytes} bytes exceeds ${MAX_RUBRIC_BUNDLE_BYTES}`,
+    );
+  }
+
+  for (const [prefix, worksheet] of Object.entries(registry.worksheets)) {
+    for (const [textareaId, item] of Object.entries(worksheet.items)) {
+      const samplePrompt = item.promptBeforeAnswer + FIXED_SAMPLE_ANSWER + item.promptAfterAnswer;
+      const actualHash = createHash('sha256').update(samplePrompt).digest('hex');
+      if (item.samplePromptSha256 !== actualHash) {
+        throw new Error(
+          `invalid FRQ rubric bundle: sample hash mismatch for ${prefix}-${textareaId}`,
+        );
+      }
+    }
+  }
+}
+
+export function loadRubricBundle(rootDir = ROOT) {
+  const bundlePath = resolve(rootDir, 'roster-server/data/frq-rubrics.SY2627.json');
+  let bundleSource;
+  try {
+    bundleSource = readFileSync(bundlePath, 'utf8');
+  } catch (error) {
+    throw new Error(`${bundlePath}: FRQ rubric bundle is missing: ${error.message}`);
+  }
+
+  let registry;
+  try {
+    registry = loadFrqRubricRegistry(bundleSource);
+  } catch (error) {
+    throw new Error(`${bundlePath}: ${error.message}`);
+  }
+  assertBundleCounts(registry, Buffer.byteLength(bundleSource, 'utf8'));
+
+  const manifestPath = resolve(rootDir, 'data/frq-regrade-manifest.json');
+  let manifestSource;
+  let manifest;
+  try {
+    manifestSource = readFileSync(manifestPath, 'utf8');
+    manifest = JSON.parse(manifestSource);
+  } catch (error) {
+    throw new Error(`${manifestPath}: could not validate FRQ rubric bundle: ${error.message}`);
+  }
+  if (!manifest.railwayServerUrl || !Array.isArray(manifest.worksheets)) {
+    throw new Error(`${manifestPath}: FRQ regrade manifest is malformed`);
+  }
+
+  const currentDigest = computeCurrentSourceDigest(rootDir, manifestSource, manifest);
+  if (registry.sourceDigest !== currentDigest) {
+    throw new Error(
+      `${bundlePath}: FRQ rubric bundle is stale `
+      + `(expected ${currentDigest}, found ${registry.sourceDigest})`,
+    );
+  }
+
+  return { registry, railwayServerUrl: manifest.railwayServerUrl };
 }
 
 async function readJsonResponse(response) {
@@ -177,7 +285,8 @@ function worksheetCounts(candidates) {
 export async function runRegradeJob(options) {
   const {
     config,
-    manifest,
+    registry: providedRegistry,
+    railwayServerUrl: providedRailwayServerUrl,
     apply = false,
     limit = Number.POSITIVE_INFINITY,
     student,
@@ -188,8 +297,18 @@ export async function runRegradeJob(options) {
     onEvent = () => {},
   } = options;
 
+  let registry = providedRegistry;
+  let railwayServerUrl = providedRailwayServerUrl;
+  if (!registry || !railwayServerUrl) {
+    const loaded = loadRubricBundle(rootDir);
+    registry ||= loaded.registry;
+    railwayServerUrl ||= loaded.railwayServerUrl;
+  }
+  validateFrqRubricRegistry(registry);
+
   const snapshot = await fetchSnapshot(config, fetchImpl);
-  const allCandidates = selectUngradedFrqRows(snapshot, manifest, { now, student });
+  const classified = classifyUngradedFrqRows(snapshot, registry, { now, student });
+  const allCandidates = classified.candidates;
   const boundedLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : allCandidates.length;
   const candidates = allCandidates.slice(0, boundedLimit);
   const summary = {
@@ -199,31 +318,51 @@ export async function runRegradeJob(options) {
     applied: 0,
     floorHeld: 0,
     failed: 0,
+    unknownItems: classified.unknownItems.length,
+    invalidTimestamps: classified.invalidTimestamps.length,
     worksheetCounts: worksheetCounts(candidates),
     grader5xx: false,
   };
 
-  if (!apply) return { summary, candidates, exitCode: 0 };
+  for (const row of classified.unknownItems) {
+    onEvent({
+      type: 'unknown-item',
+      username: row.username,
+      itemId: row.itemId,
+      reason: 'itemId is not present in the FRQ rubric bundle',
+    });
+  }
+  for (const row of classified.invalidTimestamps) {
+    onEvent({
+      type: 'invalid-timestamp',
+      username: row.username,
+      itemId: row.itemId,
+      reason: 'recorded timestamp is missing or unparseable',
+    });
+  }
 
-  const promptCache = new Map();
-  const graderUrl = `${stripTrailingSlash(manifest.railwayServerUrl)}/api/ai/grade`;
+  const permanentFailureCount = summary.unknownItems + summary.invalidTimestamps;
+  if (!apply) {
+    return { summary, candidates, exitCode: permanentFailureCount > 0 ? 1 : 0 };
+  }
+
+  const graderUrl = `${stripTrailingSlash(railwayServerUrl)}/api/ai/grade`;
   const regradeUrl = `${stripTrailingSlash(config.rosterUrl)}/ledger/frq-regrade`;
 
   for (const candidate of candidates) {
     try {
-      const promptWindow = loadPromptWindow(rootDir, candidate.worksheet, promptCache);
       const prompt = buildPrompt(
-        candidate.worksheet,
+        registry,
+        candidate.prefix,
         candidate.textareaId,
         candidate.response,
-        promptWindow,
       );
       const graderBody = buildGraderRequest(
         candidate.worksheet,
         candidate.textareaId,
         candidate.response,
         prompt,
-        promptWindow[candidate.worksheet.contextName],
+        candidate.worksheet.lessonContext,
       );
 
       await rateLimiter.wait();
@@ -272,19 +411,31 @@ export async function runRegradeJob(options) {
       }
       if (appliedResult?.applied !== true) {
         summary.failed += 1;
-        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, score });
+        onEvent({
+          type: 'failed',
+          username: candidate.username,
+          itemId: candidate.itemId,
+          score,
+          reason: 'regrade response was malformed',
+        });
         continue;
       }
 
       summary.applied += 1;
       onEvent({ type: 'applied', username: candidate.username, itemId: candidate.itemId, score });
-    } catch (_) {
+    } catch (error) {
       summary.failed += 1;
-      onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId });
+      onEvent({
+        type: 'failed',
+        username: candidate.username,
+        itemId: candidate.itemId,
+        reason: `processing error: ${error.message}`,
+      });
     }
   }
 
-  return { summary, candidates, exitCode: summary.grader5xx ? 1 : 0 };
+  const hasFailures = summary.failed > 0 || permanentFailureCount > 0;
+  return { summary, candidates, exitCode: hasFailures ? 1 : 0 };
 }
 
 export function parseArgs(argv) {
@@ -359,17 +510,19 @@ function printSummary(summary) {
   }
   console.log(
     `Summary: found=${summary.found} graded=${summary.graded} applied=${summary.applied} `
-      + `floorHeld=${summary.floorHeld} failed=${summary.failed}`,
+      + `floorHeld=${summary.floorHeld} failed=${summary.failed} `
+      + `unknownItems=${summary.unknownItems} invalidTimestamps=${summary.invalidTimestamps}`,
   );
 }
 
 export async function main(argv = process.argv.slice(2)) {
   const cli = parseArgs(argv);
   const config = loadConfig(cli.configPath);
-  const manifest = JSON.parse(readFileSync(DEFAULT_MANIFEST_PATH, 'utf8'));
+  const { registry, railwayServerUrl } = loadRubricBundle();
   const result = await runRegradeJob({
     config,
-    manifest,
+    registry,
+    railwayServerUrl,
     apply: cli.apply,
     limit: cli.limit,
     student: cli.student,
