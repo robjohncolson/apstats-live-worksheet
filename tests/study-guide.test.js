@@ -798,6 +798,9 @@ describe('session 85 mastery map', () => {
     expect(src).toContain('Low');
     expect(src).toContain('Mid');
     expect(src).toContain('High');
+    expect(src).toContain('Locked');
+    expect(src).toContain('1 ring');
+    expect(src).toContain('3 rings');
   });
 
   it('renderQueuePane appends the mastery-map-panel', () => {
@@ -838,10 +841,38 @@ describe('session 85 mastery map', () => {
 describe('session 86 mastery map polish', () => {
   it('renderMasteryMap draws cluster outline circles before nodes', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    // Cluster outlines use a low-alpha rgba stroke.
-    expect(src).toContain("rgba(100, 110, 170, 0.18)");
-    // Outline radius constant.
+    const outlineIndex = src.indexOf("ctx.strokeStyle = '#77766C'");
+    const nodesIndex = src.indexOf('// Draw nodes.');
+    expect(outlineIndex).toBeGreaterThan(-1);
+    expect(nodesIndex).toBeGreaterThan(-1);
+    expect(outlineIndex).toBeLessThan(nodesIndex);
     expect(src).toContain('OUTLINE_RADIUS = 80');
+  });
+
+  it('mastery map uses a granular monotonic ramp plus non-hue cues without locked-node opacity', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('const MASTERY_MAP_RAMP = [');
+    expect(src).toContain('ringCount');
+    expect(src).toContain("cue: '—'");
+    expect(src).toContain("cue: '×'");
+    expect(src).not.toContain('ctx.globalAlpha = locked ? 0.4 : 1');
+    expect(src).not.toContain('ctx.globalAlpha = miniLocked ? 0.4 : 1');
+  });
+
+  it('night-only component overrides are rooted on data-theme and paper copy uses normal ink', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('.sg-night .');
+    expect(src).toContain(':root[data-theme="night"] .sg-rubric-notes');
+    expect(src).toContain(':root[data-theme="night"] .sg-calc-prereq');
+    expect(src).toContain(':root[data-theme="night"] .sg-calc-param');
+    expect(src).toMatch(/\.sg-calc-prereq\{[^}]*color:var\(--sg-text\)/);
+  });
+
+  it('lifeboat correctness chips expose visible and accessible status cues', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("chip.textContent += ' ✓'");
+    expect(src).toContain("chip.textContent += ' ✕'");
+    expect(src).toContain("chip.setAttribute('aria-label', questionLabel + ': ' + resultLabel");
   });
 
   it('mastery map modal has a tooltip element', () => {
@@ -1188,7 +1219,11 @@ describe('session 88b formula modal practice button + see-all removal', () => {
   it('practice button CSS uses primary accent style', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('.sg-formula-modal-practice{');
-    expect(src).toContain('background:var(--sg-accent)');
+    // Tango separates the accent FILL from the accent INK: --sg-accent (#A8330A) is
+    // the readable text/link tone, --sg-accent-fill (#FF5B19) is for filled buttons,
+    // and text on that fill is --sg-on-accent (#161616), never white.
+    expect(src).toContain('background:var(--sg-accent-fill)');
+    expect(src).toContain('color:var(--sg-on-accent)');
   });
 });
 

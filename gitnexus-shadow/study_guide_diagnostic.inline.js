@@ -512,6 +512,60 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 if (!window.RAILWAY_SERVER_URL) window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';
 
 
@@ -541,23 +595,23 @@ if (!window.RAILWAY_SERVER_URL) window.RAILWAY_SERVER_URL = 'https://curriculumr
         var ov = document.createElement('div');
         ov.id = 'sg-signin-wall';
         ov.style.cssText = 'position:fixed;inset:0;z-index:99999;'
-            + 'background:#eceff1;display:flex;align-items:center;'
+            + 'background:#E5E3D2;display:flex;align-items:center;'
             + 'justify-content:center;font-family:Geneva,Verdana,sans-serif;';
         var box = document.createElement('div');
         box.style.cssText = 'max-width:380px;margin:16px;padding:22px 26px;'
-            + 'background:#fff;border:1px solid #999;border-radius:8px;'
+            + 'background:#F7F5EE;border:1px solid #A9A79A;border-radius:8px;'
             + 'text-align:center;box-shadow:0 6px 24px rgba(0,0,0,0.25);';
         var h = document.createElement('div');
         h.textContent = '🔒 Sign in to open the study guide';
         h.style.cssText = 'font-size:15px;font-weight:bold;margin-bottom:10px;';
         var p = document.createElement('div');
         p.textContent = 'Sign in at the Desk with your name, then come back to this page.';
-        p.style.cssText = 'font-size:12px;color:#444;margin-bottom:16px;line-height:1.5;';
+        p.style.cssText = 'font-size:12px;color:#6E6C62;margin-bottom:16px;line-height:1.5;';
         var a = document.createElement('a');
         a.href = 'ap_stats_roadmap_square_mode.html';
         a.textContent = 'Open the Desk to sign in';
-        a.style.cssText = 'display:inline-block;padding:7px 16px;background:#0000cc;'
-            + 'color:#fff;text-decoration:none;border-radius:5px;font-size:12px;';
+        a.style.cssText = 'display:inline-block;padding:7px 16px;background:#FF5B19;'
+            + 'color:#161616;text-decoration:none;border-radius:5px;font-size:12px;';
         box.appendChild(h); box.appendChild(p); box.appendChild(a);
         ov.appendChild(box);
         document.body.appendChild(ov);
@@ -1867,7 +1921,7 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
           },
           colorForMastery: function(mastery, touched) {
             const v4 = getV4();
-            return v4 && typeof v4.colorForMastery === 'function' ? v4.colorForMastery(mastery, touched) : { fill: '#3a4060', stroke: '#4a5075', glow: null };
+            return v4 && typeof v4.colorForMastery === 'function' ? v4.colorForMastery(mastery, touched) : { fill: '#3A3A36', stroke: '#6E6C62', glow: null };
           }
         };
 
@@ -3754,19 +3808,24 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
         };
       }
 
+      const MASTERY_MAP_RAMP = [
+        '#B85A52', '#BD6B53', '#C27C53', '#C78C54', '#CC9D54', '#D1AE55',
+        '#CCB96B', '#C7C481', '#C2D098', '#BDDBAE', '#B8E6C4'
+      ];
+
       function colorForMastery(mastery, touched) {
         if (!touched || typeof mastery !== 'number') {
-          return { fill: '#3a4060', stroke: '#4a5075', glow: null };
+          return { fill: '#77766C', stroke: '#F3F1E8', glow: null, ringCount: 1, cue: '—', tier: 'untouched' };
         }
         const m = Math.max(0, Math.min(1, mastery));
-        const hue = m * 120;
-        const sat = 75;
-        const light = 50;
-        return {
-          fill: 'hsl(' + hue + ', ' + sat + '%, ' + light + '%)',
-          stroke: 'hsl(' + hue + ', ' + sat + '%, ' + (light + 15) + '%)',
-          glow: m > 0.5 ? 'hsla(' + hue + ', ' + sat + '%, ' + light + '%, 0.4)' : null
-        };
+        const paletteIndex = Math.round(m * (MASTERY_MAP_RAMP.length - 1));
+        const tier = m < 0.4 ? 'low' : (m < 0.75 ? 'mid' : 'high');
+        const ringCount = tier === 'low' ? 1 : (tier === 'mid' ? 2 : 3);
+        const cue = tier === 'low' ? 'L' : (tier === 'mid' ? 'M' : 'H');
+        const glow = tier === 'high'
+          ? 'rgba(184,230,196,0.32)'
+          : (tier === 'mid' && m > 0.5 ? 'rgba(209,174,85,0.28)' : null);
+        return { fill: MASTERY_MAP_RAMP[paletteIndex], stroke: '#F3F1E8', glow: glow, ringCount: ringCount, cue: cue, tier: tier };
       }
 
       function clampPan(viewState, worldBounds, canvasWidth, canvasHeight) {
@@ -3811,8 +3870,8 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
         const panX = viewState.panX;
         const panY = viewState.panY;
 
-        // Dark-blue background.
-        ctx.fillStyle = '#0a0e27';
+        // Deliberate neutral night sky; ring count and letter cues supplement hue.
+        ctx.fillStyle = '#141414';
         ctx.fillRect(0, 0, w, h);
 
         // Center-in-viewport transform with pan/zoom.
@@ -3837,7 +3896,7 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
         });
 
         // Cluster outlines — faint circles grouping each unit's nodes.
-        ctx.strokeStyle = 'rgba(100, 110, 170, 0.18)';
+        ctx.strokeStyle = '#77766C';
         ctx.lineWidth = 1.5 / zoom;
         Object.keys(unitCenterMap).forEach(function(uKey) {
           const uc = unitCenterMap[uKey];
@@ -3851,7 +3910,7 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
         Object.keys(unitCenterMap).forEach(function(uKey) {
           const uc = unitCenterMap[uKey];
           ctx.font = Math.max(10, 14 / zoom) + 'px sans-serif';
-          ctx.fillStyle = 'rgba(140, 148, 190, 0.7)';
+          ctx.fillStyle = 'rgba(211, 209, 194, 0.7)';
           ctx.textAlign = 'center';
           ctx.fillText('Unit ' + uc.unit, uc.cx, uc.cy - 85);
         });
@@ -3900,7 +3959,9 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
           entry = touched[node.id];
           mastery = entry ? (typeof entry.lastMastery === 'number' ? entry.lastMastery : 0) : 0;
           isTouched = !!entry;
-          color = locked ? { fill: '#3a4060', stroke: 'rgba(100,110,170,0.4)', glow: null } : colorForMastery(mastery, isTouched);
+          color = locked
+            ? { fill: '#77766C', stroke: '#F3F1E8', glow: null, ringCount: 1, cue: '×', tier: 'locked' }
+            : colorForMastery(mastery, isTouched);
 
           // Glow for high-mastery unlocked nodes — pulse the highest-mastery node.
           if (!locked && color.glow) {
@@ -3918,7 +3979,6 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
           }
 
           // Main dot.
-          ctx.globalAlpha = locked ? 0.4 : 1;
           ctx.fillStyle = color.fill;
           ctx.beginPath();
           ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
@@ -3926,19 +3986,22 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
           ctx.lineWidth = 1.5 / zoom;
           ctx.strokeStyle = color.stroke;
           ctx.stroke();
-          ctx.globalAlpha = 1;
 
-          // Lock emoji overlay for locked nodes.
-          if (locked) {
-            ctx.font = Math.max(6, 8 / zoom) + 'px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('\uD83D\uDD12', node.x, node.y + 3 / zoom);
+          // Ring count and the center letter remain visible without relying on hue.
+          for (let ringIndex = 1; ringIndex < color.ringCount; ringIndex += 1) {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius + (ringIndex * 3 / zoom), 0, Math.PI * 2);
+            ctx.stroke();
           }
+          ctx.fillStyle = '#141414';
+          ctx.font = '900 ' + Math.max(6, 8 / zoom) + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(color.cue, node.x, node.y + 3 / zoom);
 
           // Label only at high zoom.
           if (!locked && zoom > 1.8) {
             ctx.font = Math.max(8, 10 / zoom) + 'px sans-serif';
-            ctx.fillStyle = '#cbd0e8';
+            ctx.fillStyle = '#F3F1E8';
             ctx.textAlign = 'center';
             ctx.fillText(node.label, node.x, node.y + node.radius + 12 / zoom);
           }
@@ -3953,7 +4016,7 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
         const w = canvas.width;  // 120
         const h = canvas.height; // 80
 
-        ctx.fillStyle = '#0a0e27';
+        ctx.fillStyle = '#141414';
         ctx.fillRect(0, 0, w, h);
 
         const scaleX = w / worldBounds.width;
@@ -3980,12 +4043,11 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
           miniLocked = !miniIsUnlocked(node.unit, appState);
           entry = touched[node.id];
           color = miniLocked
-            ? { fill: '#3a4060' }
+            ? { fill: '#77766C', stroke: '#F3F1E8', ringCount: 1 }
             : colorForMastery(
                 entry ? (typeof entry.lastMastery === 'number' ? entry.lastMastery : 0) : 0,
                 !!entry
               );
-          ctx.globalAlpha = miniLocked ? 0.4 : 1;
           ctx.fillStyle = color.fill;
           ctx.beginPath();
           ctx.arc(
@@ -3995,8 +4057,15 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
             0, Math.PI * 2
           );
           ctx.fill();
+          ctx.strokeStyle = color.stroke;
+          ctx.lineWidth = 0.75;
+          ctx.stroke();
+          for (let ringIndex = 1; ringIndex < color.ringCount; ringIndex += 1) {
+            ctx.beginPath();
+            ctx.arc(offsetX + node.x * scale, offsetY + node.y * scale, 2 + ringIndex, 0, Math.PI * 2);
+            ctx.stroke();
+          }
         }
-        ctx.globalAlpha = 1;
       }
 
       // --- Modal ---
@@ -4065,6 +4134,8 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
         canvas.className = 'sg-mastery-map-canvas';
         canvas.width = CANVAS_W;
         canvas.height = CANVAS_H;
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', 'Mastery map. L, M, and H plus one, two, or three rings show low, mid, and high mastery. A dash means untouched and a cross means locked.');
         canvasWrap.appendChild(canvas);
 
         // Tooltip element — positioned by mousemove, never captures pointer events.
@@ -4080,20 +4151,24 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
         const footer = make('div', 'sg-mastery-map-footer');
         const legend = make('div', 'sg-mastery-map-legend');
 
-        function makeDot(bg) {
+        function makeDot(bg, cue) {
           const dot = make('span', 'sg-mastery-legend-dot');
           dot.style.background = bg;
+          dot.textContent = cue;
+          dot.setAttribute('aria-hidden', 'true');
           return dot;
         }
 
-        legend.appendChild(makeDot('#3a4060'));
+        legend.appendChild(makeDot('#77766C', '—'));
         legend.appendChild(document.createTextNode(' Untouched'));
-        legend.appendChild(makeDot('hsl(0,75%,50%)'));
-        legend.appendChild(document.createTextNode(' Low'));
-        legend.appendChild(makeDot('hsl(60,75%,50%)'));
-        legend.appendChild(document.createTextNode(' Mid'));
-        legend.appendChild(makeDot('hsl(120,75%,50%)'));
-        legend.appendChild(document.createTextNode(' High'));
+        legend.appendChild(makeDot('#B85A52', 'L'));
+        legend.appendChild(document.createTextNode(' Low · 1 ring'));
+        legend.appendChild(makeDot('#D1AE55', 'M'));
+        legend.appendChild(document.createTextNode(' Mid · 2 rings'));
+        legend.appendChild(makeDot('#B8E6C4', 'H'));
+        legend.appendChild(document.createTextNode(' High · 3 rings'));
+        legend.appendChild(makeDot('#77766C', '×'));
+        legend.appendChild(document.createTextNode(' Locked'));
         footer.appendChild(legend);
         footer.appendChild(make('div', 'sg-mastery-map-hint', 'Click a formula to open its card \u00B7 scroll to zoom \u00B7 drag to pan'));
         modal.appendChild(footer);
@@ -4127,7 +4202,7 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
         if (nodes.length === 0) {
           // Graceful no-data: show a message inside the canvas area.
           const noData = make('p', '', 'No formula data available.');
-          noData.style.cssText = 'color:#8c94be;text-align:center;padding:20px;margin:0';
+          noData.style.cssText = 'color:#D3D1C2;text-align:center;padding:20px;margin:0';
           canvasWrap.insertBefore(noData, canvas);
         }
         renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
@@ -4513,7 +4588,7 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
             var bar = make('span', 'sg-scoreboard-bar');
             var pct = TOTAL_FORMULAS > 0 ? (entry.greenCount / TOTAL_FORMULAS) * 100 : 0;
             bar.style.width = pct + '%';
-            bar.style.background = 'hsl(120,75%,50%)';
+            bar.style.background = 'var(--sg-mastery-high-ink)';
             barWrap.appendChild(bar);
             scoreCell.appendChild(barWrap);
             scoreCell.appendChild(document.createTextNode(' ' + entry.greenCount + '/' + TOTAL_FORMULAS));
@@ -5649,7 +5724,7 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
           const focusHtml = focus ? `<div class="box"><p><strong>Priority:</strong> ${esc(focus.priority)}</p><p>${esc(focus.overallSummary || '')}</p>${focus.focusLessons.map(item => `<div class="item"><strong>${esc(`${String(item.lesson || '').replace(/[^\d]/g,'') ? `Lesson ${String(item.lesson || '').replace(/[^\d]/g,'')}` : 'Lesson'}${item.topic ? `: ${item.topic}` : ''}`)}</strong><p><strong>LO IDs:</strong> ${esc((item.loIds || []).join(', ') || 'Not specified')}</p><p><strong>Reason:</strong> ${esc(item.reason || 'Not specified')}</p><p><strong>Suggested action:</strong> ${esc(item.suggestedAction || 'Not specified')}</p></div>`).join('')}${focus.synthesisNote ? `<p><strong>Note:</strong> ${esc(focus.synthesisNote)}</p>` : ''}</div>` : `<div class="box muted">No focus synthesis generated for this unit.</div>`;
           return `<section class="unit"><h2>${esc(unitTitle(unit))}</h2><p class="muted">${esc(unitTopic(unit))}</p><p><span class="pill">Mode: ${esc(data.mode === 'both' ? 'Both' : data.mode.toUpperCase())}</span> <span class="pill">Exam Weight: ${esc(examWeight(unit))}</span></p><h3>MCQ Results</h3><table><thead><tr><th>Lesson</th><th>Topic</th><th>Probe Prompt</th><th>Student Answer</th><th>Correct Answer</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table><h3>FRQ</h3><p>${esc(stripFrq(q ? q.prompt || '' : 'FRQ not found.'))}</p><div class="quote">${esc(data.frqAnswer || '')}</div>${gradeHtml}<h3>Focus Synthesis</h3>${focusHtml}</section>`;
         }).join('');
-        return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AP Statistics Diagnostic Export</title><style>body{margin:0;padding:32px;font-family:"Segoe UI",Arial,sans-serif;color:#16263d;background:#fff}.sheet{max-width:980px;margin:0 auto}h1,h2,h3{margin-top:0;color:#0d2746}.muted{color:#5f7189}.head{margin-bottom:28px;padding-bottom:18px;border-bottom:3px solid #0d2746}.grid,.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.cell,.card,.unit,.box,.item{border:1px solid #d7dfeb;border-radius:14px;background:#fff}.cell,.card{padding:14px}.card .v{margin-top:8px;font-size:28px;font-weight:800;color:#0d2746}.unit{margin-bottom:26px;padding:22px;break-inside:avoid;page-break-inside:avoid}.pill,.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4fb;font-size:13px;font-weight:700}.quote{padding:14px;border-left:4px solid #214a78;background:#f8fafc;white-space:pre-wrap;line-height:1.6}.box,.item{padding:14px;margin-top:12px}.badge{color:#fff}.score-E{background:#2f7b4a}.score-P{background:#9a6a16}.score-I{background:#ab3e3e}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px 12px;border:1px solid #d7dfeb;text-align:left;vertical-align:top}th{background:#f3f6fa;color:#0d2746}@media print{body{padding:.4in}}</style></head><body><div class="sheet"><section class="head"><h1>AP Statistics Diagnostic Study Guide</h1><p class="muted">Printable review sheet and save file generated from the v3 diagnostic worksheet.</p><div class="grid"><div class="cell"><strong>Username</strong><div>${esc(snapshot.studentUsername || '')}</div></div><div class="cell"><strong>Period</strong><div>${esc(snapshot.studentPeriod || '')}</div></div><div class="cell"><strong>Saved</strong><div>${esc(formatSavedAt(snapshot.savedAt))}</div></div></div></section><section class="summary"><div class="card"><div>Units Attempted</div><div class="v">${info.unitsAttempted}/${UNIT_COUNT}</div></div><div class="card"><div>MCQ Accuracy</div><div class="v">${info.mcqAnswered ? info.mcqAccuracy : 0}%</div></div><div class="card"><div>FRQs Graded</div><div class="v">${info.frqsGraded}</div></div></section>${unitSections}<script type="application/json" id="${STATE_ID}" data-state-id="${STATE_ID}">${stateJson}<\/script></div></body></html>`;
+        return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#161616"><title>AP Statistics Diagnostic Export</title><style>body{margin:0;padding:32px;font-family:"Segoe UI",Arial,sans-serif;color:#161616;background:#F7F5EE}.sheet{max-width:980px;margin:0 auto}h1,h2,h3{margin-top:0;color:#161616}.muted{color:#6E6C62}.head{margin-bottom:28px;padding-bottom:18px;border-bottom:3px solid #FF5B19}.grid,.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.cell,.card,.unit,.box,.item{border:1px solid #A9A79A;border-radius:14px;background:#F7F5EE}.cell,.card{padding:14px}.card .v{margin-top:8px;font-size:28px;font-weight:800;color:#161616}.unit{margin-bottom:26px;padding:22px;break-inside:avoid;page-break-inside:avoid}.pill,.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#E5E3D2;font-size:13px;font-weight:700}.quote{padding:14px;border-left:4px solid #AECACD;background:#F3F1E8;white-space:pre-wrap;line-height:1.6}.box,.item{padding:14px;margin-top:12px}.badge{color:#F7F5EE}.score-E{background:#25663F}.score-P{background:#8A6D12}.score-I{background:#B03A2E}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px 12px;border:1px solid #A9A79A;text-align:left;vertical-align:top}th{background:#E5E3D2;color:#161616}@media print{body{padding:.4in}}</style></head><body><div class="sheet"><section class="head"><h1>AP Statistics Diagnostic Study Guide</h1><p class="muted">Printable review sheet and save file generated from the v3 diagnostic worksheet.</p><div class="grid"><div class="cell"><strong>Username</strong><div>${esc(snapshot.studentUsername || '')}</div></div><div class="cell"><strong>Period</strong><div>${esc(snapshot.studentPeriod || '')}</div></div><div class="cell"><strong>Saved</strong><div>${esc(formatSavedAt(snapshot.savedAt))}</div></div></div></section><section class="summary"><div class="card"><div>Units Attempted</div><div class="v">${info.unitsAttempted}/${UNIT_COUNT}</div></div><div class="card"><div>MCQ Accuracy</div><div class="v">${info.mcqAnswered ? info.mcqAccuracy : 0}%</div></div><div class="card"><div>FRQs Graded</div><div class="v">${info.frqsGraded}</div></div></section>${unitSections}<script type="application/json" id="${STATE_ID}" data-state-id="${STATE_ID}">${stateJson}<\/script></div></body></html>`;
       }
 
       function doExport() {
@@ -5936,14 +6011,26 @@ window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [[
               chip.type = 'button';
               chip.className = 'lf-q-chip';
               const m = q.id.match(/-Q(\d+)$/);
-              chip.textContent = 'Q' + (m ? m[1] : '?');
-              chip.title = (q.prompt || q.id || '').slice(0, 160);
+              const questionNumber = m ? m[1] : '?';
+              const questionLabel = 'Question ' + questionNumber;
+              chip.textContent = 'Q' + questionNumber;
               chip.dataset.questionId = q.id;
               chip.dataset.unit = String(unitNum);
               const data = state.units && state.units[unitNum];
               const result = data && data.mcqResults ? data.mcqResults[q.id] : null;
-              if (result === 'correct') chip.classList.add('is-correct');
-              else if (result === 'incorrect') chip.classList.add('is-wrong');
+              let resultLabel = 'Not answered';
+              if (result === 'correct') {
+                chip.classList.add('is-correct');
+                chip.textContent += ' ✓';
+                resultLabel = 'Correct';
+              } else if (result === 'incorrect') {
+                chip.classList.add('is-wrong');
+                chip.textContent += ' ✕';
+                resultLabel = 'Incorrect';
+              }
+              const promptSummary = (q.prompt || q.id || '').slice(0, 160);
+              chip.title = resultLabel + '. ' + promptSummary;
+              chip.setAttribute('aria-label', questionLabel + ': ' + resultLabel + '. ' + promptSummary);
               if (state.activeProbe && state.activeProbe.questionId === q.id) chip.classList.add('is-active');
               chip.addEventListener('click', () => {
                 setActiveProbe(unitNum, q.id, 'manual', null);

@@ -18,6 +18,47 @@ const AUDIT_SCRIPT_PATH = resolve(ROOT, 'scripts/audit-question-context.mjs');
 const AUDIT_RESULT_PATH = resolve(ROOT, '.session90-question-audit.md');
 const MISSING_PICS_PATH = resolve(ROOT, '.session90-missing-pictures.md');
 
+function parseCssColor(value) {
+  const source = value.trim();
+  const hex = source.match(/^#([\da-f]{6})$/i);
+  if (hex) {
+    return {
+      r: parseInt(hex[1].slice(0, 2), 16),
+      g: parseInt(hex[1].slice(2, 4), 16),
+      b: parseInt(hex[1].slice(4, 6), 16),
+      a: 1
+    };
+  }
+
+  const rgb = source.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i);
+  expect(rgb, `unsupported CSS color: ${value}`).not.toBeNull();
+  return { r: Number(rgb[1]), g: Number(rgb[2]), b: Number(rgb[3]), a: rgb[4] === undefined ? 1 : Number(rgb[4]) };
+}
+
+function compositeColor(foreground, background) {
+  return {
+    r: foreground.r * foreground.a + background.r * (1 - foreground.a),
+    g: foreground.g * foreground.a + background.g * (1 - foreground.a),
+    b: foreground.b * foreground.a + background.b * (1 - foreground.a),
+    a: 1
+  };
+}
+
+function relativeLuminance(color) {
+  const channel = value => {
+    const normalized = value / 255;
+    return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
+}
+
+function contrastRatio(foregroundValue, backgroundValue) {
+  const background = parseCssColor(backgroundValue);
+  const foreground = compositeColor(parseCssColor(foregroundValue), background);
+  const values = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a);
+  return (values[0] + 0.05) / (values[1] + 0.05);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Phase 1 — classification function
 // ─────────────────────────────────────────────────────────────────────────────
@@ -286,25 +327,55 @@ describe('Fix 1 — isDarkMode night-theme detection', () => {
     expect(src).toContain("classList.contains('dark-theme')");
   });
 
-  it('study_guide_diagnostic.html defines --chart-text in night theme', () => {
+  // Assert the actual rendering contract: each token must clear its threshold on
+  // that theme's chart surface. Palette edits may change values, not accessibility.
+  const themeBlock = (content, selector) => {
+    const start = content.indexOf(selector);
+    expect(start, `${selector} block missing`).toBeGreaterThan(-1);
+    return content.slice(start, content.indexOf('}', start));
+  };
+
+  it('every theme block defines --chart-text, --chart-grid and --chart-point', () => {
     const content = readFileSync(HTML_PATH, 'utf8');
-    // Should appear in the :root[data-theme="night"] block
-    expect(content).toContain('--chart-text:#E8E8E8');
+    for (const selector of [':root{', ':root[data-theme="paper"]{', ':root[data-theme="night"]{']) {
+      const block = themeBlock(content, selector);
+      for (const token of ['--chart-text:', '--chart-grid:', '--chart-point:']) {
+        expect(block, `${selector} is missing ${token}`).toContain(token);
+      }
+    }
   });
 
-  it('study_guide_diagnostic.html defines --chart-grid in night theme', () => {
+  it('chart text, grid, and points clear contrast on each theme chart surface', () => {
     const content = readFileSync(HTML_PATH, 'utf8');
-    expect(content).toContain('--chart-grid:rgba(255,255,255,0.1)');
+    const value = (block, token) => block.match(new RegExp(token + ':\\s*([^;]+);'))[1].trim();
+    for (const selector of [':root{', ':root[data-theme="paper"]{', ':root[data-theme="night"]{']) {
+      const block = themeBlock(content, selector);
+      const surface = value(block, '--sg-bg-card');
+      expect(contrastRatio(value(block, '--chart-text'), surface), `${selector} chart text`).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(value(block, '--chart-grid'), surface), `${selector} chart grid`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio(value(block, '--chart-point'), surface), `${selector} chart point`).toBeGreaterThanOrEqual(3);
+    }
   });
 
-  it('study_guide_diagnostic.html defines --chart-point in night theme', () => {
-    const content = readFileSync(HTML_PATH, 'utf8');
-    expect(content).toContain('--chart-point:#6FAEFF');
-  });
+  it('every generated chart series clears 3:1 on its own chart surface', () => {
+    const source = readFileSync(CURRICULUM_CHARTS_PATH, 'utf8');
+    const palette = name => {
+      const match = source.match(new RegExp(`${name}:\\s*\\[([\\s\\S]*?)\\]`));
+      expect(match, `missing ${name}`).not.toBeNull();
+      return [...match[1].matchAll(/'([^']+)'/g)].map(entry => entry[1]);
+    };
+    const color = name => {
+      const match = source.match(new RegExp(`${name}:\\s*'([^']+)'`));
+      expect(match, `missing ${name}`).not.toBeNull();
+      return match[1];
+    };
 
-  it('study_guide_diagnostic.html defines --chart-text in paper/default theme', () => {
-    const content = readFileSync(HTML_PATH, 'utf8');
-    expect(content).toContain('--chart-text:#333333');
+    for (const [paletteName, surfaceName] of [['lightPalette', 'paper'], ['nightPalette', 'nightPaper']]) {
+      const surface = color(surfaceName);
+      for (const seriesColor of palette(paletteName)) {
+        expect(contrastRatio(seriesColor, surface), `${paletteName} ${seriesColor}`).toBeGreaterThanOrEqual(3);
+      }
+    }
   });
 });
 

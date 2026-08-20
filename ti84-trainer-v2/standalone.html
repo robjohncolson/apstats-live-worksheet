@@ -6,20 +6,29 @@
   <title>TI-84 Procedural Trainer V3</title>
   <style>
 :root {
-  --platinum: #c7c7c7;
-  --window: #d8d8d8;
-  --paper: #ffffff;
-  --ink: #000000;
-  --stripe: #8c8c8c;
-  --bevel-light: #ffffff;
-  --bevel-mid: #dfdfdf;
-  --bevel-dark: #7a7a7a;
-  --bevel-deep: #444444;
-  --accent: #f5c518;
-  --accent-soft: #fff4c8;
-  --good: #3f9358;
-  --bad: #bb4b3d;
-  --warn: #a57d1f;
+  /* Tango applies to the Mac-window chrome only. Calculator tokens below are hardware colors. */
+  --platinum: #E5E3D2;
+  --window: #E5E3D2;
+  --paper: #F7F5EE;
+  --ink: #161616;
+  --stripe: #A9A79A;
+  --bevel-light: #F3F1E8;
+  --bevel-mid: #D3D1C2;
+  --bevel-dark: #A9A79A;
+  --bevel-deep: #6E6C62;
+  --accent: #FF5B19;
+  --accent-soft: #F1DDD3;
+  --good: #25663F;
+  --good-soft: #DEF0D3;
+  --bad: #B03A2E;
+  --warn: #8A6D12;
+  --warn-soft: #F1EBC4;
+  --muted: #6E6C62;
+  --good-ink: #174B2B;
+  --bad-ink: #842A21;
+  --warn-ink: #665008;
+  --context-muted: #4F4E47;
+  --focus-ring: #A8330A;
   --canvas-frame: #404040;
   --screen-bg: #adc699;
   --screen-ink: #20321d;
@@ -45,9 +54,9 @@
   --label-number: #000000;
   --lcd-bg: #ffffff;
   --lcd-frame: #25282d;
-  --status-ready: #d9efdf;
-  --status-loading: #f6efc2;
-  --status-offline: #f1dfb6;
+  --status-ready: var(--good-soft);
+  --status-loading: var(--warn-soft);
+  --status-offline: var(--warn-soft);
 }
 
 * {
@@ -63,7 +72,7 @@ body {
 body {
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.35), transparent 18%),
-    linear-gradient(180deg, #bcbcbc 0%, #9f9f9f 100%);
+    linear-gradient(180deg, var(--bevel-mid) 0%, var(--bevel-dark) 100%);
   color: var(--ink);
   font-family: var(--font-body);
   line-height: 1.35;
@@ -147,8 +156,13 @@ input[type="file"] {
     inset 1px 1px 0 var(--bevel-dark);
 }
 
+/* Primary CTA matches every other Tango surface: tangerine FILL, charcoal ink
+   (--accent is a fill; --accent-soft stays the tint for passive highlights). */
 .mac-button.primary {
-  background: var(--accent-soft);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .mac-button:disabled,
@@ -158,6 +172,17 @@ input[type="file"] {
   cursor: not-allowed;
 }
 
+/* Chrome controls remain readable when unavailable. The hardware-key rule above
+   deliberately keeps its physical disabled treatment byte-for-byte. */
+.mac-button:disabled,
+.choice-button:disabled {
+  opacity: 1;
+  background: var(--bevel-mid);
+  border-color: var(--bevel-deep);
+  color: var(--context-muted);
+  box-shadow: none;
+}
+
 .banner-row {
   display: flex;
   align-items: center;
@@ -165,7 +190,7 @@ input[type="file"] {
   gap: 12px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--ink);
-  background: #efefef;
+  background: var(--bevel-light);
   font-size: 0.95rem;
 }
 
@@ -257,14 +282,14 @@ h2 {
 .problem-stem.minimized {
   padding: 10px;
   border: 1px solid var(--ink);
-  background: #f4f4f4;
+  background: var(--bevel-light);
 }
 
 .panel-note,
 .dialog-note {
   margin: 12px 0 0;
   font-size: 0.9rem;
-  color: #2d2d2d;
+  color: var(--context-muted);
 }
 
 .choice-list {
@@ -284,30 +309,30 @@ h2 {
 }
 
 .choice-button.removed {
-  background: #dfdfdf;
-  color: #606060;
+  background: var(--bevel-mid);
+  color: var(--context-muted);
   text-decoration: line-through;
 }
 
 .choice-button.choice-flash-correct {
-  background: #cdebcf;
-  border-color: #2e7d32;
-  color: #1b4b1e;
+  background: var(--good-soft);
+  border-color: var(--good-ink);
+  color: var(--good-ink);
   font-weight: 700;
   box-shadow:
-    inset 1px 1px 0 #e8f7e9,
-    inset -1px -1px 0 #4a9a4f,
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--good),
     0 0 0 2px rgba(46, 125, 50, 0.35);
 }
 
 .choice-button.choice-flash-wrong {
-  background: #f6cfce;
-  border-color: #b71c1c;
-  color: #7a1414;
+  background: var(--accent-soft);
+  border-color: var(--bad-ink);
+  color: var(--bad-ink);
   font-weight: 700;
   box-shadow:
-    inset 1px 1px 0 #fde4e3,
-    inset -1px -1px 0 #d24c48,
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bad),
     0 0 0 2px rgba(183, 28, 28, 0.35);
 }
 
@@ -316,14 +341,14 @@ h2 {
 .keypad-empty {
   padding: 12px;
   border: 1px solid var(--ink);
-  background: #f6f6f6;
+  background: var(--bevel-light);
 }
 
 .clutch-card {
   margin-top: 14px;
   padding: 14px;
   border: 1px solid var(--ink);
-  background: #f3f0d7;
+  background: var(--warn-soft);
 }
 
 .clutch-card h3 {
@@ -333,7 +358,7 @@ h2 {
 }
 
 .clutch-card-review {
-  background: #e8efe2;
+  background: var(--good-soft);
 }
 
 .clutch-note {
@@ -422,22 +447,22 @@ h2 {
 
 .mode-badge.subtle,
 .status-pill.subtle {
-  background: #f5f5f5;
+  background: var(--bevel-light);
 }
 
 .status-pill.status-ready {
   background: var(--status-ready);
-  color: #285036;
+  color: var(--good-ink);
 }
 
 .status-pill.status-loading {
   background: var(--status-loading);
-  color: #6e5c0b;
+  color: var(--warn-ink);
 }
 
 .status-pill.status-offline {
   background: var(--status-offline);
-  color: #8a6a12;
+  color: var(--warn-ink);
 }
 
 .status-indicator {
@@ -940,7 +965,7 @@ h2 {
   display: grid;
   gap: 4px;
   padding: 12px;
-  background: #f7f7f7;
+  background: var(--paper);
 }
 
 .dashboard-card strong {
@@ -955,7 +980,7 @@ h2 {
 select {
   width: 100%;
   padding: 6px 8px;
-  background: #fff;
+  background: var(--paper);
 }
 
 .dialog-backdrop {
@@ -980,7 +1005,7 @@ input[type="file"] {
   width: 100%;
   padding: 10px;
   margin-top: 10px;
-  background: #fff;
+  background: var(--paper);
 }
 
 code {
@@ -1013,7 +1038,7 @@ code {
   min-width: 0;
   padding: 7px 10px;
   border: 1px solid var(--ink);
-  background: #fff;
+  background: var(--paper);
   font-family: var(--font-mono);
   font-size: 0.95rem;
   box-shadow:
@@ -1022,8 +1047,8 @@ code {
 }
 
 .answer-input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .answer-status {
@@ -1051,7 +1076,7 @@ code {
 }
 
 .answer-card.verified {
-  background: #e8efe2;
+  background: var(--good-soft);
   border-color: var(--good);
 }
 
@@ -1368,7 +1393,7 @@ code {
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
-  border-bottom: 1px dashed #aaa;
+  border-bottom: 1px dashed var(--stripe);
   padding-bottom: 10px;
 }
 
@@ -1381,7 +1406,7 @@ code {
   font-family: var(--font-ui);
   font-size: 0.95rem;
   font-weight: 600;
-  color: #2d2d2d;
+  color: var(--context-muted);
 }
 
 .physical-card h3 {
@@ -1407,7 +1432,7 @@ code {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #4a4a4a;
+  color: var(--context-muted);
 }
 
 .physical-key-value {
@@ -1429,8 +1454,8 @@ code {
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  background: #f4f4f4;
-  border: 1px solid #aaa;
+  background: var(--bevel-light);
+  border: 1px solid var(--stripe);
 }
 
 .physical-expect-label {
@@ -1438,7 +1463,7 @@ code {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #4a4a4a;
+  color: var(--context-muted);
 }
 
 .physical-expect-value {
@@ -1454,7 +1479,7 @@ code {
   flex-direction: column;
   gap: 6px;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--ink);
 }
 
 .physical-tips li {
@@ -1466,7 +1491,7 @@ code {
   gap: 10px;
   justify-content: flex-end;
   padding-top: 6px;
-  border-top: 1px dashed #aaa;
+  border-top: 1px dashed var(--stripe);
 }
 
 /* Escape hatch out of physical mode — must stay reachable on phones,
@@ -1487,7 +1512,7 @@ code {
   align-items: center;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px dashed #aaa;
+  border-bottom: 1px dashed var(--stripe);
 }
 
 .options-row:last-of-type {
@@ -1502,7 +1527,7 @@ code {
 .options-row .dialog-note {
   margin: 0;
   font-size: 0.88rem;
-  color: #4a4a4a;
+  color: var(--context-muted);
 }
 
 .physical-idle,
@@ -1514,7 +1539,7 @@ code {
 .physical-note {
   margin: 0;
   font-size: 0.88rem;
-  color: #4a4a4a;
+  color: var(--context-muted);
 }
 
 @media (max-width: 600px) {
