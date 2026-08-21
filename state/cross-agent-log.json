@@ -4820,15 +4820,236 @@
         "tests/ti84-repeatable-steps.test.js"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "1006f74bc34e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Finish the \"Tango\" palette sweep on the last two student surfaces. The rest of the app already\nwears",
+      "status": "completed",
+      "duration_seconds": 746.145,
+      "timestamp": "2026-08-20T14:06:59Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c86f59de9985",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "DESIGN TASK. Write `FRQ_GRADE_TICKETS_SPEC.md` (repo root) \u2014 the build contract for \"Phase 2:\nserver",
+      "status": "completed",
+      "duration_seconds": 1311.706,
+      "timestamp": "2026-08-20T14:18:30Z",
+      "files_changed": [
+        "FRQ_GRADE_TICKETS_SPEC.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "b9897029184f",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only). The uncommitted working-tree diff (`git diff`) finishes the \"Tango\"\n",
+      "status": "completed",
+      "duration_seconds": 715.92,
+      "timestamp": "2026-08-20T14:25:19Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1e6f99e956f0",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement STAGE 0 of `FRQ_GRADE_TICKETS_SPEC.md` \u2014 and ONLY Stage 0. Read the spec first, especially",
+      "status": "completed",
+      "duration_seconds": 528.371,
+      "timestamp": "2026-08-20T14:37:12Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "24808e23b771",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Fix ALL 12 findings from the adversarial contrast review of your Tango sweep (uncommitted working\ntr",
+      "status": "completed",
+      "duration_seconds": 1162.617,
+      "timestamp": "2026-08-20T14:47:00Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "ab82dd19b2b8",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only). The uncommitted working tree adds STAGE 0 of\nFRQ_GRADE_TICKETS_SPEC.",
+      "status": "completed",
+      "duration_seconds": 476.51,
+      "timestamp": "2026-08-20T14:54:50Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "36f8fc5f6414",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Fix ALL FIVE findings from the adversarial review of your Stage 0 (uncommitted working tree:\nscripts",
+      "status": "completed",
+      "duration_seconds": 709.788,
+      "timestamp": "2026-08-20T15:08:07Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7fb816404773",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement PACKAGE A of FRQ_GRADE_TICKETS_SPEC.md \u2014 the database core ONLY. Read the spec first:\n\u00a75.1",
+      "status": "implemented",
+      "duration_seconds": 711.214,
+      "timestamp": "2026-08-21T05:00:05Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "d832941354d5",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only). The uncommitted working tree adds PACKAGE A of\nFRQ_GRADE_TICKETS_SPE",
+      "status": "completed",
+      "duration_seconds": 561.245,
+      "timestamp": "2026-08-21T05:11:57Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "533b7a073d6f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Fix ALL findings from the adversarial review of PACKAGE A (uncommitted working tree:\nroster-server/m",
+      "status": "completed",
+      "duration_seconds": 605.077,
+      "timestamp": "2026-08-21T05:24:46Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "73bad978b373",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement PACKAGE B of FRQ_GRADE_TICKETS_SPEC.md \u2014 the roster-server worker + routes. Read the spec\n",
+      "status": "implemented",
+      "duration_seconds": 1031.86,
+      "timestamp": "2026-08-21T05:55:17Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "01af6b5cf513",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only). The uncommitted working tree implements PACKAGE B of\nFRQ_GRADE_TICKE",
+      "status": "completed",
+      "duration_seconds": 972.991,
+      "timestamp": "2026-08-21T06:15:04Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9e70e073fee5",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Fix ALL 7 findings from the adversarial review of PACKAGE B (uncommitted working tree; files:\nroster",
+      "status": "completed",
+      "duration_seconds": 626.587,
+      "timestamp": "2026-08-21T06:26:56Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3d4fcdeebb6d",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW ROUND 2 (read-only). Same Package B diff as round 1 (roster-server FRQ worker +\nr",
+      "status": "completed",
+      "duration_seconds": 762.03,
+      "timestamp": "2026-08-21T06:41:49Z",
+      "files_changed": [
+        "state/cross-agent/3d4fcdeebb6d.result.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "775b023c2d5c",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement PACKAGE C of FRQ_GRADE_TICKETS_SPEC.md \u2014 the worksheet client. Read \u00a75.6 (client/codemod\nc",
+      "status": "implemented",
+      "duration_seconds": 916.913,
+      "timestamp": "2026-08-21T06:45:08Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9fbcca0b1777",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Fix findings #2-#7 from review round 2 of Package B (uncommitted tree). Finding #1 (gradebook-client",
+      "status": "completed",
+      "duration_seconds": 530.052,
+      "timestamp": "2026-08-21T06:52:50Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e3acb5554e6e",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW \u2014 FINAL GATE before the Phase 2 push (read-only). The uncommitted working tree\n(`",
+      "status": "completed",
+      "duration_seconds": 726.204,
+      "timestamp": "2026-08-21T07:15:00Z",
+      "files_changed": [
+        "state/cross-agent/e3acb5554e6e.result.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "434e452c0148",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Fix ALL 6 findings from the final-gate review of Package C (uncommitted tree; your files:\nscripts/wi",
+      "status": "completed",
+      "duration_seconds": 739.046,
+      "timestamp": "2026-08-21T07:28:13Z",
+      "files_changed": [
+        "scripts/wire-ai-worksheet-grade.mjs",
+        "gradebook-client.js",
+        "offline-queue.js",
+        "tests/ai-worksheet-grade.test.js",
+        "tests/gradebook-client.test.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "ffa5ac160edd",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Two tests you wrote in tests/ai-worksheet-grade.test.js are non-deterministic / interfering and\ncurr",
+      "status": "completed",
+      "duration_seconds": 390.215,
+      "timestamp": "2026-08-21T07:42:26Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 410,
-    "cc_to_codex": 410,
+    "total_calls": 429,
+    "cc_to_codex": 429,
     "codex_to_cc": 0,
-    "completed": 311,
+    "completed": 327,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 623.937
+    "avg_duration_seconds": 629.461
   }
 }

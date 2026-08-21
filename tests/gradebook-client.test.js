@@ -933,6 +933,114 @@ function makeWindowWithQueue(overrideServiceUrl = 'https://mock-service.test') {
 }
 
 describe('gradebook-client.js — offline capture', () => {
+  it('requestFrqGrade sends the authoritative ticket shape and surfaces ticket metadata', async () => {
+    const { win, gradebookClient } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    const fetchFn = mockFetch(win, {
+      ok: true,
+      ledgerId: 'frq-ledger-1',
+      clientScoreIgnored: true,
+      status: 'queued',
+      responseVersion: 7
+    });
+
+    const result = await gradebookClient.requestFrqGrade({
+      itemId: 'WS-U6L1-2-reflect1',
+      response: 'A sufficiently detailed response.'
+    });
+
+    const body = JSON.parse(fetchFn.mock.calls[0][1].body);
+    expect(body).toMatchObject({
+      source: 'frq',
+      itemId: 'WS-U6L1-2-reflect1',
+      response: 'A sufficiently detailed response.',
+      requestGrade: true
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      ledgerId: 'frq-ledger-1',
+      clientScoreIgnored: true,
+      status: 'queued',
+      responseVersion: 7
+    });
+  });
+
+  it.each([429, 503])('captures an FRQ requestGrade %s retryable response in the outbox', async (status) => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    mockFetch(win, { error: 'grading storage unavailable', retryable: true }, { ok: false, status });
+
+    const result = await gradebookClient.requestFrqGrade({
+      itemId: 'WS-U6L1-2-reflect1',
+      response: 'Latest authoritative response.'
+    });
+
+    expect(result).toMatchObject({ ok: false, reason: 'network', queued: true });
+    const rows = await OfflineQueue.all();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      source: 'frq',
+      itemId: 'WS-U6L1-2-reflect1',
+      requestGrade: true,
+      studentId: 'uuid-test-student',
+      response: 'Latest authoritative response.'
+    });
+    expect(typeof rows[0].transportSequence).toBe('number');
+  });
+
+  it('supersedes an older queued answer after a newer same-key POST succeeds', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    let resolveFirst;
+    const first = new Promise((resolve) => { resolveFirst = resolve; });
+    const fetchFn = vi.fn()
+      .mockImplementationOnce(() => first)
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ok: true, ledgerId: 'new' }) });
+    win.fetch = fetchFn;
+
+    const oldCall = gradebookClient.requestFrqGrade({ itemId: 'SAME', response: 'old answer' });
+    const newCall = gradebookClient.requestFrqGrade({ itemId: 'SAME', response: 'new answer' });
+    // The per-key send chain starts each POST on a microtask; yield once so the
+    // FIRST send fires, then assert the second is still waiting behind it.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    resolveFirst({ ok: false, status: 429, json: async () => ({ retryable: true }) });
+    const oldResult = await oldCall;
+    // The OLD call's retryable failure must NOT enqueue: a NEWER send for the same
+    // key already started, so queueing the stale text would risk replaying it over
+    // the newer answer. Superseded-and-dropped is the designed outcome.
+    expect(oldResult.ok).toBe(false);
+    expect(await OfflineQueue.all()).toHaveLength(0);
+
+    await newCall;
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(await OfflineQueue.all()).toHaveLength(0);
+    await gradebookClient.syncOfflineQueue();
+    // Nothing queued -> nothing replayed: the newer POST's success is final.
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses keepalive only when an unload FRQ flush requests it', async () => {
+    const { win, gradebookClient } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    const fetchFn = mockFetch(win, { ok: true, ledgerId: 'kept' });
+
+    await gradebookClient.requestFrqGrade({ itemId: 'Q-hide', response: 'latest', keepalive: true });
+
+    expect(fetchFn.mock.calls[0][1].keepalive).toBe(true);
+  });
+
+  it('keeps a non-FRQ retryable 503 as a server error with no outbox capture', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    mockFetch(win, { retryable: true }, { ok: false, status: 503 });
+
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q503', response: 'x' });
+
+    expect(result.reason).toBe('server');
+    expect(await OfflineQueue.all()).toHaveLength(0);
+  });
+
   it('OFFLINE_MODE: enqueues without touching the network, returns ok+queued', async () => {
     const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
     setToken(win, 'tok');
@@ -1028,6 +1136,25 @@ describe('gradebook-client.js — offline capture', () => {
     const r = await gradebookClient.syncOfflineQueue();
     expect(r.failed).toBe(1);
     expect(await OfflineQueue.all()).toHaveLength(1);
+  });
+
+  it('periodically drains queued rows while the browser stays online', async () => {
+    vi.useFakeTimers();
+    try {
+      const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+      setToken(win, 'tok');
+      win.fetch = vi.fn().mockRejectedValueOnce(new Error('brief outage'));
+      await gradebookClient.record({ source: 'worksheet', itemId: 'online-only', response: 'saved locally' });
+      expect(await OfflineQueue.all()).toHaveLength(1);
+      win.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true, ledgerId: 'replayed' }) });
+
+      await vi.advanceTimersByTimeAsync(30001);
+
+      expect(await OfflineQueue.all()).toHaveLength(0);
+      expect(win.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('without offline-queue.js loaded, record() behaves exactly as before (graceful)', async () => {

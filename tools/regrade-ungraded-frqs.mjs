@@ -10,6 +10,9 @@ import {
   loadFrqRubricRegistry,
   validateFrqRubricRegistry,
 } from '../roster-server/frq-prompt.js';
+import { verdictToScore } from '../roster-server/frq-verdict.js';
+
+export { verdictToScore };
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 const ROOT = resolve(dirname(THIS_FILE), '..');
@@ -107,15 +110,6 @@ export function selectUngradedFrqRows(snapshot, manifest, options = {}) {
 
 export const selectEligibleRows = selectUngradedFrqRows;
 
-export function verdictToScore(verdict, missing) {
-  const rawScore = verdict && typeof verdict === 'object' ? verdict.score : verdict;
-  const missingElements = verdict && typeof verdict === 'object' ? verdict.missing : missing;
-  const letter = rawScore == null ? '' : String(rawScore).trim().charAt(0).toUpperCase();
-  if (!(letter === 'E' || letter === 'P' || letter === 'I')) return null;
-  if (letter === 'P' && Array.isArray(missingElements) && missingElements.length === 0) return 1;
-  return { E: 1, P: 0.5, I: 0 }[letter];
-}
-
 export function buildPrompt(registry, prefix, textareaId, response) {
   return buildServerReflectionPrompt(registry, prefix, textareaId, response);
 }
@@ -132,12 +126,19 @@ export function buildGraderRequest(worksheet, textareaId, response, prompt, less
   };
 }
 
-export function buildRegradeRequest(candidate, score) {
+export function buildRegradeRequest(candidate, score, registry) {
+  const canonicalResponse = String(candidate.response).trim();
+  const responseHash = createHash('sha256')
+    .update(canonicalResponse, 'utf8')
+    .digest('hex');
+  const sourceDigest = String(registry?.sourceDigest || '').replace(/^sha256:/, '');
   const body = {
     studentId: candidate.studentId,
     itemId: candidate.itemId,
     score,
     provenance: 'ai-batch',
+    responseHash,
+    rubricVersion: `${registry?.schoolYear || 'unknown'}:${sourceDigest}`,
   };
   if (Number(candidate.attempt) !== 1) body.attempt = candidate.attempt;
   return body;
@@ -317,6 +318,7 @@ export async function runRegradeJob(options) {
     graded: 0,
     applied: 0,
     floorHeld: 0,
+    stale: 0,
     failed: 0,
     unknownItems: classified.unknownItems.length,
     invalidTimestamps: classified.invalidTimestamps.length,
@@ -395,15 +397,26 @@ export async function runRegradeJob(options) {
           'Content-Type': 'application/json',
           'x-teacher-secret': config.teacherKey,
         },
-        body: JSON.stringify(buildRegradeRequest(candidate, score)),
+        body: JSON.stringify(buildRegradeRequest(candidate, score, registry)),
       });
+      const appliedResult = await readJsonResponse(regradeResponse);
+      if (regradeResponse.status === 409 && appliedResult?.error === 'stale-response') {
+        summary.stale += 1;
+        onEvent({
+          type: 'stale-response',
+          username: candidate.username,
+          itemId: candidate.itemId,
+          score,
+          reason: 'student response changed after the snapshot',
+        });
+        continue;
+      }
       if (!regradeResponse.ok) {
         summary.failed += 1;
         onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, score, reason: `regrade HTTP ${regradeResponse.status}` });
         continue;
       }
 
-      const appliedResult = await readJsonResponse(regradeResponse);
       if (appliedResult?.applied === false) {
         summary.floorHeld += 1;
         onEvent({ type: 'floor-held', username: candidate.username, itemId: candidate.itemId, score });
@@ -510,7 +523,7 @@ function printSummary(summary) {
   }
   console.log(
     `Summary: found=${summary.found} graded=${summary.graded} applied=${summary.applied} `
-      + `floorHeld=${summary.floorHeld} failed=${summary.failed} `
+      + `floorHeld=${summary.floorHeld} stale=${summary.stale} failed=${summary.failed} `
       + `unknownItems=${summary.unknownItems} invalidTimestamps=${summary.invalidTimestamps}`,
   );
 }
@@ -531,6 +544,8 @@ export async function main(argv = process.argv.slice(2)) {
         console.log(`Applied ${event.username} ${event.itemId} score=${event.score}`);
       } else if (event.type === 'floor-held') {
         console.log(`Floor held ${event.username} ${event.itemId} score=${event.score}`);
+      } else if (event.type === 'stale-response') {
+        console.log(`Skipped stale response ${event.username} ${event.itemId}`);
       } else {
         console.error(`Failed ${event.username} ${event.itemId}${event.score === undefined ? '' : ` score=${event.score}`}${event.reason ? ` — ${event.reason}` : ''}`);
       }

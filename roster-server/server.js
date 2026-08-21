@@ -6,7 +6,10 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import { createLiveDb } from './db.js';
-import { createLiveLedgerDb } from './ledger-db.js';
+import { createLedgerDb, createServiceClient } from './ledger-db.js';
+import { createFrqLedgerDb } from './frq-ledger-db.js';
+import { createFrqWorker } from './frq-worker.js';
+import { loadFrqRubricRegistry } from './frq-prompt.js';
 import { createLiveRemediationDb } from './remediation-db.js';
 import { createLivePollArchiveDb } from './poll-archive-db.js';
 import { signToken, verifyToken } from './token.js';
@@ -48,7 +51,7 @@ import { encryptPassword, decryptPassword } from './crypto.js';
 import { requireTeacher, getTeacherKey } from './teacher-auth.js';
 import { getOpenSections, isOpenSection } from './signup-config.js';
 import { createRateLimiter, createLoginThrottle } from './rate-limit.js';
-import { getReceiptHealth, initReceipts, mountReceipts } from './receipts.js';
+import { getReceiptHealth, initReceipts, issueLedgerReceipt, mountReceipts } from './receipts.js';
 import { mountStudentKeys } from './student-keys.js';
 import { mountSubmissions } from './submissions.js';
 import { readFile } from 'fs/promises';
@@ -57,6 +60,30 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+let frqBundleCache;
+let frqBundleLoaded = false;
+let frqBundleWarningLogged = false;
+
+export function resolveFrqGradeMode(value = process.env.FRQ_GRADE_MODE) {
+  const normalized = String(value || 'off').trim().toLowerCase();
+  return ['off', 'shadow', 'authoritative'].includes(normalized) ? normalized : 'off';
+}
+
+function loadLiveFrqBundle() {
+  if (frqBundleLoaded) return frqBundleCache;
+  frqBundleLoaded = true;
+  try {
+    const source = readFileSync(resolve(__dirname, 'data', 'frq-rubrics.SY2627.json'), 'utf8');
+    frqBundleCache = loadFrqRubricRegistry(source);
+  } catch (error) {
+    frqBundleCache = null;
+    if (!frqBundleWarningLogged) {
+      frqBundleWarningLogged = true;
+      console.warn('roster-server: FRQ rubric bundle unavailable; FRQ worker degraded:', error.message);
+    }
+  }
+  return frqBundleCache;
+}
 
 // bcrypt work factor. Production stays 12 (BCRYPT_COST unset). Tests set
 // BCRYPT_COST=4 so the auth paths (signup/change-password/PIN hash + verify) stop
@@ -118,6 +145,22 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     blooketBonusTopics: _bonus,
     blooketLessons: _presence, // legacy alias = presence
   };
+  const _frqMode = () => resolveFrqGradeMode();
+  const _frqBundle = ledgerDb && Object.hasOwn(ledgerDb, 'frqBundle')
+    ? ledgerDb.frqBundle
+    : loadLiveFrqBundle();
+  const _frqDb = ledgerDb && ledgerDb.frqDb ? ledgerDb.frqDb : null;
+  const _frqWorker = ledgerDb && ledgerDb.frqWorker
+    ? ledgerDb.frqWorker
+    : createFrqWorker({
+      frqDb: _frqDb,
+      bundle: _frqBundle,
+      graderUrl: process.env.FRQ_GRADER_URL,
+      graderSecret: process.env.FRQ_GRADER_SECRET,
+      mode: _frqMode,
+      issueReceipt: issueLedgerReceipt,
+      log: console,
+    });
 
   const app = express();
   app.use(cors());
@@ -180,6 +223,14 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       ok: true, service: 'roster', time: new Date().toISOString(), receipts: getReceiptHealth(),
       // Deploy verification: Railway injects the deployed commit; null elsewhere.
       commit: process.env.RAILWAY_GIT_COMMIT_SHA || null,
+      frq: {
+        mode: _frqMode(),
+        bundle: _frqBundle ? _frqBundle.sourceDigest : null,
+        storage: _frqDb && _frqDb.health
+          ? { ..._frqDb.health }
+          : { degraded: true, errorCode: 'not_configured', lastDegradedAt: null },
+        worker: { ..._frqWorker.counters },
+      },
     });
   });
 
@@ -942,7 +993,16 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Mounts POST /ledger/record and GET /ledger/student/:studentId.
   // ledgerDb must be passed in (tests inject a fake; production passes createLiveLedgerDb()).
   if (ledgerDb) {
-    mountLedger(app, { db: ledgerDb, verifyToken, resolveUsername: resolveReceiptUsername, worksheetKey, rosterDb: db });
+    mountLedger(app, {
+      db: ledgerDb,
+      verifyToken,
+      resolveUsername: resolveReceiptUsername,
+      worksheetKey,
+      rosterDb: db,
+      frqDb: _frqDb,
+      frqBundle: _frqBundle,
+      frqMode: _frqMode,
+    });
     // OFFLINE_MODE_SPEC §4.D — teacher-gated batch import of offline-captured work.
     mountLedgerImport(app, { db, ledgerDb, resolveUsername: resolveReceiptUsername });
     // GRADE_LEDGER_DURABILITY_SPEC — teacher-gated read-only snapshot of the whole
@@ -1131,6 +1191,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountTrainer(app, { db, trainerDb, verifyToken });
   }
 
+  // The production entrypoint owns timer lifecycle; tests can inspect/inject
+  // this dormant worker without createApp ever scheduling background work.
+  app.locals.frqWorker = _frqWorker;
+
   return app;
 }
 
@@ -1299,7 +1363,9 @@ function loadLiveWorksheetBlankCounts() {
 if (process.env.NODE_ENV !== 'test') {
   (async () => {
     const db = createLiveDb();
-    const ledgerDb = createLiveLedgerDb();
+    const ledgerClient = createServiceClient();
+    const ledgerDb = createLedgerDb(ledgerClient);
+    ledgerDb.frqDb = createFrqLedgerDb(ledgerClient);
     // Phase 3 is ADDITIVE: the diagnostic engine must never take down the
     // LIVE auth service. If bkt.js is missing/corrupt, log and continue —
     // createApp's guard then simply does not mount /mastery (everything else,
@@ -1362,6 +1428,9 @@ if (process.env.NODE_ENV !== 'test') {
       worksheetKey,
       _prodGrade          // atomic bundle — no second resolve inside createApp
     );
+    // Same production-only, caught, unref'd lifecycle as the doge sweep. The
+    // worker itself catches every tick and start() is a no-op while mode is off.
+    if (app.locals.frqWorker) app.locals.frqWorker.start();
     const PORT = process.env.PORT || 8090;
     app.listen(PORT, () => {
       console.log(`roster-server listening on port ${PORT}`);

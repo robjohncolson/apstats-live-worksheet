@@ -1986,7 +1986,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
 
     <script>
         // ==================== AI WORKSHEET GRADING (semantic blanks + folded FRQ) ====================
-        // AI_WORKSHEET_GRADING_WIRED — AI_WORKSHEET_GRADING_BUILD.md.
+        // AI_WORKSHEET_GRADING_WIRED — AI_WORKSHEET_GRADING_BUILD.md — FRQ_GRADE_TICKETS_C_V1.
         // A SECOND layer on top of the verbatim check. A blank whose answer MEANS
         // the same thing as the key is upgraded to FULL credit; the FRQ section is
         // re-graded E/P/I UPGRADE-ONLY. ONE batched call for all blanks + hash
@@ -1995,6 +1995,175 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
         (function () {
             if (window.__aiWorksheetGradeWired) return;     // runtime idempotency
             window.__aiWorksheetGradeWired = true;
+
+            // Test-only lifecycle support. Production pages never set the seam
+            // flag, so these registries simply mirror the browser's normal
+            // timer/listener behavior for the lifetime of the page.
+            var _aiDisposed = false;
+            var _aiOwnedTimeouts = [];
+            var _aiOwnedListeners = [];
+            function _aiForgetOwnedTimeout(timeoutId) {
+                var index = _aiOwnedTimeouts.indexOf(timeoutId);
+                if (index >= 0) _aiOwnedTimeouts.splice(index, 1);
+            }
+            function _aiSetOwnedTimeout(callback, delayMs) {
+                if (_aiDisposed) return null;
+                var timeoutId = setTimeout(function () {
+                    _aiForgetOwnedTimeout(timeoutId);
+                    if (!_aiDisposed) callback();
+                }, delayMs);
+                _aiOwnedTimeouts.push(timeoutId);
+                return timeoutId;
+            }
+            function _aiClearOwnedTimeout(timeoutId) {
+                if (timeoutId == null) return;
+                clearTimeout(timeoutId);
+                _aiForgetOwnedTimeout(timeoutId);
+            }
+            function _aiClearAllOwnedTimeouts() {
+                var timeouts = _aiOwnedTimeouts.slice();
+                _aiOwnedTimeouts = [];
+                timeouts.forEach(function (timeoutId) { clearTimeout(timeoutId); });
+            }
+            function _aiAddOwnedListener(target, type, handler) {
+                if (_aiDisposed || !target || typeof target.addEventListener !== 'function') return;
+                target.addEventListener(type, handler);
+                _aiOwnedListeners.push({ target: target, type: type, handler: handler });
+            }
+            function _aiRemoveAllOwnedListeners() {
+                _aiOwnedListeners.forEach(function (listener) {
+                    try { listener.target.removeEventListener(listener.type, listener.handler); } catch (_) {}
+                    try {
+                        if (listener.target.dataset && (listener.type === 'input' || listener.type === 'blur')) {
+                            delete listener.target.dataset.aiFrqWired;
+                        }
+                    } catch (_) {}
+                });
+                _aiOwnedListeners = [];
+            }
+
+            // -- roster capability + grader authentication ------------------
+            // The capability is student-specific. Missing identity, a failed
+            // fetch, an unknown mode, or a non-canary response all retain the
+            // established legacy behavior.
+            var _AI_FRQ_CONFIG_TTL_MS = 60000;
+            var _AI_FRQ_CONFIG_TIMEOUT_MS = 4000;
+            var _aiFrqConfig = { mode: 'off', authoritative: false, pollMs: 2000, at: 0 };
+            var _aiFrqConfigFlight = null;
+            var _aiFrqConfigAbortController = null;
+            function _aiRosterToken() {
+                try {
+                    return (window.rosterClient && typeof window.rosterClient.token === 'function')
+                        ? window.rosterClient.token() : null;
+                } catch (_) { return null; }
+            }
+            function _aiLegacyFrqConfig(mode, at) {
+                _aiFrqConfig = { mode: mode || 'off', authoritative: false, pollMs: 2000, at: at || 0 };
+                return _aiFrqConfig;
+            }
+            function _aiIsAuthoritative() {
+                return _aiFrqConfig.mode === 'authoritative' && _aiFrqConfig.authoritative === true;
+            }
+            function _aiDowngradeFrqMode(mode, at) {
+                var wasAuthoritative = _aiIsAuthoritative();
+                var config = _aiLegacyFrqConfig(mode, at);
+                _aiStopFrqPolling();
+                if (wasAuthoritative && !_aiDisposed) _aiScheduleAutoGrade(0);
+                return config;
+            }
+            async function _aiFetchFrqConfig(force) {
+                if (_aiDisposed) return _aiFrqConfig;
+                var now = Date.now();
+                if (!force && _aiFrqConfig.at && now - _aiFrqConfig.at < _AI_FRQ_CONFIG_TTL_MS) return _aiFrqConfig;
+                if (_aiFrqConfigFlight) return _aiFrqConfigFlight;
+                var token = _aiRosterToken();
+                var base = window.ROSTER_SERVICE_URL;
+                if (!token || !base || typeof fetch !== 'function') return _aiLegacyFrqConfig('off', 0);
+                var flight = (async function () {
+                    var controller = null;
+                    try { controller = typeof AbortController !== 'undefined' ? new AbortController() : null; } catch (_) {}
+                    _aiFrqConfigAbortController = controller;
+                    var timeoutId = null;
+                    try {
+                        var timeout = new Promise(function (_, reject) {
+                            timeoutId = _aiSetOwnedTimeout(function () {
+                                try { if (controller) controller.abort(); } catch (_) {}
+                                reject(new Error('frq config timeout'));
+                            }, _AI_FRQ_CONFIG_TIMEOUT_MS);
+                        });
+                        var request = fetch(base + '/ledger/frq-config', {
+                            method: 'GET', cache: 'no-store',
+                            headers: { 'Authorization': 'Bearer ' + token },
+                            signal: controller ? controller.signal : undefined
+                        });
+                        var res = await Promise.race([request, timeout]);
+                        if (_aiDisposed) return _aiFrqConfig;
+                        if (!res || !res.ok) return _aiDowngradeFrqMode('off', Date.now());
+                        var data = await res.json();
+                        if (_aiDisposed) return _aiFrqConfig;
+                        var mode = data && typeof data.mode === 'string' ? data.mode : 'off';
+                        var pollMs = data && typeof data.pollMs === 'number' && data.pollMs >= 1000
+                            ? Math.round(data.pollMs) : 2000;
+                        if (mode !== 'authoritative' || !data || data.authoritative !== true) {
+                            return _aiDowngradeFrqMode(mode, Date.now());
+                        }
+                        _aiFrqConfig = {
+                            mode: mode,
+                            bundleVersion: data.bundleVersion,
+                            pollMs: pollMs,
+                            authoritative: true,
+                            at: Date.now()
+                        };
+                        return _aiFrqConfig;
+                    } catch (_) {
+                        return _aiDowngradeFrqMode('off', Date.now());
+                    } finally {
+                        _aiClearOwnedTimeout(timeoutId);
+                        if (_aiFrqConfigAbortController === controller) _aiFrqConfigAbortController = null;
+                    }
+                })();
+                _aiFrqConfigFlight = flight;
+                try { return await flight; }
+                finally { if (_aiFrqConfigFlight === flight) _aiFrqConfigFlight = null; }
+            }
+            async function _aiEnsureFrqConfig() {
+                if (_aiFrqConfig.at) return _aiFetchFrqConfig(false);
+                return _aiFetchFrqConfig(false);
+            }
+            function _aiInstallGraderBearer() {
+                try {
+                    var originalFetch = window.fetch;
+                    if (typeof originalFetch !== 'function' || originalFetch.__aiRosterBearerWrapped) return;
+                    var wrapped = function (input, init) {
+                        var url = typeof input === 'string' ? input : (input && input.url ? String(input.url) : '');
+                        var token = _aiRosterToken();
+                        var isGrade = /\/api\/ai\/(?:grade|grade-batch|grade-worksheet)(?:[?#]|$)/.test(url);
+                        if (!token || !isGrade) return originalFetch.apply(this, arguments);
+                        var next = {};
+                        var source = init || {};
+                        for (var key in source) {
+                            if (Object.prototype.hasOwnProperty.call(source, key)) next[key] = source[key];
+                        }
+                        var headers = {};
+                        if (typeof Headers !== 'undefined' && source.headers instanceof Headers) {
+                            source.headers.forEach(function (value, name) { headers[name] = value; });
+                        } else if (Array.isArray(source.headers)) {
+                            source.headers.forEach(function (pair) { if (pair && pair.length >= 2) headers[pair[0]] = pair[1]; });
+                        } else if (source.headers) {
+                            for (var header in source.headers) {
+                                if (Object.prototype.hasOwnProperty.call(source.headers, header)) headers[header] = source.headers[header];
+                            }
+                        }
+                        headers.Authorization = 'Bearer ' + token;
+                        next.headers = headers;
+                        return originalFetch.call(this, input, next);
+                    };
+                    wrapped.__aiRosterBearerWrapped = true;
+                    wrapped.__aiRosterBearerOriginal = originalFetch;
+                    window.fetch = wrapped;
+                } catch (_) {}
+            }
+            _aiInstallGraderBearer();
 
             // -- scenario: unit/lesson for framework grounding ----------------
             function _aiUnitLesson() {
@@ -2103,6 +2272,22 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     var m = await window.gradebookClient.fetchPrior(prefix);
                     return (m && typeof m.get === 'function') ? m : new Map();
                 } catch (_) { return new Map(); }
+            }
+            var _aiPriorScoresPromise = null;
+            var _aiPriorScoresCache = null;
+            function _aiSharedPriorScores() {
+                if (_aiDisposed) return Promise.resolve(new Map());
+                if (_aiPriorScoresCache) return Promise.resolve(_aiPriorScoresCache);
+                if (_aiPriorScoresPromise) return _aiPriorScoresPromise;
+                _aiPriorScoresPromise = _aiFetchPriorScores().then(function (prior) {
+                    if (!_aiDisposed) _aiPriorScoresCache = prior;
+                    return prior;
+                }, function () {
+                    var empty = new Map();
+                    if (!_aiDisposed) _aiPriorScoresCache = empty;
+                    return empty;
+                });
+                return _aiPriorScoresPromise;
             }
             function _aiLedgerRank(score) {
                 if (score === 1) return 2;      // E
@@ -2310,6 +2495,11 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 } catch (_) { return false; }
             }
             async function _aiGradeFrqs(manual) {
+                await _aiEnsureFrqConfig();
+                if (_aiIsAuthoritative()) {
+                    await _aiRequestAllFrqGrades(!!manual);
+                    return 0;
+                }
                 if (!_aiGraderFn()) return 0;   // no grader available on this worksheet
                 var refs = _aiReflectionTextareas();
                 var gradable = refs.filter(function (ta) {
@@ -2455,7 +2645,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     el = document.createElement('div');
                     el.id = id;
                     el.className = 'ai-wait-status';
-                    el.setAttribute('aria-live', 'polite');
+                    el.setAttribute('aria-live', 'off');
                     el.style.cssText = 'font-size:12px;color:#555;margin:4px 0 2px;display:flex;gap:6px;align-items:center';
                     ta.insertAdjacentElement('afterend', el);
                 }
@@ -2481,13 +2671,689 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 try { el.remove(); } catch (_) {}
             }
 
+            // -- authoritative FRQ tickets, status polling, and rendering ----
+            var _AI_FRQ_POLL_MAX_MS = 120000;
+            var _AI_FRQ_LOCAL_COPY = 'Saved on this device · waiting for a connection to queue grading.';
+            var _AI_FRQ_UNSAVED_COPY = '⚠ Not saved — check your connection';
+            var _aiFrqStates = {};
+            var _aiFrqPollTimer = null;
+            var _aiFrqPollStartedAt = 0;
+            var _aiFrqPollInFlight = false;
+            var _aiFrqPollBackoffMs = 0;
+            var _aiFrqRenderedGrade = {};
+            var _aiFrqAwayShown = {};
+            var _aiFrqAnnouncedGrade = {};
+            var _aiFrqTerminalReconciled = {};
+            var _aiFrqSessionStartedAt = Date.now();
+
+            function _aiFrqTextareaId(itemId) {
+                var prefix = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : '';
+                var lead = prefix ? prefix + '-' : '';
+                return lead && String(itemId).indexOf(lead) === 0 ? String(itemId).slice(lead.length) : null;
+            }
+            function _aiFrqTextarea(itemId) {
+                var taId = _aiFrqTextareaId(itemId);
+                return taId ? document.getElementById(taId) : null;
+            }
+            function _aiFrqVisible(itemId) {
+                var ta = _aiFrqTextarea(itemId);
+                if (!ta || ta.hidden || ta.getAttribute('aria-hidden') === 'true') return false;
+                try {
+                    var style = window.getComputedStyle ? window.getComputedStyle(ta) : null;
+                    if (style && (style.display === 'none' || style.visibility === 'hidden')) return false;
+                } catch (_) {}
+                return true;
+            }
+            function _aiFrqPending(status) {
+                return status === 'local-only' || status === 'draft' || status === 'queued'
+                    || status === 'grading' || status === 'retrying'
+                    || status === 'appeal-queued' || status === 'appeal-grading';
+            }
+            function _aiHasVisibleFrqPending() {
+                var ids = Object.keys(_aiFrqStates);
+                for (var i = 0; i < ids.length; i++) {
+                    if (_aiFrqPending(_aiFrqStates[ids[i]] && _aiFrqStates[ids[i]].status)
+                        && _aiFrqVisible(ids[i])) return true;
+                }
+                return false;
+            }
+            function _aiSetFrqStatusText(taId, text, state, announce, etaText, announcementKey) {
+                if (_aiStatusTimers[taId]) { clearInterval(_aiStatusTimers[taId]); delete _aiStatusTimers[taId]; }
+                var el = _aiStatusEl(taId, true);
+                if (!el) return null;
+                var nextState = state || '';
+                var nextText = String(text || '');
+                var nextEta = String(etaText || '');
+                var nextAnnouncement = announcementKey || '';
+                if (el.dataset.frqState === nextState && el.dataset.frqText === nextText
+                    && el.dataset.frqEta === nextEta && el.dataset.frqAnnouncement === nextAnnouncement) return el;
+                var copy = el.querySelector('.ai-status-copy');
+                var eta = el.querySelector('.ai-status-eta');
+                if (!copy || !eta) {
+                    el.textContent = '';
+                    copy = document.createElement('span');
+                    copy.className = 'ai-status-copy';
+                    eta = document.createElement('span');
+                    eta.className = 'ai-status-eta';
+                    eta.setAttribute('aria-live', 'off');
+                    el.appendChild(copy);
+                    el.appendChild(eta);
+                }
+                copy.setAttribute('aria-live', announce ? 'assertive' : 'off');
+                copy.setAttribute('aria-atomic', 'true');
+                if (copy.textContent !== nextText || (announce && el.dataset.frqAnnouncement !== nextAnnouncement)) {
+                    copy.textContent = nextText;
+                }
+                if (eta.textContent !== nextEta) eta.textContent = nextEta;
+                el.dataset.frqState = state || '';
+                el.dataset.frqText = nextText;
+                el.dataset.frqEta = nextEta;
+                el.dataset.frqAnnouncement = nextAnnouncement;
+                return el;
+            }
+            function _aiRenderFrqConnection(taId) {
+                return _aiSetFrqStatusText(taId, _AI_FRQ_LOCAL_COPY, 'local-only');
+            }
+            function _aiRenderFrqUnsaved(taId) {
+                return _aiSetFrqStatusText(taId, _AI_FRQ_UNSAVED_COPY, 'unsaved');
+            }
+            function _aiFrqEtaSeconds(item) {
+                return item && typeof item.estimatedWaitMs === 'number' && item.estimatedWaitMs >= 0
+                    ? Math.max(1, Math.round(item.estimatedWaitMs / 1000)) : null;
+            }
+            function _aiFrqRetryTime(value) {
+                try {
+                    var date = new Date(value);
+                    if (!isFinite(date.getTime())) return String(value || 'soon');
+                    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                } catch (_) { return String(value || 'soon'); }
+            }
+            function _aiFrqScoreLetter(item) {
+                var score = item && typeof item.score === 'number' ? item.score
+                    : (item && item.result && typeof item.result.score === 'number' ? item.result.score : null);
+                return score === 1 ? 'E' : (score === 0.5 ? 'P' : (score === 0 ? 'I' : null));
+            }
+            function _aiFrqScoreName(letter) {
+                return letter === 'E' ? 'Essentially Correct' : (letter === 'P' ? 'Partially Correct' : 'Incorrect');
+            }
+            function _aiRightRotate(value, amount) {
+                return (value >>> amount) | (value << (32 - amount));
+            }
+            function _aiSha256Fallback(text) {
+                var encoded;
+                try { encoded = unescape(encodeURIComponent(String(text))); } catch (_) { return null; }
+                var bytes = [], i, j;
+                for (i = 0; i < encoded.length; i++) bytes.push(encoded.charCodeAt(i));
+                var bitLength = bytes.length * 8;
+                bytes.push(128);
+                while (bytes.length % 64 !== 56) bytes.push(0);
+                for (i = 7; i >= 0; i--) bytes.push(Math.floor(bitLength / Math.pow(256, i)) & 255);
+                var h = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225];
+                var k = [1116352408,1899447441,3049323471,3921009573,961987163,1508970993,2453635748,2870763221,
+                    3624381080,310598401,607225278,1426881987,1925078388,2162078206,2614888103,3248222580,
+                    3835390401,4022224774,264347078,604807628,770255983,1249150122,1555081692,1996064986,
+                    2554220882,2821834349,2952996808,3210313671,3336571891,3584528711,113926993,338241895,
+                    666307205,773529912,1294757372,1396182291,1695183700,1986661051,2177026350,2456956037,
+                    2730485921,2820302411,3259730800,3345764771,3516065817,3600352804,4094571909,275423344,
+                    430227734,506948616,659060556,883997877,958139571,1322822218,1537002063,1747873779,
+                    1955562222,2024104815,2227730452,2361852424,2428436474,2756734187,3204031479,3329325298];
+                for (i = 0; i < bytes.length; i += 64) {
+                    var w = new Array(64);
+                    for (j = 0; j < 16; j++) {
+                        var p = i + j * 4;
+                        w[j] = ((bytes[p] << 24) | (bytes[p + 1] << 16) | (bytes[p + 2] << 8) | bytes[p + 3]) >>> 0;
+                    }
+                    for (j = 16; j < 64; j++) {
+                        var s0 = (_aiRightRotate(w[j - 15], 7) ^ _aiRightRotate(w[j - 15], 18) ^ (w[j - 15] >>> 3)) >>> 0;
+                        var s1 = (_aiRightRotate(w[j - 2], 17) ^ _aiRightRotate(w[j - 2], 19) ^ (w[j - 2] >>> 10)) >>> 0;
+                        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) >>> 0;
+                    }
+                    var a = h[0], b = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], hh = h[7];
+                    for (j = 0; j < 64; j++) {
+                        var upper = (_aiRightRotate(e, 6) ^ _aiRightRotate(e, 11) ^ _aiRightRotate(e, 25)) >>> 0;
+                        var choose = ((e & f) ^ ((~e) & g)) >>> 0;
+                        var t1 = (hh + upper + choose + k[j] + w[j]) >>> 0;
+                        var lower = (_aiRightRotate(a, 2) ^ _aiRightRotate(a, 13) ^ _aiRightRotate(a, 22)) >>> 0;
+                        var majority = ((a & b) ^ (a & c) ^ (b & c)) >>> 0;
+                        var t2 = (lower + majority) >>> 0;
+                        hh = g; g = f; f = e; e = (d + t1) >>> 0;
+                        d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+                    }
+                    h[0] = (h[0] + a) >>> 0; h[1] = (h[1] + b) >>> 0;
+                    h[2] = (h[2] + c) >>> 0; h[3] = (h[3] + d) >>> 0;
+                    h[4] = (h[4] + e) >>> 0; h[5] = (h[5] + f) >>> 0;
+                    h[6] = (h[6] + g) >>> 0; h[7] = (h[7] + hh) >>> 0;
+                }
+                return h.map(function (word) { return ('00000000' + word.toString(16)).slice(-8); }).join('');
+            }
+            async function _aiSha256Hex(text) {
+                var value = String(text == null ? '' : text).trim();
+                try {
+                    if (window.crypto && window.crypto.subtle && typeof TextEncoder !== 'undefined') {
+                        var bytes = new TextEncoder().encode(value);
+                        var digest = await window.crypto.subtle.digest('SHA-256', bytes);
+                        return Array.prototype.map.call(new Uint8Array(digest), function (b) {
+                            return ('0' + b.toString(16)).slice(-2);
+                        }).join('');
+                    }
+                } catch (_) {}
+                return _aiSha256Fallback(value);
+            }
+            function _aiClearAuthoritativeVerdict(taId) {
+                try {
+                    var ta = document.getElementById(taId);
+                    if (ta) ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+                    var feedback = document.getElementById(taId + '-feedback');
+                    if (feedback) feedback.innerHTML = '';
+                    if (typeof gradingState !== 'undefined' && gradingState) gradingState.delete(taId);
+                } catch (_) {}
+            }
+            function _aiStoredFrqResult(item) {
+                var letter = _aiFrqScoreLetter(item);
+                if (!letter || !item || !item.result || typeof item.result !== 'object') return null;
+                var result = { score: letter };
+                ['feedback', 'suggestion'].forEach(function (field) {
+                    if (typeof item.result[field] === 'string') result[field] = item.result[field];
+                });
+                ['matched', 'missing'].forEach(function (field) {
+                    if (Array.isArray(item.result[field])) result[field] = item.result[field].slice();
+                });
+                return result;
+            }
+            function _aiRenderStoredFrqResult(taId, item, currentText) {
+                var result = _aiStoredFrqResult(item);
+                if (!result) return false;
+                var renderKey = String(item.responseHash || '') + '|' + String(item.gradedAt || '') + '|' + result.score;
+                if (_aiFrqRenderedGrade[taId] === renderKey) return true;
+                try {
+                    if (typeof gradingState !== 'undefined' && gradingState) {
+                        var previous = gradingState.get(taId) || {};
+                        gradingState.set(taId, {
+                            result: result,
+                            originalAnswer: currentText,
+                            appealCount: previous.appealCount || 0,
+                            history: previous.history || []
+                        });
+                    }
+                    if (typeof showFeedback === 'function') showFeedback(taId, result);
+                    _aiFrqRenderedGrade[taId] = renderKey;
+                    return true;
+                } catch (_) { return false; }
+            }
+            function _aiLastSeenGradedKey(itemId) {
+                var who = _aiStudentKey();
+                return who ? 'apstats_frq_last_seen_graded_' + who + '_' + itemId : null;
+            }
+            async function _aiReconcileTerminalText(itemId, ta) {
+                if (!ta || (ta.value || '').trim() || ta.dataset.aiFrqEdited === '1'
+                    || _aiFrqTerminalReconciled[itemId]) return;
+                _aiFrqTerminalReconciled[itemId] = true;
+                var prior = await _aiSharedPriorScores();
+                var entry = prior && typeof prior.get === 'function' ? prior.get(itemId) : null;
+                if (!entry || entry.response === undefined || entry.response === null) return;
+                if ((ta.value || '').trim() || ta.dataset.aiFrqEdited === '1') return;
+                ta.value = typeof entry.response === 'string' ? entry.response : String(entry.response);
+                ta.dataset.restored = '1';
+            }
+            async function _aiRenderFrqStatus(itemId, item) {
+                try {
+                    var ta = _aiFrqTextarea(itemId);
+                    var taId = ta && ta.id;
+                    if (!taId || !item) return;
+                    var status = String(item.status || 'draft');
+                    if (status === 'local-only') { _aiRenderFrqConnection(taId); return; }
+
+                    var hasStoredGrade = status === 'graded' || status === 'appeal-queued' || status === 'appeal-grading';
+                    if (hasStoredGrade) {
+                        await _aiReconcileTerminalText(itemId, ta);
+                        var currentText = String(ta.value || '').trim();
+                        var currentHash = await _aiSha256Hex(currentText);
+                        if (!currentHash || !item.responseHash || currentHash !== String(item.responseHash).toLowerCase()) {
+                            _aiClearAuthoritativeVerdict(taId);
+                            _aiSetFrqStatusText(taId, 'This response is already graded. Use Appeal to request review.', 'already-graded-edited');
+                            return;
+                        }
+                        if (!_aiRenderStoredFrqResult(taId, item, currentText)) {
+                            _aiRenderFrqConnection(taId);
+                            return;
+                        }
+                        if (status === 'graded') {
+                            var markerKey = _aiLastSeenGradedKey(itemId);
+                            var gradedMs = Date.parse(item.gradedAt || '');
+                            var seenMs = 0;
+                            try { seenMs = markerKey ? Date.parse(localStorage.getItem(markerKey) || '') : 0; } catch (_) { seenMs = 0; }
+                            var away = isFinite(gradedMs) && gradedMs < _aiFrqSessionStartedAt && (!isFinite(seenMs) || gradedMs > seenMs);
+                            var label = _aiFrqScoreName(_aiFrqScoreLetter(item));
+                            var announcementKey = String(item.responseHash || '') + '|' + String(item.gradedAt || '') + '|' + label;
+                            if (_aiFrqAnnouncedGrade[itemId] === announcementKey) return;
+                            if (away) {
+                                _aiSetFrqStatusText(taId, '✓ Graded while you were away: ' + label, 'graded-away', true, '', announcementKey);
+                                _aiFrqAwayShown[itemId] = String(item.gradedAt || '');
+                            } else {
+                                _aiSetFrqStatusText(taId, '✓ Graded: ' + label, 'graded', true, '', announcementKey);
+                            }
+                            _aiFrqAnnouncedGrade[itemId] = announcementKey;
+                            try { if (markerKey && item.gradedAt) localStorage.setItem(markerKey, String(item.gradedAt)); } catch (_) {}
+                            return;
+                        }
+                    }
+
+                    var eta = _aiFrqEtaSeconds(item);
+                    if (status === 'draft') {
+                        _aiSetFrqStatusText(taId, 'Answer saved · grading starts after you pause or leave the box.', status);
+                    } else if (status === 'queued' || status === 'appeal-queued') {
+                        _aiSetFrqStatusText(taId, '✓ Saved · queued for grading', status, false, eta == null ? '' : ' · ~' + eta + ' s');
+                    } else if (status === 'grading' || status === 'appeal-grading') {
+                        _aiSetFrqStatusText(taId, '⏳ Grading…', status, false, eta == null ? '' : ' ~' + eta + ' s');
+                    } else if (status === 'retrying') {
+                        _aiSetFrqStatusText(taId, '⚠ Saved. The grader is unavailable; retrying automatically around ' + _aiFrqRetryTime(item.retryAt) + '.', status);
+                    } else if (status === 'failed') {
+                        _aiSetFrqStatusText(taId, '⚠ Saved, but grading needs teacher help.', status);
+                    }
+                } catch (_) {
+                    var fallbackTa = _aiFrqTextarea(itemId);
+                    if (fallbackTa) _aiRenderFrqUnsaved(fallbackTa.id);
+                }
+            }
+            function _aiStopFrqPolling() {
+                _aiClearOwnedTimeout(_aiFrqPollTimer);
+                _aiFrqPollTimer = null;
+            }
+            function _aiScheduleFrqPoll(delayMs) {
+                _aiStopFrqPolling();
+                if (_aiDisposed) return;
+                _aiFrqPollTimer = _aiSetOwnedTimeout(_aiPollFrqStatus, Math.max(0, delayMs));
+            }
+            function _aiStartFrqPolling(resume) {
+                if (_aiDisposed || !_aiIsAuthoritative() || document.visibilityState === 'hidden' || !_aiHasVisibleFrqPending()) {
+                    _aiStopFrqPolling();
+                    return;
+                }
+                if (resume || !_aiFrqPollStartedAt) _aiFrqPollStartedAt = Date.now();
+                if (Date.now() - _aiFrqPollStartedAt >= _AI_FRQ_POLL_MAX_MS) {
+                    _aiStopFrqPolling();
+                    return;
+                }
+                if (!_aiFrqPollTimer && !_aiFrqPollInFlight) _aiScheduleFrqPoll(0);
+            }
+            async function _aiRefreshFrqStatus() {
+                if (_aiDisposed) return false;
+                var token = _aiRosterToken();
+                var base = window.ROSTER_SERVICE_URL;
+                var prefix = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : null;
+                if (!token || !base || !prefix || typeof fetch !== 'function') {
+                    return false;
+                }
+                try {
+                    var res = await fetch(base + '/ledger/frq-status?prefix=' + encodeURIComponent(prefix), {
+                        method: 'GET', cache: 'no-store',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (!res || !res.ok) throw new Error('status unavailable');
+                    var data = await res.json();
+                    if (_aiDisposed) return false;
+                    if (!data || !data.ok) throw new Error('bad status');
+                    if (data.mode && data.mode !== 'authoritative') {
+                        _aiDowngradeFrqMode(String(data.mode), Date.now());
+                        return true;
+                    }
+                    if (!data.items || typeof data.items !== 'object') throw new Error('bad status');
+                    var ids = Object.keys(data.items);
+                    for (var i = 0; i < ids.length; i++) {
+                        _aiFrqStates[ids[i]] = data.items[ids[i]];
+                        await _aiRenderFrqStatus(ids[i], data.items[ids[i]]);
+                    }
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+            async function _aiPollFrqStatus(rearm) {
+                _aiFrqPollTimer = null;
+                if (_aiDisposed || _aiFrqPollInFlight || !_aiIsAuthoritative() || document.visibilityState === 'hidden'
+                    || !_aiHasVisibleFrqPending() || Date.now() - _aiFrqPollStartedAt >= _AI_FRQ_POLL_MAX_MS) {
+                    _aiStopFrqPolling();
+                    return;
+                }
+                _aiFrqPollInFlight = true;
+                var ok = false;
+                try { ok = await _aiRefreshFrqStatus(); } catch (_) { ok = false; }
+                _aiFrqPollInFlight = false;
+                if (_aiDisposed || !_aiHasVisibleFrqPending() || Date.now() - _aiFrqPollStartedAt >= _AI_FRQ_POLL_MAX_MS) {
+                    _aiStopFrqPolling();
+                    return;
+                }
+                if (ok) {
+                    _aiFrqPollBackoffMs = 0;
+                    if (rearm !== false) _aiScheduleFrqPoll(_aiFrqConfig.pollMs || 2000);
+                } else {
+                    _aiFrqPollBackoffMs = _aiFrqPollBackoffMs
+                        ? Math.min(30000, _aiFrqPollBackoffMs * 2)
+                        : Math.max(4000, (_aiFrqConfig.pollMs || 2000) * 2);
+                    if (rearm !== false) _aiScheduleFrqPoll(_aiFrqPollBackoffMs);
+                }
+            }
+            function _aiPollFrqStatusOnce() {
+                _aiStopFrqPolling();
+                if (!_aiFrqPollStartedAt) _aiFrqPollStartedAt = Date.now();
+                return _aiPollFrqStatus(false);
+            }
+            async function _aiRequestFrqGrade(taId, response, resume, keepalive) {
+                if (_aiDisposed) return null;
+                var itemId = _aiFrqItemId(taId);
+                var answer = String(response == null ? '' : response).trim();
+                if (!itemId || !answer) return null;
+                await _aiEnsureFrqConfig();
+                if (_aiDisposed) return null;
+                if (!_aiIsAuthoritative()) {
+                    _aiScheduleAutoGrade(0);
+                    return { ok: false, reason: 'legacy-mode' };
+                }
+                _aiSetFrqStatusText(taId, 'Saving…', 'saving');
+                try {
+                    if (!window.gradebookClient || typeof window.gradebookClient.requestFrqGrade !== 'function') {
+                        _aiFrqStates[itemId] = { status: 'unsaved' };
+                        _aiRenderFrqUnsaved(taId);
+                        return null;
+                    }
+                    var request = { itemId: itemId, response: answer };
+                    if (keepalive) request.keepalive = true;
+                    var result = await window.gradebookClient.requestFrqGrade(request);
+                    if (_aiDisposed) return result;
+                    if (result && result.queued) {
+                        _aiFrqStates[itemId] = { status: 'local-only' };
+                        _aiRenderFrqConnection(taId);
+                    } else if (!result || !result.ok) {
+                        _aiFrqStates[itemId] = { status: 'unsaved' };
+                        _aiRenderFrqUnsaved(taId);
+                    } else {
+                        var nextStatus = result.status === 'graded' ? 'queued' : (result.status || 'draft');
+                        _aiFrqStates[itemId] = { status: nextStatus };
+                        await _aiRenderFrqStatus(itemId, _aiFrqStates[itemId]);
+                    }
+                    _aiStartFrqPolling(!!resume);
+                    return result;
+                } catch (_) {
+                    _aiFrqStates[itemId] = { status: 'unsaved' };
+                    _aiRenderFrqUnsaved(taId);
+                    _aiStartFrqPolling(!!resume);
+                    return null;
+                }
+            }
+            async function _aiRequestAllFrqGrades(resume, keepalive) {
+                if (_aiDisposed) return 0;
+                var refs = _aiReflectionTextareas();
+                var work = [];
+                for (var i = 0; i < refs.length; i++) {
+                    var ta = refs[i];
+                    var answer = ta && String(ta.value || '').trim();
+                    if (ta && ta.id && answer) work.push(_aiRequestFrqGrade(ta.id, answer, resume, keepalive));
+                }
+                try { await Promise.all(work); } catch (_) {}
+                return work.length;
+            }
+            var _aiDraftSaveTimers = {};
+            var _aiDraftGradeTimers = {};
+            var _aiDraftSaveVersion = {};
+            var _aiDraftInFlight = {};
+            var _aiOriginalDraftSaver = null;
+            function _aiScheduleDraftGrade(taId, answer, startedAt) {
+                _aiClearOwnedTimeout(_aiDraftGradeTimers[taId]);
+                var delay = Math.max(0, 20000 - (Date.now() - startedAt));
+                _aiDraftGradeTimers[taId] = _aiSetOwnedTimeout(function () {
+                    delete _aiDraftGradeTimers[taId];
+                    var ta = document.getElementById(taId);
+                    if (!ta || String(ta.value || '').trim() !== answer) return;
+                    _aiRequestFrqGrade(taId, answer, false);
+                }, delay);
+            }
+            function _aiSaveFrqDraft(taId, response) {
+                if (_aiDisposed) return Promise.resolve(null);
+                var itemId = _aiFrqItemId(taId);
+                var answer = String(response == null ? '' : response).trim();
+                if (!itemId || !answer) return Promise.resolve(null);
+                var existing = _aiDraftInFlight[itemId];
+                if (existing && existing.answer === answer) return existing.promise;
+                var version = (_aiDraftSaveVersion[itemId] || 0) + 1;
+                _aiDraftSaveVersion[itemId] = version;
+                var startedAt = Date.now();
+                _aiSetFrqStatusText(taId, 'Saving…', 'saving');
+                var promise = (async function () {
+                    await _aiEnsureFrqConfig();
+                    if (_aiDisposed) return null;
+                    if (!_aiIsAuthoritative()) {
+                        return _aiOriginalDraftSaver ? _aiOriginalDraftSaver.call(window, taId, answer) : null;
+                    }
+                    var result = null;
+                    try {
+                        if (window.gradebookClient && typeof window.gradebookClient.record === 'function') {
+                            result = await window.gradebookClient.record({
+                                source: 'frq', itemId: itemId, response: answer, attempt: 1
+                            });
+                        }
+                    } catch (_) { result = null; }
+                    if (_aiDisposed) return result;
+                    var ta = document.getElementById(taId);
+                    if (_aiDraftSaveVersion[itemId] !== version || !ta || String(ta.value || '').trim() !== answer) return result;
+                    if (result && result.queued) {
+                        _aiFrqStates[itemId] = { status: 'local-only' };
+                        _aiRenderFrqConnection(taId);
+                        _aiScheduleDraftGrade(taId, answer, startedAt);
+                    } else if (result && result.ok) {
+                        _aiFrqStates[itemId] = { status: 'draft' };
+                        await _aiRenderFrqStatus(itemId, _aiFrqStates[itemId]);
+                        _aiScheduleDraftGrade(taId, answer, startedAt);
+                    } else {
+                        _aiFrqStates[itemId] = { status: 'unsaved' };
+                        _aiRenderFrqUnsaved(taId);
+                    }
+                    return result;
+                })();
+                _aiDraftInFlight[itemId] = { answer: answer, promise: promise };
+                return promise.finally(function () {
+                    if (_aiDraftInFlight[itemId] && _aiDraftInFlight[itemId].promise === promise) delete _aiDraftInFlight[itemId];
+                });
+            }
+            function _aiScheduleDraftSave(ta) {
+                if (!ta || !ta.id) return;
+                var answer = String(ta.value || '').trim();
+                _aiClearOwnedTimeout(_aiDraftSaveTimers[ta.id]);
+                if (_aiDraftGradeTimers[ta.id]) { _aiClearOwnedTimeout(_aiDraftGradeTimers[ta.id]); delete _aiDraftGradeTimers[ta.id]; }
+                if (!answer) return;
+                _aiDraftSaveTimers[ta.id] = _aiSetOwnedTimeout(function () {
+                    delete _aiDraftSaveTimers[ta.id];
+                    _aiSaveFrqDraft(ta.id, answer);
+                }, 400);
+            }
+            function _aiStopDraftTimers() {
+                Object.keys(_aiDraftSaveTimers).forEach(function (id) { _aiClearOwnedTimeout(_aiDraftSaveTimers[id]); });
+                Object.keys(_aiDraftGradeTimers).forEach(function (id) { _aiClearOwnedTimeout(_aiDraftGradeTimers[id]); });
+                _aiDraftSaveTimers = {};
+                _aiDraftGradeTimers = {};
+            }
+            function _aiInstallAckDraftSaver() {
+                if (typeof window.recordReflectionDraft !== 'function' || window.recordReflectionDraft.__aiAckWrapped) return;
+                _aiOriginalDraftSaver = window.recordReflectionDraft;
+                var wrapped = function (taId, answer) {
+                    if (!_aiIsAuthoritative()) return _aiOriginalDraftSaver.apply(this, arguments);
+                    return _aiSaveFrqDraft(taId, answer);
+                };
+                wrapped.__aiAckWrapped = true;
+                window.recordReflectionDraft = wrapped;
+            }
+            function _aiAppealText(questionId) {
+                var el = document.getElementById('appeal-text-' + questionId)
+                    || document.getElementById('appealText-' + questionId);
+                return el ? String(el.value || '').trim() : '';
+            }
+            function _aiAppealMessage(questionId, message, failed) {
+                var id = questionId + '-frq-appeal-status';
+                var el = document.getElementById(id);
+                if (!el) {
+                    el = document.createElement('div');
+                    el.id = id;
+                    el.className = 'appeal-result ' + (failed ? 'error' : 'maintained');
+                    el.setAttribute('role', failed ? 'alert' : 'status');
+                    var form = document.getElementById('appeal-form-' + questionId)
+                        || document.getElementById('appealForm-' + questionId);
+                    var feedback = document.getElementById(questionId + '-feedback');
+                    var host = form || feedback;
+                    if (host) host.appendChild(el);
+                }
+                if (el) {
+                    el.className = 'appeal-result ' + (failed ? 'error' : 'maintained');
+                    el.textContent = message;
+                }
+            }
+            async function _aiSubmitAuthoritativeAppeal(questionId) {
+                var token = _aiRosterToken();
+                var itemId = _aiFrqItemId(questionId);
+                var appealText = _aiAppealText(questionId);
+                var base = window.ROSTER_SERVICE_URL;
+                if (!token || !itemId || !base || typeof fetch !== 'function') {
+                    _aiAppealMessage(questionId, _AI_FRQ_LOCAL_COPY, true);
+                    _aiRenderFrqConnection(questionId);
+                    return null;
+                }
+                var form = document.getElementById('appeal-form-' + questionId)
+                    || document.getElementById('appealForm-' + questionId);
+                var buttons = form ? form.querySelectorAll('button') : [];
+                Array.prototype.forEach.call(buttons, function (button) { button.disabled = true; });
+                try {
+                    var res = await fetch(base + '/ledger/frq-appeal', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ itemId: itemId, appealText: appealText })
+                    });
+                    var data = null;
+                    try { data = await res.json(); } catch (_) { data = null; }
+                    if (!res || !res.ok) {
+                        _aiAppealMessage(questionId, data && data.error ? String(data.error) : _AI_FRQ_LOCAL_COPY, true);
+                        return data;
+                    }
+                    _aiAppealMessage(questionId, 'Appeal submitted · waiting for review.', false);
+                    _aiFrqStates[itemId] = { status: 'appeal-queued' };
+                    await _aiRenderFrqStatus(itemId, _aiFrqStates[itemId]);
+                    _aiStartFrqPolling(true);
+                    return data;
+                } catch (_) {
+                    _aiAppealMessage(questionId, _AI_FRQ_LOCAL_COPY, true);
+                    _aiRenderFrqConnection(questionId);
+                    return null;
+                } finally {
+                    Array.prototype.forEach.call(buttons, function (button) { button.disabled = false; });
+                }
+            }
+            function _aiInstallAuthoritativeEntryWrappers() {
+                if (typeof window.gradeReflection === 'function') {
+                    var originalGradeReflection = window.gradeReflection;
+                    var wrappedGradeReflection = async function (questionId, answer) {
+                        await _aiEnsureFrqConfig();
+                        if (_aiIsAuthoritative()) {
+                            await _aiRequestFrqGrade(questionId, answer, true);
+                            return null;
+                        }
+                        return originalGradeReflection.apply(this, arguments);
+                    };
+                    wrappedGradeReflection.toString = function () { return String(originalGradeReflection); };
+                    window.gradeReflection = wrappedGradeReflection;
+                }
+                if (typeof window.gradeAllReflections === 'function') {
+                    var originalGradeAll = window.gradeAllReflections;
+                    window.gradeAllReflections = async function () {
+                        await _aiEnsureFrqConfig();
+                        if (_aiIsAuthoritative()) return _aiRequestAllFrqGrades(true);
+                        return originalGradeAll.apply(this, arguments);
+                    };
+                }
+                if (typeof window.submitAppeal === 'function') {
+                    var originalAppeal = window.submitAppeal;
+                    window.submitAppeal = async function (questionId) {
+                        await _aiEnsureFrqConfig();
+                        if (_aiIsAuthoritative()) return _aiSubmitAuthoritativeAppeal(questionId);
+                        return originalAppeal.apply(this, arguments);
+                    };
+                }
+                if (typeof window.submitAppealForQuestion === 'function') {
+                    var originalInlineAppeal = window.submitAppealForQuestion;
+                    window.submitAppealForQuestion = async function (questionId) {
+                        await _aiEnsureFrqConfig();
+                        if (_aiIsAuthoritative()) return _aiSubmitAuthoritativeAppeal(questionId);
+                        return originalInlineAppeal.apply(this, arguments);
+                    };
+                }
+            }
+            _aiInstallAuthoritativeEntryWrappers();
+            _aiInstallAckDraftSaver();
+
+            function _aiTeardownFrqTicketClient() {
+                if (_aiDisposed) return;
+                _aiDisposed = true;
+                _aiStopFrqPolling();
+                _aiStopDraftTimers();
+                _aiClearOwnedTimeout(_aiIdleTimer);
+                _aiIdleTimer = null;
+                Object.keys(_aiStatusTimers).forEach(function (id) { clearInterval(_aiStatusTimers[id]); });
+                _aiStatusTimers = {};
+                _aiClearAllOwnedTimeouts();
+                _aiRemoveAllOwnedListeners();
+                try { if (_aiFrqConfigAbortController) _aiFrqConfigAbortController.abort(); } catch (_) {}
+                _aiFrqConfigAbortController = null;
+                _aiFrqConfig = { mode: 'off', authoritative: false, pollMs: 2000, at: 0 };
+                _aiFrqConfigFlight = null;
+                _aiPriorScoresPromise = null;
+                try { if (_aiPriorScoresCache && typeof _aiPriorScoresCache.clear === 'function') _aiPriorScoresCache.clear(); } catch (_) {}
+                _aiPriorScoresCache = null;
+                _aiFrqFloor = {};
+                _aiBatchCache = {};
+                _aiEtaCache = { at: 0, waitMs: null, ahead: 0 };
+                _aiFrqStates = {};
+                _aiFrqPollStartedAt = 0;
+                _aiFrqPollInFlight = false;
+                _aiFrqPollBackoffMs = 0;
+                _aiFrqRenderedGrade = {};
+                _aiFrqAwayShown = {};
+                _aiFrqAnnouncedGrade = {};
+                _aiFrqTerminalReconciled = {};
+                _aiFrqSessionStartedAt = 0;
+                _aiDraftSaveVersion = {};
+                _aiDraftInFlight = {};
+                _aiOriginalDraftSaver = null;
+                _aiFrqGlobalTriggersWired = false;
+                _AI_AUTO_BUDGET.stamps = [];
+            }
+
+            // Small observability surface used by the jsdom contract tests.
+            var _aiFrqTicketClient = {
+                fetchConfig: _aiFetchFrqConfig,
+                isAuthoritative: _aiIsAuthoritative,
+                requestAll: _aiRequestAllFrqGrades,
+                refreshStatus: _aiRefreshFrqStatus,
+                renderStatus: _aiRenderFrqStatus,
+                renderConnection: _aiRenderFrqConnection,
+                renderUnsaved: _aiRenderFrqUnsaved,
+                saveDraft: _aiSaveFrqDraft,
+                hash: _aiSha256Hex,
+                startPolling: _aiStartFrqPolling,
+                stopPolling: _aiStopFrqPolling,
+                isPolling: function () { return !!(_aiFrqPollTimer || _aiFrqPollInFlight); },
+                setState: function (itemId, item) { _aiFrqStates[itemId] = item; },
+                wireTriggers: _aiWireFrqTriggers,
+                stopDraftTimers: _aiStopDraftTimers
+            };
+            if (window.__AI_FRQ_TEST_SEAMS__ === true) {
+                _aiFrqTicketClient.pollOnce = _aiPollFrqStatusOnce;
+                _aiFrqTicketClient.teardown = _aiTeardownFrqTicketClient;
+            }
+            window.__aiFrqTicketClient = _aiFrqTicketClient;
+
             function _aiSetBusy(busy) {
                 try {
                     var btn = document.querySelector('.btn-ai-recheck');
                     if (!btn) return;
                     btn.disabled = busy;
                     btn.innerHTML = busy ? '✨ grading…' : '✨ Grade with AI';
-                    if (busy) {
+                    if (busy && !_aiIsAuthoritative()) {
                         _aiFetchEta().then(function (eta) {
                             if (eta && eta.waitMs != null && btn.disabled) btn.innerHTML = '✨ grading… ~' + Math.max(3, Math.round(eta.waitMs / 1000)) + ' s';
                         }).catch(function () {});
@@ -2536,7 +3402,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                         'z-index:99999;background:#323232;color:#fff;font-size:13px;padding:10px 16px;' +
                         'border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:Geneva,Verdana,sans-serif;';
                     document.body.appendChild(t);
-                    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2600);
+                    _aiSetOwnedTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2600);
                 } catch (_) {}
             }
 
@@ -2544,9 +3410,17 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             window.aiGradeWorksheet = async function (opts) {
                 opts = opts || {};
                 var manual = !!opts.manual;
+                if (manual) {
+                    await _aiEnsureFrqConfig();
+                    if (_aiIsAuthoritative()) _aiStartFrqPolling(true);
+                }
                 if (window._aiGradeBusy) { if (manual) _aiToast('AI grading is already running…'); return; }
                 var hash = _aiHash();
-                if (hash === window._aiLastGradedHash) { if (manual) _aiToast('No changes since the last AI check.'); return; }
+                if (hash === window._aiLastGradedHash) {
+                    if (_aiIsAuthoritative()) await _aiRequestAllFrqGrades(true);
+                    else if (manual) _aiToast('No changes since the last AI check.');
+                    return;
+                }
 
                 // Collect filled blanks. Send ALL (coherent context); ACT only on
                 // those below full credit (upgrade-only).
@@ -2659,6 +3533,11 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     try {
                         var itemId = _aiFrqItemId(taId);
                         var nr = _aiVerdictRank(scoreLetter);
+                        if (_aiIsAuthoritative() && itemId && nr !== undefined) {
+                            var ta = document.getElementById(taId);
+                            var latest = ta ? String(ta.value || '').trim() : String(answer || '').trim();
+                            return _aiRequestFrqGrade(taId, latest, false);
+                        }
                         if (itemId && nr !== undefined) {
                             var floor = (itemId in _aiFrqFloor) ? _aiFrqFloor[itemId] : -1;
                             if (nr <= floor) return;           // never downgrade a recorded FRQ
@@ -2689,7 +3568,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                         lastErr = new Error('invalid verdict: ' + (r && r.score));
                     } catch (e) { lastErr = e; }
                     if (attempt < _AI_FRQ_RETRY_DELAYS.length) {
-                        await new Promise(function (res) { setTimeout(res, _AI_FRQ_RETRY_DELAYS[attempt]); });
+                        await new Promise(function (res) { _aiSetOwnedTimeout(res, _AI_FRQ_RETRY_DELAYS[attempt]); });
                     }
                 }
                 if (lastErr) console.warn('[ai-frq] grading failed after retries:', taId, lastErr && lastErr.message);
@@ -2724,6 +3603,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 try { var k = _aiUngradedKey(); return !!(k && JSON.parse(localStorage.getItem(k) || '[]').length); } catch (_) { return false; }
             }
             var _aiIdleTimer = null;
+            var _aiFrqGlobalTriggersWired = false;
             // Auto-pass budget: at most 6 automatic passes per 10 minutes per page
             // (manual passes are never budgeted). Keeps a whole class from stampeding
             // the shared grader; the hash guard already skips unchanged content.
@@ -2736,8 +3616,9 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 return true;
             }
             function _aiScheduleAutoGrade(delayMs) {
-                if (_aiIdleTimer) clearTimeout(_aiIdleTimer);
-                _aiIdleTimer = setTimeout(function () {
+                _aiClearOwnedTimeout(_aiIdleTimer);
+                if (_aiDisposed) return;
+                _aiIdleTimer = _aiSetOwnedTimeout(function () {
                     _aiIdleTimer = null;
                     // A pass is already running → trail: try again shortly (content
                     // that changed mid-pass must not be left ungraded).
@@ -2747,21 +3628,52 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 }, delayMs);
             }
             function _aiWireFrqTriggers() {
+                if (_aiDisposed) return;
                 _aiReflectionTextareas().forEach(function (ta) {
                     if (!ta || ta.dataset.aiFrqWired === '1') return;
                     ta.dataset.aiFrqWired = '1';
-                    ta.addEventListener('input', function () {
+                    _aiAddOwnedListener(ta, 'input', function () {
+                        ta.dataset.aiFrqEdited = '1';
+                        if (_aiIsAuthoritative()) {
+                            _aiScheduleDraftSave(ta);
+                            return;
+                        }
                         if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(20000);   // 20 s idle
                     });
-                    ta.addEventListener('blur', function () {
+                    _aiAddOwnedListener(ta, 'blur', function () {
+                        if (_aiIsAuthoritative()) {
+                            _aiRequestFrqGrade(ta.id, (ta.value || '').trim(), false);
+                            return;
+                        }
                         if ((ta.value || '').trim().length >= 20) _aiScheduleAutoGrade(800);     // leaving the box
                     });
                 });
+                if (_aiFrqGlobalTriggersWired) return;
+                _aiFrqGlobalTriggersWired = true;
                 try {
-                    document.addEventListener('visibilitychange', function () {
+                    _aiAddOwnedListener(document, 'visibilitychange', function () {
+                        if (_aiIsAuthoritative()) {
+                            if (document.visibilityState === 'hidden') {
+                                _aiStopFrqPolling();
+                                _aiRequestAllFrqGrades(false, true);
+                            } else {
+                                _aiStartFrqPolling(true);
+                            }
+                            return;
+                        }
                         if (document.visibilityState === 'hidden') _aiScheduleAutoGrade(0);
                     });
-                    window.addEventListener('pagehide', function () { _aiScheduleAutoGrade(0); });
+                    _aiAddOwnedListener(window, 'pagehide', function () {
+                        if (_aiIsAuthoritative()) {
+                            _aiStopFrqPolling();
+                            _aiRequestAllFrqGrades(false, true);
+                        } else {
+                            _aiScheduleAutoGrade(0);
+                        }
+                    });
+                    _aiAddOwnedListener(window, 'online', function () {
+                        if (_aiIsAuthoritative()) _aiStartFrqPolling(true);
+                    });
                 } catch (_) {}
             }
             // On load: any prior FRQ row with text but no score (or a remembered
@@ -2787,7 +3699,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             // Grade only when the DOM holds the exact prior text (hydration finished);
             // re-check a few times, then give up quietly (the next blur/idle covers it).
             function _aiScheduleWhenHydrated(prior, tries) {
-                setTimeout(function () {
+                _aiSetOwnedTimeout(function () {
                     var ready = true;
                     try {
                         var prefix = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : '';
@@ -2810,24 +3722,32 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             // -- on load: restore AI-credit flags + greens from the ledger (so a
             //    post-reload blur can't clobber them) and seed the FRQ floor (so
             //    the legacy button can't downgrade before any AI pass runs).
-            function _aiOnLoad() {
+            async function _aiOnLoad() {
+                await _aiEnsureFrqConfig();
+                if (_aiDisposed) return;
                 try { _aiRestoreBlankCredits(); } catch (_) {}
                 try { _aiWireFrqTriggers(); } catch (_) {}
                 try {
-                    _aiFetchPriorScores().then(function (prior) {
+                    _aiSharedPriorScores().then(async function (prior) {
+                        if (_aiDisposed) return;
                         _aiSeedFrqFloor(prior);
-                        _aiRegradeUngradedPrior(prior);
+                        if (_aiIsAuthoritative()) {
+                            await _aiRefreshFrqStatus();
+                            _aiStartFrqPolling(false);
+                        } else {
+                            _aiRegradeUngradedPrior(prior);
+                        }
                     });
                 } catch (_) {}
             }
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function () { setTimeout(_aiOnLoad, 600); });
+                _aiAddOwnedListener(document, 'DOMContentLoaded', function () { _aiSetOwnedTimeout(_aiOnLoad, 600); });
             } else {
-                setTimeout(_aiOnLoad, 600);   // let hydration settle first
+                _aiSetOwnedTimeout(_aiOnLoad, 600);   // let hydration settle first
             }
             try {
-                window.addEventListener('storage', function (e) {
-                    if (e && e.key === 'apstats_roster.v1') setTimeout(_aiOnLoad, 600);
+                _aiAddOwnedListener(window, 'storage', function (e) {
+                    if (e && e.key === 'apstats_roster.v1') _aiSetOwnedTimeout(_aiOnLoad, 600);
                 });
             } catch (_) {}
 

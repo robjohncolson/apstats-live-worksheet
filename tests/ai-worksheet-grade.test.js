@@ -39,6 +39,7 @@ function installShippedFlow(overrides = {}) {
     renderEnrichedPass: vi.fn(),
     showFeedback: vi.fn(),
     recordReflectionToGradebook: vi.fn(),
+    recordReflectionDraft: vi.fn(),
     updateWorksheetCompletion: vi.fn(),
     gbUnitFromItemId: vi.fn((id) => { const m = /^WS-(U\d+)/.exec(id || ''); return m ? m[1] : undefined; }),
     gbWsPrefix: vi.fn(() => 'WS-' + (globalThis.UNIT_ID || 'U6L1-2')),
@@ -54,12 +55,16 @@ function installShippedFlow(overrides = {}) {
       mocks.record({ source: 'worksheet', itemId: blank.dataset.questionId, response: v, score: sc, attempt: 1 });
     }),
     record: vi.fn(async () => ({ ok: true, ledgerId: 'x' })),
+    requestFrqGrade: vi.fn(async () => ({ ok: true, ledgerId: 'frq-x', status: 'queued', clientScoreIgnored: true, responseVersion: 1 })),
     fetchPrior: vi.fn(async () => new Map()),
     fetch: vi.fn(),
     // class-view drawer deps
     loadAggregateData: vi.fn(),
     spawnPeerSnow: vi.fn(),
     rosterToken: null,                              // null = not signed in
+    rosterUsername: 'test_student',
+    submitAppeal: vi.fn(),
+    submitAppealForQuestion: vi.fn(),
     ...overrides
   };
 
@@ -72,12 +77,15 @@ function installShippedFlow(overrides = {}) {
   globalThis.renderEnrichedPass = mocks.renderEnrichedPass;
   globalThis.showFeedback = mocks.showFeedback;
   globalThis.recordReflectionToGradebook = mocks.recordReflectionToGradebook;
+  globalThis.recordReflectionDraft = mocks.recordReflectionDraft;
   globalThis.updateWorksheetCompletion = mocks.updateWorksheetCompletion;
   globalThis.gbUnitFromItemId = mocks.gbUnitFromItemId;
   globalThis.gbWsPrefix = mocks.gbWsPrefix;
   globalThis._wsReflectionTextareas = mocks._wsReflectionTextareas;
   globalThis.recordBlankToGradebook = mocks.recordBlankToGradebook;
   globalThis.gradingState = gradingState;
+  globalThis.submitAppeal = mocks.submitAppeal;
+  globalThis.submitAppealForQuestion = mocks.submitAppealForQuestion;
 
   // class-view drawer globals
   globalThis.loadAggregateData = mocks.loadAggregateData;
@@ -87,10 +95,15 @@ function installShippedFlow(overrides = {}) {
 
   // window.* the IIFE reads/writes.
   window.checkAnswers = mocks.checkAnswersOrig;
-  window.gradebookClient = { record: mocks.record, fetchPrior: mocks.fetchPrior };
-  window.rosterClient = { token: () => mocks.rosterToken };
+  window.gradebookClient = { record: mocks.record, requestFrqGrade: mocks.requestFrqGrade, fetchPrior: mocks.fetchPrior };
+  window.rosterClient = {
+    token: () => mocks.rosterToken,
+    studentId: () => mocks.rosterToken ? 'student-id' : null,
+    current: () => mocks.rosterToken ? { username: mocks.rosterUsername } : null
+  };
   window.ROSTER_SERVICE_URL = 'https://roster.example';
   window.RAILWAY_SERVER_URL = 'https://ai.example';
+  window.__AI_FRQ_TEST_SEAMS__ = true;
   globalThis.fetch = mocks.fetch;
 
   // Run the REAL shipped code (indirect eval → resolves bare names off globalThis).
@@ -142,17 +155,20 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  try { window.__aiFrqTicketClient && window.__aiFrqTicketClient.teardown(); } catch (_) {}
   vi.restoreAllMocks();
   // Defensive: clear the worksheet globals we injected so nothing leaks to
   // another test file (vitest isolates files, but keep this hermetic anyway).
   for (const k of ['UNIT_ID', 'checkAnswer', 'gradeReflection', 'fetchEnrichedAnswer',
-    'renderEnrichedPass', 'showFeedback', 'recordReflectionToGradebook', 'recordBlankToGradebook',
+    'renderEnrichedPass', 'showFeedback', 'recordReflectionToGradebook', 'recordReflectionDraft', 'recordBlankToGradebook',
     'updateWorksheetCompletion', 'gbUnitFromItemId', 'gbWsPrefix', '_wsReflectionTextareas',
-    'gradingState', 'fetch', 'loadAggregateData', 'currentQuestionBlanks', 'spawnPeerSnow', 'normalize']) {
+    'gradingState', 'fetch', 'loadAggregateData', 'currentQuestionBlanks', 'spawnPeerSnow', 'normalize',
+    'submitAppeal', 'submitAppealForQuestion']) {
     try { delete globalThis[k]; } catch (_) {}
   }
   for (const k of ['aiGradeWorksheet', 'checkAnswers', 'gradebookClient', 'rosterClient',
-    'ROSTER_SERVICE_URL', 'RAILWAY_SERVER_URL', '_aiGradeBusy', '_aiLastGradedHash', '__aiWorksheetGradeWired']) {
+    'ROSTER_SERVICE_URL', 'RAILWAY_SERVER_URL', '_aiGradeBusy', '_aiLastGradedHash', '__aiWorksheetGradeWired',
+    '__aiFrqTicketClient', '__AI_FRQ_TEST_SEAMS__', 'submitAppeal', 'submitAppealForQuestion']) {
     try { delete window[k]; } catch (_) {}
   }
 });
@@ -1056,5 +1072,449 @@ describe('FRQ batch grading (2026-08-19) — one /api/ai/grade-batch call when t
     await window.aiGradeWorksheet({ manual: false });
     expect(mocks.gradeReflection).toHaveBeenCalledTimes(2);
     expect(mocks.fetch.mock.calls.some((c) => String(c[0]).endsWith('/api/ai/grade-batch'))).toBe(false);
+  });
+});
+
+// ===========================================================================
+// 4. FRQ grade tickets — authoritative/legacy client contract
+// ===========================================================================
+describe('FRQ ticket capability gating', () => {
+  it.each([
+    ['off', false, false],
+    ['shadow', false, false],
+    ['unknown', false, false],
+    ['authoritative non-canary', false, false],
+    ['authoritative canary', true, true]
+  ])('%s selects the expected FRQ path', async (label, authoritative, expectsTicket) => {
+    addTextarea('reflect1', 'A sufficiently long response for the capability gate.');
+    installShippedFlow({ rosterToken: 'roster-token' });
+    const mode = label.startsWith('authoritative') ? 'authoritative' : label;
+    mocks.fetch.mockImplementation(async (url) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode, bundleVersion: 'v1', pollMs: 2000, authoritative }) };
+      }
+      if (String(url).includes('/ledger/frq-status')) {
+        return { ok: true, json: async () => ({ ok: true, mode, bundleVersion: 'v1', items: {} }) };
+      }
+      return okFetch([]);
+    });
+
+    await window.__aiFrqTicketClient.fetchConfig(true);
+    await window.aiGradeWorksheet({ manual: true });
+
+    expect(mocks.requestFrqGrade.mock.calls.length > 0).toBe(expectsTicket);
+    expect(mocks.gradeReflection.mock.calls.length > 0).toBe(!expectsTicket);
+    if (expectsTicket) {
+      const gradeUrls = mocks.fetch.mock.calls.map((call) => String(call[0]))
+        .filter((url) => /\/api\/ai\/grade(?:-|$)/.test(url));
+      expect(gradeUrls).toEqual([]);
+    }
+  });
+
+  it('adds the roster bearer to all three retained legacy grader endpoints', async () => {
+    installShippedFlow({ rosterToken: 'signed-roster-token' });
+    mocks.fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
+
+    for (const endpoint of ['grade', 'grade-batch', 'grade-worksheet']) {
+      await globalThis.fetch('https://ai.example/api/ai/' + endpoint, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+      });
+    }
+
+    expect(mocks.fetch).toHaveBeenCalledTimes(3);
+    for (const call of mocks.fetch.mock.calls) {
+      expect(call[1].headers.Authorization).toBe('Bearer signed-roster-token');
+      expect(call[1].headers['Content-Type']).toBe('application/json');
+    }
+  });
+});
+
+describe('authoritative FRQ ticket requests and numeric-sink suppression', () => {
+  it('flushes latest text on blur and manual Grade without calling a direct FRQ grader', async () => {
+    const ta = addTextarea('reflect1', 'A sufficiently long first response for blur.');
+    installShippedFlow({ rosterToken: 'roster-token' });
+    mocks.fetch.mockImplementation(async (url) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', bundleVersion: 'v1', pollMs: 2000, authoritative: true }) };
+      }
+      if (String(url).includes('/ledger/frq-status')) {
+        return { ok: true, json: async () => ({ ok: true, mode: 'authoritative', items: {} }) };
+      }
+      return okFetch([]);
+    });
+    await window.__aiFrqTicketClient.fetchConfig(true);
+    window.__aiFrqTicketClient.wireTriggers();
+
+    ta.dispatchEvent(new Event('blur'));
+    await Promise.resolve();
+    await Promise.resolve();
+    ta.value = 'A sufficiently long newer response for the manual action.';
+    await window.aiGradeWorksheet({ manual: true });
+
+    expect(mocks.requestFrqGrade).toHaveBeenCalledWith({
+      itemId: 'WS-U6L1-2-reflect1',
+      response: 'A sufficiently long first response for blur.'
+    });
+    expect(mocks.requestFrqGrade).toHaveBeenCalledWith({
+      itemId: 'WS-U6L1-2-reflect1',
+      response: 'A sufficiently long newer response for the manual action.'
+    });
+    expect(mocks.gradeReflection).not.toHaveBeenCalled();
+    expect(mocks.fetch.mock.calls.some((call) => /\/api\/ai\/grade(?:-|$)/.test(String(call[0])))).toBe(false);
+  });
+
+  it('the wrapped reflection sink requests a ticket and never forwards a numeric model result', async () => {
+    addTextarea('reflect1', 'The latest authoritative response in the textarea.');
+    installShippedFlow({ rosterToken: 'roster-token' });
+    mocks.fetch.mockImplementation(async (url) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', bundleVersion: 'v1', pollMs: 2000, authoritative: true }) };
+      }
+      return { ok: true, json: async () => ({ ok: true, mode: 'authoritative', items: {} }) };
+    });
+    await window.__aiFrqTicketClient.fetchConfig(true);
+
+    await window.recordReflectionToGradebook('reflect1', 'old model text', 'E');
+
+    expect(mocks.recordReflectionToGradebook).not.toHaveBeenCalled();
+    expect(mocks.requestFrqGrade).toHaveBeenCalledWith({
+      itemId: 'WS-U6L1-2-reflect1',
+      response: 'The latest authoritative response in the textarea.'
+    });
+  });
+});
+
+describe('authoritative FRQ contractual state copy and stale guard', () => {
+  it('renders every non-verdict copy-table state exactly', async () => {
+    addTextarea('reflect1', 'Current reflection text.');
+    installShippedFlow();
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-reflect1';
+    const statusText = () => document.getElementById('reflect1-ai-status').textContent;
+
+    hook.renderConnection('reflect1');
+    expect(statusText()).toBe('Saved on this device · waiting for a connection to queue grading.');
+    await hook.renderStatus(itemId, { status: 'draft' });
+    expect(statusText()).toBe('Answer saved · grading starts after you pause or leave the box.');
+    await hook.renderStatus(itemId, { status: 'queued', estimatedWaitMs: 9000 });
+    expect(statusText()).toBe('✓ Saved · queued for grading · ~9 s');
+    await hook.renderStatus(itemId, { status: 'grading', estimatedWaitMs: 6000 });
+    expect(statusText()).toBe('⏳ Grading… ~6 s');
+    const retryAt = '2030-01-02T03:04:05.000Z';
+    await hook.renderStatus(itemId, { status: 'retrying', retryAt });
+    const retryTime = new Date(retryAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    expect(statusText()).toBe('⚠ Saved. The grader is unavailable; retrying automatically around ' + retryTime + '.');
+    await hook.renderStatus(itemId, { status: 'failed' });
+    expect(statusText()).toBe('⚠ Saved, but grading needs teacher help.');
+
+    await hook.renderStatus(itemId, {
+      status: 'graded', score: 1, responseHash: 'stale-hash', gradedAt: '2030-01-02T03:04:05.000Z',
+      result: { score: 1, feedback: 'Feedback for old text.' }
+    });
+    expect(statusText()).toBe('This response is already graded. Use Appeal to request review.');
+    expect(mocks.showFeedback).not.toHaveBeenCalled();
+  });
+
+  it('renders only a hash-matched server result and announces graded-while-away once', async () => {
+    addTextarea('reflect1', 'Current reflection text.');
+    installShippedFlow({ rosterToken: 'roster-token', rosterUsername: 'away_student' });
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-reflect1';
+    const gradedAt = '2000-01-02T03:04:05.000Z';
+    const hash = await hook.hash('Current reflection text.');
+    const item = {
+      status: 'graded', score: 0.5, responseHash: hash, gradedAt,
+      result: { score: 0.5, feedback: 'Stored feedback.', matched: ['context'], missing: ['link'] }
+    };
+    const marker = 'apstats_frq_last_seen_graded_away_student_' + itemId;
+    localStorage.removeItem(marker);
+
+    await hook.renderStatus(itemId, item);
+    const live = document.getElementById('reflect1-ai-status');
+    expect(live.textContent).toBe('✓ Graded while you were away: Partially Correct');
+    expect(live.getAttribute('aria-live')).toBe('off');
+    expect(live.querySelector('.ai-status-copy').getAttribute('aria-live')).toBe('assertive');
+    expect(mocks.showFeedback).toHaveBeenCalledWith('reflect1', {
+      score: 'P', feedback: 'Stored feedback.', matched: ['context'], missing: ['link']
+    });
+    expect(localStorage.getItem(marker)).toBe(gradedAt);
+
+    let mutations = 0;
+    const observer = new MutationObserver((records) => { mutations += records.length; });
+    observer.observe(live, { childList: true, characterData: true, subtree: true });
+    await hook.renderStatus(itemId, item);
+    await Promise.resolve();
+    observer.disconnect();
+    expect(mutations).toBe(0);
+    localStorage.removeItem(marker);
+  });
+});
+
+describe('authoritative FRQ poll lifecycle', () => {
+  it('does not mutate identical pending copy across two polls and announces a new grade once', async () => {
+    addTextarea('reflect1', 'Current reflection text.');
+    installShippedFlow({ rosterToken: 'roster-token' });
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-reflect1';
+    const hash = await hook.hash('Current reflection text.');
+    let polls = 0;
+    let graded = false;
+    mocks.fetch.mockImplementation(async (url) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', authoritative: true, pollMs: 2000 }) };
+      }
+      polls += 1;
+      const item = graded
+        ? { status: 'graded', score: 1, responseHash: hash, gradedAt: '2030-01-02T03:04:05.000Z', result: { score: 1, feedback: 'Done.' } }
+        : { status: 'queued', estimatedWaitMs: 9000 };
+      return { ok: true, json: async () => ({ ok: true, mode: 'authoritative', items: { [itemId]: item } }) };
+    });
+    await hook.fetchConfig(true);
+    hook.setState(itemId, { status: 'queued', estimatedWaitMs: 9000 });
+    await hook.renderStatus(itemId, { status: 'queued', estimatedWaitMs: 9000 });
+    const status = document.getElementById('reflect1-ai-status');
+    let mutations = 0;
+    const observer = new MutationObserver((records) => { mutations += records.length; });
+    observer.observe(status, { attributes: true, childList: true, characterData: true, subtree: true });
+
+    await hook.pollOnce();
+    await hook.pollOnce();
+    expect(polls).toBeGreaterThanOrEqual(2);
+    expect(mutations).toBe(0);
+    graded = true;
+    await hook.pollOnce();
+    observer.disconnect();
+    // The graded render rebuilds the feedback DOM, so re-query the status node
+    // rather than holding the pre-grade reference.
+    const gradedNode = document.getElementById('reflect1-ai-status');
+    expect(gradedNode.dataset.frqState).toBe('graded');
+    const gradedCopy = gradedNode.querySelector('.ai-status-copy');
+    expect(gradedCopy.getAttribute('aria-live')).toBe('assertive');
+    expect(gradedCopy.textContent).toContain('Graded');
+    // Announce-once: an identical graded status re-render must not touch the node.
+    let postGradeMutations = 0;
+    const postObserver = new MutationObserver((records) => { postGradeMutations += records.length; });
+    postObserver.observe(gradedNode, { attributes: true, childList: true, characterData: true, subtree: true });
+    await hook.renderStatus(itemId, {
+      status: 'graded', score: 1, responseHash: hash, gradedAt: '2030-01-02T03:04:05.000Z', result: { score: 1, feedback: 'Done.' }
+    });
+    await Promise.resolve();
+    expect(postGradeMutations).toBe(0);
+    postObserver.disconnect();
+  });
+
+  // 20 s budget: advancing fake time through the 2-minute poll cap drives ~60
+  // poll iterations of async mock work — comfortably under 5 s alone, but not
+  // when the whole 87-test file shares the process.
+  it('starts only for visible pending work, stops on terminal/hidden/2-minute cap, and resumes on visibility/online', { timeout: 20000 }, async () => {
+    vi.useFakeTimers();
+    const visibility = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    try {
+      addTextarea('reflect1', 'Current reflection text.');
+      installShippedFlow({ rosterToken: 'roster-token' });
+      let status = 'queued';
+      mocks.fetch.mockImplementation(async (url) => {
+        if (String(url).endsWith('/ledger/frq-config')) {
+          return { ok: true, json: async () => ({ mode: 'authoritative', bundleVersion: 'v1', pollMs: 2000, authoritative: true }) };
+        }
+        return { ok: true, json: async () => ({
+          ok: true, mode: 'authoritative', items: { 'WS-U6L1-2-reflect1': { status } }
+        }) };
+      });
+      const hook = window.__aiFrqTicketClient;
+      await hook.fetchConfig(true);
+      hook.wireTriggers();
+      hook.setState('WS-U6L1-2-reflect1', { status: 'queued' });
+      hook.startPolling(true);
+      expect(hook.isPolling()).toBe(true);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(hook.isPolling()).toBe(true);
+
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+      document.dispatchEvent(new Event('visibilitychange'));
+      expect(hook.isPolling()).toBe(false);
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+      document.dispatchEvent(new Event('visibilitychange'));
+      expect(hook.isPolling()).toBe(true);
+
+      status = 'failed';
+      await vi.advanceTimersByTimeAsync(2001);
+      expect(hook.isPolling()).toBe(false);
+
+      status = 'queued';
+      hook.setState('WS-U6L1-2-reflect1', { status: 'queued' });
+      window.dispatchEvent(new Event('online'));
+      expect(hook.isPolling()).toBe(true);
+      await vi.advanceTimersByTimeAsync(120001);
+      expect(hook.isPolling()).toBe(false);
+    } finally {
+      window.__aiFrqTicketClient && window.__aiFrqTicketClient.stopPolling();
+      if (visibility) Object.defineProperty(document, 'visibilityState', visibility);
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('authoritative FRQ durability boundaries', () => {
+  it('times out a single-flight config fetch and promptly falls back to legacy', async () => {
+    vi.useFakeTimers();
+    try {
+      addTextarea('reflect1', 'A sufficiently long legacy response.');
+      installShippedFlow({ rosterToken: 'roster-token' });
+      mocks.fetch.mockImplementation(() => new Promise(() => {}));
+      const hook = window.__aiFrqTicketClient;
+      const first = hook.fetchConfig(true);
+      const second = hook.fetchConfig(true);
+      expect(mocks.fetch).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(4001);
+      await expect(first).resolves.toMatchObject({ mode: 'off', authoritative: false });
+      await expect(second).resolves.toMatchObject({ mode: 'off', authoritative: false });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('refreshes expired authority before blur and pagehide flushes', async () => {
+    vi.useFakeTimers();
+    const visibility = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    try {
+      const ta = addTextarea('reflect1', 'A sufficiently long response for rollback.');
+      installShippedFlow({ rosterToken: 'roster-token' });
+      let mode = 'authoritative';
+      mocks.fetch.mockImplementation(async (url) => {
+        if (String(url).endsWith('/ledger/frq-config')) {
+          return { ok: true, json: async () => ({ mode, authoritative: mode === 'authoritative', pollMs: 2000 }) };
+        }
+        return okFetch([]);
+      });
+      const hook = window.__aiFrqTicketClient;
+      await hook.fetchConfig(true);
+      hook.wireTriggers();
+      await vi.advanceTimersByTimeAsync(60001);
+      mode = 'off';
+      ta.dispatchEvent(new Event('blur'));
+      await vi.advanceTimersByTimeAsync(1);
+      window.dispatchEvent(new Event('pagehide'));
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(hook.isAuthoritative()).toBe(false);
+      expect(mocks.requestFrqGrade).not.toHaveBeenCalled();
+    } finally {
+      if (visibility) Object.defineProperty(document, 'visibilityState', visibility);
+      vi.useRealTimers();
+    }
+  });
+
+  it('downgrades to legacy within one status poll when the response mode is off', async () => {
+    addTextarea('reflect1', 'A sufficiently long response for status rollback.');
+    installShippedFlow({ rosterToken: 'roster-token' });
+    mocks.fetch.mockImplementation(async (url) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', authoritative: true, pollMs: 2000 }) };
+      }
+      return { ok: true, json: async () => ({ ok: true, mode: 'off', items: {} }) };
+    });
+    const hook = window.__aiFrqTicketClient;
+    await hook.fetchConfig(true);
+    await hook.refreshStatus();
+    expect(hook.isAuthoritative()).toBe(false);
+  });
+
+  it('reconciles prior text before a terminal status that wins the hydration race', async () => {
+    const ta = addTextarea('reflect1', '');
+    let resolvePrior;
+    const priorPromise = new Promise((resolve) => { resolvePrior = resolve; });
+    installShippedFlow({ rosterToken: 'roster-token', rosterUsername: 'hydrate_late', fetchPrior: vi.fn(() => priorPromise) });
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-reflect1';
+    const restored = 'Restored response that was graded while away.';
+    const hash = await hook.hash(restored);
+    const render = hook.renderStatus(itemId, {
+      status: 'graded', score: 0.5, responseHash: hash, gradedAt: '2000-01-02T03:04:05.000Z',
+      result: { score: 0.5, feedback: 'Restored feedback.' }
+    });
+    expect(mocks.showFeedback).not.toHaveBeenCalled();
+    resolvePrior(new Map([[itemId, { response: restored, score: 0.5, source: 'frq' }]]));
+    await render;
+    expect(ta.value).toBe(restored);
+    expect(mocks.showFeedback).toHaveBeenCalledWith('reflect1', expect.objectContaining({ feedback: 'Restored feedback.' }));
+  });
+
+  it('renders the same terminal result when hydration finishes first', async () => {
+    const restored = 'Restored response before the status poll.';
+    const ta = addTextarea('reflect1', restored);
+    ta.dataset.restored = '1';
+    installShippedFlow({ rosterToken: 'roster-token' });
+    const hook = window.__aiFrqTicketClient;
+    const hash = await hook.hash(restored);
+    await hook.renderStatus('WS-U6L1-2-reflect1', {
+      status: 'graded', score: 1, responseHash: hash, gradedAt: '2030-01-02T03:04:05.000Z',
+      result: { score: 1, feedback: 'Hydrated first.' }
+    });
+    expect(mocks.showFeedback).toHaveBeenCalledWith('reflect1', expect.objectContaining({ feedback: 'Hydrated first.' }));
+  });
+
+  it.each([
+    ['server acknowledgement', { ok: true, ledgerId: 'draft' }, 'draft', 'Answer saved · grading starts after you pause or leave the box.'],
+    ['confirmed queue capture', { ok: false, reason: 'network', queued: true }, 'local-only', 'Saved on this device · waiting for a connection to queue grading.'],
+    ['500 without capture', { ok: false, reason: 'server' }, 'unsaved', '⚠ Not saved — check your connection'],
+    ['queue capture failure', { ok: false, reason: 'network' }, 'unsaved', '⚠ Not saved — check your connection']
+  ])('renders acknowledgement-backed draft state for %s', async (_, result, state, copy) => {
+    addTextarea('reflect1', 'Draft answer awaiting acknowledgement.');
+    installShippedFlow({ rosterToken: 'roster-token', record: vi.fn(async () => result) });
+    mocks.fetch.mockResolvedValue({ ok: true, json: async () => ({ mode: 'authoritative', authoritative: true, pollMs: 2000 }) });
+    const hook = window.__aiFrqTicketClient;
+    await hook.fetchConfig(true);
+    await hook.saveDraft('reflect1', 'Draft answer awaiting acknowledgement.');
+    await hook.refreshStatus();
+    const statusEl = document.getElementById('reflect1-ai-status');
+    expect(statusEl.dataset.frqState).toBe(state);
+    expect(statusEl.textContent).toBe(copy);
+  });
+});
+
+describe('authoritative appeals', () => {
+  it.each([
+    [409, 'already-pending'],
+    [400, 'appealText must be at least 10 characters and at most 2048 bytes']
+  ])('POSTs only itemId + appealText and surfaces a %s server message', async (status, error) => {
+    addTextarea('reflect1', 'Current reflection text.');
+    const form = document.createElement('div');
+    form.id = 'appeal-form-reflect1';
+    form.innerHTML = '<textarea id="appeal-text-reflect1">Please review this reasoning.</textarea><button>Submit</button>';
+    document.body.appendChild(form);
+    installShippedFlow({ rosterToken: 'roster-token' });
+    mocks.fetch.mockImplementation(async (url, init) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', bundleVersion: 'v1', pollMs: 2000, authoritative: true }) };
+      }
+      if (String(url).endsWith('/ledger/frq-appeal')) {
+        expect(init.headers.Authorization).toBe('Bearer roster-token');
+        expect(JSON.parse(init.body)).toEqual({
+          itemId: 'WS-U6L1-2-reflect1', appealText: 'Please review this reasoning.'
+        });
+        return { ok: false, status, json: async () => ({ ok: false, error }) };
+      }
+      throw new Error('unexpected fetch: ' + url);
+    });
+    await window.__aiFrqTicketClient.fetchConfig(true);
+
+    await window.submitAppeal('reflect1');
+
+    expect(document.getElementById('reflect1-frq-appeal-status').textContent).toBe(error);
+    expect(mocks.submitAppeal).not.toHaveBeenCalled();
+  });
+
+  it('delegates to the original appeal function unchanged in legacy mode', async () => {
+    installShippedFlow({ rosterToken: 'roster-token' });
+    mocks.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ mode: 'shadow', bundleVersion: 'v1', pollMs: 2000, authoritative: false })
+    });
+    await window.__aiFrqTicketClient.fetchConfig(true);
+
+    await window.submitAppeal('reflect1');
+
+    expect(mocks.submitAppeal).toHaveBeenCalledWith('reflect1');
   });
 });

@@ -15,6 +15,7 @@
 //   .enqueue(rec) -> Promise        durable put (IndexedDB, in-memory fallback)
 //   .all() -> Promise<record[]>     durable read
 //   .clear() -> Promise            durable clear
+//   .supersede(rec) -> Promise     delete an older/equal row after a successful send
 //   .drain(sender) -> Promise      replay each via sender(rec)->{ok}; deletes on ok
 
 (function () {
@@ -41,9 +42,15 @@
     return (rec && typeof rec.ts === 'number' && isFinite(rec.ts)) ? rec.ts : 0;
   }
 
-  // Faithful latest-wins: on a tie the incoming record wins (it is the newer call).
+  function sequenceOf(rec) {
+    return (rec && typeof rec.transportSequence === 'number' && isFinite(rec.transportSequence))
+      ? rec.transportSequence : tsOf(rec);
+  }
+
+  // Faithful latest-wins is based on call START, not failure completion. A slow
+  // older request can therefore never replace a newer answer in the outbox.
   function pickLatest(prev, next) {
-    return tsOf(next) >= tsOf(prev) ? next : prev;
+    return sequenceOf(next) >= sequenceOf(prev) ? next : prev;
   }
 
   // Pure: merge a record into a list, deduped by keyOf, keeping the newer ts.
@@ -132,9 +139,23 @@
   }
 
   var _store = null;
+  var _keyChains = {};
   function store() {
     if (!_store) _store = makeIdbStore() || makeMemStore();
     return _store;
+  }
+
+  function withKeyLock(k, work) {
+    var previous = _keyChains[k] || Promise.resolve();
+    var run = previous.catch(function () {}).then(work);
+    _keyChains[k] = run.then(function () {}, function () {});
+    return run.then(function (value) {
+      if (_keyChains[k]) delete _keyChains[k];
+      return value;
+    }, function (err) {
+      if (_keyChains[k]) delete _keyChains[k];
+      throw err;
+    });
   }
 
   // ── Durable API ───────────────────────────────────────────────────────────
@@ -143,7 +164,11 @@
     var r = {};
     for (var key in rec) { if (Object.prototype.hasOwnProperty.call(rec, key)) r[key] = rec[key]; }
     r.attempt = attemptOf(rec);
-    if (typeof r.ts !== 'number' || !isFinite(r.ts)) r.ts = (root.Date && root.Date.now ? root.Date.now() : 0);
+    var now = (root.Date && root.Date.now ? root.Date.now() : 0);
+    if (typeof r.transportSequence !== 'number' || !isFinite(r.transportSequence)) {
+      r.transportSequence = (typeof r.ts === 'number' && isFinite(r.ts)) ? r.ts : now;
+    }
+    if (typeof r.ts !== 'number' || !isFinite(r.ts)) r.ts = r.transportSequence;
     return r;
   }
 
@@ -151,9 +176,25 @@
     var r = normalize(rec);
     var s = store();
     var k = keyOf(r);
-    return s.get(k).then(function (existing) {
-      var merged = existing ? pickLatest(existing, r) : r;
-      return s.put(k, merged).then(function () { return merged; });
+    return withKeyLock(k, function () {
+      return s.get(k).then(function (existing) {
+        var merged = existing ? pickLatest(existing, r) : r;
+        return s.put(k, merged).then(function () { return merged; });
+      });
+    });
+  }
+
+  // A successful direct send is a durable supersession boundary. Remove only
+  // rows that started no later than that send; a newer queued edit survives.
+  function supersede(rec) {
+    var r = normalize(rec);
+    var s = store();
+    var k = keyOf(r);
+    return withKeyLock(k, function () {
+      return s.get(k).then(function (current) {
+        if (!current || sequenceOf(current) > sequenceOf(r)) return false;
+        return s.del(k).then(function () { return true; });
+      });
     });
   }
 
@@ -176,16 +217,26 @@
       var chain = Promise.resolve();
       items.forEach(function (it) {
         chain = chain.then(function () {
-          return Promise.resolve().then(function () { return sender(it); }).then(function (res) {
-            if (!(res && res.ok)) { failed += 1; return; }
-            return s.get(keyOf(it)).then(function (cur) {
-              if (cur && tsOf(cur) !== tsOf(it)) { failed += 1; return; } // newer edit arrived → keep it queued
-              return s.del(keyOf(it)).then(function () { sent += 1; }, function () { failed += 1; });
+          // Re-check before network I/O: a newer direct call may have
+          // superseded this getAll() snapshot while an earlier row was sent.
+          return s.get(keyOf(it)).then(function (before) {
+            if (!before || sequenceOf(before) !== sequenceOf(it)) return;
+            return Promise.resolve().then(function () { return sender(it); }).then(function (res) {
+              if (!(res && res.ok)) { failed += 1; return; }
+              return s.get(keyOf(it)).then(function (cur) {
+                if (!cur) { sent += 1; return; }
+                if (sequenceOf(cur) !== sequenceOf(it)) { failed += 1; return; }
+                return s.del(keyOf(it)).then(function () { sent += 1; }, function () { failed += 1; });
+              });
             });
           }).catch(function () { failed += 1; });
         });
       });
-      return chain.then(function () { return { sent: sent, failed: failed, remaining: failed }; });
+      return chain.then(function () {
+        return s.getAll().then(function (remaining) {
+          return { sent: sent, failed: failed, remaining: remaining.length };
+        });
+      });
     });
   }
 
@@ -195,6 +246,7 @@
     toBundle: toBundle,
     isOffline: isOffline,
     enqueue: enqueue,
+    supersede: supersede,
     all: all,
     clear: clear,
     drain: drain,

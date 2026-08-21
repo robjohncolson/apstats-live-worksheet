@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -258,11 +259,14 @@ describe('pure regrade job decisions', () => {
       studentId: 'sid-1',
       itemId: 'WS-U1L2-reflect2',
       attempt: 1,
-    }, 0.5)).toEqual({
+      response: '  student answer  ',
+    }, 0.5, REGISTRY)).toEqual({
       studentId: 'sid-1',
       itemId: 'WS-U1L2-reflect2',
       score: 0.5,
       provenance: 'ai-batch',
+      responseHash: createHash('sha256').update('student answer', 'utf8').digest('hex'),
+      rubricVersion: `${REGISTRY.schoolYear}:${REGISTRY.sourceDigest.replace(/^sha256:/, '')}`,
     });
   });
 });
@@ -329,6 +333,8 @@ describe('regrade job HTTP flow', () => {
       itemId: 'WS-U1L2-reflect2',
       score: 1,
       provenance: 'ai-batch',
+      responseHash: createHash('sha256').update(studentAnswer.trim(), 'utf8').digest('hex'),
+      rubricVersion: `${REGISTRY.schoolYear}:${REGISTRY.sourceDigest.replace(/^sha256:/, '')}`,
     });
     expect(result.exitCode).toBe(0);
   });
@@ -427,6 +433,52 @@ describe('regrade job HTTP flow', () => {
     const result = await runApplyJob(fetchMock);
     expect(result.summary.failed).toBe(1);
     expect(result.exitCode).toBe(1);
+  });
+
+  it('counts an authoritative stale-response 409 as a non-failing skip', async () => {
+    const events = [];
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([eligibleRecord()])))
+      .mockResolvedValueOnce(response(200, { score: 'E' }))
+      .mockResolvedValueOnce(response(409, { error: 'stale-response' }));
+
+    const result = await runApplyJob(fetchMock, { onEvent: (event) => events.push(event) });
+
+    expect(result.summary).toMatchObject({
+      graded: 1,
+      applied: 0,
+      floorHeld: 0,
+      stale: 1,
+      failed: 0,
+    });
+    expect(result.exitCode).toBe(0);
+    expect(events.at(-1)).toMatchObject({
+      type: 'stale-response',
+      reason: 'student response changed after the snapshot',
+    });
+  });
+
+  it('counts an authoritative 200 applied:false response as floor-held', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([eligibleRecord()])))
+      .mockResolvedValueOnce(response(200, { score: 'P', missing: ['one idea'] }))
+      .mockResolvedValueOnce(response(200, {
+        ok: true,
+        applied: false,
+        ledgerId: 'ledger-1',
+        score: 0.5,
+      }));
+
+    const result = await runApplyJob(fetchMock);
+
+    expect(result.summary).toMatchObject({
+      graded: 1,
+      applied: 0,
+      floorHeld: 1,
+      stale: 0,
+      failed: 0,
+    });
+    expect(result.exitCode).toBe(0);
   });
 
   it('returns a non-zero exit code for a malformed apply response', async () => {

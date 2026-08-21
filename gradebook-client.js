@@ -129,8 +129,36 @@
     } catch (_) { return false; }
   }
 
+  var _transportSequence = 0;
+  var _latestStartedSequence = {};
+  var _successfulSequence = {};
+  var _sendChains = {};
+  function _recordKey(opts) {
+    var attempt = opts && opts.attempt != null ? opts.attempt : 1;
+    return String(opts && opts.source) + '|' + String(opts && opts.itemId) + '|' + String(attempt);
+  }
+  function _stampRecord(opts) {
+    var stamped = {};
+    for (var key in opts) {
+      if (Object.prototype.hasOwnProperty.call(opts, key)) stamped[key] = opts[key];
+    }
+    var now = Date.now();
+    _transportSequence = Math.max(_transportSequence + 1, now);
+    stamped.transportSequence = _transportSequence;
+    _latestStartedSequence[_recordKey(stamped)] = stamped.transportSequence;
+    return stamped;
+  }
+  function _isSuperseded(opts) {
+    var sequence = opts && opts.transportSequence;
+    if (typeof sequence !== 'number') return false;
+    var key = _recordKey(opts);
+    return (_latestStartedSequence[key] || 0) > sequence
+      || (_successfulSequence[key] || 0) > sequence;
+  }
+
   function _enqueueOffline(opts) {
     if (!_hasQueue()) return Promise.resolve(false);
+    if (_isSuperseded(opts)) return Promise.resolve(false);
     var sid = _studentId();
     try {
       // Cast: _hasQueue() above guarantees enqueue exists; tsc can't see across the call.
@@ -138,9 +166,21 @@
         source: opts.source, itemId: opts.itemId, response: opts.response,
         score: opts.score, attempt: opts.attempt,
         unit: opts.unit, topic: opts.topic, skill: opts.skill,
+        requestGrade: opts.requestGrade,
+        transportSequence: opts.transportSequence,
         studentId: sid || undefined, kind: opts.kind || 'record'
-      })).then(function () { return true; }, function () { return false; });
+      })).then(function (stored) {
+        return !!stored && !_isSuperseded(opts)
+          && (!stored.transportSequence || stored.transportSequence >= opts.transportSequence);
+      }, function () { return false; });
     } catch (_) { return Promise.resolve(false); }
+  }
+
+  function _supersedeOffline(opts) {
+    var queue = window.OfflineQueue;
+    if (!queue || typeof queue.supersede !== 'function') return Promise.resolve(false);
+    try { return Promise.resolve(queue.supersede(opts)).catch(function () { return false; }); }
+    catch (_) { return Promise.resolve(false); }
   }
 
   // Raw POST to /ledger/record. NEVER throws; NEVER enqueues (so it is safe to
@@ -165,23 +205,39 @@
         skill:    opts.skill,
         response: opts.response,
         score:    opts.score,
-        attempt:  opts.attempt
+        attempt:  opts.attempt,
+        requestGrade: opts.requestGrade
       };
 
-      var res = await fetch(baseUrl + '/ledger/record', {
+      var bodyJson = JSON.stringify(body);
+      var fetchOpts = {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body)
-      });
+        body:    bodyJson
+      };
+      // Unload keepalive has a small browser quota. Fifteen thousand UTF-16
+      // code units is at most 60 KB of UTF-8, so only bounded best-effort flushes
+      // opt in; larger answers use the durable outbox/reconnect path.
+      if (opts.keepalive === true && bodyJson.length <= 15000) fetchOpts.keepalive = true;
+      var res = await fetch(baseUrl + '/ledger/record', fetchOpts);
 
       var data = null;
       try { data = await res.json(); } catch (_) { data = null; }
 
       if (data && data.ok) {
         _captureReceipt(data.receipt, opts.source, opts.itemId, opts.score);
-        return { ok: true, ledgerId: data.ledgerId, receipt: data.receipt || null };
+        var out = { ok: true, ledgerId: data.ledgerId, receipt: data.receipt || null };
+        if (Object.prototype.hasOwnProperty.call(data, 'clientScoreIgnored')) out.clientScoreIgnored = data.clientScoreIgnored;
+        if (Object.prototype.hasOwnProperty.call(data, 'status')) out.status = data.status;
+        if (Object.prototype.hasOwnProperty.call(data, 'responseVersion')) out.responseVersion = data.responseVersion;
+        return out;
       }
       if (res && (res.status === 401 || res.status === 403)) { console.warn('gradebook-client: auth failed', data); return { ok: false, reason: 'auth' }; }
+      // Queue on the authenticated FRQ body contract, not a hard-coded status.
+      // This covers today's 429/503 responses and future retryable statuses.
+      if (opts.source === 'frq' && opts.requestGrade === true && data && data.retryable === true) {
+        return { ok: false, reason: 'network', retryable: true };
+      }
       if (res && !res.ok) { console.warn('gradebook-client: server error', data); return { ok: false, reason: 'server' }; }
       console.warn('gradebook-client: server returned ok:false', data);
       return { ok: false, reason: 'server' };
@@ -189,6 +245,49 @@
       // fetch rejection / JSON error → treat as offline-ish (queueable)
       return { ok: false, reason: 'network' };
     }
+  }
+
+  // Serialize network sends per source/item/attempt. Sequences are still
+  // stamped when record() starts, so newer intent wins in the outbox while the
+  // wire order guarantees an older POST cannot finish after a newer POST.
+  function _sendRecord(opts) {
+    var key = _recordKey(opts);
+    var previous = _sendChains[key] || Promise.resolve();
+    var run = previous.catch(function () {}).then(function () { return _postRecord(opts); });
+    _sendChains[key] = run.then(function () {}, function () {});
+    return run.then(function (value) {
+      if (_sendChains[key]) delete _sendChains[key];
+      return value;
+    }, function (err) {
+      if (_sendChains[key]) delete _sendChains[key];
+      throw err;
+    });
+  }
+
+  var _offlineDrainTimer = null;
+  var _offlineDrainBackoffMs = 30000;
+  function _canDrainOnline() {
+    try { return !_isOfflineMode() && (!window.navigator || window.navigator.onLine !== false); }
+    catch (_) { return false; }
+  }
+  function _scheduleOfflineDrain(delayMs) {
+    if (_offlineDrainTimer || !_canDrainOnline() || !_hasQueue()) return;
+    _offlineDrainTimer = window.setTimeout(async function () {
+      _offlineDrainTimer = null;
+      if (!_canDrainOnline()) return;
+      try {
+        var rows = await window.OfflineQueue.all();
+        if (!rows || !rows.length) { _offlineDrainBackoffMs = 30000; return; }
+        await window.gradebookClient.syncOfflineQueue();
+        rows = await window.OfflineQueue.all();
+        if (!rows || !rows.length) { _offlineDrainBackoffMs = 30000; return; }
+        _offlineDrainBackoffMs = Math.min(3600000, Math.max(30000, _offlineDrainBackoffMs * 2));
+        _scheduleOfflineDrain(_offlineDrainBackoffMs);
+      } catch (_) {
+        _offlineDrainBackoffMs = Math.min(3600000, Math.max(30000, _offlineDrainBackoffMs * 2));
+        _scheduleOfflineDrain(_offlineDrainBackoffMs);
+      }
+    }, Math.max(0, delayMs || 0));
   }
 
   window.gradebookClient = {
@@ -208,6 +307,10 @@
           return { ok: false, reason: 'bad-args' };
         }
 
+        // Stamp before any storage or network I/O. The key-local sequence is the
+        // durable ordering boundary for overlapping saves.
+        opts = _stampRecord(opts);
+
         // --- View-as / read-only: never capture or send (defense-in-depth) ---
         // The worksheet view-as module also neuters record(), but the Desk path
         // and any future caller rely on this guard so an impersonating teacher's
@@ -215,6 +318,10 @@
         if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) {
           return { ok: false, reason: 'read-only' };
         }
+
+        // Future writes also nudge an ownership-gated drain. A queued older row
+        // for this key is skipped because _latestStartedSequence already moved.
+        _scheduleOfflineDrain(0);
 
         // --- Offline pack: capture locally, skip the network entirely ---
         if (_isOfflineMode()) {
@@ -230,6 +337,7 @@
           // broken queue), saying "queued" would hide a LOST grade behind a
           // "Saved offline" toast. Report the failure so the caller surfaces it.
           if (await _enqueueOffline(opts)) {
+            _scheduleOfflineDrain(30000);
             return { ok: true, queued: true, ledgerId: null };
           }
           return { ok: false, reason: 'network' };
@@ -241,8 +349,14 @@
           return { ok: false, reason: 'no-identity' };
         }
 
-        var r = await _postRecord(opts);
-        if (r.ok) return r;
+        var r = await _sendRecord(opts);
+        if (r.ok) {
+          var key = _recordKey(opts);
+          _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, opts.transportSequence);
+          await _supersedeOffline(opts);
+          _scheduleOfflineDrain(0);
+          return r;
+        }
 
         // Reachability failure → capture for later instead of dropping the grade.
         // reason stays 'network' (the frozen whitelist); the additive `queued`
@@ -251,6 +365,7 @@
         // studentId (the token alone is drain-time state, not ownership).
         if (r.reason === 'network' && _hasQueue() && _studentId()) {
           if (await _enqueueOffline(opts)) {
+            _scheduleOfflineDrain(30000);
             return { ok: false, reason: 'network', queued: true };
           }
           return r;
@@ -262,6 +377,19 @@
         console.warn('gradebook-client: record failed —', err && err.message);
         return { ok: false, reason: 'network' };
       }
+    },
+
+    // Authoritative FRQ ticket ingress. This deliberately delegates to record()
+    // so identity checks, OfflineQueue capture/replay, and latest-wins dedup all
+    // remain on the single established transport path.
+    requestFrqGrade: async function (opts) {
+      return window.gradebookClient.record({
+        source: 'frq',
+        itemId: opts && opts.itemId,
+        response: opts && opts.response,
+        requestGrade: true,
+        keepalive: !!(opts && opts.keepalive)
+      });
     },
 
     // ── OFFLINE_MODE_SPEC §4.A — flush queued work to the server ────────────────
@@ -284,7 +412,14 @@
           if (!r || !r.studentId || !sid || String(r.studentId) !== String(sid)) {
             return { ok: false, reason: 'no-identity' };
           }
-          return _postRecord(r);
+          if (_isSuperseded(r)) return { ok: true, superseded: true };
+          return _sendRecord(r).then(function (result) {
+            if (result && result.ok && typeof r.transportSequence === 'number') {
+              var key = _recordKey(r);
+              _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, r.transportSequence);
+            }
+            return result;
+          });
         });
       } catch (_) {
         return { sent: 0, failed: 0 };
@@ -415,14 +550,16 @@
 
   };
 
-  // Auto-flush the offline queue when connectivity returns (intermittent case).
-  // Best-effort; never throws. The export→teacher-import path covers the fully
-  // disconnected case where 'online' never fires.
+  // Drain after initial identity hydration, on reconnect, on future writes, and
+  // periodically while queued rows remain online. Backoff is bounded at one
+  // hour so a browser that never goes offline still recovers after a 429/503.
   try {
     if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
       window.addEventListener('online', function () {
-        try { /** @type {any} */ (window.gradebookClient).syncOfflineQueue(); } catch (_) { /* best-effort */ }
+        _offlineDrainBackoffMs = 30000;
+        _scheduleOfflineDrain(0);
       });
+      _scheduleOfflineDrain(0);
     }
   } catch (_) { /* best-effort */ }
 

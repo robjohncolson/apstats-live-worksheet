@@ -10,8 +10,16 @@
 // and the writer dies silently (how study_guide_diagnostic was lost for weeks).
 import { issueLedgerReceipt, recordReceiptPersistFailure, verifyReviewGrant } from './receipts.js';
 import { requireTeacher } from './teacher-auth.js';
+import { createHash } from 'node:crypto';
+import { parseServerReflectionItemId } from './frq-prompt.js';
 
 let receiptPersistenceNotProvisionedLogged = false;
+let frqMigrationDegradedLogged = false;
+const FRQ_RESPONSE_MAX_BYTES = 8 * 1024;
+const APPEAL_MAX_BYTES = 2 * 1024;
+const RATE_WINDOW_MS = 60_000;
+const STUDENT_WINDOW_SWEEP_THRESHOLD = 5_000;
+const STUDENT_WINDOW_MAX_KEYS = 20_000;
 
 function isReceiptPersistenceNotProvisioned(err) {
   if (!err) return false;
@@ -81,9 +89,205 @@ function findWorksheetAnswer(worksheetKey, itemId) {
   return values[itemId] === undefined ? undefined : String(values[itemId]);
 }
 
+function resolveFrqMode(frqMode) {
+  let value;
+  try {
+    value = typeof frqMode === 'function' ? frqMode() : frqMode;
+  } catch (_) {
+    value = 'off';
+  }
+  return ['off', 'shadow', 'authoritative'].includes(value) ? value : 'off';
+}
+
+export function authoritativeForStudent(mode, studentId, canaryEnv) {
+  if (!studentId || resolveFrqMode(mode) !== 'authoritative') return false;
+  let rawCanary;
+  try {
+    rawCanary = typeof canaryEnv === 'function' ? canaryEnv() : canaryEnv;
+  } catch (_) {
+    return false;
+  }
+  const students = String(rawCanary || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return students.includes('*') || students.includes(studentId);
+}
+
+function positiveInteger(value, fallback) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+// The roster service is a single Railway instance today. These per-student
+// sliding windows deliberately live in-process; move them to shared storage if
+// the service is horizontally scaled.
+export function createStudentSlidingWindow(limit, options = {}) {
+  const startsByStudent = new Map();
+  const sweepThreshold = positiveInteger(
+    options.sweepThreshold,
+    STUDENT_WINDOW_SWEEP_THRESHOLD,
+  );
+  const maxKeys = positiveInteger(options.maxKeys, STUDENT_WINDOW_MAX_KEYS);
+
+  function sweepExpired(cutoff) {
+    for (const [key, starts] of startsByStudent) {
+      const recent = starts.filter((startedAt) => startedAt > cutoff);
+      if (recent.length === 0) startsByStudent.delete(key);
+      else if (recent.length !== starts.length) startsByStudent.set(key, recent);
+    }
+  }
+
+  return (studentId, at = Date.now()) => {
+    const cutoff = at - RATE_WINDOW_MS;
+    const isNewStudent = !startsByStudent.has(studentId);
+    if (startsByStudent.size >= sweepThreshold
+      || (isNewStudent && startsByStudent.size >= maxKeys)) {
+      sweepExpired(cutoff);
+    }
+
+    const recent = (startsByStudent.get(studentId) || []).filter((startedAt) => startedAt > cutoff);
+    const maximum = positiveInteger(limit(), 1);
+    if (recent.length >= maximum) {
+      startsByStudent.set(studentId, recent);
+      return false;
+    }
+    if (!startsByStudent.has(studentId) && startsByStudent.size >= maxKeys) {
+      // Fail closed instead of evicting a live student's active count.
+      return false;
+    }
+    recent.push(at);
+    startsByStudent.set(studentId, recent);
+    return true;
+  };
+}
+
+function bearerStudentId(req, verifyToken) {
+  const header = req.headers.authorization || req.headers.Authorization;
+  if (typeof header !== 'string' || !/^Bearer\s+/i.test(header)) return null;
+  const token = header.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return null;
+  try {
+    return verifyToken(token) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function frqBundleVersion(bundle) {
+  if (!bundle) return null;
+  const digest = String(bundle.sourceDigest || '').replace(/^sha256:/, '');
+  return digest ? `${bundle.schoolYear || 'unknown'}:${digest}` : null;
+}
+
+function lookupFrqItem(bundle, itemId) {
+  if (!bundle) return null;
+  try {
+    return parseServerReflectionItemId(bundle, itemId);
+  } catch (_) {
+    return null;
+  }
+}
+
+function rpcFirst(result) {
+  if (!result) return null;
+  if (Array.isArray(result)) return result[0] || null;
+  if (Array.isArray(result.data)) return result.data[0] || null;
+  if (result.data && typeof result.data === 'object') return result.data;
+  if (!Object.hasOwn(result, 'data') && !result.error && !result.degraded) return result;
+  return null;
+}
+
+function isNumericFrqScore(value) {
+  const number = Number(value);
+  return value !== null && value !== undefined
+    && (number === 0 || number === 0.5 || number === 1);
+}
+
+function deriveFrqStatus(row, at = Date.now()) {
+  const now = Number(at);
+  const leaseLive = row.frq_claimed_until
+    && Date.parse(row.frq_claimed_until) > now;
+  if (isNumericFrqScore(row.score) && row.frq_appeal_pending) {
+    return leaseLive ? 'appeal-grading' : 'appeal-queued';
+  }
+  if (isNumericFrqScore(row.score)) return 'graded';
+  if (leaseLive) return 'grading';
+  if (String(row.frq_next_attempt_at || '').toLowerCase() === 'infinity') return 'failed';
+  if (row.frq_next_attempt_at && Date.parse(row.frq_next_attempt_at) > now) return 'retrying';
+  const readyAt = row.frq_ready_at ? Date.parse(row.frq_ready_at) : Number.NaN;
+  if (typeof row.response !== 'string'
+    || [...row.response].length < 20
+    || !Number.isFinite(readyAt)
+    || readyAt > now) return 'draft';
+  return 'queued';
+}
+
+function sanitizedFrqResult(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const result = {};
+  if (isNumericFrqScore(value.score)) result.score = Number(value.score);
+  for (const field of ['feedback', 'suggestion', 'provider', 'model']) {
+    if (typeof value[field] === 'string') result[field] = value[field].slice(0, 2_048);
+  }
+  for (const field of ['matched', 'missing']) {
+    if (Array.isArray(value[field])) {
+      result[field] = value[field].slice(0, 32).map((entry) => String(entry).slice(0, 512));
+    }
+  }
+  return result;
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKey, rosterDb }) {
+export function mountLedger(app, {
+  db,
+  verifyToken,
+  resolveUsername,
+  worksheetKey,
+  rosterDb,
+  frqDb,
+  frqBundle,
+  frqMode,
+}) {
+  const allowFrqRecord = createStudentSlidingWindow(
+    () => positiveInteger(process.env.FRQ_RECORD_MAX_PER_MINUTE, 30),
+  );
+  const allowFrqAppeal = createStudentSlidingWindow(
+    () => positiveInteger(process.env.FRQ_APPEAL_MAX_PER_MINUTE, 5),
+  );
+  const allowFrqRead = createStudentSlidingWindow(
+    () => positiveInteger(process.env.FRQ_STATUS_MAX_PER_MINUTE, 120),
+  );
+
+  async function persistFrqReceipt(row, score, provenance) {
+    const username = await resolveReceiptUsername(resolveUsername, row.student_id);
+    const receipt = issueLedgerReceipt({
+      studentId: row.student_id,
+      username,
+      source: 'frq',
+      itemId: row.item_id,
+      score,
+      attempt: row.attempt ?? 1,
+      evidenceTier: row.evidence_tier || 'practice',
+      response: row.response,
+      gradingProvenance: provenance,
+    });
+    if (!receipt || !row.ledger_id || !frqDb
+      || typeof frqDb.updateFrqReceiptIfScore !== 'function') return receipt;
+    try {
+      const persisted = await frqDb.updateFrqReceiptIfScore(
+        row.ledger_id,
+        score,
+        receipt.receiptId,
+        receipt.compact,
+      );
+      if (persisted && persisted.error) handleReceiptPersistenceError(persisted.error, row.ledger_id);
+    } catch (error) {
+      handleReceiptPersistenceError(error, row.ledger_id);
+    }
+    return receipt;
+  }
 
   // ── POST /ledger/record ─────────────────────────────────────────────────────
   // FROZEN CONTRACT 2:
@@ -98,7 +302,19 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
   //   → 401 bad token
   //   → 503 source not in the item_ledger CHECK yet (run the latest migration)
   app.post('/ledger/record', async (req, res) => {
-    const { token, source, itemId, response, unit, topic, skill, score, attempt, grant } = req.body || {};
+    const {
+      token,
+      source,
+      itemId,
+      response,
+      unit,
+      topic,
+      skill,
+      score,
+      attempt,
+      grant,
+      requestGrade,
+    } = req.body || {};
 
     // Validate required fields
     if (!token) {
@@ -113,6 +329,73 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
     const studentId = verifyToken(token);
     if (!studentId) {
       return res.status(401).json({ ok: false, error: 'invalid token' });
+    }
+
+    const studentIsAuthoritative = source === 'frq' && authoritativeForStudent(
+      frqMode,
+      studentId,
+      process.env.FRQ_CANARY_STUDENTS,
+    );
+    if (studentIsAuthoritative) {
+      if (!allowFrqRecord(studentId)) {
+        return res.status(429).json({ error: 'rate limit exceeded', retryable: true });
+      }
+      if (!frqBundle) {
+        return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+      }
+      if (!lookupFrqItem(frqBundle, itemId)) {
+        return res.status(400).json({ error: 'unknown item' });
+      }
+      if (attempt !== undefined && attempt !== 1) {
+        return res.status(400).json({ error: 'attempt must be 1' });
+      }
+
+      const canonicalResponse = String(response).trim();
+      if (Buffer.byteLength(canonicalResponse, 'utf8') > FRQ_RESPONSE_MAX_BYTES) {
+        return res.status(400).json({ error: 'response too large' });
+      }
+      if (!frqDb || typeof frqDb.recordFrqDraft !== 'function') {
+        return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+      }
+
+      const responseHash = createHash('sha256').update(canonicalResponse, 'utf8').digest('hex');
+      const hasLegacyScore = typeof score === 'number' && Number.isFinite(score);
+      const readyDelayMs = requestGrade === true || hasLegacyScore ? 2_000 : 20_000;
+      let draftResult;
+      try {
+        draftResult = await frqDb.recordFrqDraft({
+          studentId,
+          itemId,
+          response: canonicalResponse,
+          responseHash,
+          readyAt: new Date(Date.now() + readyDelayMs).toISOString(),
+        });
+      } catch (error) {
+        console.error('FRQ draft RPC error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+
+      if (draftResult && draftResult.degraded) {
+        if (!frqMigrationDegradedLogged) {
+          frqMigrationDegradedLogged = true;
+          console.warn('[frq] grading storage unavailable; authoritative writes are retryable');
+        }
+        return res.status(503).json({ error: 'grading storage unavailable', retryable: true });
+      }
+      if (draftResult && draftResult.error) {
+        console.error('FRQ draft RPC error:', draftResult.error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      const ticket = rpcFirst(draftResult);
+      if (!ticket) return res.status(500).json({ ok: false, error: 'Database error' });
+      return res.json({
+        ok: true,
+        applied: false,
+        ledgerId: ticket.ledger_id ?? ticket.ledgerId,
+        status: ticket.status,
+        responseVersion: Number(ticket.response_version ?? ticket.responseVersion),
+        clientScoreIgnored: true,
+      });
     }
 
     const keyedWorksheetAnswer = source === 'worksheet' ? findWorksheetAnswer(worksheetKey, itemId) : undefined;
@@ -229,6 +512,142 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
     return res.json(body);
   });
 
+  // ── GET /ledger/frq-config ────────────────────────────────────────────────
+  app.get('/ledger/frq-config', (req, res) => {
+    const studentId = bearerStudentId(req, verifyToken);
+    if (!studentId) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!allowFrqRead(studentId)) {
+      return res.status(429).json({ error: 'rate limit exceeded', retryable: true });
+    }
+    const mode = resolveFrqMode(frqMode);
+    return res.json({
+      mode,
+      bundleVersion: frqBundleVersion(frqBundle),
+      pollMs: 2_000,
+      authoritative: authoritativeForStudent(mode, studentId, process.env.FRQ_CANARY_STUDENTS),
+    });
+  });
+
+  // ── GET /ledger/frq-status ────────────────────────────────────────────────
+  app.get('/ledger/frq-status', async (req, res) => {
+    const studentId = bearerStudentId(req, verifyToken);
+    if (!studentId) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!allowFrqRead(studentId)) {
+      return res.status(429).json({ error: 'rate limit exceeded', retryable: true });
+    }
+    const prefix = typeof req.query.prefix === 'string' ? req.query.prefix : '';
+    const worksheet = frqBundle && frqBundle.worksheets && frqBundle.worksheets[prefix];
+    if (!worksheet) return res.status(400).json({ error: 'unknown worksheet' });
+    if (!frqDb || typeof frqDb.getFrqStatusRows !== 'function') {
+      return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+    }
+
+    const itemIds = Object.keys(worksheet.items || {}).map((id) => `${prefix}-${id}`);
+    let result;
+    try {
+      result = await frqDb.getFrqStatusRows(studentId, itemIds);
+    } catch (error) {
+      console.error('FRQ status DB error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (result && result.degraded) {
+      return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+    }
+    if (result && result.error) {
+      console.error('FRQ status DB error:', result.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    const rows = Array.isArray(result && result.data) ? result.data : [];
+    const now = Date.now();
+    const pendingCount = rows.filter((row) => deriveFrqStatus(row, now) !== 'graded').length;
+    const items = {};
+    for (const row of rows) {
+      if (!itemIds.includes(row.item_id)) continue;
+      const status = deriveFrqStatus(row, now);
+      const item = {
+        status,
+        score: isNumericFrqScore(row.score) ? Number(row.score) : null,
+        responseHash: row.frq_response_hash || null,
+        retryAt: status === 'failed' ? null : (row.frq_next_attempt_at || null),
+        estimatedWaitMs: status === 'graded' ? 0 : pendingCount * 3_000,
+      };
+      if (isNumericFrqScore(row.score)) {
+        item.result = sanitizedFrqResult(row.frq_result);
+        item.gradedAt = row.graded_at || null;
+        item.rubricVersion = row.frq_rubric_version || null;
+        item.receiptId = row.receipt_id || null;
+        item.receiptCompact = row.receipt_compact || null;
+        item.receipt = row.receipt_id && row.receipt_compact
+          ? { receiptId: row.receipt_id, compact: row.receipt_compact }
+          : null;
+      }
+      items[row.item_id] = item;
+    }
+    return res.json({
+      ok: true,
+      mode: resolveFrqMode(frqMode),
+      bundleVersion: frqBundleVersion(frqBundle),
+      items,
+    });
+  });
+
+  // ── POST /ledger/frq-appeal ───────────────────────────────────────────────
+  app.post('/ledger/frq-appeal', async (req, res) => {
+    const studentId = bearerStudentId(req, verifyToken);
+    if (!studentId) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!authoritativeForStudent(frqMode, studentId, process.env.FRQ_CANARY_STUDENTS)) {
+      return res.status(409).json({ error: 'appeals not enabled' });
+    }
+    if (!allowFrqAppeal(studentId)) {
+      return res.status(429).json({ error: 'rate limit exceeded', retryable: true });
+    }
+    const { itemId } = req.body || {};
+    if (typeof req.body?.appealText !== 'string') {
+      return res.status(400).json({ error: 'appealText must be a string' });
+    }
+    const appealText = req.body.appealText.trim();
+    if (!lookupFrqItem(frqBundle, itemId)) {
+      return res.status(400).json({ error: 'unknown item' });
+    }
+    if ([...appealText].length < 10 || Buffer.byteLength(appealText, 'utf8') > APPEAL_MAX_BYTES) {
+      return res.status(400).json({ error: 'appealText must be at least 10 characters and at most 2048 bytes' });
+    }
+    if (!frqDb || typeof frqDb.queueFrqAppeal !== 'function') {
+      return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+    }
+
+    let result;
+    try {
+      result = await frqDb.queueFrqAppeal({
+        studentId,
+        itemId,
+        appealText,
+      });
+    } catch (error) {
+      console.error('FRQ appeal DB error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (result && result.degraded) {
+      return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+    }
+    if (result && result.error) {
+      console.error('FRQ appeal DB error:', result.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    const queued = rpcFirst(result);
+    if (!queued) return res.status(500).json({ ok: false, error: 'Database error' });
+    const appealCount = Number(queued.appeal_count ?? queued.appealCount ?? 0);
+    if (queued.queued) return res.json({ ok: true, queued: true, appealCount });
+    const reason = queued.reason || 'rejected';
+    if (reason === 'not_found') return res.status(404).json({ ok: false, error: reason, appealCount });
+    if (reason === 'limit' || reason === 'cooldown') {
+      return res.status(429).json({ ok: false, error: reason, appealCount });
+    }
+    return res.status(409).json({ ok: false, error: reason, appealCount });
+  });
+
   // ── POST /ledger/frq-regrade (teacher-gated) ───────────────────────────────
   // FRQ COVERAGE (2026-08-19): apply an AI/teacher verdict to an EXISTING
   // worksheet-reflection row that was left ungraded (score null) or graded low —
@@ -243,13 +662,105 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
   //   → 400 bad body · 401 · 404 no such frq row
   app.post('/ledger/frq-regrade', async (req, res) => {
     if (!await requireTeacher(req, rosterDb)) return res.status(401).json({ ok: false, error: 'forbidden' });
-    const { studentId, itemId, score, attempt, provenance } = req.body || {};
+    const {
+      studentId,
+      itemId,
+      score,
+      attempt,
+      provenance,
+      responseHash,
+      rubricVersion,
+    } = req.body || {};
     if (!studentId || !itemId) return res.status(400).json({ ok: false, error: 'studentId and itemId are required' });
     const incoming = Number(score);
     if (!(incoming === 1 || incoming === 0.5 || incoming === 0)) {
       return res.status(400).json({ ok: false, error: 'score must be 1, 0.5 or 0' });
     }
     const attemptNo = attempt ?? 1;
+
+    if (authoritativeForStudent(
+      frqMode,
+      studentId,
+      process.env.FRQ_CANARY_STUDENTS,
+    )) {
+      if (!responseHash || !rubricVersion) {
+        return res.status(400).json({ ok: false, error: 'responseHash and rubricVersion are required' });
+      }
+      if (!frqDb || typeof frqDb.applyFrqVerdict !== 'function'
+        || typeof frqDb.getFrqStatusRows !== 'function') {
+        return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+      }
+
+      let existingResult;
+      try {
+        existingResult = await frqDb.getFrqStatusRows(studentId, [itemId]);
+      } catch (error) {
+        console.error('Ledger frq-regrade lookup error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (existingResult && existingResult.degraded) {
+        return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+      }
+      if (existingResult && existingResult.error) {
+        console.error('Ledger frq-regrade lookup error:', existingResult.error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      const existingRows = Array.isArray(existingResult && existingResult.data)
+        ? existingResult.data
+        : [];
+      const atomicExisting = existingRows.find((row) => row.item_id === itemId
+        && Number(row.attempt ?? 1) === Number(attemptNo));
+      if (!atomicExisting) return res.status(404).json({ ok: false, error: 'no such frq row' });
+
+      let appliedResult;
+      try {
+        appliedResult = await frqDb.applyFrqVerdict({
+          ledgerId: atomicExisting.ledger_id,
+          claimToken: null,
+          responseVersion: atomicExisting.frq_response_version,
+          score: incoming,
+          result: {
+            score: incoming,
+            responseHash: String(responseHash),
+            provider: 'teacher',
+            model: 'external-regrade',
+          },
+          rubricVersion: String(rubricVersion),
+          gradedAt: new Date().toISOString(),
+          teacher: true,
+        });
+      } catch (error) {
+        console.error('Ledger frq-regrade apply error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (appliedResult && appliedResult.degraded) {
+        return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+      }
+      if (appliedResult && appliedResult.error) {
+        console.error('Ledger frq-regrade apply error:', appliedResult.error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      const outcome = rpcFirst(appliedResult);
+      if (!outcome) return res.status(500).json({ ok: false, error: 'Database error' });
+      if (outcome.stale) return res.status(409).json({ error: 'stale-response' });
+
+      const body = {
+        ok: true,
+        applied: Boolean(outcome.applied),
+        ledgerId: outcome.ledger_id || atomicExisting.ledger_id,
+        score: Number(outcome.score),
+      };
+      if (outcome.applied) {
+        const receipt = await persistFrqReceipt(
+          atomicExisting,
+          Number(outcome.score),
+          provenance ? String(provenance).slice(0, 32) : 'ai-batch',
+        );
+        if (receipt) body.receipt = receipt;
+      }
+      return res.json(body);
+    }
+
     let existing = null;
     try {
       const { data: rows } = await db.getLedgerByStudent(studentId, { prefix: itemId });
