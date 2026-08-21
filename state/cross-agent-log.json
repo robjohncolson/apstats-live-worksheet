@@ -5052,15 +5052,26 @@
       "timestamp": "2026-08-21T13:45:16Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "b18e5cfdd41f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Two production bugs found in the FIRST LIVE CANARY TEST of the authoritative FRQ flow (Phase 2,\nFRQ_",
+      "status": "completed",
+      "duration_seconds": 934.798,
+      "timestamp": "2026-08-21T15:20:10Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 430,
-    "cc_to_codex": 430,
+    "total_calls": 431,
+    "cc_to_codex": 431,
     "codex_to_cc": 0,
-    "completed": 328,
+    "completed": 329,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 628.857
+    "avg_duration_seconds": 629.567
   }
 }

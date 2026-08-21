@@ -2123,6 +2123,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             var _aiFrqConfig = { mode: 'off', authoritative: false, pollMs: 2000, at: 0 };
             var _aiFrqConfigFlight = null;
             var _aiFrqConfigAbortController = null;
+            var _aiFrqLegacyClientFallback = false;
             function _aiRosterToken() {
                 try {
                     return (window.rosterClient && typeof window.rosterClient.token === 'function')
@@ -2133,8 +2134,21 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 _aiFrqConfig = { mode: mode || 'off', authoritative: false, pollMs: 2000, at: at || 0 };
                 return _aiFrqConfig;
             }
+            function _aiLatchLegacyClientFallback() {
+                if (_aiFrqLegacyClientFallback) return true;
+                if (window.gradebookClient && typeof window.gradebookClient.requestFrqGrade === 'function') return false;
+                _aiFrqLegacyClientFallback = true;
+                _aiStopFrqPolling();
+                try {
+                    if (window.console && typeof window.console.warn === 'function') {
+                        window.console.warn('[ai-frq] stale gradebook-client.js is missing requestFrqGrade; using the legacy FRQ flow for this page.');
+                    }
+                } catch (_) {}
+                return true;
+            }
             function _aiIsAuthoritative() {
-                return _aiFrqConfig.mode === 'authoritative' && _aiFrqConfig.authoritative === true;
+                if (_aiFrqConfig.mode !== 'authoritative' || _aiFrqConfig.authoritative !== true) return false;
+                return !_aiLatchLegacyClientFallback();
             }
             function _aiDowngradeFrqMode(mode, at) {
                 var wasAuthoritative = _aiIsAuthoritative();
@@ -2186,6 +2200,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                             authoritative: true,
                             at: Date.now()
                         };
+                        _aiIsAuthoritative();
                         return _aiFrqConfig;
                     } catch (_) {
                         return _aiDowngradeFrqMode('off', Date.now());
@@ -2797,6 +2812,9 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 var nextText = String(text || '');
                 var nextEta = String(etaText || '');
                 var nextAnnouncement = announcementKey || '';
+                if (nextState !== 'graded' && nextState !== 'graded-away' && nextState !== 'already-graded-edited') {
+                    _aiRemoveFrqAppealControl(taId);
+                }
                 if (el.dataset.frqState === nextState && el.dataset.frqText === nextText
                     && el.dataset.frqEta === nextEta && el.dataset.frqAnnouncement === nextAnnouncement) return el;
                 var copy = el.querySelector('.ai-status-copy');
@@ -2932,6 +2950,100 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 });
                 return result;
             }
+            var _AI_FRQ_APPEAL_LIMIT = 3;
+            function _aiFrqAppealCount(item) {
+                var count = Number(item && item.appealCount);
+                return isFinite(count) && count >= 0 ? count : 0;
+            }
+            function _aiFrqAppealAllowed(item) {
+                return _aiFrqScoreLetter(item) !== 'E' && _aiFrqAppealCount(item) < _AI_FRQ_APPEAL_LIMIT;
+            }
+            function _aiFrqAppealForm(taId) {
+                return document.getElementById('appeal-form-' + taId)
+                    || document.getElementById('appealForm-' + taId);
+            }
+            function _aiRemoveFrqAppealControl(taId) {
+                var status = _aiStatusEl(taId, false);
+                var control = status && status.querySelector('.ai-frq-appeal-control');
+                if (control) {
+                    try { control.remove(); } catch (_) {
+                        if (control.parentNode) control.parentNode.removeChild(control);
+                    }
+                }
+            }
+            function _aiOpenExistingFrqAppealForm(taId, item, control) {
+                var form = _aiFrqAppealForm(taId);
+                var materialized = false;
+                if (!form) {
+                    var result = _aiStoredFrqResult(item);
+                    var canSeedState = typeof gradingState !== 'undefined' && gradingState
+                        && typeof gradingState.get === 'function' && typeof gradingState.set === 'function';
+                    var previousState = canSeedState ? gradingState.get(taId) : null;
+                    var hadState = canSeedState && typeof gradingState.has === 'function' && gradingState.has(taId);
+                    try {
+                        if (canSeedState && result) {
+                            gradingState.set(taId, {
+                                result: result,
+                                originalAnswer: String((document.getElementById(taId) || {}).value || ''),
+                                appealCount: _aiFrqAppealCount(item),
+                                history: previousState ? (previousState.history || []) : []
+                            });
+                        }
+                        if (result && typeof showFeedback === 'function') showFeedback(taId, result);
+                        form = _aiFrqAppealForm(taId);
+                        materialized = !!form;
+                    } catch (_) {
+                        form = null;
+                    } finally {
+                        if (canSeedState) {
+                            if (hadState) gradingState.set(taId, previousState);
+                            else if (typeof gradingState.delete === 'function') gradingState.delete(taId);
+                        }
+                    }
+                }
+                if (!form) return false;
+                if (materialized) {
+                    var feedback = document.getElementById(taId + '-feedback');
+                    var appealUi = form.closest ? form.closest('.appeal-section') : form;
+                    if (feedback && appealUi && feedback.contains(appealUi)) {
+                        feedback.innerHTML = '';
+                        feedback.appendChild(appealUi);
+                    }
+                    var ta = document.getElementById(taId);
+                    if (ta) ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+                }
+                var text = form.querySelector('textarea')
+                    || document.getElementById('appeal-text-' + taId)
+                    || document.getElementById('appealText-' + taId);
+                if (text) text.value = '';
+                form.classList.add('visible');
+                if (control) control.setAttribute('aria-expanded', 'true');
+                try { if (text) text.focus(); } catch (_) {}
+                return true;
+            }
+            function _aiEnsureFrqAppealControl(taId, item) {
+                if (!_aiFrqAppealAllowed(item)) {
+                    _aiRemoveFrqAppealControl(taId);
+                    return null;
+                }
+                var status = _aiStatusEl(taId, true);
+                if (!status) return null;
+                var control = status.querySelector('.ai-frq-appeal-control');
+                if (!control) {
+                    control = document.createElement('input');
+                    control.type = 'button';
+                    control.className = 'appeal-btn ai-frq-appeal-control';
+                    control.value = 'Appeal this grade…';
+                    control.setAttribute('aria-label', 'Appeal this grade');
+                    control.setAttribute('aria-expanded', 'false');
+                    control.onclick = function () {
+                        _aiOpenExistingFrqAppealForm(taId, control.__aiFrqAppealItem, control);
+                    };
+                    status.appendChild(control);
+                }
+                control.__aiFrqAppealItem = item;
+                return control;
+            }
             function _aiRenderStoredFrqResult(taId, item, currentText) {
                 var result = _aiStoredFrqResult(item);
                 if (!result) return false;
@@ -2943,7 +3055,8 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                         gradingState.set(taId, {
                             result: result,
                             originalAnswer: currentText,
-                            appealCount: previous.appealCount || 0,
+                            appealCount: item && item.appealCount !== undefined
+                                ? _aiFrqAppealCount(item) : (previous.appealCount || 0),
                             history: previous.history || []
                         });
                     }
@@ -2973,9 +3086,11 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     var taId = ta && ta.id;
                     if (!taId || !item) return;
                     var status = String(item.status || 'draft');
+                    _aiFrqStates[itemId] = item;
                     if (status === 'local-only') { _aiRenderFrqConnection(taId); return; }
 
-                    var hasStoredGrade = status === 'graded' || status === 'appeal-queued' || status === 'appeal-grading';
+                    var hasStoredGrade = status === 'graded'
+                        || ((status === 'appeal-queued' || status === 'appeal-grading') && item.responseHash && item.result);
                     if (hasStoredGrade) {
                         await _aiReconcileTerminalText(itemId, ta);
                         var currentText = String(ta.value || '').trim();
@@ -2983,6 +3098,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                         if (!currentHash || !item.responseHash || currentHash !== String(item.responseHash).toLowerCase()) {
                             _aiClearAuthoritativeVerdict(taId);
                             _aiSetFrqStatusText(taId, 'This response is already graded. Use Appeal to request review.', 'already-graded-edited');
+                            _aiEnsureFrqAppealControl(taId, item);
                             return;
                         }
                         if (!_aiRenderStoredFrqResult(taId, item, currentText)) {
@@ -2997,13 +3113,17 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                             var away = isFinite(gradedMs) && gradedMs < _aiFrqSessionStartedAt && (!isFinite(seenMs) || gradedMs > seenMs);
                             var label = _aiFrqScoreName(_aiFrqScoreLetter(item));
                             var announcementKey = String(item.responseHash || '') + '|' + String(item.gradedAt || '') + '|' + label;
-                            if (_aiFrqAnnouncedGrade[itemId] === announcementKey) return;
+                            if (_aiFrqAnnouncedGrade[itemId] === announcementKey) {
+                                _aiEnsureFrqAppealControl(taId, item);
+                                return;
+                            }
                             if (away) {
                                 _aiSetFrqStatusText(taId, '✓ Graded while you were away: ' + label, 'graded-away', true, '', announcementKey);
                                 _aiFrqAwayShown[itemId] = String(item.gradedAt || '');
                             } else {
                                 _aiSetFrqStatusText(taId, '✓ Graded: ' + label, 'graded', true, '', announcementKey);
                             }
+                            _aiEnsureFrqAppealControl(taId, item);
                             _aiFrqAnnouncedGrade[itemId] = announcementKey;
                             try { if (markerKey && item.gradedAt) localStorage.setItem(markerKey, String(item.gradedAt)); } catch (_) {}
                             return;
@@ -3124,9 +3244,10 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 _aiSetFrqStatusText(taId, 'Saving…', 'saving');
                 try {
                     if (!window.gradebookClient || typeof window.gradebookClient.requestFrqGrade !== 'function') {
-                        _aiFrqStates[itemId] = { status: 'unsaved' };
-                        _aiRenderFrqUnsaved(taId);
-                        return null;
+                        _aiLatchLegacyClientFallback();
+                        _aiClearWaiting(taId);
+                        _aiScheduleAutoGrade(0);
+                        return { ok: false, reason: 'legacy-client' };
                     }
                     var request = { itemId: itemId, response: answer };
                     if (keepalive) request.keepalive = true;
@@ -3300,11 +3421,24 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     var data = null;
                     try { data = await res.json(); } catch (_) { data = null; }
                     if (!res || !res.ok) {
+                        if (data && data.appealCount !== undefined && _aiFrqStates[itemId]) {
+                            _aiFrqStates[itemId].appealCount = _aiFrqAppealCount(data);
+                        }
+                        if (data && _aiFrqAppealCount(data) >= _AI_FRQ_APPEAL_LIMIT) {
+                            _aiRemoveFrqAppealControl(questionId);
+                        }
                         _aiAppealMessage(questionId, data && data.error ? String(data.error) : _AI_FRQ_LOCAL_COPY, true);
                         return data;
                     }
                     _aiAppealMessage(questionId, 'Appeal submitted · waiting for review.', false);
-                    _aiFrqStates[itemId] = { status: 'appeal-queued' };
+                    var previous = _aiFrqStates[itemId] || {};
+                    var queued = {};
+                    for (var key in previous) {
+                        if (Object.prototype.hasOwnProperty.call(previous, key)) queued[key] = previous[key];
+                    }
+                    queued.status = 'appeal-queued';
+                    if (data && data.appealCount !== undefined) queued.appealCount = _aiFrqAppealCount(data);
+                    _aiFrqStates[itemId] = queued;
                     await _aiRenderFrqStatus(itemId, _aiFrqStates[itemId]);
                     _aiStartFrqPolling(true);
                     return data;

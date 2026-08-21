@@ -149,6 +149,24 @@ function addTextarea(id, value) {
   return ta;
 }
 
+function renderExistingAppealUi(questionId) {
+  let container = document.getElementById(questionId + '-feedback');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = questionId + '-feedback';
+    document.body.appendChild(container);
+  }
+  container.innerHTML =
+    '<div class="ai-feedback"><div class="appeal-section">' +
+    '<button class="appeal-btn">Disagree? Appeal</button>' +
+    '<div class="appeal-form" id="appeal-form-' + questionId + '">' +
+    '<p>Explain why your answer deserves a higher score:</p>' +
+    '<textarea id="appeal-text-' + questionId + '">old draft</textarea>' +
+    '<button class="btn-check">Submit Appeal</button><button class="btn-show">Cancel</button>' +
+    '</div></div></div>';
+  return document.getElementById('appeal-form-' + questionId);
+}
+
 beforeEach(() => {
   document.body.innerHTML = '';
   expect(window === globalThis).toBe(true); // jsdom env sanity
@@ -1111,6 +1129,34 @@ describe('FRQ ticket capability gating', () => {
     }
   });
 
+  it('latches a stale gradebook-client.js into the complete legacy FRQ flow', async () => {
+    addTextarea('reflect1', 'A sufficiently long response for the stale-client fallback.');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    installShippedFlow({ rosterToken: 'roster-token' });
+    delete window.gradebookClient.requestFrqGrade;
+    mocks.fetch.mockImplementation(async (url) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', authoritative: true, pollMs: 2000 }) };
+      }
+      return okFetch([]);
+    });
+
+    await window.__aiFrqTicketClient.fetchConfig(true);
+    expect(window.__aiFrqTicketClient.isAuthoritative()).toBe(false);
+    await window.aiGradeWorksheet({ manual: true });
+
+    expect(mocks.requestFrqGrade).not.toHaveBeenCalled();
+    expect(mocks.gradeReflection).toHaveBeenCalledWith(
+      'reflect1', 'A sufficiently long response for the stale-client fallback.'
+    );
+    expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith(
+      'reflect1', 'A sufficiently long response for the stale-client fallback.', 'E'
+    );
+    expect(document.body.textContent).not.toContain('⚠ Not saved — check your connection');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('stale gradebook-client.js');
+  });
+
   it('adds the roster bearer to all three retained legacy grader endpoints', async () => {
     installShippedFlow({ rosterToken: 'signed-roster-token' });
     mocks.fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
@@ -1474,10 +1520,102 @@ describe('authoritative FRQ durability boundaries', () => {
 });
 
 describe('authoritative appeals', () => {
+  it('puts an inline appeal control in graded, graded-away, and already-graded-edited states', async () => {
+    addTextarea('reflect1', 'Current first reflection text.');
+    addTextarea('reflect2', 'Current second reflection text.');
+    addTextarea('reflect3', 'Current third reflection text.');
+    installShippedFlow({ rosterToken: 'roster-token', rosterUsername: 'appeal_states_student' });
+    const hook = window.__aiFrqTicketClient;
+    const currentAt = new Date(Date.now() + 60_000).toISOString();
+    const cases = [
+      ['reflect1', 'WS-U6L1-2-reflect1', await hook.hash('Current first reflection text.'), currentAt, 'graded'],
+      ['reflect2', 'WS-U6L1-2-reflect2', await hook.hash('Current second reflection text.'), '2000-01-02T03:04:05.000Z', 'graded-away'],
+      ['reflect3', 'WS-U6L1-2-reflect3', 'stale-response-hash', currentAt, 'already-graded-edited']
+    ];
+
+    for (const [taId, itemId, responseHash, gradedAt, expectedState] of cases) {
+      await hook.renderStatus(itemId, {
+        status: 'graded', score: 0.5, responseHash, gradedAt, appealCount: 0,
+        result: { score: 0.5, feedback: 'Stored feedback.' }
+      });
+      const status = document.getElementById(taId + '-ai-status');
+      const control = status.querySelector('.ai-frq-appeal-control');
+      expect(status.dataset.frqState).toBe(expectedState);
+      expect(control).not.toBeNull();
+      expect(control.value).toBe('Appeal this grade…');
+    }
+  });
+
+  it('omits the inline appeal control when the authoritative appeal count is exhausted', async () => {
+    addTextarea('reflect1', 'Current exhausted reflection text.');
+    installShippedFlow({ rosterToken: 'roster-token' });
+    const hook = window.__aiFrqTicketClient;
+    const hash = await hook.hash('Current exhausted reflection text.');
+
+    await hook.renderStatus('WS-U6L1-2-reflect1', {
+      status: 'graded', score: 0.5, responseHash: hash,
+      gradedAt: new Date(Date.now() + 60_000).toISOString(), appealCount: 3,
+      result: { score: 0.5, feedback: 'Stored feedback.' }
+    });
+
+    expect(document.querySelector('.ai-frq-appeal-control')).toBeNull();
+  });
+
+  it('opens the existing empty appeal form, POSTs only its contract body, and renders appeal-queued', async () => {
+    addTextarea('reflect1', 'Current reflection text.');
+    const showFeedback = vi.fn((questionId) => renderExistingAppealUi(questionId));
+    installShippedFlow({ rosterToken: 'roster-token', showFeedback });
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-reflect1';
+    const hash = await hook.hash('Current reflection text.');
+    const item = {
+      status: 'graded', score: 0.5, responseHash: hash,
+      gradedAt: new Date(Date.now() + 60_000).toISOString(), appealCount: 0,
+      result: { score: 0.5, feedback: 'Stored feedback.' }
+    };
+    mocks.fetch.mockImplementation(async (url, init) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', authoritative: true, pollMs: 2000 }) };
+      }
+      if (String(url).endsWith('/ledger/frq-appeal')) {
+        expect(JSON.parse(init.body)).toEqual({
+          itemId: 'WS-U6L1-2-reflect1', appealText: 'Please review this reasoning.'
+        });
+        return { ok: true, json: async () => ({ ok: true, queued: true, appealCount: 1 }) };
+      }
+      if (String(url).includes('/ledger/frq-status')) {
+        return { ok: true, json: async () => ({
+          ok: true, mode: 'authoritative', items: { [itemId]: { ...item, status: 'appeal-queued', appealCount: 1 } }
+        }) };
+      }
+      throw new Error('unexpected fetch: ' + url);
+    });
+    await hook.fetchConfig(true);
+    await hook.renderStatus(itemId, item);
+
+    const control = document.querySelector('.ai-frq-appeal-control');
+    const form = document.getElementById('appeal-form-reflect1');
+    const appealText = document.getElementById('appeal-text-reflect1');
+    expect(appealText.value).toBe('old draft');
+    control.click();
+    expect(form.classList.contains('visible')).toBe(true);
+    expect(appealText.value).toBe('');
+    appealText.value = 'Please review this reasoning.';
+
+    await window.submitAppeal('reflect1');
+
+    const status = document.getElementById('reflect1-ai-status');
+    expect(status.dataset.frqState).toBe('appeal-queued');
+    expect(status.textContent).toBe('✓ Saved · queued for grading');
+    expect(status.querySelector('.ai-frq-appeal-control')).toBeNull();
+    expect(document.getElementById('reflect1-frq-appeal-status').textContent)
+      .toBe('Appeal submitted · waiting for review.');
+  });
+
   it.each([
-    [409, 'already-pending'],
-    [400, 'appealText must be at least 10 characters and at most 2048 bytes']
-  ])('POSTs only itemId + appealText and surfaces a %s server message', async (status, error) => {
+    [409, 'already-pending', 3],
+    [400, 'appealText must be at least 10 characters and at most 2048 bytes', 0]
+  ])('POSTs only itemId + appealText and surfaces a %s server message', async (status, error, appealCount) => {
     addTextarea('reflect1', 'Current reflection text.');
     const form = document.createElement('div');
     form.id = 'appeal-form-reflect1';
@@ -1493,15 +1631,23 @@ describe('authoritative appeals', () => {
         expect(JSON.parse(init.body)).toEqual({
           itemId: 'WS-U6L1-2-reflect1', appealText: 'Please review this reasoning.'
         });
-        return { ok: false, status, json: async () => ({ ok: false, error }) };
+        return { ok: false, status, json: async () => ({ ok: false, error, appealCount }) };
       }
       throw new Error('unexpected fetch: ' + url);
     });
-    await window.__aiFrqTicketClient.fetchConfig(true);
+    const hook = window.__aiFrqTicketClient;
+    await hook.fetchConfig(true);
+    const hash = await hook.hash('Current reflection text.');
+    await hook.renderStatus('WS-U6L1-2-reflect1', {
+      status: 'graded', score: 0.5, responseHash: hash,
+      gradedAt: new Date(Date.now() + 60_000).toISOString(), appealCount: 0,
+      result: { score: 0.5, feedback: 'Stored feedback.' }
+    });
 
     await window.submitAppeal('reflect1');
 
     expect(document.getElementById('reflect1-frq-appeal-status').textContent).toBe(error);
+    expect(!!document.querySelector('.ai-frq-appeal-control')).toBe(appealCount < 3);
     expect(mocks.submitAppeal).not.toHaveBeenCalled();
   });
 
