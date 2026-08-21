@@ -22,7 +22,10 @@ roster-server grades it within seconds), and students see honest live status
 
 ## Stage 1 — run the migration (5 min, safe anytime)
 
-1. Supabase dashboard (project `hgvnytaqmuybzbotosyj`) → SQL editor.
+1. Supabase dashboard → the **curriculum_render project `bzqbhtrurzzavhqbgqrs`** → SQL editor.
+   (That project hosts ALL roster tables — `roster`, `item_ledger`, `trainer_state` — per
+   GRADEBOOK_SPEC §6.1 / roster-server/README.md; `hgvnytaqmuybzbotosyj` is only the
+   roadmap/driller/lesson_urls project and has no `item_ledger`.)
 2. Paste + run **`roster-server/migrations/0031_frq_tickets.sql`** (whole file; re-running is safe).
    Lock impact: adds columns (metadata-only) + two small partial indexes — seconds.
 3. Nothing changes at runtime yet; roster `/health` keeps `mode: "off"`.
