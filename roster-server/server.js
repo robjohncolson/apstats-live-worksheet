@@ -156,7 +156,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       frqDb: _frqDb,
       bundle: _frqBundle,
       graderUrl: process.env.FRQ_GRADER_URL,
-      graderSecret: process.env.FRQ_GRADER_SECRET,
+      // Either name works: the spec says FRQ_GRADER_SECRET, the runbook (and the
+      // curriculum-render side) say ROSTER_GRADER_SECRET — accept both so the
+      // same variable name can be set on both Railway services.
+      graderSecret: process.env.FRQ_GRADER_SECRET || process.env.ROSTER_GRADER_SECRET,
       mode: _frqMode,
       issueReceipt: issueLedgerReceipt,
       log: console,

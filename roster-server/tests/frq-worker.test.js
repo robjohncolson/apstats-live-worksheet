@@ -428,6 +428,83 @@ describe('createFrqWorker shadow and lifecycle', () => {
     expect(db.updateFrqReceiptIfScore).not.toHaveBeenCalled();
   });
 
+  it('pages graded history, backs off after an idle pass, and finds a new top row', async () => {
+    const gradedRows = Array.from({ length: 10 }, (_, index) => row('WS-U2L1-reflect1', {
+      ledger_id: `shadow-ledger-${index}`,
+      student_id: `shadow-student-${index}`,
+      score: 1,
+      frq_claim_token: undefined,
+    }));
+    const db = {
+      getFrqShadowRows: vi.fn(async (limit, offset) => ({
+        data: gradedRows.slice(offset, offset + limit),
+      })),
+      claimFrqTickets: vi.fn(),
+      applyFrqVerdict: vi.fn(),
+      failFrqClaim: vi.fn(),
+      updateFrqReceiptIfScore: vi.fn(),
+    };
+    const fetch = vi.fn(async () => jsonResponse({ score: 'E' }));
+    const worker = createFrqWorker({
+      ...workerOptions(db, fetch, { shadowSample: 4 }),
+      mode: 'shadow',
+    });
+
+    await worker.tick();
+    await worker.tick();
+    await worker.tick();
+
+    expect(db.getFrqShadowRows.mock.calls).toEqual([
+      [4, 0],
+      [4, 4],
+      [4, 8],
+    ]);
+    expect(worker.counters).toMatchObject({
+      shadowCompared: 10,
+      shadowCursor: 10,
+      shadowPasses: 0,
+    });
+
+    // The empty fetch closes the productive pass; the next fully seen pass is idle.
+    await worker.tick();
+    await worker.tick();
+    await worker.tick();
+    await worker.tick();
+
+    expect(db.getFrqShadowRows.mock.calls).toEqual([
+      [4, 0],
+      [4, 4],
+      [4, 8],
+      [4, 10],
+      [4, 0],
+      [4, 4],
+      [4, 8],
+    ]);
+    expect(worker.counters).toMatchObject({
+      shadowCompared: 10,
+      shadowCursor: 0,
+      shadowPasses: 2,
+    });
+
+    gradedRows.unshift(row('WS-U2L1-reflect1', {
+      ledger_id: 'shadow-ledger-new',
+      student_id: 'shadow-student-new',
+      score: 1,
+      frq_claim_token: undefined,
+    }));
+    for (let tick = 0; tick < 30; tick += 1) await worker.tick();
+    expect(db.getFrqShadowRows).toHaveBeenCalledTimes(7);
+
+    await worker.tick();
+
+    expect(db.getFrqShadowRows).toHaveBeenLastCalledWith(4, 0);
+    expect(worker.counters).toMatchObject({
+      shadowCompared: 11,
+      shadowCursor: 4,
+      shadowPasses: 2,
+    });
+  });
+
   it('no-ops as degraded without a bundle and creates only an unref timer when allowed', async () => {
     const interval = { unref: vi.fn() };
     const setInterval = vi.fn(() => interval);

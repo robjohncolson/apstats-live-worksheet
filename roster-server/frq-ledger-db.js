@@ -169,11 +169,15 @@ export function createFrqLedgerDb(client) {
     }
   }
 
-  // Shadow reads a bounded, deterministic recent slice. It never needs claim
+  // Shadow pages through deterministic graded history. It never needs claim
   // metadata and the worker never sends this row shape back to a student.
-  async function getFrqShadowRows(limit) {
+  async function getFrqShadowRows(limit, offset = 0) {
+    const parsedLimit = Number(limit);
+    const parsedOffset = Number(offset);
+    const boundedLimit = Number.isFinite(parsedLimit) ? Math.max(1, Math.floor(parsedLimit)) : 1;
+    const boundedOffset = Number.isFinite(parsedOffset) ? Math.max(0, Math.floor(parsedOffset)) : 0;
     try {
-      const result = await client
+      const query = client
         .from('item_ledger')
         .select([
           'ledger_id',
@@ -191,8 +195,11 @@ export function createFrqLedgerDb(client) {
         .eq('source', 'frq')
         .in('score', [0, 0.5, 1])
         .order('graded_at', { ascending: false })
-        .order('ledger_id', { ascending: true })
-        .limit(Math.max(1, Math.floor(Number(limit) || 1)));
+        .order('ledger_id', { ascending: true });
+      // Supabase uses the range path; the fallback keeps older injected clients bounded.
+      const result = typeof query.range === 'function'
+        ? await query.range(boundedOffset, boundedOffset + boundedLimit - 1)
+        : await query.limit(boundedLimit);
       return observeResult(result);
     } catch (error) {
       return observeThrownError(error);

@@ -5,6 +5,7 @@ const RETRY_DELAYS_MS = Object.freeze([5_000, 15_000, 60_000, 300_000]);
 const REQUEST_WINDOW_MS = 60_000;
 const FRQ_RESPONSE_MAX_BYTES = 8 * 1024;
 const APPEAL_PROMPT_MAX_BYTES = 32 * 1024;
+const SHADOW_IDLE_BACKOFF_TICKS = 30;
 
 function boundedInteger(value, fallback, minimum, maximum) {
   const parsed = Number(value);
@@ -225,6 +226,8 @@ export function createFrqWorker({
   const shadowSample = configuredNumber(config, 'shadowSample', 'FRQ_SHADOW_SAMPLE', 4, 1, 100);
   const workerId = String(config.workerId || `roster-${process.pid}`);
   const seenShadow = new Set();
+  let shadowPassUnseen = 0;
+  let shadowBackoffTicks = 0;
   let requestStarts = [];
   let running = false;
   let timer = null;
@@ -249,6 +252,8 @@ export function createFrqWorker({
     failed: 0,
     receiptsIssued: 0,
     receiptPersistFailed: 0,
+    shadowCursor: 0,
+    shadowPasses: 0,
     shadowCompared: 0,
     shadowExact: 0,
     shadowOneBand: 0,
@@ -527,20 +532,27 @@ export function createFrqWorker({
 
   async function shadowTick() {
     if (typeof frqDb.getFrqShadowRows !== 'function') return;
+    if (shadowBackoffTicks > 0) {
+      shadowBackoffTicks -= 1;
+      return;
+    }
     const requestBudget = availableRequestStarts();
     if (requestBudget < 1) {
       counters.rateLimitedTicks += 1;
       return;
     }
     const boundedSample = Math.min(shadowSample, requestBudget);
-    const result = await frqDb.getFrqShadowRows(boundedSample);
+    const result = await frqDb.getFrqShadowRows(boundedSample, counters.shadowCursor);
     if (result && (result.degraded || result.error)) return;
-    const unseen = rowsFrom(result).filter((row) => {
+    const returned = rowsFrom(result);
+    counters.shadowCursor += returned.length;
+    const unseen = returned.filter((row) => {
       const key = `${row.ledger_id}:${row.frq_response_version}`;
       if (seenShadow.has(key)) return false;
       seenShadow.add(key);
       return true;
     }).slice(0, boundedSample);
+    shadowPassUnseen += unseen.length;
 
     const prepared = [];
     for (const row of unseen) {
@@ -551,6 +563,18 @@ export function createFrqWorker({
       }
     }
     await runPool(groupPrepared(prepared), maxInFlight, shadowGroup);
+
+    if (returned.length >= boundedSample || unseen.length > 0) return;
+
+    // A no-progress short page proves this pass is exhausted. Delaying the wrap
+    // until then keeps the cursor honest when the final short page had new work.
+    counters.shadowCursor = 0;
+    counters.shadowPasses += 1;
+    if (shadowPassUnseen === 0) {
+      // seenShadow makes immediate idle rescans useless, and this tick runs every 2s.
+      shadowBackoffTicks = SHADOW_IDLE_BACKOFF_TICKS;
+    }
+    shadowPassUnseen = 0;
   }
 
   async function storageIsReady() {

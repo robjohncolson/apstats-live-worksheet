@@ -5041,15 +5041,26 @@
       "timestamp": "2026-08-21T07:42:26Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "a513af15d956",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Small targeted fix in the FRQ worker's SHADOW sampling (roster-server/frq-worker.js +\nroster-server/",
+      "status": "completed",
+      "duration_seconds": 369.721,
+      "timestamp": "2026-08-21T13:45:16Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 429,
-    "cc_to_codex": 429,
+    "total_calls": 430,
+    "cc_to_codex": 430,
     "codex_to_cc": 0,
-    "completed": 327,
+    "completed": 328,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 629.461
+    "avg_duration_seconds": 628.857
   }
 }

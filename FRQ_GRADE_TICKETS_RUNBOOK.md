@@ -38,7 +38,7 @@ Railway env:
 |---|---|---|
 | roster-server | `FRQ_GRADE_MODE` | `shadow` |
 | roster-server | `FRQ_GRADER_URL` | `https://curriculumrender-production.up.railway.app` |
-| roster-server | `ROSTER_GRADER_SECRET` | a fresh long random string (e.g. `openssl rand -hex 32`) |
+| roster-server | `ROSTER_GRADER_SECRET` | a fresh long random string (e.g. `openssl rand -hex 32`) — `FRQ_GRADER_SECRET` also accepted |
 | curriculum render | `ROSTER_GRADER_SECRET` | the **same** string |
 
 Shadow: students still get the current client-side grading, **no grade is written by the server**;
