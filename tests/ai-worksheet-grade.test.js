@@ -1294,6 +1294,23 @@ describe('authoritative FRQ contractual state copy and stale guard', () => {
     expect(mutations).toBe(0);
     localStorage.removeItem(marker);
   });
+
+  it.each([
+    ['graded', 'reflect1', 1, new Date(Date.now() + 60_000).toISOString(), '✓ Graded: Essentially Correct'],
+    ['graded-away', 'reflect2', 0, '2000-01-02T03:04:05.000Z', '✓ Graded while you were away: Incorrect'],
+  ])('renders a %s score label when legacy feedback is missing', async (_, taId, score, gradedAt, expected) => {
+    addTextarea(taId, 'Legacy response text.');
+    installShippedFlow({ rosterToken: 'roster-token', rosterUsername: 'legacy_result_student_' + taId });
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-' + taId;
+    const hash = await hook.hash('Legacy response text.');
+
+    await hook.renderStatus(itemId, { status: 'graded', score, responseHash: hash, gradedAt });
+
+    const status = document.getElementById(taId + '-ai-status');
+    expect(status.textContent).toBe(expected);
+    expect(mocks.showFeedback).not.toHaveBeenCalled();
+  });
 });
 
 describe('authoritative FRQ poll lifecycle', () => {
@@ -1561,7 +1578,7 @@ describe('authoritative appeals', () => {
     expect(document.querySelector('.ai-frq-appeal-control')).toBeNull();
   });
 
-  it('opens the existing empty appeal form, POSTs only its contract body, and renders appeal-queued', async () => {
+  it('opens the existing form, submits through its control, and renders appeal-queued', async () => {
     addTextarea('reflect1', 'Current reflection text.');
     const showFeedback = vi.fn((questionId) => renderExistingAppealUi(questionId));
     installShippedFlow({ rosterToken: 'roster-token', showFeedback });
@@ -1573,19 +1590,26 @@ describe('authoritative appeals', () => {
       gradedAt: new Date(Date.now() + 60_000).toISOString(), appealCount: 0,
       result: { score: 0.5, feedback: 'Stored feedback.' }
     };
+    let liveItem = item;
+    let appealPosts = 0;
     mocks.fetch.mockImplementation(async (url, init) => {
       if (String(url).endsWith('/ledger/frq-config')) {
         return { ok: true, json: async () => ({ mode: 'authoritative', authoritative: true, pollMs: 2000 }) };
       }
       if (String(url).endsWith('/ledger/frq-appeal')) {
+        const expectedAppealText = appealPosts === 0
+          ? 'Please review this reasoning.'
+          : 'Please review this updated reasoning.';
         expect(JSON.parse(init.body)).toEqual({
-          itemId: 'WS-U6L1-2-reflect1', appealText: 'Please review this reasoning.'
+          itemId: 'WS-U6L1-2-reflect1', appealText: expectedAppealText
         });
-        return { ok: true, json: async () => ({ ok: true, queued: true, appealCount: 1 }) };
+        appealPosts += 1;
+        return { ok: true, json: async () => ({ ok: true, queued: true, appealCount: appealPosts }) };
       }
       if (String(url).includes('/ledger/frq-status')) {
         return { ok: true, json: async () => ({
-          ok: true, mode: 'authoritative', items: { [itemId]: { ...item, status: 'appeal-queued', appealCount: 1 } }
+          ok: true, mode: 'authoritative',
+          items: { [itemId]: { ...liveItem, status: 'appeal-queued', appealCount: appealPosts } }
         }) };
       }
       throw new Error('unexpected fetch: ' + url);
@@ -1602,7 +1626,14 @@ describe('authoritative appeals', () => {
     expect(appealText.value).toBe('');
     appealText.value = 'Please review this reasoning.';
 
-    await window.submitAppeal('reflect1');
+    form.querySelector('.btn-check').click();
+    // The submit chain awaits fetch -> json -> a crypto.subtle digest for the hash
+    // guard; that digest resolves a macrotask later in Node, so poll briefly
+    // instead of assuming one setTimeout(0) is enough.
+    const statusNode = () => document.getElementById('reflect1-ai-status');
+    for (let waited = 0; waited < 500 && statusNode().dataset.frqState !== 'appeal-queued'; waited += 10) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
 
     const status = document.getElementById('reflect1-ai-status');
     expect(status.dataset.frqState).toBe('appeal-queued');
@@ -1610,6 +1641,39 @@ describe('authoritative appeals', () => {
     expect(status.querySelector('.ai-frq-appeal-control')).toBeNull();
     expect(document.getElementById('reflect1-frq-appeal-status').textContent)
       .toBe('Appeal submitted · waiting for review.');
+
+    hook.stopPolling();
+    const secondItem = {
+      ...item,
+      gradedAt: new Date(Date.now() + 120_000).toISOString(),
+      appealCount: 1,
+      result: { score: 0.5, feedback: 'Stored feedback after the first appeal.' }
+    };
+    liveItem = secondItem;
+    await hook.renderStatus(itemId, secondItem);
+
+    const secondControl = document.querySelector('.ai-frq-appeal-control');
+    const secondForm = document.getElementById('appeal-form-reflect1');
+    const secondAppealText = document.getElementById('appeal-text-reflect1');
+    expect(secondForm).not.toBe(form);
+    expect(secondAppealText.value).toBe('old draft');
+    secondControl.click();
+    expect(secondForm.classList.contains('visible')).toBe(true);
+    expect(secondAppealText.value).toBe('');
+    secondAppealText.value = 'Please review this updated reasoning.';
+
+    secondForm.querySelector('.btn-check').click();
+    // Same async chain as the first cycle: poll briefly for the render to land.
+    for (let waited = 0; waited < 500 && statusNode().dataset.frqState !== 'appeal-queued'; waited += 10) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    const secondStatus = document.getElementById('reflect1-ai-status');
+    expect(secondStatus.dataset.frqState).toBe('appeal-queued');
+    expect(secondStatus.querySelector('.ai-frq-appeal-control')).toBeNull();
+    expect(document.getElementById('reflect1-frq-appeal-status').textContent)
+      .toBe('Appeal submitted · waiting for review.');
+    expect(appealPosts).toBe(2);
   });
 
   it.each([
@@ -1619,7 +1683,7 @@ describe('authoritative appeals', () => {
     addTextarea('reflect1', 'Current reflection text.');
     const form = document.createElement('div');
     form.id = 'appeal-form-reflect1';
-    form.innerHTML = '<textarea id="appeal-text-reflect1">Please review this reasoning.</textarea><button>Submit</button>';
+    form.innerHTML = '<textarea id="appeal-text-reflect1"></textarea><button class="btn-check">Submit</button>';
     document.body.appendChild(form);
     installShippedFlow({ rosterToken: 'roster-token' });
     mocks.fetch.mockImplementation(async (url, init) => {
@@ -1644,7 +1708,10 @@ describe('authoritative appeals', () => {
       result: { score: 0.5, feedback: 'Stored feedback.' }
     });
 
-    await window.submitAppeal('reflect1');
+    document.querySelector('.ai-frq-appeal-control').click();
+    document.getElementById('appeal-text-reflect1').value = 'Please review this reasoning.';
+    form.querySelector('.btn-check').click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(document.getElementById('reflect1-frq-appeal-status').textContent).toBe(error);
     expect(!!document.querySelector('.ai-frq-appeal-control')).toBe(appealCount < 3);

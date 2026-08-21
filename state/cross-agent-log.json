@@ -5063,15 +5063,37 @@
       "timestamp": "2026-08-21T15:20:10Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "8faae7d2875f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Canary retest round 2 \u2014 three bugs, all verified against production. Fix all three.\nFiles: roster-se",
+      "status": "completed",
+      "duration_seconds": 394.666,
+      "timestamp": "2026-08-21T15:36:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0c9aa0da0708",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Your appeal-wiring fix is incomplete and YOUR OWN new end-to-end test proves it \u2014 do not weaken the\n",
+      "status": "completed",
+      "duration_seconds": 226.747,
+      "timestamp": "2026-08-21T15:46:01Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 431,
-    "cc_to_codex": 431,
+    "total_calls": 433,
+    "cc_to_codex": 433,
     "codex_to_cc": 0,
-    "completed": 329,
+    "completed": 331,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 629.567
+    "avg_duration_seconds": 628.094
   }
 }

@@ -565,10 +565,18 @@ export function mountLedger(app, {
     for (const row of rows) {
       if (!itemIds.includes(row.item_id)) continue;
       const status = deriveFrqStatus(row, now);
+      let responseHash = row.frq_response_hash || null;
+      if (status === 'graded' && !responseHash) {
+        // Migration 0031 left pre-Phase-2 graded rows without hashes. Derive the
+        // ingress-canonical hash here, but do not backfill it: a GET must not mutate.
+        responseHash = createHash('sha256')
+          .update(String(row.response).trim(), 'utf8')
+          .digest('hex');
+      }
       const item = {
         status,
         score: isNumericFrqScore(row.score) ? Number(row.score) : null,
-        responseHash: row.frq_response_hash || null,
+        responseHash,
         retryAt: status === 'failed' ? null : (row.frq_next_attempt_at || null),
         estimatedWaitMs: status === 'graded' ? 0 : pendingCount * 3_000,
       };

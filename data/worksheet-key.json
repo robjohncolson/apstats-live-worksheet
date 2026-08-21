@@ -1,6 +1,6 @@
 {
   "generatedFrom": "repo-root u*_lesson*_live.html",
-  "generated": "2026-06-14T00:28:23.769Z",
+  "generated": "2026-08-21T15:33:12.369Z",
   "counts": {
     "filesScanned": 69,
     "filesIncluded": 68,
@@ -428,7 +428,7 @@
     "WS-U1L10-Q7": "below",
     "WS-U1L10-Q8": "any",
     "WS-U1L10-Q9": "normal",
-    "WS-U1L2-Q1": "individuals",
+    "WS-U1L2-Q1": "individuals|individual",
     "WS-U1L2-Q10": "characteristic",
     "WS-U1L2-Q11": "varies|changes",
     "WS-U1L2-Q12": "columns",
@@ -439,7 +439,7 @@
     "WS-U1L2-Q17": "bedrooms|number of bedrooms",
     "WS-U1L2-Q18": "zip code|zipcode",
     "WS-U1L2-Q19": "pool|a pool",
-    "WS-U1L2-Q2": "variables",
+    "WS-U1L2-Q2": "variables|variable",
     "WS-U1L2-Q20": "category names|categories",
     "WS-U1L2-Q21": "group labels|labels",
     "WS-U1L2-Q22": "parking location|parking",

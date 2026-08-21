@@ -966,6 +966,31 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                     }
                 }
             }
+            var _aiAuthoritativeAppealClickHandler = null;
+            function _aiInstallAuthoritativeAppealDelegation() {
+                if (_aiAuthoritativeAppealClickHandler) return;
+                _aiAuthoritativeAppealClickHandler = function (event) {
+                    if (!_aiIsAuthoritative()) return;
+                    var target = event && event.target;
+                    if (!target || typeof target.closest !== 'function') return;
+                    var submit = target.closest('.btn-check, button[type="submit"], input[type="submit"]');
+                    if (!submit) return;
+                    var form = submit.closest('[id^="appeal-form-"], [id^="appealForm-"]');
+                    if (!form) return;
+                    var formId = String(form.id || '');
+                    var taId = '';
+                    if (formId.indexOf('appeal-form-') === 0) {
+                        taId = formId.slice('appeal-form-'.length);
+                    } else if (formId.indexOf('appealForm-') === 0) {
+                        taId = formId.slice('appealForm-'.length);
+                    }
+                    if (!taId) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    _aiSubmitAuthoritativeAppeal(taId);
+                };
+                document.addEventListener('click', _aiAuthoritativeAppealClickHandler, true);
+            }
             function _aiOpenExistingFrqAppealForm(taId, item, control) {
                 var form = _aiFrqAppealForm(taId);
                 var materialized = false;
@@ -1090,13 +1115,14 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                         await _aiReconcileTerminalText(itemId, ta);
                         var currentText = String(ta.value || '').trim();
                         var currentHash = await _aiSha256Hex(currentText);
-                        if (!currentHash || !item.responseHash || currentHash !== String(item.responseHash).toLowerCase()) {
+                        if (item.responseHash
+                            && (!currentHash || currentHash !== String(item.responseHash).toLowerCase())) {
                             _aiClearAuthoritativeVerdict(taId);
                             _aiSetFrqStatusText(taId, 'This response is already graded. Use Appeal to request review.', 'already-graded-edited');
                             _aiEnsureFrqAppealControl(taId, item);
                             return;
                         }
-                        if (!_aiRenderStoredFrqResult(taId, item, currentText)) {
+                        if (item.result && !_aiRenderStoredFrqResult(taId, item, currentText)) {
                             _aiRenderFrqConnection(taId);
                             return;
                         }
@@ -1486,6 +1512,7 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
             }
             _aiInstallAuthoritativeEntryWrappers();
             _aiInstallAckDraftSaver();
+            _aiInstallAuthoritativeAppealDelegation();
 
             function _aiTeardownFrqTicketClient() {
                 if (_aiDisposed) return;
@@ -1498,6 +1525,12 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                 _aiStatusTimers = {};
                 _aiClearAllOwnedTimeouts();
                 _aiRemoveAllOwnedListeners();
+                try {
+                    if (_aiAuthoritativeAppealClickHandler) {
+                        document.removeEventListener('click', _aiAuthoritativeAppealClickHandler, true);
+                    }
+                } catch (_) {}
+                _aiAuthoritativeAppealClickHandler = null;
                 try { if (_aiFrqConfigAbortController) _aiFrqConfigAbortController.abort(); } catch (_) {}
                 _aiFrqConfigAbortController = null;
                 _aiFrqConfig = { mode: 'off', authoritative: false, pollMs: 2000, at: 0 };

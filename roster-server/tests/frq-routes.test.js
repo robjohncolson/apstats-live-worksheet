@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import express from 'express';
 import http from 'node:http';
 import { createStudentSlidingWindow, mountLedger } from '../ledger.js';
@@ -320,6 +321,32 @@ describe('GET /ledger/frq-config and /ledger/frq-status', () => {
       expect(serialized).not.toContain(secret);
     }
     expect((await server.request('GET', '/ledger/frq-status?prefix=WS-NOPE', { headers: auth() })).status).toBe(400);
+  });
+
+  it('lazily derives a response hash for a pre-migration graded row without mutating it', async () => {
+    const legacyRow = {
+      item_id: 'WS-U1L1-reflect1',
+      response: '  A legacy response graded before Phase 2.  ',
+      score: 0.5,
+      graded_at: '2030-01-01T00:00:00Z',
+      frq_response_hash: null,
+      frq_result: null,
+    };
+    frqDb.statusRows = [legacyRow];
+
+    const result = await server.request('GET', '/ledger/frq-status?prefix=WS-U1L1', { headers: auth() });
+    const expectedHash = createHash('sha256')
+      .update('A legacy response graded before Phase 2.', 'utf8')
+      .digest('hex');
+
+    expect(result.status).toBe(200);
+    expect(result.body.items['WS-U1L1-reflect1']).toMatchObject({
+      status: 'graded',
+      score: 0.5,
+      responseHash: expectedHash,
+      result: null,
+    });
+    expect(legacyRow.frq_response_hash).toBeNull();
   });
 
   it.each([
