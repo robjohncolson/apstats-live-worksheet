@@ -2924,6 +2924,14 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 var materialized = false;
                 if (!form) {
                     var result = _aiStoredFrqResult(item);
+                    if (!result && item && typeof item.score === 'number' && isFinite(item.score)) {
+                        result = {
+                            score: _aiFrqScoreLetter(item) || 'I',
+                            feedback: '',
+                            matched: [],
+                            missing: []
+                        };
+                    }
                     var canSeedState = typeof gradingState !== 'undefined' && gradingState
                         && typeof gradingState.get === 'function' && typeof gradingState.set === 'function';
                     var previousState = canSeedState ? gradingState.get(taId) : null;
@@ -2941,7 +2949,8 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                         form = _aiFrqAppealForm(taId);
                         materialized = !!form;
                     } catch (_) {
-                        form = null;
+                        form = _aiFrqAppealForm(taId);
+                        materialized = !!form;
                     } finally {
                         if (canSeedState) {
                             if (hadState) gradingState.set(taId, previousState);
@@ -2949,7 +2958,50 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                         }
                     }
                 }
-                if (!form) return false;
+                if (!form) {
+                    try {
+                        var status = _aiStatusEl(taId, false);
+                        if (status && status.parentNode) {
+                            form = document.createElement('div');
+                            form.id = 'appeal-form-' + taId;
+                            form.className = 'appeal-form';
+
+                            var prompt = document.createElement('p');
+                            prompt.textContent = 'Explain why your answer deserves a higher score:';
+
+                            var fallbackText = document.createElement('textarea');
+                            fallbackText.id = 'appeal-text-' + taId;
+                            fallbackText.rows = 3;
+                            fallbackText.setAttribute('aria-label', 'Appeal explanation');
+
+                            var submit = document.createElement('button');
+                            submit.type = 'button';
+                            submit.className = 'btn-check';
+                            submit.textContent = 'Submit Appeal';
+
+                            form.appendChild(prompt);
+                            form.appendChild(fallbackText);
+                            form.appendChild(submit);
+                            status.parentNode.insertBefore(form, status.nextSibling);
+                            materialized = true;
+                        }
+                    } catch (_) {
+                        form = null;
+                    }
+                }
+                if (!form) {
+                    var errorHost = document.getElementById(taId + '-feedback');
+                    if (!errorHost) {
+                        try {
+                            errorHost = document.createElement('div');
+                            errorHost.id = taId + '-feedback';
+                            var errorStatus = _aiStatusEl(taId, false);
+                            if (errorStatus) errorStatus.appendChild(errorHost);
+                        } catch (_) {}
+                    }
+                    _aiAppealMessage(taId, 'Could not open the appeal form — reload the page and try again.', true);
+                    return false;
+                }
                 if (materialized) {
                     var feedback = document.getElementById(taId + '-feedback');
                     var appealUi = form.closest ? form.closest('.appeal-section') : form;

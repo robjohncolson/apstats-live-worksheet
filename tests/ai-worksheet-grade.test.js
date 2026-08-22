@@ -1578,6 +1578,117 @@ describe('authoritative appeals', () => {
     expect(document.querySelector('.ai-frq-appeal-control')).toBeNull();
   });
 
+  it.each([
+    ['graded', 'The original legacy response.', 'The original legacy response.'],
+    ['already-graded-edited', 'The original legacy response.', 'The teacher edited this response after grading.']
+  ])('materializes and submits a result-less legacy item in %s state', async (expectedState, gradedText, currentText) => {
+    const ta = addTextarea('reflect1', currentText);
+    const showFeedback = vi.fn((questionId, result) => {
+      renderExistingAppealUi(questionId);
+      ta.classList.add('graded-' + result.score);
+      const badge = document.createElement('span');
+      badge.className = 'grade-badge';
+      badge.textContent = result.score;
+      document.getElementById(questionId + '-feedback').prepend(badge);
+    });
+    installShippedFlow({ rosterToken: 'roster-token', showFeedback });
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-reflect1';
+    const item = {
+      status: 'graded', score: 0, responseHash: await hook.hash(gradedText),
+      gradedAt: new Date(Date.now() + 60_000).toISOString(), appealCount: 0,
+      result: null
+    };
+    let appealBody = null;
+    mocks.fetch.mockImplementation(async (url, init) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', authoritative: true, pollMs: 2000 }) };
+      }
+      if (String(url).endsWith('/ledger/frq-appeal')) {
+        appealBody = JSON.parse(init.body);
+        return { ok: true, json: async () => ({ ok: true, queued: true, appealCount: 1 }) };
+      }
+      if (String(url).includes('/ledger/frq-status')) {
+        return { ok: true, json: async () => ({ ok: true, mode: 'authoritative', items: {} }) };
+      }
+      throw new Error('unexpected fetch: ' + url);
+    });
+    await hook.fetchConfig(true);
+    await hook.renderStatus(itemId, item);
+
+    const status = document.getElementById('reflect1-ai-status');
+    expect(status.dataset.frqState).toBe(expectedState);
+    status.querySelector('.ai-frq-appeal-control').click();
+
+    const form = document.getElementById('appeal-form-reflect1');
+    const appealText = document.getElementById('appeal-text-reflect1');
+    expect(form.classList.contains('visible')).toBe(true);
+    expect(showFeedback).toHaveBeenCalledWith('reflect1', {
+      score: 'I', feedback: '', matched: [], missing: []
+    });
+    expect(item.result).toBeNull();
+    expect(mocks.gradingState.has('reflect1')).toBe(false);
+    expect(ta.className).not.toMatch(/\bgraded-[EPI]\b/);
+    expect(document.querySelector('.grade-badge')).toBeNull();
+
+    appealText.value = 'Please review this legacy grade.';
+    form.querySelector('.btn-check').click();
+    for (let waited = 0; waited < 500 && !appealBody; waited += 10) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    expect(appealBody).toEqual({ itemId, appealText: 'Please review this legacy grade.' });
+    hook.stopPolling();
+  });
+
+  it('builds and submits the bare fallback form when showFeedback is absent', async () => {
+    addTextarea('reflect1', 'A legacy response without worksheet feedback rendering.');
+    installShippedFlow({ rosterToken: 'roster-token', showFeedback: undefined });
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-reflect1';
+    const responseHash = await hook.hash('A legacy response without worksheet feedback rendering.');
+    let appealBody = null;
+    mocks.fetch.mockImplementation(async (url, init) => {
+      if (String(url).endsWith('/ledger/frq-config')) {
+        return { ok: true, json: async () => ({ mode: 'authoritative', authoritative: true, pollMs: 2000 }) };
+      }
+      if (String(url).endsWith('/ledger/frq-appeal')) {
+        appealBody = JSON.parse(init.body);
+        return { ok: true, json: async () => ({ ok: true, queued: true, appealCount: 1 }) };
+      }
+      if (String(url).includes('/ledger/frq-status')) {
+        return { ok: true, json: async () => ({ ok: true, mode: 'authoritative', items: {} }) };
+      }
+      throw new Error('unexpected fetch: ' + url);
+    });
+    await hook.fetchConfig(true);
+    await hook.renderStatus(itemId, {
+      status: 'graded', score: 0, responseHash,
+      gradedAt: new Date(Date.now() + 60_000).toISOString(), appealCount: 0,
+      result: null
+    });
+
+    const status = document.getElementById('reflect1-ai-status');
+    status.querySelector('.ai-frq-appeal-control').click();
+
+    const form = document.getElementById('appeal-form-reflect1');
+    const appealText = document.getElementById('appeal-text-reflect1');
+    expect(status.nextElementSibling).toBe(form);
+    expect(form.className).toContain('appeal-form');
+    expect(form.classList.contains('visible')).toBe(true);
+    expect(form.querySelector('.btn-check')).not.toBeNull();
+    expect(mocks.gradingState.has('reflect1')).toBe(false);
+
+    appealText.value = 'Please review the fallback appeal.';
+    form.querySelector('.btn-check').click();
+    for (let waited = 0; waited < 500 && !appealBody; waited += 10) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    expect(appealBody).toEqual({ itemId, appealText: 'Please review the fallback appeal.' });
+    hook.stopPolling();
+  });
+
   it('opens the existing form, submits through its control, and renders appeal-queued', async () => {
     addTextarea('reflect1', 'Current reflection text.');
     const showFeedback = vi.fn((questionId) => renderExistingAppealUi(questionId));

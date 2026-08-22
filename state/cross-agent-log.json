@@ -5085,15 +5085,26 @@
       "timestamp": "2026-08-21T15:46:01Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "88bf48409c07",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "One surgical bug, found by tracing the teacher's exact live repro. In\nscripts/wire-ai-worksheet-grad",
+      "status": "completed",
+      "duration_seconds": 879.895,
+      "timestamp": "2026-08-22T09:08:31Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 433,
-    "cc_to_codex": 433,
+    "total_calls": 434,
+    "cc_to_codex": 434,
     "codex_to_cc": 0,
-    "completed": 331,
+    "completed": 332,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 628.094
+    "avg_duration_seconds": 628.674
   }
 }
