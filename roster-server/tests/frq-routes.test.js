@@ -354,6 +354,53 @@ describe('GET /ledger/frq-config and /ledger/frq-status', () => {
     expect(legacyRow.frq_response_hash).toBeNull();
   });
 
+  it('exposes a sanitized last appeal without leaking another student row', async () => {
+    const appealedAt = '2030-01-02T03:04:05.000Z';
+    frqDb.statusRows = [
+      {
+        student_id: 'student-a',
+        item_id: 'WS-U1L1-reflect1',
+        response: 'The authenticated student response.',
+        score: 0.5,
+        graded_at: '2030-01-02T03:05:00.000Z',
+        frq_response_hash: 'student-a-response-hash',
+        frq_last_appeal: {
+          text: 'Please reconsider my comparison to the rubric.',
+          revisedText: 'Private revised answer.',
+          hash: 'private-dedup-hash',
+          at: appealedAt,
+          outcome: 'maintained',
+        },
+      },
+      {
+        student_id: 'student-b',
+        item_id: 'WS-U1L1-reflect2',
+        response: 'Another student response.',
+        score: 1,
+        graded_at: '2030-01-02T03:05:00.000Z',
+        frq_response_hash: 'student-b-response-hash',
+        frq_last_appeal: {
+          text: 'OTHER STUDENT APPEAL',
+          at: appealedAt,
+          outcome: 'raised',
+        },
+      },
+    ];
+
+    const result = await server.request('GET', '/ledger/frq-status?prefix=WS-U1L1', { headers: auth() });
+
+    expect(result.status).toBe(200);
+    expect(result.body.items['WS-U1L1-reflect1'].lastAppeal).toEqual({
+      text: 'Please reconsider my comparison to the rubric.',
+      at: appealedAt,
+      outcome: 'maintained',
+    });
+    expect(result.body.items['WS-U1L1-reflect2']).toBeUndefined();
+    expect(JSON.stringify(result.body)).not.toContain('Private revised answer.');
+    expect(JSON.stringify(result.body)).not.toContain('private-dedup-hash');
+    expect(JSON.stringify(result.body)).not.toContain('OTHER STUDENT APPEAL');
+  });
+
   it.each([
     [9, 'draft'],
     [10, 'draft'],

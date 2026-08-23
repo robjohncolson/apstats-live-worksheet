@@ -159,6 +159,7 @@ export function createFrqLedgerDb(client) {
           'frq_rubric_version',
           'frq_appeal_count',
           'frq_appeal_pending',
+          'frq_last_appeal',
         ].join(', '))
         .eq('student_id', studentId)
         .eq('source', 'frq')

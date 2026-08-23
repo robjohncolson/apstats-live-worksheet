@@ -5121,15 +5121,37 @@
         "tests/ai-worksheet-grade.test.js"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "30632e435926",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Small companion fix (roster repo): the FRQ appeal path keeps only {hash, at} in frq_last_appeal for\n",
+      "status": "completed",
+      "duration_seconds": 470.915,
+      "timestamp": "2026-08-23T08:08:23Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3a8ba2020769",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW (read-only). Uncommitted roster diff: FRQ appeal history \u2014 apply_frq_verdict now\n",
+      "status": "completed",
+      "duration_seconds": 296.573,
+      "timestamp": "2026-08-23T13:50:42Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 436,
-    "cc_to_codex": 436,
+    "total_calls": 438,
+    "cc_to_codex": 438,
     "codex_to_cc": 0,
-    "completed": 333,
+    "completed": 335,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 631.166
+    "avg_duration_seconds": 630.036
   }
 }

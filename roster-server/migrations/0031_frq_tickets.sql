@@ -537,7 +537,25 @@ begin
     frq_retry_count = 0,
     frq_next_attempt_at = null,
     frq_last_error = null,
-    -- frq_last_appeal deliberately survives completion so dedup/cooldown do too.
+    -- Preserve the completed request for the student while retaining the hash
+    -- and request time used by queue_frq_appeal for dedup and cooldown.
+    frq_last_appeal = case
+      when v_was_appeal then jsonb_strip_nulls(jsonb_build_object(
+        'text', v_row.frq_appeal_pending -> 'text',
+        'revisedText', v_row.frq_appeal_pending -> 'revisedText',
+        'hash', coalesce(
+          v_row.frq_appeal_pending -> 'hash',
+          v_row.frq_last_appeal -> 'hash'
+        ),
+        'at', coalesce(
+          v_row.frq_appeal_pending -> 'requestedAt',
+          v_row.frq_last_appeal -> 'at',
+          to_jsonb(statement_timestamp())
+        ),
+        'outcome', case when v_applied then 'raised' else 'maintained' end
+      ))
+      else l.frq_last_appeal
+    end,
     frq_appeal_pending = case
       when v_was_appeal then null
       else l.frq_appeal_pending

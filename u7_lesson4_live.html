@@ -2911,6 +2911,39 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 return document.getElementById('appeal-form-' + taId)
                     || document.getElementById('appealForm-' + taId);
             }
+            function _aiRenderFrqLastAppeal(taId, item) {
+                var id = taId + '-frq-last-appeal';
+                var existing = document.getElementById(id);
+                var appeal = item && item.lastAppeal;
+                var valid = appeal
+                    && typeof appeal.text === 'string'
+                    && typeof appeal.at === 'string'
+                    && (appeal.outcome === 'raised' || appeal.outcome === 'maintained');
+                if (!valid) {
+                    if (existing) existing.remove();
+                    return;
+                }
+
+                var form = _aiFrqAppealForm(taId);
+                var section = form && form.closest ? form.closest('.appeal-section') : null;
+                var feedback = document.getElementById(taId + '-feedback');
+                var status = _aiStatusEl(taId, true);
+                var host = section || feedback || (status && status.parentNode);
+                if (!host) return;
+                if (!existing) {
+                    existing = document.createElement('p');
+                    existing.id = id;
+                    existing.setAttribute('role', 'status');
+                }
+                existing.className = 'appeal-result ' + appeal.outcome + ' ai-frq-last-appeal';
+                var parsedAt = Date.parse(appeal.at);
+                var date = isFinite(parsedAt)
+                    ? new Date(parsedAt).toLocaleDateString()
+                    : appeal.at;
+                existing.textContent = 'Your last appeal (' + date + '): '
+                    + appeal.text + ' — ' + appeal.outcome;
+                if (existing.parentNode !== host) host.appendChild(existing);
+            }
             function _aiRemoveFrqAppealControl(taId) {
                 var status = _aiStatusEl(taId, false);
                 var control = status && status.querySelector('.ai-frq-appeal-control');
@@ -2925,6 +2958,14 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 var section = form.closest ? form.closest('.appeal-section') : null;
                 var count = section ? section.querySelector('.appeal-count') : form.querySelector('.appeal-count');
                 if (_aiFrqAppealExhausted(item)) {
+                    var lastAppeal = section && section.querySelector('.ai-frq-last-appeal');
+                    if (lastAppeal) {
+                        Array.prototype.forEach.call(
+                            section.querySelectorAll('.appeal-btn, .appeal-form, .appeal-count'),
+                            function (control) { control.remove(); }
+                        );
+                        return;
+                    }
                     var exhaustedUi = section || count;
                     if (exhaustedUi) {
                         try { exhaustedUi.remove(); } catch (_) {
@@ -3088,6 +3129,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     || document.getElementById('appeal-text-' + taId)
                     || document.getElementById('appealText-' + taId);
                 if (text) text.value = '';
+                _aiRenderFrqLastAppeal(taId, item);
                 _aiSyncFrqAppealCount(form, item);
                 _aiShowRevisedAppealNotice(taId, item, form);
                 form.classList.add('visible');
@@ -3137,6 +3179,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                         });
                     }
                     if (typeof showFeedback === 'function') showFeedback(taId, result);
+                    _aiRenderFrqLastAppeal(taId, item);
                     _aiSyncFrqAppealCount(_aiFrqAppealForm(taId), item);
                     _aiFrqRenderedGrade[taId] = renderKey;
                     return true;
@@ -3164,6 +3207,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     if (!taId || !item) return;
                     var status = String(item.status || 'draft');
                     _aiFrqStates[itemId] = item;
+                    _aiRenderFrqLastAppeal(taId, item);
                     if (status === 'local-only') { _aiRenderFrqConnection(taId); return; }
 
                     var hasStoredGrade = status === 'graded'

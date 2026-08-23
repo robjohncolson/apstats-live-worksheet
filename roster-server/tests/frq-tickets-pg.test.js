@@ -705,7 +705,12 @@ describe('migration 0031 FRQ ticket state machine (real plpgsql)', () => {
 
     const completed = await pgFrqRow(db, ticket.ledger_id);
     expect(completed.frq_appeal_pending).toBeNull();
-    expect(completed.frq_last_appeal).toMatchObject({ hash: expect.any(String), at: expect.any(String) });
+    expect(completed.frq_last_appeal).toEqual({
+      text,
+      hash: expect.any(String),
+      at: expect.any(String),
+      outcome: 'maintained',
+    });
     expect(await queueAppeal(itemId, text, FUTURE_AT))
       .toMatchObject({ queued: false, appeal_count: 1, reason: 'duplicate' });
     expect(await queueAppeal(itemId, '  Please   review this exact evidence.  ', FUTURE_AT))
@@ -753,6 +758,13 @@ describe('migration 0031 FRQ ticket state machine (real plpgsql)', () => {
     expect(row.response).toBe(original);
     expect(row.frq_appeal_pending).toBeNull();
     expect(row.frq_result.revisedTextUsed).toBe(true);
+    expect(row.frq_last_appeal).toEqual({
+      text: 'Please review my revised evidence.',
+      revisedText: 'A revised answer with stronger statistical evidence.',
+      hash: expect.any(String),
+      at: expect.any(String),
+      outcome: 'raised',
+    });
   }, 60000);
 
   it('omits revisedText when the canonical revision equals the immutable response', async () => {

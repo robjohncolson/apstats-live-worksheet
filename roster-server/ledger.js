@@ -560,7 +560,8 @@ export function mountLedger(app, {
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
 
-    const rows = Array.isArray(result && result.data) ? result.data : [];
+    const rows = (Array.isArray(result && result.data) ? result.data : [])
+      .filter((row) => !row.student_id || row.student_id === studentId);
     const now = Date.now();
     const pendingCount = rows.filter((row) => deriveFrqStatus(row, now) !== 'graded').length;
     const items = {};
@@ -581,6 +582,16 @@ export function mountLedger(app, {
         responseHash,
         appealCount: Number(row.frq_appeal_count ?? 0),
         appealLimit: FRQ_APPEAL_LIMIT,
+        lastAppeal: row.frq_last_appeal
+          && typeof row.frq_last_appeal.text === 'string'
+          && typeof row.frq_last_appeal.at === 'string'
+          && ['raised', 'maintained'].includes(row.frq_last_appeal.outcome)
+          ? {
+              text: row.frq_last_appeal.text,
+              at: row.frq_last_appeal.at,
+              outcome: row.frq_last_appeal.outcome,
+            }
+          : null,
         retryAt: status === 'failed' ? null : (row.frq_next_attempt_at || null),
         estimatedWaitMs: status === 'graded' ? 0 : pendingCount * 3_000,
       };

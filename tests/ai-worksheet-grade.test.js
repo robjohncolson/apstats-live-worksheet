@@ -1590,6 +1590,37 @@ describe('authoritative appeals', () => {
     expect(document.querySelector('.ai-frq-appeal-control')).toBeNull();
   });
 
+  it('renders the last appeal read-only in the worksheet appeal area', async () => {
+    addTextarea('reflect1', 'Current appealed reflection text.');
+    const showFeedback = vi.fn((questionId) => renderExistingAppealUi(questionId));
+    installShippedFlow({ rosterToken: 'roster-token', showFeedback });
+    const hook = window.__aiFrqTicketClient;
+    const appealedAt = '2030-01-02T03:04:05.000Z';
+    const responseHash = await hook.hash('Current appealed reflection text.');
+
+    await hook.renderStatus('WS-U6L1-2-reflect1', {
+      status: 'graded',
+      score: 0.5,
+      responseHash,
+      gradedAt: '2030-01-02T03:05:00.000Z',
+      appealCount: 1,
+      result: { score: 0.5, feedback: 'Stored feedback.' },
+      lastAppeal: {
+        text: 'The rubric supports my original reasoning.',
+        at: appealedAt,
+        outcome: 'maintained',
+      },
+    });
+
+    const rendered = document.getElementById('reflect1-frq-last-appeal');
+    expect(rendered.textContent).toBe(
+      'Your last appeal (' + new Date(appealedAt).toLocaleDateString()
+        + '): The rubric supports my original reasoning. — maintained',
+    );
+    expect(rendered.closest('.appeal-section')).not.toBeNull();
+    expect(rendered.querySelector('button, input, textarea')).toBeNull();
+  });
+
   it('re-renders the worksheet appeal count from authoritative status and removes it at the limit', async () => {
     addTextarea('reflect1', 'Current count reflection text.');
     const showFeedback = vi.fn((questionId) => renderExistingAppealUi(questionId));
