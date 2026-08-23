@@ -17,6 +17,7 @@ let receiptPersistenceNotProvisionedLogged = false;
 let frqMigrationDegradedLogged = false;
 const FRQ_RESPONSE_MAX_BYTES = 8 * 1024;
 const APPEAL_MAX_BYTES = 2 * 1024;
+const FRQ_APPEAL_LIMIT = 3;
 const RATE_WINDOW_MS = 60_000;
 const STUDENT_WINDOW_SWEEP_THRESHOLD = 5_000;
 const STUDENT_WINDOW_MAX_KEYS = 20_000;
@@ -235,6 +236,7 @@ function sanitizedFrqResult(value) {
       result[field] = value[field].slice(0, 32).map((entry) => String(entry).slice(0, 512));
     }
   }
+  if (value.revisedTextUsed === true) result.revisedTextUsed = true;
   return result;
 }
 
@@ -577,6 +579,8 @@ export function mountLedger(app, {
         status,
         score: isNumericFrqScore(row.score) ? Number(row.score) : null,
         responseHash,
+        appealCount: Number(row.frq_appeal_count ?? 0),
+        appealLimit: FRQ_APPEAL_LIMIT,
         retryAt: status === 'failed' ? null : (row.frq_next_attempt_at || null),
         estimatedWaitMs: status === 'graded' ? 0 : pendingCount * 3_000,
       };
@@ -614,15 +618,53 @@ export function mountLedger(app, {
     if (typeof req.body?.appealText !== 'string') {
       return res.status(400).json({ error: 'appealText must be a string' });
     }
+    if (req.body?.revisedText !== undefined && typeof req.body.revisedText !== 'string') {
+      return res.status(400).json({ error: 'revisedText must be a string' });
+    }
     const appealText = req.body.appealText.trim();
+    const revisedText = typeof req.body.revisedText === 'string'
+      ? req.body.revisedText.trim()
+      : null;
     if (!lookupFrqItem(frqBundle, itemId)) {
       return res.status(400).json({ error: 'unknown item' });
     }
     if ([...appealText].length < 10 || Buffer.byteLength(appealText, 'utf8') > APPEAL_MAX_BYTES) {
       return res.status(400).json({ error: 'appealText must be at least 10 characters and at most 2048 bytes' });
     }
+    if (revisedText !== null && Buffer.byteLength(revisedText, 'utf8') > FRQ_RESPONSE_MAX_BYTES) {
+      return res.status(400).json({ error: 'revisedText must be at most 8192 bytes' });
+    }
     if (!frqDb || typeof frqDb.queueFrqAppeal !== 'function') {
       return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+    }
+
+    let queuedRevisedText = revisedText;
+    if (revisedText !== null) {
+      if (typeof frqDb.getFrqStatusRows !== 'function') {
+        return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+      }
+      let statusResult;
+      try {
+        statusResult = await frqDb.getFrqStatusRows(studentId, [itemId]);
+      } catch (error) {
+        console.error('FRQ revised appeal lookup error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (statusResult && statusResult.degraded) {
+        return res.status(503).json({ ok: false, error: 'FRQ grading unavailable' });
+      }
+      if (statusResult && statusResult.error) {
+        console.error('FRQ revised appeal lookup error:', statusResult.error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      const storedRow = Array.isArray(statusResult?.data) ? statusResult.data[0] : null;
+      if (storedRow) {
+        const storedHash = storedRow.frq_response_hash || createHash('sha256')
+          .update(String(storedRow.response).trim(), 'utf8')
+          .digest('hex');
+        const revisedHash = createHash('sha256').update(revisedText, 'utf8').digest('hex');
+        if (revisedHash === String(storedHash).toLowerCase()) queuedRevisedText = null;
+      }
     }
 
     let result;
@@ -631,6 +673,7 @@ export function mountLedger(app, {
         studentId,
         itemId,
         appealText,
+        revisedText: queuedRevisedText,
       });
     } catch (error) {
       console.error('FRQ appeal DB error:', error);

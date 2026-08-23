@@ -73,11 +73,12 @@ export function createFrqLedgerDb(client) {
     });
   }
 
-  async function queueFrqAppeal({ studentId, itemId, appealText }) {
+  async function queueFrqAppeal({ studentId, itemId, appealText, revisedText = null }) {
     return callRpc('queue_frq_appeal', {
       p_student_id: studentId,
       p_item_id: itemId,
       p_appeal_text: appealText,
+      p_revised_text: revisedText,
     });
   }
 

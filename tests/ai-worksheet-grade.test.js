@@ -163,7 +163,7 @@ function renderExistingAppealUi(questionId) {
     '<p>Explain why your answer deserves a higher score:</p>' +
     '<textarea id="appeal-text-' + questionId + '">old draft</textarea>' +
     '<button class="btn-check">Submit Appeal</button><button class="btn-show">Cancel</button>' +
-    '</div></div></div>';
+    '</div><div class="appeal-count">Appeals used: 0/3</div></div></div>';
   return document.getElementById('appeal-form-' + questionId);
 }
 
@@ -1255,10 +1255,22 @@ describe('authoritative FRQ contractual state copy and stale guard', () => {
 
     await hook.renderStatus(itemId, {
       status: 'graded', score: 1, responseHash: 'stale-hash', gradedAt: '2030-01-02T03:04:05.000Z',
+      appealCount: null,
       result: { score: 1, feedback: 'Feedback for old text.' }
     });
-    expect(statusText()).toBe('This response is already graded. Use Appeal to request review.');
+    expect(statusText()).toBe('This response is already graded — appeal to have your revised answer reviewed.');
     expect(mocks.showFeedback).not.toHaveBeenCalled();
+
+    await hook.renderStatus(itemId, {
+      status: 'graded', score: 1, responseHash: 'original-hash', gradedAt: '2030-01-02T03:04:06.000Z',
+      appealCount: 1, appealLimit: 3,
+      result: { score: 1, feedback: 'Feedback for the revised text.', revisedTextUsed: true }
+    });
+    expect(statusText()).toBe('✓ Revised answer reviewed: Essentially Correct');
+    expect(mocks.showFeedback).toHaveBeenCalledWith('reflect1', expect.objectContaining({
+      revisedTextUsed: true,
+      feedback: 'Feedback for the revised text.'
+    }));
   });
 
   it('renders only a hash-matched server result and announces graded-while-away once', async () => {
@@ -1578,6 +1590,28 @@ describe('authoritative appeals', () => {
     expect(document.querySelector('.ai-frq-appeal-control')).toBeNull();
   });
 
+  it('re-renders the worksheet appeal count from authoritative status and removes it at the limit', async () => {
+    addTextarea('reflect1', 'Current count reflection text.');
+    const showFeedback = vi.fn((questionId) => renderExistingAppealUi(questionId));
+    installShippedFlow({ rosterToken: 'roster-token', showFeedback });
+    const hook = window.__aiFrqTicketClient;
+    const itemId = 'WS-U6L1-2-reflect1';
+    const responseHash = await hook.hash('Current count reflection text.');
+    const base = {
+      status: 'graded', score: 0.5, responseHash,
+      gradedAt: new Date(Date.now() + 60_000).toISOString(), appealLimit: 3,
+      result: { score: 0.5, feedback: 'Stored feedback.' }
+    };
+
+    await hook.renderStatus(itemId, { ...base, appealCount: 2 });
+    expect(document.querySelector('.appeal-count').textContent).toBe('Appeals used: 2/3');
+    expect(document.querySelector('.ai-frq-appeal-control')).not.toBeNull();
+
+    await hook.renderStatus(itemId, { ...base, appealCount: 3 });
+    expect(document.querySelector('.appeal-count')).toBeNull();
+    expect(document.querySelector('.ai-frq-appeal-control')).toBeNull();
+  });
+
   it.each([
     ['graded', 'The original legacy response.', 'The original legacy response.'],
     ['already-graded-edited', 'The original legacy response.', 'The teacher edited this response after grading.']
@@ -1637,7 +1671,14 @@ describe('authoritative appeals', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
-    expect(appealBody).toEqual({ itemId, appealText: 'Please review this legacy grade.' });
+    const expectedBody = { itemId, appealText: 'Please review this legacy grade.' };
+    if (expectedState === 'already-graded-edited') expectedBody.revisedText = currentText;
+    expect(appealBody).toEqual(expectedBody);
+    if (expectedState === 'already-graded-edited') {
+      expect(form.querySelector('.ai-frq-revised-appeal-notice').textContent)
+        .toBe('Your revised answer will be included.');
+      expect(form.querySelector('.ai-frq-revised-appeal-notice').hidden).toBe(false);
+    }
     hook.stopPolling();
   });
 
@@ -1788,9 +1829,13 @@ describe('authoritative appeals', () => {
   });
 
   it.each([
-    [409, 'already-pending', 3],
-    [400, 'appealText must be at least 10 characters and at most 2048 bytes', 0]
-  ])('POSTs only itemId + appealText and surfaces a %s server message', async (status, error, appealCount) => {
+    [409, 'already-pending', 3, 'This appeal is already pending review.'],
+    [429, 'limit', 3, "You've used all 3 appeals for this question."],
+    [429, 'cooldown', 1, 'Please wait a minute before submitting another appeal.'],
+    [409, 'duplicate', 1, 'This appeal is already pending review.'],
+    [400, 'appealText must be at least 10 characters and at most 2048 bytes', 0,
+      'appealText must be at least 10 characters and at most 2048 bytes']
+  ])('POSTs the unchanged answer without revisedText and maps a %s server message', async (status, error, appealCount, copy) => {
     addTextarea('reflect1', 'Current reflection text.');
     const form = document.createElement('div');
     form.id = 'appeal-form-reflect1';
@@ -1822,10 +1867,14 @@ describe('authoritative appeals', () => {
     document.querySelector('.ai-frq-appeal-control').click();
     document.getElementById('appeal-text-reflect1').value = 'Please review this reasoning.';
     form.querySelector('.btn-check').click();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    const appealStatus = () => document.getElementById('reflect1-frq-appeal-status');
+    for (let waited = 0; waited < 500 && !appealStatus(); waited += 10) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
 
-    expect(document.getElementById('reflect1-frq-appeal-status').textContent).toBe(error);
+    expect(appealStatus().textContent).toBe(copy);
     expect(!!document.querySelector('.ai-frq-appeal-control')).toBe(appealCount < 3);
+    if (appealCount >= 3) expect(form.querySelector('.btn-check').disabled).toBe(true);
     expect(mocks.submitAppeal).not.toHaveBeenCalled();
   });
 

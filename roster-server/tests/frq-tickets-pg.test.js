@@ -4,6 +4,7 @@
 // races. The deployment gate must run those against real PostgreSQL.
 
 import { describe, it, beforeAll, beforeEach, afterAll, expect } from 'vitest';
+import { readFile } from 'node:fs/promises';
 import { createFrqLedgerDb } from '../frq-ledger-db.js';
 import {
   FRQ_STUDENT_ID,
@@ -85,6 +86,16 @@ async function queueAppeal(itemId, appealText, requestedAt) {
   const result = await db.query(
     `select * from queue_frq_appeal($1::uuid, $2::text, $3::text, $4::timestamptz)`,
     [FRQ_STUDENT_ID, itemId, appealText, requestedAt],
+  );
+  return result.rows[0];
+}
+
+async function queueRevisedAppeal(itemId, appealText, requestedAt, revisedText) {
+  const result = await db.query(
+    `select * from queue_frq_appeal(
+      $1::uuid, $2::text, $3::text, $4::timestamptz, $5::text
+    )`,
+    [FRQ_STUDENT_ID, itemId, appealText, requestedAt, revisedText],
   );
   return result.rows[0];
 }
@@ -703,6 +714,104 @@ describe('migration 0031 FRQ ticket state machine (real plpgsql)', () => {
       .toMatchObject({ queued: false, appeal_count: 1, reason: 'cooldown' });
   }, 60000);
 
+  it('stores a canonical revised answer, clears it after apply, and never rewrites response', async () => {
+    const itemId = 'WS-U6L1-revised-appeal';
+    const original = longResponse('immutable original');
+    const ticket = await recordTicket(itemId, { response: original });
+    await pgApplyFrqVerdict(db, {
+      ledgerId: ticket.ledger_id,
+      claimToken: null,
+      responseVersion: ticket.response_version,
+      score: 0.5,
+      result: resultFor(hashFor(itemId)),
+      gradedAt: at(),
+      teacher: true,
+    });
+
+    const queued = await queueRevisedAppeal(
+      itemId,
+      'Please review my revised evidence.',
+      PAST_AT,
+      '  A revised answer with stronger statistical evidence.  ',
+    );
+    expect(queued).toMatchObject({ queued: true, appeal_count: 1 });
+    let row = await pgFrqRow(db, ticket.ledger_id);
+    expect(row.frq_appeal_pending.revisedText)
+      .toBe('A revised answer with stronger statistical evidence.');
+
+    const claim = await claimOne('revised-appeal-worker');
+    const applied = await pgApplyFrqVerdict(db, {
+      ledgerId: ticket.ledger_id,
+      claimToken: claim.frq_claim_token,
+      responseVersion: claim.frq_response_version,
+      score: 1,
+      result: resultFor(hashFor(itemId), { score: 1, revisedTextUsed: true }),
+      gradedAt: at(1000),
+    });
+    expect(applied.applied).toBe(true);
+    row = await pgFrqRow(db, ticket.ledger_id);
+    expect(row.response).toBe(original);
+    expect(row.frq_appeal_pending).toBeNull();
+    expect(row.frq_result.revisedTextUsed).toBe(true);
+  }, 60000);
+
+  it('omits revisedText when the canonical revision equals the immutable response', async () => {
+    const itemId = 'WS-U6L1-identical-revision';
+    const original = longResponse('identical revised answer');
+    const ticket = await recordTicket(itemId, { response: original });
+    await pgApplyFrqVerdict(db, {
+      ledgerId: ticket.ledger_id,
+      claimToken: null,
+      responseVersion: ticket.response_version,
+      score: 0.5,
+      result: resultFor(hashFor(itemId)),
+      gradedAt: at(),
+      teacher: true,
+    });
+
+    await queueRevisedAppeal(
+      itemId,
+      'Please review this unchanged answer.',
+      PAST_AT,
+      `  ${original}  `,
+    );
+    const row = await pgFrqRow(db, ticket.ledger_id);
+    expect(row.frq_appeal_pending).not.toHaveProperty('revisedText');
+  }, 60000);
+
+  it('re-runs safely and leaves exactly ONE queue_frq_appeal (defaults cover legacy calls)', async () => {
+    const migration = await readFile(new URL('../migrations/0031_frq_tickets.sql', import.meta.url), 'utf8');
+    await db.exec(migration);
+    await db.exec(migration);
+
+    // A 4-arg compatibility overload would make 4-argument calls ambiguous against
+    // the 5-arg default signature (SQLSTATE 42725) -- the migration must DROP the
+    // pre-revised-text production signature and leave only the defaulted one.
+    const functions = await db.query(
+      `select pronargs, pronargdefaults
+         from pg_proc
+        where proname = 'queue_frq_appeal'
+        order by pronargs`,
+    );
+    expect(functions.rows.map((entry) => ({
+      args: Number(entry.pronargs),
+      defaults: Number(entry.pronargdefaults),
+    }))).toEqual([
+      { args: 5, defaults: 2 },
+    ]);
+    // Legacy positional call shapes still resolve (3-arg and 4-arg) via defaults.
+    const threeArg = await db.query(
+      'select * from queue_frq_appeal($1::uuid, $2::text, $3::text)',
+      [FRQ_STUDENT_ID, 'missing-item', 'Please review this missing item.'],
+    );
+    expect(threeArg.rows[0].reason).toBe('not_found');
+    const fourArg = await db.query(
+      'select * from queue_frq_appeal($1::uuid, $2::text, $3::text, statement_timestamp())',
+      [FRQ_STUDENT_ID, 'missing-item', 'Please review this missing item again.'],
+    );
+    expect(fourArg.rows[0].reason).toBe('not_found');
+  }, 60000);
+
   it('serializes queueing against an in-flight appeal apply', async () => {
     const itemId = 'WS-U6L2-appeal-apply-race';
     const responseHash = hashFor(itemId);
@@ -742,6 +851,32 @@ describe('migration 0031 FRQ ticket state machine (real plpgsql)', () => {
 });
 
 describe('createFrqLedgerDb migration degradation contract', () => {
+  it('forwards the optional revised text under the new RPC parameter name', async () => {
+    const calls = [];
+    const wrapper = createFrqLedgerDb({
+      rpc: async (name, params) => {
+        calls.push({ name, params });
+        return { data: [{ queued: true, appeal_count: 1, reason: 'queued' }], error: null };
+      },
+    });
+
+    await wrapper.queueFrqAppeal({
+      studentId: FRQ_STUDENT_ID,
+      itemId: 'WS-U1L1-revised-rpc',
+      appealText: 'Please review the revised answer.',
+      revisedText: 'Canonical revised answer.',
+    });
+    expect(calls).toEqual([{
+      name: 'queue_frq_appeal',
+      params: {
+        p_student_id: FRQ_STUDENT_ID,
+        p_item_id: 'WS-U1L1-revised-rpc',
+        p_appeal_text: 'Please review the revised answer.',
+        p_revised_text: 'Canonical revised answer.',
+      },
+    }]);
+  });
+
   it('returns degraded results for both missing RPCs (42883) and missing columns (42703)', async () => {
     const preMigrationDb = await createFrqDb({ applyFrqMigration: false });
     try {

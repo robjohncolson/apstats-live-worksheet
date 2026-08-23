@@ -285,10 +285,12 @@ describe('GET /ledger/frq-config and /ledger/frq-status', () => {
           feedback: 'Useful feedback.',
           matched: ['one'],
           missing: ['two'],
+          revisedTextUsed: true,
           responseHash: 'must-not-leak',
           lastAppealText: 'must-not-leak',
         },
         frq_rubric_version: 'SY2627:digest',
+        frq_appeal_count: 3,
         frq_claim_token: 'must-not-leak',
         frq_claim_owner: 'must-not-leak',
         frq_last_error: 'must-not-leak',
@@ -313,6 +315,9 @@ describe('GET /ledger/frq-config and /ledger/frq-status', () => {
       receiptId: 'receipt-id',
       receiptCompact: 'receipt-compact',
       receipt: { receiptId: 'receipt-id', compact: 'receipt-compact' },
+      appealCount: 3,
+      appealLimit: 3,
+      result: { score: 0.5, feedback: 'Useful feedback.', matched: ['one'], missing: ['two'], revisedTextUsed: true },
     });
     expect(result.body.items['WS-U1L1-reflect2'].status).toBe('retrying');
     expect(result.body.items['WS-U1L1-reflect2'].estimatedWaitMs).toBe(3_000);
@@ -405,6 +410,7 @@ describe('POST /ledger/frq-appeal', () => {
       studentId: 'student-a',
       itemId: 'WS-U1L1-reflect1',
       appealText: 'Please reconsider this evidence.',
+      revisedText: null,
     });
 
     for (const [reason, status] of [
@@ -422,6 +428,58 @@ describe('POST /ledger/frq-appeal', () => {
       expect(result.status).toBe(status);
       expect(result.body.error).toBe(reason);
     }
+  });
+
+  it('caps and canonicalizes revised answers, and ignores a hash-identical revision', async () => {
+    mode = 'authoritative';
+    process.env.FRQ_APPEAL_MAX_PER_MINUTE = '20';
+    const stored = 'A stored answer that has already been graded.';
+    frqDb.statusRows = [{
+      item_id: 'WS-U1L1-reflect1',
+      response: stored,
+      score: 0.5,
+      frq_response_hash: createHash('sha256').update(stored, 'utf8').digest('hex'),
+    }];
+
+    let result = await server.request('POST', '/ledger/frq-appeal', {
+      headers: auth(),
+      body: {
+        itemId: 'WS-U1L1-reflect1',
+        appealText: 'Please review the unchanged answer.',
+        revisedText: `  ${stored}  `,
+      },
+    });
+    expect(result.status).toBe(200);
+    expect(frqDb.appeals[0].revisedText).toBeNull();
+
+    result = await server.request('POST', '/ledger/frq-appeal', {
+      headers: auth(),
+      body: {
+        itemId: 'WS-U1L1-reflect1',
+        appealText: 'Please review my improved answer.',
+        revisedText: '  A revised answer with stronger evidence.  ',
+      },
+    });
+    expect(result.status).toBe(200);
+    expect(frqDb.appeals[1].revisedText).toBe('A revised answer with stronger evidence.');
+
+    expect((await server.request('POST', '/ledger/frq-appeal', {
+      headers: auth(),
+      body: {
+        itemId: 'WS-U1L1-reflect1',
+        appealText: 'Please review this oversized revision.',
+        revisedText: '界'.repeat(2_731),
+      },
+    })).body.error).toBe('revisedText must be at most 8192 bytes');
+
+    expect((await server.request('POST', '/ledger/frq-appeal', {
+      headers: auth(),
+      body: {
+        itemId: 'WS-U1L1-reflect1',
+        appealText: 'Please review this invalid revision.',
+        revisedText: { answer: 'not a string' },
+      },
+    })).body.error).toBe('revisedText must be a string');
   });
 
   it.each(['off', 'shadow'])('keeps appeals inert in %s mode', async (selectedMode) => {

@@ -285,11 +285,16 @@ $$;
 -- Queue an appeal under the same row lock used by apply_frq_verdict. This keeps
 -- count, dedup, cooldown, and pending replacement one atomic decision and keeps
 -- a live worker claim from consuming a newly replaced request.
+-- The revised-text parameter changed the argument list; CREATE OR REPLACE with a
+-- different signature would ADD an overload (and make 4-argument calls ambiguous,
+-- SQLSTATE 42725), so drop the original signature first. Re-run-safe.
+drop function if exists queue_frq_appeal(uuid, text, text, timestamptz);
 create or replace function queue_frq_appeal(
   p_student_id uuid,
   p_item_id text,
   p_appeal_text text,
-  p_requested_at timestamptz default statement_timestamp()
+  p_requested_at timestamptz default statement_timestamp(),
+  p_revised_text text default null
 )
 returns table (
   queued boolean,
@@ -308,6 +313,7 @@ declare
   v_last_hash text;
   v_pending_at timestamptz;
   v_last_at timestamptz;
+  v_revised_text text;
 begin
   select l.*
     into v_row
@@ -330,6 +336,11 @@ begin
     return query select false, v_row.frq_appeal_count, 'limit'::text;
     return;
   end if;
+  v_revised_text := case
+    when p_revised_text is null then null
+    when btrim(p_revised_text) = btrim(coalesce(v_row.response #>> '{}', '')) then null
+    else btrim(p_revised_text)
+  end;
   v_pending_hash := coalesce(
     v_row.frq_appeal_pending ->> 'hash',
     case when v_row.frq_appeal_pending ->> 'text' is not null
@@ -362,12 +373,13 @@ begin
   update item_ledger as l
   set
     frq_appeal_count = l.frq_appeal_count + 1,
-    frq_appeal_pending = jsonb_build_object(
+    frq_appeal_pending = jsonb_strip_nulls(jsonb_build_object(
       'text', p_appeal_text,
       'hash', v_appeal_hash,
       'requestedAt', v_now,
-      'version', l.frq_response_version
-    ),
+      'version', l.frq_response_version,
+      'revisedText', v_revised_text
+    )),
     frq_last_appeal = jsonb_build_object('hash', v_appeal_hash, 'at', v_now),
     frq_claim_token = null,
     frq_claim_owner = null,
@@ -381,6 +393,10 @@ begin
   return query select true, v_row.frq_appeal_count, 'queued'::text;
 end;
 $$;
+
+-- (No four-argument compatibility overload: keeping one would make
+-- four-argument calls ambiguous against the five-argument default (42725).
+-- The old production signature is dropped above; all callers pass named params.)
 
 -- Apply under a row lock so the version/hash decision, max floor, result write,
 -- and lease release serialize with drafts and competing graders. responseHash is
@@ -591,7 +607,7 @@ revoke all on function record_frq_draft(uuid, text, text, text, timestamptz) fro
 revoke all on function claim_frq_tickets(text, int, bigint) from public;
 revoke all on function apply_frq_verdict(uuid, uuid, bigint, numeric, jsonb, text, timestamptz, boolean) from public;
 revoke all on function fail_frq_claim(uuid, uuid, text, timestamptz) from public;
-revoke all on function queue_frq_appeal(uuid, text, text, timestamptz) from public;
+revoke all on function queue_frq_appeal(uuid, text, text, timestamptz, text) from public;
 
 -- Supabase normally provides anon/authenticated/service_role. Local PostgreSQL
 -- and differently named platforms may not, so optional role changes are guarded.
@@ -620,7 +636,7 @@ begin
         v_role
       );
       execute format(
-        'revoke all on function queue_frq_appeal(uuid, text, text, timestamptz) from %I',
+        'revoke all on function queue_frq_appeal(uuid, text, text, timestamptz, text) from %I',
         v_role
       );
     end if;
@@ -631,7 +647,7 @@ begin
     execute 'grant execute on function claim_frq_tickets(text, int, bigint) to service_role';
     execute 'grant execute on function apply_frq_verdict(uuid, uuid, bigint, numeric, jsonb, text, timestamptz, boolean) to service_role';
     execute 'grant execute on function fail_frq_claim(uuid, uuid, text, timestamptz) to service_role';
-    execute 'grant execute on function queue_frq_appeal(uuid, text, text, timestamptz) to service_role';
+    execute 'grant execute on function queue_frq_appeal(uuid, text, text, timestamptz, text) to service_role';
   end if;
 end;
 $permissions$;

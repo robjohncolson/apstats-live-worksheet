@@ -943,6 +943,7 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                 ['matched', 'missing'].forEach(function (field) {
                     if (Array.isArray(item.result[field])) result[field] = item.result[field].slice();
                 });
+                if (item.result.revisedTextUsed === true) result.revisedTextUsed = true;
                 return result;
             }
             var _AI_FRQ_APPEAL_LIMIT = 3;
@@ -950,8 +951,30 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                 var count = Number(item && item.appealCount);
                 return isFinite(count) && count >= 0 ? count : 0;
             }
+            function _aiFrqAppealLimit(item) {
+                var limit = Number(item && item.appealLimit);
+                return isFinite(limit) && limit === _AI_FRQ_APPEAL_LIMIT
+                    ? limit : _AI_FRQ_APPEAL_LIMIT;
+            }
+            function _aiFrqAppealExhausted(item) {
+                if (!item || item.appealCount === undefined || item.appealCount === null) return false;
+                var count = Number(item.appealCount);
+                return isFinite(count) && count >= _aiFrqAppealLimit(item);
+            }
             function _aiFrqAppealAllowed(item) {
-                return _aiFrqScoreLetter(item) !== 'E' && _aiFrqAppealCount(item) < _AI_FRQ_APPEAL_LIMIT;
+                return _aiFrqScoreLetter(item) !== 'E'
+                    && !_aiFrqAppealExhausted(item);
+            }
+            function _aiFrqAppealErrorCopy(reason) {
+                var copies = {
+                    limit: "You've used all 3 appeals for this question.",
+                    cooldown: 'Please wait a minute before submitting another appeal.',
+                    'already-pending': 'This appeal is already pending review.',
+                    duplicate: 'This appeal is already pending review.',
+                    not_graded: 'This response must be graded before you can appeal it.',
+                    not_found: "We couldn't find this graded response. Refresh the page and try again."
+                };
+                return copies[reason] || String(reason || _AI_FRQ_LOCAL_COPY);
             }
             function _aiFrqAppealForm(taId) {
                 return document.getElementById('appeal-form-' + taId)
@@ -965,6 +988,49 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                         if (control.parentNode) control.parentNode.removeChild(control);
                     }
                 }
+            }
+            function _aiSyncFrqAppealCount(form, item) {
+                if (!form) return;
+                var section = form.closest ? form.closest('.appeal-section') : null;
+                var count = section ? section.querySelector('.appeal-count') : form.querySelector('.appeal-count');
+                if (_aiFrqAppealExhausted(item)) {
+                    var exhaustedUi = section || count;
+                    if (exhaustedUi) {
+                        try { exhaustedUi.remove(); } catch (_) {
+                            if (exhaustedUi.parentNode) exhaustedUi.parentNode.removeChild(exhaustedUi);
+                        }
+                    }
+                    return;
+                }
+                if (!count) return;
+                count.textContent = 'Appeals used: ' + _aiFrqAppealCount(item)
+                    + '/' + _aiFrqAppealLimit(item);
+            }
+            function _aiDisableFrqAppealForm(taId) {
+                var form = _aiFrqAppealForm(taId);
+                if (!form) return;
+                Array.prototype.forEach.call(
+                    form.querySelectorAll('button, input, textarea'),
+                    function (control) { control.disabled = true; }
+                );
+            }
+            function _aiShowRevisedAppealNotice(taId, item, form) {
+                if (!form) return;
+                var notice = form.querySelector('.ai-frq-revised-appeal-notice');
+                if (!notice) {
+                    notice = document.createElement('p');
+                    notice.className = 'ai-frq-revised-appeal-notice';
+                    notice.hidden = true;
+                    notice.textContent = 'Your revised answer will be included.';
+                    form.insertBefore(notice, form.firstChild);
+                }
+                var textarea = document.getElementById(taId);
+                var currentText = String((textarea && textarea.value) || '').trim();
+                var storedHash = item && item.responseHash;
+                if (!storedHash) { notice.hidden = true; return; }
+                _aiSha256Hex(currentText).then(function (currentHash) {
+                    notice.hidden = !currentHash || currentHash === String(storedHash).toLowerCase();
+                }).catch(function () { notice.hidden = true; });
             }
             var _aiAuthoritativeAppealClickHandler = null;
             function _aiInstallAuthoritativeAppealDelegation() {
@@ -1054,6 +1120,9 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                             form.appendChild(prompt);
                             form.appendChild(fallbackText);
                             form.appendChild(submit);
+                            var count = document.createElement('div');
+                            count.className = 'appeal-count';
+                            form.appendChild(count);
                             status.parentNode.insertBefore(form, status.nextSibling);
                             materialized = true;
                         }
@@ -1088,6 +1157,8 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                     || document.getElementById('appeal-text-' + taId)
                     || document.getElementById('appealText-' + taId);
                 if (text) text.value = '';
+                _aiSyncFrqAppealCount(form, item);
+                _aiShowRevisedAppealNotice(taId, item, form);
                 form.classList.add('visible');
                 if (control) control.setAttribute('aria-expanded', 'true');
                 try { if (text) text.focus(); } catch (_) {}
@@ -1119,7 +1190,9 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
             function _aiRenderStoredFrqResult(taId, item, currentText) {
                 var result = _aiStoredFrqResult(item);
                 if (!result) return false;
-                var renderKey = String(item.responseHash || '') + '|' + String(item.gradedAt || '') + '|' + result.score;
+                var renderKey = String(item.responseHash || '') + '|' + String(item.gradedAt || '')
+                    + '|' + result.score + '|' + _aiFrqAppealCount(item)
+                    + '|' + String(result.revisedTextUsed === true);
                 if (_aiFrqRenderedGrade[taId] === renderKey) return true;
                 try {
                     if (typeof gradingState !== 'undefined' && gradingState) {
@@ -1133,6 +1206,7 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                         });
                     }
                     if (typeof showFeedback === 'function') showFeedback(taId, result);
+                    _aiSyncFrqAppealCount(_aiFrqAppealForm(taId), item);
                     _aiFrqRenderedGrade[taId] = renderKey;
                     return true;
                 } catch (_) { return false; }
@@ -1169,10 +1243,16 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                         var currentHash = await _aiSha256Hex(currentText);
                         if (item.responseHash
                             && (!currentHash || currentHash !== String(item.responseHash).toLowerCase())) {
-                            _aiClearAuthoritativeVerdict(taId);
-                            _aiSetFrqStatusText(taId, 'This response is already graded. Use Appeal to request review.', 'already-graded-edited');
-                            _aiEnsureFrqAppealControl(taId, item);
-                            return;
+                            var revisedWasReviewed = item.result && item.result.revisedTextUsed === true;
+                            if (!revisedWasReviewed) {
+                                _aiClearAuthoritativeVerdict(taId);
+                                var editedCopy = _aiFrqAppealExhausted(item)
+                                    ? "This response is already graded. You've used all 3 appeals for this question."
+                                    : 'This response is already graded — appeal to have your revised answer reviewed.';
+                                _aiSetFrqStatusText(taId, editedCopy, 'already-graded-edited');
+                                _aiEnsureFrqAppealControl(taId, item);
+                                return;
+                            }
                         }
                         if (item.result && !_aiRenderStoredFrqResult(taId, item, currentText)) {
                             _aiRenderFrqConnection(taId);
@@ -1190,7 +1270,9 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                                 _aiEnsureFrqAppealControl(taId, item);
                                 return;
                             }
-                            if (away) {
+                            if (item.result && item.result.revisedTextUsed === true) {
+                                _aiSetFrqStatusText(taId, '✓ Revised answer reviewed: ' + label, 'graded', true, '', announcementKey);
+                            } else if (away) {
                                 _aiSetFrqStatusText(taId, '✓ Graded while you were away: ' + label, 'graded-away', true, '', announcementKey);
                                 _aiFrqAwayShown[itemId] = String(item.gradedAt || '');
                             } else {
@@ -1463,7 +1545,7 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                     var form = document.getElementById('appeal-form-' + questionId)
                         || document.getElementById('appealForm-' + questionId);
                     var feedback = document.getElementById(questionId + '-feedback');
-                    var host = form || feedback;
+                    var host = feedback || form;
                     if (host) host.appendChild(el);
                 }
                 if (el) {
@@ -1485,25 +1567,39 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                     || document.getElementById('appealForm-' + questionId);
                 var buttons = form ? form.querySelectorAll('button') : [];
                 Array.prototype.forEach.call(buttons, function (button) { button.disabled = true; });
+                var appealExhausted = false;
                 try {
+                    var requestBody = { itemId: itemId, appealText: appealText };
+                    var item = _aiFrqStates[itemId] || {};
+                    var answer = String((document.getElementById(questionId) || {}).value || '').trim();
+                    if (item.responseHash) {
+                        var answerHash = await _aiSha256Hex(answer);
+                        if (answerHash && answerHash !== String(item.responseHash).toLowerCase()) {
+                            requestBody.revisedText = answer;
+                        }
+                    }
                     var res = await fetch(base + '/ledger/frq-appeal', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                        body: JSON.stringify({ itemId: itemId, appealText: appealText })
+                        body: JSON.stringify(requestBody)
                     });
                     var data = null;
                     try { data = await res.json(); } catch (_) { data = null; }
                     if (!res || !res.ok) {
                         if (data && data.appealCount !== undefined && _aiFrqStates[itemId]) {
                             _aiFrqStates[itemId].appealCount = _aiFrqAppealCount(data);
+                            if (data.appealLimit !== undefined) {
+                                _aiFrqStates[itemId].appealLimit = _aiFrqAppealLimit(data);
+                            }
                         }
-                        if (data && _aiFrqAppealCount(data) >= _AI_FRQ_APPEAL_LIMIT) {
+                        if (_aiFrqAppealExhausted(data)) {
+                            appealExhausted = true;
                             _aiRemoveFrqAppealControl(questionId);
+                            _aiDisableFrqAppealForm(questionId);
                         }
-                        _aiAppealMessage(questionId, data && data.error ? String(data.error) : _AI_FRQ_LOCAL_COPY, true);
+                        _aiAppealMessage(questionId, _aiFrqAppealErrorCopy(data && data.error), true);
                         return data;
                     }
-                    _aiAppealMessage(questionId, 'Appeal submitted · waiting for review.', false);
                     var previous = _aiFrqStates[itemId] || {};
                     var queued = {};
                     for (var key in previous) {
@@ -1513,6 +1609,7 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                     if (data && data.appealCount !== undefined) queued.appealCount = _aiFrqAppealCount(data);
                     _aiFrqStates[itemId] = queued;
                     await _aiRenderFrqStatus(itemId, _aiFrqStates[itemId]);
+                    _aiAppealMessage(questionId, 'Appeal submitted · waiting for review.', false);
                     _aiStartFrqPolling(true);
                     return data;
                 } catch (_) {
@@ -1520,7 +1617,9 @@ export const INJECTED_JS = String.raw`        // ==================== AI WORKSHE
                     _aiRenderFrqConnection(questionId);
                     return null;
                 } finally {
-                    Array.prototype.forEach.call(buttons, function (button) { button.disabled = false; });
+                    if (!appealExhausted) {
+                        Array.prototype.forEach.call(buttons, function (button) { button.disabled = false; });
+                    }
                 }
             }
             function _aiInstallAuthoritativeEntryWrappers() {

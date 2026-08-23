@@ -5096,15 +5096,40 @@
       "timestamp": "2026-08-22T09:08:31Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "9aa1ba460989",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Canary round 4 \u2014 two fixes from live teacher testing of the FRQ appeal flow. Files:\nroster-server/le",
+      "status": "implemented",
+      "duration_seconds": 2078.761,
+      "timestamp": "2026-08-22T17:20:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "95fd8c1c857c",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "FOUR of your own pc8 tests fail \u2014 your implementation and your tests disagree. Fix so BOTH match the",
+      "status": "completed",
+      "duration_seconds": 265.15,
+      "timestamp": "2026-08-23T01:49:54Z",
+      "files_changed": [
+        "scripts/wire-ai-worksheet-grade.mjs",
+        "tests/ai-worksheet-grade.test.js"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 434,
-    "cc_to_codex": 434,
+    "total_calls": 436,
+    "cc_to_codex": 436,
     "codex_to_cc": 0,
-    "completed": 332,
+    "completed": 333,
     "failed": 73,
     "refused": 0,
-    "avg_duration_seconds": 628.674
+    "avg_duration_seconds": 631.166
   }
 }
