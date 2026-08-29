@@ -34,6 +34,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pickConfigUrl } from './teacher-roster.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPT_DIR, '..');
@@ -105,11 +106,8 @@ function readFileSafe(path) {
 function resolveUrl(flag) {
   if (flag) return flag.replace(/\/+$/, '');
   if (process.env.ROSTER_SERVICE_URL) return process.env.ROSTER_SERVICE_URL.replace(/\/+$/, '');
-  const cfg = readFileSafe(resolve(REPO_ROOT, 'roster_config.js'));
-  const m = cfg && cfg.match(/['"](https?:\/\/[^'"]+)['"]/);
-  // Skip the placeholder example URL ('http://...') in roster_config.js comments;
-  // fall through to the known prod URL so live mode works without --url.
-  if (m && !m[1].includes('...')) return m[1].replace(/\/+$/, '');
+  const fromConfig = pickConfigUrl(readFileSafe(resolve(REPO_ROOT, 'roster_config.js')));
+  if (fromConfig) return fromConfig;
   return DEFAULT_URL;
 }
 
