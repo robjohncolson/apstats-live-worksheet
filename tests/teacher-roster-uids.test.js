@@ -9,10 +9,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 
 let parseUidRoster;
+let pickConfigUrl;
 
 beforeAll(async () => {
   const mod = await import('../scripts/teacher-roster.mjs');
   parseUidRoster = mod.parseUidRoster;
+  pickConfigUrl = mod.pickConfigUrl;
 });
 
 describe('parseUidRoster: header detection', () => {
@@ -48,5 +50,50 @@ describe('parseUidRoster: column handling', () => {
   it('returns an empty array for empty input', () => {
     expect(parseUidRoster('')).toEqual([]);
     expect(parseUidRoster('username,schoologyUid\n')).toEqual([]);
+  });
+});
+
+// pickConfigUrl feeds the CLI's default server URL. roster_config.js contains
+// decoy URLs (the 'http://...' comment example, the localhost dev fallback)
+// that once made the CLI dial "http://..." — these pin the fix.
+describe('pickConfigUrl: production URL from roster_config.js', () => {
+  const PROD = 'https://roster-production-12c1.up.railway.app';
+
+  it('skips the http://... placeholder in comments (2026-08-29 regression)', () => {
+    const cfg =
+      "//   localStorage.setItem('roster_service_url_override', 'http://...')\n" +
+      "window.ROSTER_SERVICE_URL = '" + PROD + "';\n";
+    expect(pickConfigUrl(cfg)).toBe(PROD);
+  });
+
+  it('skips the localhost dev fallback', () => {
+    const cfg =
+      "var dev = 'http://localhost:8091';\n" +
+      "var prod = '" + PROD + "';\n";
+    expect(pickConfigUrl(cfg)).toBe(PROD);
+  });
+
+  it('takes the LAST https URL — the config file final || fallback', () => {
+    const cfg = "var a = 'https://example.com';\nvar b = '" + PROD + "';\n";
+    expect(pickConfigUrl(cfg)).toBe(PROD);
+  });
+
+  it('strips trailing slashes', () => {
+    expect(pickConfigUrl("'https://example.com/'")).toBe('https://example.com');
+  });
+
+  it('returns null when no https URL is present', () => {
+    expect(pickConfigUrl("var x = 'http://...';")).toBe(null);
+    expect(pickConfigUrl('')).toBe(null);
+    expect(pickConfigUrl(null)).toBe(null);
+  });
+
+  it('extracts the production URL from the REAL committed roster_config.js', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve, dirname } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const here = dirname(fileURLToPath(import.meta.url));
+    const cfg = readFileSync(resolve(here, '../roster_config.js'), 'utf8');
+    expect(pickConfigUrl(cfg)).toBe(PROD);
   });
 });

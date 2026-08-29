@@ -114,12 +114,23 @@ function readFileSafe(path) {
   try { return readFileSync(path, 'utf8'); } catch { return null; }
 }
 
+// Pull the production URL out of roster_config.js text — exported for tests.
+// The file quotes several URLs this CLI must NOT pick up: comment examples like
+// 'http://...' and the localhost dev fallback 'http://localhost:8091'. The
+// committed production URL is the file's final || fallback, so it is the LAST
+// quoted https:// string (both decoys are plain http).
+export function pickConfigUrl(cfgText) {
+  if (!cfgText) return null;
+  const matches = [...cfgText.matchAll(/['"](https:\/\/[a-z0-9][^'"]*)['"]/gi)];
+  if (!matches.length) return null;
+  return matches[matches.length - 1][1].replace(/\/+$/, '');
+}
+
 function resolveUrl(flag) {
   if (flag) return flag.replace(/\/+$/, '');
   if (process.env.ROSTER_SERVICE_URL) return process.env.ROSTER_SERVICE_URL.replace(/\/+$/, '');
-  const cfg = readFileSafe(resolve(REPO_ROOT, 'roster_config.js'));
-  const m = cfg && cfg.match(/['"](https?:\/\/[^'"]+)['"]/);
-  if (m) return m[1].replace(/\/+$/, '');
+  const fromConfig = pickConfigUrl(readFileSafe(resolve(REPO_ROOT, 'roster_config.js')));
+  if (fromConfig) return fromConfig;
   return DEFAULT_URL;
 }
 
