@@ -1,17 +1,26 @@
 #!/usr/bin/env node
-// build-topic-schedule-sy2627.mjs — P1 Layer 2 of the SY2627 reframe.
+// build-topic-schedule-sy2627.mjs — SY2627 reframe, real-calendar edition.
 //
-// Generates a topic-schedule.json-shaped fixture for the Fall-2026 5-unit CED:
+// Generates topic-schedule.json-shaped output for the Fall-2026 5-unit CED:
 // core old-ids sequenced in NEW teaching order, one class meeting each, with a
-// N.review marker at each new-unit boundary. Two periods (B/E). Bonus old-ids are
-// NOT scheduled (enrichment only). Old-id keys unchanged (Option B).
+// N.review marker at each new-unit boundary. Bonus old-ids are NOT scheduled
+// (enrichment only). Old-id keys unchanged (Option B).
 //
-// IMPORTANT — this output is a CLEARLY SYNTHETIC FIXTURE:
-//   * the calendar (start date, breaks) is a placeholder, NOT the real SY2627
-//     school calendar; the AP exam date is deliberately absent (confirm w/ the AP
-//     coordinator when known).
-//   * there is NO Supabase / production sync here. Do not `--execute` anything.
-// The real schedule waits on the user's actual calendar + pacing (spec §6).
+// CAL is the REAL SY2627 calendar (intake completed 2026-09-01 — see
+// sy2627-calendar-intake.md; sources: district calendar lynn-public-schools-2026-2027.md
+// + LEHS weekly schedule xlsx + teacher answers):
+//   * Periods B and E have DIFFERENT weekly cadences (B: Mon/Tue/Thu/Fri;
+//     E: Mon/Wed/Fri). There is no "offset" — each period walks its own meeting days.
+//   * Early-release Wednesdays are normal (shortened) E meetings — no scheduling effect.
+//   * N.review = the in-class Progress Check block for that unit. It consumes
+//     pcDaysPerUnit meetings (teacher: "the PC often takes two class periods");
+//     the recorded date is the FIRST of them.
+//   * The AP exam date is a HARD END: every scheduled date must land before it,
+//     or the build fails (overflow is flagged, never compressed).
+//
+// This writes the fixture path only. Production placement (roster-server
+// lesson-schedule.json, Supabase, Desk rebake) is later, gated work — see
+// SCHEDULE_HANDOFF.md §3 steps 2-6.
 //
 // Run: node scripts/build-topic-schedule-sy2627.mjs [--out <path>]
 
@@ -24,18 +33,33 @@ const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? proce
 const CW  = resolve(REPO, '2026-crosswalk.json');
 const OUT = resolve(REPO, arg('--out', 'scripts/fixtures/topic-schedule-sy2627.fixture.json'));
 
-// ── SYNTHETIC calendar fixture (placeholder — replace with the real SY2627 cal) ──
+// ── REAL SY2627 calendar (sy2627-calendar-intake.md, completed 2026-09-01) ──
 const CAL = {
-  synthetic: true,
-  firstDay: '2026-08-24',            // placeholder Monday
-  // placeholder breaks (weekday ranges skipped), NOT the real district calendar:
-  breaks: [
-    { name: 'Thanksgiving (placeholder)', from: '2026-11-25', to: '2026-11-27' },
-    { name: 'Winter (placeholder)',       from: '2026-12-21', to: '2027-01-01' },
-    { name: 'Spring (placeholder)',       from: '2027-03-15', to: '2027-03-19' },
+  synthetic: false,
+  schoolYear: 'SY2627',
+  firstDay: '2026-09-02',            // Wed — Day 1 of 180 (LPS district calendar)
+  examDate: '2027-05-11',            // Tue — AP Statistics exam (teacher-confirmed); HARD END
+  breaks: [                          // every district closure (single days use from == to)
+    { name: 'School Closed',        from: '2026-09-04', to: '2026-09-04' },
+    { name: 'Labor Day',            from: '2026-09-07', to: '2026-09-07' },
+    { name: "Indigenous Peoples' Day", from: '2026-10-12', to: '2026-10-12' },
+    { name: 'Teacher In-Service',   from: '2026-11-03', to: '2026-11-03' },
+    { name: 'Veterans Day',         from: '2026-11-11', to: '2026-11-11' },
+    { name: 'Thanksgiving Recess',  from: '2026-11-26', to: '2026-11-27' },
+    { name: 'School Closed',        from: '2026-12-24', to: '2026-12-25' },
+    { name: 'Winter Recess',        from: '2026-12-28', to: '2027-01-01' },
+    { name: 'MLK Jr. Day',          from: '2027-01-18', to: '2027-01-18' },
+    { name: 'February Vacation',    from: '2027-02-15', to: '2027-02-19' },
+    { name: 'Good Friday',          from: '2027-03-26', to: '2027-03-26' },
+    { name: 'April Vacation',       from: '2027-04-19', to: '2027-04-23' },
+    { name: 'Memorial Day',         from: '2027-05-31', to: '2027-05-31' },
   ],
-  daysPerTopic: 1,                   // synthetic pacing: one meeting per core topic
-  periodStartOffsetDays: { B: 0, E: 1 },  // E lags B by one school day (synthetic)
+  daysPerTopic: 1,                   // teacher pacing: one meeting per core topic (videos fill it)
+  pcDaysPerUnit: 2,                  // N.review = in-class Progress Check, ~2 class periods
+  meetingDays: {                     // ISO weekday numbers, Mon=1..Fri=5 (LEHS Block Summary)
+    B: [1, 2, 4, 5],                 // Mon, Tue, Thu, Fri — never Wednesday
+    E: [1, 3, 5],                    // Mon, Wed, Fri — Wed is E's 90+30 block
+  },
 };
 
 // Deterministic date math WITHOUT Date.now()/new Date() side-channels: use UTC epoch-day arithmetic.
@@ -57,19 +81,20 @@ function fromEpochDay(n) {
   const mm = String(m + 1).padStart(2, '0'), dd = String(n + 1).padStart(2, '0');
   return `${y}-${mm}-${dd}`;
 }
-// 1970-01-01 was a Thursday → dow = (epochDay + 4) % 7, 0=Sun..6=Sat
-const dow = (epoch) => (epoch + 4) % 7;
-const breakDays = new Set();
-for (const b of CAL.breaks) { for (let e = toEpochDay(b.from); e <= toEpochDay(b.to); e++) breakDays.add(e); }
-const isSchoolDay = (epoch) => { const w = dow(epoch); return w !== 0 && w !== 6 && !breakDays.has(epoch); };
+// 1970-01-01 was a Thursday → ISO weekday (Mon=1..Sun=7) = ((epoch + 3) % 7) + 1
+const isoWeekday = (epoch) => ((epoch + 3) % 7) + 1;
+const closedDays = new Set();
+for (const b of CAL.breaks) { for (let e = toEpochDay(b.from); e <= toEpochDay(b.to); e++) closedDays.add(e); }
+const meetsOn = (epoch, period) =>
+  CAL.meetingDays[period].includes(isoWeekday(epoch)) && !closedDays.has(epoch);
 
-// A day walker that yields consecutive school days from a start.
-function makeWalker(startIso) {
+// A day walker that yields consecutive MEETING days for one period.
+function makeWalker(startIso, period) {
   let e = toEpochDay(startIso);
-  while (!isSchoolDay(e)) e++;
+  while (!meetsOn(e, period)) e++;
   return {
     current: () => fromEpochDay(e),
-    advance: () => { do { e++; } while (!isSchoolDay(e)); },
+    advance: () => { do { e++; } while (!meetsOn(e, period)); },
   };
 }
 
@@ -82,28 +107,32 @@ const core = Object.entries(cw)
   .map(([oldId, c]) => ({ oldId, newUnit: c.newUnit, newTopic: c.newTopic }))
   .sort((a, b) => a.newUnit - b.newUnit || _tk(a.newTopic) - _tk(b.newTopic) || _oid(a.oldId) - _oid(b.oldId));
 
-// ── walk each period, assigning dates + inserting N.review at unit boundaries ──
+// ── walk each period on its own cadence; N.review (= the unit's Progress Check
+//    block, pcDaysPerUnit meetings) at each unit boundary ─────────────────────
 function schedule(period) {
-  const w = makeWalker(fromEpochDay(toEpochDay(CAL.firstDay) + (CAL.periodStartOffsetDays[period] || 0)));
+  const w = makeWalker(CAL.firstDay, period);
   const out = {};
+  const placePC = (unit) => {
+    out[`${unit}.review`] = w.current();
+    for (let d = 0; d < CAL.pcDaysPerUnit; d++) w.advance();
+  };
   let prevUnit = null;
   for (const t of core) {
-    if (prevUnit !== null && t.newUnit !== prevUnit) {           // unit boundary → review day for the unit just finished
-      out[`${prevUnit}.review`] = w.current(); w.advance();
-    }
+    if (prevUnit !== null && t.newUnit !== prevUnit) placePC(prevUnit);
     out[t.oldId] = w.current();
     for (let d = 0; d < CAL.daysPerTopic; d++) w.advance();
     prevUnit = t.newUnit;
   }
-  out[`${prevUnit}.review`] = w.current();                        // final unit review
+  placePC(prevUnit);                                              // final unit's PC
   return out;
 }
 
 const B = schedule('B'), E = schedule('E');
 
-// ── invariants (baked in + fail-fast, matching P1a) ──────────────────────────
+// ── invariants (baked in + fail-fast) ────────────────────────────────────────
 const bonusIds = Object.keys(cw).filter((k) => cw[k].status === 'bonus');
-function checkPeriod(m) {
+const examEpoch = toEpochDay(CAL.examDate);
+function checkPeriod(m, period) {
   // rebuild the intended date sequence (core + boundary reviews) in CED order
   const seq = []; let pu = null;
   for (const t of core) { if (pu !== null && t.newUnit !== pu) seq.push(m[`${pu}.review`]); seq.push(m[t.oldId]); pu = t.newUnit; }
@@ -115,29 +144,47 @@ function checkPeriod(m) {
     noBonusScheduled: bonusIds.every((b) => !m[b]),
     reviews1to5: [1, 2, 3, 4, 5].every((n) => !!m[`${n}.review`]),
     monotonic: mono,
-    allSchoolDays: Object.values(m).every((d) => isSchoolDay(toEpochDay(d))),
+    allMeetingDays: Object.values(m).every((d) => meetsOn(toEpochDay(d), period)),
+    beforeExam: Object.values(m).every((d) => toEpochDay(d) < examEpoch),
   };
 }
-const invariants = { B: checkPeriod(B), E: checkPeriod(E), beOffset: B[core[0].oldId] !== E[core[0].oldId], synthetic: CAL.synthetic === true, noExamDate: true };
+const invariants = {
+  B: checkPeriod(B, 'B'),
+  E: checkPeriod(E, 'E'),
+  beDiffer: B[core[0].oldId] !== E[core[0].oldId],
+  realCalendar: CAL.synthetic === false && !!CAL.examDate,
+};
 const checks = [];
 for (const P of ['B', 'E']) for (const [k, v] of Object.entries(invariants[P])) checks.push([`${P}.${k}`, v]);
-checks.push(['B/E offset', invariants.beOffset], ['synthetic flag', invariants.synthetic]);
+checks.push(['B/E cadences differ', invariants.beDiffer], ['real calendar', invariants.realCalendar]);
 const failed = checks.filter(([, ok]) => !ok);
 if (failed.length) { console.error('INVARIANT FAILURE:\n  ' + failed.map(([m]) => m).join('\n  ')); process.exit(1); }
 
+// Slack = meetings left between the last scheduled meeting and the exam ("stop and
+// extend" budget). Counted per period on its own cadence.
+function slackAfter(m, period) {
+  const last = Math.max(...Object.values(m).map(toEpochDay));
+  let n = 0;
+  for (let e = last + 1; e < examEpoch; e++) if (meetsOn(e, period)) n++;
+  return n;
+}
+const slack = { B: slackAfter(B, 'B'), E: slackAfter(E, 'E') };
+
 const out = {
-  _synthetic: true,
-  _note: 'SYNTHETIC FIXTURE — placeholder calendar, not the real SY2627 school calendar; AP exam date intentionally absent; NO production/Supabase sync. Core old-ids in Fall-2026 CED order, one meeting each, N.review at unit boundaries; bonus unscheduled. Replace CAL with the real calendar + pacing (spec §6) before any live use.',
-  _reviewMarkers: 'Keys 1.review..5.review are NEW (Agent registry only has 6.review). Before Agent/roadmap/Supabase sync (P2), add registry entries or special-title handling for 1.review..5.review, else they surface as fallback "Topic N.review" rows.',
+  _synthetic: false,
+  _note: 'REAL SY2627 calendar (intake completed 2026-09-01; sources: LPS district calendar + LEHS weekly schedule + teacher answers). Core old-ids in Fall-2026 CED order, one meeting per topic; N.review = that unit\'s in-class Progress Check block (2 meetings, dated at its first day); bonus unscheduled. B meets Mon/Tue/Thu/Fri, E meets Mon/Wed/Fri (incl. shortened early-release Wednesdays). AP exam 2027-05-11 is a hard end. Production placement (roster-server, Supabase, Desk) is separate gated work — SCHEDULE_HANDOFF.md §3.',
+  _reviewMarkers: 'Keys 1.review..5.review are NEW (Agent registry only has 6.review). Before Agent/roadmap/Supabase sync (P2), add registry entries or special-title handling for 1.review..5.review, else they surface as fallback "Topic N.review" rows. Their student-facing meaning is "Progress Check" days.',
   _calendar: CAL,
   _counts: { coreTopics: core.length, reviews: 5, scheduledPerPeriod: Object.keys(B).length },
+  _slackMeetingsBeforeExam: slack,
   _invariants: invariants,
   B, E,
 };
 
 writeFileSync(OUT, JSON.stringify(out, null, 1) + '\n');
-console.log(`Wrote ${OUT}  [SYNTHETIC]  invariants: OK (${checks.length} checks)`);
-console.log(`  core topics: ${core.length}; scheduled/period: ${Object.keys(B).length} (incl. 5 reviews)`);
-console.log(`  B: ${B[core[0].oldId]} (${core[0].oldId}) … ${B[core[core.length - 1].oldId]} (${core[core.length - 1].oldId}), 5.review ${B['5.review']}`);
-console.log(`  E starts ${E[core[0].oldId]} (lags B by ${CAL.periodStartOffsetDays.E} school day)`);
+console.log(`Wrote ${OUT}  [REAL SY2627 CALENDAR]  invariants: OK (${checks.length} checks)`);
+console.log(`  core topics: ${core.length}; scheduled/period: ${Object.keys(B).length} (incl. 5 PC/review markers)`);
+console.log(`  B (Mon/Tue/Thu/Fri): ${B[core[0].oldId]} (${core[0].oldId}) … 5.review ${B['5.review']}  | slack before exam: ${slack.B} meetings`);
+console.log(`  E (Mon/Wed/Fri):     ${E[core[0].oldId]} (${core[0].oldId}) … 5.review ${E['5.review']}  | slack before exam: ${slack.E} meetings`);
+console.log(`  AP exam (hard end): ${CAL.examDate}`);
 console.log(`  NOTE: 1.review..5.review need P2 registry/special-title handling (see _reviewMarkers).`);

@@ -8,41 +8,80 @@ just these values. Leave a field blank and I keep the synthetic placeholder + fl
 
 ---
 
+> **Sources (filled 2026-09-01):** district calendar `lynn-public-schools-2026-2027.md`
+> (repo root) + LEHS weekly schedule `~/Downloads/LEHS_SY2627_Schedule_and_Calendar.xlsx`
+> + teacher answers (exam date, pacing, review policy). The two calendar sources
+> cross-check clean (all 47 dates agree). **Intake is COMPLETE** — the one remaining
+> flagged default is §5's "2 meetings per unit Progress Check" (teacher was unsure).
+
 ## 1. Term boundaries
-- **First instructional day:** `YYYY-MM-DD` (a school day — Unit 1.1 lands here)
-- **AP exam date (hard end):** `YYYY-MM-DD` or "TBD" — the schedule must finish before it. *Confirm with your AP coordinator; the public dates page still shows 2026. I will not hardcode a guess.*
+- **First instructional day:** `2026-09-02` (Wed — Day 1 of 180)
+- **AP exam date (hard end):** `2027-05-11` (Tue) — teacher-confirmed
+- (District last day: 2027-06-17 tentative; 2027-06-25 if all 5 snow days used.)
 
 ## 2. Breaks / no-school days (skipped when placing lessons)
-List each range (or single day). Add as many rows as needed:
-- `name` — `from YYYY-MM-DD` → `to YYYY-MM-DD`
-- e.g. Thanksgiving — `2026-11-25` → `2026-11-27`
-- e.g. Winter — `______` → `______`
-- e.g. Spring — `______` → `______`
-- (single-day closures: put the same date in from/to)
+From the district calendar (single-day closures use the same date in from/to):
+- School Closed — `2026-09-04` → `2026-09-04`
+- Labor Day — `2026-09-07` → `2026-09-07`
+- Indigenous Peoples' Day — `2026-10-12` → `2026-10-12`
+- Teacher in-service (no students) — `2026-11-03` → `2026-11-03`
+- Veterans Day — `2026-11-11` → `2026-11-11`
+- Thanksgiving Recess — `2026-11-26` → `2026-11-27`
+- School Closed — `2026-12-24` → `2026-12-25`
+- Winter Recess — `2026-12-28` → `2027-01-01`
+- MLK Jr. Day — `2027-01-18` → `2027-01-18`
+- February Vacation — `2027-02-15` → `2027-02-19`
+- Good Friday — `2027-03-26` → `2027-03-26`
+- April Vacation — `2027-04-19` → `2027-04-23`
+- Memorial Day — `2027-05-31` → `2027-05-31`
+
+**Early-release Wednesdays** (school IS in session; B never meets Wednesdays, and E
+meets shortened — see §3): 2026-09-30, 10-21, 11-18, 11-25 (half-day holiday),
+12-09, 12-23 (half-day holiday), 2027-01-13, 02-10, 03-03, 03-17, 04-14, 05-19.
+
+**Quarter boundaries (LEHS marking periods — feeds `grade-config.js` `quarters[q].start/end`):**
+- Q1: 2026-09-02 → 2026-11-06 (44 days)
+- Q2: 2026-11-09 → 2027-01-22 (44 days)
+- Q3: 2027-01-25 → 2027-04-14 (52 days)
+- Q4: 2027-04-15 → 2027-06-17 (40 days)
 
 ## 3. Class-period model
-- Still **two periods B and E**? (yes / no — if changed, tell me the period names)
-- Do B and E meet on the **same days** or a different cadence? (the fixture just lags E one school day behind B — replace with reality if they differ)
+- Still **two periods B and E**: **yes**.
+- Cadence (from the LEHS weekly schedule — NOT the same days, and NOT the old
+  "E lags B by one day" fixture model):
+  - **Period B: Mon, Tue, Thu, Fri** (4 meetings/week; never Wednesday)
+  - **Period E: Mon, Wed, Fri** (3 meetings/week; Wednesday is E's 90+30 lunch block)
+  - Shared days: Mon + Fri. Both get 240 instructional min/week.
+- Every early-release day is a Wednesday, so early releases affect **only E**.
+  **Teacher confirmed (2026-09-01): E DOES meet on early-release Wednesdays, just
+  shortened.** They count as normal E meeting days for scheduling.
 
-## 4. Pacing — pick ONE
-How many class meetings each topic gets. Two ways to give it:
+## 4. Pacing — teacher's answer: video-driven, option (B)
+- **Flat 1 class meeting per topic** (the meeting is filled with that topic's videos —
+  some topics have 4 videos, some have 1). No per-unit CED budget.
+- Reality rule: *"if a topic becomes confusing, we stop and then extend"* — the
+  generated schedule is the plan; live adjustments shift it. The generator should
+  favor slack over compression.
 
-- **(A) Per-unit day budgets** *(recommended — matches the CED weights)*: total teaching days per new unit; I distribute across that unit's topics.
-  - U1 (Exploring Data & Collecting Data, 20–30%): `___` days
-  - U2 (Probability, RVs & Distributions, 15–25%): `___` days
-  - U3 (Inference: Proportions + chi-square, 15–25%): `___` days
-  - U4 (Inference: Means, 10–20%): `___` days
-  - U5 (Regression, 10–20%): `___` days
-- **(B) Per-topic**: a flat "N meetings per topic" (the fixture uses 1), with any exceptions listed.
+## 5. Review days — teacher's answer: none
+- **No standing `X.review` days.** The in-class **Progress Check at the end of each
+  unit serves as the review** and often takes **two class periods**.
+- **FLAGGED ASSUMPTION:** budget **2 meetings per unit for the PC** (5 new units × 2
+  = 10 meetings). Teacher was "unsure" — this is the recorded default, easy to change.
 
-*(67 core topics + 5 unit-review days need to fit between §1's first day and exam date. If your budget overflows the window I'll flag it rather than silently compress.)*
+### Does it fit? (computed 2026-09-01, closures excluded, Sep 2 → May 10)
+| Period | Meetings before the 5/11 exam | Needed (67 topics + 10 PC days) | Slack |
+|---|---|---|---|
+| B | **121** | 77 | **+44** |
+| E (early-release Weds count — confirmed) | **91** | 77 | **+14** |
 
-## 5. Review days
-- Keep a **review day at the end of each new unit** (`1.review`..`5.review`)? (yes / no)
-- Any unit that should get **more than one** review day? (list)
+**E is still the binding constraint**: 14 spare days all year for "stop and extend"
+vs B's 44. B will naturally run ahead of E (4 meetings/week vs 3); the per-period
+dates in the generated schedule carry that divergence honestly.
 
 ## 6. Last year's schedule
-- **Archive SY2526** so the Desk stops showing 2026 dates? (yes / no) — if yes I move the old `topic-schedule.json` to a named archive.
+- **Archive SY2526: yes** (teacher-confirmed 2026-09-01) — old `topic-schedule.json`
+  moves to a named archive so the Desk stops showing 2026 dates.
 
 ---
 
