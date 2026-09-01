@@ -123,7 +123,7 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(DESK).toMatch(/#signin-roster-dropdown\s+\.sr-row/);
   });
 
-  it('17: roster fetch hits /roster/section/:section with the current period', () => {
+  it('17: roster fetch hits /roster/section/:section', () => {
     expect(DESK).toMatch(/async\s+function\s+_fetchPeriodRoster\s*\(/);
     // After the PeriodX-fallback refactor (sign-in dropdown fix) the actual
     // per-section fetch lives in _fetchSectionRoster which _fetchPeriodRoster
@@ -185,10 +185,18 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/_renderRosterDropdown/);
   });
 
-  it('22: outside-click closes the dropdown (mousedown listener on document)', () => {
+  it('22: outside pointer-down closes the dropdown without swallowing the click', () => {
     const body = fnBody(DESK, 'openSignInModal');
-    expect(body).toMatch(/addEventListener\s*\(\s*['"]mousedown['"]/);
+    expect(body).toMatch(/addEventListener\s*\(\s*['"]pointerdown['"]/);
     expect(body).toMatch(/_closeRosterDropdown/);
+  });
+
+  it('22b: Escape closes only the open roster dropdown', () => {
+    const body = fnBody(DESK, 'openSignInModal');
+    expect(body).toMatch(/ov\.onkeydown\s*=\s*function/);
+    expect(body).toMatch(/e\.key\s*!==\s*['"]Escape['"]/);
+    expect(body).toMatch(/e\.stopPropagation\s*\(\s*\)/);
+    expect(body).toMatch(/_closeRosterDropdown\s*\(\s*\)/);
   });
 
   it('23: closeSignInModal also closes the roster dropdown', () => {

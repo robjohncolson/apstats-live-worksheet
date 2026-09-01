@@ -5143,15 +5143,59 @@
       "timestamp": "2026-08-23T13:50:42Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "5cf44d1ca9d9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "OPS TASK (no repo code changes): SY26-27 roster section cutover for the live AP Stats roster server.",
+      "status": "failed",
+      "duration_seconds": 0.314,
+      "timestamp": "2026-09-01T08:08:55Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "de0f1f061887",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "OPS TASK (no repo code changes): SY26-27 roster section cutover for the live AP Stats roster server.",
+      "status": "failed",
+      "duration_seconds": 0.116,
+      "timestamp": "2026-09-01T08:10:49Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f10b68182728",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "OPS TASK (no repo code changes): SY26-27 roster section cutover for the live AP Stats roster server.",
+      "status": "blocked",
+      "duration_seconds": 222.847,
+      "timestamp": "2026-09-01T08:15:08Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "41943c3617cd",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "DESK BUILD \u2014 Phase 3: re-enable real periods (B/E) in the Desk calendar + sign-in. All edits in ap_s",
+      "status": "completed",
+      "duration_seconds": 941.121,
+      "timestamp": "2026-09-01T08:56:55Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 438,
-    "cc_to_codex": 438,
+    "total_calls": 442,
+    "cc_to_codex": 442,
     "codex_to_cc": 0,
-    "completed": 335,
-    "failed": 73,
+    "completed": 336,
+    "failed": 75,
     "refused": 0,
-    "avg_duration_seconds": 630.036
+    "avg_duration_seconds": 626.969
   }
 }

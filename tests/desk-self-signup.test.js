@@ -63,7 +63,7 @@ describe('self-signup — modal markup', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. Static — boot forces the single hidden "Period X" = E, ignoring ?period=
+// 2. Static — real Period B/E controls + boot routing precedence
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('teacher onboarding + class gradebook (static)', () => {
@@ -118,20 +118,27 @@ describe('self-signup runtime — _toggleTeacherKey', () => {
   });
 });
 
-describe('self-signup — boot collapses B/E to a single hidden X (=E)', () => {
-  it("the boot IIFE forces cP='E' and no longer branches on the ?period= param", () => {
-    // The boot IIFE used to read ?period and set cP='E' only for period=E.
-    expect(html).not.toContain("if(pp==='E') cP='E';");
-    // Now it unconditionally pins E (right before the year load).
-    expect(html).toMatch(/cP='E';\s*if\(SCHEDULE_DEFS\[py\]\) cYear=py;/);
+describe('self-signup — boot routes real Period B/E calendars', () => {
+  it('the boot IIFE honors signed-in section, then ?period=, then defaults to E', () => {
+    expect(html).toMatch(/who\.section === 'PeriodB'\) return 'B'/);
+    expect(html).toMatch(/who\.section === 'PeriodE'\) return 'E'/);
+    const bootEnd = html.indexOf('var APP_BUILD');
+    const bootStart = html.lastIndexOf('(function(){', bootEnd);
+    const boot = html.slice(bootStart, bootEnd);
+    expect(boot.indexOf('_currentRosterPeriod()')).toBeLessThan(boot.indexOf('URLSearchParams'));
+    expect(boot).toMatch(/cP=\(pp==='B'\|\|pp==='E'\)\?pp:'E'/);
   });
 
-  it('the visible "Period X" controls keep the period at E (not B)', () => {
-    // btn-b is the visible "Period X" button; clicking it must NOT switch to B.
-    const btn = document.getElementById('btn-b');
-    expect(btn.getAttribute('onclick')).toContain("setP('E')");
-    const menu = document.getElementById('menu-period-x');
-    expect(menu.getAttribute('onclick')).toContain("setP('E')");
+  it('shows separate Period B/E buttons and View-menu items', () => {
+    const btnB = document.getElementById('btn-b');
+    const btnE = document.getElementById('btn-e');
+    expect(btnB.textContent).toBe('Period B');
+    expect(btnB.getAttribute('onclick')).toContain("setP('B')");
+    expect(btnE.textContent).toBe('Period E');
+    expect(btnE.getAttribute('onclick')).toContain("setP('E')");
+    expect(btnE.style.display).not.toBe('none');
+    expect(document.getElementById('menu-period-b').getAttribute('onclick')).toContain("setP('B')");
+    expect(document.getElementById('menu-period-e').getAttribute('onclick')).toContain("setP('E')");
   });
 
   it('a first-time device (no sign-in history) auto-opens the signup modal', () => {

@@ -2622,7 +2622,6 @@
 
 
 
-
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -6933,6 +6932,19 @@ function _periodToSection(period) {
   if (/^[A-Za-z]$/.test(period)) return 'Period' + period.toUpperCase();
   return 'PeriodX';
 }
+
+// Map the fresh roster session to the Desk calendar's real period. Unknown,
+// teacher, parked, and signed-out sessions return null so callers can apply
+// their own query/default fallback without ever throwing.
+function _currentRosterPeriod() {
+  try {
+    var who = (window.rosterClient && typeof window.rosterClient.current === 'function')
+      ? window.rosterClient.current() : null;
+    if (who && who.section === 'PeriodB') return 'B';
+    if (who && who.section === 'PeriodE') return 'E';
+  } catch (_) {}
+  return null;
+}
 // Fetch one specific section's roster (cached). Returns [] on miss/error.
 // Extracted from _fetchPeriodRoster so the period -> section call can fall
 // back to the universal "PeriodX" section.
@@ -7046,10 +7058,24 @@ function _renderRosterDropdown(filterText) {
 async function _openRosterDropdown() {
   var dd = document.getElementById('signin-roster-dropdown');
   if (!dd) return;
-  // Determine current period (cP is the global). Fall back to Period B.
-  var period = (typeof cP === 'string') ? cP : 'B';
-  // Fetch (cached) then render.
-  _rosterDropdownData = await _fetchPeriodRoster(period);
+  // Before sign-in there is no trustworthy current period. Load every live
+  // roster section, then merge by case-insensitive username.
+  var rosters = await Promise.all(['PeriodB', 'PeriodE', 'PeriodX'].map(function (section) {
+    return _fetchSectionRoster(section);
+  }));
+  var seen = Object.create(null);
+  _rosterDropdownData = [];
+  rosters.forEach(function (roster) {
+    (roster || []).forEach(function (student) {
+      var username = String((student && student.username) || '').toLowerCase();
+      if (seen[username]) return;
+      seen[username] = true;
+      _rosterDropdownData.push(student);
+    });
+  });
+  _rosterDropdownData.sort(function (a, b) {
+    return (a.realName || '').localeCompare(b.realName || '');
+  });
   // Empty roster -> bail out and leave the dropdown closed. The previous
   // behaviour was to open it and show a "No class list loaded" hint that
   // visually overlaid the password field beneath. The student can still
@@ -7114,12 +7140,25 @@ function openSignInModal() {
       if (typeof _renderRosterDropdown === 'function') _renderRosterDropdown(uInp.value);
     };
   }
+  // Escape closes only the roster dropdown; the sign-in modal stays open.
+  if (typeof _closeRosterDropdown === 'function') {
+    ov.onkeydown = function (e) {
+      var dd = document.getElementById('signin-roster-dropdown');
+      if (!e || e.key !== 'Escape' || !dd || dd.style.display === 'none') return;
+      e.preventDefault();
+      e.stopPropagation();
+      _closeRosterDropdown();
+    };
+  }
   // Outside click closes the dropdown — but only when the click is
-  // outside the username row container.
-  var row = document.getElementById('signin-username-row');
-  if (row && typeof _closeRosterDropdown === 'function') {
-    document.addEventListener('mousedown', function _outsideClick(e) {
-      if (!row.contains(e.target)) _closeRosterDropdown();
+  // outside the username row container. Registered ONCE for the page (the
+  // modal can be reopened many times; stacking a listener per open would
+  // leak). The row is re-resolved per event so the guard has no stale ref.
+  if (!openSignInModal._outsideCloser && typeof _closeRosterDropdown === 'function') {
+    openSignInModal._outsideCloser = true;
+    document.addEventListener('pointerdown', function (e) {
+      var row = document.getElementById('signin-username-row');
+      if (row && !row.contains(e.target)) _closeRosterDropdown();
     });
   }
   // No-guest-mode wall: when the visitor is not yet signed in the modal is
@@ -7217,6 +7256,11 @@ async function submitSignIn() {
     // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
     // bucket into this freshly-resolved identity before the Do Now refresh.
     try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
+    try {
+      var signedInPeriod = (typeof _currentRosterPeriod === 'function') ? _currentRosterPeriod() : null;
+      if (signedInPeriod && typeof setP === 'function'
+          && (typeof cP !== 'string' || signedInPeriod !== cP)) setP(signedInPeriod);
+    } catch (_) {}
     closeSignInModal();
     // TR2: a teacher-issued default password must be changed before continuing.
     // The welcome + Do Now refresh happen AFTER the new password is set.
@@ -7297,10 +7341,22 @@ function _nfBuckets(lo, hi) {
 }
 
 async function openNameFinder() {
-  var period = (typeof cP === 'string') ? cP : 'B';
   // {fresh:true}: bypass the 1-hour roster cache so a newly-enrolled classmate
   // shows up in the dial immediately (this was hiding recent sign-ups).
-  _nfRoster = (typeof _fetchPeriodRoster === 'function') ? await _fetchPeriodRoster(period, { fresh: true }) : [];
+  var rosters = (typeof _fetchSectionRoster === 'function')
+    ? await Promise.all(['PeriodB', 'PeriodE', 'PeriodX'].map(function (section) {
+        return _fetchSectionRoster(section, { fresh: true });
+      })) : [];
+  var seen = Object.create(null);
+  _nfRoster = [];
+  rosters.forEach(function (roster) {
+    (roster || []).forEach(function (student) {
+      var username = String((student && student.username) || '').toLowerCase();
+      if (seen[username]) return;
+      seen[username] = true;
+      _nfRoster.push(student);
+    });
+  });
   if (!_nfRoster || _nfRoster.length === 0) {
     if (typeof openSignInModal === 'function') openSignInModal();   // offline / no roster
     return;
@@ -7475,6 +7531,11 @@ async function _nfSubmitPassword() {
     // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
     // bucket into this freshly-resolved identity before the Do Now refresh.
     try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
+    try {
+      var signedInPeriod = (typeof _currentRosterPeriod === 'function') ? _currentRosterPeriod() : null;
+      if (signedInPeriod && typeof setP === 'function'
+          && (typeof cP !== 'string' || signedInPeriod !== cP)) setP(signedInPeriod);
+    } catch (_) {}
     closeNameFinder();
     if (result.mustChangePassword) {
       if (typeof openPwChangeModal === 'function') openPwChangeModal();
@@ -7561,9 +7622,8 @@ window.closeNameFinder = closeNameFinder;
 var _SIGNUP_FRUITS = ['apple','banana','cherry','grape','kiwi','lemon','lime','mango','melon','peach','pear','plum','berry','fig','date','guava','lychee','papaya','orange','apricot','coconut','pineapple','pomelo','quince','raisin','olive','tomato','avocado','pumpkin','cranberry'];
 var _SIGNUP_ANIMALS = ['koala','panda','tiger','lion','bear','wolf','fox','otter','seal','whale','shark','eagle','hawk','owl','duck','swan','deer','moose','zebra','horse','llama','sloth','gecko','turtle','frog','toad','rabbit','hamster','badger','beaver'];
 var _signupCandidate = '';
-// Fallback period if the server's /roster/open-sections is unreachable. "PeriodX"
-// is the live section convention + what the sign-in dropdown queries; "Period X"
-// is the label. The schedule shown is forced to E elsewhere (cP='E').
+// Fallback section if the server's /roster/open-sections is unreachable. PeriodX
+// remains the parked/teacher section and maps to the default Period E calendar.
 var _signupSections = [{ value: 'PeriodX', label: 'Period X' }];
 var _signupSectionValue = 'PeriodX';
 
@@ -7773,6 +7833,11 @@ function _applySignedUpSession(result) {
   // PROGRESS_RESET_FIX_SPEC D6 — union any bare-username/legacy-email marks
   // bucket into this freshly-resolved identity before the Do Now refresh.
   try { if (typeof _migrateMarksAliases === 'function') _migrateMarksAliases(_priorLegacyEmail); } catch (_) {}
+  try {
+    var signedInPeriod = (typeof _currentRosterPeriod === 'function') ? _currentRosterPeriod() : null;
+    if (signedInPeriod && typeof setP === 'function'
+        && (typeof cP !== 'string' || signedInPeriod !== cP)) setP(signedInPeriod);
+  } catch (_) {}
   // Access is granted now — drop the wall and close both modals.
   _signinWallActive = false;
   var su = document.getElementById('signup-overlay'); if (su) su.style.display = 'none';
@@ -10010,13 +10075,13 @@ const SCHEDULE_DEFS = {
     _legacyS: [[2026,2,9,d("6.6","Concluding Test for p",6,"Quiz 6.4","Drills 6.6, Quiz 6.5"),d("6.3","Justifying Claims (CI)",6,"Quiz 5-8, U5 PC","Drills 6.3, Quiz 6.1-6.2")],[2026,2,10,d("6.7","Type I & II Errors",6,"Quiz 6.5","Drills 6.7, Quiz 6.6"),NC],[2026,2,11,NC,d("6.4+6.5","Tests + p-Values",6,"Quiz 6.1-6.2","Drills 6.4-6.5, Quiz 6.3",true)],[2026,2,12,d("6.8","CI for p1-p2",6,"Quiz 6.6","Drills 6.8, Quiz 6.7"),NC],[2026,2,13,d("6.9","Justify Claims (Diff)",6,"Quiz 6.7","Drills 6.9, Quiz 6.8"),d("6.6","Concluding Test for p",6,"Quiz 6.3","Drills 6.6, Quiz 6.4-6.5")],[2026,2,16,d("6.10","Test for p1-p2 Setup",6,"Quiz 6.8","Drills 6.10, Quiz 6.9"),d("6.7","Type I & II Errors",6,"Quiz 6.4-6.5","Drills 6.7, Quiz 6.6")],[2026,2,17,d("6.11","Test for p1-p2",6,"Quiz 6.9","U6 PC, Drills 6.11, Quiz 6.10"),NC],[2026,2,18,NC,d("6.8+6.9","CI + Justify (Diff)",6,"Quiz 6.6","Drills 6.8-6.9, Quiz 6.7",true)],[2026,2,19,d("7.1","Intro: Error",7,"Quiz 6.10","Drills 7.1"),NC],[2026,2,20,d("7.2","CI for mean",7,"","Drills 7.2, Quiz 7.1"),d("6.10","Test for p1-p2 Setup",6,"Quiz 6.7","Drills 6.10, Quiz 6.8-6.9")],[2026,2,23,d("7.3","Justify Claims (mean CI)",7,"Quiz 7.1","Drills 7.3, Quiz 7.2"),d("6.11","Test for p1-p2",6,"Quiz 6.8-6.9","U6 PC, Drills 6.11, Quiz 6.10")],[2026,2,24,d("7.4","Setting Up Test for mean",7,"Quiz 7.2","Drills 7.4, Quiz 7.3"),NC],[2026,2,25,NC,d("7.1+7.2","Intro + CI for mean",7,"Quiz 6.10","Drills 7.1-7.2, Quiz 6.11",true)],[2026,2,26,d("7.5","Test for mean",7,"Quiz 7.3","Drills 7.5, Quiz 7.4"),NC],[2026,2,27,d("7.6","CI for diff of means",7,"Quiz 7.4","Drills 7.6, Quiz 7.5"),d("7.3","Justify Claims (mean CI)",7,"Quiz 6.11","Drills 7.3, Quiz 7.1-7.2")],[2026,2,30,d("7.7","Justify (Diff Means)",7,"Quiz 7.5","Drills 7.7, Quiz 7.6"),d("7.4","Setting Up Test for mean",7,"Quiz 7.1-7.2","Drills 7.4, Quiz 7.3")],[2026,2,31,d("7.8","Test for diff means Setup",7,"Quiz 7.6","Drills 7.8, Quiz 7.7"),NC],[2026,3,1,NC,d("7.5+7.6","Test + CI (Diff Means)",7,"Quiz 7.3","Drills 7.5-7.6, Quiz 7.4",true)],[2026,3,2,d("7.9","Test for diff means",7,"Quiz 7.7","U7 PC, Drills 7.9, Quiz 7.8"),NC],[2026,3,3,OFF,OFF],[2026,3,6,d("8.1","Intro: Unexpected?",8,"Quiz 7.8","Drills 8.1, Quiz 7.9"),d("7.7","Justify (Diff Means)",7,"Quiz 7.4","Drills 7.7, Quiz 7.5-7.6")],[2026,3,7,d("8.2","GOF Test Setup",8,"Quiz 7.9","Drills 8.2, Quiz 8.1"),NC],[2026,3,8,NC,d("7.8+7.9","Test for diff means",7,"Quiz 7.5-7.6","U7 PC, Drills 7.8-7.9, Quiz 7.7",true)],[2026,3,9,d("8.3","GOF Test",8,"Quiz 8.1","Drills 8.3, Quiz 8.2"),NC],[2026,3,10,d("8.4","Expected Counts",8,"Quiz 8.2","Drills 8.4, Quiz 8.3"),d("8.1","Intro: Unexpected?",8,"Quiz 7.7","Drills 8.1")],[2026,3,13,d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.3","Drills 8.5, Quiz 8.4"),d("8.2","GOF Test Setup",8,"","Drills 8.2, Quiz 8.1")],[2026,3,14,d("8.6","Chi-Sq Test",8,"Quiz 8.4","U8 PC, Drills 8.6, Quiz 8.5"),NC],[2026,3,15,NC,d("8.3+8.4","GOF + Expected Counts",8,"Quiz 8.1","Drills 8.3-8.4, Quiz 8.2",true)],[2026,3,16,d("9.1","Intro: Points Align?",9,"Quiz 8.5","Drills 9.1, Quiz 8.6"),NC],[2026,3,17,d("9.2","CI for Slope",9,"Quiz 8.6","Drills 9.2, Quiz 9.1"),d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.2","Drills 8.5, Quiz 8.3-8.4")],[2026,3,20,OFF,OFF],[2026,3,21,OFF,OFF],[2026,3,22,OFF,OFF],[2026,3,23,OFF,OFF],[2026,3,24,OFF,OFF],[2026,3,27,d("9.3","Justify Slope (CI)",9,"Quiz 9.1","Drills 9.3, Quiz 9.2"),d("8.6","Chi-Sq Test",8,"Quiz 8.3-8.4","U8 PC, Drills 8.6, Quiz 8.5")],[2026,3,28,d("9.4","Test for Slope Setup",9,"Quiz 9.2","Drills 9.4, Quiz 9.3"),NC],[2026,3,29,NC,d("9.1+9.2","Intro + CI for Slope",9,"Quiz 8.5","Drills 9.1-9.2, Quiz 8.6",true)],[2026,3,30,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Drills 9.5, Quiz 9.4"),NC],[2026,4,1,d(R,"Review: U1-5",0,"Quiz 9.4",""),d("9.3","Justify Slope (CI)",9,"Quiz 8.6","Drills 9.3, Quiz 9.1-9.2")],[2026,4,4,d(R,"Review: U6-7",0),d("9.4","Test for Slope Setup",9,"Quiz 9.1-9.2","Drills 9.4, Quiz 9.3")],[2026,4,5,d(R,"Review: U8-9 + FRQ",0),NC],[2026,4,6,NC,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Quiz 9.4")],[2026,4,7,EX,EX],[2026,4,8,PO,PO]]
   },
   "SY26-27": {
-    label: "Full Year 2026-27 (periods TBD)",
+    label: "Full Year 2026-27",
     school: "Lynn English High School",
     examDate: [2027, 4, 14],
     range: { start: [2026,8,1], end: [2027,4,15] },
     periods: {
-      B: { label:"Section 1 (TBD)", meetsDays:[1,2,4,5], doubleDay:null, schoologyCourse:null },
-      E: { label:"Section 2 (TBD)", meetsDays:[1,3,5], doubleDay:3, schoologyCourse:null }
+      B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, schoologyCourse:null },
+      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, schoologyCourse:null }
     },
     daysOff: [
       [[2026,8,7]],
@@ -18422,12 +18487,10 @@ var _bootChime = null;   // startup chime retired 2026-08-19 (kept as a null for
 
 /* Update View menu checkmarks */
 function updateViewMenu() {
-    // Period is collapsed to one "Period X" label until periods are assigned.
-    const pxItem = document.getElementById('menu-period-x');
-    if (pxItem) pxItem.innerHTML = '&#10003; Period X &#8212; actual periods TBD';
-    // Keep btn-e hidden
-    const btnE = document.getElementById('btn-e');
-    if (btnE) btnE.style.display = 'none';
+    const pbItem = document.getElementById('menu-period-b');
+    const peItem = document.getElementById('menu-period-e');
+    if (pbItem) pbItem.innerHTML = (cP === 'B' ? '&#10003; ' : '  ') + 'Period B';
+    if (peItem) peItem.innerHTML = (cP === 'E' ? '&#10003; ' : '  ') + 'Period E';
     document.querySelectorAll('[data-year]').forEach(function(item){
       var yk=item.dataset.year;
       item.textContent=(cYear===yk?'\u2713 ':'  ')+SCHEDULE_DEFS[yk].label;
@@ -22400,6 +22463,13 @@ try { window._escCloseTopModal = _escCloseTopModal; } catch (_) {}
 // Close doge dropdown & app overlays on Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+        var signinRoster = document.getElementById('signin-roster-dropdown');
+        if (signinRoster && signinRoster.style.display !== 'none') {
+            if (typeof _closeRosterDropdown === 'function') _closeRosterDropdown();
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
         if (DogePresence.dropdownOpen) DogePresence.closeDropdown();
         if (DogePresence.incomingChallenge) {
             document.getElementById('doge-challenge-panel').style.display = 'none';
@@ -22422,10 +22492,15 @@ let cP="B";
 function setP(p){
     MacSFX.play('click', 0.3);
     cP=p;
-    // btn-e is hidden until periods are assigned; btn-b is always "Period X"
     const a=document.getElementById("btn-b"),b=document.getElementById("btn-e");
-    if(b)b.style.display='none'; // keep hidden regardless of period
-    a.classList.add("s7btn-inv","s7btn-default");
+    if(a){
+        a.classList.toggle("s7btn-inv",p==="B");
+        a.classList.toggle("s7btn-default",p==="B");
+    }
+    if(b){
+        b.classList.toggle("s7btn-inv",p==="E");
+        b.classList.toggle("s7btn-default",p==="E");
+    }
     updateViewMenu();
     rCal();rProg();
     var pu=new URL(window.location);pu.searchParams.set('period',p);history.replaceState(null,'',pu);
@@ -23446,20 +23521,19 @@ function _mountClassroomBoard(){
   // DN3c / D5: ONE calendar — ignore ?year= and the persisted ap-roadmap-year
   // override; always the real school year. Legacy defs kept as dead code.
   var py=computeDefaultYear();
-  // 2026-06-03: collapse the B/E ambiguity. "Period X" is a SINGLE hidden period
-  // (= E) until the new school year's real periods are assigned. ?period= is now
-  // ignored exactly like ?year= already is — so BOTH the ...&period=B and
-  // ...&period=E links resolve to the SAME X=E schedule, and students never see
-  // two different schedules. To re-enable real period routing later, restore the
-  // ?period read here and point the "Period X" controls back at their periods.
-  cP='E';
+  var signedInPeriod = (typeof _currentRosterPeriod === 'function') ? _currentRosterPeriod() : null;
+  if (signedInPeriod) {
+    cP=signedInPeriod;
+  } else {
+    var pp='';
+    try { pp=(new URLSearchParams(window.location.search).get('period') || '').toUpperCase(); } catch (_) {}
+    cP=(pp==='B'||pp==='E')?pp:'E';
+  }
   if(SCHEDULE_DEFS[py]) cYear=py;
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-// Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
-if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
-var APP_BUILD = '2026-08-23-lkuf';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-01-uqip';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

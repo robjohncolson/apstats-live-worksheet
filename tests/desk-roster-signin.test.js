@@ -621,20 +621,14 @@ describe('TR2 runtime — renderDoNow gating', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sign-in dropdown fix -- PeriodX fallback + bail-on-empty
+// Sign-in dropdown fix -- pre-sign-in roster union + bail-on-empty
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// The roster dropdown used to call /roster/section/PeriodB (cP defaults to
-// 'B') even though every student is registered in 'PeriodX' while real
-// periods aren't yet assigned. The dropdown opened empty and showed
-// "No class list loaded" -- visually overlaid the password field below.
-// Two-part fix:
-//   1. _fetchPeriodRoster falls back to PeriodX when the configured section
-//      returns 0 students.
-//   2. _openRosterDropdown bails out (keeps the dropdown closed) when the
-//      roster is empty so the hint never overlays the password field.
+// Before sign-in the student's period is unknown, so both roster pickers must
+// merge PeriodB + PeriodE + parked PeriodX. Per-period callers continue using
+// _fetchPeriodRoster; the sign-in dropdown still stays closed on an empty union.
 
-describe('sign-in dropdown -- PeriodX fallback + bail-on-empty', () => {
+describe('sign-in dropdown -- roster union + bail-on-empty', () => {
   it('exposes a _fetchSectionRoster helper (single-section fetch) for reuse', () => {
     // (section) or (section, opts) -- opts.fresh lets the name finder bypass the cache.
     expect(html).toMatch(/async\s+function\s+_fetchSectionRoster\s*\(\s*section\b/);
@@ -646,17 +640,22 @@ describe('sign-in dropdown -- PeriodX fallback + bail-on-empty', () => {
     expect(html).toMatch(/_fetchSectionRoster\(\s*['"]PeriodX['"]/);  // may carry an opts arg
   });
 
-  it('the sign-in name finder fetches a FRESH roster (no stale cache hides new sign-ups)', () => {
-    // openNameFinder forces a live read; _fetchSectionRoster honors {fresh} by
-    // skipping the 1-hour localStorage cache + using a no-store fetch.
-    expect(html).toMatch(/_fetchPeriodRoster\(\s*period\s*,\s*\{\s*fresh:\s*true\s*\}/);
+  it('the sign-in name finder fetches a FRESH B/E/X union', () => {
+    const body = fnBody(html, 'openNameFinder');
+    for (const section of ['PeriodB', 'PeriodE', 'PeriodX']) expect(body).toContain(`'${section}'`);
+    expect(body).toMatch(/_fetchSectionRoster\(\s*section\s*,\s*\{\s*fresh:\s*true\s*\}/);
+    expect(body).toMatch(/toLowerCase\s*\(\s*\)/);
+    expect(body).toMatch(/localeCompare/);
     expect(html).toMatch(/cache:\s*['"]no-store['"]/);
     expect(html).toMatch(/if\s*\(\s*!fresh\s*\)/);  // cache read guarded by !fresh
   });
 
-  it('_openRosterDropdown bails out when _rosterDropdownData is empty', () => {
-    // After the await fetch, if the data is empty the dropdown must close.
-    expect(html).toMatch(/_rosterDropdownData\s*=\s*await\s+_fetchPeriodRoster/);
-    expect(html).toMatch(/if\s*\(\s*_rosterDropdownData\.length\s*===\s*0\s*\)\s*\{\s*_closeRosterDropdown\(\s*\);\s*return/);
+  it('_openRosterDropdown merges B/E/X, dedupes, sorts, and bails on empty', () => {
+    const body = fnBody(html, '_openRosterDropdown');
+    for (const section of ['PeriodB', 'PeriodE', 'PeriodX']) expect(body).toContain(`'${section}'`);
+    expect(body).toMatch(/_fetchSectionRoster\(\s*section\s*\)/);
+    expect(body).toMatch(/toLowerCase\s*\(\s*\)/);
+    expect(body).toMatch(/localeCompare/);
+    expect(body).toMatch(/if\s*\(\s*_rosterDropdownData\.length\s*===\s*0\s*\)\s*\{\s*_closeRosterDropdown\(\s*\);\s*return/);
   });
 });
