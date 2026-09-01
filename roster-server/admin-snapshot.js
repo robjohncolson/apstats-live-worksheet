@@ -142,7 +142,7 @@ export function mountAdminSnapshot(app, { db, ledgerDb, schoolTz = 'America/New_
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
     try {
       const section = req.query.section || null;
-      const { data: rosterData, error: rosterErr } = await db.listRoster(section);
+      const { data: rosterData, error: rosterErr } = await db.listRoster(section, { includeArchived: true });
       if (rosterErr) {
         console.error('GET /admin/snapshot roster error:', rosterErr);
         return res.status(500).json({ ok: false, error: 'Database error' });

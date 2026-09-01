@@ -884,6 +884,51 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -2008,6 +2053,173 @@
     $('backup-verify-file').addEventListener('change', function (e) { var f = e.target.files[0]; e.target.value = ''; verifyBackupFile(f); });
     $('backup-restore-confirm').addEventListener('input', function () { $('backup-restore-btn').disabled = (this.value.trim() !== 'RESTORE'); });
     $('backup-restore-btn').addEventListener('click', restoreFromFile);
+
+    // ===== Manage Students (reversible roster archive) =====
+    // /roster/list also carries password-recovery fields. Copy only this
+    // explicit safe allowlist before keeping any response data in page state.
+    var managedStudents = [];
+    function safeManagedStudent(student) {
+      return {
+        studentId: student && student.studentId ? String(student.studentId) : '',
+        realName: student && student.realName ? String(student.realName) : '',
+        username: student && student.username ? String(student.username) : '',
+        section: student && student.section ? String(student.section) : '',
+        status: student && student.status === 'archived' ? 'archived' : 'active',
+        schoologyUid: student && student.schoologyUid ? String(student.schoologyUid) : ''
+      };
+    }
+
+    function isLikelyTestStudent(student) {
+      var noSchoologyUid = !String(student.schoologyUid || '').trim();
+      var normalizedSection = String(student.section || '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+      var smokeTestSection = normalizedSection.indexOf('SMOKETEST') !== -1;
+      var testName = /test|demo|asdf|zz/i.test(String(student.realName || ''));
+      return (noSchoologyUid && smokeTestSection) || testName;
+    }
+
+    function manageStudentsStatus(message, color) {
+      var el = $('manage-students-status');
+      if (!el) return;
+      el.textContent = message;
+      el.style.color = color || 'var(--sg-text-dim)';
+    }
+
+    function renderManagedStudents() {
+      var tbody = $('manage-students-tbody');
+      var wrap = $('manage-students-wrap');
+      var empty = $('manage-students-empty');
+      tbody.textContent = '';
+
+      managedStudents.forEach(function (student) {
+        var archived = student.status === 'archived';
+        var tr = document.createElement('tr');
+        tr.className = 'manage-student-row' + (archived ? ' is-archived' : '');
+
+        var nameCell = document.createElement('td');
+        nameCell.appendChild(document.createTextNode(student.realName || student.username || '—'));
+        if (isLikelyTestStudent(student)) {
+          var testBadge = document.createElement('span');
+          testBadge.className = 'manage-test-badge';
+          testBadge.textContent = '🧪 test?';
+          testBadge.title = 'Looks like a test account; teacher review required.';
+          nameCell.appendChild(testBadge);
+        }
+
+        var sectionCell = document.createElement('td');
+        sectionCell.textContent = student.section || '—';
+
+        var statusCell = document.createElement('td');
+        var statusPill = document.createElement('span');
+        statusPill.className = 'manage-status-pill manage-status-' + student.status;
+        statusPill.textContent = student.status;
+        statusCell.appendChild(statusPill);
+
+        var uidCell = document.createElement('td');
+        uidCell.className = 'mono';
+        uidCell.textContent = student.username || '—';
+
+        var actionCell = document.createElement('td');
+        var actionButton = document.createElement('button');
+        actionButton.type = 'button';
+        actionButton.className = 'manage-student-action';
+        actionButton.textContent = archived ? 'Unarchive' : 'Archive';
+        actionButton.addEventListener('click', function () {
+          toggleManagedStudentArchive(student, actionButton);
+        });
+        actionCell.appendChild(actionButton);
+
+        tr.appendChild(nameCell);
+        tr.appendChild(sectionCell);
+        tr.appendChild(statusCell);
+        tr.appendChild(uidCell);
+        tr.appendChild(actionCell);
+        tbody.appendChild(tr);
+      });
+
+      wrap.style.display = managedStudents.length ? '' : 'none';
+      empty.style.display = managedStudents.length ? 'none' : '';
+    }
+
+    async function loadManagedStudents() {
+      var button = $('manage-students-load-btn');
+      var section = $('section-filter').value.trim();
+      var path = '/roster/list' + (section ? '?section=' + encodeURIComponent(section) : '');
+      button.disabled = true;
+      manageStudentsStatus('Loading…');
+
+      try {
+        var result = await fetchJson(path, teacherSecret());
+        if (result.status === 401) {
+          manageStudentsStatus('Forbidden — sign in as a teacher or check the teacher secret.', '#a33');
+          return;
+        }
+        if (result.status !== 200 || !result.data || !result.data.ok) {
+          var detail = result.networkError || (result.data && result.data.error) || ('HTTP ' + result.status);
+          manageStudentsStatus('Load failed: ' + detail, '#a33');
+          return;
+        }
+
+        var responseStudents = Array.isArray(result.data.students) ? result.data.students : [];
+        managedStudents = responseStudents.map(safeManagedStudent);
+        renderManagedStudents();
+
+        var archivedCount = managedStudents.filter(function (student) {
+          return student.status === 'archived';
+        }).length;
+        manageStudentsStatus(
+          managedStudents.length + ' student(s) · ' + archivedCount + ' archived.',
+          '#25663F'
+        );
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function toggleManagedStudentArchive(student, button) {
+      if (!student.studentId) {
+        manageStudentsStatus('Missing studentId — reload the students.', '#a33');
+        return;
+      }
+
+      var archiving = student.status !== 'archived';
+      var name = student.realName || student.username || 'this student';
+      if (archiving) {
+        if (typeof window.confirm !== 'function') {
+          manageStudentsStatus('Confirmation unavailable — archive cancelled.', '#a33');
+          return;
+        }
+        var confirmed = window.confirm('Hide ' + name + ' from all class views? Their work is kept; Unarchive restores everything.');
+        if (!confirmed) return;
+      }
+
+      var nextStatus = archiving ? 'archived' : 'active';
+      var action = archiving ? 'archive' : 'unarchive';
+      var rosterActionPath = '/roster/' + encodeURIComponent(student.studentId) + '/' + action;
+      button.disabled = true;
+      manageStudentsStatus((archiving ? 'Archiving ' : 'Unarchiving ') + name + '…');
+
+      var result = await postJson(rosterActionPath, {}, teacherSecret());
+      if (result.status === 401) {
+        button.disabled = false;
+        manageStudentsStatus('Forbidden — sign in as a teacher or check the teacher secret.', '#a33');
+        return;
+      }
+      if (result.status !== 200 || !result.data || !result.data.ok) {
+        button.disabled = false;
+        var detail = result.networkError || (result.data && result.data.error) || ('HTTP ' + result.status);
+        manageStudentsStatus((archiving ? 'Archive' : 'Unarchive') + ' failed: ' + detail, '#a33');
+        return;
+      }
+
+      student.status = result.data.status === 'archived' ? 'archived' : nextStatus;
+      renderManagedStudents();
+      manageStudentsStatus(
+        (student.status === 'archived' ? 'Archived ' : 'Unarchived ') + name + '.',
+        '#25663F'
+      );
+    }
+
+    $('manage-students-load-btn').addEventListener('click', loadManagedStudents);
 
     // Gradebook quarter selector: re-render from the stashed payload (no refetch).
     QUARTERS.forEach(function (q) {

@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -226,6 +226,21 @@ export function createDb(client) {
     return result;
   }
 
+  // Archive or restore one roster row without touching credentials or child data.
+  // Returns null data when no row matched so the route can answer 404.
+  async function setRosterStatus(studentId, status) {
+    if (status !== 'active' && status !== 'archived') {
+      return { data: null, error: { code: 'BAD_STATUS', message: 'Invalid roster status' } };
+    }
+
+    return client
+      .from('roster')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('student_id', studentId)
+      .select('student_id, status')
+      .maybeSingle();
+  }
+
   // Delete a roster row by student_id. Returns { data, error } — data is the
   // deleted row ({ student_id, login_username }) on success, null when no row
   // matched (404). The DB FKs are ON DELETE CASCADE, so this ALSO removes the
@@ -258,19 +273,24 @@ export function createDb(client) {
       .eq('username', username);
   }
 
-  // Teacher roster view. Optional section filter. Ordered by section then created.
+  // Roster enumeration. Archived rows are excluded unless a management/durability
+  // caller explicitly opts in. Optional section filter; ordered by section/created.
   // Returns { data, error } — data is an array of roster rows.
-  async function listRoster(section) {
+  async function listRoster(section, opts = {}) {
     // student_id is included in the projection so /class/grades + /class/mastery
     // can fan out per student via getLedgerByStudent(student_id). The existing
     // /roster/list handler explicitly maps to a UI-shaped object that omits it,
     // so this addition is invisible to the teacher console (additive, safe).
     let query = client
       .from('roster')
-      .select('student_id, real_name, login_username, section, role, password_cipher, must_change_password, created_at');
+      .select('student_id, real_name, login_username, section, role, status, password_cipher, must_change_password, created_at');
 
     if (section) {
       query = query.eq('section', section);
+    }
+
+    if (opts.includeArchived !== true) {
+      query = query.neq('status', 'archived');
     }
 
     return query.order('section', { ascending: true }).order('created_at', { ascending: true });

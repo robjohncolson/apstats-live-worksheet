@@ -298,6 +298,10 @@
 
 
 
+
+
+
+
     // ── helpers ────────────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
     // Persistence keys (shared with teacher-dashboard.html so both tools
@@ -662,19 +666,25 @@
       nameInput.focus();
     }
 
-    function exitEditMode(tr) {
-      if (_editingRow === tr) _editingRow = null;
+    function renderRosterStatus(tr) {
+      const archived = tr.dataset.status === 'archived';
+      tr.dataset.status = archived ? 'archived' : 'active';
+      tr.classList.toggle('roster-row-archived', archived);
 
-      const nameCell    = tr.querySelector('.cell-real-name');
-      const sectionCell = tr.querySelector('.cell-section');
+      const statusCell = tr.querySelector('.cell-roster-status');
+      if (!statusCell) return;
+
+      const pill = document.createElement('span');
+      pill.className = 'pill ' + (archived ? 'pill-archived' : 'pill-active');
+      pill.textContent = archived ? 'archived' : 'active';
+      statusCell.textContent = '';
+      statusCell.appendChild(pill);
+    }
+
+    function renderRosterActions(tr) {
       const actionsCell = tr.querySelector('.cell-actions');
+      if (!actionsCell) return;
 
-      // Restore original text from data attributes.
-      nameCell.textContent    = tr.dataset.realName;
-      sectionCell.textContent = tr.dataset.section;
-
-      // Restore Edit / Duplicate buttons.
-      actionsCell.innerHTML = '';
       const row = document.createElement('span');
       row.className = 'btn-row';
 
@@ -688,9 +698,36 @@
       dupBtn.textContent = 'Duplicate';
       dupBtn.addEventListener('click', () => duplicateRow(tr));
 
+      const archiveBtn = document.createElement('button');
+      archiveBtn.className = 'btn-sm btn-archive';
+      archiveBtn.textContent = tr.dataset.status === 'archived' ? 'Unarchive' : 'Archive';
+      archiveBtn.addEventListener('click', () => archiveRow(tr));
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn-sm btn-del';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', () => deleteRow(tr));
+
       row.appendChild(editBtn);
       row.appendChild(dupBtn);
+      row.appendChild(archiveBtn);
+      row.appendChild(deleteBtn);
+      actionsCell.textContent = '';
       actionsCell.appendChild(row);
+    }
+
+    function exitEditMode(tr) {
+      if (_editingRow === tr) _editingRow = null;
+
+      const nameCell    = tr.querySelector('.cell-real-name');
+      const sectionCell = tr.querySelector('.cell-section');
+
+      // Restore original text from data attributes.
+      nameCell.textContent    = tr.dataset.realName;
+      sectionCell.textContent = tr.dataset.section;
+
+      // Restore every read-mode action, including Archive/Unarchive + Delete.
+      renderRosterActions(tr);
     }
 
     async function saveRow(tr, errSpan) {
@@ -752,6 +789,53 @@
       nameEl.focus();
     }
 
+    // Archive is reversible: it hides the student from class views while the
+    // server keeps every saved-work and wallet row. Unarchive needs no warning.
+    async function archiveRow(tr) {
+      const msg = $('view-msg');
+      const studentId = tr.dataset.studentId;
+      const name = tr.dataset.realName || (tr.querySelector('.uname') ? tr.querySelector('.uname').textContent : '') || 'this student';
+      if (!studentId) { if (msg) setMsg(msg, 'Missing studentId -- reload the roster.', 'err'); return; }
+
+      const archiving = tr.dataset.status !== 'archived';
+      if (archiving) {
+        if (typeof window.confirm !== 'function') {
+          if (msg) setMsg(msg, 'Confirmation unavailable — archive cancelled.', 'err');
+          return;
+        }
+        const ok = window.confirm('Hide ' + name + ' from all class views? Their work is kept; Unarchive restores everything.');
+        if (!ok) return;
+      }
+
+      const button = tr.querySelector('.btn-archive');
+      if (button) button.disabled = true;
+
+      const action = archiving ? 'archive' : 'unarchive';
+      let res;
+      try { res = await api('POST', '/roster/' + encodeURIComponent(studentId) + '/' + action, { secret: teacherSecret() }); }
+      catch (e) {
+        if (button) button.disabled = false;
+        if (msg) setMsg(msg, 'Network error: ' + (e.message || ''), 'err');
+        return;
+      }
+
+      if (res.status === 401) {
+        if (button) button.disabled = false;
+        if (msg) setMsg(msg, 'Forbidden — check the teacher secret.', 'err');
+        return;
+      }
+      if (res.status !== 200 || !res.data || !res.data.ok) {
+        if (button) button.disabled = false;
+        if (msg) setMsg(msg, (archiving ? 'Archive' : 'Unarchive') + ' failed: ' + ((res.data && res.data.error) || ('HTTP ' + res.status)), 'err');
+        return;
+      }
+
+      tr.dataset.status = res.data.status === 'archived' ? 'archived' : 'active';
+      renderRosterStatus(tr);
+      renderRosterActions(tr);
+      if (msg) setMsg(msg, (tr.dataset.status === 'archived' ? 'Archived ' : 'Unarchived ') + name + '.', 'ok');
+    }
+
     // Delete a student account. DESTRUCTIVE: the server cascade also removes the
     // student's saved work/grades (item_ledger), so the confirm is explicit.
     async function deleteRow(tr) {
@@ -788,6 +872,7 @@
     window.exitEditMode  = exitEditMode;
     window.saveRow       = saveRow;
     window.duplicateRow  = duplicateRow;
+    window.archiveRow    = archiveRow;
     window.deleteRow     = deleteRow;
 
     // ── view roster ────────────────────────────────────────────────────────────
@@ -811,9 +896,10 @@
       const students = res.data.students || [];
       $('view-tbody').innerHTML = '';
       $('view-out').style.display = '';
-      lastViewRows = [['realName', 'username', 'section', 'currentPassword', 'mustChangePassword', 'createdAt']];
+      lastViewRows = [['realName', 'username', 'section', 'currentPassword', 'mustChangePassword', 'status', 'createdAt']];
 
       for (const s of students) {
+        const accountStatus = s.status === 'archived' ? 'archived' : 'active';
         const pw = s.currentPassword == null ? '<em style="color:var(--sg-text-dim)">(unavailable)</em>'
                                              : '<span class="mono">' + escHtml(s.currentPassword) + '</span>';
         const pill = s.mustChangePassword
@@ -823,26 +909,21 @@
         if (s.studentId) tr.dataset.studentId = s.studentId;
         tr.dataset.realName = s.realName || '';
         tr.dataset.section  = s.section  || '';
+        tr.dataset.status   = accountStatus;
         tr.innerHTML = '<td class="cell-real-name">' + escHtml(s.realName) + '</td>' +
           '<td class="uname mono">' + escHtml(s.username) + '</td>' +
           '<td class="cell-section">' + escHtml(s.section) + '</td>' +
           '<td>' + pw + '</td>' +
           '<td>' + pill + '</td>' +
+          '<td class="cell-roster-status"></td>' +
           '<td class="hint">' + escHtml((s.createdAt || '').slice(0, 10)) + '</td>' +
-          '<td class="cell-actions">' +
-            '<span class="btn-row">' +
-              '<button class="btn-sm btn-edit">Edit</button>' +
-              '<button class="btn-sm btn-dup">Duplicate</button>' +
-              '<button class="btn-sm btn-del">Delete</button>' +
-            '</span>' +
-          '</td>';
-        tr.querySelector('.btn-edit').addEventListener('click', () => enterEditMode(tr));
-        tr.querySelector('.btn-dup').addEventListener('click',  () => duplicateRow(tr));
-        tr.querySelector('.btn-del').addEventListener('click',  () => deleteRow(tr));
+          '<td class="cell-actions"></td>';
+        renderRosterStatus(tr);
+        renderRosterActions(tr);
         $('view-tbody').appendChild(tr);
         lastViewRows.push([s.realName, s.username, s.section,
           s.currentPassword == null ? '(unavailable)' : s.currentPassword,
-          s.mustChangePassword ? 'yes' : 'no', s.createdAt || '']);
+          s.mustChangePassword ? 'yes' : 'no', accountStatus, s.createdAt || '']);
       }
 
       setMsg(msg, students.length + ' student(s).', 'ok');

@@ -359,6 +359,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       return res.status(401).json({ ok: false, error: INVALID_MSG });
     }
 
+    if (data.status === 'archived') {
+      return res.status(403).json({ ok: false, error: 'account archived — ask your teacher' });
+    }
+
     // Bcrypt compare — never plaintext
     const passwordMatch = await bcrypt.compare(password, data.password_hash);
     if (!passwordMatch) {
@@ -597,8 +601,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // ── GET /roster/list (TR1 — teacher-gated) ───────────────────────────────────
   // Header: x-teacher-secret == process.env.ROSTER_TEACHER_SECRET; 401 otherwise.
   // Query: ?section= (optional filter).
-  //   → 200 { ok:true, students:[{ realName, username, section, currentPassword,
-  //           mustChangePassword, createdAt }] }
+  //   → 200 { ok:true, students:[{ realName, username, section, status,
+  //           currentPassword, mustChangePassword, createdAt }] }
   // currentPassword is the decrypted current password (teacher login-recovery),
   // or null when the cipher is absent / undecryptable / ROSTER_PW_ENC_KEY unset.
   app.get('/roster/list', async (req, res) => {
@@ -609,7 +613,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
 
     const section = req.query.section || null;
 
-    const { data, error } = await db.listRoster(section);
+    const { data, error } = await db.listRoster(section, { includeArchived: true });
 
     if (error) {
       console.error('roster list DB error:', error);
@@ -621,6 +625,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       realName:           row.real_name,
       username:           row.login_username,
       section:            row.section,
+      status:             row.status || 'active',
       currentPassword:    decryptPassword(row.password_cipher),
       mustChangePassword: !!row.must_change_password,
       createdAt:          row.created_at
@@ -691,6 +696,37 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       }
     });
   });
+
+  // ── POST /roster/:studentId/archive|unarchive (teacher-gated) ────────────────
+  // Reversible roster visibility control. These routes only write roster.status
+  // and updated_at; saved work, grades, wallet rows, and credentials stay intact.
+  function setRosterStatusRoute(status) {
+    return async (req, res) => {
+      if (!await requireTeacher(req, db)) {
+        return res.status(401).json({ ok: false, error: 'forbidden' });
+      }
+
+      const studentId = req.params.studentId;
+      if (!studentId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(studentId)) {
+        return res.status(400).json({ ok: false, error: 'Invalid studentId' });
+      }
+
+      const { data, error } = await db.setRosterStatus(studentId, status);
+      if (error) {
+        console.error(`POST /roster/:studentId/${status === 'archived' ? 'archive' : 'unarchive'} DB error:`, error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+
+      if (!data) {
+        return res.status(404).json({ ok: false, error: 'Student not found' });
+      }
+
+      return res.json({ ok: true, studentId: data.student_id, status: data.status });
+    };
+  }
+
+  app.post('/roster/:studentId/archive', setRosterStatusRoute('archived'));
+  app.post('/roster/:studentId/unarchive', setRosterStatusRoute('active'));
 
   // ── DELETE /roster/:studentId (teacher-gated — remove a student account) ─────
   // Auth: teacher (simple key / legacy secret / verified teacher token).
@@ -987,8 +1023,9 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       section:  row.section,
       role:     row.role || 'student',   // lets the gift picker drop the teacher account
     }));
-    // Send a soft cache hint — the roster doesn't change often.
-    res.setHeader('Cache-Control', 'public, max-age=300');
+    // Archive/unarchive must take effect on the next picker load. A public cache
+    // could otherwise keep an archived student visible for its full TTL.
+    res.setHeader('Cache-Control', 'no-store');
     return res.json({ ok: true, section, students });
   });
 
