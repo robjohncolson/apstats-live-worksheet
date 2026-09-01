@@ -402,6 +402,26 @@ describe('roster archive HTTP contract', () => {
     expect(ctx.db.listRosterCalls.at(-1)?.opts.includeArchived).toBe(true);
   });
 
+  it('A2b: UNSCOPED /class/wallets excludes archived students (the payout worklist surface)', async () => {
+    await ctx.server.request('POST', `/roster/${ARCHIVE_ID}/archive`, { headers: teacherHeader() });
+
+    ctx.db.listRosterCalls.length = 0;
+    const wallets = await ctx.server.request('GET', '/class/wallets', { headers: teacherHeader() });
+    expect(wallets.status).toBe(200);
+    expect(wallets.body.accounts.map((account) => account.studentId)).toEqual([ACTIVE_ID]);
+    // The no-section path must still resolve through the roster (that IS the archive boundary).
+    const call = ctx.db.listRosterCalls.at(-1);
+    expect(call).toBeDefined();
+    expect(call.section).toBe(null);
+    expect(call.opts.includeArchived).not.toBe(true);
+
+    await ctx.server.request('POST', `/roster/${ARCHIVE_ID}/unarchive`, { headers: teacherHeader() });
+    const restored = await ctx.server.request('GET', '/class/wallets', { headers: teacherHeader() });
+    expect(restored.body.accounts.map((account) => account.studentId).sort()).toEqual(
+      [ACTIVE_ID, ARCHIVE_ID].sort()
+    );
+  });
+
   it('A3: archive -> unarchive restores a byte-identical class-grade row', async () => {
     const baseline = await ctx.server.request('GET', `/class/grades?section=${SECTION}`, {
       headers: teacherHeader(),

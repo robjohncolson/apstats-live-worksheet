@@ -104,12 +104,13 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
   const chainFetch = fetchChainBalance || defaultChainFetch;   // watch-only; injectable for tests
   const sidOf = (req) => { const t = extractToken(req); try { return t ? verifyToken(t) : null; } catch (_) { return null; } };
 
-  // Resolve roster student_ids for an optional ?section= filter. Returns null
-  // (= no filter, all students) when no section is given, [] when the section is
-  // empty, or { error } to propagate a DB problem.
+  // Resolve roster student_ids for an optional ?section= filter. Always resolves
+  // through the roster — including the unscoped (no-section) case — because
+  // listRoster excludes archived students by default, and that exclusion must
+  // hold on every class-wide wallet view (the payout worklist reads these).
+  // Returns [] when the roster/section is empty, or { error } on a DB problem.
   async function sectionIds(section) {
-    if (!section) return null;
-    const rr = await db.listRoster(section);
+    const rr = await db.listRoster(section || null);
     if (rr && rr.error) return { error: rr.error };
     return ((rr && rr.data) || []).map((r) => r.student_id);
   }

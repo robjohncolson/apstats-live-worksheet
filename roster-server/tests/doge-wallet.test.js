@@ -250,6 +250,7 @@ describe('DOGE wallet — teacher routes', () => {
     const ctx = start({
       ledgers: { [UID]: quizRows(72) },   // 720 pts = 20 candy Earned
       accounts: { [UID]: { student_id: UID, candy_given: 2, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12, doge_address: 'Dabc' } },
+      roster: [{ student_id: UID, section: 'PeriodB' }],  // accounts FK the roster; unscoped reads resolve through it
     });
     const r = await req(ctx, 'GET', '/class/wallets', { secret: 'TS' });
     expect(r.status).toBe(200);
@@ -312,8 +313,11 @@ describe('DOGE wallet — hardening (item 6)', () => {
     expect(r.status).toBe(200);
     expect(r.body.accounts.length).toBe(1);
     expect(r.body.accounts[0].studentId).toBe(UID);
-    const all = await req(start({ accounts: { [UID]: { student_id: UID }, [UID2]: { student_id: UID2 } } }), 'GET', '/class/wallets', { secret: 'TS' });
-    expect(all.body.accounts.length).toBe(2);          // no section → all
+    const all = await req(start({
+      accounts: { [UID]: { student_id: UID }, [UID2]: { student_id: UID2 } },
+      roster: [{ student_id: UID, section: 'PeriodB' }, { student_id: UID2, section: 'PeriodE' }],
+    }), 'GET', '/class/wallets', { secret: 'TS' });
+    expect(all.body.accounts.length).toBe(2);          // no section → the whole (active) roster
   });
   // (d) mark-given / mark-sent clamp at candy_eaten / doge_balance (over-amount).
   it('clamps an over-amount mark-given at Owed-eligible candy', async () => {
@@ -361,6 +365,7 @@ describe('DOGE wallet — watch-only chain (item 4)', () => {
         [UID]: { student_id: UID, doge_address: 'Da' },
         [UID2]: { student_id: UID2 },          // no address → skipped
       },
+      roster: [{ student_id: UID, section: 'PeriodB' }, { student_id: UID2, section: 'PeriodE' }],
       chain: { Da: { address: 'Da', network: 'main', confirmedDoge: 3, source: 'blockcypher' } },
     });
     const r = await req(ctx, 'GET', '/class/wallets/chain', { secret: 'TS' });
