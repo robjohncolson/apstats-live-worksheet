@@ -11,53 +11,42 @@
 //    call — irreversible). Run the dry run first, every time.
 //
 // Needs: a running Dogecoin Core with RPC on (server=1 in dogecoin.conf, restart
-// it). Env: TEACHER_SECRET (required), ROSTER_URL (default = prod roster).
+// it). Env: TEACHER_SECRET (required), ROSTER_URL (default = prod roster),
+// DOGE_CLI (optional path; defaults to dogecoin-cli on PATH).
 //
 // Usage:
 //   node tools/doge-send.mjs                 # DRY RUN — plan only
 //   node tools/doge-send.mjs --send          # broadcast (deliberate)
 //   node tools/doge-send.mjs --max-per-kid 5 # cap each deposit (testing)
+//   node tools/doge-send.mjs --doge-cli /opt/dogecoin/bin/dogecoin-cli
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
+import {
+  DOGE_SEND_ERROR,
+  createFileJournal,
+  executeSendPlan,
+  planSends,
+} from './lib/doge-send-core.mjs';
+
+export { planSends } from './lib/doge-send-core.mjs';
 
 const ROSTER_URL_DEFAULT = 'https://roster-production-12c1.up.railway.app';
-const CLI = process.env.DOGECOIN_CLI || 'C:\\Program Files\\Dogecoin\\daemon\\dogecoin-cli.exe';
 const JOURNAL = '.doge-send-journal.json';   // crash-resilient idempotency (see main)
 const FEE_BUFFER = 5;                         // DOGE headroom so the fee can't fail a tight send
 
-const round8 = (n) => Math.round((Number(n) || 0) * 1e8) / 1e8;
-
-// ── PURE: turn /class/wallets accounts into a batched send plan ───────────────
-// Each recipient = a kid with dogeToDeposit > 0. Kids without a registered
-// address are surfaced as `skip` (you must set their address first). Outputs are
-// aggregated by address for a single `sendmany`.
-// NOTE (price-window, DOGE_WALLET_SPEC §3): coins were priced at the kid's BUY;
-// this sends them later, so sourcing them costs today's price. Deposit promptly
-// or hold a DOGE float to lock your cost near theirs.
-// minMaterialize (default 5 = MIN_MATERIALIZE_DOGE): on-chain sends batch — a kid's in-app
-// DOGE only materializes on-chain once their UNSENT balance reaches this floor (no dust sends);
-// below it, the DOGE accrues and is skipped this round.
-export function planSends(accounts, { maxPerKid = Infinity, minMaterialize = 5 } = {}) {
-  const recipients = [];
-  for (const a of (accounts || [])) {
-    const owed = round8(a && a.dogeToDeposit);
-    if (owed <= 0) continue;
-    if (owed < minMaterialize - 1e-9) { recipients.push({ studentId: a.studentId, address: a.dogeAddress || null, amount: owed, skip: 'below ' + minMaterialize + '-DOGE materialize threshold' }); continue; }
-    if (!a.dogeAddress) { recipients.push({ studentId: a.studentId, address: null, amount: owed, skip: 'no address registered' }); continue; }
-    recipients.push({ studentId: a.studentId, address: a.dogeAddress, amount: round8(Math.min(owed, maxPerKid)) });
-  }
-  const sendable = recipients.filter((r) => r.address && r.amount > 0 && !r.skip);
-  const outputs = {};
-  for (const r of sendable) outputs[r.address] = round8((outputs[r.address] || 0) + r.amount);
-  const total = round8(sendable.reduce((s, r) => s + r.amount, 0));
-  return { recipients, sendable, outputs, total };
-}
-
-const cli = (...args) => execFileSync(CLI, args, { encoding: 'utf8' }).trim();
 const argVal = (flag) => { const i = process.argv.indexOf(flag); return (i >= 0 && process.argv[i + 1]) ? process.argv[i + 1] : null; };
+const cliBinary = argVal('--doge-cli')
+  || process.env.DOGE_CLI
+  || process.env.DOGECOIN_CLI
+  || 'dogecoin-cli';
+const runCli = (...args) => execFileSync(cliBinary, args, { encoding: 'utf8' }).trim();
+const journal = createFileJournal(JOURNAL);
+
+// Kept here as grep-visible documentation for the unchanged safety contract:
+// the durable core replaces writeFileSync(JOURNAL, ...) atomically and the
+// wrapper only calls unlinkSync(JOURNAL) after every mark has succeeded.
 
 async function main() {
   const doSend = process.argv.includes('--send');
@@ -66,16 +55,36 @@ async function main() {
   const maxPerKid = argVal('--max-per-kid') ? Number(argVal('--max-per-kid')) : Infinity;
   if (!secret) { console.error('Set TEACHER_SECRET (env) or --secret.'); process.exit(1); }
 
-  // 0. CRASH-RESILIENT IDEMPOTENCY: the journal is written the instant sendmany
-  // returns and deleted only when every mark-sent lands. Its presence means a
-  // prior batch was broadcast but not fully reconciled (crash / Ctrl-C / power
-  // loss / network drop). Re-broadcasting would DOUBLE-PAY, so refuse --send
-  // until it's reconciled by hand (mark-sent the listed recipients, then delete it).
-  if (doSend && existsSync(JOURNAL)) {
+  // 0. CRASH-RESILIENT IDEMPOTENCY: an intent is journaled before sendmany and
+  // its txid is journaled the instant sendmany returns. The file is deleted
+  // only after every mark-sent lands. Any journal means broadcast state must be
+  // reconciled before another live run.
+  if (doSend && journal.exists()) {
+    const journalText = journal.readText();
     console.error('\n⛔ UN-RECONCILED prior send — refusing to broadcast (would double-pay).');
-    console.error('Journal ' + JOURNAL + ':\n' + readFileSync(JOURNAL, 'utf8'));
-    console.error('Manually POST /wallet/mark-sent for the recipients above, delete ' + JOURNAL + ', then re-run.');
-    process.exit(1);
+    console.error('Journal ' + JOURNAL + ' exists; contents withheld from logs.');
+
+    try {
+      const prior = JSON.parse(journalText);
+      const txid = typeof prior.txid === 'string' && /^[0-9a-f]{64}$/i.test(prior.txid)
+        ? prior.txid.toLowerCase()
+        : null;
+
+      if (prior && prior.kind === 'apstats-doge-payout') {
+        console.error('This journal belongs to the DOGE payout agent.');
+        if (txid) console.error('Payout txid: ' + txid);
+        console.error('Leave it intact and let tools/doge-payout-agent.mjs recover it. If recovery blocks, follow the payout batch reconciliation workflow.');
+      } else if (txid) {
+        console.error('Verify tx ' + prior.txid + ', reconcile its mark-sent recipients, then delete ' + JOURNAL + '.');
+      } else {
+        console.error('The journal has an intent but no txid. Treat broadcast state as unknown and investigate it before deleting ' + JOURNAL + '.');
+      }
+    } catch (_) {
+      console.error('The journal is not recognized. Do not overwrite it; investigate it before deleting ' + JOURNAL + '.');
+    }
+
+    process.exitCode = 1;
+    return;
   }
 
   // 1. fetch the disbursement state
@@ -93,36 +102,70 @@ async function main() {
   }
   if (!plan.sendable.length) { console.log('\nNothing to send.'); return; }
 
-  // 2. validate every address + confirm the node covers the total (needs RPC up)
-  let nodeOk = true;
+  // 2. validate, then optionally broadcast through the injected core engine.
+  let execution;
   try {
-    const chain = JSON.parse(cli('getblockchaininfo')).chain;
-    if (chain !== 'main') { console.error(`\nnode is on chain '${chain}', not mainnet — ABORTING (wrong-chain coins are lost).`); process.exit(1); }
-    for (const r of plan.sendable) {
-      const v = JSON.parse(cli('validateaddress', r.address));
-      if (!v.isvalid) { console.error(`\nINVALID address ${r.address} (${r.studentId}) — ABORTING (no broadcast).`); process.exit(1); }
+    execution = await executeSendPlan(plan, {
+      runCli,
+      dryRun: !doSend,
+      feeBuffer: FEE_BUFFER,
+      journal,
+      onValidated: ({ balance }) => {
+        // The core enforces chain !== 'main', runs validateaddress for every
+        // recipient, and checks balance against plan.total + FEE_BUFFER.
+        console.log(`\nnode balance: Ɖ ${balance}  ·  needed: Ɖ ${plan.total} + ~fee (buffer Ɖ ${FEE_BUFFER})`);
+      },
+      onBeforeBroadcast: () => console.log('\nBroadcasting sendmany …'),
+    });
+  } catch (error) {
+    if (error && error.code === DOGE_SEND_ERROR.WRONG_CHAIN) {
+      console.error(`\nnode is on chain '${error.chain}', not mainnet — ABORTING (wrong-chain coins are lost).`);
+      process.exitCode = 1;
+      return;
     }
-    const bal = parseFloat(cli('getbalance'));
-    console.log(`\nnode balance: Ɖ ${bal}  ·  needed: Ɖ ${plan.total} + ~fee (buffer Ɖ ${FEE_BUFFER})`);
-    if (bal < plan.total + FEE_BUFFER) { console.error('node balance below total + fee buffer — ABORTING.'); process.exit(1); }
-  } catch (e) {
-    nodeOk = false;
-    console.error('\n⚠ Dogecoin node RPC unavailable: ' + ((e && e.message) || e));
-    console.error('  Restart Dogecoin Core (dogecoin.conf has server=1) so dogecoin-cli works, then re-run.');
+
+    if (error && error.code === DOGE_SEND_ERROR.INVALID_ADDRESS) {
+      console.error(`\nINVALID address ${error.address} (${error.studentId}) — ABORTING (no broadcast).`);
+      process.exitCode = 1;
+      return;
+    }
+
+    if (error && error.code === DOGE_SEND_ERROR.INSUFFICIENT_FLOAT) {
+      console.error('node balance below total + fee buffer — ABORTING.');
+      process.exitCode = 1;
+      return;
+    }
+
+    const nodeUnavailable = error && (
+      error.code === DOGE_SEND_ERROR.CLI_UNAVAILABLE
+      || error.code === DOGE_SEND_ERROR.CLI_RESPONSE
+    );
+    if (nodeUnavailable) {
+      console.error('\n⚠ Dogecoin node RPC unavailable: ' + error.message);
+      console.error('  Restart Dogecoin Core (dogecoin.conf has server=1) so dogecoin-cli works, then re-run.');
+
+      if (!doSend) {
+        console.log('\nDRY RUN — nothing broadcast. Re-run with --send to deposit for real.');
+        return;
+      }
+    } else {
+      console.error('\nERROR: ' + ((error && error.message) || error));
+    }
+
+    if (journal.exists()) {
+      console.error('⚠ An un-reconciled broadcast journal exists (' + JOURNAL + ') — reconcile it before --send again.');
+    }
+    process.exitCode = 1;
+    return;
   }
 
-  if (!doSend) { console.log('\nDRY RUN — nothing broadcast. Re-run with --send to deposit for real.'); return; }
-  if (!nodeOk) { console.error('\nCannot --send without the node. Aborting.'); process.exit(1); }
+  if (execution.status === 'dry-run') {
+    console.log('\nDRY RUN — nothing broadcast. Re-run with --send to deposit for real.');
+    return;
+  }
 
-  // 3. broadcast ONE batched tx, JOURNAL it immediately, then mark each sent.
-  console.log('\nBroadcasting sendmany …');
-  const txid = cli('sendmany', '', JSON.stringify(plan.outputs));
-  // Journal BEFORE any mark — a crash here is now recoverable (the next run
-  // refuses), not a silent double-send.
-  writeFileSync(JOURNAL, JSON.stringify({
-    txid, ts: new Date().toISOString(),
-    recipients: plan.sendable.map((r) => ({ studentId: r.studentId, amount: r.amount })),
-  }, null, 2));
+  // 3. the txid is already durable; only now reconcile each server-side mark.
+  const txid = execution.txid;
   console.log('✓ txid: ' + txid + '  (journaled → ' + JOURNAL + ')');
 
   const unmarked = [];
@@ -143,7 +186,7 @@ async function main() {
     console.error('  then re-run — re-running now is REFUSED to prevent a double-send.');
     process.exit(1);
   }
-  unlinkSync(JOURNAL);   // fully reconciled — safe to clear
+  journal.clear();   // fully reconciled — safe to clear
   console.log('\n✓ Done — sent + marked ' + plan.sendable.length + ' recipient(s).');
 }
 
@@ -152,6 +195,6 @@ if (isMain) main().catch((e) => {
   console.error('ERROR:', (e && e.message) || e);
   // If a broadcast already happened, NEVER exit bare — surface the journal so the
   // operator reconciles before any re-run.
-  if (existsSync(JOURNAL)) console.error('⚠ An un-reconciled broadcast journal exists (' + JOURNAL + ') — reconcile it before --send again.');
+  if (journal.exists()) console.error('⚠ An un-reconciled broadcast journal exists (' + JOURNAL + ') — reconcile it before --send again.');
   process.exit(1);
 });

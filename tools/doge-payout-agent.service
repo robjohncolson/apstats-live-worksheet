@@ -1,0 +1,43 @@
+# AP Stats DOGE payout agent — systemd user service.
+#
+# Install on the Linux account that runs Dogecoin Core:
+#   mkdir -p ~/.config/systemd/user ~/.config/apstats
+#   cp tools/doge-payout-agent.service ~/.config/systemd/user/
+#   install -m 600 /dev/null ~/.config/apstats/.payout-agent.json
+# Then edit that JSON file with at least rosterUrl and payoutAgentKey; optional
+# fields are dogeCli, walletName, feeHeadroom, pollSeconds, and batchCap.
+#
+# Before enabling, edit ExecStart and WorkingDirectory if the repository or
+# Node binary lives elsewhere (`command -v node` shows the correct binary).
+# Keep PAYOUT_AGENT_KEY in the mode-0600 JSON config, never in this unit or on
+# the command line. The default journal stays in WorkingDirectory so this
+# daemon and a manual tools/doge-send.mjs invocation share the same send lock.
+#
+# Enable and inspect:
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now doge-payout-agent.service
+#   systemctl --user status doge-payout-agent.service
+#   journalctl --user -u doge-payout-agent.service -f
+#
+# Windows alternative: run the same command with Task Scheduler. No Windows
+# task definition is committed because paths and the logged-in account vary.
+
+[Unit]
+Description=AP Stats DOGE payout polling agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/repos/apstats-live-worksheet
+ExecStart=/usr/bin/node %h/repos/apstats-live-worksheet/tools/doge-payout-agent.mjs --config %h/.config/apstats/.payout-agent.json
+Restart=on-failure
+RestartSec=15
+KillMode=mixed
+TimeoutStopSec=120
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

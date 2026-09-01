@@ -362,6 +362,40 @@ export function issueReviewReceipt({ ledgerId, studentId, teacher, seenAt = Date
   }
 }
 
+// A payout receipt binds one student's on-chain amount to the frozen batch and
+// transaction. It contains public audit data only; signing failure is optional
+// metadata failure and must never interfere with wallet completion.
+export function issuePayoutReceipt({
+  studentId,
+  batchId,
+  txid,
+  doge,
+  issuedAt = Date.now(),
+}) {
+  if (!issuer.enabled || !studentId || !batchId || !txid) return null;
+
+  const amount = Number(doge);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+
+  try {
+    const payload = {
+      v: 1,
+      t: 'payout',
+      sid: studentId,
+      batch: batchId,
+      txid,
+      doge: amount,
+      ts: issuedAt,
+      n: crypto.randomBytes(4).toString('hex'),
+    };
+    const { receiptId, compact } = signPayload(issuer.privateKey, payload);
+    return { receiptId, compact };
+  } catch (err) {
+    console.error('Payout receipt issuance failed:', err.message);
+    return null;
+  }
+}
+
 function isMissingTrustedIssuers(error) {
   const code = error && error.code;
   const msg = (error && error.message) || '';

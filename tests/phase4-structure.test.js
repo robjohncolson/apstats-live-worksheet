@@ -177,8 +177,10 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
       //  - /class/quarter/ (PC makeup [D]: teacher FREEZES a quarter at close — an
       //                    idempotent snapshot for the report record. It does NOT change
       //                    how any grade computes; the read-only INTENT of /class/* holds.)
+      //  - /payout/       (DOGE batch rail: preview + seal a public-address work queue;
+      //                    the browser never broadcasts or receives wallet key material)
       // Concatenated paths (postJson('/x/' + act, ...)) capture just the prefix.
-      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/') || t.path.startsWith('/teacher/nudge') || t.path.startsWith('/admin/') || t.path.startsWith('/pc/unlock') || t.path.startsWith('/class/quarter/');
+      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/') || t.path.startsWith('/teacher/nudge') || t.path.startsWith('/admin/') || t.path.startsWith('/pc/unlock') || t.path.startsWith('/class/quarter/') || t.path.startsWith('/payout/');
       expect(ok, `POST to "${t.path}" violates the /class/* read-only intent`).toBe(true);
     }
   });

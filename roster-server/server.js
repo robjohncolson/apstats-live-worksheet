@@ -40,6 +40,7 @@ import { createLivePcDb } from './pc-db.js';
 import { createLiveFiguresSigner } from './pc-figures.js';
 import { mountTrainer } from './trainer.js';
 import { mountDogeWallet } from './doge-wallet.js';
+import { createLivePayoutDb, mountPayout } from './payout.js';
 import { createLiveTrainerDb } from './trainer-db.js';
 import {
   ACTIVE_SCHOOL_YEAR,
@@ -116,12 +117,13 @@ function bcryptCost() {
  * @param {*} lessonUnlockDbOverride
  * @param {*} trainerDbOverride
  * @param {*} worksheetKey
+ * @param {*} payoutDbOverride
  * @param {object} [productionGradeInputs] Optional pre-resolved bundle from
  *   resolveProductionGradeInputs(). When provided (production boot), createApp
  *   does NOT re-resolve — all seven mounts share this single object. When
  *   omitted (tests), createApp resolves once for ACTIVE_SCHOOL_YEAR.
  */
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs, pcDbOverride, figuresSignerOverride) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs, pcDbOverride, figuresSignerOverride, payoutDbOverride) {
   // Atomic grade-year bundle: resolve ONCE, thread to every grade mount.
   const _gradeCtx = productionGradeInputs || resolveProductionGradeInputs(ACTIVE_SCHOOL_YEAR);
   // Only an explicitly supplied production bundle activates the yearly key.
@@ -1075,6 +1077,16 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // (teacher). 503 until migration 0019. Effort comes from the same ledger.
   if (db && ledgerDb) {
     mountDogeWallet(app, { db, ledgerDb, verifyToken });
+  }
+
+  // DOGE payout queue. Production resolves its own service-role adapter; tests
+  // inject an in-memory adapter. Routes stay unmounted when DB configuration is
+  // absent and return 503 (rather than failing boot) before migration 0032.
+  const payoutDb = typeof payoutDbOverride !== 'undefined'
+    ? payoutDbOverride
+    : createLivePayoutDb();
+  if (db && payoutDb) {
+    mountPayout(app, { db, payoutDb });
   }
 
   // ── Grade route (Phase 3+6 additive) ─────────────────────────────────────────

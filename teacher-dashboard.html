@@ -397,6 +397,13 @@
     }
     .tsc-modal-confirm { background: var(--sg-accent); color: #fff; border-color: var(--sg-accent); }
     .tsc-modal-confirm[disabled] { opacity: 0.55; cursor: not-allowed; }
+    .payout-preview-wrap { max-height: 240px; overflow: auto; margin: 8px 0; }
+    .payout-preview-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .payout-preview-table th, .payout-preview-table td {
+      border-bottom: 1px solid #ddd; padding: 5px 6px; text-align: left;
+    }
+    .payout-preview-table th:last-child, .payout-preview-table td:last-child { text-align: right; }
+    .payout-status-strip { min-height: 22px; margin: 4px 0 7px; font-size: 0.84rem; }
 
     /* T3 (P6 BUILD section 4.2): Lesson Unlocks drawer section */
     .tsc-unlocks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.85rem; }
@@ -565,7 +572,11 @@
 
     <!-- 🍬 DOGE Reward Disbursement -->
     <div class="section">
-      <h2 class="section-title">🍬 Reward Disbursement <span class="dim" style="font-size:0.8rem">(effort → candy / Dogecoin)</span></h2>
+      <div class="btn-row" style="justify-content:space-between;align-items:center">
+        <h2 class="section-title" style="margin-bottom:0">🍬 Reward Disbursement <span class="dim" style="font-size:0.8rem">(effort → candy / Dogecoin)</span></h2>
+        <button type="button" class="btn" id="payout-plan-btn" disabled>⚡ Deposit all ready (Ɖ 0 to 0 students)</button>
+      </div>
+      <div class="payout-status-strip hint" id="payout-status" role="status" aria-live="polite"></div>
       <div class="hint" id="reward-rate" style="margin-bottom:6px"></div>
       <div class="table-wrap" id="reward-wrap" style="display:none">
         <table class="grades">
@@ -920,6 +931,32 @@
     </div>
   </div>
 
+  <!-- DOGE batch preview. No wallet secret or transaction material enters this page. -->
+  <div id="payout-preview-modal" class="tsc-modal" aria-hidden="true">
+    <div class="tsc-modal-overlay" data-payout-modal-close="overlay"></div>
+    <div class="tsc-modal-panel" role="dialog" aria-modal="true" aria-labelledby="payout-preview-title">
+      <header class="tsc-modal-header">
+        <h3 id="payout-preview-title">⚡ Confirm DOGE payout</h3>
+        <button type="button" class="tsc-modal-close" data-payout-modal-close="button" aria-label="Close">&times;</button>
+      </header>
+      <p class="tsc-modal-desc">Review every recipient. The local payout agent will send one transaction with one network fee.</p>
+      <div class="payout-preview-wrap">
+        <table class="payout-preview-table">
+          <thead><tr><th>Student</th><th>Address</th><th>DOGE</th></tr></thead>
+          <tbody id="payout-preview-tbody"></tbody>
+          <tfoot><tr><th colspan="2">Total</th><th id="payout-preview-total">Ɖ 0</th></tr></tfoot>
+        </table>
+      </div>
+      <label for="payout-confirm-input">Type <strong>PAY</strong> to seal this batch:</label>
+      <input type="text" id="payout-confirm-input" maxlength="3" autocomplete="off" spellcheck="false" placeholder="PAY">
+      <div class="tsc-modal-status" id="payout-preview-status" role="status"></div>
+      <div class="tsc-modal-actions">
+        <button type="button" class="tsc-modal-cancel" data-payout-modal-close="button">Cancel</button>
+        <button type="button" class="tsc-modal-confirm" id="payout-confirm-btn" disabled>Seal payout batch</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Sibling config; sets window.ROSTER_SERVICE_URL -->
   <script src="roster_config.js"></script>
   <!-- Roster identity client; provides window.rosterClient.token() and .current() -->
@@ -1239,6 +1276,341 @@
         return null;
       }).catch(function () { return null; });
     }
+
+    // Batch payouts are only a public-address work queue in this browser. The
+    // local payout agent is the sole component that can ask Core to broadcast.
+    var _payoutBatch = null;
+    var _payoutLocalTotal = 0;
+    var _payoutLocalCount = 0;
+    var _payoutPreview = null;
+    var _payoutStatusStarted = false;
+    var _payoutStatusInFlight = false;
+    var _payoutStatusTimer = null;
+    var _payoutSealing = false;
+    var _payoutCancelling = false;
+    var _payoutLastSentRefresh = null;
+
+    function _payoutAmount(value) {
+      var number = Number(value) || 0;
+      var rounded = Math.round(number * 100000000) / 100000000;
+      return rounded.toFixed(8).replace(/\.?0+$/, '');
+    }
+
+    function _payoutBatchId(batch) {
+      return batch && (batch.batchId || batch.batch_id) || null;
+    }
+
+    function _payoutIsActive(batch) {
+      return !!batch && (batch.status === 'pending' || batch.status === 'claimed');
+    }
+
+    function _payoutSetButton() {
+      var button = $('payout-plan-btn');
+      var active = _payoutIsActive(_payoutBatch);
+      if (button) {
+        button.textContent = '⚡ Deposit all ready (Ɖ ' + _payoutAmount(_payoutLocalTotal)
+          + ' to ' + _payoutLocalCount + ' students)';
+        button.disabled = active || _payoutLocalCount === 0;
+        button.title = active
+          ? 'A payout batch is already active.'
+          : (_payoutLocalCount ? 'Preview and seal one class payout transaction.' : 'No addressed student has at least Ɖ 5 ready.');
+      }
+
+      Array.prototype.forEach.call(document.querySelectorAll('[data-payout-manual-sent]'), function (manualButton) {
+        manualButton.disabled = active;
+        manualButton.title = active
+          ? 'Disabled while the class payout batch is active.'
+          : 'Manual fallback: mark this deposit sent.';
+      });
+    }
+
+    function _payoutRetryButton() {
+      var retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 's7btn';
+      retry.style.cssText = 'font-size:9px;padding:1px 5px;margin-left:8px';
+      retry.textContent = 'Retry';
+      retry.onclick = _payoutOpenPreview;
+      return retry;
+    }
+
+    function _payoutPendingCancelButton() {
+      var cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 's7btn';
+      cancel.style.cssText = 'font-size:9px;padding:1px 5px;margin-left:8px';
+      cancel.textContent = _payoutCancelling ? 'Cancelling…' : 'Cancel & use manual';
+      cancel.disabled = _payoutCancelling;
+      cancel.onclick = _payoutCancelPending;
+      return cancel;
+    }
+
+    async function _payoutCancelPending() {
+      var batchId = _payoutBatchId(_payoutBatch);
+      if (_payoutCancelling || !batchId || !_payoutBatch || _payoutBatch.status !== 'pending') return;
+
+      _payoutCancelling = true;
+      _payoutRenderStatus();
+      try {
+        var result = await postJson(
+          '/payout/batch/' + encodeURIComponent(batchId) + '/cancel',
+          {},
+          teacherSecret()
+        );
+        if (result.status === 200 && result.data && result.data.ok && result.data.batch) {
+          _payoutBatch = result.data.batch;
+          return;
+        }
+        if (result.status === 409 && result.data && result.data.batch) {
+          // Claim won the race. Keep the manual controls fenced because a
+          // broadcast may now be in progress.
+          _payoutBatch = result.data.batch;
+          return;
+        }
+        showError('Could not cancel payout: '
+          + ((result.data && result.data.error) || ('HTTP ' + result.status)));
+      } catch (_) {
+        showError('Could not cancel payout: payout status is temporarily unavailable.');
+      } finally {
+        _payoutCancelling = false;
+        _payoutRenderStatus();
+        _payoutSetButton();
+        _payoutScheduleStatusPoll();
+      }
+    }
+
+    function _payoutRenderStatus() {
+      var statusEl = $('payout-status');
+      if (!statusEl) return;
+      statusEl.textContent = '';
+
+      var batch = _payoutBatch;
+      if (!batch) return;
+      if (batch.status === 'pending') {
+        statusEl.appendChild(document.createTextNode('⏳ waiting for the payout agent…'));
+        statusEl.appendChild(_payoutPendingCancelButton());
+        return;
+      }
+      if (batch.status === 'claimed') {
+        statusEl.textContent = '🔏 agent is broadcasting…';
+        return;
+      }
+      if (batch.status === 'sent') {
+        statusEl.appendChild(document.createTextNode('⛓ sent'));
+        if (typeof batch.txid === 'string' && /^[0-9a-f]{64}$/i.test(batch.txid)) {
+          statusEl.appendChild(document.createTextNode(' — '));
+          var link = document.createElement('a');
+          link.href = 'https://blockchair.com/dogecoin/transaction/' + encodeURIComponent(batch.txid);
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = 'view tx ↗';
+          statusEl.appendChild(link);
+        }
+        return;
+      }
+      if (batch.status === 'failed') {
+        statusEl.appendChild(document.createTextNode('❌ failed: ' + (batch.error || 'payout agent failed')));
+        statusEl.appendChild(_payoutRetryButton());
+        return;
+      }
+      if (batch.status === 'cancelled') {
+        statusEl.appendChild(document.createTextNode('Payout cancelled.'));
+        statusEl.appendChild(_payoutRetryButton());
+      }
+    }
+
+    function _payoutScheduleStatusPoll(retryUnknownStatus) {
+      if (!retryUnknownStatus && !_payoutIsActive(_payoutBatch)) {
+        if (_payoutStatusTimer) clearTimeout(_payoutStatusTimer);
+        _payoutStatusTimer = null;
+        return;
+      }
+      if (_payoutStatusTimer) return;
+      _payoutStatusTimer = setTimeout(function () {
+        _payoutStatusTimer = null;
+        _payoutRefreshStatus();
+      }, 10000);
+    }
+
+    async function _payoutRefreshStatus() {
+      if (_payoutStatusInFlight) return;
+      _payoutStatusInFlight = true;
+      var retryUnknownStatus = false;
+      try {
+        var result = await fetchJson('/payout/status', teacherSecret());
+        if (result.status === 503) {
+          retryUnknownStatus = true;
+          $('payout-status').textContent = 'Batch payout is not provisioned yet (run migration 0032).';
+          return;
+        }
+        if (result.status !== 200 || !result.data || !result.data.ok) {
+          retryUnknownStatus = result.status !== 401;
+          if (result.status !== 401) $('payout-status').textContent = 'Payout status is temporarily unavailable.';
+          return;
+        }
+
+        _payoutBatch = result.data.batch || null;
+        _payoutRenderStatus();
+        _payoutSetButton();
+
+        var sentId = _payoutBatch && _payoutBatch.status === 'sent'
+          ? _payoutBatchId(_payoutBatch) : null;
+        if (sentId && sentId !== _payoutLastSentRefresh) {
+          _payoutLastSentRefresh = sentId;
+          _fetchRewardWallets().then(function (wallets) {
+            _rewardWallets = wallets;
+            if (_rewardRepaint) _rewardRepaint();
+          });
+        }
+      } catch (_) {
+        retryUnknownStatus = true;
+        $('payout-status').textContent = 'Payout status is temporarily unavailable.';
+      } finally {
+        _payoutStatusInFlight = false;
+        // Keep an active batch live through transient network failures. A
+        // sequential timeout (never setInterval) prevents overlapping polls.
+        _payoutScheduleStatusPoll(retryUnknownStatus);
+      }
+    }
+
+    function _payoutEnsureStatus() {
+      if (_payoutStatusStarted) return;
+      _payoutStatusStarted = true;
+      _payoutRefreshStatus();
+    }
+
+    function _payoutStudentName(studentId) {
+      var students = (lastPacingPayload && lastPacingPayload.students) || [];
+      for (var index = 0; index < students.length; index += 1) {
+        var student = students[index];
+        if (student && student.studentId === studentId) {
+          return student.realName || student.username || studentId;
+        }
+      }
+      return studentId;
+    }
+
+    function _payoutShortAddress(address) {
+      var value = String(address || '');
+      if (value.length <= 14) return value;
+      return value.slice(0, 7) + '…' + value.slice(-5);
+    }
+
+    function _payoutClosePreview() {
+      if (_payoutSealing) return;
+      var modal = $('payout-preview-modal');
+      modal.classList.remove('tsc-modal-open');
+      modal.setAttribute('aria-hidden', 'true');
+      $('payout-confirm-input').value = '';
+      $('payout-preview-status').textContent = '';
+      $('payout-confirm-btn').disabled = true;
+      _payoutPreview = null;
+    }
+
+    function _payoutShowPreview(plan, planHash) {
+      _payoutPreview = { plan: plan, planHash: planHash };
+      var tbody = $('payout-preview-tbody');
+      tbody.innerHTML = '';
+      (plan.rows || []).forEach(function (row) {
+        var tr = document.createElement('tr');
+        var name = document.createElement('td');
+        var address = document.createElement('td');
+        var amount = document.createElement('td');
+        name.textContent = _payoutStudentName(row.studentId);
+        address.textContent = _payoutShortAddress(row.address);
+        address.title = row.address;
+        amount.textContent = 'Ɖ ' + _payoutAmount(row.doge);
+        tr.appendChild(name);
+        tr.appendChild(address);
+        tr.appendChild(amount);
+        tbody.appendChild(tr);
+      });
+      $('payout-preview-total').textContent = 'Ɖ ' + _payoutAmount(plan.total);
+      $('payout-confirm-input').value = '';
+      $('payout-preview-status').textContent = '';
+      $('payout-confirm-btn').disabled = true;
+      var modal = $('payout-preview-modal');
+      modal.classList.add('tsc-modal-open');
+      modal.setAttribute('aria-hidden', 'false');
+      $('payout-confirm-input').focus();
+    }
+
+    async function _payoutOpenPreview() {
+      if (_payoutIsActive(_payoutBatch)) return;
+      var button = $('payout-plan-btn');
+      button.disabled = true;
+      button.textContent = 'Loading payout preview…';
+      try {
+        var result = await postJson('/payout/plan', {}, teacherSecret());
+        if (result.status !== 200 || !result.data || !result.data.ok) {
+          showError('Payout preview failed: ' + ((result.data && result.data.error) || ('HTTP ' + result.status)));
+          return;
+        }
+        var plan = result.data.plan || {
+          minPerStudent: result.data.minPerStudent,
+          rows: result.data.rows || [],
+          total: result.data.total || 0,
+        };
+        if (!plan.rows.length) {
+          $('payout-status').textContent = 'No addressed student has at least Ɖ 5 ready.';
+          return;
+        }
+        if (result.data.overCap) {
+          showError('Payout total exceeds the Ɖ ' + _payoutAmount(result.data.batchCap) + ' batch cap.');
+          return;
+        }
+        _payoutShowPreview(plan, result.data.planHash);
+      } finally {
+        _payoutSetButton();
+      }
+    }
+
+    async function _payoutSealPreview() {
+      if (_payoutSealing || !_payoutPreview || $('payout-confirm-input').value !== 'PAY') return;
+      _payoutSealing = true;
+      $('payout-confirm-btn').disabled = true;
+      $('payout-preview-status').textContent = 'Sealing the frozen plan…';
+      try {
+        var result = await postJson('/payout/batch', { planHash: _payoutPreview.planHash }, teacherSecret());
+        if ((result.status === 200 || result.status === 201) && result.data && result.data.ok) {
+          _payoutBatch = result.data.batch;
+          _payoutSealing = false;
+          _payoutClosePreview();
+          _payoutRenderStatus();
+          _payoutSetButton();
+          _payoutScheduleStatusPoll();
+          return;
+        }
+        if (result.status === 409 && result.data && result.data.batch) {
+          _payoutBatch = result.data.batch;
+          _payoutSealing = false;
+          _payoutClosePreview();
+          _payoutRenderStatus();
+          _payoutSetButton();
+          _payoutScheduleStatusPoll();
+          return;
+        }
+
+        var reason = (result.data && result.data.error) || ('HTTP ' + result.status);
+        $('payout-preview-status').textContent = result.status === 409
+          ? 'The payout plan changed. Close this preview and try again.'
+          : 'Could not seal payout: ' + reason;
+        _payoutPreview = result.status === 409 ? null : _payoutPreview;
+      } finally {
+        _payoutSealing = false;
+        $('payout-confirm-btn').disabled = !_payoutPreview || $('payout-confirm-input').value !== 'PAY';
+      }
+    }
+
+    $('payout-plan-btn').addEventListener('click', _payoutOpenPreview);
+    $('payout-confirm-input').addEventListener('input', function () {
+      $('payout-confirm-btn').disabled = _payoutSealing || this.value !== 'PAY';
+    });
+    $('payout-confirm-btn').addEventListener('click', _payoutSealPreview);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-payout-modal-close]'), function (button) {
+      button.addEventListener('click', _payoutClosePreview);
+    });
+
     function _rewardMark(studentId, action, amount) {
       postJson('/wallet/' + action, { studentId: studentId, amount: amount }, teacherSecret()).then(function (r) {
         if (r.status === 200 && r.data && r.data.ok) {
@@ -1260,11 +1632,19 @@
       var tbody = $('reward-tbody'), wrap = $('reward-wrap'), empty = $('reward-empty');
       var rateEl = $('reward-rate'), totalsEl = $('reward-totals'), noteEl = $('reward-note');
       if (!tbody) return;
+      _payoutEnsureStatus();
       // Include teacher/test accounts too (they carry effort/candy) so the
       // teacher can test redemption with their own account — badged + sorted last.
       // (Guests are device-local, never on the roster, so they can't appear here.)
       var students = (payload && payload.students) || [];
-      if (!students.length) { wrap.style.display = 'none'; empty.style.display = 'block'; return; }
+      if (!students.length) {
+        _payoutLocalTotal = 0;
+        _payoutLocalCount = 0;
+        _payoutSetButton();
+        wrap.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
       var W = (typeof WalletLogic !== 'undefined') ? WalletLogic : null;
       var rows = students.slice().sort(function (a, b) {
         var sa = (a && a.role === 'teacher') ? 1 : 0, sb = (b && b.role === 'teacher') ? 1 : 0;
@@ -1292,11 +1672,16 @@
         }
         tbody.innerHTML = '';
         var totEarned = 0, totGive = 0, totDeposit = 0, totChain = 0;
+        var payoutTotal = 0, payoutCount = 0;
         rows.forEach(function (s) {
           var earned = (s.effort && s.effort.candy) || 0;
           var acc = prov ? (wallets[s.studentId] || null) : null;
           var give = acc ? acc.candyOwed : 0, deposit = acc ? acc.dogeToDeposit : 0, addr = acc ? acc.dogeAddress : null;
           totEarned += earned; totGive += give; totDeposit += deposit;
+          if (prov && addr && deposit >= 5 - 1e-9) {
+            payoutTotal += deposit;
+            payoutCount += 1;
+          }
           var tr = document.createElement('tr');
           var nameTd = document.createElement('td'); nameTd.textContent = s.realName || s.username || s.studentId || '?';
           if (s.role === 'teacher') { var bdg = document.createElement('span'); bdg.textContent = ' 🧪'; bdg.title = 'teacher / test account'; nameTd.appendChild(bdg); }
@@ -1334,7 +1719,12 @@
           if (!prov) depTd.textContent = '—';
           // DOGE only goes ON-CHAIN in batches of ≥ 5 (MIN_MATERIALIZE_DOGE; no dust sends):
           // below the threshold it accrues in-app and the ✓send button stays disarmed.
-          else if (deposit >= 5 - 1e-9) { depTd.textContent = 'Ɖ ' + (Math.round(deposit * 10) / 10) + ' '; depTd.appendChild(btn('✓ sent', function () { _rewardMark(s.studentId, 'mark-sent', deposit); })); }
+          else if (deposit >= 5 - 1e-9) {
+            depTd.textContent = 'Ɖ ' + (Math.round(deposit * 10) / 10) + ' ';
+            var sentButton = btn('✓ sent', function () { _rewardMark(s.studentId, 'mark-sent', deposit); });
+            sentButton.setAttribute('data-payout-manual-sent', '1');
+            depTd.appendChild(sentButton);
+          }
           else if (deposit > 0.0001) { depTd.textContent = 'Ɖ ' + (Math.round(deposit * 10) / 10) + ' '; var hint = document.createElement('span'); hint.className = 'dim'; hint.style.fontSize = '0.8em'; hint.textContent = ' (needs 5 to send)'; depTd.appendChild(hint); }
           else if (acc && (acc.dogeSent || 0) > 0.0001) { depTd.textContent = '✓ Ɖ ' + (Math.round(acc.dogeSent * 10) / 10) + ' sent'; depTd.style.color = '#2a7'; }
           else depTd.textContent = '·';
@@ -1367,6 +1757,9 @@
           + (prov ? '🍬 ' + Math.round(totGive) : '—') + '</td><td>'
           + (prov ? 'Ɖ ' + totDeposit.toFixed(1) : '—') + '</td><td>'
           + (prov && _rewardChain ? 'Ɖ ' + totChain.toFixed(2) : '—') + '</td><td></td>';
+        _payoutLocalTotal = Math.round(payoutTotal * 100000000) / 100000000;
+        _payoutLocalCount = payoutCount;
+        _payoutSetButton();
         wrap.style.display = ''; empty.style.display = 'none';
       }
 

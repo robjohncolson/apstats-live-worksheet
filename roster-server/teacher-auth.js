@@ -9,6 +9,7 @@
 // Returns a boolean. Never writes to res. Callers send the 401.
 // Degrades to false (non-teacher) on any ambiguity -- never grants on error.
 
+import crypto from 'node:crypto';
 import { verifyToken } from './token.js';
 
 // The simple, shared teacher key. Teacher decision (2026-06-03): deprecate the
@@ -23,6 +24,10 @@ import { verifyToken } from './token.js';
 // public, so for real secrecy set TEACHER_KEY as a Railway env var, not this default.)
 export function getTeacherKey() {
   return process.env.TEACHER_KEY || 'apteacher2627';
+}
+
+function isPublishedTeacherKey(value) {
+  return typeof value === 'string' && value.trim() === 'apteacher2627';
 }
 
 // Extract a bearer token from Authorization: Bearer <t> or ?token=<t>.
@@ -48,7 +53,10 @@ export async function requireTeacher(req, db) {
   // Path (A): x-teacher-secret matches EITHER the legacy long secret (if still
   // configured) OR the simple shared teacher key (getTeacherKey(), default
   // 'apteacher2627'). The simple key is the deprecation path for the long secret.
-  const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
+  const configuredTeacherSecret = process.env.ROSTER_TEACHER_SECRET;
+  const teacherSecret = isPublishedTeacherKey(configuredTeacherSecret)
+    ? null
+    : configuredTeacherSecret;
   const provided = req.headers['x-teacher-secret'];
   if (provided && (provided === getTeacherKey() || (teacherSecret && provided === teacherSecret))) {
     return true;
@@ -74,4 +82,73 @@ export async function requireTeacher(req, db) {
     return false;
   }
   return role === 'teacher';
+}
+
+function configuredPayoutSecret(name) {
+  const value = process.env[name];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function configuredPayoutTeacherKey() {
+  const teacherKey = configuredPayoutSecret('TEACHER_KEY');
+  if (isPublishedTeacherKey(teacherKey)) return null;
+  return teacherKey;
+}
+
+// Hash both operands to a fixed length before timingSafeEqual. Besides avoiding
+// its unequal-length exception, this keeps comparison time independent of the
+// configured secret length.
+function payoutSecretMatches(provided, expected) {
+  if (typeof provided !== 'string' || !expected) return false;
+  const providedDigest = crypto.createHash('sha256').update(provided, 'utf8').digest();
+  const expectedDigest = crypto.createHash('sha256').update(expected, 'utf8').digest();
+  return crypto.timingSafeEqual(providedDigest, expectedDigest);
+}
+
+async function payoutTeacherFromBearer(req, db) {
+  const authorization = req.headers.authorization || req.headers.Authorization;
+  if (typeof authorization !== 'string' || !/^Bearer\s+/i.test(authorization)) return false;
+
+  const token = authorization.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return false;
+
+  let studentId;
+  try {
+    studentId = verifyToken(token);
+  } catch (_) {
+    return false;
+  }
+  if (!studentId) return false;
+
+  try {
+    return await db.getRoleByStudentId(studentId) === 'teacher';
+  } catch (_) {
+    return false;
+  }
+}
+
+// Payout sealing reserves live wallet funds, so every payout teacher route is
+// fail-closed. Requiring TEACHER_KEY also disables getTeacherKey()'s repository
+// fallback on the older wallet-management routes, so an attacker cannot change
+// payout addresses through those routes before a teacher seals a batch.
+export async function requirePayoutTeacher(req, db) {
+  const teacherKey = configuredPayoutTeacherKey();
+  if (!teacherKey) return false;
+
+  const provided = req.headers['x-teacher-secret'];
+  if (payoutSecretMatches(provided, teacherKey)) return true;
+  return payoutTeacherFromBearer(req, db);
+}
+
+// A dedicated payout-agent key is scoped to /payout only. Teachers retain the
+// manual recovery path through the same fail-closed payout teacher policy. The
+// explicit TEACHER_KEY prerequisite applies to agent-only routes as well.
+export async function requirePayoutAgent(req, db) {
+  if (!configuredPayoutTeacherKey()) return false;
+  if (await requirePayoutTeacher(req, db)) return true;
+
+  const expected = configuredPayoutSecret('PAYOUT_AGENT_KEY');
+  return payoutSecretMatches(req.headers['x-payout-agent-key'], expected);
 }
