@@ -1727,6 +1727,17 @@
       button.addEventListener('click', _payoutClosePreview);
     });
 
+    // Partial disbursement: the kid took SOME of their owed candy, not all of it.
+    // Server-side doge_mark is monotonic and capped, so any positive amount ≤ owed
+    // is safe; the row repaints with the remaining owed still carrying its buttons.
+    function _rewardMarkPartial(studentId, name, owed) {
+      var raw = prompt('How many candies did ' + name + ' take? (owed: ' + (Math.round(owed * 10) / 10) + ')');
+      if (raw == null) return;
+      var n = parseFloat(String(raw).replace(',', '.'));
+      if (!isFinite(n) || n <= 0) { showError('Enter a number above 0 (e.g. 2 or 1.5).'); return; }
+      if (n > owed + 0.001) { showError('They are only owed ' + (Math.round(owed * 10) / 10) + ' — enter at most that, or use ✓ gave for all of it.'); return; }
+      _rewardMark(studentId, 'mark-given', n);
+    }
     function _rewardMark(studentId, action, amount) {
       postJson('/wallet/' + action, { studentId: studentId, amount: amount }, teacherSecret()).then(function (r) {
         if (r.status === 200 && r.data && r.data.ok) {
@@ -1826,7 +1837,14 @@
           tr.appendChild(earnedTd);
           var giveTd = document.createElement('td');
           if (!prov) giveTd.textContent = '—';
-          else if (give > 0.01) { giveTd.textContent = '🍬 ' + (Math.round(give * 10) / 10) + ' '; giveTd.appendChild(btn('✓ gave', function () { _rewardMark(s.studentId, 'mark-given', give); })); }
+          else if (give > 0.01) {
+            giveTd.textContent = '🍬 ' + (Math.round(give * 10) / 10) + ' ';
+            giveTd.appendChild(btn('✓ gave', function () { _rewardMark(s.studentId, 'mark-given', give); }));
+            giveTd.appendChild(document.createTextNode(' '));
+            var someBtn = btn('some…', function () { _rewardMarkPartial(s.studentId, s.realName || s.username || '?', give); });
+            someBtn.title = 'They took only part of their candy — enter how many';
+            giveTd.appendChild(someBtn);
+          }
           // Owed is settled — but if candy WAS handed out, confirm it (don't vanish
           // to '·', which reads as "never gave" and misleads the teacher).
           else if (acc && (acc.candyGiven || 0) > 0.01) { giveTd.textContent = '✓ ' + (Math.round(acc.candyGiven * 10) / 10) + ' given'; giveTd.style.color = '#2a7'; }
