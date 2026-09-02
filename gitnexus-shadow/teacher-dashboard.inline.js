@@ -966,6 +966,7 @@
 
 
 
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -1266,6 +1267,121 @@
         }
         return 'unprovisioned';
       }).catch(function () { return 'unprovisioned'; });
+    }
+
+    // Student-created addresses stay in this separate teacher queue until an
+    // explicit decision. The list endpoint returns masked addresses only.
+    var _walletProposals = null;
+    var _walletProposalsLoading = false;
+    var _walletProposalsRequestEpoch = 0;
+    function _fetchWalletProposals() {
+      return fetchJson('/class/wallet-proposals', teacherSecret()).then(function (r) {
+        if (r.status === 200 && r.data && r.data.ok) return r.data.proposals || [];
+        if (r.status === 503) return [];
+        throw new Error((r.data && r.data.error) || ('HTTP ' + r.status));
+      });
+    }
+    function _walletProposalRefresh() {
+      _walletProposals = null;
+      _loadWalletProposals(true);
+      _fetchRewardWallets().then(function (wallets) {
+        _rewardWallets = wallets;
+        if (_rewardRepaint) _rewardRepaint();
+      });
+    }
+    function _walletProposalDecide(path, proposal, reason) {
+      var body = { studentId: proposal.studentId, proposedAt: proposal.proposedAt };
+      if (reason) body.reason = reason;
+      postJson(path, body, teacherSecret()).then(function (result) {
+        if (result.status === 200 && result.data && result.data.ok) {
+          _walletProposalRefresh();
+          return;
+        }
+        showError('Address decision failed: ' + ((result.data && result.data.error) || ('HTTP ' + result.status)));
+        _walletProposals = null;
+        _loadWalletProposals(true);
+      });
+    }
+    function _paintWalletProposals(proposals) {
+      var strip = $('wallet-proposals-strip');
+      if (!strip) return;
+      strip.replaceChildren();
+      if (!proposals || !proposals.length) { strip.style.display = 'none'; return; }
+
+      strip.style.display = '';
+      var heading = document.createElement('div');
+      heading.style.cssText = 'font-weight:bold;margin-bottom:4px';
+      heading.textContent = '📥 proposed addresses (' + proposals.length + ')';
+      strip.appendChild(heading);
+      proposals.forEach(function (proposal) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:3px 0';
+        var student = document.createElement('span'); student.textContent = proposal.studentName || proposal.username || proposal.studentId;
+        var address = document.createElement('span');
+        address.style.cssText = 'font-family:monospace;font-weight:bold';
+        address.textContent = proposal.maskedAddress;
+        var badge = document.createElement('span');
+        badge.style.cssText = 'font-size:0.68rem;font-weight:bold;padding:1px 4px;border-radius:3px;'
+          + (proposal.change ? 'background:#ffe0e0;color:#930000' : 'background:#e1f4df;color:#195f16');
+        badge.textContent = proposal.change ? 'CHANGE' : 'NEW';
+        var approve = document.createElement('button'); approve.type = 'button'; approve.className = 's7btn';
+        approve.style.cssText = 'font-size:9px;padding:1px 5px'; approve.textContent = 'Approve';
+        approve.title = 'First have the student read ' + String(proposal.maskedAddress || '').slice(-4) + ' aloud.';
+        if (proposal.rosterStatus === 'archived') { approve.disabled = true; approve.title = 'Archived students cannot be approved.'; }
+        approve.onclick = function () {
+          var lastFour = String(proposal.maskedAddress || '').slice(-4);
+          if (!confirm('Have ' + (proposal.studentName || 'the student') + ' read “' + lastFour + '” aloud from their own screen?')) return;
+          _walletProposalDecide('/wallet/address/approve', proposal);
+        };
+        var reject = document.createElement('button'); reject.type = 'button'; reject.className = 's7btn';
+        reject.style.cssText = 'font-size:9px;padding:1px 5px'; reject.textContent = 'Reject';
+        reject.onclick = function () {
+          var reason = prompt('Short reason the student will see (240 characters max):', 'Address did not match what we verified together.');
+          if (reason == null) return;
+          reason = reason.trim();
+          if (!reason || reason.length > 240) { showError('Enter a rejection reason of 1–240 characters.'); return; }
+          _walletProposalDecide('/wallet/address/reject', proposal, reason);
+        };
+        row.appendChild(student); row.appendChild(address); row.appendChild(badge);
+        if (proposal.rosterStatus === 'archived') { var archived = document.createElement('span'); archived.textContent = 'ARCHIVED'; archived.style.color = '#930000'; row.appendChild(archived); }
+        row.appendChild(approve); row.appendChild(reject); strip.appendChild(row);
+      });
+      var habit = document.createElement('div');
+      habit.style.cssText = 'margin-top:4px;color:#6b5400';
+      habit.textContent = 'Before Approve: the student reads the last 4 characters aloud from their own screen.';
+      strip.appendChild(habit);
+    }
+    function _paintWalletProposalError(error) {
+      var strip = $('wallet-proposals-strip');
+      if (!strip) return;
+      strip.replaceChildren();
+      strip.style.display = '';
+      var message = document.createElement('span');
+      message.textContent = 'Could not load proposed addresses: ' + (error && error.message || 'unknown error') + ' ';
+      var retry = document.createElement('button');
+      retry.type = 'button'; retry.className = 's7btn'; retry.textContent = 'Retry';
+      retry.style.cssText = 'font-size:9px;padding:1px 5px';
+      retry.onclick = function () { _loadWalletProposals(true); };
+      strip.appendChild(message); strip.appendChild(retry);
+    }
+    function _loadWalletProposals(force) {
+      if (force) _walletProposals = null;
+      if (_walletProposals !== null) { _paintWalletProposals(_walletProposals); return; }
+      if (_walletProposalsLoading && !force) return;
+
+      var requestEpoch = ++_walletProposalsRequestEpoch;
+      _walletProposalsLoading = true;
+      _fetchWalletProposals().then(function (proposals) {
+        if (requestEpoch !== _walletProposalsRequestEpoch) return;
+        _walletProposalsLoading = false;
+        _walletProposals = proposals;
+        _paintWalletProposals(proposals);
+      }).catch(function (error) {
+        if (requestEpoch !== _walletProposalsRequestEpoch) return;
+        _walletProposalsLoading = false;
+        _walletProposals = null;
+        _paintWalletProposalError(error);
+      });
     }
     // Watch-only on-chain balances (studentId → record), teacher-driven. null =
     // not yet loaded; {} = loaded (provisioned but no addresses/balances yet).
@@ -1632,6 +1748,7 @@
       var tbody = $('reward-tbody'), wrap = $('reward-wrap'), empty = $('reward-empty');
       var rateEl = $('reward-rate'), totalsEl = $('reward-totals'), noteEl = $('reward-note');
       if (!tbody) return;
+      _loadWalletProposals();
       _payoutEnsureStatus();
       // Include teacher/test accounts too (they carry effort/candy) so the
       // teacher can test redemption with their own account — badged + sorted last.
@@ -2289,6 +2406,7 @@
       btn.disabled = true;
       setLoading(true);
       $('meta-line').textContent = '';
+      _loadWalletProposals(true);
 
       try {
         // Fan-out both endpoints in parallel; each call re-reads the secret

@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -40,7 +40,7 @@ export function createDb(client) {
   async function findByStudentId(studentId) {
     return client
       .from('roster')
-      .select('student_id, section, login_username, real_name')
+      .select('student_id, section, login_username, real_name, status, role')
       .eq('student_id', studentId)
       .maybeSingle();
   }
@@ -349,6 +349,48 @@ export function createDb(client) {
     return client.from('doge_account')
       .update({ [field]: value, updated_at: new Date().toISOString() })
       .eq('student_id', studentId).select('*').maybeSingle();
+  }
+  // Self-custody onboarding proposals are deliberately separate from the
+  // approved doge_address. Migration 0033 locks the live roster/account rows,
+  // creates a monotonic proposal version, and changes proposal columns only.
+  async function setDogeAddressProposal(studentId, address) {
+    return client.rpc('doge_propose_address', {
+      p_sid: studentId,
+      p_address: address,
+    });
+  }
+  // Select proposal columns explicitly so a pre-0033 database fails closed
+  // instead of looking like an empty queue when PostgREST expands `*`.
+  async function listDogeAddressProposals(studentIds) {
+    let query = client.from('doge_account')
+      .select('student_id, doge_address, proposed_address, proposed_at');
+    if (Array.isArray(studentIds) && studentIds.length) {
+      query = query.in('student_id', studentIds);
+    }
+    return query.not('proposed_address', 'is', null).order('proposed_at', { ascending: true });
+  }
+  // Migration 0033 performs lock + active-batch check + promotion + clear in
+  // one transaction. proposedAt is an optimistic version checked under the lock.
+  async function approveDogeAddressProposal(studentId, proposedAt) {
+    return client.rpc('doge_approve_address_proposal', {
+      p_sid: studentId,
+      p_expected_proposed_at: proposedAt,
+    });
+  }
+  // Reject only the proposal the teacher actually reviewed. A newer proposal
+  // wins and causes a clean zero-row conflict instead of being accidentally lost.
+  async function rejectDogeAddressProposal(studentId, proposedAt, reason) {
+    return client.from('doge_account')
+      .update({
+        proposed_address: null,
+        proposed_at: null,
+        proposal_rejection_reason: reason,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('student_id', studentId)
+      .eq('proposed_at', proposedAt)
+      .not('proposed_address', 'is', null)
+      .select('*').maybeSingle();
   }
   // Atomic kid→kid candy transfer (migration 0021 fn doge_gift). Returns { data, error }
   // where data = the sender's updated row, or null when the guard fails.

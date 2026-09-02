@@ -8,7 +8,7 @@
 //
 // All routes 503 gracefully until migration 0019 runs (doge_account/doge_ledger).
 
-import { requireTeacher } from './teacher-auth.js';
+import { requirePayoutTeacher, requireTeacher } from './teacher-auth.js';
 import {
   computeEffort, candyPerDoge, dogeFromCandy, candyFromDoge,
   MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP, SELL_HOLD_HOURS,
@@ -36,6 +36,59 @@ function isDogeMissing(e) {
 function notProvisioned(res) {
   return res.status(503).json({ ok: false, error: 'doge_wallet not provisioned (run migration 0019)' });
 }
+
+// Migration 0033 is independently deployable after the existing wallet. Keep
+// its readiness failure specific so normal candy/DOGE routes continue working.
+function isWalletProposalMissing(e) {
+  if (!e) return false;
+  const code = String(e.code || '');
+  const msg = String(e.message || '').toLowerCase();
+  const missingCode = ['42703', '42883', 'PGRST202', 'PGRST204'].includes(code);
+  const proposalName = msg.includes('proposed_address')
+    || msg.includes('proposed_at')
+    || msg.includes('proposal_rejection_reason')
+    || msg.includes('doge_propose_address')
+    || msg.includes('doge_approve_address_proposal');
+  return missingCode && proposalName;
+}
+function walletProposalsNotProvisioned(res) {
+  return res.status(503).json({
+    ok: false,
+    error: 'wallet address proposals not provisioned (run migration 0033)',
+  });
+}
+function walletProposalPayoutNotProvisioned(res) {
+  return res.status(503).json({
+    ok: false,
+    error: 'wallet address approval requires the payout rail (run migration 0032 before 0033)',
+  });
+}
+
+const STUDENT_WALLET_TRUE = new Set(['true', '1', 'yes', 'on']);
+const studentWalletOptInEnabled = () => STUDENT_WALLET_TRUE.has(
+  String(process.env.STUDENT_WALLET_OPTIN || '').trim().toLowerCase(),
+);
+const maskDogeAddress = (address) => {
+  const value = String(address || '');
+  return value ? `${value.slice(0, 4)}…${value.slice(-4)}` : null;
+};
+const activePayoutBlocksAddress = (error) => String(error && error.message || '')
+  .toLowerCase().includes('wallet address change blocked by active payout batch');
+const proposalChanged = (error) => {
+  const message = String(error && error.message || '').toLowerCase();
+  return message.includes('wallet address proposal changed')
+    || message.includes('wallet address proposal not found');
+};
+const proposalStudentIneligible = (error) => String(error && error.message || '')
+  .toLowerCase().includes('student is not eligible to propose an address');
+const proposalAlreadyApproved = (error) => String(error && error.message || '')
+  .toLowerCase().includes('wallet address is already approved');
+const proposalApprovalIneligible = (error) => String(error && error.message || '')
+  .toLowerCase().includes('student is not eligible to approve an address proposal');
+const walletProposalPayoutMissing = (error) => {
+  const message = String(error && error.message || '').toLowerCase();
+  return String(error && error.code || '') === '42P01' && message.includes('payout_batch');
+};
 
 const num = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
 
@@ -172,6 +225,10 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)), // teacher deposits
       dogeCostBasis: converted,
       dogeAddress: a.doge_address || null,
+      studentWalletOptInEnabled: studentWalletOptInEnabled(),
+      proposedAddressMasked: maskDogeAddress(a.proposed_address),
+      proposedAt: a.proposed_at || null,
+      proposalRejectionReason: a.proposal_rejection_reason || null,
     };
   }
   // ── GET /wallet ── the student's own wallet ────────────────────────────────
@@ -185,13 +242,28 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
     const bal = deriveBalances(earned, accRes.data);
+    let studentWalletOnboardingEligible = false;
+    const hasOnboardingState = bal.studentWalletOptInEnabled
+      || bal.proposedAddressMasked
+      || bal.proposalRejectionReason;
+    if (hasOnboardingState) {
+      try {
+        const rosterResult = await db.findByStudentId(sid);
+        const student = rosterResult && !rosterResult.error && rosterResult.data;
+        studentWalletOnboardingEligible = Boolean(
+          student && student.status === 'active' && student.role === 'student',
+        );
+      } catch (_) {
+        // Fail closed for key generation without breaking the ordinary wallet.
+      }
+    }
     const price = await priceFn();
     let history = [];
     try { const h = await db.listDogeLedger(sid, 50); history = (h && h.data) || []; } catch (_) {}
     // In-app DOGE the kid can cash back to candy now (matured ≥ overnight; SELL_DOGE_SPEC).
     const sellableDoge = bal.dogeBalance > 1e-9 ? await maturedSellable(sid, accRes.data) : 0;
     return res.json({
-      ok: true, ...bal,
+      ok: true, ...bal, studentWalletOnboardingEligible,
       dogeUsd: price, candyPerDoge: price ? candyPerDoge(price) : null,
       minBuyCandy: 0,            // no buy minimum (s16): any positive candy converts to a fraction of a DOGE
       minMaterializeDoge: MIN_MATERIALIZE_DOGE, sellableDoge, history,
@@ -493,8 +565,208 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     // Narrow single-column write (never the whole row) so registering an address
     // can't clobber a concurrent spend — see WALLET_CONSERVATION_FINDINGS F1.
     const up = await db.updateDogeField(studentId, 'doge_address', addr || null);
-    if (up.error) { if (isDogeMissing(up.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    if (up.error) {
+      if (walletProposalPayoutMissing(up.error)) return walletProposalPayoutNotProvisioned(res);
+      if (isDogeMissing(up.error)) return notProvisioned(res);
+      if (activePayoutBlocksAddress(up.error)) {
+        return res.status(409).json({ ok: false, error: 'address change blocked by active payout batch' });
+      }
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
     return res.json({ ok: true, studentId, dogeAddress: addr || null });
+  });
+
+  // ── student: propose an address generated in their own browser ─────────────
+  // The request accepts ONE public value. Seed phrases and private keys have no
+  // field, no server representation, and no durable path by construction.
+  app.post('/wallet/address/propose', async (req, res) => {
+    const sid = sidOf(req);
+    if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!studentWalletOptInEnabled()) {
+      return res.status(403).json({ ok: false, error: 'self-custody wallet option is not enabled' });
+    }
+
+    const rosterResult = await db.findByStudentId(sid);
+    if (rosterResult && rosterResult.error) {
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const student = rosterResult && rosterResult.data;
+    if (!student || student.status !== 'active' || student.role !== 'student') {
+      return res.status(403).json({ ok: false, error: 'forbidden' });
+    }
+
+    const rawAddress = req.body && req.body.address;
+    if (typeof rawAddress !== 'string') {
+      return res.status(400).json({ ok: false, error: 'not a Dogecoin (D…) address' });
+    }
+    const address = rawAddress.trim();
+    if (!DOGE_MAIN_RE.test(address)) {
+      return res.status(400).json({ ok: false, error: 'not a Dogecoin (D…) address' });
+    }
+
+    const accountResult = await db.getDogeAccount(sid);
+    if (accountResult.error) {
+      if (isDogeMissing(accountResult.error)) return notProvisioned(res);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (accountResult.data && accountResult.data.doge_address === address) {
+      return res.status(409).json({ ok: false, error: 'that address is already approved' });
+    }
+
+    const proposed = await db.setDogeAddressProposal(sid, address);
+    if (proposed.error) {
+      if (isWalletProposalMissing(proposed.error)) return walletProposalsNotProvisioned(res);
+      if (isDogeMissing(proposed.error)) return notProvisioned(res);
+      if (proposalStudentIneligible(proposed.error)) {
+        return res.status(403).json({ ok: false, error: 'forbidden' });
+      }
+      if (proposalAlreadyApproved(proposed.error)) {
+        return res.status(409).json({ ok: false, error: 'that address is already approved' });
+      }
+      if (String(proposed.error.code || '') === '22023') {
+        return res.status(400).json({ ok: false, error: 'not a Dogecoin (D…) address' });
+      }
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (!proposed.data || !proposed.data.student_id) {
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    return res.json({
+      ok: true,
+      proposedAddressMasked: maskDogeAddress(proposed.data.proposed_address),
+      proposedAt: proposed.data.proposed_at,
+    });
+  });
+
+  // ── teacher: inspect and decide the pending address queue ──────────────────
+  app.get('/class/wallet-proposals', async (req, res) => {
+    // Match the payout rail's fail-closed teacher policy. The repository's
+    // published fallback key must never authorize key-adjacent decisions.
+    if (!await requirePayoutTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const section = (req.query.section && String(req.query.section).trim()) || null;
+    const rosterResult = await db.listRoster(section, { includeArchived: true });
+    if (rosterResult && rosterResult.error) {
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const roster = (rosterResult && rosterResult.data) || [];
+    if (!roster.length) return res.json({ ok: true, proposals: [] });
+
+    const byId = new Map(roster.map((student) => [student.student_id, student]));
+    const proposalResult = await db.listDogeAddressProposals(Array.from(byId.keys()));
+    if (proposalResult.error) {
+      if (isWalletProposalMissing(proposalResult.error)) return walletProposalsNotProvisioned(res);
+      if (isDogeMissing(proposalResult.error)) return notProvisioned(res);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    const proposals = ((proposalResult && proposalResult.data) || []).map((account) => {
+      const student = byId.get(account.student_id) || {};
+      return {
+        studentId: account.student_id,
+        studentName: student.real_name || student.login_username || account.student_id,
+        username: student.login_username || null,
+        rosterStatus: student.status || 'active',
+        maskedAddress: maskDogeAddress(account.proposed_address),
+        proposedAt: account.proposed_at,
+        change: Boolean(account.doge_address),
+      };
+    });
+    return res.json({ ok: true, proposals });
+  });
+
+  app.post('/wallet/address/approve', async (req, res) => {
+    if (!await requirePayoutTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const rawStudentId = req.body && req.body.studentId;
+    const rawProposedAt = req.body && req.body.proposedAt;
+    if (typeof rawStudentId !== 'string' || typeof rawProposedAt !== 'string') {
+      return res.status(400).json({ ok: false, error: 'studentId + proposedAt required' });
+    }
+    const studentId = rawStudentId.trim();
+    const proposedAt = rawProposedAt.trim();
+    if (!studentId || !proposedAt) {
+      return res.status(400).json({ ok: false, error: 'studentId + proposedAt required' });
+    }
+    if (badId(studentId)) return res.status(404).json({ ok: false, error: 'unknown student' });
+    if (proposedAt.length > 64 || !Number.isFinite(Date.parse(proposedAt))) {
+      return res.status(400).json({ ok: false, error: 'invalid proposal version' });
+    }
+
+    const rosterResult = await db.findByStudentId(studentId);
+    if (rosterResult && rosterResult.error) {
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (!rosterResult || !rosterResult.data) {
+      return res.status(404).json({ ok: false, error: 'unknown student' });
+    }
+    if (rosterResult.data.status === 'archived' || rosterResult.data.role === 'teacher') {
+      return res.status(409).json({ ok: false, error: 'archived students cannot have proposals approved' });
+    }
+
+    const approved = await db.approveDogeAddressProposal(studentId, proposedAt);
+    if (approved.error) {
+      if (walletProposalPayoutMissing(approved.error)) return walletProposalPayoutNotProvisioned(res);
+      if (isWalletProposalMissing(approved.error)) return walletProposalsNotProvisioned(res);
+      if (activePayoutBlocksAddress(approved.error)) {
+        return res.status(409).json({ ok: false, error: 'address change blocked by active payout batch' });
+      }
+      if (proposalChanged(approved.error)) {
+        return res.status(409).json({ ok: false, error: 'proposal changed; refresh and verify it again' });
+      }
+      if (proposalApprovalIneligible(approved.error)) {
+        return res.status(409).json({ ok: false, error: 'only active students can have proposals approved' });
+      }
+      if (String(approved.error.code || '') === '22023') {
+        return res.status(400).json({ ok: false, error: 'not a Dogecoin (D…) address' });
+      }
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (!approved.data || !approved.data.student_id) {
+      return res.status(409).json({ ok: false, error: 'proposal changed; refresh and verify it again' });
+    }
+
+    return res.json({
+      ok: true,
+      studentId,
+      dogeAddress: approved.data.doge_address,
+    });
+  });
+
+  app.post('/wallet/address/reject', async (req, res) => {
+    if (!await requirePayoutTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const rawStudentId = req.body && req.body.studentId;
+    const rawProposedAt = req.body && req.body.proposedAt;
+    const rawReason = req.body && req.body.reason;
+    if (typeof rawStudentId !== 'string'
+        || typeof rawProposedAt !== 'string'
+        || typeof rawReason !== 'string') {
+      return res.status(400).json({ ok: false, error: 'studentId + proposedAt + reason required' });
+    }
+    const studentId = rawStudentId.trim();
+    const proposedAt = rawProposedAt.trim();
+    const reason = rawReason.trim();
+    if (!studentId || !proposedAt || !reason) {
+      return res.status(400).json({ ok: false, error: 'studentId + proposedAt + reason required' });
+    }
+    if (badId(studentId)) return res.status(404).json({ ok: false, error: 'unknown student' });
+    if (proposedAt.length > 64 || !Number.isFinite(Date.parse(proposedAt))) {
+      return res.status(400).json({ ok: false, error: 'invalid proposal version' });
+    }
+    if (reason.length > 240) {
+      return res.status(400).json({ ok: false, error: 'reason must be 240 characters or fewer' });
+    }
+
+    const rejected = await db.rejectDogeAddressProposal(studentId, proposedAt, reason);
+    if (rejected.error) {
+      if (isWalletProposalMissing(rejected.error)) return walletProposalsNotProvisioned(res);
+      if (isDogeMissing(rejected.error)) return notProvisioned(res);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (!rejected.data || !rejected.data.student_id) {
+      return res.status(409).json({ ok: false, error: 'proposal changed; refresh and verify it again' });
+    }
+
+    return res.json({ ok: true, studentId, reason });
   });
 
   // ── teacher: mark candy physically GIVEN / DOGE SENT (disbursement done) ────

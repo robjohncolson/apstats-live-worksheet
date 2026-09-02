@@ -2622,6 +2622,7 @@
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -15991,6 +15992,9 @@ function _dogeFmt(n) {
 // ONE inline form at a time, and the full 7-number ledger tucked behind ▸ Details. Reuses every
 // existing helper (_dogeWalletAction, _dogeWalletGiftForm, _dogeWalletChainArm) + the POST endpoints.
 function _dogeWalletRender(box, w, pts) {
+    if (typeof _clearStudentWalletCeremony === 'function') {
+        _clearStudentWalletCeremony();
+    }
     box.innerHTML = '';
     if (!w || w._notProvisioned || !w.ok) { _dogeWalletPreviewFallback(box, pts, w && w._notProvisioned); return; }
     var candy = w.candyBalance || 0, doge = w.dogeBalance || 0;
@@ -16012,8 +16016,12 @@ function _dogeWalletRender(box, w, pts) {
     title.textContent = '🍬 Candy & DOGE';
     hdr.appendChild(title);
 
-    // Nothing-yet (no candy, no DOGE) → one friendly line, no Details affordance (nothing to disclose).
-    if (earned <= 0.0001 && doge <= 0.0001 && owed <= 0.05) {
+    var hasWalletOnboarding = !w.dogeAddress && Boolean(
+        w.studentWalletOptInEnabled || w.proposedAddressMasked || w.proposalRejectionReason
+    );
+    // Nothing-yet (no candy, no DOGE) → one friendly line. Keep Details when
+    // wallet onboarding has state; a brand-new student may have no rewards yet.
+    if (earned <= 0.0001 && doge <= 0.0001 && owed <= 0.05 && !hasWalletOnboarding) {
         box.appendChild(hdr);
         var first = document.createElement('div');
         first.className = 'geneva'; first.style.cssText = 'font-size:11px;color:#8a7330;margin-top:4px';
@@ -16187,6 +16195,11 @@ function _dogeWalletRender(box, w, pts) {
     var detOpen = false, detBuilt = false;
     detToggle.onclick = function () {
         detOpen = !detOpen;
+        if (!detOpen && typeof _clearStudentWalletCeremony === 'function') {
+            _clearStudentWalletCeremony();
+            detSlot.replaceChildren();
+            detBuilt = false;
+        }
         detToggle.textContent = (detOpen ? '▾' : '▸') + ' Details';
         detSlot.style.display = detOpen ? 'block' : 'none';
         if (detOpen && !detBuilt) { detBuilt = true; _walletLedgerDetail(detSlot, w); }   // chain self-refresh arms only while open
@@ -16243,6 +16256,217 @@ function _walletLedgerDetail(host, w) {
             host.appendChild(chainLine); _dogeWalletChainArm(chainLine);
         }
     }
+    if (typeof _studentWalletOnboardingAllowed === 'function' && _studentWalletOnboardingAllowed(w)) {
+        _studentWalletOnboarding(host, w);
+    }
+}
+
+// Advanced, opt-in self-custody ceremony. Secret material lives only in this
+// closure and removable DOM nodes. The only request body is { address }.
+function _studentWalletOnboardingAllowed(wallet) {
+    if (!wallet || wallet.dogeAddress || wallet.studentWalletOnboardingEligible !== true) return false;
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return false;
+    if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) return false;
+    try {
+        var who = window.rosterClient && typeof window.rosterClient.current === 'function'
+            ? window.rosterClient.current() : null;
+        if (who && who.role === 'teacher') return false;
+    } catch (_) { return false; }
+    return true;
+}
+function _clearStudentWalletCeremony() {
+    var cleanup = window.__studentWalletCeremonyCleanup;
+    window.__studentWalletCeremonyCleanup = null;
+    if (typeof cleanup === 'function') {
+        try { cleanup(); } catch (_) {}
+    }
+}
+function _studentWalletOnboarding(host, wallet) {
+    if (!_studentWalletOnboardingAllowed(wallet)) return;
+    var panel = document.createElement('div');
+    panel.style.cssText = 'border-top:1px solid #e3d3a0;margin-top:7px;padding-top:7px';
+    host.appendChild(panel);
+
+    function label(text) {
+        var el = document.createElement('div');
+        el.className = 'geneva';
+        el.style.cssText = 'font-size:10px;color:#6b5400;line-height:1.45';
+        el.textContent = text;
+        return el;
+    }
+    function button(text) {
+        var el = document.createElement('button');
+        el.type = 'button'; el.className = 's7btn';
+        el.style.cssText = 'font-size:10px;min-width:0;padding:3px 9px;margin:5px 5px 0 0';
+        el.textContent = text;
+        return el;
+    }
+    function pending(masked) {
+        panel.replaceChildren();
+        var line = label('⏳ Address awaiting teacher approval: ' + masked);
+        line.style.fontWeight = 'bold'; line.style.color = '#7a6200';
+        panel.appendChild(line);
+        panel.appendChild(label('Read the last 4 characters aloud from this screen before your teacher approves it.'));
+    }
+
+    if (wallet.proposedAddressMasked) {
+        pending(wallet.proposedAddressMasked);
+        return;
+    }
+
+    if (wallet.proposalRejectionReason) {
+        var rejected = label('Your teacher did not approve the proposed address: ' + wallet.proposalRejectionReason);
+        rejected.style.cssText += ';color:#9b2e2e;font-weight:bold;margin-bottom:4px';
+        panel.appendChild(rejected);
+    }
+    if (!wallet.studentWalletOptInEnabled) return;
+
+    var start = button('🔐 Create my own wallet (advanced)');
+    panel.appendChild(start);
+    var paper = label('The safe default is still a paper wallet from your teacher, with a sealed backup.');
+    paper.style.marginTop = '4px'; panel.appendChild(paper);
+    start.onclick = function () {
+        if (_studentWalletOnboardingAllowed(wallet)) _studentWalletCeremony(panel, wallet);
+    };
+}
+
+function _studentWalletCeremony(host, wallet) {
+    if (!_studentWalletOnboardingAllowed(wallet)) return;
+    _clearStudentWalletCeremony();
+    var onboardingHost = host.parentNode;
+    var session = null;
+    var words = null;
+    var active = true;
+    var leaveHandler = function () { clearSecrets(); };
+
+    function textLine(text) {
+        var el = document.createElement('div'); el.className = 'geneva';
+        el.style.cssText = 'font-size:10px;color:#5a4500;line-height:1.45;margin-top:4px';
+        el.textContent = text; return el;
+    }
+    function smallButton(text) {
+        var el = document.createElement('button'); el.type = 'button'; el.className = 's7btn';
+        el.style.cssText = 'font-size:10px;min-width:0;padding:3px 9px;margin:6px 5px 0 0';
+        el.textContent = text; return el;
+    }
+    function clearSecrets() {
+        active = false;
+        if (window.__studentWalletCeremonyCleanup === clearSecrets) {
+            window.__studentWalletCeremonyCleanup = null;
+        }
+        if (words) { for (var i = 0; i < words.length; i++) words[i] = ''; }
+        words = null;
+        if (session && typeof session.destroy === 'function') session.destroy();
+        session = null;
+        window.removeEventListener('pagehide', leaveHandler);
+        Array.prototype.forEach.call(host.querySelectorAll('input'), function (input) { input.value = ''; });
+        host.replaceChildren();
+    }
+    function cancel() {
+        clearSecrets();
+        if (onboardingHost && onboardingHost.isConnected) {
+            host.remove();
+            _studentWalletOnboarding(onboardingHost, wallet);
+        }
+    }
+    function showPending(masked) {
+        clearSecrets();
+        var line = textLine('⏳ Address awaiting teacher approval: ' + masked);
+        line.style.fontWeight = 'bold'; host.appendChild(line);
+        host.appendChild(textLine('Read the last 4 characters aloud from this screen before your teacher approves it.'));
+    }
+    function showReveal(note) {
+        host.replaceChildren();
+        var title = textLine('Write these 12 words on paper, in order. This is the only reveal.');
+        title.style.fontWeight = 'bold'; host.appendChild(title);
+        if (note) { var retry = textLine(note); retry.style.color = '#9b2e2e'; host.appendChild(retry); }
+
+        var grid = document.createElement('ol');
+        grid.setAttribute('aria-label', 'wallet recovery words');
+        grid.style.cssText = 'columns:2;margin:7px 0 3px;padding-left:28px;font:12px monospace;user-select:none';
+        grid.addEventListener('copy', function (event) { event.preventDefault(); });
+        words.forEach(function (word) { var item = document.createElement('li'); item.textContent = word; grid.appendChild(item); });
+        host.appendChild(grid);
+        host.appendChild(textLine('Copy is disabled. Write the words down carefully. You may print this reveal as your own paper backup.'));
+        var printButton = smallButton('Print backup');
+        printButton.onclick = function () { window.print(); };
+        var checkButton = smallButton('I wrote all 12 words down');
+        checkButton.onclick = showCheck;
+        var cancelButton = smallButton('Cancel and erase'); cancelButton.onclick = cancel;
+        host.appendChild(printButton); host.appendChild(checkButton); host.appendChild(cancelButton);
+    }
+    function showCheck() {
+        var indexes;
+        try { indexes = window.StudentWallet.pickWordIndexes(words.length, 3); }
+        catch (error) { showReveal('Secure random checking is unavailable. Cancel and ask your teacher for a paper wallet.'); return; }
+        host.replaceChildren();
+        host.appendChild(textLine('Prove you wrote it down. Enter these 3 words:'));
+        var inputs = [];
+        indexes.forEach(function (index) {
+            var row = document.createElement('label'); row.className = 'geneva';
+            row.style.cssText = 'display:block;font-size:10px;color:#5a4500;margin-top:5px';
+            row.appendChild(document.createTextNode('Word ' + (index + 1) + ': '));
+            var input = document.createElement('input'); input.type = 'text';
+            input.autocomplete = 'off'; input.autocapitalize = 'none'; input.spellcheck = false;
+            input.style.cssText = 'width:115px;font:11px monospace;border:1px solid #c9961f;padding:2px 4px';
+            row.appendChild(input); host.appendChild(row); inputs.push(input);
+        });
+        var message = textLine(''); host.appendChild(message);
+        var seal = smallButton('Verify and seal');
+        var back = smallButton('Back to the words'); back.onclick = function () { showReveal(''); };
+        var stop = smallButton('Cancel and erase'); stop.onclick = cancel;
+        host.appendChild(seal); host.appendChild(back); host.appendChild(stop);
+        seal.onclick = function () {
+            var correct = indexes.every(function (index, position) {
+                return inputs[position].value.trim().toLowerCase() === words[index];
+            });
+            inputs.forEach(function (input) { input.value = ''; });
+            if (!correct) { showReveal('Those words did not match. Check your paper, then try the same wallet again.'); return; }
+            seal.disabled = true; back.disabled = true; stop.disabled = true;
+            message.textContent = 'Sending the public address only…';
+            var address = session.address;
+            _dogeWalletAction('/wallet/address/propose', { address: address }).then(function (result) {
+                if (result && result.ok && result.proposedAddressMasked) {
+                    showPending(result.proposedAddressMasked);
+                    return;
+                }
+                seal.disabled = false; back.disabled = false; stop.disabled = false;
+                message.textContent = (result && result.error) || 'Could not reach the teacher queue. Your wallet is still only in this ceremony; try again or cancel.';
+            });
+        };
+    }
+
+    host.replaceChildren();
+    var warning = textLine('Your teacher cannot recover this. The school cannot recover this. Nobody can. If you lose the phrase, any DOGE at this address is gone forever. A paper wallet from your teacher is the safe option.');
+    warning.style.fontWeight = 'bold'; warning.style.color = '#8f2020'; host.appendChild(warning);
+    host.appendChild(textLine('Type I UNDERSTAND exactly to continue.'));
+    var gate = document.createElement('input'); gate.type = 'text'; gate.autocomplete = 'off';
+    gate.style.cssText = 'width:145px;font:11px monospace;border:1px solid #b23a3a;padding:3px 4px;margin-top:5px';
+    host.appendChild(gate);
+    var generate = smallButton('Generate 12-word wallet'); generate.disabled = true;
+    var cancelButton = smallButton('Use teacher paper wallet'); cancelButton.onclick = cancel;
+    host.appendChild(generate); host.appendChild(cancelButton);
+    gate.addEventListener('input', function () { generate.disabled = gate.value !== 'I UNDERSTAND'; });
+    generate.onclick = function () {
+        if (gate.value !== 'I UNDERSTAND') return;
+        gate.value = ''; generate.disabled = true; cancelButton.disabled = true;
+        host.appendChild(textLine('Generating securely on this device…'));
+        if (!window.StudentWallet || typeof window.StudentWallet.createWallet !== 'function') {
+            clearSecrets(); host.appendChild(textLine('Wallet generation is unavailable. Ask your teacher for a paper wallet.')); return;
+        }
+        window.StudentWallet.createWallet().then(function (created) {
+            if (!active || !host.isConnected) {
+                if (created && typeof created.destroy === 'function') created.destroy();
+                return;
+            }
+            session = created; words = session.words(); showReveal('');
+        }).catch(function () {
+            if (!active) return;
+            clearSecrets(); host.appendChild(textLine('Secure wallet generation failed. Ask your teacher for a paper wallet.'));
+        });
+    };
+    window.__studentWalletCeremonyCleanup = clearSecrets;
+    window.addEventListener('pagehide', leaveHandler, { once: true });
 }
 function _dogeWalletPreviewFallback(box, pts, notProvisioned) {
     if (typeof WalletLogic === 'undefined' || typeof WalletLogic.candyFromPoints !== 'function') return;
@@ -16270,6 +16494,7 @@ function _dogeWalletPreviewFallback(box, pts, notProvisioned) {
 
 function _walletPaint(host, receipts, loading) {
     if (!host) return;
+    if (typeof _clearStudentWalletCeremony === 'function') _clearStudentWalletCeremony();
     var grade = _walletCurrentGrade();
     var readiness = _walletDisplayReadiness();
     var pts = _walletComputePoints(receipts);
@@ -16700,6 +16925,7 @@ function openWallet() {
 
 function destroyWallet() {
     try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+    if (typeof _clearStudentWalletCeremony === 'function') _clearStudentWalletCeremony();
     var overlay = document.getElementById('app-wallet-overlay');
     if (overlay) overlay.style.display = 'none';
 }
@@ -21182,6 +21408,7 @@ function popOutApp(id) {
 
 function destroyApp(id) {
     if (typeof MacSFX !== 'undefined') MacSFX.play('click', 0.3);
+    if (id === 'wallet' && typeof _clearStudentWalletCeremony === 'function') _clearStudentWalletCeremony();
     var overlay = document.getElementById('app-' + id + '-overlay');
     var iframe = document.getElementById('app-' + id + '-frame');
     var win = overlay.querySelector('.app-window');
@@ -21193,6 +21420,7 @@ function destroyApp(id) {
 // Minimize = animate to icon, keep iframe alive
 function minimizeApp(id) {
     if (typeof MacSFX !== 'undefined') MacSFX.play('click', 0.3);
+    if (id === 'wallet' && typeof _clearStudentWalletCeremony === 'function') _clearStudentWalletCeremony();
     var overlay = document.getElementById('app-' + id + '-overlay');
     var win = overlay.querySelector('.app-window');
     var icon = document.querySelector('.app-icon[data-app="' + id + '"]');

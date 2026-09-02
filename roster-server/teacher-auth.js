@@ -123,7 +123,11 @@ async function payoutTeacherFromBearer(req, db) {
   if (!studentId) return false;
 
   try {
-    return await db.getRoleByStudentId(studentId) === 'teacher';
+    const rosterResult = await db.findByStudentId(studentId);
+    if (!rosterResult || rosterResult.error || !rosterResult.data) return false;
+
+    const teacher = rosterResult.data;
+    return teacher.role === 'teacher' && teacher.status === 'active';
   } catch (_) {
     return false;
   }

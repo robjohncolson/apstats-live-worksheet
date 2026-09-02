@@ -63,6 +63,7 @@ function createWorld() {
     completeErrorOnce: null,
     recordCalls: 0,
     completeCalls: 0,
+    teacherStatus: 'active',
     issueReceipt: vi.fn(() => {
       events.push('receipt');
       return null;
@@ -82,6 +83,19 @@ function createWorld() {
     },
     async getRoleByStudentId(studentId) {
       return studentId === SID_TEACHER ? 'teacher' : 'student';
+    },
+    async findByStudentId(studentId) {
+      if (studentId !== SID_TEACHER) {
+        return { data: null, error: null };
+      }
+      return {
+        data: {
+          student_id: SID_TEACHER,
+          role: 'teacher',
+          status: world.teacherStatus,
+        },
+        error: null,
+      };
     },
   };
 
@@ -432,6 +446,18 @@ describe('payout provisioning and authorization', () => {
     expect((await request(server, 'GET', '/payout/next', {
       headers: { 'x-payout-agent-key': 'trimmed-agent' },
     })).status).toBe(204);
+  });
+
+  it('rejects a valid Bearer token after its teacher roster row is archived', async () => {
+    expect((await request(server, 'POST', '/payout/plan', {
+      auth: 'teacher-token', body: {},
+    })).status).toBe(200);
+
+    world.teacherStatus = 'archived';
+
+    expect((await request(server, 'POST', '/payout/plan', {
+      auth: 'teacher-token', body: {},
+    })).status).toBe(401);
   });
 
   it('sets Cache-Control no-store even on an empty 204 queue', async () => {
