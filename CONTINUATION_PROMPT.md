@@ -1,6 +1,10 @@
-# CONTINUATION PROMPT — NIGHTLY REVIEW v2 SHIPPED + OFFLINE-GRADING MESH Phases 1-2 SHIPPED (s33): NIGHTLY REVIEW v2 (fa `dbd7c0c` + cr `6313293`) — the 🌙 teacher surface gains ✨ AI-drafted comments (single OR a ≤5-answer same-mistake cluster, via a NEW cr `POST /api/ai/review-comment`; the full student response is released to the drafter ONLY for rows already AI-graded at grade time — `aiGradedRow()`: quiz_review|quiz_exception|pc+'-SG'|scored frq, NEVER proctored — the spec's `{'ai','ai-graded'}` allowlist strings turned out to be DEAD/never-written) + a By-student / By-item toggle (the by-item lens groups the class under each itemId) + rh+score 409-stale pins (worksheets revise in place → a mark 409s instead of landing a comment on work a student revised mid-review, `rh` bound into the signed `t:'review'` receipt) + a 14-day default window (badge count visibly drops — intended; `?days=all` = full history) + truncation reporting. 20-agent adversarial review caught + fixed a `__proto__` item_id server-crash + a score-pin coverage hole. ⏭ USER: set `TEACHER_KEY` Railway env to something NOT the published default before the full-response endpoint sees real use (currently set to the default `apteacher2627` = zero secrecy). ; OFFLINE-GRADING MESH Phases 1-2 (fa `3a446dc`+`acf03aa`, the raw-work lane so a fully-OFFLINE classroom turns work into grades with no server): P1 = student PKI + DOMAIN SEPARATION — `verifyLedgerRow` (client) + `verifyRecord` (server) now REQUIRE `payload.t==='ledger'` (every real grade IS t:'ledger'; a teacher FRQ grade = t:'ledger'+src:'frq'; 3 test fixtures hand-built grade payloads w/o `t` → made representative), a 2nd DISJOINT `ReceiptVerify.STUDENT_KEYS` trust set + `verifySubmissionRow` (t:'submission', no sc/g, ah bind, impersonation gate row.sid===payload.sid===signing-key's REGISTERED sid), migration `0027_student_keys` (**USER-RAN ✅**; pubkey PK, FK roster, TERMINAL revoked) + `/student-keys` register(sid-from-TOKEN)/get/revoke, client `student-key.js` (APK-only device key). P2 = the SUBMISSIONS lane — `submission-store.js` 2nd content-addressed G-Set (`apstats_submissions_v1`, SEPARATE from grades) w/ grade-gated SUPPRESSION (§0.7: `coveredKeys` reads a `sub` ref from a grade's payload, covers that submission if same student, monotone → converges; `rowsForGossip` drops covered from the offer, `suppressingVerify` rejects on ingest, row NEVER deleted; nothing suppressed until Phase 3 mints `sub`), `submission-capture.js` self-sign raw work (forced self-attribution), `ledger-gossip.js` lane tags + `runLanes` (both lanes over ONE Nearby discovery; `frame`/`runRound` BYTE-IDENTICAL when no lane → grades path untouched). Reviews: P1 4/4 refuted 0 confirmed, P2 3/3 refuted (2 drove fixes: a Promise-vs-array that'd silently disable suppression, + the missing reject-on-ingest). ⚠⚠ **RUNTIME-UNTESTED — Phases 1-2 need a 2-PHONE + teacher-device test (only the user, via adb) BEFORE building Phases 3-4.** ⏭ Phase 3 = teacher offline grade loop (deterministic receipts §0.8, the `sub` ref that activates suppression, anti-farming §0.4 + per-student flood cap deferred from P2), Phase 4 = hub reconcile (server archives subs, never re-grades §0.10). ; ‖ PRIOR (s31): ANDROID Phase 2 (on-device ledger merge) + Phase 3 (P2P gossip) SHIPPED + APK rebuilt: PHASE 2 — the student device re-derives its OWN grade OFFLINE from local signed ledger rows using the EXACT server engine (item-level re-derivation, user-chosen), made divergence-proof by SHARING the engine: `scripts/build-grade-engine.mjs` bundles the 3 pure server modules (grade-config+scoring+lesson-grade+gradebook-grid+grade) into `window.GradeEngine` (`grade-engine.bundle.js`); a PARITY test pins client `computeGrade`/`buildGradebook` ≡ server across all sim-world archetypes + a no-drift check. The answer key NEVER ships: new read-only token-gated `roster-server/grade-offline-inputs.js` `GET /grade/offline-inputs` returns a REDACTED per-student key (same item-ids + gradability so denominators match, every answer a sentinel EXCEPT the student's OWN correctly-answered items; proctored PC redacted by default, `?includePc=1` restores PC parity when PCs open). `ledger-store.js` = content-addressed (receipt_id) IndexedDB G-Set w/ `.pull()` from /ledger/student + `.verifyAll()` (Ed25519 via receipt-verify.js); Desk offline branch re-derives via GradeEngine over LedgerStore ∪ unsynced OfflineQueue (REPLACES the unverified `apstats_grade_cache_v1` restore), strictly additive — online /grade still wins, never-downgrade, OFF in view-as; 🔐 verification chip in My Ledger (roster issuer pubkey fetched from `/receipts/issuer` + registered into ReceiptVerify). PHASE 3 — phones epidemically gossip the signed-ledger G-Set so a student's work reaches the teacher via classmates with no internet/no direct contact: `ledger-gossip.js` anti-entropy (HELLO→SYNC→SEND, both peers converge to the union; merge=union so conflicts impossible), VERIFY-ON-INGEST is the SECURITY BOUNDARY (a row is stored/relayed only if its receipt verifies → a peer CANNOT inject a fake grade; replay harmless). Committable local Capacitor plugin `android-app/plugins/gossip-nearby/` wraps Google Nearby Connections (P2P_CLUSTER: BT/BLE/Wi-Fi-Direct, auto-discover, no pairing); `nearby-transport.js` registers `window.GossipTransport` ONLY in the APK (web Desk inert, "Sync Nearby" menu item stays hidden); Desk `_phase3SyncNearby` runs one session per peer. APK REBUILT with the plugin (cap sync detects `gossip-nearby@1.0.0`, gradle compiles it + resolves play-services-nearby + packages it; 1514 MB). Tests root **7613/7613**, roster-server **1134/1134**. ⏭ NEXT = PHASE 4 (teacher app: move the issuer signing key on-device into Android Keystore+PIN, backup = Railway warm-spare of the EXISTING `RECEIPT_ISSUER_PRIVATE_KEY` — NOT the apteacher2627 login key — + issuer-key history; the import→grade-FRQ→sign→seal-epoch→push loop). ⚠ runtime P2P needs a **2-PHONE test** (only the user can do this; drive via adb). ; NIGHTLY REVIEW shipped + ANDROID offline-course app + cr quiz mobile pass (s30): NIGHTLY REVIEW all 4 phases LIVE — a 🌙 teacher Desk surface to review recent student work (mark SEEN per item/session/day + comment + editable templates + "not reviewed in N days" flag), each review a signed `t:'review'` receipt that mints **1 bonus candy/student/day** (new additive `candy_bonus` MINT — spec §3.3's "bump candy_given" was BACKWARDS) and toasts the student via the existing nudge path; student sees 👁seen/💬comment in My Ledger; reviews ride snapshot/verify/restore + the nightly digest; **migration 0025 USER-RUN + DONE**. ANDROID PACKET APP — the whole AP Stats course as a SIDELOADABLE offline Capacitor APK (~1.5 GB: 144 videos re-encoded H.264-CRF23 24.96GB→1.49GB visually-identical, all worksheets, the quiz app, a mobile-first lessons launcher `mobile-home.html`); grades capture offline → existing ledger; ANDROID_PACKET_APP_SPEC.md brainstormed the durable model (single-writer signed-CRDT grade ledger gossiped P2P over Nearby/BT across phones+teacher-app+Supabase, latest-ts wins, clear-text/UI-level-privacy, teacher key on-device w/ Railway warm-spare). cr quiz given a mobile-responsive `@media ≤600px` pass (desktop untouched), verified on-device via adb screenshots. ; GRADE-LEDGER DURABILITY + nightly backup/review (s29): survive a Supabase loss — signed off-Supabase snapshot / verify / FAITHFUL restore, teacher dashboard "Grade Backup & Recovery" card, Desk 1-click 💾 Download Grade Backup, a LOCAL nightly backup Task Scheduler job that also writes a per-student REVIEW digest, and the default teacher key changed apstats2627→**apteacher2627** (it collided with the student password). NIGHTLY REVIEW feature (mark-seen + comment + candy + toast, signed) is SPEC'D (NIGHTLY_REVIEW_SPEC.md), not yet built. ; GUESTS RETIRED everywhere + teacher-trust fixes (s28): guests fully disabled on every student surface (Desk/worksheets/study-guide/quiz + cr presence-server `Guest_` reject), off-roster students self-sign-up with a REAL NAME; worksheet "revise anytime" hint on all 69; VIEW-AS grade-cache bug fixed (it was showing the teacher's OWN grades under the student's banner); "Why so low?" AI COACH fixed (stops pushing not-yet-open Progress Checks + surfaces the flashcard completion/unlock gate). ; OFFLINE MODE shipped end-to-end + FEATURE AUDIT closed (s27): every student surface (worksheets/Desk/study-guide/quiz) captures grades offline → export → teacher import (`/ledger/import`); one-click USB pack (build + launcher, 24 GB video pulled local); installable PWA on BOTH repos. Distribution machinery (per-unit/torrent/USB) deliberately NOT built (YAGNI). ; TEACHER CHAT: guests can now READ + get notified of teacher messages (s26) ; cr typed sign-in roster dropdown (Codex s26) ; REPO HYGIENE + PRESENCE FIX: edgar/MIT removal + roadmap resilience + greyed-ghost-avatar ⇄ "Online Now" agreement; grade behavior clarified (s25) ; TETRIS HARDENING: Study Break 1v1 multiplayer + stakes robustness pass (s24) ; MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — **s36 (2026-09-03) IS CURRENT: read the SESSION 36 block below — its USER-ACTION CHECKLIST is the live to-do (migrations 0032/0033 + TEACHER_KEY rotation).** Historic s35 header follows: FRQ grade tickets are LIVE in `authoritative` canary; cr `AI_GRADE_AUTH=log` flipped 2026-08-27; the rest of Stage 4 (`FRQ_CANARY_STUDENTS=*`, then `enforce`) is deliberately held — `*` waits for the first real worksheet day, `enforce` is blocked on four unauthenticated grader callers. The SY2627 calendar intake is still blank with the real schedule expected ~2026-09-01, and that is the top blocker. ‖ PRIOR (s33 title, historical): NIGHTLY REVIEW v2 SHIPPED + OFFLINE-GRADING MESH Phases 1-2 SHIPPED (s33): NIGHTLY REVIEW v2 (fa `dbd7c0c` + cr `6313293`) — the 🌙 teacher surface gains ✨ AI-drafted comments (single OR a ≤5-answer same-mistake cluster, via a NEW cr `POST /api/ai/review-comment`; the full student response is released to the drafter ONLY for rows already AI-graded at grade time — `aiGradedRow()`: quiz_review|quiz_exception|pc+'-SG'|scored frq, NEVER proctored — the spec's `{'ai','ai-graded'}` allowlist strings turned out to be DEAD/never-written) + a By-student / By-item toggle (the by-item lens groups the class under each itemId) + rh+score 409-stale pins (worksheets revise in place → a mark 409s instead of landing a comment on work a student revised mid-review, `rh` bound into the signed `t:'review'` receipt) + a 14-day default window (badge count visibly drops — intended; `?days=all` = full history) + truncation reporting. 20-agent adversarial review caught + fixed a `__proto__` item_id server-crash + a score-pin coverage hole. ⏭ USER: set `TEACHER_KEY` Railway env to something NOT the published default before the full-response endpoint sees real use (currently set to the default `apteacher2627` = zero secrecy). ; OFFLINE-GRADING MESH Phases 1-2 (fa `3a446dc`+`acf03aa`, the raw-work lane so a fully-OFFLINE classroom turns work into grades with no server): P1 = student PKI + DOMAIN SEPARATION — `verifyLedgerRow` (client) + `verifyRecord` (server) now REQUIRE `payload.t==='ledger'` (every real grade IS t:'ledger'; a teacher FRQ grade = t:'ledger'+src:'frq'; 3 test fixtures hand-built grade payloads w/o `t` → made representative), a 2nd DISJOINT `ReceiptVerify.STUDENT_KEYS` trust set + `verifySubmissionRow` (t:'submission', no sc/g, ah bind, impersonation gate row.sid===payload.sid===signing-key's REGISTERED sid), migration `0027_student_keys` (**USER-RAN ✅**; pubkey PK, FK roster, TERMINAL revoked) + `/student-keys` register(sid-from-TOKEN)/get/revoke, client `student-key.js` (APK-only device key). P2 = the SUBMISSIONS lane — `submission-store.js` 2nd content-addressed G-Set (`apstats_submissions_v1`, SEPARATE from grades) w/ grade-gated SUPPRESSION (§0.7: `coveredKeys` reads a `sub` ref from a grade's payload, covers that submission if same student, monotone → converges; `rowsForGossip` drops covered from the offer, `suppressingVerify` rejects on ingest, row NEVER deleted; nothing suppressed until Phase 3 mints `sub`), `submission-capture.js` self-sign raw work (forced self-attribution), `ledger-gossip.js` lane tags + `runLanes` (both lanes over ONE Nearby discovery; `frame`/`runRound` BYTE-IDENTICAL when no lane → grades path untouched). Reviews: P1 4/4 refuted 0 confirmed, P2 3/3 refuted (2 drove fixes: a Promise-vs-array that'd silently disable suppression, + the missing reject-on-ingest). ⚠⚠ **RUNTIME-UNTESTED — Phases 1-2 need a 2-PHONE + teacher-device test (only the user, via adb) BEFORE building Phases 3-4.** ⏭ Phase 3 = teacher offline grade loop (deterministic receipts §0.8, the `sub` ref that activates suppression, anti-farming §0.4 + per-student flood cap deferred from P2), Phase 4 = hub reconcile (server archives subs, never re-grades §0.10). ; ‖ PRIOR (s31): ANDROID Phase 2 (on-device ledger merge) + Phase 3 (P2P gossip) SHIPPED + APK rebuilt: PHASE 2 — the student device re-derives its OWN grade OFFLINE from local signed ledger rows using the EXACT server engine (item-level re-derivation, user-chosen), made divergence-proof by SHARING the engine: `scripts/build-grade-engine.mjs` bundles the 3 pure server modules (grade-config+scoring+lesson-grade+gradebook-grid+grade) into `window.GradeEngine` (`grade-engine.bundle.js`); a PARITY test pins client `computeGrade`/`buildGradebook` ≡ server across all sim-world archetypes + a no-drift check. The answer key NEVER ships: new read-only token-gated `roster-server/grade-offline-inputs.js` `GET /grade/offline-inputs` returns a REDACTED per-student key (same item-ids + gradability so denominators match, every answer a sentinel EXCEPT the student's OWN correctly-answered items; proctored PC redacted by default, `?includePc=1` restores PC parity when PCs open). `ledger-store.js` = content-addressed (receipt_id) IndexedDB G-Set w/ `.pull()` from /ledger/student + `.verifyAll()` (Ed25519 via receipt-verify.js); Desk offline branch re-derives via GradeEngine over LedgerStore ∪ unsynced OfflineQueue (REPLACES the unverified `apstats_grade_cache_v1` restore), strictly additive — online /grade still wins, never-downgrade, OFF in view-as; 🔐 verification chip in My Ledger (roster issuer pubkey fetched from `/receipts/issuer` + registered into ReceiptVerify). PHASE 3 — phones epidemically gossip the signed-ledger G-Set so a student's work reaches the teacher via classmates with no internet/no direct contact: `ledger-gossip.js` anti-entropy (HELLO→SYNC→SEND, both peers converge to the union; merge=union so conflicts impossible), VERIFY-ON-INGEST is the SECURITY BOUNDARY (a row is stored/relayed only if its receipt verifies → a peer CANNOT inject a fake grade; replay harmless). Committable local Capacitor plugin `android-app/plugins/gossip-nearby/` wraps Google Nearby Connections (P2P_CLUSTER: BT/BLE/Wi-Fi-Direct, auto-discover, no pairing); `nearby-transport.js` registers `window.GossipTransport` ONLY in the APK (web Desk inert, "Sync Nearby" menu item stays hidden); Desk `_phase3SyncNearby` runs one session per peer. APK REBUILT with the plugin (cap sync detects `gossip-nearby@1.0.0`, gradle compiles it + resolves play-services-nearby + packages it; 1514 MB). Tests root **7613/7613**, roster-server **1134/1134**. ⏭ NEXT = PHASE 4 (teacher app: move the issuer signing key on-device into Android Keystore+PIN, backup = Railway warm-spare of the EXISTING `RECEIPT_ISSUER_PRIVATE_KEY` — NOT the apteacher2627 login key — + issuer-key history; the import→grade-FRQ→sign→seal-epoch→push loop). ⚠ runtime P2P needs a **2-PHONE test** (only the user can do this; drive via adb). ; NIGHTLY REVIEW shipped + ANDROID offline-course app + cr quiz mobile pass (s30): NIGHTLY REVIEW all 4 phases LIVE — a 🌙 teacher Desk surface to review recent student work (mark SEEN per item/session/day + comment + editable templates + "not reviewed in N days" flag), each review a signed `t:'review'` receipt that mints **1 bonus candy/student/day** (new additive `candy_bonus` MINT — spec §3.3's "bump candy_given" was BACKWARDS) and toasts the student via the existing nudge path; student sees 👁seen/💬comment in My Ledger; reviews ride snapshot/verify/restore + the nightly digest; **migration 0025 USER-RUN + DONE**. ANDROID PACKET APP — the whole AP Stats course as a SIDELOADABLE offline Capacitor APK (~1.5 GB: 144 videos re-encoded H.264-CRF23 24.96GB→1.49GB visually-identical, all worksheets, the quiz app, a mobile-first lessons launcher `mobile-home.html`); grades capture offline → existing ledger; ANDROID_PACKET_APP_SPEC.md brainstormed the durable model (single-writer signed-CRDT grade ledger gossiped P2P over Nearby/BT across phones+teacher-app+Supabase, latest-ts wins, clear-text/UI-level-privacy, teacher key on-device w/ Railway warm-spare). cr quiz given a mobile-responsive `@media ≤600px` pass (desktop untouched), verified on-device via adb screenshots. ; GRADE-LEDGER DURABILITY + nightly backup/review (s29): survive a Supabase loss — signed off-Supabase snapshot / verify / FAITHFUL restore, teacher dashboard "Grade Backup & Recovery" card, Desk 1-click 💾 Download Grade Backup, a LOCAL nightly backup Task Scheduler job that also writes a per-student REVIEW digest, and the default teacher key changed apstats2627→**apteacher2627** (it collided with the student password). NIGHTLY REVIEW feature (mark-seen + comment + candy + toast, signed) is SPEC'D (NIGHTLY_REVIEW_SPEC.md), not yet built. ; GUESTS RETIRED everywhere + teacher-trust fixes (s28): guests fully disabled on every student surface (Desk/worksheets/study-guide/quiz + cr presence-server `Guest_` reject), off-roster students self-sign-up with a REAL NAME; worksheet "revise anytime" hint on all 69; VIEW-AS grade-cache bug fixed (it was showing the teacher's OWN grades under the student's banner); "Why so low?" AI COACH fixed (stops pushing not-yet-open Progress Checks + surfaces the flashcard completion/unlock gate). ; OFFLINE MODE shipped end-to-end + FEATURE AUDIT closed (s27): every student surface (worksheets/Desk/study-guide/quiz) captures grades offline → export → teacher import (`/ledger/import`); one-click USB pack (build + launcher, 24 GB video pulled local); installable PWA on BOTH repos. Distribution machinery (per-unit/torrent/USB) deliberately NOT built (YAGNI). ; TEACHER CHAT: guests can now READ + get notified of teacher messages (s26) ; cr typed sign-in roster dropdown (Codex s26) ; REPO HYGIENE + PRESENCE FIX: edgar/MIT removal + roadmap resilience + greyed-ghost-avatar ⇄ "Online Now" agreement; grade behavior clarified (s25) ; TETRIS HARDENING: Study Break 1v1 multiplayer + stakes robustness pass (s24) ; MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-07-02 (session 33 — NIGHTLY REVIEW v2 SHIPPED; **OFFLINE-GRADING MESH ALL 4 PHASES + 2.5 SHIPPED (feature-complete)**; APK Phase-2.5 hardware-smoked; GitNexus refreshed). Prior s32 = grade-integrity §0 binding + mobile launcher parity + QR engine shelved. s31 = ANDROID Phases 2-5.
+> ⚠ **STALE (s33-era, 2026-07-02). The authoritative block is `## ⏭ SESSION 35` further down.** This
+> blockquote is kept for history only — its Windows `C:/Users/rober/...` paths are dead (the host moved
+> to Linux in s34) and its "supersedes everything below" claim no longer holds.
+>
+> Last updated 2026-07-02 (session 33 — NIGHTLY REVIEW v2 SHIPPED; **OFFLINE-GRADING MESH ALL 4 PHASES + 2.5 SHIPPED (feature-complete)**; APK Phase-2.5 hardware-smoked; GitNexus refreshed). Prior s32 = grade-integrity §0 binding + mobile launcher parity + QR engine shelved. s31 = ANDROID Phases 2-5.
 > follow-alongs HEAD (pushed) = `7fc297a` (s33 tip). s33 fa arc: **`dbd7c0c` Nightly Review v2** (roster `/class/review-item/:ledgerId` + `/class/review-by-item` + 409-stale rh/score pins + 14-day window; Desk By-item lens + ✨ Draft + cluster draft) → **OFFLINE-GRADING MESH `3a446dc` P1** (student PKI + domain separation: `verifyLedgerRow` needs `t:'ledger'`, disjoint `STUDENT_KEYS` + `verifySubmissionRow`, migration 0027, `student-key.js`) → **`acf03aa` P2** (submissions lane: `submission-store.js` grade-gated suppression + `submission-capture.js` self-sign + `ledger-gossip.js` lane tags/runLanes) → **`7e71ff0` P2.5** (silent non-biometric student key + native mobile signup; 3-device HW smoke PASSED) → **`b0c6347` P3** (teacher offline grade loop: `submission-grader.js` — teacher-ASSIGNED attempt is the anti-farm fix — + `/grade/answer-key` full-key + flood cap + teacher-app card; **fixed a real APK answer-key leak**) → **`7fc297a` P4** (hub reconcile: migration 0028 submission_archive + `verifySubmissionRecord` + `/submissions/archive`, decoupled from grading §0.10). cr HEAD = `6313293` (`POST /api/ai/review-comment`, the NRv2 drafter; user's `max_tokens` WIP kept out + re-applied). **GH Pages auto-publishes `master`**; **roster-server/ + cr `railway-server/**` auto-deploy** (both live-verified this session).
 > **⚠ s33 USER-ACTION ITEMS:** (1) **RUN migration `0028_submission_archive`** — `/submissions/archive` 503s until then (0027 already RUN ✅; `/grade/answer-key` LIVE). (2) **REBUILD THE APK** to pick up mesh P3-4 (`node scripts/build-android.mjs --play --media-base "https://pub-c41e030062804d678d5f79d5440fdd45.r2.dev"` then gradle assembleDebug). (3) ⚠⚠ **the offline P2P grade loop (P3-4) is RUNTIME-UNTESTED end-to-end** — needs a teacher device + ≥1 student phone (adb) to validate student-submits→teacher-grades-offline→grade-gossips-back→suppression. P1-2 were hardware-smoked (Nearby convergence ✅); the teacher grade loop was NOT. (4) `TEACHER_KEY` Railway env = the PUBLISHED default `apteacher2627` (zero secrecy — change if the full-key/full-response endpoints must be genuinely gated; low-stakes → optional). (5) known-flaky root tests (untouched by s33, pass in isolation): `teacher-student-console-dashboard-deeplink` + `gradebook-feeder-wiring` "empty blank" — s33 final root was 7789/7791 with those two as the only failures; roster-server 1209/1209 clean.
 > **⚠ THE BIG SHIPPED ITEM — §0 signature binding (`5cea79b`, grade-affecting, LIVE):** the signed ledger's Ed25519 signatures were DECORATIVE — `ledger-gossip.js ingest` only checked `verifyReceipt().ok` while `computeGrade` grades off the UNSIGNED top-level `row.score/item_id/source`, so a harvested signature could be re-stapled onto a forged score (over Bluetooth OR the future QR path). Fixed by `ReceiptVerify.verifyLedgerRow(row)` (binds `row.receipt_id===SHA-256(payload)` + graded fields must equal the signed payload + `includeTestKeys:false`); both gossip adapters (`mobile-home.html verifyRow`, Desk `_phase3VerifyRow`) delegate to it; `ingest` fails CLOSED. 12 binding tests + full suite 7670. Brought the client to parity with the server's existing `verifyRecord`.
@@ -19,7 +23,253 @@
 
 ---
 
-## ⏭ SESSION 34 (2026-08-07) — **CURRENT. Supersedes the s33 header above.**
+## ⏭ SESSION 36 (2026-09-01 → 09-03) — **CURRENT. Supersedes s35 below.**
+
+**HEAD = `e668351`** (pushed; Railway live-verified on it). s36 arc, all CC-reviewed Codex builds
+unless noted: **SY2627 schedule step 1** (`e04166e` — real calendar intake COMPLETE, topic schedule
+generated: B Mon/Tue/Thu/Fri, E Mon/Wed/Fri, AP exam 2027-05-11 hard end; handoff §3 steps 2-6 still
+owed) · **roster archive LIVE** (`3abc6c8`+`ce8f7f1` — Manage Students card, status='archived'
+filters every surface, unscoped wallet views included) · **DOGE payout rail** (`16959c4` — ⚡ batch
+sendmany via teacher-machine agent; INERT) · **student BIP-39 wallet opt-in** (`fff0d3d` — browser-only
+ceremony, address-only proposals; INERT) · **partial candy give** (`8593c20` 'some…', CC-direct, LIVE)
+· **candy returns** (`e668351` — '↩ took back…', candy_returned counter, I5 intact; migration 0034
+**RUN ✅**) · Derrick Jimenez enrolled PeriodE (`pomelo_eagle`). Specs live at repo root
+(ROSTER_ARCHIVE / DOGE_PAYOUT_RAIL / STUDENT_WALLET_ONBOARDING / CANDY_RETURN), prompts in `state/`.
+
+### ⚠ s36 USER-ACTION CHECKLIST (the activation ladder — verified live 2026-09-03)
+
+**Supabase — the `curriculum_render` project IS the roster DB (`.env.example` confirms; 0034 landing
+there proves it). SQL editor, in this order:**
+1. ✅ `0034_candy_return.sql` — **RUN + live-verified** (`/wallet/mark-returned` 200s; ↩ took back… works NOW).
+2. ☐ `roster-server/migrations/0032_payout_batch.sql` — payout tables/RPCs/reservation trigger. Run FIRST.
+3. ☐ `roster-server/migrations/0033_wallet_address_proposals.sql` — REQUIRES 0032 already run (its
+   approve path fences on `payout_batch`). Nothing else is outstanding: 0001–0031 all ran previously.
+
+**Railway env (roster-server service):**
+4. ☐ **`TEACHER_KEY` → strong non-default** (still the published `apteacher2627`). This single change
+   ARMS the payout rail's fail-closed auth AND un-403s `/class/wallet-proposals` + approve/reject
+   (they use `requirePayoutTeacher`, dead on the default key by design). Afterwards update:
+   `~/grade-backups/config.json` teacherKey (nightly backup timer) and what you type into the
+   dashboard's teacher-secret box.
+5. ☐ `PAYOUT_AGENT_KEY` → a SEPARATE strong value (payout endpoints only).
+6. ☐ `STUDENT_WALLET_OPTIN=true` — ONLY when you're ready to offer self-custody (one-time school-policy
+   comfort check first; until then the ceremony button simply doesn't render).
+7. ☐ `PC_TRACK_ENABLED=true` — unrelated to DOGE; ONLY after the first paper PC is scored
+   (SY2627_ACTIVATION_RUNBOOK Step 5). Flipping early caps unscored students at 70% of Work.
+   Already set ✓ (verified s34/35): `PC_FIGURES_SUPABASE_*`, `TRAINER_DECK_ALLOWLIST`, `USE_V3_GRADING`.
+
+**Dogecoin Core machine (only when you want one-button payouts):**
+8. ☐ `~/.config/apstats/.payout-agent.json` (mode 0600) with the two keys + roster URL + cli path;
+   install/enable `tools/doge-payout-agent.service` as a systemd user unit; fund the SENDING wallet
+   from cold storage (float only — never the 10k treasury). Audit student addresses in the dashboard
+   before sealing the first batch. NEVER delete/retry an armed or ambiguous payout journal.
+
+**Suggested minimal path if short on time:** #4 (key rotation — it's been owed since s33 and now
+gates three features), then #2. Everything else can wait; candy give/some…/took-back already work.
+
+---
+
+## ⏭ SESSION 35 (2026-08-18 → 08-27) — superseded by s36 above.
+
+**HEAD = `11adae1`** (pushed, `master`, working tree clean). Baseline for this block = `1cc59af`
+(s34 tip, 2026-08-07) — **58 commits**. **curriculum_render HEAD = `3f54c45`** (branch `main`, pushed).
+Host unchanged from s34: Linux, `/home/mrcolson/repos/apstats-live-worksheet`, sibling
+`/home/mrcolson/repos/curriculum_render`. **The box clock is JST** (timer times below are JST).
+Last green gates: **root 8849, roster-server 1465, cr 1593, pytest 165.**
+
+### ⏭ START HERE — the one live decision (as of 2026-08-27)
+
+The only open thread is the **FRQ grade-tickets Stage 4 rollout** (`FRQ_GRADE_TICKETS_RUNBOOK.md`).
+Everything else is either shipped or waiting on an external date. The decision reached 2026-08-27:
+
+**Stage 4 was split in half.**
+
+1. ✅ **`AI_GRADE_AUTH=log` on curriculum render — DONE by the teacher 2026-08-27.** `log` mode is
+   purely observational: every branch in `railway-server/ai-grade-auth.js` logs and calls `next()`;
+   only `enforce` ever returns 401/429. Its log is now accumulating the evidence needed for step 3.
+2. ⛔ **`FRQ_CANARY_STUDENTS=*` is deliberately HELD.** Flipping it during summer proves nothing —
+   `/health` `frq.worker` counters are all zero because there is no student traffic — and it would
+   skip the only load test that matters. **Plan: first real worksheet day → put ONE PERIOD's
+   studentIds in `FRQ_CANARY_STUDENTS` → watch `frq.worker` for a day → then `*`.** Everyone else
+   stays on the known-good client path meanwhile.
+3. ⛔ **`AI_GRADE_AUTH=enforce` MUST NOT be flipped yet** — it would 401 four legitimate callers.
+   See "Enforce blockers" below. This is the gating code work.
+
+Rollback for any of it stays `FRQ_GRADE_MODE=off` (≤60 s via config cache; every write is raise-only,
+so nothing can be lost).
+
+### A. Production state, verified live 2026-08-27
+
+| Surface | Verified value |
+|---|---|
+| roster `/health` → `frq.mode` | **`authoritative`** (Stage 3 canary) |
+| roster `/health` → `frq.storage.degraded` | `false` |
+| roster `/health` → `frq.worker` | ticks ~165 878, **every grade counter 0** (no traffic yet), `tickErrors: 1` |
+| cr `/health` → `aiGradeAuth` | `off` at time of check — **teacher flipped it to `log` right after** |
+| cr `/health` → `graderSecret` | `true` (so `ROSTER_GRADER_SECRET` is already set on BOTH services) |
+| GH Actions `frq-regrade.yml` | **running hourly, succeeding** (secret `APSTATS_TEACHER_KEY` is set) |
+| systemd user timers (JST) | `apstats-frq-regrade.timer` hourly ✅, `apstats-backup.timer` 22:00 daily ✅ |
+
+⚠ **Shadow-gate evidence is gone.** The runbook's Stage 2 gate (≥100 compared, 0 `shadowTwoBand`)
+cannot be re-checked: shadow counters are in-process and `mode` is now `authoritative`, so
+`shadowCompared` reads 0. If that gate's numbers ever matter, they were not persisted anywhere.
+
+### B. Enforce blockers — the exact code work before `AI_GRADE_AUTH=enforce`
+
+`enforce` requires either the grader secret (`x-roster-grader-secret`) or a roster token (Bearer
+header, or `rosterToken` in the body — `railway-server/server.js:208` `sidFromRequest`). These four
+callers send **neither** and would start 401ing:
+
+| # | Caller | File:line | Blast radius |
+|---|---|---|---|
+| 1 | Hourly regrade sweep (GH Actions **and** the systemd timer) | `tools/regrade-ungraded-frqs.mjs:371` | The standing no-lost-grades safety net dies; the workflow goes red hourly |
+| 2 | Study-guide AI gates + Focus Synthesis | `study_guide_diagnostic.html:5636` and `:5684` | Linked from the Desk **and** the landing page; students see "roster sign-in required" |
+| 3 | Quiz app "Turbo mode (or fallback)" grade path | `curriculum_render/index.html:10112` | Silent grading failure. **Note the sibling path at `:9822` DOES send the token** — only the fallback is bare |
+| 4 | Quiz FRQ grading engine | `curriculum_render/js/grading/grading-engine.js:290` | Silent grading failure. Its *appeal* call at `:456` already sends the token; the *grade* call does not |
+
+**Fix for #1 is trivial** — `ROSTER_GRADER_SECRET` already exists on both Railway services, so the
+sweep just needs to send `x-roster-grader-secret` with it, plus the value added as a GH Actions
+secret and to the systemd unit's environment.
+
+**NOT blockers** (already authenticated): the 69 worksheets wrap `window.fetch` to stamp the roster
+bearer onto grader calls (`_aiInstallGraderBearer`, e.g. `u1_lesson1_live.html:2020`); the ticket
+worker sends the grader secret (`roster-server/frq-worker.js:323`); `test_escalation.html` is a dev
+harness.
+
+🕳 **Residual that survives Stage 4:** `POST /api/ai/appeal` is **not wrapped at all**
+(`railway-server/server.js:1473` — no `aiGradeAuthFor`), so anonymous appeals still reach the model
+even under `enforce`. Wrap it or the quota hole stays half-open.
+
+**Why this work matters** (the payoff, since it was asked): `enforce` is the only thing that closes
+the hole `FRQ_GRADE_TICKETS_SPEC.md:467` calls out — `/api/ai/grade` currently accepts anonymous
+POSTs and its URL sits in the page source of 69 public worksheets, so anyone can script it and burn
+the DeepSeek/Groq quota, which would leave real students' reflections queued during class. Caps
+today: 30 items/min per sid, 600/min per IP (`ai-grade-auth.js` `RATE_DEFAULTS`). Until the four
+callers above are fixed, `enforce` can never be flipped and that hole stays open indefinitely.
+
+### C. Untested-at-load residual — the concurrency smoke
+
+The four canary rounds (§D) were all **single-user**; every bug they found was a single-user bug.
+`FRQ_GRADE_TICKETS_SPEC.md:657` lists a rollout smoke whose concurrency items were **never run**:
+**Railway restart after claim**, **two worker instances**, **GitHub sweep collision**. None of them
+need students — a redeploy plus the teacher account is enough — so they are the right thing to run
+before the first class day rather than discovering them in front of one.
+
+Known and **benign**: the sweep selects candidates from `/admin/snapshot` by null score
+(`tools/regrade-ungraded-frqs.mjs:60,269`) with **no ticket/claim awareness**, so at `*` it and the
+worker can both grade a row that is in flight. Cost is a duplicate model call, not a wrong grade —
+the apply is raise-only and response-hash checked, and the sweep does send `responseHash` +
+`rubricVersion` so it satisfies the authoritative branch (`roster-server/ledger.js:738`).
+
+### D. What landed after s34 — 2026-08-18 → 08-23
+
+- **Flashcards V2, all phases + flags ON** — `521ac70` P0 (closes the quick-check resume/timer
+  loophole, SRS foundations) → `6cd14ae` P1 (per-card logging, misses recap, Desk⇄mobile parity
+  harness) → `6b3f3b8` P2a (Review mode, "Review due (n)" deck, choice-position permutation) →
+  `8abfd25` P2b (readiness badge, two-action stage flow, quick-retry redraw, progress passport) →
+  **`02b2673` flags enabled** (teacher decision 2026-08-18) → `65ab535` T3.4 (mobile timed deck no
+  longer reveals on a miss) → `50ae02e` **Supabase practice sync** (`trainer_state` row via
+  roster-server; passport row hidden from students). Blooket deck content review applied alongside:
+  `34046fc` sheet → `0646fb4` two wrong answer keys → `0064c39` 32 rewrites / 25 drops across 23 decks.
+- **Reliability build, phases 1–4** — `a0e81f7` P1 (grade golden master: synthetic committed +
+  local real-data oracle; Desk journey harness J1–J3) → `2d530a8` P2 (**answer-key frozen per school
+  year at roster-server RUNTIME** — the s34 architectural-debt item; J4–J6) → `1d15756` P3 (J7–J9:
+  incident offline behaviors, view-as zero-writes, two-device flashcard sync) → `a6301f5` P4
+  (`RELIABILITY_PIN_CONVERSION.md`: 16 source-regex pins converted to executed journeys) +
+  `99fca75`. `d924177` captures/announces production grade flags (`USE_V3_GRADING`).
+- **Worksheet FRQ grading coverage — 44% ungraded → 0%** (`GRADEBOOK_TAGGING_AUDIT.md` found it).
+  `09a695d` client auto-grade (blur / 20 s idle / pagehide / on-load, first-ever I persisted) →
+  `bd3c692` Codex hardening (**server-side durable FRQ floor**, stale-verdict rejection, bounded
+  retry, auto budget) → `b1a33db` `POST /ledger/frq-regrade` (teacher-gated, existing rows only) →
+  `7a9ec14`/`6d43f5d` rubric audit (212 rubrics sheeted; all 62 proposals applied) → `28dd609`
+  server-independent sweep + manifest + systemd timer → `4519de8` honest wait pill under each
+  reflection → `7b57b49` **one grader call per worksheet** via `/api/ai/grade-batch` → `64a1848`
+  the same sweep hourly on GitHub Actions so grades never depend on the teacher's box being on.
+  cr side: `8a1978a` (grader queue → concurrent pool, DeepSeek 4 in flight / 120 rpm, Groq demoted
+  to failover-only, per-provider 429 backoff, `estimatedWaitMs`), `b7ff22e` (callAI retries once
+  without `json_object` on empty DeepSeek completions), `5e5d1fa` (`/api/ai/grade-batch`, ≤8 items).
+- **FRQ grade tickets Phase 2 — the current thread.** `108241b` Stage 0 (server-owned rubric
+  bundle; the hourly sweep stops trusting page-shipped prompts) → `4e135f5` Phase 2 (migration
+  `0031_frq_tickets.sql`: atomic plpgsql `record_frq_draft` / `claim_frq_tickets` SKIP LOCKED /
+  `apply_frq_verdict` / `fail_frq_claim` / `queue_frq_appeal`; `frq-ledger-db.js`, `frq-worker.js`,
+  `frq-verdict.js`; client codemod across all 69 pages — shipped **dormant** behind
+  `FRQ_GRADE_MODE=off`) → `9b23b9d` runbook fix (**migration 0031 runs in the curriculum_render
+  Supabase project `bzqbhtrurzzavhqbgqrs`** — that is where `item_ledger` lives; `hgvnytaqmuybzbotosyj`
+  is only roadmap/driller/`lesson_urls`) → `fb24226` shadow paging fix (the sampler kept refetching
+  the top-4 rows, so `shadowCompared` stalled at ~4 and the ≥100 gate was unreachable).
+  cr `7aeffff`: the `AI_GRADE_AUTH=off|log|enforce` wrapper (factory-bound per route — `req.path`
+  sniffing was a **bypass**; timing-safe secret digests).
+- **Four canary fix rounds, all teacher-driven on the live site** — `a78167d` R1 (stale precached
+  gradebook-client falls back to LEGACY, not "Not saved"; Appeal control rendered with already-graded
+  states; build bumped so the SW refreshes its precache) → `5fe533e` R2 (legacy graded rows show
+  their E/P/I again; Appeal actually posts; "individuals" accepts the singular) → `dcabd8b` R3 (the
+  Appeal control works for **legacy graded rows with `frq_result` null** — the exact edit-then-appeal
+  path the teacher hit) → `55daf0e` R4 (honest appeal counts everywhere; **appeals now review the
+  student's REVISED answer**) → `11adae1` (appeal history survives the apply: `frq_last_appeal` keeps
+  `{text, revisedText, at, outcome}`, `/ledger/frq-status` exposes self-scoped `lastAppeal`).
+  Live context recorded in `55daf0e`: the teacher's first UI appeal succeeded end-to-end (raised
+  reflect1 I→P); the `limit` was correct, only the 0/3 display lied.
+- **Desk UI pass** — `7c1fefc` explicit overlay stacking, `48e5748` screen-size breakpoints
+  (1280w/820h/760h, decoration hides first), `dd3472a` **boot splash + startup chime removed** (the
+  sign-in wall runs directly on load), `a679baa` stop the rampant sosumi, `8a0a56e` copy pass,
+  `764a620` sticky core (Do Now / calendar nav / day header pin under the menu bar), `fbc8e0f` menus
+  polish (every File/Edit/View item now does something).
+- **Tango theme** — `2512552` Desk (Platinum `#E5E3D2` chrome, Charcoal `#161616` ink, Tangerine
+  `#FF5B19` as the single accent) → `45ecdcf` one generated override block on all 69 worksheets
+  (`scripts/wire-tango-theme.mjs`) → `9dc521e` study guide + TI-84 trainer chrome.
+- **TI-84 trainer** — `e231462` phase 1 (hashchange navigation; Desk deep links no longer serve the
+  previous topic), `a445fbf` phase 2 (practice sessions record a ledger row, `mode:'practice'`, SRS
+  untouched), `9fcc64e` matrix-entry cell loop (`TI84_MATRIX_ENTRY_LOOP_SPEC.md` Option B) — this
+  closes s34 open item #5's first half.
+- **Quarters follow the schedule dates** — `ff20ee1` (`deriveQuarterBands`; dashboard labels +
+  CED-2026 tiles). `80ab9e9` added `SCHEDULE_HANDOFF.md`, the teacher intake checklist.
+- **GitNexus HTML shadows** — `282e3b9`/`3ca5eb4`/`b07b964` (line-preserving JS shadows in a
+  non-hidden `gitnexus-shadow/` so Desk symbols resolve; dot-dirs are skipped by the analyzer),
+  `f961e8c` re-index to 18 568 symbols.
+- **cr `3f54c45`** — quiz review explanations persisted and shown **privately** (companion to the
+  appeal-history work; was held there for a privacy fix round).
+
+### ⏭ CURRENT OPEN — verified against the tree, top first
+
+1. **The SY2627 calendar intake is STILL BLANK and now has a hard date.** `sy2627-calendar-intake.md`
+   is untouched since 2026-07-08 — first instructional day and AP exam date are literally still
+   `YYYY-MM-DD`. **The teacher expects the real schedule ~2026-09-01.** Until then
+   `roster-server/data/lesson-schedule.json` is *last year's sequence on this year's dates*, so once
+   Q1 opens the engine mis-attributes grades by date. `SCHEDULE_HANDOFF.md` §1 is the exact 7-item
+   intake; §2–§4 are the sequence and gates. **This is the top blocker and it is teacher-owned.**
+2. **FRQ Stage 4** — see START HERE. Code work = the four enforce blockers + wrapping
+   `/api/ai/appeal`; ops work = the three concurrency smoke items; then one-period canary → `*` →
+   `log`→`enforce`.
+3. **Railway env flips owed ~Sept** (carried from s34, unchanged): `PC_TRACK_ENABLED=true`,
+   `PC_FIGURES_SUPABASE_URL` + `PC_FIGURES_SUPABASE_SERVICE_KEY` (= copy the `ROSTER_SUPABASE_*`
+   values, same project), and a non-default `TEACHER_KEY` (still the published `apteacher2627`).
+4. **PC FRQ auto-scoring is still not built.** `1be8b27` added `PC_FRQ_GRADING_SPEC.md` as a **DRAFT
+   with 10 teacher decisions pending**; `roster-server/pc.js` `scorePcItem` still returns `null` for
+   free-response. Blocked on the bank rubric check + those decisions.
+5. **TI-84 `.8xm` matrix transfer** still not built (`autoFillMatrix` remains keystroke-only) — but
+   the matrix-entry *cell loop* half of s34 item #5 is now closed by `9fcc64e`.
+
+Carried forward and still true: the offline-mesh P3–P4 grade loop is **runtime-untested** end-to-end
+(needs a teacher device + ≥1 student phone over adb), and the APK needs a rebuild to pick up mesh P3–4.
+
+### 🔑 Gotchas that will bite the next instance
+
+- **Any edit to the worksheet AI block must be re-applied**:
+  `node scripts/wire-ai-worksheet-grade.mjs --rewire --apply` **then**
+  `node scripts/wire-tango-theme.mjs --apply` (rewire strips the theme block ordering), then
+  `npm run gitnexus:analyze` for the shadows. Keep `tests/ai-worksheet-grade.test.js` green.
+- **Any rubric edit requires regenerating the server bundle** or tests fail:
+  `node scripts/build-frq-rubrics.mjs --check`.
+- **Migration 0031 lives in the cr Supabase project `bzqbhtrurzzavhqbgqrs`**, not the roadmap project.
+- **A file-only URL fix is insufficient** — the Supabase `lesson_urls` table overrides
+  `roadmap-data.json` at runtime.
+- `node tools/regrade-ungraded-frqs.mjs --dry-run` shows the current null-score backlog.
+- Teacher-role accounts (`date_tiger`, `plum_lion`) are excluded from `/admin/snapshot` by design.
+- The teacher tests on the **public URL** — commit and push promptly; `file://` is not a valid surface.
+
+---
+
+## ⏭ SESSION 34 (2026-08-07) — superseded by s35 above.
 
 **HEAD = `f98be89`** (pushed, `master`). Baseline for this block = `7fc297a` (s33 tip, 2026-07-02).
 curriculum_render HEAD = `d8b7e79` (branch `main`).
