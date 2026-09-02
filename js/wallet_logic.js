@@ -471,6 +471,39 @@
         MIN_CONVERSION_CANDY: 5      // FALLBACK only — the live convert floor is server-side minConvertCandy() = 1 DOGE's worth (the UI reads w.minBuyCandy). Materialize floor (5 DOGE) is server-side too (MIN_MATERIALIZE_DOGE).
     };
 
+    function _walletAmount(value) {
+        var amount = Number(value);
+        return isFinite(amount) ? amount : 0;
+    }
+
+    // Client mirror of doge-wallet.js deriveBalances (CANDY_RETURN_SPEC).
+    // Accepts a /wallet-shaped object and keeps the 10-number identity in one
+    // testable place for offline/client projections.
+    function candyLedgerBalances(wallet) {
+        var w = wallet || {};
+        var earned = _walletAmount(w.candyEarned);
+        var received = _walletAmount(w.candyReceived);
+        var realized = _walletAmount(w.candyRealized);
+        var bonus = _walletAmount(w.candyBonus);
+        var returned = _walletAmount(w.candyReturned);
+        var gifted = _walletAmount(w.candyGiftedOut);
+        var converted = _walletAmount(w.candyConverted);
+        var materialized = _walletAmount(
+            w.candyMaterialized != null ? w.candyMaterialized : w.candyGiven
+        );
+        var escrowed = _walletAmount(w.candyEscrowed);
+        var raw = earned + received + realized + bonus + returned
+            - gifted - converted - materialized - escrowed;
+        var owed = Math.max(0, raw);
+
+        return {
+            candyBalanceRaw: raw,
+            candyBalance: owed,
+            candyOwed: owed,
+            candyInHand: Math.max(0, materialized - returned)
+        };
+    }
+
     // effort points → candy (the FIXED leg).
     function candyFromPoints(points) {
         var p = Number(points);
@@ -525,6 +558,7 @@
         groupReceipts: groupReceipts,
         appForNextTask: appForNextTask,
         DOGE_WALLET: DOGE_WALLET,
+        candyLedgerBalances: candyLedgerBalances,
         candyFromPoints: candyFromPoints,
         candyPerDoge: candyPerDoge,
         dogeFromCandy: dogeFromCandy,

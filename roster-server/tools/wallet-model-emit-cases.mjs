@@ -11,7 +11,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initState, applyOp, studentIds, dogeFromCandy, candyPerDoge } from '../tests/fixtures/wallet-world.js';
+import {
+  initState, applyOp, studentIds, dogeFromCandy, candyPerDoge, OP_KINDS,
+} from '../tests/fixtures/wallet-world.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outPath = resolve(__dirname, '..', '..', 'formal', 'wallet-model', 'cases.json');
@@ -29,7 +31,10 @@ const ri = (lo, hi) => Math.floor(rand(lo, hi + 1));
 const K = 3;
 const SIDS = studentIds(K);
 const NUM_TRAJ = 400;
-const KINDS = ['earn', 'buy', 'sell', 'gift', 'markGiven', 'markSent'];
+// Layer C v1 deliberately excludes the 0034 give_back transition. Derive the
+// list from the canonical fuzz vocabulary, then remove it explicitly so adding
+// it to Layer A/B can never make Redex cases start emitting it accidentally.
+const KINDS = OP_KINDS.filter((kind) => kind !== 'give_back');
 const cases = [];
 
 for (let t = 0; t < NUM_TRAJ; t++) {

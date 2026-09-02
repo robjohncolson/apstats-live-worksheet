@@ -1738,6 +1738,18 @@
       if (n > owed + 0.001) { showError('They are only owed ' + (Math.round(owed * 10) / 10) + ' — enter at most that, or use ✓ gave for all of it.'); return; }
       _rewardMark(studentId, 'mark-given', n);
     }
+    function _rewardMarkReturned(studentId, name, stillOut) {
+      var shownOut = Math.round(stillOut * 10) / 10;
+      var raw = prompt('How many did ' + name + ' hand back? (out: ' + shownOut + ')');
+      if (raw == null) return;
+      var n = parseFloat(String(raw).replace(',', '.'));
+      if (!isFinite(n) || n <= 0) { showError('Enter a number above 0 (e.g. 2 or 1.5).'); return; }
+      if (n > stillOut + 0.001) {
+        showError('They only have ' + shownOut + ' candy out — enter at most that.');
+        return;
+      }
+      _rewardMark(studentId, 'mark-returned', n);
+    }
     function _rewardMark(studentId, action, amount) {
       postJson('/wallet/' + action, { studentId: studentId, amount: amount }, teacherSecret()).then(function (r) {
         if (r.status === 200 && r.data && r.data.ok) {
@@ -1816,14 +1828,18 @@
           var received = acc ? (acc.candyReceived || 0) : 0, gifted = acc ? (acc.candyGiftedOut || 0) : 0;
           var converted = acc ? (acc.candyConverted || acc.dogeCostBasis || 0) : 0, materialized = acc ? (acc.candyMaterialized || acc.candyGiven || 0) : 0;
           var realized = acc ? (acc.candyRealized || 0) : 0;   // net P&L from DOGE cash-outs (SELL_DOGE_SPEC; signed)
-          // Reconciliation flag (CANDY_LEDGER_SPEC): the 6-number identity should hold —
-          // Earned + Received = Gifted + Converted + Materialized + Owed. A NEGATIVE raw owed
+          var bonus = acc ? (acc.candyBonus || 0) : 0, escrowed = acc ? (acc.candyEscrowed || 0) : 0;
+          var returned = acc ? (acc.candyReturned || 0) : 0;
+          var stillOut = Math.max(0, materialized - returned);
+          // Reconciliation flag (CANDY_RETURN_SPEC): the 10-number identity should hold. A NEGATIVE raw owed
           // means more was disbursed/spent than earned+received (a graded item was likely
           // deleted AFTER the student spent / after you materialized). Surface it.
           if (acc) {
             // Use the SERVER's earned (same source as acc.candyOwed) so the ⚠ flag never
             // flickers against the independently-loaded pacing earned.
-            var rawOwed = (acc.candyEarned != null ? acc.candyEarned : earned) + received - gifted - converted - materialized + realized;
+            var rawOwed = (acc.candyEarned != null ? acc.candyEarned : earned)
+              + received + realized + bonus + returned
+              - gifted - converted - materialized - escrowed;
             if (rawOwed < -0.05) {
               var warn = document.createElement('span'); warn.textContent = ' ⚠';
               warn.title = 'Overspent by ' + (Math.round((-rawOwed) * 10) / 10) + ' candy — a graded item was likely deleted after they spent. Reconcile.';
@@ -1832,8 +1848,8 @@
           }
           tr.appendChild(nameTd);
           var earnedTd = document.createElement('td'); earnedTd.textContent = '🍬 ' + Math.round(earned);
-          // The full 6-number ledger on hover (no table restructure for Phase 1).
-          if (acc) earnedTd.title = 'Earned ' + Math.round(earned) + ' · Received ' + Math.round(received) + ' · Gifted ' + Math.round(gifted) + ' · →DOGE ' + Math.round(converted) + (Math.abs(realized) > 0.05 ? ' · cash-out P&L ' + (realized >= 0 ? '+' : '') + (Math.round(realized * 10) / 10) : '') + ' · in hand ' + Math.round(materialized) + ' · still owed ' + Math.round(give);
+          // The full candy ledger on hover (no table restructure for Phase 1).
+          if (acc) earnedTd.title = 'Earned ' + Math.round(earned) + ' · Received ' + Math.round(received) + ' · Gifted ' + Math.round(gifted) + ' · →DOGE ' + Math.round(converted) + (Math.abs(realized) > 0.05 ? ' · cash-out P&L ' + (realized >= 0 ? '+' : '') + (Math.round(realized * 10) / 10) : '') + ' · in hand ' + Math.round(stillOut) + (returned > 0.01 ? ' · handed back ' + (Math.round(returned * 10) / 10) : '') + ' · still owed ' + Math.round(give);
           tr.appendChild(earnedTd);
           var giveTd = document.createElement('td');
           if (!prov) giveTd.textContent = '—';
@@ -1847,8 +1863,20 @@
           }
           // Owed is settled — but if candy WAS handed out, confirm it (don't vanish
           // to '·', which reads as "never gave" and misleads the teacher).
-          else if (acc && (acc.candyGiven || 0) > 0.01) { giveTd.textContent = '✓ ' + (Math.round(acc.candyGiven * 10) / 10) + ' given'; giveTd.style.color = '#2a7'; }
+          else if (acc && (materialized > 0.01 || returned > 0.01)) {
+            giveTd.textContent = '✓ ' + (Math.round(stillOut * 10) / 10) + ' given'
+              + (returned > 0.01 ? ' · ' + (Math.round(returned * 10) / 10) + ' returned' : '');
+            giveTd.style.color = '#2a7';
+          }
           else giveTd.textContent = '·';
+          if (stillOut > 0.01) {
+            giveTd.appendChild(document.createTextNode(' '));
+            var returnBtn = btn('↩ took back…', function () {
+              _rewardMarkReturned(s.studentId, s.realName || s.username || '?', stillOut);
+            });
+            returnBtn.title = 'They handed physical candy back — enter how many';
+            giveTd.appendChild(returnBtn);
+          }
           tr.appendChild(giveTd);
           var depTd = document.createElement('td');
           if (!prov) depTd.textContent = '—';

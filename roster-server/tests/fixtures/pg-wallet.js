@@ -1,6 +1,7 @@
 // pg-wallet.js — Layer B loader (WALLET_CONSERVATION_AUDIT_SPEC.md §2 Layer B).
 // Spins an in-process REAL Postgres (@electric-sql/pglite, WASM — no Docker) with
-// a minimal `roster` table + the ACTUAL wallet migrations (0019/0021/0022/0023),
+// minimal `roster`/`item_ledger` tables + the ACTUAL wallet migrations through
+// 0034,
 // then exposes thin wrappers that call the REAL plpgsql functions (doge_spend /
 // doge_gift / doge_sell). The differential harness diffs these against the JS
 // reducer in tests/fixtures/wallet-world.js. THIS is the layer that catches a
@@ -17,21 +18,37 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migDir = resolve(__dirname, '..', '..', 'migrations');
-const MIGRATIONS = ['0019_doge_wallet.sql', '0021_doge_gifting.sql', '0022_retire_candy_eaten.sql', '0023_doge_sell.sql', '0024_tetris_stakes.sql'];
+const BASE_MIGRATIONS = [
+  '0019_doge_wallet.sql',
+  '0021_doge_gifting.sql',
+  '0022_retire_candy_eaten.sql',
+  '0023_doge_sell.sql',
+  '0024_tetris_stakes.sql',
+  '0025_review_marks.sql',
+];
+const CANDY_RETURN_MIGRATION = '0034_candy_return.sql';
 
 // Create the db, a minimal roster (the doge_account/doge_ledger FK target), seed
-// the given student_ids, and run the real wallet migrations in order.
-export async function createWalletDb(sids) {
+// the given student_ids, and run the real wallet migrations in order. Tests that
+// exercise a later production migration before 0034 can opt out, apply that
+// migration, then apply 0034 themselves.
+export async function createWalletDb(sids, { includeCandyReturn = true } = {}) {
   const db = new PGlite();
   await db.exec(`create table roster (
     student_id uuid primary key, section text default 'PeriodB',
     role text default 'student', status text default 'active',
     real_name text, username text
   );`);
+  // 0025 references only item_ledger.ledger_id; the conservation fixture does
+  // not need the rest of the production effort-ledger schema.
+  await db.exec('create table item_ledger (ledger_id uuid primary key default gen_random_uuid());');
   for (const sid of sids) {
     await db.query(`insert into roster (student_id, username) values ($1, $2) on conflict do nothing`, [sid, 'u' + sid.slice(-4)]);
   }
-  for (const f of MIGRATIONS) await db.exec(await readFile(resolve(migDir, f), 'utf8'));
+  for (const f of BASE_MIGRATIONS) await db.exec(await readFile(resolve(migDir, f), 'utf8'));
+  if (includeCandyReturn) {
+    await db.exec(await readFile(resolve(migDir, CANDY_RETURN_MIGRATION), 'utf8'));
+  }
   return db;
 }
 
@@ -107,15 +124,11 @@ export async function pgMark(db, { p_sid, p_field, p_amount, p_earned }) {
   return r.rows[0];
 }
 
-// teacher mark-given / mark-sent are JS (markEndpoint), not plpgsql. The harness
-// computes the clamped value with the SAME formula and writes it, so the pglite
-// row stays in lock-step for the NEXT spend guard while the differential's real
-// signal stays on the plpgsql spend/sell/gift. Ensures the row exists first
-// (production's upsertDogeAccount creates it).
-export async function pgSetColumn(db, sid, col, value) {
-  if (col !== 'candy_given' && col !== 'doge_sent') throw new Error('pgSetColumn: ' + col);
-  await db.query('insert into doge_account (student_id) values ($1) on conflict do nothing', [sid]);
-  await db.query(`update doge_account set ${col} = $1, updated_at = now() where student_id = $2`, [value, sid]);
+// Call the REAL doge_give_back (0034). The function locks, clamps to
+// candy_given, advances candy_returned monotonically, and writes give_back.
+export async function pgGiveBack(db, { p_sid, p_amount }) {
+  const r = await db.query('select * from doge_give_back($1,$2)', [p_sid, p_amount]);
+  return r.rows[0];
 }
 
 export { n as pgNum };

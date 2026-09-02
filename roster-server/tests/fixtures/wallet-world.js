@@ -9,11 +9,13 @@
 // THE WALLET STATE MACHINE (spec §0). Per-student state = the doge_account columns
 // + the student's ledger of buy/sell legs (for FIFO maturity) + Earned (E, NOT
 // stored — recomputed from the effort ledger in production, a monotonic-up input
-// here). Transitions: earn / buy / sell / gift / markGiven / markSent.
+// here). Transitions: earn / buy / sell / gift / markGiven / give_back /
+// markSent.
 //
-// THE 7-NUMBER IDENTITY (spec §1):
-//   E(arned) + R(eceived) + Z(realized) == G(ifted) + C(onverted) + M(aterialized) + O(wed)
-//   raw = E + R + Z − G − C − M     (the spendable pool; SQL calls it "spendable")
+// THE 10-NUMBER IDENTITY (CANDY_RETURN_SPEC §2):
+//   E(arned) + R(eceived) + Z(realized) + B(onus) + T(returned)
+//     == G(ifted) + C(onverted) + M(aterialized) + X(escrowed) + O(wed)
+//   raw = E + R + Z + B + T − G − C − M − X
 //   O   = max(0, raw)
 //
 // ⚠ SINGLE-SOURCE NOTE (spec §2 foundation): the CONVERSION math (candyPerDoge /
@@ -42,7 +44,7 @@ function emptyAccount() {
   return {
     candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0,
     doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0,
-    candy_escrowed: 0,
+    candy_escrowed: 0, candy_bonus: 0, candy_returned: 0,
   };
 }
 
@@ -80,7 +82,7 @@ function cloneState(s) {
   };
 }
 
-// The 8 numbers + raw/Owed for one student (the JS `deriveBalances` math).
+// The 10 numbers + raw/Owed for one student (the JS `deriveBalances` math).
 export function deriveNumbers(state, sid) {
   const a = state.acc.get(sid);
   const E = state.earned.get(sid);
@@ -90,11 +92,13 @@ export function deriveNumbers(state, sid) {
   const C = a.doge_cost_basis;
   const M = a.candy_given;
   const X = a.candy_escrowed;                  // Escrowed: candy locked in a live bet (0024)
-  const raw = E + R + Z - G - C - M - X;        // SQL "spendable" (now nets escrow)
+  const B = a.candy_bonus;                     // Bonus: review-award mint (0025)
+  const T = a.candy_returned;                  // Returned: physical candy handed back (0034)
+  const raw = E + R + Z + B + T - G - C - M - X;
   return {
-    E, R, Z, G, C, M, X, raw,
+    E, R, Z, B, T, G, C, M, X, raw,
     O: Math.max(0, raw),
-    held: E + R + Z - G - C - M,                // = O + X (spendable + escrowed); the bet-conserved scalar
+    held: E + R + Z + B + T - G - C - M,       // = O + X; the bet-conserved scalar
     dogeBalance: a.doge_balance,
     dogeSent: a.doge_sent,
   };
@@ -174,8 +178,17 @@ export function applyOp(prev, op) {
       if (!(op.amount > 0)) return reject('nonpositive');
       const a = state.acc.get(op.sid);
       const n = deriveNumbers(prev, op.sid);
-      const cap = n.E + n.R - n.G - n.C + n.Z - n.X;  // Owed-eligible (doge_mark cap; nets escrow, 0024)
+      const cap = n.E + n.R + n.Z + n.B + n.T - n.G - n.C - n.X;
       a.candy_given = Math.max(a.candy_given, Math.min(a.candy_given + op.amount, cap));
+      return ok();
+    }
+    case 'give_back': {                              // teacher takes physical candy back
+      if (!(op.amount > 0)) return reject('nonpositive');
+      const a = state.acc.get(op.sid);
+      a.candy_returned = Math.max(
+        a.candy_returned,
+        Math.min(a.candy_returned + op.amount, a.candy_given),
+      );
       return ok();
     }
     case 'markSent': {                               // teacher deposits DOGE on-chain
@@ -236,15 +249,16 @@ export function applyTrajectory(state0, ops) {
 // the delta-based invariants (I2 zero-sum, I5 monotonicity, I6 sell P&L).
 const close = (a, b, eps = 1e-7) => Math.abs(a - b) <= eps;
 
-// I1 + I3 + I7 are pure single-state invariants over every student.
+// I1 + I3 + I7 + candy-return R2 are pure single-state invariants.
 export function checkStateInvariants(state) {
   const v = [];
   for (const sid of state.sids) {
     const n = deriveNumbers(state, sid);
-    // I1 — the books close: Earned+Received+Realized == Gifted+Converted+Materialized+Escrowed+Owed
-    // (raw form; a definitional identity that pins the arithmetic, now incl. the 0024 escrow term).
-    if (!close(n.E + n.R + n.Z, n.G + n.C + n.M + n.X + n.raw)) {
-      v.push(`I1 identity broken for ${sid}: ${n.E + n.R + n.Z} != ${n.G + n.C + n.M + n.X + n.raw}`);
+    // I1/R1 — the books close with Bonus, Returned, and Escrowed.
+    const inflows = n.E + n.R + n.Z + n.B + n.T;
+    const outflows = n.G + n.C + n.M + n.X + n.raw;
+    if (!close(inflows, outflows)) {
+      v.push(`I1 identity broken for ${sid}: ${inflows} != ${outflows}`);
     }
     // I3 — under the guarded ops, spendable never goes negative (Owed has no phantom debt).
     if (n.raw < -1e-7) v.push(`I3 owed floor: raw=${n.raw} < 0 for ${sid}`);
@@ -256,6 +270,9 @@ export function checkStateInvariants(state) {
     if (n.C < -1e-7) v.push(`cost_basis ${n.C} < 0 for ${sid}`);
     // I9 — escrow never negative (a bet can't make you owe escrow).
     if (n.X < -1e-7) v.push(`I9 escrow ${n.X} < 0 for ${sid}`);
+    // R2 — returned is a monotonic counter bounded by cumulative gives.
+    if (n.T < -1e-7) v.push(`R2 candy_returned ${n.T} < 0 for ${sid}`);
+    if (n.T > n.M + 1e-7) v.push(`R2 candy_returned ${n.T} > candy_given ${n.M} for ${sid}`);
   }
   // I9 — escrow is fully backed: Σ candy_escrowed == 2 × Σ(open bet stakes). Every escrowed
   // candy belongs to exactly one live bet (2 stakes per open bet); none is stranded or phantom.
@@ -268,11 +285,15 @@ export function checkStateInvariants(state) {
 // I2/I5/I6 — delta invariants relative to the prior state + the op just applied.
 export function checkDeltaInvariants(prev, next, op, accepted) {
   const v = [];
-  // I5 — Materialized + doge_sent never decrease (mark caps clamp, never claw back).
+  // I5/R2 — Materialized, Returned, and doge_sent never decrease.
   for (const sid of next.sids) {
     const p = deriveNumbers(prev, sid), q = deriveNumbers(next, sid);
     if (q.M < p.M - 1e-7) v.push(`I5 candy_given fell ${p.M}→${q.M} for ${sid}`);
+    if (q.T < p.T - 1e-7) v.push(`R2 candy_returned fell ${p.T}→${q.T} for ${sid}`);
     if (q.dogeSent < p.dogeSent - 1e-7) v.push(`I5 doge_sent fell ${p.dogeSent}→${q.dogeSent} for ${sid}`);
+    if ((op.op !== 'give_back' || op.sid !== sid) && !close(q.T, p.T)) {
+      v.push(`R2 candy_returned moved on ${op.op} for ${sid}`);
+    }
     // I5 — Converted only rises on a buy / falls on a sell; otherwise constant.
     if (op.op === 'buy' && op.sid === sid) { if (q.C < p.C - 1e-7) v.push(`I5 C fell on buy for ${sid}`); }
     else if (op.op === 'sell' && op.sid === sid) { if (q.C > p.C + 1e-7) v.push(`I5 C rose on sell for ${sid}`); }
@@ -332,7 +353,7 @@ export function checkDeltaInvariants(prev, next, op, accepted) {
 // An op references students by index; the test resolves index → sid. Amount/price
 // ranges are modest so numeric-vs-float drift stays well under the differential
 // tolerance while still exercising every guard branch.
-export const OP_KINDS = ['earn', 'buy', 'sell', 'gift', 'markGiven', 'markSent'];
+export const OP_KINDS = ['earn', 'buy', 'sell', 'gift', 'markGiven', 'give_back', 'markSent'];
 
 // The fast-check trajectory arbitrary, shared verbatim by Layer A and Layer B (so
 // both fuzz the SAME distribution). `fc` is injected to keep this fixture free of a
@@ -349,6 +370,7 @@ export function trajectoryArbitrary(fc, k) {
     fc.record({ op: fc.constant('sell'), i: idxArb, doge: fc.double({ min: 0.1, max: 40, noNaN: true }), price: priceArb }),
     fc.record({ op: fc.constant('gift'), i: idxArb, j: fc.nat({ max: Math.max(0, k - 2) }), candy: fc.integer({ min: 1, max: 25 }) }),
     fc.record({ op: fc.constant('markGiven'), i: idxArb, amount: candyArb }),
+    fc.record({ op: fc.constant('give_back'), i: idxArb, amount: candyArb }),
     fc.record({ op: fc.constant('markSent'), i: idxArb, amount: fc.double({ min: 0.1, max: 40, noNaN: true }) }),
   );
   return fc.record({
@@ -409,6 +431,7 @@ export function resolveOp(sids, raw) {
       return { op: 'gift', from: sid, to, candy: raw.candy };
     }
     case 'markGiven': return { op: 'markGiven', sid, amount: raw.amount };
+    case 'give_back': return { op: 'give_back', sid, amount: raw.amount };
     case 'markSent': return { op: 'markSent', sid, amount: raw.amount };
     default: return { op: 'noop' };
   }

@@ -1,5 +1,5 @@
 // wallet-conservation.test.js — Layer A of the candy↔DOGE conservation audit
-// (WALLET_CONSERVATION_AUDIT_SPEC.md §2 Layer A). Property-fuzz the 7-number
+// (WALLET_CONSERVATION_AUDIT_SPEC.md §2 Layer A). Property-fuzz the 10-number
 // conservation invariants I1–I8 (spec §1) through the canonical reducer in
 // tests/fixtures/wallet-world.js, then deterministically pin the guard branches
 // (I4) and the round-trip honesty (I6/I8). A separate section replays trajectories
@@ -25,8 +25,8 @@ const SIDS = studentIds(K);
 // The fuzz source Layer A and Layer B share (defined once in the fixture).
 const trajArb = trajectoryArbitrary(fc, K);
 
-describe('Layer A — conservation invariants I1–I8 hold over every fuzzed trajectory', () => {
-  it('every op preserves the 7-number identity, the Owed floor, monotonicity, sell P&L, and gift zero-sum', () => {
+describe('Layer A — conservation invariants I1–I8 + candy-return R1/R2 hold over every fuzzed trajectory', () => {
+  it('every op preserves the 10-number identity, the Owed floor, monotonicity, sell P&L, and gift zero-sum', () => {
     fc.assert(
       fc.property(trajArb, ({ initEarned, ops }) => {
         let state = initState(initEarned);
@@ -50,6 +50,29 @@ describe('Layer A — conservation invariants I1–I8 hold over every fuzzed tra
       }),
       { numRuns: NUM_RUNS },
     );
+  });
+});
+
+describe('Layer A — candy return clamp and re-give pins (R1/R2)', () => {
+  it('an oversized return clamps to still-out without ever decrementing candy_given', () => {
+    const sid = SIDS[0];
+    let state = initState([10]);
+    state = applyOp(state, { op: 'markGiven', sid, amount: 5 }).state;
+    const givenBefore = deriveNumbers(state, sid).M;
+
+    state = applyOp(state, { op: 'give_back', sid, amount: 99 }).state;
+    const returned = deriveNumbers(state, sid);
+    expect(returned.M).toBe(5);
+    expect(returned.T).toBe(5);
+    expect(returned.raw).toBe(10);
+    expect(checkStateInvariants(state)).toEqual([]);
+
+    state = applyOp(state, { op: 'markGiven', sid, amount: 1 }).state;
+    const regiven = deriveNumbers(state, sid);
+    expect(regiven.M).toBe(givenBefore + 1);
+    expect(regiven.T).toBe(5);
+    expect(regiven.raw).toBe(9);
+    expect(checkStateInvariants(state)).toEqual([]);
   });
 });
 
@@ -153,7 +176,8 @@ describe('Layer A — the s16 review objections, now pinned as EMPIRICAL disproo
     const n = deriveNumbers(s, sid);
     expect(n.C).toBeCloseTo(0, 6);                                  // basis fully unwound — no residue
     expect(n.Z).toBeCloseTo(coins * candyPerDoge(sellPrice) - spent, 6);  // realized = payout − spent (no mint)
-    expect(n.E + n.R + n.Z).toBeCloseTo(n.G + n.C + n.M + n.O, 6);  // identity closes
+    expect(n.E + n.R + n.Z + n.B + n.T)
+      .toBeCloseTo(n.G + n.C + n.M + n.X + n.O, 6);  // identity closes
   });
 });
 

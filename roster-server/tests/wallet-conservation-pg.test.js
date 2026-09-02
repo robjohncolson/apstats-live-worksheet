@@ -1,8 +1,9 @@
 // wallet-conservation-pg.test.js — Layer B of the candy↔DOGE conservation audit
 // (WALLET_CONSERVATION_AUDIT_SPEC.md §2 Layer B). The DIFFERENTIAL harness: for
 // every fuzzed trajectory, apply each op through BOTH the REAL plpgsql
-// (doge_spend / doge_gift / doge_sell in pglite) AND the JS reducer, then assert
-// the persisted Postgres row == the reducer state (within 1e-6) AND I1–I8.
+// (spend / gift / sell / mark / give-back in pglite) AND the JS reducer, then
+// assert the persisted Postgres row == the reducer state (within 1e-6) AND
+// I1–I8/R1–R2.
 //
 // This is the layer that closes the I9 gap the s16 review flagged: the in-memory
 // `dogeSell` fake in doge-wallet.test.js hand-copies the SQL formula, so a bug
@@ -18,7 +19,8 @@ import {
   candyPerDoge, dogeFromCandy, DAILY_GIFT_CAP,
 } from './fixtures/wallet-world.js';
 import {
-  createWalletDb, resetWallet, pgAccount, pgSpend, pgGift, pgSell, ageLastBuy, pgSetColumn, pgNum,
+  createWalletDb, resetWallet, pgAccount, pgSpend, pgGift, pgSell,
+  ageLastBuy, pgMark, pgGiveBack, pgNum,
 } from './fixtures/pg-wallet.js';
 
 const K = 3;
@@ -26,7 +28,11 @@ const SIDS = studentIds(K);
 const NUM_RUNS = 150;
 const trajArb = trajectoryArbitrary(fc, K);
 // The mutable doge_account columns (candy_eaten is vestigial / always 0).
-const COLS = ['candy_given', 'doge_balance', 'doge_sent', 'doge_cost_basis', 'candy_gifted_out', 'candy_gifted_in', 'candy_realized'];
+const COLS = [
+  'candy_given', 'candy_returned', 'doge_balance', 'doge_sent',
+  'doge_cost_basis', 'candy_gifted_out', 'candy_gifted_in',
+  'candy_realized', 'candy_escrowed', 'candy_bonus',
+];
 
 let db;
 beforeAll(async () => { db = await createWalletDb(SIDS); }, 60000);
@@ -77,20 +83,35 @@ async function stepBoth(state, op) {
       diffs = diffs.concat(rowDiffs(await pgAccount(db, op.to), accOf(op.to), op.to));
       break;
     }
-    case 'markGiven':                          // JS markEndpoint clamp → kept in lock-step
-      await pgSetColumn(db, op.sid, 'candy_given', accOf(op.sid).candy_given);
+    case 'markGiven': {
+      const E = deriveNumbers(state, op.sid).E;
+      const fn = await pgMark(db, {
+        p_sid: op.sid, p_field: 'candy_given', p_amount: op.amount, p_earned: E,
+      });
+      acceptMismatch(fn, 'markGiven');
       diffs = rowDiffs(await pgAccount(db, op.sid), accOf(op.sid), op.sid);
       break;
-    case 'markSent':
-      await pgSetColumn(db, op.sid, 'doge_sent', accOf(op.sid).doge_sent);
+    }
+    case 'give_back': {
+      const fn = await pgGiveBack(db, { p_sid: op.sid, p_amount: op.amount });
+      acceptMismatch(fn, 'give_back');
       diffs = rowDiffs(await pgAccount(db, op.sid), accOf(op.sid), op.sid);
       break;
+    }
+    case 'markSent': {
+      const fn = await pgMark(db, {
+        p_sid: op.sid, p_field: 'doge_sent', p_amount: op.amount, p_earned: 0,
+      });
+      acceptMismatch(fn, 'markSent');
+      diffs = rowDiffs(await pgAccount(db, op.sid), accOf(op.sid), op.sid);
+      break;
+    }
   }
   return { next: res.state, accepted: res.accepted, diffs };
 }
 
-describe('Layer B — the REAL plpgsql agrees with the reducer over every fuzzed trajectory (I9)', () => {
-  it('SQL doge_spend/doge_gift/doge_sell == reducer, and I1–I8 hold, after every op', async () => {
+describe('Layer B — the REAL plpgsql agrees with the reducer over every fuzzed trajectory (I9/R1/R2)', () => {
+  it('SQL spend/gift/sell/mark/give-back == reducer, and every invariant holds after every op', async () => {
     await fc.assert(
       fc.asyncProperty(trajArb, async ({ initEarned, ops }) => {
         await resetWallet(db);

@@ -15971,7 +15971,7 @@ function _dogeWalletGiftForm(wrap, box, w, pts) {
 }
 // One rounding rule for candy figures on the GLANCE face (hero, asset line, live previews) so the
 // SAME value can never render two ways on one line (the old "0.7 here / 1 there" wart). The Details
-// ledger below deliberately prints EXACT values instead, so the 7-number identity still sums.
+// ledger below deliberately prints EXACT values instead, so the 10-number identity still sums.
 function _candyFmt(n) {
     n = Number(n) || 0;
     if (n <= 0) return '0';
@@ -15989,7 +15989,7 @@ function _dogeFmt(n) {
 // "Candy & DOGE" panel (redesign, WALLET_REDESIGN_SPEC.md) — a System-7 sub-panel that replaces the
 // old packed block: a title + Details disclosure, ONE candy-to-spend hero, ONE DOGE asset line
 // (held · worth · maturity · gain), a row of native .s7btn pills (Buy / Cash out / Gift) that open
-// ONE inline form at a time, and the full 7-number ledger tucked behind ▸ Details. Reuses every
+// ONE inline form at a time, and the full 10-number ledger tucked behind ▸ Details. Reuses every
 // existing helper (_dogeWalletAction, _dogeWalletGiftForm, _dogeWalletChainArm) + the POST endpoints.
 function _dogeWalletRender(box, w, pts) {
     if (typeof _clearStudentWalletCeremony === 'function') {
@@ -16187,7 +16187,7 @@ function _dogeWalletRender(box, w, pts) {
     // "0 — do more work"; and when the kid HAS candy but no actions are available right now
     // (a transient DOGE-price outage), the hero stands alone instead of contradicting it.
 
-    // ── Details (collapsed by default — keep the resting state calm): the full 7-number ledger
+    // ── Details (collapsed by default — keep the resting state calm): the full 10-number ledger
     // with EXACT values (so the column reconciles), DOGE specifics, and the on-chain watch line. ──
     var detSlot = document.createElement('div');
     detSlot.style.cssText = 'display:none;margin-top:7px;border-top:1px solid #e3d3a0;padding-top:6px';
@@ -16206,8 +16206,9 @@ function _dogeWalletRender(box, w, pts) {
     };
 }
 
-// The ▸ Details drawer for the Candy & DOGE panel: the 7-number conservation ledger
-// (Earned + Received + Realized = Gifted + Converted + Materialized + Owed) as a labelled
+// The ▸ Details drawer for the Candy & DOGE panel: the 10-number conservation ledger
+// (Earned + Received + Realized + Bonus + Returned
+//  = Gifted + Converted + Materialized + Escrowed + Owed) as a labelled
 // field list with EXACT values + zero rows omitted, "To spend or gift" bolded so it
 // reconciles to the hero, then the DOGE detail + the watch-only on-chain line.
 function _walletLedgerDetail(host, w) {
@@ -16215,6 +16216,7 @@ function _walletLedgerDetail(host, w) {
     var owed = (typeof w.candyOwed === 'number') ? w.candyOwed : (w.candyBalance || 0);
     var received = w.candyReceived || 0, gifted = w.candyGiftedOut || 0;
     var converted = w.candyConverted || 0, realized = w.candyRealized || 0;
+    var returned = w.candyReturned || 0, inHand = Math.max(0, materialized - returned);
     var doge = w.dogeBalance || 0, rate = w.candyPerDoge || 0, sent = w.dogeSent || 0;
     var inApp = Math.max(0, doge - sent);
     var cx = function (n) { return Math.round((Number(n) || 0) * 100) / 100; };   // EXACT (2dp) — the column must sum
@@ -16229,7 +16231,8 @@ function _walletLedgerDetail(host, w) {
     var cg = document.createElement('div'); cg.style.cssText = 'margin-bottom:5px';
     groupHead(cg, 'CANDY');
     row(cg, 'Earned all-term', '🍬 ' + cx(earned));
-    if (materialized > 0.005) row(cg, 'In hand', '🍬 ' + cx(materialized));
+    if (inHand > 0.005) row(cg, 'In hand', '🍬 ' + cx(inHand));
+    if (returned > 0.005) row(cg, 'Handed back', '🍬 ' + cx(returned));
     if (received > 0.005) row(cg, 'From friends', '🍬 +' + cx(received));
     if (gifted > 0.005) row(cg, 'Gifted away', '🍬 −' + cx(gifted));
     if (converted > 0.005) row(cg, 'Turned into DOGE', '🍬 −' + cx(converted));

@@ -24,6 +24,11 @@
 ;; JS-accepted op stream, and crosscheck.rkt re-derives the final columns here and
 ;; checks they match the JS reducer AND that I1/I3/I5/I7 hold at every step.
 ;;
+;; 2026-09-02: CANDY_RETURN_SPEC v1 intentionally excludes give_back and the
+;; candy_returned column from this Redex layer, following the stakes precedent.
+;; Layers A/B model and differential-test it; wallet-model-emit-cases.mjs filters
+;; give_back so this eight-column model never receives an unsupported transition.
+;;
 ;; Redex note (from grade-model): pattern variables must be a nonterminal name with
 ;; an optional _subscript (n_E). A bare identifier is a LITERAL. Arithmetic is done
 ;; in Racket escapes `,(...)` over exact rationals.
