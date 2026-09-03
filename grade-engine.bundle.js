@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 9784561aa523
+ * engine-version: 9939e59e2a09
  */
 ;(function (root) {
   'use strict';
@@ -1096,6 +1096,45 @@
       return stamps[need - 1];
     }
     
+    // ── Progress Check schedule (SY2627, keyed by NEW CED unit) ─────────────────
+    //
+    // lesson-schedule.json carries progressChecks[newUnit] = { periods:{B,E} (Day 1),
+    // adminDay2:{B,E} }. PC item ids (U{n}-PC-…), pc_bank and the Desk's U{n}-PC*
+    // tiles all mean the NEW unit, so the PC track must place and date PCs from
+    // these entries — never from the OLD-unit lesson band. Absent (frozen SY2526,
+    // tests without an event schedule) → the legacy old-unit proxy still applies.
+    function pcDatesFor(eventSchedule, period) {
+      const pcs = eventSchedule && eventSchedule.progressChecks;
+      if (!pcs || typeof pcs !== 'object') return null;
+      const out = {};
+      for (const [key, entry] of Object.entries(pcs)) {
+        const unit = Number(key);
+        if (!Number.isFinite(unit) || !entry || typeof entry !== 'object') continue;
+        const periods = (entry.periods && typeof entry.periods === 'object') ? entry.periods : {};
+        const day1 = period ? (periods[period] || null) : (periods.B || periods.E || null);
+        let day2 = null;
+        if (entry.adminDay2 && typeof entry.adminDay2 === 'object') {
+          day2 = period ? (entry.adminDay2[period] || null) : (entry.adminDay2.B || entry.adminDay2.E || null);
+        } else if (typeof entry.adminDay2 === 'string') {
+          day2 = entry.adminDay2;
+        }
+        out[unit] = { day1, day2: day2 || day1 };
+      }
+      return Object.keys(out).length ? out : null;
+    }
+    
+    // NEW units whose PC becomes DUE inside quarterKey's window (Day 2 — the same
+    // instant pcDueFor gates on, so a PC can never be banded into a quarter that
+    // closes before it is due; E's U5 PC is Day 1 04-14 / Day 2 04-16 across the
+    // Q3→Q4 line and lands in Q4). Ascending.
+    function pcUnitsInQuarter(eventSchedule, period, config, quarterKey) {
+      const dates = pcDatesFor(eventSchedule, period);
+      if (!dates) return null;
+      return Object.keys(dates).map(Number)
+        .filter((u) => dates[u].day2 && quarterOfDate(dates[u].day2, config) === quarterKey)
+        .sort((a, b) => a - b);
+    }
+    
     // Extract the single-letter period key from a section string.
     // "PeriodB" → "B", "PeriodE" → "E", "B" → "B", etc.
     // Returns null if it can't be extracted.
@@ -1481,6 +1520,7 @@
       blooketLessons = /** @type {string[]|null} */ (null),   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
       quizLessons = /** @type {string[]|null} */ (null),      // [topicKey] that HAVE a quiz — the Quiz-track denominator
       trainerLessons = /** @type {string[]|null} */ (null),   // [topicKey] with mapped TI-84 skills — the trainer-track denominator
+      eventSchedule = /** @type {any} */ (null),               // { progressChecks, posters } keyed by NEW unit (SY2627)
     }) {
       const period = sectionToPeriod(section);
       const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
@@ -1724,11 +1764,19 @@
       // the fall schedule's dates pass, until the teacher flips PC_TRACK_ENABLED.
       // Enabled UNLESS explicitly false so bespoke-config callers/tests still run PC.
       const pcEnabled = !(config && config.pcTrack && config.pcTrack.enabled === false);
+      // SY2627: with an event schedule the PC band is the NEW units whose PC Day 1
+      // falls in this quarter, and a PC is due once its Day 2 has ended. Without one
+      // (frozen SY2526 / bespoke tests) the legacy old-unit proxy above applies.
+      const pcDates = pcDatesFor(eventSchedule, period);
+      const pcBand = pcDates ? pcUnitsInQuarter(eventSchedule, period, config, quarterKey) : band;
+      const pcDueFor = pcDates
+        ? (u) => isDateDue(pcDates[u] && pcDates[u].day2, todayDateStr, config)
+        : unitPcDue;
       const pcVals = [];
       let pcSumPct = 0, pcGradedCount = 0;
       if (pcEnabled) {
-        for (const unitNum of band) {
-          if (!unitPcDue(unitNum)) continue; // pcAvg covers PCs due-by-today only
+        for (const unitNum of pcBand) {
+          if (!pcDueFor(unitNum)) continue; // pcAvg covers PCs due-by-today only
           const raw = unitPcData ? unitPcData[unitNum] : null;
           if (raw != null && Number.isFinite(raw)) {
             const frac = Math.min(1, Math.max(0, raw / 100)); // clamp out-of-range raw%
@@ -1745,7 +1793,7 @@
       // (null + pcDue = "due but unattempted"); false = Progress Checks aren't open yet
       // (~fall) OR the track is disabled, so the "Why so low?" coach must NOT push PC
       // work that doesn't count. Additive — no grade math depends on it.
-      const pcDue = pcEnabled && band.some(unitPcDue);
+      const pcDue = pcEnabled && pcBand.some(pcDueFor);
     
       // ── Combine to the quarter grade ──
       const tracks = {
@@ -1822,7 +1870,7 @@
       const quizzesAvgBest = quizBandTotal > 0
         ? (quizSum + (quizBandTotal - quizDone) * 100) / quizBandTotal / 100
         : null;
-      const pcTotal = band.length;
+      const pcTotal = pcBand.length;
       const pcAvgBest = pcTotal > 0
         ? (pcSumPct + (pcTotal - pcGradedCount) * 100) / pcTotal / 100
         : null;
@@ -1852,6 +1900,7 @@
         earlyKeys,
         aheadLessons: aheadKeys.length,
         aheadKeys,
+        pcUnits: pcBand,
         ceiling,
         lessonsDue,
         // lessonsGraded counts lessons graded on the LESSONS-track feeders (blanks/
@@ -2019,7 +2068,7 @@
     
       return result;
     }
-    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands };
+    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter };
   })();
 
   // ── gradebook-grid.js ──────────────────────────────────────────────────────
@@ -2095,7 +2144,22 @@
     // LATEST date among their topicKeys. PC/Poster (unit-level): the EARLIEST lesson
     // date in that unit ("unit underway"), matching the Desk's My Gradebook gate.
     // null when no date is known. `period` is 'B' | 'E' | null (null → earliest of B/E).
-    function _columnDueDate(col, lessons, period) {
+    function _columnDueDate(col, lessons, period, events) {
+      // SY2627: PC / Poster columns are NEW units dated by the event schedule
+      // (progressChecks Day 1, posters date). Fall through to the lesson proxy only
+      // when the event schedule does not know the unit.
+      if (events && (col.kind === 'pc' || col.kind === 'poster')) {
+        const map = col.kind === 'pc' ? events.progressChecks : events.posters;
+        const entry = map && map[String(col.unit)];
+        const p = entry && entry.periods;
+        if (p) {
+          const ds = period ? (p[period] || null) : (p.B && p.E ? (p.B < p.E ? p.B : p.E) : (p.B || p.E || null));
+          if (ds) return ds;
+        }
+        // A NEW unit the event schedule does not know must NOT fall through to the
+        // OLD-unit lesson proxy below (same number, different unit) — leave undated.
+        return null;
+      }
       if (!lessons) return null;
       function pdate(entry) {
         const p = entry && entry.periods;
@@ -2176,8 +2240,10 @@
         }
       }
     
-      // Per-unit Progress Check + Poster columns.
-      for (const n of band) {
+      // Per-unit Progress Check + Poster columns — SY2627: the NEW units whose PC
+      // lands in this quarter (quarter.pcUnits); legacy: the old-unit band.
+      const pcUnits = quarter && Array.isArray(quarter.pcUnits) ? quarter.pcUnits : band;
+      for (const n of pcUnits) {
         cols.push({ key: `PC:U${n}`, kind: 'pc', category: 'Progress Check',
           title: `Unit ${n} Progress Check`, unit: n, topicKeys: [] });
         cols.push({ key: `POSTER:U${n}`, kind: 'poster', category: 'Posters',
@@ -2195,7 +2261,7 @@
       if (dueOpts && dueOpts.todayStr) {
         const period = sectionToPeriod(dueOpts.section);
         for (const col of /** @type {Array<{due?: boolean, [k: string]: any}>} */ (cols)) {
-          const ds = _columnDueDate(col, dueOpts.lessons, period);
+          const ds = _columnDueDate(col, dueOpts.lessons, period, dueOpts.events || null);
           if (ds != null) col.due = ds <= dueOpts.todayStr;
         }
       }
@@ -2349,10 +2415,10 @@
     }
     
     // ── Full per-student gradebook (all quarters) — for /grade + /class/grades ──────
-    function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = /** @type {any} */ (null), section = /** @type {string|null} */ (null), todayStr = /** @type {string|null} */ (null) } = {}) {
+    function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = /** @type {any} */ (null), eventSchedule = /** @type {any} */ (null), section = /** @type {string|null} */ (null), todayStr = /** @type {string|null} */ (null) } = {}) {
       // Date-gating opts are passed to the column builder only when both the schedule
       // and today are present; otherwise columns carry no `due` field (degrade to all).
-      const dueOpts = (lessonSchedule && todayStr) ? { lessons: lessonSchedule, section, todayStr } : null;
+      const dueOpts = (lessonSchedule && todayStr) ? { lessons: lessonSchedule, section, todayStr, events: eventSchedule || null } : null;
       const quartersOut = {};
       const quarterKeys = Object.keys((gradeObj && gradeObj.quarters) || {});
       for (const qk of quarterKeys) {
@@ -2390,9 +2456,9 @@
     // The `units` field on the response is UNCHANGED in shape and values
     // (teacher dashboard via class.js fans out computeGrade and reads it).
     
-    const { PHASE3_CONFIG, unitNumber, quarterOfUnit, pcRawToP } = __reg["grade-config"];
+    const { PHASE3_CONFIG, unitNumber, quarterOfUnit, quarterOfDate, pcRawToP } = __reg["grade-config"];
     const { latestPerItem, unitOf, answerKeyMapOrNull, scoreAgainstKey, scorePcRows } = __reg["scoring"];
-    const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands } = __reg["lesson-grade"];
+    const { buildWorksheetBlankCounts, computeLessonGrades, computeQuarterFromLessons, computeQuarterV3, buildLessonsArray, computeQuizTotals, todayInTz, sectionToPeriod, deriveQuarterBands, pcDatesFor, pcUnitsInQuarter } = __reg["lesson-grade"];
     const { buildGradebook } = __reg["gradebook-grid"];
     
     
@@ -2481,12 +2547,17 @@
     // computeGrade(ledgerRows, answerKey, config, opts) → { units, quarters, completion, lessons }
     // Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
     // opts.lessonSchedule: the lesson-schedule.json .lessons map (or null for graceful degrade).
+    // opts.eventSchedule: { progressChecks, posters } from the same file, keyed by NEW
+    //   CED unit (SY2627). When present the PC track is placed/dated by PC Day 1/Day 2.
     // opts.section: student's section string (e.g. "PeriodB") for date filter.
     // opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
     //   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
     function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts = {}) {
       const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
       const bySource = (s) => rows.filter((r) => r && r.source === s);
+      // SY2627 event schedule (PC/Poster dates keyed by NEW unit) — read up front:
+      // the per-unit P curve below needs it before the lesson schedule is resolved.
+      const eventSchedule = (opts && opts.eventSchedule) || null;
     
       // ── Q: cr-quiz correctness % per unit (re-scored vs key) ─────────────────
       const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey);
@@ -2539,6 +2610,8 @@
       const { W: wWeight, Q: qWeight } = config.feederWeights;
     
       const units = {};
+      // SY2627: PC Day 1 per NEW unit (null without an event schedule) — computed once.
+      const _pcDates = pcDatesFor(eventSchedule, sectionToPeriod((opts && opts.section) || null));
       for (const uKey of allUnitKeys) {
         const unitNum = unitNumber(uKey);
     
@@ -2555,7 +2628,11 @@
         const banked = B == null ? null : Math.round(Math.min(B, C) * 10) / 10;
     
         const pcRawPct = pcAgg.units[uKey] ? pcAgg.units[uKey].pct : null;
-        const q = unitNum == null ? null : quarterOfUnit(unitNum, config);
+        // SY2627: a PC's quarter (→ its pcAnchor curve) is the quarter it becomes DUE
+        // in (Day 2, same rule as pcUnitsInQuarter) when the event schedule knows
+        // this NEW unit; else the legacy old-unit band.
+        const _pcDay2 = _pcDates && _pcDates[unitNum] ? _pcDates[unitNum].day2 : null;
+        const q = unitNum == null ? null : ((_pcDay2 && quarterOfDate(_pcDay2, config)) || quarterOfUnit(unitNum, config));
         const P = q ? pcRawToP(pcRawPct, config.quarters[q].pcAnchor) : 0;
     
         const graded = banked != null || P > 0;
@@ -2636,6 +2713,9 @@
       for (const qKey of Object.keys(config.quarters)) {
         const band = _quarterBands[qKey] || config.quarters[qKey].units;
         const pcAnchor = config.quarters[qKey].pcAnchor;
+        // SY2627: PCs are NEW units placed by their Day 1 date (pcUnitsInQuarter);
+        // the OLD-unit band above still drives unitGrades / lessons.
+        const pcBand = pcUnitsInQuarter(eventSchedule, sectionToPeriod(section), config, qKey) || band;
     
         // Unit-level data (UNCHANGED — teacher dashboard reads this).
         const unitGrades = {};
@@ -2648,7 +2728,7 @@
         // Each P_unit = pcRawToP(unit's PC raw%, quarter's pcAnchor).
         let P_quarter = 0;
         let pcUnitCount = 0;
-        for (const n of band) {
+        for (const n of pcBand) {
           const uKey = `U${n}`;
           const pcRaw = units[uKey] ? units[uKey].pcRawPct : null;
           const P_unit = pcRawToP(pcRaw, pcAnchor);
@@ -2711,6 +2791,7 @@
             blooketLessons: blooketRequired, // REQUIRED denominator only (core 66)
             quizLessons,
             trainerLessons,
+            eventSchedule,
           });
         } else if (schedule) {
           qResult = computeQuarterFromLessons({
@@ -2769,6 +2850,9 @@
     
         quarters[qKey] = {
           units: band,
+          // SY2627: the NEW units whose Progress Check lands in this quarter (PC/Poster
+          // columns key off this; `units` stays the OLD-unit lesson band).
+          pcUnits: Array.isArray(qResult.pcUnits) ? qResult.pcUnits : pcBand,
           unitGrades,
           quarterGrade: qResult.quarterGrade,
           // SY2627 early-completion bonus surface (v3 only; explicit pick, see below).
@@ -2853,12 +2937,14 @@
     parseItemLesson: __reg["lesson-grade"].parseItemLesson,
     todayInTz: __reg["lesson-grade"].todayInTz,
     sectionToPeriod: __reg["lesson-grade"].sectionToPeriod,
+    pcDatesFor: __reg["lesson-grade"].pcDatesFor,
+    pcUnitsInQuarter: __reg["lesson-grade"].pcUnitsInQuarter,
     latestPerItem: __reg["scoring"].latestPerItem,
     answerKeyMapOrNull: __reg["scoring"].answerKeyMapOrNull,
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "9784561aa523",
+    _engineVersion: "9939e59e2a09",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

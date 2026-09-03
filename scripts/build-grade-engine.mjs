@@ -38,7 +38,7 @@ const OUT = resolve(ROOT, 'grade-engine.bundle.js');
 const MODULES = [
   { key: 'grade-config',   file: 'grade-config.js',   exports: ['PHASE3_CONFIG', 'unitNumber', 'quarterOfUnit', 'quarterOfDate', 'pcRawToP'] },
   { key: 'scoring',        file: 'scoring.js',        exports: ['blooketScore', 'normalizeResponse', 'isCorrect', 'stableLedgerSort', 'latestPerItem', 'unitOf', 'answerKeyMapOrNull', 'skillMapValidOrNull', 'scoreAgainstKey', 'scorePcRows'] },
-  { key: 'lesson-grade',   file: 'lesson-grade.js',   exports: ['parseItemLesson', 'expandLessonKey', 'buildWorksheetBlankCounts', 'computeLessonGrades', 'todayInTz', 'sectionToPeriod', 'quarterOfLesson', 'computeQuarterFromLessons', 'V3_WORK_WEIGHTS', 'V3_GATES', 'quarterGradeV3', 'workAvgV3', 'computeQuarterV3', 'computeQuizTotals', 'buildLessonsArray', 'deriveQuarterBands'] },
+  { key: 'lesson-grade',   file: 'lesson-grade.js',   exports: ['parseItemLesson', 'expandLessonKey', 'buildWorksheetBlankCounts', 'computeLessonGrades', 'todayInTz', 'sectionToPeriod', 'quarterOfLesson', 'computeQuarterFromLessons', 'V3_WORK_WEIGHTS', 'V3_GATES', 'quarterGradeV3', 'workAvgV3', 'computeQuarterV3', 'computeQuizTotals', 'buildLessonsArray', 'deriveQuarterBands', 'pcDatesFor', 'pcUnitsInQuarter'] },
   { key: 'gradebook-grid', file: 'gradebook-grid.js', exports: ['SCHOOLOGY_CATEGORY_WEIGHTS', 'buildGradebookColumns', 'reconcileQuarter', 'buildGradebookRow', 'schoologyWeightedTotal', 'buildGradebook'] },
   { key: 'grade',          file: 'grade.js',          exports: ['computeGrade', 'mountGrade', 'resolveBlooketLists', 'BLOOKET_PRESENCE', 'BLOOKET_REQUIRED'], omit: ['mountGrade'] },
 ];
@@ -57,6 +57,8 @@ const PUBLIC_API = {
   parseItemLesson:           'lesson-grade',
   todayInTz:                 'lesson-grade',
   sectionToPeriod:           'lesson-grade',
+  pcDatesFor:                'lesson-grade',
+  pcUnitsInQuarter:          'lesson-grade',
   latestPerItem:             'scoring',
   answerKeyMapOrNull:        'scoring',
   // offline-grading mesh Phase 3: the teacher device auto-grades a single submission

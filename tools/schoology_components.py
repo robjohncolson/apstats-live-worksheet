@@ -184,8 +184,17 @@ def component_columns(
     quiz_topics: set,
     blooket_topics: set,
     include_undated: bool = False,
+    progress_checks: dict | None = None,
+    posters: dict | None = None,
 ) -> list:
     """Generate the fine-grained column specs for a section.
+
+    progress_checks / posters: the schedule's `progressChecks` / `posters` maps
+    (SY2627: keyed by NEW CED unit, per-period dates). When given, the PC and
+    Poster columns come from THEM (new units, PC Day 1 / poster date) — matching
+    roster-server gradebook-grid.js and the `PC:U{new}` values the grade producer
+    emits from units[U#].pcRawPct. When absent (older schema), fall back to one
+    PC + Poster per OLD unit dated by its earliest lesson (legacy).
 
     lessons:         the schedule's "lessons" map (topicKey -> entry with
                      unit, worksheetKey, periods).
@@ -286,13 +295,29 @@ def component_columns(
     # the EARLIEST lesson date in the unit (the My Gradebook "unit underway" gate),
     # derived from the groups already filtered by include_undated.
     unit_dates = {}  # unit -> earliest group date (str) or None
-    for g in groups.values():
-        u = g["unit"]
-        d = g["date"]
-        if u not in unit_dates or (d and (unit_dates[u] is None or d < unit_dates[u])):
+    poster_dates = {}  # unit -> poster date (str) or None (event schedule only)
+    if isinstance(progress_checks, dict) and progress_checks:
+        for ukey, entry in progress_checks.items():
+            try:
+                u = int(str(ukey).lstrip("Uu"))
+            except ValueError:
+                continue
+            periods = (entry or {}).get("periods") or {}
+            d = periods.get(period_letter)
+            if d is None and not include_undated:
+                continue
             unit_dates[u] = d
+            pe = ((posters or {}).get(ukey) or (posters or {}).get(str(u)) or {}).get("periods") or {}
+            poster_dates[u] = pe.get(period_letter) or d
+    else:
+        for g in groups.values():
+            u = g["unit"]
+            d = g["date"]
+            if u not in unit_dates or (d and (unit_dates[u] is None or d < unit_dates[u])):
+                unit_dates[u] = d
     for u in sorted(unit_dates):
         udate = unit_dates[u]
+        pdate = poster_dates.get(u, udate)
         columns.append({
             "key": pc_key(u),
             "kind": KIND_PROGRESS_CHECK,
@@ -308,7 +333,7 @@ def component_columns(
             "title": poster_title(u),
             "group_label": f"U{u}",
             "topic_keys": [],
-            "due_date": udate,
+            "due_date": pdate,
             "unit": u,
         })
 

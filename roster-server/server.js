@@ -138,6 +138,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     ? { ..._gradeCtx.config, ...configOverrides }
     : _gradeCtx.config;
   const _sched = lessonSchedule || null;
+  // SY2627 event schedule (PC/Poster dates keyed by NEW unit) — only from an
+  // explicitly supplied production bundle, so tests that inject their own
+  // lessonSchedule keep the legacy old-unit PC proxy.
+  const _events = productionGradeInputs ? (_gradeCtx.eventSchedule || null) : null;
   const _presence = _gradeCtx.blooketPresence || _gradeCtx.blooketTopics;
   const _required = _gradeCtx.blooketRequired;
   const _bonus = _gradeCtx.blooketBonusTopics || [];
@@ -1097,12 +1101,12 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   if (ledgerDb && loadAnswerKey) {
     // Atomic _gradeCtx / gradeConfig / _blooketBundle resolved once at createApp top.
     mountGrade(app, {
-      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, db,
+      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, db,
       config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
       ..._blooketBundle,
     });
     mountOfflineInputs(app, {
-      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, db,
+      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, db,
       config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
       ..._blooketBundle,
     });
@@ -1110,11 +1114,11 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     // teacher device auto-grades gossiped submissions offline (§7.1). Students never
     // hit this — they get the REDACTED key from /grade/offline-inputs.
     mountAnswerKey(app, {
-      db, worksheetKey, loadAnswerKey, lessonSchedule: _sched, config: gradeConfig,
+      db, worksheetKey, loadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null, ..._blooketBundle,
     });
     mountTranscript(app, {
-      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, db,
+      verifyToken, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, lessonSchedule: _sched, eventSchedule: _events, db,
       config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null,
       ..._blooketBundle,
     });
@@ -1138,7 +1142,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   if (db && ledgerDb && loadAnswerKey) {
     mountClass(app, {
       db, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, loadSkillMap, bkt,
-      lessonSchedule: _sched, config: gradeConfig,
+      lessonSchedule: _sched, eventSchedule: _events, config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,
       verifyToken, resolveUsername: resolveReceiptUsername,
       ..._blooketBundle,
@@ -1152,7 +1156,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   if (loadAnswerKey) {
     mountTeacherStudent(app, {
       db, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey,
-      lessonSchedule: _sched,
+      lessonSchedule: _sched, eventSchedule: _events,
       config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,
       loadManifest: loadManifest || null,
@@ -1207,7 +1211,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountReview(app, {
       db, ledgerDb, nudgesDb,
       loadAnswerKey: _gradingLoadAnswerKey || null,
-      lessonSchedule: _sched,
+      lessonSchedule: _sched, eventSchedule: _events,
       config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,
       ..._blooketBundle,

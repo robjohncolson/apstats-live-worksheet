@@ -612,6 +612,45 @@ export function worksheetCoverageReachedAt(result, minComplete) {
   return stamps[need - 1];
 }
 
+// ── Progress Check schedule (SY2627, keyed by NEW CED unit) ─────────────────
+//
+// lesson-schedule.json carries progressChecks[newUnit] = { periods:{B,E} (Day 1),
+// adminDay2:{B,E} }. PC item ids (U{n}-PC-…), pc_bank and the Desk's U{n}-PC*
+// tiles all mean the NEW unit, so the PC track must place and date PCs from
+// these entries — never from the OLD-unit lesson band. Absent (frozen SY2526,
+// tests without an event schedule) → the legacy old-unit proxy still applies.
+export function pcDatesFor(eventSchedule, period) {
+  const pcs = eventSchedule && eventSchedule.progressChecks;
+  if (!pcs || typeof pcs !== 'object') return null;
+  const out = {};
+  for (const [key, entry] of Object.entries(pcs)) {
+    const unit = Number(key);
+    if (!Number.isFinite(unit) || !entry || typeof entry !== 'object') continue;
+    const periods = (entry.periods && typeof entry.periods === 'object') ? entry.periods : {};
+    const day1 = period ? (periods[period] || null) : (periods.B || periods.E || null);
+    let day2 = null;
+    if (entry.adminDay2 && typeof entry.adminDay2 === 'object') {
+      day2 = period ? (entry.adminDay2[period] || null) : (entry.adminDay2.B || entry.adminDay2.E || null);
+    } else if (typeof entry.adminDay2 === 'string') {
+      day2 = entry.adminDay2;
+    }
+    out[unit] = { day1, day2: day2 || day1 };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+// NEW units whose PC becomes DUE inside quarterKey's window (Day 2 — the same
+// instant pcDueFor gates on, so a PC can never be banded into a quarter that
+// closes before it is due; E's U5 PC is Day 1 04-14 / Day 2 04-16 across the
+// Q3→Q4 line and lands in Q4). Ascending.
+export function pcUnitsInQuarter(eventSchedule, period, config, quarterKey) {
+  const dates = pcDatesFor(eventSchedule, period);
+  if (!dates) return null;
+  return Object.keys(dates).map(Number)
+    .filter((u) => dates[u].day2 && quarterOfDate(dates[u].day2, config) === quarterKey)
+    .sort((a, b) => a - b);
+}
+
 // Extract the single-letter period key from a section string.
 // "PeriodB" → "B", "PeriodE" → "E", "B" → "B", etc.
 // Returns null if it can't be extracted.
@@ -997,6 +1036,7 @@ export function computeQuarterV3({
   blooketLessons = /** @type {string[]|null} */ (null),   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
   quizLessons = /** @type {string[]|null} */ (null),      // [topicKey] that HAVE a quiz — the Quiz-track denominator
   trainerLessons = /** @type {string[]|null} */ (null),   // [topicKey] with mapped TI-84 skills — the trainer-track denominator
+  eventSchedule = /** @type {any} */ (null),               // { progressChecks, posters } keyed by NEW unit (SY2627)
 }) {
   const period = sectionToPeriod(section);
   const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
@@ -1240,11 +1280,19 @@ export function computeQuarterV3({
   // the fall schedule's dates pass, until the teacher flips PC_TRACK_ENABLED.
   // Enabled UNLESS explicitly false so bespoke-config callers/tests still run PC.
   const pcEnabled = !(config && config.pcTrack && config.pcTrack.enabled === false);
+  // SY2627: with an event schedule the PC band is the NEW units whose PC Day 1
+  // falls in this quarter, and a PC is due once its Day 2 has ended. Without one
+  // (frozen SY2526 / bespoke tests) the legacy old-unit proxy above applies.
+  const pcDates = pcDatesFor(eventSchedule, period);
+  const pcBand = pcDates ? pcUnitsInQuarter(eventSchedule, period, config, quarterKey) : band;
+  const pcDueFor = pcDates
+    ? (u) => isDateDue(pcDates[u] && pcDates[u].day2, todayDateStr, config)
+    : unitPcDue;
   const pcVals = [];
   let pcSumPct = 0, pcGradedCount = 0;
   if (pcEnabled) {
-    for (const unitNum of band) {
-      if (!unitPcDue(unitNum)) continue; // pcAvg covers PCs due-by-today only
+    for (const unitNum of pcBand) {
+      if (!pcDueFor(unitNum)) continue; // pcAvg covers PCs due-by-today only
       const raw = unitPcData ? unitPcData[unitNum] : null;
       if (raw != null && Number.isFinite(raw)) {
         const frac = Math.min(1, Math.max(0, raw / 100)); // clamp out-of-range raw%
@@ -1261,7 +1309,7 @@ export function computeQuarterV3({
   // (null + pcDue = "due but unattempted"); false = Progress Checks aren't open yet
   // (~fall) OR the track is disabled, so the "Why so low?" coach must NOT push PC
   // work that doesn't count. Additive — no grade math depends on it.
-  const pcDue = pcEnabled && band.some(unitPcDue);
+  const pcDue = pcEnabled && pcBand.some(pcDueFor);
 
   // ── Combine to the quarter grade ──
   const tracks = {
@@ -1338,7 +1386,7 @@ export function computeQuarterV3({
   const quizzesAvgBest = quizBandTotal > 0
     ? (quizSum + (quizBandTotal - quizDone) * 100) / quizBandTotal / 100
     : null;
-  const pcTotal = band.length;
+  const pcTotal = pcBand.length;
   const pcAvgBest = pcTotal > 0
     ? (pcSumPct + (pcTotal - pcGradedCount) * 100) / pcTotal / 100
     : null;
@@ -1368,6 +1416,7 @@ export function computeQuarterV3({
     earlyKeys,
     aheadLessons: aheadKeys.length,
     aheadKeys,
+    pcUnits: pcBand,
     ceiling,
     lessonsDue,
     // lessonsGraded counts lessons graded on the LESSONS-track feeders (blanks/

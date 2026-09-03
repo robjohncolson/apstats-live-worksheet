@@ -28,7 +28,7 @@ function studentMeta(r) {
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountTeacherStudent(app, {
-  db, ledgerDb, loadAnswerKey, lessonSchedule, config = PHASE3_CONFIG,
+  db, ledgerDb, loadAnswerKey, lessonSchedule, eventSchedule = null, config = PHASE3_CONFIG,
   worksheetBlankCounts = null, loadManifest = null, pollArchiveDb = null,
   blooketPresence = null, blooketRequired = null, blooketLessons = null,
 }) {
@@ -116,6 +116,7 @@ export function mountTeacherStudent(app, {
 
     const computed = computeGrade(ledgerRows, answerKey, config, {
       lessonSchedule,
+      eventSchedule,
       section: roster.section || null,
       worksheetBlankCounts,
       blooketPresence: _presence || undefined,

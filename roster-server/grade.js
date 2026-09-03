@@ -16,6 +16,7 @@ import {
   PHASE3_CONFIG,
   unitNumber,
   quarterOfUnit,
+  quarterOfDate,
   pcRawToP,
 } from './grade-config.js';
 import {
@@ -35,6 +36,8 @@ import {
   todayInTz,
   sectionToPeriod,
   deriveQuarterBands,
+  pcDatesFor,
+  pcUnitsInQuarter,
 } from './lesson-grade.js';
 import { buildGradebook } from './gradebook-grid.js';
 import { readFileSync } from 'fs';
@@ -151,12 +154,17 @@ function frqScoreToPct(score, frqBand) {
 // computeGrade(ledgerRows, answerKey, config, opts) → { units, quarters, completion, lessons }
 // Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
 // opts.lessonSchedule: the lesson-schedule.json .lessons map (or null for graceful degrade).
+// opts.eventSchedule: { progressChecks, posters } from the same file, keyed by NEW
+//   CED unit (SY2627). When present the PC track is placed/dated by PC Day 1/Day 2.
 // opts.section: student's section string (e.g. "PeriodB") for date filter.
 // opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
 //   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
 export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts = {}) {
   const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
   const bySource = (s) => rows.filter((r) => r && r.source === s);
+  // SY2627 event schedule (PC/Poster dates keyed by NEW unit) — read up front:
+  // the per-unit P curve below needs it before the lesson schedule is resolved.
+  const eventSchedule = (opts && opts.eventSchedule) || null;
 
   // ── Q: cr-quiz correctness % per unit (re-scored vs key) ─────────────────
   const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey);
@@ -209,6 +217,8 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   const { W: wWeight, Q: qWeight } = config.feederWeights;
 
   const units = {};
+  // SY2627: PC Day 1 per NEW unit (null without an event schedule) — computed once.
+  const _pcDates = pcDatesFor(eventSchedule, sectionToPeriod((opts && opts.section) || null));
   for (const uKey of allUnitKeys) {
     const unitNum = unitNumber(uKey);
 
@@ -225,7 +235,11 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     const banked = B == null ? null : Math.round(Math.min(B, C) * 10) / 10;
 
     const pcRawPct = pcAgg.units[uKey] ? pcAgg.units[uKey].pct : null;
-    const q = unitNum == null ? null : quarterOfUnit(unitNum, config);
+    // SY2627: a PC's quarter (→ its pcAnchor curve) is the quarter it becomes DUE
+    // in (Day 2, same rule as pcUnitsInQuarter) when the event schedule knows
+    // this NEW unit; else the legacy old-unit band.
+    const _pcDay2 = _pcDates && _pcDates[unitNum] ? _pcDates[unitNum].day2 : null;
+    const q = unitNum == null ? null : ((_pcDay2 && quarterOfDate(_pcDay2, config)) || quarterOfUnit(unitNum, config));
     const P = q ? pcRawToP(pcRawPct, config.quarters[q].pcAnchor) : 0;
 
     const graded = banked != null || P > 0;
@@ -306,6 +320,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   for (const qKey of Object.keys(config.quarters)) {
     const band = _quarterBands[qKey] || config.quarters[qKey].units;
     const pcAnchor = config.quarters[qKey].pcAnchor;
+    // SY2627: PCs are NEW units placed by their Day 1 date (pcUnitsInQuarter);
+    // the OLD-unit band above still drives unitGrades / lessons.
+    const pcBand = pcUnitsInQuarter(eventSchedule, sectionToPeriod(section), config, qKey) || band;
 
     // Unit-level data (UNCHANGED — teacher dashboard reads this).
     const unitGrades = {};
@@ -318,7 +335,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     // Each P_unit = pcRawToP(unit's PC raw%, quarter's pcAnchor).
     let P_quarter = 0;
     let pcUnitCount = 0;
-    for (const n of band) {
+    for (const n of pcBand) {
       const uKey = `U${n}`;
       const pcRaw = units[uKey] ? units[uKey].pcRawPct : null;
       const P_unit = pcRawToP(pcRaw, pcAnchor);
@@ -381,6 +398,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
         blooketLessons: blooketRequired, // REQUIRED denominator only (core 66)
         quizLessons,
         trainerLessons,
+        eventSchedule,
       });
     } else if (schedule) {
       qResult = computeQuarterFromLessons({
@@ -439,6 +457,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
 
     quarters[qKey] = {
       units: band,
+      // SY2627: the NEW units whose Progress Check lands in this quarter (PC/Poster
+      // columns key off this; `units` stays the OLD-unit lesson band).
+      pcUnits: Array.isArray(qResult.pcUnits) ? qResult.pcUnits : pcBand,
       unitGrades,
       quarterGrade: qResult.quarterGrade,
       // SY2627 early-completion bonus surface (v3 only; explicit pick, see below).
@@ -511,7 +532,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountGrade(app, {
-  verifyToken, ledgerDb, loadAnswerKey, lessonSchedule, db,
+  verifyToken, ledgerDb, loadAnswerKey, lessonSchedule, eventSchedule = null, db,
   config = PHASE3_CONFIG, worksheetBlankCounts = null,
   // Presence (hasBlooket UI) vs required (Due denominator). blooketLessons is a
   // legacy alias for presence when only one list is supplied.
@@ -583,6 +604,7 @@ export function mountGrade(app, {
       config,
       {
         lessonSchedule,
+        eventSchedule,
         section,
         worksheetBlankCounts,
         blooketPresence: _presence || undefined,
@@ -613,7 +635,7 @@ export function mountGrade(app, {
       // clients (teacher dashboard) can hide future, not-yet-started work.
       gradebook: buildGradebook(
         { units, quarters, completion, lessons },
-        { lessonSchedule, section, todayStr: todayInTz((config && config.schoolTz) || 'America/New_York', undefined) }
+        { lessonSchedule, eventSchedule, section, todayStr: todayInTz((config && config.schoolTz) || 'America/New_York', undefined) }
       ),
     });
   });

@@ -747,6 +747,11 @@
             "lessonsTotal": 5,
             "pcAvg": 45,
             "pcAvgRaw": 0.44999999999999996,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 45.2,
             "quarterGradeBase": 45.2,
             "quizDone": 3,
@@ -795,6 +800,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -838,6 +847,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -881,6 +894,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -1618,6 +1635,11 @@
             "lessonsTotal": 5,
             "pcAvg": 40,
             "pcAvgRaw": 0.4,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 100,
             "quarterGradeBase": 100,
             "quizDone": 3,
@@ -1663,6 +1685,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -1706,6 +1732,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -1749,6 +1779,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -2448,6 +2482,11 @@
             "lessonsTotal": 5,
             "pcAvg": 70,
             "pcAvgRaw": 0.7,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 49,
             "quarterGradeBase": 49,
             "quizDone": 3,
@@ -2493,6 +2532,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -2536,6 +2579,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -2579,6 +2626,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -3296,6 +3347,11 @@
             "lessonsTotal": 5,
             "pcAvg": 80,
             "pcAvgRaw": 0.8,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 80,
             "quarterGradeBase": 80,
             "quizDone": 3,
@@ -3341,6 +3397,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -3384,6 +3444,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -3427,6 +3491,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -4108,6 +4176,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 12.7,
             "quarterGradeBase": 12.7,
             "quizDone": 1,
@@ -4160,6 +4233,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -4203,6 +4280,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -4246,6 +4327,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -4895,6 +4980,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 0,
             "quarterGradeBase": 0,
             "quizDone": 0,
@@ -4947,6 +5037,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -4990,6 +5084,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -5033,6 +5131,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -5686,6 +5788,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 9.3,
             "quarterGradeBase": 9.3,
             "quizDone": 1,
@@ -5736,6 +5843,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -5779,6 +5890,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -5822,6 +5937,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -6486,6 +6605,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 0,
             "quarterGradeBase": 0,
             "quizDone": 1,
@@ -6536,6 +6660,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -6579,6 +6707,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -6622,6 +6754,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -7286,6 +7422,11 @@
             "lessonsTotal": 5,
             "pcAvg": 85,
             "pcAvgRaw": 0.8500000000000001,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 59.5,
             "quarterGradeBase": 59.5,
             "quizDone": 0,
@@ -7338,6 +7479,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -7381,6 +7526,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -7424,6 +7573,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -8090,6 +8243,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 2.5,
             "quarterGradeBase": 2.5,
             "quizDone": 0,
@@ -8141,6 +8299,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -8184,6 +8346,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -8227,6 +8393,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -8882,6 +9052,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 0,
             "quarterGradeBase": 0,
             "quizDone": 0,
@@ -8933,6 +9108,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -8976,6 +9155,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -9019,6 +9202,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -9675,6 +9862,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 2.5,
             "quarterGradeBase": 2.5,
             "quizDone": 0,
@@ -9726,6 +9918,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -9769,6 +9965,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -9812,6 +10012,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -10491,6 +10695,11 @@
             "lessonsTotal": 5,
             "pcAvg": 25,
             "pcAvgRaw": 0.25,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 23.7,
             "quarterGradeBase": 23.7,
             "quizDone": 1,
@@ -10542,6 +10751,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -10585,6 +10798,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -10628,6 +10845,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -11304,6 +11525,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 15.6,
             "quarterGradeBase": 15.6,
             "quizDone": 1,
@@ -11355,6 +11581,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -11398,6 +11628,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -11441,6 +11675,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -12104,6 +12342,11 @@
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 13.1,
             "quarterGradeBase": 13.1,
             "quizDone": 0,
@@ -12153,6 +12396,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -12196,6 +12443,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -12239,6 +12490,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -12933,6 +13188,11 @@
             "lessonsTotal": 5,
             "pcAvg": 30,
             "pcAvgRaw": 0.3,
+            "pcUnits": [
+              1,
+              2,
+              3
+            ],
             "quarterGrade": 27,
             "quarterGradeBase": 27,
             "quizDone": 1,
@@ -12985,6 +13245,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              4,
+              5
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -13028,6 +13292,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              6,
+              7
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -13071,6 +13339,10 @@
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
+            "pcUnits": [
+              8,
+              9
+            ],
             "quarterGrade": null,
             "quarterGradeBase": null,
             "quizDone": 0,
@@ -13883,6 +14155,11 @@
           "lessonsTotal": 5,
           "pcAvg": 45,
           "pcAvgRaw": 0.44999999999999996,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 45.2,
           "quarterGradeBase": 45.2,
           "quizDone": 3,
@@ -13931,6 +14208,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -13974,6 +14255,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -14017,6 +14302,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -14802,6 +15091,11 @@
           "lessonsTotal": 5,
           "pcAvg": 40,
           "pcAvgRaw": 0.4,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 100,
           "quarterGradeBase": 100,
           "quizDone": 3,
@@ -14847,6 +15141,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -14890,6 +15188,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -14933,6 +15235,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -15680,6 +15986,11 @@
           "lessonsTotal": 5,
           "pcAvg": 70,
           "pcAvgRaw": 0.7,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 49,
           "quarterGradeBase": 49,
           "quizDone": 3,
@@ -15725,6 +16036,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -15768,6 +16083,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -15811,6 +16130,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -16576,6 +16899,11 @@
           "lessonsTotal": 5,
           "pcAvg": 80,
           "pcAvgRaw": 0.8,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 80,
           "quarterGradeBase": 80,
           "quizDone": 3,
@@ -16621,6 +16949,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -16664,6 +16996,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -16707,6 +17043,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -17436,6 +17776,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 12.7,
           "quarterGradeBase": 12.7,
           "quizDone": 1,
@@ -17488,6 +17833,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -17531,6 +17880,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -17574,6 +17927,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -18275,6 +18632,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 0,
           "quarterGradeBase": 0,
           "quizDone": 0,
@@ -18327,6 +18689,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -18370,6 +18736,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -18413,6 +18783,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -19118,6 +19492,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 9.3,
           "quarterGradeBase": 9.3,
           "quizDone": 1,
@@ -19168,6 +19547,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -19211,6 +19594,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -19254,6 +19641,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -19970,6 +20361,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 0,
           "quarterGradeBase": 0,
           "quizDone": 1,
@@ -20020,6 +20416,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -20063,6 +20463,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -20106,6 +20510,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -20822,6 +21230,11 @@
           "lessonsTotal": 5,
           "pcAvg": 85,
           "pcAvgRaw": 0.8500000000000001,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 59.5,
           "quarterGradeBase": 59.5,
           "quizDone": 0,
@@ -20874,6 +21287,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -20917,6 +21334,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -20960,6 +21381,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -21678,6 +22103,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 2.5,
           "quarterGradeBase": 2.5,
           "quizDone": 0,
@@ -21729,6 +22159,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -21772,6 +22206,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -21815,6 +22253,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -22522,6 +22964,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 0,
           "quarterGradeBase": 0,
           "quizDone": 0,
@@ -22573,6 +23020,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -22616,6 +23067,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -22659,6 +23114,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -23367,6 +23826,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 2.5,
           "quarterGradeBase": 2.5,
           "quizDone": 0,
@@ -23418,6 +23882,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -23461,6 +23929,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -23504,6 +23976,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -24235,6 +24711,11 @@
           "lessonsTotal": 5,
           "pcAvg": 25,
           "pcAvgRaw": 0.25,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 23.7,
           "quarterGradeBase": 23.7,
           "quizDone": 1,
@@ -24286,6 +24767,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -24329,6 +24814,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -24372,6 +24861,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -25100,6 +25593,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 15.6,
           "quarterGradeBase": 15.6,
           "quizDone": 1,
@@ -25151,6 +25649,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -25194,6 +25696,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -25237,6 +25743,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -25952,6 +26462,11 @@
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 13.1,
           "quarterGradeBase": 13.1,
           "quizDone": 0,
@@ -26001,6 +26516,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -26044,6 +26563,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -26087,6 +26610,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -26829,6 +27356,11 @@
           "lessonsTotal": 5,
           "pcAvg": 30,
           "pcAvgRaw": 0.3,
+          "pcUnits": [
+            1,
+            2,
+            3
+          ],
           "quarterGrade": 27,
           "quarterGradeBase": 27,
           "quizDone": 1,
@@ -26881,6 +27413,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            4,
+            5
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -26924,6 +27460,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            6,
+            7
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,
@@ -26967,6 +27507,10 @@
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
+          "pcUnits": [
+            8,
+            9
+          ],
           "quarterGrade": null,
           "quarterGradeBase": null,
           "quizDone": 0,

@@ -8719,6 +8719,9 @@ function _phase2ReDeriveGrade() {
       if (!rows.length) return null;
       var opts = {
         lessonSchedule: inputs.schedule || null,
+        // SY2627: PC/Poster dates keyed by NEW unit (server parity for the PC
+        // track). Older cached inputs lack it → null → legacy old-unit proxy.
+        eventSchedule: inputs.eventSchedule || null,
         section: inputs.section || null,
         worksheetBlankCounts: inputs.worksheetBlankCounts || null,
         // M2a presence/required: ship both so offline Due denom matches server
@@ -8744,7 +8747,7 @@ function _phase2ReDeriveGrade() {
           var todayStr = (GradeEngine.todayInTz)
             ? GradeEngine.todayInTz((inputs.config && inputs.config.schoolTz) || 'America/New_York')
             : undefined;
-          gradebook = GradeEngine.buildGradebook(g, { lessonSchedule: opts.lessonSchedule, section: opts.section, todayStr: todayStr });
+          gradebook = GradeEngine.buildGradebook(g, { lessonSchedule: opts.lessonSchedule, eventSchedule: opts.eventSchedule, section: opts.section, todayStr: todayStr });
         }
       } catch (_) {}
       return {
@@ -23799,7 +23802,7 @@ function _mountClassroomBoard(){
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-03-ubyo';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-03-xdp0';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -411,6 +411,8 @@ def build_component_scope(
         quiz_topics=quiz_topics,
         blooket_topics=blooket_topics,
         include_undated=include_undated,
+        progress_checks=schedule.get("progressChecks"),
+        posters=schedule.get("posters"),
     )
     return columns
 

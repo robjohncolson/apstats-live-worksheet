@@ -150,6 +150,26 @@ class TestComponentColumns(unittest.TestCase):
         self.assertEqual(by_key["POSTER:U1"]["kind"], "poster")
         self.assertNotIn("PC:U4", by_key)  # 4.6 undated -> unit 4 absent by default
 
+    def test_pc_and_poster_columns_from_event_schedule_new_units(self):
+        # SY2627: progressChecks/posters are keyed by NEW unit with per-period
+        # dates -- the PC/Poster columns must come from them, not from old units.
+        pcs = {
+            "1": {"unit": 1, "periods": {"B": "2026-10-09", "E": "2026-10-23"}, "adminDay2": {"B": "2026-10-13", "E": "2026-10-26"}},
+            "5": {"unit": 5, "periods": {"B": "2027-02-25", "E": "2027-04-14"}, "adminDay2": {"B": "2027-02-26", "E": "2027-04-16"}},
+        }
+        posters = {"1": {"unit": 1, "periods": {"B": "2026-10-08", "E": "2026-10-21"}}}
+        cols = sc.component_columns(
+            MINI_LESSONS, "B",
+            quiz_topics=QUIZ_TOPICS, blooket_topics=BLOOKET_TOPICS,
+            progress_checks=pcs, posters=posters,
+        )
+        by_key = {c["key"]: c for c in cols}
+        self.assertEqual(by_key["PC:U1"]["due_date"], "2026-10-09")
+        self.assertEqual(by_key["POSTER:U1"]["due_date"], "2026-10-08")
+        self.assertEqual(by_key["PC:U5"]["due_date"], "2027-02-25")
+        self.assertEqual(by_key["POSTER:U5"]["due_date"], "2027-02-25")  # no poster row -> PC date
+        self.assertNotIn("PC:U6", by_key)  # old unit 6 (a lesson group) gets NO PC column
+
     def test_null_date_excluded_by_default(self):
         cols = self._cols(include_undated=False)
         keys = {c["key"] for c in cols}

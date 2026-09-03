@@ -12,7 +12,7 @@ import {
   lessonCompletedAt,
   worksheetCoverageReachedAt,
 } from '../lesson-grade.js';
-import { buildGradebookRow } from '../gradebook-grid.js';
+import { buildGradebookRow, buildGradebook } from '../gradebook-grid.js';
 import { PHASE3_CONFIG } from '../grade-config.js';
 
 const CFG = {
@@ -256,5 +256,123 @@ describe('buildGradebookRow — "Schoology today" counts only DUE + COMPLETED ce
     const cols = columns.map(({ due, ...c }) => c);
     const row = buildGradebookRow(gradeObj, cols);
     expect(row.categoryAverages.Lesson).toBe(50);
+  });
+});
+
+// ── Progress Checks keyed by NEW CED unit (teacher decision 2026-09-03 #7) ──────
+import { pcDatesFor, pcUnitsInQuarter } from '../lesson-grade.js';
+import { computeGrade } from '../grade.js';
+
+describe('PC track placed and dated by the event schedule (NEW units), not the old-unit band', () => {
+  const eventSchedule = {
+    progressChecks: {
+      '1': { unit: 1, periods: { B: '2026-10-09', E: '2026-10-23' }, adminDay2: { B: '2026-10-13', E: '2026-10-26' } },
+      '2': { unit: 2, periods: { B: '2026-11-19', E: '2026-12-16' }, adminDay2: { B: '2026-11-20', E: '2026-12-18' } },
+      '3': { unit: 3, periods: { B: '2027-01-08', E: '2027-02-22' }, adminDay2: { B: '2027-01-11', E: '2027-02-24' } },
+    },
+    posters: { '1': { unit: 1, periods: { B: '2026-10-08', E: '2026-10-21' } } },
+  };
+  // Old-unit lessons: old U3 finishes in Q1 (the collision case), old U1 in Q2.
+  const schedule = {
+    '3.6': { unit: 3, periods: { B: '2026-10-06', E: '2026-10-19' } },
+    '1.10': { unit: 1, periods: { B: '2026-11-10', E: '2026-11-20' } },
+  };
+  const cfg = { ...CFG, pcTrack: { enabled: true }, v3EarlyBonus: null };
+
+  it('a PC straddling a quarter line (E U5: Day 1 04-14 = Q3 end, Day 2 04-16 = Q4) bands where it becomes due', () => {
+    const ev = { progressChecks: { '5': { unit: 5, periods: { B: '2027-02-25', E: '2027-04-14' }, adminDay2: { B: '2027-02-26', E: '2027-04-16' } } } };
+    const full = { ...cfg, quarters: PHASE3_CONFIG.quarters };
+    expect(pcUnitsInQuarter(ev, 'E', full, 'Q3')).toEqual([]);
+    expect(pcUnitsInQuarter(ev, 'E', full, 'Q4')).toEqual([5]);
+    expect(pcUnitsInQuarter(ev, 'B', full, 'Q3')).toEqual([5]);
+  });
+
+  it('pcDatesFor reads Day 1 / Day 2 per period; pcUnitsInQuarter bands by the due instant (Day 2)', () => {
+    expect(pcDatesFor(eventSchedule, 'B')[1]).toEqual({ day1: '2026-10-09', day2: '2026-10-13' });
+    expect(pcDatesFor(eventSchedule, 'E')[3]).toEqual({ day1: '2027-02-22', day2: '2027-02-24' });
+    expect(pcUnitsInQuarter(eventSchedule, 'B', cfg, 'Q1')).toEqual([1]);
+    expect(pcUnitsInQuarter(eventSchedule, 'B', cfg, 'Q2')).toEqual([2, 3]);
+    expect(pcUnitsInQuarter(eventSchedule, 'E', cfg, 'Q1')).toEqual([1]);
+    expect(pcDatesFor(null, 'B')).toBe(null);
+    expect(pcDatesFor({ progressChecks: {} }, 'B')).toBe(null);
+  });
+
+  it('Q1 PC band = NEW unit 1 (not old unit 3); not due until Day 2 has ended', () => {
+    const onDay2 = computeQuarterV3({
+      quarterKey: 'Q1', config: cfg, lessonMap: new Map(), schedule, todayDateStr: '2026-10-13',
+      section: 'PeriodB', unitPcData: { 1: 80, 3: 20 }, eventSchedule, quizLessons: [], blooketLessons: [],
+    });
+    expect(onDay2.pcUnits).toEqual([1]);
+    expect(onDay2.pcDue).toBe(false);
+    expect(onDay2.pcAvg).toBe(null);
+
+    const after = computeQuarterV3({
+      quarterKey: 'Q1', config: cfg, lessonMap: new Map(), schedule, todayDateStr: '2026-10-14',
+      section: 'PeriodB', unitPcData: { 1: 80, 3: 20 }, eventSchedule, quizLessons: [], blooketLessons: [],
+    });
+    expect(after.pcDue).toBe(true);
+    expect(after.pcAvg).toBe(80);          // new-unit-1 score, NOT old-unit-3's 20
+  });
+
+  it('a due PC with no attempt counts as 0 (unchanged rule) on the NEW band', () => {
+    const r = computeQuarterV3({
+      quarterKey: 'Q1', config: cfg, lessonMap: new Map(), schedule, todayDateStr: '2026-10-14',
+      section: 'PeriodB', unitPcData: {}, eventSchedule, quizLessons: [], blooketLessons: [],
+    });
+    expect(r.pcAvg).toBe(0);
+  });
+
+  it('WITHOUT an event schedule the legacy old-unit proxy still applies (frozen SY2526)', () => {
+    const r = computeQuarterV3({
+      quarterKey: 'Q1', config: cfg, lessonMap: new Map(), schedule, todayDateStr: '2026-10-14',
+      section: 'PeriodB', unitPcData: { 1: 80, 3: 20 }, quizLessons: [], blooketLessons: [],
+    });
+    expect(r.pcUnits).toEqual([3]);       // deriveQuarterBands: old U3 finishes in Q1
+    expect(r.pcAvg).toBe(20);
+  });
+
+  it('computeGrade threads eventSchedule: quarters[q].pcUnits and the PC quarter/curve follow Day 1', () => {
+    const rows = [
+      { source: 'pc', item_id: 'U3-PC-MCQ-A-Q1', response: 'a', score: 1, recorded_at: '2027-01-08T15:00:00Z' },
+    ];
+    const answerKey = { 'U3-PC-MCQ-A-Q1': { unit: 3, answerKey: 'a' } };
+    const out = computeGrade(rows, answerKey, { ...PHASE3_CONFIG, useV3: true, pcTrack: { enabled: true }, v3EarlyBonus: null },
+      { lessonSchedule: schedule, eventSchedule, section: 'PeriodB', asOf: Date.parse('2027-01-20T16:00:00Z') });
+    expect(out.quarters.Q1.pcUnits).toEqual([1]);
+    expect(out.quarters.Q2.pcUnits).toEqual([2, 3]);
+    expect(out.units.U3.pcRawPct).toBe(100);
+    // The gradebook grid (built by the route) keys PC/Poster columns off pcUnits
+    // and dates them from the event schedule.
+    const gb = buildGradebook(out, { lessonSchedule: schedule, eventSchedule, section: 'PeriodB', todayStr: '2027-01-20' });
+    expect(gb.quarters.Q2.columns.some((c) => c.key === 'PC:U3')).toBe(true);
+    expect(gb.quarters.Q1.columns.some((c) => c.key === 'PC:U3')).toBe(false);
+    const pc3 = gb.quarters.Q2.columns.find((c) => c.key === 'PC:U3');
+    expect(pc3.due).toBe(true);   // Day 1 2027-01-08 <= 2027-01-20
+    const pc2 = gb.quarters.Q2.columns.find((c) => c.key === 'PC:U2');
+    expect(pc2.due).toBe(true);
+    expect(gb.quarters.Q2.cells['PC:U3']).toBe(100);
+  });
+});
+
+// ── Production wiring: the live SY2627 context carries the event schedule ─────
+import { resolveProductionGradeInputs, loadEventScheduleWithPriority } from '../grade-contexts.js';
+
+describe('event schedule reaches the production grade inputs', () => {
+  it('loadEventScheduleWithPriority reads progressChecks/posters keyed by NEW units 1-5 from the bundled file', () => {
+    const ev = loadEventScheduleWithPriority();
+    expect(ev).toBeTruthy();
+    expect(Object.keys(ev.progressChecks)).toEqual(['1', '2', '3', '4', '5']);
+    expect(Object.keys(ev.posters)).toEqual(['1', '2', '3', '4', '5']);
+    expect(ev.progressChecks['1'].periods.B).toMatch(/^2026-10-/);
+    expect(ev.progressChecks['1'].adminDay2.B > ev.progressChecks['1'].periods.B).toBe(true);
+  });
+  it('resolveProductionGradeInputs(SY2627) clones it; every NEW unit lands in exactly one quarter per period', () => {
+    const prod = resolveProductionGradeInputs('SY2627');
+    expect(prod.eventSchedule && Object.keys(prod.eventSchedule.progressChecks)).toEqual(['1', '2', '3', '4', '5']);
+    for (const period of ['B', 'E']) {
+      const placed = [];
+      for (const q of ['Q1', 'Q2', 'Q3', 'Q4']) placed.push(...pcUnitsInQuarter(prod.eventSchedule, period, prod.config, q));
+      expect(placed.sort()).toEqual([1, 2, 3, 4, 5]);
+    }
   });
 });

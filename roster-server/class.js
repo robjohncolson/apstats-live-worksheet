@@ -141,7 +141,7 @@ function friendlyLabel(realName) {
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountClass(app, {
-  db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule,
+  db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, eventSchedule = null,
   config = PHASE3_CONFIG, worksheetBlankCounts = null, verifyToken, resolveUsername,
   blooketPresence = null, blooketRequired = null, blooketLessons = null,
 }) {
@@ -256,6 +256,7 @@ export function mountClass(app, {
       const section = roster && roster.section ? roster.section : null;
       const computed = computeGrade(ledgerRows, answerKey, config, {
         lessonSchedule,
+        eventSchedule,
         section,
         worksheetBlankCounts,
         blooketPresence: _presence || undefined,
@@ -304,7 +305,7 @@ export function mountClass(app, {
         trainer,
         lastActivityAt,
         effort: computeEffort(ledgerRows),   // DOGE wallet: effort points → candy
-        gradebook: buildGradebook(computed, { lessonSchedule, section, todayStr }),
+        gradebook: buildGradebook(computed, { lessonSchedule, eventSchedule, section, todayStr }),
       };
     });
 
@@ -344,6 +345,7 @@ export function mountClass(app, {
       roster,
       computed: computeGrade(ledgerRows, answerKey, config, {
         lessonSchedule,
+        eventSchedule,
         section: roster && roster.section ? roster.section : null,
         worksheetBlankCounts,
         blooketPresence: _presence || undefined,

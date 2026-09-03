@@ -69,7 +69,22 @@ function topicNum(topicKey) {
 // LATEST date among their topicKeys. PC/Poster (unit-level): the EARLIEST lesson
 // date in that unit ("unit underway"), matching the Desk's My Gradebook gate.
 // null when no date is known. `period` is 'B' | 'E' | null (null → earliest of B/E).
-function _columnDueDate(col, lessons, period) {
+function _columnDueDate(col, lessons, period, events) {
+  // SY2627: PC / Poster columns are NEW units dated by the event schedule
+  // (progressChecks Day 1, posters date). Fall through to the lesson proxy only
+  // when the event schedule does not know the unit.
+  if (events && (col.kind === 'pc' || col.kind === 'poster')) {
+    const map = col.kind === 'pc' ? events.progressChecks : events.posters;
+    const entry = map && map[String(col.unit)];
+    const p = entry && entry.periods;
+    if (p) {
+      const ds = period ? (p[period] || null) : (p.B && p.E ? (p.B < p.E ? p.B : p.E) : (p.B || p.E || null));
+      if (ds) return ds;
+    }
+    // A NEW unit the event schedule does not know must NOT fall through to the
+    // OLD-unit lesson proxy below (same number, different unit) — leave undated.
+    return null;
+  }
   if (!lessons) return null;
   function pdate(entry) {
     const p = entry && entry.periods;
@@ -150,8 +165,10 @@ export function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
     }
   }
 
-  // Per-unit Progress Check + Poster columns.
-  for (const n of band) {
+  // Per-unit Progress Check + Poster columns — SY2627: the NEW units whose PC
+  // lands in this quarter (quarter.pcUnits); legacy: the old-unit band.
+  const pcUnits = quarter && Array.isArray(quarter.pcUnits) ? quarter.pcUnits : band;
+  for (const n of pcUnits) {
     cols.push({ key: `PC:U${n}`, kind: 'pc', category: 'Progress Check',
       title: `Unit ${n} Progress Check`, unit: n, topicKeys: [] });
     cols.push({ key: `POSTER:U${n}`, kind: 'poster', category: 'Posters',
@@ -169,7 +186,7 @@ export function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
   if (dueOpts && dueOpts.todayStr) {
     const period = sectionToPeriod(dueOpts.section);
     for (const col of /** @type {Array<{due?: boolean, [k: string]: any}>} */ (cols)) {
-      const ds = _columnDueDate(col, dueOpts.lessons, period);
+      const ds = _columnDueDate(col, dueOpts.lessons, period, dueOpts.events || null);
       if (ds != null) col.due = ds <= dueOpts.todayStr;
     }
   }
@@ -323,10 +340,10 @@ export function schoologyWeightedTotal(categoryAverages, weights = SCHOOLOGY_CAT
 }
 
 // ── Full per-student gradebook (all quarters) — for /grade + /class/grades ──────
-export function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = /** @type {any} */ (null), section = /** @type {string|null} */ (null), todayStr = /** @type {string|null} */ (null) } = {}) {
+export function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = /** @type {any} */ (null), eventSchedule = /** @type {any} */ (null), section = /** @type {string|null} */ (null), todayStr = /** @type {string|null} */ (null) } = {}) {
   // Date-gating opts are passed to the column builder only when both the schedule
   // and today are present; otherwise columns carry no `due` field (degrade to all).
-  const dueOpts = (lessonSchedule && todayStr) ? { lessons: lessonSchedule, section, todayStr } : null;
+  const dueOpts = (lessonSchedule && todayStr) ? { lessons: lessonSchedule, section, todayStr, events: eventSchedule || null } : null;
   const quartersOut = {};
   const quarterKeys = Object.keys((gradeObj && gradeObj.quarters) || {});
   for (const qk of quarterKeys) {

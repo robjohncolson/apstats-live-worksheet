@@ -3,6 +3,7 @@
   "blooketPresenceLen": 77,
   "blooketRequiredLen": 66,
   "schedule_1_1_B": "2099-06-01",
+  "pcUnitsFromEvents": null,
   "frozenConfig": {
     "C": 85,
     "feederWeights": {
@@ -125,6 +126,11 @@
           2,
           3
         ],
+        "pcUnits": [
+          1,
+          2,
+          3
+        ],
         "unitGrades": {
           "U1": null,
           "U2": null,
@@ -160,6 +166,10 @@
       },
       "Q2": {
         "units": [
+          4,
+          5
+        ],
+        "pcUnits": [
           4,
           5
         ],
@@ -200,6 +210,10 @@
           6,
           7
         ],
+        "pcUnits": [
+          6,
+          7
+        ],
         "unitGrades": {
           "U6": null,
           "U7": null
@@ -234,6 +248,10 @@
       },
       "Q4": {
         "units": [
+          8,
+          9
+        ],
+        "pcUnits": [
           8,
           9
         ],

@@ -76,12 +76,27 @@ Sep 1, exam May 14, 8 of 13 closures). Fixed in one pass, one source of truth:
   revert if the teacher disagrees; `lesson-grade-v3.test.js` pins the new rule.
   The Desk's `QUARTER_WINDOWS` + `QUARTER_BAND_LABEL` (and start-here's) were also stale — now
   the real dates, labelled "Sep 2 – Nov 6" etc. instead of unit lists.
-- **OPEN (blocks `PC_TRACK_ENABLED=true`):** PC ids are NEW CED units (`U{n}-PC-*`, pc_bank,
-  Desk `U{n}-PC*`, `progressChecks` keys) but `grade.js`/`lesson-grade.js` (pcAnchor via
-  `quarterOfUnit(unit)`, `unitPcDue`, `deriveQuarterBands` placement at :1145) treat `row.unit`
-  as an OLD unit. With the real schedule `deriveQuarterBands` gives Q1=[3] (B), so new-U3's PC
-  (administered 01-08) would be "due" in Q1 and zero every student's Q1 PC track. Resolve the
-  old/new unit-id mapping in the PC path BEFORE flipping the flag.
+- **RESOLVED 2026-09-03 (late) — PC path keyed by NEW unit.** lesson-schedule.json's
+  `progressChecks`/`posters` (NEW-unit keyed, per-period Day 1 + `adminDay2`) are loaded as an
+  `eventSchedule` (grade-contexts `loadEventScheduleWithPriority`, SY2526 → null) and threaded
+  through createApp to every grade mount. With it present: the PC band for a quarter = new units
+  whose PC Day 1 falls in the quarter window; a PC is due once its Day 2 has ended; its curve is
+  that quarter's pcAnchor; `quarters[q].pcUnits` is emitted and the gradebook's PC/Poster columns
+  key off it (dated by the event schedule). Without it (frozen year, bespoke tests) the legacy
+  old-unit proxy still applies. **`PC_TRACK_ENABLED=true` may now be flipped after the first paper
+  PC is scored** (SY2627_ACTIVATION_RUNBOOK step 5). Note `units.U{n}` still merges old-unit
+  quiz/FRQ data with new-unit PC data under the same key (Phase-6 `unitGrade` is display-only
+  under v3). Two reviews folded in: PCs band by the quarter they become DUE in (Day 2 — E's U5
+  is Day 1 04-14 / Day 2 04-16 and lands in Q4, never split across a close); the offline inputs
+  (`/grade/offline-inputs`) now ship `eventSchedule` and the Desk's offline re-derive passes it
+  (server parity); `tools/schoology_components.py` builds PC/Poster columns from
+  `progressChecks`/`posters` (new units, PC Day 1 / poster date) when the schedule carries them;
+  the m2b SY2627 snapshot now threads the event schedule like production (bands B: Q1 [1], Q2
+  [2,3], Q3 [4,5], Q4 []). Accepted residuals: the gradebook marks a PC column open from Day 1
+  (`<=`) while the engine counts it after Day 2 ends; `units.U{n}` still merges old-unit
+  quiz/FRQ with new-unit PC data (display only); the Desk's baked `BAKED_REGISTRY`
+  progressChecks blob is stale (not read); golden-synthetic `inputs.json` carries no
+  eventSchedule, so regenerating it is a deliberate step that will move `pcUnits`.
 - **OPEN:** `tools/schoology_sync_section.py:300-321` derives `PC{n}`/`POSTER{n}` scope keys
   from `progressChecks`/`posters` keys — those are now NEW units 1–5 (were old 1–9), while the
   grade-write side still keys `PC:U{old}`. Dry-run default + parked, but fix before the daily

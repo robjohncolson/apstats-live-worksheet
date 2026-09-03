@@ -36,6 +36,7 @@ export const ACTIVE_SCHOOL_YEAR = /** @type {SchoolYear} */ ('SY2627');
  * @property {SchoolYear} year
  * @property {object} config
  * @property {Record<string, any>|null} lessonSchedule
+ * @property {{progressChecks: any, posters: any}|null} [eventSchedule]
  * @property {string[]} blooketPresence   // hasBlooket UI
  * @property {string[]} blooketRequired   // Due denominator
  * @property {string[]} blooketBonusTopics
@@ -373,6 +374,27 @@ export function loadLessonScheduleWithPriority() {
   return null;
 }
 
+// SY2627 event schedule ({ progressChecks, posters } keyed by NEW CED unit) from
+// the SAME lesson-schedule.json the lessons map came from (env → bundled → root).
+// null when the file lacks them (older schema) — the engine then falls back to
+// the legacy old-unit PC proxy.
+export function loadEventScheduleWithPriority() {
+  const candidates = [];
+  if (process.env.LESSON_SCHEDULE_PATH) candidates.push(process.env.LESSON_SCHEDULE_PATH);
+  candidates.push(resolve(__dirname, 'data', 'lesson-schedule.json'));
+  candidates.push(resolve(REPO_ROOT, 'data', 'lesson-schedule.json'));
+  for (const p of candidates) {
+    if (!existsSync(p)) continue;
+    const doc = loadJsonSoft(p);
+    if (!doc || !doc.lessons || typeof doc.lessons !== 'object' || Array.isArray(doc.lessons)) continue;
+    const progressChecks = doc.progressChecks && typeof doc.progressChecks === 'object' ? doc.progressChecks : null;
+    const posters = doc.posters && typeof doc.posters === 'object' ? doc.posters : null;
+    if (!progressChecks && !posters) return null;
+    return { progressChecks, posters };
+  }
+  return null;
+}
+
 function resolveLiveAnswerKeyPath() {
   if (process.env.ANSWER_KEY_PATH) return process.env.ANSWER_KEY_PATH;
   const bundled = resolve(__dirname, 'data', 'answer-key.json');
@@ -484,6 +506,7 @@ function buildContext(year) {
       year: /** @type {SchoolYear} */ ('SY2526'),
       config: loadConfigSy2526(),
       lessonSchedule: loadScheduleSy2526(),
+      eventSchedule: null, // frozen year: legacy old-unit PC proxy
       blooketPresence: bl.presence,
       blooketRequired: bl.required,
       blooketBonusTopics: bl.bonus,
@@ -499,6 +522,7 @@ function buildContext(year) {
     year: /** @type {SchoolYear} */ ('SY2627'),
     config: loadConfigSy2627(),
     lessonSchedule: loadLessonScheduleWithPriority(),
+    eventSchedule: loadEventScheduleWithPriority(),
     blooketPresence: bl.presence,
     blooketRequired: bl.required,
     blooketBonusTopics: bl.bonus,
@@ -541,6 +565,9 @@ export function resolveProductionGradeInputs(year = ACTIVE_SCHOOL_YEAR) {
     config: JSON.parse(JSON.stringify(ctx.config)),
     lessonSchedule: ctx.lessonSchedule
       ? JSON.parse(JSON.stringify(ctx.lessonSchedule))
+      : null,
+    eventSchedule: ctx.eventSchedule
+      ? JSON.parse(JSON.stringify(ctx.eventSchedule))
       : null,
     blooketPresence: ctx.blooketPresence.slice(),
     blooketRequired: ctx.blooketRequired.slice(),

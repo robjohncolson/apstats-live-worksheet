@@ -102,6 +102,7 @@ function gradeViaResolver(year, rows, { configOverride } = {}) {
   const config = configOverride ? { ...prod.config, ...configOverride } : prod.config;
   const grade = computeGrade(rows, answerKey, config, {
     lessonSchedule: schedule,
+    eventSchedule: prod.eventSchedule || null, // SY2627: PC dates keyed by NEW unit (null for the frozen year)
     section: 'B',
     asOf: new Date('2026-10-20T16:00:00.000Z').getTime(),
     blooketPresence: prod.blooketPresence,
@@ -119,6 +120,7 @@ function gradeViaResolver(year, rows, { configOverride } = {}) {
     blooketPresenceLen: prod.blooketPresence.length,
     blooketRequiredLen: prod.blooketRequired.length,
     schedule_1_1_B: schedule && schedule['1.1'] ? schedule['1.1'].periods.B : null,
+    pcUnitsFromEvents: prod.eventSchedule && prod.eventSchedule.progressChecks ? Object.keys(prod.eventSchedule.progressChecks) : null,
     frozenConfig: pinConfig(prod.config),
     artHash,
     grade: projectGrade(grade),

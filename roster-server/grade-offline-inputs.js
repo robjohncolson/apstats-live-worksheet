@@ -112,7 +112,7 @@ function extractToken(req) {
 }
 
 export function mountOfflineInputs(app, {
-  verifyToken, ledgerDb, loadAnswerKey, lessonSchedule, db,
+  verifyToken, ledgerDb, loadAnswerKey, lessonSchedule, eventSchedule = null, db,
   config, worksheetBlankCounts = null,
   blooketLessons = null, blooketPresence = null, blooketRequired = null,
   blooketBonusTopics = null,
@@ -168,6 +168,9 @@ export function mountOfflineInputs(app, {
       ok: true,
       redactedKey,
       schedule: lessonSchedule || null,
+      // SY2627: PC/Poster dates keyed by NEW unit so the offline-derived PC
+      // placement matches the server (parity contract).
+      eventSchedule: eventSchedule || null,
       config: config || null,
       section,
       worksheetBlankCounts: worksheetBlankCounts || null,

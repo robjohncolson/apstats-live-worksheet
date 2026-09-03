@@ -167,7 +167,7 @@ function currentGradeOf(ledgerRows, answerKey, config, opts) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 export function mountReview(app, {
-  db, ledgerDb, nudgesDb, loadAnswerKey, lessonSchedule, config, worksheetBlankCounts,
+  db, ledgerDb, nudgesDb, loadAnswerKey, lessonSchedule, eventSchedule = null, config, worksheetBlankCounts,
   schoolTz = 'America/New_York',
   blooketPresence = null, blooketRequired = null, blooketLessons = null,
 }) {
@@ -293,6 +293,7 @@ export function mountReview(app, {
         section: r.section ?? null,
         currentGrade: currentGradeOf(rows, answerKey, config, {
           lessonSchedule,
+          eventSchedule,
           section: r.section,
           worksheetBlankCounts,
           blooketPresence: _presence || undefined,

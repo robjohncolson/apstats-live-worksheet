@@ -76,6 +76,7 @@ export function mountTranscript(app, {
   ledgerDb,
   loadAnswerKey,
   lessonSchedule,
+  eventSchedule = null,
   db,
   config = PHASE3_CONFIG,
   worksheetBlankCounts = null,
@@ -119,6 +120,7 @@ export function mountTranscript(app, {
       const grade = computeGrade(rows, answerKey, config, {
         asOf,
         lessonSchedule,
+        eventSchedule,
         section: roster.section,
         worksheetBlankCounts,
         blooketPresence: _lists.blooketPresence,
