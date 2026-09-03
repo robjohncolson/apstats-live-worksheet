@@ -45,7 +45,7 @@ untouched.
 Goals:
 1. **One problem per dated lesson day**, 66 per period-year; student sheet + board slide +
    teacher key, PDF.
-2. **Exactly one DOK-3 per day** (or an honest, declared "no DOK-3 today" — §1.3). It is the
+2. **Exactly one DOK-3 per day, every day** (Topic 1.1 included — §1.3). It is the
    warm-up AND the exit ticket: seen first, finished last, turned in. Its parts ladder
    (a) DOK-1 identify → (b) DOK-2 describe/compute → (c) DOK-3 adjudicate/justify, so the
    *first take* at the start of class has a foothold and the video work feeds (b) and (c).
@@ -98,14 +98,22 @@ a 66-day fan-out tractable.
   invented dataset as a real study ("a survey found…" → "suppose a survey found…").
 - R7 **One DOK-3 per day.** A second DOK-3 candidate goes to `reinforcement` (not collected).
 
-### 1.3 DOK-3 deserts (declared, not faked)
+### 1.3 Every lesson carries a DOK-3, no exceptions (teacher rule, 2026-09-03)
 
-Some days carry no honest DOK-3 (e.g. OLD 1.3 "tables for a categorical variable"; the
-mechanics-only days of Unit 3 old-numbering). The YAML declares `focus: none` with a
-`desert_reason`; the day's problem stops at a DOK-2 part (c) and the teacher key prints
-"DOK 1–2 day — objective is procedural fluency" for evaluators. The class flow is unchanged
-(first take → video → finish → turn in). Folding two days into one
-DOK-3 is a teacher call made in the schedule, not by the author. Expected: ≤ 8 of 66.
+Every dated lesson day gets a real DOK-3, Topic 1.1 included. The Algebra 2 repo allows
+"DOK 1–2 days"; this course does not. On a mechanics-only topic the DOK-3 is never "do the
+mechanic harder" (R2) — it is the *judgment around* the mechanic, which always exists:
+
+| Mechanics-only topic | The DOK-3 that is honestly there |
+|---|---|
+| 1.1 What can we learn from data? (intro) | Two claims drawn from the same small dataset; decide which the data can actually support and which needs data we don't have. Skill 1.A / 4.A. |
+| 1.3 Tables for a categorical variable | A frequency table and a relative-frequency table of the same survey, one presented by a club to argue for funding; decide which table the argument needs and what the chosen table hides. Skill 2.B / 4.B. |
+| a "compute the statistic" day | Two students got different values from the same data; find whose procedure is right AND explain what the wrong one would lead a reader to conclude. Skill 3.x + 4.B. |
+| a "check the conditions" day | A study where one condition is borderline; decide whether to proceed, and what you would say to a reader who disagrees. Skill 4.C. |
+
+Pattern: **choose / critique / bound** — which display, which summary, which procedure,
+which conclusion is warranted, and what the alternative would mislead a reader into. If an
+author cannot find one, that is an authoring failure to escalate, not a `focus: none`.
 
 ## 2. Data model
 
@@ -144,8 +152,8 @@ DOK-3 is a teacher call made in the schedule, not by the author. Expected: ≤ 8
 Validation (test-enforced, §7): id pattern; `dok ∈ {1,2,3}`; `dok_rationale` ≥ 40 chars and
 contains none of the words *hard, easy, difficult*; every `skill` matches `^[1-4]\.[A-F]$` and
 exists in the parsed frameworks; `role: focus` ⇒ `first_take` + `parts` (2–4, `dok`
-non-decreasing, last == top `dok`) present, and top `dok: 3` ⇒ `frq_pattern` + `scoring`
-present; `hypothetical: true` whenever `stem` contains a number.
+non-decreasing, last == top `dok`) present, top `dok` MUST be 3, and `frq_pattern` +
+`scoring` present; `hypothetical: true` whenever `stem` contains a number.
 
 ### 2.2 Lesson YAML — `dok/lessons/{topicKey}.yaml`
 
@@ -161,7 +169,7 @@ rules_callout:                     # R4 — printed on the STUDENT sheet between
     Shape (symmetric / skewed left / skewed right; peaks) · Center (median or mean) ·
     Variability (range, IQR) · Unusual features (gaps, outliers) · always in CONTEXT with units.
     A long tail pulls the MEAN toward it; the MEDIAN resists.
-focus: aps-1.6-d3-1                # the day's problem; or `focus: none` + desert_reason (§1.3)
+focus: aps-1.6-d3-1                # the day's problem — REQUIRED, top rung must be DOK 3 (§1.3)
 reinforcement: [aps-1.6-d2-3]      # optional, back of sheet, not collected
 worksheet: "u1_lesson6_live.html"  # the follow-along that fills the middle of the period (link printed on the board slide)
 exit_reflection: "One thing the video changed about my first take: ___"   # the summary line under part (c)
@@ -293,12 +301,12 @@ ordered so (a) and (b) are already answerable from the first ten minutes of the 
   `data/lesson-schedule.json` has `dok/lessons/{topicKey}.yaml` OR is listed in
   `dok/PENDING.md` (the fan-out backlog, which the test prints as a countdown). Every YAML's
   `focus` / `reinforcement` ids exist in the registry with the right `role`; exactly one
-  `focus` (or `focus: none` with a `desert_reason`).
+  `focus`, and its registry row's top `dok` is 3 — every lesson, no exceptions (§1.3).
 - **T3 emission** (`tests/test_dok_build.py`): generator runs on every YAML; student and
   board `.tex` contain no `\answer{` body text, no `scoring`, no `dok_rationale`; teacher
   `.tex` contains all three; the board `.tex` contains the `first_take` prompt, every part
   prompt, and the `worksheet:` link, and NOT the rules callout; output deterministic; a
-  fixture YAML with `focus: none` emits the desert banner.
+  fixture YAML whose focus row tops out at DOK 2 is REJECTED with a message naming §1.3.
 - **T4 no-leak visuals**: `visuals` blocks contain only data + labels (no `answer`-bearing
   annotations such as "outlier" arrows) — a key allow-list per `kind`.
 - **T5 compile smoke (local, not CI)**: `dok/compile.ps1 -All` exits 0 and every PDF page
@@ -315,7 +323,7 @@ CI runs T1–T4 (pure Node/Python). Compilation is teacher-laptop only (MiKTeX),
 | 1 — skeleton | copy `preamble.sty`; port generator; `pgfplot_hist`; `dok/calibration/unit1.json`; ladder **1.6** authored, compiled, printed once | PDF looks right on paper |
 | 2 — stress test | ladders **1.2** (variable types) and **1.9** (comparing distributions) by the same path; `dok/README.md` written FROM the friction log; T1–T3 green | ≤ 30 min per ladder by hand, else fix the tooling before fan-out (per `feedback_authoring_tool_stress_test`) |
 | 3 — Unit 1 fan-out | remaining 7 dated Unit-1 days (B: 09-08 → 09-24), dispatched as ONE dependency-free batch (each agent owns exactly `dok/lessons/{topic}.yaml` + its registry lines + its calibration unit), adversarial review on the 10 DOK-3s only | all 10 compile; DOK-3 review: 0 must-fix |
-| 4 — rolling fan-out | Units 2–5 + bonus days, one NEW-unit per batch, each batch landed ≥ 2 weeks before its first lesson date; `dok/PENDING.md` counts down | T2 coverage reaches 66/66 (minus declared deserts) |
+| 4 — rolling fan-out | Units 2–5 + bonus days, one NEW-unit per batch, each batch landed ≥ 2 weeks before its first lesson date; `dok/PENDING.md` counts down | T2 coverage reaches 66/66, every one with a DOK-3 |
 | 5 — optional app hooks | (a) `dok_url` column on `lesson_urls` + a 🪜 chip in the Desk resource panel (the table wins over files, so this is a table write, not a file edit); (b) a `dok-{topic}` textarea in the worksheet that submits the DOK-3 answer to `/api/ai/grade` with the registry `scoring` block as the rubric — AI only ever RAISES, same as today | separate spec if pursued |
 
 ## 9. Open decisions (defaults chosen; change if you want)
@@ -330,7 +338,6 @@ CI runs T1–T4 (pure Node/Python). Compilation is teacher-laptop only (MiKTeX),
 - Bonus ("Beyond the Exam") days get ladders **[default: yes, but last, and DOK-3 optional]**.
 - Registry language **[default: JSONL + Python generator, mirroring the proven A2 chain; the
   tests are Vitest so the repo's `npm test` stays the single gate]**.
-- DOK-3 deserts allowed **[default: yes, declared, ≤ 8]**.
 - Sentence frames on every DOK-3 **[default: yes — the ELL non-negotiable from the A2 spine]**.
 - Fan-out executor **[default: Codex/agents in batches per §8; the teacher authors nothing by hand after Phase 2]**.
 
