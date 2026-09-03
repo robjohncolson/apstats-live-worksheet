@@ -93,8 +93,9 @@ MINI_SCHEDULE = {
 }
 
 # Expected scope for PeriodB from MINI_SCHEDULE:
-# 6.1, 6.2 (lessons), PC6 (progress_check), POSTER6 (poster) = 4 items
-EXPECTED_B_KEYS = {"6.1", "6.2", "PC6", "POSTER6"}
+# 6.1, 6.2 (lessons), PC:U6 (progress_check), POSTER:U6 (poster) = 4 items --
+# PC/Poster keys share the component-mode PC:U{n}/POSTER:U{n} form.
+EXPECTED_B_KEYS = {"6.1", "6.2", "PC:U6", "POSTER:U6"}
 EXPECTED_B_COUNT = 4
 
 
@@ -297,14 +298,14 @@ class TestBuildScope(unittest.TestCase):
         items = build_scope(MINI_SCHEDULE, "PeriodB")
         keys = {item["key"] for item in items}
         self.assertNotIn("7.1", keys)
-        self.assertNotIn("PC7", keys)
+        self.assertNotIn("PC:U7", keys)
 
     def test_item_kinds_correct(self):
         items = build_scope(MINI_SCHEDULE, "PeriodB")
         by_key = {item["key"]: item for item in items}
         self.assertEqual(by_key["6.1"]["kind"], "lesson")
-        self.assertEqual(by_key["PC6"]["kind"], "progress_check")
-        self.assertEqual(by_key["POSTER6"]["kind"], "poster")
+        self.assertEqual(by_key["PC:U6"]["kind"], "progress_check")
+        self.assertEqual(by_key["POSTER:U6"]["kind"], "poster")
 
     def test_items_sorted_by_date_then_key(self):
         items = build_scope(MINI_SCHEDULE, "PeriodB")
@@ -872,6 +873,103 @@ class TestThroughGate(unittest.TestCase):
         self.assertEqual(summary["grades_deferred"], 1)
         self.assertEqual(summary["grades_pushed"], 0)
         self.assertFalse(any("No scope item" in e for e in summary["errors"]))
+
+
+# ---------------------------------------------------------------------------
+# PC / Poster key parity across granularities (SY2627 new-unit numbering)
+# ---------------------------------------------------------------------------
+
+import schoology_components as components  # noqa: E402
+from schoology_sync_section import build_component_scope  # noqa: E402
+
+# A SY2627-shaped schedule: lessons carry OLD units (the 9-unit lesson band),
+# progressChecks/posters are keyed by the NEW CED unit (1-5).
+SY2627_SCHEDULE = {
+    "lessons": {
+        "1.1": {"unit": 1, "topicKey": "1.1", "worksheetKey": "1",
+                "periods": {"B": "2026-09-08", "E": "2026-09-09"}},
+        "6.1": {"unit": 6, "topicKey": "6.1", "worksheetKey": "1",
+                "periods": {"B": "2026-11-20", "E": "2026-11-23"}},
+    },
+    "progressChecks": {
+        str(u): {"unit": u, "kind": "pc",
+                 "periods": {"B": "2026-1%d-01" % (u % 3), "E": "2026-1%d-03" % (u % 3)},
+                 "adminDay2": {"B": "2026-1%d-02" % (u % 3), "E": "2026-1%d-05" % (u % 3)}}
+        for u in (1, 2, 3, 4, 5)
+    },
+    "posters": {
+        str(u): {"unit": u, "kind": "poster",
+                 "periods": {"B": "2026-1%d-04" % (u % 3), "E": "2026-1%d-06" % (u % 3)}}
+        for u in (1, 2, 3, 4, 5)
+    },
+}
+
+
+def _pc_poster_keys(items):
+    return {i["key"] for i in items if i["kind"] in ("progress_check", "poster")}
+
+
+class TestPcPosterKeyParity(unittest.TestCase):
+    """The scope key, the component column key and the grade producer's key
+    must be the SAME string for the SAME new CED unit -- otherwise the sync
+    creates a column under one name and looks up grades under another."""
+
+    def test_lesson_mode_keys_are_new_unit_pc_u(self):
+        items = build_scope(SY2627_SCHEDULE, "PeriodB")
+        self.assertEqual(
+            _pc_poster_keys(items),
+            {"PC:U%d" % u for u in range(1, 6)} | {"POSTER:U%d" % u for u in range(1, 6)},
+        )
+        by_key = {i["key"]: i for i in items}
+        # Unit comes from the event row (new unit), never the old lesson band.
+        self.assertEqual(by_key["PC:U5"]["unit"], 5)
+        self.assertEqual(by_key["PC:U5"]["title"], "Unit 5 Progress Check")
+        self.assertEqual(by_key["POSTER:U5"]["title"], "Unit 5 Poster")
+        # No PC/Poster for OLD unit 6 even though 6.1 is a dated lesson.
+        self.assertNotIn("PC:U6", by_key)
+
+    def test_lesson_and_component_modes_agree(self):
+        lesson_items = build_scope(SY2627_SCHEDULE, "PeriodB")
+        component_items = build_component_scope(
+            SY2627_SCHEDULE, "PeriodB", quiz_topics=set(), blooket_topics=set(),
+        )
+        self.assertEqual(_pc_poster_keys(lesson_items), _pc_poster_keys(component_items))
+        # Same due dates too (PC Day 1 / poster date for this period).
+        lesson_dates = {i["key"]: i["due_date"] for i in lesson_items if i["key"].startswith(("PC:", "POSTER:"))}
+        component_dates = {i["key"]: i["due_date"] for i in component_items if i["key"].startswith(("PC:", "POSTER:"))}
+        self.assertEqual(lesson_dates, component_dates)
+
+    def test_scope_keys_match_grade_producer_keys(self):
+        # The producer keys PC grades by units[U{new}].pcRawPct -> PC:U{new}.
+        doc = {"students": [{
+            "studentId": "9001", "schoologyUid": "77001",
+            "lessons": [],
+            "units": {"U%d" % u: {"pcRawPct": 60 + u} for u in range(1, 6)},
+        }]}
+        produced = components.component_grades_from_class_doc(doc)
+        produced_keys = {k.split("/", 1)[1] for k in produced}
+        scope_keys = _pc_poster_keys(build_scope(SY2627_SCHEDULE, "PeriodB"))
+        self.assertTrue(produced_keys)
+        self.assertTrue(produced_keys <= scope_keys, produced_keys - scope_keys)
+
+    def test_event_unit_prefers_explicit_unit_then_map_key(self):
+        from schoology_sync_section import _event_unit
+        self.assertEqual(_event_unit("3", {"unit": 3}), 3)
+        self.assertEqual(_event_unit("U4", {}), "4")
+        self.assertEqual(_event_unit("4", None), "4")
+
+    def test_legacy_schedule_without_events_unchanged(self):
+        # No progressChecks/posters: lesson mode emits no PC/Poster items; component
+        # mode falls back to one PC + Poster per OLD lesson unit (legacy proxy).
+        legacy = {"lessons": SY2627_SCHEDULE["lessons"]}
+        self.assertEqual(_pc_poster_keys(build_scope(legacy, "PeriodB")), set())
+        component_items = build_component_scope(
+            legacy, "PeriodB", quiz_topics=set(), blooket_topics=set(),
+        )
+        self.assertEqual(
+            _pc_poster_keys(component_items),
+            {"PC:U1", "POSTER:U1", "PC:U6", "POSTER:U6"},
+        )
 
 
 if __name__ == "__main__":

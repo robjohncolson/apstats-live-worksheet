@@ -299,6 +299,18 @@ def _load_gradebook_page(ops, cdp, course_id: str) -> None:
     ops.inject_helpers(cdp)
 
 
+def _event_unit(unit_str, entry: dict | None):
+    """The NEW CED unit an event row (progress check / poster) belongs to.
+
+    The row's explicit `unit` wins; older rows without it use the map key
+    ("3" or "U3").
+    """
+    unit = (entry or {}).get("unit")
+    if unit is not None:
+        return unit
+    return str(unit_str).lstrip("Uu")
+
+
 def build_scope(schedule: dict, section: str) -> list[dict]:
     """Return a list of scope items for the given section.
 
@@ -334,12 +346,17 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
             "unit": lesson.get("unit"),
         })
 
-    # -- progress checks --
+    # -- progress checks / posters --
+    # progressChecks/posters are keyed by the NEW CED unit (SY2627: 1-5). The
+    # column keys MUST be the shared PC:U{n} / POSTER:U{n} form so lesson mode,
+    # component mode, gradebook-grid.js and the grade producer
+    # (units[U{n}].pcRawPct -> PC:U{n}) all name the same Schoology column.
     for unit_str, pc in schedule.get("progressChecks", {}).items():
         date = pc["periods"].get(period_letter)
         if not date:
             continue
-        key = f"PC{unit_str}"
+        unit = _event_unit(unit_str, pc)
+        key = components.pc_key(unit)
         kind = "progress_check"
         title = lib.assignment_title(kind, key)
         items.append({
@@ -347,15 +364,15 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
             "kind": kind,
             "title": title,
             "due_date": date,
-            "unit": pc.get("unit"),
+            "unit": unit,
         })
 
-    # -- posters --
     for unit_str, poster in schedule.get("posters", {}).items():
         date = poster["periods"].get(period_letter)
         if not date:
             continue
-        key = f"POSTER{unit_str}"
+        unit = _event_unit(unit_str, poster)
+        key = components.poster_key(unit)
         kind = "poster"
         title = lib.assignment_title(kind, key)
         items.append({
@@ -363,7 +380,7 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
             "kind": kind,
             "title": title,
             "due_date": date,
-            "unit": poster.get("unit"),
+            "unit": unit,
         })
 
     # stable sort: by date, then by key

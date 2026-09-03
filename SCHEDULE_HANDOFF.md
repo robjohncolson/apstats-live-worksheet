@@ -97,10 +97,13 @@ Sep 1, exam May 14, 8 of 13 closures). Fixed in one pass, one source of truth:
   quiz/FRQ with new-unit PC data (display only); the Desk's baked `BAKED_REGISTRY`
   progressChecks blob is stale (not read); golden-synthetic `inputs.json` carries no
   eventSchedule, so regenerating it is a deliberate step that will move `pcUnits`.
-- **OPEN:** `tools/schoology_sync_section.py:300-321` derives `PC{n}`/`POSTER{n}` scope keys
-  from `progressChecks`/`posters` keys — those are now NEW units 1–5 (were old 1–9), while the
-  grade-write side still keys `PC:U{old}`. Dry-run default + parked, but fix before the daily
-  task is re-enabled.
+- **RESOLVED (2026-09-03):** `build_scope` (lesson mode) now keys PC/Poster items
+  `PC:U{n}`/`POSTER:U{n}` from the event row's NEW unit via `components.pc_key`/`poster_key` —
+  the same string component mode, gradebook-grid.js and the grade producer
+  (`units[U{n}].pcRawPct`) use. `tests/test_schoology_sync_section.py::TestPcPosterKeyParity`
+  pins lesson == component == producer keys and the no-event legacy path. (The local state
+  file's summer-mock `PeriodY/PC{n}` rows keep their old keys; the title pre-flight reuses
+  those columns, so no re-keying is needed.)
 - **OPEN (teacher):** Q4 (04-15 → 06-17) has NO scheduled lessons for either period (B finishes
   core 02-22, E 04-12); Q4 = bonus-only for B, one PC for E. Decide what Q4 grades on.
 - MINOR: `lessonsTotal` counts the 11 null-dated bonus topics (they fall back to the unit band),
