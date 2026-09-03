@@ -34,25 +34,25 @@ describe('quarterOfDate', () => {
   });
 
   it('the exact start date of each window returns that quarter', () => {
-    expect(quarterOfDate('2026-09-09')).toBe('Q1');
-    expect(quarterOfDate('2026-11-14')).toBe('Q2');
-    expect(quarterOfDate('2027-01-30')).toBe('Q3');
-    expect(quarterOfDate('2027-04-10')).toBe('Q4');
+    expect(quarterOfDate('2026-09-02')).toBe('Q1');
+    expect(quarterOfDate('2026-11-09')).toBe('Q2');
+    expect(quarterOfDate('2027-01-25')).toBe('Q3');
+    expect(quarterOfDate('2027-04-15')).toBe('Q4');
   });
 
   it('the exact end date of each window returns that quarter', () => {
-    expect(quarterOfDate('2026-11-13')).toBe('Q1');
-    expect(quarterOfDate('2027-01-29')).toBe('Q2');
-    expect(quarterOfDate('2027-04-09')).toBe('Q3');
-    expect(quarterOfDate('2027-06-23')).toBe('Q4');
+    expect(quarterOfDate('2026-11-06')).toBe('Q1');
+    expect(quarterOfDate('2027-01-22')).toBe('Q2');
+    expect(quarterOfDate('2027-04-14')).toBe('Q3');
+    expect(quarterOfDate('2027-06-17')).toBe('Q4');
   });
 
   it('one day before Q1 start returns null', () => {
-    expect(quarterOfDate('2026-09-08')).toBe(null);
+    expect(quarterOfDate('2026-09-01')).toBe(null);
   });
 
   it('one day after Q4 end returns null', () => {
-    expect(quarterOfDate('2027-06-24')).toBe(null);
+    expect(quarterOfDate('2027-06-18')).toBe(null);
   });
 
   it('non-string / empty / null returns null', () => {
@@ -62,19 +62,20 @@ describe('quarterOfDate', () => {
     expect(quarterOfDate(20261001)).toBe(null);
   });
 
-  it('boundary between Q1 and Q2: Q1 end and Q2 start are adjacent', () => {
-    expect(quarterOfDate('2026-11-13')).toBe('Q1');
-    expect(quarterOfDate('2026-11-14')).toBe('Q2');
+  it('boundary between Q1 and Q2: Q1 ends Fri 11-06, Q2 starts Mon 11-09 (the weekend between is no quarter)', () => {
+    expect(quarterOfDate('2026-11-06')).toBe('Q1');
+    expect(quarterOfDate('2026-11-07')).toBe(null);
+    expect(quarterOfDate('2026-11-09')).toBe('Q2');
   });
 
   it('boundary between Q2 and Q3', () => {
-    expect(quarterOfDate('2027-01-29')).toBe('Q2');
-    expect(quarterOfDate('2027-01-30')).toBe('Q3');
+    expect(quarterOfDate('2027-01-22')).toBe('Q2');
+    expect(quarterOfDate('2027-01-25')).toBe('Q3');
   });
 
   it('boundary between Q3 and Q4', () => {
-    expect(quarterOfDate('2027-04-09')).toBe('Q3');
-    expect(quarterOfDate('2027-04-10')).toBe('Q4');
+    expect(quarterOfDate('2027-04-14')).toBe('Q3');
+    expect(quarterOfDate('2027-04-15')).toBe('Q4');
   });
 });
 
@@ -253,29 +254,42 @@ describe('computeQuarterFromLessons — date-driven quarter assignment (F2)', ()
 });
 
 // ── lesson-schedule.json sanity checks ───────────────────────────────────────
+//
+// SY2627 (2026-09-03): the file is GENERATED from the Desk's own calendar by
+// scripts/build-lesson-schedule-sy2627.mjs and carries the calendar it was built
+// from (`calendar`: first day, breaks, meeting days, quarters). These checks
+// validate the file against ITSELF + grade-config, so a regenerated file with a
+// changed calendar stays honest without hardcoded date copies here.
+//
+// Facts asserted:
+//   - 77 lessons (old ids); crosswalk-core topics dated for BOTH periods,
+//     bonus topics dated for NEITHER (null = never due)
+//   - B and E have DIFFERENT dates (B meets Mon/Tue/Thu/Fri, E Mon/Wed/Fri)
+//   - every date is that period's meeting day, not a closure, inside the
+//     school year, before the AP exam
+//   - the calendar's quarter windows equal grade-config's
 
 describe('lesson-schedule.json — SY26-27 date sanity', () => {
+  const CROSSWALK_PATH = path.join(__dirname, '../../2026-crosswalk.json');
 
-  // Closure ranges (mirrors the generator).
-  const CLOSURE_RANGES = [
-    ['2026-10-12', '2026-10-12'],
-    ['2026-11-03', '2026-11-03'],
-    ['2026-11-11', '2026-11-11'],
-    ['2026-11-26', '2026-11-27'],
-    ['2026-12-24', '2027-01-01'],
-    ['2027-01-18', '2027-01-18'],
-    ['2027-02-15', '2027-02-19'],
-    ['2027-03-26', '2027-03-26'],
-    ['2027-04-19', '2027-04-23'],
-    ['2027-05-31', '2027-05-31'],
-    ['2027-06-18', '2027-06-18'],
-  ];
+  let doc = null;
+  let lessons = null;
+  let crosswalk = null;
+  try {
+    doc = JSON.parse(readFileSync(SCHEDULE_PATH, 'utf8'));
+    lessons = doc.lessons;
+    crosswalk = JSON.parse(readFileSync(CROSSWALK_PATH, 'utf8')).map;
+  } catch (e) {
+    doc = null;
+    lessons = null;
+    crosswalk = null;
+  }
 
-  function buildClosureSet(ranges) {
+  function buildClosureSet(breaks) {
     const set = new Set();
-    for (const [start, end] of ranges) {
-      let cur = new Date(start + 'T00:00:00Z');
-      const stop = new Date(end + 'T00:00:00Z');
+    for (const { from, to } of breaks) {
+      let cur = new Date(from + 'T00:00:00Z');
+      const stop = new Date(to + 'T00:00:00Z');
       while (cur <= stop) {
         set.add(cur.toISOString().slice(0, 10));
         cur = new Date(cur.getTime() + 86400000);
@@ -284,118 +298,111 @@ describe('lesson-schedule.json — SY26-27 date sanity', () => {
     return set;
   }
 
-  const CLOSURES = buildClosureSet(CLOSURE_RANGES);
-
-  function isWeekday(iso) {
-    const d = new Date(iso + 'T00:00:00Z');
-    const dow = d.getUTCDay();
-    return dow >= 1 && dow <= 5;
+  function dow(iso) {
+    return new Date(iso + 'T00:00:00Z').getUTCDay();
   }
 
-  function isSchoolDay(iso) {
-    return isWeekday(iso) && !CLOSURES.has(iso);
+  function datedEntries() {
+    const out = [];
+    for (const [topicKey, entry] of Object.entries(lessons)) {
+      for (const period of ['B', 'E']) {
+        const d = entry.periods[period];
+        if (d) out.push({ topicKey, period, date: d });
+      }
+    }
+    return out;
   }
 
-  // Quarter windows for validation.
-  const UNIT_QUARTER_WINDOWS = {
-    1: { start: '2026-09-09', end: '2026-11-13' },
-    2: { start: '2026-09-09', end: '2026-11-13' },
-    3: { start: '2026-09-09', end: '2026-11-13' },
-    4: { start: '2026-11-14', end: '2027-01-29' },
-    5: { start: '2026-11-14', end: '2027-01-29' },
-    6: { start: '2027-01-30', end: '2027-04-09' },
-    7: { start: '2027-01-30', end: '2027-04-09' },
-    8: { start: '2027-04-10', end: '2027-06-23' },
-    9: { start: '2027-04-10', end: '2027-06-23' },
-  };
-
-  let lessons;
-  let sortedTopicKeys;
-
-  try {
-    const raw = readFileSync(SCHEDULE_PATH, 'utf8');
-    const doc = JSON.parse(raw);
-    lessons = doc.lessons;
-    sortedTopicKeys = Object.keys(lessons).sort((a, b) => {
-      const [ua, la] = a.split('.');
-      const [ub, lb] = b.split('.');
-      const ud = Number(ua) - Number(ub);
-      return ud !== 0 ? ud : Number(la) - Number(lb);
-    });
-  } catch (e) {
-    lessons = null;
-    sortedTopicKeys = [];
-  }
-
-  it('lesson-schedule.json can be loaded and has 77 lessons', () => {
-    expect(lessons).not.toBe(null);
+  it('lesson-schedule.json can be loaded, has 77 lessons and a calendar block', () => {
+    expect(doc).not.toBe(null);
     expect(Object.keys(lessons).length).toBe(77);
+    expect(doc.calendar && doc.calendar.firstDay).toBe('2026-09-02');
+    expect(doc.calendar.examDate).toBe('2027-05-11');
+    expect(doc.calendar.meetingDays).toEqual({ B: [1, 2, 4, 5], E: [1, 3, 5] });
   });
 
-  it('all 77 lessons have non-null B and E dates', () => {
+  it('crosswalk-core topics are dated for BOTH periods; bonus topics for NEITHER', () => {
+    let core = 0;
+    let bonus = 0;
     for (const [topicKey, entry] of Object.entries(lessons)) {
-      expect(entry.periods.B, `${topicKey}.periods.B`).not.toBe(null);
-      expect(entry.periods.E, `${topicKey}.periods.E`).not.toBe(null);
+      const status = crosswalk[topicKey] ? crosswalk[topicKey].status : 'core';
+      if (status === 'core') {
+        core++;
+        expect(entry.periods.B, `${topicKey}.periods.B (core)`).toBeTruthy();
+        expect(entry.periods.E, `${topicKey}.periods.E (core)`).toBeTruthy();
+      } else {
+        bonus++;
+        expect(entry.periods.B, `${topicKey}.periods.B (bonus)`).toBe(null);
+        expect(entry.periods.E, `${topicKey}.periods.E (bonus)`).toBe(null);
+      }
+    }
+    expect(core).toBe(66);
+    expect(bonus).toBe(11);
+  });
+
+  it('every date is a meeting day for its period (B never Wed; E only Mon/Wed/Fri)', () => {
+    for (const { topicKey, period, date } of datedEntries()) {
+      expect(doc.calendar.meetingDays[period], `${topicKey} ${period}=${date} dow ${dow(date)}`)
+        .toContain(dow(date));
     }
   });
 
-  it('every date is a weekday (Mon-Fri)', () => {
-    for (const [topicKey, entry] of Object.entries(lessons)) {
-      const b = entry.periods.B;
-      const e = entry.periods.E;
-      expect(isWeekday(b), `${topicKey} B=${b} is weekday`).toBe(true);
-      expect(isWeekday(e), `${topicKey} E=${e} is weekday`).toBe(true);
+  it('no date falls on a district closure', () => {
+    const closures = buildClosureSet(doc.calendar.breaks);
+    expect(closures.has('2026-09-04')).toBe(true);   // the Friday that started this
+    expect(closures.has('2026-09-07')).toBe(true);   // Labor Day
+    for (const { topicKey, period, date } of datedEntries()) {
+      expect(closures.has(date), `${topicKey} ${period}=${date} is a closure`).toBe(false);
     }
   });
 
-  it('no date falls on a closure day', () => {
-    for (const [topicKey, entry] of Object.entries(lessons)) {
-      const b = entry.periods.B;
-      const e = entry.periods.E;
-      expect(CLOSURES.has(b), `${topicKey} B=${b} is not a closure`).toBe(false);
-      expect(CLOSURES.has(e), `${topicKey} E=${e} is not a closure`).toBe(false);
+  it('every date is inside the school year and before the AP exam', () => {
+    const yearStart = PHASE3_CONFIG.quarters.Q1.start;
+    for (const { topicKey, period, date } of datedEntries()) {
+      expect(date >= yearStart, `${topicKey} ${period}=${date} >= ${yearStart}`).toBe(true);
+      expect(date < doc.calendar.examDate, `${topicKey} ${period}=${date} < exam`).toBe(true);
+      expect(quarterOfDate(date), `${topicKey} ${period}=${date} resolves to a quarter`).toMatch(/^Q[1-4]$/);
+      expect(quarterOfUnit(lessons[topicKey].unit)).toMatch(/^Q[1-4]$/);
     }
   });
 
-  it('dates are non-decreasing in topic order (within each unit)', () => {
-    // Group by unit and check monotonicity.
-    const byUnit = {};
-    for (const tk of sortedTopicKeys) {
-      const u = lessons[tk].unit;
-      if (!byUnit[u]) byUnit[u] = [];
-      byUnit[u].push(lessons[tk].periods.B);
+  it('B and E walk their own meeting days — the same topic is NOT on the same date for both', () => {
+    let differ = 0;
+    for (const entry of Object.values(lessons)) {
+      if (entry.periods.B && entry.periods.B !== entry.periods.E) differ++;
     }
-    for (const [unit, dates] of Object.entries(byUnit)) {
-      for (let i = 1; i < dates.length; i++) {
-        expect(dates[i] >= dates[i - 1], `Unit ${unit}: date[${i}]=${dates[i]} >= date[${i-1}]=${dates[i-1]}`).toBe(true);
+    expect(differ).toBeGreaterThan(50);
+    expect(lessons['1.1'].periods.B).not.toBe(lessons['1.1'].periods.E);
+  });
+
+  it('within a period, no two topics share a date', () => {
+    for (const period of ['B', 'E']) {
+      const seen = new Map();
+      for (const { topicKey, date } of datedEntries().filter((x) => x.period === period)) {
+        expect(seen.has(date), `${period} ${date}: ${topicKey} vs ${seen.get(date)}`).toBe(false);
+        seen.set(date, topicKey);
       }
     }
   });
 
-  // Pack-left (s121) intentionally front-loads teaching dates, so a unit's
-  // lessons may be taught in an EARLIER calendar quarter than its report-card
-  // quarter. v3 grades bucket by unit→quarter band (computeQuarterV3 /
-  // quarterOfUnit) — a unit's lessons + PC land in the same quarter regardless
-  // of teaching date — so the old "date inside the unit's home-quarter window"
-  // invariant (UNIT_QUARTER_WINDOWS above) no longer holds and is not asserted.
-  it("each lesson's date is within the school year (pack-left decouples teaching date from grade quarter)", () => {
-    const yearStart = PHASE3_CONFIG.quarters.Q1.start;
-    const yearEnd = PHASE3_CONFIG.quarters.Q4.end;
-    for (const [topicKey, entry] of Object.entries(lessons)) {
-      const b = entry.periods.B;
-      expect(
-        b >= yearStart && b <= yearEnd,
-        `${topicKey} B=${b} in school year [${yearStart}, ${yearEnd}]`
-      ).toBe(true);
-      // The unit→quarter band (what actually buckets v3 grades) must resolve.
-      expect(quarterOfUnit(entry.unit), `${topicKey} unit ${entry.unit} bands to a quarter`)
-        .toMatch(/^Q[1-4]$/);
+  it("the calendar's quarter windows are grade-config's quarter windows", () => {
+    for (const q of ['Q1', 'Q2', 'Q3', 'Q4']) {
+      expect(doc.calendar.quarters[q]).toEqual({
+        start: PHASE3_CONFIG.quarters[q].start,
+        end: PHASE3_CONFIG.quarters[q].end,
+      });
     }
   });
 
-  it('periods.B === periods.E for all lessons (shared schedule D4)', () => {
-    for (const [topicKey, entry] of Object.entries(lessons)) {
-      expect(entry.periods.B, `${topicKey} B===E`).toBe(entry.periods.E);
+  it('progress checks + posters are keyed by the NEW CED unit (1-5) with per-period dates', () => {
+    expect(Object.keys(doc.progressChecks)).toEqual(['1', '2', '3', '4', '5']);
+    expect(Object.keys(doc.posters)).toEqual(['1', '2', '3', '4', '5']);
+    for (const u of ['1', '2', '3', '4', '5']) {
+      const pc = doc.progressChecks[u];
+      expect(pc.periods.B < pc.adminDay2.B, `U${u} PC B day1 < day2`).toBe(true);
+      expect(pc.periods.E < pc.adminDay2.E, `U${u} PC E day1 < day2`).toBe(true);
+      expect(doc.posters[u].periods.B < pc.periods.B, `U${u} poster before PC (B)`).toBe(true);
+      expect(pc.adminDay2.E < doc.calendar.examDate).toBe(true);
     }
   });
 });

@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: b1f7a4c88604
+ * engine-version: a3832667ea8c
  */
 ;(function (root) {
   'use strict';
@@ -63,11 +63,15 @@
       // raw% (PC correct/graded ×100) maps: ≥p100 → 100; [p85,p100) → linear
       // 85..100; [0,p85) → linear 0..85. Q4 ≈ published AP-Stats real (~70 = a 5);
       // Q1–Q3 deliberately gentler = the graduated-trust ramp. ALL pilot-tunable.
+      // SY2627 (2026-09-03): start/end are the REAL LEHS marking periods from
+      // sy2627-calendar-intake.md §2 (Q1 44d · Q2 44d · Q3 52d · Q4 40d). The
+      // `units` lists are the OLD-id fallback only — with a schedule present,
+      // deriveQuarterBands() places each old unit by its latest scheduled date.
       quarters: {
-        Q1: { units: [1, 2, 3], start: '2026-09-09', end: '2026-11-13', pcAnchor: { p85: 40, p100: 60 } },
-        Q2: { units: [4, 5],    start: '2026-11-14', end: '2027-01-29', pcAnchor: { p85: 45, p100: 64 } },
-        Q3: { units: [6, 7],    start: '2027-01-30', end: '2027-04-09', pcAnchor: { p85: 50, p100: 67 } },
-        Q4: { units: [8, 9],    start: '2027-04-10', end: '2027-06-23', pcAnchor: { p85: 55, p100: 70 } },
+        Q1: { units: [1, 2, 3], start: '2026-09-02', end: '2026-11-06', pcAnchor: { p85: 40, p100: 60 } },
+        Q2: { units: [4, 5],    start: '2026-11-09', end: '2027-01-22', pcAnchor: { p85: 45, p100: 64 } },
+        Q3: { units: [6, 7],    start: '2027-01-25', end: '2027-04-14', pcAnchor: { p85: 50, p100: 67 } },
+        Q4: { units: [8, 9],    start: '2027-04-15', end: '2027-06-17', pcAnchor: { p85: 55, p100: 70 } },
       },
     
       // IANA timezone for computing "today" in the date filter (Phase 6).
@@ -124,6 +128,13 @@
       // lower the grade — FINDING F4). Monotonicity wins. (only-helps stays available
       // for experimentation but must not ship.)
       v3AheadOfScheduleLessons: 'not-until-due',
+    
+      // SY2627 (2026-09-03): the v3 Lessons track buckets lessons by CALENDAR DATE
+      // (quarterOfLesson) instead of the static old-unit band. The real schedule
+      // teaches old units in Fall-2026 CED order, so an old unit straddles
+      // quarters. Absent (false) in the frozen SY2526 config → that year keeps
+      // unit banding and its grades do not move.
+      v3LessonsByDate: true,
     
       // ── TI-84 trainer strand (TI84_GRADE_INTEGRATION_SPEC.md §C) ────────────────
       // weight 0 = VISIBLE-BUT-UNCOUNTED: per-lesson trainer pct + quarter
@@ -1416,15 +1427,22 @@
         return false;
       }
     
-      // v3 buckets lessons by unit→quarter band (NOT calendar date). Pack-left
-      // front-loads teaching dates, so a unit's lessons may be taught in an earlier
-      // calendar quarter than its report-card quarter; per the pack-left design
-      // ("unit → quarter mapping only buckets grades") a unit's lessons + PC must
-      // land in the SAME quarter. (Phase 6 / quarterOfLesson stays date-driven.)
+      // SY2627 (2026-09-03): v3 buckets lessons by CALENDAR DATE (quarterOfLesson,
+      // the same rule Phase 6 uses), no longer by the static old-unit band. The
+      // real schedule teaches the OLD units in Fall-2026 CED order, so an old unit
+      // now straddles quarters (old U2 = 2.1-2.3 in Oct, 2.4-2.8 in Jan-Mar; old
+      // U8 taught in Dec). Unit banding put December work in Q4 and kept Q1
+      // growing after it closed. A lesson counts in the quarter it was due; a
+      // null-dated (bonus) entry still falls back to its unit band.
+      // Gated by config.v3LessonsByDate so the FROZEN SY2526 config (which lacks
+      // the flag) keeps its original unit-band bucketing — historical grades must
+      // not move. The live SY2627 grade-config sets it.
+      const lessonsByDate = !!(config && config.v3LessonsByDate);
       const bandLessons = [];
       for (const [topicKey, entry] of Object.entries(schedule)) {
         if (!entry || typeof entry !== 'object' || typeof entry.unit !== 'number') continue;
-        if (quarterOfUnit(entry.unit, config) !== quarterKey) continue;
+        const q = lessonsByDate ? quarterOfLesson(entry, period, config) : quarterOfUnit(entry.unit, config);
+        if (q !== quarterKey) continue;
         if (!inWindow(entry)) continue;
         bandLessons.push(topicKey);
       }
@@ -2681,7 +2699,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "b1f7a4c88604",
+    _engineVersion: "a3832667ea8c",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

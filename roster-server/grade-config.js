@@ -35,11 +35,15 @@ export const PHASE3_CONFIG = {
   // raw% (PC correct/graded ×100) maps: ≥p100 → 100; [p85,p100) → linear
   // 85..100; [0,p85) → linear 0..85. Q4 ≈ published AP-Stats real (~70 = a 5);
   // Q1–Q3 deliberately gentler = the graduated-trust ramp. ALL pilot-tunable.
+  // SY2627 (2026-09-03): start/end are the REAL LEHS marking periods from
+  // sy2627-calendar-intake.md §2 (Q1 44d · Q2 44d · Q3 52d · Q4 40d). The
+  // `units` lists are the OLD-id fallback only — with a schedule present,
+  // deriveQuarterBands() places each old unit by its latest scheduled date.
   quarters: {
-    Q1: { units: [1, 2, 3], start: '2026-09-09', end: '2026-11-13', pcAnchor: { p85: 40, p100: 60 } },
-    Q2: { units: [4, 5],    start: '2026-11-14', end: '2027-01-29', pcAnchor: { p85: 45, p100: 64 } },
-    Q3: { units: [6, 7],    start: '2027-01-30', end: '2027-04-09', pcAnchor: { p85: 50, p100: 67 } },
-    Q4: { units: [8, 9],    start: '2027-04-10', end: '2027-06-23', pcAnchor: { p85: 55, p100: 70 } },
+    Q1: { units: [1, 2, 3], start: '2026-09-02', end: '2026-11-06', pcAnchor: { p85: 40, p100: 60 } },
+    Q2: { units: [4, 5],    start: '2026-11-09', end: '2027-01-22', pcAnchor: { p85: 45, p100: 64 } },
+    Q3: { units: [6, 7],    start: '2027-01-25', end: '2027-04-14', pcAnchor: { p85: 50, p100: 67 } },
+    Q4: { units: [8, 9],    start: '2027-04-15', end: '2027-06-17', pcAnchor: { p85: 55, p100: 70 } },
   },
 
   // IANA timezone for computing "today" in the date filter (Phase 6).
@@ -96,6 +100,13 @@ export const PHASE3_CONFIG = {
   // lower the grade — FINDING F4). Monotonicity wins. (only-helps stays available
   // for experimentation but must not ship.)
   v3AheadOfScheduleLessons: 'not-until-due',
+
+  // SY2627 (2026-09-03): the v3 Lessons track buckets lessons by CALENDAR DATE
+  // (quarterOfLesson) instead of the static old-unit band. The real schedule
+  // teaches old units in Fall-2026 CED order, so an old unit straddles
+  // quarters. Absent (false) in the frozen SY2526 config → that year keeps
+  // unit banding and its grades do not move.
+  v3LessonsByDate: true,
 
   // ── TI-84 trainer strand (TI84_GRADE_INTEGRATION_SPEC.md §C) ────────────────
   // weight 0 = VISIBLE-BUT-UNCOUNTED: per-lesson trainer pct + quarter

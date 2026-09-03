@@ -651,7 +651,7 @@
       <!-- TAB 2: Plug in real Q1 grades -->
       <div class="gp-panel" id="gp-panel-real" role="tabpanel" aria-labelledby="gp-tab-real" hidden>
         <div class="gp-grid">
-          <h4>Progress Checks <small style="color:var(--muted);font-weight:400">— Q1 covers Units 1&ndash;3</small></h4>
+          <h4>Progress Checks <small style="color:var(--muted);font-weight:400">— Q1 runs Sep 2 &ndash; Nov 6</small></h4>
           <div class="gp-field">
             <label for="gp-pc-u1">Unit 1 PC</label>
             <input type="number" id="gp-pc-u1" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
@@ -1019,13 +1019,14 @@
     return m ? parseInt(m[1], 10) : null;
   }
 
-  // Quarter band labels (must match grade-config.js quarters + the Desk roadmap):
-  //   Q1 = U1-U3, Q2 = U4-U5, Q3 = U6-U7, Q4 = U8-U9
+  // Quarter band labels (must match grade-config.js quarters + the Desk roadmap).
+  // SY2627: quarters are the real LEHS marking-period DATE windows; units are
+  // taught in CED order and straddle quarters, so label by dates, not units.
   var QUARTER_BAND_LABEL = {
-    Q1: 'U1, U2, U3',
-    Q2: 'U4, U5',
-    Q3: 'U6, U7',
-    Q4: 'U8, U9',
+    Q1: 'Sep 2 – Nov 6',
+    Q2: 'Nov 9 – Jan 22',
+    Q3: 'Jan 25 – Apr 14',
+    Q4: 'Apr 15 – Jun 17',
   };
 
   function renderQuarters(host, quarters) {

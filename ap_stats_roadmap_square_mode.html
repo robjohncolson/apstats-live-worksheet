@@ -8236,12 +8236,14 @@ function maybeBumpThenOpen(inf, ds) {
 // Quarter-band labels — mirror roster-server's PHASE3_CONFIG.quarters and
 // start-here.html's QUARTER_BAND_LABEL so the Do Now strip stays consistent
 // with the full breakdown render.
-// Phase 6 update: Q1=[1,2,3], Q2=[4,5], Q3=[6,7], Q4=[8,9].
+// SY2627 (2026-09-03): quarters are DATE windows (the real LEHS marking
+// periods). Old units are taught in CED order and straddle quarters, so a
+// unit list would be false — label each quarter by its dates instead.
 const QUARTER_BAND_LABEL = {
-  Q1: 'U1, U2, U3',
-  Q2: 'U4, U5',
-  Q3: 'U6, U7',
-  Q4: 'U8, U9',
+  Q1: 'Sep 2 – Nov 6',
+  Q2: 'Nov 9 – Jan 22',
+  Q3: 'Jan 25 – Apr 14',
+  Q4: 'Apr 15 – Jun 17',
 };
 
 // Quarter calendar windows -- mirror roster-server's grade-config.js
@@ -8250,11 +8252,11 @@ const QUARTER_BAND_LABEL = {
 // same real dates instead of unit boundaries. Months are 1-indexed
 // here (Sep = 9), matching the ISO dates in grade-config.js. Re-edit
 // both files together once per school year.
-const QUARTER_WINDOWS = [
-  { q: 1, start: [2026, 9, 9],   end: [2026, 11, 13] },
-  { q: 2, start: [2026, 11, 14], end: [2027, 1, 29]  },
-  { q: 3, start: [2027, 1, 30],  end: [2027, 4, 9]   },
-  { q: 4, start: [2027, 4, 10],  end: [2027, 6, 23]  },
+const QUARTER_WINDOWS = [   // SY2627 real LEHS marking periods (2026-09-03)
+  { q: 1, start: [2026, 9, 2],   end: [2026, 11, 6]  },
+  { q: 2, start: [2026, 11, 9],  end: [2027, 1, 22]  },
+  { q: 3, start: [2027, 1, 25],  end: [2027, 4, 14]  },
+  { q: 4, start: [2027, 4, 15],  end: [2027, 6, 17]  },
 ];
 
 // Which quarter (1-4) a calendar Date falls in; 0 if outside every
@@ -9911,7 +9913,6 @@ const SY2627_PACING_B = [
   {t:"3.4",n:"3.4 → 1.12 · Potential Problems with Sampling",u:1},
   {t:"3.5",n:"3.5 → 1.13 · Experimental Design",u:1},
   {t:"3.6",n:"3.6 → 1.13 · Experimental Design",u:1},
-  {t:"3.7",n:"3.7 → 1.13 · Experimental Design",u:1},
   {t:"2.1",n:"2.1 · Two Categorical Variables: Tables & Graphs",u:2},
   {t:"2.2",n:"2.2 → 2.1 · Two Categorical Variables: Tables & Graphs",u:2},
   {t:"2.3",n:"2.3 → 2.2 · Two Categorical Variables: Summary Statistics",u:2},
@@ -9986,7 +9987,6 @@ const SY2627_PACING_E = [
   {t:"3.4",n:"3.4 → 1.12 · Potential Problems with Sampling",u:1},
   {t:"3.5",n:"3.5 → 1.13 · Experimental Design",u:1},
   {t:"3.6",n:"3.6 → 1.13 · Experimental Design",u:1},
-  {t:"3.7",n:"3.7 → 1.13 · Experimental Design",u:1},
   {t:"2.1",n:"2.1 · Two Categorical Variables: Tables & Graphs",u:2},
   {t:"2.2",n:"2.2 → 2.1 · Two Categorical Variables: Tables & Graphs",u:2},
   {t:"2.3",n:"2.3 → 2.2 · Two Categorical Variables: Summary Statistics",u:2},
@@ -10078,21 +10078,34 @@ const SCHEDULE_DEFS = {
   "SY26-27": {
     label: "Full Year 2026-27",
     school: "Lynn English High School",
-    examDate: [2027, 4, 14],
-    range: { start: [2026,8,1], end: [2027,4,15] },
+    // REAL SY2627 calendar (2026-09-03): LPS district calendar
+    // (lynn-public-schools-2026-2027.md) + LEHS weekly schedule + teacher
+    // answers — see sy2627-calendar-intake.md. First day Wed 2026-09-02;
+    // AP Statistics exam Tue 2027-05-11 (teacher-confirmed, hard end).
+    // Months are 0-based ([y, m0, d]). Early-release Wednesdays are NOT
+    // closures (E still meets, shortened) — only district closures go here.
+    // roster-server/data/lesson-schedule.json is GENERATED from this block:
+    //   node scripts/build-lesson-schedule-sy2627.mjs
+    examDate: [2027, 4, 11],
+    range: { start: [2026,8,2], end: [2027,4,15] },
     periods: {
       B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, schoologyCourse:null },
       E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, schoologyCourse:null }
     },
     daysOff: [
-      [[2026,8,7]],
-      [[2026,9,12]],
-      [[2026,10,11]],
-      [[2026,10,25],[2026,10,27]],
-      [[2026,11,23],[2027,0,2]],
-      [[2027,0,18]],
-      [[2027,1,15],[2027,1,19]],
-      [[2027,3,19],[2027,3,23]]
+      [[2026,8,4]],                    // School Closed (Fri Sep 4)
+      [[2026,8,7]],                    // Labor Day
+      [[2026,9,12]],                   // Indigenous Peoples' Day
+      [[2026,10,3]],                   // Teacher in-service (no students)
+      [[2026,10,11]],                  // Veterans Day
+      [[2026,10,26],[2026,10,27]],     // Thanksgiving Recess (Nov 25 is a half day, in session)
+      [[2026,11,24],[2026,11,25]],     // School Closed Dec 24-25 (Dec 23 is a half day, in session)
+      [[2026,11,28],[2027,0,1]],       // Winter Recess
+      [[2027,0,18]],                   // MLK Jr. Day
+      [[2027,1,15],[2027,1,19]],       // February Vacation
+      [[2027,2,26]],                   // Good Friday
+      [[2027,3,19],[2027,3,23]],       // April Vacation
+      [[2027,4,31]]                    // Memorial Day
     ],
     pacing: { B: injectPcPosterEvents(SY2627_PACING_B), E: injectPcPosterEvents(SY2627_PACING_E) },
     units: [
@@ -23764,7 +23777,7 @@ function _mountClassroomBoard(){
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-01-uqip';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-03-nbww';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -14,10 +14,11 @@ const START = readFileSync(resolve(repo, 'start-here.html'), 'utf8');
 const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
 
 describe('start-here.html — v3 two-track grade explanation', () => {
-  it('quarter band labels match the engine (Q1 = U1,U2,U3; Q2 = U4,U5)', () => {
-    expect(START).toMatch(/Q1:\s*'U1, U2, U3'/);
-    expect(START).toMatch(/Q2:\s*'U4, U5'/);
-    // The stale Phase-6 mapping must be gone.
+  it('quarter band labels are the SY2627 date windows (units straddle quarters in CED order)', () => {
+    expect(START).toMatch(/Q1:\s*'Sep 2 – Nov 6'/);
+    expect(START).toMatch(/Q2:\s*'Nov 9 – Jan 22'/);
+    // The stale unit-list mappings must be gone.
+    expect(START).not.toMatch(/Q1:\s*'U1, U2, U3'/);
     expect(START).not.toMatch(/Q1:\s*'U1, U2',/);
     expect(START).not.toMatch(/Q2:\s*'U3, U4, U5'/);
   });

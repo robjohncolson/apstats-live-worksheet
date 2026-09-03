@@ -1,14 +1,176 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-05-29T00:50:57.602Z",
+  "generatedBy": "scripts/build-lesson-schedule-sy2627.mjs",
+  "note": "lessons[].unit is the OLD 9-unit id (grades key off it); progressChecks/posters are keyed by the NEW CED-2026 unit (matches the Desk U{n}-PC ids and pc_bank). Bonus topics have null dates = never due.",
+  "calendar": {
+    "schoolYear": "SY2627",
+    "source": "ap_stats_roadmap_square_mode.html SCHEDULE_DEFS[\"SY26-27\"] (see sy2627-calendar-intake.md)",
+    "firstDay": "2026-09-02",
+    "examDate": "2027-05-11",
+    "breaks": [
+      {
+        "from": "2026-09-04",
+        "to": "2026-09-04"
+      },
+      {
+        "from": "2026-09-07",
+        "to": "2026-09-07"
+      },
+      {
+        "from": "2026-10-12",
+        "to": "2026-10-12"
+      },
+      {
+        "from": "2026-11-03",
+        "to": "2026-11-03"
+      },
+      {
+        "from": "2026-11-11",
+        "to": "2026-11-11"
+      },
+      {
+        "from": "2026-11-26",
+        "to": "2026-11-27"
+      },
+      {
+        "from": "2026-12-24",
+        "to": "2026-12-25"
+      },
+      {
+        "from": "2026-12-28",
+        "to": "2027-01-01"
+      },
+      {
+        "from": "2027-01-18",
+        "to": "2027-01-18"
+      },
+      {
+        "from": "2027-02-15",
+        "to": "2027-02-19"
+      },
+      {
+        "from": "2027-03-26",
+        "to": "2027-03-26"
+      },
+      {
+        "from": "2027-04-19",
+        "to": "2027-04-23"
+      },
+      {
+        "from": "2027-05-31",
+        "to": "2027-05-31"
+      }
+    ],
+    "meetingDays": {
+      "B": [
+        1,
+        2,
+        4,
+        5
+      ],
+      "E": [
+        1,
+        3,
+        5
+      ]
+    },
+    "quarters": {
+      "Q1": {
+        "start": "2026-09-02",
+        "end": "2026-11-06"
+      },
+      "Q2": {
+        "start": "2026-11-09",
+        "end": "2027-01-22"
+      },
+      "Q3": {
+        "start": "2027-01-25",
+        "end": "2027-04-14"
+      },
+      "Q4": {
+        "start": "2027-04-15",
+        "end": "2027-06-17"
+      }
+    },
+    "events": {
+      "B": [
+        {
+          "id": "Welcome",
+          "kind": "orientation",
+          "title": "Start Here — how grades & makeups work",
+          "date": "2026-09-03"
+        },
+        {
+          "id": "U1-PC1",
+          "kind": "baseline",
+          "title": "Unit 1 Baseline Check",
+          "date": "2026-09-08"
+        },
+        {
+          "id": "review-3",
+          "kind": "review",
+          "title": "Review: Units 1-2",
+          "date": "2027-03-01"
+        },
+        {
+          "id": "review-4",
+          "kind": "review",
+          "title": "Review: Units 3-4",
+          "date": "2027-03-02"
+        },
+        {
+          "id": "review-5",
+          "kind": "review",
+          "title": "Review: Unit 5 + FRQ Practice",
+          "date": "2027-03-04"
+        }
+      ],
+      "E": [
+        {
+          "id": "Welcome",
+          "kind": "orientation",
+          "title": "Start Here — how grades & makeups work",
+          "date": "2026-09-02"
+        },
+        {
+          "id": "U1-PC1",
+          "kind": "baseline",
+          "title": "Unit 1 Baseline Check",
+          "date": "2026-09-09"
+        },
+        {
+          "id": "review-3",
+          "kind": "review",
+          "title": "Review: Units 1-2",
+          "date": "2027-04-28"
+        },
+        {
+          "id": "review-4",
+          "kind": "review",
+          "title": "Review: Units 3-4",
+          "date": "2027-04-30"
+        },
+        {
+          "id": "review-5",
+          "kind": "review",
+          "title": "Review: Unit 5 + FRQ Practice",
+          "date": "2027-05-03"
+        }
+      ]
+    },
+    "slackMeetingsBeforeExam": {
+      "B": 33,
+      "E": 3
+    }
+  },
   "lessons": {
     "1.1": {
       "unit": 1,
       "topicKey": "1.1",
       "worksheetKey": "1",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-10",
+        "E": "2026-09-11"
       }
     },
     "1.2": {
@@ -16,8 +178,8 @@
       "topicKey": "1.2",
       "worksheetKey": "2",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-11",
+        "E": "2026-09-14"
       }
     },
     "1.3": {
@@ -25,8 +187,8 @@
       "topicKey": "1.3",
       "worksheetKey": "3",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-14",
+        "E": "2026-09-16"
       }
     },
     "1.4": {
@@ -34,8 +196,8 @@
       "topicKey": "1.4",
       "worksheetKey": "4",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-15",
+        "E": "2026-09-18"
       }
     },
     "1.5": {
@@ -43,8 +205,8 @@
       "topicKey": "1.5",
       "worksheetKey": "5",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-17",
+        "E": "2026-09-21"
       }
     },
     "1.6": {
@@ -52,8 +214,8 @@
       "topicKey": "1.6",
       "worksheetKey": "6",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-18",
+        "E": "2026-09-23"
       }
     },
     "1.7": {
@@ -61,8 +223,8 @@
       "topicKey": "1.7",
       "worksheetKey": "7",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-22",
+        "E": "2026-09-28"
       }
     },
     "1.8": {
@@ -70,8 +232,8 @@
       "topicKey": "1.8",
       "worksheetKey": "8",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-24",
+        "E": "2026-09-30"
       }
     },
     "1.9": {
@@ -79,8 +241,8 @@
       "topicKey": "1.9",
       "worksheetKey": "9",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-25",
+        "E": "2026-10-02"
       }
     },
     "1.10": {
@@ -88,8 +250,8 @@
       "topicKey": "1.10",
       "worksheetKey": "10",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-10",
+        "E": "2026-12-04"
       }
     },
     "2.1": {
@@ -97,8 +259,8 @@
       "topicKey": "2.1",
       "worksheetKey": "1",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-15",
+        "E": "2026-10-28"
       }
     },
     "2.2": {
@@ -106,8 +268,8 @@
       "topicKey": "2.2",
       "worksheetKey": "2",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-16",
+        "E": "2026-10-30"
       }
     },
     "2.3": {
@@ -115,8 +277,8 @@
       "topicKey": "2.3",
       "worksheetKey": "3",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-19",
+        "E": "2026-11-02"
       }
     },
     "2.4": {
@@ -124,8 +286,8 @@
       "topicKey": "2.4",
       "worksheetKey": "4",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-02-08",
+        "E": "2027-04-02"
       }
     },
     "2.5": {
@@ -133,8 +295,8 @@
       "topicKey": "2.5",
       "worksheetKey": "5",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-02-09",
+        "E": "2027-04-05"
       }
     },
     "2.6": {
@@ -142,8 +304,8 @@
       "topicKey": "2.6",
       "worksheetKey": "6",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-02-11",
+        "E": "2027-04-07"
       }
     },
     "2.7": {
@@ -151,8 +313,8 @@
       "topicKey": "2.7",
       "worksheetKey": "7",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-02-12",
+        "E": "2027-04-09"
       }
     },
     "2.8": {
@@ -160,8 +322,8 @@
       "topicKey": "2.8",
       "worksheetKey": "8",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-02-22",
+        "E": "2027-04-12"
       }
     },
     "2.9": {
@@ -178,8 +340,8 @@
       "topicKey": "3.1",
       "worksheetKey": "1",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-28",
+        "E": "2026-10-05"
       }
     },
     "3.2": {
@@ -187,8 +349,8 @@
       "topicKey": "3.2",
       "worksheetKey": "2",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-09-29",
+        "E": "2026-10-07"
       }
     },
     "3.3": {
@@ -196,8 +358,8 @@
       "topicKey": "3.3",
       "worksheetKey": "3",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-01",
+        "E": "2026-10-09"
       }
     },
     "3.4": {
@@ -205,8 +367,8 @@
       "topicKey": "3.4",
       "worksheetKey": "4",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-02",
+        "E": "2026-10-14"
       }
     },
     "3.5": {
@@ -214,8 +376,8 @@
       "topicKey": "3.5",
       "worksheetKey": "5",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-05",
+        "E": "2026-10-16"
       }
     },
     "3.6": {
@@ -223,8 +385,8 @@
       "topicKey": "3.6",
       "worksheetKey": "6-7",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-06",
+        "E": "2026-10-19"
       },
       "combinedWith": [
         "3.7"
@@ -247,8 +409,8 @@
       "topicKey": "4.1",
       "worksheetKey": "1-2",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-20",
+        "E": "2026-11-04"
       },
       "combinedWith": [
         "4.2"
@@ -259,8 +421,8 @@
       "topicKey": "4.2",
       "worksheetKey": "1-2",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-22",
+        "E": "2026-11-06"
       },
       "combinedWith": [
         "4.1"
@@ -271,8 +433,8 @@
       "topicKey": "4.3",
       "worksheetKey": "3-4-5",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-23",
+        "E": "2026-11-09"
       },
       "combinedWith": [
         "4.4",
@@ -284,8 +446,8 @@
       "topicKey": "4.4",
       "worksheetKey": "3-4-5",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-26",
+        "E": "2026-11-13"
       },
       "combinedWith": [
         "4.3",
@@ -297,8 +459,8 @@
       "topicKey": "4.5",
       "worksheetKey": "3-4-5",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-27",
+        "E": "2026-11-16"
       },
       "combinedWith": [
         "4.3",
@@ -310,8 +472,8 @@
       "topicKey": "4.6",
       "worksheetKey": "6",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-30",
+        "E": "2026-11-20"
       }
     },
     "4.7": {
@@ -319,8 +481,8 @@
       "topicKey": "4.7",
       "worksheetKey": "7-8",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-02",
+        "E": "2026-11-23"
       },
       "combinedWith": [
         "4.8"
@@ -331,8 +493,8 @@
       "topicKey": "4.8",
       "worksheetKey": "7-8",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-05",
+        "E": "2026-11-25"
       },
       "combinedWith": [
         "4.7"
@@ -352,8 +514,8 @@
       "topicKey": "4.10",
       "worksheetKey": "10-12",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-06",
+        "E": "2026-11-30"
       },
       "combinedWith": [
         "4.11",
@@ -365,8 +527,8 @@
       "topicKey": "4.11",
       "worksheetKey": "10-12",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-09",
+        "E": "2026-12-02"
       },
       "combinedWith": [
         "4.10",
@@ -391,8 +553,8 @@
       "topicKey": "5.1",
       "worksheetKey": "1-2",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-13",
+        "E": "2026-12-09"
       },
       "combinedWith": [
         "5.2"
@@ -403,8 +565,8 @@
       "topicKey": "5.2",
       "worksheetKey": "1-2",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-12",
+        "E": "2026-12-07"
       },
       "combinedWith": [
         "5.1"
@@ -415,8 +577,8 @@
       "topicKey": "5.3",
       "worksheetKey": "3",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-16",
+        "E": "2026-12-11"
       }
     },
     "5.4": {
@@ -424,8 +586,8 @@
       "topicKey": "5.4",
       "worksheetKey": "4",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-23",
+        "E": "2026-12-21"
       }
     },
     "5.5": {
@@ -433,8 +595,8 @@
       "topicKey": "5.5",
       "worksheetKey": "5",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-24",
+        "E": "2026-12-23"
       }
     },
     "5.6": {
@@ -442,8 +604,8 @@
       "topicKey": "5.6",
       "worksheetKey": "6",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-12-11",
+        "E": "2027-01-22"
       }
     },
     "5.7": {
@@ -451,8 +613,8 @@
       "topicKey": "5.7",
       "worksheetKey": "7",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-01-12",
+        "E": "2027-02-26"
       }
     },
     "5.8": {
@@ -460,8 +622,8 @@
       "topicKey": "5.8",
       "worksheetKey": "8",
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-01-25",
+        "E": "2027-03-12"
       }
     },
     "6.1": {
@@ -469,8 +631,8 @@
       "topicKey": "6.1",
       "worksheetKey": "1-2",
       "periods": {
-        "B": "2026-03-02",
-        "E": "2026-03-06"
+        "B": "2026-11-30",
+        "E": "2027-01-04"
       },
       "combinedWith": [
         "6.2"
@@ -481,8 +643,8 @@
       "topicKey": "6.2",
       "worksheetKey": "1-2",
       "periods": {
-        "B": "2026-03-02",
-        "E": "2026-03-06"
+        "B": "2026-12-01",
+        "E": "2027-01-06"
       },
       "combinedWith": [
         "6.1"
@@ -493,8 +655,8 @@
       "topicKey": "6.3",
       "worksheetKey": "3",
       "periods": {
-        "B": "2026-03-03",
-        "E": "2026-03-09"
+        "B": "2026-12-03",
+        "E": "2027-01-08"
       }
     },
     "6.4": {
@@ -502,8 +664,8 @@
       "topicKey": "6.4",
       "worksheetKey": "4",
       "periods": {
-        "B": "2026-03-05",
-        "E": "2026-03-11"
+        "B": "2026-12-04",
+        "E": "2027-01-11"
       }
     },
     "6.5": {
@@ -511,8 +673,8 @@
       "topicKey": "6.5",
       "worksheetKey": "5",
       "periods": {
-        "B": "2026-03-06",
-        "E": "2026-03-11"
+        "B": "2026-12-07",
+        "E": "2027-01-13"
       }
     },
     "6.6": {
@@ -520,8 +682,8 @@
       "topicKey": "6.6",
       "worksheetKey": "6",
       "periods": {
-        "B": "2026-03-09",
-        "E": "2026-03-13"
+        "B": "2026-12-08",
+        "E": "2027-01-15"
       }
     },
     "6.7": {
@@ -529,8 +691,8 @@
       "topicKey": "6.7",
       "worksheetKey": "7",
       "periods": {
-        "B": "2026-03-10",
-        "E": "2026-03-16"
+        "B": "2026-12-10",
+        "E": "2027-01-20"
       }
     },
     "6.8": {
@@ -538,8 +700,8 @@
       "topicKey": "6.8",
       "worksheetKey": "8",
       "periods": {
-        "B": "2026-03-12",
-        "E": "2026-03-18"
+        "B": "2026-12-14",
+        "E": "2027-01-25"
       }
     },
     "6.9": {
@@ -547,8 +709,8 @@
       "topicKey": "6.9",
       "worksheetKey": "9",
       "periods": {
-        "B": "2026-03-13",
-        "E": "2026-03-18"
+        "B": "2026-12-15",
+        "E": "2027-01-27"
       }
     },
     "6.10": {
@@ -556,8 +718,8 @@
       "topicKey": "6.10",
       "worksheetKey": "10",
       "periods": {
-        "B": "2026-03-16",
-        "E": "2026-03-20"
+        "B": "2026-12-17",
+        "E": "2027-01-29"
       }
     },
     "6.11": {
@@ -565,8 +727,8 @@
       "topicKey": "6.11",
       "worksheetKey": "11",
       "periods": {
-        "B": "2026-03-17",
-        "E": "2026-03-23"
+        "B": "2026-12-18",
+        "E": "2027-02-01"
       }
     },
     "7.1": {
@@ -574,8 +736,8 @@
       "topicKey": "7.1",
       "worksheetKey": "1",
       "periods": {
-        "B": "2026-03-19",
-        "E": "2026-03-25"
+        "B": "2027-01-14",
+        "E": "2027-03-01"
       }
     },
     "7.2": {
@@ -583,8 +745,8 @@
       "topicKey": "7.2",
       "worksheetKey": "2",
       "periods": {
-        "B": "2026-03-20",
-        "E": "2026-03-25"
+        "B": "2027-01-15",
+        "E": "2027-03-03"
       }
     },
     "7.3": {
@@ -592,8 +754,8 @@
       "topicKey": "7.3",
       "worksheetKey": "3",
       "periods": {
-        "B": "2026-03-23",
-        "E": "2026-03-27"
+        "B": "2027-01-19",
+        "E": "2027-03-05"
       }
     },
     "7.4": {
@@ -601,8 +763,8 @@
       "topicKey": "7.4",
       "worksheetKey": "4",
       "periods": {
-        "B": "2026-03-24",
-        "E": "2026-03-30"
+        "B": "2027-01-21",
+        "E": "2027-03-08"
       }
     },
     "7.5": {
@@ -610,8 +772,8 @@
       "topicKey": "7.5",
       "worksheetKey": "5",
       "periods": {
-        "B": "2026-03-26",
-        "E": "2026-04-01"
+        "B": "2027-01-22",
+        "E": "2027-03-10"
       }
     },
     "7.6": {
@@ -619,8 +781,8 @@
       "topicKey": "7.6",
       "worksheetKey": "6",
       "periods": {
-        "B": "2026-03-27",
-        "E": "2026-04-01"
+        "B": "2027-01-26",
+        "E": "2027-03-15"
       }
     },
     "7.7": {
@@ -628,8 +790,8 @@
       "topicKey": "7.7",
       "worksheetKey": "7",
       "periods": {
-        "B": "2026-03-30",
-        "E": "2026-04-06"
+        "B": "2027-01-28",
+        "E": "2027-03-17"
       }
     },
     "7.8": {
@@ -637,8 +799,8 @@
       "topicKey": "7.8",
       "worksheetKey": "8",
       "periods": {
-        "B": "2026-03-31",
-        "E": "2026-04-08"
+        "B": "2027-01-29",
+        "E": "2027-03-19"
       }
     },
     "7.9": {
@@ -646,8 +808,8 @@
       "topicKey": "7.9",
       "worksheetKey": "9",
       "periods": {
-        "B": "2026-04-02",
-        "E": "2026-04-08"
+        "B": "2027-02-01",
+        "E": "2027-03-22"
       }
     },
     "8.1": {
@@ -655,8 +817,8 @@
       "topicKey": "8.1",
       "worksheetKey": "1",
       "periods": {
-        "B": "2026-04-06",
-        "E": "2026-04-10"
+        "B": "2026-12-21",
+        "E": "2027-02-03"
       }
     },
     "8.2": {
@@ -664,8 +826,8 @@
       "topicKey": "8.2",
       "worksheetKey": "2",
       "periods": {
-        "B": "2026-04-07",
-        "E": "2026-04-13"
+        "B": null,
+        "E": null
       }
     },
     "8.3": {
@@ -673,8 +835,8 @@
       "topicKey": "8.3",
       "worksheetKey": "3",
       "periods": {
-        "B": "2026-04-09",
-        "E": "2026-04-15"
+        "B": null,
+        "E": null
       }
     },
     "8.4": {
@@ -682,8 +844,8 @@
       "topicKey": "8.4",
       "worksheetKey": "4",
       "periods": {
-        "B": "2026-04-10",
-        "E": "2026-04-15"
+        "B": "2026-12-22",
+        "E": "2027-02-05"
       }
     },
     "8.5": {
@@ -691,8 +853,8 @@
       "topicKey": "8.5",
       "worksheetKey": "5",
       "periods": {
-        "B": "2026-04-13",
-        "E": "2026-04-17"
+        "B": "2027-01-04",
+        "E": "2027-02-08"
       }
     },
     "8.6": {
@@ -700,8 +862,8 @@
       "topicKey": "8.6",
       "worksheetKey": "6",
       "periods": {
-        "B": "2026-04-14",
-        "E": "2026-04-27"
+        "B": "2027-01-05",
+        "E": "2027-02-10"
       }
     },
     "9.1": {
@@ -709,8 +871,8 @@
       "topicKey": "9.1",
       "worksheetKey": "1",
       "periods": {
-        "B": "2026-04-16",
-        "E": "2026-04-29"
+        "B": null,
+        "E": null
       }
     },
     "9.2": {
@@ -718,8 +880,8 @@
       "topicKey": "9.2",
       "worksheetKey": "2",
       "periods": {
-        "B": "2026-04-17",
-        "E": "2026-04-29"
+        "B": null,
+        "E": null
       }
     },
     "9.3": {
@@ -727,8 +889,8 @@
       "topicKey": "9.3",
       "worksheetKey": "3",
       "periods": {
-        "B": "2026-04-27",
-        "E": "2026-05-01"
+        "B": null,
+        "E": null
       }
     },
     "9.4": {
@@ -736,8 +898,8 @@
       "topicKey": "9.4",
       "worksheetKey": "4",
       "periods": {
-        "B": "2026-04-28",
-        "E": "2026-05-04"
+        "B": null,
+        "E": null
       }
     },
     "9.5": {
@@ -745,8 +907,8 @@
       "topicKey": "9.5",
       "worksheetKey": "5",
       "periods": {
-        "B": "2026-04-30",
-        "E": "2026-05-06"
+        "B": null,
+        "E": null
       }
     }
   },
@@ -757,11 +919,19 @@
       "kind": "pc",
       "duration": {
         "adminDays": 2,
-        "reviewDays": 1
+        "reviewDays": 0
       },
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-09",
+        "E": "2026-10-23"
+      },
+      "adminDay2": {
+        "B": "2026-10-13",
+        "E": "2026-10-26"
+      },
+      "mcqPartA": {
+        "B": "2026-09-21",
+        "E": "2026-09-25"
       }
     },
     "2": {
@@ -770,11 +940,19 @@
       "kind": "pc",
       "duration": {
         "adminDays": 2,
-        "reviewDays": 1
+        "reviewDays": 0
       },
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-19",
+        "E": "2026-12-16"
+      },
+      "adminDay2": {
+        "B": "2026-11-20",
+        "E": "2026-12-18"
+      },
+      "mcqPartA": {
+        "B": "2026-10-29",
+        "E": "2026-11-18"
       }
     },
     "3": {
@@ -783,12 +961,17 @@
       "kind": "pc",
       "duration": {
         "adminDays": 2,
-        "reviewDays": 1
+        "reviewDays": 0
       },
       "periods": {
-        "B": null,
-        "E": null
-      }
+        "B": "2027-01-08",
+        "E": "2027-02-22"
+      },
+      "adminDay2": {
+        "B": "2027-01-11",
+        "E": "2027-02-24"
+      },
+      "mcqPartA": null
     },
     "4": {
       "unit": 4,
@@ -796,12 +979,17 @@
       "kind": "pc",
       "duration": {
         "adminDays": 2,
-        "reviewDays": 1
+        "reviewDays": 0
       },
       "periods": {
-        "B": null,
-        "E": null
-      }
+        "B": "2027-02-04",
+        "E": "2027-03-29"
+      },
+      "adminDay2": {
+        "B": "2027-02-05",
+        "E": "2027-03-31"
+      },
+      "mcqPartA": null
     },
     "5": {
       "unit": 5,
@@ -809,64 +997,17 @@
       "kind": "pc",
       "duration": {
         "adminDays": 2,
-        "reviewDays": 1
+        "reviewDays": 0
       },
       "periods": {
-        "B": null,
-        "E": null
-      }
-    },
-    "6": {
-      "unit": 6,
-      "title": "Unit 6 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
+        "B": "2027-02-25",
+        "E": "2027-04-16"
       },
-      "periods": {
-        "B": null,
-        "E": null
-      }
-    },
-    "7": {
-      "unit": 7,
-      "title": "Unit 7 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
+      "adminDay2": {
+        "B": "2027-02-26",
+        "E": "2027-04-26"
       },
-      "periods": {
-        "B": null,
-        "E": null
-      }
-    },
-    "8": {
-      "unit": 8,
-      "title": "Unit 8 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": null,
-        "E": null
-      }
-    },
-    "9": {
-      "unit": 9,
-      "title": "Unit 9 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": null,
-        "E": null
-      }
+      "mcqPartA": null
     }
   },
   "posters": {
@@ -879,8 +1020,8 @@
         "shortBlocks": 2
       },
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-10-08",
+        "E": "2026-10-21"
       }
     },
     "2": {
@@ -892,8 +1033,8 @@
         "shortBlocks": 2
       },
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2026-11-17",
+        "E": "2026-12-14"
       }
     },
     "3": {
@@ -905,8 +1046,8 @@
         "shortBlocks": 2
       },
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-01-07",
+        "E": "2027-02-12"
       }
     },
     "4": {
@@ -918,8 +1059,8 @@
         "shortBlocks": 2
       },
       "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-02-02",
+        "E": "2027-03-24"
       }
     },
     "5": {
@@ -931,60 +1072,8 @@
         "shortBlocks": 2
       },
       "periods": {
-        "B": null,
-        "E": null
-      }
-    },
-    "6": {
-      "unit": 6,
-      "title": "Unit 6 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": null,
-        "E": null
-      }
-    },
-    "7": {
-      "unit": 7,
-      "title": "Unit 7 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": null,
-        "E": null
-      }
-    },
-    "8": {
-      "unit": 8,
-      "title": "Unit 8 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": null,
-        "E": null
-      }
-    },
-    "9": {
-      "unit": 9,
-      "title": "Unit 9 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": null,
-        "E": null
+        "B": "2027-02-23",
+        "E": "2027-04-14"
       }
     }
   }

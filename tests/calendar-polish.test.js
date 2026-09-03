@@ -111,15 +111,17 @@ describe('C3 -- Q1-Q4 quarter markers (F2: date-driven)', () => {
   it('quarterOfDate maps calendar dates to the right quarter', () => {
     const q = loadQuarterOfDate();
     // JS Date month arg is 0-indexed: month 8 = September.
-    expect(q(new Date(2026, 8, 9))).toBe(1);    // Sep 9 2026 -- Q1 opens
-    expect(q(new Date(2026, 10, 13))).toBe(1);  // Nov 13 2026 -- Q1 closes
-    expect(q(new Date(2026, 10, 14))).toBe(2);  // Nov 14 2026 -- Q2 opens
-    expect(q(new Date(2027, 0, 29))).toBe(2);   // Jan 29 2027 -- Q2 closes
-    expect(q(new Date(2027, 0, 30))).toBe(3);   // Jan 30 2027 -- Q3 opens
-    expect(q(new Date(2027, 3, 9))).toBe(3);    // Apr 9 2027 -- Q3 closes
-    expect(q(new Date(2027, 3, 10))).toBe(4);   // Apr 10 2027 -- Q4 opens
-    expect(q(new Date(2027, 5, 23))).toBe(4);   // Jun 23 2027 -- Q4 closes
-    expect(q(new Date(2026, 7, 31))).toBe(0);   // Aug 31 2026 -- before Q1
+    // SY2627 real LEHS marking periods (mirrors roster-server grade-config.js).
+    expect(q(new Date(2026, 8, 2))).toBe(1);    // Sep 2 2026 -- Q1 opens (first day)
+    expect(q(new Date(2026, 10, 6))).toBe(1);   // Nov 6 2026 -- Q1 closes
+    expect(q(new Date(2026, 10, 7))).toBe(0);   // Nov 7 2026 -- weekend between quarters
+    expect(q(new Date(2026, 10, 9))).toBe(2);   // Nov 9 2026 -- Q2 opens
+    expect(q(new Date(2027, 0, 22))).toBe(2);   // Jan 22 2027 -- Q2 closes
+    expect(q(new Date(2027, 0, 25))).toBe(3);   // Jan 25 2027 -- Q3 opens
+    expect(q(new Date(2027, 3, 14))).toBe(3);   // Apr 14 2027 -- Q3 closes
+    expect(q(new Date(2027, 3, 15))).toBe(4);   // Apr 15 2027 -- Q4 opens
+    expect(q(new Date(2027, 5, 17))).toBe(4);   // Jun 17 2027 -- Q4 closes
+    expect(q(new Date(2026, 8, 1))).toBe(0);    // Sep 1 2026 -- before Q1
     expect(q(new Date(2027, 6, 1))).toBe(0);    // Jul 1 2027 -- after Q4
   });
 });

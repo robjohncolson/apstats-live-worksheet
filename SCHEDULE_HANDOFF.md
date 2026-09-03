@@ -7,6 +7,66 @@ full design; this file only sequences it and records what changed since.
 
 ---
 
+## 0. STATUS 2026-09-03 — the schedule is LIVE (steps 1–3 + 5 done)
+
+Trigger: the Desk told Period B that 1.1 was due Fri 2026-09-04 — a district closure.
+The Desk's baked `SCHEDULE_DEFS["SY26-27"]` still had the estimate calendar (start
+Sep 1, exam May 14, 8 of 13 closures). Fixed in one pass, one source of truth:
+
+- **`ap_stats_roadmap_square_mode.html` `SCHEDULE_DEFS["SY26-27"]`** now carries the real
+  calendar (first day 09-02, exam 05-11, all 13 closures; B Mon/Tue/Thu/Fri, E Mon/Wed/Fri).
+  Old `3.7` removed from both pacings (crosswalk: bonus since the 2026-08-07 retag; it was
+  never in the Do-Now manifest either) → 66 core topics on the calendar.
+- **`scripts/build-lesson-schedule-sy2627.mjs`** (NEW) extracts that block + the Desk's own
+  `generateSchedule()` and writes BOTH `lesson-schedule.json` copies from it — so server
+  "due" and the student calendar cannot disagree. Self-asserting (meeting days, closures,
+  before-exam, core dated / bonus null, core order == the fixture generator's). The file now
+  also carries `calendar{firstDay, examDate, breaks, meetingDays, quarters, events, slack}`;
+  `progressChecks`/`posters` are keyed by NEW CED unit 1–5 (= Desk `U{n}-PC*` ids) with
+  per-period `adminDay2` and `mcqPartA`. `lessons[].unit` stays the OLD id.
+  Rerun after ANY change to the Desk calendar/pacing: `node scripts/build-lesson-schedule-sy2627.mjs`.
+  `scripts/build-sy2627-schedule.mjs` (even-spread estimate) is SUPERSEDED — do not run it.
+- **`roster-server/grade-config.js`** quarters = real LEHS marking periods (Q1 09-02→11-06,
+  Q2 11-09→01-22, Q3 01-25→04-14, Q4 04-15→06-17).
+- Tests moved with it: `quarters-by-date.test.js` (boundaries + a self-validating sanity block
+  that reads the file's own `calendar`), `desk-grade-checkin.test.js` (preseason = Tue 09-01),
+  J7 (66 lessons), m2b snapshot regenerated (`UPDATE_M2B_GOLDEN=1`; the Q1 band moved:
+  old units 1/2/4 now finish after 11-06 under the CED order, so only old-unit 3 bands to Q1 —
+  lesson attribution is per-lesson-date and unaffected).
+- Step 4 (Supabase) needed NOTHING: `lesson_urls` keys are unchanged, and `topic_schedule`
+  only feeds Schoology folder links/sync status in the Desk — never dates. The Agent repo's
+  `config/topic-schedule.json` + `roadmap-data.json` PC/poster dates are still last year's
+  (cosmetic; the Desk does not read dates from them). Step 6 (CED gradebook framing) still open.
+- **Grading-policy change (two adversarial reviews, 2026-09-03):** the v3 Lessons track now
+  buckets a lesson by its CALENDAR DATE (`quarterOfLesson`, same as Phase 6) instead of the
+  static old-unit band (`lesson-grade.js` computeQuarterV3). Under CED order the unit band put
+  December work (old U8) in Q4 and let Q1 keep growing after 11-06 from 2.4–2.8. One-line
+  revert if the teacher disagrees; `lesson-grade-v3.test.js` pins the new rule.
+  The Desk's `QUARTER_WINDOWS` + `QUARTER_BAND_LABEL` (and start-here's) were also stale — now
+  the real dates, labelled "Sep 2 – Nov 6" etc. instead of unit lists.
+- **OPEN (blocks `PC_TRACK_ENABLED=true`):** PC ids are NEW CED units (`U{n}-PC-*`, pc_bank,
+  Desk `U{n}-PC*`, `progressChecks` keys) but `grade.js`/`lesson-grade.js` (pcAnchor via
+  `quarterOfUnit(unit)`, `unitPcDue`, `deriveQuarterBands` placement at :1145) treat `row.unit`
+  as an OLD unit. With the real schedule `deriveQuarterBands` gives Q1=[3] (B), so new-U3's PC
+  (administered 01-08) would be "due" in Q1 and zero every student's Q1 PC track. Resolve the
+  old/new unit-id mapping in the PC path BEFORE flipping the flag.
+- **OPEN:** `tools/schoology_sync_section.py:300-321` derives `PC{n}`/`POSTER{n}` scope keys
+  from `progressChecks`/`posters` keys — those are now NEW units 1–5 (were old 1–9), while the
+  grade-write side still keys `PC:U{old}`. Dry-run default + parked, but fix before the daily
+  task is re-enabled.
+- **OPEN (teacher):** Q4 (04-15 → 06-17) has NO scheduled lessons for either period (B finishes
+  core 02-22, E 04-12); Q4 = bonus-only for B, one PC for E. Decide what Q4 grades on.
+- MINOR: `lessonsTotal` counts the 11 null-dated bonus topics (they fall back to the unit band),
+  so `/grade` says e.g. "of 26" where the Desk says "of 66 lessons" overall. Cosmetic.
+- MINOR: old units 1 and 4 (B) finish 11-09/11-10 — one day into Q2 — so a one-day slip flips
+  their derived band. Bands only matter for the PC path (above).
+- **Watch: Period E slack before the exam is +3 meetings** (B +33). The Desk pacing spends
+  E meetings on Welcome, baseline, 2 mid-unit MCQ-A days, 5 poster days, 5×2 PC days and 3
+  review days; the intake's +14 assumed only 2 PC days/unit. Any "stop and extend" on E now
+  costs a poster/review day — teacher decision.
+
+---
+
 ## 1. Data the teacher provides (the intake)
 
 Fill in `sy2627-calendar-intake.md` — it is the form. The minimum that unblocks everything:

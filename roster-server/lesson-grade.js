@@ -957,15 +957,22 @@ export function computeQuarterV3({
     return false;
   }
 
-  // v3 buckets lessons by unit→quarter band (NOT calendar date). Pack-left
-  // front-loads teaching dates, so a unit's lessons may be taught in an earlier
-  // calendar quarter than its report-card quarter; per the pack-left design
-  // ("unit → quarter mapping only buckets grades") a unit's lessons + PC must
-  // land in the SAME quarter. (Phase 6 / quarterOfLesson stays date-driven.)
+  // SY2627 (2026-09-03): v3 buckets lessons by CALENDAR DATE (quarterOfLesson,
+  // the same rule Phase 6 uses), no longer by the static old-unit band. The
+  // real schedule teaches the OLD units in Fall-2026 CED order, so an old unit
+  // now straddles quarters (old U2 = 2.1-2.3 in Oct, 2.4-2.8 in Jan-Mar; old
+  // U8 taught in Dec). Unit banding put December work in Q4 and kept Q1
+  // growing after it closed. A lesson counts in the quarter it was due; a
+  // null-dated (bonus) entry still falls back to its unit band.
+  // Gated by config.v3LessonsByDate so the FROZEN SY2526 config (which lacks
+  // the flag) keeps its original unit-band bucketing — historical grades must
+  // not move. The live SY2627 grade-config sets it.
+  const lessonsByDate = !!(config && config.v3LessonsByDate);
   const bandLessons = [];
   for (const [topicKey, entry] of Object.entries(schedule)) {
     if (!entry || typeof entry !== 'object' || typeof entry.unit !== 'number') continue;
-    if (quarterOfUnit(entry.unit, config) !== quarterKey) continue;
+    const q = lessonsByDate ? quarterOfLesson(entry, period, config) : quarterOfUnit(entry.unit, config);
+    if (q !== quarterKey) continue;
     if (!inWindow(entry)) continue;
     bandLessons.push(topicKey);
   }

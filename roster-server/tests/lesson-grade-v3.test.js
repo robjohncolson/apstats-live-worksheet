@@ -242,11 +242,32 @@ describe('computeQuarterV3 — aggregation', () => {
     expect(r.workAvg).toBeCloseTo(25.0, 1); // mean(0.50 lessons, 0.0 quizzes) = 0.25
   });
 
-  it('buckets a lesson by its unit→quarter band, NOT its calendar date (pack-left)', () => {
-    // A unit-1 lesson taught in Q2 calendar territory still counts toward Q1
-    // (unit 1 ∈ Q1 band) — matching how PCs bucket + the pack-left intent.
+  it('buckets a lesson by its CALENDAR DATE (quarterOfLesson), not its old-unit band', () => {
+    // SY2627 (2026-09-03): the real schedule teaches old units in CED order, so
+    // an old unit straddles quarters. A unit-1 lesson due in Q2 counts in Q2
+    // (the pre-SY2627 "pack-left" unit-band rule put it in Q1).
     const schedule = {
       '1.1': { unit: 1, periods: { B: '2026-12-01', E: '2026-12-01' } }, // Q2 calendar window
+    };
+    const lessonMap = lessonMapOf({ '1.1': { Cws: 100, W: 100, Q: 100, lessonGrade: 100 } });
+    const byDate = { ...CFG, v3LessonsByDate: true }; // the live SY2627 config
+    const q1 = computeQuarterV3({
+      quarterKey: 'Q1', config: byDate, lessonMap, schedule,
+      todayDateStr: '2027-01-01', section: 'PeriodB', unitPcData: {},
+    });
+    const q2 = computeQuarterV3({
+      quarterKey: 'Q2', config: byDate, lessonMap, schedule,
+      todayDateStr: '2027-01-01', section: 'PeriodB', unitPcData: {},
+    });
+    expect(q1.lessonsTotal).toBe(0); // NOT Q1 — the December date wins over the old-unit band
+    expect(q2.lessonsTotal).toBe(1); // Dec 1 is in Q2's calendar window
+  });
+
+  it('WITHOUT v3LessonsByDate (the frozen SY2526 config) the old unit→quarter band still applies', () => {
+    // Historical grades must not move: a config snapshot that predates the flag
+    // keeps bucketing a unit-1 lesson in Q1 regardless of its date.
+    const schedule = {
+      '1.1': { unit: 1, periods: { B: '2026-12-01', E: '2026-12-01' } },
     };
     const lessonMap = lessonMapOf({ '1.1': { Cws: 100, W: 100, Q: 100, lessonGrade: 100 } });
     const q1 = computeQuarterV3({
@@ -257,8 +278,8 @@ describe('computeQuarterV3 — aggregation', () => {
       quarterKey: 'Q2', config: CFG, lessonMap, schedule,
       todayDateStr: '2027-01-01', section: 'PeriodB', unitPcData: {},
     });
-    expect(q1.lessonsTotal).toBe(1); // unit 1 → Q1 band, despite the December date
-    expect(q2.lessonsTotal).toBe(0); // NOT Q2, even though Dec 1 is in Q2's calendar window
+    expect(q1.lessonsTotal).toBe(1);
+    expect(q2.lessonsTotal).toBe(0);
   });
 
   it('empty quarter (nothing scheduled/due) → all null', () => {

@@ -44,10 +44,11 @@ const SRC =
   + ['d', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule'].map(fnBody).join('\n') + '\n'
   + constArray('SY2627_PACING_B') + ';\n'
   + constArray('SY2627_PACING_E') + ';\n'
-  + 'const def={range:{start:[2026,8,1],end:[2027,4,15]},examDate:[2027,4,14],'
+  + 'const def={range:{start:[2026,8,2],end:[2027,4,15]},examDate:[2027,4,11],'
   + 'periods:{B:{meetsDays:[1,2,4,5]},E:{meetsDays:[1,3,5],doubleDay:3}},'
-  + 'daysOff:[[[2026,8,7]],[[2026,9,12]],[[2026,10,11]],[[2026,10,25],[2026,10,27]],'
-  + '[[2026,11,23],[2027,0,2]],[[2027,0,18]],[[2027,1,15],[2027,1,19]],[[2027,3,19],[2027,3,23]]],'
+  + 'daysOff:[[[2026,8,4]],[[2026,8,7]],[[2026,9,12]],[[2026,10,3]],[[2026,10,11]],[[2026,10,26],[2026,10,27]],'
+  + '[[2026,11,24],[2026,11,25]],[[2026,11,28],[2027,0,1]],[[2027,0,18]],[[2027,1,15],[2027,1,19]],'
+  + '[[2027,2,26]],[[2027,3,19],[2027,3,23]],[[2027,4,31]]],'
   + 'pacing:{B:injectPcPosterEvents(SY2627_PACING_B),E:injectPcPosterEvents(SY2627_PACING_E)}};\n'
   + 'return {S: generateSchedule(def), pacingB: def.pacing.B, pacingE: def.pacing.E};';
 

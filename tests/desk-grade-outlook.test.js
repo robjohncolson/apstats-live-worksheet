@@ -46,18 +46,17 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     expect(DESK).toMatch(/#donow-grades\s*\{[^}]*display\s*:\s*none/);
   });
 
-  it('02: QUARTER_BAND_LABEL is declared with Q1-Q4 mapping (Phase 6 bands: Q1=U1-3, Q2=U4-5)', () => {
+  it('02: QUARTER_BAND_LABEL is declared with Q1-Q4 DATE labels (SY2627 real marking periods)', () => {
     // Must declare a top-level mapping object so the tooltip text stays in
     // sync with the server-side PHASE3_CONFIG.quarters and the existing
-    // start-here.html render.
-    // Phase 6 update: Q1 now includes U3; Q2 is U4,U5.
+    // start-here.html render. SY2627: units straddle quarters (CED order), so
+    // the labels are the quarter DATE windows, not unit lists.
     expect(DESK).toMatch(/const\s+QUARTER_BAND_LABEL\s*=\s*\{/);
-    // Q1 must include U1, U2, U3.
-    expect(DESK).toMatch(/Q1\s*:\s*['"]U1[^'"]*U2[^'"]*U3['"]/);
-    // Q2 must include U4, U5 (no longer U3).
-    expect(DESK).toMatch(/Q2\s*:\s*['"]U4[^'"]*U5['"]/);
-    expect(DESK).toMatch(/Q3\s*:\s*['"]U6[^'"]*U7['"]/);
-    expect(DESK).toMatch(/Q4\s*:\s*['"]U8[^'"]*U9['"]/);
+    expect(DESK).toMatch(/Q1\s*:\s*['"]Sep 2 – Nov 6['"]/);
+    expect(DESK).toMatch(/Q2\s*:\s*['"]Nov 9 – Jan 22['"]/);
+    expect(DESK).toMatch(/Q3\s*:\s*['"]Jan 25 – Apr 14['"]/);
+    expect(DESK).toMatch(/Q4\s*:\s*['"]Apr 15 – Jun 17['"]/);
+    expect(DESK).not.toMatch(/Q1\s*:\s*['"]U1, U2, U3['"]/);
   });
 
   it('03: renderDoNowGrades function exists and accepts baseUrl + token', () => {

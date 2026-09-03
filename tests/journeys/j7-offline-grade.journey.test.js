@@ -9,7 +9,7 @@ const NOW = '2026-07-20T12:00:00.000Z';
 const MARKS_KEY = 'apstats_desk_marks_alpha_otter';
 const NEXT_TOPIC = '1.4';
 const EXPECTED_GRADE_STRIP = 'Q1:86.5↑94.0PC 82.0%Work 86.5%';
-const EXPECTED_PROGRESS = '3 ahead — 3 of 67 lessons done';
+const EXPECTED_PROGRESS = '3 ahead — 3 of 66 lessons done'; // 66 core topics: old 3.7 is bonus (crosswalk retag 2026-08-07), off the calendar
 const EXPECTED_DONOW = 'Do Now: Topic 1.4 — keep going.';
 
 const FAILURE_CASES = [

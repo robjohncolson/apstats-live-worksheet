@@ -2,7 +2,7 @@
   "year": "SY2627",
   "blooketPresenceLen": 77,
   "blooketRequiredLen": 66,
-  "schedule_1_1_B": "2026-09-09",
+  "schedule_1_1_B": "2026-09-10",
   "frozenConfig": {
     "C": 85,
     "feederWeights": {
@@ -27,8 +27,8 @@
           2,
           3
         ],
-        "start": "2026-09-09",
-        "end": "2026-11-13",
+        "start": "2026-09-02",
+        "end": "2026-11-06",
         "pcAnchor": {
           "p85": 40,
           "p100": 60
@@ -39,8 +39,8 @@
           4,
           5
         ],
-        "start": "2026-11-14",
-        "end": "2027-01-29",
+        "start": "2026-11-09",
+        "end": "2027-01-22",
         "pcAnchor": {
           "p85": 45,
           "p100": 64
@@ -51,8 +51,8 @@
           6,
           7
         ],
-        "start": "2027-01-30",
-        "end": "2027-04-09",
+        "start": "2027-01-25",
+        "end": "2027-04-14",
         "pcAnchor": {
           "p85": 50,
           "p100": 67
@@ -63,8 +63,8 @@
           8,
           9
         ],
-        "start": "2027-04-10",
-        "end": "2027-06-23",
+        "start": "2027-04-15",
+        "end": "2027-06-17",
         "pcAnchor": {
           "p85": 55,
           "p100": 70
@@ -89,6 +89,7 @@
     "v3FixQuizZero": true,
     "v3FixCwsReveal": true,
     "v3AheadOfScheduleLessons": "not-until-due",
+    "v3LessonsByDate": true,
     "trainer": {
       "weight": 0,
       "doneThreshold": 80
@@ -97,30 +98,24 @@
       "enabled": false
     }
   },
-  "artHash": "edc67114015a8b8f82de0c9f91d5f44611a75a23f8baf7e842789cf92da7d0db",
+  "artHash": "360b8c2537ddad1cf03bd67a347e22a1c9c6ed6c205aa1d6a8f18906abb5acd9",
   "grade": {
     "units": {},
     "quarters": {
       "Q1": {
         "units": [
-          1,
-          2,
-          3,
-          4
+          3
         ],
         "unitGrades": {
-          "U1": null,
-          "U2": null,
-          "U3": null,
-          "U4": null
+          "U3": null
         },
         "quarterGrade": 0,
         "unitsGraded": 0,
-        "unitsTotal": 4,
+        "unitsTotal": 1,
         "ceiling": 100,
-        "lessonsDue": 23,
+        "lessonsDue": 19,
         "lessonsGraded": 0,
-        "lessonsTotal": 41,
+        "lessonsTotal": 29,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,
@@ -138,15 +133,15 @@
       },
       "Q2": {
         "units": [
-          5,
+          1,
+          4,
           6,
-          7,
           8
         ],
         "unitGrades": {
-          "U5": null,
+          "U1": null,
+          "U4": null,
           "U6": null,
-          "U7": null,
           "U8": null
         },
         "quarterGrade": null,
@@ -155,7 +150,7 @@
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
-        "lessonsTotal": 34,
+        "lessonsTotal": 31,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,
@@ -173,18 +168,22 @@
       },
       "Q3": {
         "units": [
-          9
+          2,
+          5,
+          7
         ],
         "unitGrades": {
-          "U9": null
+          "U2": null,
+          "U5": null,
+          "U7": null
         },
         "quarterGrade": null,
         "unitsGraded": 0,
-        "unitsTotal": 1,
+        "unitsTotal": 3,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
-        "lessonsTotal": 2,
+        "lessonsTotal": 10,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,
@@ -201,15 +200,19 @@
         "trainerTodo": []
       },
       "Q4": {
-        "units": [],
-        "unitGrades": {},
+        "units": [
+          9
+        ],
+        "unitGrades": {
+          "U9": null
+        },
         "quarterGrade": null,
         "unitsGraded": 0,
-        "unitsTotal": 0,
+        "unitsTotal": 1,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
-        "lessonsTotal": 0,
+        "lessonsTotal": 7,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,

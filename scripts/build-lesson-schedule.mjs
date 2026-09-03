@@ -1,6 +1,10 @@
 /**
  * scripts/build-lesson-schedule.mjs — Gradebook Phase 6 + Grading Model v3.
  *
+ * SUPERSEDED 2026-09-03 for SY2627: lesson-schedule.json is now generated from
+ * the Desk calendar by scripts/build-lesson-schedule-sy2627.mjs. Running THIS
+ * script would overwrite the real dates with roadmap-data.json's stale ones.
+ *
  * Reads roadmap-data.json and emits a slim lesson-schedule.json with:
  *   - One entry per numeric topic (e.g. "1.1", "4.2")
  *   - unit, topicKey, worksheetKey (lesson-number string for item-id parsing)

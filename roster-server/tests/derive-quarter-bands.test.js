@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { deriveQuarterBands } from '../lesson-grade.js';
 import { PHASE3_CONFIG } from '../grade-config.js';
 
-const CFG = PHASE3_CONFIG; // Q1 2026-09-09..11-13, Q2 ..2027-01-29, Q3 ..04-09, Q4 ..06-23
+const CFG = PHASE3_CONFIG; // SY2627: Q1 2026-09-02..11-06, Q2 11-09..01-22, Q3 01-25..04-14, Q4 04-15..06-17
 
 function sched(entries) {
   const out = {};

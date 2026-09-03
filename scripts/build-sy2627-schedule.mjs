@@ -1,5 +1,9 @@
 // build-sy2627-schedule.mjs -- SY26-27 lesson-schedule generator (F2).
 //
+// SUPERSEDED 2026-09-03: the real schedule is generated from the Desk calendar by
+// scripts/build-lesson-schedule-sy2627.mjs. Do NOT run this even-spread estimator
+// against lesson-schedule.json any more (it would overwrite the real dates).
+//
 // Reads roster-server/data/lesson-schedule.json, assigns every lesson a
 // SY26-27 date using an even-spread algorithm, writes the file back.
 //

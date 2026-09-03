@@ -27,8 +27,8 @@
           2,
           3
         ],
-        "start": "2026-09-09",
-        "end": "2026-11-13",
+        "start": "2026-09-02",
+        "end": "2026-11-06",
         "pcAnchor": {
           "p85": 40,
           "p100": 60
@@ -39,8 +39,8 @@
           4,
           5
         ],
-        "start": "2026-11-14",
-        "end": "2027-01-29",
+        "start": "2026-11-09",
+        "end": "2027-01-22",
         "pcAnchor": {
           "p85": 45,
           "p100": 64
@@ -51,8 +51,8 @@
           6,
           7
         ],
-        "start": "2027-01-30",
-        "end": "2027-04-09",
+        "start": "2027-01-25",
+        "end": "2027-04-14",
         "pcAnchor": {
           "p85": 50,
           "p100": 67
@@ -63,8 +63,8 @@
           8,
           9
         ],
-        "start": "2027-04-10",
-        "end": "2027-06-23",
+        "start": "2027-04-15",
+        "end": "2027-06-17",
         "pcAnchor": {
           "p85": 55,
           "p100": 70
@@ -89,6 +89,7 @@
     "v3FixQuizZero": true,
     "v3FixCwsReveal": true,
     "v3AheadOfScheduleLessons": "not-until-due",
+    "v3LessonsByDate": true,
     "trainer": {
       "weight": 0,
       "doneThreshold": 80

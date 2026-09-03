@@ -148,13 +148,13 @@ const realPeriods = H._gradeCheckinPeriods({ yearKey: SY, def: REAL_DEF, S: REAL
 
 // ── Pure schedule tests (§8.1) ──────────────────────────────────────────────
 describe('Grade Check-in — periods derived from the real SY26-27 calendar', () => {
-  it('starts with a preseason period on Monday Aug 31, 2026 (weekday before the Tue Sep 1 start, not the prior Friday)', () => {
+  it('starts with a preseason period on Tuesday Sep 1, 2026 (weekday before the Wed Sep 2 first day)', () => {
     expect(realPeriods.length).toBeGreaterThan(0);
     const pre = realPeriods[0];
     expect(pre.kind).toBe('preseason');
     expect(pre.key).toBe('SY26-27:preseason');
-    expect(pre.dueISO).toBe('2026-08-31');
-    expect(localDate(pre.dueISO).getDay()).toBe(1); // Monday
+    expect(pre.dueISO).toBe('2026-09-01');
+    expect(localDate(pre.dueISO).getDay()).toBe(2); // Tuesday
   });
 
   it('September resolves to its final instructional day (a weekday, not Labor Day)', () => {
@@ -176,15 +176,15 @@ describe('Grade Check-in — periods derived from the real SY26-27 calendar', ()
     const expected = realFinalInstructional(2026, 11);
     expect(dec.dueISO).toBe(expected);
     expect(dec.dueISO).not.toBe('2026-12-31');
-    expect(dec.dueISO < '2026-12-23').toBe(true); // winter break starts Dec 23
+    expect(dec.dueISO < '2026-12-24').toBe(true); // closed Dec 24 → Jan 1 (Dec 23 is a half day, in session)
   });
 
-  it('the final period stops before the AP Exam (May 14, 2027) — no exam/post rows leak in', () => {
+  it('the final period stops before the AP Exam (May 11, 2027) — no exam/post rows leak in', () => {
     const last = realPeriods[realPeriods.length - 1];
     expect(last.dueISO.startsWith('2027-05-')).toBe(true);
-    expect(last.dueISO < '2027-05-14').toBe(true);
+    expect(last.dueISO < '2027-05-11').toBe(true);
     for (const p of realPeriods) {
-      expect(p.dueISO < '2027-05-14').toBe(true); // nothing on/after exam day
+      expect(p.dueISO < '2027-05-11').toBe(true); // nothing on/after exam day
     }
   });
 

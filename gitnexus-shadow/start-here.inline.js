@@ -1019,13 +1019,14 @@
     return m ? parseInt(m[1], 10) : null;
   }
 
-  // Quarter band labels (must match grade-config.js quarters + the Desk roadmap):
-  //   Q1 = U1-U3, Q2 = U4-U5, Q3 = U6-U7, Q4 = U8-U9
+  // Quarter band labels (must match grade-config.js quarters + the Desk roadmap).
+  // SY2627: quarters are the real LEHS marking-period DATE windows; units are
+  // taught in CED order and straddle quarters, so label by dates, not units.
   var QUARTER_BAND_LABEL = {
-    Q1: 'U1, U2, U3',
-    Q2: 'U4, U5',
-    Q3: 'U6, U7',
-    Q4: 'U8, U9',
+    Q1: 'Sep 2 – Nov 6',
+    Q2: 'Nov 9 – Jan 22',
+    Q3: 'Jan 25 – Apr 14',
+    Q4: 'Apr 15 – Jun 17',
   };
 
   function renderQuarters(host, quarters) {
