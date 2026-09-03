@@ -1,0 +1,251 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{apstats-poster}[2026/09/02 AP Statistics concept poster system]
+
+\RequirePackage[
+  paperwidth=22in,
+  paperheight=28in,
+  margin=0in,
+  noheadfoot
+]{geometry}
+\RequirePackage{fontspec}
+\RequirePackage{unicode-math}
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+\RequirePackage{graphicx}
+\RequirePackage{ragged2e}
+\RequirePackage{array}
+\RequirePackage{booktabs}
+\RequirePackage{tabularx}
+\RequirePackage{calc}
+\RequirePackage{enumitem}
+
+\usetikzlibrary{arrows.meta,calc,decorations.pathreplacing,positioning,shapes.geometric}
+
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{texgyreheros-regular.otf}[
+  BoldFont=texgyreheros-bold.otf,
+  ItalicFont=texgyreheros-italic.otf,
+  BoldItalicFont=texgyreheros-bolditalic.otf
+]
+\setsansfont{texgyreheros-regular.otf}[
+  BoldFont=texgyreheros-bold.otf,
+  ItalicFont=texgyreheros-italic.otf,
+  BoldItalicFont=texgyreheros-bolditalic.otf
+]
+\newfontfamily\posterheading{texgyreheroscn-regular.otf}[
+  BoldFont=texgyreheroscn-bold.otf,
+  ItalicFont=texgyreheroscn-italic.otf,
+  BoldItalicFont=texgyreheroscn-bolditalic.otf
+]
+
+\definecolor{PosterPaper}{HTML}{FBF8EF}
+\definecolor{PosterInk}{HTML}{172033}
+\definecolor{PosterMuted}{HTML}{5E6875}
+\definecolor{PosterRule}{HTML}{D8D4C8}
+\definecolor{UnitGreen}{HTML}{18794E}
+\definecolor{UnitBlue}{HTML}{1D5FBF}
+\definecolor{UnitOrange}{HTML}{D66A16}
+\definecolor{UnitPurple}{HTML}{783CB5}
+\definecolor{UnitRed}{HTML}{B73535}
+\definecolor{BeyondGold}{HTML}{B88A13}
+\definecolor{BeyondGoldLight}{HTML}{FFF6D8}
+
+\color{PosterInk}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+
+\newenvironment{posterpage}{%
+  \thispagestyle{empty}%
+  \null%
+  \begin{tikzpicture}[remember picture,overlay]
+    \coordinate (pageNW) at (current page.north west);
+    \fill[PosterPaper]
+      (pageNW) rectangle ([xshift=22in,yshift=-28in]pageNW);
+}{%
+  \end{tikzpicture}%
+}
+
+\newcommand{\PosterHeader}[7][82pt]{%
+  \fill[#2]
+    (pageNW) rectangle ([xshift=22in,yshift=-1.5in]pageNW);
+  \node[
+    anchor=west,
+    text=white,
+    font=\posterheading\bfseries\fontsize{38pt}{40pt}\selectfont
+  ] at ([xshift=.7in,yshift=-.71in]pageNW) {UNIT #3};
+  \node[
+    anchor=west,
+    text=white,
+    font=\posterheading\bfseries\fontsize{30pt}{34pt}\selectfont
+  ] at ([xshift=3.35in,yshift=-.71in]pageNW) {#4};
+  \node[
+    anchor=east,
+    text=white,
+    font=\posterheading\bfseries\fontsize{34pt}{38pt}\selectfont
+  ] at ([xshift=21.3in,yshift=-.71in]pageNW) {#5};
+  \node[
+    anchor=north west,
+    text=PosterInk,
+    font=\posterheading\bfseries\fontsize{#1}{#1}\selectfont
+  ] at ([xshift=.7in,yshift=-1.92in]pageNW) {#6};
+  \node[
+    anchor=west,
+    text=PosterMuted,
+    font=\bfseries\fontsize{25pt}{30pt}\selectfont
+  ] at ([xshift=.75in,yshift=-4.3in]pageNW) {#7};
+}
+
+\newcommand{\InferenceSubstripes}{%
+  \fill[UnitPurple]
+    ([yshift=-1.26in]pageNW) rectangle
+    ([xshift=22in,yshift=-1.38in]pageNW);
+  \fill[UnitRed]
+    ([yshift=-1.38in]pageNW) rectangle
+    ([xshift=22in,yshift=-1.5in]pageNW);
+}
+
+\newcommand{\PosterZone}[4]{%
+  \path[
+    fill=white,
+    draw=PosterRule,
+    line width=2.2pt,
+    rounded corners=.16in
+  ]
+    ([xshift=.55in,yshift=-#1]pageNW) rectangle
+    ([xshift=21.45in,yshift=-#2]pageNW);
+  \node[
+    anchor=north west,
+    fill=PosterAccent,
+    text=white,
+    rounded corners=.08in,
+    inner xsep=.17in,
+    inner ysep=.09in,
+    font=\posterheading\bfseries\fontsize{24pt}{26pt}\selectfont
+  ] at ([xshift=.82in,yshift={-\dimexpr#1+.12in\relax}]pageNW) {#3};
+  \node[anchor=north west,inner sep=0pt]
+    at ([xshift=.92in,yshift={-\dimexpr#1+.82in\relax}]pageNW) {%
+      \begin{minipage}[t][\dimexpr#2-#1-1.02in\relax][t]{20.16in}
+        \fontsize{32pt}{39pt}\selectfont
+        \RaggedRight
+        #4
+      \end{minipage}%
+    };
+}
+
+\newcommand{\WorksheetTag}[1]{%
+  \node[
+    anchor=south east,
+    fill=PosterInk,
+    text=white,
+    rounded corners=.08in,
+    inner xsep=.16in,
+    inner ysep=.08in,
+    font=\bfseries\fontsize{20pt}{22pt}\selectfont
+  ] at ([xshift=21.35in,yshift=-27.55in]pageNW) {see WS old #1};
+}
+
+\newcommand{\FormulaCardSized}[2]{%
+  \par\noindent
+  \begingroup
+    \setlength{\fboxsep}{.14in}%
+    \setlength{\fboxrule}{2.2pt}%
+    \fcolorbox{PosterAccent}{PosterAccent!5}{%
+      \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+        \centering
+        \fontsize{#1}{#1}\selectfont
+        $\displaystyle #2$
+      }%
+    }%
+  \endgroup
+  \par
+}
+
+\newcommand{\FormulaCard}[1]{\FormulaCardSized{54pt}{#1}}
+
+\newcommand{\TextCard}[1]{%
+  \par\noindent
+  \begingroup
+    \setlength{\fboxsep}{.14in}%
+    \setlength{\fboxrule}{2.2pt}%
+    \fcolorbox{PosterAccent}{PosterAccent!5}{%
+      \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{#1}%
+    }%
+  \endgroup
+  \par
+}
+
+\newcommand{\SentenceFrame}[1]{%
+  \par\noindent
+  \begingroup
+    \setlength{\fboxsep}{.14in}%
+    \setlength{\fboxrule}{2.2pt}%
+    \fcolorbox{PosterAccent}{PosterAccent!5}{%
+      \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+        \fontsize{30pt}{38pt}\selectfont\itshape #1
+      }%
+    }%
+  \endgroup
+  \par
+}
+
+\newcommand{\StepCard}[3]{%
+  \begingroup
+    \setlength{\fboxsep}{.11in}%
+    \setlength{\fboxrule}{2pt}%
+    \fcolorbox{PosterAccent}{PosterAccent!5}{%
+      \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+        \begin{minipage}[c]{1.05in}
+          \centering
+          {\posterheading\bfseries\color{PosterAccent}\fontsize{46pt}{46pt}\selectfont #1}
+        \end{minipage}%
+        \hfill
+        \begin{minipage}[c]{\dimexpr\linewidth-1.32in\relax}
+          {\posterheading\bfseries\fontsize{29pt}{31pt}\selectfont #2}\quad
+          {\fontsize{24pt}{29pt}\selectfont #3}
+        \end{minipage}%
+      }%
+    }%
+  \endgroup
+  \par\vspace{.11in}
+}
+
+\newcommand{\BeyondBox}[1]{%
+  \begingroup
+    \setlength{\fboxsep}{.16in}%
+    \setlength{\fboxrule}{3.2pt}%
+    \fcolorbox{BeyondGold}{BeyondGoldLight}{%
+      \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+        {\posterheading\bfseries\color{BeyondGold}\fontsize{24pt}{27pt}\selectfont
+          \PosterStar\ BEYOND THE EXAM}\par\vspace{.08in}
+        #1
+      }%
+    }%
+  \endgroup
+}
+
+\newcommand{\RuleLine}{%
+  \par\vspace{.08in}%
+  {\color{PosterRule}\rule{\linewidth}{2pt}}%
+  \par\vspace{.08in}%
+}
+
+\newcommand{\MiniHeading}[1]{%
+  {\posterheading\bfseries\color{PosterAccent}\fontsize{25pt}{28pt}\selectfont #1}%
+}
+
+\newcommand{\PosterBlank}[1]{\rule{#1}{2.2pt}}
+
+\newcommand{\PosterStar}{%
+  \tikz[baseline=-.1em]{%
+    \node[
+      star,
+      star points=5,
+      star point ratio=2.2,
+      minimum size=.78em,
+      inner sep=0pt,
+      fill=.,
+      draw=none
+    ] {};%
+  }%
+}

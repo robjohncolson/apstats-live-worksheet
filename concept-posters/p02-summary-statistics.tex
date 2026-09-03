@@ -1,0 +1,114 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+
+\colorlet{PosterAccent}{UnitGreen}
+
+\begin{document}
+\begin{posterpage}
+
+\PosterHeader[86pt]
+  {UnitGreen}
+  {1}
+  {EXPLORING ONE-VARIABLE DATA}
+  {P02}
+  {SUMMARY STATISTICS}
+  {new 1.7–1.8 \quad•\quad old 1.7–1.8}
+
+\PosterZone{4.72in}{16.08in}{ZONE A · THE FORMULAS}{%
+  \begin{minipage}[t]{12.45in}
+    \FormulaCardSized{56pt}{\bar{x}=\frac{\sum x_i}{n}}
+    \vspace{.14in}
+    \FormulaCardSized{48pt}{s^2=\frac{\sum (x_i-\bar{x})^2}{n-1}}
+    \vspace{.14in}
+    \FormulaCardSized{48pt}{s_x=\sqrt{\frac{\sum (x_i-\bar{x})^2}{n-1}}}
+    \vspace{.14in}
+    \FormulaCardSized{54pt}{\mathrm{IQR}=Q_3-Q_1}
+    \vspace{.14in}
+    \FormulaCardSized{38pt}{%
+      \begin{gathered}
+        \text{outlier if }x>Q_3+1.5(\mathrm{IQR})\\[-2pt]
+        \text{or }x<Q_1-1.5(\mathrm{IQR})
+      \end{gathered}%
+    }
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{7.12in}
+    \MiniHeading{A BOX PLOT IS A FIVE-NUMBER STORY}
+    \vspace{.18in}
+    \begin{center}
+      \begin{tikzpicture}[x=1in,y=1in]
+        \draw[PosterInk,line width=4pt] (.55,2.6) -- (1.48,2.6);
+        \draw[PosterInk,line width=4pt] (4.72,2.6) -- (5.82,2.6);
+        \draw[PosterInk,line width=4pt] (1.48,1.72) rectangle (4.72,3.48);
+        \draw[PosterAccent,line width=8pt] (3.12,1.72) -- (3.12,3.48);
+        \draw[PosterInk,line width=4pt] (.55,2.05) -- (.55,3.15);
+        \draw[PosterInk,line width=4pt] (5.82,2.05) -- (5.82,3.15);
+        \fill[PosterAccent] (6.34,2.6) circle (.10);
+        \node[anchor=north,font=\fontsize{20pt}{22pt}\selectfont] at (.55,1.40) {min};
+        \node[anchor=north,font=\fontsize{20pt}{22pt}\selectfont] at (1.48,1.40) {$Q_1$};
+        \node[anchor=north,font=\bfseries\fontsize{20pt}{22pt}\selectfont] at (3.12,1.40) {median};
+        \node[anchor=north,font=\fontsize{20pt}{22pt}\selectfont] at (4.72,1.40) {$Q_3$};
+        \node[anchor=north,font=\fontsize{20pt}{22pt}\selectfont] at (5.82,1.40) {max*};
+        \node[anchor=south,font=\bfseries\color{PosterAccent}\fontsize{18pt}{20pt}\selectfont]
+          at (6.34,2.82) {outlier};
+      \end{tikzpicture}
+    \end{center}
+    \vspace{.02in}
+    {\fontsize{25pt}{31pt}\selectfont
+      *The whisker stops at the last non-outlier. Plot every outlier separately.\par}
+    \vspace{.28in}
+    \TextCard{%
+      \centering
+      {\posterheading\bfseries\fontsize{28pt}{31pt}\selectfont
+        CENTER + SPREAD WORK AS A PAIR}\par\vspace{.1in}
+      {\fontsize{27pt}{34pt}\selectfont
+        symmetric, no outliers \(\rightarrow \bar{x}\) and \(s\)\par
+        skewed or outliers \(\rightarrow\) median and IQR}
+    }
+  \end{minipage}%
+}
+
+\PosterZone{16.23in}{19.64in}{ZONE B · WHAT THE SYMBOLS MEAN}{%
+  \begin{minipage}[t]{9.65in}
+    \MiniHeading{SAMPLE}\par\vspace{.08in}
+    {\fontsize{29pt}{37pt}\selectfont
+      \(\bar{x}\) = sample mean \qquad \(s\) = sample SD\par
+      five-number summary: min, \(Q_1\), median, \(Q_3\), max}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.65in}
+    \MiniHeading{POPULATION + RESISTANCE}\par\vspace{.08in}
+    {\fontsize{29pt}{37pt}\selectfont
+      \(\mu\) = population mean \qquad \(\sigma\) = population SD\par
+      \textbf{resistant:} median, IQR \quad \textbf{not resistant:} mean, SD, range}
+  \end{minipage}%
+}
+
+\PosterZone{19.79in}{23.02in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“Typically, \PosterBlank{2.7in} varies from the mean by about
+    \PosterBlank{1.45in} \PosterBlank{1.5in}.”}
+  \vspace{.16in}
+  {\fontsize{25pt}{31pt}\selectfont\color{PosterMuted}
+    variable in context \hfill value of \(s\) \hfill units \hspace{.65in}}
+}
+
+\PosterZone{23.17in}{27.45in}{ZONE D · WATCH OUT}{%
+  \begin{minipage}[t]{9.55in}
+    \MiniHeading{THE DENOMINATOR}\par\vspace{.12in}
+    {\fontsize{34pt}{42pt}\selectfont
+      For a \textbf{sample} variance or SD, divide by
+      \(\boldsymbol{n-1}\), not \(n\).}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.85in}
+    \MiniHeading{TRANSFORMATIONS}\par\vspace{.12in}
+    {\fontsize{30pt}{38pt}\selectfont
+      Adding a constant shifts the center but not the spread. Multiplying by a
+      constant scales \textbf{both}.}
+  \end{minipage}%
+}
+
+\WorksheetTag{u1\_l7–u1\_l8}
+
+\end{posterpage}
+\end{document}

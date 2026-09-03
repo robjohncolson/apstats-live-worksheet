@@ -1,0 +1,114 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+
+\colorlet{PosterAccent}{UnitOrange}
+
+\begin{document}
+\begin{posterpage}
+
+\PosterHeader[82pt]
+  {UnitOrange}
+  {3}
+  {INFERENCE FOR PROPORTIONS \& CATEGORICAL DATA}
+  {P09}
+  {CONFIDENCE INTERVALS}
+  {master recipe \quad•\quad also used in Units 4 and 5}
+\InferenceSubstripes
+
+\PosterZone{4.72in}{15.92in}{ZONE A · THE FORMULAS}{%
+  \FormulaCardSized{44pt}{%
+    \text{statistic}\ \pm\
+    \underbrace{(\text{critical value})(\text{standard error})}_{\text{margin of error}}
+  }
+  \vspace{.14in}
+  \begin{minipage}[t]{9.75in}
+    \FormulaCardSized{43pt}{\mathrm{ME}=z^*\!\cdot\mathrm{SE}\quad(\text{proportions})}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.75in}
+    \FormulaCardSized{43pt}{\mathrm{ME}=t^*\!\cdot\mathrm{SE}\quad(\text{means})}
+  \end{minipage}%
+  \vspace{.14in}
+  \FormulaCardSized{41pt}{%
+    \text{width}\propto\frac{1}{\sqrt{n}}
+    \quad\Longrightarrow\quad
+    \text{halve the margin }\Rightarrow\text{ quadruple }n
+  }
+  \vspace{.28in}
+  \begin{minipage}[t]{12.65in}
+    \MiniHeading{THE FOUR-STEP FRAME}\par\vspace{.12in}
+    \StepCard{1}{STATE}{Name the parameter in context.}
+    \StepCard{2}{PLAN}{Name the interval; check conditions.}
+    \StepCard{3}{DO}{Formula, substitutions, and interval.}
+    \StepCard{4}{CONCLUDE}{Interpret the interval in context.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.75in}
+    \MiniHeading{COMMON \(z^*\) VALUES}\par\vspace{.12in}
+    \TextCard{%
+      \renewcommand{\arraystretch}{1.35}
+      \centering
+      \begin{tabular}{>{\bfseries}c c}
+        confidence & \(z^*\) \\
+        \midrule
+        90\% & 1.645 \\
+        95\% & 1.960 \\
+        99\% & 2.576
+      \end{tabular}
+    }
+    \vspace{.18in}
+    {\fontsize{24pt}{30pt}\selectfont
+      Get \(t^*\) from the table or calculator using \textbf{df}.}
+  \end{minipage}%
+}
+
+\PosterZone{16.07in}{20.18in}{ZONE B · CONDITIONS — ALWAYS IN THIS ORDER}{%
+  \begin{minipage}[t]{6.15in}
+    \MiniHeading{1 · RANDOM}\par\vspace{.08in}
+    {\fontsize{25pt}{31pt}\selectfont
+      Random sample or\par randomized experiment.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.15in}
+    \MiniHeading{2 · 10\%}\par\vspace{.08in}
+    {\fontsize{25pt}{31pt}\selectfont
+      Sampling without replacement:\par
+      \(n<0.10N\).}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.9in}
+    \MiniHeading{3 · NORMAL / LARGE COUNTS}\par\vspace{.08in}
+    {\fontsize{23pt}{29pt}\selectfont
+      proportions: \(n\hat p\ge10\), \(n(1-\hat p)\ge10\)\par
+      means: normal population, \(n\ge30\), or no strong skew/outliers}
+  \end{minipage}%
+}
+
+\PosterZone{20.33in}{23.62in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“We are \PosterBlank{1.0in}\% confident that the interval
+    from \PosterBlank{1.25in} to \PosterBlank{1.25in} captures the true
+    \PosterBlank{4.1in}.”}
+  \vspace{.12in}
+  {\fontsize{24pt}{30pt}\selectfont
+    \textbf{Confidence level:} If we took many samples and built an interval
+    each time,\par
+    about \PosterBlank{.8in}\% of those intervals would capture the true
+    \PosterBlank{3.0in}.}
+}
+
+\PosterZone{23.77in}{27.45in}{ZONE D · WATCH OUT}{%
+  \begin{minipage}[t]{19.15in}
+    {\posterheading\bfseries\color{PosterAccent}\fontsize{31pt}{36pt}\selectfont
+      THE INTERVAL IS ABOUT THIS SAMPLE. THE LEVEL IS ABOUT THE METHOD.}\par
+    \vspace{.12in}
+    {\fontsize{29pt}{37pt}\selectfont
+      Never say the fixed parameter has a 95\% chance of being inside the
+      interval. After the interval is calculated, it either captures the
+      parameter or it does not.}
+  \end{minipage}%
+}
+
+\WorksheetTag{u6\_l2–3 · u6\_l8–9 · u7\_l2–3 · u7\_l6–7}
+
+\end{posterpage}
+\end{document}

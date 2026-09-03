@@ -1,0 +1,126 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+
+\colorlet{PosterAccent}{UnitRed}
+
+\begin{document}
+\begin{posterpage}
+
+\PosterHeader[73pt]
+  {UnitRed}
+  {5}
+  {EXPLORING TWO-VARIABLE DATA · REGRESSION}
+  {P15}
+  {RESIDUALS, \(\boldsymbol{r^2}\) \& MODEL FIT}
+  {new 5.4–5.5 \quad•\quad old 2.7–2.8 \quad•\quad \PosterStar\ old 2.9, 9.1–9.5}
+
+\PosterZone{4.72in}{15.72in}{ZONE A · THE FORMULAS + THE PLOTS}{%
+  \begin{minipage}[t]{10.25in}
+    \FormulaCardSized{50pt}{\text{residual}=y-\hat{y}=\text{actual}-\text{predicted}}
+    \vspace{.16in}
+    \TextCard{%
+      \centering
+      {\fontsize{36pt}{43pt}\selectfont
+        \(\boldsymbol{r^2}\) = fraction of the variation in \(y\) explained
+        by the linear relationship with \(x\)}
+    }
+    \vspace{.16in}
+    \FormulaCardSized{46pt}{%
+      s=\sqrt{\frac{\sum (y_i-\hat{y}_i)^2}{n-2}}
+    }
+    \vspace{.16in}
+    {\fontsize{28pt}{35pt}\selectfont
+      \(s\) is the \textbf{typical size of a residual}. It has the same units
+      as the response variable.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.25in}
+    \MiniHeading{READ THE RESIDUAL PLOT}\par\vspace{.05in}
+    \begin{center}
+      \begin{tikzpicture}[x=.78in,y=.55in]
+        \draw[-{Stealth[length=10pt]},PosterInk,line width=3pt] (.2,0) -- (8.0,0);
+        \draw[-{Stealth[length=10pt]},PosterInk,line width=3pt] (.55,-2.0) -- (.55,2.2);
+        \draw[PosterMuted,line width=2pt,dashed] (.55,0) -- (7.75,0);
+        \foreach \x/\y in {1.0/.45,1.7/-.55,2.3/.2,3.0/.8,3.6/-.75,4.3/.1,5.0/-.4,5.7/.55,6.4/-.15,7.1/.35}
+          \fill[PosterAccent] (\x,\y) circle (.09);
+        \draw[PosterAccent,line width=3pt,{Stealth[length=8pt]}-]
+          (3.0,.08) -- (3.0,.76);
+        \draw[PosterAccent,line width=3pt,-{Stealth[length=8pt]}]
+          (3.6,-.08) -- (3.6,-.71);
+        \node[anchor=south,font=\bfseries\fontsize{20pt}{22pt}\selectfont] at (4.2,2.18)
+          {NO PATTERN → LINEAR MODEL OK};
+        \node[anchor=west,font=\fontsize{18pt}{20pt}\selectfont] at (3.12,.8) {positive};
+        \node[anchor=west,font=\fontsize{18pt}{20pt}\selectfont] at (3.72,-.78) {negative};
+      \end{tikzpicture}
+    \end{center}
+    \vspace{.08in}
+    \begin{center}
+      \begin{tikzpicture}[x=.78in,y=.55in]
+        \draw[-{Stealth[length=10pt]},PosterInk,line width=3pt] (.2,0) -- (8.0,0);
+        \draw[-{Stealth[length=10pt]},PosterInk,line width=3pt] (.55,-2.0) -- (.55,2.2);
+        \draw[PosterMuted,line width=2pt,dashed] (.55,0) -- (7.75,0);
+        \foreach \x/\y in {1.0/1.2,1.7/.5,2.3/-.25,3.0/-.85,3.7/-1.15,4.4/-1.0,5.1/-.55,5.8/.05,6.5/.7,7.2/1.35}
+          \fill[PosterAccent] (\x,\y) circle (.09);
+        \node[anchor=south,font=\bfseries\fontsize{20pt}{22pt}\selectfont] at (4.2,2.18)
+          {CURVE → NOT LINEAR};
+      \end{tikzpicture}
+    \end{center}
+  \end{minipage}%
+}
+
+\PosterZone{15.87in}{19.72in}{ZONE B · COMPUTER-OUTPUT DECODER}{%
+  {\fontsize{27pt}{33pt}\selectfont
+  \renewcommand{\arraystretch}{1.24}
+  \begin{tabularx}{\linewidth}{>{\bfseries}l r r r r X}
+    Predictor & Coef & SE Coef & T & P & Read it as \\
+    \midrule
+    Constant & 12.41 & 1.86 & 6.67 & <.001 & \(\longrightarrow a\), the intercept \\
+    Study hours & 4.83 & 0.72 & 6.71 & <.001 & \(\longrightarrow b,\ s_b,\ t,\ P\text{-value}\) \\
+    \addlinespace[.12in]
+    \multicolumn{2}{l}{\(S=3.17\)} & \multicolumn{2}{l}{\(\longrightarrow s\)} &
+    \multicolumn{2}{l}{\(R\text{-Sq}=78.4\%\ \longrightarrow r^2\)}
+  \end{tabularx}}
+}
+
+\PosterZone{19.87in}{22.72in}{ZONE C · SAY IT IN WORDS}{%
+  \begin{minipage}[t]{9.75in}
+    \SentenceFrame{“About \PosterBlank{1.0in}\% of the variation in
+      \PosterBlank{2.0in} is explained by the linear relationship with
+      \PosterBlank{1.8in}.”}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.75in}
+    \SentenceFrame{“The actual \PosterBlank{1.8in} was \PosterBlank{1.0in}
+      units \PosterBlank{1.25in} what the line predicted.”}
+  \end{minipage}%
+}
+
+\PosterZone{22.87in}{27.45in}{ZONE D · WATCH OUT + \PosterStar\ BEYOND}{%
+  \begin{minipage}[t]{8.15in}
+    \vspace{0pt}
+    \MiniHeading{MODEL-FIT RULES}\par\vspace{.12in}
+    {\fontsize{28pt}{35pt}\selectfont
+      \textbf{No extrapolation:} do not predict beyond the observed
+      \(x\)-range.\par\vspace{.16in}
+      \(r^2\) gives the explained fraction, not the direction. Use \(r\) for
+      direction.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{10.95in}
+    \vspace{0pt}
+    \BeyondBox{%
+      {\fontsize{22pt}{27pt}\selectfont
+        \textbf{Departures:} outlier · high leverage · influential point\par
+        \(\log(\hat y)=a+bx\ \Rightarrow\ \hat y=10^{a+bx}\)\par
+        \textbf{Slope inference} \((df=n-2)\):\par
+        \(\mu_b=\beta \qquad \sigma_b=\dfrac{\sigma}{\sigma_x\sqrt n}\)\par
+        \(s_b=\dfrac{s}{s_x\sqrt{n-1}} \qquad
+          t=\dfrac{b}{s_b} \qquad b\pm t^*s_b\)}
+    }
+  \end{minipage}%
+}
+
+\WorksheetTag{u2\_l7–9 · u9\_l1–5}
+
+\end{posterpage}
+\end{document}
