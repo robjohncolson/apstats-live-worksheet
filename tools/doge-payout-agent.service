@@ -19,8 +19,14 @@
 #   systemctl --user status doge-payout-agent.service
 #   journalctl --user -u doge-payout-agent.service -f
 #
-# Windows alternative: run the same command with Task Scheduler. No Windows
-# task definition is committed because paths and the logged-in account vary.
+# ### Windows (Task Scheduler)
+# Use tools/register_payout_agent_task.ps1 instead of this unit. It registers
+# an at-logon, interactive-session-only task (dogecoin-qt lives in the user
+# session) that restarts on failure, runs from the repo root (shared journal
+# lock), and logs to tools/.payout-agent-logs/agent.log. Config template:
+# tools/payout-agent.config.example.json -> ~/.config/apstats/.payout-agent.json.
+#   powershell -NoProfile -File tools/register_payout_agent_task.ps1 -DryRun
+#   powershell -NoProfile -File tools/register_payout_agent_task.ps1
 
 [Unit]
 Description=AP Stats DOGE payout polling agent

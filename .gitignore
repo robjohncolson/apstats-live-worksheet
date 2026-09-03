@@ -102,3 +102,7 @@ android-app/plugins/**/build/
 # the repo is public. Only the synthetic fixture under tests/fixtures/golden-synthetic/ is committed.
 roster-server/tests/fixtures/golden-local/
 
+
+# DOGE payout: live send journal + agent logs (never commit a real journal)
+.doge-send-journal.json
+tools/.payout-agent-logs/
