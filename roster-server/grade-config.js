@@ -108,6 +108,20 @@ export const PHASE3_CONFIG = {
   // unit banding and its grades do not move.
   v3LessonsByDate: true,
 
+  // SY2627 (teacher 2026-09-03): a lesson is due once its lesson DAY HAS ENDED
+  // (11:59 PM schoolTz) — a missing worksheet is not a 0 until the next day.
+  // Absent in the frozen SY2526 config → due from the start of the lesson day.
+  dueAfterLessonDay: true,
+
+  // SY2627 (teacher 2026-09-03): early-completion bonus — +perLesson points on
+  // the quarter grade for each scheduled-due lesson whose worksheet work was all
+  // submitted by 11:59 PM on its due date, capped at `cap` per quarter (0 = off,
+  // omit = uncapped). "Submitted" = the worksheet reached minComplete (80%) of
+  // its blanks by the deadline (worksheetCoverageReachedAt) — one blank never
+  // qualifies, and a later edit/regrade of a row cannot revoke it. The cap and
+  // minComplete are placeholders the teacher has not confirmed. Absent → no bonus.
+  v3EarlyBonus: { perLesson: 1, cap: 5, minComplete: 0.8 },
+
   // ── TI-84 trainer strand (TI84_GRADE_INTEGRATION_SPEC.md §C) ────────────────
   // weight 0 = VISIBLE-BUT-UNCOUNTED: per-lesson trainer pct + quarter
   // trainerDue/Done/Todo + workTracks.trainer are surfaced, but the track never

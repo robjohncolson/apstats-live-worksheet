@@ -108,6 +108,7 @@
     "config": {
       "C": 85,
       "diagnosticTheta": 0.65,
+      "dueAfterLessonDay": true,
       "feederWeights": {
         "Q": 2,
         "W": 1
@@ -129,12 +130,12 @@
       },
       "quarters": {
         "Q1": {
-          "end": "2026-11-13",
+          "end": "2026-11-06",
           "pcAnchor": {
             "p100": 60,
             "p85": 40
           },
-          "start": "2026-09-09",
+          "start": "2026-09-02",
           "units": [
             1,
             2,
@@ -142,36 +143,36 @@
           ]
         },
         "Q2": {
-          "end": "2027-01-29",
+          "end": "2027-01-22",
           "pcAnchor": {
             "p100": 64,
             "p85": 45
           },
-          "start": "2026-11-14",
+          "start": "2026-11-09",
           "units": [
             4,
             5
           ]
         },
         "Q3": {
-          "end": "2027-04-09",
+          "end": "2027-04-14",
           "pcAnchor": {
             "p100": 67,
             "p85": 50
           },
-          "start": "2027-01-30",
+          "start": "2027-01-25",
           "units": [
             6,
             7
           ]
         },
         "Q4": {
-          "end": "2027-06-23",
+          "end": "2027-06-17",
           "pcAnchor": {
             "p100": 70,
             "p85": 55
           },
-          "start": "2027-04-10",
+          "start": "2027-04-15",
           "units": [
             8,
             9
@@ -185,12 +186,18 @@
       },
       "useV3": false,
       "v3AheadOfScheduleLessons": "not-until-due",
+      "v3EarlyBonus": {
+        "cap": 5,
+        "minComplete": 0.8,
+        "perLesson": 1
+      },
       "v3FixCwsReveal": true,
       "v3FixQuizZero": true,
       "v3Gates": {
         "ceiling": 0.7,
         "floor": 0.4
       },
+      "v3LessonsByDate": true,
       "v3LessonsExcludeQuiz": true,
       "v3WorkWeights": {
         "blooket": 0.1,

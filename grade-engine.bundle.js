@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: a3832667ea8c
+ * engine-version: 9784561aa523
  */
 ;(function (root) {
   'use strict';
@@ -135,6 +135,20 @@
       // quarters. Absent (false) in the frozen SY2526 config → that year keeps
       // unit banding and its grades do not move.
       v3LessonsByDate: true,
+    
+      // SY2627 (teacher 2026-09-03): a lesson is due once its lesson DAY HAS ENDED
+      // (11:59 PM schoolTz) — a missing worksheet is not a 0 until the next day.
+      // Absent in the frozen SY2526 config → due from the start of the lesson day.
+      dueAfterLessonDay: true,
+    
+      // SY2627 (teacher 2026-09-03): early-completion bonus — +perLesson points on
+      // the quarter grade for each scheduled-due lesson whose worksheet work was all
+      // submitted by 11:59 PM on its due date, capped at `cap` per quarter (0 = off,
+      // omit = uncapped). "Submitted" = the worksheet reached minComplete (80%) of
+      // its blanks by the deadline (worksheetCoverageReachedAt) — one blank never
+      // qualifies, and a later edit/regrade of a row cannot revoke it. The cap and
+      // minComplete are placeholders the teacher has not confirmed. Absent → no bonus.
+      v3EarlyBonus: { perLesson: 1, cap: 5, minComplete: 0.8 },
     
       // ── TI-84 trainer strand (TI84_GRADE_INTEGRATION_SPEC.md §C) ────────────────
       // weight 0 = VISIBLE-BUT-UNCOUNTED: per-lesson trainer pct + quarter
@@ -699,6 +713,7 @@
             quizItems: [],
             worksheetItems: [],
             wsCountKey: null,
+            blankCount: null,       // manifest blank count for this worksheet (early-bonus coverage)
             blooket: null,          // 0..100 — RESOLVED: game score, else flashcard make-up, else null
             blooketGame: null,      // 0..100 from a real Blooket game row (source 'blooket')
             blooketFlashcard: null, // 0..100 from a BL-…-DESK_DONE flashcard pass (make-up)
@@ -885,6 +900,7 @@
         let Cws = null;
         if (worksheetBlankCounts && acc.wsCountKey !== null) {
           const blankCount = worksheetBlankCounts[acc.wsCountKey];
+          acc.blankCount = blankCount && blankCount > 0 ? blankCount : null;
           if (blankCount && blankCount > 0) {
             const scoreSum = acc.worksheetItems.reduce((s, w) => s + w.score, 0);
             const rawFrac = scoreSum / blankCount;
@@ -1008,6 +1024,76 @@
         // fallthrough to UTC
       }
       return instant.toISOString().slice(0, 10);
+    }
+    
+    // ── Due semantics (SY2627, teacher 2026-09-03) ──────────────────────────────
+    //
+    // config.dueAfterLessonDay === true → a lesson is due once its lesson DAY HAS
+    // ENDED (11:59 PM school time): on the lesson date itself it is still "open",
+    // so a missing worksheet is not a 0 until the next day. Absent/false (the
+    // frozen SY2526 config) → the original rule: due from the start of the day.
+    function isDateDue(dateStr, todayDateStr, config) {
+      if (!dateStr || !todayDateStr) return false;
+      if (config && config.dueAfterLessonDay) return dateStr < todayDateStr;
+      return dateStr <= todayDateStr;
+    }
+    
+    // Epoch ms of 23:59:59 on a YYYY-MM-DD date in an IANA timezone (the deadline
+    // instant used by the early-completion bonus). Falls back to UTC.
+    function endOfDayEpochInTz(dateStr, tz) {
+      const [y, m, d] = String(dateStr).split('-').map(Number);
+      const guess = Date.UTC(y, m - 1, d, 23, 59, 59);
+      try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz, hourCycle: 'h23',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+        }).formatToParts(new Date(guess));
+        const g = (k) => Number(parts.find((p) => p.type === k).value);
+        const asIfUtc = Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute'), g('second'));
+        return guess - (asIfUtc - guess);
+      } catch (_) {
+        return guess;
+      }
+    }
+    
+    function stampOf(it) {
+      if (!it || it.ts == null) return NaN;
+      return typeof it.ts === 'number' ? it.ts : Date.parse(it.ts);
+    }
+    
+    // When a lesson's worksheet work was last submitted (epoch ms), from the
+    // recorded_at stamps on its worksheet + FRQ items. null when nothing is stamped.
+    function lessonCompletedAt(result) {
+      if (!result) return null;
+      let latest = null;
+      for (const list of [result.worksheetItems, result.frqItems]) {
+        if (!Array.isArray(list)) continue;
+        for (const it of list) {
+          const t = stampOf(it);
+          if (Number.isFinite(t) && (latest === null || t > latest)) latest = t;
+        }
+      }
+      return latest;
+    }
+    
+    // The instant (epoch ms) at which a worksheet reached `minComplete` coverage of
+    // its blanks — the k-th earliest recorded_at among its blank rows, with
+    // k = ceil(minComplete × blankCount). This is what the early bonus judges:
+    //   - one blank is never "done" (needs ≥ 80% of the blanks by default);
+    //   - a later edit, appeal or FRQ regrade moves ONE row's stamp, which cannot
+    //     drag the k-th earliest past the deadline unless most rows moved;
+    //   - FRQ / AI-grade stamps are ignored (grading time is not the student's).
+    // Unknown blankCount → every stamped row must be in (k = all rows, ≥ 1).
+    function worksheetCoverageReachedAt(result, minComplete) {
+      if (!result || !Array.isArray(result.worksheetItems)) return null;
+      const stamps = result.worksheetItems.map(stampOf).filter(Number.isFinite).sort((a, b) => a - b);
+      if (stamps.length === 0) return null;
+      const blanks = Number.isFinite(result.blankCount) && result.blankCount > 0 ? result.blankCount : null;
+      const frac = Number.isFinite(minComplete) && minComplete > 0 && minComplete <= 1 ? minComplete : 0.8;
+      const need = blanks ? Math.max(1, Math.ceil(frac * blanks)) : stamps.length;
+      if (stamps.length < need) return null;
+      return stamps[need - 1];
     }
     
     // Extract the single-letter period key from a section string.
@@ -1209,11 +1295,11 @@
             // No date for this period — treat as not-yet-due (future).
             return false;
           }
-          return dueDate <= todayDateStr;
+          return isDateDue(dueDate, todayDateStr, config);
         }
-        // Unknown section: due if EITHER B or E is <= today.
-        const bDue = periods.B && periods.B <= todayDateStr;
-        const eDue = periods.E && periods.E <= todayDateStr;
+        // Unknown section: due if EITHER B or E is due.
+        const bDue = isDateDue(periods.B, todayDateStr, config);
+        const eDue = isDateDue(periods.E, todayDateStr, config);
         return !!(bDue || eDue);
       }
     
@@ -1454,10 +1540,10 @@
         const periods = entry.periods && typeof entry.periods === 'object' ? entry.periods : {};
         if (period) {
           const d = periods[period];
-          return !!d && d <= todayDateStr;
+          return isDateDue(d, todayDateStr, config);
         }
-        const bDue = periods.B && periods.B <= todayDateStr;
-        const eDue = periods.E && periods.E <= todayDateStr;
+        const bDue = isDateDue(periods.B, todayDateStr, config);
+        const eDue = isDateDue(periods.E, todayDateStr, config);
         return !!(bDue || eDue);
       }
     
@@ -1629,7 +1715,7 @@
           const d = period ? periods[period] : (periods.B || periods.E);
           if (d && (latest === null || d > latest)) latest = d;
         }
-        return !!latest && latest <= todayDateStr;
+        return isDateDue(latest, todayDateStr, config);
       }
       // PC track gate (PC_MAKEUP_PHASE2_GRADE_SPEC.md §C). OFF (config.pcTrack.enabled
       // === false) → the band loop is skipped entirely, so pcAvg stays null and
@@ -1680,7 +1766,51 @@
         effectiveWorkWeights = { ...workWeights, trainer: trainerWeight };
       }
       const workAvg = workAvgV3(tracks, effectiveWorkWeights);
-      const quarterGrade = to100(combineV3(pcAvg, workAvg, gates));
+      const quarterGradeBase = to100(combineV3(pcAvg, workAvg, gates));
+    
+      // ── Early-completion bonus (SY2627, teacher 2026-09-03) ──
+      // +config.v3EarlyBonus.perLesson points on the quarter grade for every
+      // scheduled-due WORKSHEET that reached minComplete (default 80%) of its blanks
+      // by 11:59 PM school time on its due day (worksheetCoverageReachedAt), capped
+      // at config.v3EarlyBonus.cap per quarter (cap 0 = off, absent = uncapped).
+      // A combined worksheet (4.1-2, 6.1-2 …) earns ONE bonus, judged against the
+      // latest of its topics' due dates. Ahead-of-schedule worksheets (work
+      // recorded, not yet due) are counted separately (aheadLessons) and earn
+      // theirs once due. Absent config (the frozen SY2526 config) → no bonus.
+      const earlyCfg = (config && config.v3EarlyBonus) || null;
+      const earlyPerLesson = earlyCfg && Number.isFinite(earlyCfg.perLesson) ? earlyCfg.perLesson : 0;
+      const earlyCap = earlyCfg && Number.isFinite(earlyCfg.cap) ? earlyCfg.cap : Infinity;
+      const earlyMin = earlyCfg && Number.isFinite(earlyCfg.minComplete) ? earlyCfg.minComplete : 0.8;
+      const schoolTz = (config && config.schoolTz) || 'America/New_York';
+      const earlyKeys = /** @type {string[]} */ ([]);
+      const aheadKeys = /** @type {string[]} */ ([]);
+      if (earlyPerLesson > 0 && earlyCap > 0) {
+        const seenWorksheets = new Set();
+        const dateFor = (entry) => {
+          const periods = (entry && entry.periods && typeof entry.periods === 'object') ? entry.periods : {};
+          return period ? (periods[period] || null) : (periods.B || periods.E || null);
+        };
+        for (const topicKey of bandLessons) {
+          const r = lessonMap.get(topicKey);
+          if (lessonTrackValue(r) == null) continue; // no worksheet work → nothing to credit
+          const entry = schedule[topicKey];
+          const dueDate = dateFor(entry);
+          if (!dueDate) continue; // bonus/unscheduled lesson — no deadline to beat
+          const worksheetId = `${entry.unit}/${entry.worksheetKey || topicKey}`;
+          if (seenWorksheets.has(worksheetId)) continue; // combined worksheet: one bonus
+          seenWorksheets.add(worksheetId);
+          let deadlineDate = dueDate;
+          for (const other of (Array.isArray(entry.combinedWith) ? entry.combinedWith : [])) {
+            const od = dateFor(schedule[other]);
+            if (od && od > deadlineDate) deadlineDate = od;
+          }
+          if (!isDateDue(deadlineDate, todayDateStr, config)) { aheadKeys.push(topicKey); continue; }
+          const reachedAt = worksheetCoverageReachedAt(r, earlyMin);
+          if (reachedAt != null && reachedAt <= endOfDayEpochInTz(deadlineDate, schoolTz)) earlyKeys.push(topicKey);
+        }
+      }
+      const earlyBonus = earlyCap > 0 ? Math.min(earlyCap, earlyKeys.length * earlyPerLesson) : 0;
+      const quarterGrade = quarterGradeBase == null ? null : Math.min(100, quarterGradeBase + earlyBonus);
     
       // ── Ceiling: best case if every remaining/un-attempted item scores 100 ──
       const lessonsAvgBest = lessonsTotal > 0
@@ -1711,10 +1841,17 @@
       }
       const workAvgBest = workAvgV3(bestTracks, effectiveWorkWeights);
       // Ceiling only when the quarter has signal (matches Phase 6: nothing due → null).
-      const ceiling = quarterGrade == null ? null : to100(combineV3(pcAvgBest, workAvgBest, gates));
+      const ceilingBase = quarterGrade == null ? null : to100(combineV3(pcAvgBest, workAvgBest, gates));
+      const ceiling = ceilingBase == null ? null : Math.min(100, ceilingBase + earlyBonus);
     
       return {
         quarterGrade,
+        quarterGradeBase,
+        earlyBonus,
+        earlyLessons: earlyKeys.length,
+        earlyKeys,
+        aheadLessons: aheadKeys.length,
+        aheadKeys,
         ceiling,
         lessonsDue,
         // lessonsGraded counts lessons graded on the LESSONS-track feeders (blanks/
@@ -1895,8 +2032,8 @@
     // class grid). Clients just render — no grade math lives in the HTML.
     //
     // Per quarter the grid carries TWO totals, side by side:
-    //   - schoologyTotal: the cells blended by CATEGORY WEIGHT (how Schoology itself
-    //     computes the grade once these component cells are pushed).
+    //   - schoologyTotal: the DUE + COMPLETED cells blended by CATEGORY WEIGHT (how
+    //     Schoology itself computes the grade once the due cells are pushed).
     //   - v3Total:        quarters[qk].quarterGrade — the app's two-track v3 model.
     // They can differ; showing both is the point (reconciliation).
     //
@@ -2147,8 +2284,17 @@
           '); Schoology applies no floor or ceiling.';
       }
     
+      // SY2627 early-completion bonus: v3Total includes it, Schoology never does.
+      var bonus = typeof q.earlyBonus === 'number' ? q.earlyBonus : 0;
+      if (bonus > 0) {
+        var nEarly = typeof q.earlyLessons === 'number' ? q.earlyLessons : 0;
+        reason += ' Plus +' + bonus + ' early-completion bonus (' + nEarly + ' worksheet' + (nEarly === 1 ? '' : 's') +
+          ' finished by the 11:59 PM deadline) — included in the v3 total, never in Schoology.';
+      }
+    
       return {
         pcAvg: pcDisp, workAvg: workDisp,
+        earlyBonus: bonus,
         schoologyTotal: schoologyTotal != null ? schoologyTotal : null,
         v3Total: v3Total != null ? v3Total : null,
         delta: delta, branch: branch, reason: reason,
@@ -2165,10 +2311,16 @@
     
       const cells = {};
       const catVals = {};
+      // SY2627 (teacher 2026-09-03): schoologyTotal = what the Schoology gradebook
+      // shows TODAY — only columns that are DUE (col.due !== false; a column with no
+      // resolvable date is included) and COMPLETED (non-null). Ahead-of-schedule
+      // work stays visible in `cells` but does not enter the total, because the
+      // Schoology sync (tools/schoology_sync_section.py --through) only pushes due
+      // columns. Blanks are never 0 here, matching Schoology.
       for (const col of columns) {
         const v = cellValue(col, lessonsByKey, units);
         cells[col.key] = v;
-        if (v != null) (catVals[col.category] || (catVals[col.category] = [])).push(v);
+        if (v != null && col.due !== false) (catVals[col.category] || (catVals[col.category] = [])).push(v);
       }
     
       const categoryAverages = {};
@@ -2619,6 +2771,13 @@
           units: band,
           unitGrades,
           quarterGrade: qResult.quarterGrade,
+          // SY2627 early-completion bonus surface (v3 only; explicit pick, see below).
+          quarterGradeBase: typeof qResult.quarterGradeBase === 'number' ? qResult.quarterGradeBase : null,
+          earlyBonus: typeof qResult.earlyBonus === 'number' ? qResult.earlyBonus : 0,
+          earlyLessons: typeof qResult.earlyLessons === 'number' ? qResult.earlyLessons : 0,
+          earlyKeys: Array.isArray(qResult.earlyKeys) ? qResult.earlyKeys : [],
+          aheadLessons: typeof qResult.aheadLessons === 'number' ? qResult.aheadLessons : 0,
+          aheadKeys: Array.isArray(qResult.aheadKeys) ? qResult.aheadKeys : [],
           unitsGraded,
           unitsTotal: band.length,
           ceiling: qResult.ceiling,
@@ -2699,7 +2858,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "a3832667ea8c",
+    _engineVersion: "9784561aa523",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

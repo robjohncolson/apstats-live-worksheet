@@ -441,6 +441,13 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       units: band,
       unitGrades,
       quarterGrade: qResult.quarterGrade,
+      // SY2627 early-completion bonus surface (v3 only; explicit pick, see below).
+      quarterGradeBase: typeof qResult.quarterGradeBase === 'number' ? qResult.quarterGradeBase : null,
+      earlyBonus: typeof qResult.earlyBonus === 'number' ? qResult.earlyBonus : 0,
+      earlyLessons: typeof qResult.earlyLessons === 'number' ? qResult.earlyLessons : 0,
+      earlyKeys: Array.isArray(qResult.earlyKeys) ? qResult.earlyKeys : [],
+      aheadLessons: typeof qResult.aheadLessons === 'number' ? qResult.aheadLessons : 0,
+      aheadKeys: Array.isArray(qResult.aheadKeys) ? qResult.aheadKeys : [],
       unitsGraded,
       unitsTotal: band.length,
       ceiling: qResult.ceiling,

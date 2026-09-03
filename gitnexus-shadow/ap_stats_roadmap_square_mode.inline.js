@@ -9021,6 +9021,30 @@ async function renderDoNowGrades(baseUrl, token) {
       host.appendChild(_trackChip('Work', workAvg, 'Work-engagement track (worksheets, quizzes, Blooket)'));
     }
 
+    // SY2627 (teacher 2026-09-03): "Schoology today" — the category-weighted
+    // total over columns that are DUE and COMPLETED (blanks ignored, ahead work
+    // not counted): exactly what the Schoology gradebook shows once the sync ran.
+    var _gbq = data.gradebook && data.gradebook.quarters && data.gradebook.quarters[curQ];
+    var schToday = _gbq && typeof _gbq.schoologyTotal === 'number' ? _gbq.schoologyTotal : null;
+    host.appendChild(_trackChip('Schoology today', schToday,
+      'What the Schoology gradebook shows for ' + curQ + ' as of today: only work that is due AND completed. ' +
+      'Blanks are not zeros and work done ahead of schedule is not counted until it comes due.'));
+
+    // Early-completion bonus: +1 point per lesson finished by 11:59 PM on its due
+    // day (capped per quarter). Ahead-of-schedule lessons earn theirs once due.
+    var earlyN = q && typeof q.earlyLessons === 'number' ? q.earlyLessons : 0;
+    var aheadN = q && typeof q.aheadLessons === 'number' ? q.aheadLessons : 0;
+    var earlyPts = q && typeof q.earlyBonus === 'number' ? q.earlyBonus : 0;
+    if (earlyN > 0 || aheadN > 0) {
+      var eChip = document.createElement('span');
+      eChip.className = 'qtrack qearly';
+      eChip.style.cssText = 'font-size:10px;margin-left:8px;align-self:center;color:#1a7f37;font-weight:bold';
+      eChip.textContent = '⚡ +' + earlyPts + ' early' + (aheadN > 0 ? ' · ' + aheadN + ' ahead' : '');
+      eChip.title = 'Early bonus: a point on the quarter grade for each worksheet finished (at least 80% of its blanks) by 11:59 PM on its due day (' +
+        earlyN + ' so far, +' + earlyPts + '). ' + (aheadN > 0 ? aheadN + ' lesson' + (aheadN === 1 ? '' : 's') + ' done ahead of schedule will earn theirs when they come due.' : '');
+      host.appendChild(eChip);
+    }
+
     if (typeof _fcFlag === 'function' && _fcFlag('dueTodayDeck')) {
       var _dueTodaySummary = (typeof _srsDueSnapshot === 'function')
         ? _srsDueSnapshot()
@@ -18335,7 +18359,7 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     var sch = document.createElement('span');
     var scBand = _gradeBand(gq.schoologyTotal);
     sch.style.cssText = 'margin-left:10px;font-weight:bold;color:' + (scBand ? scBand.fg : '#555');
-    sch.textContent = 'Report-card estimate: ' + _n(gq.schoologyTotal);
+    sch.textContent = 'Schoology today: ' + _n(gq.schoologyTotal);
     line1.appendChild(sch);
     if (rc.delta != null && Math.abs(rc.delta) >= 0.1) {
         var d = document.createElement('span');
@@ -23775,7 +23799,7 @@ function _mountClassroomBoard(){
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-03-ikab';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-03-ubyo';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

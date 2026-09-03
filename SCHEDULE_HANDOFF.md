@@ -38,6 +38,37 @@ Sep 1, exam May 14, 8 of 13 closures). Fixed in one pass, one source of truth:
   `config/topic-schedule.json` + `roadmap-data.json` PC/poster dates are still last year's
   (cosmetic; the Desk does not read dates from them). Step 6 (CED gradebook framing) still open.
 - 2026-09-03 (later): teacher dropped the Day-2 **Unit 1 Baseline Check** from both pacings — the calendar now opens Welcome → 1.1 (B: 09-03 → 09-08; E: 09-02 → 09-09). Regenerated schedule + snapshots.
+- **Grade display decisions (teacher, 2026-09-03 evening) — SHIPPED:**
+  (1) "Schoology today" is now a real number: `gradebook-grid.js` `schoologyTotal` averages only
+  DUE + COMPLETED cells (blanks never 0, ahead work excluded) and the Schoology sync
+  (`tools/schoology_sync_section.py`) gates creation + grading to columns due on/before
+  `--through` (default: today in America/New_York; `--no-through` disables). The Desk Do-Now
+  strip shows it as a "Schoology today" chip; My Gradebook's "Report-card estimate" was renamed.
+  (2) Early-completion bonus: `v3EarlyBonus {perLesson:1, cap:5}` — +1 point on the quarter grade
+  per scheduled-due lesson whose LAST worksheet/FRQ submission (`recorded_at`) is ≤ 11:59 PM
+  school time on its due day; ahead-of-schedule lessons are reported (`aheadLessons`) and earn
+  theirs when due. **The cap of 5 is my placeholder — teacher has not confirmed it.**
+  (3) `dueAfterLessonDay: true` — a lesson is due once its lesson day has ENDED (11:59 PM), so
+  zeros appear the next morning, not at midnight before class. All three are config-gated; the
+  frozen SY2526 config lacks the keys → its grades are byte-identical (m2b SY2526 snapshot).
+- **Round-2 reviews (two more adversarial passes) folded in:** the bonus fields are threaded
+  into the `/grade` + `/class/grades` payload (`quarterGradeBase`, `earlyBonus`, `earlyLessons`,
+  `earlyKeys`, `aheadLessons`, `aheadKeys` — additive keys; the frozen SY2526 values are unchanged
+  but its m2b snapshot gained the default-valued keys, and any NEW transcript receipt hashes the new
+  shape). "Done by the deadline" = `worksheetCoverageReachedAt`: the k-th earliest blank stamp with
+  k = ceil(minComplete×blankCount) — one blank never qualifies, a later edit/appeal/FRQ regrade of a
+  row cannot revoke it, FRQ/AI stamps are ignored; a combined worksheet earns ONE bonus at its later
+  topic's date; `cap: 0` = off. `reconcileQuarter` now names the bonus. The sync defers (not errors)
+  grade targets for not-yet-due columns (`grades_deferred` in the summary), and `today_school_date()`
+  falls back to a built-in US-Eastern DST rule when Windows has no `tzdata`.
+  **`tools/daily_schoology_sync.ps1` now passes `--granularity component` to BOTH steps** — the
+  default `lesson` mode pushed quiz-blended `lessonGrade` into one "Lesson" category and would NOT
+  have matched the Desk chip. Run the dry-run once before -Live to see the new column set.
+  Known, accepted: on the lesson day itself a completed lesson counts in "Schoology today" (column
+  open, `<=`) while the v3 zero-for-missing rule waits until the day ends (`<`); the My Gradebook
+  "due, not done yet" badge therefore fires on the lesson day. PC cells enter the chip from the
+  unit's first lesson day (PC track is off, so inert). Production must have `USE_V3_GRADING=true`
+  for the bonus path (it does); the Phase-6 fallback path has no bonus.
 - **Grading-policy change (two adversarial reviews, 2026-09-03):** the v3 Lessons track now
   buckets a lesson by its CALENDAR DATE (`quarterOfLesson`, same as Phase 6) instead of the
   static old-unit band (`lesson-grade.js` computeQuarterV3). Under CED order the unit band put

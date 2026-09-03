@@ -57,14 +57,16 @@ if (-not $env:ROSTER_TEACHER_SECRET) {
 $buildArgs = @(
   (Join-Path $toolsDir 'build_schoology_fixture.py'),
   '--section', $Section,
-  '--out', $fixture
+  '--out', $fixture,
+  '--granularity', 'component'   # SY2627: fine-grained columns = the Desk's "Schoology today"
 )
 if ($Base) { $buildArgs += @('--base', $Base) }
 
 $syncArgs = @(
   (Join-Path $toolsDir 'schoology_sync_section.py'),
   '--sync-section', $Section,
-  '--grades-fixture', $fixture
+  '--grades-fixture', $fixture,
+  '--granularity', 'component'   # must match step 1; --through defaults to today (NY)
 )
 if (-not $Live) { $syncArgs += '--dry-run' }
 

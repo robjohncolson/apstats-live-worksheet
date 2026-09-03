@@ -90,6 +90,12 @@
     "v3FixCwsReveal": true,
     "v3AheadOfScheduleLessons": "not-until-due",
     "v3LessonsByDate": true,
+    "dueAfterLessonDay": true,
+    "v3EarlyBonus": {
+      "perLesson": 1,
+      "cap": 5,
+      "minComplete": 0.8
+    },
     "trainer": {
       "weight": 0,
       "doneThreshold": 80
@@ -125,6 +131,12 @@
           "U3": null
         },
         "quarterGrade": null,
+        "quarterGradeBase": null,
+        "earlyBonus": 0,
+        "earlyLessons": 0,
+        "earlyKeys": [],
+        "aheadLessons": 0,
+        "aheadKeys": [],
         "unitsGraded": 0,
         "unitsTotal": 3,
         "ceiling": null,
@@ -156,6 +168,12 @@
           "U5": null
         },
         "quarterGrade": null,
+        "quarterGradeBase": null,
+        "earlyBonus": 0,
+        "earlyLessons": 0,
+        "earlyKeys": [],
+        "aheadLessons": 0,
+        "aheadKeys": [],
         "unitsGraded": 0,
         "unitsTotal": 2,
         "ceiling": null,
@@ -187,6 +205,12 @@
           "U7": null
         },
         "quarterGrade": null,
+        "quarterGradeBase": null,
+        "earlyBonus": 0,
+        "earlyLessons": 0,
+        "earlyKeys": [],
+        "aheadLessons": 0,
+        "aheadKeys": [],
         "unitsGraded": 0,
         "unitsTotal": 2,
         "ceiling": null,
@@ -218,6 +242,12 @@
           "U9": null
         },
         "quarterGrade": null,
+        "quarterGradeBase": null,
+        "earlyBonus": 0,
+        "earlyLessons": 0,
+        "earlyKeys": [],
+        "aheadLessons": 0,
+        "aheadKeys": [],
         "unitsGraded": 0,
         "unitsTotal": 2,
         "ceiling": null,

@@ -74,7 +74,7 @@ describe('Desk My Gradebook modal', () => {
     // Both totals + the why.
     expect(text).toContain('Your grade:');
     expect(text).toContain('91.2');                 // v3
-    expect(text).toContain('Report-card estimate:');
+    expect(text).toContain('Schoology today:');
     expect(text).toContain('82.7');                 // Schoology
     expect(text).toContain('higher');               // reconciliation reason
     // Category sections + a cell.

@@ -59,6 +59,17 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     expect(DESK).not.toMatch(/Q1\s*:\s*['"]U1, U2, U3['"]/);
   });
 
+  it('02b: renderDoNowGrades renders the "Schoology today" chip from data.gradebook and the early-bonus chip from the quarter fields', () => {
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    expect(body).toMatch(/data\.gradebook/);
+    expect(body).toMatch(/schoologyTotal/);
+    expect(body).toMatch(/'Schoology today'/);
+    expect(body).toMatch(/q\.earlyLessons/);
+    expect(body).toMatch(/q\.aheadLessons/);
+    expect(body).toMatch(/q\.earlyBonus/);
+    expect(body).not.toMatch(/innerHTML\s*=\s*['"][^'"]*early/); // chips are textContent-only
+  });
+
   it('03: renderDoNowGrades function exists and accepts baseUrl + token', () => {
     expect(DESK).toMatch(/async\s+function\s+renderDoNowGrades\s*\(\s*baseUrl\s*,\s*token\s*\)/);
   });

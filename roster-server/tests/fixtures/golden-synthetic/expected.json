@@ -13,12 +13,12 @@
       },
       "quarters": {
         "Q1": {
-          "end": "2026-11-13",
+          "end": "2026-11-06",
           "pcAnchor": {
             "p100": 60,
             "p85": 40
           },
-          "start": "2026-09-09",
+          "start": "2026-09-02",
           "units": [
             1,
             2,
@@ -26,36 +26,36 @@
           ]
         },
         "Q2": {
-          "end": "2027-01-29",
+          "end": "2027-01-22",
           "pcAnchor": {
             "p100": 64,
             "p85": 45
           },
-          "start": "2026-11-14",
+          "start": "2026-11-09",
           "units": [
             4,
             5
           ]
         },
         "Q3": {
-          "end": "2027-04-09",
+          "end": "2027-04-14",
           "pcAnchor": {
             "p100": 67,
             "p85": 50
           },
-          "start": "2027-01-30",
+          "start": "2027-01-25",
           "units": [
             6,
             7
           ]
         },
         "Q4": {
-          "end": "2027-06-23",
+          "end": "2027-06-17",
           "pcAnchor": {
             "p100": 70,
             "p85": 55
           },
-          "start": "2027-04-10",
+          "start": "2027-04-15",
           "units": [
             8,
             9
@@ -95,10 +95,10 @@
           "quarters": {
             "Q1": {
               "categoryAverages": {
-                "Blooket": 70,
-                "Lesson": 73.3,
-                "Progress Check": 60,
-                "Quizzes": 66.7
+                "Blooket": 60,
+                "Lesson": 60,
+                "Progress Check": 45,
+                "Quizzes": 50
               },
               "cells": {
                 "BL:1.1": 80,
@@ -351,14 +351,15 @@
               ],
               "reconciliation": {
                 "branch": "max",
-                "delta": -18.9,
+                "delta": -4.2,
+                "earlyBonus": 0,
                 "pcAvg": 45,
-                "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 45.2), while Schoology averages the categories (64.1).",
-                "schoologyTotal": 64.1,
+                "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 45.2), while Schoology averages the categories (49.4).",
+                "schoologyTotal": 49.4,
                 "v3Total": 45.2,
                 "workAvg": 45.2
               },
-              "schoologyTotal": 64.1,
+              "schoologyTotal": 49.4,
               "v3Total": 45.2
             },
             "Q2": {
@@ -406,6 +407,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -460,6 +462,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -514,6 +517,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -724,6 +728,10 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [
+              "3.1"
+            ],
+            "aheadLessons": 1,
             "blooketDone": 3,
             "blooketDue": 5,
             "blooketTodo": [
@@ -731,12 +739,16 @@
               "1.5"
             ],
             "ceiling": 77.2,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 5,
             "lessonsGraded": 3,
             "lessonsTotal": 5,
             "pcAvg": 45,
             "pcAvgRaw": 0.44999999999999996,
             "quarterGrade": 45.2,
+            "quarterGradeBase": 45.2,
             "quizDone": 3,
             "quizDue": 5,
             "quizTodo": [
@@ -769,16 +781,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -806,16 +824,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -843,16 +867,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -1198,6 +1228,7 @@
               "reconciliation": {
                 "branch": "max",
                 "delta": 35.3,
+                "earlyBonus": 0,
                 "pcAvg": 40,
                 "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 100), while Schoology averages the categories (64.7).",
                 "schoologyTotal": 64.7,
@@ -1252,6 +1283,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -1306,6 +1338,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -1360,6 +1393,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -1570,16 +1604,22 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 3,
             "blooketDue": 3,
             "blooketTodo": [],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 3,
             "lessonsTotal": 5,
             "pcAvg": 40,
             "pcAvgRaw": 0.4,
             "quarterGrade": 100,
+            "quarterGradeBase": 100,
             "quizDone": 3,
             "quizDue": 3,
             "quizTodo": [],
@@ -1609,16 +1649,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -1646,16 +1692,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -1683,16 +1735,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -2018,6 +2076,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": 7.8,
+                "earlyBonus": 0,
                 "pcAvg": 70,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (49); Schoology applies no floor or ceiling.",
                 "schoologyTotal": 41.2,
@@ -2072,6 +2131,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -2126,6 +2186,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -2180,6 +2241,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -2372,16 +2434,22 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 3,
             "blooketDue": 3,
             "blooketTodo": [],
             "ceiling": 63,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 3,
             "lessonsTotal": 5,
             "pcAvg": 70,
             "pcAvgRaw": 0.7,
             "quarterGrade": 49,
+            "quarterGradeBase": 49,
             "quizDone": 3,
             "quizDue": 3,
             "quizTodo": [],
@@ -2411,16 +2479,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -2448,16 +2522,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -2485,16 +2565,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -2820,6 +2906,7 @@
               "reconciliation": {
                 "branch": "max",
                 "delta": 12.4,
+                "earlyBonus": 0,
                 "pcAvg": 80,
                 "reason": "Both tracks clear the 40 floor, so v3 takes the higher (PC 80), while Schoology averages the categories (67.6).",
                 "schoologyTotal": 67.6,
@@ -2874,6 +2961,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -2928,6 +3016,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -2982,6 +3071,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -3192,16 +3282,22 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 3,
             "blooketDue": 3,
             "blooketTodo": [],
             "ceiling": 93.3,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 3,
             "lessonsTotal": 5,
             "pcAvg": 80,
             "pcAvgRaw": 0.8,
             "quarterGrade": 80,
+            "quarterGradeBase": 80,
             "quizDone": 3,
             "quizDue": 3,
             "quizTodo": [],
@@ -3231,16 +3327,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -3268,16 +3370,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -3305,16 +3413,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -3382,12 +3496,7 @@
         "gradebook": {
           "quarters": {
             "Q1": {
-              "categoryAverages": {
-                "Blooket": 80,
-                "Lesson": 100,
-                "Progress Check": 55,
-                "Quizzes": 100
-              },
+              "categoryAverages": {},
               "cells": {
                 "BL:1.1": null,
                 "BL:1.2": null,
@@ -3639,14 +3748,15 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": -59.7,
+                "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (12.7); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 72.4,
+                "schoologyTotal": null,
                 "v3Total": 12.7,
                 "workAvg": 18.1
               },
-              "schoologyTotal": 72.4,
+              "schoologyTotal": null,
               "v3Total": 12.7
             },
             "Q2": {
@@ -3694,6 +3804,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -3748,6 +3859,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -3802,6 +3914,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -3974,6 +4087,10 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [
+              "3.1"
+            ],
+            "aheadLessons": 1,
             "blooketDone": 1,
             "blooketDue": 5,
             "blooketTodo": [
@@ -3983,12 +4100,16 @@
               "2.1"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 5,
             "lessonsGraded": 1,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 12.7,
+            "quarterGradeBase": 12.7,
             "quizDone": 1,
             "quizDue": 5,
             "quizTodo": [
@@ -4025,16 +4146,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -4062,16 +4189,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -4099,16 +4232,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -4418,6 +4557,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of PC = 70% of Work = the mean of the two tracks (0); Schoology applies no floor or ceiling.",
                 "schoologyTotal": null,
@@ -4472,6 +4612,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -4526,6 +4667,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -4580,6 +4722,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -4733,6 +4876,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 4,
             "blooketTodo": [
@@ -4742,12 +4887,16 @@
               "2.1"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 4,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 0,
+            "quarterGradeBase": 0,
             "quizDone": 0,
             "quizDue": 4,
             "quizTodo": [
@@ -4784,16 +4933,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -4821,16 +4976,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -4858,16 +5019,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -5175,6 +5342,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": -90.7,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (9.3); Schoology applies no floor or ceiling.",
                 "schoologyTotal": 100,
@@ -5229,6 +5397,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -5283,6 +5452,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -5337,6 +5507,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -5497,6 +5668,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 3,
             "blooketTodo": [
@@ -5505,12 +5678,16 @@
               "1.5"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 9.3,
+            "quarterGradeBase": 9.3,
             "quizDone": 1,
             "quizDue": 3,
             "quizTodo": [
@@ -5545,16 +5722,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -5582,16 +5765,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -5619,16 +5808,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -5947,6 +6142,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": 0,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of PC = 70% of Work = the mean of the two tracks (0); Schoology applies no floor or ceiling.",
                 "schoologyTotal": 0,
@@ -6001,6 +6197,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -6055,6 +6252,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -6109,6 +6307,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -6269,6 +6468,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 3,
             "blooketTodo": [
@@ -6277,12 +6478,16 @@
               "1.5"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 0,
+            "quarterGradeBase": 0,
             "quizDone": 1,
             "quizDue": 3,
             "quizTodo": [
@@ -6317,16 +6522,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -6354,16 +6565,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -6391,16 +6608,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -6725,6 +6948,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": -25.5,
+                "earlyBonus": 0,
                 "pcAvg": 85,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (59.5); Schoology applies no floor or ceiling.",
                 "schoologyTotal": 85,
@@ -6779,6 +7003,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -6833,6 +7058,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -6887,6 +7113,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -7040,6 +7267,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 4,
             "blooketTodo": [
@@ -7049,12 +7278,16 @@
               "2.1"
             ],
             "ceiling": 90,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 4,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 85,
             "pcAvgRaw": 0.8500000000000001,
             "quarterGrade": 59.5,
+            "quarterGradeBase": 59.5,
             "quizDone": 0,
             "quizDue": 4,
             "quizTodo": [
@@ -7091,16 +7324,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -7128,16 +7367,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -7165,16 +7410,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -7503,6 +7754,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": -77.5,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (2.5); Schoology applies no floor or ceiling.",
                 "schoologyTotal": 80,
@@ -7557,6 +7809,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -7611,6 +7864,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -7665,6 +7919,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -7818,6 +8073,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 1,
             "blooketDue": 3,
             "blooketTodo": [
@@ -7825,12 +8082,16 @@
               "1.5"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 2.5,
+            "quarterGradeBase": 2.5,
             "quizDone": 0,
             "quizDue": 3,
             "quizTodo": [
@@ -7866,16 +8127,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -7903,16 +8170,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -7940,16 +8213,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -8266,6 +8545,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of PC = 70% of Work = the mean of the two tracks (0); Schoology applies no floor or ceiling.",
                 "schoologyTotal": null,
@@ -8320,6 +8600,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -8374,6 +8655,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -8428,6 +8710,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -8581,6 +8864,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 3,
             "blooketTodo": [
@@ -8589,12 +8874,16 @@
               "1.5"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 0,
+            "quarterGradeBase": 0,
             "quizDone": 0,
             "quizDue": 3,
             "quizTodo": [
@@ -8630,16 +8919,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -8667,16 +8962,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -8704,16 +9005,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -9032,6 +9339,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": -77.5,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (2.5); Schoology applies no floor or ceiling.",
                 "schoologyTotal": 80,
@@ -9086,6 +9394,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -9140,6 +9449,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -9194,6 +9504,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -9347,6 +9658,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 1,
             "blooketDue": 3,
             "blooketTodo": [
@@ -9354,12 +9667,16 @@
               "1.5"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 2.5,
+            "quarterGradeBase": 2.5,
             "quizDone": 0,
             "quizDue": 3,
             "quizTodo": [
@@ -9395,16 +9712,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -9432,16 +9755,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -9469,16 +9798,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -9800,6 +10135,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": -45.1,
+                "earlyBonus": 0,
                 "pcAvg": 25,
                 "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (23.7); Schoology applies no floor or ceiling.",
                 "schoologyTotal": 68.8,
@@ -9854,6 +10190,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -9908,6 +10245,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -9962,6 +10300,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -10134,6 +10473,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 1,
             "blooketDue": 4,
             "blooketTodo": [
@@ -10142,12 +10483,16 @@
               "1.5"
             ],
             "ceiling": 83.3,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 4,
             "lessonsGraded": 1,
             "lessonsTotal": 5,
             "pcAvg": 25,
             "pcAvgRaw": 0.25,
             "quarterGrade": 23.7,
+            "quarterGradeBase": 23.7,
             "quizDone": 1,
             "quizDue": 4,
             "quizTodo": [
@@ -10183,16 +10528,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -10220,16 +10571,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -10257,16 +10614,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -10330,12 +10693,7 @@
         "gradebook": {
           "quarters": {
             "Q1": {
-              "categoryAverages": {
-                "Blooket": 70,
-                "Lesson": 100,
-                "Progress Check": 50,
-                "Quizzes": 100
-              },
+              "categoryAverages": {},
               "cells": {
                 "BL:1.1": null,
                 "BL:1.2": null,
@@ -10587,14 +10945,15 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": -53.2,
+                "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (15.6); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 68.8,
+                "schoologyTotal": null,
                 "v3Total": 15.6,
                 "workAvg": 22.3
               },
-              "schoologyTotal": 68.8,
+              "schoologyTotal": null,
               "v3Total": 15.6
             },
             "Q2": {
@@ -10642,6 +11001,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -10696,6 +11056,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -10750,6 +11111,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -10922,6 +11284,10 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [
+              "2.1"
+            ],
+            "aheadLessons": 1,
             "blooketDone": 1,
             "blooketDue": 4,
             "blooketTodo": [
@@ -10930,12 +11296,16 @@
               "1.5"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 4,
             "lessonsGraded": 1,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 15.6,
+            "quarterGradeBase": 15.6,
             "quizDone": 1,
             "quizDue": 4,
             "quizTodo": [
@@ -10971,16 +11341,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -11008,16 +11384,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -11045,16 +11427,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -11373,6 +11761,7 @@
               "reconciliation": {
                 "branch": "ceiling",
                 "delta": -86.9,
+                "earlyBonus": 0,
                 "pcAvg": 0,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (13.1); Schoology applies no floor or ceiling.",
                 "schoologyTotal": 100,
@@ -11427,6 +11816,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -11481,6 +11871,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -11535,6 +11926,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -11694,6 +12086,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 3,
             "blooketTodo": [
@@ -11702,12 +12096,16 @@
               "1.5"
             ],
             "ceiling": 100,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 3,
             "lessonsGraded": 1,
             "lessonsTotal": 5,
             "pcAvg": 0,
             "pcAvgRaw": 0,
             "quarterGrade": 13.1,
+            "quarterGradeBase": 13.1,
             "quizDone": 0,
             "quizDue": 3,
             "quizTodo": [
@@ -11741,16 +12139,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -11778,16 +12182,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -11815,16 +12225,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -11906,8 +12322,7 @@
             "Q1": {
               "categoryAverages": {
                 "Lesson": 100,
-                "Progress Check": 53.3,
-                "Quizzes": 100
+                "Progress Check": 30
               },
               "cells": {
                 "BL:1.1": null,
@@ -12160,14 +12575,15 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": -43.8,
+                "delta": -19.2,
+                "earlyBonus": 0,
                 "pcAvg": 30,
                 "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (27); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 70.8,
+                "schoologyTotal": 46.2,
                 "v3Total": 27,
                 "workAvg": 24
               },
-              "schoologyTotal": 70.8,
+              "schoologyTotal": 46.2,
               "v3Total": 27
             },
             "Q2": {
@@ -12215,6 +12631,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -12269,6 +12686,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -12323,6 +12741,7 @@
               "reconciliation": {
                 "branch": "none",
                 "delta": null,
+                "earlyBonus": 0,
                 "pcAvg": null,
                 "reason": "No graded tracks yet this quarter.",
                 "schoologyTotal": null,
@@ -12495,6 +12914,8 @@
         ],
         "quarters": {
           "Q1": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 4,
             "blooketTodo": [
@@ -12504,12 +12925,16 @@
               "2.1"
             ],
             "ceiling": 80,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 5,
             "lessonsGraded": 2,
             "lessonsTotal": 5,
             "pcAvg": 30,
             "pcAvgRaw": 0.3,
             "quarterGrade": 27,
+            "quarterGradeBase": 27,
             "quizDone": 1,
             "quizDue": 5,
             "quizTodo": [
@@ -12546,16 +12971,22 @@
             }
           },
           "Q2": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -12583,16 +13014,22 @@
             }
           },
           "Q3": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -12620,16 +13057,22 @@
             }
           },
           "Q4": {
+            "aheadKeys": [],
+            "aheadLessons": 0,
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
             "ceiling": null,
+            "earlyBonus": 0,
+            "earlyKeys": [],
+            "earlyLessons": 0,
             "lessonsDue": 0,
             "lessonsGraded": 0,
             "lessonsTotal": 0,
             "pcAvg": null,
             "pcAvgRaw": null,
             "quarterGrade": null,
+            "quarterGradeBase": null,
             "quizDone": 0,
             "quizDue": 0,
             "quizTodo": [],
@@ -12734,12 +13177,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -12747,36 +13190,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -12788,10 +13231,10 @@
         "quarters": {
           "Q1": {
             "categoryAverages": {
-              "Blooket": 70,
-              "Lesson": 73.3,
-              "Progress Check": 60,
-              "Quizzes": 66.7
+              "Blooket": 60,
+              "Lesson": 60,
+              "Progress Check": 45,
+              "Quizzes": 50
             },
             "cells": {
               "BL:1.1": 80,
@@ -13044,14 +13487,15 @@
             ],
             "reconciliation": {
               "branch": "max",
-              "delta": -18.9,
+              "delta": -4.2,
+              "earlyBonus": 0,
               "pcAvg": 45,
-              "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 45.2), while Schoology averages the categories (64.1).",
-              "schoologyTotal": 64.1,
+              "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 45.2), while Schoology averages the categories (49.4).",
+              "schoologyTotal": 49.4,
               "v3Total": 45.2,
               "workAvg": 45.2
             },
-            "schoologyTotal": 64.1,
+            "schoologyTotal": 49.4,
             "v3Total": 45.2
           },
           "Q2": {
@@ -13099,6 +13543,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -13153,6 +13598,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -13207,6 +13653,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -13417,6 +13864,10 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [
+            "3.1"
+          ],
+          "aheadLessons": 1,
           "blooketDone": 3,
           "blooketDue": 5,
           "blooketTodo": [
@@ -13424,12 +13875,16 @@
             "1.5"
           ],
           "ceiling": 77.2,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 5,
           "lessonsGraded": 3,
           "lessonsTotal": 5,
           "pcAvg": 45,
           "pcAvgRaw": 0.44999999999999996,
           "quarterGrade": 45.2,
+          "quarterGradeBase": 45.2,
           "quizDone": 3,
           "quizDue": 5,
           "quizTodo": [
@@ -13462,16 +13917,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -13499,16 +13960,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -13536,16 +14003,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -13628,12 +14101,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -13641,36 +14114,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -13939,6 +14412,7 @@
             "reconciliation": {
               "branch": "max",
               "delta": 35.3,
+              "earlyBonus": 0,
               "pcAvg": 40,
               "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 100), while Schoology averages the categories (64.7).",
               "schoologyTotal": 64.7,
@@ -13993,6 +14467,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -14047,6 +14522,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -14101,6 +14577,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -14311,16 +14788,22 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 3,
           "blooketDue": 3,
           "blooketTodo": [],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 3,
           "lessonsTotal": 5,
           "pcAvg": 40,
           "pcAvgRaw": 0.4,
           "quarterGrade": 100,
+          "quarterGradeBase": 100,
           "quizDone": 3,
           "quizDue": 3,
           "quizTodo": [],
@@ -14350,16 +14833,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -14387,16 +14876,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -14424,16 +14919,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -14496,12 +14997,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -14509,36 +15010,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -14807,6 +15308,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": 7.8,
+              "earlyBonus": 0,
               "pcAvg": 70,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (49); Schoology applies no floor or ceiling.",
               "schoologyTotal": 41.2,
@@ -14861,6 +15363,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -14915,6 +15418,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -14969,6 +15473,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -15161,16 +15666,22 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 3,
           "blooketDue": 3,
           "blooketTodo": [],
           "ceiling": 63,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 3,
           "lessonsTotal": 5,
           "pcAvg": 70,
           "pcAvgRaw": 0.7,
           "quarterGrade": 49,
+          "quarterGradeBase": 49,
           "quizDone": 3,
           "quizDue": 3,
           "quizTodo": [],
@@ -15200,16 +15711,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -15237,16 +15754,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -15274,16 +15797,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -15346,12 +15875,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -15359,36 +15888,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -15657,6 +16186,7 @@
             "reconciliation": {
               "branch": "max",
               "delta": 12.4,
+              "earlyBonus": 0,
               "pcAvg": 80,
               "reason": "Both tracks clear the 40 floor, so v3 takes the higher (PC 80), while Schoology averages the categories (67.6).",
               "schoologyTotal": 67.6,
@@ -15711,6 +16241,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -15765,6 +16296,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -15819,6 +16351,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -16029,16 +16562,22 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 3,
           "blooketDue": 3,
           "blooketTodo": [],
           "ceiling": 93.3,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 3,
           "lessonsTotal": 5,
           "pcAvg": 80,
           "pcAvgRaw": 0.8,
           "quarterGrade": 80,
+          "quarterGradeBase": 80,
           "quizDone": 3,
           "quizDue": 3,
           "quizTodo": [],
@@ -16068,16 +16607,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -16105,16 +16650,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -16142,16 +16693,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -16214,12 +16771,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -16227,36 +16784,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -16267,12 +16824,7 @@
       "gradebook": {
         "quarters": {
           "Q1": {
-            "categoryAverages": {
-              "Blooket": 80,
-              "Lesson": 100,
-              "Progress Check": 55,
-              "Quizzes": 100
-            },
+            "categoryAverages": {},
             "cells": {
               "BL:1.1": null,
               "BL:1.2": null,
@@ -16524,14 +17076,15 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": -59.7,
+              "delta": null,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (12.7); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 72.4,
+              "schoologyTotal": null,
               "v3Total": 12.7,
               "workAvg": 18.1
             },
-            "schoologyTotal": 72.4,
+            "schoologyTotal": null,
             "v3Total": 12.7
           },
           "Q2": {
@@ -16579,6 +17132,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -16633,6 +17187,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -16687,6 +17242,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -16859,6 +17415,10 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [
+            "3.1"
+          ],
+          "aheadLessons": 1,
           "blooketDone": 1,
           "blooketDue": 5,
           "blooketTodo": [
@@ -16868,12 +17428,16 @@
             "2.1"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 5,
           "lessonsGraded": 1,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 12.7,
+          "quarterGradeBase": 12.7,
           "quizDone": 1,
           "quizDue": 5,
           "quizTodo": [
@@ -16910,16 +17474,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -16947,16 +17517,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -16984,16 +17560,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -17049,12 +17631,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -17062,36 +17644,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -17355,6 +17937,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of PC = 70% of Work = the mean of the two tracks (0); Schoology applies no floor or ceiling.",
               "schoologyTotal": null,
@@ -17409,6 +17992,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -17463,6 +18047,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -17517,6 +18102,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -17670,6 +18256,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 4,
           "blooketTodo": [
@@ -17679,12 +18267,16 @@
             "2.1"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 4,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 0,
+          "quarterGradeBase": 0,
           "quizDone": 0,
           "quizDue": 4,
           "quizTodo": [
@@ -17721,16 +18313,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -17758,16 +18356,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -17795,16 +18399,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -17856,12 +18466,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -17869,36 +18479,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -18164,6 +18774,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": -90.7,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (9.3); Schoology applies no floor or ceiling.",
               "schoologyTotal": 100,
@@ -18218,6 +18829,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -18272,6 +18884,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -18326,6 +18939,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -18486,6 +19100,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 3,
           "blooketTodo": [
@@ -18494,12 +19110,16 @@
             "1.5"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 9.3,
+          "quarterGradeBase": 9.3,
           "quizDone": 1,
           "quizDue": 3,
           "quizTodo": [
@@ -18534,16 +19154,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -18571,16 +19197,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -18608,16 +19240,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -18680,12 +19318,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -18693,36 +19331,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -18988,6 +19626,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": 0,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of PC = 70% of Work = the mean of the two tracks (0); Schoology applies no floor or ceiling.",
               "schoologyTotal": 0,
@@ -19042,6 +19681,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -19096,6 +19736,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -19150,6 +19791,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -19310,6 +19952,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 3,
           "blooketTodo": [
@@ -19318,12 +19962,16 @@
             "1.5"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 0,
+          "quarterGradeBase": 0,
           "quizDone": 1,
           "quizDue": 3,
           "quizTodo": [
@@ -19358,16 +20006,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -19395,16 +20049,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -19432,16 +20092,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -19510,12 +20176,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -19523,36 +20189,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -19818,6 +20484,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": -25.5,
+              "earlyBonus": 0,
               "pcAvg": 85,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (59.5); Schoology applies no floor or ceiling.",
               "schoologyTotal": 85,
@@ -19872,6 +20539,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -19926,6 +20594,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -19980,6 +20649,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -20133,6 +20803,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 4,
           "blooketTodo": [
@@ -20142,12 +20814,16 @@
             "2.1"
           ],
           "ceiling": 90,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 4,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 85,
           "pcAvgRaw": 0.8500000000000001,
           "quarterGrade": 59.5,
+          "quarterGradeBase": 59.5,
           "quizDone": 0,
           "quizDue": 4,
           "quizTodo": [
@@ -20184,16 +20860,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -20221,16 +20903,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -20258,16 +20946,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -20340,12 +21034,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -20353,36 +21047,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -20648,6 +21342,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": -77.5,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (2.5); Schoology applies no floor or ceiling.",
               "schoologyTotal": 80,
@@ -20702,6 +21397,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -20756,6 +21452,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -20810,6 +21507,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -20963,6 +21661,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 1,
           "blooketDue": 3,
           "blooketTodo": [
@@ -20970,12 +21670,16 @@
             "1.5"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 2.5,
+          "quarterGradeBase": 2.5,
           "quizDone": 0,
           "quizDue": 3,
           "quizTodo": [
@@ -21011,16 +21715,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -21048,16 +21758,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -21085,16 +21801,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -21157,12 +21879,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -21170,36 +21892,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -21463,6 +22185,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of PC = 70% of Work = the mean of the two tracks (0); Schoology applies no floor or ceiling.",
               "schoologyTotal": null,
@@ -21517,6 +22240,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -21571,6 +22295,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -21625,6 +22350,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -21778,6 +22504,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 3,
           "blooketTodo": [
@@ -21786,12 +22514,16 @@
             "1.5"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 0,
+          "quarterGradeBase": 0,
           "quizDone": 0,
           "quizDue": 3,
           "quizTodo": [
@@ -21827,16 +22559,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -21864,16 +22602,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -21901,16 +22645,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -21973,12 +22723,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -21986,36 +22736,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -22281,6 +23031,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": -77.5,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (2.5); Schoology applies no floor or ceiling.",
               "schoologyTotal": 80,
@@ -22335,6 +23086,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -22389,6 +23141,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -22443,6 +23196,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -22596,6 +23350,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 1,
           "blooketDue": 3,
           "blooketTodo": [
@@ -22603,12 +23359,16 @@
             "1.5"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 2.5,
+          "quarterGradeBase": 2.5,
           "quizDone": 0,
           "quizDue": 3,
           "quizTodo": [
@@ -22644,16 +23404,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -22681,16 +23447,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -22718,16 +23490,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -22790,12 +23568,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -22803,36 +23581,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -23101,6 +23879,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": -45.1,
+              "earlyBonus": 0,
               "pcAvg": 25,
               "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (23.7); Schoology applies no floor or ceiling.",
               "schoologyTotal": 68.8,
@@ -23155,6 +23934,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -23209,6 +23989,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -23263,6 +24044,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -23435,6 +24217,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 1,
           "blooketDue": 4,
           "blooketTodo": [
@@ -23443,12 +24227,16 @@
             "1.5"
           ],
           "ceiling": 83.3,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 4,
           "lessonsGraded": 1,
           "lessonsTotal": 5,
           "pcAvg": 25,
           "pcAvgRaw": 0.25,
           "quarterGrade": 23.7,
+          "quarterGradeBase": 23.7,
           "quizDone": 1,
           "quizDue": 4,
           "quizTodo": [
@@ -23484,16 +24272,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -23521,16 +24315,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -23558,16 +24358,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -23630,12 +24436,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -23643,36 +24449,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -23683,12 +24489,7 @@
       "gradebook": {
         "quarters": {
           "Q1": {
-            "categoryAverages": {
-              "Blooket": 70,
-              "Lesson": 100,
-              "Progress Check": 50,
-              "Quizzes": 100
-            },
+            "categoryAverages": {},
             "cells": {
               "BL:1.1": null,
               "BL:1.2": null,
@@ -23940,14 +24741,15 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": -53.2,
+              "delta": null,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (15.6); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 68.8,
+              "schoologyTotal": null,
               "v3Total": 15.6,
               "workAvg": 22.3
             },
-            "schoologyTotal": 68.8,
+            "schoologyTotal": null,
             "v3Total": 15.6
           },
           "Q2": {
@@ -23995,6 +24797,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -24049,6 +24852,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -24103,6 +24907,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -24275,6 +25080,10 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [
+            "2.1"
+          ],
+          "aheadLessons": 1,
           "blooketDone": 1,
           "blooketDue": 4,
           "blooketTodo": [
@@ -24283,12 +25092,16 @@
             "1.5"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 4,
           "lessonsGraded": 1,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 15.6,
+          "quarterGradeBase": 15.6,
           "quizDone": 1,
           "quizDue": 4,
           "quizTodo": [
@@ -24324,16 +25137,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -24361,16 +25180,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -24398,16 +25223,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -24470,12 +25301,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -24483,36 +25314,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -24778,6 +25609,7 @@
             "reconciliation": {
               "branch": "ceiling",
               "delta": -86.9,
+              "earlyBonus": 0,
               "pcAvg": 0,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (13.1); Schoology applies no floor or ceiling.",
               "schoologyTotal": 100,
@@ -24832,6 +25664,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -24886,6 +25719,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -24940,6 +25774,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -25099,6 +25934,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 3,
           "blooketTodo": [
@@ -25107,12 +25944,16 @@
             "1.5"
           ],
           "ceiling": 100,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 3,
           "lessonsGraded": 1,
           "lessonsTotal": 5,
           "pcAvg": 0,
           "pcAvgRaw": 0,
           "quarterGrade": 13.1,
+          "quarterGradeBase": 13.1,
           "quizDone": 0,
           "quizDue": 3,
           "quizTodo": [
@@ -25146,16 +25987,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -25183,16 +26030,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -25220,16 +26073,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -25304,12 +26163,12 @@
         },
         "quarters": {
           "Q1": {
-            "end": "2026-11-13",
+            "end": "2026-11-06",
             "pcAnchor": {
               "p100": 60,
               "p85": 40
             },
-            "start": "2026-09-09",
+            "start": "2026-09-02",
             "units": [
               1,
               2,
@@ -25317,36 +26176,36 @@
             ]
           },
           "Q2": {
-            "end": "2027-01-29",
+            "end": "2027-01-22",
             "pcAnchor": {
               "p100": 64,
               "p85": 45
             },
-            "start": "2026-11-14",
+            "start": "2026-11-09",
             "units": [
               4,
               5
             ]
           },
           "Q3": {
-            "end": "2027-04-09",
+            "end": "2027-04-14",
             "pcAnchor": {
               "p100": 67,
               "p85": 50
             },
-            "start": "2027-01-30",
+            "start": "2027-01-25",
             "units": [
               6,
               7
             ]
           },
           "Q4": {
-            "end": "2027-06-23",
+            "end": "2027-06-17",
             "pcAnchor": {
               "p100": 70,
               "p85": 55
             },
-            "start": "2027-04-10",
+            "start": "2027-04-15",
             "units": [
               8,
               9
@@ -25359,8 +26218,7 @@
           "Q1": {
             "categoryAverages": {
               "Lesson": 100,
-              "Progress Check": 53.3,
-              "Quizzes": 100
+              "Progress Check": 30
             },
             "cells": {
               "BL:1.1": null,
@@ -25613,14 +26471,15 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": -43.8,
+              "delta": -19.2,
+              "earlyBonus": 0,
               "pcAvg": 30,
               "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (27); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 70.8,
+              "schoologyTotal": 46.2,
               "v3Total": 27,
               "workAvg": 24
             },
-            "schoologyTotal": 70.8,
+            "schoologyTotal": 46.2,
             "v3Total": 27
           },
           "Q2": {
@@ -25668,6 +26527,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -25722,6 +26582,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -25776,6 +26637,7 @@
             "reconciliation": {
               "branch": "none",
               "delta": null,
+              "earlyBonus": 0,
               "pcAvg": null,
               "reason": "No graded tracks yet this quarter.",
               "schoologyTotal": null,
@@ -25948,6 +26810,8 @@
       "ok": true,
       "quarters": {
         "Q1": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 4,
           "blooketTodo": [
@@ -25957,12 +26821,16 @@
             "2.1"
           ],
           "ceiling": 80,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 5,
           "lessonsGraded": 2,
           "lessonsTotal": 5,
           "pcAvg": 30,
           "pcAvgRaw": 0.3,
           "quarterGrade": 27,
+          "quarterGradeBase": 27,
           "quizDone": 1,
           "quizDue": 5,
           "quizTodo": [
@@ -25999,16 +26867,22 @@
           }
         },
         "Q2": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -26036,16 +26910,22 @@
           }
         },
         "Q3": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],
@@ -26073,16 +26953,22 @@
           }
         },
         "Q4": {
+          "aheadKeys": [],
+          "aheadLessons": 0,
           "blooketDone": 0,
           "blooketDue": 0,
           "blooketTodo": [],
           "ceiling": null,
+          "earlyBonus": 0,
+          "earlyKeys": [],
+          "earlyLessons": 0,
           "lessonsDue": 0,
           "lessonsGraded": 0,
           "lessonsTotal": 0,
           "pcAvg": null,
           "pcAvgRaw": null,
           "quarterGrade": null,
+          "quarterGradeBase": null,
           "quizDone": 0,
           "quizDue": 0,
           "quizTodo": [],

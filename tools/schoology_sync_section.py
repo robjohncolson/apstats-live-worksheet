@@ -31,8 +31,46 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
+
+SCHOOL_TZ = "America/New_York"
+
+
+def _eastern_offset_hours(utc_dt: datetime) -> int:
+    """US Eastern UTC offset without tzdata: -4 during DST (2nd Sun Mar 2am ->
+    1st Sun Nov 2am local), else -5. Windows CPython has no tz database unless the
+    `tzdata` pip package is installed, so zoneinfo is only a first attempt."""
+    def nth_sunday(month: int, n: int) -> datetime:
+        first = datetime(utc_dt.year, month, 1)
+        first_sun = first + timedelta(days=(6 - first.weekday()) % 7)
+        return first_sun + timedelta(days=7 * (n - 1))
+    start = nth_sunday(3, 2).replace(hour=7)   # 2am EST == 07:00 UTC
+    end = nth_sunday(11, 1).replace(hour=6)    # 2am EDT == 06:00 UTC
+    return -4 if start <= utc_dt < end else -5
+
+
+def today_school_date() -> str:
+    """Today's date (YYYY-MM-DD) in school time -- the default --through date."""
+    try:
+        from zoneinfo import ZoneInfo  # optional on Windows (needs the tzdata package)
+        return datetime.now(ZoneInfo(SCHOOL_TZ)).strftime("%Y-%m-%d")
+    except Exception:  # ZoneInfoNotFoundError on a box without tzdata
+        now = datetime.utcnow()
+        return (now + timedelta(hours=_eastern_offset_hours(now))).strftime("%Y-%m-%d")
+
+
+def filter_scope_through(items: list, through_date: str | None) -> list:
+    """Keep only scope items whose due_date has arrived (due_date <= through_date).
+
+    SY2627 (teacher 2026-09-03): Schoology must show ONLY work that is due, so
+    columns for future lessons are neither created nor graded until their day.
+    A None through_date disables the gate (summer mock / explicit override).
+    Undated items are dropped when a gate is active.
+    """
+    if through_date is None:
+        return list(items)
+    return [i for i in items if i.get("due_date") and i["due_date"] <= through_date]
 
 # ---------------------------------------------------------------------------
 # Path bootstrap -- allow running from any cwd
@@ -604,8 +642,12 @@ def sync_section(
     granularity: str = "lesson",
     quiz_topics=None,
     blooket_topics=None,
+    through_date: str | None = None,
 ) -> dict:
     """Orchestrate one full sync for a single section.
+
+    through_date: only scope items due on/before this YYYY-MM-DD are created and
+    graded (None = no gate; the summer mock passes None via force_mp_date).
 
     Parameters
     ----------
@@ -636,6 +678,10 @@ def sync_section(
         )
     else:
         scope_items = build_scope(schedule, section)
+    if through_date is not None and not force_mp_date:
+        before = len(scope_items)
+        scope_items = filter_scope_through(scope_items, through_date)
+        print(f"[sync_section] --through {through_date}: {len(scope_items)} of {before} scope items are due")
     if limit is not None:
         scope_items = scope_items[:limit]
 
@@ -706,6 +752,15 @@ def sync_section(
             )
 
     # -- push grades -------------------------------------------------------
+    # SY2627 --through gate, grade side: targets for columns that are not yet
+    # due are DEFERRED (not errors) -- they get pushed on their day.
+    grades_deferred = 0
+    if grades and through_date is not None and not force_mp_date:
+        in_scope = {k: v for k, v in grades.items() if k[1] in scope_items_by_key}
+        grades_deferred = len(grades) - len(in_scope)
+        if grades_deferred:
+            print(f"[sync_section] --through {through_date}: {grades_deferred} grade targets deferred (not yet due)")
+        grades = in_scope
     if not grades:
         print("[4/5] No grade targets supplied -- skipping grade push.")
         grades_pushed = 0
@@ -734,6 +789,7 @@ def sync_section(
         "assignments_created": assignments_created,
         "grades_pushed": grades_pushed,
         "grades_skipped": grades_skipped,
+        "grades_deferred": grades_deferred,
         "errors": errors,
     }
 
@@ -789,6 +845,19 @@ def _parse_args(argv=None):
         default=None,
         metavar="N",
         help="Cap scope to first N items.  Useful for smoke-testing.",
+    )
+    p.add_argument(
+        "--through",
+        default=None,
+        help=(
+            "Only create/grade columns due on or before this YYYY-MM-DD "
+            "(default: today in America/New_York). Schoology shows ONLY due work."
+        ),
+    )
+    p.add_argument(
+        "--no-through",
+        action="store_true",
+        help="Disable the due-date gate (push every dated column).",
     )
     p.add_argument(
         "--granularity",
@@ -859,6 +928,7 @@ def main(argv=None):
         limit=args.limit,
         force_mp_date=force_mp_date,
         granularity=args.granularity,
+        through_date=None if args.no_through else (args.through or today_school_date()),
     )
 
 

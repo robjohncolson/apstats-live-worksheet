@@ -6,8 +6,8 @@
 // class grid). Clients just render — no grade math lives in the HTML.
 //
 // Per quarter the grid carries TWO totals, side by side:
-//   - schoologyTotal: the cells blended by CATEGORY WEIGHT (how Schoology itself
-//     computes the grade once these component cells are pushed).
+//   - schoologyTotal: the DUE + COMPLETED cells blended by CATEGORY WEIGHT (how
+//     Schoology itself computes the grade once the due cells are pushed).
 //   - v3Total:        quarters[qk].quarterGrade — the app's two-track v3 model.
 // They can differ; showing both is the point (reconciliation).
 //
@@ -258,8 +258,17 @@ export function reconcileQuarter(gradeObj, quarterKey, schoologyTotal, v3Total) 
       '); Schoology applies no floor or ceiling.';
   }
 
+  // SY2627 early-completion bonus: v3Total includes it, Schoology never does.
+  var bonus = typeof q.earlyBonus === 'number' ? q.earlyBonus : 0;
+  if (bonus > 0) {
+    var nEarly = typeof q.earlyLessons === 'number' ? q.earlyLessons : 0;
+    reason += ' Plus +' + bonus + ' early-completion bonus (' + nEarly + ' worksheet' + (nEarly === 1 ? '' : 's') +
+      ' finished by the 11:59 PM deadline) — included in the v3 total, never in Schoology.';
+  }
+
   return {
     pcAvg: pcDisp, workAvg: workDisp,
+    earlyBonus: bonus,
     schoologyTotal: schoologyTotal != null ? schoologyTotal : null,
     v3Total: v3Total != null ? v3Total : null,
     delta: delta, branch: branch, reason: reason,
@@ -276,10 +285,16 @@ export function buildGradebookRow(gradeObj, columns, weights = SCHOOLOGY_CATEGOR
 
   const cells = {};
   const catVals = {};
+  // SY2627 (teacher 2026-09-03): schoologyTotal = what the Schoology gradebook
+  // shows TODAY — only columns that are DUE (col.due !== false; a column with no
+  // resolvable date is included) and COMPLETED (non-null). Ahead-of-schedule
+  // work stays visible in `cells` but does not enter the total, because the
+  // Schoology sync (tools/schoology_sync_section.py --through) only pushes due
+  // columns. Blanks are never 0 here, matching Schoology.
   for (const col of columns) {
     const v = cellValue(col, lessonsByKey, units);
     cells[col.key] = v;
-    if (v != null) (catVals[col.category] || (catVals[col.category] = [])).push(v);
+    if (v != null && col.due !== false) (catVals[col.category] || (catVals[col.category] = [])).push(v);
   }
 
   const categoryAverages = {};

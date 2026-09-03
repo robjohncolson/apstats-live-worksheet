@@ -796,6 +796,84 @@ class TestForceMarkingPeriod(unittest.TestCase):
 # Runner
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# SY2627 (teacher 2026-09-03): Schoology shows ONLY due work -- the --through gate
+# ---------------------------------------------------------------------------
+
+from datetime import datetime  # noqa: E402
+from schoology_sync_section import filter_scope_through, today_school_date, _eastern_offset_hours  # noqa: E402
+
+
+class TestThroughGate(unittest.TestCase):
+    """Columns for future lessons are neither created nor graded until their day."""
+
+    def test_filter_keeps_only_due_items_and_drops_undated(self):
+        items = [
+            {"key": "6.1", "due_date": "2026-03-02"},
+            {"key": "6.2", "due_date": "2026-03-03"},
+            {"key": "6.3", "due_date": "2026-03-05"},
+            {"key": "9.9", "due_date": None},
+        ]
+        kept = filter_scope_through(items, "2026-03-03")
+        self.assertEqual([i["key"] for i in kept], ["6.1", "6.2"])
+
+    def test_filter_disabled_when_through_is_none(self):
+        items = [{"key": "a", "due_date": "2099-01-01"}, {"key": "b", "due_date": None}]
+        self.assertEqual(filter_scope_through(items, None), items)
+
+    def test_today_school_date_is_iso(self):
+        self.assertRegex(today_school_date(), r"^\d{4}-\d{2}-\d{2}$")
+
+    def test_sync_section_creates_only_due_assignments(self):
+        tmpdir = tempfile.mkdtemp()
+        schedule_path = _write_schedule(tmpdir)
+        state = FakeStateStore()
+        ops = FakeOps()
+        all_items = build_scope(MINI_SCHEDULE, "PeriodB")
+        first_date = min(i["due_date"] for i in all_items if i["due_date"])
+        expected = len([i for i in all_items if i["due_date"] and i["due_date"] <= first_date])
+        self.assertLess(expected, len(all_items))
+        summary = sync_section(
+            "PeriodB", "7945275782",
+            dry_run=False,
+            state=state,
+            grades={},
+            ops=ops,
+            schedule_path=schedule_path,
+            through_date=first_date,
+        )
+        self.assertEqual(summary["assignments_created"], expected)
+        self.assertEqual(len(ops.created_assignments), expected)
+
+    def test_eastern_offset_fallback_handles_dst(self):
+        self.assertEqual(_eastern_offset_hours(datetime(2026, 9, 9, 12)), -4)   # EDT
+        self.assertEqual(_eastern_offset_hours(datetime(2027, 1, 12, 12)), -5)  # EST
+        self.assertEqual(_eastern_offset_hours(datetime(2026, 11, 1, 5)), -4)   # 1am EDT, before fall-back
+        self.assertEqual(_eastern_offset_hours(datetime(2026, 11, 1, 7)), -5)   # after fall-back
+
+    def test_grade_targets_for_future_columns_are_deferred_not_errors(self):
+        tmpdir = tempfile.mkdtemp()
+        schedule_path = _write_schedule(tmpdir)
+        state = FakeStateStore()
+        ops = FakeOps()
+        all_items = build_scope(MINI_SCHEDULE, "PeriodB")
+        dated = sorted(i["due_date"] for i in all_items if i["due_date"])
+        first_date = dated[0]
+        last_key = next(i["key"] for i in all_items if i["due_date"] == dated[-1])
+        summary = sync_section(
+            "PeriodB", "7945275782",
+            dry_run=True,
+            state=state,
+            grades={("stu-1", last_key): 88.0},   # a future column -- must be deferred
+            ops=ops,
+            schedule_path=schedule_path,
+            through_date=first_date,
+        )
+        self.assertEqual(summary["grades_deferred"], 1)
+        self.assertEqual(summary["grades_pushed"], 0)
+        self.assertFalse(any("No scope item" in e for e in summary["errors"]))
+
+
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromModule(sys.modules[__name__])
