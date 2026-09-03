@@ -1,14 +1,17 @@
-# APS_DOK_LADDER_SPEC.md — One DOK 1→2→3 ladder per AP Stats lesson day
+# APS_DOK_LADDER_SPEC.md — One DOK-3 problem per AP Stats lesson day, laddered 1→2→3 inside
 
-**Purpose:** give every dated lesson day of SY26-27 a one-sheet paper task ladder: two
-DOK-1 warm-ups, two DOK-2 builds, and ONE starred DOK-3 focus task that the class works
-in Explore. Student edition + teacher edition (answers, questions to ask, scoring guide),
-generated from a YAML per lesson and an item registry, typeset in LaTeX, published as PDFs
-the Desk can link.
+**Purpose:** give every dated lesson day of SY26-27 ONE DOK-3 problem that bookends the
+period: it goes up on the board as the warm-up (students commit a *first take* before the
+video), the video follow-along carries the DOK-1/2 work, and students finish the problem
+and turn it in as the exit ticket. The problem's parts (a)(b)(c) ladder DOK 1 → 2 → 3 so
+every student gets a foothold. Three editions — student sheet, board slide, teacher key
+(answers, questions to ask, E/P/I scoring guide) — generated from a YAML per lesson and an
+item registry, typeset in LaTeX, published as PDFs the Desk can link.
 
-> **Status:** proposed (2026-09-03). **Owner:** teacher. **Workflow:** brainstorm (2026-09-03)
-> → this spec → stress-test 3 ladders → fan-out. Grade-INERT in v1. Nothing in the app
-> changes until Phase 5, which is optional.
+> **Status:** proposed (2026-09-03, revised the same day to the teacher's class flow — §6).
+> **Owner:** teacher. **Workflow:** brainstorm (2026-09-03) → this spec → stress-test 3
+> problems → fan-out. Grade-INERT in v1. Nothing in the app changes until Phase 5, which is
+> optional.
 
 ---
 
@@ -40,9 +43,12 @@ untouched.
 ## 1. Goals / Non-goals
 
 Goals:
-1. **One sheet per dated lesson day**, 66 per period-year, student + teacher editions, PDF.
-2. **Exactly one DOK-3 per day** (or an honest, declared "no DOK-3 today" — §1.3). The DOK-3 is
-   the thing the class focuses on; everything above it primes it.
+1. **One problem per dated lesson day**, 66 per period-year; student sheet + board slide +
+   teacher key, PDF.
+2. **Exactly one DOK-3 per day** (or an honest, declared "no DOK-3 today" — §1.3). It is the
+   warm-up AND the exit ticket: seen first, finished last, turned in. Its parts ladder
+   (a) DOK-1 identify → (b) DOK-2 describe/compute → (c) DOK-3 adjudicate/justify, so the
+   *first take* at the start of class has a foothold and the video work feeds (b) and (c).
 3. **AP-authentic DOK-3.** Every DOK-3 names the CED skill code it exercises and the released-FRQ
    pattern it rehearses (pattern DESCRIBED in the registry, never the copyrighted item).
 4. **Evaluator-legible teacher edition**: phase tag, DOK, minutes, `Questions to ask`, `Adult
@@ -96,8 +102,9 @@ a 66-day fan-out tractable.
 
 Some days carry no honest DOK-3 (e.g. OLD 1.3 "tables for a categorical variable"; the
 mechanics-only days of Unit 3 old-numbering). The YAML declares `focus: none` with a
-`desert_reason`; the ladder becomes 2 × DOK-1, 3 × DOK-2, and the teacher edition prints
-"DOK 1–2 day — objective is procedural fluency" for evaluators. Folding two days into one
+`desert_reason`; the day's problem stops at a DOK-2 part (c) and the teacher key prints
+"DOK 1–2 day — objective is procedural fluency" for evaluators. The class flow is unchanged
+(first take → video → finish → turn in). Folding two days into one
 DOK-3 is a teacher call made in the schedule, not by the author. Expected: ≤ 8 of 66.
 
 ## 2. Data model
@@ -108,17 +115,22 @@ DOK-3 is a teacher call made in the schedule, not by the author. Expected: ≤ 8
 {
   "id": "aps-1.6-d3-1",              // aps-{topicKey}-d{dok}-{k}; topicKey = OLD key from lesson-schedule.json
   "topic": "1.6",
-  "dok": 3,                           // 1 | 2 | 3
-  "role": "focus",                    // warmup | build | focus | reinforcement | exit
-  "skill": "4.B",                     // primary CED skill code (validated against framework-parse output)
+  "dok": 3,                           // the problem's TOP rung: 1 | 2 | 3
+  "role": "focus",                    // focus | reinforcement (reinforcement = optional back-of-sheet items)
+  "skill": "4.B",                     // primary CED skill code of the top rung (validated against framework-parse output)
   "lo": ["UNC-1.H", "UNC-1.I"],       // learning objectives touched
   "frq_pattern": "two-descriptions-adjudicate-then-choose-center",   // DOK-3 only
-  "dok_rationale": "Requires weighing two competing descriptions against graph features and defending a summary choice; no single procedure yields the answer.",
-  "prompt": "Two students described the commute-time histogram …",   // LaTeX-safe text
-  "parts": ["(a) …", "(b) …", "(c) …"],                               // optional lettered parts
+  "dok_rationale": "Part (c) requires weighing two competing descriptions against graph features and defending a summary choice; no single procedure yields the answer.",
+  "stem": "Two students described the commute-time histogram …",     // LaTeX-safe; shared by all parts and the board slide
+  "first_take": "Before the video: whose description do you trust more, Ana's or Ben's? One sentence, no wrong answers yet.",
+  "parts": [                          // the ladder — REQUIRED for role: focus, dok strictly non-decreasing, last part == top rung
+    {"label": "a", "dok": 1, "skill": "2.A", "prompt": "…"},
+    {"label": "b", "dok": 2, "skill": "2.B", "prompt": "…"},
+    {"label": "c", "dok": 3, "skill": "4.B", "prompt": "…"}
+  ],
   "visual": "commute_hist",           // key into the lesson YAML's visuals block, or null
-  "answer": "…",                      // teacher edition only
-  "scoring": {                        // DOK-3 only; SAME shape as ai-grading-prompts
+  "answers": {"a": "…", "b": "…", "c": "…"},   // teacher edition only
+  "scoring": {                        // top rung only; SAME shape as ai-grading-prompts
     "expectedElements": [{"id": "cites-skew", "description": "names the right skew / tail", "required": true}],
     "scoringGuide": {"E": "…", "P": "…", "I": "…"},
     "commonMistakes": ["treats the 70-min value as typical"]
@@ -130,9 +142,10 @@ DOK-3 is a teacher call made in the schedule, not by the author. Expected: ≤ 8
 ```
 
 Validation (test-enforced, §7): id pattern; `dok ∈ {1,2,3}`; `dok_rationale` ≥ 40 chars and
-contains none of the words *hard, easy, difficult*; `skill` matches `^[1-4]\.[A-F]$` and exists
-in the parsed frameworks; `role: focus` ⇒ `dok: 3` + `frq_pattern` + `scoring` present;
-`hypothetical: true` whenever `prompt` contains a number.
+contains none of the words *hard, easy, difficult*; every `skill` matches `^[1-4]\.[A-F]$` and
+exists in the parsed frameworks; `role: focus` ⇒ `first_take` + `parts` (2–4, `dok`
+non-decreasing, last == top `dok`) present, and top `dok: 3` ⇒ `frq_pattern` + `scoring`
+present; `hypothetical: true` whenever `stem` contains a number.
 
 ### 2.2 Lesson YAML — `dok/lessons/{topicKey}.yaml`
 
@@ -140,25 +153,20 @@ in the parsed frameworks; `role: focus` ⇒ `dok: 3` + `frq_pattern` + `scoring`
 topic: "1.6"                       # OLD topicKey (file/registry key)
 ced2026: { unit: 1, topic: "1.6", label: "Describing the Distribution of a Quantitative Variable" }  # printed
 title: "Describing a Distribution"
-minutes: { warmup: 4, build: 8, focus: 18, exit: 3 }   # 33 min total — see §6 for where it sits
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }   # the §6 flow; video block is the follow-along's own timing
 essential_question: "What does a reader need from a description of a distribution to trust a summary statistic?"
-rules_callout:                     # R4 — printed on the STUDENT sheet above the focus task
+rules_callout:                     # R4 — printed on the STUDENT sheet between the first-take box and the parts
   title: "DESCRIBING A DISTRIBUTION (keep on the page)"
   body: |
     Shape (symmetric / skewed left / skewed right; peaks) · Center (median or mean) ·
     Variability (range, IQR) · Unusual features (gaps, outliers) · always in CONTEXT with units.
     A long tail pulls the MEAN toward it; the MEDIAN resists.
-items:
-  warmup: [aps-1.6-d1-1, aps-1.6-d1-2]
-  build:  [aps-1.6-d2-1, aps-1.6-d2-2]
-  focus:  aps-1.6-d3-1              # or `focus: none` + desert_reason (§1.3)
-  reinforcement: [aps-1.6-d2-3]     # optional, back of sheet, not collected
-exit:                              # summary recap, NOT a CER
-  lines:
-    - "A description of a distribution must mention ___, ___, ___, and ___, in context."
-    - "The biggest thing I learned today was ___."
+focus: aps-1.6-d3-1                # the day's problem; or `focus: none` + desert_reason (§1.3)
+reinforcement: [aps-1.6-d2-3]      # optional, back of sheet, not collected
+worksheet: "u1_lesson6_live.html"  # the follow-along that fills the middle of the period (link printed on the board slide)
+exit_reflection: "One thing the video changed about my first take: ___"   # the summary line under part (c)
 teacher:                           # teacher edition only
-  phase_tag: "Explore — DOK-3 focus task"
+  phase_tag: "Do Now (first take) → Explore (video + follow-along) → Exit (finish + turn in)"
   questions_to_ask:
     - "Which feature of the graph did you look at first? Why that one?"
     - "If you deleted the 70-minute student, which description changes?"
@@ -184,10 +192,10 @@ visuals:
 | `dok/lessons/{topicKey}.yaml` | one per dated lesson day (§2.2) |
 | `dok/calibration/unit{1..5}.json` | 2 DOK-2 + 2 DOK-3 *anchor descriptions* per NEW unit (what a DOK-3 in this unit looks like, which FRQ patterns) — the authoring reference, in the A2 `calibration/` spirit |
 | `dok/tex/preamble.sty` | copied from `Lesson_planning/tex/preamble.sty`; one-line header noting origin + copy date. Add `\ladderheading`, `\dokbadge{n}`, `\focusbanner`, and a `pgfplot_hist` helper |
-| `dok/build_ladder.py` | YAML + registry → `dok/tex/aps_{topicKey}_student.tex` and `_teacher.tex` (§4) |
-| `dok/compile.ps1` / `dok/compile.sh` | `pdflatex --miktex-enable-installer` both editions → `dok/pdf/aps_{topicKey}_{student,teacher}.pdf`; `-All` loops every YAML |
-| `dok/pdf/` | committed PDFs (student + teacher). GH Pages serves them. Teacher PDFs are public like every other teacher-facing spec in this repo — they contain answers to *our* items, not exam items |
-| `dok/index.html` | static TOC: one row per lesson day, dates for B and E, student/teacher PDF links, DOK-3 skill + pattern badge |
+| `dok/build_ladder.py` | YAML + registry → `dok/tex/aps_{topicKey}_{student,board,teacher}.tex` (§4) |
+| `dok/compile.ps1` / `dok/compile.sh` | `pdflatex --miktex-enable-installer` all three editions → `dok/pdf/aps_{topicKey}_{student,board,teacher}.pdf`; `-All` loops every YAML |
+| `dok/pdf/` | committed PDFs. GH Pages serves them, so the board slide opens in a browser tab on the classroom projector with no file copying. Teacher PDFs are public like every other teacher-facing spec in this repo — they contain answers to *our* items, not exam items |
+| `dok/index.html` | static TOC: one row per lesson day, dates for B and E, student / board / teacher PDF links, DOK-3 skill + pattern badge. The teacher's morning tab: click today's row, project the board slide |
 | `tests/dok-registry.test.js`, `tests/dok-coverage.test.js` | §7 |
 | `tests/test_dok_build.py` | §7 (generator emission, no-leak) |
 
@@ -203,50 +211,78 @@ Port of `build_lesson_from_yaml.py`, cut to the ladder:
 2. `load_frameworks()` — shells out to `node scripts/lib/framework-parse.mjs --json` (or reads a
    cached `data/frameworks.json` that a tiny `scripts/build-frameworks-json.mjs` emits) to
    validate `skill`/`lo` and print the LO/EK block on the teacher edition.
-3. `emit_student(lesson, registry)` → sections in order: heading (NEW CED label, date line
-   left blank) · `WARM-UP` (2 × `\bankitem`, `\dokbadge{1}`) · `BUILD` (2 ×, `\dokbadge{2}`) ·
-   rules callout (`calloutgreen`) · `\focusbanner` + the DOK-3 `\bankitem` with parts and
-   sentence frames · `EXIT` summary box · `\clearpage` · `OPTIONAL REINFORCEMENT`.
-   `\answer{}` renders to nothing. Whitespace: `\vspace{1.4in}` after each build item,
-   `\vspace{2.6in}` after the focus task (tunable per YAML `space:`).
-4. `emit_teacher(lesson, registry)` → the student body with answers rendered inline in
-   `warmred`, plus a front page: objectives/LO/EK table, `\frameworkphaseheader{Explore}{3}{18}`
-   with `questions_to_ask` / `adult_role` / `watch_for`, the DOK-3 `scoring` block as an E/P/I
-   table, and `dok_rationale` printed under each item (evaluators read these).
-5. `render_visual()` — reuse `render_pgfplot` / `render_tikz_boxes`; add `pgfplot_hist`,
+3. `emit_student(lesson, registry)` → ONE side: heading (NEW CED label, Name/Date line) ·
+   the stem + visual · **FIRST TAKE** box (`calloutyellow`, the `first_take` prompt, ~1.2in of
+   space) · rules callout (`calloutgreen`) · parts (a)(b)(c) each with a `\dokbadge{n}` and
+   graduated space (0.9in / 1.4in / 2.4in, tunable per YAML `space:`) · the `exit_reflection`
+   line · "Turn this in." Back side: `OPTIONAL REINFORCEMENT` only if declared, else blank
+   for work. `\answer{}` renders to nothing.
+4. `emit_board(lesson, registry)` → one landscape page, 28pt+: stem + visual + the
+   `first_take` prompt, the three part prompts in a column with their DOK badges, the
+   follow-along link/QR from `worksheet:`, and a footer "Finish (a)–(c) after the video —
+   turn in." No rules callout (that stays on paper), no answers. Same TikZ source as the
+   sheet so the board and the paper show the identical figure.
+5. `emit_teacher(lesson, registry)` → the student body with answers rendered inline in
+   `warmred`, plus a front page: objectives/LO/EK table,
+   `\frameworkphaseheader{Do Now → Explore → Exit}{1→3}{45}` with `questions_to_ask` /
+   `adult_role` / `watch_for`, the top-rung `scoring` block as an E/P/I table, and
+   `dok_rationale` printed under the problem (evaluators read these).
+6. `render_visual()` — reuse `render_pgfplot` / `render_tikz_boxes`; add `pgfplot_hist`,
    `boxplot` (five-number list), `dotplot`, `two_way_table`, `scatter` — the five displays
-   the course needs. No raster images in v1.
-6. Deterministic output; running twice yields byte-identical `.tex` (test).
+   the course needs. No raster images in v1. A `scale:` argument so the board edition
+   renders the same spec at 2×.
+7. Deterministic output; running twice yields byte-identical `.tex` (test).
 
-## 5. Page anatomy (student edition)
+## 5. Page anatomy
+
+Student sheet (one side; the back is blank for work unless reinforcement is declared):
 
 ```
 ┌ AP Statistics · Topic 1.6 (CED 1.6) · Describing a Distribution      Name ____ Date ____ ┐
-│ WARM-UP  [DOK 1]   1. …   2. …                                          (4 min)          │
-│ BUILD    [DOK 2]   3. …            ⟨1.4in⟩   4. …            ⟨1.4in⟩    (8 min)          │
-│ ┌ RULES: DESCRIBING A DISTRIBUTION (keep on the page) ───────────────────────────────┐ │
-│ └───────────────────────────────────────────────────────────────────────────────────┘ │
-│ ★ FOCUS TASK [DOK 3 · Skill 4.B]   5. Two students described … (a) (b) (c)  (18 min)    │
-│   sentence frame: "I would report the ___ because …"           ⟨2.6in⟩                  │
-│ EXIT — summary recap: A description must mention ___ … / Biggest thing I learned: ___  │
-└ (back) OPTIONAL REINFORCEMENT — not collected ────────────────────────────────────────┘
+│ ★ TODAY'S PROBLEM   [stem + histogram]                                                   │
+│ ┌ FIRST TAKE (before the video, 5 min) ─────────────────────────────────────────────┐   │
+│ │ Whose description do you trust more, Ana's or Ben's? One sentence.   ⟨1.2in⟩      │   │
+│ └───────────────────────────────────────────────────────────────────────────────────┘   │
+│ ┌ RULES: DESCRIBING A DISTRIBUTION (keep on the page) ──────────────────────────────┐   │
+│ └───────────────────────────────────────────────────────────────────────────────────┘   │
+│ (a) [DOK 1] …                                                     ⟨0.9in⟩               │
+│ (b) [DOK 2] …                                                     ⟨1.4in⟩               │
+│ (c) [DOK 3 · Skill 4.B] …   frame: "I would report the ___ because …"   ⟨2.4in⟩         │
+│ One thing the video changed about my first take: ______________________  → TURN IN     │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Teacher edition = 1 front page (framework block + scoring) + the annotated sheet. Target
-≤ 3 pages.
+Board slide (landscape, projected at the bell and again after the video):
 
-## 6. Where the 20 minutes come from (teacher decision — defaults chosen)
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│  TOPIC 1.6 · TODAY'S PROBLEM                                    [histogram, 2× scale]    │
+│  Two students described the commute data …  Ana: "…"   Ben: "…"                          │
+│  FIRST TAKE (5 min, on your sheet): whose description do you trust more? One sentence.   │
+│  (a) [1] …   (b) [2] …   (c) [3] …                                                       │
+│  ▶ Video + follow-along: u1_lesson6_live.html   [QR]       Finish (a)–(c) after. Turn in. │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
-The follow-along worksheet currently occupies Launch + Explore with the video. Three
-placements; the YAML `minutes` block is sized for the default.
+Teacher key = 1 front page (framework block + E/P/I scoring) + the annotated sheet. ≤ 3 pages.
 
-| Option | Shape | Trade-off |
-|---|---|---|
-| **C (default)** | Video follow-along trimmed to ~20 min (pause points only, reflections moved to homework/AI-graded revision) → ladder 30–33 min | keeps both; the worksheet's reflection textareas already accept revision any time (`project_worksheet_revision_semantics`) |
-| A | Ladder REPLACES the worksheet's post-video reflection block on the day | least time pressure; loses the AI-graded FRQ practice on the day |
-| B | Ladder is the NEXT day's Do Now A (extended, 15 min) | DOK-3 lands a day late; Do Now runs long against the framework's <10-min target |
+## 6. The class flow (teacher decision, 2026-09-03 — this is the design)
 
-Wednesday-short periods: drop `build` item 2 and the reinforcement; never cut the focus task.
+The DOK-3 problem bookends the period. It never competes with the video for time because
+the first take is short and the finish reuses what the video just taught.
+
+| Min | Phase (framework) | What happens | DOK |
+|---|---|---|---|
+| 0–5 | Do Now | Board slide up at the bell. Students read the problem and write a **first take** on their sheet: a one-sentence commitment, "no wrong answers yet." | 2 (predict) |
+| 5–33 | Launch + Explore | Video follow-along on devices — the existing worksheet, unchanged. This IS the DOK-1/2 work of the day. | 1–2 |
+| 33–43 | Explore (finish) | Board slide back up. Students finish parts (a)(b)(c) with the rules callout in front of them; teacher circulates with the printed prompts. | 1→2→3 |
+| 43–45 | Exit | One-line reflection ("what the video changed about my first take"), name on it, **turn in**. | recap |
+| later / optional | — | Quiz questions and Blooket are homework or a short after-video fun round. Neither is required for the sheet. | 1 |
+
+Rules: the first take is never graded for correctness (it is the hook); part (c) is the only
+thing the E/P/I guide scores; a Wednesday-short period cuts the reinforcement and part (b)'s
+space, never part (c). If a video runs long, the finish window shrinks to 6 min — parts are
+ordered so (a) and (b) are already answerable from the first ten minutes of the video.
 
 ## 7. Tests / invariants
 
@@ -256,14 +292,18 @@ Wednesday-short periods: drop `build` item 2 and the reinforcement; never cut th
 - **T2 coverage** (`tests/dok-coverage.test.js`): every `topicKey` with a `periods.B` date in
   `data/lesson-schedule.json` has `dok/lessons/{topicKey}.yaml` OR is listed in
   `dok/PENDING.md` (the fan-out backlog, which the test prints as a countdown). Every YAML's
-  `items.*` ids exist in the registry with the right `dok`/`role`. One and only one `focus`.
-- **T3 emission** (`tests/test_dok_build.py`): generator runs on every YAML; student `.tex`
-  contains no `\answer{` body text, no `scoring`, no `dok_rationale`; teacher `.tex` contains
-  all three; output deterministic; a fixture YAML with `focus: none` emits the desert banner.
+  `focus` / `reinforcement` ids exist in the registry with the right `role`; exactly one
+  `focus` (or `focus: none` with a `desert_reason`).
+- **T3 emission** (`tests/test_dok_build.py`): generator runs on every YAML; student and
+  board `.tex` contain no `\answer{` body text, no `scoring`, no `dok_rationale`; teacher
+  `.tex` contains all three; the board `.tex` contains the `first_take` prompt, every part
+  prompt, and the `worksheet:` link, and NOT the rules callout; output deterministic; a
+  fixture YAML with `focus: none` emits the desert banner.
 - **T4 no-leak visuals**: `visuals` blocks contain only data + labels (no `answer`-bearing
   annotations such as "outlier" arrows) — a key allow-list per `kind`.
 - **T5 compile smoke (local, not CI)**: `dok/compile.ps1 -All` exits 0 and every PDF page
-  count ≤ 2 (student) / ≤ 3 (teacher); logged in `dok/COMPILE_LOG.md` by the author.
+  count is exactly 1 (board), ≤ 2 (student) and ≤ 3 (teacher); logged in
+  `dok/COMPILE_LOG.md` by the author.
 
 CI runs T1–T4 (pure Node/Python). Compilation is teacher-laptop only (MiKTeX), like the A2 repo.
 
@@ -280,7 +320,11 @@ CI runs T1–T4 (pure Node/Python). Compilation is teacher-laptop only (MiKTeX),
 
 ## 9. Open decisions (defaults chosen; change if you want)
 
-- Placement of the 20 min **[default: §6 option C — trim the video block]**.
+- Board slide as a PDF page vs. a projectable HTML page **[default: PDF — same TikZ source as
+  the sheet, opens from `dok/index.html` on GH Pages; HTML only if the projector browser
+  fights PDF zoom]**.
+- Turned-in sheets: paper only in v1 **[default: yes; Phase 5(b) adds the typed part-(c)
+  textarea for AI grading, never replacing the paper]**.
 - Student PDFs committed to the repo (public) **[default: yes; teacher PDFs too — items are ours]**.
 - File key **[default: OLD `topicKey` like the rest of the repo; NEW CED label printed]**.
 - Bonus ("Beyond the Exam") days get ladders **[default: yes, but last, and DOK-3 optional]**.
@@ -290,47 +334,51 @@ CI runs T1–T4 (pure Node/Python). Compilation is teacher-laptop only (MiKTeX),
 - Sentence frames on every DOK-3 **[default: yes — the ELL non-negotiable from the A2 spine]**.
 - Fan-out executor **[default: Codex/agents in batches per §8; the teacher authors nothing by hand after Phase 2]**.
 
-## 10. Worked sample — Topic 1.6 (the Phase-1 ladder)
+## 10. Worked sample — Topic 1.6 (the Phase-1 problem)
 
-**WARM-UP [DOK 1]**
-1. The histogram shows commute times for 40 students. Name its shape and state which
-   interval contains the median. *(2.A — one feature each)*
-2. A long right tail pulls which measure of center toward it: the mean or the median?
-   *(UNC-1.I recall)*
+**★ TODAY'S PROBLEM** *(stem + histogram of 40 students' commute times, bins of 10 min,
+one value near 70)*
+Two students described the commute data.
+*Ana:* "Roughly symmetric, centered near 20 minutes, spread from 5 to 45."
+*Ben:* "Skewed right with a peak in the 10–20 interval; most students are under 30
+minutes; one student at about 70 minutes is an outlier."
 
-**BUILD [DOK 2]**
-3. Describe the distribution of commute times in context. Address shape, center,
-   variability, and unusual features, with units. *(2.A/2.B — multi-feature description)*
-4. The same data are redrawn with bin width 20 instead of 10. Name one feature that is
-   easier to see and one that is hidden. *(2.B — compare two displays of one dataset)*
+**FIRST TAKE (before the video, 5 min)** — Whose description do you trust more, Ana's or
+Ben's? One sentence. No wrong answers yet.
 
-**★ FOCUS TASK [DOK 3 · Skill 4.B · pattern `two-descriptions-adjudicate-then-choose-center`]**
-5. Two students described the commute data.
-   *Ana:* "Roughly symmetric, centered near 20 minutes, spread from 5 to 45."
-   *Ben:* "Skewed right with a peak in the 10–20 interval; most students are under 30
-   minutes; one student at about 70 minutes is an outlier."
-   (a) Whose description could a reader trust when choosing a summary statistic? Cite two
-   specific features of the graph that settle it.
-   (b) State which measure of center you would report for these data and why.
-   (c) Ana's "spread from 5 to 45" ignores one value. Explain what that omission would do
-   to a reader's sense of variability.
-   *Sentence frame:* "I would report the ___ because the distribution is ___, so the ___ is
-   pulled toward ___."
+*(video + follow-along `u1_lesson6_live.html`)*
 
-**EXIT — summary recap**
-A description of a distribution must mention ___, ___, ___, and ___, in context. /
-The biggest thing I learned today was ___.
+**Finish after the video:**
+(a) **[DOK 1 · 2.A]** Name the shape of the histogram and state which interval contains the
+median.
+(b) **[DOK 2 · 2.B]** Describe the distribution in context: shape, center, variability, and
+unusual features, with units.
+(c) **[DOK 3 · 4.B · pattern `two-descriptions-adjudicate-then-choose-center`]** Whose
+description could a reader trust when choosing a summary statistic? Cite two specific
+features of the graph that settle it, then state which measure of center you would report
+and why. *Frame:* "I would report the ___ because the distribution is ___, so the ___ is
+pulled toward ___."
 
-**Teacher scoring (E/P/I), abbreviated.** E: picks Ben, cites the tail AND the 70-min value,
-chooses median with a pull-toward-tail justification, and names the omitted outlier's effect
-on range. P: picks Ben with one feature, or chooses median without the mechanism. I: picks
-Ana, or chooses a center without reference to shape. Common mistake: treating the 70-minute
-value as typical; reading "skewed right" off the acronym without pointing at the tail.
+**Exit line:** One thing the video changed about my first take: ___. → Turn in.
+
+**Teacher key (E/P/I on part (c), abbreviated).** E: picks Ben, cites the tail AND the
+70-min value, chooses the median with a pull-toward-tail justification. P: picks Ben with
+one feature, or chooses the median without the mechanism. I: picks Ana, or chooses a center
+without reference to shape. Watch for: treating the 70-minute value as typical; reading
+"skewed right" off the acronym without pointing at the tail. Questions to ask while
+circulating: "Which feature did you look at first — why that one?" / "If you deleted the
+70-minute student, whose description changes?"
+
+Why this shape ladders: (a) is a one-feature read, (b) is the SOCS procedure the video just
+taught, (c) forces a judgment between two plausible descriptions and a defended choice —
+the identify → describe → adjudicate spine that recurs in every unit.
 
 ### TL;DR
 One YAML per lesson day + one JSONL item bank → a Python generator (ported from the proven
-Algebra 2 chain) emits a one-sheet DOK 1→2→3 ladder with exactly one starred DOK-3 focus
-task anchored to a CED skill code and an FRQ pattern, in student and teacher editions,
-compiled with MiKTeX and published under `dok/`. Stress-test three ladders, then fan out the
-66 dated days a unit at a time, two weeks ahead of the calendar. Grade-inert; the Desk chip
-and AI grading of the DOK-3 are an optional Phase 5.
+Algebra 2 chain) emits ONE DOK-3 problem whose parts ladder 1→2→3, in three editions:
+student sheet (first-take box at the top, finish at the bottom, turn in), board slide
+(projected at the bell and after the video), teacher key (E/P/I on the top rung). Anchored
+to a CED skill code and a described FRQ pattern, compiled with MiKTeX, published under
+`dok/`. Stress-test three problems, then fan out the 66 dated days a unit at a time, two
+weeks ahead of the calendar. Grade-inert; the Desk chip and AI grading of part (c) are an
+optional Phase 5.
