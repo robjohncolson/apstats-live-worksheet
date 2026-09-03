@@ -9897,7 +9897,6 @@ function injectPcPosterEvents(pacing){
 }
 const SY2627_PACING_B = [
   {t:"Welcome",n:"Start Here — how grades & makeups work",u:0,kind:"orientation"},
-  {t:"U1-PC1",n:"Unit 1 Baseline Check",u:1,kind:"baseline"},
   {t:"1.1",n:"1.1 · What Can We Learn from Data?",u:1},
   {t:"1.2",n:"1.2 · Variables",u:1},
   {t:"1.3",n:"1.3 · Tabular Representation & Summary Statistics (1 categorical)",u:1},
@@ -9971,7 +9970,6 @@ const SY2627_PACING_B = [
 
 const SY2627_PACING_E = [
   {t:"Welcome",n:"Start Here — how grades & makeups work",u:0,kind:"orientation"},
-  {t:"U1-PC1",n:"Unit 1 Baseline Check",u:1,kind:"baseline"},
   {t:"1.1",n:"1.1 · What Can We Learn from Data?",u:1},
   {t:"1.2",n:"1.2 · Variables",u:1},
   {t:"1.3",n:"1.3 · Tabular Representation & Summary Statistics (1 categorical)",u:1},
@@ -23777,7 +23775,7 @@ function _mountClassroomBoard(){
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-03-nbww';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-03-ikab';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

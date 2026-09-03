@@ -2,7 +2,7 @@
   "year": "SY2627",
   "blooketPresenceLen": 77,
   "blooketRequiredLen": 66,
-  "schedule_1_1_B": "2026-09-10",
+  "schedule_1_1_B": "2026-09-08",
   "frozenConfig": {
     "C": 85,
     "feederWeights": {
@@ -98,7 +98,7 @@
       "enabled": false
     }
   },
-  "artHash": "360b8c2537ddad1cf03bd67a347e22a1c9c6ed6c205aa1d6a8f18906abb5acd9",
+  "artHash": "84177fee5e77c4ce829fce7ffc4832597f84558088d9132d00bab928493cd67c",
   "grade": {
     "units": {
       "U1": {
@@ -115,18 +115,20 @@
     "quarters": {
       "Q1": {
         "units": [
-          3
+          3,
+          4
         ],
         "unitGrades": {
-          "U3": null
+          "U3": null,
+          "U4": null
         },
         "quarterGrade": 0,
         "unitsGraded": 0,
-        "unitsTotal": 1,
+        "unitsTotal": 2,
         "ceiling": 100,
-        "lessonsDue": 19,
+        "lessonsDue": 20,
         "lessonsGraded": 0,
-        "lessonsTotal": 29,
+        "lessonsTotal": 30,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,
@@ -145,13 +147,13 @@
       "Q2": {
         "units": [
           1,
-          4,
+          5,
           6,
           8
         ],
         "unitGrades": {
           "U1": null,
-          "U4": null,
+          "U5": null,
           "U6": null,
           "U8": null
         },
@@ -180,21 +182,19 @@
       "Q3": {
         "units": [
           2,
-          5,
           7
         ],
         "unitGrades": {
           "U2": null,
-          "U5": null,
           "U7": null
         },
         "quarterGrade": null,
         "unitsGraded": 0,
-        "unitsTotal": 3,
+        "unitsTotal": 2,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
-        "lessonsTotal": 10,
+        "lessonsTotal": 9,
         "pcAvg": null,
         "workAvg": null,
         "pcAvgRaw": null,

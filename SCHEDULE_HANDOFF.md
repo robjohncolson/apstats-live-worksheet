@@ -37,6 +37,7 @@ Sep 1, exam May 14, 8 of 13 closures). Fixed in one pass, one source of truth:
   only feeds Schoology folder links/sync status in the Desk — never dates. The Agent repo's
   `config/topic-schedule.json` + `roadmap-data.json` PC/poster dates are still last year's
   (cosmetic; the Desk does not read dates from them). Step 6 (CED gradebook framing) still open.
+- 2026-09-03 (later): teacher dropped the Day-2 **Unit 1 Baseline Check** from both pacings — the calendar now opens Welcome → 1.1 (B: 09-03 → 09-08; E: 09-02 → 09-09). Regenerated schedule + snapshots.
 - **Grading-policy change (two adversarial reviews, 2026-09-03):** the v3 Lessons track now
   buckets a lesson by its CALENDAR DATE (`quarterOfLesson`, same as Phase 6) instead of the
   static old-unit band (`lesson-grade.js` computeQuarterV3). Under CED order the unit band put

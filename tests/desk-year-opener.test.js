@@ -1,8 +1,8 @@
 // desk-year-opener.test.js — the SY26-27 school calendar opens with Day-1
-// orientation (not graded) + a Day-2 no-stakes Unit-1 BASELINE (a real early
-// U1 PC attempt, t reuses "U1-PC1" so it opens the same PC and feeds best-of).
-// Runs the REAL schedule generator to prove placement AND that the +2 opener
-// cells don't push tail lessons off the end of the year.
+// orientation (not graded) and goes straight into 1.1 on the next meeting.
+// (The Day-2 no-stakes Unit-1 BASELINE was dropped by the teacher 2026-09-03.)
+// Runs the REAL schedule generator to prove placement AND that the opener
+// cell doesn't push tail lessons off the end of the year.
 //
 // @vitest-environment node
 
@@ -66,30 +66,26 @@ function cellsFor(col) {
 }
 
 describe('SY26-27 year opener — placement', () => {
-  it('period B opens orientation → baseline → 1.1', () => {
+  it('period B opens orientation → 1.1 (no baseline day)', () => {
     const b = cellsFor(3);
     expect(b[0].kind).toBe('orientation');
-    expect(b[1].kind).toBe('baseline');
-    expect(b[1].t).toBe('U1-PC1');          // reuses the PC topic → same PC, feeds best-of
-    expect(b[1].u).toBe(1);
-    expect(b[2].t).toBe('1.1');
+    expect(b[1].t).toBe('1.1');
+    expect(b.some((c) => c.kind === 'baseline')).toBe(false);
   });
 
   it('period E opens the same way', () => {
     const e = cellsFor(4);
     expect(e[0].kind).toBe('orientation');
-    expect(e[1].kind).toBe('baseline');
-    expect(e[2].t).toBe('1.1');
+    expect(e[1].t).toBe('1.1');
+    expect(e.some((c) => c.kind === 'baseline')).toBe(false);
   });
 
-  it('the baseline opens the SAME PC as the unit-end U1 PC (same topic id)', () => {
-    // both the day-2 baseline and the auto-injected unit-end PC1 carry t "U1-PC1",
-    // so getRegistryEntry resolves them to one PC → one best-of pool.
-    const b = cellsFor(3);
-    const baseline = b.find((c) => c.kind === 'baseline');
-    const endPc1 = b.find((c) => c.kind === 'pc' && c.t === 'U1-PC1');
-    expect(baseline.t).toBe('U1-PC1');
-    expect(endPc1).toBeTruthy();
+  it('U1-PC1 appears exactly once per period — the unit-end PC only', () => {
+    for (const col of [3, 4]) {
+      const hits = cellsFor(col).filter((c) => c.t === 'U1-PC1');
+      expect(hits.length).toBe(1);
+      expect(hits[0].kind).toBe('pc');
+    }
   });
 });
 

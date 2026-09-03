@@ -181,7 +181,9 @@ describe('Grade Check-in — periods derived from the real SY26-27 calendar', ()
 
   it('the final period stops before the AP Exam (May 11, 2027) — no exam/post rows leak in', () => {
     const last = realPeriods[realPeriods.length - 1];
-    expect(last.dueISO.startsWith('2027-05-')).toBe(true);
+    // The last instructional cell (E's final review day) lands in late April
+    // now that the baseline day is gone; the invariant is "before the exam".
+    expect(last.dueISO >= '2027-04-01').toBe(true);
     expect(last.dueISO < '2027-05-11').toBe(true);
     for (const p of realPeriods) {
       expect(p.dueISO < '2027-05-11').toBe(true); // nothing on/after exam day
