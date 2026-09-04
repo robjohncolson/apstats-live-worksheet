@@ -23,7 +23,28 @@
 
 ---
 
-## ⏭ SESSION 38 (2026-09-04, Athena laptop) — **CURRENT. Supersedes s37 below. Codex round 2 = OLD Unit 3.**
+## ⏭ SESSION 39 (2026-09-04, Athena laptop) — **CURRENT. Supersedes s38 below. Codex rounds 3+ are CHAINED.**
+
+**HEAD = `6c36ff6` + this commit** (pushed). **Codex round 2 DONE and reviewed: OLD 3.1–3.6 (`52567b3`, `aa879bc`, `6c36ff6`)** —
+every edition 2/1/3 pages, 71 vitest + 104 pytest, real `ced2026` (1.10–1.13), 3.1 tethered to VAR-1.E. Orchestrator fix on top:
+3.4's student table had a "Flaw" column naming the biases part (a) asks for → column removed, recompiled (2/1/3). **Coverage 16/66.**
+
+### ⏭ NEXT (Codex, chained — no orchestrator needed between rounds): `state/dok-ladder-rounds3plus-codex-prompt.md`
+- **Round 3** (seeded): OLD 2.1–2.3 + 4.1–4.5 — B 10-13 → 10-26, **land by 09-29**; write `dok/calibration/unit2.json` before 4.1.
+- **Round 4** (seeded): OLD 4.6–4.8, 4.10, 4.11, 5.2, 5.1, 5.3 — B 10-29 → 11-13, **land by 10-15**.
+- **Rounds 5+** (self-seeded per §C of the prompt): the rest of `dok/PENDING.md` in date order, 6–8 per round, a
+  `dok/calibration/unit{n}.json` before each NEW unit's first topic; append a report per round to `dok/ROUNDS.md`.
+- Codex commits per topic, **never pushes**. The orchestrator reviews a round the same way each time (scope outside `dok/`,
+  `--validate`, both DOK suites, `pdfinfo` page counts, one student PDF eyeballed for leaks/cropping, a Python recompute of
+  any arithmetic in the seed) and pushes with the sentinel.
+
+### User-action checklist — unchanged (Railway `TEACHER_KEY` / `PAYOUT_AGENT_KEY` / `STUDENT_WALLET_OPTIN`; Schoology rig
+sign-in + UID map; print `dok/pdf/aps_1.6_student.pdf` once). Unit 1 starts **09-08 B**; the DOK sheets for it are all on GH Pages
+(`dok/index.html` → today's row).
+
+---
+
+## ⏭ SESSION 38 (2026-09-04, Athena laptop) — superseded by s39 above.
 
 **HEAD = `d6ceaba` + this commit** (pushed). **Unit 1 DOK ladders are COMPLETE — 10/10** (Codex round 1: `d7bae86`
 1.1+1.4 · `2770358` 1.5+1.7 · `459db6a` 1.8 + 1.3 trim · `d6ceaba` 1.10; orchestrator-reviewed 2026-09-04: every edition
