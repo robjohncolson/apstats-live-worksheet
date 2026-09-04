@@ -1,8 +1,20 @@
 {
+  "1.2": {
+    "title": "Numbers That Aren't Quantities",
+    "skill": "4.B",
+    "frq_pattern": "number-coded-categorical-decide-and-name-the-meaningless-summary",
+    "worksheet": "u1_lesson2_live.html"
+  },
   "1.6": {
     "title": "Describing a Distribution",
     "skill": "4.B",
     "frq_pattern": "two-descriptions-adjudicate-then-choose-center",
     "worksheet": "u1_lesson6_live.html"
+  },
+  "1.9": {
+    "title": "Which Class Did Better?",
+    "skill": "4.B",
+    "frq_pattern": "compare-two-boxplots-adjudicate-competing-claims-then-choose-one-statistic",
+    "worksheet": "u1_lesson9_live.html"
   }
 }

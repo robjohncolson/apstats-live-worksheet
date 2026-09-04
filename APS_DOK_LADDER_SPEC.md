@@ -117,7 +117,7 @@ author cannot find one, that is an authoring failure to escalate, not a `focus: 
 
 ## 2. Data model
 
-### 2.1 Registry — `dok/registry.jsonl` (one JSON object per line, append-only, id-unique)
+### 2.1 Registry — `dok/registry/{topic}.jsonl` (one file per lesson day; one JSON object per line; id-unique; the row's `topic` must equal the file name — Phase-2 change so parallel authors never touch one shared file)
 
 ```jsonc
 {

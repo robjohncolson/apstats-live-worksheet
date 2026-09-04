@@ -1,0 +1,53 @@
+# Topic 1.9 — Comparing Distributions of a Quantitative Variable (Phase-2 stress test #2)
+topic: "1.9"
+ced2026: { unit: 1, topic: "1.9", label: "Comparing Distributions of a Quantitative Variable" }
+title: "Which Class Did Better?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "What does `did better' mean for a whole class, and which feature of a plot answers it?"
+worksheet: "u1_lesson9_live.html"
+
+rules_callout:
+  title: "COMPARING DISTRIBUTIONS (keep on the page)"
+  body: |
+    Compare, don't list: every sentence names BOTH groups (``Period E's median is higher than Period B's'').\\
+    Cover \textbf{center} (median / mean) \textperiodcentered\ \textbf{variability} (IQR = Q3 $-$ Q1, range)
+    \textperiodcentered\ \textbf{shape} (where the median sits in the box, whisker lengths)
+    \textperiodcentered\ \textbf{unusual features} (outlier dots) --- in context, with units.\\
+    A maximum or minimum is ONE student. A median is the typical student.
+
+focus: aps-1.9-d3-1
+reinforcement: [aps-1.9-d2-1]
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.6in, b: 1.5in, c: 2.0in }   # two frames + optional item share the back
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Read Sam's and Tia's lines aloud once; take a quick hand-count of first takes but do not react."
+    - "Video follow-along from minute 5."
+    - "Board slide back up at minute 33. Circulate with the prompts; insist on comparative sentences."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "One-sentence first take naming one plot feature."
+    - "Video follow-along (comparing distributions: center, variability, shape, unusual features)."
+    - "Finish (a)--(c); exit line; turn in."
+  questions_to_ask:
+    - "How many students does the top of a whisker represent? How many does the median line represent?"
+    - "If the 40 in Period B were a 33 instead, would Sam's claim change? Would Tia's?"
+    - "Point at the box widths. Which class would you rather be a random student in? Why?"
+    - "Your parent asks `how did the class do?' --- which number answers that question?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Answer questions with questions; do not confirm Tia until two features are cited."
+  watch_for:
+    - "Sentences that describe one plot at a time with no comparison word."
+    - "Reading the whisker end as `most students'."
+    - "Choosing the mean for Period B without noticing the outlier at 5."
+  first_take_note: "Not graded. Expect a split toward Sam (the 40 is eye-catching); that split is the lesson."
+
+visuals:
+  quiz_boxplots:
+    kind: boxplot
+    xlabel: "Quiz score (out of 40)"
+    series:
+      - { label: "Period B", five: [12, 22, 27, 33, 40], outliers: [5] }
+      - { label: "Period E", five: [18, 26, 31, 34, 38], outliers: [] }

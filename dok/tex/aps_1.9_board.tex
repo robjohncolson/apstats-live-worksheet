@@ -1,0 +1,54 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 1.9 \textperiodcentered\ TODAY'S PROBLEM}{Which Class Did Better?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Two AP Statistics classes took the same 40-point quiz. The side-by-side boxplots show the scores. Two students read them differently. \textbf{Sam:} ``Period B did better --- its highest score is 40 and Period E's is only 38.'' \textbf{Tia:} ``Period E did better --- its median is higher and its scores are more consistent.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.85\linewidth,
+  height=2.00in,
+  ytick={2,1}, yticklabels={{Period B},{Period E}}, ymin=0.4, ymax=2.6,
+  axis x line=bottom, axis y line*=left, y axis line style={draw=none}, boxplot/box extend=0.5, xmajorgrids, enlarge x limits=0.06,
+  xlabel={Quiz score (out of 40)}, tick label style={font=\small}, label style={font=\small},
+  ytick style={draw=none}, yticklabel style={font=\small\bfseries}
+]
+\addplot[boxplot prepared={lower whisker=12, lower quartile=22, median=27, upper quartile=33, upper whisker=40, draw position=2}, fill=calloutblue, draw=dayblue] coordinates {};
+\addplot[only marks, mark=*, color=warmred] coordinates {(5,2)};
+\addplot[boxplot prepared={lower whisker=18, lower quartile=26, median=31, upper quartile=34, upper whisker=38, draw position=1}, fill=calloutblue, draw=dayblue] coordinates {};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which class did better on the quiz? One sentence, and name ONE feature of the plot you used.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Read off the median and the maximum score for each class.
+  \item[\dokbadge{2}~(b)] Compare the two distributions of quiz scores in context. Use comparative language (higher / lower, more / less variable) and address center, variability, shape, and any unusual features.
+  \item[\dokbadge{3}~(c)] Whose claim is better supported, Sam's or Tia's? Cite two specific features of the boxplots that settle it. Then: if you could report only ONE statistic per class to a parent asking `how did the class do?', which statistic would you choose, and why that one rather than the maximum?
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson9_live.html}{\texttt{\detokenize{u1_lesson9_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson9_live.html}
+
+\end{document}

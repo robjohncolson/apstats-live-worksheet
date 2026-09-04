@@ -9,7 +9,7 @@ Spec: APS_DOK_LADDER_SPEC.md. Ported 2026-09-03 from
 Lesson_planning/build_lesson_from_yaml.py and trimmed to the ladder.
 
 Inputs
-  dok/registry.jsonl        one JSON object per line (spec §2.1)
+  dok/registry/{topic}.jsonl  one file per lesson day, one JSON object per line (spec §2.1)
   dok/lessons/{topic}.yaml  one per dated lesson day (spec §2.2)
   ai-tutor/u{u}_l{n}.md     the CED tether (LO / EK lines) printed on the teacher key
   data/lesson-schedule.json topic -> unit + dates (for the header + coverage)
@@ -29,7 +29,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 DOK = ROOT / "dok"
-REGISTRY = DOK / "registry.jsonl"
+REGISTRY_DIR = DOK / "registry"   # one {topic}.jsonl per lesson day — parallel authors never collide
 LESSONS = DOK / "lessons"
 TEX_DIR = DOK / "tex"
 SCHEDULE = ROOT / "data" / "lesson-schedule.json"
@@ -46,23 +46,27 @@ DEFAULT_SPACE = {"first_take": "1.2in", "a": "0.9in", "b": "1.4in", "c": "2.4in"
 
 
 def load_registry() -> dict[str, dict]:
+    """All rows from dok/registry/*.jsonl. A row must live in the file named for its topic."""
     out: dict[str, dict] = {}
-    with REGISTRY.open(encoding="utf-8") as f:
-        for lineno, line in enumerate(f, start=1):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError as e:
-                hint = line[:80] + ("..." if len(line) > 80 else "")
-                raise SystemExit(
-                    f"registry.jsonl line {lineno}: JSON decode error ({e.msg} at col {e.colno}).\n"
-                    f"  first 80 chars: {hint}"
-                ) from e
-            if row["id"] in out:
-                raise SystemExit(f"registry.jsonl line {lineno}: duplicate id {row['id']}")
-            out[row["id"]] = row
+    for path in sorted(REGISTRY_DIR.glob("*.jsonl")):
+        with path.open(encoding="utf-8") as f:
+            for lineno, line in enumerate(f, start=1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError as e:
+                    hint = line[:80] + ("..." if len(line) > 80 else "")
+                    raise SystemExit(
+                        f"{path.name} line {lineno}: JSON decode error ({e.msg} at col {e.colno}).\n"
+                        f"  first 80 chars: {hint}"
+                    ) from e
+                if row.get("topic") != path.stem:
+                    raise SystemExit(f"{path.name} line {lineno}: row topic {row.get('topic')!r} must equal the file name")
+                if row["id"] in out:
+                    raise SystemExit(f"{path.name} line {lineno}: duplicate id {row['id']}")
+                out[row["id"]] = row
     return out
 
 
@@ -81,16 +85,65 @@ def tutor_path(topic: str) -> Path:
     return TUTOR_DIR / f"u{unit}_l{n}.md"
 
 
+LATEX_ESCAPES = {"&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}"}
+UNICODE_TO_LATEX = {
+    "≥": r"$\geq$", "≤": r"$\leq$", "≠": r"$\neq$", "±": r"$\pm$", "×": r"$\times$", "−": "-",
+    "→": r"$\rightarrow$", "μ": r"$\mu$", "σ": r"$\sigma$", "α": r"$\alpha$", "β": r"$\beta$",
+    "χ": r"$\chi$", "√": r"$\surd$", "…": r"\ldots{}", "—": "---", "–": "--", "’": "'", "“": "``", "”": "''",
+}
+
+
+def latex_text(s: str) -> str:
+    """Escape prose (NOT author-written LaTeX) for pdflatex."""
+    out = []
+    for ch in s:
+        if ch in LATEX_ESCAPES:
+            out.append(LATEX_ESCAPES[ch])
+        elif ch in UNICODE_TO_LATEX:
+            out.append(UNICODE_TO_LATEX[ch])
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
 def tether_lines(topic: str) -> list[str]:
-    """The 'Skill / EU / LO / EK' bullet lines from the tutor artifact, verbatim."""
+    """The Skill / EU / LO / EK lines from the tutor artifact, LaTeX-escaped.
+
+    Tutor files come in three shapes (bullets, bold bullets with nested EKs, and a
+    two-column LO | EK table); all are reduced to one flat list of statements.
+    """
     p = tutor_path(topic)
     if not p.exists():
         return []
-    out = []
-    for line in p.read_text(encoding="utf-8").splitlines():
-        if re.match(r"^- (Skill|Enduring Understanding|LO|EK) ", line):
+    text = p.read_text(encoding="utf-8")
+    start = text.find("THE CONCEPTS THIS LESSON")
+    end = text.find("HOW YOU MUST BEHAVE")
+    block = text[start:end] if start >= 0 and end > start else text
+    out: list[str] = []
+    for raw in block.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("THE CONCEPTS") or line.startswith("back to one of"):
+            continue
+        if line.startswith("|"):
+            if set(line) <= set("|:- "):
+                continue  # table rule
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if cells and cells[0].upper().startswith("LEARNING OBJECTIVE"):
+                continue  # header
+            out.extend(c for c in cells if c)
+            continue
+        if line.startswith("- "):
             out.append(line[2:].strip())
-    return out
+            continue
+        if line.startswith("**"):
+            out.append(line)
+            continue
+        if out and not out[-1].endswith("."):
+            out[-1] = out[-1] + " " + line  # wrapped EU sentence
+        else:
+            out.append(line)
+    cleaned = [re.sub(r"\*\*(.+?)\*\*", r"\1", s) for s in out]
+    return [r"\textbf{" + latex_text(s.split(" — ")[0]) + "}" + latex_text(" — " + " — ".join(s.split(" — ")[1:])) if " — " in s else latex_text(s) for s in cleaned]
 
 
 # ---- Validation (spec §2.1 / §7 T1) -------------------------------------
@@ -166,7 +219,7 @@ def validate_lesson(lesson: dict, registry: dict) -> list[str]:
 VISUAL_KEYS = {
     "pgfplot_hist": {"kind", "bins", "counts", "xlabel", "ylabel", "scale"},
     "dotplot": {"kind", "values", "xlabel", "scale"},
-    "boxplot": {"kind", "five", "xlabel", "scale", "outliers"},
+    "boxplot": {"kind", "five", "xlabel", "scale", "outliers", "series"},
     "two_way_table": {"kind", "rows", "cols", "cells", "row_label", "col_label"},
     "scatter": {"kind", "points", "xlabel", "ylabel", "xmin", "xmax", "ymin", "ymax", "scale"},
     "raw_tikz": {"kind", "body", "wrap_center"},
@@ -253,16 +306,29 @@ def render_dotplot(s: dict, scale: float) -> str:
 
 
 def render_boxplot(s: dict, scale: float) -> str:
-    lo, q1, med, q3, hi = s["five"]
-    outs = " ".join(f"({v},1)" for v in s.get("outliers", []))
+    """One boxplot (`five` + `outliers`) or several side by side (`series: [{label, five, outliers}]`)."""
+    series = s.get("series") or [{"label": "", "five": s["five"], "outliers": s.get("outliers", [])}]
+    n = len(series)
+    labels = ",".join(f"{{{sr.get('label', '')}}}" for sr in series)
+    plots = []
+    for i, sr in enumerate(series):
+        lo, q1, med, q3, hi = sr["five"]
+        y = n - i  # first series on top
+        plots.append(
+            f"\\addplot[boxplot prepared={{lower whisker={lo}, lower quartile={q1}, median={med}, "
+            f"upper quartile={q3}, upper whisker={hi}, draw position={y}}}, fill=calloutblue, draw=dayblue] coordinates {{}};\n"
+        )
+        outs = " ".join(f"({v},{y})" for v in sr.get("outliers", []))
+        if outs:
+            plots.append(f"\\addplot[only marks, mark=*, color=warmred] coordinates {{{outs}}};\n")
     return (
         "\\begin{center}\n\\begin{tikzpicture}\n\\begin{axis}[\n"
-        + _axis_size(scale, h=1.4)
-        + "  ytick=\\empty, axis y line=none, axis x line=bottom, ymin=0.5, ymax=1.5,\n"
-        + f"  xlabel={{{s.get('xlabel', '')}}}, tick label style={{font=\\small}}, label style={{font=\\small}}\n]\n"
-        + f"\\addplot[boxplot prepared={{lower whisker={lo}, lower quartile={q1}, median={med}, "
-        + f"upper quartile={q3}, upper whisker={hi}}}, fill=calloutblue, draw=dayblue] coordinates {{}};\n"
-        + (f"\\addplot[only marks, mark=*, color=warmred] coordinates {{{outs}}};\n" if outs else "")
+        + _axis_size(scale, h=0.9 + 0.55 * n)
+        + f"  ytick={{{','.join(str(n - i) for i in range(n))}}}, yticklabels={{{labels}}}, ymin=0.4, ymax={n + 0.6},\n"
+        + "  axis x line=bottom, axis y line*=left, y axis line style={draw=none}, boxplot/box extend=0.5, xmajorgrids, enlarge x limits=0.06,\n"
+        + f"  xlabel={{{s.get('xlabel', '')}}}, tick label style={{font=\\small}}, label style={{font=\\small}},\n"
+        + "  ytick style={draw=none}, yticklabel style={font=\\small\\bfseries}\n]\n"
+        + "".join(plots)
         + "\\end{axis}\n\\end{tikzpicture}\n\\end{center}\n"
     )
 
@@ -384,7 +450,7 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
     for p in item["parts"]:
         parts.append(part_block(p, space, answers=None))
     for frame in item.get("sentence_frames", []):
-        parts.append(f"\\begin{{sentenceframebox}}\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n")
+        parts.append(f"\\begin{{sentenceframebox}}\\raggedright\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n")
     parts.append(
         f"\\begin{{summaryexitbox}}{{EXIT --- turn this in}}\n{lesson['exit_reflection']}\\par\n"
         "\\workspace{0.4in}\n\\end{summaryexitbox}\n\n"

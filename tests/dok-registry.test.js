@@ -10,19 +10,25 @@ import { readFileSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = resolve(__dirname, '..');
-const REGISTRY = resolve(ROOT, 'dok', 'registry.jsonl');
+const REGISTRY_DIR = resolve(ROOT, 'dok', 'registry');
 
 const ID_RE = /^aps-\d+\.\d+-d[123]-\d+$/;
 const SKILL_RE = /^[1-4]\.[A-F]$/;
 const BANNED = ['hard', 'easy', 'difficult'];
 
 function loadRows() {
-  return readFileSync(REGISTRY, 'utf8')
-    .split(/\r?\n/)
-    .filter((l) => l.trim())
-    .map((l, i) => {
-      try { return JSON.parse(l); } catch (e) { throw new Error(`registry.jsonl line ${i + 1}: ${e.message}`); }
+  // One file per lesson day (dok/registry/{topic}.jsonl) so parallel authors never collide.
+  const rows = [];
+  for (const f of readdirSync(REGISTRY_DIR).filter((n) => n.endsWith('.jsonl')).sort()) {
+    const lines = readFileSync(resolve(REGISTRY_DIR, f), 'utf8').split(/\r?\n/).filter((l) => l.trim());
+    lines.forEach((l, i) => {
+      let row;
+      try { row = JSON.parse(l); } catch (e) { throw new Error(`${f} line ${i + 1}: ${e.message}`); }
+      if (row.topic !== f.slice(0, -6)) throw new Error(`${f} line ${i + 1}: topic ${row.topic} must equal the file name`);
+      rows.push(row);
     });
+  }
+  return rows;
 }
 
 function cedSkillCodes() {

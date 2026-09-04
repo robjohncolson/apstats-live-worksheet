@@ -23,8 +23,9 @@ const pendingTopics = existsSync(resolve(ROOT, 'dok', 'PENDING.md'))
   : [];
 
 const registry = new Map(
-  readFileSync(resolve(ROOT, 'dok', 'registry.jsonl'), 'utf8')
-    .split(/\r?\n/).filter((l) => l.trim()).map((l) => JSON.parse(l)).map((r) => [r.id, r]),
+  readdirSync(resolve(ROOT, 'dok', 'registry')).filter((f) => f.endsWith('.jsonl')).flatMap((f) =>
+    readFileSync(resolve(ROOT, 'dok', 'registry', f), 'utf8').split(/\r?\n/).filter((l) => l.trim()).map((l) => JSON.parse(l)),
+  ).map((r) => [r.id, r]),
 );
 
 // Minimal YAML reads — the lesson files are flat enough that a scalar grab is reliable.
