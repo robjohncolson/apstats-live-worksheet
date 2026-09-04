@@ -77,6 +77,18 @@
     "frq_pattern": "marginal-vs-conditional-association-is-not-cause",
     "worksheet": "u2_lesson3_live.html"
   },
+  "2.6": {
+    "title": "Two Payloads, One Regression Line",
+    "skill": "4.B",
+    "frq_pattern": "regression-prediction-range-and-decision",
+    "worksheet": "u2_lesson6_live.html"
+  },
+  "2.7": {
+    "title": "One Line, Two Model Diagnostics",
+    "skill": "4.B",
+    "frq_pattern": "correlation-residuals-model-choice-and-scope",
+    "worksheet": "u2_lesson7_live.html"
+  },
   "3.1": {
     "title": "Who Chose Whom?",
     "skill": "4.A",

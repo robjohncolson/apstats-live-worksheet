@@ -1,0 +1,116 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 2.6 (CED 5.3) \textperiodcentered\ B: 2027-02-09 \textperiodcentered\ E: 2027-04-05 \textperiodcentered\ TEACHER KEY}{Two Payloads, One Regression Line}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 2.C} --- Calculate summary statistics, relative positions of points within a distribution, correlation, and predicted response.
+  \item \textbf{EU DAT-1} --- Regression models may allow us to predict responses to changes in an explanatory variable.
+  \item \textbf{LO DAT-1.D} --- Calculate a predicted response value using a linear regression model. [Skill 2.C]
+  \item \textbf{EK DAT-1.D.1} --- A simple linear regression model is an equation that uses an explanatory variable, x, to predict the response variable, y.
+  \item \textbf{EK DAT-1.D.2} --- The predicted response value, denoted by $\widehat{y}$, is calculated as $\widehat{y}$ = a + bx, where a is the y-intercept and b is the slope of the regression line, and x is the value of the explanatory variable.
+  \item \textbf{EK DAT-1.D.3} --- Extrapolation is predicting a response value using a value for the explanatory variable that is beyond the interval of x-values used to determine the regression line. The predicted value is less reliable as an estimate the further we extrapolate.
+\end{itemize}
+}
+\textbf{Essential question:} How should observed range, prediction purpose, and new evidence guide use of a regression model?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{regression-\allowbreak{}prediction-\allowbreak{}range-\allowbreak{}and-\allowbreak{}decision}}\par
+\textbf{DOK rationale:} Part (c) coordinates the observed predictor range, two prediction purposes, a safety margin, and needed target-range evidence to evaluate competing recommendations and trace a decision consequence.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Ask which evidence should control the mission decision; do not confirm a recommendation.
+  \item Begin the 2.6 video follow-along at minute 5.
+  \item Return at minute 33. Require range, prediction, safety-margin, and new-data evidence; score part (c).
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to a recommendation and cite one number or plot feature.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Which prediction has observed payloads on both sides?
+  \item What evidence does the fitted pattern provide at 3.5 kg?
+  \item What observations would reduce uncertainty for this mission?
+\end{itemize}
+}{Circulate. Separate numerical computability from empirical support and press for decision-relevant evidence.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Approving solely because the equation returns 13.60 minutes.
+  \item Treating the 1.60-minute modeled buffer as guaranteed.
+  \item Using response plausibility instead of the observed payload range.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{compares-prediction-support} (required) --- Distinguishes the supported interpolation from the extrapolation
+  \item \textbf{uses-range-and-margin} (required) --- Uses the one-kilogram range gap and 1.60-minute modeled buffer
+  \item \textbf{requests-target-evidence} (required) --- Calls for repeated observations near 3.5 kg and model reassessment
+  \item \textbf{states-decision-consequence} (required) --- Connects unsupported extrapolation to inadequate flight time
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Compares both predictions, uses the range gap and buffer, makes a defensible decision, requests target-range evidence, and states the safety consequence. \\ \hline
+\textbf{P} & Identifies extrapolation but incompletely uses the numerical evidence, new-data requirement, or consequence. \\ \hline
+\textbf{I} & Approves solely because substitution gives a plausible value or treats the prediction as guaranteed. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose eight drone tests with payloads from 0.5 to 2.5 kg produced the shown data and the model $\hat y=36.0-6.4x$, where $x$ is payload and $\hat y$ is predicted flight duration in minutes. A proposed mission carries 3.5 kg and requires 12 minutes of flight.\par\smallskip \textbf{Ravi:} Approve it: the model predicts more than the required 12 minutes, and the fitted data are close to a line.\par \textbf{Mina:} Before deciding, compare the support for predictions at 1.8 and 3.5 kg and identify evidence the safety decision still needs.\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.52\linewidth,
+  height=1.40in,
+  xmin=0.3, xmax=2.7, ymin=18, ymax=35,
+  xlabel={Payload (kg)}, ylabel={Duration (min)}, grid=major,
+  tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=1.3pt, color=dayblue] coordinates {
+  (0.5,33.2)
+  (0.8,30.58)
+  (1.1,29.16)
+  (1.4,26.74)
+  (1.6,25.46)
+  (1.9,24.04)
+  (2.2,21.62)
+  (2.5,20.4)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Would you approve now, delay approval, or approve conditionally? Cite one number or plot feature.\par
+\answer{Not graded. Students should distinguish a computed prediction from evidence supporting its use.}
+\end{firsttakebox}
+
+\textit{Rules callout ``USING A REGRESSION MODEL (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Identify the explanatory and response variables, slope, intercept, and observed payload range.\par
+\answer{Payload $x$ is explanatory and flight duration $y$ is the response. The slope is $-6.4$ minutes per kg, the intercept is 36.0 minutes, and observed payloads range from 0.5 to 2.5 kg.}
+
+\dokbadge{2}~\textbf{(b)} Interpret the slope. Predict duration at 1.8 and 3.5 kg, classify each prediction, and calculate the modeled buffer above 12 minutes.\par
+\answer{Each added kilogram predicts 6.4 fewer flight minutes. At 1.8 kg, $\hat y=36-6.4(1.8)=24.48$ minutes, an interpolation. At 3.5 kg, $\hat y=13.60$ minutes, an extrapolation 1.0 kg beyond the maximum. Its modeled buffer is $13.60-12=1.60$ minutes.}
+
+\dokbadge{3}~\textbf{(c)} Evaluate both approaches using the observed range, the distance from 3.5 kg to that range, the modeled buffer you computed, and the in-range plot. Decide what to do, explain whether the two predictions have equal support, specify evidence needed before approval, and state the consequence of the rejected reasoning.\par
+\answer{Mina's approach supports delaying approval. The 1.8-kg prediction is supported by nearby payloads, but 3.5 kg is 1.0 kg beyond the tested maximum. A tight linear pattern from 0.5 to 2.5 kg does not establish that battery performance remains linear beyond that range, and the modeled reserve is only 1.60 minutes. Collect repeated flights near 3.5 kg, inspect the relationship there, and validate or refit the model before approval. Ravi's reasoning treats a computable, plausible extrapolation like supported evidence or a guaranteed duration; using it could leave too little flight time.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

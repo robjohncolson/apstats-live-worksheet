@@ -1,0 +1,60 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 2.6 \textperiodcentered\ TODAY'S PROBLEM}{Two Payloads, One Regression Line}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose eight drone tests with payloads from 0.5 to 2.5 kg produced the shown data and the model $\hat y=36.0-6.4x$, where $x$ is payload and $\hat y$ is predicted flight duration in minutes. A proposed mission carries 3.5 kg and requires 12 minutes of flight.\par\smallskip \textbf{Ravi:} Approve it: the model predicts more than the required 12 minutes, and the fitted data are close to a line.\par \textbf{Mina:} Before deciding, compare the support for predictions at 1.8 and 3.5 kg and identify evidence the safety decision still needs.\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.65\linewidth,
+  height=1.75in,
+  xmin=0.3, xmax=2.7, ymin=18, ymax=35,
+  xlabel={Payload (kg)}, ylabel={Duration (min)}, grid=major,
+  tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=1.7pt, color=dayblue] coordinates {
+  (0.5,33.2)
+  (0.8,30.58)
+  (1.1,29.16)
+  (1.4,26.74)
+  (1.6,25.46)
+  (1.9,24.04)
+  (2.2,21.62)
+  (2.5,20.4)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Would you approve now, delay approval, or approve conditionally? Cite one number or plot feature.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Identify the explanatory and response variables, slope, intercept, and observed payload range.
+  \item[\dokbadge{2}~(b)] Interpret the slope. Predict duration at 1.8 and 3.5 kg, classify each prediction, and calculate the modeled buffer above 12 minutes.
+  \item[\dokbadge{3}~(c)] Evaluate both approaches using the observed range, the distance from 3.5 kg to that range, the modeled buffer you computed, and the in-range plot. Decide what to do, explain whether the two predictions have equal support, specify evidence needed before approval, and state the consequence of the rejected reasoning.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson6_live.html}{\texttt{\detokenize{u2_lesson6_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson6_live.html}
+
+\end{document}
