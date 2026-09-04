@@ -1,0 +1,49 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 8.5 \textperiodcentered\ TODAY'S PROBLEM}{One Table, Two Study Designs}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a transit authority obtains the shown counts under either design.\par\smallskip \textbf{Design A:} Take independent SRSs of 100 from each of three route populations of 4,000 and record ticket method.\par \textbf{Design B:} Take one SRS of 300 from 15,000 system riders and record both route and ticket method.\par\smallskip \textbf{Ari:} ``Route rows imply homogeneity; the counts are enough to choose.''\par \textbf{Bea:} ``Read how riders were sampled; identical counts can support different population claims.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Ticket method}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Route} & \textbf{Mobile} & \textbf{Card} & \textbf{Cash} & \textbf{Total} \\ \hline
+\textbf{North} & 60 & 25 & 15 & 100 \\ \hline
+\textbf{East} & 48 & 32 & 20 & 100 \\ \hline
+\textbf{West} & 42 & 33 & 25 & 100 \\ \hline
+\textbf{Total} & 150 & 90 & 60 & 300 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which claim is more defensible? Cite the sampling structure of each design.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] For each design, state the number of random samples and the categorical variable or variables recorded.
+  \item[\dokbadge{2}~(b)] Calculate the expected counts and $df$, then verify random sampling, 10 percent, and expected counts for both designs.
+  \item[\dokbadge{3}~(c)] Adjudicate the claims. For each design, name the procedure and state $H_0$ and $H_a$ in context. Use the sampling structure, diagnose the rejected table-only rule, and identify the numerical pieces that remain identical.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson5_live.html}{\texttt{\detokenize{u8_lesson5_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson5_live.html}
+
+\end{document}

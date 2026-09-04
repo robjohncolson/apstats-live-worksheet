@@ -1,0 +1,116 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 8.5 (CED 3.14) \textperiodcentered\ B: 2026-12-22 \textperiodcentered\ E: 2027-02-05 \textperiodcentered\ TEACHER KEY}{One Table, Two Study Designs}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 1.F} --- Identify null and alternative hypotheses.
+  \item \textbf{Skill 1.E} --- Identify an appropriate inference method for significance tests.
+  \item \textbf{Skill 4.C} --- Verify that inference procedures apply in a given situation.
+  \item \textbf{EU VAR-8} --- The chi-square distribution may be used to model variation.
+  \item \textbf{LO VAR-8.I} --- Identify the null and alternative hypotheses for a chi-square test for homogeneity or independence.
+  \item \textbf{EK VAR-8.I.1} --- The appropriate hypotheses for a chi-square test for homogeneity are: $H_0$: There is no difference in distributions of a categorical variable across populations or treatments. $H_a$: There is a difference in distributions of a categorical variable across populations or treatments.
+  \item \textbf{EK VAR-8.I.2} --- The appropriate hypotheses for a chi-square test for independence are: $H_0$: There is no association between two categorical variables in a given population (or the two variables are independent). $H_a$: Two categorical variables in a population are associated or dependent.
+  \item \textbf{LO VAR-8.J} --- Identify an appropriate testing method for comparing distributions in two-way tables of categorical data.
+  \item \textbf{EK VAR-8.J.1} --- When comparing distributions to determine whether proportions in each category for categorical data collected from different populations are the same, the appropriate test is the chi-square test for homogeneity.
+  \item \textbf{EK VAR-8.J.2} --- To determine whether row and column variables in a two-way table of categorical data might be associated in the population from which the data were sampled, the appropriate test is the chi-square test for independence.
+  \item \textbf{LO VAR-8.K} --- Verify the conditions for making statistical inferences when testing a chi-square distribution for independence or homogeneity.
+  \item \textbf{EK VAR-8.K.1} --- Conditions for chi-square tests on two-way tables (homogeneity or independence): a. Independence check: i. For a test for independence: data should be collected using a simple random sample.
+  \item ii. For a test for homogeneity: data should be collected using a stratified random sample or randomized experiment.
+  \item iii. When sampling without replacement, check that n $\leq$ 10\% N.
+  \item b. Large counts (shape): all expected counts should be greater than 5.
+\end{itemize}
+}
+\textbf{Essential question:} Why can identical counts require different chi-square procedure names and hypotheses?\par
+\textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{design-\allowbreak{}controls-\allowbreak{}chi-\allowbreak{}square-\allowbreak{}procedure}}\par
+\textbf{DOK rationale:} Part (c) coordinates sample structure, inferential target, hypotheses, shared expected counts, and conditions to adjudicate a procedure claim and explain why identical arithmetic does not imply identical population meaning.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask what information beyond the displayed counts names the procedure.
+  \item Begin the 8.5 video follow-along at minute 5.
+  \item Return at minute 33. Require a procedure and contextual hypotheses for each design.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to one claim and cite how each design samples riders.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item In Design A, what population did each random sample come from?
+  \item In Design B, which two variables were recorded on each sampled rider?
+  \item What population statement changes when the procedure name changes?
+\end{itemize}
+}{Solo teacher. Tie each procedure and hypothesis to its sampling structure, then compare the shared arithmetic.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Naming a test from the row labels without reading how the samples were taken.
+  \item Using association language for homogeneity without identifying separate route populations.
+  \item Claiming that different procedure names require different expected counts or degrees of freedom.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{names-both-procedures} (required) --- Names homogeneity for A and independence for B
+  \item \textbf{states-distinct-hypotheses} (required) --- States same-distribution and no-association hypotheses in context
+  \item \textbf{uses-sample-structure} (required) --- Uses three population SRSs versus one two-variable SRS
+  \item \textbf{states-reader-consequence} (required) --- Diagnoses the table-only rule's false sampling assumption
+  \item \textbf{recognizes-shared-arithmetic} (required) --- Identifies the shared numerical setup
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Names both tests and hypotheses, uses sampling structure, diagnoses the rejected rule, and identifies shared arithmetic. \\ \hline
+\textbf{P} & Distinguishes the tests but omits hypothesis context, the consequence, or shared arithmetic. \\ \hline
+\textbf{I} & Chooses from row labels alone or says the designs need different expected counts. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a transit authority obtains the shown counts under either design.\par\smallskip \textbf{Design A:} Take independent SRSs of 100 from each of three route populations of 4,000 and record ticket method.\par \textbf{Design B:} Take one SRS of 300 from 15,000 system riders and record both route and ticket method.\par\smallskip \textbf{Ari:} ``Route rows imply homogeneity; the counts are enough to choose.''\par \textbf{Bea:} ``Read how riders were sampled; identical counts can support different population claims.''\par
+\begin{center}
+\textbf{Ticket method}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Route} & \textbf{Mobile} & \textbf{Card} & \textbf{Cash} & \textbf{Total} \\ \hline
+\textbf{North} & 60 & 25 & 15 & 100 \\ \hline
+\textbf{East} & 48 & 32 & 20 & 100 \\ \hline
+\textbf{West} & 42 & 33 & 25 & 100 \\ \hline
+\textbf{Total} & 150 & 90 & 60 & 300 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which claim is more defensible? Cite the sampling structure of each design.\par
+\answer{Not graded. Sampling structure, not table shape, controls the choice.}
+\end{firsttakebox}
+
+\textit{Rules callout ``LET DATA COLLECTION NAME THE TEST (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} For each design, state the number of random samples and the categorical variable or variables recorded.\par
+\answer{Design A uses three independent SRSs and records one categorical response, ticket method. Design B uses one SRS and records two categorical variables, route and ticket method.}
+
+\dokbadge{2}~\textbf{(b)} Calculate the expected counts and $df$, then verify random sampling, 10 percent, and expected counts for both designs.\par
+\answer{Each row has expected counts $(50,30,20)$, all greater than 5, and $df=(3-1)(3-1)=4$. For A, the independent SRSs satisfy $100\leq0.10(4{,}000)=400$ in each route population. For B, the SRS satisfies $300\leq0.10(15{,}000)=1{,}500$.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate the claims. For each design, name the procedure and state $H_0$ and $H_a$ in context. Use the sampling structure, diagnose the rejected table-only rule, and identify the numerical pieces that remain identical.\par
+\answer{Bea is warranted. For A, use homogeneity: $H_0$ says ticket-method distributions are the same across route populations; $H_a$ says at least one differs. For B, use independence: $H_0$ says route and ticket method are not associated among system riders; $H_a$ says they are associated. Three route-population SRSs versus one system SRS with two variables controls the choice. The rejected rule falsely assumes separate population samples for B. Observed and expected counts, $df=4$, the statistic, and p-value match; their population meanings differ.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

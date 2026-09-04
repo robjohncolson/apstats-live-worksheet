@@ -298,5 +298,17 @@
     "skill": "4.B",
     "frq_pattern": "fixed-count-vs-null-generation",
     "worksheet": "u8_lesson1_live.html"
+  },
+  "8.4": {
+    "title": "A Two-Way Table Before Inference",
+    "skill": "4.C",
+    "frq_pattern": "expected-count-boundary-and-remedy",
+    "worksheet": "u8_lesson4_live.html"
+  },
+  "8.5": {
+    "title": "One Table, Two Study Designs",
+    "skill": "4.C",
+    "frq_pattern": "design-controls-chi-square-procedure",
+    "worksheet": "u8_lesson5_live.html"
   }
 }

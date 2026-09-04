@@ -1,0 +1,58 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 8.5 (CED 3.14) \textperiodcentered\ B: 2026-12-22 \textperiodcentered\ E: 2027-02-05}{One Table, Two Study Designs}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a transit authority obtains the shown counts under either design.\par\smallskip \textbf{Design A:} Take independent SRSs of 100 from each of three route populations of 4,000 and record ticket method.\par \textbf{Design B:} Take one SRS of 300 from 15,000 system riders and record both route and ticket method.\par\smallskip \textbf{Ari:} ``Route rows imply homogeneity; the counts are enough to choose.''\par \textbf{Bea:} ``Read how riders were sampled; identical counts can support different population claims.''\par
+\begin{center}
+\textbf{Ticket method}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Route} & \textbf{Mobile} & \textbf{Card} & \textbf{Cash} & \textbf{Total} \\ \hline
+\textbf{North} & 60 & 25 & 15 & 100 \\ \hline
+\textbf{East} & 48 & 32 & 20 & 100 \\ \hline
+\textbf{West} & 42 & 33 & 25 & 100 \\ \hline
+\textbf{Total} & 150 & 90 & 60 & 300 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Which claim is more defensible? Cite the sampling structure of each design.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ LET DATA COLLECTION NAME THE TEST (keep on the page)}{calloutgreen}
+Use chi-square \textbf{homogeneity} to compare one categorical distribution across independently
+sampled populations or randomized treatments: $H_0$ says the distributions are the same.
+Use chi-square \textbf{independence} for one random sample from one population with two categorical
+variables recorded: $H_0$ says the variables are not associated. Both use
+$E=(\text{row total})(\text{column total})/(\text{table total})$, require every expected count $>5$,
+and have $df=(r-1)(c-1)$. The arithmetic may match even when the inferential wording does not.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} For each design, state the number of random samples and the categorical variable or variables recorded.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Calculate the expected counts and $df$, then verify random sampling, 10 percent, and expected counts for both designs.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate the claims. For each design, name the procedure and state $H_0$ and $H_a$ in context. Use the sampling structure, diagnose the rejected table-only rule, and identify the numerical pieces that remain identical.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} For Design A, the procedure is \blank[1.5in] because \blank[2.5in]; for Design B, it is \blank[1.5in] because \blank[2.3in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The rejected rule would make readers assume \blank[2.5in]; the numerical pieces that match are \blank[2.2in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

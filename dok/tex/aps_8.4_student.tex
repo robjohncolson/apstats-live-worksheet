@@ -1,0 +1,57 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 8.4 (CED 3.14) \textperiodcentered\ B: 2026-12-21 \textperiodcentered\ E: 2027-02-03}{A Two-Way Table Before Inference}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a membership association has 5,000 new members and takes an SRS of 120. Each member is classified by orientation status and preferred support channel. The association may test whether the variables are associated.\par\smallskip \textbf{Nico:} ``Every observed cell is at least 6, and the data came from an SRS, so the usual chi-square setup is ready.''\par \textbf{Priya:} ``The margins may produce a different boundary check; I would calculate that table before deciding.''\par
+\begin{center}
+\textbf{Support channel}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Status} & \textbf{Chat} & \textbf{Email} & \textbf{Phone} & \textbf{Total} \\ \hline
+\textbf{Done} & 42 & 34 & 24 & 100 \\ \hline
+\textbf{Not done} & 8 & 6 & 6 & 20 \\ \hline
+\textbf{Total} & 50 & 40 & 30 & 120 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Which claim is more defensible so far? Identify the evidence that should settle the condition check.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ EXPECTED COUNTS UNDER NO ASSOCIATION (keep on the page)}{calloutgreen}
+Under no association, the expected count in a cell is
+$E=\dfrac{(\text{row total})(\text{column total})}{\text{table total}}$.
+Expected counts preserve the observed margins and describe the null table; they need not be whole numbers.
+For the course's conservative chi-square check, \textbf{every expected count must be greater than 5},
+not merely every observed count. A table with $r$ rows and $c$ columns has $df=(r-1)(c-1)$.
+Combining categories changes the question and needs a substantive reason, not just a failed condition.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Use the margins to calculate the expected counts for Done/Chat and Not done/Phone under no association.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Calculate all six expected counts, identify the smallest, and state the degrees of freedom. Verify the random-sample and 10 percent conditions.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate the claims and decide whether the usual chi-square approximation should proceed as is. Cite the observed and expected boundary counts, explain what the rejected rule would mislead a reader into believing, and recommend a defensible next step without silently changing the research question.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The relevant check uses \blank[1.4in] because \blank[2.1in]; in the boundary cell, the two counts are \blank[0.7in] and \blank[0.7in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The rejected rule would imply \blank[2.2in]; a defensible next step is \blank[2.1in] because \blank[1.8in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

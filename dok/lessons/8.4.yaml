@@ -1,0 +1,56 @@
+# Topic 8.4 — Expected Counts in Two-Way Tables
+topic: "8.4"
+ced2026: { unit: 3, topic: "3.14", label: "Setting Up a Chi-Square Test (homogeneity/independence)" }
+title: "A Two-Way Table Before Inference"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "Why is a chi-square condition judged from expected counts rather than the observed cells?"
+worksheet: "u8_lesson4_live.html"
+
+rules_callout:
+  title: "EXPECTED COUNTS UNDER NO ASSOCIATION (keep on the page)"
+  body: |
+    Under no association, the expected count in a cell is
+    $E=\dfrac{(\text{row total})(\text{column total})}{\text{table total}}$.
+    Expected counts preserve the observed margins and describe the null table; they need not be whole numbers.
+    For the course's conservative chi-square check, \textbf{every expected count must be greater than 5},
+    not merely every observed count. A table with $r$ rows and $c$ columns has $df=(r-1)(c-1)$.
+    Combining categories changes the question and needs a substantive reason, not just a failed condition.
+
+focus: aps-8.4-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask which evidence is needed before deciding whether the approximation is ready."
+    - "Begin the 8.4 video follow-along at minute 5."
+    - "Return at minute 33. Require the margins that generate the boundary cell and a defensible next step."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one claim and identify the evidence still needed."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "Which row total and column total generate the Not done/Phone cell?"
+    - "Why can an expected count equal 5 even when its observed count is 6?"
+    - "When would combining support channels preserve the research question?"
+  adult_role: "Solo teacher. Require the expected table, the strict boundary check, and a remedy that preserves the question."
+  watch_for:
+    - "Using the observed interior count as its own expected count."
+    - "Rounding an expected count of exactly 5 upward before checking the condition."
+    - "Combining categories solely to make the condition pass without considering meaning."
+  first_take_note: "Not graded. The observed cells were chosen to pass a tempting but incorrect checklist while one expected cell lands exactly on the boundary."
+
+visuals:
+  support_table:
+    kind: two_way_table
+    col_label: "Support channel"
+    row_label: "Status"
+    cols: ["Chat", "Email", "Phone", "Total"]
+    rows: ["Done", "Not done", "Total"]
+    cells:
+      - ["42", "34", "24", "100"]
+      - ["8", "6", "6", "20"]
+      - ["50", "40", "30", "120"]

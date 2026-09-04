@@ -1,0 +1,57 @@
+# Topic 8.5 — Setting Up a Chi-Square Test for Homogeneity or Independence
+topic: "8.5"
+ced2026: { unit: 3, topic: "3.14", label: "Setting Up a Chi-Square Test (homogeneity/independence)" }
+title: "One Table, Two Study Designs"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "Why can identical counts require different chi-square procedure names and hypotheses?"
+worksheet: "u8_lesson5_live.html"
+
+rules_callout:
+  title: "LET DATA COLLECTION NAME THE TEST (keep on the page)"
+  body: |
+    Use chi-square \textbf{homogeneity} to compare one categorical distribution across independently
+    sampled populations or randomized treatments: $H_0$ says the distributions are the same.
+    Use chi-square \textbf{independence} for one random sample from one population with two categorical
+    variables recorded: $H_0$ says the variables are not associated. Both use
+    $E=(\text{row total})(\text{column total})/(\text{table total})$, require every expected count $>5$,
+    and have $df=(r-1)(c-1)$. The arithmetic may match even when the inferential wording does not.
+
+focus: aps-8.5-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask what information beyond the displayed counts names the procedure."
+    - "Begin the 8.5 video follow-along at minute 5."
+    - "Return at minute 33. Require a procedure and contextual hypotheses for each design."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one claim and cite how each design samples riders."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "In Design A, what population did each random sample come from?"
+    - "In Design B, which two variables were recorded on each sampled rider?"
+    - "What population statement changes when the procedure name changes?"
+  adult_role: "Solo teacher. Tie each procedure and hypothesis to its sampling structure, then compare the shared arithmetic."
+  watch_for:
+    - "Naming a test from the row labels without reading how the samples were taken."
+    - "Using association language for homogeneity without identifying separate route populations."
+    - "Claiming that different procedure names require different expected counts or degrees of freedom."
+  first_take_note: "Not graded. Sampling structure, not table shape, controls the choice."
+
+visuals:
+  ticket_table:
+    kind: two_way_table
+    col_label: "Ticket method"
+    row_label: "Route"
+    cols: ["Mobile", "Card", "Cash", "Total"]
+    rows: ["North", "East", "West", "Total"]
+    cells:
+      - ["60", "25", "15", "100"]
+      - ["48", "32", "20", "100"]
+      - ["42", "33", "25", "100"]
+      - ["150", "90", "60", "300"]

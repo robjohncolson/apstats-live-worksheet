@@ -1,0 +1,48 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 8.4 \textperiodcentered\ TODAY'S PROBLEM}{A Two-Way Table Before Inference}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a membership association has 5,000 new members and takes an SRS of 120. Each member is classified by orientation status and preferred support channel. The association may test whether the variables are associated.\par\smallskip \textbf{Nico:} ``Every observed cell is at least 6, and the data came from an SRS, so the usual chi-square setup is ready.''\par \textbf{Priya:} ``The margins may produce a different boundary check; I would calculate that table before deciding.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Support channel}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Status} & \textbf{Chat} & \textbf{Email} & \textbf{Phone} & \textbf{Total} \\ \hline
+\textbf{Done} & 42 & 34 & 24 & 100 \\ \hline
+\textbf{Not done} & 8 & 6 & 6 & 20 \\ \hline
+\textbf{Total} & 50 & 40 & 30 & 120 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which claim is more defensible so far? Identify the evidence that should settle the condition check.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Use the margins to calculate the expected counts for Done/Chat and Not done/Phone under no association.
+  \item[\dokbadge{2}~(b)] Calculate all six expected counts, identify the smallest, and state the degrees of freedom. Verify the random-sample and 10 percent conditions.
+  \item[\dokbadge{3}~(c)] Adjudicate the claims and decide whether the usual chi-square approximation should proceed as is. Cite the observed and expected boundary counts, explain what the rejected rule would mislead a reader into believing, and recommend a defensible next step without silently changing the research question.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson4_live.html}{\texttt{\detokenize{u8_lesson4_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson4_live.html}
+
+\end{document}
