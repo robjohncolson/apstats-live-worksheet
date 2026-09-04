@@ -1,0 +1,52 @@
+# Topic 6.6 — Concluding a Test for a Population Proportion
+topic: "6.6"
+ced2026: { unit: 3, topic: "3.7", label: "Carrying Out a Test for a Proportion" }
+title: "Significant Does Not Mean Caused"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do the p-value, practical importance, and study design jointly limit a test conclusion?"
+worksheet: "u6_lesson6_live.html"
+
+rules_callout:
+  title: "MAKE THE DECISION, THEN BOUND THE CLAIM (keep on the page)"
+  body: |
+    Compare the $p$-value with the predetermined $\alpha$: if $p\text{-value}\leq\alpha$, reject $H_0$;
+    otherwise fail to reject $H_0$. State evidence for $H_a$ in context; never report the $p$-value as
+    $P(H_0\text{ is true})$. Statistical significance does not by itself establish practical importance or causation.
+    A random sample supports inference to the sampled population, while cause requires random assignment.
+
+focus: aps-6.6-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Record one trusted clause from each statement."
+    - "Begin the video at minute 5; return at minute 33 to separate decision, effect size, and scope."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Mark one defensible and one questionable clause."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in the sheet."
+  questions_to_ask:
+    - "What does 0.0354 assume about the September sorting rate?"
+    - "Which numbers govern the decision and describe the effect?"
+    - "What population and causal comparison does the design support?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require separate decision, importance, and scope statements."
+  watch_for:
+    - "Reporting 0.0354 as the probability that the director's claim is true."
+    - "Letting a small practical gap reverse the predetermined significance-test rule."
+    - "Generalizing a September sample to every month or attributing the result to the labels."
+  first_take_note: "Not graded. Each statement mixes a defensible idea with an overreach."
+
+visuals:
+  tray_sorting_table:
+    kind: two_way_table
+    col_label: "September study"
+    row_label: "Source"
+    cols: ["Trays", "Correct", "$\\alpha$"]
+    rows: ["September", "SRS"]
+    cells:
+      - ['5,000', 'claim: $\geq 60\%$', '--']
+      - ['250', '136', '0.05']

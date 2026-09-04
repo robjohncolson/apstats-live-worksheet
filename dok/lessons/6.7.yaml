@@ -1,0 +1,52 @@
+# Topic 6.7 — Potential Errors When Performing Tests
+topic: "6.7"
+ced2026: { unit: 3, topic: "3.8", label: "Potential Errors When Performing Tests" }
+title: "Which Error Can the District Afford?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How should the consequences of false positives and false negatives shape a testing plan?"
+worksheet: "u6_lesson7_live.html"
+
+rules_callout:
+  title: "ERROR PROBABILITIES TRADE OFF (keep on the page)"
+  body: |
+    A Type I error rejects a true $H_0$, and its probability is $\alpha$. A Type II error fails to reject a false
+    $H_0$; $\beta=1-\text{power}$. With sample size fixed, increasing $\alpha$ generally raises power and lowers
+    $\beta$, but it also raises the false-positive risk. Increasing sample size can raise power while keeping the
+    chosen $\alpha$ fixed. Choose a plan by naming the real consequence of each error.
+
+focus: aps-6.7-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Tally A, B, and need-more-information votes."
+    - "Begin the video at minute 5; return at minute 33 to translate each probability into a decision and true state."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose a plan and name the prioritized error."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in the sheet."
+  questions_to_ask:
+    - "If $p=0.10$, what decision creates the dangerous miss?"
+    - "What does the complement of 0.748 represent?"
+    - "What does Plan B trade per 1,000 tests?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require both consequences and both sides of the tradeoff."
+  watch_for:
+    - "Using $1-\\alpha$ as the probability of a Type II error."
+    - "Claiming that lowering alpha lowers both error probabilities when $n$ is fixed."
+    - "Choosing solely from the larger power without acknowledging its false-positive cost."
+  first_take_note: "Not graded. Either plan needs a conditional defense; neither is cost-free."
+
+visuals:
+  alert_plan_table:
+    kind: two_way_table
+    col_label: "Test plans ($n=200$)"
+    row_label: "Plan"
+    cols: ["$\\alpha$", "Power at $p=0.10$"]
+    rows: ["A", "B"]
+    cells:
+      - ["0.010", "0.748"]
+      - ["0.050", "0.877"]

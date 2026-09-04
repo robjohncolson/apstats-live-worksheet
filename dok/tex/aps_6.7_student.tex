@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 6.7 (CED 3.8) \textperiodcentered\ B: 2026-12-08 \textperiodcentered\ E: 2027-01-15}{Which Error Can the District Afford?}
+
+\focusbanner{TODAY'S PROBLEM}
+
+A district tests $H_0:p=0.05$ versus $H_a:p>0.05$, where $p$ is the late-alert proportion. Both plans use $n=200$ and have the table's operating probabilities. Safety prioritizes avoiding retention when $p=0.10$; Budget prioritizes avoiding replacement when $p=0.05$. No common cost scale exists.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
+\begin{center}
+\textbf{Test plans ($n=200$)}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Plan} & \textbf{$\alpha$} & \textbf{Power at $p=0.10$} \\ \hline
+\textbf{A} & 0.010 & 0.748 \\ \hline
+\textbf{B} & 0.050 & 0.877 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Which plan would you try first? Name the office you prioritized and one competing cost.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ ERROR PROBABILITIES TRADE OFF (keep on the page)}{calloutgreen}
+A Type I error rejects a true $H_0$, and its probability is $\alpha$. A Type II error fails to reject a false
+$H_0$; $\beta=1-\text{power}$. With sample size fixed, increasing $\alpha$ generally raises power and lowers
+$\beta$, but it also raises the false-positive risk. Increasing sample size can raise power while keeping the
+chosen $\alpha$ fixed. Choose a plan by naming the real consequence of each error.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Describe a Type I error and a Type II error in this context. Identify what $P(\text{reject }H_0\mid p=0.10)$ represents.\par
+\workspace{0.8in}
+
+\dokbadge{2}~\textbf{(b)} For each plan, calculate $\beta$. Then give the expected number of Type I errors per 1{,}000 repeated tests when $p=0.05$ and Type II errors per 1{,}000 repeated tests when $p=0.10$.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both claims. Explain why no plan is universally best; recommend one for a stated office using both error probabilities and their per-1{,}000 consequences. Name information needed for a district-wide choice and a change that improves power at fixed $\alpha$.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I recommend Plan \blank[0.4in] because its chance of missing a 10 percent late rate is \blank[0.6in], compared with \blank[0.6in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} That benefit costs about \blank[0.6in] additional \blank[1.1in] per 1{,}000 tests; increasing \blank[0.8in] could improve power while holding $\alpha$ fixed.\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

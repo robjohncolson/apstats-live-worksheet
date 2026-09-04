@@ -232,5 +232,17 @@
     "skill": "4.B",
     "frq_pattern": "one-sided-vs-two-sided-p-value-interpret-the-condition",
     "worksheet": "u6_lesson5_live.html"
+  },
+  "6.6": {
+    "title": "Significant Does Not Mean Caused",
+    "skill": "4.E",
+    "frq_pattern": "statistical-decision-vs-practical-size-and-scope",
+    "worksheet": "u6_lesson6_live.html"
+  },
+  "6.7": {
+    "title": "Which Error Can the District Afford?",
+    "skill": "4.B",
+    "frq_pattern": "alpha-vs-power-which-error-tradeoff-fits-consequences",
+    "worksheet": "u6_lesson7_live.html"
   }
 }

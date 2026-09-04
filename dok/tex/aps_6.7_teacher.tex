@@ -1,0 +1,127 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 6.7 (CED 3.8) \textperiodcentered\ B: 2026-12-08 \textperiodcentered\ E: 2027-01-15 \textperiodcentered\ TEACHER KEY}{Which Error Can the District Afford?}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 1.B} --- Identify key and relevant information to answer a question or solve a problem.
+  \item \textbf{Skill 3.A} --- Determine relative frequencies, proportions, or probabilities using simulation or calculations.
+  \item \textbf{Skill 4.A} --- Make an appropriate claim or draw an appropriate conclusion.
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item \textbf{EU UNC-5} --- Probabilities of Type I and Type II errors influence inference.
+  \item \textbf{LO UNC-5.A} --- Identify Type I and Type II errors. [Skill 1.B]
+  \item \textbf{EK UNC-5.A.1} --- A Type I error occurs when the null hypothesis is true and is rejected (false positive).
+  \item \textbf{EK UNC-5.A.2} --- A Type II error occurs when the null hypothesis is false and is not rejected (false negative).
+  \item Table of Errors:
+  \item $H_0$ true
+  \item $H_a$ true
+  \item Reject $H_0$
+  \item Type I Error
+  \item Correct Decision
+  \item Fail to Reject $H_0$
+  \item Correct Decision
+  \item Type II Error
+  \item \textbf{LO UNC-5.B} --- Calculate the probability of a Type I and Type II errors. [Skill 3.A]
+  \item \textbf{EK UNC-5.B.1} --- The significance level, $\alpha$, is the probability of making a Type I error, if the null hypothesis is true.
+  \item \textbf{EK UNC-5.B.2} --- The power of a test is the probability that a test will correctly reject a false null hypothesis.
+  \item \textbf{EK UNC-5.B.3} --- The probability of making a Type II error = 1 - power.
+  \item \textbf{LO UNC-5.C} --- Identify factors that affect the probability of errors in significance testing. [Skill 4.A]
+  \item \textbf{EK UNC-5.C.1} --- The probability of a Type II error decreases when any of the following occurs, provided the others do not change: i. Sample size(s) increases.
+  \item ii. Significance level ($\alpha$) of a test increases.
+  \item iii. Standard error decreases.
+  \item iv. True parameter value is farther from the null.
+  \item \textbf{LO UNC-5.D} --- Interpret Type I and Type II errors. [Skill 4.B]
+  \item \textbf{EK UNC-5.D.1} --- Whether a Type I or a Type II error is more consequential depends upon the situation.
+  \item \textbf{EK UNC-5.D.2} --- Since the significance level, $\alpha$, is the probability of a Type I error, the consequences of a Type I error influence decisions about a significance level.
+\end{itemize}
+}
+\textbf{Essential question:} How should the consequences of false positives and false negatives shape a testing plan?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{alpha-\allowbreak{}vs-\allowbreak{}power-\allowbreak{}which-\allowbreak{}error-\allowbreak{}tradeoff-\allowbreak{}fits-\allowbreak{}consequences}}\par
+\textbf{DOK rationale:} Part (c) translates operating probabilities into contextual consequences, weighs two stakeholders' competing priorities, critiques two absolute claims, and proposes a design change that improves detection without erasing the tradeoff.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Tally A, B, and need-more-information votes.
+  \item Begin the video at minute 5; return at minute 33 to translate each probability into a decision and true state.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose a plan and name the prioritized error.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item If $p=0.10$, what decision creates the dangerous miss?
+  \item What does the complement of 0.748 represent?
+  \item What does Plan B trade per 1,000 tests?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Require both consequences and both sides of the tradeoff.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Using $1-\alpha$ as the probability of a Type II error.
+  \item Claiming that lowering alpha lowers both error probabilities when $n$ is fixed.
+  \item Choosing solely from the larger power without acknowledging its false-positive cost.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{computes-both-error-risks} (required) --- Uses $\beta=1-\text{power}$ and Type I risk $\alpha$
+  \item \textbf{recommends-conditionally} (required) --- Makes a stakeholder-linked, conditional recommendation
+  \item \textbf{acknowledges-tradeoff} (required) --- Contrasts 129 fewer misses with 40 more false replacements
+  \item \textbf{critiques-both-claims} (required) --- Explains why neither lower nor higher $\alpha$ is cost-free
+  \item \textbf{proposes-sample-size-change} (required) --- Raises $n$ to improve power at fixed $\alpha$
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Quantifies both errors, recommends conditionally, states the tradeoff and missing costs, critiques both claims, and raises $n$. \\ \hline
+\textbf{P} & Defends a plan but omits a consequence, critique, comparison, missing input, or design change. \\ \hline
+\textbf{I} & Uses $1-\alpha$ for $\beta$, calls either plan cost-free, or names a universal winner. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+A district tests $H_0:p=0.05$ versus $H_a:p>0.05$, where $p$ is the late-alert proportion. Both plans use $n=200$ and have the table's operating probabilities. Safety prioritizes avoiding retention when $p=0.10$; Budget prioritizes avoiding replacement when $p=0.05$. No common cost scale exists.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
+\begin{center}
+\textbf{Test plans ($n=200$)}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Plan} & \textbf{$\alpha$} & \textbf{Power at $p=0.10$} \\ \hline
+\textbf{A} & 0.010 & 0.748 \\ \hline
+\textbf{B} & 0.050 & 0.877 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which plan would you try first? Name the office you prioritized and one competing cost.\par
+\answer{Not graded. Either plan needs a conditional defense; neither is cost-free.}
+\end{firsttakebox}
+
+\textit{Rules callout ``ERROR PROBABILITIES TRADE OFF (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Describe a Type I error and a Type II error in this context. Identify what $P(\text{reject }H_0\mid p=0.10)$ represents.\par
+\answer{A Type I error rejects $H_0$ and concludes that more than 5 percent of alerts are late, causing the district to replace the system, when the true late rate is 0.05. A Type II error fails to reject $H_0$ and retains the system when its true late rate exceeds 0.05; at the specified alternative, the true rate is 0.10. The conditional rejection probability at $p=0.10$ is the power against $p=0.10$.}
+
+\dokbadge{2}~\textbf{(b)} For each plan, calculate $\beta$. Then give the expected number of Type I errors per 1{,}000 repeated tests when $p=0.05$ and Type II errors per 1{,}000 repeated tests when $p=0.10$.\par
+\answer{Plan A has $\beta=1-0.748=0.252$; per 1{,}000 repetitions it produces about $1{,}000(0.010)=10$ Type I errors when $p=0.05$ and $1{,}000(0.252)=252$ Type II errors when $p=0.10$. Plan B has $\beta=1-0.877=0.123$; it produces about $1{,}000(0.050)=50$ Type I errors and $1{,}000(0.123)=123$ Type II errors in the corresponding states.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both claims. Explain why no plan is universally best; recommend one for a stated office using both error probabilities and their per-1{,}000 consequences. Name information needed for a district-wide choice and a change that improves power at fixed $\alpha$.\par
+\answer{No plan is universally best without consequence weights. For Safety, B is defensible: power is 0.877 versus 0.748, so Type II risk is 0.123 versus 0.252---123 versus 252 misses per 1{,}000 at $p=0.10$. For Budget, A is defensible: Type I risk is 0.010 versus 0.050---10 versus 50 false replacements per 1{,}000 at $p=0.05$. Thus B trades 129 fewer misses for 40 more false replacements. Dev ignores that lower $\alpha$ raises Type II risk at fixed $n$; Lin hides B's false-positive cost. The district needs relative costs and likely true states. Increasing $n$ can raise power and lower $\beta$ while holding $\alpha$ fixed.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

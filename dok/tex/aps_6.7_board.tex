@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.7 \textperiodcentered\ TODAY'S PROBLEM}{Which Error Can the District Afford?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+A district tests $H_0:p=0.05$ versus $H_a:p>0.05$, where $p$ is the late-alert proportion. Both plans use $n=200$ and have the table's operating probabilities. Safety prioritizes avoiding retention when $p=0.10$; Budget prioritizes avoiding replacement when $p=0.05$. No common cost scale exists.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Test plans ($n=200$)}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Plan} & \textbf{$\alpha$} & \textbf{Power at $p=0.10$} \\ \hline
+\textbf{A} & 0.010 & 0.748 \\ \hline
+\textbf{B} & 0.050 & 0.877 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which plan would you try first? Name the office you prioritized and one competing cost.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Describe a Type I error and a Type II error in this context. Identify what $P(\text{reject }H_0\mid p=0.10)$ represents.
+  \item[\dokbadge{2}~(b)] For each plan, calculate $\beta$. Then give the expected number of Type I errors per 1{,}000 repeated tests when $p=0.05$ and Type II errors per 1{,}000 repeated tests when $p=0.10$.
+  \item[\dokbadge{3}~(c)] Adjudicate both claims. Explain why no plan is universally best; recommend one for a stated office using both error probabilities and their per-1{,}000 consequences. Name information needed for a district-wide choice and a change that improves power at fixed $\alpha$.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson7_live.html}{\texttt{\detokenize{u6_lesson7_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson7_live.html}
+
+\end{document}
