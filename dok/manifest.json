@@ -215,6 +215,12 @@
     "frq_pattern": "normal-vs-clt-model-adjudication",
     "worksheet": "u5_lesson7_live.html"
   },
+  "5.8": {
+    "title": "Two Samples, One Difference",
+    "skill": "4.B",
+    "frq_pattern": "two-shape-routes-for-a-mean-difference",
+    "worksheet": "u5_lesson8_live.html"
+  },
   "6.1": {
     "title": "When a Normal Curve Distorts the Tail",
     "skill": "4.B",
@@ -304,6 +310,12 @@
     "skill": "4.C",
     "frq_pattern": "paired-test-setup-and-consequences",
     "worksheet": "u7_lesson4_live.html"
+  },
+  "7.5": {
+    "title": "A Test of Mean Resolution Time",
+    "skill": "4.E",
+    "frq_pattern": "mean-test-decision-and-conclusion",
+    "worksheet": "u7_lesson5_live.html"
   },
   "8.1": {
     "title": "Two Simulations for Mystery Tokens",

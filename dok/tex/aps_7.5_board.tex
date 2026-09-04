@@ -1,0 +1,50 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 7.5 \textperiodcentered\ TODAY'S PROBLEM}{A Test of Mean Resolution Time}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a help desk closed 1,200 tickets in a quarter. To investigate whether their population mean resolution time was below 12 hours, an analyst took an SRS of 24 and used $\alpha=0.05$.\par\smallskip \textbf{Leah:} ``The lower-tail test gives $t=-1.5747$, $df=23$, and $p\approx0.0645$. I would state what evidence this does and does not provide.''\par \textbf{Damon:} ``Because $p>0.05$, accept $H_0$. The test proves the population mean was exactly 12 hours and the observed difference was only chance.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Ticket sample}\par\smallskip
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Summary} & \textbf{Value} \\ \hline
+\textbf{Population} & 1200 \\ \hline
+\textbf{$n$} & 24 \\ \hline
+\textbf{Mean (h)} & 11.1 \\ \hline
+\textbf{SD (h)} & 2.8 \\ \hline
+\textbf{Shape} & Symmetric; no outliers \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which account is more defensible? Cite the p-value comparison or a claim that a test can or cannot justify.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define the population mean and state hypotheses for the research question.
+  \item[\dokbadge{2}~(b)] Verify random, 10 percent, and shape conditions. Compute $SE$, $t$, $df$, and the lower-tail p-value; interpret the p-value.
+  \item[\dokbadge{3}~(c)] Adjudicate the accounts. Compare $p$ with $\alpha$, distinguish the formal decision from acceptance or proof, state the scoped population conclusion, and explain the two beliefs produced by the rejected account.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson5_live.html}{\texttt{\detokenize{u7_lesson5_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson5_live.html}
+
+\end{document}

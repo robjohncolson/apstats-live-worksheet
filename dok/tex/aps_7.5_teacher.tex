@@ -1,0 +1,114 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 7.5 (CED 4.5) \textperiodcentered\ B: 2027-01-21 \textperiodcentered\ E: 2027-03-08 \textperiodcentered\ TEACHER KEY}{A Test of Mean Resolution Time}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 3.E} --- Calculate a test statistic and find a p-value, provided conditions for inference are met.
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item \textbf{Skill 4.E} --- Justify a claim using a decision based on significance tests.
+  \item \textbf{EU VAR-7} --- The t-distribution may be used to model variation.
+  \item \textbf{LO VAR-7.E} --- Calculate an appropriate test statistic for a population mean, including the mean difference between values in matched pairs. [Skill 3.E]
+  \item \textbf{EK VAR-7.E.1} --- For a single quantitative variable when random sampling with replacement from a population that can be modeled with a normal distribution with mean $\mu$ and standard deviation $\sigma$, the sampling distribution of t = ($\bar{x}$ - $\mu$) / (s/$\surd$n) has a t-distribution with n - 1 degrees of freedom.
+  \item \textbf{EU DAT-3} --- Significance testing allows us to make decisions about hypotheses within a particular context.
+  \item \textbf{LO DAT-3.E} --- Interpret the p-value of a significance test for a population mean, including the mean difference between values in matched pairs. [Skill 4.B]
+  \item \textbf{EK DAT-3.E.1} --- An interpretation of the p-value of a significance test for a population mean should recognize that the p-value is computed by assuming that the null hypothesis is true, i.e., by assuming that the true population mean is equal to the particular value stated in the null hypothesis.
+  \item \textbf{LO DAT-3.F} --- Justify a claim about the population based on the results of a significance test for a population mean. [Skill 4.E]
+  \item \textbf{EK DAT-3.F.1} --- A formal decision explicitly compares the p-value to the significance $\alpha$. If the p-value $\leq$ $\alpha$, then reject the null hypothesis, $H_0$: $\mu$ = $\mu_0$. If the p-value > $\alpha$, then fail to reject the null hypothesis.
+  \item \textbf{EK DAT-3.F.2} --- The results of a significance test for a population mean can serve as the statistical reasoning to support the answer to a research question about the population that was sampled.
+\end{itemize}
+}
+\textbf{Essential question:} What conclusion is warranted when a one-sample t-test does not cross its evidence threshold?\par
+\textbf{DOK-3 skill:} 4.E \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{mean-\allowbreak{}test-\allowbreak{}decision-\allowbreak{}and-\allowbreak{}conclusion}}\par
+\textbf{DOK rationale:} Part (c) coordinates the lower-tail p-value, preset threshold, asymmetric decision logic, and SRS population scope to adjudicate two conclusions and trace the consequence of overclaiming.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask what conclusion the reported evidence permits.
+  \item Begin the 7.5 video follow-along at minute 5.
+  \item Return at minute 33. Require the p-value meaning, decision, scope, and limit.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to one account and cite the numerical comparison or population claim.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What assumption begins a correct interpretation of 0.0645?
+  \item What does 0.0645 greater than 0.05 let us decide, and what does it not establish?
+  \item Which group of tickets can this SRS represent?
+\end{itemize}
+}{Solo teacher. Connect the lower-tail probability to the null model and bound the conclusion.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Interpreting the p-value as the probability that the null hypothesis is true.
+  \item Using a two-sided p-value even though the alternative is lower-tailed.
+  \item Accepting the null or claiming that the true mean equals 12 hours after failing to reject.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{chooses-warranted-account} (required) --- Selects the bounded fail-to-reject account
+  \item \textbf{compares-p-and-alpha} (required) --- Uses $0.0645>0.05$
+  \item \textbf{interprets-p-conditionally} (required) --- Interprets the lower tail assuming $\mu=12$
+  \item \textbf{rejects-proof-of-equality} (required) --- Distinguishes failure to reject from acceptance or proof
+  \item \textbf{uses-scope-and-consequence} (required) --- States the 1,200-ticket scope and both false beliefs
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Uses the threshold, conditional p-value meaning, scoped conclusion, and both limits of the rejected account. \\ \hline
+\textbf{P} & Gives the correct decision but incompletely explains p-value meaning, scope, or why equality was not established. \\ \hline
+\textbf{I} & Accepts the null, treats the p-value as a null probability, or concludes the mean equals 12. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a help desk closed 1,200 tickets in a quarter. To investigate whether their population mean resolution time was below 12 hours, an analyst took an SRS of 24 and used $\alpha=0.05$.\par\smallskip \textbf{Leah:} ``The lower-tail test gives $t=-1.5747$, $df=23$, and $p\approx0.0645$. I would state what evidence this does and does not provide.''\par \textbf{Damon:} ``Because $p>0.05$, accept $H_0$. The test proves the population mean was exactly 12 hours and the observed difference was only chance.''\par
+\begin{center}
+\textbf{Ticket sample}\par\smallskip
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Summary} & \textbf{Value} \\ \hline
+\textbf{Population} & 1200 \\ \hline
+\textbf{$n$} & 24 \\ \hline
+\textbf{Mean (h)} & 11.1 \\ \hline
+\textbf{SD (h)} & 2.8 \\ \hline
+\textbf{Shape} & Symmetric; no outliers \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which account is more defensible? Cite the p-value comparison or a claim that a test can or cannot justify.\par
+\answer{Not graded. Students should distinguish the formal decision from a claim about the null value.}
+\end{firsttakebox}
+
+\textit{Rules callout ``COMPARE EVIDENCE TO THE PRESET THRESHOLD (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Define the population mean and state hypotheses for the research question.\par
+\answer{Let $\mu$ be the mean resolution time for all 1,200 tickets closed that quarter. $H_0:\mu=12$ hours and $H_a:\mu<12$ hours.}
+
+\dokbadge{2}~\textbf{(b)} Verify random, 10 percent, and shape conditions. Compute $SE$, $t$, $df$, and the lower-tail p-value; interpret the p-value.\par
+\answer{The SRS satisfies $24\leq0.10(1{,}200)=120$; the symmetric, outlier-free sample supports shape for $n=24$. $SE=2.8/\sqrt{24}=0.57155$, so $t=(11.1-12)/0.57155=-1.57467$, $df=23$, and $p=0.06449$. If $\mu=12$, the chance of an SRS result at least this low in the direction of $H_a$ is about 0.0645.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate the accounts. Compare $p$ with $\alpha$, distinguish the formal decision from acceptance or proof, state the scoped population conclusion, and explain the two beliefs produced by the rejected account.\par
+\answer{Leah is warranted. Since $0.0645>0.05$, fail to reject $H_0$. The sample does not provide convincing evidence that the mean for all 1,200 tickets was below 12 hours. The p-value assumes $\mu=12$; it is not the probability that assumption is true. Failing to reject says the data are not sufficiently incompatible with 12, not that $\mu=12$ was proved. Chance is plausible but not proved to be the only explanation. The rejected account would falsely report both equality and certainty about chance.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

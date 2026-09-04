@@ -1,0 +1,58 @@
+# Topic 7.5 — Carrying Out a Test for a Population Mean (B: 2027-01-21)
+topic: "7.5"
+ced2026: { unit: 4, topic: "4.5", label: "Carrying Out a Test for a Population Mean" }
+title: "A Test of Mean Resolution Time"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "What conclusion is warranted when a one-sample t-test does not cross its evidence threshold?"
+worksheet: "u7_lesson5_live.html"
+
+rules_callout:
+  title: "COMPARE EVIDENCE TO THE PRESET THRESHOLD (keep on the page)"
+  body: |
+    For a one-sample mean test with unknown population standard deviation,
+    $t=(\bar x-\mu_0)/(s/\sqrt n)$ has $df=n-1$. The $p$-value is the probability, assuming $H_0$ is true,
+    of a test statistic at least as extreme as the observed statistic in the direction of $H_a$.
+    If $p\leq\alpha$, reject $H_0$; if $p>\alpha$, fail to reject $H_0$. Failing to reject says the sample
+    does not provide convincing evidence for $H_a$ at that significance level. It does not prove the null value,
+    and the conclusion must concern the population represented by the random sample.
+
+focus: aps-7.5-d3-1
+reinforcement: []
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.5in, c: 2.0in }
+
+teacher:
+  phase_tag: 'Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)'
+  teacher_does:
+    - "Board slide up at the bell. Ask what conclusion the reported evidence permits."
+    - "Begin the 7.5 video follow-along at minute 5."
+    - "Return at minute 33. Require the p-value meaning, decision, scope, and limit."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one account and cite the numerical comparison or population claim."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "What assumption begins a correct interpretation of 0.0645?"
+    - "What does 0.0645 greater than 0.05 let us decide, and what does it not establish?"
+    - "Which group of tickets can this SRS represent?"
+  adult_role: "Solo teacher. Connect the lower-tail probability to the null model and bound the conclusion."
+  watch_for:
+    - "Interpreting the p-value as the probability that the null hypothesis is true."
+    - "Using a two-sided p-value even though the alternative is lower-tailed."
+    - "Accepting the null or claiming that the true mean equals 12 hours after failing to reject."
+  first_take_note: "Not graded. Students should distinguish the formal decision from a claim about the null value."
+
+visuals:
+  help_desk_sample:
+    kind: two_way_table
+    col_label: "Ticket sample"
+    row_label: "Summary"
+    cols: ["Value"]
+    rows: ["Population", "$n$", "Mean (h)", "SD (h)", "Shape"]
+    cells:
+      - ["1200"]
+      - ["24"]
+      - ["11.1"]
+      - ["2.8"]
+      - ["Symmetric; no outliers"]

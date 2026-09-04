@@ -1,0 +1,108 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 5.8 (CED 4.6) \textperiodcentered\ B: 2027-01-22 \textperiodcentered\ E: 2027-03-10 \textperiodcentered\ TEACHER KEY}{Two Samples, One Difference}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{ENDURING UNDERSTANDING: UNC-3} --- Probabilistic reasoning allows us to anticipate patterns in data.
+  \item \textbf{Skills: 3.B} --- Determine parameters for probability distributions. | 3.C --- Describe probability distributions. | 4.B --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item UNC-3.T Determine parameters of a sampling distribution for a difference in sample means. [Skill 3.B]
+  \item UNC-3.T.1 For a numerical variable, when randomly sampling from two independent populations with means $\mu$1 and $\mu$2 and standard deviations $\sigma$1 and $\sigma$2, the sampling distribution of the difference in sample means has mean $\mu$ = $\mu$1 - $\mu$2 and standard deviation $\sigma$ = sqrt($\sigma$1\textsuperscript{2}/n1 + $\sigma$2\textsuperscript{2}/n2). UNC-3.T.2 If sampling without replacement and sample sizes are less than 10\% of population sizes, the difference is negligible.
+  \item UNC-3.U Determine whether a sampling distribution of a difference in sample means can be described as approximately normal. [Skill 3.C]
+  \item UNC-3.U.1 The sampling distribution of the difference in sample means can be modeled with a normal distribution if both population distributions can be modeled with normal distributions. UNC-3.U.2 If population distributions cannot be modeled with normal distributions, the sampling distribution can be approximated by a normal distribution if both sample sizes are at least 30.
+  \item UNC-3.V Interpret probabilities and parameters for a sampling distribution for a difference in sample means. [Skill 4.B]
+  \item UNC-3.V.1 Probabilities and parameters for a sampling distribution for a difference of sample means should be interpreted using appropriate units and within the context of specific populations.
+\end{itemize}
+}
+\textbf{Essential question:} How can two sample means use different pathways to justify one normal model for their difference?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{two-\allowbreak{}shape-\allowbreak{}routes-\allowbreak{}for-\allowbreak{}a-\allowbreak{}mean-\allowbreak{}difference}}\par
+\textbf{DOK rationale:} Part (c) coordinates a separate shape pathway for each sample mean, judges two incomplete model claims, and uses a small-sample counterfactual to trace when the tail probability loses support.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask which details govern the sampling model.
+  \item Begin the Topic 5.8 video follow-along at minute 5.
+  \item Return at minute 33. Require separate shape arguments and the counterfactual check.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Name one argument to retain and one that needs more evidence.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Which distribution are we justifying for North: individual waits or sample means?
+  \item Why can the two groups use different routes to approximate normality?
+  \item What changes if the skewed South sample has size 8?
+  \item What repeated-sampling event does 0.0273 describe?
+\end{itemize}
+}{Solo teacher. Justify North and South separately, then combine them using independence.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Requiring both samples to have size at least 30 even when one population is normal.
+  \item Assuming one normal component automatically fixes an unjustified second component.
+  \item Subtracting variances because the statistic subtracts means.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{uses-north-normal-route} (required) --- Uses North population normality despite $n_N=12$
+  \item \textbf{uses-south-clt-route} (required) --- Uses South $n_S=48$ with the CLT
+  \item \textbf{coordinates-difference-model} (required) --- Uses both component models and independence for $0.0273$
+  \item \textbf{adjudicates-both-accounts} (required) --- Diagnoses both incomplete rules
+  \item \textbf{traces-counterfactual} (required) --- Uses $n_S=8$ to expose the combined-size shortcut
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Justifies both components by distinct routes, coordinates independence, diagnoses both accounts, and explains the $n_S=8$ consequence. \\ \hline
+\textbf{P} & Reaches the warranted verdict but omits a route, independence, or the counterfactual consequence. \\ \hline
+\textbf{I} & Requires both populations normal or uses one/combined sample size to justify both means. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose parcel pickup waits have the shown population parameters. North waits are approximately normal; South waits are strongly right-skewed. Independent SRSs are taken without replacement, and the service wants $P(\bar X_N-\bar X_S>2.5)$.\par\smallskip \textbf{Rina:} ``South is skewed, so I would not use a normal model for the difference.''\par \textbf{Oscar:} ``North is normal and the combined sample size is 60, so the normal model is valid; the probability is $0.0273$.''\par
+\begin{center}
+\textbf{Locker samples}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Locker} & \textbf{$n$} & \textbf{$\mu$} & \textbf{$\sigma$} \\ \hline
+\textbf{North} & 12 & 6.0 & 1.8 \\ \hline
+\textbf{South} & 48 & 4.8 & 3.0 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Identify one argument you would retain and one that needs more evidence. Cite a population shape or sample size.\par
+\answer{Not graded. Each account contains a claim that still needs component-level justification.}
+\end{firsttakebox}
+
+\textit{Rules callout ``JUSTIFY EACH SAMPLE MEAN BEFORE THEIR DIFFERENCE (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State the mean of $\bar X_N-\bar X_S$ and translate the event above into context.\par
+\answer{The sampling distribution is centered at $\mu_N-\mu_S=6.0-4.8=1.2$ minutes. The event says the sample mean North wait exceeds the sample mean South wait by more than 2.5 minutes.}
+
+\dokbadge{2}~\textbf{(b)} Verify both 10 percent conditions, compute the sampling-distribution SD, and calculate the probability under a normal model.\par
+\answer{North: $12\leq0.10(600)=60$; South: $48\leq0.10(1{,}000)=100$. The SD is $\sqrt{1.8^2/12+3.0^2/48}=\sqrt{0.4575}=0.676387$. Thus $z=(2.5-1.2)/0.676387=1.92198$ and the upper-tail probability is $0.027304\approx0.0273$.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both accounts and decide whether $0.0273$ is warranted. Justify each sample mean separately using its shape and sample size, coordinate independence, then use a South sample of 8 to expose the consequence of any rejected shortcut.\par
+\answer{The probability is warranted, but both explanations are incomplete. North's normal population supports $\bar X_N$ with $n_N=12$. For skewed South, $n_S=48\geq30$ supports $\bar X_S$ by the CLT. Independence then supports an approximately normal difference. Rina would discard a justified probability by requiring both populations to be normal. Oscar's combined-size rule fails because each component needs support: with skewed South and $n_S=8$, its sample mean is not assured normal, so neither is the difference. That shortcut would make readers trust unsupported tails.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}
