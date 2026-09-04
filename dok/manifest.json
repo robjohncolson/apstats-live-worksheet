@@ -310,5 +310,11 @@
     "skill": "4.C",
     "frq_pattern": "design-controls-chi-square-procedure",
     "worksheet": "u8_lesson5_live.html"
+  },
+  "8.6": {
+    "title": "Interpreting a Chi-Square Result",
+    "skill": "4.B",
+    "frq_pattern": "scaled-cell-evidence-and-scope",
+    "worksheet": "u8_lesson6_live.html"
   }
 }

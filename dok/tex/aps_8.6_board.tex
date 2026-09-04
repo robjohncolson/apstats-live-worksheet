@@ -1,0 +1,49 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 8.6 \textperiodcentered\ TODAY'S PROBLEM}{Interpreting a Chi-Square Result}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a city library takes an SRS of 240 of its 6,000 active adult cardholders. It records each person's chosen notification method and whether the person returned an item late in the previous six months.\par\smallskip \textbf{Nia:} ``Email/Late has the largest raw gap, 13.75; I think that cell drives the statistic and the result shows email prevents late returns.''\par \textbf{Omar:} ``Expected counts differ, so raw gaps may not settle cell influence. I would calculate contributions and examine how notification methods were obtained before interpreting.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Late returns}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Method} & \textbf{Late} & \textbf{Not late} & \textbf{Total} \\ \hline
+\textbf{Email} & 15 & 85 & 100 \\ \hline
+\textbf{Text} & 24 & 56 & 80 \\ \hline
+\textbf{None} & 30 & 30 & 60 \\ \hline
+\textbf{Total} & 69 & 171 & 240 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which account is better supported so far? Name one calculation and one design fact needed to decide.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Give the row totals, column totals, table total, and degrees of freedom.
+  \item[\dokbadge{2}~(b)] Verify random sampling, 10 percent, and expected counts. Calculate all expected counts, cell contributions, $\chi^2$, and the upper-tail p-value.
+  \item[\dokbadge{3}~(c)] Adjudicate the accounts. Compare the Email/Late and None/Late raw gaps and contributions, use the p-value for a population conclusion, bound causation, and state the two consequences of the rejected account.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson6_live.html}{\texttt{\detokenize{u8_lesson6_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson6_live.html}
+
+\end{document}

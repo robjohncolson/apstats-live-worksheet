@@ -1,0 +1,59 @@
+# Topic 8.6 — Carrying Out a Chi-Square Test
+topic: "8.6"
+ced2026: { unit: 3, topic: "3.15", label: "Carrying Out a Chi-Square Test (homogeneity/independence)" }
+title: "Interpreting a Chi-Square Result"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do cell contributions and study design control what a significant chi-square result permits us to say?"
+worksheet: "u8_lesson6_live.html"
+
+rules_callout:
+  title: "SCALE EACH GAP, THEN BOUND THE CONCLUSION (keep on the page)"
+  body: |
+    For a chi-square test of independence, $H_0$ says the two categorical variables are not
+    associated in the population; $H_a$ says they are associated. Calculate
+    $E=(\text{row total})(\text{column total})/(\text{table total})$ and
+    $\chi^2=\sum (O-E)^2/E$ with $df=(r-1)(c-1)$. Every expected count should be greater than 5,
+    and the p-value is the upper-tail probability assuming $H_0$ is true. A cell's contribution
+    scales its squared gap by $E$, so the largest raw gap need not contribute most. Random sampling
+    supports population scope; without random assignment, association does not establish causation.
+
+focus: aps-8.6-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask what evidence measures a cell's effect on the statistic."
+    - "Begin the 8.6 video follow-along at minute 5."
+    - "Return at minute 33. Require a two-cell comparison and a bounded inference conclusion."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one account and name the evidence needed to evaluate it."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "Why can a 12.75 gap contribute more than a 13.75 gap?"
+    - "Which expected count scales each disputed gap?"
+    - "What does the upper-tail probability say under no association?"
+    - "Which design feature permits population generalization, and which missing feature blocks causation?"
+  adult_role: "Solo teacher. Require cell contributions, the p-value, population scope, and a causal limit."
+  watch_for:
+    - "Selecting a driver from the largest raw observed-minus-expected gap without dividing by its expected count."
+    - "Turning the upper-tail p-value into the probability that the null hypothesis is true."
+    - "Treating an SRS of cardholders as random assignment of their chosen notification methods."
+  first_take_note: "Not graded. Students should identify both numerical and design evidence still needed."
+
+visuals:
+  notification_table:
+    kind: two_way_table
+    col_label: "Late returns"
+    row_label: "Method"
+    cols: ["Late", "Not late", "Total"]
+    rows: ["Email", "Text", "None", "Total"]
+    cells:
+      - ["15", "85", "100"]
+      - ["24", "56", "80"]
+      - ["30", "30", "60"]
+      - ["69", "171", "240"]

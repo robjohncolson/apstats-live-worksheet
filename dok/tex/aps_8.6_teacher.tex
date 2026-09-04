@@ -1,0 +1,117 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 8.6 (CED 3.15) \textperiodcentered\ B: 2027-01-04 \textperiodcentered\ E: 2027-02-08 \textperiodcentered\ TEACHER KEY}{Interpreting a Chi-Square Result}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 3.E} --- Calculate a test statistic and find a p-value, provided conditions for inference are met.
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item \textbf{Skill 4.E} --- Justify a claim using a decision based on significance tests.
+  \item \textbf{EU VAR-8} --- The chi-square distribution may be used to model variation.
+  \item \textbf{EU DAT-3} --- Significance testing allows us to make decisions about hypotheses within a particular context.
+  \item \textbf{LO VAR-8.L} --- Calculate the appropriate statistic for a chi-square test for homogeneity or independence. [Skill 3.E]
+  \item \textbf{EK VAR-8.L.1} --- The appropriate test statistic for a chi-square test for homogeneity or independence is the chi-square statistic: $\chi$\textsuperscript{2} = $\sum$ (Observed count - Expected count)\textsuperscript{2} / Expected count, with degrees of freedom equal to (number of rows - 1)(number of columns - 1).
+  \item \textbf{LO VAR-8.M} --- Determine the p-value for a chi-square significance test for independence or homogeneity. [Skill 3.E]
+  \item \textbf{EK VAR-8.M.1} --- The p-value for a chi-square test for independence or homogeneity for a number of degrees of freedom is found using the appropriate table or technology.
+  \item \textbf{EK VAR-8.M.2} --- For a test of independence or homogeneity for a two-way table, the p-value is the proportion of values in a chi-square distribution with appropriate degrees of freedom that are equal to or larger than the test statistic.
+  \item \textbf{LO DAT-3.K} --- Interpret the p-value for the chi-square test for homogeneity or independence. [Skill 4.B]
+  \item \textbf{EK DAT-3.K.1} --- An interpretation of the p-value for the chi-square test for homogeneity or independence is the probability, given the null hypothesis and probability model are true, of obtaining a test statistic as, or more, extreme than the observed value.
+  \item \textbf{LO DAT-3.L} --- Justify a claim about the population based on the results of a chi-square test for homogeneity or independence. [Skill 4.E]
+  \item \textbf{EK DAT-3.L.1} --- A decision to either reject or fail to reject the null hypothesis for a chi-square test for homogeneity or independence is based on comparison of the p-value to the significance level, $\alpha$.
+  \item \textbf{EK DAT-3.L.2} --- The results of a chi-square test for homogeneity or independence can serve as the statistical reasoning to support the answer to a research question about the population that was sampled (independence) or the populations that were sampled (homogeneity).
+\end{itemize}
+}
+\textbf{Essential question:} How do cell contributions and study design control what a significant chi-square result permits us to say?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{scaled-\allowbreak{}cell-\allowbreak{}evidence-\allowbreak{}and-\allowbreak{}scope}}\par
+\textbf{DOK rationale:} Part (c) coordinates scaled cell evidence, the overall p-value, sampling scope, and causal limits to adjudicate two accounts and trace both consequences of the rejected reasoning.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask what evidence measures a cell's effect on the statistic.
+  \item Begin the 8.6 video follow-along at minute 5.
+  \item Return at minute 33. Require a two-cell comparison and a bounded inference conclusion.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to one account and name the evidence needed to evaluate it.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Why can a 12.75 gap contribute more than a 13.75 gap?
+  \item Which expected count scales each disputed gap?
+  \item What does the upper-tail probability say under no association?
+  \item Which design feature permits population generalization, and which missing feature blocks causation?
+\end{itemize}
+}{Solo teacher. Require cell contributions, the p-value, population scope, and a causal limit.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Selecting a driver from the largest raw observed-minus-expected gap without dividing by its expected count.
+  \item Turning the upper-tail p-value into the probability that the null hypothesis is true.
+  \item Treating an SRS of cardholders as random assignment of their chosen notification methods.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-scaled-account} (required) --- Uses scaled contributions, not raw gaps alone
+  \item \textbf{uses-two-cell-values} (required) --- Compares both disputed gaps and contributions
+  \item \textbf{states-overall-conclusion} (required) --- Uses $p\approx0.0000129$ for an association conclusion
+  \item \textbf{bounds-population-and-causation} (required) --- Uses the SRS for scope and lack of assignment to block causation
+  \item \textbf{states-reader-consequences} (required) --- Diagnoses both false cell ranking and false causation
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Compares scaled cell evidence, uses the p-value, bounds scope and causation, and states both consequences. \\ \hline
+\textbf{P} & Gives a valid association conclusion but omits a cell comparison, scope limit, or consequence. \\ \hline
+\textbf{I} & Ranks by raw gap, treats the p-value as a null probability, or claims prevention. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a city library takes an SRS of 240 of its 6,000 active adult cardholders. It records each person's chosen notification method and whether the person returned an item late in the previous six months.\par\smallskip \textbf{Nia:} ``Email/Late has the largest raw gap, 13.75; I think that cell drives the statistic and the result shows email prevents late returns.''\par \textbf{Omar:} ``Expected counts differ, so raw gaps may not settle cell influence. I would calculate contributions and examine how notification methods were obtained before interpreting.''\par
+\begin{center}
+\textbf{Late returns}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Method} & \textbf{Late} & \textbf{Not late} & \textbf{Total} \\ \hline
+\textbf{Email} & 15 & 85 & 100 \\ \hline
+\textbf{Text} & 24 & 56 & 80 \\ \hline
+\textbf{None} & 30 & 30 & 60 \\ \hline
+\textbf{Total} & 69 & 171 & 240 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which account is better supported so far? Name one calculation and one design fact needed to decide.\par
+\answer{Not graded. Students should identify both numerical and design evidence still needed.}
+\end{firsttakebox}
+
+\textit{Rules callout ``SCALE EACH GAP, THEN BOUND THE CONCLUSION (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Give the row totals, column totals, table total, and degrees of freedom.\par
+\answer{Row totals are 100, 80, and 60; column totals are 69 and 171; $n=240$; and $df=(3-1)(2-1)=2$.}
+
+\dokbadge{2}~\textbf{(b)} Verify random sampling, 10 percent, and expected counts. Calculate all expected counts, cell contributions, $\chi^2$, and the upper-tail p-value.\par
+\answer{The SRS satisfies $240\leq0.10(6{,}000)=600$. Expected counts are Email $(28.75,71.25)$, Text $(23,57)$, and None $(17.25,42.75)$, all greater than 5.\par Contributions are $6.5761,2.6535,0.0435$ and $0.0175,9.4239,3.8026$ in table order. Thus $\chi^2=22.5172$, $df=2$, and $p\approx0.0000129$.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate the accounts. Compare the Email/Late and None/Late raw gaps and contributions, use the p-value for a population conclusion, bound causation, and state the two consequences of the rejected account.\par
+\answer{Omar is warranted. Email/Late has gap $13.75$ but contribution $13.75^2/28.75=6.5761$; None/Late has gap $12.75$ but contribution $12.75^2/17.25=9.4239$, the largest. Since $p\approx0.0000129$, reject no association: chosen method and late return are associated among the 6,000 active adult cardholders. The SRS supports that scope, but methods were not assigned, so prevention is not established. The rejected account both ranks cell influence by unscaled gaps and turns observational association into causation.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

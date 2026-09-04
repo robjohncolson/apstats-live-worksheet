@@ -163,8 +163,11 @@ def test_latex_text_converts_unicode_statistics_notation():
 def test_tether_lines_remove_html_breaks_and_unsupported_stats_unicode():
     topic_15 = "\n".join(bl.tether_lines("1.5"))
     topic_17 = "\n".join(bl.tether_lines("1.7"))
+    topic_86 = "\n".join(bl.tether_lines("8.6"))
 
     assert "<br" not in topic_15.lower()
     assert r"$\bar{x}$" in topic_17
     assert r"$\sum$" in topic_17
     assert not any(char in topic_17 for char in "̄Σᵢᵗʰₓ²")
+    assert "*p*" not in topic_86
+    assert "p-value" in topic_86
