@@ -59,6 +59,18 @@
     "frq_pattern": "compare-two-boxplots-adjudicate-competing-claims-then-choose-one-statistic",
     "worksheet": "u1_lesson9_live.html"
   },
+  "2.1": {
+    "title": "Counts or Conditional Percents?",
+    "skill": "4.B",
+    "frq_pattern": "counts-vs-conditional-percents-are-the-variables-related",
+    "worksheet": "u2_lesson1_live.html"
+  },
+  "2.2": {
+    "title": "Same Responses, Different Questions",
+    "skill": "4.B",
+    "frq_pattern": "count-bars-vs-segmented-bars-which-answers-the-question",
+    "worksheet": "u2_lesson2_live.html"
+  },
   "3.1": {
     "title": "Who Chose Whom?",
     "skill": "4.A",

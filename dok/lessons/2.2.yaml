@@ -1,0 +1,112 @@
+# Topic 2.2 --- Representing Two Categorical Variables
+topic: "2.2"
+ced2026: { unit: 2, topic: "2.1", label: "Two Categorical Variables: Tables & Graphs" }
+title: "Same Responses, Different Questions"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "Which display best answers a relationship question when the groups have different sizes?"
+worksheet: "u2_lesson2_live.html"
+
+rules_callout:
+  title: "MATCH THE DISPLAY TO THE QUESTION (keep on the page)"
+  body: |
+    A \textbf{count bar graph} preserves how many observations are in each category and group. A
+    \textbf{segmented bar graph} stacks each group's conditional relative frequencies to $100\%$.
+    Equal total heights remove the effect of unequal group sizes, so corresponding segments compare proportions.
+    Different conditional distributions indicate an association. A segmented graph needs group totals before it
+    can recover counts; a count graph needs division before it directly shows within-group percentages.
+
+focus: aps-2.2-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask for a graph choice and one visible feature before students calculate."
+    - "Begin the video follow-along at minute 5."
+    - "Return to both graphs at minute 33. Circulate and keep the reader's exact question in view."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose a graph for the relationship question and cite one feature."
+    - "Complete the video follow-along about two-way tables and bar-graph displays."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Why is the ninth-grade count bar twice as tall before preference is considered?"
+    - "What does making both grade bars end at 100 percent remove from the comparison?"
+    - "Which graph could answer how many students need Field Day supplies?"
+    - "What extra number would let you turn a segment percentage back into a count?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to connect each graph to a specific reader question; accept both students' observations while pressing for which display answers association."
+  watch_for:
+    - "Reading equal total heights in Graph B as equal numbers of students."
+    - "Comparing 72 with 18 without accounting for grade totals."
+    - "Saying one graph is always better rather than matching counts or proportions to a purpose."
+  first_take_note: "Not graded. The goal is to surface whether students instinctively compare bar totals, segment counts, or within-grade shares."
+
+visuals:
+  celebration_graphs:
+    kind: raw_tikz
+    body: |
+      \begin{minipage}{0.48\linewidth}
+      \centering
+      \begin{tikzpicture}
+      \begin{axis}[
+        width=0.95\linewidth,
+        height=1.25in,
+        ybar stacked,
+        bar width=18pt,
+        ymin=0,
+        ymax=135,
+        ytick={0,30,60,90,120},
+        symbolic x coords={9th,12th},
+        xtick=data,
+        enlarge x limits=0.35,
+        title={\textbf{Graph A}},
+        xlabel={Grade},
+        ylabel={Number of students},
+        tick label style={font=\scriptsize},
+        label style={font=\scriptsize},
+        title style={font=\small},
+        ymajorgrids,
+        nodes near coords,
+        every node near coord/.append style={font=\scriptsize},
+        legend style={at={(0.5,-0.30)},anchor=north,font=\scriptsize,draw=none}
+      ]
+      \addplot[fill=calloutblue,draw=dayblue] coordinates {(9th,72) (12th,18)};
+      \addplot[fill=calloutgreen,draw=dayblue] coordinates {(9th,48) (12th,42)};
+      \legend{Field Day,Talent Show}
+      \end{axis}
+      \end{tikzpicture}
+      \end{minipage}\hfill
+      \begin{minipage}{0.48\linewidth}
+      \centering
+      \begin{tikzpicture}
+      \begin{axis}[
+        width=0.95\linewidth,
+        height=1.25in,
+        ybar stacked,
+        bar width=18pt,
+        ymin=0,
+        ymax=108,
+        ytick={0,20,40,60,80,100},
+        symbolic x coords={9th,12th},
+        xtick=data,
+        enlarge x limits=0.35,
+        title={\textbf{Graph B}},
+        xlabel={Grade},
+        ylabel={Percent within grade},
+        tick label style={font=\scriptsize},
+        label style={font=\scriptsize},
+        title style={font=\small},
+        ymajorgrids,
+        nodes near coords,
+        every node near coord/.append style={font=\scriptsize},
+        legend style={at={(0.5,-0.30)},anchor=north,font=\scriptsize,draw=none}
+      ]
+      \addplot[fill=calloutblue,draw=dayblue] coordinates {(9th,60) (12th,30)};
+      \addplot[fill=calloutgreen,draw=dayblue] coordinates {(9th,40) (12th,70)};
+      \legend{Field Day,Talent Show}
+      \end{axis}
+      \end{tikzpicture}
+      \end{minipage}

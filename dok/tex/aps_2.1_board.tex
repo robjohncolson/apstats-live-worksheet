@@ -1,0 +1,48 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 2.1 \textperiodcentered\ TODAY'S PROBLEM}{Counts or Conditional Percents?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a counselor records whether each of 200 students plays a school sport and whether the student usually gets at least 8 hours of sleep on a school night.\par\smallskip \textbf{Kai:} \emph{Seventy-five nonathletes but only 35 athletes get at least 8 hours, so playing a sport goes with less sleep.}\par \textbf{Rosa:} \emph{Those counts compare groups of different sizes; 35 out of 50 may tell a different story from 75 out of 150.}\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Usual sleep on a school night}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Sport?} & \textbf{At least 8 h} & \textbf{Under 8 h} & \textbf{Total} \\ \hline
+\textbf{Plays} & 35 & 15 & 50 \\ \hline
+\textbf{Does not} & 75 & 75 & 150 \\ \hline
+\textbf{Total} & 110 & 90 & 200 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which student's reasoning seems more useful for deciding whether sport participation and sleep are related? Name one table detail.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Identify the two categorical variables and list the categories of each.
+  \item[\dokbadge{2}~(b)] Compute the conditional distribution of sleep category within each sport-participation group. Compare the percentages who get at least 8 hours.
+  \item[\dokbadge{3}~(c)] Decide whether sport participation and sleep category appear related for these students. Cite the two conditional percentages that settle your decision. Explain what Kai's comparison of 75 with 35 would mislead a reader into believing and why the unequal row totals create that impression. Finally, state what this table cannot establish about playing a sport causing a change in sleep.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson1_live.html}{\texttt{\detokenize{u2_lesson1_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson1_live.html}
+
+\end{document}
