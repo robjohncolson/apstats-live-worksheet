@@ -17,10 +17,10 @@ rules_callout:
     Counts answer ``how many?''; percents answer ``what share?'' --- use the table that answers the question asked.
 
 focus: aps-1.3-d3-1
-reinforcement: [aps-1.3-d2-1]
+reinforcement: []
 exit_reflection: "One thing the video changed about my first take: \\hrulefill"
 
-space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }   # two sentence frames + optional item share the back
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }   # two sentence frames share the back
 
 teacher:
   phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"

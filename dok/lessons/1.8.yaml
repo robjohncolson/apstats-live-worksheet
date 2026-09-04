@@ -1,0 +1,82 @@
+# Topic 1.8 — Graphical Representations of Summary Statistics
+topic: "1.8"
+ced2026: { unit: 1, topic: "1.8", label: "Graphical Representations of Summary Statistics" }
+title: "Two Displays, One Data Set"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "What information survives when individual observations are compressed into a boxplot?"
+worksheet: "u1_lesson8_live.html"
+
+rules_callout:
+  title: "DOTPLOTS AND BOXPLOTS (keep on the page)"
+  body: |
+    A \textbf{dotplot} keeps every observation, so it can show clusters, gaps, peaks, and isolated values.\
+    A \textbf{boxplot} compresses the data to the five-number summary: minimum, Q1, median, Q3, maximum
+    (with separately marked outliers). The box contains the middle $50\%$ of observations.\
+    A boxplot shows center and spread efficiently, but it may hide modality, clusters, and gaps.
+
+focus: aps-1.8-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Read Omar's and Nia's claims aloud without confirming either."
+    - "Video follow-along from minute 5 (five-number summaries and boxplots)."
+    - "Board slide back up at minute 33. Circulate; ask students to point before they name a feature."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to Omar or Nia from the two displays before the video."
+    - "Complete the video follow-along on five-number summaries and boxplots."
+    - "Finish (a)--(c); complete the exit line; turn in."
+  questions_to_ask:
+    - "Point to 32 minutes on the dotplot. How many dots are nearby?"
+    - "Could a different data set have this same five-number summary but no gap?"
+    - "Which features disappeared when the 24 dots became five numbers?"
+    - "For the coach's decision, do you need a center or the number of students above 30?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Do not say `bimodal' or confirm Nia; ask students to locate the median on both displays and name what disappears."
+  watch_for:
+    - "Treating the median as a mode or as a value an observation must equal."
+    - "Claiming the boxplot displays the two clusters because its box is wide."
+    - "Calling 55 an outlier without checking the $1.5\\,\\mathrm{IQR}$ fence."
+  first_take_note: "Not graded. Expect Omar; the empty interval around 32 is the reveal."
+
+visuals:
+  practice_times:
+    kind: raw_tikz
+    body: |
+      \begin{tikzpicture}
+      \begin{axis}[
+        width=0.92\linewidth,
+        height=1.85in,
+        xmin=20, xmax=58,
+        ymin=-1.6, ymax=3.8,
+        ytick=\empty,
+        axis y line=none,
+        axis x line=bottom,
+        xtick={22,24,32,40.5,55},
+        xticklabels={22,24,32,40.5,55},
+        tick label style={font=\scriptsize},
+        xlabel={Practice-test time (minutes)},
+        label style={font=\small},
+        clip=false
+      ]
+      \node[anchor=west,font=\scriptsize\bfseries] at (axis cs:20.4,3.35) {Dotplot};
+      \addplot[only marks, mark=*, mark size=2.4pt, color=dayblue] coordinates {
+        (22,1) (22,2) (23,1) (23,2) (24,1) (24,2) (24,3)
+        (25,1) (25,2) (25,3) (26,1) (26,2)
+        (38,1) (38,2) (39,1) (39,2) (40,1) (40,2)
+        (41,1) (41,2) (42,1) (43,1) (44,1) (55,1)
+      };
+      \node[anchor=west,font=\scriptsize\bfseries] at (axis cs:20.4,-0.15) {Boxplot};
+      \draw[dayblue,thick] (axis cs:22,-0.85) -- (axis cs:55,-0.85);
+      \draw[dayblue,thick] (axis cs:22,-1.15) -- (axis cs:22,-0.55);
+      \draw[dayblue,thick] (axis cs:55,-1.15) -- (axis cs:55,-0.55);
+      \filldraw[fill=calloutblue,draw=dayblue,thick]
+        (axis cs:24,-1.25) rectangle (axis cs:40.5,-0.45);
+      \draw[dayblue,very thick] (axis cs:32,-1.25) -- (axis cs:32,-0.45);
+      \end{axis}
+      \end{tikzpicture}
+    wrap_center: true

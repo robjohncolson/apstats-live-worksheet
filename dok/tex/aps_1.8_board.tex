@@ -1,0 +1,72 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 1.8 \textperiodcentered\ TODAY'S PROBLEM}{Two Displays, One Data Set}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+The displays show practice-test times, in minutes, for 24 students. Two students interpret the boxplot.\par\smallskip \textbf{Omar:} ``Most students took about 32 minutes---the middle of the box.''\par \textbf{Nia:} ``A boxplot cannot tell us whether most students took about 32 minutes.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.92\linewidth,
+  height=1.85in,
+  xmin=20, xmax=58,
+  ymin=-1.6, ymax=3.8,
+  ytick=\empty,
+  axis y line=none,
+  axis x line=bottom,
+  xtick={22,24,32,40.5,55},
+  xticklabels={22,24,32,40.5,55},
+  tick label style={font=\scriptsize},
+  xlabel={Practice-test time (minutes)},
+  label style={font=\small},
+  clip=false
+]
+\node[anchor=west,font=\scriptsize\bfseries] at (axis cs:20.4,3.35) {Dotplot};
+\addplot[only marks, mark=*, mark size=2.4pt, color=dayblue] coordinates {
+  (22,1) (22,2) (23,1) (23,2) (24,1) (24,2) (24,3)
+  (25,1) (25,2) (25,3) (26,1) (26,2)
+  (38,1) (38,2) (39,1) (39,2) (40,1) (40,2)
+  (41,1) (41,2) (42,1) (43,1) (44,1) (55,1)
+};
+\node[anchor=west,font=\scriptsize\bfseries] at (axis cs:20.4,-0.15) {Boxplot};
+\draw[dayblue,thick] (axis cs:22,-0.85) -- (axis cs:55,-0.85);
+\draw[dayblue,thick] (axis cs:22,-1.15) -- (axis cs:22,-0.55);
+\draw[dayblue,thick] (axis cs:55,-1.15) -- (axis cs:55,-0.55);
+\filldraw[fill=calloutblue,draw=dayblue,thick]
+  (axis cs:24,-1.25) rectangle (axis cs:40.5,-0.45);
+\draw[dayblue,very thick] (axis cs:32,-1.25) -- (axis cs:32,-0.45);
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Who do you trust more, Omar or Nia? Point to one feature in either display.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Read the median and the first and third quartiles from the boxplot. What percent of the times lie in the box from Q1 to Q3?
+  \item[\dokbadge{2}~(b)] Describe the dotplot in context: include the two clusters, the gap, and the isolated high value. State two features that the boxplot preserves.
+  \item[\dokbadge{3}~(c)] Whose interpretation is better supported? Cite the dotplot feature that settles it. Explain what a boxplot can and cannot show here. A coach asks whether most students need more than 30 minutes: choose a display, and explain what the boxplot alone would lead the coach to believe.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson8_live.html}{\texttt{\detokenize{u1_lesson8_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson8_live.html}
+
+\end{document}
