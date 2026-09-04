@@ -23,11 +23,23 @@
     "frq_pattern": "truncated-axis-which-display-is-honest-and-what-it-misleads",
     "worksheet": "u1_lesson4_live.html"
   },
+  "1.5": {
+    "title": "Same Data, Different Bins",
+    "skill": "4.B",
+    "frq_pattern": "bin-width-which-display-answers-the-question-and-what-it-hides",
+    "worksheet": "u1_lesson5_live.html"
+  },
   "1.6": {
     "title": "Describing a Distribution",
     "skill": "4.B",
     "frq_pattern": "two-descriptions-adjudicate-then-choose-center",
     "worksheet": "u1_lesson6_live.html"
+  },
+  "1.7": {
+    "title": "Which Summary Tells the Story?",
+    "skill": "4.B",
+    "frq_pattern": "whose-computation-and-what-it-misleads-then-choose-the-summary",
+    "worksheet": "u1_lesson7_live.html"
   },
   "1.9": {
     "title": "Which Class Did Better?",

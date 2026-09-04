@@ -1,0 +1,75 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 1.7 (CED 1.7) \textperiodcentered\ B: 2026-09-21 \textperiodcentered\ E: 2026-09-25}{Which Summary Tells the Story?}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a principal asks, ``How much paid work do students do in a week?'' Fifteen students report these weekly hours: 0, 0, 0, 4, 5, 6, 6, 8, 8, 10, 10, 12, 12, 15, 30.\par\smallskip \textbf{Kai:} ``$\bar{x}=8.4$, $s_x\approx7.5$, and $\mathrm{IQR}=8$. Report the mean and SD because they use every observation.''\par \textbf{Rosa:} ``Median $=8$, $Q_1=4.5$, $Q_3=11$, and $\mathrm{IQR}=6.5$. Report the median and IQR because 30 looks unusual.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.85\linewidth,
+  height=1.60in,
+  ymin=0, ymax=4, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={Weekly paid-work hours}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.4pt, color=dayblue] coordinates {
+  (0,1)
+  (0,2)
+  (0,3)
+  (4,1)
+  (5,1)
+  (6,1)
+  (6,2)
+  (8,1)
+  (8,2)
+  (10,1)
+  (10,2)
+  (12,1)
+  (12,2)
+  (15,1)
+  (30,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Whose report would you send, Kai's or Rosa's? Cite one number or dotplot feature.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ CENTER, SPREAD, AND OUTLIERS (keep on the page)}{calloutgreen}
+$\bar{x}=\dfrac{\sum x_i}{n}$ \textperiodcentered\
+$s_x=\sqrt{\dfrac{\sum(x_i-\bar{x})^2}{n-1}}$ \textperiodcentered\
+$\mathrm{IQR}=Q_3-Q_1$. For odd $n$, use the ordered values \textbf{before the overall median's position} for $Q_1$
+and those \textbf{after its position} for $Q_3$; do not include the overall median itself in either half.\\
+Outlier fences: $Q_1-1.5(\mathrm{IQR})$ and $Q_3+1.5(\mathrm{IQR})$. Mean and SD are
+\textbf{nonresistant}; median and IQR are \textbf{resistant}. Match the pair to the distribution.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} State the median and maximum weekly paid-work hours.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Using the AP quartile convention, calculate $Q_1$, $Q_3$, the IQR, and both 1.5-IQR fences; identify any outlier. Then verify the mean and sample standard deviation. Show enough work to distinguish the methods.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both reports. Whose IQR follows the AP convention, and what did the other student do differently? Choose mean and SD or median and IQR for the principal, cite the specific dotplot feature controlling your choice, and explain what the alternative pair alone could lead the principal to believe.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} \blank[0.8in]'s IQR follows the AP convention; the other student \blank[2.4in], changing \blank[1.4in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I would report \blank[1.3in] because the dotplot shows \blank[2in]; the alternative could make the principal believe \blank[2.2in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

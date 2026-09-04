@@ -89,12 +89,26 @@ LATEX_ESCAPES = {"&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_", "{"
 UNICODE_TO_LATEX = {
     "≥": r"$\geq$", "≤": r"$\leq$", "≠": r"$\neq$", "±": r"$\pm$", "×": r"$\times$", "−": "-",
     "→": r"$\rightarrow$", "μ": r"$\mu$", "σ": r"$\sigma$", "α": r"$\alpha$", "β": r"$\beta$",
-    "χ": r"$\chi$", "√": r"$\surd$", "…": r"\ldots{}", "—": "---", "–": "--", "’": "'", "“": "``", "”": "''",
+    "χ": r"$\chi$", "Σ": r"$\sum$", "√": r"$\surd$", "…": r"\ldots{}", "—": "---", "–": "--", "’": "'", "“": "``", "”": "''",
+}
+UNICODE_STAT_SEQUENCES = {
+    "x̄": r"$\bar{x}$",
+    "xᵢ": r"$x_i$",
+    "iᵗʰ": r"$i^{\mathrm{th}}$",
+    "sₓ": r"$s_x$",
+    "s²": r"$s^2$",
+    "ᵗʰ": r"\textsuperscript{th}",
+    "²": r"\textsuperscript{2}",
 }
 
 
 def latex_text(s: str) -> str:
     """Escape prose (NOT author-written LaTeX) for pdflatex."""
+    protected: dict[str, str] = {}
+    for index, (source, replacement) in enumerate(UNICODE_STAT_SEQUENCES.items()):
+        marker = f"\x00STAT{index}\x00"
+        s = s.replace(source, marker)
+        protected[marker] = replacement
     out = []
     for ch in s:
         if ch in LATEX_ESCAPES:
@@ -103,7 +117,10 @@ def latex_text(s: str) -> str:
             out.append(UNICODE_TO_LATEX[ch])
         else:
             out.append(ch)
-    return "".join(out)
+    rendered = "".join(out)
+    for marker, replacement in protected.items():
+        rendered = rendered.replace(marker, replacement)
+    return rendered
 
 
 def tether_lines(topic: str) -> list[str]:
@@ -116,6 +133,7 @@ def tether_lines(topic: str) -> list[str]:
     if not p.exists():
         return []
     text = p.read_text(encoding="utf-8")
+    text = re.sub(r"<br\s*/?>", " ", text, flags=re.IGNORECASE)
     start = text.find("THE CONCEPTS THIS LESSON")
     end = text.find("HOW YOU MUST BEHAVE")
     block = text[start:end] if start >= 0 and end > start else text
@@ -500,12 +518,13 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
     total = sum(v for v in m.values() if isinstance(v, (int, float)))
     # A YAML `tether:` list (LaTeX-safe lines) overrides the tutor artifact — for topics without one.
     tether = [str(x) for x in (lesson.get("tether") or [])] or tether_lines(str(lesson["topic"]))
+    frq_pattern = str(item.get("frq_pattern", "")).replace("-", r"-\allowbreak{}")
     parts = [
         "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\n",
         f"\\daybanner{{{header_line(lesson, schedule)} \\textperiodcentered\\ TEACHER KEY}}{{{lesson['title']}}}\n\n",
         "\\sectionbanner{CED TETHER}\n\n{\\small\n" + (bulleted(tether) if tether else "\\textit{(no tutor artifact for this topic)}\n") + "}\n",
         f"\\textbf{{Essential question:}} {lesson.get('essential_question', '')}\\par\n",
-        f"\\textbf{{DOK-3 skill:}} {item.get('skill')} \\textperiodcentered\\ \\textbf{{FRQ pattern:}} \\texttt{{{item.get('frq_pattern')}}}\\par\n",
+        f"\\textbf{{DOK-3 skill:}} {item.get('skill')} \\textperiodcentered\\ \\textbf{{FRQ pattern:}} {{\\small\\texttt{{{frq_pattern}}}}}\\par\n",
         f"\\textbf{{DOK rationale:}} {item.get('dok_rationale')}\\par\n\n",
         f"\\frameworkphaseheader{{{t.get('phase_tag', 'Do Now → Explore → Exit')}}}{{1 $\\rightarrow$ 3}}{{{total:g}}}"
         f"{{%\n{bulleted(t.get('teacher_does', []))}}}"

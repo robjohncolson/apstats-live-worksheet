@@ -1,0 +1,66 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 1.7 \textperiodcentered\ TODAY'S PROBLEM}{Which Summary Tells the Story?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a principal asks, ``How much paid work do students do in a week?'' Fifteen students report these weekly hours: 0, 0, 0, 4, 5, 6, 6, 8, 8, 10, 10, 12, 12, 15, 30.\par\smallskip \textbf{Kai:} ``$\bar{x}=8.4$, $s_x\approx7.5$, and $\mathrm{IQR}=8$. Report the mean and SD because they use every observation.''\par \textbf{Rosa:} ``Median $=8$, $Q_1=4.5$, $Q_3=11$, and $\mathrm{IQR}=6.5$. Report the median and IQR because 30 looks unusual.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.85\linewidth,
+  height=1.60in,
+  ymin=0, ymax=4, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={Weekly paid-work hours}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.4pt, color=dayblue] coordinates {
+  (0,1)
+  (0,2)
+  (0,3)
+  (4,1)
+  (5,1)
+  (6,1)
+  (6,2)
+  (8,1)
+  (8,2)
+  (10,1)
+  (10,2)
+  (12,1)
+  (12,2)
+  (15,1)
+  (30,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Whose report would you send, Kai's or Rosa's? Cite one number or dotplot feature.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the median and maximum weekly paid-work hours.
+  \item[\dokbadge{2}~(b)] Using the AP quartile convention, calculate $Q_1$, $Q_3$, the IQR, and both 1.5-IQR fences; identify any outlier. Then verify the mean and sample standard deviation. Show enough work to distinguish the methods.
+  \item[\dokbadge{3}~(c)] Adjudicate both reports. Whose IQR follows the AP convention, and what did the other student do differently? Choose mean and SD or median and IQR for the principal, cite the specific dotplot feature controlling your choice, and explain what the alternative pair alone could lead the principal to believe.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson7_live.html}{\texttt{\detokenize{u1_lesson7_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson7_live.html}
+
+\end{document}

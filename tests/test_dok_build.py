@@ -66,7 +66,17 @@ def test_teacher_has_key_and_scoring(path: Path):
         assert ans[:40] in tex, f"teacher key missing answer ({label})"
     assert item["dok_rationale"][:40] in tex
     assert "SCORING PART (c)" in tex
-    assert item["frq_pattern"] in tex
+    assert item["frq_pattern"].replace("-", r"-\allowbreak{}") in tex
+
+
+def test_teacher_allows_long_frq_patterns_to_wrap():
+    lesson = _lesson(LESSONS[0])
+    item = REGISTRY[lesson["focus"]]
+
+    tex = bl.emit_teacher(lesson, REGISTRY, SCHEDULE)
+
+    breakable_pattern = item["frq_pattern"].replace("-", r"-\allowbreak{}")
+    assert f"{{\\small\\texttt{{{breakable_pattern}}}}}" in tex
 
 
 @pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
@@ -121,3 +131,21 @@ def test_visual_allowlist_rejects_annotations():
 def test_hist_renders_every_bin():
     tex = bl.render_hist({"bins": [0, 10, 20], "counts": [3, 5], "xlabel": "x", "ylabel": "y"}, 1.0)
     assert "(0,3)" in tex and "(10,5)" in tex and "(20,0)" in tex
+
+
+def test_latex_text_converts_unicode_statistics_notation():
+    tex = bl.latex_text("x̄ = (1/n) Σ xᵢ; the iᵗʰ value; sₓ and s²")
+    assert tex == (
+        r"$\bar{x}$ = (1/n) $\sum$ $x_i$; the $i^{\mathrm{th}}$ value; "
+        r"$s_x$ and $s^2$"
+    )
+
+
+def test_tether_lines_remove_html_breaks_and_unsupported_stats_unicode():
+    topic_15 = "\n".join(bl.tether_lines("1.5"))
+    topic_17 = "\n".join(bl.tether_lines("1.7"))
+
+    assert "<br" not in topic_15.lower()
+    assert r"$\bar{x}$" in topic_17
+    assert r"$\sum$" in topic_17
+    assert not any(char in topic_17 for char in "̄Σᵢᵗʰₓ²")
