@@ -71,6 +71,12 @@
     "frq_pattern": "count-bars-vs-segmented-bars-which-answers-the-question",
     "worksheet": "u2_lesson2_live.html"
   },
+  "2.3": {
+    "title": "Which Pass Rate Answers Which Question?",
+    "skill": "4.B",
+    "frq_pattern": "marginal-vs-conditional-association-is-not-cause",
+    "worksheet": "u2_lesson3_live.html"
+  },
   "3.1": {
     "title": "Who Chose Whom?",
     "skill": "4.A",

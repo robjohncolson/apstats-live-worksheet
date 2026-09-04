@@ -1,0 +1,48 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 2.3 \textperiodcentered\ TODAY'S PROBLEM}{Which Pass Rate Answers Which Question?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a school records exam outcomes for 300 students. Students chose for themselves whether to use the tutoring center.\par\smallskip \textbf{Mara:} \emph{The pass rate is 75\%.}\par \textbf{Noah:} \emph{The pass rate is 88\%.}\par \textbf{Elena:} \emph{Tutoring raises the pass rate by 13 percentage points because $88\%-75\%=13$ percentage points.}\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Exam outcomes for 300 students}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Center?} & \textbf{Passed} & \textbf{Did not pass} & \textbf{Total} \\ \hline
+\textbf{Used} & 66 & 9 & 75 \\ \hline
+\textbf{Did not} & 159 & 66 & 225 \\ \hline
+\textbf{Total} & 225 & 75 & 300 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Can 75\% and 88\% both be correct pass rates? State what group you think each percentage describes.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Identify 75\% and 88\% as marginal or conditional relative frequencies. For the conditional frequency, name the group on which it is conditioned.
+  \item[\dokbadge{2}~(b)] Verify both percentages from the table. Then compute the pass rate among students who did not use the center and the percentage-point gap between the two user groups.
+  \item[\dokbadge{3}~(c)] Explain which question Mara's 75\% answers and which question Noah's 88\% answers. Decide whether tutoring use and exam outcome appear associated, citing the two conditional pass rates that settle it. Then evaluate Elena's 13-point claim: state what two rates she compared, what comparison directly measures the group gap, and why the word \emph{raises} is not warranted when students chose tutoring.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson3_live.html}{\texttt{\detokenize{u2_lesson3_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson3_live.html}
+
+\end{document}

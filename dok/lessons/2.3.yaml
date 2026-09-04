@@ -1,0 +1,57 @@
+# Topic 2.3 --- Statistics for Two Categorical Variables
+topic: "2.3"
+ced2026: { unit: 2, topic: "2.2", label: "Two Categorical Variables: Summary Statistics" }
+title: "Which Pass Rate Answers Which Question?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do the denominator and study design limit what a percentage can say?"
+worksheet: "u2_lesson3_live.html"
+
+rules_callout:
+  title: "NAME THE DENOMINATOR, THEN THE CLAIM (keep on the page)"
+  body: |
+    A \textbf{marginal relative frequency} uses a row or column total divided by the table total. A
+    \textbf{conditional relative frequency} uses a cell count divided by the total for the named group.
+    To decide whether two categorical variables are associated, compare the same response's conditional
+    percentage across the groups. Different conditional distributions show association. They do not show cause
+    when people choose their own groups; a fair causal comparison requires random assignment.
+
+focus: aps-2.3-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask what population sits in each denominator without saying either rate is wrong."
+    - "Begin the video follow-along at minute 5."
+    - "Return to the table at minute 33. Circulate and require students to compare like-conditioned rates."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Name the group described by each first-take percentage."
+    - "Complete the video follow-along about joint, marginal, and conditional relative frequencies."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Who is included in the denominator 300? Who is included in the denominator 75?"
+    - "Which two denominators create a direct users-versus-nonusers comparison?"
+    - "Where are tutoring users already included inside the overall 75 percent?"
+    - "Who decided whether each student used tutoring, and why does that matter for raises?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require every rate to be stated with its conditioning group and separate evidence of association from evidence of causation."
+  watch_for:
+    - "Using the overall 75 percent as though it were the nonuser pass rate."
+    - "Reporting 13 percent instead of 13 percentage points and missing the mixed denominators."
+    - "Treating a conditional-rate difference from self-selected groups as proof of a tutoring effect."
+  first_take_note: "Not graded. Expect some students to believe two different pass rates cannot both be correct until their denominators are named."
+
+visuals:
+  tutoring_outcomes:
+    kind: two_way_table
+    col_label: "Exam outcomes for 300 students"
+    row_label: "Center?"
+    cols: ["Passed", "Did not pass", "Total"]
+    rows: ["Used", "Did not", "Total"]
+    cells:
+      - ["66", "9", "75"]
+      - ["159", "66", "225"]
+      - ["225", "75", "300"]
