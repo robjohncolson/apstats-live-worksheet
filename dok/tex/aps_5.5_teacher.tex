@@ -1,0 +1,119 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 5.5 (CED 3.2) \textperiodcentered\ B: 2026-11-23 \textperiodcentered\ E: 2026-12-21 \textperiodcentered\ TEACHER KEY}{Wrong Shape Does Not Mean Biased}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 3.B} --- Determine parameters for probability distributions.
+  \item \textbf{Skill 3.C} --- Describe probability distributions.
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item \textbf{EU UNC-3} --- Probabilistic reasoning allows us to anticipate patterns in data.
+  \item \textbf{LO UNC-3.K} --- Determine parameters of a sampling distribution for sample proportions. [Skill 3.B]
+  \item \textbf{EK UNC-3.K.1} --- For independent samples of a categorical variable from a population with proportion p, the sampling distribution of the sample proportion has mean $\mu$ = p and a standard deviation $\sigma$ = sqrt(p(1-p)/n).
+  \item \textbf{EK UNC-3.K.2} --- If sampling without replacement, the standard deviation of the sample proportion is smaller than the formula above. If the sample size is less than 10\% of the population size, the difference is negligible.
+  \item \textbf{LO UNC-3.L} --- Determine whether a sampling distribution for a sample proportion can be described as approximately normal. [Skill 3.C]
+  \item \textbf{EK UNC-3.L.1} --- For a categorical variable, the sampling distribution of the sample proportion will have an approximate normal distribution provided the sample size is large enough: np $\geq$ 10 and n(1-p) $\geq$ 10.
+  \item \textbf{LO UNC-3.M} --- Interpret probabilities and parameters for a sampling distribution for a sample proportion. [Skill 4.B]
+  \item \textbf{EK UNC-3.M.1} --- Probabilities and parameters for a sampling distribution for a sample proportion should be interpreted using appropriate units and within the context of a specific population.
+\end{itemize}
+}
+\textbf{Essential question:} How do sampling, spread, and shape conditions limit what a surprising sample proportion can show?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{failed-\allowbreak{}large-\allowbreak{}counts-\allowbreak{}normal-\allowbreak{}tail-\allowbreak{}vs-\allowbreak{}valid-\allowbreak{}binomial-\allowbreak{}and-\allowbreak{}bias}}\par
+\textbf{DOK rationale:} Part (c) separates independence and shape conditions, compares two probability models, adjudicates distinct overclaims about evidence and bias, and bounds the strongest conclusion supported by the random sample.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask students to mark which sentence in each claim is about shape, center, or evidence.
+  \item Begin the Topic 5.5 video follow-along at minute 5.
+  \item Return to the board slide at minute 33. Circulate and press the distinct roles of 10 percent and Large Counts.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose whose reasoning is closer and name one condition before the lesson.
+  \item Complete the follow-along about the center, spread, shape, and probabilities for sample proportions.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Which condition supports treating the 100 selections as approximately independent?
+  \item Why does $np=8$ address shape rather than the estimator's long-run center?
+  \item What values of $X$ belong to $\widehat p\geq0.14$?
+  \item How do 0.0135 and about 0.028 change the strength, but not the direction, of the evidence?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Require students to attach each condition to its job and to distinguish evidence against 0.08 from proof of a changed population rate.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Applying an $n>30$ rule carried over from sample means.
+  \item Calling a nonnormal sampling distribution biased.
+  \item Calculating exactly 14 rather than 14 or more caption users.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{distinguishes-two-condition-roles} (required) --- Uses $100<500$ to support approximate independence and $np=8<10$ to reject the normal approximation
+  \item \textbf{uses-valid-tail-method} (required) --- Uses a binomial calculation or a fully specified simulation to estimate the upper-tail probability near 0.028
+  \item \textbf{bounds-evidence-conclusion} (required) --- Calls the result unusual evidence under $p=0.08$ without claiming it proves an increase
+  \item \textbf{separates-normality-from-bias} (required) --- Explains that failure of a shape condition does not shift the long-run center of the sample proportion and states the consequence of each overclaim
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Correctly assigns the 10 percent and Large Counts conditions, obtains a valid tail estimate near 0.028, rejects both overclaims, and distinguishes unusual evidence, normal shape, and unbiased estimation with both reader consequences. \\ \hline
+\textbf{P} & Gets the model choice and evidence conclusion but omits one condition role, gives an incomplete simulation, or explains only one student's overreach. \\ \hline
+\textbf{I} & Uses $n>30$ to justify normality for a proportion, declares the estimator biased because $np<10$, or treats a small probability as proof the rate changed. \\ \hline
+\end{tabular}}
+
+\textbf{Common mistakes}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Checking only $n>30$ instead of both expected counts
+  \item Using $P(X=14)$ rather than the upper-tail event $P(X\geq14)$
+  \item Saying the 10 percent condition determines normal shape rather than approximate independence and spread
+  \item Equating a skewed sampling distribution with a biased estimator
+\end{itemize}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a video platform has 5,000 active accounts and says that $p=0.08$ of them regularly use captions. An SRS of 100 accounts, selected without replacement, contains 14 regular caption users, so $\widehat p=0.14$.\par\smallskip \textbf{Jules:} ``Because $n=100>30$, $\widehat p$ is approximately normal. I get $P(\widehat p\geq0.14)=0.0135$, which proves caption use increased.''\par \textbf{Nora:} ``Because $np=8<10$, a normal model is not justified. Therefore $\widehat p$ is biased and this sample tells us nothing.''\par
+\begin{center}
+\textbf{Caption-use sample}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Source} & \textbf{Accounts} & \textbf{Users} & \textbf{Rate} \\ \hline
+\textbf{Population} & 5,000 & 400 & 0.08 \\ \hline
+\textbf{SRS} & 100 & 14 & 0.14 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Whose reasoning is closer to correct, Jules's or Nora's? Name one condition or claim you would check.\par
+\answer{Not graded. Each student has one correct observation and one overreach.}
+\end{firsttakebox}
+
+\textit{Rules callout ``CHECK INDEPENDENCE, THEN SHAPE (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Identify the population parameter, sample statistic, population size, and sample size. Verify the reported value of $\widehat p$.\par
+\answer{The parameter is $p$, the proportion of all 5,000 active accounts that regularly use captions. The statistic is the sample proportion $\widehat p=14/100=0.14$. Thus $N=5{,}000$ and $n=100$.}
+
+\dokbadge{2}~\textbf{(b)} Find the mean and standard deviation of the sampling distribution of $\widehat p$. Check the 10 percent condition and both Large Counts values.\par
+\answer{The sampling distribution has mean $\mu_{\widehat p}=p=0.08$ and standard deviation $\sigma_{\widehat p}=\sqrt{0.08(0.92)/100}=0.027129\ldots\approx0.0271$. The 10 percent condition holds because $100<0.10(5{,}000)=500$, so dependence from sampling without replacement is negligible. Large Counts does not fully hold: $np=100(0.08)=8<10$, while $n(1-p)=100(0.92)=92\geq10$.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both claims. Use a binomial calculation or valid simulation for $P(\widehat p\geq0.14)$ under $p=0.08$. State the strongest conclusion warranted, explain why failed normality does not create bias, and give the consequence of each overclaim.\par
+\answer{Neither claim is fully correct. Nora rightly rejects the normal approximation because $np=8<10$; $n>30$ cannot replace both proportion counts. With $X\sim\mathrm{Bin}(100,0.08)$, $P(\widehat p\geq0.14)=P(X\geq14)=0.0282357\approx0.0282$; the without-replacement result is about 0.0269. This is unusual evidence worth investigating, not proof of an increase. The SRS and 10 percent condition support an unbiased $\widehat p$; normality concerns shape, not center. Jules's 0.0135 makes the evidence look about twice as rare and ``proves'' erases sampling chance. Nora's claim could make a reader discard a legitimate random-sample estimate.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

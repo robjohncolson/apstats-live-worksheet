@@ -1,0 +1,55 @@
+# Topic 5.4 — Biased and Unbiased Point Estimates
+topic: "5.4"
+ced2026: { unit: 3, topic: "3.1", label: "Estimators" }
+title: "Centered or Close?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How should purpose change the way we weigh an estimator's bias and variability?"
+worksheet: "u5_lesson4_live.html"
+
+rules_callout:
+  title: "BIAS AND VARIABILITY ANSWER DIFFERENT QUESTIONS (keep on the page)"
+  body: |
+    A \textbf{point estimator} is a statistic used to estimate a population parameter; its observed value is a
+    \textbf{point estimate}. An estimator is \textbf{unbiased} when the mean of its sampling distribution equals the
+    parameter. \textbf{Bias} is long-run center minus the parameter; \textbf{variability} is sampling-distribution spread.
+    Unbiased does not mean exact in one sample, and smaller spread does not erase bias. Judge the tradeoff against the stated goal.
+
+focus: aps-5.4-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Record Lena, Omar, and depends votes without endorsing a universal rule."
+    - "Begin the Topic 5.4 video follow-along at minute 5; leave first takes ungraded."
+    - "Return to the board slide at minute 33. Circulate and separate one estimate from a sampling distribution."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose a claim and cite one table entry before the lesson."
+    - "Complete the follow-along about point estimators, bias, and sampling variability."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Does Rule B landing exactly on 0.40 once tell you where it centers over all samples?"
+    - "Which table column measures systematic direction, and which measures sample-to-sample spread?"
+    - "What does the phrase within 0.06 make the team's loss function reward?"
+    - "How could a 2.9-point upward bias matter in a threshold decision?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to name the stated goal before declaring an estimator better and to critique the word always in both claims."
+  watch_for:
+    - "Using the $X=9$ sample to classify long-run bias."
+    - "Treating smaller standard deviation as proof that Rule B is unbiased."
+    - "Choosing the unbiased rule without using the within-0.06 criterion."
+  first_take_note: "Not graded. Each claim names a real strength, then overgeneralizes it."
+
+visuals:
+  estimator_table:
+    kind: two_way_table
+    col_label: "Sampling distributions when $p=0.40$"
+    row_label: "Rule"
+    cols: ["Mean", "SD", "Within 0.06"]
+    rows: ["A", "B"]
+    cells:
+      - ["0.400", "0.098", "0.459"]
+      - ["0.429", "0.070", "0.659"]

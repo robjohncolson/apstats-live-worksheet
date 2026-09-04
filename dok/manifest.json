@@ -190,5 +190,17 @@
     "skill": "4.B",
     "frq_pattern": "clt-when-does-normality-apply",
     "worksheet": "u5_lesson3_live.html"
+  },
+  "5.4": {
+    "title": "Centered or Close?",
+    "skill": "4.B",
+    "frq_pattern": "unbiased-vs-low-variability-which-estimator-for-the-purpose",
+    "worksheet": "u5_lesson4_live.html"
+  },
+  "5.5": {
+    "title": "Wrong Shape Does Not Mean Biased",
+    "skill": "4.B",
+    "frq_pattern": "failed-large-counts-normal-tail-vs-valid-binomial-and-bias",
+    "worksheet": "u5_lesson5_live.html"
   }
 }

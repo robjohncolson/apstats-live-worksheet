@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 5.5 (CED 3.2) \textperiodcentered\ B: 2026-11-23 \textperiodcentered\ E: 2026-12-21}{Wrong Shape Does Not Mean Biased}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a video platform has 5,000 active accounts and says that $p=0.08$ of them regularly use captions. An SRS of 100 accounts, selected without replacement, contains 14 regular caption users, so $\widehat p=0.14$.\par\smallskip \textbf{Jules:} ``Because $n=100>30$, $\widehat p$ is approximately normal. I get $P(\widehat p\geq0.14)=0.0135$, which proves caption use increased.''\par \textbf{Nora:} ``Because $np=8<10$, a normal model is not justified. Therefore $\widehat p$ is biased and this sample tells us nothing.''\par
+\begin{center}
+\textbf{Caption-use sample}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Source} & \textbf{Accounts} & \textbf{Users} & \textbf{Rate} \\ \hline
+\textbf{Population} & 5,000 & 400 & 0.08 \\ \hline
+\textbf{SRS} & 100 & 14 & 0.14 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Whose reasoning is closer to correct, Jules's or Nora's? Name one condition or claim you would check.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ CHECK INDEPENDENCE, THEN SHAPE (keep on the page)}{calloutgreen}
+For an SRS, $\mu_{\widehat p}=p$ and $\sigma_{\widehat p}=\sqrt{p(1-p)/n}$ when $n<10\%$ of the
+population makes without-replacement dependence negligible. Approximate normality is a separate question:
+require both $np\geq10$ and $n(1-p)\geq10$; a generic $n>30$ rule is not enough for proportions.
+If Large Counts fails, use an exact binomial calculation when independence is reasonable or simulate the sampling process.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Identify the population parameter, sample statistic, population size, and sample size. Verify the reported value of $\widehat p$.\par
+\workspace{0.8in}
+
+\dokbadge{2}~\textbf{(b)} Find the mean and standard deviation of the sampling distribution of $\widehat p$. Check the 10 percent condition and both Large Counts values.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both claims. Use a binomial calculation or valid simulation for $P(\widehat p\geq0.14)$ under $p=0.08$. State the strongest conclusion warranted, explain why failed normality does not create bias, and give the consequence of each overclaim.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The 10 percent condition tells us \blank[1.8in], while $np=8$ tells us \blank[1.8in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The result is evidence that \blank[2.1in], but it does not prove \blank[2.1in]; Jules misleads by \blank[1.8in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

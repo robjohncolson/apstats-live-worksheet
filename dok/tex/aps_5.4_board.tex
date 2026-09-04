@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 5.4 \textperiodcentered\ TODAY'S PROBLEM}{Centered or Close?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a research team tests two rules for estimating a support proportion in a validation population where the true proportion is $p=0.40$. For a random sample of 25 people, let $X$ be the number who support the proposal.\par\smallskip Rule A reports $\widehat p_A=X/25$. Rule B reports $\widehat p_B=(X+5)/35$. Exact summaries of the two sampling distributions are shown.\par\smallskip \textbf{Lena:} ``A is unbiased, so it is always the more trustworthy estimator.''\par \textbf{Omar:} ``B varies less and is more likely to land within 0.06 of the truth, so its bias does not matter.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Sampling distributions when $p=0.40$}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Rule} & \textbf{Mean} & \textbf{SD} & \textbf{Within 0.06} \\ \hline
+\textbf{A} & 0.400 & 0.098 & 0.459 \\ \hline
+\textbf{B} & 0.429 & 0.070 & 0.659 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Whose recommendation do you trust more, Lena's or Omar's? Cite one entry from the table.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] If one sample has $X=9$ supporters, calculate the point estimate from Rule A and from Rule B. State the population parameter both rules estimate.
+  \item[\dokbadge{2}~(b)] Use the table to classify each rule as biased or unbiased. For any biased rule, give the direction and amount of bias; then compare the rules' sampling variability.
+  \item[\dokbadge{3}~(c)] Adjudicate both claims. For the goal of maximizing the chance that one estimate is within 0.06 of $p$, choose a rule using its center, spread, and within-0.06 probability. Explain why neither criterion means always better and what ignoring Rule B's bias could mislead a reader into believing.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson4_live.html}{\texttt{\detokenize{u5_lesson4_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson4_live.html}
+
+\end{document}

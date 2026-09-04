@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 5.4 (CED 3.1) \textperiodcentered\ B: 2026-11-20 \textperiodcentered\ E: 2026-12-18}{Centered or Close?}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a research team tests two rules for estimating a support proportion in a validation population where the true proportion is $p=0.40$. For a random sample of 25 people, let $X$ be the number who support the proposal.\par\smallskip Rule A reports $\widehat p_A=X/25$. Rule B reports $\widehat p_B=(X+5)/35$. Exact summaries of the two sampling distributions are shown.\par\smallskip \textbf{Lena:} ``A is unbiased, so it is always the more trustworthy estimator.''\par \textbf{Omar:} ``B varies less and is more likely to land within 0.06 of the truth, so its bias does not matter.''\par
+\begin{center}
+\textbf{Sampling distributions when $p=0.40$}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Rule} & \textbf{Mean} & \textbf{SD} & \textbf{Within 0.06} \\ \hline
+\textbf{A} & 0.400 & 0.098 & 0.459 \\ \hline
+\textbf{B} & 0.429 & 0.070 & 0.659 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Whose recommendation do you trust more, Lena's or Omar's? Cite one entry from the table.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ BIAS AND VARIABILITY ANSWER DIFFERENT QUESTIONS (keep on the page)}{calloutgreen}
+A \textbf{point estimator} is a statistic used to estimate a population parameter; its observed value is a
+\textbf{point estimate}. An estimator is \textbf{unbiased} when the mean of its sampling distribution equals the
+parameter. \textbf{Bias} is long-run center minus the parameter; \textbf{variability} is sampling-distribution spread.
+Unbiased does not mean exact in one sample, and smaller spread does not erase bias. Judge the tradeoff against the stated goal.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} If one sample has $X=9$ supporters, calculate the point estimate from Rule A and from Rule B. State the population parameter both rules estimate.\par
+\workspace{0.8in}
+
+\dokbadge{2}~\textbf{(b)} Use the table to classify each rule as biased or unbiased. For any biased rule, give the direction and amount of bias; then compare the rules' sampling variability.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both claims. For the goal of maximizing the chance that one estimate is within 0.06 of $p$, choose a rule using its center, spread, and within-0.06 probability. Explain why neither criterion means always better and what ignoring Rule B's bias could mislead a reader into believing.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} For the within-0.06 goal, I would use Rule \blank[0.4in] because \blank[2.6in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} That choice is not always better: its \blank[1.2in] could make a reader believe \blank[2.5in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

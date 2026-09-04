@@ -1,0 +1,55 @@
+# Topic 5.5 — Sampling Distributions for Sample Proportions
+topic: "5.5"
+ced2026: { unit: 3, topic: "3.2", label: "Sampling Distributions for Sample Proportions" }
+title: "Wrong Shape Does Not Mean Biased"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do sampling, spread, and shape conditions limit what a surprising sample proportion can show?"
+worksheet: "u5_lesson5_live.html"
+
+rules_callout:
+  title: "CHECK INDEPENDENCE, THEN SHAPE (keep on the page)"
+  body: |
+    For an SRS, $\mu_{\widehat p}=p$ and $\sigma_{\widehat p}=\sqrt{p(1-p)/n}$ when $n<10\%$ of the
+    population makes without-replacement dependence negligible. Approximate normality is a separate question:
+    require both $np\geq10$ and $n(1-p)\geq10$; a generic $n>30$ rule is not enough for proportions.
+    If Large Counts fails, use an exact binomial calculation when independence is reasonable or simulate the sampling process.
+
+focus: aps-5.5-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to mark which sentence in each claim is about shape, center, or evidence."
+    - "Begin the Topic 5.5 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and press the distinct roles of 10 percent and Large Counts."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose whose reasoning is closer and name one condition before the lesson."
+    - "Complete the follow-along about the center, spread, shape, and probabilities for sample proportions."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Which condition supports treating the 100 selections as approximately independent?"
+    - "Why does $np=8$ address shape rather than the estimator's long-run center?"
+    - 'What values of $X$ belong to $\widehat p\geq0.14$?'
+    - "How do 0.0135 and about 0.028 change the strength, but not the direction, of the evidence?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to attach each condition to its job and to distinguish evidence against 0.08 from proof of a changed population rate."
+  watch_for:
+    - "Applying an $n>30$ rule carried over from sample means."
+    - "Calling a nonnormal sampling distribution biased."
+    - "Calculating exactly 14 rather than 14 or more caption users."
+  first_take_note: "Not graded. Each student has one correct observation and one overreach."
+
+visuals:
+  caption_sample_table:
+    kind: two_way_table
+    col_label: "Caption-use sample"
+    row_label: "Source"
+    cols: ["Accounts", "Users", "Rate"]
+    rows: ["Population", "SRS"]
+    cells:
+      - ["5,000", "400", "0.08"]
+      - ["100", "14", "0.14"]
