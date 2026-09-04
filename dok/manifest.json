@@ -136,5 +136,11 @@
     "skill": "4.B",
     "frq_pattern": "mutually-exclusive-or-not-when-the-addition-rule-double-counts",
     "worksheet": "u4_lesson3-4-5_live.html"
+  },
+  "4.5": {
+    "title": "Which Way Does the Condition Point?",
+    "skill": "4.B",
+    "frq_pattern": "conditional-direction-confusion-p-a-given-b-vs-b-given-a",
+    "worksheet": "u4_lesson3-4-5_live.html"
   }
 }

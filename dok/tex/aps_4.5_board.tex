@@ -1,0 +1,48 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 4.5 \textperiodcentered\ TODAY'S PROBLEM}{Which Way Does the Condition Point?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a school screens 1{,}000 students for a hypothetical condition. Exactly $5\%$ have the condition. The test has $90\%$ sensitivity: among students with the condition, $90\%$ test positive. Its false-positive rate is $10\%$: among students without the condition, $10\%$ test positive. The implied counts are shown.\par\smallskip \textbf{Mina:} ``The test catches $90\%$ of students who have the condition, so a positive result means a student has a $90\%$ chance of having it.''\par \textbf{Luis:} ``The base rate matters; the denominator should be everyone who tested positive.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Screening results (counts)}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Status} & \textbf{Pos.} & \textbf{Neg.} & \textbf{Total} \\ \hline
+\textbf{Condition} & 45 & 5 & 50 \\ \hline
+\textbf{No condition} & 95 & 855 & 950 \\ \hline
+\textbf{Total} & 140 & 860 & 1{,}000 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Does a positive result mean a $90\%$ chance of having the condition? Choose a claim and cite one table count.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] For $P(\text{condition}\mid\text{positive})$, identify the numerator count and the denominator count from the table.
+  \item[\dokbadge{2}~(b)] Compute $P(\text{positive}\mid\text{condition})$ and $P(\text{condition}\mid\text{positive})$. Show the count fraction for each and convert each to a percent.
+  \item[\dokbadge{3}~(c)] Decide whether Mina's claim is warranted. Cite the 45 positive results among students with the condition and the 95 positive results among students without it, explain how those counts determine the positive-test group, and diagnose the confusion between $P(\text{positive}\mid\text{condition})$ and $P(\text{condition}\mid\text{positive})$.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html}{\texttt{\detokenize{u4_lesson3-4-5_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html}
+
+\end{document}

@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 4.5 (CED 2.6) \textperiodcentered\ B: 2026-10-26 \textperiodcentered\ E: 2026-11-13}{Which Way Does the Condition Point?}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a school screens 1{,}000 students for a hypothetical condition. Exactly $5\%$ have the condition. The test has $90\%$ sensitivity: among students with the condition, $90\%$ test positive. Its false-positive rate is $10\%$: among students without the condition, $10\%$ test positive. The implied counts are shown.\par\smallskip \textbf{Mina:} ``The test catches $90\%$ of students who have the condition, so a positive result means a student has a $90\%$ chance of having it.''\par \textbf{Luis:} ``The base rate matters; the denominator should be everyone who tested positive.''\par
+\begin{center}
+\textbf{Screening results (counts)}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Status} & \textbf{Pos.} & \textbf{Neg.} & \textbf{Total} \\ \hline
+\textbf{Condition} & 45 & 5 & 50 \\ \hline
+\textbf{No condition} & 95 & 855 & 950 \\ \hline
+\textbf{Total} & 140 & 860 & 1{,}000 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Does a positive result mean a $90\%$ chance of having the condition? Choose a claim and cite one table count.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ THE GIVEN EVENT SETS THE DENOMINATOR (keep on the page)}{calloutgreen}
+$P(A\mid B)$ means the probability of $A$ \textbf{given} $B$. Restrict attention to the outcomes in $B$:
+$P(A\mid B)=\dfrac{P(A\cap B)}{P(B)}=\dfrac{\text{count in both }A\text{ and }B}{\text{count in }B}$.
+In general, $P(A\mid B)\neq P(B\mid A)$ because the denominators are different.
+\textbf{Sensitivity} is $P(\text{positive}\mid\text{condition})$.
+The \textbf{false-positive rate} is $P(\text{positive}\mid\text{no condition})$.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} For $P(\text{condition}\mid\text{positive})$, identify the numerator count and the denominator count from the table.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Compute $P(\text{positive}\mid\text{condition})$ and $P(\text{condition}\mid\text{positive})$. Show the count fraction for each and convert each to a percent.\par
+\workspace{1.3in}
+
+\dokbadge{3}~\textbf{(c)} Decide whether Mina's claim is warranted. Cite the 45 positive results among students with the condition and the 95 positive results among students without it, explain how those counts determine the positive-test group, and diagnose the confusion between $P(\text{positive}\mid\text{condition})$ and $P(\text{condition}\mid\text{positive})$.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The $90\%$ describes $P(\blank[1.2in]\mid\blank[1.2in])$, but the claim asks for $P(\blank[1.2in]\mid\blank[1.2in])$.\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Among the \blank[0.7in] positive results, \blank[0.6in] are true positives and \blank[0.6in] are false positives, so \blank[2.1in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}
