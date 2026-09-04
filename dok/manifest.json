@@ -112,5 +112,17 @@
     "skill": "4.B",
     "frq_pattern": "completely-randomized-vs-block-when-blocking-earns-its-keep",
     "worksheet": "u3_lesson6-7_live.html"
+  },
+  "4.1": {
+    "title": "Can Chance Make a Streak?",
+    "skill": "4.A",
+    "frq_pattern": "is-this-pattern-random-design-the-simulation",
+    "worksheet": "u4_lesson1-2_live.html"
+  },
+  "4.2": {
+    "title": "What Did Each Simulation Estimate?",
+    "skill": "4.B",
+    "frq_pattern": "whose-simulation-design-is-valid-and-what-it-misestimates",
+    "worksheet": "u4_lesson1-2_live.html"
   }
 }

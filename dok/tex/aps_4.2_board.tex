@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 4.2 \textperiodcentered\ TODAY'S PROBLEM}{What Did Each Simulation Estimate?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose each of five students can be treated as independently selected, and each has probability 0.12 of being left-handed. Two students use 1,000 simulation trials to estimate the probability that at least 2 of the 5 students are left-handed. Their plans and results are shown.\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Results: Student 1 = 87/1,000; Student 2 = 94/1,000}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Plan} & \textbf{$L$ assignment} & \textbf{Trial; success} \\ \hline
+\textbf{1} & 0 of 0--9 & 5 digits; $2+$ L \\ \hline
+\textbf{2} & 00--11 of 00--99 & 5 pairs; exactly 2 L \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which simulation result would you trust more for the question asked---Student 1, Student 2, or neither? Name one reason.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Write the event ``at least 2 of 5 are left-handed'' as a list of possible left-handed counts. State the probability that the random labels in a valid design must assign to left-handed.
+  \item[\dokbadge{2}~(b)] Calculate each student's reported estimate. For each design, compare its left-handed assignment and its counted success event with the target question.
+  \item[\dokbadge{3}~(c)] Identify the flaw in each design. Decide which reported estimate you expect to be closer to the target probability, and explain why two flawed, variable simulations cannot establish that choice reliably. Then write one correct trial description, including the random-number assignment and the event counted.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html}{\texttt{\detokenize{u4_lesson1-2_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html}
+
+\end{document}

@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 4.2 (CED 2.3) \textperiodcentered\ B: 2026-10-20 \textperiodcentered\ E: 2026-11-04}{What Did Each Simulation Estimate?}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose each of five students can be treated as independently selected, and each has probability 0.12 of being left-handed. Two students use 1,000 simulation trials to estimate the probability that at least 2 of the 5 students are left-handed. Their plans and results are shown.\par
+\begin{center}
+\textbf{Results: Student 1 = 87/1,000; Student 2 = 94/1,000}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Plan} & \textbf{$L$ assignment} & \textbf{Trial; success} \\ \hline
+\textbf{1} & 0 of 0--9 & 5 digits; $2+$ L \\ \hline
+\textbf{2} & 00--11 of 00--99 & 5 pairs; exactly 2 L \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Which simulation result would you trust more for the question asked---Student 1, Student 2, or neither? Name one reason.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ THREE MATCHES MAKE A VALID SIMULATION (keep on the page)}{calloutgreen}
+\textbf{Chance assignment:} the fraction of equally likely labels for each outcome must match its real probability.\\
+\textbf{One trial:} reproduce the stated number of independent selections.\\
+\textbf{Success event:} count exactly the outcomes named in the question; ``at least 2'' includes 2, 3, 4, and 5.
+Repeat many trials and estimate probability with $\dfrac{\text{successful trials}}{\text{total trials}}$.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Write the event ``at least 2 of 5 are left-handed'' as a list of possible left-handed counts. State the probability that the random labels in a valid design must assign to left-handed.\par
+\workspace{0.8in}
+
+\dokbadge{2}~\textbf{(b)} Calculate each student's reported estimate. For each design, compare its left-handed assignment and its counted success event with the target question.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Identify the flaw in each design. Decide which reported estimate you expect to be closer to the target probability, and explain why two flawed, variable simulations cannot establish that choice reliably. Then write one correct trial description, including the random-number assignment and the event counted.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Student 1 actually models \blank[1.5in], while Student 2 actually estimates \blank[1.6in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I expect \blank[0.7in] to be closer because \blank[2.2in], but neither is trustworthy until \blank[2.1in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}
