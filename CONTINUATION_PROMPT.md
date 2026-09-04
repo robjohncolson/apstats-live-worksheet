@@ -23,7 +23,30 @@
 
 ---
 
-## ⏭ SESSION 39 (2026-09-04, Athena laptop) — **CURRENT. Supersedes s38 below. Codex rounds 3+ are CHAINED.**
+## ⏭ SESSION 40 (2026-09-04, Athena laptop) — **CURRENT. Supersedes s39 below. DOK LADDERS COMPLETE — 66/66.**
+
+**HEAD = `6706332` + this commit** (origin/master). Codex ran the chained rounds 3–9 to completion **twice, on two machines
+from the same base `d97cbe0`**: one run on Athena (32 local commits, never pushed) and one elsewhere (37 commits, pushed to
+origin, incl. a "final round" + `fix(dok): show five-unit CED topic labels`). Orchestrator reconciliation 2026-09-04: adopted
+**origin's lineage** (equal coverage, more hardening — repaired clipped board tables, unicode notation, index shows NEW-CED
+unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is preserved as branch **`codex-athena-rounds`**
+(delete when nobody wants to mine it). Verified on Athena: `--validate` 70 rows / 66 lessons, vitest 271, pytest 471,
+**all 198 PDFs at student 2 / board 1 / teacher 3**, GH Pages serving all 66 (`dok/index.html` → today's row).
+**LESSON: never launch the same Codex prompt on two machines — the hand-off should name the executor host.**
+
+### What is left on the DOK ladders (no Codex round needed)
+- Teacher pilot: print `dok/pdf/aps_1.1_student.pdf` + 1.2 (B 09-08 / 09-10), run the flow once, note what to change in
+  `dok/README.md` under a "Pilot feedback" heading. Space/wording tweaks are per-YAML edits + `bash dok/compile.sh <topic>`.
+- Optional Phase 5 (spec §8): (a) `dok_url` column on Supabase `lesson_urls` + a 🪜 chip in the Desk resource panel; (b) a typed
+  part-(c) textarea in the worksheet that posts to `/api/ai/grade` with the registry `scoring` block. Separate spec first.
+- Housekeeping when convenient: `git branch -D codex-athena-rounds`; `node .gitnexus/run.cjs analyze` (index stale).
+
+### User-action checklist — unchanged (Railway `TEACHER_KEY` / `PAYOUT_AGENT_KEY` / `STUDENT_WALLET_OPTIN`; Schoology rig
+sign-in + UID map; SY2627 Q4 grading decision in SCHEDULE_HANDOFF). Unit 1 starts **09-08 B**.
+
+---
+
+## ⏭ SESSION 39 (2026-09-04, Athena laptop) — superseded by s40 above.
 
 **HEAD = `6c36ff6` + this commit** (pushed). **Codex round 2 DONE and reviewed: OLD 3.1–3.6 (`52567b3`, `aa879bc`, `6c36ff6`)** —
 every edition 2/1/3 pages, 71 vitest + 104 pytest, real `ced2026` (1.10–1.13), 3.1 tethered to VAR-1.E. Orchestrator fix on top:
