@@ -1,0 +1,71 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 5.3 (CED 2.12) \textperiodcentered\ B: 2026-11-13 \textperiodcentered\ E: 2026-12-09}{When Is the Mean Nearly Normal?}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Individual commute times in a very large city are strongly right-skewed, with population mean $\mu=25$ minutes and standard deviation $\sigma=15$ minutes. Consider independent random samples.\par\smallskip \textbf{Rae:} ``Any average is approximately normal, even for $n=4$.''\par \textbf{Sol:} ``With this long right tail, $n=4$ may be too small; $n=40$ is more defensible.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.55\linewidth,
+  height=1.49in,
+  ybar interval, ymin=0, ymax=32,
+  xmin=0, xmax=80, xtick={0,10,20,30,40,50,60,70,80},
+  xlabel={Individual commute time (minutes)}, ylabel={Relative frequency (percent)},
+  ymajorgrids, tick label style={font=\small}, label style={font=\small},
+  bar shift=0pt, x tick label as interval=false
+]
+\addplot[fill=calloutblue, draw=dayblue] coordinates {
+  (0,12)
+  (10,30)
+  (20,28)
+  (30,15)
+  (40,8)
+  (50,4)
+  (60,2)
+  (70,1)
+  (80,0)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+For which sample size, $n=4$ or $n=40$, would you trust a normal model for the sample mean? Name one feature behind your choice.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ CLT: SHAPE, SIZE, AND THE RIGHT DISTRIBUTION (keep on the page)}{calloutgreen}
+The sampling distribution of $\bar{x}$ contains the sample means from all possible random samples of one size $n$.
+For independent observations, $\mu_{\bar{x}}=\mu$ and $\sigma_{\bar{x}}=\dfrac{\sigma}{\sqrt{n}}$.
+The \textbf{central limit theorem} says that when $n$ is sufficiently large, the sampling distribution of
+$\bar{x}$ is approximately normal even if the population is not. Stronger population skew generally requires
+a larger $n$; a small sample can retain that skew. The CLT concerns sample means, not individual observations.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Identify the population shape and state the population mean and standard deviation with units.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} For $n=4$ and $n=40$, calculate the mean and standard deviation of the sampling distribution of $\bar{x}$.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both claims for $n=4$ and $n=40$. Cite the histogram shape, independence, and the CLT's sample-size requirement; use the $n=40$ standard deviation; and explain one consequence of ignoring skew when using a normal model at $n=4$.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} For $n=4$, the normal model is \blank[1.0in] because \blank[2.6in]; for $n=40$, it is \blank[1.0in] because \blank[2.4in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} At $n=40$, $\mu_{\bar{x}}=\blank[0.7in]$ and $\sigma_{\bar{x}}=\blank[0.8in]$ minutes; ignoring skew at $n=4$ could distort \blank[2.2in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

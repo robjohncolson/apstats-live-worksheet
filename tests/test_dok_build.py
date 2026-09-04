@@ -132,6 +132,12 @@ def test_hist_renders_every_bin():
     tex = bl.render_hist({"bins": [0, 10, 20], "counts": [3, 5], "xlabel": "x", "ylabel": "y"}, 1.0)
     assert "(0,3)" in tex and "(10,5)" in tex and "(20,0)" in tex
 
+    scaled = bl.render_visual(
+        {"kind": "pgfplot_hist", "bins": [0, 10], "counts": [3], "scale": 0.5},
+        1.0,
+    )
+    assert "height=1.15in" in scaled
+
 
 def test_latex_text_converts_unicode_statistics_notation():
     tex = bl.latex_text("x̄ = (1/n) Σ xᵢ; the iᵗʰ value; sₓ and s²")

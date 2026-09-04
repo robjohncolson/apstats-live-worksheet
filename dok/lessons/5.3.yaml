@@ -1,0 +1,54 @@
+# Topic 5.3 — The Central Limit Theorem (B: 2026-11-13)
+topic: "5.3"
+ced2026: { unit: 2, topic: "2.12", label: "Sampling Distributions & the CLT" }
+title: "When Is the Mean Nearly Normal?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do population shape and sample size determine whether a normal model is trustworthy for sample means?"
+worksheet: "u5_lesson3_live.html"
+
+rules_callout:
+  title: "CLT: SHAPE, SIZE, AND THE RIGHT DISTRIBUTION (keep on the page)"
+  body: |
+    The sampling distribution of $\bar{x}$ contains the sample means from all possible random samples of one size $n$.
+    For independent observations, $\mu_{\bar{x}}=\mu$ and $\sigma_{\bar{x}}=\dfrac{\sigma}{\sqrt{n}}$.
+    The \textbf{central limit theorem} says that when $n$ is sufficiently large, the sampling distribution of
+    $\bar{x}$ is approximately normal even if the population is not. Stronger population skew generally requires
+    a larger $n$; a small sample can retain that skew. The CLT concerns sample means, not individual observations.
+
+focus: aps-5.3-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask for a sample-size choice before displaying a rule of thumb."
+    - "Begin the 5.3 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require students to name which distribution becomes approximately normal."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose n equals 4 or n equals 40 and cite population shape or sample size."
+    - "Complete the follow-along about simulated sampling distributions, the CLT, and randomization distributions."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Does averaging four values erase a long right tail automatically?"
+    - "Which distribution does the CLT describe: commuters or sample means?"
+    - "What happens to $15/\\sqrt{n}$ when $n$ grows from 4 to 40?"
+    - "Which probability calculation becomes questionable if the n equals 4 shape is not normal?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require shape, sample size, and independence in every normality defense; redirect claims that the population itself changes shape."
+  watch_for:
+    - "Invoking the CLT for n equals 4 without considering the strong population skew."
+    - "Saying forty individual commute times have a normal distribution."
+    - "Using 15 minutes, rather than $15/\\sqrt{n}$, for the spread of sample means."
+  first_take_note: "Not graded. Expect `averages are normal' as an initial rule; the revision should add population shape and sufficiently large n."
+
+visuals:
+  commute_population:
+    kind: pgfplot_hist
+    bins: [0, 10, 20, 30, 40, 50, 60, 70, 80]
+    counts: [12, 30, 28, 15, 8, 4, 2, 1]
+    xlabel: "Individual commute time (minutes)"
+    ylabel: "Relative frequency (percent)"
+    scale: 0.65

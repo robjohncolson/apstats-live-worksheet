@@ -1,0 +1,71 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 5.1 \textperiodcentered\ TODAY'S PROBLEM}{Unusual Does Not Mean Wrong}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a class uses a simulator containing a very large population of package weights with population mean $\mu=500$ grams. Each of 20 students independently takes a random sample of $n=10$ packages and records the sample mean $\bar{x}$. The dotplot shows the 20 sample means. Elena's sample mean is 520 grams. She says, ``My sample must be wrong because its mean is far from everyone else's.'' Another student says, ``A random sample can be unusual without being collected incorrectly.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.77\linewidth,
+  height=1.44in,
+  ymin=0, ymax=4, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={Sample mean package weight (grams), n=10}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.2pt, color=dayblue] coordinates {
+  (492,1)
+  (494,1)
+  (495,1)
+  (496,1)
+  (497,1)
+  (498,1)
+  (499,1)
+  (499,2)
+  (500,1)
+  (500,2)
+  (500,3)
+  (501,1)
+  (501,2)
+  (502,1)
+  (503,1)
+  (504,1)
+  (505,1)
+  (506,1)
+  (508,1)
+  (520,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Is Elena's sample necessarily wrong, or could 520 grams be sampling variability? Choose a claim and cite one dotplot feature.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Identify the population parameter and Elena's sample statistic, including symbols, values, and units.
+  \item[\dokbadge{2}~(b)] Describe the distribution of the 20 sample means: give its center, overall range, where most values lie, and one unusual feature.
+  \item[\dokbadge{3}~(c)] Decide whether the dotplot proves Elena's sample was collected incorrectly. Cite the spread and gap that settle your decision, distinguish the fixed population parameter from the varying sample statistics, explain what calling 520 an error would mislead the class into believing, and state what change to the sampling plan would shrink the spread of sample means.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson1-2_live.html}{\texttt{\detokenize{u5_lesson1-2_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson1-2_live.html}
+
+\end{document}

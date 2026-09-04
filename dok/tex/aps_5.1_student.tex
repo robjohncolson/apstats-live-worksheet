@@ -1,0 +1,79 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 5.1 (CED 2.12) \textperiodcentered\ B: 2026-11-12 \textperiodcentered\ E: 2026-12-07}{Unusual Does Not Mean Wrong}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a class uses a simulator containing a very large population of package weights with population mean $\mu=500$ grams. Each of 20 students independently takes a random sample of $n=10$ packages and records the sample mean $\bar{x}$. The dotplot shows the 20 sample means. Elena's sample mean is 520 grams. She says, ``My sample must be wrong because its mean is far from everyone else's.'' Another student says, ``A random sample can be unusual without being collected incorrectly.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.77\linewidth,
+  height=1.44in,
+  ymin=0, ymax=4, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={Sample mean package weight (grams), n=10}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.2pt, color=dayblue] coordinates {
+  (492,1)
+  (494,1)
+  (495,1)
+  (496,1)
+  (497,1)
+  (498,1)
+  (499,1)
+  (499,2)
+  (500,1)
+  (500,2)
+  (500,3)
+  (501,1)
+  (501,2)
+  (502,1)
+  (503,1)
+  (504,1)
+  (505,1)
+  (506,1)
+  (508,1)
+  (520,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Is Elena's sample necessarily wrong, or could 520 grams be sampling variability? Choose a claim and cite one dotplot feature.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ PARAMETER FIXED, STATISTIC VARIABLE (keep on the page)}{calloutgreen}
+A \textbf{population parameter}, such as $\mu$, is a fixed number describing the entire population.
+A \textbf{sample statistic}, such as $\bar{x}$, is computed from one sample and varies when the random sample changes.
+This natural sample-to-sample variation is \textbf{sampling variability}; unusual does not by itself mean incorrect.
+Increasing the size $n$ of \emph{each} random sample makes sample means less variable. Increasing only the number
+of repetitions shows the sampling distribution more clearly but does not change its underlying spread at fixed $n$.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Identify the population parameter and Elena's sample statistic, including symbols, values, and units.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Describe the distribution of the 20 sample means: give its center, overall range, where most values lie, and one unusual feature.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Decide whether the dotplot proves Elena's sample was collected incorrectly. Cite the spread and gap that settle your decision, distinguish the fixed population parameter from the varying sample statistics, explain what calling 520 an error would mislead the class into believing, and state what change to the sampling plan would shrink the spread of sample means.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The value 520 is \blank[1.0in] but not proof of error because the sample means \blank[2.6in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The parameter \blank[0.8in] is fixed, while \blank[1.0in] varies; increasing \blank[1.6in] would shrink the spread because \blank[2.0in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

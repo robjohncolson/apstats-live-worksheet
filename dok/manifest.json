@@ -173,10 +173,22 @@
     "frq_pattern": "same-mean-different-sd-which-parameter-answers-the-question",
     "worksheet": "u4_lesson7-8_live.html"
   },
+  "5.1": {
+    "title": "Unusual Does Not Mean Wrong",
+    "skill": "4.B",
+    "frq_pattern": "sampling-variability-is-not-error",
+    "worksheet": "u5_lesson1-2_live.html"
+  },
   "5.2": {
     "title": "Same Score, Different Standing",
     "skill": "4.B",
     "frq_pattern": "same-score-two-models-compare-with-z",
     "worksheet": "u5_lesson1-2_live.html"
+  },
+  "5.3": {
+    "title": "When Is the Mean Nearly Normal?",
+    "skill": "4.B",
+    "frq_pattern": "clt-when-does-normality-apply",
+    "worksheet": "u5_lesson3_live.html"
   }
 }

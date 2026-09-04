@@ -280,6 +280,7 @@ def all_skill_codes() -> set[str]:
 
 
 def render_visual(spec: dict, scale: float = 1.0) -> str:
+    scale *= float(spec.get("scale", 1.0))
     kind = spec.get("kind")
     if kind == "pgfplot_hist":
         return render_hist(spec, scale)

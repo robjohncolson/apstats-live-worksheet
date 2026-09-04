@@ -1,0 +1,135 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 5.1 (CED 2.12) \textperiodcentered\ B: 2026-11-12 \textperiodcentered\ E: 2026-12-07 \textperiodcentered\ TEACHER KEY}{Unusual Does Not Mean Wrong}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{VAR-1.G} Identify questions suggested by variation in statistics for samples collected from the same population. \textbf{[Skill 1.A]}
+  \item \textbf{VAR-1.G.1} Variation in statistics for samples taken from the same population may be random or not.
+\end{itemize}
+}
+\textbf{Essential question:} When is an unusual sample statistic evidence of an error, and when is it ordinary sampling variability?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{sampling-\allowbreak{}variability-\allowbreak{}is-\allowbreak{}not-\allowbreak{}error}}\par
+\textbf{DOK rationale:} Part (c) weighs an unusual statistic against the full distribution of repeated-sample results, distinguishes a fixed parameter from variable statistics, and predicts how a design change affects spread.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask students to classify 520 before defining sampling variability.
+  \item Begin the combined 5.1--5.2 video follow-along at minute 5.
+  \item Return to the board slide at minute 33. Circulate and separate unusualness from evidence of a collection error.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose error or sampling variability and cite one feature of the dotplot.
+  \item Complete the follow-along about statistics from repeated samples and predictable sample-to-sample variation.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Which number belongs to the whole population, and which belongs to Elena's ten packages?
+  \item Do the other 19 sample means match one another exactly?
+  \item What evidence about the sampling procedure would you need before calling 520 an error?
+  \item Would more repetitions or more packages per sample shrink the distribution itself?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Require students to point to both ordinary spread and the isolated value; do not equate unusual with impossible or incorrect.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating the population mean as the required result of every random sample.
+  \item Calling the 12-gram gap proof of a recording mistake.
+  \item Saying more simulated repetitions shrink variability when each sample remains n equals 10.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{does-not-declare-error} (required) --- States that an unusual sample mean alone does not prove the random sample was collected incorrectly
+  \item \textbf{uses-dotplot-evidence} (required) --- Cites the 492-to-520 spread and the 12-gram gap separating 520 from 508
+  \item \textbf{distinguishes-parameter-statistic} (required) --- Distinguishes fixed population mean mu from sample means that vary across random samples
+  \item \textbf{states-misleading-implication} (required) --- Explains that labeling 520 an error would deny ordinary random sampling variability
+  \item \textbf{changes-sample-size} (required) --- Says increasing each sample's n, not merely the number of repetitions, shrinks the spread of sample means
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Does not infer an error from unusualness alone, cites both the observed spread and gap, distinguishes parameter from statistic, explains the misleading implication, and increases sample size to reduce spread. \\ \hline
+\textbf{P} & Recognizes sampling variability and distinguishes parameter from statistic but omits a specific dotplot feature, the reader consequence, or the correct way to shrink spread. \\ \hline
+\textbf{I} & Declares the sample wrong solely because 520 is separated, treats every sample mean as equal to the population mean, or says collecting more samples of size 10 shrinks the sampling distribution. \\ \hline
+\end{tabular}}
+
+\textbf{Common mistakes}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating the population mean of 500 as a requirement for every random sample mean
+  \item Calling 520 a data-entry error without evidence about how the sample was generated
+  \item Confusing the spread within one sample with the spread of means across samples
+  \item Increasing only the number of simulated samples rather than the size of each sample
+\end{itemize}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a class uses a simulator containing a very large population of package weights with population mean $\mu=500$ grams. Each of 20 students independently takes a random sample of $n=10$ packages and records the sample mean $\bar{x}$. The dotplot shows the 20 sample means. Elena's sample mean is 520 grams. She says, ``My sample must be wrong because its mean is far from everyone else's.'' Another student says, ``A random sample can be unusual without being collected incorrectly.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.61\linewidth,
+  height=1.15in,
+  ymin=0, ymax=4, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={Sample mean package weight (grams), n=10}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=1.7pt, color=dayblue] coordinates {
+  (492,1)
+  (494,1)
+  (495,1)
+  (496,1)
+  (497,1)
+  (498,1)
+  (499,1)
+  (499,2)
+  (500,1)
+  (500,2)
+  (500,3)
+  (501,1)
+  (501,2)
+  (502,1)
+  (503,1)
+  (504,1)
+  (505,1)
+  (506,1)
+  (508,1)
+  (520,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Is Elena's sample necessarily wrong, or could 520 grams be sampling variability? Choose a claim and cite one dotplot feature.\par
+\answer{Not graded. Expect students to distrust the isolated value; the finish should preserve unusualness while removing the unsupported error claim.}
+\end{firsttakebox}
+
+\textit{Rules callout ``PARAMETER FIXED, STATISTIC VARIABLE (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Identify the population parameter and Elena's sample statistic, including symbols, values, and units.\par
+\answer{The population parameter is the population mean $\mu=500$ grams. Elena's sample statistic is her sample mean $\bar{x}=520$ grams from $n=10$ packages.}
+
+\dokbadge{2}~\textbf{(b)} Describe the distribution of the 20 sample means: give its center, overall range, where most values lie, and one unusual feature.\par
+\answer{The distribution is centered near 500 grams: its median is 500 grams and its mean is 501 grams. The sample means range from 492 to 520 grams, an overall range of 28 grams. Nineteen of the 20 values lie from 492 through 508 grams, while 520 is separated from the next value, 508, by a 12-gram gap.}
+
+\dokbadge{3}~\textbf{(c)} Decide whether the dotplot proves Elena's sample was collected incorrectly. Cite the spread and gap that settle your decision, distinguish the fixed population parameter from the varying sample statistics, explain what calling 520 an error would mislead the class into believing, and state what change to the sampling plan would shrink the spread of sample means.\par
+\answer{The dotplot does not prove an error. The 20 independently generated sample means already vary from 492 to 520 grams even though every sample came from the same population, so a separated value can be an unusual result of random sampling. The population parameter $\mu=500$ grams is fixed; each $\bar{x}$ is a statistic that changes with the selected packages. Calling 520 automatically wrong would mislead the class into thinking every correct random sample must closely reproduce the parameter or the other samples. Increasing the size of each sample beyond $n=10$ would shrink the sampling variability of $\bar{x}$ because larger samples average over more individual variation. Merely running more samples would display the sampling distribution more clearly but would not shrink its underlying spread at fixed $n$.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}
