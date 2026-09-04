@@ -57,7 +57,11 @@ Goals:
    whitespace for work.
 
 Non-goals (v1):
-- No grade wiring. The ladder is paper; nothing lands in the ledger. (Phase 5 is optional.)
+- No grade wiring. The ladder is paper; nothing lands in the ledger. (Phase 5(a) is optional.)
+- **No AI grading of the DOK-3, ever — the human channel (teacher decision, 2026-09-04).** The rest of the course
+  is largely AI-graded; this sheet is the one guaranteed teacher-read, teacher-scored piece of work every lesson day.
+  Part (c) is scored by the teacher with the E/P/I guide on the key, by hand, and handed back. The E/P/I shape is
+  kept only because it is a good rubric shape, not as a hook for the grader. Do not propose an AI-graded textarea.
 - No slides, no pacer, no six-page packet. The follow-along worksheet already owns Launch.
 - No MCQs. (`curriculum.js` is sacred; this is a separate, paper artifact — no quiz-bank edits.)
 - No copying of AP Classroom / released-exam item text. Contexts and numbers are original.
@@ -324,7 +328,7 @@ CI runs T1–T4 (pure Node/Python). Compilation is teacher-laptop only (MiKTeX),
 | 2 — stress test | ladders **1.2** (variable types) and **1.9** (comparing distributions) by the same path; `dok/README.md` written FROM the friction log; T1–T3 green | ≤ 30 min per ladder by hand, else fix the tooling before fan-out (per `feedback_authoring_tool_stress_test`) |
 | 3 — Unit 1 fan-out | remaining 7 dated Unit-1 days (B: 09-08 → 09-24), dispatched as ONE dependency-free batch (each agent owns exactly `dok/lessons/{topic}.yaml` + its registry lines + its calibration unit), adversarial review on the 10 DOK-3s only | all 10 compile; DOK-3 review: 0 must-fix |
 | 4 — rolling fan-out | Units 2–5 + bonus days, one NEW-unit per batch, each batch landed ≥ 2 weeks before its first lesson date; `dok/PENDING.md` counts down | T2 coverage reaches 66/66, every one with a DOK-3 |
-| 5 — optional app hooks | (a) `dok_url` column on `lesson_urls` + a 🪜 chip in the Desk resource panel (the table wins over files, so this is a table write, not a file edit); (b) a `dok-{topic}` textarea in the worksheet that submits the DOK-3 answer to `/api/ai/grade` with the registry `scoring` block as the rubric — AI only ever RAISES, same as today | separate spec if pursued |
+| 5 — optional app hook | (a) `dok_url` column on `lesson_urls` + a 🪜 chip in the Desk resource panel (the table wins over files, so this is a table write, not a file edit). **(b) is withdrawn — see §1 "the human channel".** | separate spec if pursued |
 
 ## 9. Open decisions (defaults chosen; change if you want)
 
@@ -387,5 +391,5 @@ student sheet (first-take box at the top, finish at the bottom, turn in), board 
 (projected at the bell and after the video), teacher key (E/P/I on the top rung). Anchored
 to a CED skill code and a described FRQ pattern, compiled with MiKTeX, published under
 `dok/`. Stress-test three problems, then fan out the 66 dated days a unit at a time, two
-weeks ahead of the calendar. Grade-inert; the Desk chip and AI grading of part (c) are an
-optional Phase 5.
+weeks ahead of the calendar. Grade-inert; the Desk chip is an optional Phase 5(a); the DOK-3 is
+never AI-graded — it is the teacher's human channel.

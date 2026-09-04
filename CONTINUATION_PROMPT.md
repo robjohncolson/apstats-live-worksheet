@@ -37,8 +37,9 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
 ### What is left on the DOK ladders (no Codex round needed)
 - Teacher pilot: print `dok/pdf/aps_1.1_student.pdf` + 1.2 (B 09-08 / 09-10), run the flow once, note what to change in
   `dok/README.md` under a "Pilot feedback" heading. Space/wording tweaks are per-YAML edits + `bash dok/compile.sh <topic>`.
-- Optional Phase 5 (spec §8): (a) `dok_url` column on Supabase `lesson_urls` + a 🪜 chip in the Desk resource panel; (b) a typed
-  part-(c) textarea in the worksheet that posts to `/api/ai/grade` with the registry `scoring` block. Separate spec first.
+- Optional Phase 5(a) only (spec §8): `dok_url` column on Supabase `lesson_urls` + a 🪜 chip in the Desk resource panel.
+  **No AI grading of the DOK-3 — ever.** Teacher decision 2026-09-04: the sheet is the one guaranteed human channel in a
+  largely AI-graded course; part (c) is teacher-scored by hand with the E/P/I key. Do not propose it again.
 - Housekeeping when convenient: `git branch -D codex-athena-rounds`; `node .gitnexus/run.cjs analyze` (index stale).
 
 ### User-action checklist — unchanged (Railway `TEACHER_KEY` / `PAYOUT_AGENT_KEY` / `STUDENT_WALLET_OPTIN`; Schoology rig
