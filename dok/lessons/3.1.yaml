@@ -1,0 +1,60 @@
+# Topic 3.1 — Introducing Statistics: Do the Data We Collected Tell the Truth?
+topic: "3.1"
+ced2026: { unit: 1, topic: "1.10", label: "Investigative Question & Data Collection" }
+title: "Who Chose Whom?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How does the way people enter a sample limit which result we should trust?"
+worksheet: "u3_lesson1_live.html"
+
+rules_callout:
+  title: "TRUST STARTS WITH SELECTION (keep on the page)"
+  body: |
+    First name the \textbf{statistical question} and the \textbf{population} it asks about. A method that uses chance to
+    choose from that population can produce a representative sample. In a \textbf{voluntary-response sample},
+    people choose themselves; people with strong opinions may be overrepresented. A large number of responses
+    reduces random sampling variability, but it does not erase bias from how the sample was selected.
+
+focus: aps-3.1-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Read both headlines without endorsing either."
+    - "Begin the video follow-along at minute 5; leave first takes ungraded."
+    - "Return to the board slide at minute 33. Circulate and ask who chose whom in each poll."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one headline and one supporting detail before the lesson."
+    - "Complete the video follow-along about trustworthy data collection."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "In which method did students choose the sample, and in which did the researcher choose it?"
+    - "What kind of student is especially likely to click the website poll?"
+    - "What does a larger response count improve, and what can it not repair?"
+    - "How would your fix stop students from volunteering themselves into the sample?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to point to how each sample was formed before accepting a percentage; do not say which headline is stronger first."
+  watch_for:
+    - "Treating the larger response count as proof that the website sample represents the school."
+    - "Calling the homeroom method an SRS of students; the random units are homerooms."
+    - "Proposing a wording change that leaves the website poll open to self-selection."
+  first_take_note: "Not graded. Expect many students to choose 71 percent because 412 is larger."
+
+# Topic 3.1 has no tutor artifact. These lines are copied from apstat_3_framework.md.
+tether:
+  - '\textbf{VAR-1.E} Identify questions to be answered about data collection methods. \textbf{[Skill 1.A]}'
+  - '\textbf{VAR-1.E.1} Methods for data collection that do not rely on chance result in untrustworthy conclusions.'
+
+visuals:
+  poll_table:
+    kind: two_way_table
+    col_label: "Two polls of student opinion"
+    row_label: "Poll"
+    cols: ["$n$", "Yes", "Selection"]
+    rows: ["Website", "Homerooms"]
+    cells:
+      - ["412", "$71\\%$", "Visitors opt in"]
+      - ["68", "$44\\%$", "3 rooms random"]

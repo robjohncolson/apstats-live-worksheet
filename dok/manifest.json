@@ -58,5 +58,17 @@
     "skill": "4.B",
     "frq_pattern": "compare-two-boxplots-adjudicate-competing-claims-then-choose-one-statistic",
     "worksheet": "u1_lesson9_live.html"
+  },
+  "3.1": {
+    "title": "Who Chose Whom?",
+    "skill": "4.A",
+    "frq_pattern": "voluntary-response-vs-random-which-number-and-why",
+    "worksheet": "u3_lesson1_live.html"
+  },
+  "3.2": {
+    "title": "What Can Each Study Claim?",
+    "skill": "4.A",
+    "frq_pattern": "observational-vs-experiment-what-each-can-claim",
+    "worksheet": "u3_lesson2_live.html"
   }
 }
