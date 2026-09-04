@@ -1,0 +1,64 @@
+# Topic 5.6 — Sampling Distributions for Differences in Sample Proportions
+topic: "5.6"
+ced2026: { unit: 3, topic: "3.9", label: "Sampling Distributions (difference of proportions)" }
+title: "When Two Proportions Are Not Independent"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "When is the independent two-proportion sampling model warranted, and what changes for paired observations?"
+worksheet: "u5_lesson6_live.html"
+
+tether:
+  - '\textbf{UNC-3.N} Determine parameters of a sampling distribution for a difference in sample proportions. \textbf{[Skill 3.B]}'
+  - '\textbf{UNC-3.N.1} For a categorical variable, when randomly sampling from two independent populations with proportions $p_1$ and $p_2$, the sampling distribution of the difference in sample proportions has mean $\mu=p_1-p_2$.'
+  - '\textbf{UNC-3.N.2} If sampling without replacement and sample sizes are less than 10\% of population sizes, the difference is negligible.'
+  - '\textbf{UNC-3.O} Determine whether a sampling distribution for a difference of sample proportions can be described as approximately normal. \textbf{[Skill 3.C]}'
+  - '\textbf{UNC-3.O.1} The sampling distribution of the difference in sample proportions will have an approximate normal distribution provided sample sizes are large enough: $n_1p_1\geq10$, $n_1(1-p_1)\geq10$, $n_2p_2\geq10$, $n_2(1-p_2)\geq10$.'
+  - '\textbf{UNC-3.P} Interpret probabilities and parameters for a sampling distribution for a difference in proportions. \textbf{[Skill 4.B]}'
+  - '\textbf{UNC-3.P.1} Parameters for a sampling distribution for a difference of proportions should be interpreted using appropriate units and within the context of specific populations.'
+
+rules_callout:
+  title: "THE VARIANCE FORMULA REQUIRES INDEPENDENT SAMPLES (keep on the page)"
+  body: |
+    For independent samples, $\mu_{\widehat p_1-\widehat p_2}=p_1-p_2$ and
+    $\sigma_{\widehat p_1-\widehat p_2}=\sqrt{p_1(1-p_1)/n_1+p_2(1-p_2)/n_2}$ when each sample is
+    below 10\% of its population. Approximate normality requires all four expected counts to be at least 10.
+    Repeated measurements on the same people are paired, not independent; their association belongs in the variability.
+
+focus: aps-5.6-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to mark one sound idea and one overreach across the two claims."
+    - "Begin the Topic 5.6 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and attach every condition to the formula feature it supports."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose whose use of the formula is warranted and cite one design detail before the lesson."
+    - "Complete the follow-along about center, spread, shape, and probabilities for differences in sample proportions."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "What random object is selected in Plan I, and what is selected in Plan P?"
+    - "Which four expected counts establish the normal shape for Plan I?"
+    - "Does using 120 twice make the two results independent?"
+    - "What information about within-cardholder changes disappears if the plans are treated alike?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to separate a useful paired design from an invalid use of the independent-sample variance formula."
+  watch_for:
+    - "Treating equal sample sizes as evidence of independence."
+    - "Subtracting the two variance terms because the proportions are subtracted."
+    - "Calling Plan P unusable instead of identifying the need for a paired analysis."
+  first_take_note: "Not graded. Sora matches the model; Mateo values a sound design but transfers the wrong model."
+
+visuals:
+  library_plan_table:
+    kind: two_way_table
+    col_label: "Sampling plans"
+    row_label: "Plan"
+    cols: ["Before", "After", "Repeated"]
+    rows: ["I", "P"]
+    cells:
+      - ["SRS 120", "SRS 150", "no"]
+      - ["120", "same 120", "yes"]

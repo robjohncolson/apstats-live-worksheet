@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 5.6 \textperiodcentered\ TODAY'S PROBLEM}{When Two Proportions Are Not Independent}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+A library studies self-checkout before and after a redesign. Records give $p_B=0.42$ among 4{,}000 before visits and $p_A=0.54$ among 5{,}000 after visits.\par\smallskip \textbf{Plan I:} Draw an SRS of 120 before visits and a separate SRS of 150 after visits; do not track cardholders.\par \textbf{Plan P:} Measure the same 120 cardholders before and after.\par\smallskip \textbf{Sora:} Separate selection warrants Plan I's independent model; 0.0350 means a difference at most 0.01 is unusual.\par \textbf{Mateo:} Pairing controls person differences, so Plan P may help. Because both proportions use 120 people, Plan I's model applies to P too.\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Sampling plans}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Plan} & \textbf{Before} & \textbf{After} & \textbf{Repeated} \\ \hline
+\textbf{I} & SRS 120 & SRS 150 & no \\ \hline
+\textbf{P} & 120 & same 120 & yes \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which parts of Sora's and Mateo's reasoning are warranted? Cite one design detail.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] For after minus before, identify the parameter and statistic and state Plan I's sampling-distribution mean.
+  \item[\dokbadge{2}~(b)] For Plan I, check both 10 percent conditions and all four counts. Find the standard deviation and approximate $P(\widehat p_A-\widehat p_B\leq0.01)$; interpret it.
+  \item[\dokbadge{3}~(c)] Adjudicate the claims. Use design and conditions to place the independent model and assess Plan P. Explain why equal sample sizes are not independence, how transferring 0.0607 and 0.0350 could mislead, and what paired analysis must retain.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson6_live.html}{\texttt{\detokenize{u5_lesson6_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson6_live.html}
+
+\end{document}

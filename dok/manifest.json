@@ -203,6 +203,12 @@
     "frq_pattern": "failed-large-counts-normal-tail-vs-valid-binomial-and-bias",
     "worksheet": "u5_lesson5_live.html"
   },
+  "5.6": {
+    "title": "When Two Proportions Are Not Independent",
+    "skill": "4.B",
+    "frq_pattern": "independent-vs-paired-which-sampling-distribution-model-is-warranted",
+    "worksheet": "u5_lesson6_live.html"
+  },
   "6.1": {
     "title": "When a Normal Curve Distorts the Tail",
     "skill": "4.B",
