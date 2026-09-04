@@ -1,0 +1,112 @@
+# Topic 1.4 --- Representing a Categorical Variable with Graphs
+topic: "1.4"
+ced2026: { unit: 1, topic: "1.4", label: "Representing a Categorical Variable with Graphs" }
+title: "Same Counts, Different Message"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How can a graph use correct counts but still create a misleading comparison?"
+worksheet: "u1_lesson4_live.html"
+
+rules_callout:
+  title: "GRAPHING ONE CATEGORICAL VARIABLE (keep on the page)"
+  body: |
+    In a bar graph, each bar's height represents a category's \textbf{count} or \textbf{relative frequency};
+    bars have equal widths and gaps. Bar height is measured from the displayed baseline, so changing the baseline
+    changes the visible height even when the count does not change.\\
+    Relative frequency $=$ count $\div$ total. A \textbf{bar graph} encodes categories as aligned lengths.
+    A \textbf{pie chart} encodes shares of one whole as angles and areas. Match the display to the reader's question.
+
+focus: aps-1.4-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Read both captions aloud, then collect first takes without reacting."
+    - "Begin the video follow-along at minute 5."
+    - "Return to the graphs at minute 33. Circulate and require students to connect the baseline to bar height."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Write a one-sentence first take that names the graph they trusted."
+    - "Complete the video follow-along on categorical displays."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "If the counts are identical, what changed between the two graphs?"
+    - "From what vertical value are you measuring each visible bar in Graph A?"
+    - "How does the visible 12-to-1 comparison differ from the actual 52-to-41 comparison?"
+    - "For four close categories, what can your eyes compare more precisely: aligned lengths or wedge angles?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Do not call a graph honest or misleading for students; ask them to name the baseline, quantify both comparisons, and connect the display choice to the reader's question."
+  watch_for:
+    - "Calling Graph A's counts incorrect instead of explaining how its 40 baseline distorts their visual sizes."
+    - "Treating the visible heights 12 and 1 as the original category counts."
+    - "Choosing a pie chart because the data can be percentages without considering whether close wedges are easy to compare."
+  first_take_note: "Not graded. Expect Graph A to attract votes because its Pizza bar dominates."
+
+visuals:
+  lunch_bars:
+    kind: raw_tikz
+    body: |
+      \begin{minipage}{0.48\linewidth}
+      \centering
+      \begin{tikzpicture}
+      \begin{axis}[
+        width=0.95\linewidth,
+        height=1.4in,
+        ybar=2pt,
+        bar width=10pt,
+        ymin=40,
+        ymax=55,
+        ytick={40,44,48,52},
+        symbolic x coords={Pizza,Tacos,Salad,Pasta},
+        xtick=data,
+        enlarge x limits=0.18,
+        title={\textbf{Graph A}},
+        xlabel={Favorite lunch option},
+        ylabel={Number of students},
+        x tick label style={rotate=30,anchor=east,font=\scriptsize},
+        tick label style={font=\scriptsize},
+        label style={font=\scriptsize},
+        title style={font=\small},
+        ymajorgrids,
+        nodes near coords,
+        every node near coord/.append style={font=\scriptsize},
+        axis on top
+      ]
+      \addplot[fill=calloutblue,draw=dayblue] coordinates
+        {(Pizza,52) (Tacos,47) (Salad,44) (Pasta,41)};
+      \end{axis}
+      \end{tikzpicture}
+      \end{minipage}\hfill
+      \begin{minipage}{0.48\linewidth}
+      \centering
+      \begin{tikzpicture}
+      \begin{axis}[
+        width=0.95\linewidth,
+        height=1.4in,
+        ybar=2pt,
+        bar width=10pt,
+        ymin=0,
+        ymax=58,
+        ytick={0,10,20,30,40,50},
+        symbolic x coords={Pizza,Tacos,Salad,Pasta},
+        xtick=data,
+        enlarge x limits=0.18,
+        title={\textbf{Graph B}},
+        xlabel={Favorite lunch option},
+        ylabel={Number of students},
+        x tick label style={rotate=30,anchor=east,font=\scriptsize},
+        tick label style={font=\scriptsize},
+        label style={font=\scriptsize},
+        title style={font=\small},
+        ymajorgrids,
+        nodes near coords,
+        every node near coord/.append style={font=\scriptsize},
+        axis on top
+      ]
+      \addplot[fill=calloutblue,draw=dayblue] coordinates
+        {(Pizza,52) (Tacos,47) (Salad,44) (Pasta,41)};
+      \end{axis}
+      \end{tikzpicture}
+      \end{minipage}

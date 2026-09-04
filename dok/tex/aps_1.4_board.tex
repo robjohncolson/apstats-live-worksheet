@@ -1,0 +1,102 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 1.4 \textperiodcentered\ TODAY'S PROBLEM}{Same Counts, Different Message}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose 184 students chose a favorite lunch option. A newsletter printed \textbf{Graph A} with the headline ``\textbf{Pizza wins by a landslide.}'' A council member redrew the data as \textbf{Graph B} and said, ``It is basically a tie.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{minipage}{0.48\linewidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.95\linewidth,
+  height=1.4in,
+  ybar=2pt,
+  bar width=10pt,
+  ymin=40,
+  ymax=55,
+  ytick={40,44,48,52},
+  symbolic x coords={Pizza,Tacos,Salad,Pasta},
+  xtick=data,
+  enlarge x limits=0.18,
+  title={\textbf{Graph A}},
+  xlabel={Favorite lunch option},
+  ylabel={Number of students},
+  x tick label style={rotate=30,anchor=east,font=\scriptsize},
+  tick label style={font=\scriptsize},
+  label style={font=\scriptsize},
+  title style={font=\small},
+  ymajorgrids,
+  nodes near coords,
+  every node near coord/.append style={font=\scriptsize},
+  axis on top
+]
+\addplot[fill=calloutblue,draw=dayblue] coordinates
+  {(Pizza,52) (Tacos,47) (Salad,44) (Pasta,41)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.95\linewidth,
+  height=1.4in,
+  ybar=2pt,
+  bar width=10pt,
+  ymin=0,
+  ymax=58,
+  ytick={0,10,20,30,40,50},
+  symbolic x coords={Pizza,Tacos,Salad,Pasta},
+  xtick=data,
+  enlarge x limits=0.18,
+  title={\textbf{Graph B}},
+  xlabel={Favorite lunch option},
+  ylabel={Number of students},
+  x tick label style={rotate=30,anchor=east,font=\scriptsize},
+  tick label style={font=\scriptsize},
+  label style={font=\scriptsize},
+  title style={font=\small},
+  ymajorgrids,
+  nodes near coords,
+  every node near coord/.append style={font=\scriptsize},
+  axis on top
+]
+\addplot[fill=calloutblue,draw=dayblue] coordinates
+  {(Pizza,52) (Tacos,47) (Salad,44) (Pasta,41)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Is pizza clearly the favorite? Name the graph that most influenced you.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Read the Pizza and Pasta counts. How many more students chose Pizza?
+  \item[\dokbadge{2}~(b)] Convert all four counts to whole-number percents of 184. Describe how close the categories are in context.
+  \item[\dokbadge{3}~(c)] For ``Is pizza clearly the favorite?'' choose the more honest graph and name the design feature that settles it. Quantify Graph A's visible Pizza-to-Pasta heights, then compare 52 with 41 using percent increase. Finally, choose a zero-baseline bar graph or pie chart for comparing the four categories and defend that choice.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html}{\texttt{\detokenize{u1_lesson4_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html}
+
+\end{document}

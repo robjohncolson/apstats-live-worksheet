@@ -1,4 +1,10 @@
 {
+  "1.1": {
+    "title": "What Can These Data Support?",
+    "skill": "4.A",
+    "frq_pattern": "claim-vs-data-support-bound-the-conclusion",
+    "worksheet": "u1_lesson1_live.html"
+  },
   "1.2": {
     "title": "Numbers That Aren't Quantities",
     "skill": "4.B",
@@ -10,6 +16,12 @@
     "skill": "4.B",
     "frq_pattern": "frequency-vs-relative-frequency-which-table-the-argument-needs",
     "worksheet": "u1_lesson3_live.html"
+  },
+  "1.4": {
+    "title": "Same Counts, Different Message",
+    "skill": "4.B",
+    "frq_pattern": "truncated-axis-which-display-is-honest-and-what-it-misleads",
+    "worksheet": "u1_lesson4_live.html"
   },
   "1.6": {
     "title": "Describing a Distribution",

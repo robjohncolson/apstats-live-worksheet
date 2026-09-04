@@ -1,0 +1,110 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 1.4 (CED 1.4) \textperiodcentered\ B: 2026-09-14 \textperiodcentered\ E: 2026-09-16}{Same Counts, Different Message}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose 184 students chose a favorite lunch option. A newsletter printed \textbf{Graph A} with the headline ``\textbf{Pizza wins by a landslide.}'' A council member redrew the data as \textbf{Graph B} and said, ``It is basically a tie.''\par
+\begin{center}
+\begin{minipage}{0.48\linewidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.95\linewidth,
+  height=1.4in,
+  ybar=2pt,
+  bar width=10pt,
+  ymin=40,
+  ymax=55,
+  ytick={40,44,48,52},
+  symbolic x coords={Pizza,Tacos,Salad,Pasta},
+  xtick=data,
+  enlarge x limits=0.18,
+  title={\textbf{Graph A}},
+  xlabel={Favorite lunch option},
+  ylabel={Number of students},
+  x tick label style={rotate=30,anchor=east,font=\scriptsize},
+  tick label style={font=\scriptsize},
+  label style={font=\scriptsize},
+  title style={font=\small},
+  ymajorgrids,
+  nodes near coords,
+  every node near coord/.append style={font=\scriptsize},
+  axis on top
+]
+\addplot[fill=calloutblue,draw=dayblue] coordinates
+  {(Pizza,52) (Tacos,47) (Salad,44) (Pasta,41)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.95\linewidth,
+  height=1.4in,
+  ybar=2pt,
+  bar width=10pt,
+  ymin=0,
+  ymax=58,
+  ytick={0,10,20,30,40,50},
+  symbolic x coords={Pizza,Tacos,Salad,Pasta},
+  xtick=data,
+  enlarge x limits=0.18,
+  title={\textbf{Graph B}},
+  xlabel={Favorite lunch option},
+  ylabel={Number of students},
+  x tick label style={rotate=30,anchor=east,font=\scriptsize},
+  tick label style={font=\scriptsize},
+  label style={font=\scriptsize},
+  title style={font=\small},
+  ymajorgrids,
+  nodes near coords,
+  every node near coord/.append style={font=\scriptsize},
+  axis on top
+]
+\addplot[fill=calloutblue,draw=dayblue] coordinates
+  {(Pizza,52) (Tacos,47) (Salad,44) (Pasta,41)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Is pizza clearly the favorite? Name the graph that most influenced you.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ GRAPHING ONE CATEGORICAL VARIABLE (keep on the page)}{calloutgreen}
+In a bar graph, each bar's height represents a category's \textbf{count} or \textbf{relative frequency};
+bars have equal widths and gaps. Bar height is measured from the displayed baseline, so changing the baseline
+changes the visible height even when the count does not change.\\
+Relative frequency $=$ count $\div$ total. A \textbf{bar graph} encodes categories as aligned lengths.
+A \textbf{pie chart} encodes shares of one whole as angles and areas. Match the display to the reader's question.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Read the Pizza and Pasta counts. How many more students chose Pizza?\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Convert all four counts to whole-number percents of 184. Describe how close the categories are in context.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} For ``Is pizza clearly the favorite?'' choose the more honest graph and name the design feature that settles it. Quantify Graph A's visible Pizza-to-Pasta heights, then compare 52 with 41 using percent increase. Finally, choose a zero-baseline bar graph or pie chart for comparing the four categories and defend that choice.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Graph \blank[0.5in] is more honest because its axis begins at \blank[0.4in], so height represents \blank[1.2in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Graph A looks \blank[0.5in] times as tall, but 52 is only about \blank[0.5in]\% more than 41.\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}
