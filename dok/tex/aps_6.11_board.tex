@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.11 \textperiodcentered\ TODAY'S PROBLEM}{One Result, Two Claims}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a utility has 500,000 online accounts. It randomly selects 10,000, assigns 5,000 to message A and 5,000 to B, and records on-time payment. The pre-data question asks whether the population proportions differ at $\alpha=0.05$; deployment requires A to improve payment by at least 5 percentage points.\par\smallskip \textbf{Rowan:} ``I rejected equality, so A has proved an important improvement of at least 5 points. Deploy A.''\par \textbf{Salma:} ``Rejecting equality supports a nonzero difference, but does not automatically establish the separate 5-point requirement.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{On-time payment}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Message} & \textbf{n} & \textbf{Paid} & \textbf{Other} \\ \hline
+\textbf{A} & 5,000 & 3,050 & 1,950 \\ \hline
+\textbf{B} & 5,000 & 2,950 & 2,050 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Whose report is more defensible, Rowan's or Salma's? Cite the observed gap or the claim tested.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Calculate $\hat p_A$, $\hat p_B$, and the observed difference $\hat p_A-\hat p_B$.
+  \item[\dokbadge{2}~(b)] Verify conditions and carry out the two-sided two-sample $z$-test of $H_0:p_A-p_B=0$. Compute $\hat p_c$, pooled SE, $z$, and the $p$-value; interpret the $p$-value and decide at $\alpha=0.05$.
+  \item[\dokbadge{3}~(c)] Decide which report is warranted. Use the $p$-value, observed gap, 5-point standard, and null value. Explain what the rejected report would mislead a reader to believe and name the confidence level and endpoint criterion needed for deployment.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson11_live.html}{\texttt{\detokenize{u6_lesson11_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson11_live.html}
+
+\end{document}

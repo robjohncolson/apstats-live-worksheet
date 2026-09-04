@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 6.10 (CED 3.12) \textperiodcentered\ B: 2026-12-15 \textperiodcentered\ E: 2027-01-27}{Two Analysts, One Planned Test}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose an online retailer has 50,000 active accounts. Before collecting data, its team asks, ``Does a progress meter change the proportion of active accounts completing checkout?'' It randomly selects 360 accounts and assigns 180 to each screen. The table shows the outcomes. Let $p_M$ and $p_S$ be the corresponding population completion proportions.\par\smallskip \textbf{Nia:} ``Use $H_0:p_M-p_S=0$ versus $H_a:p_M-p_S\ne0$ because either direction is a change.''\par \textbf{Omar:} ``Because $\hat p_M$ is larger, use $H_a:p_M-p_S>0$.''\par
+\begin{center}
+\textbf{Checkout outcomes}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Screen} & \textbf{n} & \textbf{Complete} & \textbf{Other} \\ \hline
+\textbf{Meter} & 180 & 126 & 54 \\ \hline
+\textbf{Standard} & 180 & 108 & 72 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Which analyst's setup should the team use? Cite one phrase or timing detail from the study.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ SET THE QUESTION, PARAMETERS, AND CONDITIONS (keep on the page)}{calloutgreen}
+Define population proportions before writing hypotheses. For no difference,
+$H_0:p_1-p_2=0$. Choose $H_a:p_1-p_2>0$, $<0$, or $\ne0$ from the research
+question set \textbf{before} viewing results; do not choose a tail because of the observed sign.
+Use a two-sample $z$-test for a difference of proportions with independent random samples
+or randomized groups. Check each 10 percent condition when sampling without replacement.
+Under $H_0$, pool: $\hat p_c=(x_1+x_2)/(n_1+n_2)$; all four pooled expected counts must be at least 10.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Define $p_M$ and $p_S$ in context. Calculate $\hat p_M$, $\hat p_S$, and the observed difference $\hat p_M-\hat p_S$.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Name the test procedure. Calculate the pooled proportion and verify randomization, the 10 percent condition, and all four pooled expected counts.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Decide which setup is defensible and state the hypotheses. Use the word `change,' the timing of the tail choice, condition evidence, and both kinds of randomization. Explain how the rejected setup would misrepresent the strength or scope of the evidence.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I would register $H_0:\blank[1.1in]$ and $H_a:\blank[1.1in]$ because the pre-data question asks \blank[2.0in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Changing the tail after seeing \blank[1.0in] would mislead readers by \blank[2.5in]; the design supports \blank[2.1in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

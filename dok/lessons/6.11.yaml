@@ -1,0 +1,57 @@
+# Topic 6.11 — Carrying Out a Test for the Difference of Two Population Proportions
+topic: "6.11"
+ced2026: { unit: 3, topic: "3.13", label: "Carrying Out a Test (difference of two proportions)" }
+title: "One Result, Two Claims"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "What does a significant test against zero establish, and what practical claim remains untested?"
+worksheet: "u6_lesson11_live.html"
+
+rules_callout:
+  title: "CALCULATE, INTERPRET, THEN BOUND THE CLAIM (keep on the page)"
+  body: |
+    For $H_0:p_1-p_2=0$, pool $\hat p_c=(x_1+x_2)/(n_1+n_2)$ and use
+    $z=\dfrac{(\hat p_1-\hat p_2)-0}{\sqrt{\hat p_c(1-\hat p_c)(1/n_1+1/n_2)}}$.
+    A two-sided test uses $P(|Z|\ge |z|)$. The $p$-value assumes $H_0$ is true and measures
+    how often random chance would produce a difference at least as extreme. If $p\le\alpha$, reject
+    $H_0$; otherwise fail to reject it. A test against zero addresses whether a difference exists;
+    it does not by itself establish that the difference exceeds a separate practical threshold.
+
+focus: aps-6.11-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Let students compare the observed gap and sample sizes before calculating."
+    - "Begin the 6.11 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require separate statements about the zero-difference test and five-point deployment standard."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose Rowan's or Salma's conclusion and cite one number."
+    - "Complete the follow-along about pooled standard error, test statistic, p-value, and conclusion."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Which null difference did this test actually use?"
+    - "What does 0.041 describe under that null model?"
+    - "How does the observed two-point gap compare with the five-point deployment standard?"
+    - "What additional interval or test would address the five-point claim directly?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require the test decision and a separate practical-threshold judgment."
+  watch_for:
+    - "Using unpooled standard errors in a null test of equal proportions."
+    - "Interpreting the p-value as the probability that the population proportions are equal."
+    - "Concluding that rejection of zero proves an improvement of at least five percentage points."
+  first_take_note: "Not graded. The large samples make a two-point difference statistically detectable; students must decide what the specified deployment rule still requires."
+
+visuals:
+  reminder_table:
+    kind: two_way_table
+    col_label: "On-time payment"
+    row_label: "Message"
+    cols: ["n", "Paid", "Other"]
+    rows: ["A", "B"]
+    cells:
+      - ["5,000", "3,050", "1,950"]
+      - ["5,000", "2,950", "2,050"]

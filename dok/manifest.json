@@ -215,6 +215,18 @@
     "frq_pattern": "normal-approximation-vs-simulation-for-a-skewed-tail",
     "worksheet": "u6_lesson1-2_live.html"
   },
+  "6.10": {
+    "title": "Two Analysts, One Planned Test",
+    "skill": "4.C",
+    "frq_pattern": "predata-question-vs-postdata-tail-switch",
+    "worksheet": "u6_lesson10_live.html"
+  },
+  "6.11": {
+    "title": "One Result, Two Claims",
+    "skill": "4.E",
+    "frq_pattern": "zero-test-vs-practical-threshold",
+    "worksheet": "u6_lesson11_live.html"
+  },
   "6.2": {
     "title": "Narrower Is Not Automatically Better",
     "skill": "4.C",

@@ -1,0 +1,57 @@
+# Topic 6.10 — Setting Up a Test for the Difference of Two Population Proportions
+topic: "6.10"
+ced2026: { unit: 3, topic: "3.12", label: "Setting Up a Test (difference of two proportions)" }
+title: "Two Analysts, One Planned Test"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do the original research question and study design determine a defensible two-proportion test setup?"
+worksheet: "u6_lesson10_live.html"
+
+rules_callout:
+  title: "SET THE QUESTION, PARAMETERS, AND CONDITIONS (keep on the page)"
+  body: |
+    Define population proportions before writing hypotheses. For no difference,
+    $H_0:p_1-p_2=0$. Choose $H_a:p_1-p_2>0$, $<0$, or $\ne0$ from the research
+    question set \textbf{before} viewing results; do not choose a tail because of the observed sign.
+    Use a two-sample $z$-test for a difference of proportions with independent random samples
+    or randomized groups. Check each 10 percent condition when sampling without replacement.
+    Under $H_0$, pool: $\hat p_c=(x_1+x_2)/(n_1+n_2)$; all four pooled expected counts must be at least 10.
+
+focus: aps-6.10-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask which setup matches the team's question without confirming the tail."
+    - "Begin the 6.10 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and make students separate the question chosen before data from the sign observed afterward."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose Nia's or Omar's setup and cite wording or design evidence."
+    - "Complete the follow-along about hypotheses, procedure selection, pooling, and conditions."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "What result would matter if the meter actually lowered completion?"
+    - "When was the direction of Omar's alternative chosen?"
+    - "Why are pooled expected counts appropriate under equality?"
+    - "What do random selection and random assignment each allow the team to claim?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require a setup, pooled-count check, and consequence of changing tails after seeing data."
+  watch_for:
+    - "Writing hypotheses with sample proportions instead of population parameters."
+    - "Choosing a greater-than alternative only because the observed meter proportion is larger."
+    - "Checking observed rather than pooled expected counts for the test."
+  first_take_note: "Not graded. The positive observed difference is intentionally tempting; the research question must control the tail."
+
+visuals:
+  completion_table:
+    kind: two_way_table
+    col_label: "Checkout outcomes"
+    row_label: "Screen"
+    cols: ["n", "Complete", "Other"]
+    rows: ["Meter", "Standard"]
+    cells:
+      - ["180", "126", "54"]
+      - ["180", "108", "72"]

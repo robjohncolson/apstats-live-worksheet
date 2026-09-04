@@ -1,0 +1,115 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 6.10 (CED 3.12) \textperiodcentered\ B: 2026-12-15 \textperiodcentered\ E: 2027-01-27 \textperiodcentered\ TEACHER KEY}{Two Analysts, One Planned Test}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Enduring Understanding VAR-6} --- The normal distribution may be used to model variation.
+  \item \textbf{Skill 1.F} --- Identify null and alternative hypotheses.
+  \item \textbf{Skill 1.E} --- Identify an appropriate inference method for significance tests.
+  \item \textbf{Skill 4.C} --- Verify that inference procedures apply in a given situation.
+  \item \textbf{LO VAR-6.H} --- Identify the null and alternative hypotheses for a difference of two population proportions. [Skill 1.F]
+  \item \textbf{EK VAR-6.H.1} --- For a two-sample test for a difference of two proportions, the null hypothesis specifies a value of 0 for the difference in population proportions, indicating no difference or effect.
+  \item \textbf{EK VAR-6.H.2} --- The null hypothesis for a difference in proportions is: $H_0$: $p_1$ = $p_2$, or $H_0$: $p_1$ - $p_2$ = 0.
+  \item \textbf{EK VAR-6.H.3} --- A one-sided alternative hypothesis for a difference in proportions is $H_a$: $p_1$ < $p_2$ or $H_a$: $p_1$ > $p_2$. A two-sided alternative hypothesis is $H_a$: $p_1$ $\neq$ $p_2$.
+  \item \textbf{LO VAR-6.I} --- Identify an appropriate testing method for the difference of two population proportions. [Skill 1.E]
+  \item \textbf{EK VAR-6.I.1} --- For a single categorical variable, the appropriate testing method for the difference of two population proportions is a two-sample z-test for a difference between two population proportions.
+  \item \textbf{LO VAR-6.J} --- Verify the conditions for making statistical inferences when testing a difference of two population proportions. [Skill 4.C]
+  \item \textbf{EK VAR-6.J.1} --- To make statistical inferences when testing a difference between population proportions, check for independence and approximately normal sampling distribution:
+  \item Independence: data collected using two independent, random samples or a randomized experiment; when sampling without replacement, check $n_1$ $\leq$ 10\%$N_1$ and $n_2$ $\leq$ 10\%$N_2$.
+  \item Shape (approximate normality): compute the combined (pooled) proportion $\widehat p_c$ = ($n_1$$\widehat p_1$ + $n_2$$\widehat p_2$) / ($n_1$ + $n_2$); assuming $H_0$ is true, check that $n_1$$\widehat p_c$, $n_1$(1 - $\widehat p_c$), $n_2$$\widehat p_c$, and $n_2$(1 - $\widehat p_c$) are all $\geq$ 5 (or 10, per the predetermined value used).
+\end{itemize}
+}
+\textbf{Essential question:} How do the original research question and study design determine a defensible two-proportion test setup?\par
+\textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{predata-\allowbreak{}question-\allowbreak{}vs-\allowbreak{}postdata-\allowbreak{}tail-\allowbreak{}switch}}\par
+\textbf{DOK rationale:} Part (c) coordinates the original question, timing of the tail choice, pooled conditions, and randomization scope to adjudicate two test setups and trace how the rejected setup distorts the evidence.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask which setup matches the team's question without confirming the tail.
+  \item Begin the 6.10 video follow-along at minute 5.
+  \item Return to the board slide at minute 33. Circulate and make students separate the question chosen before data from the sign observed afterward.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose Nia's or Omar's setup and cite wording or design evidence.
+  \item Complete the follow-along about hypotheses, procedure selection, pooling, and conditions.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What result would matter if the meter actually lowered completion?
+  \item When was the direction of Omar's alternative chosen?
+  \item Why are pooled expected counts appropriate under equality?
+  \item What do random selection and random assignment each allow the team to claim?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Require a setup, pooled-count check, and consequence of changing tails after seeing data.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Writing hypotheses with sample proportions instead of population parameters.
+  \item Choosing a greater-than alternative only because the observed meter proportion is larger.
+  \item Checking observed rather than pooled expected counts for the test.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-predata-two-sided-setup} (required) --- Selects Nia and states a two-sided alternative
+  \item \textbf{uses-question-and-timing} (required) --- Uses the pre-data word change rather than the observed sign
+  \item \textbf{cites-valid-conditions} (required) --- Cites randomization, 10 percent, or pooled-count evidence
+  \item \textbf{states-reader-consequence} (required) --- Explains that a post-data tail switch hides decreases and exaggerates evidence
+  \item \textbf{bounds-scope} (required) --- Separates generalization from selection and causation from assignment
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Chooses the two-sided setup; justifies its timing, conditions, consequence, and scope. \\ \hline
+\textbf{P} & Chooses the two-sided setup but omits a condition, consequence, or scope statement. \\ \hline
+\textbf{I} & Chooses a tail from the observed sign, uses sample statistics in hypotheses, or gives no design defense. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose an online retailer has 50,000 active accounts. Before collecting data, its team asks, ``Does a progress meter change the proportion of active accounts completing checkout?'' It randomly selects 360 accounts and assigns 180 to each screen. The table shows the outcomes. Let $p_M$ and $p_S$ be the corresponding population completion proportions.\par\smallskip \textbf{Nia:} ``Use $H_0:p_M-p_S=0$ versus $H_a:p_M-p_S\ne0$ because either direction is a change.''\par \textbf{Omar:} ``Because $\hat p_M$ is larger, use $H_a:p_M-p_S>0$.''\par
+\begin{center}
+\textbf{Checkout outcomes}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Screen} & \textbf{n} & \textbf{Complete} & \textbf{Other} \\ \hline
+\textbf{Meter} & 180 & 126 & 54 \\ \hline
+\textbf{Standard} & 180 & 108 & 72 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which analyst's setup should the team use? Cite one phrase or timing detail from the study.\par
+\answer{Not graded. The positive observed difference is intentionally tempting; the research question must control the tail.}
+\end{firsttakebox}
+
+\textit{Rules callout ``SET THE QUESTION, PARAMETERS, AND CONDITIONS (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Define $p_M$ and $p_S$ in context. Calculate $\hat p_M$, $\hat p_S$, and the observed difference $\hat p_M-\hat p_S$.\par
+\answer{Here $p_M$ and $p_S$ are the completion proportions for all active accounts under the meter and standard screens. Thus $\hat p_M=126/180=0.70$, $\hat p_S=108/180=0.60$, and the difference is $0.10$.}
+
+\dokbadge{2}~\textbf{(b)} Name the test procedure. Calculate the pooled proportion and verify randomization, the 10 percent condition, and all four pooled expected counts.\par
+\answer{The appropriate procedure is a two-sample $z$-test for a difference of proportions. The 360 accounts were randomly selected and assigned; $360\le0.10(50{,}000)=5{,}000$. Under $H_0$, $\hat p_c=234/360=0.65$, so each group has pooled expected counts $117$ and $63$, all at least 10.}
+
+\dokbadge{3}~\textbf{(c)} Decide which setup is defensible and state the hypotheses. Use the word `change,' the timing of the tail choice, condition evidence, and both kinds of randomization. Explain how the rejected setup would misrepresent the strength or scope of the evidence.\par
+\answer{Nia is defensible: $H_0:p_M-p_S=0$ versus $H_a:p_M-p_S\ne0$. The pre-data word `change' includes either direction; the later difference $0.10$ cannot select the tail. Random selection and assignment, $360\le5{,}000$, and pooled counts 117 and 63 validate the procedure. The right-tail switch omits decreases and exaggerates evidence for a planned benefit. Selection supports generalization to accounts represented by the frame; assignment supports causation about screen type; neither extends beyond that frame.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}
