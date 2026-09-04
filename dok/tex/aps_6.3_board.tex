@@ -1,0 +1,46 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.3 \textperiodcentered\ TODAY'S PROBLEM}{One Interval, Two Threshold Claims}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a statewide activities association has 10,000 member students and is considering requiring reusable food containers at its tournaments. In a simple random sample of 300 member students, 204 favor the requirement. A sponsor claims that at least $65\%$ of all member students favor it; an event organizer makes the more modest claim that more than $60\%$ favor it.\par\smallskip \textbf{Kai:} ``The sample has $204/300=68\%$ in favor, above both thresholds, so it supports both claims.''\par \textbf{Mira:} ``The point estimate alone cannot settle both claims. We should construct a confidence interval and compare all of its plausible values with each threshold.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Sample counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Group} & \textbf{N} & \textbf{n} & \textbf{Favor} & \textbf{Other} \\ \hline
+\textbf{Members} & 10,000 & 300 & 204 & 96 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Do the data appear to support both claims, only one, or neither? Cite one number and commit before calculating the interval.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define the population proportion $p$ and calculate the sample proportion $\hat p$.
+  \item[\dokbadge{2}~(b)] Verify the conditions, construct a 95 percent confidence interval for $p$, and interpret the interval in the association's context.
+  \item[\dokbadge{3}~(c)] Use the interval to decide which threshold claim has support and whose reasoning is warranted. Cite both endpoint comparisons, distinguish plausible from justified, and explain the reader consequence of Kai's point-estimate argument.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson3_live.html}{\texttt{\detokenize{u6_lesson3_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson3_live.html}
+
+\end{document}

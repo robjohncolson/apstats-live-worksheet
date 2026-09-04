@@ -1,0 +1,52 @@
+# Topic 6.3 — Justifying a Claim Based on a Confidence Interval for a Population Proportion
+topic: "6.3"
+ced2026: { unit: 3, topic: "3.4", label: "Justifying a Claim (CI, proportion)" }
+title: "One Interval, Two Threshold Claims"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How can one confidence interval support a modest lower-bound claim but not a stronger one?"
+worksheet: "u6_lesson3_live.html"
+
+rules_callout:
+  title: "LET THE WHOLE INTERVAL SET THE BOUND (keep on the page)"
+  body: |
+    For a one-sample $z$-interval for $p$, check random sampling, $n\le0.10N$, and at least
+    10 observed successes and failures. Then use $\hat p\pm1.96\sqrt{\hat p(1-\hat p)/n}$
+    for $95\%$ confidence. Interpret: ``We are $95\%$ confident that the interval captures
+    the population proportion [in context].'' A claim $p>c$ is supported only when the whole
+    interval lies above $c$; if $c$ is inside the interval, plausible values lie on both sides.
+
+focus: aps-6.3-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask for a point-estimate first take."
+    - "Begin the video at minute 5; return at minute 33 to compare the lower endpoint with both thresholds."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose which threshold claims have support and cite one number."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in the sheet."
+  questions_to_ask:
+    - "What uncertainty disappears if you report only $0.68$?"
+    - "Which endpoint should you compare with a lower-bound claim?"
+    - "What does $0.65$ inside the interval establish---and not establish?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require both endpoint comparisons and a bounded conclusion."
+  watch_for:
+    - "Treating the sample proportion as the population proportion."
+    - "Calling an interior threshold a proved lower bound."
+    - "Assigning 95 percent probability to the fixed parameter."
+  first_take_note: "Not graded. The interval must separate plausible from justified."
+
+visuals:
+  container_table:
+    kind: two_way_table
+    col_label: "Sample counts"
+    row_label: "Group"
+    cols: ["N", "n", "Favor", "Other"]
+    rows: ["Members"]
+    cells:
+      - ["10,000", "300", "204", "96"]

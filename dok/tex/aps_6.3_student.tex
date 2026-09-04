@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 6.3 (CED 3.4) \textperiodcentered\ B: 2026-12-01 \textperiodcentered\ E: 2027-01-06}{One Interval, Two Threshold Claims}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a statewide activities association has 10,000 member students and is considering requiring reusable food containers at its tournaments. In a simple random sample of 300 member students, 204 favor the requirement. A sponsor claims that at least $65\%$ of all member students favor it; an event organizer makes the more modest claim that more than $60\%$ favor it.\par\smallskip \textbf{Kai:} ``The sample has $204/300=68\%$ in favor, above both thresholds, so it supports both claims.''\par \textbf{Mira:} ``The point estimate alone cannot settle both claims. We should construct a confidence interval and compare all of its plausible values with each threshold.''\par
+\begin{center}
+\textbf{Sample counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Group} & \textbf{N} & \textbf{n} & \textbf{Favor} & \textbf{Other} \\ \hline
+\textbf{Members} & 10,000 & 300 & 204 & 96 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Do the data appear to support both claims, only one, or neither? Cite one number and commit before calculating the interval.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ LET THE WHOLE INTERVAL SET THE BOUND (keep on the page)}{calloutgreen}
+For a one-sample $z$-interval for $p$, check random sampling, $n\le0.10N$, and at least
+10 observed successes and failures. Then use $\hat p\pm1.96\sqrt{\hat p(1-\hat p)/n}$
+for $95\%$ confidence. Interpret: ``We are $95\%$ confident that the interval captures
+the population proportion [in context].'' A claim $p>c$ is supported only when the whole
+interval lies above $c$; if $c$ is inside the interval, plausible values lie on both sides.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Define the population proportion $p$ and calculate the sample proportion $\hat p$.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Verify the conditions, construct a 95 percent confidence interval for $p$, and interpret the interval in the association's context.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Use the interval to decide which threshold claim has support and whose reasoning is warranted. Cite both endpoint comparisons, distinguish plausible from justified, and explain the reader consequence of Kai's point-estimate argument.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The interval supports the claim \blank[1.7in] because its lower endpoint, \blank[0.7in], is \blank[1.4in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Although $0.65$ is \blank[1.2in], it does not establish \blank[2.0in]; Kai's argument would make readers think \blank[2.2in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

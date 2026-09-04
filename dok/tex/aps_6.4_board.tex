@@ -1,0 +1,46 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.4 \textperiodcentered\ TODAY'S PROBLEM}{Which Test Answers the Question Asked?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+A district of 2{,}400 students had bus ridership $p_0=0.40$ before a new route. Before collecting data, the director asks whether the current proportion $p$ has \emph{increased}. An SRS of 180 current students finds 84 riders.\par\smallskip \textbf{Maya:} ``Use $H_0:p=0.40$ versus $H_a:p>0.40$ and a one-sample $z$-test. Check large counts with 72 and 108.''\par \textbf{Theo:} ``Use $H_a:p\neq0.40$ because samples can differ either way. Check large counts with the observed 84 and 96.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Current SRS counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Group} & \textbf{Bus} & \textbf{Other} & \textbf{Total} \\ \hline
+\textbf{Students} & 84 & 96 & 180 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which setup better answers whether ridership increased? Choose Maya or Theo and cite one detail from the question or sample.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define the population parameter $p$ in context and identify the null value $p_0$.
+  \item[\dokbadge{2}~(b)] Compute $\hat p$, name the testing procedure, and verify the random, 10 percent, and large-counts conditions using the appropriate values.
+  \item[\dokbadge{3}~(c)] Choose the warranted setup. Use the word \emph{increased}, distinguish $p_0$ from $\hat p$, and explain why large counts uses null-expected values. Give the reader consequence of Theo's alternative and count check.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson4_live.html}{\texttt{\detokenize{u6_lesson4_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson4_live.html}
+
+\end{document}

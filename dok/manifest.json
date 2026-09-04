@@ -214,5 +214,17 @@
     "skill": "4.C",
     "frq_pattern": "narrower-self-selected-interval-vs-wider-random-interval",
     "worksheet": "u6_lesson1-2_live.html"
+  },
+  "6.3": {
+    "title": "One Interval, Two Threshold Claims",
+    "skill": "4.D",
+    "frq_pattern": "one-interval-two-threshold-claims-bound-the-conclusion",
+    "worksheet": "u6_lesson3_live.html"
+  },
+  "6.4": {
+    "title": "Which Test Answers the Question Asked?",
+    "skill": "4.C",
+    "frq_pattern": "directional-question-null-based-conditions-which-test-setup",
+    "worksheet": "u6_lesson4_live.html"
   }
 }
