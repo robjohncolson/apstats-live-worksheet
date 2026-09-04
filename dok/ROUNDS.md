@@ -15,3 +15,9 @@ pages: all student 2 / board 1 / teacher ≤3
 tests: vitest 163 passed · pytest 242 passed · validation 43 registry rows / 39 lessons
 changed outside lessons/registry: calibration/unit3.json, PENDING.md, manifest.json, build_ladder.py, test_dok_build.py, generated tex/pdf
 notes: compacted neutral table labels and teacher keys after visual inspection; added TeX-safe H₀, Hₐ, np₀, and p₀ tutor notation
+
+## Round 6 — 2026-09-04 — topics 5.6, 6.6–6.11 — commits b64ecd5, 32d164f, d5f9df6, 1b5dd93 — coverage 46/66
+pages: all student 2 / board 1 / teacher ≤3
+tests: vitest 191 passed · pytest 284 passed · validation 50 registry rows / 46 lessons
+changed outside lessons/registry: PENDING.md, manifest.json, build_ladder.py, test_dok_build.py, generated tex/pdf
+notes: corrected finite-population checks for randomized groups; added TeX-safe two-proportion subscript notation and compact board tables
