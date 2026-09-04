@@ -204,7 +204,7 @@ def tether_lines(topic: str) -> list[str]:
         else:
             out.append(line)
     cleaned = [re.sub(r"\*\*(.+?)\*\*", r"\1", s) for s in out]
-    cleaned = [re.sub(r"\*(.+?)\*", r"\1", s) for s in cleaned]
+    cleaned = [re.sub(r"(?<!\w)\*([^*\n]+?)\*(?!\w)", r"\1", s) for s in cleaned]
     return [r"\textbf{" + latex_text(s.split(" — ")[0]) + "}" + latex_text(" — " + " — ".join(s.split(" — ")[1:])) if " — " in s else latex_text(s) for s in cleaned]
 
 
