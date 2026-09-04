@@ -1,0 +1,134 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 1.10 (CED 1.10) \textperiodcentered\ B: 2026-11-09 \textperiodcentered\ E: 2026-12-02 \textperiodcentered\ TEACHER KEY}{Check the Model}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item ENDURING UNDERSTANDING: VAR-2 The normal distribution can be used to represent some population distributions.
+  \item \textbf{Skill 2.D} --- Compare distributions or relative positions of points within a distribution.
+  \item \textbf{Skill 3.A} --- Determine relative frequencies, proportions, or probabilities using simulation or calculations.
+  \item VAR-2.A Compare a data distribution to the normal distribution model. [Skill 2.D]
+  \item VAR-2.A.1 A parameter is a numerical summary of a population. VAR-2.A.2 Some sets of data may be described as approximately normally distributed. A normal curve is mound-shaped and symmetric. The parameters of a normal distribution are the population mean, $\mu$, and the population standard deviation, $\sigma$. VAR-2.A.3 For a normal distribution, approximately 68\% of the observations are within 1 standard deviation of the mean, approximately 95\% of observations are within 2 standard deviations of the mean, and approximately 99.7\% of observations are within 3 standard deviations of the mean. This is called the empirical rule. VAR-2.A.4 Many variables can be modeled by a normal distribution.
+  \item VAR-2.B Determine proportions and percentiles from a normal distribution. [Skill 3.A]
+  \item VAR-2.B.1 A standardized score for a particular data value is calculated as (data value -- mean)/(standard deviation), and measures the number of standard deviations a data value falls above or below the mean. VAR-2.B.2 One example of a standardized score is a z-score, calculated as z = (x - $\mu$)/$\sigma$. A z-score measures how many standard deviations a data value is from the mean. VAR-2.B.3 Technology, such as a calculator, a standard normal table, or computer-generated output, can be used to find the proportion of data values located on a given interval of a normally distributed random variable. VAR-2.B.4 Given the area of a region under the graph of the normal distribution curve, it is possible to use technology to estimate parameters for some populations.
+  \item VAR-2.C Compare measures of relative position in data sets. [Skill 2.D]
+  \item VAR-2.C.1 Percentiles and z-scores may be used to compare relative positions of points within a data set or between data sets.
+\end{itemize}
+}
+\textbf{Essential question:} When does a correct normal calculation justify a conclusion about actual data?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{is-\allowbreak{}the-\allowbreak{}normal-\allowbreak{}model-\allowbreak{}appropriate-\allowbreak{}adjudicate-\allowbreak{}model-\allowbreak{}vs-\allowbreak{}data}}\par
+\textbf{DOK rationale:} Part (c) separates model arithmetic from a warranted conclusion, tests the model against shape and an observed tail, and explains the consequence of a mismatch.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Read Ben's and Ava's lines; do not say whether the model fits.
+  \item Video follow-along from minute 5 (normal curves, empirical rule, and z-scores).
+  \item Board slide back up at minute 33. Circulate; require every model judgment to point to the histogram.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to using or rejecting the model before the video.
+  \item Complete the video follow-along and check both model calculations.
+  \item Finish (a)--(c); complete the exit line; turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Which claim is about a normal curve, and which claim is about the 60 actual students?
+  \item How many bars continue to the right after the peak? What would symmetry require on the left?
+  \item How many students does $0.62\%$ of 60 represent? How many do you actually see above 70?
+  \item What must you inspect before typing values into normalcdf?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Accept the arithmetic before pressing on the assumption; do not let `correct z-score' stand in for a model check.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating the school's assertion of normality as evidence stronger than the histogram.
+  \item Counting the 60--70 bar as above 70.
+  \item Rejecting the model with no named feature or tail comparison.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{separates-calculation-from-conclusion} (required) --- Says the calculations are correct under the model but not warranted for the displayed data
+  \item \textbf{cites-skew-or-shape} (required) --- Cites the peak with a long right tail or lack of mound-shaped symmetry
+  \item \textbf{compares-observed-tail} (required) --- Compares 4 of 60 (6.7 percent) above 70 with the model's 0.62 percent
+  \item \textbf{explains-model-check} (required) --- Names the underestimated upper tail and says to check shape before normal methods
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Separates correct model arithmetic from the data conclusion, cites shape and the 4-of-60 versus 0.62 percent tail discrepancy, and explains the underestimated tail and needed model check. \\ \hline
+\textbf{P} & Rejects the model with only one feature, OR gives both features without explaining how correct arithmetic misleads, OR discusses model checking without comparing the tails. \\ \hline
+\textbf{I} & Accepts the model because the calculations are correct, labels the histogram approximately normal, or gives no histogram evidence. \\ \hline
+\end{tabular}}
+
+\textbf{Common mistakes}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating a correct $z$-score as proof that the data are normal
+  \item Saying ``not normal'' without naming skew, asymmetry, or the long tail
+  \item Counting the 60--70 bin as above 70 or reporting 4 of 60 as $4\%$
+\end{itemize}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+A school says daily app time is approximately normal with mean $40$ minutes and standard deviation $12$ minutes. The histogram shows 60 students; no recorded time was exactly 70 minutes.\par\smallskip \textbf{Ben:} ``About $16\%$ should be above 52 minutes.''\quad \textbf{Ava:} ``For 70 minutes, $z=2.5$, so less than $1\%$ should be above 70.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.68\linewidth,
+  height=1.84in,
+  ybar interval, ymin=0, ymax=18,
+  xmin=0, xmax=100, xtick={0,10,20,30,40,50,60,70,80,90,100},
+  xlabel={Daily app time (minutes)}, ylabel={Number of students},
+  ymajorgrids, tick label style={font=\small}, label style={font=\small},
+  bar shift=0pt, x tick label as interval=false
+]
+\addplot[fill=calloutblue, draw=dayblue] coordinates {
+  (0,3)
+  (10,7)
+  (20,13)
+  (30,16)
+  (40,9)
+  (50,5)
+  (60,3)
+  (70,2)
+  (80,1)
+  (90,1)
+  (100,0)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Does the normal model fit? Point to one histogram feature.\par
+\answer{Not graded. Expect trust in the stated model; preserve that tension.}
+\end{firsttakebox}
+
+\textit{Rules callout ``USING A NORMAL MODEL (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State $\mu$ and $\sigma$ for the proposed model. What two shape features should approximately normal data have?\par
+\answer{$\mu=40$ min and $\sigma=12$ min. Approximately normal data should be mound-shaped and roughly symmetric.}
+
+\dokbadge{2}~\textbf{(b)} Check Ben's and Ava's model calculations. Then find the observed fraction of these 60 students above 70 minutes.\par
+\answer{52 is $1\sigma$ above 40, so Ben's normal-model result is about $16\%$. For Ava, $P(Z>2.5)\approx0.0062=0.62\%$. The histogram has $2+1+1=4$ above 70, or $4/60=6.7\%$.}
+
+\dokbadge{3}~\textbf{(c)} Are the calculations warranted as conclusions about these students? Defend your decision with the histogram's shape and tail count. Explain how the relationship between a model and its data supports your decision, what a reader would conclude about long app times, and what must be checked before using normal methods.\par
+\answer{The arithmetic is correct for the model but not warranted for these data. The histogram peaks at 30--40 and has a long right tail; 4 of 60 ($6.7\%$) exceed 70 versus the model's $0.62\%$. A calculation inherits its model assumption, so this model underestimates long app times. Check for a mound shape, symmetry, and contradictory skew, gaps, clusters, or outliers before using normal methods.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

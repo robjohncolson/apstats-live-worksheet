@@ -1,0 +1,65 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 1.10 \textperiodcentered\ TODAY'S PROBLEM}{Check the Model}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+A school says daily app time is approximately normal with mean $40$ minutes and standard deviation $12$ minutes. The histogram shows 60 students; no recorded time was exactly 70 minutes.\par\smallskip \textbf{Ben:} ``About $16\%$ should be above 52 minutes.''\quad \textbf{Ava:} ``For 70 minutes, $z=2.5$, so less than $1\%$ should be above 70.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.85\linewidth,
+  height=2.30in,
+  ybar interval, ymin=0, ymax=18,
+  xmin=0, xmax=100, xtick={0,10,20,30,40,50,60,70,80,90,100},
+  xlabel={Daily app time (minutes)}, ylabel={Number of students},
+  ymajorgrids, tick label style={font=\small}, label style={font=\small},
+  bar shift=0pt, x tick label as interval=false
+]
+\addplot[fill=calloutblue, draw=dayblue] coordinates {
+  (0,3)
+  (10,7)
+  (20,13)
+  (30,16)
+  (40,9)
+  (50,5)
+  (60,3)
+  (70,2)
+  (80,1)
+  (90,1)
+  (100,0)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Does the normal model fit? Point to one histogram feature.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State $\mu$ and $\sigma$ for the proposed model. What two shape features should approximately normal data have?
+  \item[\dokbadge{2}~(b)] Check Ben's and Ava's model calculations. Then find the observed fraction of these 60 students above 70 minutes.
+  \item[\dokbadge{3}~(c)] Are the calculations warranted as conclusions about these students? Defend your decision with the histogram's shape and tail count. Explain how the relationship between a model and its data supports your decision, what a reader would conclude about long app times, and what must be checked before using normal methods.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson10_live.html}{\texttt{\detokenize{u1_lesson10_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson10_live.html}
+
+\end{document}

@@ -5,6 +5,12 @@
     "frq_pattern": "claim-vs-data-support-bound-the-conclusion",
     "worksheet": "u1_lesson1_live.html"
   },
+  "1.10": {
+    "title": "Check the Model",
+    "skill": "4.B",
+    "frq_pattern": "is-the-normal-model-appropriate-adjudicate-model-vs-data",
+    "worksheet": "u1_lesson10_live.html"
+  },
   "1.2": {
     "title": "Numbers That Aren't Quantities",
     "skill": "4.B",

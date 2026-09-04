@@ -1,0 +1,53 @@
+# Topic 1.10 — The Normal Distribution
+topic: "1.10"
+ced2026: { unit: 1, topic: "1.10", label: "The Normal Distribution" }
+title: "Check the Model"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "When does a correct normal calculation justify a conclusion about actual data?"
+worksheet: "u1_lesson10_live.html"
+
+rules_callout:
+  title: "USING A NORMAL MODEL (keep on the page)"
+  body: |
+    A normal curve is \textbf{mound-shaped and symmetric}. Its parameters are the population mean $\mu$ and
+    population standard deviation $\sigma$. Check the data's shape before using the model.\
+    Empirical rule: about $68\%$ is within $1\sigma$, $95\%$ within $2\sigma$, and $99.7\%$ within $3\sigma$.\
+    Standardize with $z=(x-\mu)/\sigma$. A normal-table answer describes the \emph{model}; it describes the data
+    only when the model is appropriate.
+
+focus: aps-1.10-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Read Ben's and Ava's lines; do not say whether the model fits."
+    - "Video follow-along from minute 5 (normal curves, empirical rule, and z-scores)."
+    - "Board slide back up at minute 33. Circulate; require every model judgment to point to the histogram."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to using or rejecting the model before the video."
+    - "Complete the video follow-along and check both model calculations."
+    - "Finish (a)--(c); complete the exit line; turn in."
+  questions_to_ask:
+    - "Which claim is about a normal curve, and which claim is about the 60 actual students?"
+    - "How many bars continue to the right after the peak? What would symmetry require on the left?"
+    - "How many students does $0.62\\%$ of 60 represent? How many do you actually see above 70?"
+    - "What must you inspect before typing values into normalcdf?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Accept the arithmetic before pressing on the assumption; do not let `correct z-score' stand in for a model check."
+  watch_for:
+    - "Treating the school's assertion of normality as evidence stronger than the histogram."
+    - "Counting the 60--70 bar as above 70."
+    - "Rejecting the model with no named feature or tail comparison."
+  first_take_note: "Not graded. Expect trust in the stated model; preserve that tension."
+
+visuals:
+  app_time_hist:
+    kind: pgfplot_hist
+    bins: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    counts: [3, 7, 13, 16, 9, 5, 3, 2, 1, 1]
+    xlabel: "Daily app time (minutes)"
+    ylabel: "Number of students"
