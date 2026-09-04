@@ -28,7 +28,7 @@ item registry, typeset in LaTeX, published as PDFs the Desk can link.
 | The real calendar: 66 dated lesson days per period (B: 10/8/6/10/8/11/9/4 by OLD unit 1–8), `topicKey` + `periods.B/E` dates | `data/lesson-schedule.json` | coverage test (§7) + fan-out order (§8) |
 | OLD-topic → NEW-CED-unit mapping (`ced2026.newUnit`, `newTopic`, `newLabel`, `status: core|bonus`) | `roadmap-data.json` | the sheet header prints the NEW label; files stay keyed by the OLD `topicKey` like everything else in this repo |
 | E/P/I scoring-guide shape (`expectedElements`, `scoringGuide.{E,P,I}`, `commonMistakes`) | `ai-grading-prompts*.js` (see CLAUDE.md "AI Grading Rubric Structure") | the DOK-3 scoring guide on the teacher edition uses the SAME shape (a good rubric shape for hand-scoring — the DOK-3 is never AI-graded, §1) |
-| Runtime resource overlay: Supabase `lesson_urls` (`topic, worksheet_url, drills_url, quiz_url, blooket_url`) read by the Desk at `ap_stats_roadmap_square_mode.html:4987` | Desk + Supabase `hgvnytaqmuybzbotosyj` | Phase 5 adds `dok_url` (optional) |
+| Runtime resource overlay: Supabase `lesson_urls` (`topic, worksheet_url, drills_url, quiz_url, blooket_url`) read by the Desk at `ap_stats_roadmap_square_mode.html:4987` | Desk + Supabase `hgvnytaqmuybzbotosyj` | NOT needed — Phase 5a derives the PDF URL from the topic key instead |
 | MiKTeX on the teacher laptop (`pdflatex`, `latexmk`) | Athena, via scoop | local compile; CI does NOT compile (§7) |
 
 **Why this lives in `follow-alongs`, not `Lesson_planning`.** Lesson_planning's hard rules are
@@ -328,7 +328,7 @@ CI runs T1–T4 (pure Node/Python). Compilation is teacher-laptop only (MiKTeX),
 | 2 — stress test | ladders **1.2** (variable types) and **1.9** (comparing distributions) by the same path; `dok/README.md` written FROM the friction log; T1–T3 green | ≤ 30 min per ladder by hand, else fix the tooling before fan-out (per `feedback_authoring_tool_stress_test`) |
 | 3 — Unit 1 fan-out | remaining 7 dated Unit-1 days (B: 09-08 → 09-24), dispatched as ONE dependency-free batch (each agent owns exactly `dok/lessons/{topic}.yaml` + its registry lines + its calibration unit), adversarial review on the 10 DOK-3s only | all 10 compile; DOK-3 review: 0 must-fix |
 | 4 — rolling fan-out | Units 2–5 + bonus days, one NEW-unit per batch, each batch landed ≥ 2 weeks before its first lesson date; `dok/PENDING.md` counts down | T2 coverage reaches 66/66, every one with a DOK-3 |
-| 5 — optional app hook | (a) `dok_url` column on `lesson_urls` + a 🪜 chip in the Desk resource panel (the table wins over files, so this is a table write, not a file edit). **(b) is withdrawn — see §1 "the human channel".** | separate spec if pursued |
+| 5 — app hook (BUILT 2026-09-04) | (a) **teacher-only** "DOK-3 · Board · Sheet · Key" row in the Desk resource panel (`_dokLadderRowHtml`, gated on `_deskIsTeacher()` — false for students AND in view-as; teacher decision: students must not be pulled toward the paper sheet and away from the AI-graded work). URLs are derived from the OLD topic key (`dok/pdf/aps_{topic}_{edition}.pdf`, relative to the Desk's origin), so **no Supabase `lesson_urls` column** was needed. Test: `tests/desk-dok-ladder-row.test.js`. **(b) is withdrawn — see §1 "the human channel".** | shipped |
 
 ## 9. Open decisions (defaults chosen; change if you want)
 

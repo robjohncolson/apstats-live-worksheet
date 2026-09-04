@@ -42,8 +42,20 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   largely AI-graded course; part (c) is teacher-scored by hand with the E/P/I key. Do not propose it again.
 - Housekeeping when convenient: `git branch -D codex-athena-rounds`; `node .gitnexus/run.cjs analyze` (index stale).
 
-### User-action checklist — unchanged (Railway `TEACHER_KEY` / `PAYOUT_AGENT_KEY` / `STUDENT_WALLET_OPTIN`; Schoology rig
-sign-in + UID map; SY2627 Q4 grading decision in SCHEDULE_HANDOFF). Unit 1 starts **09-08 B**.
+### Teacher decisions + actions, 2026-09-04 (evening)
+- ✅ Railway `TEACHER_KEY` ROTATED and `PAYOUT_AGENT_KEY` SET (a long random secret, separate from the teacher key).
+  ⏭ still owed by the teacher: paste the agent key into `~/.config/apstats/.payout-agent.json` on Athena (skeleton
+  written by the orchestrator, owner-only ACL, `walletName: ""` = the treasury, `batchCap: 500`); put the NEW teacher key
+  into `~/grade-backups/config.json` (`teacherKey`) and the dashboard secret box. THEN the orchestrator registers the
+  agent: `powershell -NoProfile -File tools/register_payout_agent_task.ps1` (one `--once` smoke first).
+- ✅ Payout float = **the treasury wallet** (single node wallet, ~10.2k DOGE), guarded by `batchCap` 500 Ɖ per batch.
+- ✅ Q4 grading RESOLVED: nothing new — post-AP-exam free days, seniors leave early, everyone gets an A (SCHEDULE_HANDOFF).
+- ✅ Desk DOK-3 links are **teacher-only** (built; `tests/desk-dok-ladder-row.test.js`). Students never see them — the
+  paper sheet must not compete with the AI-graded work for their attention.
+- ⏭ Schoology rig sign-in "soon" (rig Edge window may need relaunching: `python tools/cdp/edge.py --url
+  https://lynnschools.schoology.com/home --keep`); then UID map + dry-run sync.
+- ⏭ `STUDENT_WALLET_OPTIN=true` when ready. Pilot feedback on the DOK sheets waits for Tuesday (first class 09-08 B is
+  a shortened/late-start day per the teacher). Unit 1 starts **09-08 B**.
 
 ---
 

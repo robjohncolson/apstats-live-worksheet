@@ -104,8 +104,9 @@ Sep 1, exam May 14, 8 of 13 closures). Fixed in one pass, one source of truth:
   pins lesson == component == producer keys and the no-event legacy path. (The local state
   file's summer-mock `PeriodY/PC{n}` rows keep their old keys; the title pre-flight reuses
   those columns, so no re-keying is needed.)
-- **OPEN (teacher):** Q4 (04-15 → 06-17) has NO scheduled lessons for either period (B finishes
-  core 02-22, E 04-12); Q4 = bonus-only for B, one PC for E. Decide what Q4 grades on.
+- **RESOLVED (teacher, 2026-09-04):** Q4 (04-15 → 06-17) grades on nothing new — after the AP exam (2027-05-11)
+  every day is a free day, seniors are gone a month early, and every student gets an A for Q4. Q4 = bonus-only
+  for B, one PC for E; no Q4-specific engine work is needed.
 - MINOR: `lessonsTotal` counts the 11 null-dated bonus topics (they fall back to the unit band),
   so `/grade` says e.g. "of 26" where the Desk says "of 66 lessons" overall. Cosmetic.
 - MINOR: old units 1 and 4 (B) finish 11-09/11-10 — one day into Q2 — so a one-day slip flips
