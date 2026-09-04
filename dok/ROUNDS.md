@@ -9,3 +9,9 @@ pages: all student 2 / board 1 / teacher ≤3
 tests: vitest 135 passed · pytest 200 passed · validation 36 registry rows / 32 lessons
 changed outside lessons/registry: PENDING.md, manifest.json, build_ladder.py, test_dok_build.py, generated tex/pdf
 notes: made visual scale effective; completed TeX-safe union and statistics notation; rebuilt the GitNexus FTS cache after incremental PDF-index corruption
+
+## Round 5 — 2026-09-04 — topics 5.4–5.5, 6.1–6.5 — commits 6b2f450, 24c0be2, d8a9289, b85758b — coverage 39/66
+pages: all student 2 / board 1 / teacher ≤3
+tests: vitest 163 passed · pytest 242 passed · validation 43 registry rows / 39 lessons
+changed outside lessons/registry: calibration/unit3.json, PENDING.md, manifest.json, build_ladder.py, test_dok_build.py, generated tex/pdf
+notes: compacted neutral table labels and teacher keys after visual inspection; added TeX-safe H₀, Hₐ, np₀, and p₀ tutor notation
