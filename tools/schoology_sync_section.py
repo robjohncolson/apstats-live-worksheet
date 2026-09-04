@@ -104,14 +104,14 @@ import schoology_sync_lib as lib
 import schoology_components as components
 
 SECTION_TO_COURSE_ID = {
-    "PeriodB": "7945275782",
-    "PeriodE": "7945275798",
+    "PeriodB": "8537033028",   # SY26-27 "AP Statistics · Section 1" (13 students; discovered via the rig 2026-09-04)
+    "PeriodE": "8537033042",   # SY26-27 "AP Statistics · Section 2" (15 students). SY25-26 mock courses were 7945275782 / 7945275798.
     # Summer mock-grading (2026-06). PeriodY is a roster TEST section whose 3
     # fruit_animal students map (via roster.schoology_uid) to real Period B
     # students, so a mock push lands in Period B's REAL gradebook. Same course as
     # Period B. Fall cutover = repoint this entry + the per-student schoology_uid
     # map (and clear SECTION_FORCE_MP_DATE below); the sync code stays unchanged.
-    "PeriodY": "7945275782",
+    "PeriodY": "8537033028",  # fall cutover 2026-09-04: follows PeriodB (its 3 mock uids are stale — mock pushes find no rows)
 }
 
 PERIOD_LETTER = {

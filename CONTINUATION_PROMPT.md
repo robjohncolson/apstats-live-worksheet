@@ -52,8 +52,23 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
 - ✅ Q4 grading RESOLVED: nothing new — post-AP-exam free days, seniors leave early, everyone gets an A (SCHEDULE_HANDOFF).
 - ✅ Desk DOK-3 links are **teacher-only** (built; `tests/desk-dok-ladder-row.test.js`). Students never see them — the
   paper sheet must not compete with the AI-graded work for their attention.
-- ⏭ Schoology rig sign-in "soon" (rig Edge window may need relaunching: `python tools/cdp/edge.py --url
-  https://lynnschools.schoology.com/home --keep`); then UID map + dry-run sync.
+- ✅ **Schoology rig SIGNED IN (2026-09-04)** and the SY26-27 cutover done: the old course ids were last year's mock
+  sections (still holding 10 SY25-26 students). NEW: `PeriodB → 8537033028` ("AP Statistics · Section 1", 13) and
+  `PeriodE → 8537033042` ("Section 2", 15) in `tools/schoology-sync.py` + `tools/schoology_sync_section.py` (PeriodY follows B).
+  Every prior `schoology_uid` was a stale 6-digit id from another id space → **all remapped by name via
+  `scripts/teacher-roster.mjs --set-schoology-uids`: PeriodB 12/13, PeriodE 15/16** (3 uids first landed on PeriodX
+  duplicate accounts and were moved; `schoology_uid` is UNIQUE, so clear the dupe before setting). Left for the teacher:
+  **Savannah Lynn Robinson** (roster PeriodB, NOT in either Schoology AP Stats section, stale uid 222813 — drop or
+  transfer?), **Derrick Jimenez** (PeriodE duplicate of Dereck Jimenez `avocado_koala` — archive `pomelo_eagle`),
+  **Wedgina Tranchant** (Schoology has her in Section 1 = B; roster says PeriodE — uid set, section may need moving),
+  **Andrew Barrios** (in Schoology Section 2, no roster account — enroll or ignore). Next Schoology steps: configure the
+  weighted categories on BOTH new sections (Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5 / PC 50 — the old Sec 1
+  setup does not carry over), verify SY26-27 marking periods exist, then
+  `powershell -File tools/daily_schoology_sync.ps1 -Section PeriodB` (dry-run) → review → `-Live` → register the daily task.
+- ✅ **DOGE payout agent REGISTERED + RUNNING on Athena** (task "APStats DOGE Payout Agent", at-logon, config
+  `~/.config/apstats/.payout-agent.json` with the real key, `--once` smoke exit 0, `/payout/status` 200 with the rotated
+  teacher key → migrations 0032/0033 confirmed live). It polls every 60 s; the dashboard ⚡ "Deposit all ready" button is
+  now armed. `~/grade-backups/config.json` carries the new teacher key.
 - ⏭ `STUDENT_WALLET_OPTIN=true` when ready. Pilot feedback on the DOK sheets waits for Tuesday (first class 09-08 B is
   a shortened/late-start day per the teacher). Unit 1 starts **09-08 B**.
 

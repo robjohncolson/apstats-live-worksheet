@@ -59,8 +59,8 @@ SCHOOLOGY_BASE = ops.SCHOOLOGY_BASE
 # --- AP Stats sync targets per s120 P0 discovery + s121 user decision ---
 # Sec 1 = Period B; Sec 2 = Period E.
 SECTION_TO_COURSE_ID = {
-    "PeriodB": "7945275782",
-    "PeriodE": "7945275798",
+    "PeriodB": "8537033028",   # SY26-27 "AP Statistics · Section 1" (13 students; discovered via the rig 2026-09-04)
+    "PeriodE": "8537033042",   # SY26-27 "AP Statistics · Section 2" (15 students). SY25-26 mock courses were 7945275782 / 7945275798.
 }
 COURSE_ID_TO_SECTION = {v: k for k, v in SECTION_TO_COURSE_ID.items()}
 

@@ -742,7 +742,8 @@ class TestForceMarkingPeriod(unittest.TestCase):
 
     def test_periodY_targets_periodB_course_and_dates(self):
         # Cutover seam #1: PeriodY -> Period B's real course, Period B's dates.
-        self.assertEqual(SECTION_TO_COURSE_ID["PeriodY"], "7945275782")
+        # PeriodY always follows PeriodB (fall cutover 2026-09-04 repointed both to SY26-27 Section 1).
+        self.assertEqual(SECTION_TO_COURSE_ID["PeriodY"], SECTION_TO_COURSE_ID["PeriodB"])
         self.assertEqual(SECTION_TO_COURSE_ID["PeriodY"], SECTION_TO_COURSE_ID["PeriodB"])
         self.assertEqual(PERIOD_LETTER["PeriodY"], "B")
 
