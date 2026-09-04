@@ -1,0 +1,116 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 4.6 (CED 2.7) \textperiodcentered\ B: 2026-10-29 \textperiodcentered\ E: 2026-11-18 \textperiodcentered\ TEACHER KEY}{Overlap Does Not Decide Independence}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 3.A} --- Determine relative frequencies, proportions, or probabilities using simulation or calculations.
+  \item \textbf{EU VAR-4} --- The likelihood of a random event can be quantified.
+  \item \textbf{LO VAR-4.E} --- Calculate probabilities for independent events and for the union of two events. [Skill 3.A]
+  \item \textbf{EK VAR-4.E.1} --- Events A and B are independent if, and only if, knowing whether event A has occurred (or will occur) does not change the probability that event B will occur.
+  \item \textbf{EK VAR-4.E.2} --- If, and only if, events A and B are independent, then P(A | B) = P(A), P(B | A) = P(B), and P(A $\cap$ B) = P(A) · P(B).
+  \item \textbf{EK VAR-4.E.3} --- The probability that event A or event B (or both) will occur is the probability of the union of A and B, denoted P(A $\cup$ B).
+  \item \textbf{EK VAR-4.E.4} --- The addition rule states that P(A $\cup$ B) = P(A) + P(B) - P(A $\cap$ B).
+\end{itemize}
+}
+\textbf{Essential question:} Which probability comparison determines independence, and how is that different from checking overlap?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{independent-\allowbreak{}vs-\allowbreak{}mutually-\allowbreak{}exclusive-\allowbreak{}decide-\allowbreak{}from-\allowbreak{}the-\allowbreak{}table}}\par
+\textbf{DOK rationale:} Part (c) requires selecting and interpreting an independence check, separating independence from mutual exclusivity despite an overlapping sample, and tracing the multiplication-rule consequence of the decision.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Read both students' lines without endorsing the conclusion or the method.
+  \item Begin the video follow-along at minute 5.
+  \item Return to the table at minute 33. Circulate and ask students to name the two probabilities in every comparison.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to an independence decision and cite one table feature.
+  \item Complete the video follow-along about independence, intersections, and unions.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What is the chance of instrument playing before you know pet ownership?
+  \item What is that chance after you learn the student owns a pet?
+  \item Could independent events occur together? What equation would they satisfy?
+  \item For a complementary pair, what are the intersection and the product of the marginals?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Require a probability equality or inequality for independence and a separate overlap statement for mutual exclusivity; do not accept the word related without both numbers.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Comparing $P(I\mid P)$ with $P(P)$ rather than $P(I)$.
+  \item Using the product rule to manufacture an intersection before independence is established.
+  \item Treating not mutually exclusive as a synonym for independent.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{rejects-independence-with-probabilities} (required) --- Rejects independence by comparing 0.70 conditional on pet ownership with the 0.50 marginal probability
+  \item \textbf{separates-event-relationships} (required) --- Explains that mutual exclusivity concerns overlap while independence concerns whether one probability changes given the other
+  \item \textbf{gives-exclusive-dependent-pair} (required) --- Uses owns a pet and does not own a pet, or an equivalent complementary pair, as mutually exclusive but not independent
+  \item \textbf{states-product-consequence} (required) --- Explains that independence would make the intersection equal 0.60 times 0.50, or 0.30, and contrasts it with 0.42
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Rejects independence with the two required probabilities, distinguishes the two event relationships with a valid contextual pair, and correctly states the multiplication-rule consequence. \\ \hline
+\textbf{P} & Makes the correct independence decision and probability comparison but incompletely explains mutual exclusivity, omits a valid pair, or does not connect independence to the product calculation. \\ \hline
+\textbf{I} & Uses overlap alone to decide independence, says mutually exclusive means independent, or claims the actual intersection should equal 0.30 without treating that as a failed independence condition. \\ \hline
+\end{tabular}}
+
+\textbf{Common mistakes}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Comparing $P(I\mid P)$ with $P(P)$ instead of with $P(I)$
+  \item Saying events must be independent whenever both can occur
+  \item Calling owns a pet and plays an instrument mutually exclusive despite the count 84
+  \item Using $P(P)P(I)$ for the actual intersection before independence has been established
+\end{itemize}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a school surveys 200 students about whether they own at least one pet and whether they play a musical instrument. Let $P$ be the event that a randomly selected surveyed student owns a pet and $I$ the event that the student plays an instrument.\par\smallskip \textbf{Aaliyah:} \emph{The events overlap because 84 students do both. Since they are not mutually exclusive, they must be independent.}\par \textbf{Marcus:} \emph{Overlap does not decide independence; the relevant probabilities must be compared.}\par
+\begin{center}
+\textbf{Pet ownership and instrument playing}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Pet?} & \textbf{Plays} & \textbf{Does not} & \textbf{Total} \\ \hline
+\textbf{Yes} & 84 & 36 & 120 \\ \hline
+\textbf{No} & 16 & 64 & 80 \\ \hline
+\textbf{Total} & 100 & 100 & 200 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Do the events $P$ and $I$ seem independent? Cite one count or comparison from the table.\par
+\answer{Not graded. Aaliyah reaches the correct dependence decision from an invalid overlap rule; preserve that tension.}
+\end{firsttakebox}
+
+\textit{Rules callout ``INDEPENDENCE, INTERSECTION, AND UNION (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State the counts for $P$, $I$, and $P\cap I$.\par
+\answer{There are 120 students in $P$, 100 in $I$, and 84 in $P\cap I$.}
+
+\dokbadge{2}~\textbf{(b)} Compute $P(I)$, $P(I\mid P)$, $P(P\cap I)$, and $P(P\cup I)$.\par
+\answer{$P(I)=100/200=0.50$. $P(I\mid P)=84/120=0.70$. $P(P\cap I)=84/200=0.42$. By the addition rule, $P(P\cup I)=0.60+0.50-0.42=0.68$ (equivalently, $136/200$).}
+
+\dokbadge{3}~\textbf{(c)} Decide whether pet ownership and instrument playing are independent for these students. Cite the two probabilities that settle it. Then evaluate Aaliyah's reasoning: explain how mutually exclusive and independent events differ, give a pair of events from this context that is mutually exclusive but not independent, and state what independence would have allowed you to compute with the multiplication rule.\par
+\answer{The events are not independent because $P(I\mid P)=0.70$ differs from $P(I)=0.50$; knowing that a student owns a pet changes the modeled chance that the student plays an instrument. Aaliyah is right that $P$ and $I$ are not mutually exclusive, because 84 students are in both, but overlap neither proves nor disproves independence. Mutually exclusive events cannot occur together; independent events may overlap, but one event does not change the probability of the other. The events owns a pet and does not own a pet are mutually exclusive but not independent: their intersection has probability 0 while the product of their probabilities is $(0.60)(0.40)=0.24$. If $P$ and $I$ were independent, the multiplication rule would give $P(P\cap I)=P(P)P(I)=(0.60)(0.50)=0.30$; the actual value $0.42$ provides another independence check.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

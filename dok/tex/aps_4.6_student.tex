@@ -1,0 +1,55 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 4.6 (CED 2.7) \textperiodcentered\ B: 2026-10-29 \textperiodcentered\ E: 2026-11-18}{Overlap Does Not Decide Independence}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a school surveys 200 students about whether they own at least one pet and whether they play a musical instrument. Let $P$ be the event that a randomly selected surveyed student owns a pet and $I$ the event that the student plays an instrument.\par\smallskip \textbf{Aaliyah:} \emph{The events overlap because 84 students do both. Since they are not mutually exclusive, they must be independent.}\par \textbf{Marcus:} \emph{Overlap does not decide independence; the relevant probabilities must be compared.}\par
+\begin{center}
+\textbf{Pet ownership and instrument playing}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Pet?} & \textbf{Plays} & \textbf{Does not} & \textbf{Total} \\ \hline
+\textbf{Yes} & 84 & 36 & 120 \\ \hline
+\textbf{No} & 16 & 64 & 80 \\ \hline
+\textbf{Total} & 100 & 100 & 200 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Do the events $P$ and $I$ seem independent? Cite one count or comparison from the table.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ INDEPENDENCE, INTERSECTION, AND UNION (keep on the page)}{calloutgreen}
+Events $A$ and $B$ are \textbf{independent} exactly when knowing one does not change the probability of the other:
+$P(A\mid B)=P(A)$. Equivalently, $P(A\cap B)=P(A)P(B)$. Establish independence before using that product.
+\textbf{Mutually exclusive} events have no overlap, so $P(A\cap B)=0$; this is a different relationship.
+For any two events, $P(A\cup B)=P(A)+P(B)-P(A\cap B)$.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} State the counts for $P$, $I$, and $P\cap I$.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Compute $P(I)$, $P(I\mid P)$, $P(P\cap I)$, and $P(P\cup I)$.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Decide whether pet ownership and instrument playing are independent for these students. Cite the two probabilities that settle it. Then evaluate Aaliyah's reasoning: explain how mutually exclusive and independent events differ, give a pair of events from this context that is mutually exclusive but not independent, and state what independence would have allowed you to compute with the multiplication rule.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The events are \blank[0.9in] because $P(I\mid P)=\blank[0.5in]$ while $P(I)=\blank[0.5in]$.\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Mutually exclusive means \blank[1.8in], whereas independent means \blank[2.0in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

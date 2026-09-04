@@ -142,5 +142,17 @@
     "skill": "4.B",
     "frq_pattern": "conditional-direction-confusion-p-a-given-b-vs-b-given-a",
     "worksheet": "u4_lesson3-4-5_live.html"
+  },
+  "4.6": {
+    "title": "Overlap Does Not Decide Independence",
+    "skill": "4.B",
+    "frq_pattern": "independent-vs-mutually-exclusive-decide-from-the-table",
+    "worksheet": "u4_lesson6_live.html"
+  },
+  "4.7": {
+    "title": "Average Payoff, Typical Ticket",
+    "skill": "4.B",
+    "frq_pattern": "expected-value-vs-typical-outcome-what-the-mean-tells-one-person",
+    "worksheet": "u4_lesson7-8_live.html"
   }
 }

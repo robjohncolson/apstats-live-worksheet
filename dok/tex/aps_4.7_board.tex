@@ -1,0 +1,49 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 4.7 \textperiodcentered\ TODAY'S PROBLEM}{Average Payoff, Typical Ticket}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a club sells 200 raffle tickets for \$2 each. One ticket wins \$100, four tickets win \$25 each, 20 tickets win \$5 each, and the other tickets win nothing. Let $X$ be the buyer's net profit from one randomly chosen ticket: prize minus ticket cost.\par\smallskip \textbf{Priya:} \emph{The average gross payout is \$1.50 per ticket, so buying one is a good deal.}\par \textbf{Mateo:} \emph{Most tickets win nothing.}\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Ticket net-profit distribution}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Prize} & \textbf{Net $x$} & \textbf{$P(X=x)$} \\ \hline
+\textbf{Top prize} & $98$ & $1/200$ \\ \hline
+\textbf{Second prize} & $23$ & $4/200$ \\ \hline
+\textbf{Small prize} & $3$ & $20/200$ \\ \hline
+\textbf{No prize} & $-2$ & $175/200$ \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Would you buy one ticket if your goal were to make money? Use one number or outcome from the problem.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the four possible values of $X$ and identify the most likely value.
+  \item[\dokbadge{2}~(b)] Verify that the probabilities form a distribution. Calculate the expected gross payout and the expected net profit $\mu_X$.
+  \item[\dokbadge{3}~(c)] Decide whether Priya's numerical statement and Mateo's statement can both be true, and explain why there is no contradiction. Assess Priya's good-deal conclusion using the ticket cost and $\mu_X$. Explain what expected value does and does not predict for one buyer, then decide whether you would buy and defend the criterion behind your choice.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson7-8_live.html}{\texttt{\detokenize{u4_lesson7-8_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson7-8_live.html}
+
+\end{document}

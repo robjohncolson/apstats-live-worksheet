@@ -1,0 +1,48 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 4.6 \textperiodcentered\ TODAY'S PROBLEM}{Overlap Does Not Decide Independence}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a school surveys 200 students about whether they own at least one pet and whether they play a musical instrument. Let $P$ be the event that a randomly selected surveyed student owns a pet and $I$ the event that the student plays an instrument.\par\smallskip \textbf{Aaliyah:} \emph{The events overlap because 84 students do both. Since they are not mutually exclusive, they must be independent.}\par \textbf{Marcus:} \emph{Overlap does not decide independence; the relevant probabilities must be compared.}\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Pet ownership and instrument playing}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Pet?} & \textbf{Plays} & \textbf{Does not} & \textbf{Total} \\ \hline
+\textbf{Yes} & 84 & 36 & 120 \\ \hline
+\textbf{No} & 16 & 64 & 80 \\ \hline
+\textbf{Total} & 100 & 100 & 200 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Do the events $P$ and $I$ seem independent? Cite one count or comparison from the table.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the counts for $P$, $I$, and $P\cap I$.
+  \item[\dokbadge{2}~(b)] Compute $P(I)$, $P(I\mid P)$, $P(P\cap I)$, and $P(P\cup I)$.
+  \item[\dokbadge{3}~(c)] Decide whether pet ownership and instrument playing are independent for these students. Cite the two probabilities that settle it. Then evaluate Aaliyah's reasoning: explain how mutually exclusive and independent events differ, give a pair of events from this context that is mutually exclusive but not independent, and state what independence would have allowed you to compute with the multiplication rule.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson6_live.html}{\texttt{\detokenize{u4_lesson6_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson6_live.html}
+
+\end{document}

@@ -98,7 +98,7 @@ LATEX_ESCAPES = {
 UNICODE_TO_LATEX = {
     "≥": r"$\geq$", "≤": r"$\leq$", "≠": r"$\neq$", "±": r"$\pm$", "×": r"$\times$", "−": "-",
     "→": r"$\rightarrow$", "μ": r"$\mu$", "σ": r"$\sigma$", "α": r"$\alpha$", "β": r"$\beta$",
-    "χ": r"$\chi$", "Σ": r"$\sum$", "√": r"$\surd$", "∩": r"$\cap$", "…": r"\ldots{}", "—": "---", "–": "--", "’": "'", "“": "``", "”": "''",
+    "χ": r"$\chi$", "Σ": r"$\sum$", "√": r"$\surd$", "∩": r"$\cap$", "∪": r"$\cup$", "…": r"\ldots{}", "—": "---", "–": "--", "’": "'", "“": "``", "”": "''",
 }
 UNICODE_STAT_SEQUENCES = {
     "x̄": r"$\bar{x}$",

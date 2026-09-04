@@ -139,7 +139,9 @@ def test_latex_text_converts_unicode_statistics_notation():
         r"$\bar{x}$ = (1/n) $\sum$ $x_i$; the $i^{\mathrm{th}}$ value; "
         r"$s_x$ and $s^2$"
     )
-    assert bl.latex_text("E^C and A ∩ B") == r"E\textasciicircum{}C and A $\cap$ B"
+    assert bl.latex_text("E^C, A ∩ B, or A ∪ B") == (
+        r"E\textasciicircum{}C, A $\cap$ B, or A $\cup$ B"
+    )
 
 
 def test_tether_lines_remove_html_breaks_and_unsupported_stats_unicode():
