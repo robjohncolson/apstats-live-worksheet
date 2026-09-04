@@ -57,11 +57,11 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   `PeriodE → 8537033042` ("Section 2", 15) in `tools/schoology-sync.py` + `tools/schoology_sync_section.py` (PeriodY follows B).
   Every prior `schoology_uid` was a stale 6-digit id from another id space → **all remapped by name via
   `scripts/teacher-roster.mjs --set-schoology-uids`: PeriodB 12/13, PeriodE 15/16** (3 uids first landed on PeriodX
-  duplicate accounts and were moved; `schoology_uid` is UNIQUE, so clear the dupe before setting). Left for the teacher:
-  **Savannah Lynn Robinson** (roster PeriodB, NOT in either Schoology AP Stats section, stale uid 222813 — drop or
-  transfer?), **Derrick Jimenez** (PeriodE duplicate of Dereck Jimenez `avocado_koala` — archive `pomelo_eagle`),
-  **Wedgina Tranchant** (Schoology has her in Section 1 = B; roster says PeriodE — uid set, section may need moving),
-  **Andrew Barrios** (in Schoology Section 2, no roster account — enroll or ignore). Next Schoology steps: configure the
+  duplicate accounts and were moved; `schoology_uid` is UNIQUE, so clear the dupe before setting). ROSTER ANOMALIES RESOLVED (teacher, 2026-09-04 late): Savannah Robinson ARCHIVED (dropped);
+  the empty "Derrick Jimenez" dupe (`pomelo_eagle`) ARCHIVED — the account with work already had Schoology's spelling
+  "Dereck Jimenez" (`avocado_koala`, uid set); Wedgina Tranchant MOVED PeriodE → PeriodB (Schoology Section 1);
+  Andrew Barrios ENROLLED in PeriodE (`guava_fox`, uid 120126061; credentials sheet left in the teacher's %TEMP%).
+  **Roster == Schoology: PeriodB 13/13 mapped, PeriodE 15/15 mapped.** Next Schoology steps: configure the
   weighted categories on BOTH new sections (Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5 / PC 50 — the old Sec 1
   setup does not carry over), verify SY26-27 marking periods exist, then
   `powershell -File tools/daily_schoology_sync.ps1 -Section PeriodB` (dry-run) → review → `-Live` → register the daily task.
