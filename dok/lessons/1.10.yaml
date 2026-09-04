@@ -1,6 +1,6 @@
 # Topic 1.10 — The Normal Distribution
 topic: "1.10"
-ced2026: { unit: 1, topic: "1.10", label: "The Normal Distribution" }
+ced2026: { unit: 2, topic: "2.11", label: "The Normal Distribution" }   # NEW CED places this in Unit 2 (roadmap-data.json)
 title: "Check the Model"
 minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
 essential_question: "When does a correct normal calculation justify a conclusion about actual data?"

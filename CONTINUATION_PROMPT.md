@@ -23,7 +23,28 @@
 
 ---
 
-## ⏭ SESSION 37 (2026-09-03, Athena laptop) — **CURRENT. Supersedes s36 below. Codex takes over from here.**
+## ⏭ SESSION 38 (2026-09-04, Athena laptop) — **CURRENT. Supersedes s37 below. Codex round 2 = OLD Unit 3.**
+
+**HEAD = `d6ceaba` + this commit** (pushed). **Unit 1 DOK ladders are COMPLETE — 10/10** (Codex round 1: `d7bae86`
+1.1+1.4 · `2770358` 1.5+1.7 · `459db6a` 1.8 + 1.3 trim · `d6ceaba` 1.10; orchestrator-reviewed 2026-09-04: every edition
+student 2pp / board 1pp / teacher 3pp, 47 vitest + 68 pytest green, no leakage, seed arithmetic corrected by Codex —
+1.4 truncated-axis ratio is 12×, 1.7 sample SD 7.5). Orchestrator fix on top: 1.10's `ced2026` is **2.11** (the NEW CED
+moves the Normal distribution to Unit 2; header now prints "CED 2.11"). Coverage **10/66**, `dok/PENDING.md` 56.
+
+### ⏭ NEXT (Codex round 2): `state/dok-ladder-unit3-codex-prompt.md` — OLD 3.1–3.6 (Collecting Data; NEW CED 1.10–1.13)
+Period B starts 3.1 on **2026-09-25** → land by **09-11**. Seeds, the real `ced2026` mapping, worksheets (`u3_lesson1..5`,
+`u3_lesson6-7`), tutor availability (3.1 has none → `tether:` from `apstat_3_framework.md`) are all in the prompt.
+Same gates; commit per topic; **no push** (orchestrator gate). 3.7 is undated (bonus). Nice-to-have if time: the
+`raw_tikz` two-graph figures (1.4, 1.5, 1.8) render small in the board slide's 40\%-width column — a `board_scale`
+or a full-width figure row on the board edition would help projection (generator change + test). After that: OLD 2.1–2.3
+(B 10-13..16) and OLD 4.1–4.3 (B 10-19..22) — orchestrator writes those seeds next.
+
+### User-action checklist — unchanged from s37 (TEACHER_KEY / PAYOUT_AGENT_KEY / STUDENT_WALLET_OPTIN on Railway;
+Schoology rig sign-in + UID map; print `dok/pdf/aps_1.6_student.pdf` once; Unit 1 starts **09-08 B**).
+
+---
+
+## ⏭ SESSION 37 (2026-09-03, Athena laptop) — superseded by s38 above.
 
 **HEAD = `1d0a0d7`** (pushed). Host = the Windows laptop **Athena** (`C:/Users/rober/Downloads/Projects/school/follow-alongs`;
 MiKTeX, Dogecoin node, Schoology Edge rig all live here — see memory `athena-laptop-capabilities`). Session ended on the
