@@ -1,0 +1,62 @@
+# Topic 8.1 — Introducing Statistics: Are My Results Unexpected?
+topic: "8.1"
+ced2026: { unit: 3, topic: "3.14", label: "Setting Up a Chi-Square Test (homogeneity/independence)" }
+title: "Two Simulations for Mystery Tokens"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "What must a simulation vary to decide whether observed categorical discrepancies are surprising?"
+worksheet: "u8_lesson1_live.html"
+
+rules_callout:
+  title: "BUILD DISCREPANCY FROM THE NULL MODEL (keep on the page)"
+  body: |
+    For model probability $p_i$ and sample size $n$, category $i$ has expected count $np_i$.
+    Measure total relative discrepancy with $\chi^2=\sum (O-E)^2/E$; for $k$ model categories,
+    $df=k-1$. A valid null simulation generates a new sample of size $n$ using the claimed
+    probabilities, recomputes $\chi^2$, and counts simulated values at least as large as observed.
+    Merely rearranging fixed observed labels cannot show sample-to-sample count variation.
+
+focus: aps-8.1-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students what changes from one proposed simulation trial to the next."
+    - "Begin the 8.1 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require students to name the fixed-count flaw before judging surprise."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose Leo's or Amara's simulation and cite what one trial generates."
+    - "Complete the follow-along about observed and expected counts, chi-square discrepancy, and null simulation."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Can shuffling 32 red labels ever produce 40 red labels?"
+    - "What model should determine each new token color?"
+    - "Why do simulated statistics larger than 3.35 count too?"
+    - "What does 186 out of 1,000 say about random variation under the claim?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require model, trial, statistic, tail event, and reader consequence; do not accept `shuffle means random' without checking what the shuffle preserves."
+  watch_for:
+    - "Treating random order as random variation in category counts."
+    - "Adding signed observed-minus-expected differences, which always cancel to zero."
+    - "Saying a non-small simulated tail proves the company's model is true."
+  first_take_note: "Not graded. Both plans use random actions; the key distinction is whether category totals may vary under the null model."
+
+# Topic 8.1 has no tutor artifact. These lines are copied from apstat_8_framework.md.
+tether:
+  - '\textbf{VAR-1.J} Identify questions suggested by variation between observed and expected counts in categorical data. \textbf{[Skill 1.A]}'
+  - '\textbf{VAR-1.J.1} Variation between what we find and what we expect to find may be random or not.'
+
+visuals:
+  token_table:
+    kind: two_way_table
+    col_label: "Token sample"
+    row_label: "Color"
+    cols: ["Claim", "Observed"]
+    rows: ["Red", "Teal", "Gold"]
+    cells:
+      - ["$0.50$", "32"]
+      - ["$0.30$", "30"]
+      - ["$0.20$", "18"]

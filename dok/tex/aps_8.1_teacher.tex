@@ -1,0 +1,103 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 8.1 (CED 3.14) \textperiodcentered\ B: 2026-12-18 \textperiodcentered\ E: 2027-02-01 \textperiodcentered\ TEACHER KEY}{Two Simulations for Mystery Tokens}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{VAR-1.J} Identify questions suggested by variation between observed and expected counts in categorical data. \textbf{[Skill 1.A]}
+  \item \textbf{VAR-1.J.1} Variation between what we find and what we expect to find may be random or not.
+\end{itemize}
+}
+\textbf{Essential question:} What must a simulation vary to decide whether observed categorical discrepancies are surprising?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{fixed-\allowbreak{}count-\allowbreak{}vs-\allowbreak{}null-\allowbreak{}generation}}\par
+\textbf{DOK rationale:} Part (c) coordinates the null model, what each simulation preserves, the chi-square tail, and an evidence threshold to adjudicate two designs and explain the false assurance produced by the rejected design.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask students what changes from one proposed simulation trial to the next.
+  \item Begin the 8.1 video follow-along at minute 5.
+  \item Return to the board slide at minute 33. Circulate and require students to name the fixed-count flaw before judging surprise.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose Leo's or Amara's simulation and cite what one trial generates.
+  \item Complete the follow-along about observed and expected counts, chi-square discrepancy, and null simulation.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Can shuffling 32 red labels ever produce 40 red labels?
+  \item What model should determine each new token color?
+  \item Why do simulated statistics larger than 3.35 count too?
+  \item What does 186 out of 1,000 say about random variation under the claim?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Require model, trial, statistic, tail event, and reader consequence; do not accept `shuffle means random' without checking what the shuffle preserves.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating random order as random variation in category counts.
+  \item Adding signed observed-minus-expected differences, which always cancel to zero.
+  \item Saying a non-small simulated tail proves the company's model is true.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-null-generation} (required) --- Selects Amara because new counts come from the claimed probabilities
+  \item \textbf{diagnoses-fixed-count-shuffle} (required) --- Explains that Leo fixes 32, 30, and 18 and therefore fixes $\chi^2$
+  \item \textbf{uses-tail-to-bound-conclusion} (required) --- Uses $0.186>0.05$ for a bounded not-unexpected conclusion
+  \item \textbf{states-reader-consequence} (required) --- Explains the false assurance from a fixed-count simulation
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Chooses Amara, diagnoses fixed counts, uses the tail criterion, and bounds the conclusion. \\ \hline
+\textbf{P} & Chooses Amara but omits the mechanism, tail comparison, or reader consequence. \\ \hline
+\textbf{I} & Chooses a fixed-count shuffle, treats 3.35 as a probability, or claims proof. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a company claims 10{,}000 mystery tokens are $50\%$ red, $30\%$ teal, and $20\%$ gold. An SRS of 80 has the shown counts.\par\smallskip \textbf{Leo:} ``Mix and redraw these same 80 tokens without replacement; recompute $\chi^2$ for 1,000 trials.''\par \textbf{Amara:} ``For each trial, generate 80 independent colors with probabilities 0.50, 0.30, and 0.20, then recompute $\chi^2$.'' In Amara's trials, 186 statistics are at least the observed value.\par
+\begin{center}
+\textbf{Token sample}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Color} & \textbf{Claim} & \textbf{Observed} \\ \hline
+\textbf{Red} & $0.50$ & 32 \\ \hline
+\textbf{Teal} & $0.30$ & 30 \\ \hline
+\textbf{Gold} & $0.20$ & 18 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which simulation can reveal whether the sample's color discrepancies are unexpected? State what varies in one trial.\par
+\answer{Not graded. Both plans use random actions; the key distinction is whether category totals may vary under the null model.}
+\end{firsttakebox}
+
+\textit{Rules callout ``BUILD DISCREPANCY FROM THE NULL MODEL (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Calculate the three expected counts under the company's claimed color model.\par
+\answer{For $n=80$, expected counts are $40$ red, $24$ teal, and $16$ gold.}
+
+\dokbadge{2}~\textbf{(b)} Compute the $\chi^2$ contributions and total, give $df$, estimate the upper tail from Amara's trials, and check 10 percent and expected counts.\par
+\answer{The contributions are $1.60$, $1.50$, and $0.25$, so $\chi^2=3.35$ and $df=3-1=2$. The simulated upper tail is $186/1000=0.186$. Also, $80\leq0.10(10{,}000)=1{,}000$, and expected counts 40, 24, and 16 exceed 5.}
+
+\dokbadge{3}~\textbf{(c)} Choose the simulation that answers the chance-variation question and judge surprise at 5 percent. Compare what each trial fixes or varies, use the simulated tail, explain the rejected output's false assurance, and avoid claiming the model is proved.\par
+\answer{Amara is valid because each trial lets counts vary under the claimed probabilities while fixing $n=80$. Leo preserves 32 red, 30 teal, and 18 gold, so every trial returns $\chi^2=3.35$; order is irrelevant. Since 186 of 1,000 statistics are at least 3.35, $0.186>0.05$ and the discrepancy is not unexpected. The sample gives no convincing evidence against the mix but does not prove it. Leo's degenerate output would make every observed mix look automatically typical. The theoretical tail is about 0.1873.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

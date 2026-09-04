@@ -286,5 +286,17 @@
     "skill": "4.B",
     "frq_pattern": "rerandomization-probability-error-and-scope",
     "worksheet": "u7_lesson1_live.html"
+  },
+  "7.2": {
+    "title": "Two Interfaces, Twelve Specialists",
+    "skill": "4.C",
+    "frq_pattern": "paired-vs-independent-interval-and-scope",
+    "worksheet": "u7_lesson2_live.html"
+  },
+  "8.1": {
+    "title": "Two Simulations for Mystery Tokens",
+    "skill": "4.B",
+    "frq_pattern": "fixed-count-vs-null-generation",
+    "worksheet": "u8_lesson1_live.html"
   }
 }

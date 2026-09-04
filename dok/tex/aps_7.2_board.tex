@@ -1,0 +1,63 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 7.2 \textperiodcentered\ TODAY'S PROBLEM}{Two Interfaces, Twelve Specialists}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a hospital randomly samples 12 of its 180 billing specialists. Each completes the same task with the current interface and, one week later, the redesign; everyone uses the current interface first and there is no comparison group. Let $d=\text{current}-\text{redesigned}$ time in seconds. The differences are shown.\par\smallskip \textbf{Priya:} ``Use a matched-pairs $t$ interval for $\mu_d$; fixed order limits a causal claim.''\par \textbf{Mateo:} ``Two columns require an independent two-sample interval; a positive interval proves the redesign caused faster work.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.85\linewidth,
+  height=1.60in,
+  ymin=0, ymax=5, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={Current time minus redesigned time (seconds)}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.4pt, color=dayblue] coordinates {
+  (-1,1)
+  (0,1)
+  (1,1)
+  (1,2)
+  (2,1)
+  (2,2)
+  (2,3)
+  (2,4)
+  (3,1)
+  (3,2)
+  (4,1)
+  (5,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Whose procedure is more defensible, Priya's or Mateo's? Cite how the two measurements are linked.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Give the number of observational units and pairs, define $\mu_d$, state $df$, and interpret a positive difference.
+  \item[\dokbadge{2}~(b)] Check random sampling, 10 percent, and the shape of the differences. Compute $\bar d$, $s_d$, SE, and a 95 percent interval for $\mu_d$; interpret it.
+  \item[\dokbadge{3}~(c)] Choose the warranted analysis from the linked data. Use the interval for the 180 specialists, then use fixed order and no comparison group to bound causation. Explain the two consequences of the rejected procedure and causal wording.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson2_live.html}{\texttt{\detokenize{u7_lesson2_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson2_live.html}
+
+\end{document}

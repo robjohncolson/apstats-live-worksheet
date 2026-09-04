@@ -1,0 +1,47 @@
+# Topic 7.2 — Constructing a Confidence Interval for a Population Mean
+topic: "7.2"
+ced2026: { unit: 4, topic: "4.2", label: "Constructing a CI for a Mean or Mean Difference" }
+title: "Two Interfaces, Twelve Specialists"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do linked measurements choose an interval and bound a causal claim?"
+worksheet: "u7_lesson2_live.html"
+
+rules_callout:
+  title: "MATCH THE INTERVAL TO THE PAIRS (keep on the page)"
+  body: |
+    For paired measurements, define every difference in the same order and treat the $n$ pairs as
+    one sample: $\bar d\pm t^*(s_d/\sqrt n)$ with $df=n-1$. Check conditions on the differences:
+    random sampling or random assignment, $n\leq0.10N$ when sampling without replacement, and,
+    for $n<30$, no strong skew or outliers. Two readings from each person are not two independent
+    samples. Random sampling supports generalization to the sampled population; random assignment
+    or an adequate randomized comparison is needed to isolate causation from practice or time effects.
+
+focus: aps-7.2-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask whether two columns of measurements necessarily mean two independent samples."
+    - "Run the follow-along from minute 5 to 33; return to require procedure and scope statements."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose a procedure, complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "What is one observational unit here: a time or a specialist?"
+    - "What changed along with the interface between measurements?"
+  adult_role: "Solo teacher. Tie the procedure to person-level differences and separate change from causation."
+  watch_for:
+    - "Counting 24 independent observations or using 23 degrees of freedom."
+    - "Checking separate-interface distributions instead of the 12 differences."
+    - "Treating an interval above zero as proof that no practice or time effect exists."
+  first_take_note: "Not graded. Mateo's two-column rule is intentionally plausible; students should revise it by identifying the observational unit and the rival explanation created by fixed order."
+
+visuals:
+  interface_difference_dotplot:
+    kind: dotplot
+    values: [-1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 4, 5]
+    xlabel: "Current time minus redesigned time (seconds)"

@@ -1,0 +1,48 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 8.1 \textperiodcentered\ TODAY'S PROBLEM}{Two Simulations for Mystery Tokens}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a company claims 10{,}000 mystery tokens are $50\%$ red, $30\%$ teal, and $20\%$ gold. An SRS of 80 has the shown counts.\par\smallskip \textbf{Leo:} ``Mix and redraw these same 80 tokens without replacement; recompute $\chi^2$ for 1,000 trials.''\par \textbf{Amara:} ``For each trial, generate 80 independent colors with probabilities 0.50, 0.30, and 0.20, then recompute $\chi^2$.'' In Amara's trials, 186 statistics are at least the observed value.\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Token sample}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Color} & \textbf{Claim} & \textbf{Observed} \\ \hline
+\textbf{Red} & $0.50$ & 32 \\ \hline
+\textbf{Teal} & $0.30$ & 30 \\ \hline
+\textbf{Gold} & $0.20$ & 18 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which simulation can reveal whether the sample's color discrepancies are unexpected? State what varies in one trial.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Calculate the three expected counts under the company's claimed color model.
+  \item[\dokbadge{2}~(b)] Compute the $\chi^2$ contributions and total, give $df$, estimate the upper tail from Amara's trials, and check 10 percent and expected counts.
+  \item[\dokbadge{3}~(c)] Choose the simulation that answers the chance-variation question and judge surprise at 5 percent. Compare what each trial fixes or varies, use the simulated tail, explain the rejected output's false assurance, and avoid claiming the model is proved.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson1_live.html}{\texttt{\detokenize{u8_lesson1_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson1_live.html}
+
+\end{document}
