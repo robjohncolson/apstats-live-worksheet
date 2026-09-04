@@ -23,7 +23,48 @@
 
 ---
 
-## ⏭ SESSION 36 (2026-09-01 → 09-03) — **CURRENT. Supersedes s35 below.**
+## ⏭ SESSION 37 (2026-09-03, Athena laptop) — **CURRENT. Supersedes s36 below. Codex takes over from here.**
+
+**HEAD = `1d0a0d7`** (pushed). Host = the Windows laptop **Athena** (`C:/Users/rober/Downloads/Projects/school/follow-alongs`;
+MiKTeX, Dogecoin node, Schoology Edge rig all live here — see memory `athena-laptop-capabilities`). Session ended on the
+Fable session limit with 7 authoring agents killed mid-flight; **the hand-off for Codex is `state/dok-ladder-unit1-codex-prompt.md`.**
+
+**s37 arc (all pushed):** cr `b80e070` quiz PWA assets network-first + build bump (ends the students' Ctrl+Shift+R ritual;
+`tests/build-stamp-fresh.test.js` + cr pre-push gate) · fa `d8ef68b` Windows Task-Scheduler wrapper for the DOGE payout agent
+(`tools/register_payout_agent_task.ps1`, config template; INERT until `PAYOUT_AGENT_KEY`) · fa `c32caa0` Schoology
+`build_scope` PC/Poster keys unified on `PC:U{n}` (the SCHEDULE_HANDOFF OPEN item) · **`APS_DOK_LADDER_SPEC.md`** (brainstorm →
+spec → revised to the teacher's flow: board slide at the bell → *first take* → video follow-along → finish (a)(b)(c) →
+turn in; a DOK-3 for EVERY lesson, 1.1 included, no deserts) · **`dok/` Phase 1+2 BUILT:** `build_ladder.py` (YAML +
+`dok/registry/{topic}.jsonl` → student 2pp / board 1pp landscape+QR / teacher ≤3pp with CED tether + E/P/I),
+`compile.ps1|.sh`, `index.html` (today's row → board + key), tests (`tests/dok-registry.test.js`, `tests/dok-coverage.test.js`,
+`tests/test_dok_build.py`). **Built topics: 1.2, 1.6, 1.9** (hand) **+ 1.3** (agent draft; teacher key 4pp → trim).
+Drafts: `dok/registry/1.1.jsonl` (valid, no YAML), `dok/_drafts/1.4.jsonl.draft` (bad `\` escape). Coverage 4/66.
+
+### ⚠ s37 USER-ACTION CHECKLIST (carry-forward + new)
+1. ✅ Migrations 0032 + 0033 RUN (teacher, 2026-09-03). 0034 was already run.
+2. ☐ Railway `TEACHER_KEY` → strong non-default (verified STILL `apteacher2627` on 2026-09-03 — `/payout/*` and
+   `/class/wallet-proposals` 401 by design until rotated); then `~/grade-backups/config.json` + dashboard box.
+3. ☐ Railway `PAYOUT_AGENT_KEY` (separate); then on Athena: fill `~/.config/apstats/.payout-agent.json` from
+   `tools/payout-agent.config.example.json` and run `tools/register_payout_agent_task.ps1`. Decide float wallet vs treasury
+   (node has ONE wallet, ~10,232 DOGE; spec wants a separate float, `batchCap` 500).
+4. ☐ `STUDENT_WALLET_OPTIN=true` when ready (kids CAN self-generate BIP-39 wallets, address-only, teacher approves).
+5. ☐ Schoology rig: `%TEMP%/edge-claude-cdp` profile was wiped → sign in (MS SSO) in the rig Edge window; then map the
+   9 students missing `schoology_uid` (B 9/13, E 11/16 mapped), verify SY26-27 marking periods, decide Period E weights,
+   dry-run `tools/daily_schoology_sync.ps1` (no task registered on Athena).
+6. ☐ **Print `dok/pdf/aps_1.6_student.pdf` once** (the Phase-1 paper gate). Unit 1 starts **2026-09-08 (B)**.
+
+### ⏭ NEXT (Codex): finish Unit 1 DOK ladders — `state/dok-ladder-unit1-codex-prompt.md`
+Order 1.1 → 1.4 → 1.5 → 1.7 → 1.8 → 1.3 teacher trim → 1.10. Commit per topic, **do not push** (orchestrator gate).
+Then Phase 4: one NEW-CED unit per batch, ≥ 2 weeks ahead of `data/lesson-schedule.json` dates; `dok/PENDING.md` counts down.
+
+**Windows test gotchas (Athena):** root `npm test` shows ~6 environmental failures (doge-payout-agent path, doge-send-core
+chmod, lineage `../Agent`) + flaky journey timeouts; the FRQ-bundle digest tests fail only when `ai-grading-prompts*.js` sit
+on disk with mixed EOLs — fix by `rm` + `git checkout` those files, never by regenerating the bundle. Memory
+`windows-root-test-failures`.
+
+---
+
+## ⏭ SESSION 36 (2026-09-01 → 09-03) — superseded by s37 above.
 
 **HEAD = `e668351`** (pushed; Railway live-verified on it). s36 arc, all CC-reviewed Codex builds
 unless noted: **SY2627 schedule step 1** (`e04166e` — real calendar intake COMPLETE, topic schedule

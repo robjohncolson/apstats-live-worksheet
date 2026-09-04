@@ -498,7 +498,8 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
     rules = lesson.get("rules_callout") or {}
     m = lesson["minutes"]
     total = sum(v for v in m.values() if isinstance(v, (int, float)))
-    tether = tether_lines(str(lesson["topic"]))
+    # A YAML `tether:` list (LaTeX-safe lines) overrides the tutor artifact — for topics without one.
+    tether = [str(x) for x in (lesson.get("tether") or [])] or tether_lines(str(lesson["topic"]))
     parts = [
         "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\n",
         f"\\daybanner{{{header_line(lesson, schedule)} \\textperiodcentered\\ TEACHER KEY}}{{{lesson['title']}}}\n\n",

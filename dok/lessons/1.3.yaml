@@ -1,0 +1,57 @@
+# Topic 1.3 — Representing a Categorical Variable with Tables
+topic: "1.3"
+ced2026: { unit: 1, topic: "1.3", label: "Representing a Categorical Variable with Tables" }
+title: "A Percent Needs Its Base"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "When does a count answer the question, and when does a percent --- and what does each one hide?"
+worksheet: "u1_lesson3_live.html"
+
+rules_callout:
+  title: "TABLES FOR A CATEGORICAL VARIABLE (keep on the page)"
+  body: |
+    A \textbf{frequency table} gives the \textbf{count} in each category.
+    A \textbf{relative-frequency table} gives the \textbf{proportion} (or percent) in each category:
+    $\text{relative frequency} = \dfrac{\text{count in the category}}{\text{total}}$, times 100 for a percent.
+    The percents in one table add to 100\%.\\
+    \textbf{A percent needs its base.} ``83\% said yes'' means nothing until you know 83\% \emph{of how many}.
+    Counts answer ``how many?''; percents answer ``what share?'' --- use the table that answers the question asked.
+
+focus: aps-1.3-d3-1
+reinforcement: [aps-1.3-d2-1]
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }   # two sentence frames + optional item share the back
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Read the council's question aloud once; do not say which table you prefer."
+    - "Video follow-along from minute 5 (frequency vs. relative-frequency tables)."
+    - "Board slide back up at minute 33. Circulate; every time a student says a percent, ask `of how many?'"
+    - "Collect at the door. Score part (c) only, E/P/I. Either table can earn E if the reason is tied to the question."
+  students_do:
+    - "One-sentence first take with one number, before any teaching."
+    - "Video follow-along (build and read frequency and relative-frequency tables)."
+    - "Finish (a)--(c) with the rules callout in front of them; exit line; turn in."
+  questions_to_ask:
+    - "If the session room holds 30 chairs, which table tells the council how many chairs each club fills?"
+    - "83\\% of what? 60\\% of what? Say the base out loud."
+    - "Why did Robotics choose counts and Chess choose percents? What would each look like on the other table?"
+    - "Rewrite the council's question so that the \\emph{other} table is the right one to answer it."
+  adult_role: "Solo teacher. Circulate ~5 pairs. Do not name a table yourself during the finish window; ask what the question is asking for --- people or share."
+  watch_for:
+    - "`Percents are always fairer' stated as a rule, with no link to what the council actually asked."
+    - "Citing 83\\% without ever saying it is 15 of 18 people."
+    - "Comparing 27 Yes to 15 Yes as if the clubs were the same size."
+  first_take_note: "Not graded. Expect a split: some say Robotics (27) and some say Chess (83\\%); the split IS the lesson."
+
+visuals:
+  club_table:
+    kind: two_way_table
+    col_label: "``Would you attend a Saturday session?'' (every member surveyed; counts)"
+    row_label: "Club"
+    cols: ["Yes", "No", "Total"]
+    rows: ["Chess", "Robotics"]
+    cells:
+      - ["15", "3", "18"]
+      - ["27", "18", "45"]
