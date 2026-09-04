@@ -1,0 +1,116 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 2.8 (CED 5.5) \textperiodcentered\ B: 2027-02-12 \textperiodcentered\ E: 2027-04-09 \textperiodcentered\ TEACHER KEY}{Which Regression Line Fits?}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 2.C} --- Calculate summary statistics, relative positions of points within a distribution, correlation, and predicted response.
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item \textbf{EU DAT-1} --- Regression models may allow us to predict responses to changes in an explanatory variable.
+  \item \textbf{LO DAT-1.G} --- Estimate parameters for the least-squares regression line model. [Skill 2.C]
+  \item \textbf{EK DAT-1.G.1} --- The least-squares regression model minimizes the sum of the squares of the residuals and contains the point ($\bar{x}$, $\bar{y}$).
+  \item \textbf{EK DAT-1.G.2} --- The slope, b, of the regression line can be calculated as b = r(s\_y / s\_x), where r is the correlation between x and y, s\_y is the sample standard deviation of the response variable, and s\_x is the sample standard deviation of the explanatory variable.
+  \item \textbf{EK DAT-1.G.3} --- Sometimes, the y-intercept of the line does not have a logical interpretation in context.
+  \item \textbf{EK DAT-1.G.4} --- In simple linear regression, r\textsuperscript{2} is the square of the correlation, r. It is also called the coefficient of determination. r\textsuperscript{2} is the proportion of variation in the response variable that is explained by the explanatory variable in the model.
+  \item \textbf{LO DAT-1.H} --- Interpret coefficients for the least-squares regression line model. [Skill 4.B]
+  \item \textbf{EK DAT-1.H.1} --- The coefficients of the least-squares regression model are the estimated slope and y-intercept.
+  \item \textbf{EK DAT-1.H.2} --- The slope is the amount that the predicted y-value changes for every unit increase in x.
+  \item \textbf{EK DAT-1.H.3} --- The y-intercept value is the predicted value of the response variable when the explanatory variable is equal to 0. The formula for the y-intercept, a, is a = $\bar{y}$ - b$\bar{x}$.
+\end{itemize}
+}
+\textbf{Essential question:} How do several regression properties distinguish lines that share the same mean point?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{shared-\allowbreak{}mean-\allowbreak{}point-\allowbreak{}which-\allowbreak{}line-\allowbreak{}is-\allowbreak{}lsrl}}\par
+\textbf{DOK rationale:} Part (c) synthesizes a warranted regression analysis from two partly defensible accounts by coordinating slope units, least-squares and mean-point properties, coefficient meanings, domain, and prediction consequences.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Ask students to mark one defensible and one questionable clause before choosing a line.
+  \item After the video, require slope units, the mean-point property, and $r^2$ evidence.
+  \item Collect at the door; score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Make a first claim, then complete the 2.8 follow-along.
+  \item Synthesize a supported analysis in (c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Which standard-deviation ratio has response-per-explanatory units?
+  \item Why can both lines contain $(7,28)$?
+  \item What differs at 8 sunshine hours?
+\end{itemize}
+}{Circulate. Ask for linked evidence rather than confirming an analyst.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Reversing $s_y/s_x$.
+  \item Treating the mean point as sufficient.
+  \item Using $r$ rather than $r^2$ for explained variation.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-supported-components} (required) --- Retains Quinn's slope and line plus Rowan's $r^2$ and domain caution
+  \item \textbf{coordinates-line-properties} (required) --- Uses slope units and explains why the mean point is necessary but insufficient
+  \item \textbf{interprets-coefficients} (required) --- Interprets slope, intercept, and 64 percent with the observed domain
+  \item \textbf{quantifies-consequences} (required) --- Gives 31.2 versus 28.2 MWh and the 16-point explained-variation error
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Synthesizes the correct line and interpretations, links the regression properties, and quantifies both consequences. \\ \hline
+\textbf{P} & Finds the correct line and $r^2$ but incompletely links a property, domain, or consequence. \\ \hline
+\textbf{I} & Accepts the reversed ratio, treats the mean point as sufficient, or reports 80 percent explained. \\ \hline
+\end{tabular}}
+
+\textbf{Common mistakes}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Reversing the standard-deviation ratio
+  \item Treating the mean point as sufficient
+  \item Using $r$ as explained variation
+\end{itemize}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a solar-farm analyst uses hours of direct sunshine, $x$, to predict daily generation, $y$, in megawatt-hours. Summary statistics for 12 observed days are shown.\par\smallskip \textbf{Quinn:} ``Using $b=r(s_y/s_x)$ gives $\hat y=5.6+3.2x$. It passes through $(7,28)$, which by itself proves it is the LSRL. Since $r=0.80$, the model explains 80 percent of the variation.''\par \textbf{Rowan:} ``Using $b=r(s_x/s_y)$ gives $\hat y=26.6+0.2x$. It also passes through $(7,28)$, so that line is equally eligible. Explained variation is 64 percent, and a zero-hour intercept needs caution because 0 is outside the observed range.''\par
+\begin{center}
+\textbf{Solar-farm summary (12 observed days)}\par\smallskip
+\resizebox{0.98\linewidth}{!}{%
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+$x$ range & $\bar x$ & $\bar y$ & $s_x$ & $s_y$ & $r$ \\ \hline
+4--10 h & 7 h & 28 MWh & 1.5 h & 6 MWh & 0.80 \\ \hline
+\end{tabular}}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which clauses in Quinn's and Rowan's analyses look defensible? Cite one formula or line property.\par
+\answer{Not graded. Credit a committed clause-level comparison supported by one property.}
+\end{firsttakebox}
+
+\textit{Rules callout ``MAKE THE REGRESSION PROPERTIES AGREE (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State what the LSRL minimizes, the point it contains, and the contextual meanings of slope and intercept.\par
+\answer{The LSRL minimizes the sum of squared residuals and contains $(\bar x,\bar y)$. Its slope is the predicted response change for a one-unit increase in $x$; its intercept predicts the response at $x=0$.}
+
+\dokbadge{2}~\textbf{(b)} Calculate the LSRL slope and intercept, $r^2$, and the prediction at 8 sunshine hours. Verify the mean-point property.\par
+\answer{$b=0.80(6/1.5)=3.2$ MWh per hour and $a=28-3.2(7)=5.6$ MWh, so $\hat y=5.6+3.2x$. At $x=7$, $\hat y=28$; $r^2=0.64$; and $\hat y(8)=31.2$ MWh.}
+
+\dokbadge{3}~\textbf{(c)} Evaluate both analyses and write one warranted synthesis. Coordinate the slope ratio and units, least-squares and mean-point properties, coefficient meanings, and the observed domain. Compare both lines at 8 hours and quantify the consequences of using the rejected slope and using $r$ instead of $r^2$.\par
+\answer{Quinn has the correct line because $s_y/s_x$ has response-per-explanatory units, but the shared point alone is not sufficient and explained variation is not $r$. Rowan correctly squares $r$ and recognizes the domain concern, but reverses the slope ratio. Both lines contain $(7,28)$ because their intercepts were set by $a=\bar y-b\bar x$; only the 3.2-slope line has the regression slope and minimizes squared residuals. The supported line predicts 31.2 MWh at 8 hours; the other predicts $26.6+0.2(8)=28.2$ MWh, 3.0 MWh lower. Explained variation is 64 percent, so using 80 percent overstates it by 16 percentage points. The correct 5.6-MWh intercept is a prediction at 0 hours, outside the observed 4--10-hour range, so it is unsupported here.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

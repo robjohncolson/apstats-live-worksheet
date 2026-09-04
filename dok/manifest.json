@@ -101,6 +101,12 @@
     "frq_pattern": "correlation-residuals-model-choice-and-scope",
     "worksheet": "u2_lesson7_live.html"
   },
+  "2.8": {
+    "title": "Which Regression Line Fits?",
+    "skill": "4.B",
+    "frq_pattern": "shared-mean-point-which-line-is-lsrl",
+    "worksheet": "u2_lesson8_live.html"
+  },
   "3.1": {
     "title": "Who Chose Whom?",
     "skill": "4.A",
@@ -358,6 +364,12 @@
     "skill": "4.C",
     "frq_pattern": "predata-tail-parameter-and-scope",
     "worksheet": "u7_lesson8_live.html"
+  },
+  "7.9": {
+    "title": "What Does This Test Support?",
+    "skill": "4.E",
+    "frq_pattern": "significance-vs-size-cause-and-scope",
+    "worksheet": "u7_lesson9_live.html"
   },
   "8.1": {
     "title": "Two Simulations for Mystery Tokens",

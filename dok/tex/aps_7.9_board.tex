@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 7.9 \textperiodcentered\ TODAY'S PROBLEM}{What Does This Test Support?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose 4{,}000 active students chose Focus mode and 3{,}600 chose Guided mode on an online practice service this term. Independent SRSs of 100 nonoverlapping students completed the same set; summaries are shown. Before sampling, the service asked whether $\mu_F>\mu_G$ and set $\alpha=0.05$. Students chose their modes, and only a difference of at least 3 minutes is practically important.\par\smallskip \textbf{Nia:} ``Since $p\approx0.0263<0.05$, there is evidence that the Focus population mean is higher. Therefore Guided mode causes every student to finish at least 3 minutes faster; switch everyone.''\par \textbf{Mateo:} ``The observed gap is only 1.2 minutes and students selected their modes, so neither a 3-minute effect nor causation is established. Therefore retain $H_0$; there is no evidence of a population mean difference.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Practice time summaries (minutes)}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Mode} & \textbf{$N$} & \textbf{$n$} & \textbf{$\bar x$} & \textbf{$s$} \\ \hline
+\textbf{Focus} & 4{,}000 & 100 & 42.8 & 4.2 \\ \hline
+\textbf{Guided} & 3{,}600 & 100 & 41.6 & 4.5 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which clauses in Nia's and Mateo's reports look defensible? Cite one number and one design feature.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define $\mu_F$ and $\mu_G$, then state $H_0$ and $H_a$ in Focus-minus-Guided order.
+  \item[\dokbadge{2}~(b)] Check the two-sample $t$ conditions. Compute the difference, $SE$, $t$, technology degrees of freedom, and one-sided $p$-value; interpret the $p$-value.
+  \item[\dokbadge{3}~(c)] Evaluate both reports and write one warranted conclusion. Coordinate $p$ versus $\alpha$, the 1.2-minute gap versus the 3-minute benchmark, means versus individuals, SRS population scope, and self-selection. Explain the decision risk of retaining either report unchanged.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson9_live.html}{\texttt{\detokenize{u7_lesson9_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson9_live.html}
+
+\end{document}

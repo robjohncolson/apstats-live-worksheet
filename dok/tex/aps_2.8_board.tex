@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 2.8 \textperiodcentered\ TODAY'S PROBLEM}{Which Regression Line Fits?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a solar-farm analyst uses hours of direct sunshine, $x$, to predict daily generation, $y$, in megawatt-hours. Summary statistics for 12 observed days are shown.\par\smallskip \textbf{Quinn:} ``Using $b=r(s_y/s_x)$ gives $\hat y=5.6+3.2x$. It passes through $(7,28)$, which by itself proves it is the LSRL. Since $r=0.80$, the model explains 80 percent of the variation.''\par \textbf{Rowan:} ``Using $b=r(s_x/s_y)$ gives $\hat y=26.6+0.2x$. It also passes through $(7,28)$, so that line is equally eligible. Explained variation is 64 percent, and a zero-hour intercept needs caution because 0 is outside the observed range.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Solar-farm summary (12 observed days)}\par\smallskip
+\resizebox{0.98\linewidth}{!}{%
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+$x$ range & $\bar x$ & $\bar y$ & $s_x$ & $s_y$ & $r$ \\ \hline
+4--10 h & 7 h & 28 MWh & 1.5 h & 6 MWh & 0.80 \\ \hline
+\end{tabular}}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which clauses in Quinn's and Rowan's analyses look defensible? Cite one formula or line property.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State what the LSRL minimizes, the point it contains, and the contextual meanings of slope and intercept.
+  \item[\dokbadge{2}~(b)] Calculate the LSRL slope and intercept, $r^2$, and the prediction at 8 sunshine hours. Verify the mean-point property.
+  \item[\dokbadge{3}~(c)] Evaluate both analyses and write one warranted synthesis. Coordinate the slope ratio and units, least-squares and mean-point properties, coefficient meanings, and the observed domain. Compare both lines at 8 hours and quantify the consequences of using the rejected slope and using $r$ instead of $r^2$.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson8_live.html}{\texttt{\detokenize{u2_lesson8_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson8_live.html}
+
+\end{document}

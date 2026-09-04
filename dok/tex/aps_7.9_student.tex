@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 7.9 (CED 4.10) \textperiodcentered\ B: 2027-01-29 \textperiodcentered\ E: 2027-03-19}{What Does This Test Support?}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose 4{,}000 active students chose Focus mode and 3{,}600 chose Guided mode on an online practice service this term. Independent SRSs of 100 nonoverlapping students completed the same set; summaries are shown. Before sampling, the service asked whether $\mu_F>\mu_G$ and set $\alpha=0.05$. Students chose their modes, and only a difference of at least 3 minutes is practically important.\par\smallskip \textbf{Nia:} ``Since $p\approx0.0263<0.05$, there is evidence that the Focus population mean is higher. Therefore Guided mode causes every student to finish at least 3 minutes faster; switch everyone.''\par \textbf{Mateo:} ``The observed gap is only 1.2 minutes and students selected their modes, so neither a 3-minute effect nor causation is established. Therefore retain $H_0$; there is no evidence of a population mean difference.''\par
+\begin{center}
+\textbf{Practice time summaries (minutes)}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Mode} & \textbf{$N$} & \textbf{$n$} & \textbf{$\bar x$} & \textbf{$s$} \\ \hline
+\textbf{Focus} & 4{,}000 & 100 & 42.8 & 4.2 \\ \hline
+\textbf{Guided} & 3{,}600 & 100 & 41.6 & 4.5 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Which clauses in Nia's and Mateo's reports look defensible? Cite one number and one design feature.
+\workspace{0.7in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ CARRY OUT THE TEST, THEN BOUND THE CONCLUSION (keep on the page)}{calloutgreen}
+For independent samples, $SE=\sqrt{s_1^2/n_1+s_2^2/n_2}$ and
+$t=((\bar x_1-\bar x_2)-0)/SE$. A $p$-value is the probability, assuming $H_0$,
+of a statistic at least as extreme in the direction of $H_a$. If $p\leq\alpha$, reject
+$H_0$ and state evidence for $H_a$ in context. Significance against 0 does not establish
+practical size or an individual guarantee. Random sampling supports population scope;
+random assignment, not self-selection, supports causation.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Define $\mu_F$ and $\mu_G$, then state $H_0$ and $H_a$ in Focus-minus-Guided order.\par
+\workspace{0.6in}
+
+\dokbadge{2}~\textbf{(b)} Check the two-sample $t$ conditions. Compute the difference, $SE$, $t$, technology degrees of freedom, and one-sided $p$-value; interpret the $p$-value.\par
+\workspace{1.25in}
+
+\dokbadge{3}~\textbf{(c)} Evaluate both reports and write one warranted conclusion. Coordinate $p$ versus $\alpha$, the 1.2-minute gap versus the 3-minute benchmark, means versus individuals, SRS population scope, and self-selection. Explain the decision risk of retaining either report unchanged.\par
+\workspace{1.65in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The test supports $\blank[2.0in]$ because $\blank[1.7in]$; it does not establish $\blank[2.2in]$ because $\blank[2.0in]$.\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}
