@@ -1,0 +1,53 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 7.8 \textperiodcentered\ TODAY'S PROBLEM}{Two Test Plans for Cure Time}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose existing lines N (new formula) and S (standard) make the same sealant. Independently, a team samples 18 of 600 recent N batches and 18 of 540 recent S batches. Cure-time summaries are $\bar x_N=41.2$, $s_N=3.6$, $\bar x_S=44.0$, and $s_S=4.1$; boxplots are shown. Before sampling it asked, ``Do the two populations differ in mean cure time?'' Formula was not assigned to lines.\par\smallskip \textbf{Rhea:} ``Preserve the pre-data direction, use population means, and separate association from causation.''\par \textbf{Sol:} ``Since $41.2<44.0$, use a lower tail with sample means; significance proves formula caused faster curing.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.61\linewidth,
+  height=1.44in,
+  ytick={2,1}, yticklabels={{Line N},{Line S}}, ymin=0.4, ymax=2.6,
+  axis x line=bottom, axis y line*=left, y axis line style={draw=none}, boxplot/box extend=0.5, xmajorgrids, enlarge x limits=0.06,
+  xlabel={Cure time (min)}, tick label style={font=\small}, label style={font=\small},
+  ytick style={draw=none}, yticklabel style={font=\small\bfseries}
+]
+\addplot[boxplot prepared={lower whisker=34, lower quartile=38.5, median=41, upper quartile=44, upper whisker=48.5, draw position=2}, fill=calloutblue, draw=dayblue] coordinates {};
+\addplot[boxplot prepared={lower whisker=35.5, lower quartile=40, median=44, upper quartile=48, upper whisker=52.5, draw position=1}, fill=calloutblue, draw=dayblue] coordinates {};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which parts of each plan do the question's timing and the design support? Name one detail to verify.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Identify the response, both samples, and $\bar x_N-\bar x_S$. Did the pre-data question specify a direction?
+  \item[\dokbadge{2}~(b)] Name the procedure; define both parameters; state $H_0$ in N-minus-S order; and verify independence, 10 percent, and shape.
+  \item[\dokbadge{3}~(c)] Adjudicate both plans. Defend the alternative and notation, diagnose selecting a tail from the observed order, and bound a significant result. Explain the misleading belief invited by each rejected choice.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson8_live.html}{\texttt{\detokenize{u7_lesson8_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson8_live.html}
+
+\end{document}

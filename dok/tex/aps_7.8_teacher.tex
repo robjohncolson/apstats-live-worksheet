@@ -1,0 +1,116 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 7.8 (CED 4.9) \textperiodcentered\ B: 2027-01-28 \textperiodcentered\ E: 2027-03-17 \textperiodcentered\ TEACHER KEY}{Two Test Plans for Cure Time}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 1.E} --- Identify an appropriate inference method for significance tests.
+  \item \textbf{Skill 1.F} --- Identify null and alternative hypotheses.
+  \item \textbf{Skill 4.C} --- Verify that inference procedures apply in a given situation.
+  \item \textbf{EU VAR-7} --- The t-distribution may be used to model variation.
+  \item \textbf{LO VAR-7.F} --- Identify an appropriate selection of a testing method for a difference of two population means. [Skill 1.E]
+  \item \textbf{EK VAR-7.F.1} --- For a quantitative variable, the appropriate test for a difference of two population means is a two-sample t-test for a difference of two population means.
+  \item \textbf{LO VAR-7.G} --- Identify the null and alternative hypotheses for a difference of two population means. [Skill 1.F]
+  \item \textbf{EK VAR-7.G.1} --- The null hypothesis for a two-sample t-test for a difference of two population means, $\mu_1$ and $\mu_2$, is: $H_0$: $\mu_1$ - $\mu_2$ = 0, or $H_0$: $\mu_1$ = $\mu_2$. The alternative hypothesis is $H_a$: $\mu_1$ - $\mu_2$ < 0, or $H_a$: $\mu_1$ - $\mu_2$ > 0, or $H_a$: $\mu_1$ - $\mu_2$ $\neq$ 0, or $H_a$: $\mu_1$ > $\mu_2$, or $H_a$: $\mu_1$ < $\mu_2$, or $H_a$: $\mu_1$ $\neq$ $\mu_2$.
+  \item \textbf{LO VAR-7.H} --- Verify the conditions for the significance test for the difference of two population means. [Skill 4.C]
+  \item \textbf{EK VAR-7.H.1} --- In order to make statistical inferences when testing a difference between population means, we must check for independence and that the sampling distribution is approximately normal:
+  \item a. Individual observations should be independent: (i) Data should be collected using simple random samples or a randomized experiment; (ii) When sampling without replacement, check that $n_1$ $\leq$ 10\% $N_1$ and $n_2$ $\leq$ 10\% $N_2$.
+  \item \textbf{b. The sampling distribution of $\bar{x}_1$ - $\bar{x}_2$ should be approximately normal (shape): (i) If the observed distribution is skewed, both $n_1$ and $n_2$ should be greater than 30; (ii) If the sample size is less than 30, the distribution of the sample data should be free from strong skewness and outliers} --- checked for BOTH samples.
+\end{itemize}
+}
+\textbf{Essential question:} How do the original question and study design control a defensible two-mean test plan?\par
+\textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{predata-\allowbreak{}tail-\allowbreak{}parameter-\allowbreak{}and-\allowbreak{}scope}}\par
+\textbf{DOK rationale:} Part (c) coordinates the pre-data question, parameter order, sample structure, distribution evidence, and assignment limits to adjudicate two test plans and trace three misleading conclusions.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Ask when each plan fixed its direction and what design produced the data.
+  \item Begin the 7.8 video at minute 5; return at minute 33 for parts (a)--(c).
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Compare the timing, notation, and design claims in the two plans.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What wording fixed the alternative before any sample was seen?
+  \item Why inspect each sample separately when both sizes are 18?
+  \item What does sampling support that assignment would have supported?
+\end{itemize}
+}{Solo teacher. Trace the question and design to each inferential choice.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choosing a lower tail only because the observed difference is negative.
+  \item Writing hypotheses with sample means.
+  \item Treating separate SRSs as random assignment of formula.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-predata-tail} (required) --- Uses the nondirectional question to defend a two-sided alternative
+  \item \textbf{uses-population-parameters} (required) --- Uses population means and rejects fixed sample means in hypotheses
+  \item \textbf{diagnoses-posthoc-tail} (required) --- Explains how post-data tail selection makes evidence look stronger
+  \item \textbf{uses-design-evidence} (required) --- Separates valid sampling conditions from absent assignment
+  \item \textbf{bounds-causal-claim} (required) --- Limits scope and identifies line conditions as confounded
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Defends the pre-data parameter test, diagnoses the post-data tail, uses design evidence, and bounds scope and causation. \\ \hline
+\textbf{P} & States a valid test but incompletely connects timing, notation, conditions, scope, or causation. \\ \hline
+\textbf{I} & Chooses a tail from the observed sign, tests sample means, or treats sampling as formula assignment. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose existing lines N (new formula) and S (standard) make the same sealant. Independently, a team samples 18 of 600 recent N batches and 18 of 540 recent S batches. Cure-time summaries are $\bar x_N=41.2$, $s_N=3.6$, $\bar x_S=44.0$, and $s_S=4.1$; boxplots are shown. Before sampling it asked, ``Do the two populations differ in mean cure time?'' Formula was not assigned to lines.\par\smallskip \textbf{Rhea:} ``Preserve the pre-data direction, use population means, and separate association from causation.''\par \textbf{Sol:} ``Since $41.2<44.0$, use a lower tail with sample means; significance proves formula caused faster curing.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.49\linewidth,
+  height=1.15in,
+  ytick={2,1}, yticklabels={{Line N},{Line S}}, ymin=0.4, ymax=2.6,
+  axis x line=bottom, axis y line*=left, y axis line style={draw=none}, boxplot/box extend=0.5, xmajorgrids, enlarge x limits=0.06,
+  xlabel={Cure time (min)}, tick label style={font=\small}, label style={font=\small},
+  ytick style={draw=none}, yticklabel style={font=\small\bfseries}
+]
+\addplot[boxplot prepared={lower whisker=34, lower quartile=38.5, median=41, upper quartile=44, upper whisker=48.5, draw position=2}, fill=calloutblue, draw=dayblue] coordinates {};
+\addplot[boxplot prepared={lower whisker=35.5, lower quartile=40, median=44, upper quartile=48, upper whisker=52.5, draw position=1}, fill=calloutblue, draw=dayblue] coordinates {};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which parts of each plan do the question's timing and the design support? Name one detail to verify.\par
+\answer{Not graded. Require evidence about both timing and design.}
+\end{firsttakebox}
+
+\textit{Rules callout ``LET THE QUESTION--NOT THE SAMPLE--SET THE TAIL (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Identify the response, both samples, and $\bar x_N-\bar x_S$. Did the pre-data question specify a direction?\par
+\answer{The response is batch cure time in minutes; the independent samples are 18 N and 18 S batches. The difference is $41.2-44.0=-2.8$ minutes. The question specified no direction.}
+
+\dokbadge{2}~\textbf{(b)} Name the procedure; define both parameters; state $H_0$ in N-minus-S order; and verify independence, 10 percent, and shape.\par
+\answer{Use a two-sample $t$ test. Let $\mu_N$ and $\mu_S$ be recent-population mean cure times; $H_0:\mu_N-\mu_S=0$. Independent SRSs and $18\leq60$, $18\leq54$ satisfy design checks. Since both $n=18<30$, inspect both boxplots: each is roughly symmetric without outliers or strong skew.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate both plans. Defend the alternative and notation, diagnose selecting a tail from the observed order, and bound a significant result. Explain the misleading belief invited by each rejected choice.\par
+\answer{Use $H_a:\mu_N-\mu_S\neq0$: the pre-data question asked about any difference. Unknown population means belong in hypotheses; fixed statistics do not. Selecting a lower tail after observing $-2.8$ favors the observed direction and overstates planned evidence. Significance could support a recent line-population mean difference, not formula causation, because formula and line are confounded. The rejected notation portrays statistics as unknown, the tail portrays direction as pre-specified, and causal wording portrays line differences as controlled.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

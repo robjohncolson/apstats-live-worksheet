@@ -329,6 +329,12 @@
     "frq_pattern": "mean-difference-threshold-and-scope",
     "worksheet": "u7_lesson7_live.html"
   },
+  "7.8": {
+    "title": "Two Test Plans for Cure Time",
+    "skill": "4.C",
+    "frq_pattern": "predata-tail-parameter-and-scope",
+    "worksheet": "u7_lesson8_live.html"
+  },
   "8.1": {
     "title": "Two Simulations for Mystery Tokens",
     "skill": "4.B",

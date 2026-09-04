@@ -1,0 +1,53 @@
+# Topic 7.8 — Setting Up a Test for the Difference of Two Population Means
+topic: "7.8"
+ced2026: { unit: 4, topic: "4.9", label: "Setting Up a Test (difference of two means)" }
+title: "Two Test Plans for Cure Time"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do the original question and study design control a defensible two-mean test plan?"
+worksheet: "u7_lesson8_live.html"
+
+rules_callout:
+  title: "LET THE QUESTION--NOT THE SAMPLE--SET THE TAIL (keep on the page)"
+  body: |
+    For two independent groups with a quantitative response, use a two-sample $t$ test for
+    $\mu_1-\mu_2$. The null states no population difference: $H_0:\mu_1-\mu_2=0$.
+    Choose $<$ or $>$ only when the research question specified that direction before seeing
+    the data; otherwise use $\neq$. Hypotheses use population parameters, never observed sample
+    means. Check independent random samples or random assignment, both 10 percent conditions
+    when sampling without replacement, and both sample shapes when either $n<30$. Random sampling
+    supports population scope; random assignment is needed to isolate a causal treatment effect.
+
+focus: aps-7.8-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Ask when each plan fixed its direction and what design produced the data."
+    - "Begin the 7.8 video at minute 5; return at minute 33 for parts (a)--(c)."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Compare the timing, notation, and design claims in the two plans."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "What wording fixed the alternative before any sample was seen?"
+    - "Why inspect each sample separately when both sizes are 18?"
+    - "What does sampling support that assignment would have supported?"
+  adult_role: "Solo teacher. Trace the question and design to each inferential choice."
+  watch_for:
+    - "Choosing a lower tail only because the observed difference is negative."
+    - "Writing hypotheses with sample means."
+    - "Treating separate SRSs as random assignment of formula."
+  first_take_note: "Not graded. Require evidence about both timing and design."
+
+visuals:
+  sealant_boxplots:
+    kind: boxplot
+    xlabel: "Cure time (min)"
+    scale: 0.72
+    series:
+      - { label: "Line N", five: [34, 38.5, 41, 44, 48.5], outliers: [] }
+      - { label: "Line S", five: [35.5, 40, 44, 48, 52.5], outliers: [] }
