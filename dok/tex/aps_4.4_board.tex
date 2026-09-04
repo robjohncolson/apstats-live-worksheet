@@ -1,0 +1,48 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 4.4 \textperiodcentered\ TODAY'S PROBLEM}{Count the Overlap Once}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose 120 students answer two yes-or-no questions: ``Do you like pizza?'' and ``Do you like tacos?'' The table summarizes their answers. Let $P$ be the event that a randomly selected student likes pizza and $T$ the event that the student likes tacos.\par\smallskip \textbf{Jamie:} ``$P(P\text{ or }T)=80/120+60/120=140/120$. Because a probability cannot exceed 1, this must mean everyone likes at least one; I would report the answer as 1.''\par \textbf{Noor:} ``Some students may have been counted in both totals, so we need the intersection before deciding.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Student food preferences (counts)}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Preference} & \textbf{Pizza} & \textbf{Not pizza} & \textbf{Total} \\ \hline
+\textbf{Tacos} & 35 & 25 & 60 \\ \hline
+\textbf{Not tacos} & 45 & 15 & 60 \\ \hline
+\textbf{Total} & 80 & 40 & 120 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Does the table support reporting everyone likes pizza or tacos? Choose a claim and cite one count.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the number of students in $P\cap T$ and write $P(P\cap T)$ as a fraction.
+  \item[\dokbadge{2}~(b)] Compute $P(P\cup T)$ so every student in the union is counted once. Also compute the probability that a student likes neither food.
+  \item[\dokbadge{3}~(c)] Decide whether $P$ and $T$ are mutually exclusive and which student's reasoning is warranted. Cite the 35-student intersection and your union probability, explain what Jamie's calculation would mislead a reader into believing, and name a pair of events from this context that really are mutually exclusive.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html}{\texttt{\detokenize{u4_lesson3-4-5_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html}
+
+\end{document}

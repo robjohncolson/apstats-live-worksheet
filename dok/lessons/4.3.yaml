@@ -1,0 +1,53 @@
+# Topic 4.3 — Introduction to Probability
+topic: "4.3"
+ced2026: { unit: 2, topic: "2.4", label: "Introduction to Probability" }
+title: "Probability or Estimate?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How should a reader connect a theoretical probability to what happened in a finite set of trials?"
+worksheet: "u4_lesson3-4-5_live.html"
+
+rules_callout:
+  title: "MODEL, DATA, AND THE LONG RUN (keep on the page)"
+  body: |
+    For equally likely outcomes, $P(E)=\dfrac{\text{outcomes in }E}{\text{outcomes in the sample space}}$.
+    A \textbf{theoretical probability} comes from a probability model; an \textbf{empirical probability}
+    is the observed relative frequency $\dfrac{\text{times }E\text{ occurred}}{\text{number of trials}}$ and estimates it.
+    The \textbf{law of large numbers} says that, as the number of independent trials made under the same
+    conditions grows, the observed relative frequency tends to approach the true probability. It does not
+    guarantee an exact match in a fixed number of trials. A fair model requires its stated outcomes to be equally likely.
+
+focus: aps-4.3-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.3in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to commit to one number without confirming either claim."
+    - "Begin the combined 4.3--4.5 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require students to label each number by its source."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose 0.375 or 0.45 and cite either the spinner design or the observed plays."
+    - "Complete the follow-along about sample spaces, long-run interpretations, intersections, and conditional probability."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Which number comes from possible outcomes, and which comes from recorded outcomes?"
+    - "Does a difference of 7.5 percentage points prove that either calculation is wrong?"
+    - "What exactly does the law of large numbers predict as trials accumulate?"
+    - "If the spinner favored one sector, which number would stop representing the actual game?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Ask for the source and role of each number; do not accept `the data are wrong' or `the model always wins' without a condition."
+  watch_for:
+    - "Treating the 40-play relative frequency as an exact, permanent probability."
+    - "Treating the law of large numbers as a fixed-trial guarantee."
+    - "Using the equal-sector count even if the physical spinner or spinning method is not fair."
+  first_take_note: "Not graded. Expect both choices; the revision should distinguish a model probability from a data-based estimate."
+
+visuals:
+  spin_results:
+    kind: dotplot
+    values: [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8]
+    xlabel: "Spinner result (40 plays)"
+    scale: 0.9

@@ -124,5 +124,17 @@
     "skill": "4.B",
     "frq_pattern": "whose-simulation-design-is-valid-and-what-it-misestimates",
     "worksheet": "u4_lesson1-2_live.html"
+  },
+  "4.3": {
+    "title": "Probability or Estimate?",
+    "skill": "4.B",
+    "frq_pattern": "theoretical-vs-empirical-which-is-the-probability",
+    "worksheet": "u4_lesson3-4-5_live.html"
+  },
+  "4.4": {
+    "title": "Count the Overlap Once",
+    "skill": "4.B",
+    "frq_pattern": "mutually-exclusive-or-not-when-the-addition-rule-double-counts",
+    "worksheet": "u4_lesson3-4-5_live.html"
   }
 }

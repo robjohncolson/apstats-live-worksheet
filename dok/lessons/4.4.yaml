@@ -1,0 +1,57 @@
+# Topic 4.4 — Mutually Exclusive Events
+topic: "4.4"
+ced2026: { unit: 2, topic: "2.5", label: "Mutually Exclusive Events" }
+title: "Count the Overlap Once"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How does an intersection determine whether two events are mutually exclusive and how their union should be counted?"
+worksheet: "u4_lesson3-4-5_live.html"
+
+rules_callout:
+  title: "INTERSECTION, UNION, AND DISJOINT EVENTS (keep on the page)"
+  body: |
+    $A\cap B$ is the \textbf{intersection}: outcomes in both $A$ and $B$.
+    Events are \textbf{mutually exclusive} (disjoint) exactly when they cannot happen together, so $P(A\cap B)=0$.
+    $A\cup B$ is the \textbf{union}: outcomes in $A$, in $B$, or in both. Count every outcome once:
+    $P(A\cup B)=P(A)+P(B)-P(A\cap B)$. The subtraction removes the second count of the overlap.
+    Every probability must be between 0 and 1; a result outside that range signals an error to diagnose, not a value to cap.
+
+focus: aps-4.4-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.3in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Read both students' claims without naming the overlap."
+    - "Begin the combined 4.3--4.5 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and have students trace which table cell each total includes."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose a claim and cite one count from the preference table."
+    - "Complete the follow-along about intersections, mutually exclusive events, and conditional probability."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Where do the 35 students appear inside the pizza total and inside the taco total?"
+    - "What does a nonzero intersection say about mutual exclusivity?"
+    - "What real group of students disappears if the union is reported as 1?"
+    - "Can you name two events here whose intersection must be empty?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require a table-based explanation for the subtraction and a reader consequence; do not accept `because the formula says so' alone."
+  watch_for:
+    - "Treating two different food preferences as automatically mutually exclusive."
+    - "Capping 140/120 at 1 without locating the duplicated students."
+    - "Naming a proposed mutually exclusive pair that still has a nonzero table cell."
+  first_take_note: "Not graded. A student may initially trust the marginal totals; the finish should make the duplicated intersection visible."
+
+visuals:
+  preference_table:
+    kind: two_way_table
+    col_label: "Student food preferences (counts)"
+    row_label: "Preference"
+    cols: ["Pizza", "Not pizza", "Total"]
+    rows: ["Tacos", "Not tacos", "Total"]
+    cells:
+      - ["35", "25", "60"]
+      - ["45", "15", "60"]
+      - ["80", "40", "120"]

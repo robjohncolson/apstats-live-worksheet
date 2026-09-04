@@ -1,0 +1,115 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 4.4 (CED 2.5) \textperiodcentered\ B: 2026-10-23 \textperiodcentered\ E: 2026-11-09 \textperiodcentered\ TEACHER KEY}{Count the Overlap Once}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item \textbf{EU VAR-4} --- The likelihood of a random event can be quantified.
+  \item \textbf{LO VAR-4.C} --- Explain why two events are (or are not) mutually exclusive. [Skill 4.B]
+  \item \textbf{EK VAR-4.C.1} --- The probability that events A and B both will occur, sometimes called the joint probability, is the probability of the intersection of A and B, denoted P(A $\cap$ B).
+  \item \textbf{EK VAR-4.C.2} --- Two events are mutually exclusive or disjoint if they cannot occur at the same time. So P(A $\cap$ B) = 0.
+\end{itemize}
+}
+\textbf{Essential question:} How does an intersection determine whether two events are mutually exclusive and how their union should be counted?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{mutually-\allowbreak{}exclusive-\allowbreak{}or-\allowbreak{}not-\allowbreak{}when-\allowbreak{}the-\allowbreak{}addition-\allowbreak{}rule-\allowbreak{}double-\allowbreak{}counts}}\par
+\textbf{DOK rationale:} Part (c) combines an intersection diagnosis, a union calculation, and error analysis to adjudicate a claim, explain its consequence for a reader, and construct a genuinely disjoint pair.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Read both students' claims without naming the overlap.
+  \item Begin the combined 4.3--4.5 video follow-along at minute 5.
+  \item Return to the board slide at minute 33. Circulate and have students trace which table cell each total includes.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose a claim and cite one count from the preference table.
+  \item Complete the follow-along about intersections, mutually exclusive events, and conditional probability.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Where do the 35 students appear inside the pizza total and inside the taco total?
+  \item What does a nonzero intersection say about mutual exclusivity?
+  \item What real group of students disappears if the union is reported as 1?
+  \item Can you name two events here whose intersection must be empty?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Require a table-based explanation for the subtraction and a reader consequence; do not accept `because the formula says so' alone.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating two different food preferences as automatically mutually exclusive.
+  \item Capping 140/120 at 1 without locating the duplicated students.
+  \item Naming a proposed mutually exclusive pair that still has a nonzero table cell.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{rejects-mutual-exclusivity} (required) --- States the events are not mutually exclusive because the intersection contains 35 students
+  \item \textbf{gives-correct-union} (required) --- Uses 105/120 or 7/8 as the probability of liking pizza or tacos
+  \item \textbf{explains-double-count} (required) --- Explains that adding the two marginal totals counts all 35 students in the intersection twice
+  \item \textbf{states-reader-consequence} (required) --- Says the report of 1 hides or denies the 15 students who like neither food
+  \item \textbf{constructs-disjoint-pair} (required) --- Names two events in the food-preference context that cannot happen together
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Uses the nonzero intersection to reject mutual exclusivity, gives 105/120, explains the duplicated 35 and the false all-students message, and supplies a valid mutually exclusive pair. \\ \hline
+\textbf{P} & Reaches the correct conclusion and probability but omits either the double-counting mechanism, the consequence for a reader, or a valid mutually exclusive pair. \\ \hline
+\textbf{I} & Calls pizza and tacos mutually exclusive, caps 140/120 at 1, or subtracts the overlap without explaining why and gives no valid disjoint pair. \\ \hline
+\end{tabular}}
+
+\textbf{Common mistakes}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Assuming two named food preferences must be mutually exclusive
+  \item Replacing a computed value above 1 with 1 instead of diagnosing the counting error
+  \item Subtracting the 35 twice, producing $70/120$
+  \item Calling `likes pizza' and `does not like tacos' mutually exclusive even though 45 students satisfy both
+\end{itemize}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose 120 students answer two yes-or-no questions: ``Do you like pizza?'' and ``Do you like tacos?'' The table summarizes their answers. Let $P$ be the event that a randomly selected student likes pizza and $T$ the event that the student likes tacos.\par\smallskip \textbf{Jamie:} ``$P(P\text{ or }T)=80/120+60/120=140/120$. Because a probability cannot exceed 1, this must mean everyone likes at least one; I would report the answer as 1.''\par \textbf{Noor:} ``Some students may have been counted in both totals, so we need the intersection before deciding.''\par
+\begin{center}
+\textbf{Student food preferences (counts)}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Preference} & \textbf{Pizza} & \textbf{Not pizza} & \textbf{Total} \\ \hline
+\textbf{Tacos} & 35 & 25 & 60 \\ \hline
+\textbf{Not tacos} & 45 & 15 & 60 \\ \hline
+\textbf{Total} & 80 & 40 & 120 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Does the table support reporting everyone likes pizza or tacos? Choose a claim and cite one count.\par
+\answer{Not graded. A student may initially trust the marginal totals; the finish should make the duplicated intersection visible.}
+\end{firsttakebox}
+
+\textit{Rules callout ``INTERSECTION, UNION, AND DISJOINT EVENTS (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State the number of students in $P\cap T$ and write $P(P\cap T)$ as a fraction.\par
+\answer{The intersection contains 35 students, so $P(P\cap T)=35/120=7/24\approx0.292$.}
+
+\dokbadge{2}~\textbf{(b)} Compute $P(P\cup T)$ so every student in the union is counted once. Also compute the probability that a student likes neither food.\par
+\answer{Count the union once: $80+60-35=105$, so $P(P\cup T)=105/120=7/8=0.875$. The table has 15 students who like neither, so $P(\text{neither})=15/120=1/8=0.125$.}
+
+\dokbadge{3}~\textbf{(c)} Decide whether $P$ and $T$ are mutually exclusive and which student's reasoning is warranted. Cite the 35-student intersection and your union probability, explain what Jamie's calculation would mislead a reader into believing, and name a pair of events from this context that really are mutually exclusive.\par
+\answer{The events are not mutually exclusive because 35 students like both, so $P(P\cap T)=35/120>0$. Noor's reasoning is warranted. Jamie's sum counts each of those 35 students twice; subtracting that duplicated intersection gives $105/120=0.875$, not 1. Reporting 1 would mislead a reader into believing all 120 students like at least one food even though 15 like neither. One mutually exclusive pair is `likes pizza but not tacos' and `likes tacos but not pizza'; one student cannot be in both groups. Another valid pair is `likes tacos' and `does not like tacos.'}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

@@ -85,11 +85,20 @@ def tutor_path(topic: str) -> Path:
     return TUTOR_DIR / f"u{unit}_l{n}.md"
 
 
-LATEX_ESCAPES = {"&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}"}
+LATEX_ESCAPES = {
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+    "^": r"\textasciicircum{}",
+}
 UNICODE_TO_LATEX = {
     "≥": r"$\geq$", "≤": r"$\leq$", "≠": r"$\neq$", "±": r"$\pm$", "×": r"$\times$", "−": "-",
     "→": r"$\rightarrow$", "μ": r"$\mu$", "σ": r"$\sigma$", "α": r"$\alpha$", "β": r"$\beta$",
-    "χ": r"$\chi$", "Σ": r"$\sum$", "√": r"$\surd$", "…": r"\ldots{}", "—": "---", "–": "--", "’": "'", "“": "``", "”": "''",
+    "χ": r"$\chi$", "Σ": r"$\sum$", "√": r"$\surd$", "∩": r"$\cap$", "…": r"\ldots{}", "—": "---", "–": "--", "’": "'", "“": "``", "”": "''",
 }
 UNICODE_STAT_SEQUENCES = {
     "x̄": r"$\bar{x}$",
