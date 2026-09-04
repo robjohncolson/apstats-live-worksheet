@@ -39,3 +39,9 @@ pages: all student 2 / board 1 / teacher ≤3
 tests: vitest 271 passed · pytest 404 passed · validation 70 registry rows / 66 lessons
 changed outside lessons/registry: calibration/unit5.json, PENDING.md, manifest.json, build_ladder.py, test_dok_build.py, generated tex/pdf
 notes: completed the backlog; used partly defensible competing accounts; preserved literal t-stars in tutor tethers; constrained the regression-summary table to page width
+
+## Post-completion audit — 2026-09-04 — five-unit CED labels — coverage 66/66
+pages: all 198 PDFs verified; student 2 / board 1 / teacher ≤3; zero TeX overflow, glyph, or control-sequence warnings
+tests: vitest 271 passed · pytest 471 passed · validation 70 registry rows / 66 lessons
+changed outside lessons/registry: index.html, manifest.json, build_ladder.py, test_dok_build.py, generated tex/pdf
+notes: retained legacy lesson keys only for stable filenames and data joins; displayed current CED unit/topic labels; repaired three clipped board tables and one teacher scoring overflow

@@ -47,9 +47,9 @@ teacher:
 visuals:
   survey_table:
     kind: two_way_table
-    col_label: "Getting-to-school survey (six students)"
-    row_label: "Student"
-    cols: ["Lunch period", "Zip code", "Commute (min)", "Rating (1--5 stars)"]
+    col_label: "Getting-to-school survey (minutes; 1--5 stars)"
+    row_label: "Name"
+    cols: ["Lunch", "ZIP", "Min", "Stars"]
     rows: ["Aiden", "Bea", "Cruz", "Dev", "Elise", "Fiona"]
     cells:
       - ["A", "01902", "12", "4"]

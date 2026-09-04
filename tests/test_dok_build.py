@@ -69,6 +69,33 @@ def test_teacher_has_key_and_scoring(path: Path):
     assert item["frq_pattern"].replace("-", r"-\allowbreak{}") in tex
 
 
+@pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
+def test_public_headers_use_current_ced_numbering(path: Path):
+    lesson = _lesson(path)
+    ced = lesson["ced2026"]
+    expected = f"Unit {ced['unit']} \\textperiodcentered\\ Topic {ced['topic']}"
+
+    for ed in (bl.emit_student, bl.emit_board, bl.emit_teacher):
+        tex = ed(lesson, REGISTRY, SCHEDULE)
+        assert expected in tex
+
+        if str(lesson["topic"]) != str(ced["topic"]):
+            assert f"Topic {lesson['topic']}" not in tex
+
+
+def test_manifest_includes_current_ced_numbering(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(bl, "DOK", tmp_path)
+
+    bl.write_manifest(REGISTRY)
+
+    manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    for path in LESSONS:
+        lesson = _lesson(path)
+        entry = manifest[str(lesson["topic"])]
+        assert entry["ced_unit"] == lesson["ced2026"]["unit"]
+        assert entry["ced_topic"] == lesson["ced2026"]["topic"]
+
+
 def test_teacher_allows_long_frq_patterns_to_wrap():
     lesson = _lesson(LESSONS[0])
     item = REGISTRY[lesson["focus"]]

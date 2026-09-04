@@ -441,13 +441,16 @@ def bulleted(items: list[str]) -> str:
     )
 
 
-def header_line(lesson: dict, schedule: dict) -> str:
+def ced_topic_label(lesson: dict) -> str:
     ced = lesson.get("ced2026") or {}
+    return f"Unit {ced.get('unit', '?')} \\textperiodcentered\\ Topic {ced.get('topic', '?')}"
+
+
+def header_line(lesson: dict, schedule: dict) -> str:
     dates = schedule["lessons"].get(str(lesson["topic"]), {}).get("periods", {})
     when = " \\textperiodcentered\\ ".join(f"{p}: {d}" for p, d in sorted(dates.items()))
     return (
-        f"AP Statistics \\textperiodcentered\\ Topic {lesson['topic']}"
-        f" (CED {ced.get('unit', '?')}.{str(ced.get('topic', '?')).split('.')[-1]})"
+        f"AP Statistics \\textperiodcentered\\ {ced_topic_label(lesson)}"
         f" \\textperiodcentered\\ {when}"
     )
 
@@ -537,7 +540,7 @@ def emit_board(lesson: dict, registry: dict, schedule: dict) -> str:
         "\\documentclass[14pt]{extarticle}\n\\usepackage{preamble}\n"
         "\\geometry{letterpaper, landscape, margin=0.5in}\n\\usepackage{qrcode}\n"
         "\\renewcommand{\\answer}[1]{}\n\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\\pagestyle{empty}\n\n"
-        f"\\daybanner{{Topic {lesson['topic']} \\textperiodcentered\\ TODAY'S PROBLEM}}{{{lesson['title']}}}\n\n"
+        f"\\daybanner{{{ced_topic_label(lesson)} \\textperiodcentered\\ TODAY'S PROBLEM}}{{{lesson['title']}}}\n\n"
         "\\noindent\\begin{minipage}[t]{0.57\\linewidth}\n\\vspace{0pt}\n"
         + item["stem"].strip() + "\\par\n"
         + "\\end{minipage}\\hfill\n"
@@ -623,7 +626,10 @@ def write_manifest(registry: dict) -> None:
     for path in sorted(LESSONS.glob("*.yaml")):
         lesson = load_lesson(path)
         item = registry.get(lesson.get("focus"), {})
+        ced = lesson.get("ced2026") or {}
         out[str(lesson["topic"])] = {
+            "ced_unit": ced.get("unit"),
+            "ced_topic": ced.get("topic"),
             "title": lesson["title"],
             "skill": item.get("skill"),
             "frq_pattern": item.get("frq_pattern"),

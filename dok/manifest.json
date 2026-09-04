@@ -1,395 +1,527 @@
 {
   "1.1": {
+    "ced_unit": 1,
+    "ced_topic": "1.1",
     "title": "What Can These Data Support?",
     "skill": "4.A",
     "frq_pattern": "claim-vs-data-support-bound-the-conclusion",
     "worksheet": "u1_lesson1_live.html"
   },
   "1.10": {
+    "ced_unit": 2,
+    "ced_topic": "2.11",
     "title": "Check the Model",
     "skill": "4.B",
     "frq_pattern": "is-the-normal-model-appropriate-adjudicate-model-vs-data",
     "worksheet": "u1_lesson10_live.html"
   },
   "1.2": {
+    "ced_unit": 1,
+    "ced_topic": "1.2",
     "title": "Numbers That Aren't Quantities",
     "skill": "4.B",
     "frq_pattern": "number-coded-variable-and-meaningless-summary",
     "worksheet": "u1_lesson2_live.html"
   },
   "1.3": {
+    "ced_unit": 1,
+    "ced_topic": "1.3",
     "title": "A Percent Needs Its Base",
     "skill": "4.B",
     "frq_pattern": "frequency-vs-relative-frequency-which-table-the-argument-needs",
     "worksheet": "u1_lesson3_live.html"
   },
   "1.4": {
+    "ced_unit": 1,
+    "ced_topic": "1.4",
     "title": "Same Counts, Different Message",
     "skill": "4.B",
     "frq_pattern": "truncated-axis-which-display-is-honest-and-what-it-misleads",
     "worksheet": "u1_lesson4_live.html"
   },
   "1.5": {
+    "ced_unit": 1,
+    "ced_topic": "1.5",
     "title": "Same Data, Different Bins",
     "skill": "4.B",
     "frq_pattern": "bin-width-which-display-answers-the-question-and-what-it-hides",
     "worksheet": "u1_lesson5_live.html"
   },
   "1.6": {
+    "ced_unit": 1,
+    "ced_topic": "1.6",
     "title": "Describing a Distribution",
     "skill": "4.B",
     "frq_pattern": "two-descriptions-adjudicate-then-choose-center",
     "worksheet": "u1_lesson6_live.html"
   },
   "1.7": {
+    "ced_unit": 1,
+    "ced_topic": "1.7",
     "title": "Which Summary Tells the Story?",
     "skill": "4.B",
     "frq_pattern": "whose-computation-and-what-it-misleads-then-choose-the-summary",
     "worksheet": "u1_lesson7_live.html"
   },
   "1.8": {
+    "ced_unit": 1,
+    "ced_topic": "1.8",
     "title": "Two Displays, One Data Set",
     "skill": "4.B",
     "frq_pattern": "what-a-boxplot-can-and-cannot-show-adjudicate",
     "worksheet": "u1_lesson8_live.html"
   },
   "1.9": {
+    "ced_unit": 1,
+    "ced_topic": "1.9",
     "title": "Which Class Did Better?",
     "skill": "4.B",
     "frq_pattern": "compare-two-boxplots-adjudicate-competing-claims-then-choose-one-statistic",
     "worksheet": "u1_lesson9_live.html"
   },
   "2.1": {
+    "ced_unit": 2,
+    "ced_topic": "2.1",
     "title": "Counts or Conditional Percents?",
     "skill": "4.B",
     "frq_pattern": "counts-vs-conditional-percents-are-the-variables-related",
     "worksheet": "u2_lesson1_live.html"
   },
   "2.2": {
+    "ced_unit": 2,
+    "ced_topic": "2.1",
     "title": "Same Responses, Different Questions",
     "skill": "4.B",
     "frq_pattern": "count-bars-vs-segmented-bars-which-answers-the-question",
     "worksheet": "u2_lesson2_live.html"
   },
   "2.3": {
+    "ced_unit": 2,
+    "ced_topic": "2.2",
     "title": "Which Pass Rate Answers Which Question?",
     "skill": "4.B",
     "frq_pattern": "marginal-vs-conditional-association-is-not-cause",
     "worksheet": "u2_lesson3_live.html"
   },
   "2.4": {
+    "ced_unit": 5,
+    "ced_topic": "5.1",
     "title": "One Plot, Two Reporting Strategies",
     "skill": "4.B",
     "frq_pattern": "linear-label-vs-curved-pattern-description-and-consequence",
     "worksheet": "u2_lesson4_live.html"
   },
   "2.5": {
+    "ced_unit": 5,
+    "ced_topic": "5.2",
     "title": "What Does This Correlation Support?",
     "skill": "4.B",
     "frq_pattern": "strong-correlation-driven-by-one-point-and-causation-overreach",
     "worksheet": "u2_lesson5_live.html"
   },
   "2.6": {
+    "ced_unit": 5,
+    "ced_topic": "5.3",
     "title": "Two Payloads, One Regression Line",
     "skill": "4.B",
     "frq_pattern": "regression-prediction-range-and-decision",
     "worksheet": "u2_lesson6_live.html"
   },
   "2.7": {
+    "ced_unit": 5,
+    "ced_topic": "5.4",
     "title": "One Line, Two Model Diagnostics",
     "skill": "4.B",
     "frq_pattern": "correlation-residuals-model-choice-and-scope",
     "worksheet": "u2_lesson7_live.html"
   },
   "2.8": {
+    "ced_unit": 5,
+    "ced_topic": "5.5",
     "title": "Which Regression Line Fits?",
     "skill": "4.B",
     "frq_pattern": "shared-mean-point-which-line-is-lsrl",
     "worksheet": "u2_lesson8_live.html"
   },
   "3.1": {
+    "ced_unit": 1,
+    "ced_topic": "1.10",
     "title": "Who Chose Whom?",
     "skill": "4.A",
     "frq_pattern": "voluntary-response-vs-random-which-number-and-why",
     "worksheet": "u3_lesson1_live.html"
   },
   "3.2": {
+    "ced_unit": 1,
+    "ced_topic": "1.10",
     "title": "What Can Each Study Claim?",
     "skill": "4.A",
     "frq_pattern": "observational-vs-experiment-what-each-can-claim",
     "worksheet": "u3_lesson2_live.html"
   },
   "3.3": {
+    "ced_unit": 1,
+    "ced_topic": "1.11",
     "title": "Random Does Not Mean the Same",
     "skill": "4.A",
     "frq_pattern": "srs-vs-systematic-vs-stratified-choose-and-defend",
     "worksheet": "u3_lesson3_live.html"
   },
   "3.4": {
+    "ced_unit": 1,
+    "ced_topic": "1.12",
     "title": "Two Surveys, Two Biases",
     "skill": "4.A",
     "frq_pattern": "name-the-bias-direction-and-fix",
     "worksheet": "u3_lesson4_live.html"
   },
   "3.5": {
+    "ced_unit": 1,
+    "ced_topic": "1.13",
     "title": "Which Design Supports Cause?",
     "skill": "4.A",
     "frq_pattern": "experiment-principles-which-design-supports-cause",
     "worksheet": "u3_lesson5_live.html"
   },
   "3.6": {
+    "ced_unit": 1,
+    "ced_topic": "1.13",
     "title": "When Blocking Earns Its Keep",
     "skill": "4.B",
     "frq_pattern": "completely-randomized-vs-block-when-blocking-earns-its-keep",
     "worksheet": "u3_lesson6-7_live.html"
   },
   "4.1": {
+    "ced_unit": 2,
+    "ced_topic": "2.3",
     "title": "Can Chance Make a Streak?",
     "skill": "4.A",
     "frq_pattern": "is-this-pattern-random-design-the-simulation",
     "worksheet": "u4_lesson1-2_live.html"
   },
   "4.10": {
+    "ced_unit": 2,
+    "ced_topic": "2.10",
     "title": "Rare Is Not Never",
     "skill": "4.B",
     "frq_pattern": "binomial-conditions-then-is-this-outcome-unusual",
     "worksheet": "u4_lesson10-12_live.html"
   },
   "4.11": {
+    "ced_unit": 2,
+    "ced_topic": "2.10",
     "title": "Unusual Does Not Mean Impossible",
     "skill": "4.B",
     "frq_pattern": "binomial-mean-sd-unusual-vs-impossible",
     "worksheet": "u4_lesson10-12_live.html"
   },
   "4.2": {
+    "ced_unit": 2,
+    "ced_topic": "2.3",
     "title": "What Did Each Simulation Estimate?",
     "skill": "4.B",
     "frq_pattern": "whose-simulation-design-is-valid-and-what-it-misestimates",
     "worksheet": "u4_lesson1-2_live.html"
   },
   "4.3": {
+    "ced_unit": 2,
+    "ced_topic": "2.4",
     "title": "Probability or Estimate?",
     "skill": "4.B",
     "frq_pattern": "theoretical-vs-empirical-which-is-the-probability",
     "worksheet": "u4_lesson3-4-5_live.html"
   },
   "4.4": {
+    "ced_unit": 2,
+    "ced_topic": "2.5",
     "title": "Count the Overlap Once",
     "skill": "4.B",
     "frq_pattern": "mutually-exclusive-or-not-when-the-addition-rule-double-counts",
     "worksheet": "u4_lesson3-4-5_live.html"
   },
   "4.5": {
+    "ced_unit": 2,
+    "ced_topic": "2.6",
     "title": "Which Way Does the Condition Point?",
     "skill": "4.B",
     "frq_pattern": "conditional-direction-confusion-p-a-given-b-vs-b-given-a",
     "worksheet": "u4_lesson3-4-5_live.html"
   },
   "4.6": {
+    "ced_unit": 2,
+    "ced_topic": "2.7",
     "title": "Overlap Does Not Decide Independence",
     "skill": "4.B",
     "frq_pattern": "independent-vs-mutually-exclusive-decide-from-the-table",
     "worksheet": "u4_lesson6_live.html"
   },
   "4.7": {
+    "ced_unit": 2,
+    "ced_topic": "2.8",
     "title": "Average Payoff, Typical Ticket",
     "skill": "4.B",
     "frq_pattern": "expected-value-vs-typical-outcome-what-the-mean-tells-one-person",
     "worksheet": "u4_lesson7-8_live.html"
   },
   "4.8": {
+    "ced_unit": 2,
+    "ced_topic": "2.9",
     "title": "Same Mean, Different Deadline Risk",
     "skill": "4.B",
     "frq_pattern": "same-mean-different-sd-which-parameter-answers-the-question",
     "worksheet": "u4_lesson7-8_live.html"
   },
   "5.1": {
+    "ced_unit": 2,
+    "ced_topic": "2.12",
     "title": "Unusual Does Not Mean Wrong",
     "skill": "4.B",
     "frq_pattern": "sampling-variability-is-not-error",
     "worksheet": "u5_lesson1-2_live.html"
   },
   "5.2": {
+    "ced_unit": 2,
+    "ced_topic": "2.11",
     "title": "Same Score, Different Standing",
     "skill": "4.B",
     "frq_pattern": "same-score-two-models-compare-with-z",
     "worksheet": "u5_lesson1-2_live.html"
   },
   "5.3": {
+    "ced_unit": 2,
+    "ced_topic": "2.12",
     "title": "When Is the Mean Nearly Normal?",
     "skill": "4.B",
     "frq_pattern": "clt-when-does-normality-apply",
     "worksheet": "u5_lesson3_live.html"
   },
   "5.4": {
+    "ced_unit": 3,
+    "ced_topic": "3.1",
     "title": "Centered or Close?",
     "skill": "4.B",
     "frq_pattern": "unbiased-vs-low-variability-which-estimator-for-the-purpose",
     "worksheet": "u5_lesson4_live.html"
   },
   "5.5": {
+    "ced_unit": 3,
+    "ced_topic": "3.2",
     "title": "Wrong Shape Does Not Mean Biased",
     "skill": "4.B",
     "frq_pattern": "failed-large-counts-normal-tail-vs-valid-binomial-and-bias",
     "worksheet": "u5_lesson5_live.html"
   },
   "5.6": {
+    "ced_unit": 3,
+    "ced_topic": "3.9",
     "title": "When Two Proportions Are Not Independent",
     "skill": "4.B",
     "frq_pattern": "independent-vs-paired-which-sampling-distribution-model-is-warranted",
     "worksheet": "u5_lesson6_live.html"
   },
   "5.7": {
+    "ced_unit": 4,
+    "ced_topic": "4.1",
     "title": "Two Production Lines, Two Sampling Plans",
     "skill": "4.B",
     "frq_pattern": "normal-vs-clt-model-adjudication",
     "worksheet": "u5_lesson7_live.html"
   },
   "5.8": {
+    "ced_unit": 4,
+    "ced_topic": "4.6",
     "title": "Two Samples, One Difference",
     "skill": "4.B",
     "frq_pattern": "two-shape-routes-for-a-mean-difference",
     "worksheet": "u5_lesson8_live.html"
   },
   "6.1": {
+    "ced_unit": 3,
+    "ced_topic": "3.3",
     "title": "When a Normal Curve Distorts the Tail",
     "skill": "4.B",
     "frq_pattern": "normal-approximation-vs-simulation-for-a-skewed-tail",
     "worksheet": "u6_lesson1-2_live.html"
   },
   "6.10": {
+    "ced_unit": 3,
+    "ced_topic": "3.12",
     "title": "Two Analysts, One Planned Test",
     "skill": "4.C",
     "frq_pattern": "predata-question-vs-postdata-tail-switch",
     "worksheet": "u6_lesson10_live.html"
   },
   "6.11": {
+    "ced_unit": 3,
+    "ced_topic": "3.13",
     "title": "One Result, Two Claims",
     "skill": "4.E",
     "frq_pattern": "zero-test-vs-practical-threshold",
     "worksheet": "u6_lesson11_live.html"
   },
   "6.2": {
+    "ced_unit": 3,
+    "ced_topic": "3.3",
     "title": "Narrower Is Not Automatically Better",
     "skill": "4.C",
     "frq_pattern": "narrower-self-selected-interval-vs-wider-random-interval",
     "worksheet": "u6_lesson1-2_live.html"
   },
   "6.3": {
+    "ced_unit": 3,
+    "ced_topic": "3.4",
     "title": "One Interval, Two Threshold Claims",
     "skill": "4.D",
     "frq_pattern": "one-interval-two-threshold-claims-bound-the-conclusion",
     "worksheet": "u6_lesson3_live.html"
   },
   "6.4": {
+    "ced_unit": 3,
+    "ced_topic": "3.5",
     "title": "Which Test Answers the Question Asked?",
     "skill": "4.C",
     "frq_pattern": "directional-question-null-based-conditions-which-test-setup",
     "worksheet": "u6_lesson4_live.html"
   },
   "6.5": {
+    "ced_unit": 3,
+    "ced_topic": "3.6",
     "title": "Which Tail, and Probability of What?",
     "skill": "4.B",
     "frq_pattern": "one-sided-vs-two-sided-p-value-interpret-the-condition",
     "worksheet": "u6_lesson5_live.html"
   },
   "6.6": {
+    "ced_unit": 3,
+    "ced_topic": "3.7",
     "title": "Significant Does Not Mean Caused",
     "skill": "4.E",
     "frq_pattern": "statistical-decision-vs-practical-size-and-scope",
     "worksheet": "u6_lesson6_live.html"
   },
   "6.7": {
+    "ced_unit": 3,
+    "ced_topic": "3.8",
     "title": "Which Error Can the District Afford?",
     "skill": "4.B",
     "frq_pattern": "alpha-vs-power-which-error-tradeoff-fits-consequences",
     "worksheet": "u6_lesson7_live.html"
   },
   "6.8": {
+    "ced_unit": 3,
+    "ced_topic": "3.10",
     "title": "One Difference, Not Two Separate Intervals",
     "skill": "4.C",
     "frq_pattern": "two-sample-interval-vs-separate-intervals",
     "worksheet": "u6_lesson8_live.html"
   },
   "6.9": {
+    "ced_unit": 3,
+    "ced_topic": "3.11",
     "title": "A Positive Effect Is Not Every Positive Claim",
     "skill": "4.D",
     "frq_pattern": "confidence-interval-claim-effect-size-and-scope-adjudication",
     "worksheet": "u6_lesson9_live.html"
   },
   "7.1": {
+    "ced_unit": 4,
+    "ced_topic": "4.2",
     "title": "Can Chance Explain the Mean Difference?",
     "skill": "4.B",
     "frq_pattern": "rerandomization-probability-error-and-scope",
     "worksheet": "u7_lesson1_live.html"
   },
   "7.2": {
+    "ced_unit": 4,
+    "ced_topic": "4.2",
     "title": "Two Interfaces, Twelve Specialists",
     "skill": "4.C",
     "frq_pattern": "paired-vs-independent-interval-and-scope",
     "worksheet": "u7_lesson2_live.html"
   },
   "7.3": {
+    "ced_unit": 4,
+    "ced_topic": "4.3",
     "title": "One Interval, Two Cutoffs",
     "skill": "4.D",
     "frq_pattern": "mean-interval-two-cutoffs-and-scope",
     "worksheet": "u7_lesson3_live.html"
   },
   "7.4": {
+    "ced_unit": 4,
+    "ced_topic": "4.4",
     "title": "Two Measurements per Technician",
     "skill": "4.C",
     "frq_pattern": "paired-test-setup-and-consequences",
     "worksheet": "u7_lesson4_live.html"
   },
   "7.5": {
+    "ced_unit": 4,
+    "ced_topic": "4.5",
     "title": "A Test of Mean Resolution Time",
     "skill": "4.E",
     "frq_pattern": "mean-test-decision-and-conclusion",
     "worksheet": "u7_lesson5_live.html"
   },
   "7.6": {
+    "ced_unit": 4,
+    "ced_topic": "4.7",
     "title": "Two Samples of Service Times",
     "skill": "4.C",
     "frq_pattern": "design-selects-two-mean-interval",
     "worksheet": "u7_lesson6_live.html"
   },
   "7.7": {
+    "ced_unit": 4,
+    "ced_topic": "4.8",
     "title": "A Controller Comparison",
     "skill": "4.D",
     "frq_pattern": "mean-difference-threshold-and-scope",
     "worksheet": "u7_lesson7_live.html"
   },
   "7.8": {
+    "ced_unit": 4,
+    "ced_topic": "4.9",
     "title": "Two Test Plans for Cure Time",
     "skill": "4.C",
     "frq_pattern": "predata-tail-parameter-and-scope",
     "worksheet": "u7_lesson8_live.html"
   },
   "7.9": {
+    "ced_unit": 4,
+    "ced_topic": "4.10",
     "title": "What Does This Test Support?",
     "skill": "4.E",
     "frq_pattern": "significance-vs-size-cause-and-scope",
     "worksheet": "u7_lesson9_live.html"
   },
   "8.1": {
+    "ced_unit": 3,
+    "ced_topic": "3.14",
     "title": "Two Simulations for Mystery Tokens",
     "skill": "4.B",
     "frq_pattern": "fixed-count-vs-null-generation",
     "worksheet": "u8_lesson1_live.html"
   },
   "8.4": {
+    "ced_unit": 3,
+    "ced_topic": "3.14",
     "title": "A Two-Way Table Before Inference",
     "skill": "4.C",
     "frq_pattern": "expected-count-boundary-and-remedy",
     "worksheet": "u8_lesson4_live.html"
   },
   "8.5": {
+    "ced_unit": 3,
+    "ced_topic": "3.14",
     "title": "One Table, Two Study Designs",
     "skill": "4.C",
     "frq_pattern": "design-controls-chi-square-procedure",
     "worksheet": "u8_lesson5_live.html"
   },
   "8.6": {
+    "ced_unit": 3,
+    "ced_topic": "3.15",
     "title": "Interpreting a Chi-Square Result",
     "skill": "4.B",
     "frq_pattern": "scaled-cell-evidence-and-scope",

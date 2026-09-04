@@ -48,7 +48,7 @@ visuals:
     kind: two_way_table
     col_label: "Park-fee surveys"
     row_label: ""
-    cols: ["Selected", "Replied", "Oppose the fee"]
+    cols: ["Selected", "Replied", "Oppose"]
     rows: ["Mail", "Phone"]
     cells:
       - ["500", "120", "$78\\%$"]

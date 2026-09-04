@@ -54,7 +54,7 @@ visuals:
     kind: two_way_table
     col_label: "Usual sleep on a school night"
     row_label: "Sport?"
-    cols: ["At least 8 h", "Under 8 h", "Total"]
+    cols: ["$\\geq 8$ h", "$<8$ h", "Total"]
     rows: ["Plays", "Does not", "Total"]
     cells:
       - ["35", "15", "50"]

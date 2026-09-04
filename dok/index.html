@@ -30,7 +30,7 @@
 <main>
   <div class="today" id="today">Loading today's problem…</div>
   <table>
-    <thead><tr><th>Topic</th><th>B</th><th>E</th><th>Title · DOK-3 skill</th><th>PDFs</th></tr></thead>
+    <thead><tr><th>CED topic</th><th>B</th><th>E</th><th>Title · DOK-3 skill</th><th>PDFs</th></tr></thead>
     <tbody id="rows"></tbody>
   </table>
   <p class="muted">Built rows are green. Pending rows come from <code>PENDING.md</code>. Student = 2 sides, Board = 1 landscape page, Teacher = key + E/P/I scoring.</p>
@@ -49,11 +49,12 @@
 
   for (const [topic, v] of rows) {
     const b = built[topic];
+    const cedLabel = b ? `Unit ${b.ced_unit} · Topic ${b.ced_topic}` : 'Pending mapping';
     const tr = document.createElement('tr');
     tr.className = b ? 'built' : 'pending';
     const pdf = (ed) => `<a href="pdf/aps_${topic}_${ed}.pdf">${ed}</a>`;
     tr.innerHTML =
-      `<td>${topic}</td><td>${v.periods.B}</td><td>${v.periods.E || ''}</td>` +
+      `<td>${cedLabel}</td><td>${v.periods.B}</td><td>${v.periods.E || ''}</td>` +
       `<td>${b ? b.title + ' <span class="badge">DOK-3 · ' + b.skill + '</span>' : '<span class="muted">pending</span>'}</td>` +
       `<td class="links">${b ? pdf('student') + pdf('board') + pdf('teacher') : ''}</td>`;
     tbody.appendChild(tr);
@@ -62,7 +63,7 @@
 
   const today = document.getElementById('today');
   if (todayRow) {
-    today.innerHTML = `Today: <strong>Topic ${todayRow.topic} — ${todayRow.b.title}</strong> · ` +
+    today.innerHTML = `Today: <strong>Unit ${todayRow.b.ced_unit} · Topic ${todayRow.b.ced_topic} — ${todayRow.b.title}</strong> · ` +
       `<a href="pdf/aps_${todayRow.topic}_board.pdf">open the board slide</a> · ` +
       `<a href="pdf/aps_${todayRow.topic}_teacher.pdf">teacher key</a>`;
   } else {
