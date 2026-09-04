@@ -27,7 +27,7 @@ item registry, typeset in LaTeX, published as PDFs the Desk can link.
 | Per-topic lesson content already written (Socratic tutor prompts with answer keys + scoring notes) | `ai-tutor/u{u}_l{n}.md` (75 files) | authoring anchor: the ladder's DOK-2 items rehearse the same EKs; never copy the tutor's answer key onto the student sheet |
 | The real calendar: 66 dated lesson days per period (B: 10/8/6/10/8/11/9/4 by OLD unit 1–8), `topicKey` + `periods.B/E` dates | `data/lesson-schedule.json` | coverage test (§7) + fan-out order (§8) |
 | OLD-topic → NEW-CED-unit mapping (`ced2026.newUnit`, `newTopic`, `newLabel`, `status: core|bonus`) | `roadmap-data.json` | the sheet header prints the NEW label; files stay keyed by the OLD `topicKey` like everything else in this repo |
-| E/P/I scoring-guide shape (`expectedElements`, `scoringGuide.{E,P,I}`, `commonMistakes`) | `ai-grading-prompts*.js` (see CLAUDE.md "AI Grading Rubric Structure") | the DOK-3 scoring guide on the teacher edition uses the SAME shape, so Phase 5 can feed it to the grader unchanged |
+| E/P/I scoring-guide shape (`expectedElements`, `scoringGuide.{E,P,I}`, `commonMistakes`) | `ai-grading-prompts*.js` (see CLAUDE.md "AI Grading Rubric Structure") | the DOK-3 scoring guide on the teacher edition uses the SAME shape (a good rubric shape for hand-scoring — the DOK-3 is never AI-graded, §1) |
 | Runtime resource overlay: Supabase `lesson_urls` (`topic, worksheet_url, drills_url, quiz_url, blooket_url`) read by the Desk at `ap_stats_roadmap_square_mode.html:4987` | Desk + Supabase `hgvnytaqmuybzbotosyj` | Phase 5 adds `dok_url` (optional) |
 | MiKTeX on the teacher laptop (`pdflatex`, `latexmk`) | Athena, via scoop | local compile; CI does NOT compile (§7) |
 
