@@ -27,3 +27,9 @@ pages: all student 2 / board 1 / teacher ≤3
 tests: vitest 219 passed · pytest 326 passed · validation 57 registry rows / 53 lessons
 changed outside lessons/registry: calibration/unit4.json, PENDING.md, manifest.json, build_ladder.py, test_dok_build.py, generated tex/pdf
 notes: made the 8.4 cross-topic tether explicit; neutralized preselected claims; enforced expected counts >5; normalized Markdown italics in tutor tethers
+
+## Round 8 — 2026-09-04 — topics 5.8, 7.3–7.8 — commits 4140473, 33ebaf1, 196c084, a750317 — coverage 60/66
+pages: all student 2 / board 1 / teacher ≤3
+tests: vitest 247 passed · pytest 368 passed · validation 64 registry rows / 60 lessons
+changed outside lessons/registry: PENDING.md, manifest.json, build_ladder.py, test_dok_build.py, generated tex/pdf
+notes: added TeX-safe subscripted mean and spread notation; replaced answer-bearing condition summaries; separated sampling, assignment, threshold, and tail-selection claims
