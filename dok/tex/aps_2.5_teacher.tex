@@ -1,0 +1,124 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 2.5 (CED 5.2) \textperiodcentered\ B: 2027-02-08 \textperiodcentered\ E: 2027-04-02 \textperiodcentered\ TEACHER KEY}{What Does This Correlation Support?}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 2.C} --- Calculate summary statistics, relative positions of points within a distribution, correlation, and predicted response.
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item \textbf{EU DAT-1} --- Regression models may allow us to predict responses to changes in an explanatory variable.
+  \item DAT-1.B Determine the correlation for a linear relationship. [Skill 2.C]
+  \item DAT-1.B.1 The correlation, r, gives the direction and quantifies the strength of the linear association between two quantitative variables.  DAT-1.B.2 The correlation coefficient can be calculated by: r = (1/(n-1)) $\times$ $\sum$(($x_i$ - $\bar{x}$)/s\_x)((y\_i - $\bar{y}$)/s\_y). However, the most common way to determine r is by using technology.  DAT-1.B.3 A correlation coefficient close to 1 or -1 does not necessarily mean that a linear model is appropriate.
+  \item DAT-1.C Interpret the correlation for a linear relationship. [Skill 4.B]
+  \item DAT-1.C.1 The correlation, r, is unit-free, and always between -1 and 1, inclusive. A value of r = 0 indicates that there is no linear association. A value of r = 1 or r = -1 indicates that there is a perfect linear association.  DAT-1.C.2 A perceived or real relationship between two variables does not mean that changes in one variable cause changes in the other. That is, correlation does not necessarily imply causation.
+\end{itemize}
+}
+\textbf{Essential question:} How should a correlation, its sensitivity, and the study design shape one recommendation?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{strong-\allowbreak{}correlation-\allowbreak{}driven-\allowbreak{}by-\allowbreak{}one-\allowbreak{}point-\allowbreak{}and-\allowbreak{}causation-\allowbreak{}overreach}}\par
+\textbf{DOK rationale:} Part (c) requires reconciling full-data and sensitivity correlations with the scatterplot and observational design, then bounding an operational recommendation.\par
+
+\frameworkphaseheader{Do Now $\rightarrow$ video follow-along $\rightarrow$ finish and turn in}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Project the first take; require one number or design fact.
+  \item Start the 2.5 follow-along at minute 5.
+  \item At minute 33, require students to reconcile both correlations before recommending action.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to a proposal, then complete the follow-along.
+  \item Finish (a)--(c), revise the first take, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What does 0.922 accurately summarize?
+  \item What changes for the seven-point cluster?
+  \item What conclusion does the design permit?
+\end{itemize}
+}{Circulate; require numerical, graphical, and design evidence before confirming a recommendation.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Silently deleting the separated point.
+  \item Ignoring the plot after computing $r$.
+  \item Turning association into causation.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-approach} (required) --- Selects Tessa's evidence-bounded approach
+  \item \textbf{reconciles-correlations} (required) --- Preserves 0.922 while using 0.095 and the separated point to assess sensitivity
+  \item \textbf{bounds-causation} (required) --- Uses the observational design to reject a causal forecast
+  \item \textbf{traces-consequence} (required) --- States a concrete spending or forecasting risk
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Selects Tessa; reconciles both correlations and the plot, bounds causation, and states a concrete risk. \\ \hline
+\textbf{P} & Makes the warranted choice but incompletely links sensitivity, design, or consequence. \\ \hline
+\textbf{I} & Treats 0.922 as stable causal evidence, silently deletes the point, or gives an unsupported choice. \\ \hline
+\end{tabular}}
+
+\textbf{Common mistakes}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Discarding the separated point without labeling the sensitivity analysis
+  \item Ignoring the scatterplot after computing $r$
+  \item Treating observational association as causation
+\end{itemize}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a nonprofit records monthly social-media posts and average weekend visitors at eight community arts centers. The pairs are $(2,50)$, $(3,47)$, $(4,54)$, $(5,45)$, $(6,53)$, $(7,48)$, $(8,51)$, and $(20,90)$. For all eight centers, $r=0.922$.\par\smallskip \textbf{Omar:} Use that strong correlation to forecast the attendance gained from additional posts; every observed center belongs in the analysis.\par \textbf{Tessa:} Report the full analysis, but also examine the seven-center cluster and how posting levels were chosen before recommending a campaign.\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.53\linewidth,
+  height=1.44in,
+  xmin=0, xmax=21, ymin=40, ymax=95,
+  xlabel={Social-media posts during the month}, ylabel={Average weekend visitors}, grid=major,
+  tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=1.4pt, color=dayblue] coordinates {
+  (2,50)
+  (3,47)
+  (4,54)
+  (5,45)
+  (6,53)
+  (7,48)
+  (8,51)
+  (20,90)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which proposal seems more defensible, Omar's or Tessa's? Cite one number, plot feature, or design fact.\par
+\answer{Not graded; the finish must preserve valid evidence while bounding the claim.}
+\end{firsttakebox}
+
+\textit{Rules callout ``READ r WITH THE PLOT AND DESIGN (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State the range and units of $r$, and interpret its sign and magnitude.\par
+\answer{Correlation is unit-free and lies from $-1$ to $1$. The positive value near 1 summarizes a strong positive linear association for all eight observed centers, subject to checking the plot.}
+
+\dokbadge{2}~\textbf{(b)} Calculate $r$ for all eight centers and for the first seven as a labeled sensitivity analysis. Describe the plot's structure.\par
+\answer{For all eight, $r=0.9223783\approx0.922$; for the first seven, $r=0.0949158\approx0.095$. Seven points form a compact cloud with little linear tendency, while $(20,90)$ is separated at the upper right. The second value is a sensitivity analysis, not a reason to hide that point.}
+
+\dokbadge{3}~\textbf{(c)} Recommend Omar's or Tessa's approach. Reconcile both correlations with the plot, state what the full value supports, use the observational design to assess the forecast, and explain one decision risk from overreaching.\par
+\answer{Tessa's approach is warranted. The full $r=0.922$ accurately summarizes all eight centers, but $r\approx0.095$ for the compact cluster shows that the apparent linear pattern is highly sensitive to $(20,90)$ and is not typical of the other seven. Because centers were observed rather than assigned posting levels, confounding prevents a causal forecast. Omar's approach could prompt spending on posts with an unsupported attendance guarantee.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

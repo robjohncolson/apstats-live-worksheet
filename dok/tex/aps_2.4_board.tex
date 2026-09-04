@@ -1,0 +1,62 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 2.4 \textperiodcentered\ TODAY'S PROBLEM}{One Plot, Two Reporting Strategies}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a test kitchen measures dough volume for ten batches at assigned times after mixing. The scatterplot shows the paired measurements.\par\smallskip \textbf{Jules:} Use a straight-line summary because volume generally increases with time. Treat the 50-minute batch as ordinary variation.\par \textbf{Ravi:} Decide the form from how the rate changes, and report the 50-minute batch separately if it departs from nearby values.\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.70\linewidth,
+  height=1.89in,
+  xmin=0, xmax=90, ymin=380, ymax=820,
+  xlabel={Minutes after mixing}, ylabel={Dough volume (mL)}, grid=major,
+  tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=1.8pt, color=dayblue] coordinates {
+  (0,420)
+  (10,510)
+  (20,590)
+  (30,650)
+  (40,695)
+  (50,600)
+  (60,750)
+  (70,770)
+  (80,780)
+  (90,785)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which reporting strategy seems more defensible, Jules's or Ravi's? Cite one graph feature.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Identify the explanatory and response variables, assign them to axes, and interpret $(30,650)$.
+  \item[\dokbadge{2}~(b)] Find the volume changes from 0 to 20 and 70 to 90 minutes. Compare the 50-minute volume with the midpoint of the 40- and 60-minute volumes.
+  \item[\dokbadge{3}~(c)] Choose a reporting strategy. Use direction, form, strength, both changes, and the 50-minute comparison to write a complete description. Explain how the rejected strategy could distort a later-growth decision.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson4_live.html}{\texttt{\detokenize{u2_lesson4_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson4_live.html}
+
+\end{document}

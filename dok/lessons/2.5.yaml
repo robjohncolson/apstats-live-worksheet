@@ -1,0 +1,53 @@
+# Topic 2.5 — Correlation
+topic: "2.5"
+ced2026: { unit: 5, topic: "5.2", label: "Correlation" }
+title: "What Does This Correlation Support?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How should a correlation, its sensitivity, and the study design shape one recommendation?"
+worksheet: "u2_lesson5_live.html"
+
+rules_callout:
+  title: "READ r WITH THE PLOT AND DESIGN (keep on the page)"
+  body: |
+    Correlation $r$ is unit-free, lies from $-1$ to $1$, and summarizes direction and
+    strength of linear association. Inspect the scatterplot for form and unusual points.
+    If a separated point changes $r$ greatly, report both the full analysis and a labeled
+    sensitivity analysis. Association in observational data does not establish causation.
+
+focus: aps-2.5-d3-1
+reinforcement: []
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+
+space: { first_take: 0.85in, a: 0.55in, b: 1.1in, c: 1.7in }
+
+teacher:
+  phase_tag: 'Do Now $\rightarrow$ video follow-along $\rightarrow$ finish and turn in'
+  teacher_does:
+    - "Project the first take; require one number or design fact."
+    - "Start the 2.5 follow-along at minute 5."
+    - "At minute 33, require students to reconcile both correlations before recommending action."
+  students_do:
+    - "Commit to a proposal, then complete the follow-along."
+    - "Finish (a)--(c), revise the first take, and turn in."
+  questions_to_ask:
+    - "What does 0.922 accurately summarize?"
+    - "What changes for the seven-point cluster?"
+    - "What conclusion does the design permit?"
+  adult_role: "Circulate; require numerical, graphical, and design evidence before confirming a recommendation."
+  watch_for:
+    - "Silently deleting the separated point."
+    - "Ignoring the plot after computing $r$."
+    - "Turning association into causation."
+  first_take_note: "Not graded; the finish must preserve valid evidence while bounding the claim."
+
+visuals:
+  arts_centers:
+    kind: scatter
+    points: [[2, 50], [3, 47], [4, 54], [5, 45], [6, 53], [7, 48], [8, 51], [20, 90]]
+    xlabel: "Social-media posts during the month"
+    ylabel: "Average weekend visitors"
+    xmin: 0
+    xmax: 21
+    ymin: 40
+    ymax: 95
+    scale: 0.78

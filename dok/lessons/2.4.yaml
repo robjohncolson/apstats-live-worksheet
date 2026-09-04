@@ -1,0 +1,53 @@
+# Topic 2.4 — Representing the Relationship Between Two Quantitative Variables
+topic: "2.4"
+ced2026: { unit: 5, topic: "5.1", label: "Graphical Representations (two quantitative variables)" }
+title: "One Plot, Two Reporting Strategies"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How should several scatterplot features be weighed when descriptions conflict?"
+worksheet: "u2_lesson4_live.html"
+
+rules_callout:
+  title: "BUILD A COMPLETE SCATTERPLOT DESCRIPTION (keep on the page)"
+  body: |
+    Put the explanatory variable on the $x$-axis and the response on the $y$-axis.
+    Describe direction, form, strength, and unusual features in context. Linear form has
+    an approximately constant rate; nonlinear form may curve or change rate. Report an
+    unusual point without letting that one point erase the pattern followed by the rest.
+
+focus: aps-2.4-d3-1
+reinforcement: []
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+
+space: { first_take: 0.85in, a: 0.55in, b: 1.1in, c: 1.7in }
+
+teacher:
+  phase_tag: 'Do Now $\rightarrow$ video follow-along $\rightarrow$ finish and turn in'
+  teacher_does:
+    - "Project the first take; require one cited feature."
+    - "Start the 2.4 follow-along at minute 5."
+    - "At minute 33, require students to reconcile the rate changes and 50-minute value."
+  students_do:
+    - "Commit to a reporting strategy, then complete the follow-along."
+    - "Finish (a)--(c), revise the first take, and turn in."
+  questions_to_ask:
+    - "What do the early and late changes imply about form?"
+    - "How unusual is the 50-minute value locally?"
+    - "Which strategy preserves both facts?"
+  adult_role: "Circulate; withhold confirmation until students cite form and the unusual point."
+  watch_for:
+    - "Equating positive direction with linear form."
+    - "Letting one point determine the entire pattern."
+    - "Omitting context or strength."
+  first_take_note: "Not graded; students revise after coordinating all features."
+
+visuals:
+  dough_growth:
+    kind: scatter
+    points: [[0, 420], [10, 510], [20, 590], [30, 650], [40, 695], [50, 600], [60, 750], [70, 770], [80, 780], [90, 785]]
+    xlabel: "Minutes after mixing"
+    ylabel: "Dough volume (mL)"
+    xmin: 0
+    xmax: 90
+    ymin: 380
+    ymax: 820
+    scale: 0.82

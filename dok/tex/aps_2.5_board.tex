@@ -1,0 +1,60 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 2.5 \textperiodcentered\ TODAY'S PROBLEM}{What Does This Correlation Support?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a nonprofit records monthly social-media posts and average weekend visitors at eight community arts centers. The pairs are $(2,50)$, $(3,47)$, $(4,54)$, $(5,45)$, $(6,53)$, $(7,48)$, $(8,51)$, and $(20,90)$. For all eight centers, $r=0.922$.\par\smallskip \textbf{Omar:} Use that strong correlation to forecast the attendance gained from additional posts; every observed center belongs in the analysis.\par \textbf{Tessa:} Report the full analysis, but also examine the seven-center cluster and how posting levels were chosen before recommending a campaign.\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.66\linewidth,
+  height=1.79in,
+  xmin=0, xmax=21, ymin=40, ymax=95,
+  xlabel={Social-media posts during the month}, ylabel={Average weekend visitors}, grid=major,
+  tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=1.7pt, color=dayblue] coordinates {
+  (2,50)
+  (3,47)
+  (4,54)
+  (5,45)
+  (6,53)
+  (7,48)
+  (8,51)
+  (20,90)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which proposal seems more defensible, Omar's or Tessa's? Cite one number, plot feature, or design fact.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the range and units of $r$, and interpret its sign and magnitude.
+  \item[\dokbadge{2}~(b)] Calculate $r$ for all eight centers and for the first seven as a labeled sensitivity analysis. Describe the plot's structure.
+  \item[\dokbadge{3}~(c)] Recommend Omar's or Tessa's approach. Reconcile both correlations with the plot, state what the full value supports, use the observational design to assess the forecast, and explain one decision risk from overreaching.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson5_live.html}{\texttt{\detokenize{u2_lesson5_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson5_live.html}
+
+\end{document}

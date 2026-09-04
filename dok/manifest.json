@@ -77,6 +77,18 @@
     "frq_pattern": "marginal-vs-conditional-association-is-not-cause",
     "worksheet": "u2_lesson3_live.html"
   },
+  "2.4": {
+    "title": "One Plot, Two Reporting Strategies",
+    "skill": "4.B",
+    "frq_pattern": "linear-label-vs-curved-pattern-description-and-consequence",
+    "worksheet": "u2_lesson4_live.html"
+  },
+  "2.5": {
+    "title": "What Does This Correlation Support?",
+    "skill": "4.B",
+    "frq_pattern": "strong-correlation-driven-by-one-point-and-causation-overreach",
+    "worksheet": "u2_lesson5_live.html"
+  },
   "2.6": {
     "title": "Two Payloads, One Regression Line",
     "skill": "4.B",
