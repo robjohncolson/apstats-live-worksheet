@@ -1,0 +1,111 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 7.7 (CED 4.8) \textperiodcentered\ B: 2027-01-26 \textperiodcentered\ E: 2027-03-15 \textperiodcentered\ TEACHER KEY}{A Controller Comparison}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item \textbf{Skill 4.D} --- Justify a claim based on a confidence interval.
+  \item \textbf{Skill 4.A} --- Make an appropriate claim or draw an appropriate conclusion.
+  \item \textbf{EU UNC-4} --- An interval of values should be used to estimate parameters, in order to account for uncertainty.
+  \item \textbf{LO UNC-4.Z} --- Interpret a confidence interval for a difference of population means. [Skill 4.B]
+  \item \textbf{EK UNC-4.Z.1} --- In repeated random sampling with the same sample size, approximately C\% of confidence intervals created will capture the difference of population means.
+  \item \textbf{EK UNC-4.Z.2} --- An interpretation for a confidence interval for the difference of two population means should include a reference to the samples taken and details about the populations they represent.
+  \item \textbf{LO UNC-4.AA} --- Justify a claim based on a confidence interval for a difference of population means. [Skill 4.D]
+  \item \textbf{EK UNC-4.AA.1} --- A confidence interval for a difference of population means provides an interval of values that may provide sufficient evidence to support a particular claim in context.
+  \item \textbf{LO UNC-4.AB} --- Identify the effects of sample size on the width of a confidence interval for the difference of two means. [Skill 4.A]
+  \item \textbf{EK UNC-4.AB.1} --- When all other things remain the same, the width of the confidence interval for the difference of two means tends to decrease as the sample sizes increase.
+\end{itemize}
+}
+\textbf{Essential question:} How can one interval support a population difference while leaving a practical threshold and causal explanation unresolved?\par
+\textbf{DOK-3 skill:} 4.D \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{mean-\allowbreak{}difference-\allowbreak{}threshold-\allowbreak{}and-\allowbreak{}scope}}\par
+\textbf{DOK rationale:} Part (c) coordinates zero, a practical threshold, random sampling, and treatment assignment to adjudicate competing claims and trace a concrete budgeting consequence.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask which interval and design details are relevant to the policy claim.
+  \item Begin the 7.7 video follow-along at minute 5.
+  \item Return at minute 33. Require separate statistical, practical, population, and causal statements.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to one account and name an interval feature or design detail needed.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What does excluding zero establish about the two current population means?
+  \item Which plausible interval values fail the cooperative's two-kWh policy threshold?
+  \item What populations do the two random samples represent?
+  \item What alternative explanations remain because controllers were not randomly assigned?
+\end{itemize}
+}{Solo teacher. Test each claim layer against zero, the threshold, sampling, and assignment.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Calling two a guaranteed minimum merely because it is inside the interval.
+  \item Interpreting the endpoints as a range for 95 percent of individual cases.
+  \item Converting random sampling of existing groups into a causal retrofit experiment.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{chooses-bounded-account} (required) --- Separates a positive mean difference from a minimum 2-kWh effect
+  \item \textbf{uses-zero} (required) --- Uses zero outside the interval
+  \item \textbf{uses-threshold} (required) --- Uses 2 inside and the 1.219 lower endpoint
+  \item \textbf{bounds-scope-and-causation} (required) --- Uses SRSs for scope and absent assignment to block causation
+  \item \textbf{states-budget-consequence} (required) --- Identifies the unsupported guaranteed retrofit saving
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Uses zero and the threshold correctly, bounds population and causal scope, and states the budgeting consequence. \\ \hline
+\textbf{P} & Supports a positive difference but incompletely handles the threshold, scope, causation, or consequence. \\ \hline
+\textbf{I} & Treats an inside value as guaranteed or the observational groups as assigned treatments. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a cooperative has 1,200 cases with conventional controllers and 900 with adaptive controllers. It takes independent SRSs of 40 existing cases from each group; controller type was not assigned. A 95\% interval for $\mu_C-\mu_A$ is $(1.219,4.781)$ kWh per case-day. A retrofit is worthwhile only if mean savings are at least 2.0 kWh.\par\smallskip \textbf{Rhea:} ``Zero is excluded and 2 is inside, so retrofitting is shown to cause savings of at least 2 kWh.''\par \textbf{Sol:} ``I would compare the interval separately with 0 and 2, then inspect sampling and assignment before applying it to a retrofit.''\par
+\begin{center}
+\textbf{Daily kWh samples}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Controller} & \textbf{$N$} & \textbf{$n$} & \textbf{$\bar x$} & \textbf{$s$} \\ \hline
+\textbf{Conv.} & 1,200 & 40 & 18.6 & 4.0 \\ \hline
+\textbf{Adaptive} & 900 & 40 & 15.6 & 4.0 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which account is better supported so far? Identify any interval feature or design detail needed to decide.\par
+\answer{Not graded. Students should identify both interval evidence and a design limit before deciding.}
+\end{firsttakebox}
+
+\textit{Rules callout ``CHECK ZERO, THE CLAIM'S THRESHOLD, AND THE DESIGN (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Define $\mu_C-\mu_A$, calculate the point estimate, and locate 0 and 2 relative to the interval.\par
+\answer{Let $\mu_C-\mu_A$ be the difference in current population mean daily use. The estimate is $18.6-15.6=3.0$ kWh. Zero is outside $(1.219,4.781)$; 2 is inside.}
+
+\dokbadge{2}~\textbf{(b)} Verify independent sampling, both 10 percent checks, and large-sample shape. Reproduce $SE$, $df$, margin of error, and the interval; interpret it.\par
+\answer{The independent SRSs satisfy $40\leq120$ and $40\leq90$; both sizes exceed 30.\par $SE=\sqrt{4^2/40+4^2/40}=\sqrt{0.8}=0.894427$. With Welch $df=78$, $ME=1.990847(0.894427)=1.780668$. The interval is $(1.219332,4.780668)$. We are 95\% confident that the current conventional mean exceeds the current adaptive mean by about 1.219 to 4.781 kWh.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate the accounts using the positions of 0 and the 2-kWh threshold. Bound population and causal scope from sampling and assignment, and explain the budgeting consequence of the rejected interpretation.\par
+\answer{Sol is warranted. Excluding 0 supports a positive current population mean difference. But 2 is inside, so differences below 2 remain plausible; a minimum 2-kWh saving is not established. The SRSs support the cooperative's current controller populations. Without random assignment, other case or location differences could explain the gap, so retrofit causation is not isolated. The rejected interpretation could make the committee budget for a guaranteed causal saving of at least 2 kWh even though 1.219 is plausible and the observational gap may not be a retrofit effect.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

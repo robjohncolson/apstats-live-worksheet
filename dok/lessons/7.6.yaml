@@ -1,0 +1,56 @@
+# Topic 7.6 — Confidence Intervals for the Difference of Two Means (B: 2027-01-25)
+topic: "7.6"
+ced2026: { unit: 4, topic: "4.7", label: "CI (difference of two means)" }
+title: "Two Samples of Service Times"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How does the sampling design determine whether a paired or independent-means confidence interval is trustworthy?"
+worksheet: "u7_lesson6_live.html"
+
+rules_callout:
+  title: "LET THE DESIGN CHOOSE THE INTERVAL (keep on the page)"
+  body: |
+    For two independent random samples, use the two-sample $t$ interval
+    $(\bar x_1-\bar x_2)\pm t^*\sqrt{s_1^2/n_1+s_2^2/n_2}$. Check independent random
+    sampling or random assignment, each 10\% condition when sampling without replacement,
+    and an approximately normal sampling distribution (population shape or both samples over 30).
+    Matched pairs must be created by the design before responses are observed; sorting two independent
+    samples does not create pairs. Interpret the resulting interval in the stated subtraction order.
+
+focus: aps-7.6-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask what links existed before service times were observed."
+    - "Begin the Topic 7.6 video follow-along at minute 5."
+    - "Return at minute 33. Require students to connect each standard error to a design."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one procedure and identify a design detail still needed."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "What link existed between a North record and a South record before either time was seen?"
+    - "Why can sorting the response values make the standard deviation of differences look small?"
+    - "Which standard error preserves the original sampling design?"
+    - "Which population can the random samples represent?"
+  adult_role: "Solo teacher. Trace design to standard error, interval width, interpretation, and scope."
+  watch_for:
+    - "Calling equal sample sizes a matched-pairs design."
+    - "Accepting response-based sorted pairs as if they were planned pairs."
+    - "Reading an interval containing 0 as proof that the means are equal."
+  first_take_note: "Not graded. Students should identify whether any pairing existed before the responses were sorted."
+
+visuals:
+  depot_time_summaries:
+    kind: two_way_table
+    col_label: "Service-time samples (min)"
+    row_label: "Depot"
+    cols: ["$N$", "$n$", '$\bar x$', "$s$"]
+    rows: ["North", "South"]
+    cells:
+      - ["900", "36", "42.3", "8.4"]
+      - ["1,200", "36", "40.1", "7.6"]

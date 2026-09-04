@@ -317,6 +317,18 @@
     "frq_pattern": "mean-test-decision-and-conclusion",
     "worksheet": "u7_lesson5_live.html"
   },
+  "7.6": {
+    "title": "Two Samples of Service Times",
+    "skill": "4.C",
+    "frq_pattern": "design-selects-two-mean-interval",
+    "worksheet": "u7_lesson6_live.html"
+  },
+  "7.7": {
+    "title": "A Controller Comparison",
+    "skill": "4.D",
+    "frq_pattern": "mean-difference-threshold-and-scope",
+    "worksheet": "u7_lesson7_live.html"
+  },
   "8.1": {
     "title": "Two Simulations for Mystery Tokens",
     "skill": "4.B",

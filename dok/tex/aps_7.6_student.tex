@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 7.6 (CED 4.7) \textperiodcentered\ B: 2027-01-25 \textperiodcentered\ E: 2027-03-12}{Two Samples of Service Times}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose two depots independently take SRSs of 36 weekday service-time records from monthly populations of 900 North and 1,200 South records. Technology gives $df=69.31$ and $t^*=1.995$ for a 95\% two-sample interval.\par\smallskip \textbf{Tariq:} ``I sorted both samples and paired equal ranks. The resulting differences have $\bar d=2.2$ and $s_d=3.0$, giving $(1.18,3.22)$. Pairing makes the estimate more precise.''\par \textbf{Mei:} ``The records were sampled separately, so I would use a two-sample interval. Sorting observed responses may change the uncertainty rather than reveal design-based pairs.''\par
+\begin{center}
+\textbf{Service-time samples (min)}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Depot} & \textbf{$N$} & \textbf{$n$} & \textbf{$\bar x$} & \textbf{$s$} \\ \hline
+\textbf{North} & 900 & 36 & 42.3 & 8.4 \\ \hline
+\textbf{South} & 1,200 & 36 & 40.1 & 7.6 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Which interval procedure matches the original design? Cite any link that did or did not exist before times were observed.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ LET THE DESIGN CHOOSE THE INTERVAL (keep on the page)}{calloutgreen}
+For two independent random samples, use the two-sample $t$ interval
+$(\bar x_1-\bar x_2)\pm t^*\sqrt{s_1^2/n_1+s_2^2/n_2}$. Check independent random
+sampling or random assignment, each 10\% condition when sampling without replacement,
+and an approximately normal sampling distribution (population shape or both samples over 30).
+Matched pairs must be created by the design before responses are observed; sorting two independent
+samples does not create pairs. Interpret the resulting interval in the stated subtraction order.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Define $\mu_N-\mu_S$, calculate its point estimate, and name the design-based interval procedure.\par
+\workspace{0.8in}
+
+\dokbadge{2}~\textbf{(b)} Verify random, 10 percent, and shape conditions. Compute $SE$, margin of error, and the 95\% interval.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate the procedures using the separate SRSs, rank pairing, $s_d=3.0$, and both intervals. Explain how response-based pairing changes uncertainty and the conclusion a reader might draw; then interpret the warranted interval and bound its population scope.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The design supports a \blank[1.6in] interval because \blank[2.2in]; sorting ranks instead \blank[2.0in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The two uncertainty estimates are \blank[1.6in] and \blank[1.6in], which changes \blank[2.0in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

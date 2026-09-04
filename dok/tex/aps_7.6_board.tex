@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 7.6 \textperiodcentered\ TODAY'S PROBLEM}{Two Samples of Service Times}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose two depots independently take SRSs of 36 weekday service-time records from monthly populations of 900 North and 1,200 South records. Technology gives $df=69.31$ and $t^*=1.995$ for a 95\% two-sample interval.\par\smallskip \textbf{Tariq:} ``I sorted both samples and paired equal ranks. The resulting differences have $\bar d=2.2$ and $s_d=3.0$, giving $(1.18,3.22)$. Pairing makes the estimate more precise.''\par \textbf{Mei:} ``The records were sampled separately, so I would use a two-sample interval. Sorting observed responses may change the uncertainty rather than reveal design-based pairs.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Service-time samples (min)}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Depot} & \textbf{$N$} & \textbf{$n$} & \textbf{$\bar x$} & \textbf{$s$} \\ \hline
+\textbf{North} & 900 & 36 & 42.3 & 8.4 \\ \hline
+\textbf{South} & 1,200 & 36 & 40.1 & 7.6 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which interval procedure matches the original design? Cite any link that did or did not exist before times were observed.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define $\mu_N-\mu_S$, calculate its point estimate, and name the design-based interval procedure.
+  \item[\dokbadge{2}~(b)] Verify random, 10 percent, and shape conditions. Compute $SE$, margin of error, and the 95\% interval.
+  \item[\dokbadge{3}~(c)] Adjudicate the procedures using the separate SRSs, rank pairing, $s_d=3.0$, and both intervals. Explain how response-based pairing changes uncertainty and the conclusion a reader might draw; then interpret the warranted interval and bound its population scope.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson6_live.html}{\texttt{\detokenize{u7_lesson6_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson6_live.html}
+
+\end{document}

@@ -1,0 +1,56 @@
+# Topic 7.7 — Justifying a Claim About the Difference of Two Means Based on a Confidence Interval
+topic: "7.7"
+ced2026: { unit: 4, topic: "4.8", label: "Justifying a Claim (CI, 2 means)" }
+title: "A Controller Comparison"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How can one interval support a population difference while leaving a practical threshold and causal explanation unresolved?"
+worksheet: "u7_lesson7_live.html"
+
+rules_callout:
+  title: "CHECK ZERO, THE CLAIM'S THRESHOLD, AND THE DESIGN (keep on the page)"
+  body: |
+    A confidence interval for $\mu_1-\mu_2$ describes plausible values for a difference in
+    population means in the stated subtraction order, not a range containing a percent of individual
+    observations. If 0 is excluded, the interval supports a population mean difference; a practical
+    claim such as $\mu_1-\mu_2\geq c$ requires the entire interval to lie at or beyond $c$.
+    For a fixed interval, say ``we are confident,'' not ``there is a probability.'' Random sampling
+    supports population scope, while random assignment is needed to isolate a causal treatment effect.
+
+focus: aps-7.7-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask which interval and design details are relevant to the policy claim."
+    - "Begin the 7.7 video follow-along at minute 5."
+    - "Return at minute 33. Require separate statistical, practical, population, and causal statements."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one account and name an interval feature or design detail needed."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "What does excluding zero establish about the two current population means?"
+    - "Which plausible interval values fail the cooperative's two-kWh policy threshold?"
+    - "What populations do the two random samples represent?"
+    - "What alternative explanations remain because controllers were not randomly assigned?"
+  adult_role: "Solo teacher. Test each claim layer against zero, the threshold, sampling, and assignment."
+  watch_for:
+    - "Calling two a guaranteed minimum merely because it is inside the interval."
+    - "Interpreting the endpoints as a range for 95 percent of individual cases."
+    - "Converting random sampling of existing groups into a causal retrofit experiment."
+  first_take_note: "Not graded. Students should identify both interval evidence and a design limit before deciding."
+
+visuals:
+  controller_summary:
+    kind: two_way_table
+    col_label: "Daily kWh samples"
+    row_label: "Controller"
+    cols: ["$N$", "$n$", "$\\bar x$", "$s$"]
+    rows: ["Conv.", "Adaptive"]
+    cells:
+      - ["1,200", "40", "18.6", "4.0"]
+      - ["900", "40", "15.6", "4.0"]
