@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.8 \textperiodcentered\ TODAY'S PROBLEM}{One Difference, Not Two Separate Intervals}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Town Oak has 2{,}200 households and Pine 1{,}800. Independent SRSs find 77 of 140 Oak households and 48 of 120 Pine households use curbside composting. Let $p_O-p_P$ mean Oak minus Pine.\par\smallskip \textbf{Elena:} ``The two-sample $z$-interval is $(0.030,0.270)$.''\par \textbf{Devon:} ``Subtract the farthest endpoints of separate 95\% intervals. That gives $(-0.020,0.320)$, so zero is plausible.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Household samples}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Town} & \textbf{Use} & \textbf{Other} & \textbf{n} & \textbf{N} \\ \hline
+\textbf{Oak} & 77 & 63 & 140 & 2200 \\ \hline
+\textbf{Pine} & 48 & 72 & 120 & 1800 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which method gives the requested 95\% interval for $p_O-p_P$? Cite one design or numerical detail.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define $p_O$ and $p_P$ and name the interval procedure for $p_O-p_P$.
+  \item[\dokbadge{2}~(b)] Check independent samples, both 10 percent conditions, and all four counts. Compute the estimate, SE, margin of error, and 95\% interval.
+  \item[\dokbadge{3}~(c)] Choose the warranted method. Use design, counts, variance structure, and zero's location. Explain why separate 95\% intervals do not produce the requested coverage and how Devon's result misleads.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson8_live.html}{\texttt{\detokenize{u6_lesson8_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson8_live.html}
+
+\end{document}

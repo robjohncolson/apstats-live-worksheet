@@ -1,0 +1,57 @@
+# Topic 6.9 — Justifying a Claim Based on a Confidence Interval for a Difference of Population Proportions (B: 2026-12-14)
+topic: "6.9"
+ced2026: { unit: 3, topic: "3.11", label: "Justifying a Claim Based on a Confidence Interval for a Difference in Population Proportions" }
+title: "A Positive Effect Is Not Every Positive Claim"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "Which claims about direction, effect size, causation, and population scope does a confidence interval actually support?"
+worksheet: "u6_lesson9_live.html"
+
+rules_callout:
+  title: "MATCH EVERY CLAIM TO THE INTERVAL AND DESIGN (keep on the page)"
+  body: |
+    A confidence interval for $p_1-p_2$ gives plausible values for that population difference in the stated order.
+    If 0 is inside, no difference is plausible; if the whole interval is positive, the evidence supports $p_1>p_2$.
+    A claimed minimum effect $d$ is supported only when every interval value is at least $d$.
+    The confidence level is the long-run percent of intervals from repeated use of the method that capture the parameter,
+    not the probability that a fixed parameter or one computed interval is correct. Random assignment can support causation
+    for the experimental units; random sampling is what supports generalization to the sampled population.
+
+focus: aps-6.9-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to mark 0 and 0.10 relative to the interval before choosing a claim."
+    - "Begin the 6.9 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require separate statements about direction, magnitude, causation, and generalization."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose Iris or Cole and cite one endpoint or one feature of the recruitment and assignment."
+    - "Complete the follow-along about interval meaning, confidence level, and claim justification."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "What does excluding zero establish, and what does it not establish?"
+    - "Which plausible interval values are smaller than a 10-point increase?"
+    - "What repeated process owns the 95 percent?"
+    - "Which design feature supports causation, and which missing feature blocks district-wide generalization?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to audit each clause of a claim against either an interval endpoint or a study-design feature; do not accept a single blanket verdict."
+  watch_for:
+    - "Treating the point estimate as a guaranteed minimum effect."
+    - "Assigning 95 percent probability to the fixed difference or to this one interval."
+    - "Confusing random assignment with random sampling when stating population scope."
+  first_take_note: "Not graded. Cole joins familiar numbers into unsupported claims."
+
+visuals:
+  practice_experiment:
+    kind: two_way_table
+    col_label: "Experiment counts"
+    row_label: "Version"
+    cols: ["Complete", "Other", "Total"]
+    rows: ["Reminder", "Standard"]
+    cells:
+      - ["126", "54", "180"]
+      - ["105", "75", "180"]

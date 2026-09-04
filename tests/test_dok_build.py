@@ -154,6 +154,7 @@ def test_latex_text_converts_unicode_statistics_notation():
     assert bl.latex_text("H₀: p = p₀; Hₐ: p > p₀; np₀") == (
         r"$H_0$: p = $p_0$; $H_a$: p > $p_0$; $np_0$"
     )
+    assert bl.latex_text("p̂1 - p̂2") == r"$\widehat p_1$ - $\widehat p_2$"
 
 
 def test_tether_lines_remove_html_breaks_and_unsupported_stats_unicode():

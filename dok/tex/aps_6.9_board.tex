@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.9 \textperiodcentered\ TODAY'S PROBLEM}{A Positive Effect Is Not Every Positive Claim}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+In a district experiment, 360 volunteers are randomly assigned: 180 get daily reminders and 180 use a standard platform. By Friday, 126 reminder and 105 standard students finish optional practice. For students like these volunteers, a 95\% interval for $p_R-p_S$ is $(0.018,0.215)$.\par\smallskip \textbf{Iris:} ``The positive interval and random assignment support a causal increase of 1.8 to 21.5 points for students like these volunteers.''\par \textbf{Cole:} ``There is a 95\% chance reminders raise completion for all district students by at least 10 points.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Experiment counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Version} & \textbf{Complete} & \textbf{Other} & \textbf{Total} \\ \hline
+\textbf{Reminder} & 126 & 54 & 180 \\ \hline
+\textbf{Standard} & 105 & 75 & 180 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Whose claim is supported? Cite one endpoint or design feature.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State what $p_R-p_S$ represents, and identify whether $0$ and $0.10$ are contained in the reported interval.
+  \item[\dokbadge{2}~(b)] Interpret the 95\% confidence interval in context. Then interpret the 95\% confidence level as the long-run performance of the interval procedure.
+  \item[\dokbadge{3}~(c)] Choose the warranted conclusion. Use the positions of 0 and 0.10, distinguish random assignment from volunteer recruitment, and diagnose Cole's probability, minimum-effect, and population claims.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson9_live.html}{\texttt{\detokenize{u6_lesson9_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson9_live.html}
+
+\end{document}

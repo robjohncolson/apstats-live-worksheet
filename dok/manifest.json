@@ -250,5 +250,17 @@
     "skill": "4.B",
     "frq_pattern": "alpha-vs-power-which-error-tradeoff-fits-consequences",
     "worksheet": "u6_lesson7_live.html"
+  },
+  "6.8": {
+    "title": "One Difference, Not Two Separate Intervals",
+    "skill": "4.C",
+    "frq_pattern": "two-sample-interval-vs-separate-intervals",
+    "worksheet": "u6_lesson8_live.html"
+  },
+  "6.9": {
+    "title": "A Positive Effect Is Not Every Positive Claim",
+    "skill": "4.D",
+    "frq_pattern": "confidence-interval-claim-effect-size-and-scope-adjudication",
+    "worksheet": "u6_lesson9_live.html"
   }
 }

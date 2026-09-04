@@ -101,6 +101,8 @@ UNICODE_TO_LATEX = {
     "χ": r"$\chi$", "Σ": r"$\sum$", "√": r"$\surd$", "·": r"$\cdot$", "∩": r"$\cap$", "∪": r"$\cup$", "…": r"\ldots{}", "—": "---", "–": "--", "’": "'", "“": "``", "”": "''",
 }
 UNICODE_STAT_SEQUENCES = {
+    "p̂1": r"$\widehat p_1$",
+    "p̂2": r"$\widehat p_2$",
     "H₀": r"$H_0$",
     "Hₐ": r"$H_a$",
     "np₀": r"$np_0$",

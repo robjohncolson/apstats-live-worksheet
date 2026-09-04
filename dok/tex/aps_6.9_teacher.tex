@@ -1,0 +1,107 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 6.9 (CED 3.11) \textperiodcentered\ B: 2026-12-14 \textperiodcentered\ E: 2027-01-25 \textperiodcentered\ TEACHER KEY}{A Positive Effect Is Not Every Positive Claim}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{ENDURING UNDERSTANDING: UNC-4} --- An interval of values should be used to estimate parameters, in order to account for uncertainty.
+  \item \textbf{Skills: 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim. | 4.D --- Justify a claim based on a confidence interval.
+  \item UNC-4.M Interpret a confidence interval for a difference of proportions. [Skill 4.B]
+  \item UNC-4.M.1 In repeated random sampling with the same sample size, approximately C\% of confidence intervals created will capture the difference in population proportions. UNC-4.M.2 Interpreting a confidence interval for difference between population proportions should include a reference to the sample taken and details about the population it represents.
+  \item UNC-4.N Justify a claim based on a confidence interval for a difference of proportions. [Skill 4.D]
+  \item UNC-4.N.1 A confidence interval for difference in population proportions provides an interval of values that may provide sufficient evidence to support a particular claim in context.
+\end{itemize}
+}
+\textbf{Essential question:} Which claims about direction, effect size, causation, and population scope does a confidence interval actually support?\par
+\textbf{DOK-3 skill:} 4.D \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{confidence-\allowbreak{}interval-\allowbreak{}claim-\allowbreak{}effect-\allowbreak{}size-\allowbreak{}and-\allowbreak{}scope-\allowbreak{}adjudication}}\par
+\textbf{DOK rationale:} Part (c) adjudicates competing claims by coordinating interval direction, a practical-effect threshold, long-run confidence meaning, random assignment, volunteer recruitment, and the resulting limits on causal and population conclusions.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask students to mark 0 and 0.10 relative to the interval before choosing a claim.
+  \item Begin the 6.9 video follow-along at minute 5.
+  \item Return to the board slide at minute 33. Circulate and require separate statements about direction, magnitude, causation, and generalization.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose Iris or Cole and cite one endpoint or one feature of the recruitment and assignment.
+  \item Complete the follow-along about interval meaning, confidence level, and claim justification.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What does excluding zero establish, and what does it not establish?
+  \item Which plausible interval values are smaller than a 10-point increase?
+  \item What repeated process owns the 95 percent?
+  \item Which design feature supports causation, and which missing feature blocks district-wide generalization?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Ask students to audit each clause of a claim against either an interval endpoint or a study-design feature; do not accept a single blanket verdict.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating the point estimate as a guaranteed minimum effect.
+  \item Assigning 95 percent probability to the fixed difference or to this one interval.
+  \item Confusing random assignment with random sampling when stating population scope.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-bounded-claim} (required) --- Selects Iris and uses the interval above zero
+  \item \textbf{evaluates-practical-threshold} (required) --- Uses $0.10$ inside and lower endpoint $0.018$
+  \item \textbf{interprets-confidence-level} (required) --- Treats 95 percent as long-run method performance
+  \item \textbf{bounds-causal-scope} (required) --- Uses random assignment for a causal conclusion
+  \item \textbf{bounds-population-scope} (required) --- Uses volunteer recruitment to limit generalization
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Chooses Iris, uses 0 and 0.10, interprets confidence, and separates causal from population scope. \\ \hline
+\textbf{P} & Finds a positive but not guaranteed 10-point effect while weakening confidence or scope. \\ \hline
+\textbf{I} & Guarantees 10 points, assigns 95 percent to the parameter, or generalizes volunteers district-wide. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+In a district experiment, 360 volunteers are randomly assigned: 180 get daily reminders and 180 use a standard platform. By Friday, 126 reminder and 105 standard students finish optional practice. For students like these volunteers, a 95\% interval for $p_R-p_S$ is $(0.018,0.215)$.\par\smallskip \textbf{Iris:} ``The positive interval and random assignment support a causal increase of 1.8 to 21.5 points for students like these volunteers.''\par \textbf{Cole:} ``There is a 95\% chance reminders raise completion for all district students by at least 10 points.''\par
+\begin{center}
+\textbf{Experiment counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Version} & \textbf{Complete} & \textbf{Other} & \textbf{Total} \\ \hline
+\textbf{Reminder} & 126 & 54 & 180 \\ \hline
+\textbf{Standard} & 105 & 75 & 180 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Whose claim is supported? Cite one endpoint or design feature.\par
+\answer{Not graded. Cole joins familiar numbers into unsupported claims.}
+\end{firsttakebox}
+
+\textit{Rules callout ``MATCH EVERY CLAIM TO THE INTERVAL AND DESIGN (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State what $p_R-p_S$ represents, and identify whether $0$ and $0.10$ are contained in the reported interval.\par
+\answer{Here $p_R-p_S$ is the reminder-minus-standard difference in the population proportions of students like these volunteers who would complete the optional practice under the two conditions. The value $0$ is not in $(0.018,0.215)$, while $0.10$ is in the interval.}
+
+\dokbadge{2}~\textbf{(b)} Interpret the 95\% confidence interval in context. Then interpret the 95\% confidence level as the long-run performance of the interval procedure.\par
+\answer{We are 95\% confident that, for students like these volunteers, the reminder completion proportion is 0.018 to 0.215 greater than the standard proportion. In repeated uses of this method with the same group sizes, about 95\% of constructed intervals would capture the represented population difference.}
+
+\dokbadge{3}~\textbf{(c)} Choose the warranted conclusion. Use the positions of 0 and 0.10, distinguish random assignment from volunteer recruitment, and diagnose Cole's probability, minimum-effect, and population claims.\par
+\answer{Iris is warranted. The entire interval is positive, so it supports a causal increase for these randomly assigned volunteers or similar students. But $0.10$ is inside and the lower endpoint is $0.018$, so an increase below 10 points remains plausible despite the point estimate $0.1167$. Also, 95\% is the method's long-run capture rate, not a probability about this fixed interval or effect. Volunteer recruitment is not random sampling, so the experiment does not represent every district student. Cole falsely assures a 10-point minimum, a 95\% probability, and district-wide scope.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

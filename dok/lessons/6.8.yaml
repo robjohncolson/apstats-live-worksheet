@@ -1,0 +1,54 @@
+# Topic 6.8 — Confidence Intervals for the Difference of Two Proportions (B: 2026-12-11)
+topic: "6.8"
+ced2026: { unit: 3, topic: "3.10", label: "Confidence Intervals for a Difference in Population Proportions" }
+title: "One Difference, Not Two Separate Intervals"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do the study design and variance structure determine a valid interval for a difference in population proportions?"
+worksheet: "u6_lesson8_live.html"
+
+rules_callout:
+  title: "BUILD ONE INTERVAL FOR THE DIFFERENCE (keep on the page)"
+  body: |
+    For two independent random samples, estimate $p_1-p_2$ with a two-sample $z$-interval:
+    $(\hat p_1-\hat p_2)\pm z^*\sqrt{\hat p_1(1-\hat p_1)/n_1+\hat p_2(1-\hat p_2)/n_2}$.
+    Verify independent random samples or random assignment, $n_i\leq0.10N_i$ when sampling without replacement,
+    and at least 10 observed successes and failures in each group. For an interval, use each group's sample
+    proportion separately; because the samples are independent, estimated variances add before taking the square root.
+    Two separately constructed $C\%$ intervals do not automatically combine into one $C\%$ interval for $p_1-p_2$.
+
+focus: aps-6.8-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to choose a method before confirming it."
+    - "Begin the video at minute 5; return at minute 33 to separate variance, SE, and margin of error."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose Elena or Devon and cite design, counts, or zero."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in the sheet."
+  questions_to_ask:
+    - "What single parameter is the town comparison trying to estimate?"
+    - "Which four observed counts justify the normal approximation?"
+    - "Do standard errors or variances add?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Link the formula to design and the rejected method to zero."
+  watch_for:
+    - "Pooling the two sample proportions even though the task is to estimate an unrestricted difference."
+    - "Adding separate margins of error instead of adding estimated variance terms under the square root."
+    - "Assuming two individual 95 percent intervals automatically yield a 95 percent interval for their difference."
+  first_take_note: "Not graded. Equal centers do not make both uncertainty calculations valid."
+
+visuals:
+  compost_samples:
+    kind: two_way_table
+    col_label: "Household samples"
+    row_label: "Town"
+    cols: ["Use", "Other", "n", "N"]
+    rows: ["Oak", "Pine"]
+    cells:
+      - ["77", "63", "140", "2200"]
+      - ["48", "72", "120", "1800"]

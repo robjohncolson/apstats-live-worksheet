@@ -1,0 +1,112 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 6.8 (CED 3.10) \textperiodcentered\ B: 2026-12-11 \textperiodcentered\ E: 2027-01-22 \textperiodcentered\ TEACHER KEY}{One Difference, Not Two Separate Intervals}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 1.D} --- Identify an appropriate inference method for confidence intervals.
+  \item \textbf{Skill 4.C} --- Verify that inference procedures apply in a given situation.
+  \item \textbf{Skill 3.D} --- Construct a confidence interval, provided conditions for inference are met.
+  \item \textbf{EU UNC-4} --- An interval of values should be used to estimate parameters, in order to account for uncertainty.
+  \item \textbf{LO UNC-4.I} --- Identify an appropriate confidence interval procedure for a comparison of population proportions. [Skill 1.D]
+  \item \textbf{EK UNC-4.I.1} --- The appropriate confidence interval procedure for a two-sample comparison of proportions for one categorical variable is a two-sample z-interval for a difference between population proportions.
+  \item \textbf{LO UNC-4.J} --- Verify the conditions for calculating confidence intervals for a difference between population proportions. [Skill 4.C]
+  \item \textbf{EK UNC-4.J.1} --- In order to calculate confidence intervals to estimate a difference between proportions, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: i. Data should be collected using two independent, random samples or a randomized experiment.
+  \item ii. When sampling without replacement, check that n1 $\leq$ 10\%N1 and n2 $\leq$ 10\%N2.
+  \item b. To check that the sampling distribution of $\widehat p_1$ - $\widehat p_2$ is approximately normal (shape): i. For categorical variables, check that n1*$\widehat p_1$, n1*(1-$\widehat p_1$), n2*$\widehat p_2$, and n2*(1-$\widehat p_2$) are all greater than or equal to some predetermined value, typically either 5 or 10.
+  \item \textbf{LO UNC-4.K} --- Calculate an appropriate confidence interval for a comparison of population proportions. [Skill 3.D]
+  \item \textbf{EK UNC-4.K.1} --- For a comparison of proportions, the interval estimate is ($\widehat p_1$ - $\widehat p_2$) $\pm$ z* $\cdot$ sqrt($\widehat p_1$(1-$\widehat p_1$)/n1 + $\widehat p_2$(1-$\widehat p_2$)/n2). (Note: these formulas can be constructed from the general formula and SE formulas on the AP formula sheet; they need not be memorized.)
+  \item \textbf{LO UNC-4.L} --- Calculate an interval estimate based on a confidence interval for a difference of proportions. [Skill 3.D]
+  \item \textbf{EK UNC-4.L.1} --- Confidence intervals for a difference in proportions can be used to calculate interval estimates with specified units.
+\end{itemize}
+}
+\textbf{Essential question:} How do the study design and variance structure determine a valid interval for a difference in population proportions?\par
+\textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{two-\allowbreak{}sample-\allowbreak{}interval-\allowbreak{}vs-\allowbreak{}separate-\allowbreak{}intervals}}\par
+\textbf{DOK rationale:} Part (c) requires adjudicating two plausible interval methods by coordinating the two-sample design, condition evidence, variance structure, confidence-level target, and the inferential consequence of an invalid construction.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask students to choose a method before confirming it.
+  \item Begin the video at minute 5; return at minute 33 to separate variance, SE, and margin of error.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose Elena or Devon and cite design, counts, or zero.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What single parameter is the town comparison trying to estimate?
+  \item Which four observed counts justify the normal approximation?
+  \item Do standard errors or variances add?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Link the formula to design and the rejected method to zero.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Pooling the two sample proportions even though the task is to estimate an unrestricted difference.
+  \item Adding separate margins of error instead of adding estimated variance terms under the square root.
+  \item Assuming two individual 95 percent intervals automatically yield a 95 percent interval for their difference.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-two-sample-method} (required) --- Selects Elena's two-sample $z$-interval
+  \item \textbf{uses-design-and-counts} (required) --- Uses independent SRSs and counts 77, 63, 48, and 72
+  \item \textbf{explains-variance-combination} (required) --- Adds independent variance terms under one square root
+  \item \textbf{rejects-separate-interval-coverage} (required) --- Rejects automatic 95 percent coverage from two intervals
+  \item \textbf{traces-inferential-consequence} (required) --- Explains Devon's misleading inclusion of zero
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Selects Elena, uses design and counts, explains variance and coverage, and diagnoses the false zero conclusion. \\ \hline
+\textbf{P} & Selects Elena but incompletely explains the rejected construction or its consequence. \\ \hline
+\textbf{I} & Uses separate intervals, pools samples, or ignores design and zero. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Town Oak has 2{,}200 households and Pine 1{,}800. Independent SRSs find 77 of 140 Oak households and 48 of 120 Pine households use curbside composting. Let $p_O-p_P$ mean Oak minus Pine.\par\smallskip \textbf{Elena:} ``The two-sample $z$-interval is $(0.030,0.270)$.''\par \textbf{Devon:} ``Subtract the farthest endpoints of separate 95\% intervals. That gives $(-0.020,0.320)$, so zero is plausible.''\par
+\begin{center}
+\textbf{Household samples}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Town} & \textbf{Use} & \textbf{Other} & \textbf{n} & \textbf{N} \\ \hline
+\textbf{Oak} & 77 & 63 & 140 & 2200 \\ \hline
+\textbf{Pine} & 48 & 72 & 120 & 1800 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which method gives the requested 95\% interval for $p_O-p_P$? Cite one design or numerical detail.\par
+\answer{Not graded. Equal centers do not make both uncertainty calculations valid.}
+\end{firsttakebox}
+
+\textit{Rules callout ``BUILD ONE INTERVAL FOR THE DIFFERENCE (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Define $p_O$ and $p_P$ and name the interval procedure for $p_O-p_P$.\par
+\answer{$p_O$ and $p_P$ are the proportions of all Oak and Pine households using their town's service. Use a two-sample $z$-interval for $p_O-p_P$.}
+
+\dokbadge{2}~\textbf{(b)} Check independent samples, both 10 percent conditions, and all four counts. Compute the estimate, SE, margin of error, and 95\% interval.\par
+\answer{The SRSs are independent; $140\le220$ and $120\le180$; and counts 77, 63, 48, and 72 exceed 10. Thus $\hat p_O-\hat p_P=0.55-0.40=0.15$, $SE=0.0613829$, and $ME=1.96(0.0613829)=0.1203104$. The interval is $(0.0296896,0.2703104)\approx(0.030,0.270)$.}
+
+\dokbadge{3}~\textbf{(c)} Choose the warranted method. Use design, counts, variance structure, and zero's location. Explain why separate 95\% intervals do not produce the requested coverage and how Devon's result misleads.\par
+\answer{Elena is warranted. Independent SRSs and counts 77, 63, 48, and 72 support one two-sample interval. Each sample proportion estimates its own population proportion; independence makes the two estimated variance terms add under one square root. Devon instead combines separate intervals $(0.4676,0.6324)$ and $(0.3123,0.4877)$ into $(-0.0201,0.3201)$. Two individual 95\% intervals do not guarantee one 95\% interval for their difference. His wider result includes zero and falsely makes no difference look plausible; Elena's requested interval supports a positive Oak-minus-Pine difference of about 3 to 27 points.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}
