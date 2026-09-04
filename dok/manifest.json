@@ -125,6 +125,12 @@
     "frq_pattern": "binomial-conditions-then-is-this-outcome-unusual",
     "worksheet": "u4_lesson10-12_live.html"
   },
+  "4.11": {
+    "title": "Unusual Does Not Mean Impossible",
+    "skill": "4.B",
+    "frq_pattern": "binomial-mean-sd-unusual-vs-impossible",
+    "worksheet": "u4_lesson10-12_live.html"
+  },
   "4.2": {
     "title": "What Did Each Simulation Estimate?",
     "skill": "4.B",
@@ -166,5 +172,11 @@
     "skill": "4.B",
     "frq_pattern": "same-mean-different-sd-which-parameter-answers-the-question",
     "worksheet": "u4_lesson7-8_live.html"
+  },
+  "5.2": {
+    "title": "Same Score, Different Standing",
+    "skill": "4.B",
+    "frq_pattern": "same-score-two-models-compare-with-z",
+    "worksheet": "u5_lesson1-2_live.html"
   }
 }

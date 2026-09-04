@@ -1,0 +1,46 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 4.11 \textperiodcentered\ TODAY'S PROBLEM}{Unusual Does Not Mean Impossible}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose the same 70 percent free-throw shooter takes 100 attempts under comparable conditions and makes 58. Let $X$ be the number of makes if the career-rate model still applies.\par\smallskip \textbf{Coach:} ``Anything under 60 makes is impossible for a 70 percent shooter, so 58 proves the career rate no longer applies.''\par \textbf{Analyst:} ``A result can be unusual without being impossible; compare 58 with the model's mean and standard deviation.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Career-rate model}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Set} & \textbf{Attempts} & \textbf{Rate} & \textbf{Makes} \\ \hline
+\textbf{Tonight} & 100 & 0.70 & 58 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Whose statement is more defensible, the coach's or the analyst's? Name one quantity you would check.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State $n$ and $p$ for $X$ and write the formulas for the binomial mean and standard deviation.
+  \item[\dokbadge{2}~(b)] Without calculating yet, interpret the model's mean and standard deviation in the context of many sets of 100 free throws.
+  \item[\dokbadge{3}~(c)] Compute $\mu_X$, $\sigma_X$, and the $z$-score of 58. Check $np$ and $n(1-p)$ to decide whether a normal approximation is reasonable. Is 58 unusual? Adjudicate the two statements, distinguish ``unusual'' from ``impossible,'' and explain what the coach's claim could mislead a reader into believing.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson10-12_live.html}{\texttt{\detokenize{u4_lesson10-12_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson10-12_live.html}
+
+\end{document}
