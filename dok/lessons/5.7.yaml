@@ -1,0 +1,56 @@
+# Topic 5.7 — Sampling Distributions for Sample Means (B: 2027-01-11)
+topic: "5.7"
+ced2026: { unit: 4, topic: "4.1", label: "Sampling Distributions for Sample Means" }
+title: "Two Production Lines, Two Sampling Plans"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do population shape, sample size, and sampling variability determine whether a normal probability for a sample mean is trustworthy?"
+worksheet: "u5_lesson7_live.html"
+
+rules_callout:
+  title: "MODEL SAMPLE MEANS, NOT INDIVIDUAL VALUES (keep on the page)"
+  body: |
+    For an SRS of size $n$, $\mu_{\bar X}=\mu$ and $\sigma_{\bar X}=\sigma/\sqrt n$ when
+    $n\leq0.10N$ for sampling without replacement. The sampling distribution of $\bar X$ is
+    approximately normal if the population is approximately normal (for any $n$)
+    \textbf{or} if the population is not normal but $n\geq30$ (Central Limit Theorem).
+    A normal tail probability describes the mean of an entire random sample, not one individual value.
+
+focus: aps-5.7-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to mark one plausible clause in each claim without confirming either."
+    - "Begin the 5.7 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require a separate normality justification for each line."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Mark a plausible clause in each claim and cite population shape or sample size."
+    - "Complete the follow-along about center, standard deviation, normality, and probabilities for sample means."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Is 30 the only route to a normal sampling distribution?"
+    - "Does the Central Limit Theorem change the original population or the distribution of sample means?"
+    - "Why are both sampling distributions centered at 40 despite different sample sizes?"
+    - "How do standard deviations 4 and 2 change where 46 falls on each model?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to evaluate each clause of each claim, then connect the normality path and sampling standard deviation to its tail probability."
+  watch_for:
+    - "Using n at least 30 as a universal requirement even for a normal population."
+    - "Claiming a skewed population prevents the CLT from applying at n equals 36."
+    - "Using the population standard deviation of 12 for both distributions of sample means."
+  first_take_note: "Not graded. Each student is correct about one line and wrong about the other; the finish should replace either-or reasoning with the two separate normality pathways."
+
+visuals:
+  cycle_time_plans:
+    kind: two_way_table
+    col_label: "Sampling plans"
+    row_label: "Line"
+    cols: ["Shape", "$N$", "$n$", '$\mu$', '$\sigma$']
+    rows: ["A", "B"]
+    cells:
+      - ["Normal", "1000", "9", "40", "12"]
+      - ["Right-skewed", "1000", "36", "40", "12"]

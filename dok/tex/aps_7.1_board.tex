@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 7.1 \textperiodcentered\ TODAY'S PROBLEM}{Can Chance Explain the Mean Difference?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a researcher recruits 50 student volunteers to test whether a planning prompt lowers mean logic-task time, then randomly assigns 25 to the prompt and 25 to standard directions. Their means are 14.2 and 17.8 minutes, so prompt minus standard is $-3.6$. Under no effect, 18 of 2{,}000 rerandomized differences are $-3.6$ or lower.\par\smallskip \textbf{Nia:} ``A result this favorable is rare under no effect, supporting a causal decrease for students like these volunteers.''\par \textbf{Owen:} ``The $0.009$ is the probability of no effect, so there is a $99.1\%$ chance the prompt works for every district student.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Experiment results}\par\smallskip
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Group} & \textbf{n} & \textbf{Mean (min)} \\ \hline
+\textbf{Prompt} & 25 & 14.2 \\ \hline
+\textbf{Standard} & 25 & 17.8 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Whose use of the rerandomization result is better supported, Nia's or Owen's? Cite $-3.6$ or $18/2{,}000$.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the directional claim, the observed evidence statistic, and its expected value under no effect.
+  \item[\dokbadge{2}~(b)] Describe one rerandomization trial, compute the tail proportion, and interpret it under no effect.
+  \item[\dokbadge{3}~(c)] Decide whose conclusion is warranted using 0, $-3.6$, and 18 of 2{,}000. Distinguish the two directions of conditional probability, bound causation and generalization from the design, identify the remaining inference error, and explain the rejected statement's consequence.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson1_live.html}{\texttt{\detokenize{u7_lesson1_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson1_live.html}
+
+\end{document}

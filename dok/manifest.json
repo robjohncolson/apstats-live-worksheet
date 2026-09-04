@@ -209,6 +209,12 @@
     "frq_pattern": "independent-vs-paired-which-sampling-distribution-model-is-warranted",
     "worksheet": "u5_lesson6_live.html"
   },
+  "5.7": {
+    "title": "Two Production Lines, Two Sampling Plans",
+    "skill": "4.B",
+    "frq_pattern": "normal-vs-clt-model-adjudication",
+    "worksheet": "u5_lesson7_live.html"
+  },
   "6.1": {
     "title": "When a Normal Curve Distorts the Tail",
     "skill": "4.B",
@@ -274,5 +280,11 @@
     "skill": "4.D",
     "frq_pattern": "confidence-interval-claim-effect-size-and-scope-adjudication",
     "worksheet": "u6_lesson9_live.html"
+  },
+  "7.1": {
+    "title": "Can Chance Explain the Mean Difference?",
+    "skill": "4.B",
+    "frq_pattern": "rerandomization-probability-error-and-scope",
+    "worksheet": "u7_lesson1_live.html"
   }
 }

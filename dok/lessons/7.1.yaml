@@ -1,0 +1,61 @@
+# Topic 7.1 — Introducing Statistics: Should I Worry About Error? (B: 2027-01-12)
+topic: "7.1"
+ced2026: { unit: 4, topic: "4.2", label: "Constructing a CI for a Mean or Mean Difference" }
+title: "Can Chance Explain the Mean Difference?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How can rerandomization distinguish a treatment explanation from chance variation while preserving the possibility of inferential error?"
+worksheet: "u7_lesson1_live.html"
+
+rules_callout:
+  title: "ASK WHAT CHANCE WOULD DO UNDER NO EFFECT (keep on the page)"
+  body: |
+    In a randomized experiment, the observed difference in sample means is evidence for a directional claim.
+    Under no treatment effect, rerandomize the recorded responses into groups of the original sizes, compute the
+    difference in means in the stated order, and repeat. The proportion at least as extreme in the claim's direction
+    estimates $P(\text{result this extreme}\mid\text{no effect})$; it is not the probability that no effect is true.
+    A small tail proportion weakens the chance-only explanation but cannot make error impossible. Random assignment
+    supports causation for the experimental units; random sampling is needed to generalize to a target population.
+
+focus: aps-7.1-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to decide what 0.009 is a probability of before naming a preferred claim."
+    - "Begin the 7.1 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require students to name the assumption before interpreting the simulated proportion."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose Nia or Owen and cite the observed difference or simulation count."
+    - "Complete the follow-along about evidence, chance variation, and rerandomization for a difference in means."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Where should rerandomized differences be centered if the prompt has no effect?"
+    - "Why do we count differences at or below negative 3.6 rather than merely equal to it?"
+    - "What appears before and after the conditioning bar in the probability statement?"
+    - "Which study feature supports causation, and which missing feature limits generalization?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require separate statements about evidence, error risk, causation, and population scope."
+  watch_for:
+    - "Calling 0.009 the probability that the prompt has no effect."
+    - "Using 99.1 percent as certainty that the treatment works."
+    - "Treating random assignment of volunteers as a random sample from the district."
+  first_take_note: "Not graded. Owen's conditional-probability reversal is familiar and tempting; the finish should preserve both strong evidence and a nonzero chance of error."
+
+tether:
+  - '\textbf{VAR-1.I} Identify questions suggested by probabilities of errors in statistical inference. \textbf{[Skill 1.A]}'
+  - '\textbf{VAR-1.I.1} Random variation may result in errors in statistical inference.'
+
+visuals:
+  planning_prompt_results:
+    kind: two_way_table
+    col_label: "Experiment results"
+    row_label: "Group"
+    cols: ["n", "Mean (min)"]
+    rows: ["Prompt", "Standard"]
+    cells:
+      - ["25", "14.2"]
+      - ["25", "17.8"]

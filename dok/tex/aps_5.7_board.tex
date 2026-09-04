@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 5.7 \textperiodcentered\ TODAY'S PROBLEM}{Two Production Lines, Two Sampling Plans}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 seconds and standard deviation 12 seconds. Line A is approximately normal and is sampled with $n_A=9$; Line B is strongly right-skewed and is sampled with $n_B=36$. An auditor wants $P(\bar X>46)$ for each.\par\smallskip \textbf{Serena:} ``Only B can use a normal model because $36\geq30$; its probability is $0.00135$. A is too small.''\par \textbf{Mateo:} ``Only A can use a normal model because its population is normal; its probability is $0.0668$. B is too skewed.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Sampling plans}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Line} & \textbf{Shape} & \textbf{$N$} & \textbf{$n$} & \textbf{$\mu$} & \textbf{$\sigma$} \\ \hline
+\textbf{A} & Normal & 1000 & 9 & 40 & 12 \\ \hline
+\textbf{B} & Right-skewed & 1000 & 36 & 40 & 12 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which parts of Serena's and Mateo's reasoning look defensible? Cite one shape or sample-size detail.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the mean of each sampling distribution and the finite-population condition for using $\sigma_{\bar X}=\sigma/\sqrt n$.
+  \item[\dokbadge{2}~(b)] Verify the 10 percent condition, compute both sampling-distribution standard deviations, and calculate each normal tail probability when justified.
+  \item[\dokbadge{3}~(c)] Evaluate both claims using population shape, sample size, the two normality pathways, and sampling variability. Determine which probabilities are warranted, explain any difference between them, and trace what each incomplete rule would cause the auditor to discard.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson7_live.html}{\texttt{\detokenize{u5_lesson7_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson7_live.html}
+
+\end{document}
