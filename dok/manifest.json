@@ -82,5 +82,17 @@
     "skill": "4.A",
     "frq_pattern": "name-the-bias-direction-and-fix",
     "worksheet": "u3_lesson4_live.html"
+  },
+  "3.5": {
+    "title": "Which Design Supports Cause?",
+    "skill": "4.A",
+    "frq_pattern": "experiment-principles-which-design-supports-cause",
+    "worksheet": "u3_lesson5_live.html"
+  },
+  "3.6": {
+    "title": "When Blocking Earns Its Keep",
+    "skill": "4.B",
+    "frq_pattern": "completely-randomized-vs-block-when-blocking-earns-its-keep",
+    "worksheet": "u3_lesson6-7_live.html"
   }
 }
