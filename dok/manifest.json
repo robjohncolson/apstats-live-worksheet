@@ -293,6 +293,18 @@
     "frq_pattern": "paired-vs-independent-interval-and-scope",
     "worksheet": "u7_lesson2_live.html"
   },
+  "7.3": {
+    "title": "One Interval, Two Cutoffs",
+    "skill": "4.D",
+    "frq_pattern": "mean-interval-two-cutoffs-and-scope",
+    "worksheet": "u7_lesson3_live.html"
+  },
+  "7.4": {
+    "title": "Two Measurements per Technician",
+    "skill": "4.C",
+    "frq_pattern": "paired-test-setup-and-consequences",
+    "worksheet": "u7_lesson4_live.html"
+  },
   "8.1": {
     "title": "Two Simulations for Mystery Tokens",
     "skill": "4.B",

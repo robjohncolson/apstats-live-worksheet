@@ -1,0 +1,58 @@
+# Topic 7.3 — Justifying a Claim About a Population Mean Based on a Confidence Interval (B: 2027-01-15)
+topic: "7.3"
+ced2026: { unit: 4, topic: "4.3", label: "Justifying a Claim Based on a Confidence Interval for a Population Mean" }
+title: "One Interval, Two Cutoffs"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How can one confidence interval support a bounded claim while leaving a stronger claim unresolved?"
+worksheet: "u7_lesson3_live.html"
+
+rules_callout:
+  title: "LET THE ENTIRE INTERVAL GOVERN THE CLAIM (keep on the page)"
+  body: |
+    A $C\%$ confidence interval estimates a population mean, not the spread of individual observations.
+    We are $C\%$ confident that the interval captures the population mean represented by the random sample;
+    the fixed interval either contains that mean or it does not. A value inside the interval remains plausible.
+    To support $\mu<c$, the entire interval must lie below $c$; an endpoint merely falling below $c$ is not enough.
+    With other features held fixed, a larger sample tends to narrow a mean interval, while a higher confidence
+    level widens it.
+
+focus: aps-7.3-d3-1
+reinforcement: []
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: 'Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)'
+  teacher_does:
+    - "Board slide up at the bell. Ask which interval feature evaluates each cutoff."
+    - "Begin the 7.3 video follow-along at minute 5."
+    - "Return at minute 33. Require separate decisions for the two cutoffs and the individual-time claim."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one approach and cite an endpoint or the parameter."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "Why does 44.877 settle the 45-second claim but not the 42-second claim?"
+    - "Does this interval describe a population mean or 95 percent of individual transactions?"
+    - "Which population can the random sample represent?"
+  adult_role: "Solo teacher. Test each cutoff against the interval, then separate the mean from individual times."
+  watch_for:
+    - "Using only the lower endpoint to support a less-than claim."
+    - "Treating 95 percent confidence as a probability that the fixed population mean is in this realized interval."
+    - "Claiming that 95 percent of individual setup times fall between the confidence-interval endpoints."
+  first_take_note: "Not graded. Students should identify the parameter and an interval feature before deciding."
+
+visuals:
+  kiosk_sample:
+    kind: two_way_table
+    col_label: "Kiosk sample"
+    row_label: "Summary"
+    cols: ["Value"]
+    rows: ["Population", "$n$", "Mean (s)", "SD (s)", "Shape"]
+    cells:
+      - ["800"]
+      - ["25"]
+      - ["42.4"]
+      - ["6.0"]
+      - ["Symmetric; no outliers"]

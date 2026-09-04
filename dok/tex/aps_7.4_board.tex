@@ -1,0 +1,69 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 7.4 \textperiodcentered\ TODAY'S PROBLEM}{Two Measurements per Technician}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a company takes an SRS of 18 of its 300 technicians. Each completes the same task with old and new interfaces; interface order is randomly assigned. The plot shows $d=\text{new time}-\text{old time}$. Researchers ask whether the new interface reduces the population mean time.\par\smallskip \textbf{Nia:} ``The technician seems to be the independent unit, so I would build one difference per person; the subtraction order matters for the tail.''\par \textbf{Colin:} ``There are 36 recorded times, so I would use two independent samples of 18 and a two-sided alternative.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.77\linewidth,
+  height=1.44in,
+  ymin=0, ymax=2, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={New-interface time minus old-interface time (seconds)}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.2pt, color=dayblue] coordinates {
+  (-4.2,1)
+  (-3.6,1)
+  (-3.2,1)
+  (-2.9,1)
+  (-2.6,1)
+  (-2.4,1)
+  (-2.2,1)
+  (-2.0,1)
+  (-1.9,1)
+  (-1.7,1)
+  (-1.6,1)
+  (-1.4,1)
+  (-1.2,1)
+  (-1.0,1)
+  (-0.7,1)
+  (-0.4,1)
+  (0.0,1)
+  (0.6,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which setup better aligns with the study? Cite the measurement structure or the direction of the claim.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define $\mu_d$ and state hypotheses for the research question.
+  \item[\dokbadge{2}~(b)] Calculate $\bar d$ and $s_d$, verify random, 10 percent, and shape conditions, and name the procedure.
+  \item[\dokbadge{3}~(c)] Adjudicate the setups using the same 18 technicians, subtraction order, directional question, and difference plot. Explain why 36 times are not 36 independent units and how the rejected analysis could change both uncertainty and the question answered.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson4_live.html}{\texttt{\detokenize{u7_lesson4_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson4_live.html}
+
+\end{document}

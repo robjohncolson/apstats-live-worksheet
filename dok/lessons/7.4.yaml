@@ -1,0 +1,51 @@
+# Topic 7.4 — Setting Up a Test for a Population Mean (B: 2027-01-19)
+topic: "7.4"
+ced2026: { unit: 4, topic: "4.4", label: "Setting Up a Test for a Population Mean" }
+title: "Two Measurements per Technician"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How does the study structure determine the parameter, hypotheses, and conditions for a mean test?"
+worksheet: "u7_lesson4_live.html"
+
+rules_callout:
+  title: "PAIR THE DATA BEFORE YOU TEST (keep on the page)"
+  body: |
+    When the same individual is measured twice, define an order of subtraction and analyze the resulting
+    differences as one quantitative sample. For $d=\text{new}-\text{old}$, a reduction corresponds to
+    $H_a:\mu_d<0$; the null is $H_0:\mu_d=0$. With unknown population standard deviation, use a matched-pairs
+    one-sample $t$-test on the differences. Verify random sampling or random assignment, $n\leq0.10N$ when
+    sampling without replacement, and an approximately normal sampling distribution. If $n<30$, inspect the
+    differences themselves for strong skewness and outliers.
+
+focus: aps-7.4-d3-1
+reinforcement: []
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: 'Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)'
+  teacher_does:
+    - "Board slide up at the bell. Ask students to identify the independent observational units."
+    - "Begin the 7.4 video follow-along at minute 5."
+    - "Return at minute 33. Require the unit, subtraction order, tail, and shape evidence."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one setup and cite either the measurement structure or claim direction."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  questions_to_ask:
+    - "How many independent technicians are represented, 18 or 36?"
+    - 'What sign represents an improvement when $d=\text{new}-\text{old}$?'
+    - "What research question would a two-sided alternative answer instead?"
+  adult_role: "Solo teacher. Connect the design to one sample of differences and trace uncertainty and tail consequences."
+  watch_for:
+    - "Treating repeated measurements on the same 18 technicians as two independent samples."
+    - "Using 36 instead of 18 as the independent sample size."
+    - "Checking the old-time and new-time distributions instead of the distribution of within-technician differences."
+  first_take_note: "Not graded. Students should identify the independent unit and direction before naming a test."
+
+visuals:
+  interface_differences:
+    kind: dotplot
+    values: [-4.2, -3.6, -3.2, -2.9, -2.6, -2.4, -2.2, -2.0, -1.9, -1.7, -1.6, -1.4, -1.2, -1.0, -0.7, -0.4, 0.0, 0.6]
+    xlabel: "New-interface time minus old-interface time (seconds)"
+    scale: 0.9

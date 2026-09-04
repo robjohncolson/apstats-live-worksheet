@@ -158,6 +158,10 @@ def test_latex_text_converts_unicode_statistics_notation():
         r"$\widehat p_1$ - $\widehat p_2$; $\widehat p_1$ - $\widehat p_2$; "
         r"$\widehat p_c$; $p_1$, $p_2$, $n_1$, $n_2$, $N_1$, $N_2$"
     )
+    assert bl.latex_text("x̄₁, x̄₂, μ₀, μ₁, μ₂, μ_D, σ₁², σ₂, s₁², s₂, ȳ, ŷ") == (
+        r"$\bar{x}_1$, $\bar{x}_2$, $\mu_0$, $\mu_1$, $\mu_2$, $\mu_D$, "
+        r"$\sigma_1^2$, $\sigma_2$, $s_1^2$, $s_2$, $\bar{y}$, $\widehat{y}$"
+    )
 
 
 def test_tether_lines_remove_html_breaks_and_unsupported_stats_unicode():

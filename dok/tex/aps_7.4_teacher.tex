@@ -1,0 +1,134 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 7.4 (CED 4.4) \textperiodcentered\ B: 2027-01-19 \textperiodcentered\ E: 2027-03-05 \textperiodcentered\ TEACHER KEY}{Two Measurements per Technician}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 1.E} --- Identify an appropriate inference method for significance tests.
+  \item \textbf{Skill 1.F} --- Identify null and alternative hypotheses.
+  \item \textbf{Skill 4.C} --- Verify that inference procedures apply in a given situation.
+  \item \textbf{EU VAR-7} --- The t-distribution may be used to model variation.
+  \item \textbf{LO VAR-7.B} --- Identify an appropriate testing method for a population mean with unknown $\sigma$, including the mean difference between values in matched pairs. [Skill 1.E]
+  \item \textbf{EK VAR-7.B.1} --- The appropriate test for a population mean with unknown $\sigma$ is a one-sample t-test for a population mean.
+  \item \textbf{EK VAR-7.B.2} --- Matched pairs can be thought of as one sample of pairs. Once differences between pairs of values are found, inference for significance testing proceeds as for a population mean.
+  \item \textbf{LO VAR-7.C} --- Identify the null and alternative hypotheses for a population mean with unknown $\sigma$, including the mean difference between values in matched pairs. [Skill 1.F]
+  \item \textbf{EK VAR-7.C.1} --- The null hypothesis for a one-sample t-test for a population mean is $H_0$: $\mu$ = $\mu_0$, where $\mu_0$ is the hypothesized value. Depending upon the situation, the alternative hypothesis is $H_a$: $\mu$ < $\mu_0$, or $H_a$: $\mu$ > $\mu_0$, or $H_a$: $\mu$ $\neq$ $\mu_0$.
+  \item \textbf{EK VAR-7.C.2} --- When finding the mean difference, $\mu_D$, between values in a matched pair, it is important to define the order of subtraction.
+  \item \textbf{LO VAR-7.D} --- Verify the conditions for the test for a population mean, including the mean difference between values in matched pairs. [Skill 4.C]
+  \item \textbf{EK VAR-7.D.1} --- In order to make statistical inferences when testing a population mean, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: (i) Data should be collected using a random sample or a randomized experiment. (ii) When sampling without replacement, check that n $\leq$ 10\% N.
+  \item b. To check that the sampling distribution of $\bar{x}$ is approximately normal (shape): (i) If the observed distribution is skewed, n should be greater than 30. (ii) If the sample size is less than 30, the distribution of the sample data should be free from strong skewness and outliers.
+\end{itemize}
+}
+\textbf{Essential question:} How does the study structure determine the parameter, hypotheses, and conditions for a mean test?\par
+\textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{paired-\allowbreak{}test-\allowbreak{}setup-\allowbreak{}and-\allowbreak{}consequences}}\par
+\textbf{DOK rationale:} Part (c) coordinates repeated measures, subtraction order, tail direction, independent sample size, and shape evidence, then traces the uncertainty and research-question consequences of the rejected setup.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask students to identify the independent observational units.
+  \item Begin the 7.4 video follow-along at minute 5.
+  \item Return at minute 33. Require the unit, subtraction order, tail, and shape evidence.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Commit to one setup and cite either the measurement structure or claim direction.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item How many independent technicians are represented, 18 or 36?
+  \item What sign represents an improvement when $d=\text{new}-\text{old}$?
+  \item What research question would a two-sided alternative answer instead?
+\end{itemize}
+}{Solo teacher. Connect the design to one sample of differences and trace uncertainty and tail consequences.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating repeated measurements on the same 18 technicians as two independent samples.
+  \item Using 36 instead of 18 as the independent sample size.
+  \item Checking the old-time and new-time distributions instead of the distribution of within-technician differences.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{chooses-paired-setup} (required) --- Uses a matched-pairs one-sample test
+  \item \textbf{uses-paired-structure} (required) --- Treats 18 technicians as 18 independent units
+  \item \textbf{uses-order-and-direction} (required) --- Connects new minus old to a lower tail
+  \item \textbf{checks-difference-conditions} (required) --- Uses the SRS, 10 percent check, and difference shape
+  \item \textbf{traces-wrong-procedure} (required) --- Diagnoses uncertainty and question-direction consequences
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Coordinates pairing, subtraction order, lower tail, all conditions, and both consequences of the rejected setup. \\ \hline
+\textbf{P} & Recognizes pairing but incompletely explains the tail, conditions, or a consequence. \\ \hline
+\textbf{I} & Treats 36 times as independent or chooses a two-sided test without reconciling the reduction claim. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a company takes an SRS of 18 of its 300 technicians. Each completes the same task with old and new interfaces; interface order is randomly assigned. The plot shows $d=\text{new time}-\text{old time}$. Researchers ask whether the new interface reduces the population mean time.\par\smallskip \textbf{Nia:} ``The technician seems to be the independent unit, so I would build one difference per person; the subtraction order matters for the tail.''\par \textbf{Colin:} ``There are 36 recorded times, so I would use two independent samples of 18 and a two-sided alternative.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.61\linewidth,
+  height=1.15in,
+  ymin=0, ymax=2, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={New-interface time minus old-interface time (seconds)}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=1.7pt, color=dayblue] coordinates {
+  (-4.2,1)
+  (-3.6,1)
+  (-3.2,1)
+  (-2.9,1)
+  (-2.6,1)
+  (-2.4,1)
+  (-2.2,1)
+  (-2.0,1)
+  (-1.9,1)
+  (-1.7,1)
+  (-1.6,1)
+  (-1.4,1)
+  (-1.2,1)
+  (-1.0,1)
+  (-0.7,1)
+  (-0.4,1)
+  (0.0,1)
+  (0.6,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which setup better aligns with the study? Cite the measurement structure or the direction of the claim.\par
+\answer{Not graded. Students should identify the independent unit and direction before naming a test.}
+\end{firsttakebox}
+
+\textit{Rules callout ``PAIR THE DATA BEFORE YOU TEST (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Define $\mu_d$ and state hypotheses for the research question.\par
+\answer{Let $\mu_d$ be the population mean new-minus-old time for all 300 technicians. A reduction is negative, so $H_0:\mu_d=0$ and $H_a:\mu_d<0$.}
+
+\dokbadge{2}~\textbf{(b)} Calculate $\bar d$ and $s_d$, verify random, 10 percent, and shape conditions, and name the procedure.\par
+\answer{The differences sum to $-32.4$, so $\bar d=-1.8$ seconds; $s_d=1.2546$ seconds. The SRS satisfies $18\leq0.10(300)=30$. The difference plot is roughly symmetric with no outliers, supporting the small-sample shape check. Use a matched-pairs one-sample $t$-test on the differences.}
+
+\dokbadge{3}~\textbf{(c)} Adjudicate the setups using the same 18 technicians, subtraction order, directional question, and difference plot. Explain why 36 times are not 36 independent units and how the rejected analysis could change both uncertainty and the question answered.\par
+\answer{Nia's setup is warranted. The 18 technicians are the independent units, and their paired measurements form 18 differences. With $d=\text{new}-\text{old}$, reduction means $\mu_d<0$. The SRS, 10 percent check, and difference plot support the test. Treating 36 linked times as independent discards within-technician pairing and can distort the standard error and p-value. A two-sided alternative asks whether times differ either way, not specifically whether the new interface reduces time.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}
