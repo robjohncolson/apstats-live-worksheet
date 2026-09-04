@@ -69,6 +69,7 @@ The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 
 | `ai-grading-prompts*.js` | AI grading rubrics keyed by textarea ID — 73 files: one per worksheet (69) + edgar/MIT/study-guide variants (see Rubric Structure) |
 | `ai-tutor/` | 75 Socratic prompt artifacts (66 lesson + 9 PC), delivered via Desk copy buttons |
 | `u*_blooket.csv` / `*_blooket.csv` | 76 Blooket quiz CSVs at root |
+| `dok/` | **DOK ladders**: one DOK-3 problem per lesson day (student sheet + board slide + teacher key), YAML + `registry.jsonl` → `build_ladder.py` → LaTeX → `dok/pdf/`; TOC at `dok/index.html`; spec `APS_DOK_LADDER_SPEC.md` |
 | `u4_poster/` | Poster job cards + exemplars |
 | `unit4_5_schedule_v12.html` etc. | 16 schedule/calendar pages — superseded by the Desk; v12 is the latest |
 | `u3_random_block_review.html`, `u6-proportion-inference-plan.html`, `code-to-website-workshop.html` | One-off pages |
@@ -254,7 +255,7 @@ Do not re-add transpile work here. If a transpile session needs something from t
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **apstats-live-worksheet** (18676 symbols, 35189 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **apstats-live-worksheet** (18834 symbols, 35549 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 

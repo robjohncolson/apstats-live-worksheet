@@ -1,0 +1,544 @@
+r"""dok/build_ladder.py — one DOK-3 problem per lesson day, three editions.
+
+    python dok/build_ladder.py dok/lessons/1.6.yaml            # student + board + teacher .tex
+    python dok/build_ladder.py dok/lessons/1.6.yaml --edition board
+    python dok/build_ladder.py --all                            # every YAML in dok/lessons/
+    python dok/build_ladder.py --validate                       # registry + YAML checks, exit 1 on any problem
+
+Spec: APS_DOK_LADDER_SPEC.md. Ported 2026-09-03 from
+Lesson_planning/build_lesson_from_yaml.py and trimmed to the ladder.
+
+Inputs
+  dok/registry.jsonl        one JSON object per line (spec §2.1)
+  dok/lessons/{topic}.yaml  one per dated lesson day (spec §2.2)
+  ai-tutor/u{u}_l{n}.md     the CED tether (LO / EK lines) printed on the teacher key
+  data/lesson-schedule.json topic -> unit + dates (for the header + coverage)
+
+Outputs
+  dok/tex/aps_{topic}_{student,board,teacher}.tex
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parent.parent
+DOK = ROOT / "dok"
+REGISTRY = DOK / "registry.jsonl"
+LESSONS = DOK / "lessons"
+TEX_DIR = DOK / "tex"
+SCHEDULE = ROOT / "data" / "lesson-schedule.json"
+TUTOR_DIR = ROOT / "ai-tutor"
+PAGES_BASE = "https://robjohncolson.github.io/apstats-live-worksheet/"
+
+SKILL_RE = re.compile(r"^[1-4]\.[A-F]$")
+ID_RE = re.compile(r"^aps-\d+\.\d+-d[123]-\d+$")
+BANNED_RATIONALE_WORDS = ("hard", "easy", "difficult")
+DEFAULT_SPACE = {"first_take": "1.2in", "a": "0.9in", "b": "1.4in", "c": "2.4in"}
+
+
+# ---- Loading -------------------------------------------------------------
+
+
+def load_registry() -> dict[str, dict]:
+    out: dict[str, dict] = {}
+    with REGISTRY.open(encoding="utf-8") as f:
+        for lineno, line in enumerate(f, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as e:
+                hint = line[:80] + ("..." if len(line) > 80 else "")
+                raise SystemExit(
+                    f"registry.jsonl line {lineno}: JSON decode error ({e.msg} at col {e.colno}).\n"
+                    f"  first 80 chars: {hint}"
+                ) from e
+            if row["id"] in out:
+                raise SystemExit(f"registry.jsonl line {lineno}: duplicate id {row['id']}")
+            out[row["id"]] = row
+    return out
+
+
+def load_schedule() -> dict:
+    return json.loads(SCHEDULE.read_text(encoding="utf-8"))
+
+
+def load_lesson(path: Path) -> dict:
+    lesson = yaml.safe_load(path.read_text(encoding="utf-8"))
+    lesson["_path"] = str(path)
+    return lesson
+
+
+def tutor_path(topic: str) -> Path:
+    unit, n = topic.split(".")
+    return TUTOR_DIR / f"u{unit}_l{n}.md"
+
+
+def tether_lines(topic: str) -> list[str]:
+    """The 'Skill / EU / LO / EK' bullet lines from the tutor artifact, verbatim."""
+    p = tutor_path(topic)
+    if not p.exists():
+        return []
+    out = []
+    for line in p.read_text(encoding="utf-8").splitlines():
+        if re.match(r"^- (Skill|Enduring Understanding|LO|EK) ", line):
+            out.append(line[2:].strip())
+    return out
+
+
+# ---- Validation (spec §2.1 / §7 T1) -------------------------------------
+
+
+def validate_item(row: dict, skill_codes: set[str]) -> list[str]:
+    e: list[str] = []
+    iid = row.get("id", "?")
+    if not ID_RE.match(iid):
+        e.append(f"{iid}: id must match aps-{{topic}}-d{{1|2|3}}-{{k}}")
+    if row.get("dok") not in (1, 2, 3):
+        e.append(f"{iid}: dok must be 1, 2 or 3")
+    if row.get("role") not in ("focus", "reinforcement"):
+        e.append(f"{iid}: role must be focus | reinforcement")
+    rationale = row.get("dok_rationale", "")
+    if len(rationale) < 40:
+        e.append(f"{iid}: dok_rationale must be at least 40 chars")
+    if any(w in rationale.lower() for w in BANNED_RATIONALE_WORDS):
+        e.append(f"{iid}: dok_rationale describes difficulty, not the kind of thinking (R2)")
+    for code in [row.get("skill")] + [p.get("skill") for p in row.get("parts", [])]:
+        if code is not None and (not SKILL_RE.match(str(code)) or code not in skill_codes):
+            e.append(f"{iid}: unknown CED skill code {code!r}")
+    if re.search(r"\d", row.get("stem", "")) and row.get("hypothetical") is not True:
+        e.append(f"{iid}: a stem with numbers must declare hypothetical: true (R6)")
+
+    if row.get("role") == "focus":
+        parts = row.get("parts") or []
+        if not row.get("first_take"):
+            e.append(f"{iid}: focus needs a first_take prompt")
+        if not 2 <= len(parts) <= 4:
+            e.append(f"{iid}: focus needs 2-4 parts")
+        doks = [p.get("dok") for p in parts]
+        if doks != sorted(doks):
+            e.append(f"{iid}: part DOKs must be non-decreasing")
+        if parts and doks[-1] != row.get("dok"):
+            e.append(f"{iid}: last part's dok must equal the item's top dok")
+        if row.get("dok") != 3:
+            e.append(f"{iid}: every lesson's focus problem tops out at DOK 3 (spec §1.3)")
+        if not row.get("frq_pattern"):
+            e.append(f"{iid}: DOK-3 focus needs frq_pattern")
+        sc = row.get("scoring") or {}
+        if not (sc.get("expectedElements") and sc.get("scoringGuide")):
+            e.append(f"{iid}: DOK-3 focus needs scoring.expectedElements + scoring.scoringGuide")
+        answers = row.get("answers") or {}
+        for p in parts:
+            if p.get("label") not in answers:
+                e.append(f"{iid}: missing answer for part ({p.get('label')})")
+    return e
+
+
+def validate_lesson(lesson: dict, registry: dict) -> list[str]:
+    e: list[str] = []
+    topic = str(lesson.get("topic", "?"))
+    focus = lesson.get("focus")
+    if not focus or focus not in registry:
+        e.append(f"{topic}: focus must name a registry id (got {focus!r})")
+    elif registry[focus].get("role") != "focus" or registry[focus].get("dok") != 3:
+        e.append(f"{topic}: focus item must be role=focus, dok=3")
+    for rid in lesson.get("reinforcement") or []:
+        if rid not in registry:
+            e.append(f"{topic}: reinforcement id {rid} not in registry")
+    if focus in registry:
+        vis = registry[focus].get("visual")
+        if vis and vis not in (lesson.get("visuals") or {}):
+            e.append(f"{topic}: focus visual {vis!r} has no visuals block")
+    for name, spec in (lesson.get("visuals") or {}).items():
+        e.extend(f"{topic}: visual {name}: {msg}" for msg in validate_visual(spec))
+    if not lesson.get("worksheet"):
+        e.append(f"{topic}: worksheet filename required (board slide link)")
+    return e
+
+
+VISUAL_KEYS = {
+    "pgfplot_hist": {"kind", "bins", "counts", "xlabel", "ylabel", "scale"},
+    "dotplot": {"kind", "values", "xlabel", "scale"},
+    "boxplot": {"kind", "five", "xlabel", "scale", "outliers"},
+    "two_way_table": {"kind", "rows", "cols", "cells", "row_label", "col_label"},
+    "scatter": {"kind", "points", "xlabel", "ylabel", "xmin", "xmax", "ymin", "ymax", "scale"},
+    "raw_tikz": {"kind", "body", "wrap_center"},
+}
+
+
+def validate_visual(spec: dict) -> list[str]:
+    """T4: a visual carries data + labels only (no answer-bearing annotations)."""
+    kind = spec.get("kind")
+    if kind not in VISUAL_KEYS:
+        return [f"unknown kind {kind!r}"]
+    extra = set(spec) - VISUAL_KEYS[kind]
+    return [f"unexpected keys {sorted(extra)} (data + labels only)"] if extra else []
+
+
+def all_skill_codes() -> set[str]:
+    """Every skill code that appears in the parsed CED frameworks (via the tutor tethers)."""
+    codes: set[str] = set()
+    for p in TUTOR_DIR.glob("u*_l*.md"):
+        for m in re.finditer(r"Skill[s]? ([1-4]\.[A-F])", p.read_text(encoding="utf-8")):
+            codes.add(m.group(1))
+    # The four categories always exist even if a tutor file misses one.
+    codes.update(f"{c}.{l}" for c in "1234" for l in "ABCDEF")
+    return codes
+
+
+# ---- Visual renderers ----------------------------------------------------
+
+
+def render_visual(spec: dict, scale: float = 1.0) -> str:
+    kind = spec.get("kind")
+    if kind == "pgfplot_hist":
+        return render_hist(spec, scale)
+    if kind == "dotplot":
+        return render_dotplot(spec, scale)
+    if kind == "boxplot":
+        return render_boxplot(spec, scale)
+    if kind == "two_way_table":
+        return render_two_way(spec)
+    if kind == "scatter":
+        return render_scatter(spec, scale)
+    if kind == "raw_tikz":
+        body = spec.get("body", "").rstrip()
+        return f"\\begin{{center}}\n{body}\n\\end{{center}}\n" if spec.get("wrap_center", True) else body + "\n"
+    return f"% unknown visual kind: {kind}\n"
+
+
+def _axis_size(scale: float, w: float = 0.85, h: float = 2.3) -> str:
+    return f"  width={w * scale:.2f}\\linewidth,\n  height={h * scale:.2f}in,\n"
+
+
+def render_hist(s: dict, scale: float) -> str:
+    bins, counts = s["bins"], s["counts"]
+    width = bins[1] - bins[0]
+    bars = "\n".join(f"  ({bins[i]},{counts[i]})" for i in range(len(counts)))
+    return (
+        "\\begin{center}\n\\begin{tikzpicture}\n\\begin{axis}[\n"
+        + _axis_size(scale)
+        + f"  ybar interval, ymin=0, ymax={max(counts) + 2},\n"
+        + f"  xmin={bins[0]}, xmax={bins[-1]}, xtick={{{','.join(str(b) for b in bins)}}},\n"
+        + f"  xlabel={{{s.get('xlabel', '')}}}, ylabel={{{s.get('ylabel', '')}}},\n"
+        + "  ymajorgrids, tick label style={font=\\small}, label style={font=\\small},\n"
+        + "  bar shift=0pt, x tick label as interval=false\n]\n"
+        + f"\\addplot[fill=calloutblue, draw=dayblue] coordinates {{\n{bars}\n  ({bins[-1]},0)\n}};\n"
+        + "\\end{axis}\n\\end{tikzpicture}\n\\end{center}\n"
+    )
+
+
+def render_dotplot(s: dict, scale: float) -> str:
+    values = sorted(s["values"])
+    stacks: dict[float, int] = {}
+    pts = []
+    for v in values:
+        stacks[v] = stacks.get(v, 0) + 1
+        pts.append(f"  ({v},{stacks[v]})")
+    return (
+        "\\begin{center}\n\\begin{tikzpicture}\n\\begin{axis}[\n"
+        + _axis_size(scale, h=1.6)
+        + f"  ymin=0, ymax={max(stacks.values()) + 1}, ytick=\\empty, axis y line=none, axis x line=bottom,\n"
+        + f"  xlabel={{{s.get('xlabel', '')}}}, tick label style={{font=\\small}}, label style={{font=\\small}}\n]\n"
+        + f"\\addplot[only marks, mark=*, mark size={2.4 * scale:.1f}pt, color=dayblue] coordinates {{\n"
+        + "\n".join(pts) + "\n};\n\\end{axis}\n\\end{tikzpicture}\n\\end{center}\n"
+    )
+
+
+def render_boxplot(s: dict, scale: float) -> str:
+    lo, q1, med, q3, hi = s["five"]
+    outs = " ".join(f"({v},1)" for v in s.get("outliers", []))
+    return (
+        "\\begin{center}\n\\begin{tikzpicture}\n\\begin{axis}[\n"
+        + _axis_size(scale, h=1.4)
+        + "  ytick=\\empty, axis y line=none, axis x line=bottom, ymin=0.5, ymax=1.5,\n"
+        + f"  xlabel={{{s.get('xlabel', '')}}}, tick label style={{font=\\small}}, label style={{font=\\small}}\n]\n"
+        + f"\\addplot[boxplot prepared={{lower whisker={lo}, lower quartile={q1}, median={med}, "
+        + f"upper quartile={q3}, upper whisker={hi}}}, fill=calloutblue, draw=dayblue] coordinates {{}};\n"
+        + (f"\\addplot[only marks, mark=*, color=warmred] coordinates {{{outs}}};\n" if outs else "")
+        + "\\end{axis}\n\\end{tikzpicture}\n\\end{center}\n"
+    )
+
+
+def render_two_way(s: dict) -> str:
+    cols = s["cols"]
+    head = " & ".join([f"\\textbf{{{s.get('row_label', '')}}}"] + [f"\\textbf{{{c}}}" for c in cols])
+    body = "".join(
+        f"\\textbf{{{r}}} & " + " & ".join(str(v) for v in s["cells"][i]) + " \\\\ \\hline\n"
+        for i, r in enumerate(s["rows"])
+    )
+    return (
+        "\\begin{center}\n"
+        f"\\textbf{{{s.get('col_label', '')}}}\\par\\smallskip\n"
+        f"\\begin{{tabular}}{{|l|{'c|' * len(cols)}}}\n\\hline\n{head} \\\\ \\hline\n{body}"
+        "\\end{tabular}\n\\end{center}\n"
+    )
+
+
+def render_scatter(s: dict, scale: float) -> str:
+    pts = "\n".join(f"  ({x},{y})" for x, y in s["points"])
+    return (
+        "\\begin{center}\n\\begin{tikzpicture}\n\\begin{axis}[\n"
+        + _axis_size(scale)
+        + f"  xmin={s['xmin']}, xmax={s['xmax']}, ymin={s['ymin']}, ymax={s['ymax']},\n"
+        + f"  xlabel={{{s.get('xlabel', '')}}}, ylabel={{{s.get('ylabel', '')}}}, grid=major,\n"
+        + "  tick label style={font=\\small}, label style={font=\\small}\n]\n"
+        + f"\\addplot[only marks, mark=*, mark size={2.2 * scale:.1f}pt, color=dayblue] coordinates {{\n{pts}\n}};\n"
+        + "\\end{axis}\n\\end{tikzpicture}\n\\end{center}\n"
+    )
+
+
+# ---- Small blocks --------------------------------------------------------
+
+
+def callout_block(title: str, color: str, body: str) -> str:
+    return f"\\begin{{callout}}{{{title}}}{{{color}}}\n{body.rstrip()}\n\\end{{callout}}\n\n"
+
+
+def bulleted(items: list[str]) -> str:
+    if not items:
+        return ""
+    return (
+        "\\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]\n"
+        + "".join(f"  \\item {it}\n" for it in items)
+        + "\\end{itemize}\n"
+    )
+
+
+def header_line(lesson: dict, schedule: dict) -> str:
+    ced = lesson.get("ced2026") or {}
+    dates = schedule["lessons"].get(str(lesson["topic"]), {}).get("periods", {})
+    when = " \\textperiodcentered\\ ".join(f"{p}: {d}" for p, d in sorted(dates.items()))
+    return (
+        f"AP Statistics \\textperiodcentered\\ Topic {lesson['topic']}"
+        f" (CED {ced.get('unit', '?')}.{str(ced.get('topic', '?')).split('.')[-1]})"
+        f" \\textperiodcentered\\ {when}"
+    )
+
+
+def part_block(part: dict, space: dict, answers: dict | None) -> str:
+    label = part["label"]
+    out = [f"\\dokbadge{{{part['dok']}}}~\\textbf{{({label})}} {part['prompt'].strip()}\\par"]
+    if answers is not None:
+        out.append(f"\\answer{{{answers.get(label, '(no key)')}}}")
+    else:
+        out.append(f"\\workspace{{{space.get(label, '1in')}}}")
+    return "\n".join(out) + "\n\n"
+
+
+def scoring_table(sc: dict) -> str:
+    els = bulleted([
+        f"\\textbf{{{el['id']}}}{' (required)' if el.get('required') else ''} --- {el['description']}"
+        for el in sc.get("expectedElements", [])
+    ])
+    guide = sc.get("scoringGuide", {})
+    rows = "".join(
+        f"\\textbf{{{k}}} & {guide.get(k, '')} \\\\ \\hline\n" for k in ("E", "P", "I")
+    )
+    mistakes = bulleted(sc.get("commonMistakes", []))
+    return (
+        "\\sectionbanner{SCORING PART (c) --- E / P / I}\n\n"
+        "\\textbf{Expected elements}\n" + els + "\n"
+        "{\\small\\renewcommand{\\arraystretch}{1.25}\n"
+        "\\noindent\\begin{tabular}{|p{0.5in}|p{5.9in}|}\n\\hline\n" + rows + "\\end{tabular}}\n\n"
+        + ("\\textbf{Common mistakes}\n" + mistakes + "\n" if mistakes else "")
+    )
+
+
+# ---- Editions ------------------------------------------------------------
+
+
+def shared_problem(lesson: dict, item: dict, scale: float) -> str:
+    """Stem + visual, identical across the three editions (R5: same TikZ source)."""
+    out = [item["stem"].strip() + "\\par\n"]
+    vis = item.get("visual")
+    if vis:
+        out.append(render_visual(lesson["visuals"][vis], scale))
+    return "".join(out)
+
+
+def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
+    item = registry[lesson["focus"]]
+    space = {**DEFAULT_SPACE, **(lesson.get("space") or {})}
+    rules = lesson.get("rules_callout") or {}
+    parts = [
+        "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n\\renewcommand{\\answer}[1]{}\n\n",
+        "\\begin{document}\n\n",
+        f"\\ladderheading{{{header_line(lesson, schedule)}}}{{{lesson['title']}}}\n\n",
+        "\\focusbanner{TODAY'S PROBLEM}\n\n",
+        shared_problem(lesson, item, 1.0),
+        f"\\begin{{firsttakebox}}{{FIRST TAKE --- before the video ({lesson['minutes'].get('first_take', 5)} min)}}\n"
+        f"{item['first_take'].strip()}\n\\workspace{{{space['first_take']}}}\n\\end{{firsttakebox}}\n\n",
+    ]
+    if rules:
+        parts.append(callout_block(f"\\IconBook\\ {rules['title']}", "calloutgreen", rules["body"]))
+    # Front = read + commit. Back = finish + turn in. A deliberate two-sided sheet.
+    parts.append("\\newpage\n\\textbf{Finish after the video:}\\par\\smallskip\n\n")
+    for p in item["parts"]:
+        parts.append(part_block(p, space, answers=None))
+    for frame in item.get("sentence_frames", []):
+        parts.append(f"\\begin{{sentenceframebox}}\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n")
+    parts.append(
+        f"\\begin{{summaryexitbox}}{{EXIT --- turn this in}}\n{lesson['exit_reflection']}\\par\n"
+        "\\workspace{0.4in}\n\\end{summaryexitbox}\n\n"
+    )
+    for k, rid in enumerate(lesson.get("reinforcement") or [], start=1):
+        r = registry[rid]
+        parts.append(
+            f"\\bankitem{{Optional \\#{k} --- not collected}}{{\\dokbadge{{{r['dok']}}}~{r['stem'].strip()}}}{{}}\n\n"
+        )
+    parts.append("\\end{document}\n")
+    return "".join(parts)
+
+
+def emit_board(lesson: dict, registry: dict, schedule: dict) -> str:
+    item = registry[lesson["focus"]]
+    ws_url = PAGES_BASE + lesson["worksheet"]
+    part_lines = "".join(
+        f"  \\item[\\dokbadge{{{p['dok']}}}~({p['label']})] {p['prompt'].strip()}\n" for p in item["parts"]
+    )
+    return (
+        "\\documentclass[14pt]{extarticle}\n\\usepackage{preamble}\n"
+        "\\geometry{letterpaper, landscape, margin=0.5in}\n\\usepackage{qrcode}\n"
+        "\\renewcommand{\\answer}[1]{}\n\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\\pagestyle{empty}\n\n"
+        f"\\daybanner{{Topic {lesson['topic']} \\textperiodcentered\\ TODAY'S PROBLEM}}{{{lesson['title']}}}\n\n"
+        "\\noindent\\begin{minipage}[t]{0.57\\linewidth}\n\\vspace{0pt}\n"
+        + item["stem"].strip() + "\\par\n"
+        + "\\end{minipage}\\hfill\n"
+        "\\begin{minipage}[t]{0.40\\linewidth}\n\\vspace{0pt}\n"
+        + (render_visual(lesson["visuals"][item["visual"]], 1.0) if item.get("visual") else "")
+        + "\\end{minipage}\n\n"
+        f"\\begin{{firsttakebox}}{{FIRST TAKE ({lesson['minutes'].get('first_take', 5)} min, on your sheet)}}\n"
+        f"{item['first_take'].strip()}\n\\end{{firsttakebox}}\n\n"
+        "\\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]\n" + part_lines + "\\end{description}\n\n"
+        "\\vfill\n\\noindent\\begin{minipage}{0.84\\linewidth}\n"
+        f"\\textbf{{Video + follow-along:}} \\href{{{ws_url}}}{{\\texttt{{\\detokenize{{{lesson['worksheet']}}}}}}} (scan the code)\\par\n"
+        "\\textbf{Finish (a)--(c) after the video. Turn in your sheet.}\n\\end{minipage}\\hfill\n"
+        f"\\qrcode[height=0.75in]{{{ws_url}}}\n\n\\end{{document}}\n"
+    )
+
+
+def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
+    item = registry[lesson["focus"]]
+    space = {**DEFAULT_SPACE, **(lesson.get("space") or {})}
+    t = lesson.get("teacher") or {}
+    rules = lesson.get("rules_callout") or {}
+    m = lesson["minutes"]
+    total = sum(v for v in m.values() if isinstance(v, (int, float)))
+    tether = tether_lines(str(lesson["topic"]))
+    parts = [
+        "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\n",
+        f"\\daybanner{{{header_line(lesson, schedule)} \\textperiodcentered\\ TEACHER KEY}}{{{lesson['title']}}}\n\n",
+        "\\sectionbanner{CED TETHER}\n\n{\\small\n" + (bulleted(tether) if tether else "\\textit{(no tutor artifact for this topic)}\n") + "}\n",
+        f"\\textbf{{Essential question:}} {lesson.get('essential_question', '')}\\par\n",
+        f"\\textbf{{DOK-3 skill:}} {item.get('skill')} \\textperiodcentered\\ \\textbf{{FRQ pattern:}} \\texttt{{{item.get('frq_pattern')}}}\\par\n",
+        f"\\textbf{{DOK rationale:}} {item.get('dok_rationale')}\\par\n\n",
+        f"\\frameworkphaseheader{{{t.get('phase_tag', 'Do Now → Explore → Exit')}}}{{1 $\\rightarrow$ 3}}{{{total:g}}}"
+        f"{{%\n{bulleted(t.get('teacher_does', []))}}}"
+        f"{{%\n{bulleted(t.get('students_do', []))}}}"
+        f"{{%\n{bulleted(t.get('questions_to_ask', []))}}}"
+        f"{{{t.get('adult_role', '')}}}\n\n",
+    ]
+    if t.get("watch_for"):
+        parts.append(callout_block("\\IconWarn\\ WATCH FOR", "calloutred", bulleted(t["watch_for"])))
+    parts.append(scoring_table(item.get("scoring") or {}))
+    for k, rid in enumerate(lesson.get("reinforcement") or [], start=1):
+        r = registry[rid]
+        parts.append(f"\\bankitem{{Optional \\#{k} --- not collected}}{{\\dokbadge{{{r['dok']}}}~{r['stem'].strip()}}}{{}}\n")
+        parts.append(f"\\answer{{{(r.get('answers') or {}).get('a', r.get('answer', '(no key)'))}}}\n\n")
+    parts.append("\\clearpage\n\\focusbanner{TODAY'S PROBLEM --- annotated}\n\n")
+    parts.append(shared_problem(lesson, item, 0.8))
+    parts.append(
+        f"\\begin{{firsttakebox}}{{FIRST TAKE ({m.get('first_take', 5)} min)}}\n{item['first_take'].strip()}\\par\n"
+        f"\\answer{{{t.get('first_take_note', 'Not graded. Any committed sentence counts.')}}}\n\\end{{firsttakebox}}\n\n"
+    )
+    if rules:
+        parts.append(f"\\textit{{Rules callout ``{rules['title']}'' is printed on the student sheet.}}\\par\\medskip\n\n")
+    for p in item["parts"]:
+        parts.append(part_block(p, space, answers=item.get("answers") or {}))
+    parts.append(f"\\begin{{summaryexitbox}}{{EXIT}}\n{lesson['exit_reflection']}\n\\end{{summaryexitbox}}\n\n")
+    parts.append("\\end{document}\n")
+    return "".join(parts)
+
+
+# ---- Main ----------------------------------------------------------------
+
+
+def build(path: Path, editions: tuple[str, ...], registry: dict, schedule: dict) -> None:
+    lesson = load_lesson(path)
+    problems = validate_lesson(lesson, registry)
+    if problems:
+        raise SystemExit("\n".join(problems))
+    TEX_DIR.mkdir(exist_ok=True)
+    topic = str(lesson["topic"])
+    emitters = {"student": emit_student, "board": emit_board, "teacher": emit_teacher}
+    for ed in editions:
+        out = emitters[ed](lesson, registry, schedule)
+        target = TEX_DIR / f"aps_{topic}_{ed}.tex"
+        target.write_text(out, encoding="utf-8", newline="\n")
+        print(f"wrote {target.relative_to(ROOT)} ({len(out)} chars)")
+
+
+def write_manifest(registry: dict) -> None:
+    """dok/manifest.json — what dok/index.html renders: built topics -> title + DOK-3 skill."""
+    out = {}
+    for path in sorted(LESSONS.glob("*.yaml")):
+        lesson = load_lesson(path)
+        item = registry.get(lesson.get("focus"), {})
+        out[str(lesson["topic"])] = {
+            "title": lesson["title"],
+            "skill": item.get("skill"),
+            "frq_pattern": item.get("frq_pattern"),
+            "worksheet": lesson.get("worksheet"),
+        }
+    (DOK / "manifest.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8", newline="\n")
+    print(f"wrote dok/manifest.json ({len(out)} built)")
+
+
+def validate_all() -> int:
+    registry = load_registry()
+    codes = all_skill_codes()
+    problems: list[str] = []
+    for row in registry.values():
+        problems.extend(validate_item(row, codes))
+    for path in sorted(LESSONS.glob("*.yaml")):
+        problems.extend(validate_lesson(load_lesson(path), registry))
+    if problems:
+        print("\n".join(problems))
+        return 1
+    print(f"ok: {len(registry)} registry rows, {len(list(LESSONS.glob('*.yaml')))} lessons")
+    return 0
+
+
+def main() -> int:
+    p = argparse.ArgumentParser()
+    p.add_argument("yaml_path", nargs="?", help="dok/lessons/{topic}.yaml")
+    p.add_argument("--edition", choices=("student", "board", "teacher", "all"), default="all")
+    p.add_argument("--all", action="store_true", help="build every lesson YAML")
+    p.add_argument("--validate", action="store_true", help="registry + lesson checks only")
+    args = p.parse_args()
+
+    if args.validate:
+        return validate_all()
+
+    registry = load_registry()
+    schedule = load_schedule()
+    editions = ("student", "board", "teacher") if args.edition == "all" else (args.edition,)
+    paths = sorted(LESSONS.glob("*.yaml")) if args.all else [Path(args.yaml_path)] if args.yaml_path else []
+    if not paths:
+        p.error("give a YAML path or --all")
+    for path in paths:
+        build(path, editions, registry, schedule)
+    write_manifest(registry)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

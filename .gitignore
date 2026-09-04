@@ -106,3 +106,10 @@ roster-server/tests/fixtures/golden-local/
 # DOGE payout: live send journal + agent logs (never commit a real journal)
 .doge-send-journal.json
 tools/.payout-agent-logs/
+
+# DOK ladders: LaTeX byproducts (PDFs in dok/pdf/ ARE committed)
+dok/tex/*.aux
+dok/tex/*.log
+dok/tex/*.out
+dok/tex/*.pdf
+dok/tex/*.synctex.gz

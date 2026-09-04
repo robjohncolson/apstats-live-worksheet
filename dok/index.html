@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AP Stats · DOK Ladders</title>
+<style>
+  body { font-family: Geneva, Verdana, sans-serif; margin: 0; background: #e8e8e8; color: #111; }
+  header { background: #2B5C8A; color: #fff; padding: 14px 20px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; font-size: 13px; opacity: .9; }
+  main { padding: 16px 20px 40px; max-width: 980px; }
+  .today { background: #FFF2CC; border: 2px solid #111; box-shadow: 2px 2px 0 #111; padding: 10px 14px; margin-bottom: 16px; }
+  .today a { font-weight: bold; }
+  table { border-collapse: collapse; width: 100%; background: #fff; font-size: 14px; }
+  th, td { border: 1px solid #999; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #d9d9d9; }
+  tr.built td { background: #EAF4E4; }
+  tr.pending td { color: #666; }
+  .badge { display: inline-block; font-size: 11px; padding: 1px 6px; border: 1px solid #555; border-radius: 3px; background: #F4CCCC; margin-left: 4px; }
+  .links a { margin-right: 10px; }
+  .muted { color: #666; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AP Statistics · DOK Ladders</h1>
+  <p>One DOK-3 problem per lesson day. Board slide at the bell → first take → video follow-along → finish → turn in. Spec: <code>APS_DOK_LADDER_SPEC.md</code></p>
+</header>
+<main>
+  <div class="today" id="today">Loading today's problem…</div>
+  <table>
+    <thead><tr><th>Topic</th><th>B</th><th>E</th><th>Title · DOK-3 skill</th><th>PDFs</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p class="muted">Built rows are green. Pending rows come from <code>PENDING.md</code>. Student = 2 sides, Board = 1 landscape page, Teacher = key + E/P/I scoring.</p>
+</main>
+<script>
+(async function () {
+  const schedule = await (await fetch('../data/lesson-schedule.json')).json();
+  const built = await (await fetch('manifest.json')).json().catch(() => ({}));
+  const rows = Object.entries(schedule.lessons)
+    .filter(([, v]) => v.periods && v.periods.B)
+    .sort((a, b) => a[1].periods.B.localeCompare(b[1].periods.B));
+
+  const tbody = document.getElementById('rows');
+  const todayIso = new Date().toISOString().slice(0, 10);
+  let todayRow = null;
+
+  for (const [topic, v] of rows) {
+    const b = built[topic];
+    const tr = document.createElement('tr');
+    tr.className = b ? 'built' : 'pending';
+    const pdf = (ed) => `<a href="pdf/aps_${topic}_${ed}.pdf">${ed}</a>`;
+    tr.innerHTML =
+      `<td>${topic}</td><td>${v.periods.B}</td><td>${v.periods.E || ''}</td>` +
+      `<td>${b ? b.title + ' <span class="badge">DOK-3 · ' + b.skill + '</span>' : '<span class="muted">pending</span>'}</td>` +
+      `<td class="links">${b ? pdf('student') + pdf('board') + pdf('teacher') : ''}</td>`;
+    tbody.appendChild(tr);
+    if (b && !todayRow && (v.periods.B === todayIso || v.periods.E === todayIso)) todayRow = { topic, b };
+  }
+
+  const today = document.getElementById('today');
+  if (todayRow) {
+    today.innerHTML = `Today: <strong>Topic ${todayRow.topic} — ${todayRow.b.title}</strong> · ` +
+      `<a href="pdf/aps_${todayRow.topic}_board.pdf">open the board slide</a> · ` +
+      `<a href="pdf/aps_${todayRow.topic}_teacher.pdf">teacher key</a>`;
+  } else {
+    today.textContent = 'No ladder is scheduled for today. Pick a row below.';
+  }
+})();
+</script>
+</body>
+</html>
