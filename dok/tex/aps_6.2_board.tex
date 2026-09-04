@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.2 \textperiodcentered\ TODAY'S PROBLEM}{Narrower Is Not Automatically Better}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+A library system has 20,000 adult cardholders and wants to estimate $p$, the proportion who used a digital audiobook last month.\par\smallskip \textbf{Plan A:} A computer takes an SRS of 200 cardholder IDs. All answer; 116 say yes.\par \textbf{Plan B:} A newsletter link lets cardholders choose to respond once. Of 800 respondents, 520 say yes.\par\smallskip \textbf{Eli:} ``Use Plan B. Its larger sample gives the narrower interval.''\par \textbf{Dana:} ``Use Plan A. Entry into the sample matters more than the narrowest output.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Plan counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Plan} & \textbf{N} & \textbf{n} & \textbf{Yes} & \textbf{No} \\ \hline
+\textbf{A} & 20,000 & 200 & 116 & 84 \\ \hline
+\textbf{B} & 20,000 & 800 & 520 & 280 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which plan, if either, should estimate all adult cardholders? Cite one collection detail.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define the population parameter $p$ in context and name the confidence-interval procedure that would be appropriate when its conditions are met.
+  \item[\dokbadge{2}~(b)] For each plan, compute $\hat p$, check the random, 10 percent, and large-count conditions, and calculate the 95 percent formula interval. Mark any nondefensible population interval.
+  \item[\dokbadge{3}~(c)] Decide which plan can support a 95 percent interval for all cardholders. Cite recruitment and a numerical condition, compare interval widths, and explain the reader consequence of reporting Plan B's output.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html}{\texttt{\detokenize{u6_lesson1-2_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html}
+
+\end{document}

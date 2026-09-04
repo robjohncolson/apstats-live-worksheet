@@ -1,0 +1,117 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 6.2 (CED 3.3) \textperiodcentered\ B: 2026-11-30 \textperiodcentered\ E: 2027-01-04 \textperiodcentered\ TEACHER KEY}{Narrower Is Not Automatically Better}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Skill 1.D} --- Identify an appropriate inference method for confidence intervals.
+  \item \textbf{Skill 4.C} --- Verify that inference procedures apply in a given situation.
+  \item \textbf{Skill 3.D} --- Construct a confidence interval, provided conditions for inference are met.
+  \item \textbf{EU UNC-4} --- An interval of values should be used to estimate parameters, in order to account for uncertainty.
+  \item \textbf{LO UNC-4.A} --- Identify an appropriate confidence interval procedure for a population proportion. [Skill 1.D]
+  \item \textbf{EK UNC-4.A.1} --- The appropriate confidence interval procedure for a one-sample proportion for one categorical variable is a one sample z-interval for a proportion.
+  \item \textbf{LO UNC-4.B} --- Verify the conditions for calculating confidence intervals for a population proportion. [Skill 4.C]
+  \item \textbf{EK UNC-4.B.1} --- In order to make assumptions necessary for inference on population proportions, means, and slopes, we must check for independence in data collection methods and for selection of the appropriate sampling distribution.
+  \item \textbf{EK UNC-4.B.2} --- In order to calculate a confidence interval to estimate a population proportion p, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: (i) Data should be collected using a random sample or a randomized experiment. (ii) When sampling without replacement, check that n $\leq$ 10\%N, where N is the size of the population.
+  \item b. To check that the sampling distribution of p-hat is approximately normal (shape): for categorical variables, check that both the number of successes, n$\cdot$p-hat, and the number of failures, n(1 - p-hat) are at least 10.
+  \item \textbf{LO UNC-4.C} --- Determine the margin of error for a given sample size and an estimate for the sample size that will result in a given margin of error for a population proportion. [Skill 3.D]
+  \item \textbf{EK UNC-4.C.1} --- The standard error of p-hat is SE = sqrt(p-hat(1 - p-hat)/n).
+  \item \textbf{EK UNC-4.C.2} --- A margin of error gives how much a value of a sample statistic is likely to vary from the value of the corresponding population parameter.
+  \item \textbf{EK UNC-4.C.3} --- For categorical variables, the margin of error is z* $\times$ sqrt(p-hat(1 - p-hat)/n) for a one-sample proportion.
+  \item \textbf{EK UNC-4.C.4} --- The formula for margin of error can be rearranged to solve for n, the minimum sample size needed to achieve a given margin of error. Use a guess for p-hat or use p-hat = 0.5 to find an upper bound for the sample size.
+  \item \textbf{LO UNC-4.D} --- Calculate an appropriate confidence interval for a population proportion. [Skill 3.D]
+  \item \textbf{EK UNC-4.D.1} --- For a one-sample proportion, the interval estimate is p-hat $\pm$ z* $\times$ sqrt(p-hat(1 - p-hat)/n).
+  \item \textbf{EK UNC-4.D.2} --- Critical values represent the boundaries encompassing the middle C\% of the standard normal distribution, where C\% is an approximate confidence level for a proportion.
+  \item \textbf{LO UNC-4.E} --- Calculate an interval estimate based on a confidence interval for a population proportion. [Skill 3.D]
+  \item \textbf{EK UNC-4.E.1} --- Confidence intervals for population proportions can be used to calculate interval estimates with specified units.
+\end{itemize}
+}
+\textbf{Essential question:} Why can a wider interval from a random sample be more trustworthy than a narrower formula result?\par
+\textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{narrower-\allowbreak{}self-\allowbreak{}selected-\allowbreak{}interval-\allowbreak{}vs-\allowbreak{}wider-\allowbreak{}random-\allowbreak{}interval}}\par
+\textbf{DOK rationale:} Part (c) requires judging two competing interval reports by coordinating recruitment, numerical conditions, and interval width, then explaining why the more precise-looking output cannot support the target-population claim.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask students to choose a plan before calculating.
+  \item Begin the 6.1--6.2 video at minute 5; return at minute 33 to separate calculation from generalization.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose a plan and cite one collection detail.
+  \item Complete the follow-along, finish (a)--(c), revise, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Which condition depends on how cardholders entered the sample?
+  \item What do the numerical conditions not establish?
+  \item Why is Plan B's formula interval narrower?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Require all three checks and distinguish a formula output from a defensible interval.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating a larger self-selected group as representative.
+  \item Using numerical checks as substitutes for random selection.
+  \item Calling Plan B's output a population confidence interval.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-plan-a} (required) --- Chooses Plan A for population inference
+  \item \textbf{uses-collection-and-numerical-evidence} (required) --- Cites the SRS and one numerical check
+  \item \textbf{contrasts-widths-with-validity} (required) --- Notes $0.066<0.137$ but Plan B is nonrandom
+  \item \textbf{states-reader-consequence} (required) --- Explains false precision from self-selection
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Chooses A, cites both kinds of checks, contrasts widths, and explains self-selection. \\ \hline
+\textbf{P} & Chooses A but omits a check, width, or reader consequence. \\ \hline
+\textbf{I} & Chooses B for size or width, or treats numerical checks as randomness. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+A library system has 20,000 adult cardholders and wants to estimate $p$, the proportion who used a digital audiobook last month.\par\smallskip \textbf{Plan A:} A computer takes an SRS of 200 cardholder IDs. All answer; 116 say yes.\par \textbf{Plan B:} A newsletter link lets cardholders choose to respond once. Of 800 respondents, 520 say yes.\par\smallskip \textbf{Eli:} ``Use Plan B. Its larger sample gives the narrower interval.''\par \textbf{Dana:} ``Use Plan A. Entry into the sample matters more than the narrowest output.''\par
+\begin{center}
+\textbf{Plan counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Plan} & \textbf{N} & \textbf{n} & \textbf{Yes} & \textbf{No} \\ \hline
+\textbf{A} & 20,000 & 200 & 116 & 84 \\ \hline
+\textbf{B} & 20,000 & 800 & 520 & 280 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which plan, if either, should estimate all adult cardholders? Cite one collection detail.\par
+\answer{Not graded. The larger sample is intentionally attractive.}
+\end{firsttakebox}
+
+\textit{Rules callout ``ONE-SAMPLE INTERVAL FOR A PROPORTION (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} Define the population parameter $p$ in context and name the confidence-interval procedure that would be appropriate when its conditions are met.\par
+\answer{Here $p$ is the proportion of all 20,000 adult library cardholders who used a digital audiobook last month. When conditions are met, the procedure is a one-sample $z$-interval for a population proportion.}
+
+\dokbadge{2}~\textbf{(b)} For each plan, compute $\hat p$, check the random, 10 percent, and large-count conditions, and calculate the 95 percent formula interval. Mark any nondefensible population interval.\par
+\answer{Plan A has $\hat p=116/200=0.58$. It is an SRS; $200\le0.10(20{,}000)=2{,}000$; and counts are 116 and 84. Thus $SE=0.0348999$, $ME=1.96(SE)=0.0684037$, and the valid interval is $(0.5116,0.6484)$. Plan B has $\hat p=520/800=0.65$; $800\le2{,}000$ and counts 520 and 280 pass, but self-selection fails the random condition. Its mechanical output is $0.65\pm0.0330523$, or $(0.6169,0.6831)$, not a defensible population confidence interval.}
+
+\dokbadge{3}~\textbf{(c)} Decide which plan can support a 95 percent interval for all cardholders. Cite recruitment and a numerical condition, compare interval widths, and explain the reader consequence of reporting Plan B's output.\par
+\answer{Use Plan A. Its SRS, $200\le2{,}000$, and counts 116 and 84 support the interval $(0.512,0.648)$ for all cardholders. Its width is about $0.1368$ versus Plan B's smaller formula width, $0.0661$. Plan B's volunteers may differ systematically from nonrespondents; its margin of error covers random variation, not self-selection. Reporting it would falsely suggest that a narrow range represents all cardholders with 95 percent confidence.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

@@ -1,0 +1,62 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.1 \textperiodcentered\ TODAY'S PROBLEM}{When a Normal Curve Distorts the Tail}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose an app developer's model says that $p_0=0.20$ of all new users activate voice commands during their first day. A simple random sample of 12 new users includes 6 who activate the feature, so $\hat p=0.50$. Under the developer's model, a class simulates 200 samples of 12 independent users; the histogram shows the number of activations in each sample.\par\smallskip \textbf{Mara:} ``A normal model for $\hat p$ gives $P(\hat p\ge 0.50)\approx0.005$, so that is the chance probability I would report.''\par \textbf{Jules:} ``The simulated distribution is not very normal. I would estimate the chance probability directly from its tail.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.68\linewidth,
+  height=1.84in,
+  ybar interval, ymin=0, ymax=60,
+  xmin=0, xmax=7, xtick={0,1,2,3,4,5,6,7},
+  xlabel={Voice-command activations in one sample of 12}, ylabel={Simulated samples},
+  ymajorgrids, tick label style={font=\small}, label style={font=\small},
+  bar shift=0pt, x tick label as interval=false
+]
+\addplot[fill=calloutblue, draw=dayblue] coordinates {
+  (0,14)
+  (1,40)
+  (2,58)
+  (3,47)
+  (4,25)
+  (5,12)
+  (6,4)
+  (7,0)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which chance probability would you report, Mara's or Jules's? Cite one detail from the histogram or sample size.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the most common number of activations in the simulated samples and describe the distribution as roughly symmetric, skewed left, or skewed right.
+  \item[\dokbadge{2}~(b)] Use the histogram to estimate $P(\hat p\ge0.50)$ under $p_0=0.20$. Then calculate $np_0$ and $n(1-p_0)$ and assess the expected-count condition for a normal approximation.
+  \item[\dokbadge{3}~(c)] Choose the better chance-probability method and use a $5\%$ criterion to judge evidence against $p_0=0.20$. Cite the simulated tail and a shape or expected-count feature, compare $0.020$ with $0.005$, and explain the reader consequence of Mara's report.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html}{\texttt{\detokenize{u6_lesson1-2_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html}
+
+\end{document}

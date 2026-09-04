@@ -1,0 +1,59 @@
+# Topic 6.1 — Introducing Statistics: Why Be Normal?
+topic: "6.1"
+ced2026: { unit: 3, topic: "3.3", label: "Constructing a CI for a Proportion" }
+title: "When a Normal Curve Distorts the Tail"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "When should a simulated sampling distribution be trusted more than a normal approximation?"
+worksheet: "u6_lesson1-2_live.html"
+
+rules_callout:
+  title: "CHECK THE SHAPE BEFORE USING NORMAL (keep on the page)"
+  body: |
+    Under a proposed proportion $p_0$, the sampling distribution of $\hat p$ has center $p_0$ and
+    standard deviation $\sqrt{p_0(1-p_0)/n}$. A normal approximation needs both expected counts
+    $np_0\ge 10$ and $n(1-p_0)\ge 10$. A matched simulation does not need a normal shape: estimate
+    a one-sided chance probability by counting simulated results at least as large as the observed result.
+    A small chance probability is evidence against the proposed model, not proof of a particular cause.
+
+focus: aps-6.1-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Let students choose between the two reported tail probabilities without confirming a method."
+    - "Begin the combined 6.1--6.2 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require a shape or expected-count check before a probability choice."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose the normal-model or simulation estimate and cite one visible feature."
+    - "Complete the follow-along about chance explanations, normal models, and intervals for a proportion."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "What does one bar in this simulated distribution count?"
+    - "Which expected count warns you that a symmetric curve may miss the tail?"
+    - "Why do simulated samples with more than six activations still count?"
+    - "Can the two methods disagree in size yet lead to the same 5 percent decision?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Ask for the model, shape check, tail event, and reader consequence; do not accept a method choice based only on which probability is smaller."
+  watch_for:
+    - "Treating every sampling distribution as normal regardless of expected counts."
+    - "Counting exactly six activations instead of six or more."
+    - "Saying a small chance probability proves why the activation rate differs."
+  first_take_note: "Not graded. Preserve the normal-model versus matched-simulation tension."
+
+# Topic 6.1 has no tutor artifact. These lines are copied from apstat_6_framework.md.
+tether:
+  - '\textbf{VAR-1.H} Identify questions suggested by variation in the shapes of distributions of samples taken from the same population. \textbf{[Skill 1.A]}'
+  - '\textbf{VAR-1.H.1} Variation in shapes of data distributions may be random or not.'
+
+visuals:
+  activation_hist:
+    kind: pgfplot_hist
+    scale: 0.8
+    bins: [0, 1, 2, 3, 4, 5, 6, 7]
+    counts: [14, 40, 58, 47, 25, 12, 4]
+    xlabel: "Voice-command activations in one sample of 12"
+    ylabel: "Simulated samples"

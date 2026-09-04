@@ -1,0 +1,125 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 6.1 (CED 3.3) \textperiodcentered\ B: 2026-11-24 \textperiodcentered\ E: 2026-12-23 \textperiodcentered\ TEACHER KEY}{When a Normal Curve Distorts the Tail}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{VAR-1.H} Identify questions suggested by variation in the shapes of distributions of samples taken from the same population. \textbf{[Skill 1.A]}
+  \item \textbf{VAR-1.H.1} Variation in shapes of data distributions may be random or not.
+\end{itemize}
+}
+\textbf{Essential question:} When should a simulated sampling distribution be trusted more than a normal approximation?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{normal-\allowbreak{}approximation-\allowbreak{}vs-\allowbreak{}simulation-\allowbreak{}for-\allowbreak{}a-\allowbreak{}skewed-\allowbreak{}tail}}\par
+\textbf{DOK rationale:} Part (c) coordinates an expected-count check, the simulated distribution's shape, and two tail estimates to choose a defensible method, bound the evidence, and explain the consequence of the rejected analysis.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Let students choose between the two reported tail probabilities without confirming a method.
+  \item Begin the combined 6.1--6.2 video follow-along at minute 5.
+  \item Return to the board slide at minute 33. Circulate and require a shape or expected-count check before a probability choice.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose the normal-model or simulation estimate and cite one visible feature.
+  \item Complete the follow-along about chance explanations, normal models, and intervals for a proportion.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item What does one bar in this simulated distribution count?
+  \item Which expected count warns you that a symmetric curve may miss the tail?
+  \item Why do simulated samples with more than six activations still count?
+  \item Can the two methods disagree in size yet lead to the same 5 percent decision?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Ask for the model, shape check, tail event, and reader consequence; do not accept a method choice based only on which probability is smaller.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Treating every sampling distribution as normal regardless of expected counts.
+  \item Counting exactly six activations instead of six or more.
+  \item Saying a small chance probability proves why the activation rate differs.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-matched-simulation} (required) --- Selects Jules's simulation estimate rather than Mara's unsupported normal approximation
+  \item \textbf{uses-shape-or-count-evidence} (required) --- Cites the right-skewed discrete shape or the failed expected counts 2.4 and 9.6
+  \item \textbf{uses-tail-and-bounds-conclusion} (required) --- Uses 4 of 200, or 0.020, to make the 5 percent evidence decision without claiming proof of a cause
+  \item \textbf{states-reader-consequence} (required) --- Explains that 0.005 makes the result appear about four times rarer and overstates the evidence
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Chooses the matched simulation, supports that choice with the failed normal condition or displayed shape, uses 0.020 for the 5 percent decision, and explains how 0.005 overstates rarity without claiming causation. \\ \hline
+\textbf{P} & Chooses the simulation and reaches the correct evidence decision but omits either the shape or expected-count support, the quantitative comparison, or the consequence for a reader. \\ \hline
+\textbf{I} & Chooses the normal result solely because it is smaller, treats the distribution as automatically normal, counts only exactly six incorrectly, or states that the result proves a cause. \\ \hline
+\end{tabular}}
+
+\textbf{Common mistakes}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Using $6/12=0.50$ as the chance probability
+  \item Counting only the bar at 6 without recognizing that all larger results would also be at least as extreme
+  \item Checking observed successes and failures instead of expected counts under $p_0$ for this model
+  \item Calling the two percent estimate proof that the developer intentionally misstated the rate
+\end{itemize}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose an app developer's model says that $p_0=0.20$ of all new users activate voice commands during their first day. A simple random sample of 12 new users includes 6 who activate the feature, so $\hat p=0.50$. Under the developer's model, a class simulates 200 samples of 12 independent users; the histogram shows the number of activations in each sample.\par\smallskip \textbf{Mara:} ``A normal model for $\hat p$ gives $P(\hat p\ge 0.50)\approx0.005$, so that is the chance probability I would report.''\par \textbf{Jules:} ``The simulated distribution is not very normal. I would estimate the chance probability directly from its tail.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.54\linewidth,
+  height=1.47in,
+  ybar interval, ymin=0, ymax=60,
+  xmin=0, xmax=7, xtick={0,1,2,3,4,5,6,7},
+  xlabel={Voice-command activations in one sample of 12}, ylabel={Simulated samples},
+  ymajorgrids, tick label style={font=\small}, label style={font=\small},
+  bar shift=0pt, x tick label as interval=false
+]
+\addplot[fill=calloutblue, draw=dayblue] coordinates {
+  (0,14)
+  (1,40)
+  (2,58)
+  (3,47)
+  (4,25)
+  (5,12)
+  (6,4)
+  (7,0)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which chance probability would you report, Mara's or Jules's? Cite one detail from the histogram or sample size.\par
+\answer{Not graded. Preserve the normal-model versus matched-simulation tension.}
+\end{firsttakebox}
+
+\textit{Rules callout ``CHECK THE SHAPE BEFORE USING NORMAL (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State the most common number of activations in the simulated samples and describe the distribution as roughly symmetric, skewed left, or skewed right.\par
+\answer{Two activations is most common, occurring in 58 of the 200 simulations. The distribution is discrete and skewed right, with most results from 0 through 4 and a thinning tail toward 6.}
+
+\dokbadge{2}~\textbf{(b)} Use the histogram to estimate $P(\hat p\ge0.50)$ under $p_0=0.20$. Then calculate $np_0$ and $n(1-p_0)$ and assess the expected-count condition for a normal approximation.\par
+\answer{Six activations out of 12 gives $\hat p=0.50$. Four simulations have 6 or more activations, so the simulated estimate is $4/200=0.020$. The expected counts are $np_0=12(0.20)=2.4$ and $n(1-p_0)=12(0.80)=9.6$; neither reaches 10, so the normal-approximation condition is not met.}
+
+\dokbadge{3}~\textbf{(c)} Choose the better chance-probability method and use a $5\%$ criterion to judge evidence against $p_0=0.20$. Cite the simulated tail and a shape or expected-count feature, compare $0.020$ with $0.005$, and explain the reader consequence of Mara's report.\par
+\answer{Use Jules's simulation: expected counts 2.4 and 9.6 fail the normal check, and the distribution is discrete and right-skewed. Its tail is $4/200=0.020<0.05$, convincing evidence against $p_0=0.20$ in the higher direction if the random sample is sound, but not proof of a cause. Mara's $0.005$ is one fourth as large, making the result appear four times rarer and overstating the evidence. The exact binomial tail, about $0.0194$, supports the simulation.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

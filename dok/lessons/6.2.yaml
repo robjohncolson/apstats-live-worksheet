@@ -1,0 +1,53 @@
+# Topic 6.2 — Constructing a Confidence Interval for a Population Proportion
+topic: "6.2"
+ced2026: { unit: 3, topic: "3.3", label: "Constructing a CI for a Proportion" }
+title: "Narrower Is Not Automatically Better"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "Why can a wider interval from a random sample be more trustworthy than a narrower formula result?"
+worksheet: "u6_lesson1-2_live.html"
+
+rules_callout:
+  title: "ONE-SAMPLE INTERVAL FOR A PROPORTION (keep on the page)"
+  body: |
+    Use a one-sample $z$-interval for $p$: $\hat p\pm z^*\sqrt{\hat p(1-\hat p)/n}$;
+    for $95\%$ confidence, $z^*=1.96$. Check (1) random data collection, (2) when sampling
+    without replacement, $n\le 0.10N$, and (3) at least 10 observed successes and 10 failures.
+    A smaller formula margin of error describes less random sampling variation; it does not repair
+    systematic error caused by who chooses to respond.
+
+focus: aps-6.2-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to choose a plan before calculating."
+    - "Begin the 6.1--6.2 video at minute 5; return at minute 33 to separate calculation from generalization."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose a plan and cite one collection detail."
+    - "Complete the follow-along, finish (a)--(c), revise, and turn in the sheet."
+  questions_to_ask:
+    - "Which condition depends on how cardholders entered the sample?"
+    - "What do the numerical conditions not establish?"
+    - "Why is Plan B's formula interval narrower?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require all three checks and distinguish a formula output from a defensible interval."
+  watch_for:
+    - "Treating a larger self-selected group as representative."
+    - "Using numerical checks as substitutes for random selection."
+    - "Calling Plan B's output a population confidence interval."
+  first_take_note: "Not graded. The larger sample is intentionally attractive."
+
+visuals:
+  audiobook_table:
+    kind: two_way_table
+    col_label: "Plan counts"
+    row_label: "Plan"
+    cols: ["N", "n", "Yes", "No"]
+    rows: ["A", "B"]
+    cells:
+      - ["20,000", "200", "116", "84"]
+      - ["20,000", "800", "520", "280"]

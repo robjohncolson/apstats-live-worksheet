@@ -202,5 +202,17 @@
     "skill": "4.B",
     "frq_pattern": "failed-large-counts-normal-tail-vs-valid-binomial-and-bias",
     "worksheet": "u5_lesson5_live.html"
+  },
+  "6.1": {
+    "title": "When a Normal Curve Distorts the Tail",
+    "skill": "4.B",
+    "frq_pattern": "normal-approximation-vs-simulation-for-a-skewed-tail",
+    "worksheet": "u6_lesson1-2_live.html"
+  },
+  "6.2": {
+    "title": "Narrower Is Not Automatically Better",
+    "skill": "4.C",
+    "frq_pattern": "narrower-self-selected-interval-vs-wider-random-interval",
+    "worksheet": "u6_lesson1-2_live.html"
   }
 }

@@ -1,0 +1,55 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 6.2 (CED 3.3) \textperiodcentered\ B: 2026-11-30 \textperiodcentered\ E: 2027-01-04}{Narrower Is Not Automatically Better}
+
+\focusbanner{TODAY'S PROBLEM}
+
+A library system has 20,000 adult cardholders and wants to estimate $p$, the proportion who used a digital audiobook last month.\par\smallskip \textbf{Plan A:} A computer takes an SRS of 200 cardholder IDs. All answer; 116 say yes.\par \textbf{Plan B:} A newsletter link lets cardholders choose to respond once. Of 800 respondents, 520 say yes.\par\smallskip \textbf{Eli:} ``Use Plan B. Its larger sample gives the narrower interval.''\par \textbf{Dana:} ``Use Plan A. Entry into the sample matters more than the narrowest output.''\par
+\begin{center}
+\textbf{Plan counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Plan} & \textbf{N} & \textbf{n} & \textbf{Yes} & \textbf{No} \\ \hline
+\textbf{A} & 20,000 & 200 & 116 & 84 \\ \hline
+\textbf{B} & 20,000 & 800 & 520 & 280 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Which plan, if either, should estimate all adult cardholders? Cite one collection detail.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ ONE-SAMPLE INTERVAL FOR A PROPORTION (keep on the page)}{calloutgreen}
+Use a one-sample $z$-interval for $p$: $\hat p\pm z^*\sqrt{\hat p(1-\hat p)/n}$;
+for $95\%$ confidence, $z^*=1.96$. Check (1) random data collection, (2) when sampling
+without replacement, $n\le 0.10N$, and (3) at least 10 observed successes and 10 failures.
+A smaller formula margin of error describes less random sampling variation; it does not repair
+systematic error caused by who chooses to respond.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Define the population parameter $p$ in context and name the confidence-interval procedure that would be appropriate when its conditions are met.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} For each plan, compute $\hat p$, check the random, 10 percent, and large-count conditions, and calculate the 95 percent formula interval. Mark any nondefensible population interval.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} Decide which plan can support a 95 percent interval for all cardholders. Cite recruitment and a numerical condition, compare interval widths, and explain the reader consequence of reporting Plan B's output.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I would report Plan \blank[0.35in] because \blank[2.7in], and the numerical check \blank[1.6in] is satisfied.\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Although Plan B's formula width is \blank[0.8in], it would mislead readers because \blank[2.8in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}
