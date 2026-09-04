@@ -5,7 +5,6 @@ every dated topic to have a YAML OR a line here; delete a line when its ladder l
 
 | Topic | B | E |
 |---|---|---|
-| 6.5 | 2026-12-04 | 2027-01-11 |
 | 6.6 | 2026-12-07 | 2027-01-13 |
 | 6.7 | 2026-12-08 | 2027-01-15 |
 | 5.6 | 2026-12-10 | 2027-01-20 |

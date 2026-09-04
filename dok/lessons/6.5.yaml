@@ -1,0 +1,56 @@
+# Topic 6.5 — Interpreting p-Values (B: 2026-12-04)
+topic: "6.5"
+ced2026: { unit: 3, topic: "3.6", label: "p-Values" }
+title: "Which Tail, and Probability of What?"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "How do the alternative hypothesis and the null assumption determine a p-value and its meaning?"
+worksheet: "u6_lesson5_live.html"
+
+rules_callout:
+  title: "A p-VALUE CONDITIONS ON THE NULL (keep on the page)"
+  body: |
+    For a one-sample proportion test,
+    $z=\dfrac{\hat p-p_0}{\sqrt{p_0(1-p_0)/n}}$.
+    The p-value is the probability of a sample statistic \textbf{as extreme or more extreme} than the observed one,
+    in the direction of $H_a$, assuming $H_0$ and the probability model are true. Use the left tail for $H_a:p<p_0$,
+    the right tail for $H_a:p>p_0$, and both tails for $H_a:p\neq p_0$.
+    A p-value is a probability about possible sample results under $H_0$; it is not the probability that a hypothesis is true.
+
+focus: aps-6.5-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to choose a tail and interpretation before calculating."
+    - "Begin the 6.5 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and require every p-value sentence to begin with its null assumption."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose Priya or Noah and cite the word fallen, 0.49, or one proposed p-value."
+    - "Complete the follow-along about test statistics, tail areas, and p-value interpretations."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "Which sample results are stronger evidence for a less-than alternative?"
+    - "What different research question would make $0.088$ the relevant p-value?"
+    - "What must be assumed before the probability $0.044$ is calculated?"
+    - "Is the random object in a p-value the fixed parameter or a future sample statistic?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to name the null world, tail direction, and repeated-sample event; do not accept `the null is probably false' as an interpretation."
+  watch_for:
+    - "Doubling a one-sided p-value merely because the sample proportion differs from the null value."
+    - "Interpreting the p-value as the probability that $H_0$ or $H_a$ is true."
+    - "Describing exactly 98 supporters rather than 98 or fewer as the left-tail event."
+  first_take_note: "Not graded. The doubled value can sound more cautious; the finish should tie the tail to the question and the probability to repeated samples."
+
+visuals:
+  support_sample:
+    kind: two_way_table
+    col_label: "Sample counts"
+    row_label: "Group"
+    cols: ["Support", "Other", "Total"]
+    rows: ["Households"]
+    cells:
+      - ["98", "102", "200"]

@@ -1,0 +1,110 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\daybanner{AP Statistics \textperiodcentered\ Topic 6.5 (CED 3.6) \textperiodcentered\ B: 2026-12-04 \textperiodcentered\ E: 2027-01-11 \textperiodcentered\ TEACHER KEY}{Which Tail, and Probability of What?}
+
+\sectionbanner{CED TETHER}
+
+{\small
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item SKILLS: Using Probability and Simulation
+  \item \textbf{Skill 3.E} --- Calculate a test statistic and find a *p*-value, provided conditions for inference are met.
+  \item SKILLS: Statistical Argumentation
+  \item \textbf{Skill 4.B} --- Interpret statistical calculations and findings to assign meaning or assess a claim.
+  \item ENDURING UNDERSTANDING: VAR-6 The normal distribution may be used to model variation.
+  \item VAR-6.G Calculate an appropriate test statistic and *p*-value for a population proportion. [Skill 3.E]
+  \item VAR-6.G.1 The distribution of the test statistic assuming the null hypothesis is true (null distribution) can be either a randomization distribution or when a probability model is assumed to be true, a theoretical distribution (*z*). VAR-6.G.2 When using a *z*-test, the standardized test statistic can be written: test statistic = (sample statistic - null value of the parameter) / (standard deviation of the statistic). This is called a *z*-statistic for proportions. VAR-6.G.3 The test statistic for a population proportion is: z = (p-hat - p\_0) / sqrt(p\_0(1 - p\_0) / n). VAR-6.G.4 A *p*-value is the probability of obtaining a test statistic as extreme or more extreme than the observed test statistic when the null hypothesis and probability model are assumed to be true. The significance level may be given or determined by the researcher.
+  \item ENDURING UNDERSTANDING: DAT-3 Significance testing allows us to make decisions about hypotheses within a particular context.
+  \item DAT-3.A Interpret the *p*-value of a significance test for a population proportion. [Skill 4.B]
+  \item DAT-3.A.1 The *p*-value is the proportion of values for the null distribution that are as extreme or more extreme than the observed value of the test statistic. This is: (a) the proportion at or above the observed value of the test statistic, if the alternative is >; (b) the proportion at or below the observed value of the test statistic, if the alternative is <; (c) the proportion less than or equal to the negative of the absolute value of the test statistic plus the proportion greater than or equal to the absolute value of the test statistic, if the alternative is $\neq$. DAT-3.A.2 An interpretation of the *p*-value of a significance test for a one-sample proportion should recognize that the *p*-value is computed by assuming that the probability model and null hypothesis are true, i.e., by assuming that the true population proportion is equal to the particular value stated in the null hypothesis.
+\end{itemize}
+}
+\textbf{Essential question:} How do the alternative hypothesis and the null assumption determine a p-value and its meaning?\par
+\textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{one-\allowbreak{}sided-\allowbreak{}vs-\allowbreak{}two-\allowbreak{}sided-\allowbreak{}p-\allowbreak{}value-\allowbreak{}interpret-\allowbreak{}the-\allowbreak{}condition}}\par
+\textbf{DOK rationale:} Part (c) coordinates the research direction, null distribution, tail area, and conditional meaning of a p-value to adjudicate two interpretations and explain the inferential consequence of choosing the wrong tail.\par
+
+\frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Board slide up at the bell. Ask students to choose a tail and interpretation before calculating.
+  \item Begin the 6.5 video follow-along at minute 5.
+  \item Return to the board slide at minute 33. Circulate and require every p-value sentence to begin with its null assumption.
+  \item Collect at the door. Score part (c) only, E/P/I.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Choose Priya or Noah and cite the word fallen, 0.49, or one proposed p-value.
+  \item Complete the follow-along about test statistics, tail areas, and p-value interpretations.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
+\end{itemize}
+}{%
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Which sample results are stronger evidence for a less-than alternative?
+  \item What different research question would make $0.088$ the relevant p-value?
+  \item What must be assumed before the probability $0.044$ is calculated?
+  \item Is the random object in a p-value the fixed parameter or a future sample statistic?
+\end{itemize}
+}{Solo teacher. Circulate ~5 pairs. Ask students to name the null world, tail direction, and repeated-sample event; do not accept `the null is probably false' as an interpretation.}
+
+\begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item Doubling a one-sided p-value merely because the sample proportion differs from the null value.
+  \item Interpreting the p-value as the probability that $H_0$ or $H_a$ is true.
+  \item Describing exactly 98 supporters rather than 98 or fewer as the left-tail event.
+\end{itemize}
+\end{callout}
+
+\sectionbanner{SCORING PART (c) --- E / P / I}
+
+\textbf{Expected elements}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+  \item \textbf{selects-left-tail} (required) --- Selects Priya's one-sided p-value and ties the left tail to the less-than alternative and observed 0.49
+  \item \textbf{uses-correct-calculation} (required) --- Uses z approximately negative 1.706 and one-sided p-value approximately 0.044
+  \item \textbf{states-null-condition} (required) --- Conditions the probability on p equal to 0.55 and the null probability model being true
+  \item \textbf{states-extreme-event} (required) --- Identifies sample proportions at or below 0.49 in random samples of 200 as the relevant as-extreme-or-more-extreme event
+  \item \textbf{diagnoses-two-errors} (required) --- Explains that 0.088 answers a two-sided change question and is not the probability that the true parameter differs from 0.55
+\end{itemize}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
+\hline
+\textbf{E} & Selects 0.044, cites the less-than direction and 0.49, gives a complete null-conditioned interpretation, and explains both the different question answered by doubling and the parameter-probability error. \\ \hline
+\textbf{P} & Selects the correct one-sided p-value and gives a mostly correct interpretation but omits the random-sample threshold, the null assumption, or one of Noah's two errors. \\ \hline
+\textbf{I} & Doubles solely because the sample differs, interprets a p-value as the probability that H0 or Ha is true, or uses the right-tail area for a less-than alternative. \\ \hline
+\end{tabular}}
+
+\clearpage
+\focusbanner{TODAY'S PROBLEM --- annotated}
+
+Suppose a city's earlier planning model says $55\%$ of households support expanded evening bus service. A researcher suspects support has \emph{fallen}. From the city's 20{,}000 households, a simple random sample of 200 finds 98 that support expansion, so $\hat p=0.49$. Conditions for a one-sample $z$-test are met.\par\smallskip \textbf{Priya:} ``For $H_0:p=0.55$ versus $H_a:p<0.55$, use the left-tail p-value, about $0.044$. If support is still $55\%$, about $4.4\%$ of random samples of 200 would produce a sample proportion of $0.49$ or lower.''\par \textbf{Noah:} ``Any difference from $0.55$ counts, so double the tail to about $0.088$. That means there is an $8.8\%$ chance that the actual support proportion differs from $0.55$.''\par
+\begin{center}
+\textbf{Sample counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Group} & \textbf{Support} & \textbf{Other} & \textbf{Total} \\ \hline
+\textbf{Households} & 98 & 102 & 200 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE (5 min)}
+Which p-value and interpretation answer whether support has fallen? Choose Priya or Noah and cite one phrase or number.\par
+\answer{Not graded. The doubled value can sound more cautious; the finish should tie the tail to the question and the probability to repeated samples.}
+\end{firsttakebox}
+
+\textit{Rules callout ``A p-VALUE CONDITIONS ON THE NULL (keep on the page)'' is printed on the student sheet.}\par\medskip
+
+\dokbadge{1}~\textbf{(a)} State the null and alternative hypotheses and identify the tail direction required by the research question.\par
+\answer{Let $p$ be the current proportion of all city households that support expanded evening bus service. The hypotheses are $H_0:p=0.55$ and $H_a:p<0.55$. Because fallen means less than, the p-value is a left-tail area.}
+
+\dokbadge{2}~\textbf{(b)} Compute the one-sample proportion $z$-statistic and its one-sided p-value. Also compute the two-sided p-value Noah would obtain.\par
+\answer{The null standard deviation is $\sqrt{0.55(0.45)/200}\approx0.035178$. Thus $z=(0.49-0.55)/0.035178\approx-1.7056$. The one-sided p-value is $P(Z\leq-1.7056)\approx0.04404$. Noah's two-sided area is $2(0.04404)\approx0.08808$.}
+
+\dokbadge{3}~\textbf{(c)} Choose the warranted p-value and interpretation. Use $H_a$ and $\hat p=0.49$ to define the tail event and null assumption, then explain what Noah's doubled area answers and what his statement gets wrong.\par
+\answer{Priya is warranted. Because $H_a:p<0.55$ and $\hat p=0.49$, more extreme means $\hat p\leq0.49$. Assuming $H_0:p=0.55$ and the model are true, that random-sample probability is about $0.044$. Noah's $0.088$ answers the two-sided question $p\neq0.55$. A p-value concerns possible samples under an assumed null, not the probability that a parameter or hypothesis is true; Noah would falsely imply an $8.8\%$ chance that the true support differs.}
+
+\begin{summaryexitbox}{EXIT}
+One thing the video changed about my first take: \hrulefill
+\end{summaryexitbox}
+
+\end{document}

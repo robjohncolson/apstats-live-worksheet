@@ -1,0 +1,46 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 6.5 \textperiodcentered\ TODAY'S PROBLEM}{Which Tail, and Probability of What?}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a city's earlier planning model says $55\%$ of households support expanded evening bus service. A researcher suspects support has \emph{fallen}. From the city's 20{,}000 households, a simple random sample of 200 finds 98 that support expansion, so $\hat p=0.49$. Conditions for a one-sample $z$-test are met.\par\smallskip \textbf{Priya:} ``For $H_0:p=0.55$ versus $H_a:p<0.55$, use the left-tail p-value, about $0.044$. If support is still $55\%$, about $4.4\%$ of random samples of 200 would produce a sample proportion of $0.49$ or lower.''\par \textbf{Noah:} ``Any difference from $0.55$ counts, so double the tail to about $0.088$. That means there is an $8.8\%$ chance that the actual support proportion differs from $0.55$.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Sample counts}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Group} & \textbf{Support} & \textbf{Other} & \textbf{Total} \\ \hline
+\textbf{Households} & 98 & 102 & 200 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which p-value and interpretation answer whether support has fallen? Choose Priya or Noah and cite one phrase or number.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the null and alternative hypotheses and identify the tail direction required by the research question.
+  \item[\dokbadge{2}~(b)] Compute the one-sample proportion $z$-statistic and its one-sided p-value. Also compute the two-sided p-value Noah would obtain.
+  \item[\dokbadge{3}~(c)] Choose the warranted p-value and interpretation. Use $H_a$ and $\hat p=0.49$ to define the tail event and null assumption, then explain what Noah's doubled area answers and what his statement gets wrong.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson5_live.html}{\texttt{\detokenize{u6_lesson5_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson5_live.html}
+
+\end{document}

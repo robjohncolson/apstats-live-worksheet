@@ -226,5 +226,11 @@
     "skill": "4.C",
     "frq_pattern": "directional-question-null-based-conditions-which-test-setup",
     "worksheet": "u6_lesson4_live.html"
+  },
+  "6.5": {
+    "title": "Which Tail, and Probability of What?",
+    "skill": "4.B",
+    "frq_pattern": "one-sided-vs-two-sided-p-value-interpret-the-condition",
+    "worksheet": "u6_lesson5_live.html"
   }
 }
