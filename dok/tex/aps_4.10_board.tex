@@ -1,0 +1,66 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 4.10 \textperiodcentered\ TODAY'S PROBLEM}{Rare Is Not Never}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a basketball player has made 70 percent of her free throws over a long career. Tonight she makes 3 of 10 attempts. Let $X$ be the number she would make in 10 attempts if her chance on each shot were still 0.70. The graph shows the binomial model as expected frequencies per 1,000 sets of 10 shots.\par\smallskip \textbf{Claim A:} ``She is in a slump---making only 3 of 10 never happens at her career rate.''\par \textbf{Claim B:} ``With only 10 shots, 3 makes is ordinary chance variation.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.85\linewidth,
+  height=2.30in,
+  ybar interval, ymin=0, ymax=268.828,
+  xmin=0, xmax=11, xtick={0,1,2,3,4,5,6,7,8,9,10,11},
+  xlabel={Number of made shots, $X$}, ylabel={Expected count per 1,000},
+  ymajorgrids, tick label style={font=\small}, label style={font=\small},
+  bar shift=0pt, x tick label as interval=false
+]
+\addplot[fill=calloutblue, draw=dayblue] coordinates {
+  (0,0.006)
+  (1,0.138)
+  (2,1.447)
+  (3,9.002)
+  (4,36.757)
+  (5,102.919)
+  (6,200.121)
+  (7,266.828)
+  (8,233.474)
+  (9,121.061)
+  (10,28.248)
+  (11,0)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which claim, if either, do you trust more? Cite one detail from the result or graph.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Define the random variable $X$ in context, state $n$ and $p$, and write a probability expression for exactly 3 makes.
+  \item[\dokbadge{2}~(b)] Calculate $P(X=3)$ using the binomial probability formula and interpret the result in context.
+  \item[\dokbadge{3}~(c)] Check all four binomial conditions for this model, explicitly assessing whether independence is plausible. Then compute $P(X\leq3)$ and adjudicate Claims A and B: which claim, if either, is warranted, and why? State what additional shooting evidence would change your conclusion.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson10-12_live.html}{\texttt{\detokenize{u4_lesson10-12_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson10-12_live.html}
+
+\end{document}

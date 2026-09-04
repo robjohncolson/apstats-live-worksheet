@@ -142,6 +142,9 @@ def test_latex_text_converts_unicode_statistics_notation():
     assert bl.latex_text("E^C, A ∩ B, or A ∪ B") == (
         r"E\textasciicircum{}C, A $\cap$ B, or A $\cup$ B"
     )
+    assert bl.latex_text("μ_X = Σ x_i · P(x_i)") == (
+        r"$\mu_X$ = $\sum$ $x_i$ $\cdot$ P($x_i$)"
+    )
 
 
 def test_tether_lines_remove_html_breaks_and_unsupported_stats_unicode():

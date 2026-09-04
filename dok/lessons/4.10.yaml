@@ -1,0 +1,52 @@
+# Topic 4.10 — Introduction to the Binomial Distribution
+topic: "4.10"
+ced2026: { unit: 2, topic: "2.10", label: "The Binomial Distribution" }
+title: "Rare Is Not Never"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "When does a low binomial probability count against a familiar chance model without proving it false?"
+worksheet: "u4_lesson10-12_live.html"
+
+rules_callout:
+  title: "BINS BEFORE BINOMIAL (keep on the page)"
+  body: |
+    A binomial random variable counts successes across trials that are \textbf{B}inary, plausibly \textbf{I}ndependent,
+    fixed in \textbf{N}umber, and have the \textbf{S}ame success probability. Define $X$, $n$, and $p$ before calculating.\\
+    $P(X=x)=\binom{n}{x}p^x(1-p)^{n-x}$. A cumulative event such as $X\leq3$ includes every value from
+    0 through 3. A small probability makes an outcome unusual under the model; it does not make it impossible or name a cause.
+
+focus: aps-4.10-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.8in, b: 1.3in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Record Claim A, Claim B, and neither votes without resolving the tail probability."
+    - "Begin the combined 4.10--4.12 video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and separate model fit, probability, and conclusion."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to one claim or neither and cite the result or graph before the lesson."
+    - "Complete the follow-along about BINS and exact versus cumulative binomial probability."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "What values belong in the event 3 or fewer?"
+    - "Which BINS condition is an assumption about consecutive free throws rather than a stated fact?"
+    - "Does 0.0106 mean impossible, ordinary, or something between those?"
+    - "What pattern in a larger set of comparable shots would update your conclusion?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require a condition check and cumulative event before accepting language about a slump or chance variation."
+  watch_for:
+    - "Using only the probability of exactly 3 for a 3-or-fewer claim."
+    - "Listing BINS without assessing independence or constant probability in context."
+    - "Treating one unusual set as proof of a changed parameter."
+  first_take_note: "Not graded. Preserve the possibility of neither claim; both statements intentionally overreach in different directions."
+
+visuals:
+  free_throw_pmf:
+    kind: pgfplot_hist
+    bins: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    counts: [0.006, 0.138, 1.447, 9.002, 36.757, 102.919, 200.121, 266.828, 233.474, 121.061, 28.248]
+    xlabel: "Number of made shots, $X$"
+    ylabel: "Expected count per 1,000"

@@ -1,0 +1,94 @@
+# Topic 4.8 --- Mean and Standard Deviation of Random Variables
+topic: "4.8"
+ced2026: { unit: 2, topic: "2.9", label: "Parameters of Random Variables" }
+title: "Same Mean, Different Deadline Risk"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "When two probability models have the same mean, how can standard deviation change the decision?"
+worksheet: "u4_lesson7-8_live.html"
+
+rules_callout:
+  title: "MEAN, STANDARD DEVIATION, AND SHIFTS (keep on the page)"
+  body: |
+    For a discrete random variable, $\mu_X=\sum xP(X=x)$ and
+    $\sigma_X=\sqrt{\sum(x-\mu_X)^2P(X=x)}$. Interpret $\mu_X$ as the long-run average and
+    $\sigma_X$ as a typical distance from that mean, in context and with units. If $Y=X+c$, then
+    $\mu_Y=\mu_X+c$ while $\sigma_Y=\sigma_X$: adding the same constant shifts every outcome but does not change spread.
+    Match the parameter to the decision; equal centers do not imply equal tail risk.
+
+focus: aps-4.8-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask for a route choice before discussing parameter formulas."
+    - "Begin the parameter portion of the combined 4.7--4.8 follow-along at minute 5."
+    - "Return to the route models at minute 33. Circulate and connect spread to this customer's deadline."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Choose a route and cite one model feature."
+    - "Complete the video follow-along about means, standard deviations, and their interpretations."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "What do the equal means say, and what do they leave unresolved?"
+    - "Which route places probability beyond the 40-minute deadline?"
+    - "When every outcome increases by five, what happens to each distance from its new mean?"
+    - "Would your decision be the same for a customer who valued the chance of arriving extremely early?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Require both a parameter and a deadline-specific display feature; do not let same average stand in for same reliability."
+  watch_for:
+    - "Interpreting a standard deviation as the exact deviation of every delivery."
+    - "Using sample standard deviation with denominator 7 instead of the probability-model denominator 8."
+    - "Adding five to standard deviation when loading time is constant."
+  first_take_note: "Not graded. Route B's very fast outcomes may attract some students before deadline risk is made explicit."
+
+visuals:
+  route_dotplots:
+    kind: raw_tikz
+    body: |
+      \begin{tikzpicture}
+      \begin{axis}[
+        width=0.90\linewidth,
+        height=0.68in,
+        xmin=5,
+        xmax=55,
+        xtick={10,15,20,25,30,35,40,45,50},
+        ymin=0,
+        ymax=3,
+        ytick=\empty,
+        axis y line=none,
+        axis x line=bottom,
+        title={\textbf{Route A}},
+        xlabel={Delivery time (minutes)},
+        tick label style={font=\scriptsize},
+        label style={font=\scriptsize},
+        title style={font=\small}
+      ]
+      \addplot[only marks,mark=*,mark size=2.4pt,color=dayblue] coordinates
+        {(25,1) (27,1) (29,1) (29,2) (31,1) (31,2) (33,1) (35,1)};
+      \end{axis}
+      \end{tikzpicture}\par\vspace{-0.08in}
+      \begin{tikzpicture}
+      \begin{axis}[
+        width=0.90\linewidth,
+        height=0.68in,
+        xmin=5,
+        xmax=55,
+        xtick={10,15,20,25,30,35,40,45,50},
+        ymin=0,
+        ymax=3,
+        ytick=\empty,
+        axis y line=none,
+        axis x line=bottom,
+        title={\textbf{Route B}},
+        xlabel={Delivery time (minutes)},
+        tick label style={font=\scriptsize},
+        label style={font=\scriptsize},
+        title style={font=\small}
+      ]
+      \addplot[only marks,mark=*,mark size=2.4pt,color=dayblue] coordinates
+        {(10,1) (18,1) (26,1) (26,2) (34,1) (34,2) (42,1) (50,1)};
+      \end{axis}
+      \end{tikzpicture}
