@@ -70,5 +70,17 @@
     "skill": "4.A",
     "frq_pattern": "observational-vs-experiment-what-each-can-claim",
     "worksheet": "u3_lesson2_live.html"
+  },
+  "3.3": {
+    "title": "Random Does Not Mean the Same",
+    "skill": "4.A",
+    "frq_pattern": "srs-vs-systematic-vs-stratified-choose-and-defend",
+    "worksheet": "u3_lesson3_live.html"
+  },
+  "3.4": {
+    "title": "Two Surveys, Two Biases",
+    "skill": "4.A",
+    "frq_pattern": "name-the-bias-direction-and-fix",
+    "worksheet": "u3_lesson4_live.html"
   }
 }

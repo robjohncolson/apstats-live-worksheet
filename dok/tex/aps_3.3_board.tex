@@ -1,0 +1,48 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 3.3 \textperiodcentered\ TODAY'S PROBLEM}{Random Does Not Mean the Same}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a school of 1{,}200 students wants to estimate nightly hours of sleep. Three teams propose samples of 50.\par\smallskip \textbf{Method 1:} Choose a random start among the first 24 names on the alphabetical roster, then take every 24th name.\par \textbf{Method 2:} Put all 1{,}200 names in a hat, mix thoroughly, and draw 50 without replacement.\par \textbf{Method 3:} Separate the roster by grade, then randomly choose 12 or 13 students from each grade, for 50 total.\par\smallskip A student says, \emph{They all use randomness, so they are the same.}\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Three proposed samples}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{\#} & \textbf{Rule} & \textbf{$n$} & \textbf{Per grade} \\ \hline
+\textbf{1} & Every 24th & 50 & Not fixed \\ \hline
+\textbf{2} & Hat & 50 & Not fixed \\ \hline
+\textbf{3} & Within grade & 50 & 12 or 13 \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Are all three methods the same kind of random sample? Choose one comparison and explain your instinct.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Name each method: systematic random, simple random, or stratified random.
+  \item[\dokbadge{2}~(b)] Which method is an SRS of 50 students? Explain using what must have an equal chance, not just the word random.
+  \item[\dokbadge{3}~(c)] If sleep differs substantially by grade, choose one method and defend it with the feature that settles your choice. Explain what the other two methods fail to guarantee. Then suppose the roster has a repeating 24-name pattern tied to a school program; explain the specific risk for Method 1.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson3_live.html}{\texttt{\detokenize{u3_lesson3_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson3_live.html}
+
+\end{document}

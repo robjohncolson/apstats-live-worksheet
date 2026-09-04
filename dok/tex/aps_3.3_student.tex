@@ -1,0 +1,55 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Topic 3.3 (CED 1.11) \textperiodcentered\ B: 2026-09-29 \textperiodcentered\ E: 2026-10-07}{Random Does Not Mean the Same}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose a school of 1{,}200 students wants to estimate nightly hours of sleep. Three teams propose samples of 50.\par\smallskip \textbf{Method 1:} Choose a random start among the first 24 names on the alphabetical roster, then take every 24th name.\par \textbf{Method 2:} Put all 1{,}200 names in a hat, mix thoroughly, and draw 50 without replacement.\par \textbf{Method 3:} Separate the roster by grade, then randomly choose 12 or 13 students from each grade, for 50 total.\par\smallskip A student says, \emph{They all use randomness, so they are the same.}\par
+\begin{center}
+\textbf{Three proposed samples}\par\smallskip
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{\#} & \textbf{Rule} & \textbf{$n$} & \textbf{Per grade} \\ \hline
+\textbf{1} & Every 24th & 50 & Not fixed \\ \hline
+\textbf{2} & Hat & 50 & Not fixed \\ \hline
+\textbf{3} & Within grade & 50 & 12 or 13 \\ \hline
+\end{tabular}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
+Are all three methods the same kind of random sample? Choose one comparison and explain your instinct.
+\workspace{0.9in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ THREE RANDOM METHODS (keep on the page)}{calloutgreen}
+An \textbf{SRS of size $n$} gives every possible group of $n$ individuals an equal chance. A
+\textbf{systematic random sample} uses a random start and a fixed interval; beware an ordering pattern that
+repeats with the interval. A \textbf{stratified random sample} divides the population into similar groups,
+then takes an SRS within every group. Choose a method by what it guarantees for this population and question.
+\end{callout}
+
+\newpage
+\textbf{Finish after the video:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} Name each method: systematic random, simple random, or stratified random.\par
+\workspace{0.7in}
+
+\dokbadge{2}~\textbf{(b)} Which method is an SRS of 50 students? Explain using what must have an equal chance, not just the word random.\par
+\workspace{1.4in}
+
+\dokbadge{3}~\textbf{(c)} If sleep differs substantially by grade, choose one method and defend it with the feature that settles your choice. Explain what the other two methods fail to guarantee. Then suppose the roster has a repeating 24-name pattern tied to a school program; explain the specific risk for Method 1.\par
+\workspace{2.0in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I would use Method \blank[0.4in] because it guarantees \blank[2.4in].\end{sentenceframebox}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Method 1 becomes risky when \blank[1.8in] lines up with \blank[1.2in], causing \blank[1.7in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One thing the video changed about my first take: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

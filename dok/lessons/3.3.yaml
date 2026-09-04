@@ -1,0 +1,56 @@
+# Topic 3.3 — Random Sampling and Data Collection
+topic: "3.3"
+ced2026: { unit: 1, topic: "1.11", label: "Random Sampling" }
+title: "Random Does Not Mean the Same"
+minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+essential_question: "Which random sampling method best matches the structure of the population and the question?"
+worksheet: "u3_lesson3_live.html"
+
+rules_callout:
+  title: "THREE RANDOM METHODS (keep on the page)"
+  body: |
+    An \textbf{SRS of size $n$} gives every possible group of $n$ individuals an equal chance. A
+    \textbf{systematic random sample} uses a random start and a fixed interval; beware an ordering pattern that
+    repeats with the interval. A \textbf{stratified random sample} divides the population into similar groups,
+    then takes an SRS within every group. Choose a method by what it guarantees for this population and question.
+
+focus: aps-3.3-d3-1
+reinforcement: []
+exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+
+space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
+
+teacher:
+  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  teacher_does:
+    - "Board slide up at the bell. Ask students to compare any two methods before naming them."
+    - "Begin the video follow-along at minute 5."
+    - "Return to the board slide at minute 33. Circulate and ask what each method guarantees."
+    - "Collect at the door. Score part (c) only, E/P/I."
+  students_do:
+    - "Commit to whether the methods are equivalent and cite one difference."
+    - "Complete the video follow-along about SRS, systematic, stratified, and cluster sampling."
+    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  questions_to_ask:
+    - "For an SRS, what must have an equal chance: each person or each group of 50?"
+    - "Which method forces every grade to appear?"
+    - "Could an SRS contain many students from one grade by chance?"
+    - "What must be true about the roster order for every 24th name to create a repeated type?"
+  adult_role: "Solo teacher. Circulate ~5 pairs. Ask for the guarantee and the failure mode before accepting a method name; do not treat all chance-based designs as interchangeable."
+  watch_for:
+    - "Using random start as proof that the systematic sample is an SRS."
+    - "Confusing strata, sampled within every group, with clusters, where whole selected groups are measured."
+    - "Claiming any sorted list biases systematic sampling without identifying periodic alignment."
+  first_take_note: "Not graded. Expect the word random to make the three methods look equivalent at first."
+
+visuals:
+  methods_table:
+    kind: two_way_table
+    col_label: "Three proposed samples"
+    row_label: '\#'
+    cols: ["Rule", "$n$", "Per grade"]
+    rows: ["1", "2", "3"]
+    cells:
+      - ["Every 24th", "50", "Not fixed"]
+      - ["Hat", "50", "Not fixed"]
+      - ["Within grade", "50", "12 or 13"]

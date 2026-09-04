@@ -1,0 +1,47 @@
+\documentclass[14pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Topic 3.4 \textperiodcentered\ TODAY'S PROBLEM}{Two Surveys, Two Biases}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose a town studies support for a park fee.\par\smallskip \textbf{Mail survey:} A neutral question is mailed to 500 randomly chosen households. Only 120 return it; $78\%$ of respondents oppose the fee.\par \textbf{Phone survey:} The town calls 300 random phone numbers. Of 240 people who answer, $62\%$ oppose after hearing, \emph{Do you support a NEW FEE that would tax park users?}\par\smallskip One council member says $62\%$ must be closer to the truth because more people answered. Another says $78\%$ must be closer because the households were randomly chosen.\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\textbf{Park-fee surveys}\par\smallskip
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{} & \textbf{$n$} & \textbf{Reply} & \textbf{Opp.} & \textbf{Flaw} \\ \hline
+\textbf{Mail} & 500 & 120 & $78\%$ & Nonresp. \\ \hline
+\textbf{Phone} & 300 & 240 & $62\%$ & Wording \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which estimate, if either, would you report to the town? Name one detail behind your choice.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Compute the response rate for each survey. Name the main source of bias in each.
+  \item[\dokbadge{2}~(b)] Explain how each bias could change the reported percent opposing the fee. State a likely direction when the information supports one.
+  \item[\dokbadge{3}~(c)] Decide whether either council member has established which estimate is closer to the town's true opinion. Cite the $24\%$ response rate and the loaded wording in your reasoning, explain why neither estimate is trustworthy as is, and propose one design-specific fix for each survey.
+\end{description}
+
+\vfill
+\noindent\begin{minipage}{0.84\linewidth}
+\textbf{Video + follow-along:} \href{https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson4_live.html}{\texttt{\detokenize{u3_lesson4_live.html}}} (scan the code)\par
+\textbf{Finish (a)--(c) after the video. Turn in your sheet.}
+\end{minipage}\hfill
+\qrcode[height=0.75in]{https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson4_live.html}
+
+\end{document}
