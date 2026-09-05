@@ -89,6 +89,15 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   loading `330efe6`; packing Parts 1–2 `740a60a` `dc61af2` `a15dfd5`) + a working-tree archive move of 35 DOK sheets — ALL
   parked on local branch **`codex-packing-paused`** (never push it: it also swept `tools/.schoology-sync-logs/` fixtures with
   student data). master was reset to origin (`824bcb6`). Specs marked REVERTED/PARKED; prompt marked WITHDRAWN.
+- ✅ **WALLET LOADING SHIPPED 2026-09-05** (teacher OK'd the spec; Codex's `330efe6` cherry-picked, reviewed, pushed):
+  dashboard "📥 Load wallets" (paste the generator's KEYS CSV → assign → submit), 📷 Scan (vendored jsQR — cdnjs 404s),
+  🔑 held/reveal (typed confirm, audited under row lock), `POST/GET/DELETE /wallet/custody`, `GET /class/wallet-custody`,
+  `roster-server/wallet-custody.js`, public wallet reads use an explicit column list (never `doge_wif_enc`),
+  `tools/doge-wallet-gen.mjs --reprint`. Build notes: `WALLET_LOADING_BUILD.md`. **⏭ TEACHER (both required before the
+  Load button works): (1) run `roster-server/migrations/0035_wallet_custody.sql` in the curriculum_render Supabase SQL
+  editor (additive; also widens the doge_ledger kind check with 'key_reveal' and clears custody when an address changes);
+  (2) Railway roster-server env `WALLET_KEY_SECRET` = a random string of ≥ 32 bytes, backed up in the password manager.**
+  Until both: address loading works, custody endpoints 503.
 - ⏭ STILL OPEN from that thread: (1) **calendar relabel to NEW CED codes/colours** (the teacher's original complaint) — a
   standalone Desk task now (pacing `n`/`u` + `rProg`), no schedule change; (2) **wallet loading** — Codex's `330efe6` on
   the parked branch implements `WALLET_LOADING_SPEC.md` (custody endpoints, migration 0035, dashboard loader, QR scanner,
