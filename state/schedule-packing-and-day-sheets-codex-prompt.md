@@ -1,3 +1,5 @@
+# WITHDRAWN 2026-09-05 — the teacher reverted schedule packing (pace too fast). Do not run. Kept for the record.
+
 # Codex prompt — build the packed SY26-27 schedule (rule A), relabel the calendar to the Fall-2026 CED, then the per-day DOK sheets — 2026-09-05
 
 Repo `C:/Users/rober/Downloads/Projects/school/follow-alongs` (Windows; forward slashes; `python`, `node`, `pdflatex`,

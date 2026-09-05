@@ -83,7 +83,17 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   MOST of its lessons (was: latest lesson) — old Unit 1 no longer sinks into Q2 because 1.10 (Normal → CED 2.11) is in
   November; Q1 gradebook shows the first month again. m2b goldens regenerated; bundle regenerated. Dashboard quarter
   buttons now read "Q1 · CED U1" (from `pcUnits`; Q4 → "after the exam") instead of "Q4 · U9".
-- ⏭ DECIDED + HANDED TO CODEX (plan-then-implement, 3 parts): `state/schedule-packing-and-day-sheets-codex-prompt.md` —
+- ❌ **SCHEDULE PACKING REVERTED 2026-09-05 (same day).** Teacher: the 30-min cap counted video runtime only; real class
+  time with pauses/follow-along/questions is far longer; "the current pace is better than shoving all the videos next to
+  each other." **One topic per day stays. Do not re-propose packing.** Codex had already made 4 local commits (wallet
+  loading `330efe6`; packing Parts 1–2 `740a60a` `dc61af2` `a15dfd5`) + a working-tree archive move of 35 DOK sheets — ALL
+  parked on local branch **`codex-packing-paused`** (never push it: it also swept `tools/.schoology-sync-logs/` fixtures with
+  student data). master was reset to origin (`824bcb6`). Specs marked REVERTED/PARKED; prompt marked WITHDRAWN.
+- ⏭ STILL OPEN from that thread: (1) **calendar relabel to NEW CED codes/colours** (the teacher's original complaint) — a
+  standalone Desk task now (pacing `n`/`u` + `rProg`), no schedule change; (2) **wallet loading** — Codex's `330efe6` on
+  the parked branch implements `WALLET_LOADING_SPEC.md` (custody endpoints, migration 0035, dashboard loader, QR scanner,
+  tests); cherry-pick + review + push ONLY after the teacher OKs the spec.
+- (withdrawn) `state/schedule-packing-and-day-sheets-codex-prompt.md` —
   Part 1 packing rule A + calendar relabel to NEW CED (pacing GROUPS, `generateSchedule`, generator flattening + `dayGroups`,
   goldens/bundle regen); Part 2 `build_ladder.py` for day-groups; Part 3 author the 15 group DOK sheets (first one
   `1.1+1.2+1.3` is taught 09-08) and archive the 35 absorbed per-topic sheets. Specs: `SCHEDULE_PACKING_SPEC.md` (decided),

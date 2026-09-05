@@ -5,7 +5,12 @@ Q1 closes with only CED Unit 1 banked. The teacher's rule: **up to 3 videos on a
 simulates packing against the real calendar, recommends a rule, and defines the build. It also fixes the calendar's
 labels, which still speak in the OLD 9-unit codes.
 
-> **Status:** DECIDED (rule A + per-day DOK sheets, 2026-09-05); build handed to Codex — `state/schedule-packing-and-day-sheets-codex-prompt.md`. **Owner:** teacher. **Workflow:** analysis (this doc, §1–§2)
+> **Status: REVERTED 2026-09-05 (same day).** The teacher stopped the build: the 30-minute cap counted video RUNTIME only —
+> pauses, follow-along work, questions and practice make a three-video day far longer than a period — and judged the
+> existing one-topic-per-day pace better. **Do not re-propose packing.** Codex's paused build (Parts 1–3, incl. the
+> archive move of 35 sheets) is preserved on branch `codex-packing-paused` (local, never pushed) for the record. The
+> measurements (`data/video-minutes.json`) stay; the calendar RELABEL to NEW CED codes (§4.3) is still wanted as a
+> standalone task. Historical text below is unchanged. **Owner:** teacher. **Workflow:** analysis (this doc, §1–§2)
 > → teacher picks a rule (§3) → implement (§4). Grade-affecting only through due dates (lesson-schedule.json is regenerated).
 
 ## 0. What already exists

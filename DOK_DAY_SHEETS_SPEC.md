@@ -6,7 +6,9 @@ not one of them. This spec redefines the unit of authoring from the topic to the
 else in `APS_DOK_LADDER_SPEC.md` (the flow, the three editions, the rules, the human channel), and says what happens to
 the 35 per-topic sheets that get absorbed.
 
-> **Status:** proposed (2026-09-05). **Owner:** teacher. **Depends on:** the packing build (§4 of the packing spec) landing
+> **Status: PARKED 2026-09-05** — the packing it depends on was reverted the same day (see `SCHEDULE_PACKING_SPEC.md`);
+> one topic per day stays, so the per-topic ladder stands. Kept for the record; Codex's partial implementation lives on
+> branch `codex-packing-paused`. **Depends on:** the packing build (§4 of the packing spec) landing
 > first, because the day-groups are read from `data/lesson-schedule.json`. **Workflow:** spec → Codex builds (plan first)
 > → orchestrator reviews and pushes. Still grade-inert; still never AI-graded.
 
