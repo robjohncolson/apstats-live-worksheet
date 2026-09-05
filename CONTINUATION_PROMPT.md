@@ -93,11 +93,10 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   dashboard "📥 Load wallets" (paste the generator's KEYS CSV → assign → submit), 📷 Scan (vendored jsQR — cdnjs 404s),
   🔑 held/reveal (typed confirm, audited under row lock), `POST/GET/DELETE /wallet/custody`, `GET /class/wallet-custody`,
   `roster-server/wallet-custody.js`, public wallet reads use an explicit column list (never `doge_wif_enc`),
-  `tools/doge-wallet-gen.mjs --reprint`. Build notes: `WALLET_LOADING_BUILD.md`. **⏭ TEACHER (both required before the
-  Load button works): (1) run `roster-server/migrations/0035_wallet_custody.sql` in the curriculum_render Supabase SQL
-  editor (additive; also widens the doge_ledger kind check with 'key_reveal' and clears custody when an address changes);
-  (2) Railway roster-server env `WALLET_KEY_SECRET` = a random string of ≥ 32 bytes, backed up in the password manager.**
-  Until both: address loading works, custody endpoints 503.
+  `tools/doge-wallet-gen.mjs --reprint`. Build notes: `WALLET_LOADING_BUILD.md`. ✅ Migration 0035 RUN + `WALLET_KEY_SECRET` (≥32 chars — the
+  first attempt was too short; the server silently reports 'not configured' below 32 bytes) SET 2026-09-05; live-verified:
+  `/class/wallet-custody` 200 (13 B students, 0 held), no-key 401, junk WIF → 400 'invalid Dogecoin mainnet WIF'.
+  **Wallet loading is LIVE** — next: the teacher pastes the KEYS CSV in the dashboard's 📥 Load wallets.
 - ⏭ STILL OPEN from that thread: (1) **calendar relabel to NEW CED codes/colours** (the teacher's original complaint) — a
   standalone Desk task now (pacing `n`/`u` + `rProg`), no schedule change; (2) **wallet loading** — Codex's `330efe6` on
   the parked branch implements `WALLET_LOADING_SPEC.md` (custody endpoints, migration 0035, dashboard loader, QR scanner,
