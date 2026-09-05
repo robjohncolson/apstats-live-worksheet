@@ -1,48 +1,66 @@
-# Topic 1.7 --- Summary Statistics for a Quantitative Variable
 topic: "1.7"
-ced2026: { unit: 1, topic: "1.7", label: "Summary Statistics for a Quantitative Variable" }
-title: "Which Summary Tells the Story?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How can a statistic be calculated correctly but still be the wrong summary to report?"
-worksheet: "u1_lesson7_live.html"
-
+ced2026:
+  unit: 1
+  topic: '1.7'
+  label: Summary Statistics for a Quantitative Variable
+title: Which Summary Tells the Story?
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How can a statistic be calculated correctly but still be the wrong summary to report?
+worksheet: u1_lesson7_live.html
 rules_callout:
-  title: "CENTER, SPREAD, AND OUTLIERS (keep on the page)"
-  body: |
-    $\bar{x}=\dfrac{\sum x_i}{n}$ \textperiodcentered\
-    $s_x=\sqrt{\dfrac{\sum(x_i-\bar{x})^2}{n-1}}$ \textperiodcentered\
-    $\mathrm{IQR}=Q_3-Q_1$. For odd $n$, use the ordered values \textbf{before the overall median's position} for $Q_1$
-    and those \textbf{after its position} for $Q_3$; do not include the overall median itself in either half.\\
-    Outlier fences: $Q_1-1.5(\mathrm{IQR})$ and $Q_3+1.5(\mathrm{IQR})$. Mean and SD are
-    \textbf{nonresistant}; median and IQR are \textbf{resistant}. Match the pair to the distribution.
-
+  title: CENTER, SPREAD, AND OUTLIERS (keep on the page)
+  body: 'The median is the middle ordered value (average the two middle values for an even count). For
+    this sheet, find $Q_1$ and $Q_3$ as the medians of the lower and upper halves, excluding the overall
+    median when $n$ is odd. $\mathrm{IQR}=Q_3-Q_1$. Outlier fences are $Q_1-1.5\mathrm{IQR}$ and $Q_3+1.5\mathrm{IQR}$.
+    Mean and SD are nonresistant: extremes affect them more. Median and IQR are resistant. Use the distribution''s
+    shape to choose a pair.'
 focus: aps-1.7-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.7in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now $\\rightarrow$ Explore $\\rightarrow$ Exit"
+  phase_tag: Do Now $\rightarrow$ Explore $\rightarrow$ Exit
   teacher_does:
-    - "Show both recommendations without endorsement; start the video at minute 5."
-    - "At minute 33, press calculation versus choice; collect and score part (c), E/P/I."
+  - Show both recommendations without endorsement; start the video at minute 5.
+  - At minute 33, press calculation versus choice; collect and score part (c), E/P/I.
   students_do:
-    - "Choose with evidence, follow along, then finish (a)--(c) and the exit."
+  - Choose with evidence, follow along, then finish (a)--(c) and the exit.
   questions_to_ask:
-    - "Where does the overall median go when you form the halves?"
-    - "Can correct arithmetic support a less representative summary?"
-    - "What changes if the 30-hour point moves farther right?"
-    - "What could 7.5 suggest without the dotplot?"
-  adult_role: "Circulate five pairs; press separately on quartiles and summary choice."
+  - Where does the overall median go when you form the halves?
+  - Can correct arithmetic support a less representative summary?
+  - What changes if the 30-hour point moves farther right?
+  - What could 7.5 suggest without the dotplot?
+  adult_role: Circulate five pairs; press separately on quartiles and summary choice.
   watch_for:
-    - "Including the overall median in both halves."
-    - "Treating either student as entirely correct."
-    - "Choosing resistant summaries but retaining IQR 6.5."
-  first_take_note: "Not graded. Preserve the split between computation and choice."
-
+  - Including the overall median in both halves.
+  - Treating either student as entirely correct.
+  - Choosing resistant summaries but retaining IQR 6.5.
+  first_take_note: Not graded. Preserve the split between computation and choice.
 visuals:
   work_hours_dotplot:
     kind: dotplot
-    values: [0, 0, 0, 4, 5, 6, 6, 8, 8, 10, 10, 12, 12, 15, 30]
-    xlabel: "Weekly paid-work hours"
+    values:
+    - 0
+    - 0
+    - 0
+    - 4
+    - 5
+    - 6
+    - 6
+    - 8
+    - 8
+    - 10
+    - 10
+    - 12
+    - 12
+    - 15
+    - 30
+    xlabel: Weekly paid-work hours

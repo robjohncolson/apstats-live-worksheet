@@ -21,7 +21,7 @@
 }
 \textbf{Essential question:} How can the same quantitative data tell a different visual story when the histogram bins change?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{bin-\allowbreak{}width-\allowbreak{}which-\allowbreak{}display-\allowbreak{}answers-\allowbreak{}the-\allowbreak{}question-\allowbreak{}and-\allowbreak{}what-\allowbreak{}it-\allowbreak{}hides}}\par
-\textbf{DOK rationale:} Part (c) weighs two bin widths against the coach's purpose, identifies structure lost through grouping, bounds an unlabeled-group conclusion, and defends when the coarser display is preferable.\par
+\textbf{DOK rationale:} Part (c) selects a bin width for the coach's question, explains how grouping changes the reader's impression, and bounds conclusions from unlabeled observations.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -57,19 +57,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-fine-for-purpose} (required) --- Chooses F or Leo as the better first look for the coach
-  \item \textbf{cites-hidden-feature} (required) --- Cites a cluster or the 9--11-thousand gap visible in F and merged in C
-  \item \textbf{states-misleading-conclusion} (required) --- Explains that C can suggest one routine and hide two possible groups
-  \item \textbf{bounds-group-conclusion} (required) --- Requires day labels before assigning either cluster to school days or weekends
-  \item \textbf{defends-coarse-use} (required) --- Names a broad-bin question for which C is more efficient and explains why
+  \item \textbf{selects-with-feature} (required) --- Chooses F and cites the 9--11-thousand gap or separated groups
+  \item \textbf{explains-hidden-structure} (required) --- Explains how C's broad bins can hide two possible routines
+  \item \textbf{requires-day-labels} (required) --- Requires school-day/weekend labels before attributing groups to day types
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Chooses F, cites structure C merges, explains the one-routine misread, requires day labels, and defends a concrete use for C. \\ \hline
-\textbf{P} & Makes the supported choice but omits the inference limit, misleading consequence, or defensible use for C. \\ \hline
-\textbf{I} & Chooses by appearance, treats bin width as changing the data, assigns unlabeled clusters to day types, or cites no feature. \\ \hline
+\textbf{E} & All three elements are correct and linked to this problem. Accept equivalent plain-language reasoning. \\ \hline
+\textbf{P} & At least one element includes a correct evidence-to-reason link, but another is missing or incorrect. \\ \hline
+\textbf{I} & No correct evidence-to-reason link; only a choice, copied numbers, or unsupported statements. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -84,16 +82,18 @@
 
 Suppose a student recorded steps for 30 days. Histograms F and C show the same data with 1-thousand- and 5-thousand-step bins. A coach asks, ``Does this student move differently on school days and weekends?''\par\smallskip \textbf{Priya:} ``Use C. F has too many short and empty bars; C gives the clearer summary.''\par \textbf{Leo:} ``Use F. C combines values that should not be treated as one group.''\par
 \begin{center}
+\def\auditplotheight{1.4in}\ifdim\linewidth<5in\def\auditplotheight{1.15in}\fi
+\def\auditplotwidth{0.46\linewidth}\ifdim\linewidth<5in\def\auditplotwidth{0.98\linewidth}\fi
 \noindent
-\begin{minipage}[t]{0.46\linewidth}
+\begin{minipage}[t]{\auditplotwidth}
 \centering
 \textbf{F: 1-thousand-step bins}\par\smallskip
 \begin{tikzpicture}
 \begin{axis}[
-  width=\linewidth, height=1.40in,
+  width=\linewidth, height=\auditplotheight,
   ybar interval, bar shift=0pt,
   xmin=4, xmax=20, ymin=0, ymax=8,
-  xtick={4,6,8,10,12,14,16,18,20}, ytick={0,2,4,6,8},
+  xtick={4,6,8,10,12,14,16,18,20}, ytick={0,4,8},
   xlabel={Daily steps (thousands)}, ylabel={Days},
   tick label style={font=\scriptsize}, label style={font=\scriptsize},
   ymajorgrids, x tick label as interval=false
@@ -104,16 +104,16 @@ Suppose a student recorded steps for 30 days. Histograms F and C show the same d
 };
 \end{axis}
 \end{tikzpicture}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.46\linewidth}
+\end{minipage}\ifdim\linewidth<5in\par\smallskip\else\hfill\fi
+\begin{minipage}[t]{\auditplotwidth}
 \centering
 \textbf{C: 5-thousand-step bins}\par\smallskip
 \begin{tikzpicture}
 \begin{axis}[
-  width=\linewidth, height=1.40in,
+  width=\linewidth, height=\auditplotheight,
   ybar interval, bar shift=0pt,
   xmin=0, xmax=20, ymin=0, ymax=23,
-  xtick={0,5,10,15,20}, ytick={0,5,10,15,20},
+  xtick={0,5,10,15,20}, ytick={0,10,20},
   xlabel={Daily steps (thousands)}, ylabel={Days},
   tick label style={font=\scriptsize}, label style={font=\scriptsize},
   ymajorgrids, x tick label as interval=false
@@ -135,11 +135,11 @@ Which histogram is more useful to the coach, F or C? Name one visible feature.\p
 \dokbadge{1}~\textbf{(a)} State each bin width and the number of days in F's 19--20-thousand interval.\par
 \answer{F uses 1-thousand-step bins; C uses 5-thousand-step bins. F has 1 day in 19--20 thousand.}
 
-\dokbadge{2}~\textbf{(b)} Describe F in context, including clusters, gaps, and the unusual value, with units.\par
-\answer{There are 21 days from 5.1--8.6 thousand, 8 from 11.1--13.4 thousand, a gap from 8.6--11.1, a longer gap to an isolated 19.0 thousand. Raw data (thousands): 5.1, 5.3, 5.5, 5.7, 5.8, 6.1, 6.2, 6.4, 6.6, 6.8, 6.9, 7.1, 7.2, 7.4, 7.5, 7.7, 7.8, 7.9, 8.1, 8.3, 8.6, 11.1, 11.4, 11.8, 12.1, 12.4, 12.7, 13.1, 13.4, 19.0.}
+\dokbadge{2}~\textbf{(b)} In two sentences, describe where F's days are grouped and where its empty intervals are. Use thousands of steps.\par
+\answer{There are 21 days in the 5--9-thousand-step intervals and 8 in the 11--14-thousand intervals. No days fall in 9--11 or 14--19 thousand; one day falls in 19--20 thousand. The histogram does not show exact individual values.}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate Priya's and Leo's recommendations. Choose the better first look for the coach, cite a feature that vanishes in the other display, and explain what its reader could wrongly conclude. State what information is still needed before naming either cluster school days or weekends. Give one specific question for which C is better.\par
-\answer{Leo's F is the better first look: it preserves clusters near 5--9 and 11--14 thousand and the 9--11 gap. C merges these into adjacent broad bars, so a reader could infer one right-skewed routine and miss two possible routines. Neither histogram identifies day type; match observations to dates or compare labeled school-day/weekend displays. C is better for ``How many days were below 10 thousand?'' because its broad bin shows 21 directly.}
+\dokbadge{3}~\textbf{(c)} Choose Priya's or Leo's display for a first look at the coach's question. Cite one feature that the other display hides and explain how that changes the impression. What information would you still need to tell school days from weekends?\par
+\answer{Leo's F preserves the empty 9--11-thousand interval between two groups. C merges the groups into adjacent broad bars, which could hide two possible routines. Neither graph labels the days; the coach needs the school-day/weekend label for each observation before identifying either group.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

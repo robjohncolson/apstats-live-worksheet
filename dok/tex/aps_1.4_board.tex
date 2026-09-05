@@ -17,12 +17,14 @@ Suppose 184 students chose a favorite lunch option. A newsletter printed \textbf
 \begin{minipage}[t]{0.40\linewidth}
 \vspace{0pt}
 \begin{center}
-\begin{minipage}{0.48\linewidth}
+\def\auditplotheight{1.4in}\ifdim\linewidth<5in\def\auditplotheight{1.15in}\fi
+\def\auditplotwidth{0.48\linewidth}\ifdim\linewidth<5in\def\auditplotwidth{0.98\linewidth}\fi
+\begin{minipage}{\auditplotwidth}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
   width=0.95\linewidth,
-  height=1.4in,
+  height=\auditplotheight,
   ybar=2pt,
   bar width=10pt,
   ymin=40,
@@ -47,18 +49,18 @@ Suppose 184 students chose a favorite lunch option. A newsletter printed \textbf
   {(Pizza,52) (Tacos,47) (Salad,44) (Pasta,41)};
 \end{axis}
 \end{tikzpicture}
-\end{minipage}\hfill
-\begin{minipage}{0.48\linewidth}
+\end{minipage}\ifdim\linewidth<5in\par\smallskip\else\hfill\fi
+\begin{minipage}{\auditplotwidth}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
   width=0.95\linewidth,
-  height=1.4in,
+  height=\auditplotheight,
   ybar=2pt,
   bar width=10pt,
   ymin=0,
   ymax=58,
-  ytick={0,10,20,30,40,50},
+  ytick={0,20,40},
   symbolic x coords={Pizza,Tacos,Salad,Pasta},
   xtick=data,
   enlarge x limits=0.18,
@@ -88,8 +90,8 @@ Is pizza clearly the favorite? Name the graph that most influenced you.
 
 \begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
   \item[\dokbadge{1}~(a)] Read the Pizza and Pasta counts. How many more students chose Pizza?
-  \item[\dokbadge{2}~(b)] Convert all four counts to whole-number percents of 184. Describe how close the categories are in context.
-  \item[\dokbadge{3}~(c)] For ``Is pizza clearly the favorite?'' choose the more honest graph and name the design feature that settles it. Quantify Graph A's visible Pizza-to-Pasta heights, then compare 52 with 41 using percent increase. Finally, choose a zero-baseline bar graph or pie chart for comparing the four categories and defend that choice.
+  \item[\dokbadge{2}~(b)] Graph A starts at 40. Find the visible heights above 40 for Pizza and Pasta. Compare those heights with the actual counts.
+  \item[\dokbadge{3}~(c)] Which graph gives a fairer picture of the lunch votes? Explain how its scale affects the comparison. Use your counts to judge both `landslide' and `basically a tie,' then write a more accurate headline.
 \end{description}
 
 \vfill

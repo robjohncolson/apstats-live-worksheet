@@ -8,7 +8,7 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-A school says daily app time is approximately normal with mean $40$ minutes and standard deviation $12$ minutes. The histogram shows 60 students; no recorded time was exactly 70 minutes.\par\smallskip \textbf{Ben:} ``About $16\%$ should be above 52 minutes.''\quad \textbf{Ava:} ``For 70 minutes, $z=2.5$, so less than $1\%$ should be above 70.''\par
+A school says daily app time is approximately normal with mean $40$ minutes and standard deviation $12$ minutes. The histogram shows 60 students; no recorded time was exactly 70 minutes. Table A gives a left area of $0.9938$ for $z=2.5$.\par\smallskip \textbf{Ben:} ``About $16\%$ should be above 52 minutes.''\quad \textbf{Ava:} ``For 70 minutes, $z=2.5$, so less than $1\%$ should be above 70.''\par
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
@@ -37,28 +37,24 @@ A school says daily app time is approximately normal with mean $40$ minutes and 
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Does the normal model fit? Point to one histogram feature.
+Do the times look balanced around 40 minutes, or does one side stretch farther? Point to the bars.
 \workspace{0.9in}
 \end{firsttakebox}
 
 \begin{callout}{\IconBook\ USING A NORMAL MODEL (keep on the page)}{calloutgreen}
-A normal curve is \textbf{mound-shaped and symmetric}. Its parameters are the population mean $\mu$ and
-population standard deviation $\sigma$. Check the data's shape before using the model.\
-Empirical rule: about $68\%$ is within $1\sigma$, $95\%$ within $2\sigma$, and $99.7\%$ within $3\sigma$.\
-Standardize with $z=(x-\mu)/\sigma$. A normal-table answer describes the \emph{model}; it describes the data
-only when the model is appropriate.
+A normal curve is mound-shaped and symmetric, with population mean $\mu$ and standard deviation $\sigma$. Check whether the data's shape fits the model. About $68\%$, $95\%$, and $99.7\%$ lie within 1, 2, and 3 standard deviations. Standardize with $z=(x-\mu)/\sigma$. Table A gives area to the left; right area is 1 minus left area. Observed percent is $100\times\text{count}/\text{total}$. A model's calculated area need not match the observed data.
 \end{callout}
 
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} State $\mu$ and $\sigma$ for the proposed model. What two shape features should approximately normal data have?\par
+\dokbadge{1}~\textbf{(a)} State the proposed model's mean $\mu$ and standard deviation $\sigma$, with units.\par
 \workspace{0.7in}
 
 \dokbadge{2}~\textbf{(b)} Check Ben's and Ava's model calculations. Then find the observed fraction of these 60 students above 70 minutes.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Are the calculations warranted as conclusions about these students? Defend your decision with the histogram's shape and tail count. Explain how the relationship between a model and its data supports your decision, what a reader would conclude about long app times, and what must be checked before using normal methods.\par
+\dokbadge{3}~\textbf{(c)} Would you use Ben's and Ava's model results to describe these students? Use the histogram's shape and the observed versus predicted percent above 70. Explain what a reader could get wrong about long app times.\par
 \workspace{2.0in}
 
 \begin{sentenceframebox}\raggedright\textbf{Frame:} The calculations are \blank[0.9in] under the model; for these data I would \blank[1in] them because \blank[2in].\end{sentenceframebox}

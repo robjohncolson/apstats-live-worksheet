@@ -1,60 +1,97 @@
-# Topic 1.2 — The Language of Variation: Variables (Phase-2 stress test #1)
 topic: "1.2"
-ced2026: { unit: 1, topic: "1.2", label: "The Language of Variation: Variables" }
-title: "Numbers That Aren't Quantities"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "When is a number a quantity, and when is it just a label?"
-worksheet: "u1_lesson2_live.html"
-
+ced2026:
+  unit: 1
+  topic: '1.2'
+  label: 'The Language of Variation: Variables'
+title: 'Getting to School: Survey Data'
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: When is a number a quantity, and when is it just a label?
+worksheet: u1_lesson2_live.html
 rules_callout:
-  title: "VARIABLES (keep on the page)"
-  body: |
-    An \textbf{individual} is one row: the person or thing the data describe. A \textbf{variable} is one column: a
-    characteristic that changes from individual to individual.\\
-    \textbf{Categorical} --- the values are category names or group labels (even if written with digits).\\
-    \textbf{Quantitative} --- the values are numbers for a \emph{measured or counted quantity}, with a unit.
-    Test: does ``twice as big'' or ``the average'' mean anything? If not, it's a label.
-
+  title: VARIABLES (keep on the page)
+  body: An \textbf{individual} is a person or thing the data describe. A \textbf{variable} is a characteristic
+    that can change between individuals. An identifier only names an individual. \textbf{Categorical}
+    values are category names or group labels, even when written with digits. \textbf{Quantitative} values
+    are numbers for a measured or counted quantity. State units for measurements. Before averaging, ask
+    what quantity the values measure or count.
 focus: aps-1.2-d3-1
-reinforcement: [aps-1.2-d2-1]
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.8in, b: 1.3in, c: 1.9in }   # two sentence frames + optional item share the back
-
+reinforcement:
+- aps-1.2-d2-1
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.8in
+  b: 1.3in
+  c: 1.9in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
+    + turn in)
   teacher_does:
-    - "Board slide up at the bell. Read Maya's and Jordan's lines aloud; do not react."
-    - "Video follow-along from minute 5."
-    - "Board slide back up at minute 33. Circulate; push for the definition, not the label."
-    - "Collect at the door. Score part (c) only, E/P/I. Either position on Rating can earn E."
+  - Board slide up at the bell. Read Maya's and Jordan's lines aloud; do not react.
+  - Video follow-along from minute 5.
+  - Board slide back up at minute 33. Circulate; push for the definition, not the label.
+  - Collect at the door. Score part (c) only, E/P/I. Either position on Rating can earn E.
   students_do:
-    - "One-sentence first take on the zip-code question before any teaching."
-    - "Video follow-along (individuals, variables, categorical vs quantitative)."
-    - "Finish (a)--(c); exit line; turn in."
+  - One-sentence first take on the zip-code question before any teaching.
+  - Video follow-along (individuals, variables, categorical vs quantitative).
+  - Finish (a)--(c); exit line; turn in.
   questions_to_ask:
-    - "What does a zip code measure? What does it count?"
-    - "If I averaged two zip codes, what place would I get?"
-    - "Is a 5-star rating twice as good as a 2.5-star rating? Does that matter for your answer?"
-    - "Which column would you sort to find the `biggest'? Which column has no `biggest'?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Never say `categorical' or `quantitative' yourself during the finish window; ask what the number measures."
+  - What does a zip code measure? What does it count?
+  - If I averaged two zip codes, what place would I get?
+  - Do equal one-star steps represent equal changes in what is being measured? State your assumption.
+  - Which column would you sort to find the `biggest'? Which column has no `biggest'?
+  adult_role: Solo teacher. Circulate ~5 pairs. Never say `categorical' or `quantitative' yourself during
+    the finish window; ask what the number measures.
   watch_for:
-    - "`It's a number so it's quantitative' --- the digit-vs-quantity confusion the whole lesson is about."
-    - "Students who get Zip code right by instinct but cannot state the definition (P, not E)."
-    - "Listing the newspaper or the school as the individual."
-  first_take_note: "Not graded. Most will say `yes, it's a number'; that is the hook."
-
+  - '`It has digits, so it''s quantitative'' --- confuses how a value is written with what it measures'
+  - Saying zip code is categorical `because you can't add them' without saying WHY (it measures/counts
+    nothing)
+  - Treating Rating as obviously quantitative because the quiz app computes an average star rating
+  - Naming the individuals as `the newspaper' or `the school' instead of the six students
+  first_take_note: Not graded. Most will say `yes, it's a number'; that is the hook.
 visuals:
   survey_table:
     kind: two_way_table
-    col_label: "Getting-to-school survey (minutes; 1--5 stars)"
-    row_label: "Name"
-    cols: ["Lunch", "ZIP", "Min", "Stars"]
-    rows: ["Aiden", "Bea", "Cruz", "Dev", "Elise", "Fiona"]
+    col_label: Getting-to-school survey (minutes; 1--5 stars)
+    row_label: Name
+    cols:
+    - Lunch
+    - ZIP
+    - Min
+    - Stars
+    rows:
+    - Aiden
+    - Bea
+    - Cruz
+    - Dev
+    - Elise
+    - Fiona
     cells:
-      - ["A", "01902", "12", "4"]
-      - ["B", "01905", "35", "2"]
-      - ["A", "01902", "8", "5"]
-      - ["C", "01904", "22", "3"]
-      - ["B", "01905", "41", "1"]
-      - ["A", "01901", "15", "4"]
+    - - A
+      - 01902
+      - '12'
+      - '4'
+    - - B
+      - 01905
+      - '35'
+      - '2'
+    - - A
+      - 01902
+      - '8'
+      - '5'
+    - - C
+      - 01904
+      - '22'
+      - '3'
+    - - B
+      - 01905
+      - '41'
+      - '1'
+    - - A
+      - 01901
+      - '15'
+      - '4'

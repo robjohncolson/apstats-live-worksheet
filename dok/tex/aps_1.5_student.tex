@@ -10,16 +10,18 @@
 
 Suppose a student recorded steps for 30 days. Histograms F and C show the same data with 1-thousand- and 5-thousand-step bins. A coach asks, ``Does this student move differently on school days and weekends?''\par\smallskip \textbf{Priya:} ``Use C. F has too many short and empty bars; C gives the clearer summary.''\par \textbf{Leo:} ``Use F. C combines values that should not be treated as one group.''\par
 \begin{center}
+\def\auditplotheight{1.4in}\ifdim\linewidth<5in\def\auditplotheight{1.15in}\fi
+\def\auditplotwidth{0.46\linewidth}\ifdim\linewidth<5in\def\auditplotwidth{0.98\linewidth}\fi
 \noindent
-\begin{minipage}[t]{0.46\linewidth}
+\begin{minipage}[t]{\auditplotwidth}
 \centering
 \textbf{F: 1-thousand-step bins}\par\smallskip
 \begin{tikzpicture}
 \begin{axis}[
-  width=\linewidth, height=1.40in,
+  width=\linewidth, height=\auditplotheight,
   ybar interval, bar shift=0pt,
   xmin=4, xmax=20, ymin=0, ymax=8,
-  xtick={4,6,8,10,12,14,16,18,20}, ytick={0,2,4,6,8},
+  xtick={4,6,8,10,12,14,16,18,20}, ytick={0,4,8},
   xlabel={Daily steps (thousands)}, ylabel={Days},
   tick label style={font=\scriptsize}, label style={font=\scriptsize},
   ymajorgrids, x tick label as interval=false
@@ -30,16 +32,16 @@ Suppose a student recorded steps for 30 days. Histograms F and C show the same d
 };
 \end{axis}
 \end{tikzpicture}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.46\linewidth}
+\end{minipage}\ifdim\linewidth<5in\par\smallskip\else\hfill\fi
+\begin{minipage}[t]{\auditplotwidth}
 \centering
 \textbf{C: 5-thousand-step bins}\par\smallskip
 \begin{tikzpicture}
 \begin{axis}[
-  width=\linewidth, height=1.40in,
+  width=\linewidth, height=\auditplotheight,
   ybar interval, bar shift=0pt,
   xmin=0, xmax=20, ymin=0, ymax=23,
-  xtick={0,5,10,15,20}, ytick={0,5,10,15,20},
+  xtick={0,5,10,15,20}, ytick={0,10,20},
   xlabel={Daily steps (thousands)}, ylabel={Days},
   tick label style={font=\scriptsize}, label style={font=\scriptsize},
   ymajorgrids, x tick label as interval=false
@@ -57,11 +59,7 @@ Which histogram is more useful to the coach, F or C? Name one visible feature.
 \end{firsttakebox}
 
 \begin{callout}{\IconBook\ READING HISTOGRAMS (keep on the page)}{calloutgreen}
-A histogram bar counts the observations in its interval; adjacent bars touch because the horizontal axis is quantitative.\\
-Changing bin width or bin boundaries changes what is \textbf{visible}, not the observations themselves. Narrow bins can expose
-\textbf{clusters, gaps, and isolated values}; wide bins can make broad counts easier but can merge those features.\\
-Choose a bin width for the question. A one-variable histogram can suggest distinct groups, but it cannot identify
-which observation belongs to which group unless the group labels are retained.
+A histogram groups observations into intervals; each bar gives the count in its interval. Values at a boundary go in the interval that starts there. Changing interval widths changes the appearance, not the observations. Narrow intervals can reveal separated groups and empty intervals; wide intervals summarize broad counts. A histogram does not show each exact value or attach a group label to each observation.
 \end{callout}
 
 \newpage
@@ -70,15 +68,15 @@ which observation belongs to which group unless the group labels are retained.
 \dokbadge{1}~\textbf{(a)} State each bin width and the number of days in F's 19--20-thousand interval.\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Describe F in context, including clusters, gaps, and the unusual value, with units.\par
+\dokbadge{2}~\textbf{(b)} In two sentences, describe where F's days are grouped and where its empty intervals are. Use thousands of steps.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate Priya's and Leo's recommendations. Choose the better first look for the coach, cite a feature that vanishes in the other display, and explain what its reader could wrongly conclude. State what information is still needed before naming either cluster school days or weekends. Give one specific question for which C is better.\par
+\dokbadge{3}~\textbf{(c)} Choose Priya's or Leo's display for a first look at the coach's question. Cite one feature that the other display hides and explain how that changes the impression. What information would you still need to tell school days from weekends?\par
 \workspace{2.0in}
 
 \begin{sentenceframebox}\raggedright\textbf{Frame:} I would show histogram \blank[0.6in] because it preserves \blank[1.9in], while the other merges \blank[1.6in].\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} Before naming day types, I need \blank[2.2in]; C is better when the question is \blank[2.2in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The other display could make a reader think \blank[2in]. To tell which days are weekends, I still need \blank[2in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

@@ -1,71 +1,89 @@
-# Topic 1.1 --- Introducing Statistics: What Can We Learn from Data?
 topic: "1.1"
-ced2026: { unit: 1, topic: "1.1", label: "Introducing Statistics: What Can We Learn from Data?" }
-title: "What Can These Data Support?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How do the data collected limit what we can honestly claim?"
-worksheet: "u1_lesson1_live.html"
-
+ced2026:
+  unit: 1
+  topic: '1.1'
+  label: 'Introducing Statistics: What Can We Learn from Data?'
+title: What Can These Data Support?
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How can leaving out valid data change the answer to a question?
+worksheet: u1_lesson1_live.html
 rules_callout:
-  title: "CLAIMS NEED CONTEXT AND EVIDENCE (keep on the page)"
-  body: |
-    A number or pattern is meaningful only in \textbf{context}: who or what was measured, what variable was recorded,
-    when it was recorded, and its units. A statement that says \emph{tended to} allows exceptions.\\
-    A pattern can describe the individuals measured. To generalize to a larger group, the people measured must
-    represent that group. To claim \textbf{cause}, look for an assigned comparison in an experiment; an observed
-    pattern alone leaves other explanations possible.
-
+  title: USE DATA IN CONTEXT (keep on the page)
+  body: A variable is a characteristic recorded for each individual. Variation means the values differ.
+    A threshold is a cutoff used to decide whether action is needed. $\text{Percent}=100\times\dfrac{\text{count
+    meeting the condition}}{\text{total count}}$. When observations are removed, count the remaining observations
+    and use the remaining total. Interpret the result in the original context.
 focus: aps-1.1-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.7in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
+    + turn in)
   teacher_does:
-    - "Board slide up at the bell. Read both newspaper claims once without endorsing either."
-    - "Begin the video follow-along at minute 5; leave first takes ungraded."
-    - "Return to the board slide at minute 33. Circulate and ask students to separate pattern, scope, and cause."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Board slide up at the bell. Read both newspaper claims once without endorsing either.
+  - Begin the video follow-along at minute 5; leave first takes ungraded.
+  - Return to the board at minute 33. Ask students to connect each percent to the group it describes.
+  - Collect at the door. Score part (c) only, E/P/I.
   students_do:
-    - "Commit to one claim, neither claim, or both in a one-sentence first take."
-    - "Complete the video follow-along about questions, variation, and context."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Commit to one claim, neither claim, or both in a one-sentence first take.
+  - Complete the video follow-along about questions, variation, and context.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Which paired values make the words 'tended to' reasonable even with Leo in the table?"
-    - "Which words in Claim 2 change the scope, and which word makes it causal?"
-    - "What does 'surveyed' tell you that 'randomly assigned' would not?"
-    - "Would a random school sample establish cause? Would random assignment in this one class represent the school?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to point to the table or collection description before accepting a claim; do not supply the words 'scope' or 'cause' first."
+  - Who is included in each percent?
+  - Why does the total change when two observations are removed?
+  - Were the removed values recording errors?
+  - Which conclusion answers the original question about all 12 students?
+  adult_role: Solo teacher. Ask which students each fraction includes; let students decide whether omission
+    is justified.
   watch_for:
-    - "Using Leo to erase the overall tendency instead of treating him as one exception."
-    - "Saying only '12 is too small' without explaining who the 12 students represent."
-    - "Treating a random sample as proof of cause, or random assignment in one class as proof about the whole school."
-  first_take_note: "Not graded. Expect Claim 2; the revision should become more bounded."
-
-# Topic 1.1 has no tutor artifact. These two lines are copied from apstat_1_framework.md.
+  - Dividing by 12 after removing two students
+  - Calling the shortened percent an arithmetic error rather than a changed data set
+  - Treating a valid low value as permission to omit it
+  first_take_note: Not graded. Students can choose using the sleep values and the printed threshold before
+    formal vocabulary.
 tether:
-  - '\textbf{VAR-1.A} Identify questions to be answered, based on variation in one-variable data. \textbf{[Skill 1.A]}'
-  - '\textbf{VAR-1.A.1} Numbers may convey meaningful information, when placed in context.'
-
+- \textbf{VAR-1.A} Identify questions to be answered, based on variation in one-variable data. \textbf{[Skill
+  1.A]}
+- \textbf{VAR-1.A.1} Numbers may convey meaningful information, when placed in context.
 visuals:
   sleep_table:
     kind: two_way_table
-    col_label: "Sleep and quiz scores"
-    row_label: "Student"
-    cols: ["Sleep (h)", "Quiz (/10)"]
-    rows: ["Aiden", "Bea", "Cruz", "Dev", "Elise", "Fiona", "Gabe", "Hana", "Imani", "Jalen", "Kira", "Leo"]
+    col_label: Sleep last night
+    row_label: Student
+    cols:
+    - Sleep (hours)
+    rows:
+    - Aiden
+    - Bea
+    - Cruz
+    - Dev
+    - Elise
+    - Fiona
+    - Gabe
+    - Hana
+    - Imani
+    - Jalen
+    - Kira
+    - Leo
     cells:
-      - ["5.0", "4"]
-      - ["7.0", "7"]
-      - ["8.5", "10"]
-      - ["6.5", "7"]
-      - ["8.0", "8"]
-      - ["7.5", "8"]
-      - ["5.5", "5"]
-      - ["9.0", "10"]
-      - ["7.0", "7"]
-      - ["6.0", "6"]
-      - ["8.0", "9"]
-      - ["4.5", "9"]
+    - - '5.0'
+    - - '7.0'
+    - - '8.5'
+    - - '6.5'
+    - - '8.0'
+    - - '7.5'
+    - - '5.5'
+    - - '9.0'
+    - - '7.0'
+    - - '6.0'
+    - - '8.0'
+    - - '4.5'

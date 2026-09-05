@@ -65,18 +65,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{adjudicates-quartiles} (required) --- Identifies Kai's IQR 8 and explains Rosa included the median in both halves
-  \item \textbf{selects-resistant-pair} (required) --- Recommends median 8 and corrected IQR 8
-  \item \textbf{cites-isolated-thirty} (required) --- Cites the isolated 30, 15-hour gap, or right skew
-  \item \textbf{states-nonresistant-consequence} (required) --- Explains how mean and SD could make outlier-driven spread seem typical
+  \item \textbf{quartile-method} (required) --- Identifies Kai's IQR 8 and explains Rosa's inclusion of the overall median
+  \item \textbf{corrected-pair} (required) --- Chooses median 8 and IQR 8 hours
+  \item \textbf{feature-and-resistance} (required) --- Links isolated 30 or right skew to why mean/SD are more affected than the chosen pair
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Corrects Rosa's method, chooses median and IQR, and links isolated 30 to a mean-and-SD misread. \\ \hline
-\textbf{P} & Gets the method or summary choice right but omits a required link. \\ \hline
-\textbf{I} & Treats one student as wholly correct or gives no feature-based judgment. \\ \hline
+\textbf{E} & All three elements are correct and linked to this problem. Accept equivalent plain-language reasoning. \\ \hline
+\textbf{P} & At least one element includes a correct evidence-to-reason link, but another is missing or incorrect. \\ \hline
+\textbf{I} & No correct evidence-to-reason link; only a choice, copied numbers, or unsupported statements. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -126,11 +125,11 @@ Whose report would you send, Kai's or Rosa's? Cite one number or dotplot feature
 \dokbadge{1}~\textbf{(a)} State the median and maximum weekly paid-work hours.\par
 \answer{The median is 8 hours and the maximum is 30 hours.}
 
-\dokbadge{2}~\textbf{(b)} Using the AP quartile convention, calculate $Q_1$, $Q_3$, the IQR, and both 1.5-IQR fences; identify any outlier. Then verify the mean and sample standard deviation. Show enough work to distinguish the methods.\par
-\answer{Exclude the overall median. The seven values below it give $Q_1=4$; the seven above give $Q_3=12$. Thus IQR $=8$, the fences are $-8$ and $24$, and 30 is a high outlier. Also, $\sum x=126$, so $\bar{x}=8.4$; with squared-deviation sum $795.6$, $s_x=\sqrt{795.6/14}=7.538\ldots\approx7.5$ hours.}
+\dokbadge{2}~\textbf{(b)} Using the printed quartile rule, find $Q_1$, $Q_3$, the IQR, and the upper $1.5$-IQR fence. Is 30 beyond it? Use Kai's mean and SD as given.\par
+\answer{Exclude the overall median: $Q_1=4$, $Q_3=12$, IQR $=8$, and the upper fence is $12+1.5(8)=24$ hours. The 30-hour value exceeds it. Kai's supplied mean 8.4 and sample SD about 7.5 are correct; recalculating them is not required.}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate both reports. Whose IQR follows the AP convention, and what did the other student do differently? Choose mean and SD or median and IQR for the principal, cite the specific dotplot feature controlling your choice, and explain what the alternative pair alone could lead the principal to believe.\par
-\answer{Kai's IQR of 8 follows the AP convention. Rosa included the overall median in both halves, giving $Q_1=4.5$, $Q_3=11$, and IQR $=6.5$. Report the median of 8 and corrected IQR of 8: the isolated 30 follows a 15-hour gap and exceeds the upper fence 24. Mean 8.4 and SD 7.5 alone could make outlier-driven spread seem routine, hiding that 14 of 15 students worked at most 15 hours.}
+\dokbadge{3}~\textbf{(c)} Whose IQR follows the printed rule, and how did the other result arise? Choose a corrected summary pair for the principal. Use a dotplot feature to explain why that pair describes typical work hours better than the alternative.\par
+\answer{Kai's IQR of 8 follows the printed rule. Rosa included the overall median in each half, giving quartiles 4.5 and 11 and IQR 6.5. Report median 8 and corrected IQR 8 hours: the isolated 30-hour value pulls the nonresistant mean and SD, especially the spread. The resistant pair describes the middle of the distribution without letting that one student's hours dominate.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

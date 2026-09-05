@@ -56,18 +56,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{picks-tia} (required) --- Chooses Tia's claim as better supported
-  \item \textbf{cites-median-comparison} (required) --- Cites the medians (31 vs. 27) or equivalent center comparison as a settling feature
-  \item \textbf{cites-spread-or-outlier} (required) --- Cites the IQR / range / outlier as a second settling feature
-  \item \textbf{median-over-max-reason} (required) --- Chooses the median (or another center measure) and explains that the maximum describes one student, not the class
+  \item \textbf{tia-center} (required) --- Chooses Tia using medians 31 versus 27
+  \item \textbf{compares-spread} (required) --- Uses IQR 8 versus 11, overall ranges 20 versus 35, or B's low outlier as further evidence
+  \item \textbf{median-over-max} (required) --- Chooses median and explains a maximum describes an extreme observation rather than the class center
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Picks Tia, cites center AND variability (or the outlier), chooses the median with the `one student vs. the class' reasoning stated in context. \\ \hline
-\textbf{P} & Picks Tia with only one feature, OR chooses the median without contrasting it with the maximum, OR gives the reasoning but names the mean without addressing the outlier. \\ \hline
-\textbf{I} & Picks Sam, or compares with no specific plot features, or chooses the maximum. \\ \hline
+\textbf{E} & All three elements are correct and linked to this problem. Accept equivalent plain-language reasoning. \\ \hline
+\textbf{P} & At least one element includes a correct evidence-to-reason link, but another is missing or incorrect. \\ \hline
+\textbf{I} & No correct evidence-to-reason link; only a choice, copied numbers, or unsupported statements. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -79,7 +78,7 @@
 \end{itemize}
 
 \bankitem{Optional \#1 --- not collected}{\dokbadge{2}~Two bus routes were timed for 20 mornings each. Route 1: mean 24.0 min, SD 6.5 min, median 22 min. Route 2: mean 24.5 min, SD 1.8 min, median 24 min. Write two sentences comparing the routes for a student who must not be late, using comparative language and the statistics given.}{}
-\answer{Centers are nearly the same (medians 22 vs 24, means 24.0 vs 24.5). Route 2 is far more consistent (SD 1.8 vs 6.5 min); Route 1's mean above its median suggests some very long mornings. A student who must not be late should prefer Route 2: a typical morning is about as long, but the bad mornings are much shorter.}
+\answer{The means are nearly the same (24.0 versus 24.5 minutes), while Route 2 has much lower SD (1.8 versus 6.5 minutes), so it is more consistent. A student concerned about unpredictable travel could prefer Route 2, but these summaries alone do not give the worst delay or the probability of being late.}
 
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
@@ -108,14 +107,14 @@ Which class did better on the quiz? One sentence, and name ONE feature of the pl
 
 \textit{Rules callout ``COMPARING DISTRIBUTIONS (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} Read off the median and the maximum score for each class.\par
-\answer{Period B: median 27, maximum 40. Period E: median 31, maximum 38.}
+\dokbadge{1}~\textbf{(a)} Read the median for each class.\par
+\answer{Period B: 27 points. Period E: 31 points.}
 
-\dokbadge{2}~\textbf{(b)} Compare the two distributions of quiz scores in context. Use comparative language (higher / lower, more / less variable) and address center, variability, shape, and any unusual features.\par
-\answer{Center: Period E's median (31) is higher than Period B's (27). Variability: Period E is less variable --- IQR 34 - 26 = 8 vs. Period B's 33 - 22 = 11; Period B's range is also wider (12 to 40 vs. 18 to 38), and Period B has a low outlier at 5. Shape: Period B is roughly symmetric within the box; Period E's box is slightly skewed left (the median sits nearer Q3). Unusual: the single low score of 5 in Period B. In context: a typical Period E student scored a few points higher and the class was more consistent, while Period B had both the highest and the lowest scores.}
+\dokbadge{2}~\textbf{(b)} In two or three sentences, compare the quiz scores' center, spread, apparent shape, and unusual features. Use points and comparative words.\par
+\answer{E has a higher median (31 versus 27 points) and a smaller IQR (8 versus 11 points). B's overall range is $40-5=35$ points, versus E's $38-18=20$, and B has the low outlier at 5. B is fairly balanced within its box but extends farther on the low side overall; E also appears more spread toward low scores. Boxplots cannot establish detailed shape.}
 
 \dokbadge{3}~\textbf{(c)} Whose claim is better supported, Sam's or Tia's? Cite two specific features of the boxplots that settle it. Then: if you could report only ONE statistic per class to a parent asking `how did the class do?', which statistic would you choose, and why that one rather than the maximum?\par
-\answer{Tia's. Two settling features: the medians (31 vs. 27 --- the typical student in E scored higher) and the spread (E's IQR 8 vs. B's 11, plus B's outlier at 5). Sam's evidence is a single value: one student in B scored 40, which says nothing about the class. Report the median: it describes the typical student and is not moved by one very high or very low score; the maximum describes exactly one student and would make Period B look better because of one paper.}
+\answer{Tia's. Two settling features: the medians (31 vs. 27 --- the typical student in E scored higher) and the spread (E's IQR 8 vs. B's 11, plus B's outlier at 5). Sam's evidence is a single value: one student in B scored 40, which says nothing about the class. Report the median: it describes the typical student and is less affected by extreme scores; the maximum describes exactly one student and would make Period B look better because of one paper.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

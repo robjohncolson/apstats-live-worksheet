@@ -1,55 +1,78 @@
-# Topic 1.6 — Describing the Distribution of a Quantitative Variable
-# Phase-1 problem (APS_DOK_LADDER_SPEC.md §10). Build:
-#   python dok/build_ladder.py dok/lessons/1.6.yaml && pwsh dok/compile.ps1 1.6
 topic: "1.6"
-ced2026: { unit: 1, topic: "1.6", label: "Describing the Distribution of a Quantitative Variable" }
-title: "Describing a Distribution"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "What does a reader need from a description of a distribution before they can trust a summary statistic?"
-worksheet: "u1_lesson6_live.html"
-
+ced2026:
+  unit: 1
+  topic: '1.6'
+  label: Describing the Distribution of a Quantitative Variable
+title: Describing a Distribution
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: What does a reader need from a description of a distribution before they can trust
+  a summary statistic?
+worksheet: u1_lesson6_live.html
 rules_callout:
-  title: "DESCRIBING A DISTRIBUTION (keep on the page)"
-  body: |
-    \textbf{Shape} (symmetric / skewed left / skewed right; one peak or two) \textperiodcentered\
-    \textbf{Center} (median or mean) \textperiodcentered\ \textbf{Variability} (range, IQR)
-    \textperiodcentered\ \textbf{Unusual features} (gaps, outliers, clusters) --- always \textbf{in context, with units}.\\
-    A long tail pulls the \textbf{mean} toward it; the \textbf{median} resists.
-    ``Skewed right'' means the \emph{tail} points right, not the peak.
-
+  title: DESCRIBING A DISTRIBUTION (keep on the page)
+  body: Describe \textbf{shape, center, variability, and unusual features} in context, with units. Center
+    describes a typical response; variability describes how spread out values are. A longer right tail
+    means skewed right; a longer left tail means skewed left. An outlier is unusually far from the rest.
+    A gap has no observations. A histogram identifies intervals, not exact individual values.
 focus: aps-1.6-d3-1
-reinforcement: [aps-1.6-d2-1]
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 1.0in, a: 0.8in, b: 1.5in, c: 2.4in, reinforcement: 1.0in }
-
+reinforcement:
+- aps-1.6-d2-1
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 1.0in
+  a: 0.8in
+  b: 1.5in
+  c: 2.4in
+  reinforcement: 1.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
+    + turn in)
   teacher_does:
-    - "Board slide up at the bell. Read the two descriptions aloud once; do not react to either."
-    - "Start the video follow-along at minute 5. Collect nothing yet."
-    - "Board slide back up at minute 33. Circulate with the printed prompts; confirm nothing."
-    - "Collect sheets at the door. Score part (c) only, E/P/I."
+  - Board slide up at the bell. Read the two descriptions aloud once; do not react to either.
+  - Start the video follow-along at minute 5. Collect nothing yet.
+  - Board slide back up at minute 33. Circulate with the printed prompts; confirm nothing.
+  - Collect sheets at the door. Score part (c) only, E/P/I.
   students_do:
-    - "Write a one-sentence first take before anything is taught."
-    - "Do the video follow-along (the DOK-1/2 work of the day)."
-    - "Finish (a)--(c) with the rules callout in front of them; complete the exit line; turn in."
+  - Write a one-sentence first take before anything is taught.
+  - Do the video follow-along (the DOK-1/2 work of the day).
+  - Finish (a)--(c) with the rules callout in front of them; complete the exit line; turn in.
   questions_to_ask:
-    - "Which feature of the graph did you look at first --- why that one?"
-    - "If you deleted the 70-minute student, whose description changes?"
-    - "Ana says `centered near 20'. Is she wrong about the center, or about something else?"
-    - "What would a reader who only saw Ana's sentence expect the longest commute to be?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Answer questions with questions. Do not confirm a choice until the student has cited two features."
+  - Which side extends farther beyond the peak?
+  - What does the empty interval tell you?
+  - Can the graph tell you the exact longest time?
+  - What would a reader miss if you gave only a typical time?
+  adult_role: Solo teacher. Ask students to point to evidence and connect the spread to the meaning of
+    a typical time.
   watch_for:
-    - "Reading `skewed right' off the acronym without pointing at the tail."
-    - "Treating the 70-minute student as typical, or ignoring the gap before it."
-    - "Choosing the mean `because it uses all the data' with no mention of the outlier."
-  first_take_note: "Not graded. Expect a near-even split; the point is that they committed before the video."
-
+  - Treating the isolated long commute as typical
+  - Naming right skew without locating the tail
+  - Reading exact endpoints or a mean from grouped data
+  first_take_note: Not graded. Expect a near-even split; the point is that they committed before the video.
 visuals:
   commute_hist:
     kind: pgfplot_hist
-    bins: [0, 10, 20, 30, 40, 50, 60, 70, 80]
-    counts: [3, 13, 10, 7, 4, 2, 0, 1]
-    xlabel: "Commute time (minutes)"
-    ylabel: "Number of students"
+    bins:
+    - 0
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    - 60
+    - 70
+    - 80
+    counts:
+    - 3
+    - 13
+    - 10
+    - 7
+    - 4
+    - 2
+    - 0
+    - 1
+    xlabel: Commute time (minutes)
+    ylabel: Number of students

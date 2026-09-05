@@ -28,7 +28,7 @@
 }
 \textbf{Essential question:} How can a graph use correct counts but still create a misleading comparison?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{truncated-\allowbreak{}axis-\allowbreak{}which-\allowbreak{}display-\allowbreak{}is-\allowbreak{}honest-\allowbreak{}and-\allowbreak{}what-\allowbreak{}it-\allowbreak{}misleads}}\par
-\textbf{DOK rationale:} Part (c) adjudicates two displays, connects the baseline to distortion, contrasts apparent and actual magnitudes, and defends a second display choice for a stated purpose.\par
+\textbf{DOK rationale:} Part (c) judges two headlines by relating the graph baseline to visible bar heights and contrasting that impression with the actual counts.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -45,18 +45,18 @@
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item If the counts are identical, what changed between the two graphs?
-  \item From what vertical value are you measuring each visible bar in Graph A?
-  \item How does the visible 12-to-1 comparison differ from the actual 52-to-41 comparison?
-  \item For four close categories, what can your eyes compare more precisely: aligned lengths or wedge angles?
+  \item What changed between the graphs if the votes are identical?
+  \item Where does each visible bar begin?
+  \item What do the counts support about the size of Pizza's lead?
+  \item What headline would tell readers both the leader and the size of the difference?
 \end{itemize}
 }{Solo teacher. Circulate ~5 pairs. Do not call a graph honest or misleading for students; ask them to name the baseline, quantify both comparisons, and connect the display choice to the reader's question.}
 
 \begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Calling Graph A's counts incorrect instead of explaining how its 40 baseline distorts their visual sizes.
-  \item Treating the visible heights 12 and 1 as the original category counts.
-  \item Choosing a pie chart because the data can be percentages without considering whether close wedges are easy to compare.
+  \item Calling Graph A's counts false instead of explaining its baseline
+  \item Treating the visible heights as vote counts
+  \item Repeating a headline without using the counts
 \end{itemize}
 \end{callout}
 
@@ -64,25 +64,24 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-zero-baseline-graph} (required) --- Selects Graph B and connects its zero baseline to bar height representing count
-  \item \textbf{quantifies-visual-distortion} (required) --- Uses visible heights 12 and 1 to explain the apparent 12-times ratio
-  \item \textbf{quantifies-actual-difference} (required) --- Contrasts that with 52 versus 41, 11 students, or about 27 percent
-  \item \textbf{chooses-display-for-purpose} (required) --- Defends bar or pie by what lengths versus angles or areas make easier to compare
+  \item \textbf{graph-and-scale} (required) --- Chooses B and explains zero baseline makes heights proportional to counts
+  \item \textbf{compares-impression} (required) --- Contrasts Graph A's 12-to-1 visible heights with 52 versus 41 or an 11-vote difference
+  \item \textbf{judges-headlines} (required) --- Judges both headlines and supplies a bounded headline supported by the counts
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Chooses Graph B with the baseline mechanism, quantifies both apparent and actual differences, and defends a display for comparing close categories. \\ \hline
-\textbf{P} & Makes the graph decision but omits the mechanism or one numerical contrast, or gives only a generic display reason. \\ \hline
-\textbf{I} & Trusts Graph A's magnitude, treats 12 and 1 as counts, or gives no feature-based display choice. \\ \hline
+\textbf{E} & All three elements are correct and linked to this problem. Accept equivalent plain-language reasoning. \\ \hline
+\textbf{P} & At least one element includes a correct evidence-to-reason link, but another is missing or incorrect. \\ \hline
+\textbf{I} & No correct evidence-to-reason link; only a choice, copied numbers, or unsupported statements. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Calling Graph A's counts false instead of explaining its truncated baseline
-  \item Reading visible heights 12 and 1 as student counts
-  \item Saying 52 is $11\%$ more than 41 rather than dividing by 41
+  \item Calling Graph A's counts false instead of explaining its baseline
+  \item Treating the visible heights as vote counts
+  \item Repeating a headline without using the counts
 \end{itemize}
 
 \clearpage
@@ -90,12 +89,14 @@
 
 Suppose 184 students chose a favorite lunch option. A newsletter printed \textbf{Graph A} with the headline ``\textbf{Pizza wins by a landslide.}'' A council member redrew the data as \textbf{Graph B} and said, ``It is basically a tie.''\par
 \begin{center}
-\begin{minipage}{0.48\linewidth}
+\def\auditplotheight{1.4in}\ifdim\linewidth<5in\def\auditplotheight{1.15in}\fi
+\def\auditplotwidth{0.48\linewidth}\ifdim\linewidth<5in\def\auditplotwidth{0.98\linewidth}\fi
+\begin{minipage}{\auditplotwidth}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
   width=0.95\linewidth,
-  height=1.4in,
+  height=\auditplotheight,
   ybar=2pt,
   bar width=10pt,
   ymin=40,
@@ -120,18 +121,18 @@ Suppose 184 students chose a favorite lunch option. A newsletter printed \textbf
   {(Pizza,52) (Tacos,47) (Salad,44) (Pasta,41)};
 \end{axis}
 \end{tikzpicture}
-\end{minipage}\hfill
-\begin{minipage}{0.48\linewidth}
+\end{minipage}\ifdim\linewidth<5in\par\smallskip\else\hfill\fi
+\begin{minipage}{\auditplotwidth}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
   width=0.95\linewidth,
-  height=1.4in,
+  height=\auditplotheight,
   ybar=2pt,
   bar width=10pt,
   ymin=0,
   ymax=58,
-  ytick={0,10,20,30,40,50},
+  ytick={0,20,40},
   symbolic x coords={Pizza,Tacos,Salad,Pasta},
   xtick=data,
   enlarge x limits=0.18,
@@ -163,11 +164,11 @@ Is pizza clearly the favorite? Name the graph that most influenced you.\par
 \dokbadge{1}~\textbf{(a)} Read the Pizza and Pasta counts. How many more students chose Pizza?\par
 \answer{Pizza has 52 students and Pasta 41, so Pizza has 11 more.}
 
-\dokbadge{2}~\textbf{(b)} Convert all four counts to whole-number percents of 184. Describe how close the categories are in context.\par
-\answer{Pizza $28\%$, Tacos $26\%$, Salad $24\%$, Pasta $22\%$ (rounded). The largest and smallest shares differ by about 6 percentage points, and none reaches $30\%$.}
+\dokbadge{2}~\textbf{(b)} Graph A starts at 40. Find the visible heights above 40 for Pizza and Pasta. Compare those heights with the actual counts.\par
+\answer{Visible heights: Pizza 52-40=12 and Pasta 41-40=1. Pizza looks 12 times as tall, while the actual counts are 52 and 41, a difference of 11 students.}
 
-\dokbadge{3}~\textbf{(c)} For ``Is pizza clearly the favorite?'' choose the more honest graph and name the design feature that settles it. Quantify Graph A's visible Pizza-to-Pasta heights, then compare 52 with 41 using percent increase. Finally, choose a zero-baseline bar graph or pie chart for comparing the four categories and defend that choice.\par
-\answer{Graph B: its zero baseline makes full bar height proportional to count. Graph A starts at 40, so visible heights are $12$ and $1$; Pizza looks 12 times as tall. In fact, $52/41=1.27$: only 11 students, about $27\%$ more (about a 6-point share lead). Pizza leads narrowly---neither a landslide nor a tie. Use the zero-baseline bar graph because aligned lengths reveal close differences; a pie chart emphasizes shares of a whole but its similar wedges are harder to compare.}
+\dokbadge{3}~\textbf{(c)} Which graph gives a fairer picture of the lunch votes? Explain how its scale affects the comparison. Use your counts to judge both `landslide' and `basically a tie,' then write a more accurate headline.\par
+\answer{Graph B uses zero, so full bar heights represent counts. Graph A starts at 40 and exaggerates the difference: visible heights are 12 to 1, but counts are 52 to 41. Pizza has the most votes, yet neither a huge landslide nor an exact tie describes the counts. A supported headline is `Pizza leads Pasta by 11 votes; all four options receive support.' Accept other measured wording supported by the counts.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill
