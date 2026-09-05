@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{apstats-poster}
+% Formula IDs: ci-formula, margin-error, width-ci, random-condition, ten-pct-condition, normal-condition
 
 \colorlet{PosterAccent}{UnitOrange}
 
@@ -27,6 +28,7 @@
   \hfill
   \begin{minipage}[t]{9.75in}
     \FormulaCardSized{43pt}{\mathrm{ME}=t^*\!\cdot\mathrm{SE}\quad(\text{means})}
+    {\fontsize{21pt}{25pt}\selectfont Use the procedure's \(df\) to choose \(t^*\).}
   \end{minipage}%
   \vspace{.14in}
   \FormulaCardSized{41pt}{%
@@ -79,7 +81,8 @@
   \begin{minipage}[t]{6.9in}
     \MiniHeading{3 · NORMAL / LARGE COUNTS}\par\vspace{.08in}
     {\fontsize{23pt}{29pt}\selectfont
-      proportions: \(n\hat p\ge10\), \(n(1-\hat p)\ge10\)\par
+      CI: \(n\hat p\ge10\), \(n(1-\hat p)\ge10\)\par
+      Test: \(np_0\ge10\), \(n(1-p_0)\ge10\) (see P11)\par
       means: normal population, \(n\ge30\), or no strong skew/outliers}
   \end{minipage}%
 }
@@ -99,7 +102,7 @@
 \PosterZone{23.77in}{27.45in}{ZONE D · WATCH OUT}{%
   \begin{minipage}[t]{19.15in}
     {\posterheading\bfseries\color{PosterAccent}\fontsize{31pt}{36pt}\selectfont
-      THE INTERVAL IS ABOUT THIS SAMPLE. THE LEVEL IS ABOUT THE METHOD.}\par
+      THE INTERVAL ESTIMATES THE PARAMETER. THE LEVEL DESCRIBES THE METHOD.}\par
     \vspace{.12in}
     {\fontsize{29pt}{37pt}\selectfont
       Never say the fixed parameter has a 95\% chance of being inside the

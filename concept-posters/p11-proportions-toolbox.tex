@@ -1,0 +1,79 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{apstats-poster}
+% Formula IDs: phat-se, one-prop-ci, one-prop-z, large-counts, diff-p-sd, diff-p-se, two-prop-ci, pooled-se, two-prop-z
+\colorlet{PosterAccent}{UnitOrange}
+\begin{document}
+\begin{posterpage}
+\PosterHeader{UnitOrange}{3}{INFERENCE FOR PROPORTIONS \& CATEGORICAL DATA}{P11}
+  {PROPORTIONS TOOLBOX}{new 3.2–3.13 \quad•\quad old 6.1–6.11}
+
+\PosterZone{4.72in}{16.45in}{ZONE A · ONE SAMPLE / TWO INDEPENDENT SAMPLES}{%
+  \begin{minipage}[t]{9.6in}
+    \vspace{0pt}
+    \MiniHeading{ONE PROPORTION · CONFIDENCE INTERVAL}\par\vspace{.1in}
+    \FormulaCardSized{43pt}{s_{\hat p}=\sqrt{\frac{\hat p(1-\hat p)}{n}}}
+    \vspace{.14in}
+    \FormulaCardSized{44pt}{\hat p\pm z^*\sqrt{\frac{\hat p(1-\hat p)}{n}}}
+    \vspace{.2in}
+    \MiniHeading{ONE PROPORTION · TEST}\par\vspace{.1in}
+    \FormulaCardSized{43pt}{z=\frac{\hat p-p_0}{\sqrt{p_0(1-p_0)/n}}}
+    \vspace{.18in}
+    {\fontsize{29pt}{35pt}\selectfont \(H_0:p=p_0\). Use the null value \(p_0\) in the denominator.}
+    \vspace{.15in}
+    \MiniHeading{TRUE SD · WHEN POPULATION PROPORTIONS ARE KNOWN}\par\vspace{.1in}
+    \FormulaCardSized{34pt}{\sigma_{\hat p_1-\hat p_2}=\sqrt{\frac{p_1(1-p_1)}{n_1}+\frac{p_2(1-p_2)}{n_2}}}
+    \vspace{.22in}
+    {\fontsize{26pt}{32pt}\selectfont Standard error (\(s_{\text{statistic}}\), or SE) estimates the true SD of a sampling distribution using sample data.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{10.0in}
+    \vspace{0pt}
+    \MiniHeading{TWO PROPORTIONS · CONFIDENCE INTERVAL}\par\vspace{.1in}
+    \FormulaCardSized{34pt}{s_{\hat p_1-\hat p_2}=\sqrt{\frac{\hat p_1(1-\hat p_1)}{n_1}+\frac{\hat p_2(1-\hat p_2)}{n_2}}}
+    \vspace{.14in}
+    \FormulaCardSized{34pt}{(\hat p_1-\hat p_2)\pm z^*\sqrt{\frac{\hat p_1(1-\hat p_1)}{n_1}+\frac{\hat p_2(1-\hat p_2)}{n_2}}}
+    \vspace{.2in}
+    \MiniHeading{TWO PROPORTIONS · TEST OF \(H_0:p_1=p_2\)}\par\vspace{.1in}
+    \FormulaCardSized{39pt}{\hat p_c=\frac{x_1+x_2}{n_1+n_2}}
+    \vspace{.14in}
+    \FormulaCardSized{35pt}{\mathrm{SE}_{\text{pooled}}=\sqrt{\hat p_c(1-\hat p_c)\left(\frac1{n_1}+\frac1{n_2}\right)}}
+    \vspace{.14in}
+    \FormulaCardSized{38pt}{z=\frac{\hat p_1-\hat p_2}{\sqrt{\hat p_c(1-\hat p_c)(1/n_1+1/n_2)}}}
+    \vspace{.2in}
+    {\fontsize{26pt}{32pt}\selectfont \(x_i\): successes; \(n_i\): sample size; \(\hat p_i=x_i/n_i\).}
+  \end{minipage}%
+}
+
+\PosterZone{16.6in}{21.0in}{ZONE B · CONDITIONS + WHICH PROPORTION TO USE}{%
+  {\fontsize{27pt}{33pt}\selectfont
+  \textbf{1 · Random:} random sample or randomized experiment; separate groups independent.\par
+  \textbf{2 · 10\%:} when sampling without replacement, \(n<0.10N\) in each population.\par\vspace{.12in}
+  \textbf{3 · Large Counts:} at least 10 expected successes and 10 expected failures.\par\vspace{.1in}
+  \begin{minipage}[t]{9.7in}
+    \TextCard{\textbf{CI: use the sample proportion}\par
+      \(n\hat p\ge10,\quad n(1-\hat p)\ge10\)\par
+      Two groups: check each \(\hat p_i\) with its own \(n_i\).}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.7in}
+    \TextCard{\textbf{Test: use the null model}\par
+      \(np_0\ge10,\quad n(1-p_0)\ge10\)\par
+      Two groups: use \(\hat p_c\); check both \(n_i\hat p_c\) and \(n_i(1-\hat p_c)\).}
+  \end{minipage}}
+}
+
+\PosterZone{21.15in}{24.25in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“We are \PosterBlank{.9in}\% confident the true proportion of
+    \PosterBlank{4.3in} is between \PosterBlank{1.2in} and \PosterBlank{1.2in}.”}
+  \vspace{.13in}
+  {\fontsize{27pt}{34pt}\selectfont For two groups, name the difference \(p_1-p_2\) in context and keep the subtraction order.}
+}
+
+\PosterZone{24.4in}{27.45in}{ZONE D · WATCH OUT}{%
+  {\fontsize{32pt}{40pt}\selectfont
+    \textbf{CI:} estimate each unknown proportion with its own \(\hat p\).\par
+    \textbf{One-sample test:} use \(p_0\). \textbf{Two-sample test:} pool under \(p_1=p_2\).\par
+    \textbf{Keep the CI unpooled.} Its groups may have different true proportions.}
+}
+\WorksheetTag{u6\_l1–11}
+\end{posterpage}
+\end{document}

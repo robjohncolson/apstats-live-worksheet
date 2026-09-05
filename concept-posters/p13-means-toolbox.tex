@@ -1,0 +1,97 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{apstats-poster}
+% Formula IDs: xbar-se, one-mean-ci, one-mean-t, paired-t, diff-x-sd, diff-x-se, two-mean-ci, two-mean-t, df-t
+\colorlet{PosterAccent}{UnitPurple}
+\begin{document}
+\begin{posterpage}
+\PosterHeader{UnitPurple}{4}{INFERENCE FOR MEANS}{P13}
+  {MEANS TOOLBOX}{t procedures \quad•\quad new 4.1–4.10 \quad•\quad old 7.1–7.10}
+
+\PosterZone{4.72in}{17.2in}{ZONE A · ONE MEAN, PAIRED DIFFERENCES, TWO MEANS}{%
+  \begin{minipage}[t]{9.8in}
+    \vspace{0pt}
+    \MiniHeading{ONE MEAN}\par\vspace{.08in}
+    \FormulaCardSized{40pt}{s_{\bar x}=\frac{s}{\sqrt n}}
+    \vspace{.1in}
+    \FormulaCardSized{40pt}{\bar x\pm t^*\frac{s}{\sqrt n}\qquad df=n-1}
+    \vspace{.1in}
+    \FormulaCardSized{39pt}{t=\frac{\bar x-\mu_0}{s/\sqrt n}\qquad df=n-1}
+    \vspace{.2in}
+    {\fontsize{26pt}{32pt}\selectfont \(H_0:\mu=\mu_0\). Standard error \(s_{\bar x}\) estimates \(\sigma_{\bar x}=\sigma/\sqrt n\) using sample SD \(s\).}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.8in}
+    \vspace{0pt}
+    \MiniHeading{PAIRED · WORK WITH THE DIFFERENCES}\par\vspace{.08in}
+    {\fontsize{29pt}{36pt}\selectfont Same subjects measured twice, or natural pairs: subtract in one consistent order.\par\vspace{.12in}
+      \(\bar d\): mean difference; \(s_d\): SD of differences; \(n\): number of \textbf{pairs}.}
+    \vspace{.12in}
+    \FormulaCardSized{38pt}{t=\frac{\bar d-\mu_{d0}}{s_d/\sqrt n}\qquad df=n-1}
+    \vspace{.2in}
+    {\fontsize{26pt}{32pt}\selectfont Usually \(H_0:\mu_d=0\). Treat the differences as \textbf{one sample}; use their shape and their SD.}
+  \end{minipage}\par\vspace{.12in}
+  \MiniHeading{TWO MEANS · INDEPENDENT GROUPS}\par\vspace{.08in}
+  \begin{minipage}[t]{9.8in}
+    \FormulaCardSized{37pt}{s_{\bar x_1-\bar x_2}=\sqrt{s_1^2/n_1+s_2^2/n_2}}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.8in}
+    \FormulaCardSized{37pt}{\sigma_{\bar x_1-\bar x_2}=\sqrt{\sigma_1^2/n_1+\sigma_2^2/n_2}}
+  \end{minipage}\par\vspace{.2in}
+  {\fontsize{25pt}{31pt}\selectfont Left: SE estimates the sampling SD. Right: true SD when population SDs \(\sigma_1,\sigma_2\) are known.}\par
+  \vspace{.12in}
+  \begin{minipage}[t]{9.8in}
+    \FormulaCardSized{36pt}{\begin{gathered}
+      (\bar x_1-\bar x_2)\pm t^*\sqrt{s_1^2/n_1+s_2^2/n_2}\\[-.1em]
+      {\scriptstyle df:\ \text{calculator, or }\min(n_1-1,n_2-1)}
+    \end{gathered}}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.8in}
+    \FormulaCardSized{36pt}{\begin{gathered}
+      t=\frac{\bar x_1-\bar x_2}{\sqrt{s_1^2/n_1+s_2^2/n_2}}\\[-.1em]
+      {\scriptstyle df:\ \text{calculator, or }\min(n_1-1,n_2-1)}
+    \end{gathered}}
+  \end{minipage}\par\vspace{.2in}
+  {\fontsize{25pt}{31pt}\selectfont Test above assumes \(H_0:\mu_1=\mu_2\). Calculator df is Welch's approximation; the minimum is conservative.}
+}
+
+\PosterZone{17.35in}{21.45in}{ZONE B · WHY t? + CONDITIONS IN ORDER}{%
+  \begin{minipage}[t]{8.0in}
+    \vspace{0pt}
+    \begin{tikzpicture}[x=.78in,y=.93in]
+      \draw[PosterInk,line width=2.5pt,-{Stealth[length=10pt]}] (-4.5,0) -- (4.5,0);
+      \draw[PosterMuted,dashed,line width=3pt] plot[domain=-4.2:4.2,samples=100] (\x,{1.85*exp(-\x*\x/2)});
+      \draw[PosterAccent,line width=3.5pt] plot[domain=-4.2:4.2,samples=100] (\x,{1.7045*(1+\x*\x/3)^(-2)});
+      \node[font=\fontsize{22pt}{27pt}\selectfont,anchor=west,text=PosterAccent] at (1.45,1.5) {\(t\), df = 3};
+      \node[font=\fontsize{22pt}{27pt}\selectfont,anchor=west,text=PosterMuted] at (-4.1,1.45) {normal};
+      \node[font=\fontsize{22pt}{27pt}\selectfont,anchor=north] at (0,-.04) {0};
+    \end{tikzpicture}\par
+    {\fontsize{26pt}{32pt}\selectfont \textbf{t because we replaced \(\sigma\) with \(s\).}\par
+      Heavier tails; more df \(\longrightarrow\) closer to normal.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{11.5in}
+    \vspace{0pt}
+    {\fontsize{27pt}{34pt}\selectfont
+      \textbf{1 · Random:} random sample or randomized experiment.\par
+      \textbf{2 · 10\%:} \(n<0.10N\) when sampling without replacement.\par
+      \textbf{3 · Normal / Large Sample:} normal population, \(n\ge30\), or graph shows no strong skew or outliers.\par\vspace{.1in}
+      Paired: check the \textbf{differences}.\par
+      Two samples: independent groups; check \textbf{each group}.}
+  \end{minipage}%
+}
+
+\PosterZone{21.6in}{24.3in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“We are \PosterBlank{.9in}\% confident the true mean
+    \PosterBlank{4.5in} is between \PosterBlank{1.2in} and \PosterBlank{1.2in}
+    \PosterBlank{1.3in} [units].”}
+  \vspace{.1in}
+  {\fontsize{25pt}{31pt}\selectfont For paired data, name the mean difference \(\mu_d\); for independent groups, name \(\mu_1-\mu_2\).}
+}
+
+\PosterZone{24.45in}{27.45in}{ZONE D · WATCH OUT}{%
+  {\fontsize{31pt}{39pt}\selectfont
+    \textbf{Paired or two-sample?} Let the study design decide. Repeated measurements or natural pairs use differences; separate independent groups use two-sample t.\par\vspace{.1in}
+    \textbf{Keep group variances separate for two-sample t.} Use the unpooled SE above.}
+}
+\WorksheetTag{u7\_l1–10}
+\end{posterpage}
+\end{document}

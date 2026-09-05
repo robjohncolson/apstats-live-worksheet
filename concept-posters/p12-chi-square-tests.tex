@@ -1,0 +1,101 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{apstats-poster}
+% Formula IDs: chi-sq, expected-twoway, df-twoway, chi-sq-select, chi-sq-hyp, chi-sq-conditions, chi-sq-conclude, chi-sq-output, std-resid-chi, expected-gof, df-gof
+\colorlet{PosterAccent}{UnitOrange}
+\begin{document}
+\begin{posterpage}
+\PosterHeader{UnitOrange}{3}{INFERENCE FOR PROPORTIONS \& CATEGORICAL DATA}{P12}
+  {CHI-SQUARE TESTS}{new 3.14–3.15 \quad•\quad old 8.4–8.6 \quad•\quad \PosterStar\ old 8.1}
+
+\PosterZone{4.72in}{15.7in}{ZONE A · COUNTS, A RIGHT TAIL, AND A TEST SELECTOR}{%
+  \begin{minipage}[t]{11.0in}
+    \vspace{0pt}
+    \FormulaCardSized{45pt}{\begin{gathered}\chi^2=\sum\frac{(O-E)^2}{E}\\[-.12em]
+      {\scriptstyle df=(r-1)(c-1)}\end{gathered}}
+    \vspace{.18in}
+    \FormulaCardSized{39pt}{E=\frac{(\text{row total})(\text{column total})}{\text{grand total}}}
+    \vspace{.14in}
+    {\fontsize{29pt}{35pt}\selectfont \(r\): number of rows; \(c\): number of columns.\par
+      Sum every cell's contribution.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{8.6in}
+    \vspace{0pt}
+    \MiniHeading{SHADE TO THE RIGHT}\par
+    \begin{tikzpicture}[x=.83in,y=1.13in]
+      \fill[PosterAccent!28] (4.2,0) -- plot[domain=4.2:8,samples=45] (\x,{2.4*\x*exp(-.85*\x)}) -- (8,0) -- cycle;
+      \draw[PosterInk,line width=3pt,-{Stealth[length=11pt]}] (0,0) -- (8.2,0);
+      \draw[PosterAccent,line width=3.5pt] plot[domain=0:8,samples=100] (\x,{2.4*\x*exp(-.85*\x)});
+      \draw[PosterInk,dashed,line width=2pt] (4.2,0) -- (4.2,.95);
+      \node[anchor=north,font=\fontsize{24pt}{28pt}\selectfont] at (4.2,-.1) {observed statistic};
+      \node[font=\bfseries\fontsize{26pt}{30pt}\selectfont] at (6.4,.7) {P-value};
+      \node[anchor=north,font=\fontsize{24pt}{28pt}\selectfont] at (.05,-.1) {0};
+    \end{tikzpicture}\par\vspace{.2in}
+    {\fontsize{28pt}{35pt}\selectfont Large values mean a larger mismatch. All chi-square test P-values are right-tail areas.}
+  \end{minipage}\par\vspace{.32in}
+  \MiniHeading{CHOOSE FROM THE DATA COLLECTION DESIGN}\par\vspace{.12in}
+  {\fontsize{29pt}{35pt}\selectfont
+  \renewcommand{\arraystretch}{1.28}
+  \begin{tabularx}{\linewidth}{>{\bfseries}p{3.5in} p{7.4in} X}
+    Test & Data shape & \(H_0\) says \\
+    \midrule
+    Homogeneity & One categorical variable; several populations or treatments & Same distribution in every population or treatment. \\
+    Independence & Two categorical variables; one population & The variables are not associated. \\
+    \PosterStar\ Goodness of fit & One categorical variable; claimed proportions & Matches the claimed distribution.
+  \end{tabularx}\par\vspace{.16in}
+  \(H_a\): distributions differ; variables are associated; at least one claimed proportion differs, respectively.}
+}
+
+\PosterZone{15.85in}{21.55in}{ZONE B · CONDITIONS, SYMBOLS, AND OUTPUT}{%
+  {\fontsize{27pt}{34pt}\selectfont
+    \textbf{1 · Random} sample or assignment \(\longrightarrow\)
+    \textbf{2 · 10\%} \(n<0.10N\) without replacement\par
+    \(\longrightarrow\) \textbf{3 · Large Counts: every expected count \(E\ge5\).}
+    Check each sampled population.\par\vspace{.14in}}
+  \begin{minipage}[t]{10.0in}
+    \MiniHeading{OBSERVED VS EXPECTED}\par\vspace{.08in}
+    {\fontsize{26pt}{33pt}\selectfont \(O\): observed count. \(E\): count expected under \(H_0\).}
+    \FormulaCardSized{33pt}{\begin{gathered}
+      \text{standardized residual}=\frac{O-E}{\sqrt E}\\[-.12em]
+      {\scriptstyle\text{two-way test }df=(r-1)(c-1)}
+    \end{gathered}}
+    \vspace{.2in}
+    {\fontsize{25pt}{31pt}\selectfont Positive: excess; negative: shortfall.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.5in}
+    \MiniHeading{COMPUTER-OUTPUT DECODER}\par\vspace{.08in}
+    \TextCard{{\fontsize{28pt}{34pt}\selectfont
+      \(\chi^2=9.21,\quad df=2,\quad P=.010\)\par\vspace{.08in}
+      \textbf{9.21:} total standardized discrepancy.\par
+      \textbf{2:} selects the null chi-square curve.\par
+      \textbf{.010:} under \(H_0\), chance of a statistic this large or larger.}}
+  \end{minipage}%
+}
+
+\PosterZone{21.7in}{24.3in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“Because the P-value of \PosterBlank{.8in} is [less/greater] than
+    \(\alpha=\)\PosterBlank{.8in}, we [reject/fail to reject] \(H_0\).
+    There [is/is not] convincing evidence of an association between
+    \PosterBlank{2.2in} and \PosterBlank{2.2in} for \PosterBlank{2.4in}.”}
+  \vspace{.08in}
+  {\fontsize{24pt}{30pt}\selectfont For homogeneity or GOF, replace “association” with the matching \(H_a\) in context.}
+}
+
+\PosterZone{24.45in}{27.45in}{ZONE D · WATCH OUT + \PosterStar\ BEYOND}{%
+  \begin{minipage}[t]{10.4in}
+    \vspace{0pt}
+    {\fontsize{28pt}{34pt}\selectfont
+      \textbf{Check expected counts against 5.}\par
+      Test: overall evidence. Residual: which cell.\par
+      Large \(\lvert\text{residual}\rvert\) marks a stronger departure; its square is the cell's contribution.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.1in}
+    \vspace{0pt}
+    \BeyondBox{{\fontsize{29pt}{35pt}\selectfont
+      \(\text{GOF: }E=np_0\quad\text{for each category}\)\par
+      \(df=k-1\); \(k\) = number of categories.}}
+  \end{minipage}%
+}
+\WorksheetTag{u8\_l1 · u8\_l4–6}
+\end{posterpage}
+\end{document}

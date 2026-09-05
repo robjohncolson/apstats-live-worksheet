@@ -1,0 +1,223 @@
+{
+  "formula_ids": 81,
+  "placements": 83,
+  "combined_pages_each": 15,
+  "posters": [
+    {
+      "poster": "P01",
+      "formula_ids": [],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P02",
+      "formula_ids": [
+        "mean",
+        "std-dev",
+        "variance",
+        "iqr",
+        "outlier-iqr"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P03",
+      "formula_ids": [
+        "random-condition"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P04",
+      "formula_ids": [],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P05",
+      "formula_ids": [
+        "complement",
+        "add-rule",
+        "cond-prob",
+        "mult-rule",
+        "mult-independent"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P06",
+      "formula_ids": [
+        "rv-mean",
+        "rv-sd",
+        "lintransform",
+        "binom-pmf",
+        "binom-mean",
+        "binom-sd",
+        "lincomb-mean",
+        "lincomb-var",
+        "geom-pmf",
+        "geom-mean",
+        "geom-sd"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P07",
+      "formula_ids": [
+        "zscore",
+        "empirical-rule"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P08",
+      "formula_ids": [
+        "phat-mean",
+        "phat-sd",
+        "xbar-mean",
+        "xbar-sd",
+        "ten-pct-condition"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P09",
+      "formula_ids": [
+        "ci-formula",
+        "margin-error",
+        "width-ci",
+        "random-condition",
+        "ten-pct-condition",
+        "normal-condition"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P10",
+      "formula_ids": [
+        "z-test-stat",
+        "p-value-interp",
+        "type-i-error",
+        "type-ii-error",
+        "power"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P11",
+      "formula_ids": [
+        "phat-se",
+        "one-prop-ci",
+        "one-prop-z",
+        "large-counts",
+        "diff-p-sd",
+        "diff-p-se",
+        "two-prop-ci",
+        "pooled-se",
+        "two-prop-z"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P12",
+      "formula_ids": [
+        "chi-sq",
+        "expected-twoway",
+        "df-twoway",
+        "chi-sq-select",
+        "chi-sq-hyp",
+        "chi-sq-conditions",
+        "chi-sq-conclude",
+        "chi-sq-output",
+        "std-resid-chi",
+        "expected-gof",
+        "df-gof"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P13",
+      "formula_ids": [
+        "xbar-se",
+        "one-mean-ci",
+        "one-mean-t",
+        "paired-t",
+        "diff-x-sd",
+        "diff-x-se",
+        "two-mean-ci",
+        "two-mean-t",
+        "df-t"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P14",
+      "formula_ids": [
+        "corr-r",
+        "linreg",
+        "linreg-mean",
+        "slope-b",
+        "y-intercept"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    },
+    {
+      "poster": "P15",
+      "formula_ids": [
+        "residual",
+        "r-squared",
+        "resid-s",
+        "log-transform",
+        "slope-mean",
+        "slope-sd",
+        "slope-se",
+        "slope-t",
+        "slope-ci"
+      ],
+      "poster_pages": 1,
+      "letter_pages": 1,
+      "sizes_and_text_bounds": "PASS",
+      "log": "PASS"
+    }
+  ]
+}

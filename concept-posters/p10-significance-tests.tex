@@ -1,0 +1,109 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+% Formula IDs: z-test-stat, p-value-interp, type-i-error, type-ii-error, power
+\colorlet{PosterAccent}{UnitOrange}
+
+\begin{document}
+\begin{posterpage}
+\PosterHeader[82pt]{UnitOrange}{3}{INFERENCE FOR PROPORTIONS \& CATEGORICAL DATA}
+  {P10}{SIGNIFICANCE TESTS}
+  {master recipe \quad\textbullet\quad also used in Units 4 and 5}
+\InferenceSubstripes
+
+\PosterZone{4.72in}{15.15in}{ZONE A · THE FORMULAS + THE FOUR-STEP FRAME}{%
+  \FormulaCardSized{47pt}{z=\frac{\text{statistic}-\text{parameter under }H_0}{\text{standard error of the statistic}}}
+  \vspace{.13in}
+  {\fontsize{26pt}{33pt}\selectfont
+    SE estimates the statistic's sampling SD; use the test's null model.
+    A \(t\)-procedure uses \(t\) with its \textbf{df}.}
+  \vspace{.19in}
+  \FormulaCardSized{38pt}{P\text{-value}=P(\text{observed or more extreme statistic}\mid H_0\text{ true})}
+  \vspace{.25in}
+  \begin{minipage}[t]{12.0in}
+    \MiniHeading{THE SAME FOUR STEPS AS A CONFIDENCE INTERVAL}\par\vspace{.13in}
+    \StepCard{1}{STATE}{Define the parameter. Give \(H_0\), \(H_a\), and \(\alpha\) in context.}
+    \StepCard{2}{PLAN}{Name the test. Check Random \(\to\) 10\% \(\to\) Normal / Large Counts.}
+    \StepCard{3}{DO}{Statistic, df if needed, and P-value. Draw and shade the curve.}
+    \StepCard{4}{CONCLUDE}{Compare P with \(\alpha\); state evidence for \(H_a\) in context.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{7.65in}
+    \MiniHeading{THE DECISION}\par\vspace{.13in}
+    \TextCard{\fontsize{30pt}{39pt}\selectfont
+      \(\boldsymbol{P\le\alpha}\)\par
+      \(\longrightarrow\) reject \(H_0\)\par
+      \textbf{Convincing evidence} for \(H_a\).}
+    \vspace{.20in}
+    \TextCard{\fontsize{30pt}{39pt}\selectfont
+      \(\boldsymbol{P>\alpha}\)\par
+      \(\longrightarrow\) fail to reject \(H_0\)\par
+      \textbf{Not convincing evidence} for \(H_a\).}
+  \end{minipage}
+}
+
+\PosterZone{15.30in}{21.30in}{ZONE B · ERRORS + POWER}{%
+  \begin{minipage}[t]{8.0in}
+    \vspace{0pt}\RaggedRight
+    \MiniHeading{DECISION × TRUE STATE}\par\vspace{.14in}
+    {\fontsize{25pt}{32pt}\selectfont
+      \renewcommand{\arraystretch}{1.50}
+      \begin{tabularx}{\linewidth}{>{\RaggedRight\arraybackslash}p{2.45in}|>{\centering\arraybackslash}X|>{\centering\arraybackslash}X}
+        & \(H_0\) true & \(H_a\) true\\\hline
+        Reject \(H_0\) & Type I error & Correct\\\hline
+        Fail to reject \(H_0\) & Correct & Type II error
+      \end{tabularx}}
+    \vspace{.18in}
+    {\fontsize{26pt}{33pt}\selectfont
+      \(\alpha\): significance level.\par
+      \(\beta\) and power depend on a specific true effect.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{11.65in}
+    \vspace{0pt}\RaggedRight
+    \FormulaCardSized{29pt}{\begin{gathered}
+      \alpha=P(\text{Type I error})\\[6pt]
+      =P(\text{reject }H_0\mid H_0\text{ true})
+    \end{gathered}}
+    \vspace{.12in}
+    \FormulaCardSized{29pt}{\begin{gathered}
+      \beta=P(\text{Type II error})\\[6pt]
+      =P(\text{fail to reject }H_0\mid H_a\text{ true})
+    \end{gathered}}
+    \vspace{.12in}
+    {\fontsize{32pt}{40pt}\selectfont
+      \(\textbf{Power}=1-\beta\)}\par
+    {\fontsize{25pt}{32pt}\selectfont
+      Increases with larger \(n\), larger \(\alpha\), or a larger true effect,
+      with other factors held fixed.}
+  \end{minipage}
+}
+
+\PosterZone{21.45in}{24.35in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“Because the P-value of \PosterBlank{1.0in} is [less/greater]
+    than \(\alpha=\) \PosterBlank{1.0in}, we [reject / fail to reject] \(H_0\).
+    There [is / is not] convincing evidence that \PosterBlank{4.2in}.”}
+  \vspace{.10in}
+  {\fontsize{24pt}{30pt}\selectfont
+    Fill the last blank with \(H_a\) in context. At \(P=\alpha\), use “equal to” and reject.}
+}
+
+\PosterZone{24.50in}{27.45in}{ZONE D · WATCH OUT}{%
+  \begin{minipage}[t]{6.10in}
+    \MiniHeading{KEEP THE DECISION PRECISE}\par\vspace{.10in}
+    {\fontsize{27pt}{35pt}\selectfont
+      Say “fail to reject \(H_0\).”\par
+      Never “accept \(H_0\).”}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{6.10in}
+    \MiniHeading{NAME THE PARAMETER}\par\vspace{.10in}
+    {\fontsize{27pt}{35pt}\selectfont
+      Hypotheses use \(p\) or \(\mu\),\par
+      not \(\hat p\) or \(\bar x\).}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{7.15in}
+    \MiniHeading{CHOOSE TAILS BEFORE DATA}\par\vspace{.10in}
+    {\fontsize{27pt}{35pt}\selectfont
+      One-sided vs two-sided changes P. Let the question choose the tail.}
+  \end{minipage}
+}
+\WorksheetTag{u6\_l4--7, l10--11 · u7\_l4--5, l8--10}
+\end{posterpage}
+\end{document}

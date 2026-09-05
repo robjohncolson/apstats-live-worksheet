@@ -1,0 +1,93 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{apstats-poster}
+% Formula IDs: corr-r, linreg, linreg-mean, slope-b, y-intercept
+\colorlet{PosterAccent}{UnitRed}
+\begin{document}
+\begin{posterpage}
+\PosterHeader[76pt]{UnitRed}{5}{EXPLORING TWO-VARIABLE DATA · REGRESSION}{P14}
+  {SCATTERPLOTS, CORRELATION \& LSRL}{new 5.1–5.3, 5.5 \quad•\quad old 2.4–2.6, 2.8}
+
+\PosterZone{4.72in}{16.45in}{ZONE A · THE LEAST-SQUARES REGRESSION LINE}{%
+  \begin{minipage}[t]{9.8in}
+    \vspace{0pt}
+    \FormulaCardSized{68pt}{\hat y=a+bx}
+    \vspace{.16in}
+    \FormulaCardSized{52pt}{b=r\frac{s_y}{s_x}\qquad a=\bar y-b\bar x}
+    \vspace{.16in}
+    \FormulaCardSized{49pt}{\bar y=a+b\bar x}
+    \vspace{.12in}
+    {\fontsize{31pt}{39pt}\selectfont The LSRL always passes through \((\bar x,\bar y)\). It minimizes the sum of squared vertical residuals.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.8in}
+    \vspace{0pt}
+    \begin{tikzpicture}[x=.8in,y=.58in]
+      \draw[PosterInk,line width=3pt,-{Stealth[length=11pt]}] (0,0) -- (10,0) node[below left,font=\fontsize{26pt}{30pt}\selectfont] {\(x\)};
+      \draw[PosterInk,line width=3pt,-{Stealth[length=11pt]}] (0,0) -- (0,10) node[below left,font=\fontsize{26pt}{30pt}\selectfont] {\(y\)};
+      % Symmetric residuals sum to zero and have zero x-weighted sum;
+      % the illustrative points have mean (5,5) and LSRL y = 1 + .8x.
+      \foreach \x/\y in {1/2.2,2/2.0,3/3.7,4/3.7,5/5.8,6/5.3,7/6.9,8/6.8,9/8.6}
+        \fill[PosterAccent] (\x,\y) circle (.11);
+      \draw[PosterAccent,line width=4pt] (.5,1.4) -- (9.5,8.6);
+      \fill[PosterInk] (5,5) circle (.14);
+      \draw[PosterInk,line width=2pt,-{Stealth[length=8pt]}] (3.0,7.3) -- (4.84,5.2);
+      \node[font=\bfseries\fontsize{29pt}{34pt}\selectfont] at (2.7,8.1) {\((\bar x,\bar y)\)};
+      \node[font=\fontsize{25pt}{30pt}\selectfont,anchor=west,text=PosterAccent] at (6.8,9.25) {LSRL};
+    \end{tikzpicture}
+  \end{minipage}\par\vspace{.25in}
+  \FormulaCardSized{48pt}{r=\frac1{n-1}\sum\left(\frac{x_i-\bar x}{s_x}\right)\left(\frac{y_i-\bar y}{s_y}\right)}
+  \vspace{.23in}
+  \TextCard{{\posterheading\bfseries\fontsize{40pt}{47pt}\selectfont
+    DIRECTION · FORM · STRENGTH · UNUSUAL POINTS}\par\vspace{.12in}
+    {\fontsize{29pt}{36pt}\selectfont Describe the association using all four, with the variables and their context.}}
+}
+
+\PosterZone{16.6in}{20.75in}{ZONE B · WHAT THE SYMBOLS MEAN + HOW r BEHAVES}{%
+  \begin{minipage}[t]{8.2in}
+    \vspace{0pt}
+    {\fontsize{31pt}{39pt}\selectfont
+      \(x\): explanatory variable\par
+      \(y\): observed response\par
+      \(\hat y\): \textbf{predicted} response\par
+      \(a\): intercept; \(b\): slope\par
+      \(s_x,s_y\): sample SDs; \(n\): number of pairs}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{11.2in}
+    \vspace{0pt}
+    {\fontsize{29pt}{37pt}\selectfont
+      \(\boldsymbol{-1\le r\le1}\); \textbf{r has no units.}\par
+      Swapping \(x\) and \(y\) leaves \(r\) unchanged.\par
+      Changing measurement units leaves \(r\) unchanged.\par
+      \(r\) measures \textbf{linear} direction and strength only.\par
+      Outliers can change \(r\) substantially.}
+  \end{minipage}%
+}
+
+\PosterZone{20.9in}{24.4in}{ZONE C · SAY IT IN WORDS}{%
+  \begin{minipage}[t]{9.8in}
+    \vspace{0pt}
+    \MiniHeading{SLOPE}\par\vspace{.08in}
+    \SentenceFrame{“For each additional \PosterBlank{1.5in} [unit of \(x\)],
+      the predicted \PosterBlank{2.1in} [\(y\)] [increases/decreases] by
+      \PosterBlank{1.0in} [\(|b|\)] \PosterBlank{1.5in} [units of \(y\)].”}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.8in}
+    \vspace{0pt}
+    \MiniHeading{INTERCEPT}\par\vspace{.08in}
+    \SentenceFrame{“When \PosterBlank{2.1in} [\(x\)] is 0, the predicted
+      \PosterBlank{2.1in} [\(y\)] is \PosterBlank{1.1in} [\(a\)]
+      \PosterBlank{1.5in} [units].”}
+    \vspace{.1in}
+    {\fontsize{25pt}{31pt}\selectfont This may not make sense in context.}
+  \end{minipage}%
+}
+
+\PosterZone{24.55in}{27.45in}{ZONE D · WATCH OUT}{%
+  {\fontsize{31pt}{39pt}\selectfont
+    \textbf{Correlation does not establish causation.}\par
+    Inspect the scatterplot and residual plot (P15) for curvature, even when \(|r|\) is large.\par
+    \textbf{Slope has units of \(y\) per unit of \(x\); \(r\) has no units.}}
+}
+\WorksheetTag{u2\_l4–6 · u2\_l8}
+\end{posterpage}
+\end{document}
