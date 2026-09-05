@@ -83,7 +83,12 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   MOST of its lessons (was: latest lesson) — old Unit 1 no longer sinks into Q2 because 1.10 (Normal → CED 2.11) is in
   November; Q1 gradebook shows the first month again. m2b goldens regenerated; bundle regenerated. Dashboard quarter
   buttons now read "Q1 · CED U1" (from `pcUnits`; Q4 → "after the exam") instead of "Q4 · U9".
-- ⏭ SPEC written, not built: `SCHEDULE_PACKING_SPEC.md` (teacher's ask 2026-09-05): measured all 147 videos (1,167 min,
+- ⏭ DECIDED + HANDED TO CODEX (plan-then-implement, 3 parts): `state/schedule-packing-and-day-sheets-codex-prompt.md` —
+  Part 1 packing rule A + calendar relabel to NEW CED (pacing GROUPS, `generateSchedule`, generator flattening + `dayGroups`,
+  goldens/bundle regen); Part 2 `build_ladder.py` for day-groups; Part 3 author the 15 group DOK sheets (first one
+  `1.1+1.2+1.3` is taught 09-08) and archive the 35 absorbed per-topic sheets. Specs: `SCHEDULE_PACKING_SPEC.md` (decided),
+  `DOK_DAY_SHEETS_SPEC.md` (new). Orchestrator reviews per part and pushes.
+- (background) `SCHEDULE_PACKING_SPEC.md` (teacher's ask 2026-09-05): measured all 147 videos (1,167 min,
   `data/video-minutes.json`); packing consecutive same-NEW-unit topics under ≤3 videos + ≤30 min turns 87 lesson days into
   67 → Q1 banks Units 1 AND 2 for both periods, core done Jan 7 (B) / Feb 12 (E). Build = pacing groups in the Desk def +
   generator flattening + calendar relabel to NEW CED codes/colours. Teacher decisions in §3 (rule A vs B; DOK sheet on a

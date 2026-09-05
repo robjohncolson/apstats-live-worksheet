@@ -5,7 +5,7 @@ Q1 closes with only CED Unit 1 banked. The teacher's rule: **up to 3 videos on a
 simulates packing against the real calendar, recommends a rule, and defines the build. It also fixes the calendar's
 labels, which still speak in the OLD 9-unit codes.
 
-> **Status:** proposed (2026-09-05, from the teacher's ask). **Owner:** teacher. **Workflow:** analysis (this doc, §1–§2)
+> **Status:** DECIDED (rule A + per-day DOK sheets, 2026-09-05); build handed to Codex — `state/schedule-packing-and-day-sheets-codex-prompt.md`. **Owner:** teacher. **Workflow:** analysis (this doc, §1–§2)
 > → teacher picks a rule (§3) → implement (§4). Grade-affecting only through due dates (lesson-schedule.json is regenerated).
 
 ## 0. What already exists
@@ -52,10 +52,10 @@ than as 7-minute lesson days in September.
 
 ## 3. Teacher decisions
 
-1. Rule A or B (or a custom cap): **[default A]**.
-2. **The DOK-3 on a doubled day.** Two or three topics means two or three DOK sheets exist. **[default: the day's sheet is
-   the LAST topic of the group]** (it is the one whose video the class ends on; the earlier topics' sheets stay available
-   on `dok/index.html` as extra practice). Alternative: print all and let students choose one.
+1. Rule A or B (or a custom cap): **DECIDED 2026-09-05: A** (≤ 3 videos and ≤ 30 min).
+2. **The DOK-3 on a doubled day. DECIDED 2026-09-05: one sheet per class DAY that covers every video taught that day** —
+   see `DOK_DAY_SHEETS_SPEC.md` (group key `1.1+1.2+1.3`, rungs walk the day's topics in order, the DOK-3 lands on the
+   last one; the absorbed per-topic sheets are archived and mined for the group sheet).
 3. What to do with the freed days **[default: nothing scheduled — they surface as slack before each PC and after the last
    core day; the teacher drops in review/Beyond-the-Exam by hand]**. The generator reports the slack per period.
 4. Calendar labels **[default: NEW CED topic numbers and NEW unit colours everywhere on the calendar; the OLD id stays
