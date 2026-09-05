@@ -1,51 +1,84 @@
-# Topic 2.7 - Residuals
 topic: "2.7"
-ced2026: { unit: 5, topic: "5.4", label: "Residuals" }
-title: "One Line, Two Model Diagnostics"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How should correlation and residuals be reconciled when judging a model for safety planning?"
-worksheet: "u2_lesson7_live.html"
-
+ced2026:
+  unit: 5
+  topic: '5.4'
+  label: Residuals
+title: One Line, Two Model Diagnostics
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How should correlation and residuals be reconciled when judging a model for safety
+  planning?
+worksheet: u2_lesson7_live.html
 rules_callout:
-  title: "READING A RESIDUAL PLOT (keep on the page)"
-  body: |
-    A residual is $y-\hat y$. A positive residual means the model underpredicted;
+  title: READING A RESIDUAL PLOT (keep on the page)
+  body: 'A residual is $y-\hat y$. A positive residual means the model underpredicted;
+
     a negative residual means it overpredicted. Plot residuals against $x$ or $\hat y$.
+
     Random scatter around 0 supports a linear form. Curvature, trends, clusters, or
+
     changing spread show structure the line missed. Correlation measures the direction
+
     and strength of linear association, but even a large $|r|$ does not replace checking
+
     residual locations. Check a replacement model with its own residual plot.
 
+    '
 focus: aps-2.7-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.85in, a: 0.65in, b: 1.35in, c: 1.9in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.85in
+  a: 0.65in
+  b: 1.35in
+  c: 1.9in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
+    (finish + turn in)
   teacher_does:
-    - "Ask which evidence should control the model judgment; do not name the residual form."
-    - "Run the follow-along at minute 5; return at minute 33 for correlation, residual, safety, replacement, and scope evidence. Score part (c)."
+  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
-    - "Commit to a judgment, complete the follow-along, finish (a)--(c), revise, and turn in."
+  - Commit to a judgment, complete the follow-along, finish (a)--(c), revise, and turn in.
   questions_to_ask:
-    - "What does a positive residual say about the prediction?"
-    - "Does sign alone reveal where the errors occur?"
-    - "What would you require from a replacement model's residuals?"
-  adult_role: "Circulate. Require students to reconcile the two diagnostics and connect error direction to the safety use."
+  - Which number or visible feature supports your claim?
+  - Why does the other claim go beyond that evidence?
+  - What would you tell someone who chose the other claim?
+  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
+    the three required reasoning elements; do not require dropped extension work.
   watch_for:
-    - "Using correlation as a substitute for inspecting errors."
-    - "Counting residual signs without checking their locations."
-    - "Reversing underprediction and overprediction."
-  first_take_note: "Not graded. Students should decide what each diagnostic establishes before judging the line."
-
+  - A choice with copied numbers but no explanation of how they support it.
+  - Treating a model or average as a guaranteed individual outcome.
+  first_take_note: Not graded. Students should decide what each diagnostic establishes before judging
+    the line.
 visuals:
   braking_residuals:
     kind: scatter
-    points: [[10, 4], [15, 1], [20, -1], [25, -2], [30, -4], [35, -2], [40, -1], [45, 1], [50, 4]]
-    xlabel: "Speed (mph)"
-    ylabel: "Residual (ft)"
+    points:
+    - - 10
+      - 4
+    - - 15
+      - 1
+    - - 20
+      - -1
+    - - 25
+      - -2
+    - - 30
+      - -4
+    - - 35
+      - -2
+    - - 40
+      - -1
+    - - 45
+      - 1
+    - - 50
+      - 4
+    xlabel: Speed (mph)
+    ylabel: Residual (ft)
     xmin: 5
     xmax: 55
     ymin: -5

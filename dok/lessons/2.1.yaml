@@ -1,62 +1,88 @@
-# Topic 2.1 --- Introducing Statistics: Are Variables Related?
 topic: "2.1"
-ced2026: { unit: 2, topic: "2.1", label: "Two Categorical Variables: Tables & Graphs" }
-title: "Counts or Conditional Percents?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "When group sizes differ, which comparison reveals whether two categorical variables are related?"
-worksheet: "u2_lesson1_live.html"
-
+ced2026:
+  unit: 2
+  topic: '2.1'
+  label: 'Two Categorical Variables: Tables & Graphs'
+title: Counts or Conditional Percents?
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: When group sizes differ, which comparison reveals whether two categorical variables
+  are related?
+worksheet: u2_lesson1_live.html
 rules_callout:
-  title: "COMPARE WITHIN GROUPS (keep on the page)"
-  body: |
-    A \textbf{two-way table} records combinations of two categorical variables. A raw count answers
-    \emph{how many}; it does not by itself answer \emph{how likely within a group}. To compare groups of
-    different sizes, compute a \textbf{conditional relative frequency}:
-    $\text{cell count}\div\text{total for that row or column}$. If the conditional distributions differ,
-    the variables appear associated. Association from observed data does not by itself establish cause.
+  title: COMPARE WITHIN GROUPS (keep on the page)
+  body: 'A \textbf{two-way table} records combinations of two categorical variables. A raw count
+    answers
 
+    \emph{how many}; it does not by itself answer \emph{how likely within a group}. To compare groups
+    of
+
+    different sizes, compute a \textbf{conditional relative frequency}:
+
+    $\text{cell count}\div\text{total for that row or column}$. If the conditional distributions
+    differ,
+
+    the variables appear associated. Association from observed data does not by itself establish
+    cause.
+
+    '
 focus: aps-2.1-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.7in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
+    (finish + turn in)
   teacher_does:
-    - "Board slide up at the bell. Read Kai's and Rosa's statements without confirming either."
-    - "Begin the video follow-along at minute 5."
-    - "Return to the table at minute 33. Circulate and ask students to name every denominator they use."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
-    - "Choose the more useful line of reasoning and cite one table detail."
-    - "Complete the video follow-along about variable types, displays, and possible relationships."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Choose the more useful line of reasoning and cite one table detail.
+  - Complete the video follow-along about variable types, displays, and possible relationships.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What question does the count 75 answer? What question would 75 divided by 150 answer?"
-    - "If both sport groups had 100 students, what counts would these percentages produce?"
-    - "Does knowing sport participation change your prediction of the sleep category?"
-    - "What assignment or control would be needed before using the word causes?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require both conditional percentages and the unequal-row-total mechanism before accepting a relationship claim; do not announce which student is right."
+  - Which number or visible feature supports your claim?
+  - Why does the other claim go beyond that evidence?
+  - What would you tell someone who chose the other claim?
+  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
+    the three required reasoning elements; do not require dropped extension work.
   watch_for:
-    - "Dividing each cell by 200 instead of conditioning within the sport-participation row."
-    - "Treating a larger raw count as a larger within-group chance."
-    - "Changing associated into caused without evidence from an experiment."
-  first_take_note: "Not graded. Expect the 75-to-35 count comparison to attract students before they normalize for group size."
-
-# Topic 2.1 has no tutor artifact. These two lines are copied from apstat_2_framework.md.
+  - A choice with copied numbers but no explanation of how they support it.
+  - Treating a model or average as a guaranteed individual outcome.
+  first_take_note: Not graded. Expect the 75-to-35 count comparison to attract students before they
+    normalize for group size.
 tether:
-  - '\textbf{VAR-1.D} Identify questions to be answered about possible relationships in data. \textbf{[Skill 1.A]}'
-  - '\textbf{VAR-1.D.1} Apparent patterns and associations in data may be random or not.'
-
+- \textbf{VAR-1.D} Identify questions to be answered about possible relationships in data. \textbf{[Skill
+  1.A]}
+- \textbf{VAR-1.D.1} Apparent patterns and associations in data may be random or not.
 visuals:
   sport_sleep_table:
     kind: two_way_table
-    col_label: "Usual sleep on a school night"
-    row_label: "Sport?"
-    cols: ["$\\geq 8$ h", "$<8$ h", "Total"]
-    rows: ["Plays", "Does not", "Total"]
+    col_label: Usual sleep on a school night
+    row_label: Sport?
+    cols:
+    - $\geq 8$ h
+    - $<8$ h
+    - Total
+    rows:
+    - Plays
+    - Does not
+    - Total
     cells:
-      - ["35", "15", "50"]
-      - ["75", "75", "150"]
-      - ["110", "90", "200"]
+    - - '35'
+      - '15'
+      - '50'
+    - - '75'
+      - '75'
+      - '150'
+    - - '110'
+      - '90'
+      - '200'

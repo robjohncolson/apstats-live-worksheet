@@ -1,53 +1,83 @@
-# Topic 2.6 - Linear Regression Models
 topic: "2.6"
-ced2026: { unit: 5, topic: "5.3", label: "Linear Regression Models" }
-title: "Two Payloads, One Regression Line"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How should observed range, prediction purpose, and new evidence guide use of a regression model?"
-worksheet: "u2_lesson6_live.html"
-
+ced2026:
+  unit: 5
+  topic: '5.3'
+  label: Linear Regression Models
+title: Two Payloads, One Regression Line
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How should observed range, prediction purpose, and new evidence guide use of
+  a regression model?
+worksheet: u2_lesson6_live.html
 rules_callout:
-  title: "USING A REGRESSION MODEL (keep on the page)"
-  body: |
-    A linear model $\hat y=a+bx$ predicts response $y$ from explanatory variable $x$.
+  title: USING A REGRESSION MODEL (keep on the page)
+  body: 'A linear model $\hat y=a+bx$ predicts response $y$ from explanatory variable $x$.
+
     Its slope is the predicted change in $y$ for a one-unit increase in $x$; substitution
+
     gives a prediction, not an exact outcome. Interpolation uses an $x$ inside the observed
+
     range. Extrapolation uses an $x$ outside that range and becomes less reliable farther
+
     from the data because the fitted pattern may not continue. A plausible output does not
+
     create evidence beyond the observations used to fit the model.
 
+    '
 focus: aps-2.6-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.85in, a: 0.65in, b: 1.35in, c: 1.9in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.85in
+  a: 0.65in
+  b: 1.35in
+  c: 1.9in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
+    (finish + turn in)
   teacher_does:
-    - "Ask which evidence should control the mission decision; do not confirm a recommendation."
-    - "Begin the 2.6 video follow-along at minute 5."
-    - "Return at minute 33. Require range, prediction, safety-margin, and new-data evidence; score part (c)."
+  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
-    - "Commit to a recommendation and cite one number or plot feature."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  - Commit to a recommendation and cite one number or plot feature.
+  - Complete the follow-along, finish (a)--(c), revise, and turn in.
   questions_to_ask:
-    - "Which prediction has observed payloads on both sides?"
-    - "What evidence does the fitted pattern provide at 3.5 kg?"
-    - "What observations would reduce uncertainty for this mission?"
-  adult_role: "Circulate. Separate numerical computability from empirical support and press for decision-relevant evidence."
+  - Which number or visible feature supports your claim?
+  - Why does the other claim go beyond that evidence?
+  - What would you tell someone who chose the other claim?
+  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
+    the three required reasoning elements; do not require dropped extension work.
   watch_for:
-    - "Approving solely because the equation returns 13.60 minutes."
-    - "Treating the 1.60-minute modeled buffer as guaranteed."
-    - "Using response plausibility instead of the observed payload range."
-  first_take_note: "Not graded. Students should distinguish a computed prediction from evidence supporting its use."
-
+  - A choice with copied numbers but no explanation of how they support it.
+  - Treating a model or average as a guaranteed individual outcome.
+  first_take_note: Not graded. Students should distinguish a computed prediction from evidence supporting
+    its use.
 visuals:
   drone_scatter:
     kind: scatter
-    points: [[0.5, 33.2], [0.8, 30.58], [1.1, 29.16], [1.4, 26.74], [1.6, 25.46], [1.9, 24.04], [2.2, 21.62], [2.5, 20.4]]
-    xlabel: "Payload (kg)"
-    ylabel: "Duration (min)"
+    points:
+    - - 0.5
+      - 33.2
+    - - 0.8
+      - 30.58
+    - - 1.1
+      - 29.16
+    - - 1.4
+      - 26.74
+    - - 1.6
+      - 25.46
+    - - 1.9
+      - 24.04
+    - - 2.2
+      - 21.62
+    - - 2.5
+      - 20.4
+    xlabel: Payload (kg)
+    ylabel: Duration (min)
     xmin: 0.3
     xmax: 2.7
     ymin: 18

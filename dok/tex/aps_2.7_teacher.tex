@@ -24,12 +24,13 @@
 }
 \textbf{Essential question:} How should correlation and residuals be reconciled when judging a model for safety planning?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{correlation-\allowbreak{}residuals-\allowbreak{}model-\allowbreak{}choice-\allowbreak{}and-\allowbreak{}scope}}\par
-\textbf{DOK rationale:} Part (c) reconciles correlation with ordered residual locations, connects signed error to a safety decision, and requires both a replacement-model diagnostic and a scope boundary.\par
+\textbf{DOK rationale:} Part (c) weighs competing claims using the day's numerical or graphical evidence and explains a limitation or consequence; the judgment requires linked reasoning beyond a calculation.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Ask which evidence should control the model judgment; do not name the residual form.
-  \item Run the follow-along at minute 5; return at minute 33 for correlation, residual, safety, replacement, and scope evidence. Score part (c).
+  \item Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  \item Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  \item Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -37,17 +38,16 @@
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item What does a positive residual say about the prediction?
-  \item Does sign alone reveal where the errors occur?
-  \item What would you require from a replacement model's residuals?
+  \item Which number or visible feature supports your claim?
+  \item Why does the other claim go beyond that evidence?
+  \item What would you tell someone who chose the other claim?
 \end{itemize}
-}{Circulate. Require students to reconcile the two diagnostics and connect error direction to the safety use.}
+}{Circulate and ask students to connect their choice to evidence. Score part (c) using the three required reasoning elements; do not require dropped extension work.}
 
 \begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Using correlation as a substitute for inspecting errors.
-  \item Counting residual signs without checking their locations.
-  \item Reversing underprediction and overprediction.
+  \item A choice with copied numbers but no explanation of how they support it.
+  \item Treating a model or average as a guaranteed individual outcome.
 \end{itemize}
 \end{callout}
 
@@ -55,24 +55,23 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{reconciles-diagnostics} (required) --- Uses the U-shaped residual locations despite the large correlation
-  \item \textbf{rejects-sign-counting} (required) --- Explains why both residual signs do not establish random scatter
-  \item \textbf{uses-safety-error} (required) --- Links the four-foot underprediction at 50 mph to a safety consequence
-  \item \textbf{sets-check-and-scope} (required) --- Requires unpatterned replacement residuals and bounds the setting
+  \item \textbf{reasoning-1} (required) --- Supports June by reconciling the large correlation with the U-shaped residuals
+  \item \textbf{reasoning-2} (required) --- Links the 4-foot underprediction to a stopping-distance consequence
+  \item \textbf{reasoning-3} (required) --- Requires a replacement residual check in the stated vehicle/surface setting
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Reconciles both diagnostics, rejects sign counting, uses the high-speed error, requires a replacement check, and bounds scope. \\ \hline
-\textbf{P} & Identifies the residual pattern but incompletely explains correlation, safety, replacement evidence, or scope. \\ \hline
-\textbf{I} & Accepts the line solely from correlation or residual signs, or reverses the meaning of residual sign. \\ \hline
+\textbf{E} & Includes all three required reasoning elements above, with correct contextual evidence. \\ \hline
+\textbf{P} & Includes at least one substantive correct reasoning link above, but omits or misstates another required element. \\ \hline
+\textbf{I} & Includes no substantive correct reasoning link above; an unsupported choice or copied number alone is insufficient. \\ \hline
 \end{tabular}}
 
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-Suppose a road-safety lab records braking distance $y$ at speeds $x$ from 10 through 50 mph on one vehicle and dry surface. The line is $\hat y=-10+2.5x$, the correlation is $r=0.997$, and the residual plot is shown. Actual distances at 10, 30, and 50 mph are 19, 61, and 119 feet.\par\smallskip \textbf{Ezra:} The large correlation and residuals on both sides of 0 justify using the line across the tested speeds.\par \textbf{June:} I would use where the residuals occur and the 50-mph error to judge safety, then check any replacement model separately.\par
+Suppose a road-safety lab records braking distance $y$ at speeds $x$ from 10 through 50 mph on one vehicle and dry surface. The line is $\hat y=-10+2.5x$, the correlation is $r=0.997$, and the residual plot is shown. A residual is actual distance minus the line's prediction. At 50 mph, the actual distance is 119 feet.\par\smallskip \textbf{Ezra:} The large correlation and residuals on both sides of 0 justify using the line across the tested speeds.\par \textbf{June:} I would use where the residuals occur and the 50-mph error to judge safety, then check any replacement model separately.\par
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
@@ -97,20 +96,20 @@ Suppose a road-safety lab records braking distance $y$ at speeds $x$ from 10 thr
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which evidence should control the model judgment? Cite one numerical or graphical feature.\par
+Would you trust this line to plan a safe stopping distance? Give one number or visible pattern in one sentence.\par
 \answer{Not graded. Students should decide what each diagnostic establishes before judging the line.}
 \end{firsttakebox}
 
 \textit{Rules callout ``READING A RESIDUAL PLOT (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} Read the residuals at 10, 30, and 50 mph and state whether the line underpredicts or overpredicts at each speed.\par
-\answer{The residuals are 4, $-4$, and 4 feet. Positive residuals at 10 and 50 mph mean underprediction; the negative residual at 30 mph means overprediction.}
+\dokbadge{1}~\textbf{(a)} Read the residual at 50 mph. Does the line predict too high or too low there?\par
+\answer{The residual is 4 feet, so the line predicts too low.}
 
-\dokbadge{2}~\textbf{(b)} Verify those residuals from the equation and actual distances. Describe the full residual plot, including its form and where the line tends to underpredict or overpredict.\par
-\answer{Predictions at 10, 30, and 50 mph are 15, 65, and 115 feet, so $19-15=4$, $61-65=-4$, and $119-115=4$. The residuals form a U-shaped sequence: positive at 10--15, negative at 20--40, then positive at 45--50 mph. The line underpredicts at the ends and overpredicts in the middle.}
+\dokbadge{2}~\textbf{(b)} Verify the 50-mph residual using the equation. Describe where the residual plot is above and below zero.\par
+\answer{At 50 mph, $\hat y=-10+2.5(50)=115$ feet, so the residual is $119-115=4$ feet. Residuals are positive at 10--15 and 45--50 mph, and negative at 20--40 mph, forming a U-shaped pattern.}
 
-\dokbadge{3}~\textbf{(c)} Evaluate both judgments by reconciling $r=0.997$ with the residual locations. Assess what the large correlation and both residual signs do or do not establish, use the 50-mph error for a safety consequence, specify evidence required before trusting a replacement model, and bound the conclusion to the observed setting.\par
-\answer{June's approach is warranted. The value $r=0.997$ describes very strong positive linear association in the original variables, but the U-shaped residual sequence shows systematic error left by the line. Both signs do not imply random scatter when their locations are predictable. At 50 mph the line predicts 115 feet but the observed distance is 119 feet, a 4-foot underprediction that could make a stopping zone too short. Fit a plausible curved model, require unpatterned residuals around 0, and validate it on new trials. Conclusions remain limited to this vehicle, dry surface, and 10--50 mph.}
+\dokbadge{3}~\textbf{(c)} Whose judgment is supported? Explain why the residual pattern matters even with the large correlation, and connect the 50-mph error to safety. State what you would check in a replacement model for this vehicle and dry surface. Write 3--4 sentences.\par
+\answer{June is supported: $r=0.997$ shows a strong positive linear association, but the U-shaped residuals show a pattern of errors the line misses. Having both signs is not enough when the signs occur in a predictable order. At 50 mph the 4-foot underprediction could make a stopping zone too short. For this vehicle and dry surface, check that a replacement model's residuals have no clear pattern around zero before trusting it.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

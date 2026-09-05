@@ -12,7 +12,7 @@
 
 \noindent\begin{minipage}[t]{0.57\linewidth}
 \vspace{0pt}
-Suppose a road-safety lab records braking distance $y$ at speeds $x$ from 10 through 50 mph on one vehicle and dry surface. The line is $\hat y=-10+2.5x$, the correlation is $r=0.997$, and the residual plot is shown. Actual distances at 10, 30, and 50 mph are 19, 61, and 119 feet.\par\smallskip \textbf{Ezra:} The large correlation and residuals on both sides of 0 justify using the line across the tested speeds.\par \textbf{June:} I would use where the residuals occur and the 50-mph error to judge safety, then check any replacement model separately.\par
+Suppose a road-safety lab records braking distance $y$ at speeds $x$ from 10 through 50 mph on one vehicle and dry surface. The line is $\hat y=-10+2.5x$, the correlation is $r=0.997$, and the residual plot is shown. A residual is actual distance minus the line's prediction. At 50 mph, the actual distance is 119 feet.\par\smallskip \textbf{Ezra:} The large correlation and residuals on both sides of 0 justify using the line across the tested speeds.\par \textbf{June:} I would use where the residuals occur and the 50-mph error to judge safety, then check any replacement model separately.\par
 \end{minipage}\hfill
 \begin{minipage}[t]{0.40\linewidth}
 \vspace{0pt}
@@ -42,13 +42,13 @@ Suppose a road-safety lab records braking distance $y$ at speeds $x$ from 10 thr
 \end{minipage}
 
 \begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
-Which evidence should control the model judgment? Cite one numerical or graphical feature.
+Would you trust this line to plan a safe stopping distance? Give one number or visible pattern in one sentence.
 \end{firsttakebox}
 
 \begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
-  \item[\dokbadge{1}~(a)] Read the residuals at 10, 30, and 50 mph and state whether the line underpredicts or overpredicts at each speed.
-  \item[\dokbadge{2}~(b)] Verify those residuals from the equation and actual distances. Describe the full residual plot, including its form and where the line tends to underpredict or overpredict.
-  \item[\dokbadge{3}~(c)] Evaluate both judgments by reconciling $r=0.997$ with the residual locations. Assess what the large correlation and both residual signs do or do not establish, use the 50-mph error for a safety consequence, specify evidence required before trusting a replacement model, and bound the conclusion to the observed setting.
+  \item[\dokbadge{1}~(a)] Read the residual at 50 mph. Does the line predict too high or too low there?
+  \item[\dokbadge{2}~(b)] Verify the 50-mph residual using the equation. Describe where the residual plot is above and below zero.
+  \item[\dokbadge{3}~(c)] Whose judgment is supported? Explain why the residual pattern matters even with the large correlation, and connect the 50-mph error to safety. State what you would check in a replacement model for this vehicle and dry surface. Write 3--4 sentences.
 \end{description}
 
 \vfill

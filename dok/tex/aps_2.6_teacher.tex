@@ -20,13 +20,13 @@
 }
 \textbf{Essential question:} How should observed range, prediction purpose, and new evidence guide use of a regression model?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{regression-\allowbreak{}prediction-\allowbreak{}range-\allowbreak{}and-\allowbreak{}decision}}\par
-\textbf{DOK rationale:} Part (c) coordinates the observed predictor range, two prediction purposes, a safety margin, and needed target-range evidence to evaluate competing recommendations and trace a decision consequence.\par
+\textbf{DOK rationale:} Part (c) weighs competing claims using the day's numerical or graphical evidence and explains a limitation or consequence; the judgment requires linked reasoning beyond a calculation.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Ask which evidence should control the mission decision; do not confirm a recommendation.
-  \item Begin the 2.6 video follow-along at minute 5.
-  \item Return at minute 33. Require range, prediction, safety-margin, and new-data evidence; score part (c).
+  \item Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  \item Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  \item Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -35,17 +35,16 @@
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Which prediction has observed payloads on both sides?
-  \item What evidence does the fitted pattern provide at 3.5 kg?
-  \item What observations would reduce uncertainty for this mission?
+  \item Which number or visible feature supports your claim?
+  \item Why does the other claim go beyond that evidence?
+  \item What would you tell someone who chose the other claim?
 \end{itemize}
-}{Circulate. Separate numerical computability from empirical support and press for decision-relevant evidence.}
+}{Circulate and ask students to connect their choice to evidence. Score part (c) using the three required reasoning elements; do not require dropped extension work.}
 
 \begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Approving solely because the equation returns 13.60 minutes.
-  \item Treating the 1.60-minute modeled buffer as guaranteed.
-  \item Using response plausibility instead of the observed payload range.
+  \item A choice with copied numbers but no explanation of how they support it.
+  \item Treating a model or average as a guaranteed individual outcome.
 \end{itemize}
 \end{callout}
 
@@ -53,18 +52,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{compares-prediction-support} (required) --- Distinguishes the supported interpolation from the extrapolation
-  \item \textbf{uses-range-and-margin} (required) --- Uses the one-kilogram range gap and 1.60-minute modeled buffer
-  \item \textbf{requests-target-evidence} (required) --- Calls for repeated observations near 3.5 kg and model reassessment
-  \item \textbf{states-decision-consequence} (required) --- Connects unsupported extrapolation to inadequate flight time
+  \item \textbf{reasoning-1} (required) --- Makes a supported decision by comparing an in-range and out-of-range prediction
+  \item \textbf{reasoning-2} (required) --- Uses the tested range and 1.60-minute predicted surplus without treating it as guaranteed
+  \item \textbf{reasoning-3} (required) --- Requests flight evidence near 3.5 kg before relying on the model
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Compares both predictions, uses the range gap and buffer, makes a defensible decision, requests target-range evidence, and states the safety consequence. \\ \hline
-\textbf{P} & Identifies extrapolation but incompletely uses the numerical evidence, new-data requirement, or consequence. \\ \hline
-\textbf{I} & Approves solely because substitution gives a plausible value or treats the prediction as guaranteed. \\ \hline
+\textbf{E} & Includes all three required reasoning elements above, with correct contextual evidence. \\ \hline
+\textbf{P} & Includes at least one substantive correct reasoning link above, but omits or misstates another required element. \\ \hline
+\textbf{I} & Includes no substantive correct reasoning link above; an unsupported choice or copied number alone is insufficient. \\ \hline
 \end{tabular}}
 
 \clearpage
@@ -100,14 +98,14 @@ Would you approve now, delay approval, or approve conditionally? Cite one number
 
 \textit{Rules callout ``USING A REGRESSION MODEL (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} Identify the explanatory and response variables, slope, intercept, and observed payload range.\par
-\answer{Payload $x$ is explanatory and flight duration $y$ is the response. The slope is $-6.4$ minutes per kg, the intercept is 36.0 minutes, and observed payloads range from 0.5 to 2.5 kg.}
+\dokbadge{1}~\textbf{(a)} Name the explanatory and response variables, with units.\par
+\answer{Payload (kg) is explanatory; flight duration (minutes) is the response.}
 
-\dokbadge{2}~\textbf{(b)} Interpret the slope. Predict duration at 1.8 and 3.5 kg, classify each prediction, and calculate the modeled buffer above 12 minutes.\par
-\answer{Each added kilogram predicts 6.4 fewer flight minutes. At 1.8 kg, $\hat y=36-6.4(1.8)=24.48$ minutes, an interpolation. At 3.5 kg, $\hat y=13.60$ minutes, an extrapolation 1.0 kg beyond the maximum. Its modeled buffer is $13.60-12=1.60$ minutes.}
+\dokbadge{2}~\textbf{(b)} Predict flight duration at 1.8 and 3.5 kg. How much does the 3.5-kg prediction exceed the required 12 minutes?\par
+\answer{At 1.8 kg, $\hat y=36-6.4(1.8)=24.48$ minutes. At 3.5 kg, $\hat y=36-6.4(3.5)=13.60$ minutes, leaving $13.60-12=1.60$ minutes above the requirement.}
 
-\dokbadge{3}~\textbf{(c)} Evaluate both approaches using the observed range, the distance from 3.5 kg to that range, the modeled buffer you computed, and the in-range plot. Decide what to do, explain whether the two predictions have equal support, specify evidence needed before approval, and state the consequence of the rejected reasoning.\par
-\answer{Mina's approach supports delaying approval. The 1.8-kg prediction is supported by nearby payloads, but 3.5 kg is 1.0 kg beyond the tested maximum. A tight linear pattern from 0.5 to 2.5 kg does not establish that battery performance remains linear beyond that range, and the modeled reserve is only 1.60 minutes. Collect repeated flights near 3.5 kg, inspect the relationship there, and validate or refit the model before approval. Ravi's reasoning treats a computable, plausible extrapolation like supported evidence or a guaranteed duration; using it could leave too little flight time.}
+\dokbadge{3}~\textbf{(c)} Would you approve this mission now? Compare the support for the two predictions using the tested payload range and the extra time from (b). Explain what evidence you would want before relying on the 3.5-kg prediction. Write 3--4 sentences.\par
+\answer{Mina's approach supports delaying approval. The 1.8-kg prediction is within the tested 0.5--2.5 kg range, but 3.5 kg is 1.0 kg beyond it, where the pattern may change. A predicted 1.60-minute surplus does not guarantee enough time, even though the tested points follow a line. Repeated tests near 3.5 kg are needed to check actual flight times before approval.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

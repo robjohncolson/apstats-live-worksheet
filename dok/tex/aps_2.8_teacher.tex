@@ -26,13 +26,13 @@
 }
 \textbf{Essential question:} How do several regression properties distinguish lines that share the same mean point?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{shared-\allowbreak{}mean-\allowbreak{}point-\allowbreak{}which-\allowbreak{}line-\allowbreak{}is-\allowbreak{}lsrl}}\par
-\textbf{DOK rationale:} Part (c) synthesizes a warranted regression analysis from two partly defensible accounts by coordinating slope units, least-squares and mean-point properties, coefficient meanings, domain, and prediction consequences.\par
+\textbf{DOK rationale:} Part (c) weighs competing claims using the day's numerical or graphical evidence and explains a limitation or consequence; the judgment requires linked reasoning beyond a calculation.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Ask students to mark one defensible and one questionable clause before choosing a line.
-  \item After the video, require slope units, the mean-point property, and $r^2$ evidence.
-  \item Collect at the door; score part (c) only, E/P/I.
+  \item Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  \item Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  \item Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -41,17 +41,16 @@
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Which standard-deviation ratio has response-per-explanatory units?
-  \item Why can both lines contain $(7,28)$?
-  \item What differs at 8 sunshine hours?
+  \item Which number or visible feature supports your claim?
+  \item Why does the other claim go beyond that evidence?
+  \item What would you tell someone who chose the other claim?
 \end{itemize}
-}{Circulate. Ask for linked evidence rather than confirming an analyst.}
+}{Circulate and ask students to connect their choice to evidence. Score part (c) using the three required reasoning elements; do not require dropped extension work.}
 
 \begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Reversing $s_y/s_x$.
-  \item Treating the mean point as sufficient.
-  \item Using $r$ rather than $r^2$ for explained variation.
+  \item A choice with copied numbers but no explanation of how they support it.
+  \item Treating a model or average as a guaranteed individual outcome.
 \end{itemize}
 \end{callout}
 
@@ -59,18 +58,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-supported-components} (required) --- Retains Quinn's slope and line plus Rowan's $r^2$ and domain caution
-  \item \textbf{coordinates-line-properties} (required) --- Uses slope units and explains why the mean point is necessary but insufficient
-  \item \textbf{interprets-coefficients} (required) --- Interprets slope, intercept, and 64 percent with the observed domain
-  \item \textbf{quantifies-consequences} (required) --- Gives 31.2 versus 28.2 MWh and the 16-point explained-variation error
+  \item \textbf{reasoning-1} (required) --- Keeps Quinn's line using the correct SD ratio and slope
+  \item \textbf{reasoning-2} (required) --- Explains why the shared mean point is insufficient to choose the LSRL
+  \item \textbf{reasoning-3} (required) --- Keeps Rowan's 64 percent and interprets response variation in context
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Synthesizes the correct line and interpretations, links the regression properties, and quantifies both consequences. \\ \hline
-\textbf{P} & Finds the correct line and $r^2$ but incompletely links a property, domain, or consequence. \\ \hline
-\textbf{I} & Accepts the reversed ratio, treats the mean point as sufficient, or reports 80 percent explained. \\ \hline
+\textbf{E} & Includes all three required reasoning elements above, with correct contextual evidence. \\ \hline
+\textbf{P} & Includes at least one substantive correct reasoning link above, but omits or misstates another required element. \\ \hline
+\textbf{I} & Includes no substantive correct reasoning link above; an unsupported choice or copied number alone is insufficient. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -83,7 +81,7 @@
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-Suppose a solar-farm analyst uses hours of direct sunshine, $x$, to predict daily generation, $y$, in megawatt-hours. Summary statistics for 12 observed days are shown.\par\smallskip \textbf{Quinn:} ``Using $b=r(s_y/s_x)$ gives $\hat y=5.6+3.2x$. It passes through $(7,28)$, which by itself proves it is the LSRL. Since $r=0.80$, the model explains 80 percent of the variation.''\par \textbf{Rowan:} ``Using $b=r(s_x/s_y)$ gives $\hat y=26.6+0.2x$. It also passes through $(7,28)$, so that line is equally eligible. Explained variation is 64 percent, and a zero-hour intercept needs caution because 0 is outside the observed range.''\par
+Suppose a solar-farm analyst uses sunshine hours $x$ to predict daily generation $y$ in megawatt-hours (MWh). The table summarizes 12 observed days.\par\smallskip \textbf{Quinn:} ``Using $b=r(s_y/s_x)$ gives $\hat y=5.6+3.2x$. It passes through $(7,28)$, so it must be the LSRL. It explains 80 percent of the variation.''\par \textbf{Rowan:} ``Using $b=r(s_x/s_y)$ gives $\hat y=26.6+0.2x$. It also passes through $(7,28)$, so it is equally good. Explained variation is 64 percent.''\par
 \begin{center}
 \textbf{Solar-farm summary (12 observed days)}\par\smallskip
 \resizebox{0.98\linewidth}{!}{%
@@ -94,20 +92,20 @@ $x$ range & $\bar x$ & $\bar y$ & $s_x$ & $s_y$ & $r$ \\ \hline
 \end{tabular}}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which clauses in Quinn's and Rowan's analyses look defensible? Cite one formula or line property.\par
+The two lines agree at 7 sunshine hours. Does that make them equally useful at other times? Give your first thought in one sentence.\par
 \answer{Not graded. Credit a committed clause-level comparison supported by one property.}
 \end{firsttakebox}
 
 \textit{Rules callout ``MAKE THE REGRESSION PROPERTIES AGREE (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} State what the LSRL minimizes, the point it contains, and the contextual meanings of slope and intercept.\par
-\answer{The LSRL minimizes the sum of squared residuals and contains $(\bar x,\bar y)$. Its slope is the predicted response change for a one-unit increase in $x$; its intercept predicts the response at $x=0$.}
+\dokbadge{1}~\textbf{(a)} State the mean point that every least-squares regression line must contain.\par
+\answer{The mean point is $(\bar x,\bar y)=(7,28)$: 7 sunshine hours and 28 MWh.}
 
-\dokbadge{2}~\textbf{(b)} Calculate the LSRL slope and intercept, $r^2$, and the prediction at 8 sunshine hours. Verify the mean-point property.\par
-\answer{$b=0.80(6/1.5)=3.2$ MWh per hour and $a=28-3.2(7)=5.6$ MWh, so $\hat y=5.6+3.2x$. At $x=7$, $\hat y=28$; $r^2=0.64$; and $\hat y(8)=31.2$ MWh.}
+\dokbadge{2}~\textbf{(b)} Calculate the regression slope and intercept, and $r^2$. Give the slope's units.\par
+\answer{$b=0.80(6/1.5)=3.2$ MWh per hour; $a=28-3.2(7)=5.6$ MWh; $r^2=(0.80)^2=0.64$.}
 
-\dokbadge{3}~\textbf{(c)} Evaluate both analyses and write one warranted synthesis. Coordinate the slope ratio and units, least-squares and mean-point properties, coefficient meanings, and the observed domain. Compare both lines at 8 hours and quantify the consequences of using the rejected slope and using $r$ instead of $r^2$.\par
-\answer{Quinn has the correct line because $s_y/s_x$ has response-per-explanatory units, but the shared point alone is not sufficient and explained variation is not $r$. Rowan correctly squares $r$ and recognizes the domain concern, but reverses the slope ratio. Both lines contain $(7,28)$ because their intercepts were set by $a=\bar y-b\bar x$; only the 3.2-slope line has the regression slope and minimizes squared residuals. The supported line predicts 31.2 MWh at 8 hours; the other predicts $26.6+0.2(8)=28.2$ MWh, 3.0 MWh lower. Explained variation is 64 percent, so using 80 percent overstates it by 16 percentage points. The correct 5.6-MWh intercept is a prediction at 0 hours, outside the observed 4--10-hour range, so it is unsupported here.}
+\dokbadge{3}~\textbf{(c)} Which parts of Quinn's and Rowan's claims should a report keep? Use the slope formula to choose a line, explain why their shared mean point does not make both lines correct, and interpret the correct percent of variation explained. Write 3--4 sentences.\par
+\answer{Keep Quinn's line, $\hat y=5.6+3.2x$, because it uses the correct response-SD over explanatory-SD ratio. Both lines pass through $(7,28)$, but only Quinn's has the regression slope; passing through the mean point alone is not enough to minimize squared residuals. Keep Rowan's $64\%$: the linear model explains $64\%$ of the variation in daily generation. Quinn's $80\%$ confuses correlation with its square.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

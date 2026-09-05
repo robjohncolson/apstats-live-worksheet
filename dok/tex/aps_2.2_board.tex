@@ -17,68 +17,10 @@ Suppose a student council asks 120 ninth graders and 60 twelfth graders whether 
 \begin{minipage}[t]{0.40\linewidth}
 \vspace{0pt}
 \begin{center}
-\begin{minipage}{0.48\linewidth}
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-  width=0.95\linewidth,
-  height=1.25in,
-  ybar stacked,
-  bar width=18pt,
-  ymin=0,
-  ymax=135,
-  ytick={0,30,60,90,120},
-  symbolic x coords={9th,12th},
-  xtick=data,
-  enlarge x limits=0.35,
-  title={\textbf{Graph A}},
-  xlabel={Grade},
-  ylabel={Number of students},
-  tick label style={font=\scriptsize},
-  label style={font=\scriptsize},
-  title style={font=\small},
-  ymajorgrids,
-  nodes near coords,
-  every node near coord/.append style={font=\scriptsize},
-  legend style={at={(0.5,-0.30)},anchor=north,font=\scriptsize,draw=none}
-]
-\addplot[fill=calloutblue,draw=dayblue] coordinates {(9th,72) (12th,18)};
-\addplot[fill=calloutgreen,draw=dayblue] coordinates {(9th,48) (12th,42)};
-\legend{Field Day,Talent Show}
-\end{axis}
-\end{tikzpicture}
-\end{minipage}\hfill
-\begin{minipage}{0.48\linewidth}
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-  width=0.95\linewidth,
-  height=1.25in,
-  ybar stacked,
-  bar width=18pt,
-  ymin=0,
-  ymax=108,
-  ytick={0,20,40,60,80,100},
-  symbolic x coords={9th,12th},
-  xtick=data,
-  enlarge x limits=0.35,
-  title={\textbf{Graph B}},
-  xlabel={Grade},
-  ylabel={Percent within grade},
-  tick label style={font=\scriptsize},
-  label style={font=\scriptsize},
-  title style={font=\small},
-  ymajorgrids,
-  nodes near coords,
-  every node near coord/.append style={font=\scriptsize},
-  legend style={at={(0.5,-0.30)},anchor=north,font=\scriptsize,draw=none}
-]
-\addplot[fill=calloutblue,draw=dayblue] coordinates {(9th,60) (12th,30)};
-\addplot[fill=calloutgreen,draw=dayblue] coordinates {(9th,40) (12th,70)};
-\legend{Field Day,Talent Show}
-\end{axis}
-\end{tikzpicture}
-\end{minipage}
+\begin{tikzpicture}\begin{axis}[width=0.95\linewidth,height=1.05in,ybar stacked,bar width=18pt,ymin=0,ymax=135,ytick={0,60,120},symbolic x coords={9th,12th},xtick=data,enlarge x limits=0.4,title={Graph A},ylabel={Students},tick label style={font=\small},label style={font=\small},title style={font=\small\bfseries},nodes near coords,every node near coord/.append style={font=\small},ymajorgrids]\addplot[fill=calloutblue,draw=dayblue] coordinates {(9th,72) (12th,18)};\addplot[fill=calloutgreen,draw=dayblue] coordinates {(9th,48) (12th,42)};\end{axis}\end{tikzpicture}
+\par\smallskip
+\begin{tikzpicture}\begin{axis}[width=0.95\linewidth,height=1.05in,ybar stacked,bar width=18pt,ymin=0,ymax=112,ytick={0,50,100},symbolic x coords={9th,12th},xtick=data,enlarge x limits=0.4,title={Graph B},ylabel={Percent},tick label style={font=\small},label style={font=\small},title style={font=\small\bfseries},nodes near coords,every node near coord/.append style={font=\small},ymajorgrids]\addplot[fill=calloutblue,draw=dayblue] coordinates {(9th,60) (12th,30)};\addplot[fill=calloutgreen,draw=dayblue] coordinates {(9th,40) (12th,70)};\end{axis}\end{tikzpicture}
+\par{\small Lower: Field Day\quad Upper: Talent Show}
 \end{center}
 \end{minipage}
 
@@ -87,9 +29,9 @@ For the question \emph{Is celebration preference related to grade level?}, which
 \end{firsttakebox}
 
 \begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
-  \item[\dokbadge{1}~(a)] From Graph A, state each grade's total surveyed and the count in each preference category.
-  \item[\dokbadge{2}~(b)] Compute the conditional distribution of preference within each grade. Describe the largest contrast between the grades.
-  \item[\dokbadge{3}~(c)] For deciding whether preference is related to grade level, choose the more useful graph and explain how equal-height bars settle the comparison. State what Graph A is useful for. Then give one question that Graph A cannot answer \emph{directly from bar lengths alone} and one question that Graph B cannot answer from the display.
+  \item[\dokbadge{1}~(a)] From Graph A, state the total surveyed in each grade.
+  \item[\dokbadge{2}~(b)] Find the percent who prefer Field Day in each grade. Show the fractions and compare the results.
+  \item[\dokbadge{3}~(c)] Which graph better shows whether grade and preference are related? Use both Field Day percentages and explain how the bar heights help. Then explain what Andre is right about and one question Graph A answers more directly. Write 3--4 sentences.
 \end{description}
 
 \vfill
