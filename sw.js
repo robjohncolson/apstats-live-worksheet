@@ -13,7 +13,7 @@
 // is just `self.addEventListener('install',()=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));`
 // to unregister-by-emptying (clears caches; pages fall back to plain network).
 
-const BUILD = '2026-09-03-xdp0'; // scripts/bump-build.mjs replaces this stamp
+const BUILD = '2026-09-05-ced-labels'; // scripts/bump-build.mjs replaces this stamp
 const CACHE = 'apstats-pwa-' + BUILD;
 
 const CORE = [
@@ -25,6 +25,7 @@ const CORE = [
   'lib/flashcard-flags.js', 'lib/flashcard-sync.js', 'mobile-home.html',
   'data/blooket-difficulty.json', 'data/blooket-topic-csv.json',
   'data/flashcard-flags.json',
+  'js/ced2026-crosswalk.js', 'js/ced2026-labels.js',
 ];
 
 // Pure decision (unit-tested via extraction): 'navigate' | 'asset' | 'passthrough'.

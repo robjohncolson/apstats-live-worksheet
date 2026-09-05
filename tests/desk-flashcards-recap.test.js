@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { loadCedLabels } from './fixtures/ced2026-labels.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
@@ -114,6 +115,7 @@ describe('Desk quick flashcard misses recap', () => {
         '_bfLoadDifficultyTags', '_bfSelectTop10', '_bfShowQuizUI',
         '_bfKeydownHandler', '_ftKeydownHandler', '_ftClearTimer',
         '_blooketCommit', 'setTimeout', 'clearTimeout',
+        'cedLabel',
         source + '\nreturn {' +
           'finish: _bfFinish,' +
           'start: _bfStartQuick' +
@@ -150,7 +152,8 @@ describe('Desk quick flashcard misses recap', () => {
         function () {},
         commit,
         setTimeout,
-        clearTimeout
+        clearTimeout,
+        loadCedLabels().cedLabel
       );
 
       await api.finish();

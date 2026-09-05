@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { loadCedLabels } from './fixtures/ced2026-labels.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
@@ -54,7 +55,7 @@ describe('Desk due-today deck — static contract', () => {
     expect(plans).toMatch(/_bfCsvPath\(topicId\)/);
     expect(plans).toMatch(/status\s*===\s*'bonus'/);
     expect(plans).toMatch(/status\s*===\s*'optional'/);
-    expect(plans).toMatch(/ced\.newLabel\s*\|\|\s*topicId/);
+    expect(plans).toContain('cedLabel(topicId).text');
     expect(body).toMatch(/_rvState\.mixed\s*=\s*true/);
     expect(body).toContain('Review due — practice, not graded');
   });
@@ -96,7 +97,8 @@ describe('Desk due-today deck — executed behavior', () => {
     };
     const factory = new Function(
       'FlashcardStore', 'FlashcardSrs', 'localStorage', 'getStudentEmail',
-      '_viewAsContext', 'window', 'Date', 'REGISTRY', '_bfCsvPath', '_srsCsvFor',
+      '_viewAsContext', 'window', 'Date', 'REGISTRY', '_bfCsvPath', '_srsCsvFor', 'cedHelpers',
+      'cedHelpers.configureCedLabels(() => REGISTRY); const cedLabel = cedHelpers.cedLabel;\n' +
       'var _srsFoldCache = null;\n' +
         fnBody(DESK, '_srsFoldedState') + '\n' +
         fnBody(DESK, '_srsCoreDeckPlans') + '\n' +
@@ -112,7 +114,8 @@ describe('Desk due-today deck — executed behavior', () => {
       { now: () => 77 * 86400000 },
       { lessons: { '1.1': {}, '2.3': {} } },
       (topic) => topic === '1.1' ? 'u1_l1_blooket.csv' : 'u2_l3_blooket.csv',
-      (topic) => topic === '1.1' ? 'u1_l1_blooket.csv' : 'u2_l3_blooket.csv'
+      (topic) => topic === '1.1' ? 'u1_l1_blooket.csv' : 'u2_l3_blooket.csv',
+      loadCedLabels()
     );
 
     expect(summarize()).toEqual({
@@ -163,7 +166,8 @@ describe('Desk due-today deck — executed behavior', () => {
       }
     };
     const factory = new Function(
-      'FlashcardSrs', '_srsFoldedState', 'REGISTRY', '_bfCsvPath', '_srsCsvFor', 'Date',
+      'FlashcardSrs', '_srsFoldedState', 'REGISTRY', '_bfCsvPath', '_srsCsvFor', 'Date', 'cedHelpers',
+      'cedHelpers.configureCedLabels(() => REGISTRY); const cedLabel = cedHelpers.cedLabel;\n' +
       fnBody(DESK, '_srsCoreDeckPlans') + '\n' +
         fnBody(DESK, '_srsDueSummary') + '\nreturn _srsDueSummary;'
     );
@@ -178,12 +182,13 @@ describe('Desk due-today deck — executed behavior', () => {
         lessons: {
           '1.1': { ced2026: { status: 'bonus' } },
           '1.2': { optional: true },
-          '1.3': { ced2026: { status: 'core', newLabel: 'Core lesson' } }
+          '1.3': { ced2026: { status: 'core', newUnit: 1, newTopic: '1.3', newLabel: 'Core lesson' } }
         }
       },
       (topic) => ({ '1.1': 'a_bonus.csv', '1.2': 'b_optional.csv', '1.3': 'z_core.csv' })[topic],
       (topic) => ({ '1.1': 'a_bonus.csv', '1.2': 'b_optional.csv', '1.3': 'z_core.csv' })[topic],
-      { now: () => 42 * 86400000 }
+      { now: () => 42 * 86400000 },
+      loadCedLabels()
     );
 
     expect(summarize()).toEqual({
@@ -193,7 +198,7 @@ describe('Desk due-today deck — executed behavior', () => {
     });
   });
 
-  it('filters bonus cards before the mixed cap and uses the CED-2026 newLabel', async () => {
+  it('filters bonus cards before the mixed cap and uses the shared CED-2026 label', async () => {
     const bonusDue = Array.from({ length: 25 }, (_, i) => 'a_bonus.csv#' + (i + 1));
     const orderedDue = bonusDue.concat(['z_core.csv#1', 'z_core.csv#2']);
     const dueCards = vi.fn(() => orderedDue);
@@ -206,7 +211,8 @@ describe('Desk due-today deck — executed behavior', () => {
       '_viewAsContext', 'window', 'FlashcardSrs', '_srsFoldedState', 'REGISTRY',
       '_bfCsvPath', '_srsCsvFor', 'Date', 'fetch', '_bfRowsToDeck', '_bfParseCsv',
       '_rvState', '_srsRoundId', 'document', '_bfShowQuizUI', '_rvRenderCard',
-      '_rvKeydownHandler',
+      '_rvKeydownHandler', 'cedHelpers',
+      'cedHelpers.configureCedLabels(() => REGISTRY); const cedLabel = cedHelpers.cedLabel;\n' +
       fnBody(DESK, '_srsCoreDeckPlans') + '\n' +
         fnBody(DESK, '_rvStartMixed') + '\nreturn _rvStartMixed;'
     );
@@ -218,7 +224,7 @@ describe('Desk due-today deck — executed behavior', () => {
       {
         lessons: {
           '1.1': { ced2026: { status: 'bonus', newLabel: 'Bonus' } },
-          '1.2': { ced2026: { status: 'core', newLabel: 'Collecting Data' } }
+          '1.2': { ced2026: { status: 'core', newUnit: 1, newTopic: '1.2', newLabel: 'Collecting Data' } }
         }
       },
       (topic) => topic === '1.1' ? 'a_bonus.csv' : 'z_core.csv',
@@ -235,7 +241,8 @@ describe('Desk due-today deck — executed behavior', () => {
       dom.window.document,
       vi.fn(),
       vi.fn(),
-      vi.fn()
+      vi.fn(),
+      loadCedLabels()
     );
 
     await startMixed();
@@ -244,7 +251,7 @@ describe('Desk due-today deck — executed behavior', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(fetchImpl).toHaveBeenCalledWith('z_core.csv');
     expect(state.queue.map((card) => card.qnum)).toEqual([1, 2]);
-    expect(state.queue.every((card) => card._rvLabel === 'Collecting Data')).toBe(true);
+    expect(state.queue.every((card) => card._rvLabel === '1.2 · Collecting Data')).toBe(true);
   });
 
   it('_srsDueSnapshot returns due zero under view-as before touching cache state', () => {

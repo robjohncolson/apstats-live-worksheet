@@ -13,6 +13,7 @@ import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { loadCedLabels } from './fixtures/ced2026-labels.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
 const DESK_PATH = resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html');
@@ -105,6 +106,7 @@ function makeDesk({ token, tokenThrows, fetchImpl, serviceUrl = 'https://roster.
   };
 
   const sandbox = {
+    cedLabel: loadCedLabels().cedLabel,
     document: { getElementById: el },
     window: {
       ROSTER_SERVICE_URL: serviceUrl,
@@ -138,7 +140,7 @@ describe('DN3a runtime — renderDoNow states', () => {
       }) }),
     });
     await d.run();
-    expect(d.el('donow-msg').textContent).toBe('Do Now: U1 1.2 — worksheet (4/12 done).');
+    expect(d.el('donow-msg').textContent).toBe('Do Now: 1.2 · Variables — worksheet (4/12 done).');
     expect(d.el('donow-card').className).toBe('donow-todo');
     // Fetch spy: exact URL + Authorization header (not just a source regex).
     expect(d.fetchCalls).toHaveLength(1);

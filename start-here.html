@@ -653,15 +653,15 @@
         <div class="gp-grid">
           <h4>Progress Checks <small style="color:var(--muted);font-weight:400">— Q1 runs Sep 2 &ndash; Nov 6</small></h4>
           <div class="gp-field">
-            <label for="gp-pc-u1">Unit 1 PC</label>
+            <label for="gp-pc-u1">PC score 1</label>
             <input type="number" id="gp-pc-u1" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
           </div>
           <div class="gp-field">
-            <label for="gp-pc-u2">Unit 2 PC</label>
+            <label for="gp-pc-u2">PC score 2</label>
             <input type="number" id="gp-pc-u2" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
           </div>
           <div class="gp-field">
-            <label for="gp-pc-u3">Unit 3 PC</label>
+            <label for="gp-pc-u3">PC score 3</label>
             <input type="number" id="gp-pc-u3" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
           </div>
           <div class="gp-field"></div>
@@ -976,6 +976,8 @@
 </div>
 <script src="roster_config.js"></script>
 <script src="roster-client.js"></script>
+<script src="js/ced2026-crosswalk.js"></script>
+<script src="js/ced2026-labels.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1046,7 +1048,7 @@
       var bandLabel = QUARTER_BAND_LABEL[qKey] || '';
       var tip = qKey + ' covers ' + bandLabel;
       if (graded != null && total != null) {
-        tip += ' — ' + graded + ' of ' + total + ' unit' + (total === 1 ? '' : 's') + ' graded';
+        tip += ' — ' + graded + ' of ' + total + ' topic group' + (total === 1 ? '' : 's') + ' graded';
       }
       pill.setAttribute('title', tip);
       pill.appendChild(document.createTextNode(qKey));
@@ -1058,7 +1060,7 @@
       if (ceiling != null && grade != null) {
         pill.appendChild(el('br'));
         var ceilEl = el('small', { html: '&uarr; ' + ceiling });
-        ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' unit' + ((total - graded) === 1 ? '' : 's') + ' in ' + qKey);
+        ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' topic group' + ((total - graded) === 1 ? '' : 's') + ' in ' + qKey);
         ceilEl.style.color = '#25663F';
         ceilEl.style.fontSize = '0.85em';
         pill.appendChild(ceilEl);
@@ -1071,7 +1073,8 @@
   function renderUnitCard(uKey, u, completion) {
     var card = el('div', { class: 'wys-unit' });
     var unitNum = unitNumberFromKey(uKey);
-    card.appendChild(el('h3', { text: unitNum ? 'Unit ' + unitNum : uKey }));
+    // Preserve each server score bucket; its CED topic coverage may span units.
+    card.appendChild(el('h3', { text: cedLegacyUnitLabel(unitNum) }));
 
     var ug = fmtGrade(u && u.unitGrade);
     var graded = !!(u && u.graded) && ug != null;

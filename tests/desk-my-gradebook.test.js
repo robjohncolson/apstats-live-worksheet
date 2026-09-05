@@ -13,6 +13,7 @@ import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { CED_SOURCE } from './fixtures/ced2026-labels.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(resolve(here, '../ap_stats_roadmap_square_mode.html'), 'utf8');
@@ -45,7 +46,10 @@ let win, doc, loaded = false;
 
 beforeAll(async () => {
   try {
-    const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'https://example.test/desk.html', pretendToBeVisual: true });
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously', url: 'https://example.test/desk.html', pretendToBeVisual: true,
+      beforeParse(window) { window.eval(CED_SOURCE); },
+    });
     win = dom.window;
     doc = win.document;
     await new Promise((r) => setTimeout(r, 60));
@@ -79,7 +83,7 @@ describe('Desk My Gradebook modal', () => {
     expect(text).toContain('higher');               // reconciliation reason
     // Category sections + a cell.
     expect(text).toContain('Lesson (15%)');
-    expect(text).toContain('1.1 Follow-Along');
+    expect(text).toContain('1.1 · What Can We Learn from Data?');
     expect(text).toContain('84');
     expect(text).toContain('Progress Check (50%)');
   });
@@ -198,8 +202,8 @@ describe('Desk My Gradebook modal', () => {
     );
     win.renderMyGradebook('Q1');
     var text = doc.getElementById('my-gradebook-body').textContent;
-    expect(text).toContain('1.1 Follow-Along');       // started → shown
-    expect(text).not.toContain('1.5 Follow-Along');   // future + not started → hidden
+    expect(text).toContain('1.1 · What Can We Learn from Data?');       // started → shown
+    expect(text).not.toContain('1.5 · Graphical Representations');      // future + not started → hidden
   });
 
   it('date-gate: once a lesson date passes, a not-done lesson shows as "not done yet" + an owe badge', () => {
@@ -212,7 +216,7 @@ describe('Desk My Gradebook modal', () => {
     );
     win.renderMyGradebook('Q1');
     var text = doc.getElementById('my-gradebook-body').textContent;
-    expect(text).toContain('1.5 Follow-Along');       // due now → shown
+    expect(text).toContain('1.5 · Graphical Representations');       // due now → shown
     expect(text).toContain('not done yet');
     expect(text).toMatch(/due, not done/i);           // the "what you owe" badge
   });
@@ -227,8 +231,8 @@ describe('Desk My Gradebook modal', () => {
     );
     win.renderMyGradebook('Q1');
     const text = doc.getElementById('my-gradebook-body').textContent;
-    expect(text).not.toContain('1.1 Follow-Along');  // server due:false wins over the client calendar → hidden
-    expect(text).toContain('1.2 Follow-Along');       // server due:true → shown
+    expect(text).not.toContain('1.1 · What Can We Learn from Data?');  // server due:false wins over the client calendar → hidden
+    expect(text).toContain('1.2 · Variables');                       // server due:true → shown
   });
 
   it('flags a category sitting below the 40% floor', () => {

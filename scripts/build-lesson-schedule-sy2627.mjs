@@ -50,7 +50,7 @@ const OUT_ROOT = resolve(ROOT, 'data/lesson-schedule.json');
 const OUT_BUNDLED = resolve(ROOT, 'roster-server/data/lesson-schedule.json');
 const CHECK_ONLY = process.argv.includes('--check');
 
-const { PHASE3_CONFIG } = await import(resolve(ROOT, 'roster-server/grade-config.js'));
+const { PHASE3_CONFIG } = await import(new URL('../roster-server/grade-config.js', import.meta.url));
 
 // ── 1. Extract the live calendar + generator from the Desk ───────────────────
 const DESK = readFileSync(DESK_PATH, 'utf8');

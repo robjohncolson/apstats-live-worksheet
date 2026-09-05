@@ -14,6 +14,8 @@ import { JSDOM } from 'jsdom';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const HOME = readFileSync(resolve(repo, 'mobile-home.html'), 'utf8');
+const CED_SOURCE = ['js/ced2026-crosswalk.js', 'js/ced2026-labels.js']
+  .map((file) => readFileSync(resolve(repo, file), 'utf8')).join('\n');
 const FLASHCARDS_SRC = readFileSync(resolve(repo, 'flashcards.js'), 'utf8');
 const FLASHCARD_FLAGS_SRC = readFileSync(resolve(repo, 'lib/flashcard-flags.js'), 'utf8');
 
@@ -111,6 +113,7 @@ function bootLauncher({
     runScripts: 'dangerously',
     url: 'https://x.test/mobile-home.html',
     beforeParse(window) {
+      window.eval(CED_SOURCE);
       if (permutationOff) {
         window.localStorage.setItem('apstats_fc_perm_off', '1');
       }

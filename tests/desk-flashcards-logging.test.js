@@ -4,6 +4,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadCedLabels } from './fixtures/ced2026-labels.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
@@ -120,6 +121,7 @@ describe('Desk flashcard per-card logging — static contract', () => {
     const factory = new Function(
       '_bfState', '_bfLoadProgress', '_bfSaveProgress', '_srsRoundId',
       'document', '_bfShowQuizUI', '_bfRenderCard', '_bfKeydownHandler',
+      'cedLabel',
       fnBody(DESK, '_bfStartQuick') + '\nreturn _bfStartQuick;'
     );
     const start = factory(
@@ -133,7 +135,8 @@ describe('Desk flashcard per-card logging — static contract', () => {
       },
       function () {},
       function () {},
-      function () {}
+      function () {},
+      loadCedLabels().cedLabel
     );
 
     await start({}, '4.1');

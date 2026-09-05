@@ -40,6 +40,7 @@
             --u7: #DAF0E6;  --u7-t: #161616;
             --u8: #F1D9B8;  --u8-t: #161616;
             --u9: #DAF0CF;  --u9-t: #161616;
+            --bonus: #EADDF4; --bonus-t: #48285E;
             --rev: #F1F0CF; --rev-t: #161616;
             --exam-bg: #161616; --exam-t: #E5E3D2;
             --off-bg: #F7F5EE; --off-t: #161616;
@@ -686,7 +687,7 @@
         .cell-exam:hover, .cell-pc:hover, .cell-orient:hover, .cell-baseline:hover { outline-color: var(--white); }
         @media (prefers-reduced-motion: reduce) { .dc, .cal-nav-btn { transition: none; } }
         .dc .dn { font-size: 9px; margin-bottom: 2px; }
-        .dc .tl { font-size: 10px; line-height: 1.2; margin-top: 1px; font-weight: bold; }
+        .dc .tl { font-size: 10px; line-height: 1.2; margin-top: 1px; font-weight: bold; overflow-wrap: anywhere; }
         .dc .tt { font-size: 9px; line-height: 1.1; margin-top: 2px; }
         .cell-u1 { background: var(--u1); color: var(--u1-t); }
         .cell-u2 { background: var(--u2); color: var(--u2-t); }
@@ -697,6 +698,7 @@
         .cell-u7 { background: var(--u7); color: var(--u7-t); }
         .cell-u8 { background: var(--u8); color: var(--u8-t); }
         .cell-u9 { background: var(--u9); color: var(--u9-t); }
+        .cell-bonus { background: var(--bonus); color: var(--bonus-t); }
         .cell-rev { background: var(--rev); color: var(--rev-t); }
         .cell-off {
             background-color: var(--white); color: var(--black);
@@ -2615,6 +2617,8 @@
 <script src="vendor/qrcode-generator/qrcode-2.0.4.js"></script>
 <script src="js/wallet-print-sheets.js?v=student-print-1"></script>
 <script src="js/student-wallet-print.js"></script>
+<script src="js/ced2026-crosswalk.js"></script>
+<script src="js/ced2026-labels.js"></script>
 <script src="lib/qrcode.min.js"></script>
 <script src="canvas_engine.js"></script>
 <script src="sprite_sheet.js"></script>
@@ -4557,255 +4561,9 @@ const BAKED_REGISTRY = {
       }
     }
   },
-  "progressChecks": {
-    "1": {
-      "unit": 1,
-      "title": "Unit 1 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-09-24",
-        "E": "2026-09-24"
-      },
-      "adminDay2": "2026-09-25"
-    },
-    "2": {
-      "unit": 2,
-      "title": "Unit 2 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-10-13",
-        "E": "2026-10-13"
-      },
-      "adminDay2": "2026-10-14"
-    },
-    "3": {
-      "unit": 3,
-      "title": "Unit 3 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-10-26",
-        "E": "2026-10-26"
-      },
-      "adminDay2": "2026-10-27"
-    },
-    "4": {
-      "unit": 4,
-      "title": "Unit 4 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-11-09",
-        "E": "2026-11-09"
-      },
-      "adminDay2": "2026-11-10"
-    },
-    "5": {
-      "unit": 5,
-      "title": "Unit 5 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-11-24",
-        "E": "2026-11-24"
-      },
-      "adminDay2": "2026-11-25"
-    },
-    "6": {
-      "unit": 6,
-      "title": "Unit 6 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-12-15",
-        "E": "2026-12-15"
-      },
-      "adminDay2": "2026-12-16"
-    },
-    "7": {
-      "unit": 7,
-      "title": "Unit 7 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2027-01-11",
-        "E": "2027-01-11"
-      },
-      "adminDay2": "2027-01-12"
-    },
-    "8": {
-      "unit": 8,
-      "title": "Unit 8 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2027-01-25",
-        "E": "2027-01-25"
-      },
-      "adminDay2": "2027-01-26"
-    },
-    "9": {
-      "unit": 9,
-      "title": "Unit 9 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2027-02-04",
-        "E": "2027-02-04"
-      },
-      "adminDay2": "2027-02-05"
-    }
-  },
-  "posters": {
-    "1": {
-      "unit": 1,
-      "title": "Unit 1 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-09-23",
-        "E": "2026-09-23"
-      }
-    },
-    "2": {
-      "unit": 2,
-      "title": "Unit 2 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-10-09",
-        "E": "2026-10-09"
-      }
-    },
-    "3": {
-      "unit": 3,
-      "title": "Unit 3 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-10-23",
-        "E": "2026-10-23"
-      }
-    },
-    "4": {
-      "unit": 4,
-      "title": "Unit 4 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-11-06",
-        "E": "2026-11-06"
-      }
-    },
-    "5": {
-      "unit": 5,
-      "title": "Unit 5 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-11-23",
-        "E": "2026-11-23"
-      }
-    },
-    "6": {
-      "unit": 6,
-      "title": "Unit 6 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-12-14",
-        "E": "2026-12-14"
-      }
-    },
-    "7": {
-      "unit": 7,
-      "title": "Unit 7 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2027-01-08",
-        "E": "2027-01-08"
-      }
-    },
-    "8": {
-      "unit": 8,
-      "title": "Unit 8 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2027-01-22",
-        "E": "2027-01-22"
-      }
-    },
-    "9": {
-      "unit": 9,
-      "title": "Unit 9 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2027-02-03",
-        "E": "2027-02-03"
-      }
-    }
-  }
 };
 let REGISTRY = BAKED_REGISTRY;
+configureCedLabels(function () { return REGISTRY; });
 
 const ROADMAP_FETCH_TIMEOUT_MS = 5500;
 const ROADMAP_REGISTRY_CACHE_KEY = 'apstats_roadmap_registry_cache_v2';
@@ -6533,10 +6291,10 @@ function _isLessonUnlocked(topic, lessonDate, prevTopic, today, marks, signedIn)
 // Click handler for a locked lesson cell — explains why + how to unlock.
 function _showLessonLockedDialog(topic, prevTopic, dateStr) {
   // STRICT gate (§8): completion is the ONLY unlock — no "unlocks on <date>".
-  var msg = 'Lesson ' + topic + ' is locked. ';
-  msg += prevTopic ? ('Finish Lesson ' + prevTopic + ' first to unlock it') : 'It is not open yet';
+  var msg = cedLabel(topic).text + ' is locked. ';
+  msg += prevTopic ? ('Finish ' + cedLabel(prevTopic).text + ' first to unlock it') : 'It is not open yet';
   msg += '.';
-  try { showDialog('🔒', msg, 'OK'); } catch (_) {}
+  try { showDialog('🔒', _resourcePanelEsc(msg), 'OK'); } catch (_) {}
 }
 
 // How long the student has to spend on a resource before the Done button
@@ -9304,7 +9062,7 @@ function _renderCoachPanel(panel, ctx) {
   if (ctx.biggestWin) {
     var bw = document.createElement('div');
     bw.style.cssText = 'font-weight:bold;margin-top:3px';
-    bw.textContent = '🎯 Biggest win: your Topic ' + ctx.biggestWin.lesson + ' ' + ctx.biggestWin.label +
+    bw.textContent = '🎯 Biggest win: your ' + cedLabel(ctx.biggestWin.lesson).text + ' ' + ctx.biggestWin.label +
       ' is at ' + Math.round(ctx.biggestWin.score) + '% — fixing that lifts your grade the most.';
     facts.appendChild(bw);
   }
@@ -9324,7 +9082,7 @@ function _renderCoachPanel(panel, ctx) {
     var bTrk = (ctx.blooket.track != null) ? (Math.round(ctx.blooket.track) + '%') : '—';
     var bMsg = 'Blooket: ' + bTrk + ' (' + ctx.blooket.done + ' of ' + ctx.blooket.due + ' done).';
     if (ctx.blooket.todo && ctx.blooket.todo.length) {
-      bMsg += ' Make one up to 80% with the Desk flashcards — e.g. Topic ' + ctx.blooket.todo.slice(0, 3).join(', Topic ') + '.';
+      bMsg += ' Make one up to 80% with the Desk flashcards — e.g. ' + ctx.blooket.todo.slice(0, 3).map(function (key) { return cedLabel(key).text; }).join('; ') + '.';
     }
     blk.textContent = bMsg;
     facts.appendChild(blk);
@@ -9336,7 +9094,7 @@ function _renderCoachPanel(panel, ctx) {
   // grade — Blooket isn't a grade component yet.)
   if (Array.isArray(ctx.flashcardGate) && ctx.flashcardGate.length) {
     var fg = document.createElement('div');
-    var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return 'Topic ' + g.lesson; }).join(', ');
+    var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return cedLabel(g.lesson).text; }).join('; ');
     fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to complete it and unlock the next lesson.';
     facts.appendChild(fg);
   }
@@ -9345,8 +9103,7 @@ function _renderCoachPanel(panel, ctx) {
   // component to fix first (otherwise it competes with the biggest win above).
   if (!ctx.biggestWin && ctx.nextTask && ctx.nextTask.unit) {
     var nt = document.createElement('div');
-    nt.textContent = 'Start here: Unit ' + ctx.nextTask.unit +
-      (ctx.nextTask.lesson ? ', Topic ' + ctx.nextTask.lesson : '') +
+    nt.textContent = 'Start here: ' + (ctx.nextTask.lesson ? cedLabel(ctx.nextTask.lesson).text : ctx.nextTask.unit) +
       (ctx.nextTask.activity ? ' — ' + ctx.nextTask.activity : '') + '.';
     facts.appendChild(nt);
   }
@@ -9365,7 +9122,7 @@ function _renderCoachPanel(panel, ctx) {
       // Mention Blooket only when the lesson actually HAS one (never invent it).
       if (w.hasBlooket) bits.push((w.blooket != null) ? 'Blooket ' + Math.round(w.blooket) + '%' : 'Blooket not done');
       if (!bits.length && typeof w.grade === 'number') bits.push('grade ' + Math.round(w.grade) + '%');
-      li.textContent = 'Topic ' + w.lesson + (bits.length ? ' (' + bits.join(', ') + ')' : '');
+      li.textContent = cedLabel(w.lesson).text + (bits.length ? ' (' + bits.join(', ') + ')' : '');
       ul.appendChild(li);
     });
     facts.appendChild(ul);
@@ -9457,7 +9214,7 @@ async function _coachAsk(ctx, message, transcriptEl, history, askBtn) {
     var data = await resp.json();
     var answer = (data && data.response) ? String(data.response) : '';
     if (!answer) { setCoach(unavailable); return; }
-    setCoach(answer);
+    setCoach(cedReferenceText(answer));
     history.push({ role: 'user', content: message });
     history.push({ role: 'assistant', content: answer });
     if (history.length > 12) history.splice(0, history.length - 12);
@@ -9590,7 +9347,7 @@ async function renderDoNow() {
       if (nt && nt.lesson && _dnMarks && typeof localLessonState === 'function'
           && localLessonState(nt.lesson, _dnMarks) === 'done') {
         if (_calNextUp) {
-          show('Do Now: Topic ' + _calNextUp + ' — keep going.', 'todo');
+          show('Do Now: ' + cedLabel(_calNextUp).text + ' — keep going.', 'todo');
         } else {
           show('All caught up — every assigned item is done. 🎉', 'done');
         }
@@ -9621,7 +9378,7 @@ async function renderDoNow() {
           && typeof getStudentMarks === 'function') {
         var _sumNext = calNextUpTopic(_orderedSummerTopics(), getStudentMarks());
         if (_sumNext) {
-          show('Do Now: Topic ' + _sumNext + ' — keep going.', 'todo');
+          show('Do Now: ' + cedLabel(_sumNext).text + ' — keep going.', 'todo');
           return;
         }
         // summerNextUp null = summer track complete → fall through to server (e.g. U1 3.1)
@@ -9641,7 +9398,8 @@ async function renderDoNow() {
     var prog = (nt.progress && typeof nt.progress.done === 'number' && typeof nt.progress.total === 'number')
       ? (' (' + nt.progress.done + '/' + nt.progress.total + ' done)')
       : '';
-    var where = nt.lesson ? (nt.unit + ' ' + nt.lesson) : nt.unit;
+    // Manifest unit-only tasks are already CED keyed; lesson keys remain OLD.
+    var where = nt.lesson ? cedLabel(nt.lesson).text : nt.unit;
     var act = nt.activity || 'work';
     try {
       _dnNextApp = (window.WalletLogic && typeof WalletLogic.appForNextTask === 'function')
@@ -9886,7 +9644,15 @@ let SCHOOLOGY_COURSE_E = '7945275798';
 const SUPABASE_URL='https://hgvnytaqmuybzbotosyj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhndm55dGFxbXV5Ynpib3Rvc3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNTE5MTMsImV4cCI6MjA4MDcyNzkxM30.-LcH_zly4pXoX_2Vra-RbH9twPvUj6xAJp66xPi02tU';
 const _supaCache={};
-function d(t,n,u,due,as,db){return{t,n,u,due:due||"",as:as||"",db:db||false}}
+function d(t,n,u,due,as,db){return{t,n,u,due:due||"",as:as||"",db:db||false,ced:typeof cedLabel==='function'?cedLabel(t):null}}
+// Retain the DOK teacher/view-as gate and require the signed-in roster role.
+function cedTeacherBridgeAllowed() {
+    if (typeof _deskIsTeacher !== 'function' || !_deskIsTeacher()) return false;
+    try {
+        var who = window.rosterClient && window.rosterClient.current();
+        return !!who && who.role === 'teacher';
+    } catch (_) { return false; }
+}
 // Grading Model v3 (s121): inject Poster + PC Day 1 + PC Day 2 pseudo-lessons
 // at every unit transition (and at the array end). generateSchedule treats
 // them like lessons and places them on consecutive meeting days so each
@@ -10335,6 +10101,7 @@ function updateLegend(def){
   if(!el) return;
   let h='';
   for(const u of def.units) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--u'+u.id+')"></div>U'+u.id+' '+u.label+'</div>';
+  if (def === SCHEDULE_DEFS['SY26-27']) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--bonus)"></div>★ Beyond the Exam</div>';
   h+='<div class="legend-item"><div class="legend-sw" style="background:var(--rev)"></div>Review</div>';
   h+='<div class="legend-item"><div class="legend-sw" style="background:var(--exam-bg);border:1px solid #999"></div>Exam</div>';
   h+='<div class="legend-item"><div class="legend-sw cell-off" style="border:1px solid #999"></div>No School</div>';
@@ -11298,24 +11065,29 @@ function showResourcePanel(inf, dateStr) {
     const topicIds = lookupTopic(inf.t);
     const ids = Array.isArray(topicIds) ? topicIds : (topicIds ? [topicIds] : []);
 
-    // Fall-2026 CED relabel (display-only): OLD nomenclature leads (matches the
-    // "Unit X Lesson Y" video + "Topic X.Y" worksheet the student opens); the new CED
-    // placement is context. Labels come from the verified crosswalk (ced2026), NOT the
-    // stale pacing labels. Falls back for review days / uncrosswalked ids. Links below
-    // are unchanged \u2014 header text only.
+    // The calendar keeps OLD identity keys; students read the CED label. Only a
+    // signed-in teacher outside student preview gets the video/worksheet bridge.
     var _hdrEl = document.getElementById('resource-header');
     var _ced = (typeof REGISTRY !== 'undefined' && REGISTRY.lessons && REGISTRY.lessons[inf.t]) ? REGISTRY.lessons[inf.t].ced2026 : null;
     var _m = /^(\d+)\.(\d+)$/.exec(inf.t);
-    var _oldNom = _m ? ('Unit ' + _m[1] + ' \u00b7 Lesson ' + _m[2]) : inf.t;
-    let header = dateStr + ' \u2014 ';
+    var _newLabels = typeof cYear === 'undefined' || cYear === 'SY26-27';
+    let header;
     if (inf.t === R) {
-        header += inf.n;
-    } else if (_ced && _ced.status === 'core' && _ced.newTopic) {
-        header += _oldNom + ': ' + (_ced.newLabel || inf.n) + '  \u00b7  CED ' + _ced.newTopic + ' (New Unit ' + _ced.newUnit + ')';
-    } else if (_ced && _ced.status === 'bonus') {
-        header += _oldNom + ': ' + String(_ced.newLabel || inf.n).replace(/^Beyond the Exam:\s*/i, '') + '  \u00b7  \u2605 Beyond the Exam (not on the Fall 2026 exam)';
+        header = dateStr + ' \u2014 ' + inf.n;
+    } else if (!_newLabels) {
+        // Frozen prior-year definitions retain their original nomenclature.
+        var _oldNom = _m ? ('Unit ' + _m[1] + ' \u00b7 Lesson ' + _m[2]) : inf.t;
+        header = dateStr + ' \u2014 ' + _oldNom + ': ' + inf.n;
+    } else if (inf.kind) {
+        header = inf.n;
     } else {
-        header += (_m ? _oldNom + ': ' : inf.t + ': ') + inf.n;
+        inf.ced = cedLabel(inf.t);
+        header = inf.ced.text;
+        if (inf.ced.unit) header += ' \u2014 CED Unit ' + inf.ced.unit;
+        if (_m && cedTeacherBridgeAllowed()) {
+            header += ' (old ' + inf.t + ': video "Unit ' + _m[1] + ' Lesson ' + _m[2]
+                + '", worksheet u' + _m[1] + '_lesson' + _m[2] + ')';
+        }
     }
     _hdrEl.textContent = header;
     var _cedBonus = !!(_ced && _ced.status === 'bonus');
@@ -11631,7 +11403,8 @@ function showResourcePanel(inf, dateStr) {
             if (!r) continue;
             if (item.type === 'quiz' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    dueHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
+                    var dueLabel = _newLabels ? cedLabel(item.topicId.replace('-', '.')).text : (b.title || 'Blooket');
+                    dueHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + _resourcePanelEsc(dueLabel) + '</a></div>';
                 });
             }
         }
@@ -11649,12 +11422,14 @@ function showResourcePanel(inf, dateStr) {
             if (!r) continue;
             if (item.type === 'drill' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Drill: ' + (b.title || 'Practice') + '</a></div>';
+                    var drillLabel = _newLabels ? cedLabel(item.topicId.replace('-', '.')).text : (b.title || 'Practice');
+                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Drill: ' + _resourcePanelEsc(drillLabel) + '</a></div>';
                 });
             }
             if (item.type === 'quiz' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
+                    var quizLabel = _newLabels ? cedLabel(item.topicId.replace('-', '.')).text : (b.title || 'Blooket');
+                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + _resourcePanelEsc(quizLabel) + '</a></div>';
                 });
             }
         }
@@ -12250,7 +12025,7 @@ function _srsCoreDeckPlans() {
             csv: csv,
             path: path,
             topic: topicId,
-            label: ced.newLabel || topicId
+            label: cedLabel(topicId).text
         };
     }
     return plansByCsv;
@@ -13119,7 +12894,7 @@ function _rvRestoreActions() {
 // cards, timed, up to 100% — the real Blooket substitute).
 function _bfShowModePicker(btn, topicId) {
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Flashcards — ' + topicId;
+    if (header) header.textContent = 'Flashcards — ' + cedLabel(topicId).text;
     _bfHideQuizUI();
     var mp = document.getElementById('bf-modepick');
     if (mp) {
@@ -13263,7 +13038,7 @@ async function _rvStart(btn, topicId) {
     if (header) {
         while (header.firstChild) header.removeChild(header.firstChild);
         var title = document.createElement('span');
-        title.textContent = 'Review — ' + topicId + ' (practice, not graded)';
+        title.textContent = 'Review — ' + cedLabel(topicId).text + ' (practice, not graded)';
         var close = document.createElement('button');
         close.className = 's7btn';
         close.style.cssText = 'float:right;padding:0 5px;min-width:24px';
@@ -13815,7 +13590,7 @@ async function _bfStartQuick(btn, topicId) {
         _bfSaveProgress();
     }
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Quick check — ' + topicId + (isResume ? ' (resuming)' : '') + ' (pass ≥ 80%, caps at 80%)';
+    if (header) header.textContent = 'Quick check — ' + cedLabel(topicId).text + (isResume ? ' (resuming)' : '') + ' (pass ≥ 80%, caps at 80%)';
     _bfShowQuizUI(false);  // hide the picker, show the quiz, no timer
     document.getElementById('bf-result').style.display = 'none';
     if (finishOnResume) {
@@ -14425,7 +14200,7 @@ async function _ftStart(btn, topicId) {
     _ftState.round = _ftCreateRound(_bfShuffle(allCards));   // FULL deck — no top-10 trim
     _ftState.answered = false;
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Timed deck — ' + topicId + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
+    if (header) header.textContent = 'Timed deck — ' + cedLabel(topicId).text + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
     _bfShowQuizUI(true);   // show the quiz + the timer
     document.getElementById('bf-result').style.display = 'none';
     document.addEventListener('keydown', _ftKeydownHandler);
@@ -14918,7 +14693,7 @@ function renderMyReceipts() {
         main.style.cssText = 'min-width:0;line-height:1.35';
         var title = document.createElement('div');
         title.style.cssText = 'font-weight:bold;word-break:break-word';
-        title.textContent = _receiptSourceIcon(r.src || payload.src) + ' ' + (r.i || payload.i || 'Receipt');
+        title.textContent = _receiptSourceIcon(r.src || payload.src) + ' ' + cedDisplayText(r.i || payload.i || 'Receipt');
         main.appendChild(title);
 
         var meta = document.createElement('div');
@@ -16879,7 +16654,7 @@ function _walletReceiptRow(r) {
     var title = document.createElement('div');
     title.style.cssText = 'font-weight:bold;word-break:break-word';
     var icon = (typeof _receiptSourceIcon === 'function') ? _receiptSourceIcon(r.src || payload.src) : '🧾';
-    title.textContent = icon + ' ' + (r.i || payload.i || 'Recorded work');
+    title.textContent = icon + ' ' + cedDisplayText(r.i || payload.i || 'Recorded work');
     main.appendChild(title);
 
     var meta = document.createElement('div');
@@ -18452,7 +18227,9 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
             }
             var nm = document.createElement('span');
             nm.style.cssText = 'position:relative;z-index:1';
-            nm.textContent = c.title;
+            nm.textContent = Array.isArray(c.topicKeys) && c.topicKeys.length
+                ? c.topicKeys.map(function (key) { return cedLabel(key).text; }).join(' / ')
+                : cedDisplayText(c.title);
             var vv = document.createElement('span');
             if (band) {
                 vv.style.cssText = 'position:relative;z-index:1;font-variant-numeric:tabular-nums;font-weight:bold;color:' + band.fg;
@@ -18527,7 +18304,7 @@ function openDayGrade(dateStr) {
 
             var titleEl = document.createElement('div');
             titleEl.style.cssText = 'font-family:Chicago,monospace;font-size:11px;font-weight:bold;margin-bottom:3px';
-            titleEl.textContent = lesson.lessonKey + (lesson.topicName ? (' — ' + lesson.topicName) : '');
+            titleEl.textContent = cedLabel(lesson.lessonKey).text;
             card.appendChild(titleEl);
 
             var gradeEl = document.createElement('div');
@@ -22835,6 +22612,10 @@ function cls(i){
     if(i.kind==='orientation')return"cell-orient";
     if(i.kind==='baseline')return"cell-baseline";
     if(i.t===R)return"cell-rev";
+    if(typeof cYear==='undefined'||cYear==='SY26-27'){
+        i.ced=cedLabel(i.t);
+        return"cell-"+cedUnitClass(i.t);
+    }
     return"cell-u"+i.u;
 }
 function htm(i,ds){
@@ -22849,6 +22630,10 @@ function htm(i,ds){
     if(i.kind==='baseline')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Baseline</div><div class="tt">No stakes — best score kept</div>`;
     if(i.t===R)return`<div class="dn">${ds}</div><div class="tl">Review</div><div class="tt">${i.n}</div>`;
     const doubleBadge=i.db?'<span class="dbl">2x</span>':'';
+    if(typeof cYear==='undefined'||cYear==='SY26-27'){
+        i.ced=cedLabel(i.t);
+        return`<div class="dn">${ds}</div><div class="tl">${_resourcePanelEsc(i.ced.text)}</div>`+doubleBadge;
+    }
     return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+doubleBadge;
 }
 // cellAria(i, ds) — flat, emoji-free aria-label text for a calendar cell, built
@@ -22865,9 +22650,11 @@ function cellAria(i, ds){
     if(i.kind==='poster') return ds + ', Unit ' + i.u + ' Poster gallery walk';
     if(i.kind==='orientation') return ds + ', Start Here — how grades and makeups work';
     if(i.kind==='baseline') return ds + ', Unit ' + i.u + ' Baseline — no stakes, best score kept';
+    const newLabels = typeof cYear==='undefined'||cYear==='SY26-27';
     let label = (i.t===R) ? ('Review: ' + (i.n||'')) : (i.t + ' ' + (i.n||''));
+    if(newLabels&&i.t!==R){i.ced=cedLabel(i.t);label=i.ced.text;}
     let parts = [ds, label.trim()];
-    if(i.due) parts.push('due ' + i.due);
+    if(i.due) parts.push('due ' + (newLabels ? cedDisplayText(i.due) : i.due));
     if(i.db) parts.push('double topic day');
     // Resource readiness — mirror sTip's status line when the registry has the topic.
     try {
@@ -23303,15 +23090,25 @@ function _computePace(topics, marks, sCells, todayTs, period){
 }
 function rProg(){
     const t=tdy(),tk=document.getElementById("pb"),lb=document.getElementById("pl");
+    const newLabels=typeof cYear==='undefined'||cYear==='SY26-27';
     const ut={},ud={};let tt=0,ds=0;
     for(const e of S){const inf=cP==="B"?e[3]:e[4];
         if(!inf||inf===OFF||inf===EX||inf===PO||inf===NC)continue;
-        const u=inf.t===R?"Rev":"U"+inf.u;
-        if((inf.t===R&&inf.u===0)||inf.u){ut[u]=(ut[u]||0)+1;tt++;
-            const dt=new Date(e[0],e[1],e[2]);if(dt<=t){ud[u]=(ud[u]||0)+1;ds++;}}}
+        let u=inf.t===R?"Rev":"U"+inf.u;
+        if(newLabels&&inf.t!==R&&!inf.kind){
+            inf.ced=cedLabel(inf.t);
+            u=inf.ced.bonus?'★':(inf.ced.unit?'U'+inf.ced.unit:null);
+        }
+        if((inf.t===R&&inf.u===0)||inf.u||(newLabels&&inf.ced&&inf.ced.bonus)){
+            if(u)ut[u]=(ut[u]||0)+1;
+            tt++;
+            const dt=new Date(e[0],e[1],e[2]);
+            if(dt<=t){if(u)ud[u]=(ud[u]||0)+1;ds++;}
+        }
+    }
     const def=SCHEDULE_DEFS[cYear];
-    const uo=def.units.map(u=>"U"+u.id).concat(["Rev"]);
-    const uc={};const utc={};for(const u of uo){uc[u]="var(--"+(u==="Rev"?"rev":u.toLowerCase())+")";utc[u]="var(--"+(u==="Rev"?"rev":u.toLowerCase())+"-t)";}
+    const uo=def.units.map(u=>"U"+u.id).concat(newLabels?["★","Rev"]:["Rev"]);
+    const uc={};const utc={};for(const u of uo){const token=u==="Rev"?"rev":u==="★"?"bonus":u.toLowerCase();uc[u]="var(--"+token+")";utc[u]="var(--"+token+"-t)";}
     let h="";for(const u of uo){const c=ut[u]||0;if(!c)continue;
         h+=`<div class="prog-seg" style="width:${(c/tt*100).toFixed(1)}%;background:${uc[u]};color:${utc[u]}">${u}</div>`;}
     h+=`<div class="prog-mark" style="left:${tt?(ds/tt*100):0}%"></div>`;
@@ -23367,8 +23164,20 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
     if(inf===OFF)h+='<div class="tp">No School</div>';
     else if(inf===EX)h+='<div class="tp">AP Statistics Exam!</div>';
     else if(inf===PO)h+='<div class="tp">Post-exam</div>';
-    else{h+=inf.t===R?`<div class="tp">${inf.n}</div>`:`<div class="tp">${inf.t} \u2014 ${inf.n}</div>`;
-        if(inf.due)h+=`<div class="th">Due: ${inf.due}</div>`;if(inf.as)h+=`<div class="th">Assign: ${inf.as}</div>`;
+    else{
+        const newLabels=typeof cYear==='undefined'||cYear==='SY26-27';
+        let label=inf.t===R?inf.n:inf.t+' \u2014 '+inf.n;
+        if(newLabels&&inf.t!==R){
+            if(inf.kind)label=inf.n;
+            else{
+                inf.ced=cedLabel(inf.t);
+                label=inf.ced.text;
+                if(cedTeacherBridgeAllowed())label+=' (old '+inf.t+')';
+            }
+        }
+        h+=`<div class="tp">${_resourcePanelEsc(label)}</div>`;
+        if(inf.due)h+=`<div class="th">Due: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.due):inf.due)}</div>`;
+        if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
         const re=getRegistryEntry(inf.t);
         if(re){

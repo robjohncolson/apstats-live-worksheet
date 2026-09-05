@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
+import { loadCedLabels } from './fixtures/ced2026-labels.js';
 
 const REPO_ROOT = resolve(__dirname, '..');
 const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
@@ -302,7 +303,8 @@ describe('Item 3 -- aria-label + screen-reader live region', () => {
 
   // behavioral: cellAria produces flat, emoji-free text from the schedule entry
   function loadCellAria() {
-    const sandbox = {};
+    const labels = loadCedLabels();
+    const sandbox = { cedLabel: labels.cedLabel, cedDisplayText: labels.cedDisplayText };
     createContext(sandbox);
     runInContext(
       "const R='review',OFF='off',EX='exam',PO='post',NC='noclass';\n" +
@@ -316,7 +318,7 @@ describe('Item 3 -- aria-label + screen-reader live region', () => {
     expect(a('noclass', 'Sep 6')).toBe('Sep 6');
     const lesson = a({ t: '1.2', n: 'Describing distributions', u: 1, due: 'Sep 12' }, 'Sep 9');
     expect(lesson).toContain('Sep 9');
-    expect(lesson).toContain('1.2 Describing distributions');
+    expect(lesson).toContain('1.2 · Variables');
     expect(lesson).toContain('due Sep 12');
     expect(a({ kind: 'pc', u: 1, admin: 1 }, 'Sep 1')).toContain('Unit 1 Progress Check 1 of 2');
     // emoji-free (screen readers speak emoji names aloud)

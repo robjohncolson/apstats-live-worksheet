@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { loadCedLabels } from './fixtures/ced2026-labels.js';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
@@ -141,6 +142,7 @@ describe('Desk review mode — executed rating flow', () => {
       'fetch', '_bfRowsToDeck', '_bfParseCsv', '_srsFoldedState', '_srsCsvFor',
       'Date', '_rvState', '_srsRoundId', 'document', '_bfShowQuizUI',
       '_rvRenderCard', '_rvKeydownHandler',
+      'cedLabel',
       fnBody(DESK, '_rvStart') + '\nreturn _rvStart;'
     );
     const start = factory(
@@ -162,7 +164,8 @@ describe('Desk review mode — executed rating flow', () => {
       dom.window.document,
       vi.fn(),
       vi.fn(),
-      vi.fn()
+      vi.fn(),
+      loadCedLabels().cedLabel
     );
 
     await start(null, '4.1');

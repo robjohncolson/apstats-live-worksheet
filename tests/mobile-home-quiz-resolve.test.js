@@ -9,6 +9,8 @@ import { JSDOM } from 'jsdom';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const HOME = readFileSync(resolve(repo, 'mobile-home.html'), 'utf8');
+const CED_SOURCE = ['js/ced2026-crosswalk.js', 'js/ced2026-labels.js']
+  .map((file) => readFileSync(resolve(repo, file), 'utf8')).join('\n');
 
 const CR = 'https://robjohncolson.github.io/curriculum_render/?u=1&l=2';
 
@@ -17,6 +19,7 @@ function boot({ offlineMode, lessons }) {
     runScripts: 'dangerously',
     url: 'https://robjohncolson.github.io/apstats-live-worksheet/mobile-home.html',
     beforeParse(window) {
+      window.eval(CED_SOURCE);
       if (offlineMode !== undefined) window.OFFLINE_MODE = offlineMode;
       window.fetch = (url) => {
         const u = String(url);
