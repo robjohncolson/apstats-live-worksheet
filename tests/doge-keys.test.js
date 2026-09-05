@@ -1,10 +1,11 @@
 // @vitest-environment node
-import { webcrypto } from 'node:crypto';
+import { createECDH, webcrypto } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 import { base58check, decodeWIF, addressFromWIF } from '../tools/lib/doge-keys.mjs';
-import { decodeWIF as serverDecodeWIF } from '../roster-server/lib/doge-keys.mjs';
+import { decodeWIF as serverDecodeWIF, deriveAddress, deriveWIF, NETWORKS } from '../roster-server/lib/doge-keys.mjs';
+import { deriveAddress as cliAddress, deriveWIF as cliWIF } from '../tools/doge-wallet-gen.mjs';
 
 // Public test scalars 1, 2, 0x0707...07 and n-1. Never fund these addresses.
 // Independently computed with Python cryptography SECP256K1 + hashlib + base58.
@@ -90,13 +91,73 @@ describe('shared Dogecoin WIF decoder', () => {
     await expect(browser.decodeWIF(valid, { network: '__proto__' })).rejects.toThrow('Invalid Dogecoin network');
   });
 
-  it('requires only SHA-256 from Web Crypto and never generates keys', async () => {
+  it('decoding requires only SHA-256 from Web Crypto and never draws random bytes', async () => {
     const browser = browserKeys({
       subtle: { digest: webcrypto.subtle.digest.bind(webcrypto.subtle) },
       getRandomValues() { throw new Error('Key generation is forbidden'); },
     });
-    expect(Object.keys(browser).sort()).toEqual(['addressFromWIF', 'decodeWIF']);
+    expect(Object.keys(browser).sort()).toEqual(['addressFromWIF', 'decodeWIF', 'generateWallet']);
     expect(await browser.addressFromWIF(VECTORS[0][2])).toBe(VECTORS[0][3]);
     await expect(browserKeys({}).addressFromWIF(VECTORS[0][2])).rejects.toThrow('Web Crypto');
+  });
+});
+
+describe('browser wallet generation', () => {
+  it.each(['01'.padStart(64, '0'), '07'.repeat(32), 'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140'])
+    ('matches the Node server and CLI for fixed scalar %s', async hex => {
+      const bytes = Buffer.from(hex, 'hex');
+      const ecdh = createECDH('secp256k1'); ecdh.setPrivateKey(bytes);
+      const publicKey = ecdh.getPublicKey(null, 'compressed');
+      const expected = { address: deriveAddress(publicKey, NETWORKS.mainnet.p2pkh), wif: deriveWIF(bytes, NETWORKS.mainnet.wif) };
+      expect(cliAddress(publicKey, NETWORKS.mainnet.p2pkh)).toBe(expected.address);
+      expect(cliWIF(bytes, NETWORKS.mainnet.wif)).toBe(expected.wif);
+      let drawn;
+      const browser = browserKeys();
+      const wallet = await browser.generateWallet({ random(target) { drawn = target; target.set(bytes); } });
+      expect(wallet).toEqual(expected);
+      expect(await browser.decodeWIF(wallet.wif)).toEqual(serverDecodeWIF(wallet.wif));
+      expect(serverDecodeWIF(wallet.wif).address).toBe(wallet.address);
+      expect([...drawn]).toEqual(new Array(32).fill(0));
+      expect(Object.keys(wallet).sort()).toEqual(['address', 'wif']);
+    });
+
+  it('redraws zero, curve order, and larger scalars before offering a wallet', async () => {
+    const draws = [Buffer.alloc(32), Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141', 'hex'), Buffer.alloc(32, 255), Buffer.alloc(32)];
+    draws[3][31] = 1;
+    let calls = 0, drawn;
+    const wallet = await browserKeys().generateWallet({ random(target) { drawn = target; target.set(draws[calls++]); } });
+    expect(calls).toBe(4);
+    expect(wallet).toEqual({ wif: VECTORS[0][2], address: VECTORS[0][3] });
+    expect([...drawn]).toEqual(new Array(32).fill(0));
+  });
+
+  it('uses Web Crypto by default and refuses missing randomness or digest', async () => {
+    let drawn;
+    const browser = browserKeys({ subtle: webcrypto.subtle, getRandomValues(target) { drawn = target; target[31] = 1; return target; } });
+    expect((await browser.generateWallet()).address).toBe(VECTORS[0][3]);
+    expect([...drawn]).toEqual(new Array(32).fill(0));
+    await expect(browserKeys({ subtle: webcrypto.subtle }).generateWallet()).rejects.toThrow('secure Web Crypto');
+    await expect(browserKeys({ getRandomValues: webcrypto.getRandomValues }).generateWallet()).rejects.toThrow('digest');
+  });
+
+  it('wipes private and hashing buffers when generation fails its self-check', async () => {
+    const buffers = [];
+    let calls = 0, drawn;
+    const browser = browserKeys({ subtle: { async digest(algorithm, bytes) {
+      buffers.push(bytes);
+      const result = new Uint8Array(await webcrypto.subtle.digest(algorithm, bytes));
+      // Change the address derivation only during decodeWIF's independent check.
+      if (++calls === 8) result[0] ^= 1;
+      return result.buffer;
+    } } });
+    await expect(browser.generateWallet({ random(target) { drawn = target; target[31] = 1; } })).rejects.toThrow('self-check');
+    expect([...drawn]).toEqual(new Array(32).fill(0));
+    expect(buffers.every(bytes => [...bytes].every(byte => byte === 0))).toBe(true);
+  });
+
+  it('wipes the random buffer even when its provider throws', async () => {
+    let drawn;
+    await expect(browserKeys().generateWallet({ random(target) { drawn = target; target.fill(7); throw new Error('random source failed'); } })).rejects.toThrow('random source failed');
+    expect([...drawn]).toEqual(new Array(32).fill(0));
   });
 });

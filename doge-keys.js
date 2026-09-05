@@ -1,7 +1,7 @@
-// Teacher-only WIF validation; classic browser script, no imports or network requests.
+// Teacher-only wallet generation and WIF validation; no network requests.
 // SHA-256 uses Web Crypto. RIPEMD-160 and secp256k1 arithmetic below are copied
-// from the repository's vector-tested js/student-wallet.js; no key generation,
-// mnemonic handling, or student-wallet ceremony is included.
+// from the repository's vector-tested js/student-wallet.js; no mnemonic handling
+// or student-wallet ceremony is included.
 (function (root) {
   'use strict';
 
@@ -491,5 +491,43 @@ async function addressFromWIF(wif, options) {
   return (await decodeWIF(wif, options)).address;
 }
 
-root.DogeKeys = Object.freeze({ decodeWIF, addressFromWIF });
+async function generateWallet({ random } = {}) {
+  const cryptoApi = requireWebCrypto(root.crypto);
+  if (root.isSecureContext === false || (random === undefined && typeof cryptoApi.getRandomValues !== 'function')) {
+    throw new Error('Wallet generation requires secure Web Crypto randomness (HTTPS or localhost).');
+  }
+  // The injection is for deterministic tests; production always uses Web Crypto.
+  const draw = random === undefined ? bytes => cryptoApi.getRandomValues(bytes) : random;
+  if (typeof draw !== 'function') throw new Error('A secure random byte provider is required.');
+
+  const privateBytes = new Uint8Array(32);
+  let scalar = 0n, publicKey, publicKeyHash, addressPayload, wifPayload;
+  try {
+    do {
+      wipeBytes(privateBytes);
+      draw(privateBytes);
+      scalar = bigIntFromBytes(privateBytes);
+    } while (scalar <= 0n || scalar >= SECP256K1_N);
+
+    publicKey = publicKeyFromScalar(scalar, true);
+    publicKeyHash = await hash160Bytes(publicKey, cryptoApi);
+    addressPayload = joinBytes(new Uint8Array([NETWORKS.mainnet.p2pkh]), publicKeyHash);
+    const address = await base58Check(addressPayload, cryptoApi);
+    wifPayload = joinBytes(new Uint8Array([NETWORKS.mainnet.wif]), privateBytes, new Uint8Array([1]));
+    const wif = await base58Check(wifPayload, cryptoApi);
+    if ((await decodeWIF(wif)).address !== address) {
+      throw new Error('Generated wallet self-check failed.');
+    }
+    return { address, wif };
+  } finally {
+    scalar = 0n;
+    wipeBytes(privateBytes);
+    wipeBytes(publicKey);
+    wipeBytes(publicKeyHash);
+    wipeBytes(addressPayload);
+    wipeBytes(wifPayload);
+  }
+}
+
+root.DogeKeys = Object.freeze({ decodeWIF, addressFromWIF, generateWallet });
 })(typeof window !== 'undefined' ? window : globalThis);
