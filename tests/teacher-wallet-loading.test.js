@@ -128,6 +128,181 @@ function generatedHarness({ section = '', failCustody = false, failGeneration = 
   return { ...h, generated, generateWallet, get, post, loader, storage };
 }
 
+function printHarness({ section = 'B', blocked = false, empty = false } = {}) {
+  const h = boot();
+  const events = [], printed = [];
+  const responseWallets = [
+    { ...wallets[0], studentId: 'a', realName: 'Ana', username: 'ana', section: 'B' },
+    { ...wallets[1], studentId: 'b', realName: 'Beth', username: 'beth', section: 'E' },
+  ];
+  const session = {
+    close: vi.fn(), isClosed: vi.fn(() => false),
+    print: vi.fn(async (values, options) => { printed.push(structuredClone({ wallets: values, options })); }),
+  };
+  const open = vi.fn(() => { events.push('open'); if (blocked) throw new Error('popup blocked'); return session; });
+  h.dom.window.WalletPrintSheets = { open };
+  const get = vi.fn(async path => {
+    events.push(path);
+    if (path.includes('/export?')) return ok({ wallets: responseWallets, skipped: [{ studentId: 'skipped', reason: 'held key could not be read' }] });
+    if (path.startsWith('/wallet/custody/')) return ok({ address, wif, label: 'Wallet #1' });
+    return ok({ wallets: empty ? {} : { a: { held: true }, b: { held: true }, unheld: { held: false } } });
+  });
+  const storage = vi.spyOn(h.dom.window.Storage.prototype, 'setItem');
+  const loader = h.api.create({ get, post: vi.fn(), changed() {}, section: () => section });
+  function confirm(value = 'PRINT') {
+    const input = h.doc.querySelector('dialog input');
+    input.value = value; input.dispatchEvent(new h.dom.window.Event('input'));
+  }
+  return { ...h, loader, get, session, open, events, responseWallets, printed, storage, confirm };
+}
+
+describe('teacher wallet print controls', () => {
+  it('does not reveal when the held count cannot be loaded', async () => {
+    const h = printHarness();
+    h.get.mockResolvedValueOnce({ status: 503, data: { ok: false } });
+    await h.loader.openPrint();
+    h.confirm();
+    expect(findButton(h.doc, 'Print wallet sheets').disabled).toBe(true);
+    expect(h.open).not.toHaveBeenCalled();
+    expect(h.doc.body.textContent).toContain('Held wallet count unavailable');
+  });
+
+  it('discards response keys if the print window closes while export is loading', async () => {
+    const h = printHarness();
+    await h.loader.openPrint();
+    h.session.isClosed.mockReturnValue(true);
+    h.confirm(); findButton(h.doc, 'Print wallet sheets').click();
+    await vi.waitFor(() => expect(h.responseWallets.every(wallet => wallet.wif === '')).toBe(true));
+    expect(h.session.print).not.toHaveBeenCalled();
+    expect(h.session.close).toHaveBeenCalledOnce();
+  });
+
+  it.each(['renderer fails', 'malformed response'])('clears all response keys when %s', async failure => {
+    const h = printHarness();
+    await h.loader.openPrint();
+    if (failure === 'renderer fails') h.session.print.mockRejectedValueOnce(new Error(wif));
+    else h.get.mockResolvedValueOnce(ok({ wallets: [h.responseWallets[0], 'invalid wallet', h.responseWallets[1]], skipped: [] }));
+    h.confirm(); findButton(h.doc, 'Print wallet sheets').click();
+    await vi.waitFor(() => expect(findButton(h.doc, 'Close').disabled).toBe(false));
+    expect(h.responseWallets.every(wallet => wallet.wif === '')).toBe(true);
+    expect(h.session.close).toHaveBeenCalled();
+    expect(h.doc.body.textContent).not.toContain(wif);
+    expect(h.doc.body.textContent).not.toContain(secondWif);
+  });
+
+  it('shows count and section, requires exact PRINT, opens before export and clears response keys', async () => {
+    const h = printHarness({ section: 'B & E' });
+    await h.loader.openPrint();
+    expect(h.get).toHaveBeenCalledWith('/class/wallet-custody?includeArchived=1&section=B%20%26%20E');
+    expect(h.doc.body.textContent).toContain('2 held wallets');
+    expect(h.doc.body.textContent).toContain('B & E');
+    h.confirm('print');
+    expect(findButton(h.doc, 'Print wallet sheets').disabled).toBe(true);
+    expect(h.open).not.toHaveBeenCalled();
+    h.confirm(); findButton(h.doc, 'Print wallet sheets').click();
+    await vi.waitFor(() => expect(h.session.print).toHaveBeenCalledOnce());
+    expect(h.events.slice(-2)).toEqual(['open', '/class/wallet-custody/export?confirm=1&section=B%20%26%20E']);
+    expect(h.printed[0].wallets.map(wallet => wallet.wif)).toEqual([wif, secondWif]);
+    expect(h.printed[0].options).toEqual({ section: 'B & E', cover: true });
+    expect(h.responseWallets.every(wallet => wallet.wif === '')).toBe(true);
+    expect(h.doc.body.textContent).toContain('1 wallet skipped');
+    expect(h.storage).not.toHaveBeenCalled();
+    expect(h.doc.body.innerHTML).not.toContain(wif);
+    expect(h.doc.body.innerHTML).not.toContain(secondWif);
+    findButton(h.doc, 'Close').click();
+    expect(h.doc.querySelector('dialog')).toBeNull();
+    expect(h.session.close).not.toHaveBeenCalled();
+  });
+
+  it('shows all sections and refuses a zero-count export', async () => {
+    const h = printHarness({ section: '', empty: true });
+    await h.loader.openPrint();
+    expect(h.doc.body.textContent).toContain('All sections');
+    expect(h.doc.body.textContent).toContain('0 held wallets');
+    h.confirm();
+    expect(findButton(h.doc, 'Print wallet sheets').disabled).toBe(true);
+    expect(h.open).not.toHaveBeenCalled();
+    expect(h.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reveal anything if popups are blocked', async () => {
+    const h = printHarness({ blocked: true });
+    await h.loader.openPrint();
+    h.confirm(); findButton(h.doc, 'Print wallet sheets').click();
+    await vi.waitFor(() => expect(h.doc.querySelector('.wallet-status').textContent).toContain('Allow popups'));
+    expect(h.get).toHaveBeenCalledTimes(1);
+    expect(h.session.print).not.toHaveBeenCalled();
+  });
+
+  it('closes an unused popup on export failure without echoing an error payload', async () => {
+    const h = printHarness();
+    await h.loader.openPrint();
+    h.get.mockResolvedValueOnce({ status: 503, data: { ok: false, error: wif } });
+    h.confirm(); findButton(h.doc, 'Print wallet sheets').click();
+    await vi.waitFor(() => expect(h.session.close).toHaveBeenCalledOnce());
+    expect(h.session.print).not.toHaveBeenCalled();
+    expect(h.doc.body.textContent).not.toContain(wif);
+  });
+
+  it('clears late export keys and avoids printing after parent navigation', async () => {
+    const h = printHarness();
+    await h.loader.openPrint();
+    let finish;
+    h.get.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    h.confirm(); findButton(h.doc, 'Print wallet sheets').click();
+    expect(finish).toBeTypeOf('function');
+    h.dom.window.dispatchEvent(new h.dom.window.Event('pagehide'));
+    finish(ok({ wallets: h.responseWallets, skipped: [] }));
+    await vi.waitFor(() => expect(h.responseWallets.every(wallet => wallet.wif === '')).toBe(true));
+    expect(h.session.print).not.toHaveBeenCalled();
+    expect(h.session.close).toHaveBeenCalled();
+    expect(h.doc.querySelector('dialog')).toBeNull();
+  });
+
+  it('reprints from the address cell with one audited reveal and one wallet page', async () => {
+    const h = printHarness();
+    const cell = h.doc.createElement('td'); h.doc.body.appendChild(cell);
+    h.loader.decorateAddressCell(cell, students[1]);
+    await vi.waitFor(() => expect(findButton(h.doc, 'Reprint').disabled).toBe(false));
+    h.get.mockClear();
+    findButton(h.doc, 'Reprint').click();
+    expect(h.doc.body.textContent).toContain('1 held wallet');
+    expect(h.get).not.toHaveBeenCalled();
+    h.confirm(); findButton(h.doc, 'Print wallet sheets').click();
+    await vi.waitFor(() => expect(h.session.print).toHaveBeenCalledOnce());
+    expect(h.get).toHaveBeenCalledTimes(1);
+    expect(h.get).toHaveBeenCalledWith('/wallet/custody/a?confirm=1');
+    expect(h.printed[0]).toEqual({ wallets: [{ studentId: 'a', realName: 'Ana', username: 'ana', section: 'B', address, wif, label: 'Wallet #1' }], options: { section: 'B', cover: false } });
+    expect(h.doc.body.innerHTML).not.toContain(wif);
+  });
+
+  it('prints an already revealed key without making another reveal request', async () => {
+    const h = printHarness();
+    h.loader.openReveal(students[1]);
+    h.confirm('REVEAL'); findButton(h.doc, 'Reveal key').click();
+    await vi.waitFor(() => expect(findButton(h.doc, 'Reprint sheet')).toBeTruthy());
+    findButton(h.doc, 'Reprint sheet').click();
+    await vi.waitFor(() => expect(h.session.print).toHaveBeenCalledOnce());
+    expect(h.get).toHaveBeenCalledTimes(1);
+    expect(h.printed[0].wallets[0].wif).toBe(wif);
+    expect(h.printed[0].options.cover).toBe(false);
+    expect(h.doc.body.textContent).not.toContain('node tools/doge-wallet-gen');
+    await vi.waitFor(() => expect(findButton(h.doc, 'Close').disabled).toBe(false));
+    findButton(h.doc, 'Close').click();
+    expect(h.doc.querySelector('input[readonly]')).toBeNull();
+  });
+
+  it('loads print scripts and controls only on the teacher dashboard', () => {
+    const desk = readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8');
+    expect(DASH).toContain('id="wallet-print-btn"');
+    expect(DASH).toContain('_walletLoader.openPrint()');
+    for (const file of ['js/wallet-print-sheets.js', 'vendor/qrcode-generator/qrcode-2.0.4.js']) {
+      expect(DASH).toContain('src="' + file + '"');
+      expect(desk).not.toContain('src="' + file + '"');
+    }
+  });
+});
+
 describe('generated wallet assignments', () => {
   it('warns before navigation only while generated keys remain unsaved', async () => {
     const h = generatedHarness({ section: 'B' });

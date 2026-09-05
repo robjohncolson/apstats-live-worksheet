@@ -168,6 +168,9 @@
         node.textContent = held ? '🔑 held · reveal' : '🔑 reveal';
         node.title = held ? 'Reveal the stored key for reprinting' : 'Check for a stored key';
       });
+      doc.querySelectorAll('[data-wallet-reprint]').forEach(node => {
+        node.disabled = !custody[node.dataset.walletReprint]?.held;
+      });
     }
     async function refreshBadges(force) {
       if (custodyPending || (!force && Date.now() - custodyLoadedAt < 30000)) return;
@@ -404,6 +407,101 @@
       if (generated) await generateBatch();
     }
 
+    async function openPrint(student) {
+      const section = student ? String(student.section || '')
+        : typeof options.section === 'function' ? String(options.section() || '').trim() : '';
+      const ui = dialog(student ? 'Reprint wallet for ' + (student.realName || student.username) : '🖨 Print wallet sheets');
+      const scope = element('p', 'Loading held wallet count…');
+      ui.content.appendChild(scope);
+      const confirmation = inputField(ui.content, 'Type PRINT to reveal and print these private keys');
+      confirmation.autocomplete = 'off';
+      const print = button('Print wallet sheets', printKeys); print.disabled = true;
+      ui.content.append(print, element('p', 'Keep the printed sheets sealed. Anyone with a private key owns its coins.', 'hint'));
+      let count = 0, saving = false, disposed = false, activeSession = null;
+      function updatePrint() { print.disabled = saving || count === 0 || confirmation.value !== 'PRINT'; }
+      confirmation.addEventListener('input', updatePrint);
+      function cleanupPrint() {
+        disposed = true; confirmation.value = '';
+        if (activeSession) activeSession.close();
+        activeSession = null;
+        root.removeEventListener('pagehide', leavePrint);
+      }
+      function leavePrint() { cleanupPrint(); ui.node.remove(); }
+      ui.cleanup(cleanupPrint);
+      root.addEventListener('pagehide', leavePrint);
+
+      async function printKeys() {
+        if (saving || disposed || !count || confirmation.value !== 'PRINT') return;
+        saving = true; ui.busy(true); updatePrint();
+        let data = null, wallets = [], session = null;
+        try {
+          // Opening during this click avoids losing user activation while fetching.
+          try {
+            session = root.WalletPrintSheets.open();
+            activeSession = session;
+          } catch (_) {
+            ui.status.textContent = 'The print window could not open. Allow popups and reload the print tools, then try again.';
+            return;
+          }
+          const path = student ? '/wallet/custody/' + encodeURIComponent(student.studentId) + '?confirm=1'
+            : '/class/wallet-custody/export?confirm=1' + (section ? '&section=' + encodeURIComponent(section) : '');
+          const result = await options.get(path);
+          data = result?.data;
+          if (disposed || session.isClosed()) { session.close(); return; }
+          if (result?.status !== 200 || data?.ok !== true) throw new Error('print unavailable');
+          if (student) {
+            wallets = [{ studentId: student.studentId, realName: student.realName, username: student.username,
+              section, address: data.address, wif: data.wif, label: data.label }];
+            data.wif = '';
+          } else {
+            if (!Array.isArray(data.wallets)) throw new Error('invalid wallet response');
+            wallets = data.wallets;
+          }
+          if (wallets.some(wallet => !wallet || !ADDRESS.test(wallet.address) || typeof wallet.wif !== 'string' || !wallet.wif)) {
+            throw new Error('invalid wallet response');
+          }
+          const printed = wallets.length;
+          const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0;
+          if (printed) await session.print(wallets, { section, cover: !student });
+          else session.close();
+          if (disposed || (printed && session.isClosed())) return;
+          confirmation.value = '';
+          ui.status.textContent = printed + ' wallet sheets opened for printing.'
+            + (skipped ? ' ' + skipped + ' wallet' + (skipped === 1 ? '' : 's') + ' skipped because held keys could not be verified or revealed.' : '')
+            + ' Close the print window when finished.';
+        } catch (_) {
+          if (session) session.close();
+          if (!disposed) ui.status.textContent = 'Could not print wallet sheets. Check custody access and try again.';
+        } finally {
+          // The renderer also clears its input, including failures; keep this boundary independent.
+          wallets.forEach(wallet => { if (wallet && typeof wallet === 'object') wallet.wif = ''; });
+          if (data && typeof data === 'object') {
+            data.wif = '';
+            if (Array.isArray(data.wallets)) data.wallets.forEach(wallet => { if (wallet && typeof wallet === 'object') wallet.wif = ''; });
+          }
+          wallets = []; data = null; activeSession = null; session = null;
+          saving = false;
+          if (!disposed) { ui.busy(false); updatePrint(); }
+        }
+      }
+
+      try {
+        if (student) count = 1;
+        else {
+          const result = await options.get('/class/wallet-custody?includeArchived=1' + (section ? '&section=' + encodeURIComponent(section) : ''));
+          if (disposed) return;
+          const metadata = requireOk(result, 'Could not count held wallets.').wallets;
+          if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) throw new Error('missing metadata');
+          count = Object.values(metadata).filter(wallet => wallet?.held).length;
+        }
+        scope.textContent = count + ' held wallet' + (count === 1 ? '' : 's') + ' · Section: ' + (section || 'All sections');
+        if (!count) ui.status.textContent = 'There are no held wallet keys in this section.';
+        updatePrint();
+      } catch (_) {
+        if (!disposed) { scope.textContent = 'Held wallet count unavailable.'; ui.status.textContent = 'Could not load held wallets. Check custody access and reopen Print.'; }
+      }
+    }
+
     function openReveal(student) {
       const ui = dialog('Reveal key for ' + (student.realName || student.username));
       const confirmation = inputField(ui.content, 'Type REVEAL to show this private key'); confirmation.autocomplete = 'off';
@@ -420,8 +518,19 @@
           output.append(element('p', data.label || 'Paper wallet'), element('p', data.address));
           const wif = inputField(output, 'Private key (WIF)'); wif.readOnly = true; wif.value = data.wif; wif.autocomplete = 'off';
           data.wif = null;
-          output.appendChild(element('p', 'Reprint sheet on your laptop:'));
-          output.appendChild(element('code', 'node tools/doge-wallet-gen.mjs --reprint --wif <WIF> --label "<label>" --out sheet.html'));
+          output.appendChild(button('Reprint sheet', async () => {
+            let session;
+            const wallet = { studentId: student.studentId, realName: student.realName, username: student.username,
+              section: student.section, address: data.address, label: data.label, wif: wif.value };
+            ui.busy(true);
+            try {
+              session = root.WalletPrintSheets.open();
+              await session.print([wallet], { section: student.section || '', cover: false });
+            } catch (_) {
+              if (session) session.close();
+              ui.status.textContent = 'Could not print this sheet. Allow popups and reload the print tools, then try again.';
+            } finally { wallet.wif = ''; ui.busy(false); }
+          }));
           ui.status.textContent = 'This reveal was recorded in the wallet ledger. Close this dialog when finished.';
         } catch (error) { ui.status.textContent = error.message; }
         finally { ui.busy(false); reveal.disabled = confirmation.value !== 'REVEAL'; }
@@ -508,9 +617,11 @@
       cell.appendChild(button('📷 Scan', () => openScan(student)));
       const reveal = button('🔑 reveal', () => openReveal(student));
       reveal.dataset.walletHeld = student.studentId; cell.appendChild(reveal);
+      const reprint = button('Reprint', () => openPrint(student));
+      reprint.dataset.walletReprint = student.studentId; reprint.disabled = true; cell.appendChild(reprint);
       paintBadges(); refreshBadges(false).catch(() => {});
     }
-    return { openBulk, openGenerate, generationUnavailableReason, openScan, openReveal, decorateAddressCell, refreshBadges };
+    return { openBulk, openGenerate, generationUnavailableReason, openPrint, openScan, openReveal, decorateAddressCell, refreshBadges };
   }
 
   root.TeacherWalletLoading = { parseCsv, planAssignments, submitAssignments, create };

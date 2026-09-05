@@ -59,3 +59,9 @@ Phase 2 commit: `992db61`.
 Phase 3 scope clarification from review: “every held key” includes archived students. Export uses the existing roster helper's archived-inclusive option; metadata adds an opt-in `includeArchived=1` query while ordinary badges keep their prior scope. Generation requests this metadata for collision-free class-wide label continuation. No new database methods or migration are needed.
 
 Phase 3: browser/tool gate 89 passed; server gate 1,640 passed, 3 skipped (82 files), including 51 custody tests. Individual upstream impacts are low. Staged detection reports high aggregate risk through 11 existing custody mount/auth/crypto flows and 2 bulk-dialog flows; reviewed all affected paths and confirmed no payout, crypto helper, migration, or student-route edits. Full conservation/payout suites passed.
+
+Phase 3 commit: `85a815b`.
+
+Phase 4: browser/tool gate 113 passed; server gate 1,640 passed, 3 skipped (82 files). Renderer tests decode the actual emitted address/WIF QR SVGs with jsQR and verify page isolation and cleanup. Headless Chrome PDF smoke: cover plus two wallets produces 3 letter pages; a single reprint produces 1 letter page. Final build notes are in `WALLET_GENERATE_EXPORT_BUILD.md`.
+
+Final full GitNexus refresh succeeded after an incremental refresh exited without diagnostics. Staged phase 4 and `compare master` each show 7 intended files with medium aggregate risk. Full-task comparison against `f3829e2^` shows the reviewed custody paths and concurrent, separately committed documentation work; wallet commits include only their explicitly staged files. The renderer's inferred `PrintReady` graph paths were checked against its actual browser `Window.print()` call. PDF text also confirmed per-page WIF isolation, and both QR codes decoded from the PDF raster at 144 DPI. No deployment or push was performed.

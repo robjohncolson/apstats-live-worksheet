@@ -577,6 +577,7 @@
         <h2 class="section-title" style="margin-bottom:0">🍬 Reward Disbursement <span class="dim" style="font-size:0.8rem">(effort → candy / Dogecoin)</span></h2>
         <button type="button" class="btn" id="wallet-load-btn">📥 Load wallets</button>
         <button type="button" class="btn" id="wallet-generate-btn">✨ Generate wallets</button>
+        <button type="button" class="btn" id="wallet-print-btn">🖨 Print wallet sheets</button>
         <button type="button" class="btn" id="payout-plan-btn" disabled>⚡ Deposit all ready (Ɖ 0 to 0 students)</button>
       </div>
       <div class="payout-status-strip hint" id="payout-status" role="status" aria-live="polite"></div>
@@ -971,6 +972,8 @@
   <script src="js/wallet_logic.js"></script>
   <script src="doge-keys.js"></script>
   <script src="js/wallet-qr-scanner.js"></script>
+  <script src="vendor/qrcode-generator/qrcode-2.0.4.js"></script>
+  <script src="js/wallet-print-sheets.js"></script>
   <script src="js/teacher-wallet-loading.js"></script>
 
   <script>
@@ -1796,6 +1799,10 @@
     $('wallet-generation-unavailable').hidden = !walletGenerationUnavailable;
     $('wallet-generate-btn').addEventListener('click', function () {
       if (_walletLoader) _walletLoader.openGenerate();
+    });
+    $('wallet-print-btn').addEventListener('click', function () {
+      if (_walletLoader) _walletLoader.openPrint();
+      else showError('Wallet print tools did not load. Reload this page.');
     });
 
     function renderRewardDisbursement(payload) {
