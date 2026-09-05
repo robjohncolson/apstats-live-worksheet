@@ -101,11 +101,14 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   — generate wallets in the dashboard (browser-side via the vendored `doge-keys.js`, keep-keys forced on, saved through the
   shipped custody path) + "🖨 Print wallet sheets" (audited bulk reveal `GET /class/wallet-custody/export?confirm=1`, one
   page per student with address/WIF text + QR, browser Save-as-PDF; vendored `qrcode-generator`). No migration. Codex builds.
-- ⚠ SCHOOLOGY 2026-09-05 evening: the SY26-27 marking periods EXIST on the new sections (MP1 9/02–11/06 … MP4 4/15–6/30 read
-  off Section 1's grade setup). **Period B's categories are STILL NOT SAVED** (`list_categories` → `{}` for 8537033028 twice;
-  Period E reads all five with the same code; last year's old Section 1 course 7945275782 has a full set — easy to confuse).
-  Teacher: open THIS YEAR's AP Statistics · Section 1 (13 students) → Grade Setup → Categories → add the five → **Save**.
-  Then the orchestrator re-verifies and the sync can go `-Live` + daily task.
+- ✅ SCHOOLOGY READY 2026-09-05 (late): SY26-27 marking periods exist (MP1 9/02–11/06 … MP4 4/15–6/30); **both sections
+  now carry all five categories** (B verified after the teacher's third save; the trap was last year's identically named
+  "Section 1"). Daily sync REGISTERED on Athena as Task Scheduler jobs **`ApStatsSchoologySync-B` 16:30** and
+  **`ApStatsSchoologySync-E` 16:45**, DRY-RUN by default; `ROSTER_TEACHER_SECRET` set in the user environment (the new key).
+  **⏭ Go-live = after the first meaningful dry run (nothing is due before 09-08): read `tools/.schoology-sync-logs/sync-*.log`
+  for 09-08/09-09, confirm the created columns look right, then re-register each task with `-Live`:**
+  `powershell -NoProfile -File tools/register_schoology_sync_task.ps1 -Section PeriodB -Time 16:30 -TaskName ApStatsSchoologySync-B -Live`
+  (and `-Section PeriodE -Time 16:45 -TaskName ApStatsSchoologySync-E -Live`). The rig Edge session must stay signed in.
 - ⏭ STILL OPEN from that thread: (1) **calendar relabel to NEW CED codes/colours** (the teacher's original complaint) — a
   standalone Desk task now (pacing `n`/`u` + `rProg`), no schedule change; (2) **wallet loading** — Codex's `330efe6` on
   the parked branch implements `WALLET_LOADING_SPEC.md` (custody endpoints, migration 0035, dashboard loader, QR scanner,
