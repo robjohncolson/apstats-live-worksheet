@@ -1,7 +1,7 @@
 # Topic 5.2 — The Normal Distribution, Revisited (B: 2026-11-10; first of this date-ordered slice)
 topic: "5.2"
 ced2026: { unit: 2, topic: "2.11", label: "The Normal Distribution" }
-title: "Same Score, Different Standing"
+title: "Comparing a Score of 92"
 minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
 essential_question: "How can the same raw score have different relative standings in two normal distributions with the same mean?"
 worksheet: "u5_lesson1-2_live.html"
@@ -10,9 +10,9 @@ rules_callout:
   title: "STANDARDIZE BEFORE COMPARING (keep on the page)"
   body: |
     For a normal random variable, $z=\dfrac{x-\mu}{\sigma}$ tells how many standard deviations $x$ is from its mean.
-    The percentile of $x$ is the area under the normal curve to the \textbf{left} of $x$, written $P(X\leq x)=\Phi(z)$.
-    Raw distances from the mean are comparable only when the standard deviations match. With the same above-mean
-    raw distance, a smaller standard deviation produces a larger positive $z$-score and a higher percentile.
+    The percentile of $x$ is the percent of values at or below $x$.
+    Use a normal table or calculator to find the area to the left of the $z$-score; multiply that area by 100.
+    A larger percentile means a higher standing relative to that school's scores.
 
 focus: aps-5.2-d3-1
 reinforcement: []
@@ -56,11 +56,11 @@ visuals:
         axis x line=bottom,
         axis y line=left,
         ytick=\empty,
-        xtick={50,65,80,92,95,110},
+        xtick={50,65,80,92,110},
         xlabel={Exam score (points)},
         tick label style={font=\small},
         label style={font=\small},
-        legend style={font=\small,draw=none,fill=none,at={(0.98,0.98)},anchor=north east}
+        legend style={font=\small,draw=none,fill=none,at={(0.5,1.02)},anchor=south}
       ]
       \addplot[dayblue,very thick,domain=35:125,samples=181]
         {1/(9*sqrt(2*pi))*exp(-0.5*((x-80)/9)^2)};

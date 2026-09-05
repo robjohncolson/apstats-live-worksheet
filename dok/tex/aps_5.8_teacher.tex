@@ -57,25 +57,23 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{uses-north-normal-route} (required) --- Uses North population normality despite $n_N=12$
-  \item \textbf{uses-south-clt-route} (required) --- Uses South $n_S=48$ with the CLT
-  \item \textbf{coordinates-difference-model} (required) --- Uses both component models and independence for $0.0273$
-  \item \textbf{adjudicates-both-accounts} (required) --- Diagnoses both incomplete rules
-  \item \textbf{traces-counterfactual} (required) --- Uses $n_S=8$ to expose the combined-size shortcut
+  \item \textbf{judgment-1} (required) --- Supports the original probability using North population normality and South n=48 CLT route.
+  \item \textbf{judgment-2} (required) --- Uses independence and explains the incomplete reasoning in both accounts.
+  \item \textbf{judgment-3} (required) --- Uses the 48-plus-8 counterexample: total 56 does not justify the small skewed South component.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Justifies both components by distinct routes, coordinates independence, diagnoses both accounts, and explains the $n_S=8$ consequence. \\ \hline
-\textbf{P} & Reaches the warranted verdict but omits a route, independence, or the counterfactual consequence. \\ \hline
-\textbf{I} & Requires both populations normal or uses one/combined sample size to justify both means. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-Suppose parcel pickup waits have the shown population parameters. North waits are approximately normal; South waits are strongly right-skewed. Independent SRSs are taken without replacement, and the service wants $P(\bar X_N-\bar X_S>2.5)$.\par\smallskip \textbf{Rina:} ``South is skewed, so I would not use a normal model for the difference.''\par \textbf{Oscar:} ``North is normal and the combined sample size is 60, so the normal model is valid; the probability is $0.0273$.''\par
+Suppose parcel pickup waits have the shown population parameters, measured in minutes. There are 600 North visits and 1,000 South visits. North waits are approximately normal; South waits are strongly right-skewed. Independent SRSs are taken without replacement, and the service wants $P(\bar X_N-\bar X_S>2.5)$.\par\smallskip \textbf{Rina:} ``South is skewed, so I would not use a normal model for the difference.''\par \textbf{Oscar:} ``North is normal and the combined sample size is 60, so the normal model is valid; the probability is $0.0273$.''\par
 \begin{center}
 \textbf{Locker samples}\par\smallskip
 \begin{tabular}{|l|c|c|c|}
@@ -86,7 +84,7 @@ Suppose parcel pickup waits have the shown population parameters. North waits ar
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Identify one argument you would retain and one that needs more evidence. Cite a population shape or sample size.\par
+Would you check each place's sample size separately or add them together? Give one reason from the study.\par
 \answer{Not graded. Each account contains a claim that still needs component-level justification.}
 \end{firsttakebox}
 
@@ -98,8 +96,8 @@ Identify one argument you would retain and one that needs more evidence. Cite a 
 \dokbadge{2}~\textbf{(b)} Verify both 10 percent conditions, compute the sampling-distribution SD, and calculate the probability under a normal model.\par
 \answer{North: $12\leq0.10(600)=60$; South: $48\leq0.10(1{,}000)=100$. The SD is $\sqrt{1.8^2/12+3.0^2/48}=\sqrt{0.4575}=0.676387$. Thus $z=(2.5-1.2)/0.676387=1.92198$ and the upper-tail probability is $0.027304\approx0.0273$.}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate both accounts and decide whether $0.0273$ is warranted. Justify each sample mean separately using its shape and sample size, coordinate independence, then use a South sample of 8 to expose the consequence of any rejected shortcut.\par
-\answer{The probability is warranted, but both explanations are incomplete. North's normal population supports $\bar X_N$ with $n_N=12$. For skewed South, $n_S=48\geq30$ supports $\bar X_S$ by the CLT. Independence then supports an approximately normal difference. Rina would discard a justified probability by requiring both populations to be normal. Oscar's combined-size rule fails because each component needs support: with skewed South and $n_S=8$, its sample mean is not assured normal, so neither is the difference. That shortcut would make readers trust unsupported tails.}
+\dokbadge{3}~\textbf{(c)} In 4--5 sentences, decide whether 0.0273 is supported and explain what each student overlooks. Justify each sample mean using its own shape and size. Then consider $n_N=48$ and $n_S=8$: explain why their total alone cannot justify the same normal-model claim.\par
+\answer{The original probability is supported, but both explanations are incomplete. North's normal population supports its sample mean at $n_N=12$, and South's $n_S=48$ supports its sample mean by the CLT. Independence then supports an approximately normal difference, so Rina rejects a supported approximation. Oscar's combined-size rule fails: with $n_N=48$ and $n_S=8$, the total is 56, but the small sample from skewed South has no normality justification. The total alone would make readers trust an unsupported tail approximation.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

@@ -62,25 +62,23 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{recognizes-both-models} (required) --- Concludes that both sampling distributions are approximately normal
-  \item \textbf{uses-two-normality-paths} (required) --- Uses A's normal population and B's $n=36$ CLT route
-  \item \textbf{uses-variability-values} (required) --- Connects sampling SDs 4 and 2 to z-scores 1.5 and 3
-  \item \textbf{adjudicates-both-claims} (required) --- Identifies the valid and invalid part of each claim
-  \item \textbf{traces-model-consequences} (required) --- Explains that each incomplete rule discards a valid probability
+  \item \textbf{judgment-1} (required) --- Supports both approximations, using A population normality and B n=36 CLT route.
+  \item \textbf{judgment-2} (required) --- Explains the correct and incorrect portion of both students' claims.
+  \item \textbf{judgment-3} (required) --- Connects SDs 4 and 2, or z-scores 1.5 and 3, to the different tail probabilities.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Validates both models with distinct routes, links variability to both tails, and diagnoses both exclusions. \\ \hline
-\textbf{P} & Recognizes both routes and probabilities but incompletely diagnoses a claim or the tail difference. \\ \hline
-\textbf{I} & Requires $n\geq30$ for a normal population, rejects the CLT for skew, or ignores sampling variability. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 seconds and standard deviation 12 seconds. Line A is approximately normal and is sampled with $n_A=9$; Line B is strongly right-skewed and is sampled with $n_B=36$. An auditor wants $P(\bar X>46)$ for each.\par\smallskip \textbf{Serena:} ``Only B can use a normal model because $36\geq30$; its probability is $0.00135$. A is too small.''\par \textbf{Mateo:} ``Only A can use a normal model because its population is normal; its probability is $0.0668$. B is too skewed.''\par
+Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 seconds and standard deviation 12 seconds. Line A is approximately normal and an SRS of $n_A=9$ is selected; Line B is strongly right-skewed and an SRS of $n_B=36$ is selected. An auditor wants $P(\bar X>46)$ for each.\par\smallskip \textbf{Serena:} ``Only B can use a normal model because $36\geq30$; its probability is $0.00135$. A is too small.''\par \textbf{Mateo:} ``Only A can use a normal model because its population is normal; its probability is $0.0668$. B is too skewed.''\par
 \begin{center}
 \textbf{Sampling plans}\par\smallskip
 \begin{tabular}{|l|c|c|c|c|c|}
@@ -91,19 +89,19 @@ Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 s
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which parts of Serena's and Mateo's reasoning look defensible? Cite one shape or sample-size detail.\par
+Which plan seems more likely to give averages close to 40 seconds? Give one reason from the sample sizes or shapes.\par
 \answer{Not graded. Each student is correct about one line and wrong about the other; the finish should replace either-or reasoning with the two separate normality pathways.}
 \end{firsttakebox}
 
 \textit{Rules callout ``MODEL SAMPLE MEANS, NOT INDIVIDUAL VALUES (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} State the mean of each sampling distribution and the finite-population condition for using $\sigma_{\bar X}=\sigma/\sqrt n$.\par
+\dokbadge{1}~\textbf{(a)} State the mean of each sampling distribution and the 10\% condition for using $\sigma_{\bar X}=\sigma/\sqrt n$.\par
 \answer{Both sampling distributions have mean 40 seconds. Without replacement, each sample must be no more than 10 percent of its population to use $\sigma_{\bar X}=\sigma/\sqrt n$ without a finite-population correction.}
 
 \dokbadge{2}~\textbf{(b)} Verify the 10 percent condition, compute both sampling-distribution standard deviations, and calculate each normal tail probability when justified.\par
 \answer{Both SRS sizes satisfy the cap $0.10(1{,}000)=100$. For A, $\sigma_{\bar X}=12/\sqrt9=4$; its normal population justifies $z=(46-40)/4=1.5$ and an upper tail of $0.0668$. For B, $\sigma_{\bar X}=12/\sqrt{36}=2$; the CLT applies because $36\geq30$, giving $z=3$ and an upper tail of $0.00135$.}
 
-\dokbadge{3}~\textbf{(c)} Evaluate both claims using population shape, sample size, the two normality pathways, and sampling variability. Determine which probabilities are warranted, explain any difference between them, and trace what each incomplete rule would cause the auditor to discard.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, explain what each student gets right and wrong. Use the two normality pathways to decide which probabilities are supported. Connect the different tail probabilities to the sampling SDs in (b).\par
 \answer{Neither whole claim is complete. Serena is right about B: despite population skew, $n_B=36$ activates the CLT and supports $0.00135$; she wrongly rejects A, whose normal population supports a normal sampling distribution at $n_A=9$. Mateo is right about A and $0.0668$ but ignores B's CLT route. Their rules would each discard one valid probability. Both models center at 40, but 46 is 1.5 sampling SDs above A's center and 3 above B's, so B's larger sample produces the smaller tail.}
 
 \begin{summaryexitbox}{EXIT}

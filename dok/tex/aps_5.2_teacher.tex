@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.11 \textperiodcentered\ B: 2026-11-10 \textperiodcentered\ E: 2026-12-04 \textperiodcentered\ TEACHER KEY}{Same Score, Different Standing}
+\daybanner{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.11 \textperiodcentered\ B: 2026-11-10 \textperiodcentered\ E: 2026-12-04 \textperiodcentered\ TEACHER KEY}{Comparing a Score of 92}
 
 \sectionbanner{CED TETHER}
 
@@ -24,7 +24,7 @@
 }
 \textbf{Essential question:} How can the same raw score have different relative standings in two normal distributions with the same mean?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{same-\allowbreak{}score-\allowbreak{}two-\allowbreak{}models-\allowbreak{}compare-\allowbreak{}with-\allowbreak{}z}}\par
-\textbf{DOK rationale:} Part (c) coordinates two standardized scores and normal areas to adjudicate a same-percentile claim, explain the role of spread, and define what a relative comparison can support.\par
+\textbf{DOK rationale:} Part (c) combines two percentile comparisons with the effect of spread to judge competing same-score claims and explain the relative standing supported by the models.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -60,19 +60,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{rejects-same-percentile} (required) --- Rejects the claim that a score of 92 has the same percentile in the two models
-  \item \textbf{uses-two-standardizations} (required) --- Cites z approximately 1.33 and percentile 90.9 percent for School A, and z 0.80 and percentile 78.8 percent for School B
-  \item \textbf{explains-spread-mechanism} (required) --- Explains that the same 12-point distance represents different numbers of standard deviations because the standard deviations differ
-  \item \textbf{makes-relative-choice} (required) --- Chooses School A for the higher relative standing and limits better to the stated percentile meaning
-  \item \textbf{states-reader-consequence} (required) --- Explains that the counselor's claim hides the effect of variability on standardized position
+  \item \textbf{judgment-1} (required) --- Supports the data coach using percentiles about 90.9 at A and 78.8 at B.
+  \item \textbf{judgment-2} (required) --- Explains that the same 12-point gap is different numbers of standard deviations because the spreads differ.
+  \item \textbf{judgment-3} (required) --- Concludes that 92 has higher relative standing at A and explains why the shared mean is insufficient.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Rejects the claim, uses both correct z-scores and percentiles, links the difference to standard deviation, identifies School A as the higher relative standing, and explains the misleading implication. \\ \hline
-\textbf{P} & Reaches the correct school and gives both percentiles, but incompletely explains the standard-deviation mechanism, the meaning of better, or the consequence of the claim. \\ \hline
-\textbf{I} & Says equal means force equal percentiles, compares only raw distances, or reverses which school gives 92 the higher percentile. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -97,11 +95,11 @@ Suppose exam scores at School A and School B are each approximately normal. Both
   axis x line=bottom,
   axis y line=left,
   ytick=\empty,
-  xtick={50,65,80,92,95,110},
+  xtick={50,65,80,92,110},
   xlabel={Exam score (points)},
   tick label style={font=\small},
   label style={font=\small},
-  legend style={font=\small,draw=none,fill=none,at={(0.98,0.98)},anchor=north east}
+  legend style={font=\small,draw=none,fill=none,at={(0.5,1.02)},anchor=south}
 ]
 \addplot[dayblue,very thick,domain=35:125,samples=181]
   {1/(9*sqrt(2*pi))*exp(-0.5*((x-80)/9)^2)};
@@ -113,7 +111,7 @@ Suppose exam scores at School A and School B are each approximately normal. Both
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Is a score of 92 at the same percentile in both schools? Choose a claim and name one parameter behind your choice.\par
+Would a 92 stand out equally at both schools? Give one reason from the picture.\par
 \answer{Not graded. Equal means should make the counselor's claim tempting; standardization should change the final judgment.}
 \end{firsttakebox}
 
@@ -125,8 +123,8 @@ Is a score of 92 at the same percentile in both schools? Choose a claim and name
 \dokbadge{2}~\textbf{(b)} For a score of 92, calculate the $z$-score and percentile at each school. Show the standardization and report each percentile to the nearest tenth of a percent.\par
 \answer{School A: $z=(92-80)/9=1.333\ldots$, so $P(X_A\leq92)=\Phi(1.333\ldots)\approx0.9088$ and 92 is at about the $90.9$th percentile. School B: $z=(92-80)/15=0.80$, so $P(X_B\leq92)=\Phi(0.80)\approx0.7881$ and 92 is at about the $78.8$th percentile.}
 
-\dokbadge{3}~\textbf{(c)} Decide whether the counselor's same-percentile claim is warranted. Cite both $z$-scores and percentiles, explain why equal means do not give equal relative standing when standard deviations differ, and state at which school a 92 is `better' if better means a higher standing relative to that school's scores. Explain what the counselor's claim would mislead a reader into believing.\par
-\answer{The counselor's claim is not warranted. Although 92 is 12 points above the common mean, that gap is $1.33$ School A standard deviations but only $0.80$ School B standard deviations. The corresponding percentiles are about $90.9$ and $78.8$, not the same. If `better' means higher relative standing, the 92 is better at School A. Saying the percentiles are equal would mislead a reader into treating distance in raw points as distance in standard-deviation units and into overlooking School B's greater variability.}
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, decide whose claim is better supported. Use both percentiles from (b) and explain how the different spreads change what a score of 92 means at each school.\par
+\answer{The data coach's claim is better supported. A 92 is about the 90.9th percentile at A and the 78.8th percentile at B. The same 12-point gap is $1.33$ standard deviations at A but only $0.80$ at B because the spreads differ. Thus a 92 stands higher relative to scores at School A; the shared mean alone does not settle the comparison.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

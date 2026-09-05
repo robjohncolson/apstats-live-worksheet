@@ -1,7 +1,7 @@
 # Topic 5.6 — Sampling Distributions for Differences in Sample Proportions
 topic: "5.6"
 ced2026: { unit: 3, topic: "3.9", label: "Sampling Distributions (difference of proportions)" }
-title: "When Two Proportions Are Not Independent"
+title: "Two Ways to Sample Library Visits"
 minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
 essential_question: "When is the independent two-proportion sampling model warranted, and what changes for paired observations?"
 worksheet: "u5_lesson6_live.html"

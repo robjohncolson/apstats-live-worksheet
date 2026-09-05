@@ -22,7 +22,7 @@
 }
 \textbf{Essential question:} How do population shape and sample size determine whether a normal model is trustworthy for sample means?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{clt-\allowbreak{}when-\allowbreak{}does-\allowbreak{}normality-\allowbreak{}apply}}\par
-\textbf{DOK rationale:} Part (c) coordinates population shape, sample size, independence, and sampling-distribution parameters to adjudicate two normality claims and bound which probability model a reader may use.\par
+\textbf{DOK rationale:} Part (c) weighs population shape, independence, and sample size to judge two normality claims and distinguish a model for sample means from a model for individuals.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -58,19 +58,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{rejects-small-n-normality} (required) --- Rejects the automatic normal claim for n equals 4 because the source population is strongly right-skewed
-  \item \textbf{supports-large-n-normality} (required) --- Uses independence and sufficiently large n equals 40 to invoke the central limit theorem
-  \item \textbf{uses-large-n-spread} (required) --- States that the n equals 40 sampling distribution is centered at 25 minutes with standard deviation about 2.37 minutes
-  \item \textbf{distinguishes-distributions} (required) --- Clarifies that the CLT concerns the distribution of sample means, not the distribution of individual commute times
-  \item \textbf{states-model-consequence} (required) --- Explains that a normal approximation at n equals 4 could give inaccurate tail probabilities
+  \item \textbf{judgment-1} (required) --- Rejects automatic normality at n=4 using population right skew.
+  \item \textbf{judgment-2} (required) --- Supports n=40 as more defensible using independence and the CLT, without claiming a universal guarantee.
+  \item \textbf{judgment-3} (required) --- Distinguishes sample means from individual times and explains why a small-sample normal tail can be unreliable.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Rejects normality at n equals 4, supports it at n equals 40 with independence and the CLT, uses the 2.37-minute standard deviation, distinguishes the two distributions, and explains the tail-probability consequence. \\ \hline
-\textbf{P} & Chooses the appropriate sample sizes and mentions skew and the CLT but omits independence, the computed spread, the distribution distinction, or the consequence for probability calculations. \\ \hline
-\textbf{I} & Says every average is normal, says the population itself becomes normal at n equals 40, or uses 15 minutes as the sampling-distribution standard deviation for both sample sizes. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -88,8 +86,8 @@ Individual commute times in a very large city are strongly right-skewed, with po
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
-  width=0.44\linewidth,
-  height=1.20in,
+  width=0.61\linewidth,
+  height=1.66in,
   ybar interval, ymin=0, ymax=32,
   xmin=0, xmax=80, xtick={0,10,20,30,40,50,60,70,80},
   xlabel={Individual commute time (minutes)}, ylabel={Relative frequency (percent)},
@@ -111,7 +109,7 @@ Individual commute times in a very large city are strongly right-skewed, with po
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-For which sample size, $n=4$ or $n=40$, would you trust a normal model for the sample mean? Name one feature behind your choice.\par
+Which would you expect to smooth out the long commute times more: averaging 4 people or 40? Give one reason.\par
 \answer{Not graded. Expect `averages are normal' as an initial rule; the revision should add population shape and sufficiently large n.}
 \end{firsttakebox}
 
@@ -123,8 +121,8 @@ For which sample size, $n=4$ or $n=40$, would you trust a normal model for the s
 \dokbadge{2}~\textbf{(b)} For $n=4$ and $n=40$, calculate the mean and standard deviation of the sampling distribution of $\bar{x}$.\par
 \answer{For either sample size, $\mu_{\bar{x}}=\mu=25$ minutes. For $n=4$, $\sigma_{\bar{x}}=15/\sqrt{4}=7.5$ minutes. For $n=40$, $\sigma_{\bar{x}}=15/\sqrt{40}\approx2.3717$ minutes, or about $2.37$ minutes.}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate both claims for $n=4$ and $n=40$. Cite the histogram shape, independence, and the CLT's sample-size requirement; use the $n=40$ standard deviation; and explain one consequence of ignoring skew when using a normal model at $n=4$.\par
-\answer{Rae's claim is not warranted at $n=4$: averaging only four observations from a strongly right-skewed population need not remove the skew. Sol is warranted at $n=40$: independence and the large sample size let the CLT support an approximately normal sampling distribution centered at 25 minutes with standard deviation $15/\sqrt{40}\approx2.37$ minutes. The CLT concerns sample means, not individual commute times. Ignoring the population skew at $n=4$ could make normal-curve tail probabilities inaccurate, making rare sample means look too common or too rare.}
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, decide whose claim is better supported. Use the population shape, independence, and the two sample sizes. Explain which distribution the CLT describes and why using a normal curve for averages of 4 could be unreliable.\par
+\answer{Sol's claim is better supported: a long right tail can remain when only four commute times are averaged. Independent samples of 40 make an approximately normal distribution of sample means more defensible by the CLT. The CLT describes sample means, not individual commute times. Using a normal curve for averages of 4 could give unreliable tail probabilities.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

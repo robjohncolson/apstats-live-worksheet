@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\ladderheading{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.11 \textperiodcentered\ B: 2026-11-10 \textperiodcentered\ E: 2026-12-04}{Same Score, Different Standing}
+\ladderheading{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.11 \textperiodcentered\ B: 2026-11-10 \textperiodcentered\ E: 2026-12-04}{Comparing a Score of 92}
 
 \focusbanner{TODAY'S PROBLEM}
 
@@ -19,11 +19,11 @@ Suppose exam scores at School A and School B are each approximately normal. Both
   axis x line=bottom,
   axis y line=left,
   ytick=\empty,
-  xtick={50,65,80,92,95,110},
+  xtick={50,65,80,92,110},
   xlabel={Exam score (points)},
   tick label style={font=\small},
   label style={font=\small},
-  legend style={font=\small,draw=none,fill=none,at={(0.98,0.98)},anchor=north east}
+  legend style={font=\small,draw=none,fill=none,at={(0.5,1.02)},anchor=south}
 ]
 \addplot[dayblue,very thick,domain=35:125,samples=181]
   {1/(9*sqrt(2*pi))*exp(-0.5*((x-80)/9)^2)};
@@ -35,15 +35,15 @@ Suppose exam scores at School A and School B are each approximately normal. Both
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Is a score of 92 at the same percentile in both schools? Choose a claim and name one parameter behind your choice.
+Would a 92 stand out equally at both schools? Give one reason from the picture.
 \workspace{0.9in}
 \end{firsttakebox}
 
 \begin{callout}{\IconBook\ STANDARDIZE BEFORE COMPARING (keep on the page)}{calloutgreen}
 For a normal random variable, $z=\dfrac{x-\mu}{\sigma}$ tells how many standard deviations $x$ is from its mean.
-The percentile of $x$ is the area under the normal curve to the \textbf{left} of $x$, written $P(X\leq x)=\Phi(z)$.
-Raw distances from the mean are comparable only when the standard deviations match. With the same above-mean
-raw distance, a smaller standard deviation produces a larger positive $z$-score and a higher percentile.
+The percentile of $x$ is the percent of values at or below $x$.
+Use a normal table or calculator to find the area to the left of the $z$-score; multiply that area by 100.
+A larger percentile means a higher standing relative to that school's scores.
 \end{callout}
 
 \newpage
@@ -55,7 +55,7 @@ raw distance, a smaller standard deviation produces a larger positive $z$-score 
 \dokbadge{2}~\textbf{(b)} For a score of 92, calculate the $z$-score and percentile at each school. Show the standardization and report each percentile to the nearest tenth of a percent.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Decide whether the counselor's same-percentile claim is warranted. Cite both $z$-scores and percentiles, explain why equal means do not give equal relative standing when standard deviations differ, and state at which school a 92 is `better' if better means a higher standing relative to that school's scores. Explain what the counselor's claim would mislead a reader into believing.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, decide whose claim is better supported. Use both percentiles from (b) and explain how the different spreads change what a score of 92 means at each school.\par
 \workspace{2.0in}
 
 \begin{sentenceframebox}\raggedright\textbf{Frame:} At School A, $z=\blank[0.7in]$ and the percentile is \blank[0.8in]; at School B, $z=\blank[0.7in]$ and the percentile is \blank[0.8in].\end{sentenceframebox}

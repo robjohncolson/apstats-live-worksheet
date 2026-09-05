@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.9 \textperiodcentered\ B: 2026-12-10 \textperiodcentered\ E: 2027-01-20 \textperiodcentered\ TEACHER KEY}{When Two Proportions Are Not Independent}
+\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.9 \textperiodcentered\ B: 2026-12-10 \textperiodcentered\ E: 2027-01-20 \textperiodcentered\ TEACHER KEY}{Two Ways to Sample Library Visits}
 
 \sectionbanner{CED TETHER}
 
@@ -21,7 +21,7 @@
 }
 \textbf{Essential question:} When is the independent two-proportion sampling model warranted, and what changes for paired observations?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{independent-\allowbreak{}vs-\allowbreak{}paired-\allowbreak{}which-\allowbreak{}sampling-\allowbreak{}distribution-\allowbreak{}model-\allowbreak{}is-\allowbreak{}warranted}}\par
-\textbf{DOK rationale:} Part (c) weighs model fit against design purpose, uses numerical condition evidence, distinguishes a useful paired plan from an independent analysis, and traces the consequence of omitting within-person association.\par
+\textbf{DOK rationale:} Part (c) compares independent and repeated-person sampling plans, evaluates the useful and unsupported parts of competing claims, and explains how a mismatched model can misstate uncertainty.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -57,19 +57,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{validates-plan-i-model} (required) --- Applies the independent model to Plan I and cites separate selection plus both 10 percent checks and all four passing counts
-  \item \textbf{recognizes-paired-design-value} (required) --- Recognizes that following the same people can control stable person-to-person differences or target within-person change
-  \item \textbf{diagnoses-pairing} (required) --- Explains that Plan P links each person's outcomes and that equal sample sizes do not imply independence
-  \item \textbf{states-model-consequence} (required) --- Explains that omitting within-person association can distort the 0.0607 spread and 0.0350 probability
-  \item \textbf{preserves-paired-information} (required) --- Describes a valid Plan P analysis that retains individual pairs or discordant transitions
+  \item \textbf{judgment-1} (required) --- Applies the independent model to Plan I using separate random selection and passing conditions.
+  \item \textbf{judgment-2} (required) --- Recognizes the useful within-person comparison in Plan P while explaining its linked responses.
+  \item \textbf{judgment-3} (required) --- Explains that equal sample sizes do not imply independence and transferring the SD/tail can misstate uncertainty.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Correctly validates Plan I with numerical conditions, recognizes Plan P's potential design value, diagnoses its dependence, explains the uncertainty consequence, and preserves paired information in a valid alternative analysis. \\ \hline
-\textbf{P} & Correctly separates the independent and paired structures but omits one numerical condition set, Mateo's defensible design point, a specific consequence, or what the paired analysis must retain. \\ \hline
-\textbf{I} & Transfers the independent formula to Plan P because sample sizes match, ignores the repeated people, or dismisses Plan P rather than changing the analysis. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -83,7 +81,7 @@
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-A library studies self-checkout before and after a redesign. Records give $p_B=0.42$ among 4{,}000 before visits and $p_A=0.54$ among 5{,}000 after visits.\par\smallskip \textbf{Plan I:} Draw an SRS of 120 before visits and a separate SRS of 150 after visits; do not track cardholders.\par \textbf{Plan P:} Measure the same 120 cardholders before and after.\par\smallskip \textbf{Sora:} Separate selection warrants Plan I's independent model; 0.0350 means a difference at most 0.01 is unusual.\par \textbf{Mateo:} Pairing controls person differences, so Plan P may help. Because both proportions use 120 people, Plan I's model applies to P too.\par
+A library studies self-checkout before and after a redesign. Records give $p_B=0.42$ among 4{,}000 before visits and $p_A=0.54$ among 5{,}000 after visits.\par\smallskip \textbf{Plan I:} Draw an SRS of 120 before visits and a separate SRS of 150 after visits; do not track cardholders.\par \textbf{Plan P:} Measure the same 120 cardholders before and after.\par\smallskip \textbf{Sora:} Separate selection warrants Plan I's independent model; 0.0350 means a difference at most 0.01 is unusual.\par \textbf{Mateo:} Pairing controls person differences, so Plan P may help. Because both proportions use 120 people, Plan I's model applies to P too.\par\smallskip For Plan I, the four expected counts are 81, 69, 50.4, and 69.6. A normal calculator gives the lower-tail probability 0.0350.\par
 \begin{center}
 \textbf{Sampling plans}\par\smallskip
 \begin{tabular}{|l|c|c|c|}
@@ -94,20 +92,20 @@ A library studies self-checkout before and after a redesign. Records give $p_B=0
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which parts of Sora's and Mateo's reasoning are warranted? Cite one design detail.\par
+Does using the same people twice seem different from choosing two separate groups? Give one reason.\par
 \answer{Not graded. Sora matches the model; Mateo values a sound design but transfers the wrong model.}
 \end{firsttakebox}
 
 \textit{Rules callout ``THE VARIANCE FORMULA REQUIRES INDEPENDENT SAMPLES (keep on the page)'' is printed on the student sheet.}\par\medskip
 
 \dokbadge{1}~\textbf{(a)} For after minus before, identify the parameter and statistic and state Plan I's sampling-distribution mean.\par
-\answer{The parameter is $p_A-p_B$, the difference between the after- and before-period population proportions of visits using self-checkout. The statistic is $\widehat p_A-\widehat p_B$. For Plan I, $\mu_{\widehat p_A-\widehat p_B}=p_A-p_B=0.54-0.42=0.12$.}
+\answer{The parameter $p_A-p_B$ is the after-minus-before population difference; the statistic is $\widehat p_A-\widehat p_B$. Its mean is $0.54-0.42=0.12$.}
 
-\dokbadge{2}~\textbf{(b)} For Plan I, check both 10 percent conditions and all four counts. Find the standard deviation and approximate $P(\widehat p_A-\widehat p_B\leq0.01)$; interpret it.\par
-\answer{Both 10 percent checks hold: $150<500$ and $120<400$; the four counts are 81, 69, 50.4, and 69.6. The variance is $0.001656+0.002030=0.003686$, so $SD=\sqrt{0.003686}=0.0607124$. Then $z=-1.8118$ and $P(\widehat p_A-\widehat p_B\leq0.01)\approx0.0350$. About 3.5 percent of independent sample pairs would show a difference at most 0.01 when the population difference is 0.12.}
+\dokbadge{2}~\textbf{(b)} For Plan I, verify both 10\% conditions and use the four supplied counts to check normality. Calculate the SD and interpret the supplied probability $P(\widehat p_A-\widehat p_B\leq0.01)=0.0350$.\par
+\answer{Both 10\% checks pass: $150<500$ and $120<400$. All four supplied counts exceed 10. The SD is $\sqrt{0.54(0.46)/150+0.42(0.58)/120}=0.0607124$. About 3.5\% of independent sample pairs would show an after-minus-before difference at most 0.01 when the population difference is 0.12.}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate the claims. Use design and conditions to place the independent model and assess Plan P. Explain why equal sample sizes are not independence, how transferring 0.0607 and 0.0350 could mislead, and what paired analysis must retain.\par
-\answer{Sora is correct for Plan I: separate SRSs and passing conditions warrant 0.0607 and 0.0350. Mateo is right that pairing can control stable person differences. But Plan P links each person's outcomes; equal sample sizes do not imply independence. The independent formula omits within-person association and could distort spread and tail probability in either direction. A valid paired analysis keeps each pair or the discordant transitions. Plan I fits the independent model; Plan P can be useful with paired analysis.}
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, explain what Sora and Mateo each get right and wrong. Use how the samples are selected to decide where the independent model applies. Explain why transferring its SD and probability to the repeated people could mislead a reader.\par
+\answer{Sora's model fits Plan I: separate SRSs and passing conditions support the independent formula. Mateo is right that repeated people can help compare within-person changes. However, their linked responses are dependent, even with equal sample sizes. Transferring the independent SD and tail probability to Plan P ignores those links and can misstate uncertainty.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

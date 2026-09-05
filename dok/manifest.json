@@ -274,7 +274,7 @@
   "5.1": {
     "ced_unit": 2,
     "ced_topic": "2.12",
-    "title": "Unusual Does Not Mean Wrong",
+    "title": "One Sample Far From the Others",
     "skill": "4.B",
     "frq_pattern": "sampling-variability-is-not-error",
     "worksheet": "u5_lesson1-2_live.html"
@@ -282,7 +282,7 @@
   "5.2": {
     "ced_unit": 2,
     "ced_topic": "2.11",
-    "title": "Same Score, Different Standing",
+    "title": "Comparing a Score of 92",
     "skill": "4.B",
     "frq_pattern": "same-score-two-models-compare-with-z",
     "worksheet": "u5_lesson1-2_live.html"
@@ -306,7 +306,7 @@
   "5.5": {
     "ced_unit": 3,
     "ced_topic": "3.2",
-    "title": "Wrong Shape Does Not Mean Biased",
+    "title": "Fourteen Caption Users",
     "skill": "4.B",
     "frq_pattern": "failed-large-counts-normal-tail-vs-valid-binomial-and-bias",
     "worksheet": "u5_lesson5_live.html"
@@ -314,7 +314,7 @@
   "5.6": {
     "ced_unit": 3,
     "ced_topic": "3.9",
-    "title": "When Two Proportions Are Not Independent",
+    "title": "Two Ways to Sample Library Visits",
     "skill": "4.B",
     "frq_pattern": "independent-vs-paired-which-sampling-distribution-model-is-warranted",
     "worksheet": "u5_lesson6_live.html"

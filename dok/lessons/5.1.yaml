@@ -1,7 +1,7 @@
 # Topic 5.1 — Introducing Statistics: Why Is My Sample Not Like Yours? (B: 2026-11-12)
 topic: "5.1"
 ced2026: { unit: 2, topic: "2.12", label: "Sampling Distributions & the CLT" }
-title: "Unusual Does Not Mean Wrong"
+title: "One Sample Far From the Others"
 minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
 essential_question: "When is an unusual sample statistic evidence of an error, and when is it ordinary sampling variability?"
 worksheet: "u5_lesson1-2_live.html"
@@ -9,11 +9,10 @@ worksheet: "u5_lesson1-2_live.html"
 rules_callout:
   title: "PARAMETER FIXED, STATISTIC VARIABLE (keep on the page)"
   body: |
-    A \textbf{population parameter}, such as $\mu$, is a fixed number describing the entire population.
-    A \textbf{sample statistic}, such as $\bar{x}$, is computed from one sample and varies when the random sample changes.
-    This natural sample-to-sample variation is \textbf{sampling variability}; unusual does not by itself mean incorrect.
-    Increasing the size $n$ of \emph{each} random sample makes sample means less variable. Increasing only the number
-    of repetitions shows the sampling distribution more clearly but does not change its underlying spread at fixed $n$.
+    A \textbf{population parameter}, such as $\mu$, describes the entire population and stays fixed.
+    A \textbf{sample statistic}, such as $\bar{x}$, is computed from one sample.
+    \textbf{Sampling variability} is the natural variation in statistics from different random samples of the same size from one population.
+    A graph shows the recorded results; details of data collection help us investigate possible mistakes.
 
 focus: aps-5.1-d3-1
 reinforcement: []

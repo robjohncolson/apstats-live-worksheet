@@ -8,11 +8,11 @@
 \begin{document}
 \pagestyle{empty}
 
-\daybanner{Unit 3 \textperiodcentered\ Topic 3.2 \textperiodcentered\ TODAY'S PROBLEM}{Wrong Shape Does Not Mean Biased}
+\daybanner{Unit 3 \textperiodcentered\ Topic 3.2 \textperiodcentered\ TODAY'S PROBLEM}{Fourteen Caption Users}
 
 \noindent\begin{minipage}[t]{0.57\linewidth}
 \vspace{0pt}
-Suppose a video platform has 5,000 active accounts and says that $p=0.08$ of them regularly use captions. An SRS of 100 accounts, selected without replacement, contains 14 regular caption users, so $\widehat p=0.14$.\par\smallskip \textbf{Jules:} ``Because $n=100>30$, $\widehat p$ is approximately normal. I get $P(\widehat p\geq0.14)=0.0135$, which proves caption use increased.''\par \textbf{Nora:} ``Because $np=8<10$, a normal model is not justified. Therefore $\widehat p$ is biased and this sample tells us nothing.''\par
+Suppose a video platform has 5,000 active accounts and says that $p=0.08$ of them regularly use captions. An SRS of 100 accounts, selected without replacement, contains 14 regular caption users, so $\widehat p=0.14$.\par\smallskip \textbf{Jules:} ``Because $n=100>30$, $\widehat p$ is approximately normal. I get $P(\widehat p\geq0.14)=0.0135$, which proves caption use increased.''\par \textbf{Nora:} ``Because $np=8<10$, a normal model is not justified. Therefore $\widehat p$ is biased and this sample tells us nothing.''\par\smallskip A binomial calculator gives $P(X\geq14)=0.0282$ for $X\sim\mathrm{Bin}(100,0.08)$. This closely approximates sampling from 5,000 accounts.\par
 \end{minipage}\hfill
 \begin{minipage}[t]{0.40\linewidth}
 \vspace{0pt}
@@ -28,13 +28,13 @@ Suppose a video platform has 5,000 active accounts and says that $p=0.08$ of the
 \end{minipage}
 
 \begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
-Whose reasoning is closer to correct, Jules's or Nora's? Name one condition or claim you would check.
+Does finding 14 caption users instead of the expected 8 prove that use increased? Give one reason.
 \end{firsttakebox}
 
 \begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
-  \item[\dokbadge{1}~(a)] Identify the population parameter, sample statistic, population size, and sample size. Verify the reported value of $\widehat p$.
+  \item[\dokbadge{1}~(a)] Identify $p$ and verify the sample proportion $\widehat p=14/100$.
   \item[\dokbadge{2}~(b)] Find the mean and standard deviation of the sampling distribution of $\widehat p$. Check the 10 percent condition and both Large Counts values.
-  \item[\dokbadge{3}~(c)] Adjudicate both claims. Use a binomial calculation or valid simulation for $P(\widehat p\geq0.14)$ under $p=0.08$. State the strongest conclusion warranted, explain why failed normality does not create bias, and give the consequence of each overclaim.
+  \item[\dokbadge{3}~(c)] In 3--4 sentences, explain what each student gets right and wrong. Use the condition checks and the supplied probability 0.0282. State what the sample suggests about caption use and why a failed normal-shape check does not make the estimate biased.
 \end{description}
 
 \vfill

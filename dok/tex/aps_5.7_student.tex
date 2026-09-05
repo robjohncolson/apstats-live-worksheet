@@ -8,7 +8,7 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 seconds and standard deviation 12 seconds. Line A is approximately normal and is sampled with $n_A=9$; Line B is strongly right-skewed and is sampled with $n_B=36$. An auditor wants $P(\bar X>46)$ for each.\par\smallskip \textbf{Serena:} ``Only B can use a normal model because $36\geq30$; its probability is $0.00135$. A is too small.''\par \textbf{Mateo:} ``Only A can use a normal model because its population is normal; its probability is $0.0668$. B is too skewed.''\par
+Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 seconds and standard deviation 12 seconds. Line A is approximately normal and an SRS of $n_A=9$ is selected; Line B is strongly right-skewed and an SRS of $n_B=36$ is selected. An auditor wants $P(\bar X>46)$ for each.\par\smallskip \textbf{Serena:} ``Only B can use a normal model because $36\geq30$; its probability is $0.00135$. A is too small.''\par \textbf{Mateo:} ``Only A can use a normal model because its population is normal; its probability is $0.0668$. B is too skewed.''\par
 \begin{center}
 \textbf{Sampling plans}\par\smallskip
 \begin{tabular}{|l|c|c|c|c|c|}
@@ -19,7 +19,7 @@ Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 s
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Which parts of Serena's and Mateo's reasoning look defensible? Cite one shape or sample-size detail.
+Which plan seems more likely to give averages close to 40 seconds? Give one reason from the sample sizes or shapes.
 \workspace{0.9in}
 \end{firsttakebox}
 
@@ -29,18 +29,19 @@ $n\leq0.10N$ for sampling without replacement. The sampling distribution of $\ba
 approximately normal if the population is approximately normal (for any $n$)
 \textbf{or} if the population is not normal but $n\geq30$ (Central Limit Theorem).
 A normal tail probability describes the mean of an entire random sample, not one individual value.
+For a normal probability, standardize with $z=(\text{value}-\text{mean})/\text{SD}$ and use the appropriate normal tail.
 \end{callout}
 
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} State the mean of each sampling distribution and the finite-population condition for using $\sigma_{\bar X}=\sigma/\sqrt n$.\par
+\dokbadge{1}~\textbf{(a)} State the mean of each sampling distribution and the 10\% condition for using $\sigma_{\bar X}=\sigma/\sqrt n$.\par
 \workspace{0.7in}
 
 \dokbadge{2}~\textbf{(b)} Verify the 10 percent condition, compute both sampling-distribution standard deviations, and calculate each normal tail probability when justified.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Evaluate both claims using population shape, sample size, the two normality pathways, and sampling variability. Determine which probabilities are warranted, explain any difference between them, and trace what each incomplete rule would cause the auditor to discard.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, explain what each student gets right and wrong. Use the two normality pathways to decide which probabilities are supported. Connect the different tail probabilities to the sampling SDs in (b).\par
 \workspace{2.0in}
 
 \begin{sentenceframebox}\raggedright\textbf{Frame:} For Line A, a normal model is \blank[0.8in] because \blank[1.6in]; for Line B, it is \blank[0.8in] because \blank[1.6in].\end{sentenceframebox}

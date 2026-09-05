@@ -14,6 +14,7 @@ rules_callout:
     approximately normal if the population is approximately normal (for any $n$)
     \textbf{or} if the population is not normal but $n\geq30$ (Central Limit Theorem).
     A normal tail probability describes the mean of an entire random sample, not one individual value.
+    For a normal probability, standardize with $z=(\text{value}-\text{mean})/\text{SD}$ and use the appropriate normal tail.
 
 focus: aps-5.7-d3-1
 reinforcement: []

@@ -11,10 +11,11 @@ rules_callout:
   body: |
     For independent random samples, $\mu_{\bar X_1-\bar X_2}=\mu_1-\mu_2$ and
     $\sigma_{\bar X_1-\bar X_2}=\sqrt{\sigma_1^2/n_1+\sigma_2^2/n_2}$ when each
-    sample meets its 10\% condition. Justify each component's shape: a normal population
+    sample has $n\leq0.10N$. Justify each component's shape: a normal population
     supports a normal sample mean even for small $n$, while the Central Limit Theorem supports
     a sample mean from a nonnormal population when its own $n\geq30$. The two groups need not
     use the same pathway. Interpret probabilities as outcomes from repeated pairs of samples.
+    For a normal probability, standardize with $z=(\text{value}-\text{mean})/\text{SD}$ and use the appropriate normal tail.
 
 focus: aps-5.8-d3-1
 reinforcement: []
