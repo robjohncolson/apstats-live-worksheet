@@ -29,17 +29,20 @@ the DOK sheets, `data/lesson-schedule.json`), and no date, due rule, or grade mo
 ## 1. Display contract (what a student sees)
 
 1. **Cell text** on the calendar: `<newTopic> · <newLabel>` — e.g. `1.10 · Investigative Question & Data Collection`.
-   For a folded topic the NEW id repeats on consecutive days; append the OLD lesson in light text so the two days are
-   distinguishable: `1.10 · Investigative Question & Data Collection (3.1)` / `(3.2)`. Bonus topics: `★ Beyond the Exam ·
-   <label>` in the ★ tone. Review / exam / off cells unchanged.
+   For a folded topic the NEW id repeats on consecutive days; distinguish the days with a NEW-side suffix, never the OLD
+   id: `1.10 · Investigative Question & Data Collection · Day 1` / `· Day 2`. Bonus topics: `★ Beyond the Exam ·
+   <label>` in the ★ tone. Review / exam / off cells unchanged. **Students never see an OLD id on a cell.**
 2. **Cell colour** = NEW unit (`--u1…--u5`), ★ tier its own tone; the legend (already NEW) and the cells therefore agree.
 3. **Progress bar** (`rProg`) segments by NEW unit in NEW order (1…5, ★, Rev), labelled `U1…U5` per the legend's ids.
-4. **Resource-panel header** leads with the NEW id: `1.10 · Investigative Question & Data Collection — CED Unit 1 (old 3.1:
-   video "Unit 3 Lesson 1", worksheet u3_lesson1)`. The OLD reference stays because the video title on screen and the
-   worksheet file name still say it; students need the bridge.
+4. **Resource-panel header** for students: `1.10 · Investigative Question & Data Collection — CED Unit 1`, nothing else.
+   The video title on screen and the worksheet file name still say "Unit 3 Lesson 1"; that is acceptable — the header
+   does NOT print the OLD id to students. In **teacher mode only** the header appends the bridge: `(old 3.1: video "Unit 3
+   Lesson 1", worksheet u3_lesson1)`.
 5. **Do Now card, due chips, tooltips, "today" strings** — any place that prints a topic id to a student uses the NEW id
-   through ONE helper (§2.1). The OLD key never appears alone on a student surface except as the explicit bridge in 4.
-6. **Teacher mode** may keep OLD ids in tooltips (teacher tools, Schoology, DOK files are OLD-keyed).
+   through ONE helper (§2.1). The OLD key NEVER appears on a student surface. (Teacher decision 2026-09-05: "primarily
+   show the new unit numbers first, and only for teacher show the old numberings.")
+6. **Teacher mode** (signed-in `role='teacher'`, the same gate the DOK-3 links use) shows OLD ids as a secondary bridge:
+   resource-header suffix in 4, and `(old 3.1)` in cell tooltips. Teacher tools, Schoology, DOK files stay OLD-keyed.
 
 ## 2. Build
 
@@ -58,8 +61,8 @@ the DOK sheets, `data/lesson-schedule.json`), and no date, due rule, or grade mo
    prior-year def, or (d) reported. List the disposition of each hit in the report.
 6. **Tests** (`tests/desk-calendar-ced2026.test.js`): (i) render the SY26-27 calendar in jsdom (the existing desk tests
    show how to load the Desk) and assert no student-visible cell text matches `/\b[6-9]\.\d+\b/` or `/Unit [6-9]/`;
-   (ii) folded topics get the `(old)` suffix; (iii) bonus cells carry the ★ class; (iv) `rProg` segment ids ⊆ `{U1..U5, ★,
-   Rev}`; (v) the resource-panel header for old `3.1` starts with `1.10 ·` and still contains `u3_lesson1`; (vi) the
+   (ii) folded topics get the `· Day n` suffix and no OLD id; (iii) bonus cells carry the ★ class; (iv) `rProg` segment ids ⊆ `{U1..U5, ★,
+   Rev}`; (v) the resource-panel header for old `3.1` starts with `1.10 ·` and does NOT contain `3.1`/`u3_lesson1` as a student, and DOES contain `u3_lesson1` in teacher mode; (vi) the
    generator output (`data/lesson-schedule.json`) is byte-identical after the change (display-only proof).
 7. **Out of scope**: dates, pacing order, `lessons[].unit`, Schoology column names, DOK file names, the grade engine,
    the teacher dashboard (done), packing.
@@ -70,5 +73,5 @@ byte-identical proof for the schedule JSON, test counts.
 
 ### TL;DR
 One `cedLabel()` helper, cells/progress/tooltips/header rendered from it, five unit colours plus a ★ tone, folded topics
-carry a small `(old)` bridge, the OLD key survives only as the file-name bridge in the resource header and in teacher tools.
+carry a `· Day n` suffix, the OLD key survives only in teacher mode (header bridge + tooltips) and in teacher tools.
 Nothing about dates or grades changes, and a test proves the schedule file did not move.
