@@ -1,0 +1,2338 @@
+{
+  "audit_date": "2026-09-04",
+  "scope": "OLD units 5 and 6, all 19 dated topics in Period B date order",
+  "method": "Read each actual worksheet (vocabulary, timestamped blanks, reflections, exit), every matching recall-card item, tether, registry, rules and figures; recomputed key quantities in Python; inspected rasterized student and board pages. FIX records a corrected original defect; PASS records an adequate criterion. No problem replacements.",
+  "topics": [
+    {
+      "topic": "5.2",
+      "old_unit": 5,
+      "date_B": "2026-11-10",
+      "title": "Comparing a Score of 92",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Combined worksheet vocabulary and Video 2 probability section give z=(x-mu)/sigma, normal area, and boundary direction. CSV 5.2 rehearses relative performance using z-scores.",
+          "final_state": "Combined worksheet vocabulary and Video 2 probability section give z=(x-mu)/sigma, normal area, and boundary direction. CSV 5.2 rehearses relative performance using z-scores."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Removed a separate reader-consequence subquestion and repeated numerical checklist; (c) now 3--4 sentences.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 4 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Replaced warranted/relative-standing checklist with a direct comparison.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Removed percentile and parameter vocabulary.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "Removed the sentence that directly supplied the smaller-SD winning relationship; retained standardization and percentile rules.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading; separated 92 from adjacent ticks and moved the legend above curves for board readability.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Replaced five overlapping scoring requirements with three distinct checks.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u5_lesson1-2_live.html",
+      "flashcards": [
+        {
+          "file": "u5_l2_blooket.csv",
+          "items_read": 35
+        },
+        {
+          "file": "u5_l1_l2_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u5_l2.md",
+      "source_sha256": {
+        "u5_lesson1-2_live.html": "67592eea845602f3671e1088d66ca2b543292ca9fb0b17a9b5c57d4d1fbc9b8c",
+        "u5_l2_blooket.csv": "12146281817b96aca56b5f35a7b4d675a8eb1e7a532ddea73aa6d85e4389ed2f",
+        "u5_l1_l2_blooket.csv": "be09b477aa627ab2d6b9d66ce50e6893a74f32ef515b48c85b3d30c0134df9dc",
+        "dok/lessons/5.2.yaml": "38675e497bf02d19a7fc65e76e3104a63929e06779966844c0ae5306cab0ad0e",
+        "dok/registry/5.2.jsonl": "1f202348c088907d6c8e3253fb8dab26fad969ea0059255d95c0f3c309bb23cf",
+        "ai-tutor/u5_l2.md": "7bf054bd7521cc9e5b5350a05e87cd153d00fa3c4e74f444b08a8120ed32daaa"
+      },
+      "concepts": [
+        "normal model",
+        "mean",
+        "SD",
+        "z-score",
+        "normal area",
+        "percentile defined in callout"
+      ],
+      "worksheet_skills_evidence": "Combined worksheet vocabulary and Video 2 probability section give z=(x-mu)/sigma, normal area, and boundary direction. CSV 5.2 rehearses relative performance using z-scores.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 4,
+        "features_to_cite": 2,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Removed a separate reader-consequence subquestion and repeated numerical checklist; (c) now 3--4 sentences.",
+        "Replaced warranted/relative-standing checklist with a direct comparison.",
+        "Removed percentile and parameter vocabulary.",
+        "Removed the sentence that directly supplied the smaller-SD winning relationship; retained standardization and percentile rules.",
+        "Replaced five overlapping scoring requirements with three distinct checks.",
+        "Changed answer-revealing heading; separated 92 from adjacent ticks and moved the legend above curves for board readability."
+      ],
+      "change_summary": "Removed a separate reader-consequence subquestion and repeated numerical checklist; (c) now 3--4 sentences.; Replaced warranted/relative-standing checklist with a direct comparison.; Removed percentile and parameter vocabulary.; Removed the sentence that directly supplied the smaller-SD winning relationship; retained standardization and percentile rules.; Replaced five overlapping scoring requirements with three distinct checks.; Changed answer-revealing heading; separated 92 from adjacent ticks and moved the legend above curves for board readability.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "same-score-two-models-compare-with-z",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#5.2",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "5079b74725b637d9ae17db4e6a737355dfef248b7654120b072e62627eecb37a",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "c3f50bc89a2b1a74555d213b900081f3f8ca8f603c0e299efa3c8bf7aa5b9da5",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "00375a455a4f6399a913ea87679353fbbe13bd1fb27aec615d2b4045088f876b",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "5.1",
+      "old_unit": 5,
+      "date_B": "2026-11-12",
+      "title": "One Sample Far From the Others",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "PASS",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Combined worksheet Video 1 dice/koala examples explain why samples vary around a fixed population mean; 5.1 cards distinguish statistic, parameter, and one sample versus sampling distribution.",
+          "final_state": "Combined worksheet Video 1 dice/koala examples explain why samples vary around a fixed population mean; 5.1 cards distinguish statistic, parameter, and one sample versus sampling distribution."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Dropped a new sampling-design recommendation and redundant consequence; reduced graph description to two sentences.",
+          "final_state": "After-video work: about 3 short (a)/(b) sentences, 2 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "PASS",
+          "reason": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Removed sampling-variability terminology.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "Removed unnecessary future sample-size/repetition rules.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading to a neutral context title.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Removed unasked exact mean/median calculations and aligned three scoring checks with the shorter task.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u5_lesson1-2_live.html",
+      "flashcards": [
+        {
+          "file": "u5_l1_blooket.csv",
+          "items_read": 35
+        },
+        {
+          "file": "u5_l1_l2_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "dok/lessons/5.1.yaml:tether",
+      "source_sha256": {
+        "u5_lesson1-2_live.html": "67592eea845602f3671e1088d66ca2b543292ca9fb0b17a9b5c57d4d1fbc9b8c",
+        "u5_l1_blooket.csv": "c3832d139a69ec63bd97a2a2da701a607a3b5d93e2940ec19e7d103f9c26fed6",
+        "u5_l1_l2_blooket.csv": "be09b477aa627ab2d6b9d66ce50e6893a74f32ef515b48c85b3d30c0134df9dc",
+        "dok/lessons/5.1.yaml": "d324172d5345d7000ad52fb9e14a200561b165e5ca14bdb703fafed59fa765c1",
+        "dok/registry/5.1.jsonl": "086e57bf1bd8cfd41b5b6fce0822cb7600a91f02c287dfa131fdb28511cbb639"
+      },
+      "concepts": [
+        "sampling variability",
+        "sample statistic",
+        "population parameter",
+        "sample mean",
+        "dotplot center and spread"
+      ],
+      "worksheet_skills_evidence": "Combined worksheet Video 1 dice/koala examples explain why samples vary around a fixed population mean; 5.1 cards distinguish statistic, parameter, and one sample versus sampling distribution.",
+      "workload": {
+        "a_b_short_sentences": 3,
+        "arithmetic_outputs_including_intermediates": 2,
+        "features_to_cite": 2,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Dropped a new sampling-design recommendation and redundant consequence; reduced graph description to two sentences.",
+        "Removed sampling-variability terminology.",
+        "Removed unnecessary future sample-size/repetition rules.",
+        "Removed unasked exact mean/median calculations and aligned three scoring checks with the shorter task.",
+        "Changed answer-revealing heading to a neutral context title."
+      ],
+      "change_summary": "Dropped a new sampling-design recommendation and redundant consequence; reduced graph description to two sentences.; Removed sampling-variability terminology.; Removed unnecessary future sample-size/repetition rules.; Removed unasked exact mean/median calculations and aligned three scoring checks with the shorter task.; Changed answer-revealing heading to a neutral context title.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "sampling-variability-is-not-error",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#5.1",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "8ff179639383028a576cf35b80a1541d06728a97e2890af80c1b4c81698a516b",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "b5784e70a629e2875938be541255bce5891b46c29d843bacdc0f6a6a394ec5bd",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "8c2573ba36c6c5a21ced013be976c134e1b37eaac296f43f15275f6ec5b0b494",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "5.3",
+      "old_unit": 5,
+      "date_B": "2026-11-13",
+      "title": "When Is the Mean Nearly Normal?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet Video 1 compares n=2 and n=25 from normal, skewed, and U-shaped populations; vocabulary and cards state the sufficiently-large-n and independence requirements. Mean/SD formulas are supplied in the callout.",
+          "final_state": "Worksheet Video 1 compares n=2 and n=25 from normal, skewed, and U-shaped populations; vocabulary and cards state the sufficiently-large-n and independence requirements. Mean/SD formulas are supplied in the callout."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Removed repeated mean/SD demand from the argument; retained the CLT judgment in four sentences.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 2 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Replaced adjudicate/coordinate checklist with direct prompts.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Removed normal-model terminology.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Enlarged the histogram from scale 0.65 to 0.9 so board labels are legible.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Changed categorical n=40 guarantee to the more-defensible claim actually supported; reduced scoring to three checks.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u5_lesson3_live.html",
+      "flashcards": [
+        {
+          "file": "u5_l3_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u5_l3.md",
+      "source_sha256": {
+        "u5_lesson3_live.html": "1a0ce44deaf178565cfd881cfa890a2c2b09b839177c530a1fcadf0d77100b61",
+        "u5_l3_blooket.csv": "f08794fca7f7c13baa32080b7d82627e2efd2aab3ae6446236d2a15f3c78d16d",
+        "dok/lessons/5.3.yaml": "052806a848a517062f8cb26fdd4a7debc4a2c02d1c5e0c12db46832478f6605c",
+        "dok/registry/5.3.jsonl": "aa316b714886c15f802d977b03a09cc30d215fe5f0fcf2ca5c225420d55777e7",
+        "ai-tutor/u5_l3.md": "5089624edd026b17e87b4892695713b0d571561b51faafe96008f79ebc526019"
+      },
+      "concepts": [
+        "sampling distribution",
+        "CLT",
+        "independent sample values",
+        "population versus sample means"
+      ],
+      "worksheet_skills_evidence": "Worksheet Video 1 compares n=2 and n=25 from normal, skewed, and U-shaped populations; vocabulary and cards state the sufficiently-large-n and independence requirements. Mean/SD formulas are supplied in the callout.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 2,
+        "features_to_cite": 3,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Removed repeated mean/SD demand from the argument; retained the CLT judgment in four sentences.",
+        "Replaced adjudicate/coordinate checklist with direct prompts.",
+        "Removed normal-model terminology.",
+        "Changed categorical n=40 guarantee to the more-defensible claim actually supported; reduced scoring to three checks.",
+        "Enlarged the histogram from scale 0.65 to 0.9 so board labels are legible."
+      ],
+      "change_summary": "Removed repeated mean/SD demand from the argument; retained the CLT judgment in four sentences.; Replaced adjudicate/coordinate checklist with direct prompts.; Removed normal-model terminology.; Changed categorical n=40 guarantee to the more-defensible claim actually supported; reduced scoring to three checks.; Enlarged the histogram from scale 0.65 to 0.9 so board labels are legible.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "clt-when-does-normality-apply",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#5.3",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "21a151be23fd6d1b617df626e3267963735e99c989d002ad848eb42ccd7d6796",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "35974f775413ccd52f256d83a626dbe0665d20e820229ed70a7596d432f59a7d",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "53e1641f455e005b56356d0afbb8be9e1f7cc61c02ffb633474c201281ac98cb",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "5.4",
+      "old_unit": 5,
+      "date_B": "2026-11-20",
+      "title": "Centered or Close?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet dog-age sample means versus sample ranges defines long-run bias. Cards explicitly separate bias from variability and allow a purpose-dependent tradeoff.",
+          "final_state": "Worksheet dog-age sample means versus sample ranges defines long-run bias. Cards explicitly separate bias from variability and allow a purpose-dependent tradeoff."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Removed a separate threshold-decision consequence; (c) now four sentences.",
+          "final_state": "After-video work: about 3 short (a)/(b) sentences, 3 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Removed adjudicate and stacked goals.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Removed dependence on unbiased/bias vocabulary.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "reason": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Three checks capture the purpose-specific choice and both competing overclaims.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u5_lesson4_live.html",
+      "flashcards": [
+        {
+          "file": "u5_l4_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u5_l4.md",
+      "source_sha256": {
+        "u5_lesson4_live.html": "6254ded9930d5634a749a1cc3f65f6ffec4e3e071d8af0e558e2e576f58e8a49",
+        "u5_l4_blooket.csv": "eaeb39fa338068e903db1ba2af26f6ae654e09e022d50e7558146fedbccefc59",
+        "dok/lessons/5.4.yaml": "5f8eaae149049c74d2128bb7e6f64e6576e608117fc59dcec2900f7d842a8e82",
+        "dok/registry/5.4.jsonl": "16cb8a3421efb4299704b59a681190aff2dcbfc81a2dce78131a46766206049f",
+        "ai-tutor/u5_l4.md": "d4c2865ce3f25e0c93f01d042362e1b8929d1ddd1ddbee6cc847e04013e233f0"
+      },
+      "concepts": [
+        "point estimator",
+        "point estimate",
+        "bias",
+        "unbiased",
+        "sampling variability",
+        "SD"
+      ],
+      "worksheet_skills_evidence": "Worksheet dog-age sample means versus sample ranges defines long-run bias. Cards explicitly separate bias from variability and allow a purpose-dependent tradeoff.",
+      "workload": {
+        "a_b_short_sentences": 3,
+        "arithmetic_outputs_including_intermediates": 3,
+        "features_to_cite": 3,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Removed a separate threshold-decision consequence; (c) now four sentences.",
+        "Removed adjudicate and stacked goals.",
+        "Removed dependence on unbiased/bias vocabulary.",
+        "Three checks capture the purpose-specific choice and both competing overclaims."
+      ],
+      "change_summary": "Removed a separate threshold-decision consequence; (c) now four sentences.; Removed adjudicate and stacked goals.; Removed dependence on unbiased/bias vocabulary.; Three checks capture the purpose-specific choice and both competing overclaims.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "unbiased-vs-low-variability-which-estimator-for-the-purpose",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#5.4",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "d6e38aa9701c885b9d05232512d114b9dd1cb57eb74f1f5c1e0f45f498b359cc",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "ca36d81b43b1b223b4a35ac38890045d3f50db4744e1d3425439509eb14c4d8b",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "c4d8c61a9c8a5562c94dea703bab88803cd070afb5e9c3c08e8def7bbf4c003d",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "5.5",
+      "old_unit": 5,
+      "date_B": "2026-11-23",
+      "title": "Fourteen Caption Users",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet Parts 2--5 give p, sqrt(p(1-p)/n), 10 percent, both Large Counts products, z and unusual sample proportions. Cards contrast shape and SD conditions; unbiasedness follows the printed mean p.",
+          "final_state": "Worksheet Parts 2--5 give p, sqrt(p(1-p)/n), 10 percent, both Large Counts products, z and unusual sample proportions. Cards contrast shape and SD conditions; unbiasedness follows the printed mean p."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Supplied the binomial tail instead of requiring an additional calculator method or full simulation; shortened (a) and (c).",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 5 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Shortened the dense adjudication prompt.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Replaced named condition checks with a concrete 14-versus-8 question.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "The supplied tail removes the need for an unprinted binomial-tail calculation rule.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading to Fourteen Caption Users.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Removed the unasked finite-population tail and corrected the explanation: SRS, not the 10 percent condition, gives unbiasedness.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u5_lesson5_live.html",
+      "flashcards": [
+        {
+          "file": "u5_l5_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u5_l5.md",
+      "source_sha256": {
+        "u5_lesson5_live.html": "0bb01f6f39a856346d68a0136904df528a2184e1d8b50beaa03cc2663bc8c921",
+        "u5_l5_blooket.csv": "98115feab8ed70cf08988ab49e5a1d4d510fb33c99d7afbe1f6e65864392261e",
+        "dok/lessons/5.5.yaml": "372f6417bcabab3f1174d98e61d4f25cd0e365759cca797d8e0903cae2b9a333",
+        "dok/registry/5.5.jsonl": "aca0c6eebe20e5837a75896f6bb56898153069699651c1552f0544f2999203eb",
+        "ai-tutor/u5_l5.md": "7077bd0d7af4bbbf857324e9f273ca756646335796495eb756d67cd14e7d9d68"
+      },
+      "concepts": [
+        "population proportion",
+        "sample proportion",
+        "sampling-distribution mean and SD",
+        "10 percent",
+        "Large Counts",
+        "normal tails"
+      ],
+      "worksheet_skills_evidence": "Worksheet Parts 2--5 give p, sqrt(p(1-p)/n), 10 percent, both Large Counts products, z and unusual sample proportions. Cards contrast shape and SD conditions; unbiasedness follows the printed mean p.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 5,
+        "features_to_cite": 3,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Supplied the binomial tail instead of requiring an additional calculator method or full simulation; shortened (a) and (c).",
+        "Shortened the dense adjudication prompt.",
+        "Replaced named condition checks with a concrete 14-versus-8 question.",
+        "The supplied tail removes the need for an unprinted binomial-tail calculation rule.",
+        "Removed the unasked finite-population tail and corrected the explanation: SRS, not the 10 percent condition, gives unbiasedness.",
+        "Changed answer-revealing heading to Fourteen Caption Users."
+      ],
+      "change_summary": "Supplied the binomial tail instead of requiring an additional calculator method or full simulation; shortened (a) and (c).; Shortened the dense adjudication prompt.; Replaced named condition checks with a concrete 14-versus-8 question.; The supplied tail removes the need for an unprinted binomial-tail calculation rule.; Removed the unasked finite-population tail and corrected the explanation: SRS, not the 10 percent condition, gives unbiasedness.; Changed answer-revealing heading to Fourteen Caption Users.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "failed-large-counts-normal-tail-vs-valid-binomial-and-bias",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#5.5",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "a4a31f419d8b9e3edcd72d8c9f37ebfb05de6581bb0f03c4b9d7739118a99ccf",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "33e916991403fee9e05936ebf5a6085e72168a2350c8750b628a0339f27e82c6",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "f386e67f527d9e0b9d3eccb1a90b126ec2ef5fc1ea4e6ab8c26f6d093be75708",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.1",
+      "old_unit": 6,
+      "date_B": "2026-11-24",
+      "title": "Six Activations in Twelve Users",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "PASS",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Combined worksheet Video 1 uses green-cup simulation to compare chance and an effect. The worksheet 6.2 section and preceding 5.5 teach large counts; the callout supplies null expected counts and the 5 percent classroom evidence criterion.",
+          "final_state": "Combined worksheet Video 1 uses green-cup simulation to compare chance and an effect. The worksheet 6.2 section and preceding 5.5 teach large counts; the callout supplies null expected counts and the 5 percent classroom evidence criterion."
+        },
+        "Load": {
+          "verdict": "PASS",
+          "reason": "After-video work: about 1 short (a)/(b) sentences, 3 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 3 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Shortened the part (c) checklist.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Replaced chance-probability terminology with methods visible in the stem.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "Added the 5 percent decision criterion needed by (c) and removed unused SD formula.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading; centered count bars on integers and labeled all frequencies so the four tail simulations can be read.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Three nonoverlapping scoring checks.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson1-2_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l1_l2_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "dok/lessons/6.1.yaml:tether",
+      "source_sha256": {
+        "u6_lesson1-2_live.html": "0a81302062cf4c6428396f7d85ce33041103a400311a41f99708c56da43a3bc3",
+        "u6_l1_l2_blooket.csv": "488df6e2d6d321f041c651c31e535bcd044025a5eebc9b06769a80d2b69b4972",
+        "dok/lessons/6.1.yaml": "b10c052185e501588b325158b94b3d08f4308280d0df30727d5eb37210d1f0c4",
+        "dok/registry/6.1.jsonl": "04fc33b730f68a58f97418646378086ca214b2f1ebb29521b90e959716ade558"
+      },
+      "concepts": [
+        "evidence",
+        "chance-only model",
+        "simulation tail",
+        "expected counts",
+        "sampling proportion"
+      ],
+      "worksheet_skills_evidence": "Combined worksheet Video 1 uses green-cup simulation to compare chance and an effect. The worksheet 6.2 section and preceding 5.5 teach large counts; the callout supplies null expected counts and the 5 percent classroom evidence criterion.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 3,
+        "features_to_cite": 2,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Replaced chance-probability terminology with methods visible in the stem.",
+        "Added the 5 percent decision criterion needed by (c) and removed unused SD formula.",
+        "Shortened the part (c) checklist.",
+        "Three nonoverlapping scoring checks.",
+        "Changed answer-revealing heading; centered count bars on integers and labeled all frequencies so the four tail simulations can be read."
+      ],
+      "change_summary": "Replaced chance-probability terminology with methods visible in the stem.; Added the 5 percent decision criterion needed by (c) and removed unused SD formula.; Shortened the part (c) checklist.; Three nonoverlapping scoring checks.; Changed answer-revealing heading; centered count bars on integers and labeled all frequencies so the four tail simulations can be read.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "normal-approximation-vs-simulation-for-a-skewed-tail",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.1",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "15edf56dbfc993cb75b8093b091cc8a8a3ef17662fa5cbdf675ad27aa89be92a",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "6f84fbd2ec54c75016d5fe6536c5ed141eff78741d7f10ec12e84f983128b663",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "4317115b3e8cdbc023d36bd65609b8b2a0fffd1be032705dff3def6bf53811f5",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.2",
+      "old_unit": 6,
+      "date_B": "2026-11-30",
+      "title": "Two Library Survey Plans",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Combined worksheet Videos 2--3 check convenience versus random signature samples and build a 95 percent proportion interval. Cards explain why a convenience sample can invalidate population inference.",
+          "final_state": "Combined worksheet Videos 2--3 check convenience versus random signature samples and build a 95 percent proportion interval. Cards explain why a convenience sample can invalidate population inference."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Supplied B's output and both widths, leaving one short interval computation and the design judgment.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 7 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Replaced nondefensible/adjudication wording with direct questions.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "PASS",
+          "reason": "One sentence can cite the stem or visual without computing or recalling the new procedure.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading to Two Library Survey Plans.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Three checks distinguish numerical precision from valid population inference.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson1-2_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l1_l2_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u6_l2.md",
+      "source_sha256": {
+        "u6_lesson1-2_live.html": "0a81302062cf4c6428396f7d85ce33041103a400311a41f99708c56da43a3bc3",
+        "u6_l1_l2_blooket.csv": "488df6e2d6d321f041c651c31e535bcd044025a5eebc9b06769a80d2b69b4972",
+        "dok/lessons/6.2.yaml": "c8f2ceb57ac784adb36635f94596e8691d80a2514ac39d35a191dc07434d66d3",
+        "dok/registry/6.2.jsonl": "d4658550047801f76c33823d6b4926d7df331eeeb68525fe52c0ab5f74acf8ea",
+        "ai-tutor/u6_l2.md": "eb3094724d5196667c78cd1014841d6744318d24bc3655275d1965477efeec21"
+      },
+      "concepts": [
+        "one-sample z interval",
+        "random data",
+        "10 percent",
+        "observed counts",
+        "standard error",
+        "margin of error"
+      ],
+      "worksheet_skills_evidence": "Combined worksheet Videos 2--3 check convenience versus random signature samples and build a 95 percent proportion interval. Cards explain why a convenience sample can invalidate population inference.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 7,
+        "features_to_cite": 3,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Supplied B's output and both widths, leaving one short interval computation and the design judgment.",
+        "Replaced nondefensible/adjudication wording with direct questions.",
+        "Three checks distinguish numerical precision from valid population inference.",
+        "Changed answer-revealing heading to Two Library Survey Plans."
+      ],
+      "change_summary": "Supplied B's output and both widths, leaving one short interval computation and the design judgment.; Replaced nondefensible/adjudication wording with direct questions.; Three checks distinguish numerical precision from valid population inference.; Changed answer-revealing heading to Two Library Survey Plans.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "narrower-self-selected-interval-vs-wider-random-interval",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.2",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "8e38d66574e1de35ff1fef31d6164ec44d5785617713c10b2ca0678092eacafa",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "50af683e2131a1c9b9887629cb144eb7943a9982b8ebb3aa903ae487448bb07c",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "4e874e92d681b33f9c24eddf510e68114f35a329eb00315ca9533c44d4348e1c",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.3",
+      "old_unit": 6,
+      "date_B": "2026-12-01",
+      "title": "One Interval, Two Threshold Claims",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "PASS",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet Video 1 compares intervals with required-signature and majority thresholds; Video 3 gives complete interval steps. Reflection 1 explicitly compares two different claims with one interval.",
+          "final_state": "Worksheet Video 1 compares intervals with required-signature and majority thresholds; Video 3 gives complete interval steps. Reflection 1 explicitly compares two different claims with one interval."
+        },
+        "Load": {
+          "verdict": "PASS",
+          "reason": "After-video work: about 3 short (a)/(b) sentences, 7 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout.",
+          "final_state": "After-video work: about 3 short (a)/(b) sentences, 7 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Replaced warranted/plausible-versus-justified stack with explicit comparisons.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "PASS",
+          "reason": "One sentence can cite the stem or visual without computing or recalling the new procedure.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "reason": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Corrected the scoring language from both endpoints to the two threshold comparisons actually needed.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson3_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l3_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u6_l3.md",
+      "source_sha256": {
+        "u6_lesson3_live.html": "f0bc8f7b6aca546f769361d8a9b9566516056fe860d7ed2c90b54a9d59228165",
+        "u6_l3_blooket.csv": "964a5ecea301338a044f148ecd009ddfb62337a728865cb527ddf3553c3c970f",
+        "dok/lessons/6.3.yaml": "cef16720f54926c7fd013ac11fc84971d6bf81393fd2debb0f46a61b4807ee18",
+        "dok/registry/6.3.jsonl": "488d42d9caab9dd5ca5ba88373ec74e89f8a5ac1a9bbd80623f02e3ef18d81af",
+        "ai-tutor/u6_l3.md": "e8825cd13f5c6444c7e58e9c902f5fc1b3227ad6190983644d5e126bd92dfa0c"
+      },
+      "concepts": [
+        "confidence interval",
+        "population parameter",
+        "plausible values",
+        "claim threshold",
+        "margin of error"
+      ],
+      "worksheet_skills_evidence": "Worksheet Video 1 compares intervals with required-signature and majority thresholds; Video 3 gives complete interval steps. Reflection 1 explicitly compares two different claims with one interval.",
+      "workload": {
+        "a_b_short_sentences": 3,
+        "arithmetic_outputs_including_intermediates": 7,
+        "features_to_cite": 2,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Replaced warranted/plausible-versus-justified stack with explicit comparisons.",
+        "Corrected the scoring language from both endpoints to the two threshold comparisons actually needed."
+      ],
+      "change_summary": "Replaced warranted/plausible-versus-justified stack with explicit comparisons.; Corrected the scoring language from both endpoints to the two threshold comparisons actually needed.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "one-interval-two-threshold-claims-bound-the-conclusion",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.3",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "5dba9ad9e3511e34f02027480adbefef8a01a098ea8844e8e6cdeed56575852a",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "e2976f5aaf23fb97212b137201b8c1fa862c7177980f88693323375c2aa3894e",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "d68c25a6f0fea110aefe7b0183258a1e2b0e29d47676cd0138cec86a15225212",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.4",
+      "old_unit": 6,
+      "date_B": "2026-12-03",
+      "title": "Which Test Answers the Question Asked?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet Video 1 fixes direction from the question before data; Video 2 checks random, 10 percent, and null expected counts. Cards contrast p0 and observed proportions.",
+          "final_state": "Worksheet Video 1 fixes direction from the question before data; Video 2 checks random, 10 percent, and null expected counts. Cards contrast p0 and observed proportions."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Removed repeated whole-test condition verification from (c) scoring.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 4 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Shortened the conceptual checklist.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Uses everyday direction language rather than a not-yet-taught test setup.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "reason": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Three checks score the argument in (c), with no duplicate conditions requirement from (b).",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson4_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l4_blooket.csv",
+          "items_read": 28
+        }
+      ],
+      "tether": "ai-tutor/u6_l4.md",
+      "source_sha256": {
+        "u6_lesson4_live.html": "3254511eb68033600facabf9ab22d9715ccfc56d5617363a93e59afd2d6a0be8",
+        "u6_l4_blooket.csv": "915ddc84dcaf569dd6db091b329034a7bcdc7d576380e5c5748428f947bcd120",
+        "dok/lessons/6.4.yaml": "e7b4b0ce12c36a422bc26bc9fb564243170046d8429c48bb3a2917689bd0543a",
+        "dok/registry/6.4.jsonl": "61742219f71923501468abe12b12ff1c2d2033ff785c3906a91480aee0327a43",
+        "ai-tutor/u6_l4.md": "6bb4947eaad227e809dccd866f8fd018978081c253b69245fcbaa56fe2fd04bc"
+      },
+      "concepts": [
+        "null hypothesis",
+        "alternative",
+        "population parameter",
+        "one-sided versus two-sided",
+        "expected counts under p0"
+      ],
+      "worksheet_skills_evidence": "Worksheet Video 1 fixes direction from the question before data; Video 2 checks random, 10 percent, and null expected counts. Cards contrast p0 and observed proportions.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 4,
+        "features_to_cite": 2,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Removed repeated whole-test condition verification from (c) scoring.",
+        "Uses everyday direction language rather than a not-yet-taught test setup.",
+        "Shortened the conceptual checklist.",
+        "Three checks score the argument in (c), with no duplicate conditions requirement from (b)."
+      ],
+      "change_summary": "Removed repeated whole-test condition verification from (c) scoring.; Uses everyday direction language rather than a not-yet-taught test setup.; Shortened the conceptual checklist.; Three checks score the argument in (c), with no duplicate conditions requirement from (b).",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "directional-question-null-based-conditions-which-test-setup",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.4",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "3e4933715cb665d1b397369ed2640794cf831b055bce0a0eb06de45d81bb3d87",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "d0baf97394452f75e865f5a9919602eb3d4772ff9d0ed5a188e537a0fcd08959",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "e2fa2ad9865426694f503c5dac87b0dd77a12c7dfaa6f42deb378612976fc21e",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.5",
+      "old_unit": 6,
+      "date_B": "2026-12-04",
+      "title": "Which Tail, and Probability of What?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "PASS",
+        "Reading": "PASS",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet Videos 1--2 calculate one-/two-sided p-values and require an assuming-null clause plus at-least-as-extreme sample event. Reflection 1 addresses hypothesis-probability reversal.",
+          "final_state": "Worksheet Videos 1--2 calculate one-/two-sided p-values and require an assuming-null clause plus at-least-as-extreme sample event. Reflection 1 addresses hypothesis-probability reversal."
+        },
+        "Load": {
+          "verdict": "PASS",
+          "reason": "After-video work: about 1 short (a)/(b) sentences, 3 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 3 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "PASS",
+          "reason": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Removed the demand to interpret a p-value before the lesson.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "reason": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Consolidated five scoring elements into the three substantive decisions.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson5_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l5_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u6_l5.md",
+      "source_sha256": {
+        "u6_lesson5_live.html": "cc27603e8ed217dbe5827231ce9a6cec1f47d613ff14c5af5b6357fa77813682",
+        "u6_l5_blooket.csv": "3af8fa11cb33df2a8cdd08b032fab204e094a52d65df09a7e7831c97dc602067",
+        "dok/lessons/6.5.yaml": "abb8f7e9871233977182476bc381c9399239f26f0883d08e69d229515d3c1644",
+        "dok/registry/6.5.jsonl": "b23b1522465b22ef3619fab3cbb54bfc8c2386f58d5d5496cd1eb60db1e243a2",
+        "ai-tutor/u6_l5.md": "dbf6b010831803d5b4a3be53136af58a806149ffb5cd0ee832e2a5b0f26633e3"
+      },
+      "concepts": [
+        "standardized test statistic",
+        "p-value",
+        "conditional probability under H0",
+        "tail direction"
+      ],
+      "worksheet_skills_evidence": "Worksheet Videos 1--2 calculate one-/two-sided p-values and require an assuming-null clause plus at-least-as-extreme sample event. Reflection 1 addresses hypothesis-probability reversal.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 3,
+        "features_to_cite": 3,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Removed the demand to interpret a p-value before the lesson.",
+        "Consolidated five scoring elements into the three substantive decisions."
+      ],
+      "change_summary": "Removed the demand to interpret a p-value before the lesson.; Consolidated five scoring elements into the three substantive decisions.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "one-sided-vs-two-sided-p-value-interpret-the-condition",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.5",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "dfda7d398384c934fd5e9482e88a206dec9b2f8bb1b846966aaa3ce312df8466",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "f63fd22cb07b7c0dcfac2dd3bfe4916e6fb2531fa2f3abe4dbdef37574be9e06",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "17ab5e4433108d7845e8d53f72494cc66d8270400b8628c8b78fff94798e66d7",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.6",
+      "old_unit": 6,
+      "date_B": "2026-12-07",
+      "title": "Sorting Trays After New Labels",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet decision rule and cereal worked test require comparing p-value to alpha and prohibit proving/accepting a hypothesis. The callout defines practical importance and random-sample/random-assignment limits.",
+          "final_state": "Worksheet decision rule and cereal worked test require comparing p-value to alpha and prohibit proving/accepting a hypothesis. The callout defines practical importance and random-sample/random-assignment limits."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Supplied conditions and removed a second full p-value interpretation plus repeated consequences; retained a five-sentence argument.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 3 arithmetic outputs (including intermediate checks), 3 evidence features, then 5 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Direct questions replace a long adjudication checklist.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Replaced statistical/scope terminology with concrete cause and month language.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "Added missing z and tail rules for the computation; defined practical importance.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading to Sorting Trays After New Labels.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Three scoring checks track the decision, practical importance, and scope.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson6_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l6_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u6_l6.md",
+      "source_sha256": {
+        "u6_lesson6_live.html": "cd8cd1964f669bec753e14e8ff9d17e9977e360618651121d33b5495093f1eea",
+        "u6_l6_blooket.csv": "e6cfdd9fed07d428051a0559f3fb8e8b27c0e1d9eda1985d555da0df0c3ea9a4",
+        "dok/lessons/6.6.yaml": "cd9582600e0c0f8100c7d37a408fbef38c1346702dd391caadc2ec786076767e",
+        "dok/registry/6.6.jsonl": "ceeecd3ed583ede02014ade21919db2a151031e9be0dd8bbd7e41fc603b84219",
+        "ai-tutor/u6_l6.md": "2e0a7dc63c48e1c133b71dc6f4cb3b1dc7e23bbc947123f9c72726824f351b3a"
+      },
+      "concepts": [
+        "significance level",
+        "reject/fail to reject",
+        "conclusion in context",
+        "practical importance and design scope in callout"
+      ],
+      "worksheet_skills_evidence": "Worksheet decision rule and cereal worked test require comparing p-value to alpha and prohibit proving/accepting a hypothesis. The callout defines practical importance and random-sample/random-assignment limits.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 3,
+        "features_to_cite": 3,
+        "c_sentences_max": 5,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Supplied conditions and removed a second full p-value interpretation plus repeated consequences; retained a five-sentence argument.",
+        "Replaced statistical/scope terminology with concrete cause and month language.",
+        "Added missing z and tail rules for the computation; defined practical importance.",
+        "Direct questions replace a long adjudication checklist.",
+        "Three scoring checks track the decision, practical importance, and scope.",
+        "Changed answer-revealing heading to Sorting Trays After New Labels."
+      ],
+      "change_summary": "Supplied conditions and removed a second full p-value interpretation plus repeated consequences; retained a five-sentence argument.; Replaced statistical/scope terminology with concrete cause and month language.; Added missing z and tail rules for the computation; defined practical importance.; Direct questions replace a long adjudication checklist.; Three scoring checks track the decision, practical importance, and scope.; Changed answer-revealing heading to Sorting Trays After New Labels.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "statistical-decision-vs-practical-size-and-scope",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.6",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "89d2d4ab9653293eedeb06649eea88045bdfacc92028183aa4310eecf4640f68",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "99ce594f9f6a8bb248c575ee891f951abe74816396e20c442ad04822f1a125c9",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "8ccc902fc78388903208a7b778bfbd8291529c9a395df850221d3b4885e65a83",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.7",
+      "old_unit": 6,
+      "date_B": "2026-12-08",
+      "title": "Which Error Can the District Afford?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet decision table and green-cup power example interpret both errors in context; reflection and exit require consequences and a priority-dependent judgment.",
+          "final_state": "Worksheet decision table and green-cup power example interpret both errors in context; reflection and exit require consequences and a priority-dependent judgment."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Removed four expected-frequency computations, district-wide information request, and additional sample-size redesign.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 2 arithmetic outputs (including intermediate checks), 4 evidence features, then 5 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Defined emergency alerts and the reject/replace decision; replaced retention and no common cost scale.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "PASS",
+          "reason": "One sentence can cite the stem or visual without computing or recalling the new procedure.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "reason": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Removed misleading combined tradeoff across different conditional true states; three contextual checks.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson7_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l7_blooket.csv",
+          "items_read": 30
+        }
+      ],
+      "tether": "ai-tutor/u6_l7.md",
+      "source_sha256": {
+        "u6_lesson7_live.html": "f4e75172ad70bb99f28daf36a42880b116b595b91876466b3bf035197da7f337",
+        "u6_l7_blooket.csv": "b14b9624175c54ccf5569989ff7a60e5dfb1538f7da8d040fd029de60d42a291",
+        "dok/lessons/6.7.yaml": "133f63273fa2b0e99d96b9a4b4a5875d24fae86340216b94e96349b569111cf6",
+        "dok/registry/6.7.jsonl": "558b657ffaf64a0312a814c9501eb167baf323633f002513ae838e49e3ce7ff9",
+        "ai-tutor/u6_l7.md": "87ad10ded8e42bf70a534ed5be563d1d7205977439d15f3f255e70eaac421ada"
+      },
+      "concepts": [
+        "Type I error",
+        "Type II error",
+        "power",
+        "alpha",
+        "beta=1-power",
+        "contextual consequences"
+      ],
+      "worksheet_skills_evidence": "Worksheet decision table and green-cup power example interpret both errors in context; reflection and exit require consequences and a priority-dependent judgment.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 2,
+        "features_to_cite": 4,
+        "c_sentences_max": 5,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Removed four expected-frequency computations, district-wide information request, and additional sample-size redesign.",
+        "Defined emergency alerts and the reject/replace decision; replaced retention and no common cost scale.",
+        "Removed misleading combined tradeoff across different conditional true states; three contextual checks."
+      ],
+      "change_summary": "Removed four expected-frequency computations, district-wide information request, and additional sample-size redesign.; Defined emergency alerts and the reject/replace decision; replaced retention and no common cost scale.; Removed misleading combined tradeoff across different conditional true states; three contextual checks.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "alpha-vs-power-which-error-tradeoff-fits-consequences",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.7",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "2eafd42a796dd39cf07631788c5fc2309b4c56ae839751337f9ee0f144513ef8",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "e02ed070cd6949ed3269965381db3ddd6f73b0be831b4a5b73b89bb789c5e80f",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "f22f26fd92f42909e7fc352d678daeade1897dd8097af2bd83269951f10462f0",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "5.6",
+      "old_unit": 5,
+      "date_B": "2026-12-10",
+      "title": "Two Ways to Sample Library Visits",
+      "verdicts": {
+        "Alignment": "FIX",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "FIX",
+          "reason": "Removed the demand for a later paired categorical analysis and unexplained discordant transitions.",
+          "final_state": "Worksheet Parts 2--4 explicitly require independent samples and all four count checks. The callout defines why repeated responses on one person are linked; no paired inferential method remains required."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Supplied four counts and the tail; removed a paired-analysis redesign and extra probability calculation.",
+          "final_state": "After-video work: about 2 short (a)/(b) sentences, 4 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Replaced coordination/adjudication wording with direct model comparisons.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Removed warranted/design-model vocabulary.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading to Two Ways to Sample Library Visits.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Three checks no longer require later paired-inference knowledge.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u5_lesson6_live.html",
+      "flashcards": [
+        {
+          "file": "u5_l6_blooket.csv",
+          "items_read": 40
+        }
+      ],
+      "tether": "dok/lessons/5.6.yaml:tether",
+      "source_sha256": {
+        "u5_lesson6_live.html": "1bc66409b0a1352cb6c447f75a533533e16d2b6a6b7a6b1c7309e4864e9c110f",
+        "u5_l6_blooket.csv": "ce5a254dfa9871118819749efa97b33d62954c385f3fe990fbff8bc487c574b8",
+        "dok/lessons/5.6.yaml": "ee9a8ff1089068dd48547d8df6d1ad7408353e18b113838bf018aa3aa7b2bba7",
+        "dok/registry/5.6.jsonl": "2441c0b5a3c126d7192abe427943b625d90fa349641ef94e153c78fe8c955b97"
+      },
+      "concepts": [
+        "difference in sample proportions",
+        "independent samples",
+        "variance addition",
+        "four expected counts",
+        "10 percent"
+      ],
+      "worksheet_skills_evidence": "Worksheet Parts 2--4 explicitly require independent samples and all four count checks. The callout defines why repeated responses on one person are linked; no paired inferential method remains required.",
+      "workload": {
+        "a_b_short_sentences": 2,
+        "arithmetic_outputs_including_intermediates": 4,
+        "features_to_cite": 2,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Removed the demand for a later paired categorical analysis and unexplained discordant transitions.",
+        "Supplied four counts and the tail; removed a paired-analysis redesign and extra probability calculation.",
+        "Removed warranted/design-model vocabulary.",
+        "Replaced coordination/adjudication wording with direct model comparisons.",
+        "Three checks no longer require later paired-inference knowledge.",
+        "Changed answer-revealing heading to Two Ways to Sample Library Visits."
+      ],
+      "change_summary": "Removed the demand for a later paired categorical analysis and unexplained discordant transitions.; Supplied four counts and the tail; removed a paired-analysis redesign and extra probability calculation.; Removed warranted/design-model vocabulary.; Replaced coordination/adjudication wording with direct model comparisons.; Three checks no longer require later paired-inference knowledge.; Changed answer-revealing heading to Two Ways to Sample Library Visits.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "independent-vs-paired-which-sampling-distribution-model-is-warranted",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#5.6",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "11e4053e220313893cdf608a4e0d54428a1879d6b3df2d47b18660d503c5e2e5",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "99f1f964b505a6ea22266751b590d83173545fe2c032730dd91332b370976036",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "609010914be5e9d76a4df62fb3a3507010c76962e986c34d9d7f4b4026b8c5e4",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.8",
+      "old_unit": 6,
+      "date_B": "2026-12-11",
+      "title": "Two Ways to Build an Interval",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "PASS",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet tree/dog examples build one difference interval with separate sample proportions and summed variance contributions. Cards cover zero as equal population proportions and the interval confidence target.",
+          "final_state": "Worksheet tree/dog examples build one difference interval with separate sample proportions and summed variance contributions. Cards cover zero as equal population proportions and the interval confidence target."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Removed a second count-list requirement from the argument.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 10 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "PASS",
+          "reason": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Replaced an unlearned interval-method selection with a concrete disagreement about equality.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "Added missing 1.96 critical value and zero interpretation; removed direct answer about the competing method.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading to Two Ways to Build an Interval.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Three distinct checks; procedure critique stays central.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson8_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l8_blooket.csv",
+          "items_read": 30
+        }
+      ],
+      "tether": "ai-tutor/u6_l8.md",
+      "source_sha256": {
+        "u6_lesson8_live.html": "cc259bf2fbb1a1be081a50ddb88f2286763b965a189abf1c0c034c9af2be6c38",
+        "u6_l8_blooket.csv": "e47b18d55ac4e6de239430f221314cb8687df366af6b381225d2885beff31720",
+        "dok/lessons/6.8.yaml": "5b7786e3e8fb29d24a11995bd8b5bc5c5b0d13e1852145b18ebc23bcff195b1b",
+        "dok/registry/6.8.jsonl": "513c34add3bfd05fb8b40a38ba9d5abb81dde0b9bf175ca84478b19f1dc5b855",
+        "ai-tutor/u6_l8.md": "0fcd73f220029ab45ea66ae46ebb07d038360e7ea9d2d5bd997ee605f124bf05"
+      },
+      "concepts": [
+        "two-sample z interval",
+        "difference in proportions",
+        "independent random samples",
+        "observed counts",
+        "variance addition"
+      ],
+      "worksheet_skills_evidence": "Worksheet tree/dog examples build one difference interval with separate sample proportions and summed variance contributions. Cards cover zero as equal population proportions and the interval confidence target.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 10,
+        "features_to_cite": 3,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Replaced an unlearned interval-method selection with a concrete disagreement about equality.",
+        "Added missing 1.96 critical value and zero interpretation; removed direct answer about the competing method.",
+        "Removed a second count-list requirement from the argument.",
+        "Three distinct checks; procedure critique stays central.",
+        "Changed answer-revealing heading to Two Ways to Build an Interval."
+      ],
+      "change_summary": "Replaced an unlearned interval-method selection with a concrete disagreement about equality.; Added missing 1.96 critical value and zero interpretation; removed direct answer about the competing method.; Removed a second count-list requirement from the argument.; Three distinct checks; procedure critique stays central.; Changed answer-revealing heading to Two Ways to Build an Interval.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "two-sample-interval-vs-separate-intervals",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.8",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "28c09ce95ced639f7f4a8a36b5c91ee066254c9c9dec3cfd46230eec9c184710",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "d9dfb971e139892eb1e0c68d29e6838f23c7d84ecc94a93b9b25d7a6e20cb2d0",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "d206d945bbcd97d0c54732c7a4d006d93f0cb6f1858c3ab6c92d001eeac5a8a0",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.9",
+      "old_unit": 6,
+      "date_B": "2026-12-14",
+      "title": "Reminders and Practice Completion",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "PASS",
+        "Reading": "PASS",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet tree/dog examples assess zero and effect direction. Its claim rule compares all plausible values, and Video 2 distinguishes interval interpretation from confidence level; callout supplies design/scope rules.",
+          "final_state": "Worksheet tree/dog examples assess zero and effect direction. Its claim rule compares all plausible values, and Video 2 distinguishes interval interpretation from confidence level; callout supplies design/scope rules."
+        },
+        "Load": {
+          "verdict": "PASS",
+          "reason": "After-video work: about 3 short (a)/(b) sentences, 0 arithmetic outputs (including intermediate checks), 3 evidence features, then 5 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout.",
+          "final_state": "After-video work: about 3 short (a)/(b) sentences, 0 arithmetic outputs (including intermediate checks), 3 evidence features, then 5 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "PASS",
+          "reason": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Removed endpoint/design jargon from the initial choice.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Changed answer-revealing heading to Reminders and Practice Completion.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Consolidated five scoring elements into three distinct checks, preserving interval, confidence, and scope reasoning.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson9_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l9_blooket.csv",
+          "items_read": 28
+        }
+      ],
+      "tether": "ai-tutor/u6_l9.md",
+      "source_sha256": {
+        "u6_lesson9_live.html": "e636c5b5b313cd83ee21009fbacd1716f70a8260ca60bc6160951a59d5df4bf7",
+        "u6_l9_blooket.csv": "993f96b6d632cd8729d8c8e66d115bbe8f9f30f0fe02b30e4ed9fec7013873f3",
+        "dok/lessons/6.9.yaml": "ab8ea1573797c780353034c85e993f541f1d0f1bbebe5960aff5f269ccd01451",
+        "dok/registry/6.9.jsonl": "44be5a4650d422638e00832707cbdea02873a9b552268b124b5eab315f5bc1c0",
+        "ai-tutor/u6_l9.md": "23f1230348a6f9337693a8130af20c062bed49736ce8566eb806d7cd48989629"
+      },
+      "concepts": [
+        "difference interval",
+        "positive/negative effect",
+        "zero",
+        "threshold claim",
+        "long-run confidence"
+      ],
+      "worksheet_skills_evidence": "Worksheet tree/dog examples assess zero and effect direction. Its claim rule compares all plausible values, and Video 2 distinguishes interval interpretation from confidence level; callout supplies design/scope rules.",
+      "workload": {
+        "a_b_short_sentences": 3,
+        "arithmetic_outputs_including_intermediates": 0,
+        "features_to_cite": 3,
+        "c_sentences_max": 5,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Consolidated five scoring elements into three distinct checks, preserving interval, confidence, and scope reasoning.",
+        "Removed endpoint/design jargon from the initial choice.",
+        "Changed answer-revealing heading to Reminders and Practice Completion."
+      ],
+      "change_summary": "Consolidated five scoring elements into three distinct checks, preserving interval, confidence, and scope reasoning.; Removed endpoint/design jargon from the initial choice.; Changed answer-revealing heading to Reminders and Practice Completion.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "confidence-interval-claim-effect-size-and-scope-adjudication",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.9",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "f3f1e6b28ef83e395da1ae93e43a2f91169e5b17f42712dd4f89d24384e233bb",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "a85f4ae2f7bd4b35c14b80b44dc5a2eaeb8d2eca99575b09b2cd22b47d2596ba",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "007872c484bd3c7dacb83636944a8e61fff5c612b366295e976cc1d1e94c38d6",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.10",
+      "old_unit": 6,
+      "date_B": "2026-12-15",
+      "title": "Two Analysts, One Planned Test",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet Video 1 chooses one-/two-sided hypotheses from the original question; Video 2 pools successes and checks randomization and expected counts.",
+          "final_state": "Worksheet Video 1 chooses one-/two-sided hypotheses from the original question; Video 2 pools successes and checks randomization and expected counts."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Removed an extra generalization/causation argument from the test-setup day.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 7 arithmetic outputs (including intermediate checks), 2 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Made random assignment explicit rather than relying on ambiguous shared wording.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Removed dependence on hypothesis notation.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "reason": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "reason": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Three checks match the pre-data question and tail-selection judgment.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson10_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l10_blooket.csv",
+          "items_read": 30
+        }
+      ],
+      "tether": "ai-tutor/u6_l10.md",
+      "source_sha256": {
+        "u6_lesson10_live.html": "357ced7c9983692244d125aa5d3097f254f109eda717c0d4935c6c15abb4bb95",
+        "u6_l10_blooket.csv": "a9295a7757a6d9166acaffd3f55b1e67780621719cf6d6b793e39ce3be5db26f",
+        "dok/lessons/6.10.yaml": "6136248db4c7e09150bc111975580ae7a85d19683ae6e2500c4b42cc876dfb71",
+        "dok/registry/6.10.jsonl": "55f5eade8681d3eec2398885d330549609caec7715c09029c87d689dbbc58b72",
+        "ai-tutor/u6_l10.md": "d99a1e28939ed242eb77129c7f22cef0d8fe114889f680c49e51754e22ce7caf"
+      },
+      "concepts": [
+        "difference hypotheses",
+        "pre-data direction",
+        "pooled proportion",
+        "pooled expected counts",
+        "randomized groups"
+      ],
+      "worksheet_skills_evidence": "Worksheet Video 1 chooses one-/two-sided hypotheses from the original question; Video 2 pools successes and checks randomization and expected counts.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 7,
+        "features_to_cite": 2,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Made random assignment explicit rather than relying on ambiguous shared wording.",
+        "Removed dependence on hypothesis notation.",
+        "Removed an extra generalization/causation argument from the test-setup day.",
+        "Three checks match the pre-data question and tail-selection judgment."
+      ],
+      "change_summary": "Made random assignment explicit rather than relying on ambiguous shared wording.; Removed dependence on hypothesis notation.; Removed an extra generalization/causation argument from the test-setup day.; Three checks match the pre-data question and tail-selection judgment.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "predata-question-vs-postdata-tail-switch",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.10",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "fcb297230b3f881de5dfd901fed92763cbaba2d06f39905c04d37a742a6bf2c3",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "e10c39ffc9ca4fb2fdfd8d4ee7dfca9660c03bd229f0950e6b35552111ca96d6",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "f15dec4a3f2e1fabedc1bb05366ff89acb3843e691ed4eab4f38de04e896fed7",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "6.11",
+      "old_unit": 6,
+      "date_B": "2026-12-17",
+      "title": "One Result, Two Claims",
+      "verdicts": {
+        "Alignment": "FIX",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "FIX",
+          "reason": "Removed one-sided confidence bounds and confidence-level selection absent from worksheet/cards/callout.",
+          "final_state": "Worksheet full test sequence gives pooled SE, z, two-sided tail, and contextual decision. Callout distinguishes testing zero from testing a separate practical threshold; one-sided confidence bounds were removed."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Supplied condition checks; removed a second complete interpretation and a confidence-bound design.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 7 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Clarified random assignment and simplified the report judgment.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Replaced significance-test vocabulary with the observed gap and target.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "Distinguished p-value from the population proportion symbol in the decision rule.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "reason": "Shortened the table header and removed thousands separators to eliminate board-table overflow.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Replaced the unsupported one-sided-bound scoring demand with three checks on the actual test and threshold.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u6_lesson11_live.html",
+      "flashcards": [
+        {
+          "file": "u6_l11_blooket.csv",
+          "items_read": 32
+        }
+      ],
+      "tether": "ai-tutor/u6_l11.md",
+      "source_sha256": {
+        "u6_lesson11_live.html": "3ac81fa27d41dff910f54cb57564952cf4731174deeb26dba48a40e460b2d6c0",
+        "u6_l11_blooket.csv": "227839a7c5c766130cd0046f93bb384fd174d9d9327278386446e7b4cd0a808a",
+        "dok/lessons/6.11.yaml": "acaed2aa81f1ee034a3f7aada446296eca9dcfe0ca4275b0655b3ba279bba30e",
+        "dok/registry/6.11.jsonl": "4745b78c01326284ed9893cb5bb9c752791dcaac8b8c7eb53d2ca3593db36dde",
+        "ai-tutor/u6_l11.md": "6852e90ad8ae913b972fd8650a2965cf641ab36d640a9b3874cd1ab032226f5a"
+      },
+      "concepts": [
+        "pooled two-proportion z test",
+        "two-sided p-value",
+        "alpha",
+        "population difference",
+        "practical threshold"
+      ],
+      "worksheet_skills_evidence": "Worksheet full test sequence gives pooled SE, z, two-sided tail, and contextual decision. Callout distinguishes testing zero from testing a separate practical threshold; one-sided confidence bounds were removed.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 7,
+        "features_to_cite": 3,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Removed one-sided confidence bounds and confidence-level selection absent from worksheet/cards/callout.",
+        "Supplied condition checks; removed a second complete interpretation and a confidence-bound design.",
+        "Replaced significance-test vocabulary with the observed gap and target.",
+        "Clarified random assignment and simplified the report judgment.",
+        "Replaced the unsupported one-sided-bound scoring demand with three checks on the actual test and threshold.",
+        "Distinguished p-value from the population proportion symbol in the decision rule.",
+        "Shortened the table header and removed thousands separators to eliminate board-table overflow."
+      ],
+      "change_summary": "Removed one-sided confidence bounds and confidence-level selection absent from worksheet/cards/callout.; Supplied condition checks; removed a second complete interpretation and a confidence-bound design.; Replaced significance-test vocabulary with the observed gap and target.; Clarified random assignment and simplified the report judgment.; Replaced the unsupported one-sided-bound scoring demand with three checks on the actual test and threshold.; Distinguished p-value from the population proportion symbol in the decision rule.; Shortened the table header and removed thousands separators to eliminate board-table overflow.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "zero-test-vs-practical-threshold",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#6.11",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "786078653bbf074924925ad990049edac48635dcd8ea299900d5961e430904b4",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "b2a8b4deada203644cde2300c7fe27b3e7e49ba1831190781ef96802efefe4f0",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "a1afb841918ba8efaaf4d913c5a74d5319693478319a6fc8d22cb28a6fec314c",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "5.7",
+      "old_unit": 5,
+      "date_B": "2027-01-11",
+      "title": "Two Production Lines, Two Sampling Plans",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "PASS",
+          "reason": "Worksheet lemon example and Part 3 give the two normality pathways; Part 5 contrasts single values with sample averages and explains the smaller spread. The n>=30 convention is the worksheet convention.",
+          "final_state": "Worksheet lemon example and Part 3 give the two normality pathways; Part 5 contrasts single values with sample averages and explains the smaller spread. The n>=30 convention is the worksheet convention."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "reason": "Removed a redundant rejected-rule consequence while retaining both claims and spread reasoning.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 7 arithmetic outputs (including intermediate checks), 3 evidence features, then 4 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Shortened the stacked evaluation prompt.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Replaced technical model adjudication with an intuitive comparison of averages.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "Added the missing z standardization and normal-tail rule.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "reason": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Made the random-sample assumption used by the key explicit in the stem; three checks.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u5_lesson7_live.html",
+      "flashcards": [
+        {
+          "file": "u5_l7_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u5_l7.md",
+      "source_sha256": {
+        "u5_lesson7_live.html": "94c36874b6c449ed9461ba495fd358d78d71ba288e44e85b0c756a9f669aa109",
+        "u5_l7_blooket.csv": "215123ef1f88735a9cf11200f16ec432afc4ed9d7e3ef25e2fcebdbb5543bf44",
+        "dok/lessons/5.7.yaml": "e57c091269ed83e6b3b2d67aa5fb9aa6c7493af6071228b1b96f9aab53559310",
+        "dok/registry/5.7.jsonl": "360cd3cfce602384a62cce21dd47cb5194e246691e3125784a27ef187c6a8f15",
+        "ai-tutor/u5_l7.md": "a3ac37764b6f7dab3ac5969b0208a40df0d5a857456576539d25b93d42bd0070"
+      },
+      "concepts": [
+        "sample mean",
+        "mean and SD of sample means",
+        "CLT",
+        "normal-population route",
+        "10 percent",
+        "z tails"
+      ],
+      "worksheet_skills_evidence": "Worksheet lemon example and Part 3 give the two normality pathways; Part 5 contrasts single values with sample averages and explains the smaller spread. The n>=30 convention is the worksheet convention.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 7,
+        "features_to_cite": 3,
+        "c_sentences_max": 4,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Made the random-sample assumption used by the key explicit in the stem; three checks.",
+        "Removed a redundant rejected-rule consequence while retaining both claims and spread reasoning.",
+        "Shortened the stacked evaluation prompt.",
+        "Replaced technical model adjudication with an intuitive comparison of averages.",
+        "Added the missing z standardization and normal-tail rule."
+      ],
+      "change_summary": "Made the random-sample assumption used by the key explicit in the stem; three checks.; Removed a redundant rejected-rule consequence while retaining both claims and spread reasoning.; Shortened the stacked evaluation prompt.; Replaced technical model adjudication with an intuitive comparison of averages.; Added the missing z standardization and normal-tail rule.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "normal-vs-clt-model-adjudication",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#5.7",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "ddb0dd9a49d9bcf054ae8925e149104a70edd5a676929aa6ce28b7fe1b31e215",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "0fe042914185d7a93db1d010559c86fd7f0fd24aa85c32092d9de64c3aeee652",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "e8574f041dd626c8cdbdbe6ea35dad9048411df839aa812f9543b29040356dae",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    },
+    {
+      "topic": "5.8",
+      "old_unit": 5,
+      "date_B": "2027-01-22",
+      "title": "Two Samples, One Difference",
+      "verdicts": {
+        "Alignment": "FIX",
+        "Load": "PASS",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "criterion_evidence": {
+        "Alignment": {
+          "verdict": "FIX",
+          "reason": "Supplied missing population sizes and units that the key assumed for required 10 percent checks.",
+          "final_state": "Worksheet Parts 2--3 give mean/SD and shape requirements; prior 5.7 gives each component route. The callout explicitly permits one route for each group and supplies z and finite-population checks."
+        },
+        "Load": {
+          "verdict": "PASS",
+          "reason": "After-video work: about 1 short (a)/(b) sentences, 7 arithmetic outputs (including intermediate checks), 3 evidence features, then 5 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout.",
+          "final_state": "After-video work: about 1 short (a)/(b) sentences, 7 arithmetic outputs (including intermediate checks), 3 evidence features, then 5 sentences at most in (c). One short computation may replace prose; arithmetic uses the printed callout."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "reason": "Made the case and counterfactual explicit.",
+          "final_state": "Concrete original context; direct prompts and two sentence frames scaffold a choice plus evidence/explanation."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "reason": "Reduced two argument judgments to one before-video choice in plain language.",
+          "final_state": "One sentence can cite the stem or visual without computing or recalling the new procedure."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "reason": "Stated n<=0.10N and the z normal-tail rule explicitly.",
+          "final_state": "All rules needed for the argument are printed; the callout identifies no winning speaker and no specific deciding data value."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "reason": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim.",
+          "final_state": "Student letter pages and landscape board rasterized and inspected; figure labels are data labels, with no named flaw or winning claim."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "reason": "Repaired the original nSouth=8 counterexample: original North12 gave total20, which did not expose a combined-n-at-least30 shortcut; new total56 does.",
+          "final_state": "All answer-key quantities recomputed by verify-units-5-6.py; E requires all three substantive checks, P some valid reasoning with an omission/error, I none."
+        }
+      },
+      "worksheet": "u5_lesson8_live.html",
+      "flashcards": [
+        {
+          "file": "u5_l8_blooket.csv",
+          "items_read": 35
+        }
+      ],
+      "tether": "ai-tutor/u5_l8.md",
+      "source_sha256": {
+        "u5_lesson8_live.html": "d40d274eef4cc3b52bfbdaa623fc3afe22fefd5dcb2e5225ec6baece612ba30b",
+        "u5_l8_blooket.csv": "8117024c41561fb47ea0b01d10e0be634a03faacf2f7bb2b0d0fcd8de2374684",
+        "dok/lessons/5.8.yaml": "fca70a84523ec4759ccd97e33e902a0b84fa5bda62c44859f2e60d99e6a42296",
+        "dok/registry/5.8.jsonl": "45eb88e68416dcfa9e3533332d0ed6704ab09ab45afd8f41775b9fd67ffb4bb1",
+        "ai-tutor/u5_l8.md": "77baaeece426f8d7e111175a2ae6fd3b76313937bbeb505beea12b2df520c81e"
+      },
+      "concepts": [
+        "difference of sample means",
+        "independent samples",
+        "variance addition",
+        "normal-population/CLT routes",
+        "10 percent"
+      ],
+      "worksheet_skills_evidence": "Worksheet Parts 2--3 give mean/SD and shape requirements; prior 5.7 gives each component route. The callout explicitly permits one route for each group and supplies z and finite-population checks.",
+      "workload": {
+        "a_b_short_sentences": 1,
+        "arithmetic_outputs_including_intermediates": 7,
+        "features_to_cite": 3,
+        "c_sentences_max": 5,
+        "estimated_finish_minutes": "8--10"
+      },
+      "changes": [
+        "Supplied missing population sizes and units that the key assumed for required 10 percent checks.",
+        "Made the case and counterfactual explicit.",
+        "Repaired the original nSouth=8 counterexample: original North12 gave total20, which did not expose a combined-n-at-least30 shortcut; new total56 does.",
+        "Reduced two argument judgments to one before-video choice in plain language.",
+        "Stated n<=0.10N and the z normal-tail rule explicitly."
+      ],
+      "change_summary": "Supplied missing population sizes and units that the key assumed for required 10 percent checks.; Made the case and counterfactual explicit.; Repaired the original nSouth=8 counterexample: original North12 gave total20, which did not expose a combined-n-at-least30 shortcut; new total56 does.; Reduced two argument judgments to one before-video choice in plain language.; Stated n<=0.10N and the z normal-tail rule explicitly.",
+      "identity": {
+        "context_preserved": true,
+        "competing_claims_preserved": true,
+        "frq_pattern": "two-shape-routes-for-a-mean-difference",
+        "replaced": false
+      },
+      "numeric_evidence": "dok/audit-support/units-5-6-numbers.json#5.8",
+      "pdf_qa": {
+        "status": "compiled; pdfinfo 2/1/<=3 passed",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "d4768cfcd59cd208c4a3d28639c7388a523e02cbda355974368b58f9edd3c97e",
+            "overfull": []
+          },
+          "board": {
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "1c8a0905367472222d45ebb9f61f602203544bdca9ab164de440fffa013e20d7",
+            "overfull": []
+          },
+          "teacher": {
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "66aa750bea6921ed631284224162f1bb4b95e06bee6375ff13907cfa18dd7fca",
+            "overfull": []
+          }
+        },
+        "student_and_board_inspected": true,
+        "teacher_layout_inspected": true
+      }
+    }
+  ],
+  "human_review_notes": [
+    "5.3 uses more defensible, not guaranteed, for n=40 with a skewed population. 5.7/5.8 retain the worksheet n>=30 classroom CLT convention; precise tail accuracy for extreme skew would need further distribution information.",
+    "6.9 retains the familiar AP phrase students like these volunteers. Causal inference is supported for randomized participants; transport to other similar students needs a substantive similarity judgment and never implies all district students.",
+    "The 8--10 minute finish estimates are planning judgments, not observed student timing; pilot the longest condition-check days (6.2, 6.3, 6.8) with this class."
+  ],
+  "patterns": [
+    "Several headings and one callout supplied the result students were meant to justify. Neutral headings preserve the need to adjudicate.",
+    "Many arguments combined a choice, repeated calculations, full interpretation, reader consequences, and another design task. Trimming extra tasks preserves the claim/evidence/reasoning demand.",
+    "Before-video prompts often requested terminology or a complete method judgment. Concrete one-sentence choices are more accessible.",
+    "Missing inputs and method requirements emerged only when checking against the actual worksheet: 5.8 population sizes, 6.8 critical value, and 6.11 one-sided confidence bounds."
+  ]
+}

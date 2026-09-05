@@ -1,7 +1,7 @@
 # Topic 6.2 — Constructing a Confidence Interval for a Population Proportion
 topic: "6.2"
 ced2026: { unit: 3, topic: "3.3", label: "Constructing a CI for a Proportion" }
-title: "Narrower Is Not Automatically Better"
+title: "Two Library Survey Plans"
 minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
 essential_question: "Why can a wider interval from a random sample be more trustworthy than a narrower formula result?"
 worksheet: "u6_lesson1-2_live.html"

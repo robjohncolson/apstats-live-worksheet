@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ B: 2026-11-30 \textperiodcentered\ E: 2027-01-04 \textperiodcentered\ TEACHER KEY}{Narrower Is Not Automatically Better}
+\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ B: 2026-11-30 \textperiodcentered\ E: 2027-01-04 \textperiodcentered\ TEACHER KEY}{Two Library Survey Plans}
 
 \sectionbanner{CED TETHER}
 
@@ -67,24 +67,23 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-plan-a} (required) --- Chooses Plan A for population inference
-  \item \textbf{uses-collection-and-numerical-evidence} (required) --- Cites the SRS and one numerical check
-  \item \textbf{contrasts-widths-with-validity} (required) --- Notes $0.066<0.137$ but Plan B is nonrandom
-  \item \textbf{states-reader-consequence} (required) --- Explains false precision from self-selection
+  \item \textbf{judgment-1} (required) --- Chooses A using its SRS and a valid numerical condition.
+  \item \textbf{judgment-2} (required) --- Compares B width 0.0661 with A width 0.1368.
+  \item \textbf{judgment-3} (required) --- Explains that B self-selection can bias its estimate and its narrow formula margin does not justify population confidence.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Chooses A, cites both kinds of checks, contrasts widths, and explains self-selection. \\ \hline
-\textbf{P} & Chooses A but omits a check, width, or reader consequence. \\ \hline
-\textbf{I} & Chooses B for size or width, or treats numerical checks as randomness. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-A library system has 20,000 adult cardholders and wants to estimate $p$, the proportion who used a digital audiobook last month.\par\smallskip \textbf{Plan A:} A computer takes an SRS of 200 cardholder IDs. All answer; 116 say yes.\par \textbf{Plan B:} A newsletter link lets cardholders choose to respond once. Of 800 respondents, 520 say yes.\par\smallskip \textbf{Eli:} ``Use Plan B. Its larger sample gives the narrower interval.''\par \textbf{Dana:} ``Use Plan A. Entry into the sample matters more than the narrowest output.''\par
+A library system has 20,000 adult cardholders and wants to estimate $p$, the proportion who used a digital audiobook last month.\par\smallskip \textbf{Plan A:} A computer takes an SRS of 200 cardholder IDs. All answer; 116 say yes.\par \textbf{Plan B:} A newsletter link lets cardholders choose to respond once. Of 800 respondents, 520 say yes.\par\smallskip \textbf{Eli:} ``Use Plan B. Its larger sample gives the narrower interval.''\par \textbf{Dana:} ``Use Plan A. Entry into the sample matters more than the narrowest output.''\par\smallskip The 95\% formula output for B is $(0.6169,0.6831)$, width 0.0661. A's formula width is 0.1368.\par
 \begin{center}
 \textbf{Plan counts}\par\smallskip
 \begin{tabular}{|l|c|c|c|c|}
@@ -104,10 +103,10 @@ Which plan, if either, should estimate all adult cardholders? Cite one collectio
 \dokbadge{1}~\textbf{(a)} Define the population parameter $p$ in context and name the confidence-interval procedure that would be appropriate when its conditions are met.\par
 \answer{Here $p$ is the proportion of all 20,000 adult library cardholders who used a digital audiobook last month. When conditions are met, the procedure is a one-sample $z$-interval for a population proportion.}
 
-\dokbadge{2}~\textbf{(b)} For each plan, compute $\hat p$, check the random, 10 percent, and large-count conditions, and calculate the 95 percent formula interval. Mark any nondefensible population interval.\par
+\dokbadge{2}~\textbf{(b)} For Plan A, calculate $\hat p$ and its 95\% interval. Check A's random, 10 percent, and success/failure conditions. For Plan B, identify the condition that fails.\par
 \answer{Plan A has $\hat p=116/200=0.58$. It is an SRS; $200\le0.10(20{,}000)=2{,}000$; and counts are 116 and 84. Thus $SE=0.0348999$, $ME=1.96(SE)=0.0684037$, and the valid interval is $(0.5116,0.6484)$. Plan B has $\hat p=520/800=0.65$; $800\le2{,}000$ and counts 520 and 280 pass, but self-selection fails the random condition. Its mechanical output is $0.65\pm0.0330523$, or $(0.6169,0.6831)$, not a defensible population confidence interval.}
 
-\dokbadge{3}~\textbf{(c)} Decide which plan can support a 95 percent interval for all cardholders. Cite recruitment and a numerical condition, compare interval widths, and explain the reader consequence of reporting Plan B's output.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose the plan that can estimate all cardholders. Use recruitment and one numerical condition. Explain why the supplied widths do or do not support Eli's recommendation.\par
 \answer{Use Plan A. Its SRS, $200\le2{,}000$, and counts 116 and 84 support the interval $(0.512,0.648)$ for all cardholders. Its width is about $0.1368$ versus Plan B's smaller formula width, $0.0661$. Plan B's volunteers may differ systematically from nonrespondents; its margin of error covers random variation, not self-selection. Reporting it would falsely suggest that a narrow range represents all cardholders with 95 percent confidence.}
 
 \begin{summaryexitbox}{EXIT}

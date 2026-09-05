@@ -28,7 +28,7 @@
 }
 \textbf{Essential question:} How do the original research question and study design determine a defensible two-proportion test setup?\par
 \textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{predata-\allowbreak{}question-\allowbreak{}vs-\allowbreak{}postdata-\allowbreak{}tail-\allowbreak{}switch}}\par
-\textbf{DOK rationale:} Part (c) coordinates the original question, timing of the tail choice, pooled conditions, and randomization scope to adjudicate two test setups and trace how the rejected setup distorts the evidence.\par
+\textbf{DOK rationale:} Part (c) uses the original research question and the timing of the tail choice to adjudicate competing test setups and explain how choosing a direction after observing results overstates evidence.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -64,25 +64,23 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-predata-two-sided-setup} (required) --- Selects Nia and states a two-sided alternative
-  \item \textbf{uses-question-and-timing} (required) --- Uses the pre-data word change rather than the observed sign
-  \item \textbf{cites-valid-conditions} (required) --- Cites randomization, 10 percent, or pooled-count evidence
-  \item \textbf{states-reader-consequence} (required) --- Explains that a post-data tail switch hides decreases and exaggerates evidence
-  \item \textbf{bounds-scope} (required) --- Separates generalization from selection and causation from assignment
+  \item \textbf{judgment-1} (required) --- Chooses Nia and states equality null and two-sided alternative with population parameters.
+  \item \textbf{judgment-2} (required) --- Ties either direction to the pre-data word change rather than the observed positive gap.
+  \item \textbf{judgment-3} (required) --- Explains that selecting a tail after observing the result changes the question and overstates evidence.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Chooses the two-sided setup; justifies its timing, conditions, consequence, and scope. \\ \hline
-\textbf{P} & Chooses the two-sided setup but omits a condition, consequence, or scope statement. \\ \hline
-\textbf{I} & Chooses a tail from the observed sign, uses sample statistics in hypotheses, or gives no design defense. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-Suppose an online retailer has 50,000 active accounts. Before collecting data, its team asks, ``Does a progress meter change the proportion of active accounts completing checkout?'' It randomly selects 360 accounts and assigns 180 to each screen. The table shows the outcomes. Let $p_M$ and $p_S$ be the corresponding population completion proportions.\par\smallskip \textbf{Nia:} ``Use $H_0:p_M-p_S=0$ versus $H_a:p_M-p_S\ne0$ because either direction is a change.''\par \textbf{Omar:} ``Because $\hat p_M$ is larger, use $H_a:p_M-p_S>0$.''\par
+Suppose an online retailer has 50,000 active accounts. Before collecting data, its team asks, ``Does a progress meter change the proportion of active accounts completing checkout?'' It randomly selects 360 accounts and randomly assigns 180 to each screen. The table shows the outcomes. Let $p_M$ and $p_S$ be the corresponding population completion proportions.\par\smallskip \textbf{Nia:} ``Use $H_0:p_M-p_S=0$ versus $H_a:p_M-p_S\ne0$ because either direction is a change.''\par \textbf{Omar:} ``Because $\hat p_M$ is larger, use $H_a:p_M-p_S>0$.''\par
 \begin{center}
 \textbf{Checkout outcomes}\par\smallskip
 \begin{tabular}{|l|c|c|c|}
@@ -93,7 +91,7 @@ Suppose an online retailer has 50,000 active accounts. Before collecting data, i
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which analyst's setup should the team use? Cite one phrase or timing detail from the study.\par
+When the team asks whether checkout changes, should a decrease count too? Use the original question to explain.\par
 \answer{Not graded. The positive observed difference is intentionally tempting; the research question must control the tail.}
 \end{firsttakebox}
 
@@ -105,8 +103,8 @@ Which analyst's setup should the team use? Cite one phrase or timing detail from
 \dokbadge{2}~\textbf{(b)} Name the test procedure. Calculate the pooled proportion and verify randomization, the 10 percent condition, and all four pooled expected counts.\par
 \answer{The appropriate procedure is a two-sample $z$-test for a difference of proportions. The 360 accounts were randomly selected and assigned; $360\le0.10(50{,}000)=5{,}000$. Under $H_0$, $\hat p_c=234/360=0.65$, so each group has pooled expected counts $117$ and $63$, all at least 10.}
 
-\dokbadge{3}~\textbf{(c)} Decide which setup is defensible and state the hypotheses. Use the word `change,' the timing of the tail choice, condition evidence, and both kinds of randomization. Explain how the rejected setup would misrepresent the strength or scope of the evidence.\par
-\answer{Nia is defensible: $H_0:p_M-p_S=0$ versus $H_a:p_M-p_S\ne0$. The pre-data word `change' includes either direction; the later difference $0.10$ cannot select the tail. Random selection and assignment, $360\le5{,}000$, and pooled counts 117 and 63 validate the procedure. The right-tail switch omits decreases and exaggerates evidence for a planned benefit. Selection supports generalization to accounts represented by the frame; assignment supports causation about screen type; neither extends beyond that frame.}
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose and state the hypotheses. Use the original word change and when the direction was chosen. Explain how Omar's choice after seeing the result changes the question and could overstate the evidence.\par
+\answer{Nia is defensible: $H_0:p_M-p_S=0$ versus $H_a:p_M-p_S\ne0$. The question asked about change before data were collected, so either an increase or a decrease counts. The observed difference 0.10 cannot decide the research direction afterward. Omar's right-tail switch omits decreases and makes the observed increase look stronger than it is for the original question.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

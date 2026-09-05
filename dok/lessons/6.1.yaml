@@ -1,7 +1,7 @@
 # Topic 6.1 — Introducing Statistics: Why Be Normal?
 topic: "6.1"
 ced2026: { unit: 3, topic: "3.3", label: "Constructing a CI for a Proportion" }
-title: "When a Normal Curve Distorts the Tail"
+title: "Six Activations in Twelve Users"
 minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
 essential_question: "When should a simulated sampling distribution be trusted more than a normal approximation?"
 worksheet: "u6_lesson1-2_live.html"
@@ -9,11 +9,10 @@ worksheet: "u6_lesson1-2_live.html"
 rules_callout:
   title: "CHECK THE SHAPE BEFORE USING NORMAL (keep on the page)"
   body: |
-    Under a proposed proportion $p_0$, the sampling distribution of $\hat p$ has center $p_0$ and
-    standard deviation $\sqrt{p_0(1-p_0)/n}$. A normal approximation needs both expected counts
-    $np_0\ge 10$ and $n(1-p_0)\ge 10$. A matched simulation does not need a normal shape: estimate
-    a one-sided chance probability by counting simulated results at least as large as the observed result.
-    A small chance probability is evidence against the proposed model, not proof of a particular cause.
+    Under a proposed proportion $p_0$, check expected counts $np_0\geq10$ and $n(1-p_0)\geq10$ before using a normal approximation.
+    A matched simulation estimates the chance probability by the number of simulated results at least as large as the observed result, divided by the total simulations.
+    For this task, a chance probability below $5\%$ counts as convincing evidence against the proposed model.
+    Evidence against a model does not prove a particular cause.
 
 focus: aps-6.1-d3-1
 reinforcement: []
@@ -51,9 +50,19 @@ tether:
 
 visuals:
   activation_hist:
-    kind: pgfplot_hist
-    scale: 0.8
-    bins: [0, 1, 2, 3, 4, 5, 6, 7]
-    counts: [14, 40, 58, 47, 25, 12, 4]
-    xlabel: "Voice-command activations in one sample of 12"
-    ylabel: "Simulated samples"
+    kind: raw_tikz
+    body: |
+      \begin{tikzpicture}
+      \begin{axis}[
+        width=0.98\linewidth,height=1.75in,
+        ybar,bar width=10pt,xmin=-0.6,xmax=6.6,ymin=0,ymax=70,
+        xtick={0,1,2,3,4,5,6},ytick={0,20,40,60},
+        xlabel={Activations in a sample of 12},ylabel={Simulated samples},
+        tick label style={font=\small},label style={font=\small},
+        nodes near coords,nodes near coords style={font=\scriptsize},
+        axis lines*=left
+      ]
+      \addplot[draw=dayblue,fill=dayblue!20] coordinates {(0,14) (1,40) (2,58) (3,47) (4,25) (5,12) (6,4)};
+      \end{axis}
+      \end{tikzpicture}
+    wrap_center: true

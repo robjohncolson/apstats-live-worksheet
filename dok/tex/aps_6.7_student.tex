@@ -8,7 +8,7 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-A district tests $H_0:p=0.05$ versus $H_a:p>0.05$, where $p$ is the late-alert proportion. Both plans use $n=200$ and have the table's operating probabilities. Safety prioritizes avoiding retention when $p=0.10$; Budget prioritizes avoiding replacement when $p=0.05$. No common cost scale exists.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
+A district checks an emergency-alert system. Let $p$ be the proportion of alerts that arrive late. It tests $H_0:p=0.05$ versus $H_a:p>0.05$, replacing the system if it rejects $H_0$. Both plans use $n=200$. The Safety office wants to avoid keeping a system with a 10\% late rate. The Budget office wants to avoid replacing a system with a 5\% late rate. The offices have not agreed how to compare these costs.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
 \begin{center}
 \textbf{Test plans ($n=200$)}\par\smallskip
 \begin{tabular}{|l|c|c|}
@@ -33,18 +33,18 @@ chosen $\alpha$ fixed. Choose a plan by naming the real consequence of each erro
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} Describe a Type I error and a Type II error in this context. Identify what $P(\text{reject }H_0\mid p=0.10)$ represents.\par
+\dokbadge{1}~\textbf{(a)} Identify what the table's power at $p=0.10$ means in this setting.\par
 \workspace{0.8in}
 
-\dokbadge{2}~\textbf{(b)} For each plan, calculate $\beta$. Then give the expected number of Type I errors per 1{,}000 repeated tests when $p=0.05$ and Type II errors per 1{,}000 repeated tests when $p=0.10$.\par
+\dokbadge{2}~\textbf{(b)} Calculate the Type II error probability $\beta$ for each plan. State each plan's Type I error probability.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate both claims. Explain why no plan is universally best; recommend one for a stated office using both error probabilities and their per-1{,}000 consequences. Name information needed for a district-wide choice and a change that improves power at fixed $\alpha$.\par
+\dokbadge{3}~\textbf{(c)} In 4--5 sentences, recommend a plan for one office using both error risks. Explain the consequence of each error and what Dev and Lin each overlook. State why the other office might choose differently.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} I recommend Plan \blank[0.4in] because its chance of missing a 10 percent late rate is \blank[0.6in], compared with \blank[0.6in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} For the \blank[0.8in] office, I recommend \blank[0.6in] because \blank[2.2in].\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} That benefit costs about \blank[0.6in] additional \blank[1.1in] per 1{,}000 tests; increasing \blank[0.8in] could improve power while holding $\alpha$ fixed.\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} That plan risks \blank[2.0in] when \blank[1.5in]; the other office may prioritize \blank[1.5in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

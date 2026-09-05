@@ -338,7 +338,7 @@
   "6.1": {
     "ced_unit": 3,
     "ced_topic": "3.3",
-    "title": "When a Normal Curve Distorts the Tail",
+    "title": "Six Activations in Twelve Users",
     "skill": "4.B",
     "frq_pattern": "normal-approximation-vs-simulation-for-a-skewed-tail",
     "worksheet": "u6_lesson1-2_live.html"
@@ -362,7 +362,7 @@
   "6.2": {
     "ced_unit": 3,
     "ced_topic": "3.3",
-    "title": "Narrower Is Not Automatically Better",
+    "title": "Two Library Survey Plans",
     "skill": "4.C",
     "frq_pattern": "narrower-self-selected-interval-vs-wider-random-interval",
     "worksheet": "u6_lesson1-2_live.html"
@@ -394,7 +394,7 @@
   "6.6": {
     "ced_unit": 3,
     "ced_topic": "3.7",
-    "title": "Significant Does Not Mean Caused",
+    "title": "Sorting Trays After New Labels",
     "skill": "4.E",
     "frq_pattern": "statistical-decision-vs-practical-size-and-scope",
     "worksheet": "u6_lesson6_live.html"
@@ -410,7 +410,7 @@
   "6.8": {
     "ced_unit": 3,
     "ced_topic": "3.10",
-    "title": "One Difference, Not Two Separate Intervals",
+    "title": "Two Ways to Build an Interval",
     "skill": "4.C",
     "frq_pattern": "two-sample-interval-vs-separate-intervals",
     "worksheet": "u6_lesson8_live.html"
@@ -418,7 +418,7 @@
   "6.9": {
     "ced_unit": 3,
     "ced_topic": "3.11",
-    "title": "A Positive Effect Is Not Every Positive Claim",
+    "title": "Reminders and Practice Completion",
     "skill": "4.D",
     "frq_pattern": "confidence-interval-claim-effect-size-and-scope-adjudication",
     "worksheet": "u6_lesson9_live.html"

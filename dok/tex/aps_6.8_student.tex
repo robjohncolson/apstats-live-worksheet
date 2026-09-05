@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\ladderheading{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.10 \textperiodcentered\ B: 2026-12-11 \textperiodcentered\ E: 2027-01-22}{One Difference, Not Two Separate Intervals}
+\ladderheading{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.10 \textperiodcentered\ B: 2026-12-11 \textperiodcentered\ E: 2027-01-22}{Two Ways to Build an Interval}
 
 \focusbanner{TODAY'S PROBLEM}
 
@@ -19,17 +19,17 @@ Town Oak has 2{,}200 households and Pine 1{,}800. Independent SRSs find 77 of 14
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Which method gives the requested 95\% interval for $p_O-p_P$? Cite one design or numerical detail.
+The two reported ranges disagree about whether the towns could be equal. Which range would you trust, and why?
 \workspace{0.9in}
 \end{firsttakebox}
 
 \begin{callout}{\IconBook\ BUILD ONE INTERVAL FOR THE DIFFERENCE (keep on the page)}{calloutgreen}
-For two independent random samples, estimate $p_1-p_2$ with a two-sample $z$-interval:
+For two independent random samples, use a two-sample $z$-interval for $p_1-p_2$:
 $(\hat p_1-\hat p_2)\pm z^*\sqrt{\hat p_1(1-\hat p_1)/n_1+\hat p_2(1-\hat p_2)/n_2}$.
-Verify independent random samples or random assignment, $n_i\leq0.10N_i$ when sampling without replacement,
-and at least 10 observed successes and failures in each group. For an interval, use each group's sample
-proportion separately; because the samples are independent, estimated variances add before taking the square root.
-Two separately constructed $C\%$ intervals do not automatically combine into one $C\%$ interval for $p_1-p_2$.
+For 95\% confidence, $z^*=1.96$. Check independent random samples or random assignment,
+each $n_i\leq0.10N_i$ when sampling without replacement, and at least 10 observed successes and failures in each group.
+Independent estimated variances add under one square root. Confidence belongs to the procedure used to construct the interval.
+An interval for a difference that includes 0 leaves equal proportions plausible; one entirely above 0 supports a positive difference.
 \end{callout}
 
 \newpage
@@ -41,7 +41,7 @@ Two separately constructed $C\%$ intervals do not automatically combine into one
 \dokbadge{2}~\textbf{(b)} Check independent samples, both 10 percent conditions, and all four counts. Compute the estimate, SE, margin of error, and 95\% interval.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Choose the warranted method. Use design, counts, variance structure, and zero's location. Explain why separate 95\% intervals do not produce the requested coverage and how Devon's result misleads.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose a method using the independent samples and the variance formula. Explain why subtracting separate 95\% intervals does not establish a 95\% interval for the difference. Use zero's location to explain how the method changes the conclusion.\par
 \workspace{2.0in}
 
 \begin{sentenceframebox}\raggedright\textbf{Frame:} The warranted method is \blank[1.0in] because the data come from \blank[2.2in], and the four counts are \blank[1.5in].\end{sentenceframebox}

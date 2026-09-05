@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ B: 2026-11-24 \textperiodcentered\ E: 2026-12-23 \textperiodcentered\ TEACHER KEY}{When a Normal Curve Distorts the Tail}
+\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ B: 2026-11-24 \textperiodcentered\ E: 2026-12-23 \textperiodcentered\ TEACHER KEY}{Six Activations in Twelve Users}
 
 \sectionbanner{CED TETHER}
 
@@ -52,18 +52,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-matched-simulation} (required) --- Selects Jules's simulation estimate rather than Mara's unsupported normal approximation
-  \item \textbf{uses-shape-or-count-evidence} (required) --- Cites the right-skewed discrete shape or the failed expected counts 2.4 and 9.6
-  \item \textbf{uses-tail-and-bounds-conclusion} (required) --- Uses 4 of 200, or 0.020, to make the 5 percent evidence decision without claiming proof of a cause
-  \item \textbf{states-reader-consequence} (required) --- Explains that 0.005 makes the result appear about four times rarer and overstates the evidence
+  \item \textbf{judgment-1} (required) --- Chooses the simulation using failed expected counts 2.4 and 9.6 or the right-skewed shape.
+  \item \textbf{judgment-2} (required) --- Uses 4/200=0.020 below 0.05 as evidence against the model, without claiming proof.
+  \item \textbf{judgment-3} (required) --- Explains that 0.005 makes the result seem four times rarer and overstates the evidence.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Chooses the matched simulation, supports that choice with the failed normal condition or displayed shape, uses 0.020 for the 5 percent decision, and explains how 0.005 overstates rarity without claiming causation. \\ \hline
-\textbf{P} & Chooses the simulation and reaches the correct evidence decision but omits either the shape or expected-count support, the quantitative comparison, or the consequence for a reader. \\ \hline
-\textbf{I} & Chooses the normal result solely because it is smaller, treats the distribution as automatically normal, counts only exactly six incorrectly, or states that the result proves a cause. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -77,46 +76,37 @@
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-Suppose an app developer's model says that $p_0=0.20$ of all new users activate voice commands during their first day. A simple random sample of 12 new users includes 6 who activate the feature, so $\hat p=0.50$. Under the developer's model, a class simulates 200 samples of 12 independent users; the histogram shows the number of activations in each sample.\par\smallskip \textbf{Mara:} ``A normal model for $\hat p$ gives $P(\hat p\ge 0.50)\approx0.005$, so that is the chance probability I would report.''\par \textbf{Jules:} ``The simulated distribution is not very normal. I would estimate the chance probability directly from its tail.''\par
+Suppose a developer's model says $p_0=0.20$ of new app users activate voice commands. An SRS of 12 users includes 6 activations, so $\hat p=0.50$. The chart shows 200 simulated samples of 12 independent users under this model.\par\smallskip \textbf{Mara:} ``A normal model for $\hat p$ gives $P(\hat p\ge 0.50)\approx0.005$, so that is the chance probability I would report.''\par \textbf{Jules:} ``The simulated distribution is not very normal. I would estimate the chance probability directly from its tail.''\par
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
-  width=0.54\linewidth,
-  height=1.47in,
-  ybar interval, ymin=0, ymax=60,
-  xmin=0, xmax=7, xtick={0,1,2,3,4,5,6,7},
-  xlabel={Voice-command activations in one sample of 12}, ylabel={Simulated samples},
-  ymajorgrids, tick label style={font=\small}, label style={font=\small},
-  bar shift=0pt, x tick label as interval=false
+  width=0.98\linewidth,height=1.75in,
+  ybar,bar width=10pt,xmin=-0.6,xmax=6.6,ymin=0,ymax=70,
+  xtick={0,1,2,3,4,5,6},ytick={0,20,40,60},
+  xlabel={Activations in a sample of 12},ylabel={Simulated samples},
+  tick label style={font=\small},label style={font=\small},
+  nodes near coords,nodes near coords style={font=\scriptsize},
+  axis lines*=left
 ]
-\addplot[fill=calloutblue, draw=dayblue] coordinates {
-  (0,14)
-  (1,40)
-  (2,58)
-  (3,47)
-  (4,25)
-  (5,12)
-  (6,4)
-  (7,0)
-};
+\addplot[draw=dayblue,fill=dayblue!20] coordinates {(0,14) (1,40) (2,58) (3,47) (4,25) (5,12) (6,4)};
 \end{axis}
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which chance probability would you report, Mara's or Jules's? Cite one detail from the histogram or sample size.\par
+Whose method would you trust more, Mara's smooth curve or Jules's repeated trials? Give one reason from the picture.\par
 \answer{Not graded. Preserve the normal-model versus matched-simulation tension.}
 \end{firsttakebox}
 
 \textit{Rules callout ``CHECK THE SHAPE BEFORE USING NORMAL (keep on the page)'' is printed on the student sheet.}\par\medskip
 
 \dokbadge{1}~\textbf{(a)} State the most common number of activations in the simulated samples and describe the distribution as roughly symmetric, skewed left, or skewed right.\par
-\answer{Two activations is most common, occurring in 58 of the 200 simulations. The distribution is discrete and skewed right, with most results from 0 through 4 and a thinning tail toward 6.}
+\answer{Two activations is most common (58 simulations). The distribution is skewed right.}
 
-\dokbadge{2}~\textbf{(b)} Use the histogram to estimate $P(\hat p\ge0.50)$ under $p_0=0.20$. Then calculate $np_0$ and $n(1-p_0)$ and assess the expected-count condition for a normal approximation.\par
-\answer{Six activations out of 12 gives $\hat p=0.50$. Four simulations have 6 or more activations, so the simulated estimate is $4/200=0.020$. The expected counts are $np_0=12(0.20)=2.4$ and $n(1-p_0)=12(0.80)=9.6$; neither reaches 10, so the normal-approximation condition is not met.}
+\dokbadge{2}~\textbf{(b)} Use the chart to estimate $P(\hat p\ge0.50)$ under $p_0=0.20$. Then calculate $np_0$ and $n(1-p_0)$ and assess the expected-count condition for a normal approximation.\par
+\answer{The simulated tail is $4/200=0.020$. Expected counts $12(0.20)=2.4$ and $12(0.80)=9.6$ both fall below 10, so the normal condition fails.}
 
-\dokbadge{3}~\textbf{(c)} Choose the better chance-probability method and use a $5\%$ criterion to judge evidence against $p_0=0.20$. Cite the simulated tail and a shape or expected-count feature, compare $0.020$ with $0.005$, and explain the reader consequence of Mara's report.\par
-\answer{Use Jules's simulation: expected counts 2.4 and 9.6 fail the normal check, and the distribution is discrete and right-skewed. Its tail is $4/200=0.020<0.05$, convincing evidence against $p_0=0.20$ in the higher direction if the random sample is sound, but not proof of a cause. Mara's $0.005$ is one fourth as large, making the result appear four times rarer and overstating the evidence. The exact binomial tail, about $0.0194$, supports the simulation.}
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose a method using the simulated tail and either the shape or expected counts. Apply the $5\%$ evidence rule. Explain how reporting 0.005 instead of 0.020 would change a reader's impression.\par
+\answer{Use Jules's simulation: the failed expected counts and right skew weaken the normal approximation. The tail $0.020<0.05$ gives evidence against the model, without proving a cause. Reporting $0.005$ makes the result seem four times rarer and overstates the evidence.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

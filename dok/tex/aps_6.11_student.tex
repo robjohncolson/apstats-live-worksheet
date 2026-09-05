@@ -8,18 +8,18 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose a utility has 500,000 online accounts. It randomly selects 10,000, assigns 5,000 to message A and 5,000 to B, and records on-time payment. The pre-data question asks whether the population proportions differ at $\alpha=0.05$; deployment requires A to improve payment by at least 5 percentage points.\par\smallskip \textbf{Rowan:} ``I rejected equality, so A has proved an important improvement of at least 5 points. Deploy A.''\par \textbf{Salma:} ``Rejecting equality supports a nonzero difference, but does not automatically establish the separate 5-point requirement.''\par
+Suppose a utility has 500,000 online accounts. It randomly selects 10,000, randomly assigns 5,000 to message A and 5,000 to B, and records on-time payment. The pre-data question asks whether the population proportions differ at $\alpha=0.05$; deployment requires A to improve payment by at least 5 percentage points.\par\smallskip \textbf{Rowan:} ``I rejected equality, so A has proved an important improvement of at least 5 points. Deploy A.''\par \textbf{Salma:} ``Rejecting equality supports a nonzero difference, but does not automatically establish the separate 5-point requirement.''\par\smallskip Conditions have been verified: random selection and assignment; $10{,}000\leq50{,}000$; pooled expected counts 3,000 and 2,000 in each group.\par
 \begin{center}
 \textbf{On-time payment}\par\smallskip
 \begin{tabular}{|l|c|c|c|}
 \hline
-\textbf{Message} & \textbf{n} & \textbf{Paid} & \textbf{Other} \\ \hline
-\textbf{A} & 5,000 & 3,050 & 1,950 \\ \hline
-\textbf{B} & 5,000 & 2,950 & 2,050 \\ \hline
+\textbf{Text} & \textbf{n} & \textbf{Paid} & \textbf{Other} \\ \hline
+\textbf{A} & 5000 & 3050 & 1950 \\ \hline
+\textbf{B} & 5000 & 2950 & 2050 \\ \hline
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Whose report is more defensible, Rowan's or Salma's? Cite the observed gap or the claim tested.
+The observed improvement is 2 percentage points and the deployment target is 5. Is that enough to deploy? Give one reason.
 \workspace{0.9in}
 \end{firsttakebox}
 
@@ -27,7 +27,7 @@ Whose report is more defensible, Rowan's or Salma's? Cite the observed gap or th
 For $H_0:p_1-p_2=0$, pool $\hat p_c=(x_1+x_2)/(n_1+n_2)$ and use
 $z=\dfrac{(\hat p_1-\hat p_2)-0}{\sqrt{\hat p_c(1-\hat p_c)(1/n_1+1/n_2)}}$.
 A two-sided test uses $P(|Z|\ge |z|)$. The $p$-value assumes $H_0$ is true and measures
-how often random chance would produce a difference at least as extreme. If $p\le\alpha$, reject
+how often random chance would produce a difference at least as extreme. If the $p$-value is at most $\alpha$, reject
 $H_0$; otherwise fail to reject it. A test against zero addresses whether a difference exists;
 it does not by itself establish that the difference exceeds a separate practical threshold.
 \end{callout}
@@ -38,15 +38,15 @@ it does not by itself establish that the difference exceeds a separate practical
 \dokbadge{1}~\textbf{(a)} Calculate $\hat p_A$, $\hat p_B$, and the observed difference $\hat p_A-\hat p_B$.\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Verify conditions and carry out the two-sided two-sample $z$-test of $H_0:p_A-p_B=0$. Compute $\hat p_c$, pooled SE, $z$, and the $p$-value; interpret the $p$-value and decide at $\alpha=0.05$.\par
+\dokbadge{2}~\textbf{(b)} Using the verified conditions, calculate the pooled proportion, pooled SE, $z$, and the two-sided $p$-value for $H_0:p_A-p_B=0$.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Decide which report is warranted. Use the $p$-value, observed gap, 5-point standard, and null value. Explain what the rejected report would mislead a reader to believe and name the confidence level and endpoint criterion needed for deployment.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose a report using the $p$-value, the 2-point observed gap, and the 5-point target. Explain what the test against zero establishes and why that does or does not justify deployment.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} Because $p=\blank[0.7in]$ is \blank[0.6in] $\alpha$, I would \blank[1.0in] $H_0$ and report \blank[2.1in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The p-value supports \blank[2.0in], because \blank[1.8in].\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} That decision does not establish 5 points because \blank[2.4in]; deployment would require an interval \blank[2.1in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The test compares the difference with \blank[0.7in], but deployment requires \blank[1.1in]; therefore \blank[2.0in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

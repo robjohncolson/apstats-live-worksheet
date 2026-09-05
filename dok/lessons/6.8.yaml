@@ -1,7 +1,7 @@
 # Topic 6.8 — Confidence Intervals for the Difference of Two Proportions (B: 2026-12-11)
 topic: "6.8"
 ced2026: { unit: 3, topic: "3.10", label: "Confidence Intervals for a Difference in Population Proportions" }
-title: "One Difference, Not Two Separate Intervals"
+title: "Two Ways to Build an Interval"
 minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
 essential_question: "How do the study design and variance structure determine a valid interval for a difference in population proportions?"
 worksheet: "u6_lesson8_live.html"
@@ -9,12 +9,12 @@ worksheet: "u6_lesson8_live.html"
 rules_callout:
   title: "BUILD ONE INTERVAL FOR THE DIFFERENCE (keep on the page)"
   body: |
-    For two independent random samples, estimate $p_1-p_2$ with a two-sample $z$-interval:
+    For two independent random samples, use a two-sample $z$-interval for $p_1-p_2$:
     $(\hat p_1-\hat p_2)\pm z^*\sqrt{\hat p_1(1-\hat p_1)/n_1+\hat p_2(1-\hat p_2)/n_2}$.
-    Verify independent random samples or random assignment, $n_i\leq0.10N_i$ when sampling without replacement,
-    and at least 10 observed successes and failures in each group. For an interval, use each group's sample
-    proportion separately; because the samples are independent, estimated variances add before taking the square root.
-    Two separately constructed $C\%$ intervals do not automatically combine into one $C\%$ interval for $p_1-p_2$.
+    For 95\% confidence, $z^*=1.96$. Check independent random samples or random assignment,
+    each $n_i\leq0.10N_i$ when sampling without replacement, and at least 10 observed successes and failures in each group.
+    Independent estimated variances add under one square root. Confidence belongs to the procedure used to construct the interval.
+    An interval for a difference that includes 0 leaves equal proportions plausible; one entirely above 0 supports a positive difference.
 
 focus: aps-6.8-d3-1
 reinforcement: []

@@ -1,7 +1,7 @@
 # Topic 6.6 — Concluding a Test for a Population Proportion
 topic: "6.6"
 ced2026: { unit: 3, topic: "3.7", label: "Carrying Out a Test for a Proportion" }
-title: "Significant Does Not Mean Caused"
+title: "Sorting Trays After New Labels"
 minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
 essential_question: "How do the p-value, practical importance, and study design jointly limit a test conclusion?"
 worksheet: "u6_lesson6_live.html"
@@ -9,10 +9,11 @@ worksheet: "u6_lesson6_live.html"
 rules_callout:
   title: "MAKE THE DECISION, THEN BOUND THE CLAIM (keep on the page)"
   body: |
-    Compare the $p$-value with the predetermined $\alpha$: if $p\text{-value}\leq\alpha$, reject $H_0$;
-    otherwise fail to reject $H_0$. State evidence for $H_a$ in context; never report the $p$-value as
-    $P(H_0\text{ is true})$. Statistical significance does not by itself establish practical importance or causation.
-    A random sample supports inference to the sampled population, while cause requires random assignment.
+    For a one-proportion test, $z=(\widehat p-p_0)/\sqrt{p_0(1-p_0)/n}$; for $H_a:p<p_0$, use the left normal tail.
+    If the $p$-value is at most the predetermined $\alpha$, reject $H_0$; otherwise fail to reject it.
+    State evidence for $H_a$ in context. Failing to reject does not establish that $H_0$ is true.
+    Statistical significance uses the evidence rule; practical importance asks whether an effect is large enough to matter.
+    A random sample supports inference to its population. A cause requires a comparison with random assignment.
 
 focus: aps-6.6-d3-1
 reinforcement: []

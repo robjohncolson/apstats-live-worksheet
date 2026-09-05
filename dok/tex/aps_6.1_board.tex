@@ -8,48 +8,39 @@
 \begin{document}
 \pagestyle{empty}
 
-\daybanner{Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ TODAY'S PROBLEM}{When a Normal Curve Distorts the Tail}
+\daybanner{Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ TODAY'S PROBLEM}{Six Activations in Twelve Users}
 
 \noindent\begin{minipage}[t]{0.57\linewidth}
 \vspace{0pt}
-Suppose an app developer's model says that $p_0=0.20$ of all new users activate voice commands during their first day. A simple random sample of 12 new users includes 6 who activate the feature, so $\hat p=0.50$. Under the developer's model, a class simulates 200 samples of 12 independent users; the histogram shows the number of activations in each sample.\par\smallskip \textbf{Mara:} ``A normal model for $\hat p$ gives $P(\hat p\ge 0.50)\approx0.005$, so that is the chance probability I would report.''\par \textbf{Jules:} ``The simulated distribution is not very normal. I would estimate the chance probability directly from its tail.''\par
+Suppose a developer's model says $p_0=0.20$ of new app users activate voice commands. An SRS of 12 users includes 6 activations, so $\hat p=0.50$. The chart shows 200 simulated samples of 12 independent users under this model.\par\smallskip \textbf{Mara:} ``A normal model for $\hat p$ gives $P(\hat p\ge 0.50)\approx0.005$, so that is the chance probability I would report.''\par \textbf{Jules:} ``The simulated distribution is not very normal. I would estimate the chance probability directly from its tail.''\par
 \end{minipage}\hfill
 \begin{minipage}[t]{0.40\linewidth}
 \vspace{0pt}
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
-  width=0.68\linewidth,
-  height=1.84in,
-  ybar interval, ymin=0, ymax=60,
-  xmin=0, xmax=7, xtick={0,1,2,3,4,5,6,7},
-  xlabel={Voice-command activations in one sample of 12}, ylabel={Simulated samples},
-  ymajorgrids, tick label style={font=\small}, label style={font=\small},
-  bar shift=0pt, x tick label as interval=false
+  width=0.98\linewidth,height=1.75in,
+  ybar,bar width=10pt,xmin=-0.6,xmax=6.6,ymin=0,ymax=70,
+  xtick={0,1,2,3,4,5,6},ytick={0,20,40,60},
+  xlabel={Activations in a sample of 12},ylabel={Simulated samples},
+  tick label style={font=\small},label style={font=\small},
+  nodes near coords,nodes near coords style={font=\scriptsize},
+  axis lines*=left
 ]
-\addplot[fill=calloutblue, draw=dayblue] coordinates {
-  (0,14)
-  (1,40)
-  (2,58)
-  (3,47)
-  (4,25)
-  (5,12)
-  (6,4)
-  (7,0)
-};
+\addplot[draw=dayblue,fill=dayblue!20] coordinates {(0,14) (1,40) (2,58) (3,47) (4,25) (5,12) (6,4)};
 \end{axis}
 \end{tikzpicture}
 \end{center}
 \end{minipage}
 
 \begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
-Which chance probability would you report, Mara's or Jules's? Cite one detail from the histogram or sample size.
+Whose method would you trust more, Mara's smooth curve or Jules's repeated trials? Give one reason from the picture.
 \end{firsttakebox}
 
 \begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
   \item[\dokbadge{1}~(a)] State the most common number of activations in the simulated samples and describe the distribution as roughly symmetric, skewed left, or skewed right.
-  \item[\dokbadge{2}~(b)] Use the histogram to estimate $P(\hat p\ge0.50)$ under $p_0=0.20$. Then calculate $np_0$ and $n(1-p_0)$ and assess the expected-count condition for a normal approximation.
-  \item[\dokbadge{3}~(c)] Choose the better chance-probability method and use a $5\%$ criterion to judge evidence against $p_0=0.20$. Cite the simulated tail and a shape or expected-count feature, compare $0.020$ with $0.005$, and explain the reader consequence of Mara's report.
+  \item[\dokbadge{2}~(b)] Use the chart to estimate $P(\hat p\ge0.50)$ under $p_0=0.20$. Then calculate $np_0$ and $n(1-p_0)$ and assess the expected-count condition for a normal approximation.
+  \item[\dokbadge{3}~(c)] In 3--4 sentences, choose a method using the simulated tail and either the shape or expected counts. Apply the $5\%$ evidence rule. Explain how reporting 0.005 instead of 0.020 would change a reader's impression.
 \end{description}
 
 \vfill

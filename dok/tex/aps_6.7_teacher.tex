@@ -43,7 +43,7 @@
 }
 \textbf{Essential question:} How should the consequences of false positives and false negatives shape a testing plan?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{alpha-\allowbreak{}vs-\allowbreak{}power-\allowbreak{}which-\allowbreak{}error-\allowbreak{}tradeoff-\allowbreak{}fits-\allowbreak{}consequences}}\par
-\textbf{DOK rationale:} Part (c) translates operating probabilities into contextual consequences, weighs two stakeholders' competing priorities, critiques two absolute claims, and proposes a design change that improves detection without erasing the tradeoff.\par
+\textbf{DOK rationale:} Part (c) weighs both conditional error risks and their consequences to recommend a plan for a stated priority and explain why another priority can support another plan.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -76,25 +76,23 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{computes-both-error-risks} (required) --- Uses $\beta=1-\text{power}$ and Type I risk $\alpha$
-  \item \textbf{recommends-conditionally} (required) --- Makes a stakeholder-linked, conditional recommendation
-  \item \textbf{acknowledges-tradeoff} (required) --- Contrasts 129 fewer misses with 40 more false replacements
-  \item \textbf{critiques-both-claims} (required) --- Explains why neither lower nor higher $\alpha$ is cost-free
-  \item \textbf{proposes-sample-size-change} (required) --- Raises $n$ to improve power at fixed $\alpha$
+  \item \textbf{judgment-1} (required) --- Makes an office-linked recommendation and uses the two Type I risks, 0.010 and 0.050.
+  \item \textbf{judgment-2} (required) --- Uses Type II risks 0.252 and 0.123 and connects each error type to keeping or replacing the system in the appropriate true state.
+  \item \textbf{judgment-3} (required) --- Critiques both absolute claims and explains why different priorities can justify different choices.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Quantifies both errors, recommends conditionally, states the tradeoff and missing costs, critiques both claims, and raises $n$. \\ \hline
-\textbf{P} & Defends a plan but omits a consequence, critique, comparison, missing input, or design change. \\ \hline
-\textbf{I} & Uses $1-\alpha$ for $\beta$, calls either plan cost-free, or names a universal winner. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-A district tests $H_0:p=0.05$ versus $H_a:p>0.05$, where $p$ is the late-alert proportion. Both plans use $n=200$ and have the table's operating probabilities. Safety prioritizes avoiding retention when $p=0.10$; Budget prioritizes avoiding replacement when $p=0.05$. No common cost scale exists.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
+A district checks an emergency-alert system. Let $p$ be the proportion of alerts that arrive late. It tests $H_0:p=0.05$ versus $H_a:p>0.05$, replacing the system if it rejects $H_0$. Both plans use $n=200$. The Safety office wants to avoid keeping a system with a 10\% late rate. The Budget office wants to avoid replacing a system with a 5\% late rate. The offices have not agreed how to compare these costs.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
 \begin{center}
 \textbf{Test plans ($n=200$)}\par\smallskip
 \begin{tabular}{|l|c|c|}
@@ -111,14 +109,14 @@ Which plan would you try first? Name the office you prioritized and one competin
 
 \textit{Rules callout ``ERROR PROBABILITIES TRADE OFF (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} Describe a Type I error and a Type II error in this context. Identify what $P(\text{reject }H_0\mid p=0.10)$ represents.\par
-\answer{A Type I error rejects $H_0$ and concludes that more than 5 percent of alerts are late, causing the district to replace the system, when the true late rate is 0.05. A Type II error fails to reject $H_0$ and retains the system when its true late rate exceeds 0.05; at the specified alternative, the true rate is 0.10. The conditional rejection probability at $p=0.10$ is the power against $p=0.10$.}
+\dokbadge{1}~\textbf{(a)} Identify what the table's power at $p=0.10$ means in this setting.\par
+\answer{Power is the probability that the test rejects $H_0$ and replaces the system when its true late-alert rate is 10\%.}
 
-\dokbadge{2}~\textbf{(b)} For each plan, calculate $\beta$. Then give the expected number of Type I errors per 1{,}000 repeated tests when $p=0.05$ and Type II errors per 1{,}000 repeated tests when $p=0.10$.\par
-\answer{Plan A has $\beta=1-0.748=0.252$; per 1{,}000 repetitions it produces about $1{,}000(0.010)=10$ Type I errors when $p=0.05$ and $1{,}000(0.252)=252$ Type II errors when $p=0.10$. Plan B has $\beta=1-0.877=0.123$; it produces about $1{,}000(0.050)=50$ Type I errors and $1{,}000(0.123)=123$ Type II errors in the corresponding states.}
+\dokbadge{2}~\textbf{(b)} Calculate the Type II error probability $\beta$ for each plan. State each plan's Type I error probability.\par
+\answer{A: $\beta=1-0.748=0.252$ and Type I risk $\alpha=0.010$. B: $\beta=1-0.877=0.123$ and Type I risk $\alpha=0.050$.}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate both claims. Explain why no plan is universally best; recommend one for a stated office using both error probabilities and their per-1{,}000 consequences. Name information needed for a district-wide choice and a change that improves power at fixed $\alpha$.\par
-\answer{No plan is universally best without consequence weights. For Safety, B is defensible: power is 0.877 versus 0.748, so Type II risk is 0.123 versus 0.252---123 versus 252 misses per 1{,}000 at $p=0.10$. For Budget, A is defensible: Type I risk is 0.010 versus 0.050---10 versus 50 false replacements per 1{,}000 at $p=0.05$. Thus B trades 129 fewer misses for 40 more false replacements. Dev ignores that lower $\alpha$ raises Type II risk at fixed $n$; Lin hides B's false-positive cost. The district needs relative costs and likely true states. Increasing $n$ can raise power and lower $\beta$ while holding $\alpha$ fixed.}
+\dokbadge{3}~\textbf{(c)} In 4--5 sentences, recommend a plan for one office using both error risks. Explain the consequence of each error and what Dev and Lin each overlook. State why the other office might choose differently.\par
+\answer{For Safety, choose B: its chance of keeping a system with a 10\% late rate is 0.123 versus 0.252 for A. But B has a 0.050 chance of unnecessary replacement when the rate is 5\%, compared with 0.010 for A. Dev overlooks that A's lower Type I risk comes with a higher Type II risk. Lin overlooks B's higher replacement risk. Budget could reasonably choose A because it prioritizes avoiding unnecessary replacement; neither office's priority makes one plan universally best.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

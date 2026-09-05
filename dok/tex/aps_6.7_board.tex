@@ -12,7 +12,7 @@
 
 \noindent\begin{minipage}[t]{0.57\linewidth}
 \vspace{0pt}
-A district tests $H_0:p=0.05$ versus $H_a:p>0.05$, where $p$ is the late-alert proportion. Both plans use $n=200$ and have the table's operating probabilities. Safety prioritizes avoiding retention when $p=0.10$; Budget prioritizes avoiding replacement when $p=0.05$. No common cost scale exists.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
+A district checks an emergency-alert system. Let $p$ be the proportion of alerts that arrive late. It tests $H_0:p=0.05$ versus $H_a:p>0.05$, replacing the system if it rejects $H_0$. Both plans use $n=200$. The Safety office wants to avoid keeping a system with a 10\% late rate. The Budget office wants to avoid replacing a system with a 5\% late rate. The offices have not agreed how to compare these costs.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
 \end{minipage}\hfill
 \begin{minipage}[t]{0.40\linewidth}
 \vspace{0pt}
@@ -32,9 +32,9 @@ Which plan would you try first? Name the office you prioritized and one competin
 \end{firsttakebox}
 
 \begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
-  \item[\dokbadge{1}~(a)] Describe a Type I error and a Type II error in this context. Identify what $P(\text{reject }H_0\mid p=0.10)$ represents.
-  \item[\dokbadge{2}~(b)] For each plan, calculate $\beta$. Then give the expected number of Type I errors per 1{,}000 repeated tests when $p=0.05$ and Type II errors per 1{,}000 repeated tests when $p=0.10$.
-  \item[\dokbadge{3}~(c)] Adjudicate both claims. Explain why no plan is universally best; recommend one for a stated office using both error probabilities and their per-1{,}000 consequences. Name information needed for a district-wide choice and a change that improves power at fixed $\alpha$.
+  \item[\dokbadge{1}~(a)] Identify what the table's power at $p=0.10$ means in this setting.
+  \item[\dokbadge{2}~(b)] Calculate the Type II error probability $\beta$ for each plan. State each plan's Type I error probability.
+  \item[\dokbadge{3}~(c)] In 4--5 sentences, recommend a plan for one office using both error risks. Explain the consequence of each error and what Dev and Lin each overlook. State why the other office might choose differently.
 \end{description}
 
 \vfill

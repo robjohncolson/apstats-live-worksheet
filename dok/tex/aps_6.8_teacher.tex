@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.10 \textperiodcentered\ B: 2026-12-11 \textperiodcentered\ E: 2027-01-22 \textperiodcentered\ TEACHER KEY}{One Difference, Not Two Separate Intervals}
+\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.10 \textperiodcentered\ B: 2026-12-11 \textperiodcentered\ E: 2027-01-22 \textperiodcentered\ TEACHER KEY}{Two Ways to Build an Interval}
 
 \sectionbanner{CED TETHER}
 
@@ -61,19 +61,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-two-sample-method} (required) --- Selects Elena's two-sample $z$-interval
-  \item \textbf{uses-design-and-counts} (required) --- Uses independent SRSs and counts 77, 63, 48, and 72
-  \item \textbf{explains-variance-combination} (required) --- Adds independent variance terms under one square root
-  \item \textbf{rejects-separate-interval-coverage} (required) --- Rejects automatic 95 percent coverage from two intervals
-  \item \textbf{traces-inferential-consequence} (required) --- Explains Devon's misleading inclusion of zero
+  \item \textbf{judgment-1} (required) --- Chooses Elena using independent samples and adding variance contributions under one square root.
+  \item \textbf{judgment-2} (required) --- Explains that separate intervals are not the requested 95 percent procedure for the difference.
+  \item \textbf{judgment-3} (required) --- Uses Elena's positive interval versus Devon's interval containing zero to explain the changed inference.
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Selects Elena, uses design and counts, explains variance and coverage, and diagnoses the false zero conclusion. \\ \hline
-\textbf{P} & Selects Elena but incompletely explains the rejected construction or its consequence. \\ \hline
-\textbf{I} & Uses separate intervals, pools samples, or ignores design and zero. \\ \hline
+\textbf{E} & Meets all three checks with correct contextual reasoning; equivalent wording is acceptable. \\ \hline
+\textbf{P} & Shows at least one substantive correct check, but has an omission or error that prevents E. \\ \hline
+\textbf{I} & Shows none of the three checks with substantive correct reasoning; a choice alone is insufficient. \\ \hline
 \end{tabular}}
 
 \clearpage
@@ -90,7 +88,7 @@ Town Oak has 2{,}200 households and Pine 1{,}800. Independent SRSs find 77 of 14
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which method gives the requested 95\% interval for $p_O-p_P$? Cite one design or numerical detail.\par
+The two reported ranges disagree about whether the towns could be equal. Which range would you trust, and why?\par
 \answer{Not graded. Equal centers do not make both uncertainty calculations valid.}
 \end{firsttakebox}
 
@@ -102,7 +100,7 @@ Which method gives the requested 95\% interval for $p_O-p_P$? Cite one design or
 \dokbadge{2}~\textbf{(b)} Check independent samples, both 10 percent conditions, and all four counts. Compute the estimate, SE, margin of error, and 95\% interval.\par
 \answer{The SRSs are independent; $140\le220$ and $120\le180$; and counts 77, 63, 48, and 72 exceed 10. Thus $\hat p_O-\hat p_P=0.55-0.40=0.15$, $SE=0.0613829$, and $ME=1.96(0.0613829)=0.1203104$. The interval is $(0.0296896,0.2703104)\approx(0.030,0.270)$.}
 
-\dokbadge{3}~\textbf{(c)} Choose the warranted method. Use design, counts, variance structure, and zero's location. Explain why separate 95\% intervals do not produce the requested coverage and how Devon's result misleads.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose a method using the independent samples and the variance formula. Explain why subtracting separate 95\% intervals does not establish a 95\% interval for the difference. Use zero's location to explain how the method changes the conclusion.\par
 \answer{Elena is warranted. Independent SRSs and counts 77, 63, 48, and 72 support one two-sample interval. Each sample proportion estimates its own population proportion; independence makes the two estimated variance terms add under one square root. Devon instead combines separate intervals $(0.4676,0.6324)$ and $(0.3123,0.4877)$ into $(-0.0201,0.3201)$. Two individual 95\% intervals do not guarantee one 95\% interval for their difference. His wider result includes zero and falsely makes no difference look plausible; Elena's requested interval supports a positive Oak-minus-Pine difference of about 3 to 27 points.}
 
 \begin{summaryexitbox}{EXIT}

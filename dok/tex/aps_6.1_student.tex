@@ -4,46 +4,36 @@
 
 \begin{document}
 
-\ladderheading{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ B: 2026-11-24 \textperiodcentered\ E: 2026-12-23}{When a Normal Curve Distorts the Tail}
+\ladderheading{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ B: 2026-11-24 \textperiodcentered\ E: 2026-12-23}{Six Activations in Twelve Users}
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose an app developer's model says that $p_0=0.20$ of all new users activate voice commands during their first day. A simple random sample of 12 new users includes 6 who activate the feature, so $\hat p=0.50$. Under the developer's model, a class simulates 200 samples of 12 independent users; the histogram shows the number of activations in each sample.\par\smallskip \textbf{Mara:} ``A normal model for $\hat p$ gives $P(\hat p\ge 0.50)\approx0.005$, so that is the chance probability I would report.''\par \textbf{Jules:} ``The simulated distribution is not very normal. I would estimate the chance probability directly from its tail.''\par
+Suppose a developer's model says $p_0=0.20$ of new app users activate voice commands. An SRS of 12 users includes 6 activations, so $\hat p=0.50$. The chart shows 200 simulated samples of 12 independent users under this model.\par\smallskip \textbf{Mara:} ``A normal model for $\hat p$ gives $P(\hat p\ge 0.50)\approx0.005$, so that is the chance probability I would report.''\par \textbf{Jules:} ``The simulated distribution is not very normal. I would estimate the chance probability directly from its tail.''\par
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
-  width=0.68\linewidth,
-  height=1.84in,
-  ybar interval, ymin=0, ymax=60,
-  xmin=0, xmax=7, xtick={0,1,2,3,4,5,6,7},
-  xlabel={Voice-command activations in one sample of 12}, ylabel={Simulated samples},
-  ymajorgrids, tick label style={font=\small}, label style={font=\small},
-  bar shift=0pt, x tick label as interval=false
+  width=0.98\linewidth,height=1.75in,
+  ybar,bar width=10pt,xmin=-0.6,xmax=6.6,ymin=0,ymax=70,
+  xtick={0,1,2,3,4,5,6},ytick={0,20,40,60},
+  xlabel={Activations in a sample of 12},ylabel={Simulated samples},
+  tick label style={font=\small},label style={font=\small},
+  nodes near coords,nodes near coords style={font=\scriptsize},
+  axis lines*=left
 ]
-\addplot[fill=calloutblue, draw=dayblue] coordinates {
-  (0,14)
-  (1,40)
-  (2,58)
-  (3,47)
-  (4,25)
-  (5,12)
-  (6,4)
-  (7,0)
-};
+\addplot[draw=dayblue,fill=dayblue!20] coordinates {(0,14) (1,40) (2,58) (3,47) (4,25) (5,12) (6,4)};
 \end{axis}
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Which chance probability would you report, Mara's or Jules's? Cite one detail from the histogram or sample size.
+Whose method would you trust more, Mara's smooth curve or Jules's repeated trials? Give one reason from the picture.
 \workspace{0.9in}
 \end{firsttakebox}
 
 \begin{callout}{\IconBook\ CHECK THE SHAPE BEFORE USING NORMAL (keep on the page)}{calloutgreen}
-Under a proposed proportion $p_0$, the sampling distribution of $\hat p$ has center $p_0$ and
-standard deviation $\sqrt{p_0(1-p_0)/n}$. A normal approximation needs both expected counts
-$np_0\ge 10$ and $n(1-p_0)\ge 10$. A matched simulation does not need a normal shape: estimate
-a one-sided chance probability by counting simulated results at least as large as the observed result.
-A small chance probability is evidence against the proposed model, not proof of a particular cause.
+Under a proposed proportion $p_0$, check expected counts $np_0\geq10$ and $n(1-p_0)\geq10$ before using a normal approximation.
+A matched simulation estimates the chance probability by the number of simulated results at least as large as the observed result, divided by the total simulations.
+For this task, a chance probability below $5\%$ counts as convincing evidence against the proposed model.
+Evidence against a model does not prove a particular cause.
 \end{callout}
 
 \newpage
@@ -52,10 +42,10 @@ A small chance probability is evidence against the proposed model, not proof of 
 \dokbadge{1}~\textbf{(a)} State the most common number of activations in the simulated samples and describe the distribution as roughly symmetric, skewed left, or skewed right.\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Use the histogram to estimate $P(\hat p\ge0.50)$ under $p_0=0.20$. Then calculate $np_0$ and $n(1-p_0)$ and assess the expected-count condition for a normal approximation.\par
+\dokbadge{2}~\textbf{(b)} Use the chart to estimate $P(\hat p\ge0.50)$ under $p_0=0.20$. Then calculate $np_0$ and $n(1-p_0)$ and assess the expected-count condition for a normal approximation.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Choose the better chance-probability method and use a $5\%$ criterion to judge evidence against $p_0=0.20$. Cite the simulated tail and a shape or expected-count feature, compare $0.020$ with $0.005$, and explain the reader consequence of Mara's report.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose a method using the simulated tail and either the shape or expected counts. Apply the $5\%$ evidence rule. Explain how reporting 0.005 instead of 0.020 would change a reader's impression.\par
 \workspace{2.0in}
 
 \begin{sentenceframebox}\raggedright\textbf{Frame:} I would use \blank[1.2in] because the expected counts are \blank[1.5in] and the simulated shape is \blank[1.4in].\end{sentenceframebox}
