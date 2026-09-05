@@ -1,0 +1,479 @@
+[
+  {
+    "topic": "1.1",
+    "date": "2026-09-08",
+    "title": "What Can These Data Support?",
+    "verdicts": {
+      "Alignment": "FIX",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson1_live.html",
+    "flashcards": "u1_l1_blooket.csv",
+    "tether": "dok/lessons/1.1.yaml tether",
+    "concepts_and_skills": "One-variable questions, context, variation, thresholds; count/total and effect of omitting valid data.",
+    "changes": "Replaced sleep/quiz causal claims with sleep-only full-versus-omitted claims; retained the newspaper/class/sleep setting and claim-vs-data FRQ pattern.",
+    "load_after": "a: 1 line; b: 2 fractions/percents; c: 3 sentences, threshold + omission mechanism.",
+    "replaced": true,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson1_live.html": "553d3b3575d33a9f82be90d17d1d0d9688316bb9d75b6f4d444a8c313aeebda4",
+      "u1_l1_blooket.csv": "a6a9f179a2648f082d701ab34f84e23e05488ded20dc0071046d1efbcb559433",
+      "dok/lessons/1.1.yaml": "6d5f0ab7e43ee1700c9eeb4bbf10f6edee07ec56b67a3b6ec3004c6a27682a67",
+      "dok/registry/1.1.jsonl": "b353c14555f84393ff497fd379324c39e2ae4678a06c0835803cbf122c933920"
+    }
+  },
+  {
+    "topic": "1.2",
+    "date": "2026-09-10",
+    "title": "Getting to School: Survey Data",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "FIX",
+      "Callout": "FIX",
+      "Visual": "FIX",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson2_live.html",
+    "flashcards": "u1_l2_blooket.csv",
+    "tether": "ai-tutor/u1_l2.md",
+    "concepts_and_skills": "Individuals/identifiers, categorical labels versus measured or counted quantities; numeric labels and grouping.",
+    "changes": "Defined rating and columns; plain average-ZIP first take; removed extra classifications and the invalid twice-as-big test; required explicit equal-step assumption for a quantitative rating. Neutral title.",
+    "load_after": "a: 1 line; b: 3 classifications + 1 unit; c: 3 sentences, ZIP meaning + rating assumption.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson2_live.html": "5b2ce8188371c3abc5aeea56175c03b03408792a8b572dab976c4804d2208c8e",
+      "u1_l2_blooket.csv": "86281b87fd384855745f9280a38f7d0b0a8d612bb8b2b01fffbeea18115fcc11",
+      "dok/lessons/1.2.yaml": "e4d6e6f60cfe83009e40cfc002f1d66737f8c4d5b89eb0f98d6d86874691c730",
+      "dok/registry/1.2.jsonl": "46e6838cb21d6c54d403cf7dfddf07e89cb146cb31bcaa7dc7377d652ebbd6aa",
+      "ai-tutor/u1_l2.md": "109e6154c836a7a4681f5f12213f0df9e7cce4765b3f56f82be3c243fb7e6061"
+    }
+  },
+  {
+    "topic": "1.3",
+    "date": "2026-09-11",
+    "title": "A Percent Needs Its Base",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson3_live.html",
+    "flashcards": "u1_l3_blooket.csv",
+    "tether": "ai-tutor/u1_l3.md",
+    "concepts_and_skills": "Frequency and relative frequency tables, category shares, percent=count/total; justify a contextual claim.",
+    "changes": "Reduced four percents to two; replaced false claim that the complete count table hides totals with people-versus-share reasoning; both interpretations still earn E.",
+    "load_after": "a: 1 count; b: 2 percents; c: 3 sentences, chosen interpretation + reversed lead + totals.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson3_live.html": "a17db5a9f557a2013ae4dd894f6c5fd4d1bb162e2fe9fdc4cd0600be51114bdd",
+      "u1_l3_blooket.csv": "f567e4225a55d578afdef3fe9ef59272ffb1daadeef55f1c5bba315180dfcbf5",
+      "dok/lessons/1.3.yaml": "78795232e297d6e44b14e1dadb40cd91c9d6d0af8224fb08d224f67c9b16ffc1",
+      "dok/registry/1.3.jsonl": "57afe665ebc2fc5529f0f7e258cb2f68eaadc8ecda175dc2e6d2e44971448b6e",
+      "ai-tutor/u1_l3.md": "cc577ce84ba7e9eccb4a946366a826c63f60b4728bb1adf5aa2d9a3179e4ebf6"
+    }
+  },
+  {
+    "topic": "1.4",
+    "date": "2026-09-14",
+    "title": "Same Counts, Different Message",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "FIX",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson4_live.html",
+    "flashcards": "u1_l4_blooket.csv",
+    "tether": "ai-tutor/u1_l4.md",
+    "concepts_and_skills": "Zero-baseline equal-width bar charts, relative frequencies, comparison of categories; pie chart limitations.",
+    "changes": "Removed four percentages, percent increase and an extra bar/pie choice; compare visible heights to counts and judge both headlines. Stack graphs in the narrow board column for readable labels.",
+    "load_after": "a: 2 counts + 1 difference; b: 2 subtractions; c: 3-4 sentences, scale + evidence + headline.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson4_live.html": "6d304717f4099ae6acb237c2ec5fa233377a0a2239d0e216860c8033d9fec192",
+      "u1_l4_blooket.csv": "b37f6786e8938d2aca2989e350e6e1c80316f22b2909623e802b716fc5dfb43b",
+      "dok/lessons/1.4.yaml": "3c7b0939bf5a150937c57685a68e107045d1569fc6554e83b1534846d15bbad4",
+      "dok/registry/1.4.jsonl": "42213e1f9f05178c0864df0fa3730c36dcda1be958ba53963f1daf71cd7f26c3",
+      "ai-tutor/u1_l4.md": "486d5fcca068a53ec78e9dcbc9f046aef175b26cb9f67819616bf912c51fc67f"
+    }
+  },
+  {
+    "topic": "1.5",
+    "date": "2026-09-15",
+    "title": "Same Data, Different Bins",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "FIX",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson5_live.html",
+    "flashcards": "u1_l5_blooket.csv",
+    "tether": "ai-tutor/u1_l5.md",
+    "concepts_and_skills": "Discrete/continuous quantities; dotplots, stem plots and histogram intervals; wide bins hide detail.",
+    "changes": "Dropped a second use-case question; explained needed day labels; replaced exact raw values unavailable in the histogram with readable bin intervals. Stack graphs in the narrow board column for readable labels.",
+    "load_after": "a: 2 widths + 1 count; b: 2 sentences; c: 3 sentences, hidden gap + impression + day labels.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson5_live.html": "6ab10d80d10678f94a1871e55c65dba7ce53b2a96c1a59b2992ef1ff911fc8b0",
+      "u1_l5_blooket.csv": "38dac8143ca4fabe873e5bb3e6ca83368a4121550d4dc83b2b08c22679ebfcbe",
+      "dok/lessons/1.5.yaml": "0bf3f34bdd23c3ee8b9cd17f23cf70908e5d219cabac0febb425a5dee690bcb0",
+      "dok/registry/1.5.jsonl": "c756ac5e4557bbca024ee05d04b088aaac753855377d508990aaeca7f693d553",
+      "ai-tutor/u1_l5.md": "02ffcacedec82815d37fd91be29bb98f69c8167519ca0057de73bce58f3f4707"
+    }
+  },
+  {
+    "topic": "1.6",
+    "date": "2026-09-17",
+    "title": "Describing a Distribution",
+    "verdicts": {
+      "Alignment": "FIX",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson6_live.html",
+    "flashcards": "u1_l6_blooket.csv",
+    "tether": "ai-tutor/u1_l6.md",
+    "concepts_and_skills": "Shape, visual center, variability, gaps/clusters/outliers; contextual descriptions, no mean/median selection yet.",
+    "changes": "Removed premature median/mean-resistance task; retained Ana/Ben and histogram, with DOK-3 about why a typical-time-only report is incomplete; corrected unsupported exact endpoints/mean. Rubric accepts any two distinct valid graph features.",
+    "load_after": "a: 1 bin; b: 2-3 sentences describing four features; c: 3 sentences, tail + gap + consequence.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson6_live.html": "31df565422edec588837cab9c5cb7cdf86bf1607a3f583bea2131e01ec624123",
+      "u1_l6_blooket.csv": "1cdb5755b45a89b8f1e300f3d56f3081ded3d9fec4c4a5564e1bbebceae99b62",
+      "dok/lessons/1.6.yaml": "b7de3cb686053dfd5472d97cf45f5e1d793caadcc00fa02a263e29221c007a7f",
+      "dok/registry/1.6.jsonl": "9c3e169cd77f822d907207efc6eabe3fdb857c29db137ef7d2749e645c1045b8",
+      "ai-tutor/u1_l6.md": "81a3d29783f2234ed8c169af9a13d5085a6f8301b76a08058ec0e046491c3da4"
+    }
+  },
+  {
+    "topic": "1.7",
+    "date": "2026-09-21",
+    "title": "Which Summary Tells the Story?",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson7_live.html",
+    "flashcards": "u1_l7_blooket.csv",
+    "tether": "ai-tutor/u1_l7.md",
+    "concepts_and_skills": "Mean/median, quartiles/IQR, SD, outlier fences, resistance and summary choice.",
+    "changes": "Supplied mean/SD as given instead of recalculating 15 deviations; only upper fence required; called the quartile rule the printed convention rather than the unique AP convention.",
+    "load_after": "a: 2 values; b: 2 quartiles + IQR + upper fence; c: 3 sentences, method + corrected pair + resistance.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson7_live.html": "c74f791a340c7604970f2dd3754e5f037e937af131df9c01e0eb711c235a9d1f",
+      "u1_l7_blooket.csv": "3587397fe58b4d2a56e52dc0614528fca7f57be81568cd28b61fcd9a5426c690",
+      "dok/lessons/1.7.yaml": "21740114fb2b73e22950366803a8f3d5acad0a9fae8be731a8d808de72081468",
+      "dok/registry/1.7.jsonl": "5e487cf4b53af4cfe007ee9943ccecfce6bc7ff8795894eb6b43d92b435123aa",
+      "ai-tutor/u1_l7.md": "7f346b5f13cb39144087bb92e724ce6020b5bde3b9e26d468629a54761ad21f0"
+    }
+  },
+  {
+    "topic": "1.8",
+    "date": "2026-09-22",
+    "title": "Two Displays, One Data Set",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "PASS",
+      "Callout": "PASS",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson8_live.html",
+    "flashcards": "u1_l8_blooket.csv",
+    "tether": "ai-tutor/u1_l8.md",
+    "concepts_and_skills": "Five-number summary, box/median/whiskers, hidden individual values and shape; mean/median relationship.",
+    "changes": "Trimmed repeated display descriptions; use the dotplot count for the coach; key describes a possible misreading of the boxplot rather than an implied actual pile near 32.",
+    "load_after": "a: 3 values; b: 2 sentences + count; c: 3 sentences, gap + limitation + 12/24 decision.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson8_live.html": "6e8994b8d1c44999daa4d93a7a5488940e2310b55b74775835cd006d46401daa",
+      "u1_l8_blooket.csv": "b475b5bffdc6eb704bbe13d23e1853b92960ac8aa854c7ca0e35d2963188f0b4",
+      "dok/lessons/1.8.yaml": "400a044e0b2a2c98f74d7ac20f3af66c80f0a4de9a0c66eb68bffca01aabc341",
+      "dok/registry/1.8.jsonl": "3956f80681eeabe6151efa4c753a7099e04efa050a3dccc7e2e0f5f195ecbdcc",
+      "ai-tutor/u1_l8.md": "2ad3aa01cf9a75b488ec31c996c2db6649a1b8229aad1949fa1c2b58bd397c7d"
+    }
+  },
+  {
+    "topic": "1.9",
+    "date": "2026-09-24",
+    "title": "Which Class Did Better?",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "PASS",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson9_live.html",
+    "flashcards": "u1_l9_blooket.csv",
+    "tether": "ai-tutor/u1_l9.md",
+    "concepts_and_skills": "Comparative SOCS, medians/IQR/range, qualified boxplot shape, reasons to choose based on visible features.",
+    "changes": "Removed callout example stating the winning median comparison; corrected B range to 35 including the outlier; qualified shape and optional bus-route tail claims.",
+    "load_after": "a: 2 medians; b: 2-3 sentences with short spread differences; c: 3-4 sentences, center + spread + maximum limitation.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson9_live.html": "0cdc2b0b440a898362c8c2d8e88efc53ef8eb07f271342229667725253ee6664",
+      "u1_l9_blooket.csv": "b2d0b56237a112499d6b99fd57ac7816938087305882b225a5a4b1b3f583d40f",
+      "dok/lessons/1.9.yaml": "41942140c64915f706ba90a36c9fa7a3c3a31f1b012143fa0e36cbd59e51eeae",
+      "dok/registry/1.9.jsonl": "5a129e11f134e71d5cf212ac14845cf7d9b7ef2400e9930c5b2af25e09e1aa8b",
+      "ai-tutor/u1_l9.md": "248471a80f99134e7c234d77d20f40da02e4a6b95918d60dd0a69473c651436c"
+    }
+  },
+  {
+    "topic": "3.1",
+    "date": "2026-09-25",
+    "title": "Who Chose Whom?",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "PASS",
+      "Reading": "PASS",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u3_lesson1_live.html",
+    "flashcards": "u3_l1_blooket.csv",
+    "tether": "dok/lessons/3.1.yaml tether",
+    "concepts_and_skills": "Population/sample, chance selection, representativeness, missing cases and strong-view volunteers.",
+    "changes": "Removed demand for a later sampling-method label and misleading random-variability claim for opt-in responses; three reasoning elements preserve selection critique and repair.",
+    "load_after": "a: 1 population; b: 2 sentences; c: 3-4 sentences, chance selection + size limitation + repair.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u3_lesson1_live.html": "7df4642fa8ad020d7e4b8d4b7bdd5d890809990cd5d549774e793b16b0f31f20",
+      "u3_l1_blooket.csv": "d8121af39c92058aed1438b0037a378ec8c540da9a4344b498dd01d718b19289",
+      "dok/lessons/3.1.yaml": "076aca80a5898c6551655bd006d4721c24b7fd58181273e61e836d971ebde172",
+      "dok/registry/3.1.jsonl": "699d13d5e19a5ef0a997dd4991f3b2ef20c2a2e194f3a9d400edbdb71568f362"
+    }
+  },
+  {
+    "topic": "3.2",
+    "date": "2026-09-28",
+    "title": "What Can Each Study Claim?",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "PASS",
+      "Reading": "FIX",
+      "First take": "PASS",
+      "Callout": "FIX",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u3_lesson2_live.html",
+    "flashcards": "u3_l2_blooket.csv",
+    "tether": "ai-tutor/u3_l2.md",
+    "concepts_and_skills": "Observational/experimental studies; confounding factors; random selection for scope and imposed randomized treatments for cause.",
+    "changes": "Used the worksheet term outside/confounding factor, defined it in the callout, and reduced repeated classification explanations.",
+    "load_after": "a: 2 labels; b: 2 linked sentences; c: 3 sentences, random assignment + alternative cause + volunteer scope.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u3_lesson2_live.html": "8d438927c7f436ba1966600735befc840ec0405d4d67ce745b10810e2c217829",
+      "u3_l2_blooket.csv": "36959d93f788df53ed297fb615d88680ebad9b8c178f86d69d4fb59ae2355825",
+      "dok/lessons/3.2.yaml": "dd298d57e8886c87b98ebcff45bea952c994e12bb23b2127ef7c77799aa39949",
+      "dok/registry/3.2.jsonl": "e73dbb059ee1138e4342354a81103dc6137a43735589b75bfabbb180f947ed4e",
+      "ai-tutor/u3_l2.md": "2a93047c2fc2af3c2055d90c124a1cb9845ab282a42227c1722b416def13438e"
+    }
+  },
+  {
+    "topic": "3.3",
+    "date": "2026-09-29",
+    "title": "Three Ways to Sample Students",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "FIX",
+      "Callout": "PASS",
+      "Visual": "FIX",
+      "Key": "FIX"
+    },
+    "worksheet": "u3_lesson3_live.html",
+    "flashcards": "u3_l3_blooket.csv",
+    "tether": "ai-tutor/u3_l3.md",
+    "concepts_and_skills": "Census, SRS, systematic, stratified and cluster methods; samples possible under each and practical appropriateness.",
+    "changes": "Removed extra periodicity scenario; supplied equal grade sizes and explicit 50-person allocation; removed analyzed Per grade column and answer-bearing title.",
+    "load_after": "a: 3 labels; b: 2 sentences; c: 3 sentences, grade guarantee + alternatives + non-equivalence.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u3_lesson3_live.html": "3dc2a258b1c97101ae0fcedcf610c8e6688e0d1eb6020e554440eaed7fd84cde",
+      "u3_l3_blooket.csv": "d66f31a7c3995b036a4e788f2ec5a39e44fc4c5155dd4fba0d435a9d77f05237",
+      "dok/lessons/3.3.yaml": "313291d4db7109ed48ef7d9c7280fad488d95681b919eb669f919895322a94fd",
+      "dok/registry/3.3.jsonl": "6f9cead0c0cd8a4cd11da69d86dbd877e773c8bfde58a8f89122bded0188d892",
+      "ai-tutor/u3_l3.md": "b12b9bb2bb864c3c567aca8ccaf86a6614c593ac44bc200c7db160f472b53d65"
+    }
+  },
+  {
+    "topic": "3.4",
+    "date": "2026-10-01",
+    "title": "Two Surveys of Park Fees",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "PASS",
+      "First take": "PASS",
+      "Callout": "PASS",
+      "Visual": "FIX",
+      "Key": "FIX"
+    },
+    "worksheet": "u3_lesson4_live.html",
+    "flashcards": "u3_l4_blooket.csv",
+    "tether": "ai-tutor/u3_l4.md",
+    "concepts_and_skills": "Nonresponse, undercoverage, volunteer and wording bias; direction and population/sample explanations.",
+    "changes": "Neutral title; one matched repair instead of two; removed instructions that already named the two deciding problems.",
+    "load_after": "a: 2 rates; b: 2-3 sentences; c: 3 sentences, no accuracy ranking + both biases + one repair.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u3_lesson4_live.html": "65328132c6afea9cef297755f8e07ad6b2243fa081b5c4f9f1394206aa023599",
+      "u3_l4_blooket.csv": "3a8263e86f83f109b129afabe300bec0fcc1486e1c9653e46796715fb0399006",
+      "dok/lessons/3.4.yaml": "f9e77bcf5a81e76e00051e50f597aa5d68b1697df1ce0e15ef0d97e1f861a274",
+      "dok/registry/3.4.jsonl": "97da71c6922a5ad4faad634fbde2176ef82f88e371ce5061a1d7df94a202a7d5",
+      "ai-tutor/u3_l4.md": "04e860e1b30637f56c463991ce82be28044df6e2d33c92c230e90fc007ced600"
+    }
+  },
+  {
+    "topic": "3.5",
+    "date": "2026-10-02",
+    "title": "Which Design Supports Cause?",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "FIX",
+      "Callout": "PASS",
+      "Visual": "FIX",
+      "Key": "FIX"
+    },
+    "worksheet": "u3_lesson5_live.html",
+    "flashcards": "u3_l5_blooket.csv",
+    "tether": "dok/lessons/3.5.yaml tether",
+    "concepts_and_skills": "Experimental units/treatments/response; comparison, random assignment, replication/control, blinding; scope.",
+    "changes": "Trimmed full six-cell principles checklist; supplied response-time unit; neutral data-only design table and direct first take.",
+    "load_after": "a: 2 identifiers; b: 2-3 sentences; c: 3 sentences, assignment + alternative explanation + scope.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u3_lesson5_live.html": "bf59224f0f64c967d587652e491c9f6749f861ca642d7384201dcbdabfc71c29",
+      "u3_l5_blooket.csv": "ec669d0b8c262da75aa2c289f0ad73c4595d4981f882b39dc9799d8c9af651ce",
+      "dok/lessons/3.5.yaml": "b8a9115c0f0df70fec385be03dda6339ec97a29175cc85c30fb60dd4256e044e",
+      "dok/registry/3.5.jsonl": "af0d417ed688c1bf661aa0ce3c84bfef4202f1054fd48e285c7604ca5c4407b5"
+    }
+  },
+  {
+    "topic": "3.6",
+    "date": "2026-10-05",
+    "title": "Fertilizer in Two Greenhouses",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "PASS",
+      "First take": "PASS",
+      "Callout": "PASS",
+      "Visual": "FIX",
+      "Key": "FIX"
+    },
+    "worksheet": "u3_lesson6-7_live.html",
+    "flashcards": "u3_l6_l7_blooket.csv",
+    "tether": "ai-tutor/u3_l6.md",
+    "concepts_and_skills": "Blocking and within-block randomization, matched pairs, blinding/replication; combined worksheet also teaches significance and generalization.",
+    "changes": "Two pilot differences instead of four; bounded causal conclusion; removed title that prescribed blocking.",
+    "load_after": "a: 2 identifiers; b: 2 subtractions; c: 3-4 sentences, relative differences + imbalance + bounded cause.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u3_lesson6-7_live.html": "a0b2e256a1fd3e1be2bfb4090583af96b9ac63152cb56e5ef71d01af5d3875f9",
+      "u3_l6_l7_blooket.csv": "1c6d59b2f2a0ecabf4407fb6ee0962b9babefe86a57c5bdd136df931eb8efaa8",
+      "dok/lessons/3.6.yaml": "3affefac6453274c787fb583743377141467644d752dc0426787af30d35aeb02",
+      "dok/registry/3.6.jsonl": "3ee64af4001bef8673721a86dfe7f3e7fdfb672ee84aadb21c4922adfa5ac321",
+      "ai-tutor/u3_l6.md": "598a0d1bf4fc5453d1fcd152fd79d89267f540a296490f7318618a8f82b3cea6"
+    }
+  },
+  {
+    "topic": "1.10",
+    "date": "2026-11-09",
+    "title": "Check the Model",
+    "verdicts": {
+      "Alignment": "PASS",
+      "Load": "FIX",
+      "Reading": "FIX",
+      "First take": "FIX",
+      "Callout": "FIX",
+      "Visual": "PASS",
+      "Key": "FIX"
+    },
+    "worksheet": "u1_lesson10_live.html",
+    "flashcards": "u1_l10_blooket.csv",
+    "tether": "ai-tutor/u1_l10.md",
+    "concepts_and_skills": "Percentiles/z-scores; normal shape and empirical rule; Table A left/right/between/inverse; checking a model.",
+    "changes": "Plain first take; supplied Table A left area and missing right-tail rule; removed repetitive model-check extension while retaining shape and observed-tail evidence.",
+    "load_after": "a: 2 values; b: one z-check, one complement, one fraction, empirical tail; c: 3 sentences.",
+    "replaced": false,
+    "numeric_evidence": "numeric-units-1-3.py/.json",
+    "visual_qa": "Final student (2 pages), board (1 page), and teacher (3 pages) rasterized and opened; legible, no clipping or overfull boxes.",
+    "source_sha256": {
+      "u1_lesson10_live.html": "144c09b325696866b1d094502516ae3c9d1ffb0e7b7db933d1485f9bde8a7bb1",
+      "u1_l10_blooket.csv": "90dc11c5e2e1c0bd5e0b70d1cec68aa6126560bb61cbc2262a65e8c53d9aaf1e",
+      "dok/lessons/1.10.yaml": "e00d15065ddd024ded992e88188220d035a5684b6598c682f1229b0acd92369a",
+      "dok/registry/1.10.jsonl": "9798040a02aa5f69260818fa491e7b3dba6179d833cc7fd6078aba37e9c9449c",
+      "ai-tutor/u1_l10.md": "f6fb8cc223c398a9ea9c3eae2a1e8d491109e0537ab340868cb003c57131723e"
+    }
+  }
+]

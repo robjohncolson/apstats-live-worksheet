@@ -1,69 +1,94 @@
-# Topic 3.5 — Introduction to Experimental Design
 topic: "3.5"
-ced2026: { unit: 1, topic: "1.13", label: "Experimental Design" }
-title: "Which Design Supports Cause?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "Which design features let a researcher attribute a response difference to a treatment?"
-worksheet: "u3_lesson5_live.html"
-
+ced2026:
+  unit: 1
+  topic: '1.13'
+  label: Experimental Design
+title: Which Design Supports Cause?
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: Which design features let a researcher attribute a response difference to a treatment?
+worksheet: u3_lesson5_live.html
 rules_callout:
-  title: "PRINCIPLES OF EXPERIMENTAL DESIGN (keep on the page)"
-  body: |
-    A well-designed experiment uses \textbf{comparison}, \textbf{random assignment}, \textbf{replication}, and
+  title: PRINCIPLES OF EXPERIMENTAL DESIGN (keep on the page)
+  body: 'A well-designed experiment uses \textbf{comparison}, \textbf{random assignment}, \textbf{replication},
+    and
+
     control of potential confounding variables. A \textbf{control group} supplies a baseline. Random assignment
+
     tends to balance uncontrolled variables so a difference can be attributed to treatment. \textbf{Blinding}
+
     reduces changes caused by expectations or by how responses are measured. Selection still limits generalization.
 
+    '
 focus: aps-3.5-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.8in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
+    + turn in)
   teacher_does:
-    - "Board slide up at the bell. Ask for a design choice and one feature."
-    - "Begin the video follow-along at minute 5."
-    - "Return to the board slide at minute 33. Circulate and separate assignment, control, blinding, and selection."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Board slide up at the bell. Ask for a design choice and one feature.
+  - Begin the video follow-along at minute 5.
+  - Return to the board slide at minute 33. Circulate and separate assignment, control, blinding, and
+    selection.
+  - Collect at the door. Score part (c) only, E/P/I.
   students_do:
-    - "Choose a design and cite one feature before the lesson."
-    - "Complete the video follow-along about experimental units, treatments, responses, and design principles."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Choose a design and cite one feature before the lesson.
+  - Complete the video follow-along about experimental units, treatments, responses, and design principles.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What exactly did the researcher manipulate, and what was measured afterward?"
-    - "Which feature addresses preexisting differences between early and late volunteers?"
-    - "What does the control group reveal that one treatment group cannot?"
-    - "Who was randomized, and from what larger population were they not randomly selected?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require each named design feature to be linked to the threat it addresses; do not accept a list of principles without mechanisms."
+  - What exactly did the researcher manipulate, and what was measured afterward?
+  - Which feature addresses preexisting differences between early and late volunteers?
+  - What does the control group reveal that one treatment group cannot?
+  - Who was randomized, and from what larger population were they not randomly selected?
+  adult_role: Solo teacher. Circulate ~5 pairs. Require each named design feature to be linked to the
+    threat it addresses; do not accept a list of principles without mechanisms.
   watch_for:
-    - "Treating signup order or equal group size as random assignment."
-    - "Calling the study representative of teenagers because its treatments were randomized."
-    - "Naming blinding without saying whose expectations or measurements it protects."
-  first_take_note: "Not graded. Expect students to notice the coin flip before they can explain why it matters."
-
-# Focused subset distilled from ai-tutor/u3_l5.md to keep the teacher key within three pages.
+  - Treating signup order or equal group size as random assignment.
+  - Calling the study representative of teenagers because its treatments were randomized.
+  - Naming blinding without saying whose expectations or measurements it protects.
+  first_take_note: Not graded. Expect students to notice the coin flip before they can explain why it
+    matters.
 tether:
-  - '\textbf{Skill 1.C} --- Describe an appropriate method for gathering and representing data.'
-  - '\textbf{Skill 1.B} --- Identify key and relevant information to answer a question or solve a problem.'
-  - '\textbf{LO VAR-3.A} --- Identify the components of an experiment. [Skill 1.C]'
-  - '\textbf{EK VAR-3.A.1} --- The experimental units are the individuals (which may be people or other objects of study) that are assigned treatments.'
-  - '\textbf{EK VAR-3.A.2} --- An explanatory variable (or factor) in an experiment is a variable whose levels are manipulated intentionally. The levels or combination of levels are called treatments.'
-  - '\textbf{EK VAR-3.A.3} --- A response variable in an experiment is an outcome from the experimental units that is measured after the treatments have been administered.'
-  - '\textbf{LO VAR-3.B} --- Describe elements of a well-designed experiment. [Skill 1.B]'
-  - '\textbf{EK VAR-3.B.1} --- A well-designed experiment includes comparison, random assignment, replication, and control of potential confounding variables where appropriate.'
-  - '\textbf{EK VAR-3.C.1} --- Random assignment tends to balance uncontrolled variables so that differences in responses can be attributed to treatments.'
-  - '\textbf{EK VAR-3.C.4} --- In a double-blind experiment neither the subjects nor the research team members who interact with them know which treatment a subject is receiving.'
-  - '\textbf{EK VAR-3.C.5} --- A control group receives no treatment of interest or an inactive treatment so the treatment of interest can be evaluated.'
-
+- \textbf{Skill 1.C} --- Describe an appropriate method for gathering and representing data.
+- \textbf{Skill 1.B} --- Identify key and relevant information to answer a question or solve a problem.
+- \textbf{LO VAR-3.A} --- Identify the components of an experiment. [Skill 1.C]
+- \textbf{EK VAR-3.A.1} --- The experimental units are the individuals (which may be people or other objects
+  of study) that are assigned treatments.
+- \textbf{EK VAR-3.A.2} --- An explanatory variable (or factor) in an experiment is a variable whose levels
+  are manipulated intentionally. The levels or combination of levels are called treatments.
+- \textbf{EK VAR-3.A.3} --- A response variable in an experiment is an outcome from the experimental units
+  that is measured after the treatments have been administered.
+- \textbf{LO VAR-3.B} --- Describe elements of a well-designed experiment. [Skill 1.B]
+- \textbf{EK VAR-3.B.1} --- A well-designed experiment includes comparison, random assignment, replication,
+  and control of potential confounding variables where appropriate.
+- \textbf{EK VAR-3.C.1} --- Random assignment tends to balance uncontrolled variables so that differences
+  in responses can be attributed to treatments.
+- \textbf{EK VAR-3.C.4} --- In a double-blind experiment neither the subjects nor the research team members
+  who interact with them know which treatment a subject is receiving.
+- \textbf{EK VAR-3.C.5} --- A control group receives no treatment of interest or an inactive treatment
+  so the treatment of interest can be evaluated.
 visuals:
   designs_table:
     kind: two_way_table
-    col_label: "Two energy-drink designs"
-    row_label: '\#'
-    cols: ["Assign", "Control", "Blind"]
-    rows: ["1", "2"]
+    col_label: Two energy-drink designs
+    row_label: \#
+    cols:
+    - Drink allocation
+    - Tester told drink?
+    rows:
+    - '1'
+    - '2'
     cells:
-      - ["Signup", "Water", "No"]
-      - ["Coin", "Matched", "Both"]
+    - - First/last signup
+      - 'Yes'
+    - - Coin flip
+      - 'No'

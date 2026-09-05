@@ -1,56 +1,79 @@
-# Topic 3.6 — Selecting an Experimental Design
 topic: "3.6"
-ced2026: { unit: 1, topic: "1.13", label: "Experimental Design" }
-title: "When Blocking Earns Its Keep"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "When does blocking reveal a treatment effect more clearly than complete randomization?"
-worksheet: "u3_lesson6-7_live.html"
-
+ced2026:
+  unit: 1
+  topic: '1.13'
+  label: Experimental Design
+title: Fertilizer in Two Greenhouses
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: When does blocking reveal a treatment effect more clearly than complete randomization?
+worksheet: u3_lesson6-7_live.html
 rules_callout:
-  title: "BLOCK, RANDOMIZE, THEN INFER (keep on the page)"
-  body: |
-    In a \textbf{completely randomized design}, treatments are assigned across all units. In a
-    \textbf{randomized block design}, first group units that are similar on a relevant variable, then randomly
-    assign treatments \emph{within each block}. Blocking separates natural block-to-block variability from the
-    treatment comparison. Random assignment supports cause only when the observed difference is too large for
+  title: BLOCK, RANDOMIZE, THEN INFER (keep on the page)
+  body: 'In a \textbf{completely randomized design}, treatments are assigned across all units. In a
+
+    \textbf{randomized block design}, first group units that are similar on a relevant variable, then
+    randomly
+
+    assign treatments \emph{within each block}. Blocking separates natural block-to-block variability
+    from the
+
+    treatment comparison. Random assignment supports cause only when the observed difference is too large
+    for
+
     chance alone; generalization also requires units that represent the target population.
 
+    '
 focus: aps-3.6-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.8in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
+    + turn in)
   teacher_does:
-    - "Board slide up at the bell. Ask for a design choice before students calculate."
-    - "Begin the combined 3.6--3.7 video follow-along at minute 5."
-    - "Return to the board slide at minute 33. Circulate and compare block variation with treatment variation."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Board slide up at the bell. Ask for a design choice before students calculate.
+  - Begin the combined 3.6--3.7 video follow-along at minute 5.
+  - Return to the board slide at minute 33. Circulate and compare block variation with treatment variation.
+  - Collect at the door. Score part (c) only, E/P/I.
   students_do:
-    - "Choose complete randomization or blocking and cite one table feature."
-    - "Complete the follow-along about blocking, matched pairs, significance, causation, and generalization."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Choose complete randomization or blocking and cite one table feature.
+  - Complete the follow-along about blocking, matched pairs, significance, causation, and generalization.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Which comparison estimates fertilizer effect without mixing greenhouses?"
-    - "Which is larger: the greenhouse gap or the treatment gap?"
-    - "How could complete randomization accidentally pair treatment with shade?"
-    - "What does random assignment permit, what does significance add, and what would broader generalization need?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to name the nuisance variation that blocking removes and to separate causal inference from population generalization."
+  - Which comparison estimates fertilizer effect without mixing greenhouses?
+  - 'Which is larger: the greenhouse gap or the treatment gap?'
+  - How could complete randomization accidentally pair treatment with shade?
+  - What does random assignment permit, what does significance add, and what would broader generalization
+    need?
+  adult_role: Solo teacher. Circulate ~5 pairs. Ask students to name the nuisance variation that blocking
+    removes and to separate causal inference from population generalization.
   watch_for:
-    - "Calling greenhouse a treatment rather than the blocking variable."
-    - "Saying complete randomization is invalid instead of less precise for this setting."
-    - "Treating the displayed means alone as proof of statistical significance or broad generalizability."
-  first_take_note: "Not graded. Accept either design initially if the student identifies a real tradeoff; the calculations should sharpen the revision."
-
+  - Calling greenhouse a treatment rather than the blocking variable.
+  - Saying complete randomization is invalid instead of less precise for this setting.
+  - Treating the displayed means alone as proof of statistical significance or broad generalizability.
+  first_take_note: Not graded. Accept either design initially if the student identifies a real tradeoff;
+    the calculations should sharpen the revision.
 visuals:
   yield_table:
     kind: two_way_table
-    col_label: "Mean fruit yield (kg per plant)"
-    row_label: "Greenhouse"
-    cols: ["Fertilizer", "None"]
-    rows: ["Sunny", "Shaded"]
+    col_label: Mean fruit yield (kg per plant)
+    row_label: Greenhouse
+    cols:
+    - Fertilizer
+    - None
+    rows:
+    - Sunny
+    - Shaded
     cells:
-      - ["7.2", "6.0"]
-      - ["4.0", "2.8"]
+    - - '7.2'
+      - '6.0'
+    - - '4.0'
+      - '2.8'

@@ -1,55 +1,72 @@
-# Topic 3.2 — Introduction to Planning a Study
 topic: "3.2"
-ced2026: { unit: 1, topic: "1.10", label: "Investigative Question & Data Collection" }
-title: "What Can Each Study Claim?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How do selection and assignment determine the conclusions a study can support?"
-worksheet: "u3_lesson2_live.html"
-
+ced2026:
+  unit: 1
+  topic: '1.10'
+  label: Investigative Question & Data Collection
+title: What Can Each Study Claim?
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How do selection and assignment determine the conclusions a study can support?
+worksheet: u3_lesson2_live.html
 rules_callout:
-  title: "SELECTION, ASSIGNMENT, AND SCOPE (keep on the page)"
-  body: |
-    In an \textbf{observational study}, investigators observe groups without assigning treatments; association does not
-    establish cause. In an \textbf{experiment}, treatments are assigned. \textbf{Random assignment} supports a causal
-    comparison by tending to balance lurking variables. \textbf{Random selection} or other evidence that the participants
-    represent a population supports generalization to that population. Assignment and selection answer different questions.
-
+  title: SELECTION, ASSIGNMENT, AND SCOPE (keep on the page)
+  body: An \textbf{observational study} records data without imposing treatments. An \textbf{experiment}
+    assigns treatments. A confounding factor is an outside factor related to both the groups and the outcome.
+    Random assignment tends to balance such factors between treatments. Random selection or other evidence
+    of representativeness supports generalization to the population selected from. Observational comparisons
+    alone cannot establish cause.
 focus: aps-3.2-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.8in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
+    + turn in)
   teacher_does:
-    - "Board slide up at the bell. Ask for a plan choice before defining study types."
-    - "Begin the video follow-along at minute 5."
-    - "Return to the board slide at minute 33. Circulate and separate assignment from selection."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Board slide up at the bell. Ask for a plan choice before defining study types.
+  - Begin the video follow-along at minute 5.
+  - Return to the board slide at minute 33. Circulate and separate assignment from selection.
+  - Collect at the door. Score part (c) only, E/P/I.
   students_do:
-    - "Choose Plan A or Plan B and name one design feature in a first take."
-    - "Complete the video follow-along about populations, samples, observational studies, and experiments."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Choose Plan A or Plan B and name one design feature in a first take.
+  - Complete the video follow-along about populations, samples, observational studies, and experiments.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Who decides whether a student receives tutoring in each plan?"
-    - "How could motivation affect both the group a student joins and the score later measured?"
-    - "What does the coin flip balance, and among whom?"
-    - "Were the volunteers selected by chance from all students? What conclusion does that limit?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to label each arrow as selection or assignment before accepting a claim about cause or scope."
+  - Who decides whether a student receives tutoring in each plan?
+  - How could motivation affect both the group a student joins and the score later measured?
+  - What does the coin flip balance, and among whom?
+  - Were the volunteers selected by chance from all students? What conclusion does that limit?
+  adult_role: Solo teacher. Circulate ~5 pairs. Ask students to label each arrow as selection or assignment
+    before accepting a claim about cause or scope.
   watch_for:
-    - "Calling any comparison of two groups an experiment."
-    - "Naming a lurking variable without linking it to both explanatory and response variables."
-    - "Assuming random assignment also makes volunteers representative of all students."
-  first_take_note: "Not graded. Listen for students who say Plan B is stronger merely because it is random without naming what is randomized."
-
+  - Calling any comparison of two groups an experiment.
+  - Naming a lurking variable without linking it to both explanatory and response variables.
+  - Assuming random assignment also makes volunteers representative of all students.
+  first_take_note: Not graded. Listen for students who say Plan B is stronger merely because it is random
+    without naming what is randomized.
 visuals:
   plans_table:
     kind: two_way_table
-    col_label: "Two plans for studying tutoring"
-    row_label: "Plan"
-    cols: ["Who?", "Groups?", "Response"]
-    rows: ["A", "B"]
+    col_label: Two plans for studying tutoring
+    row_label: Plan
+    cols:
+    - Who?
+    - Groups?
+    - Response
+    rows:
+    - A
+    - B
     cells:
-      - ["Students", "Choose", "Scores"]
-      - ["40 volunteers", "Coin flip", "Scores"]
+    - - Students
+      - Choose
+      - Scores
+    - - 40 volunteers
+      - Coin flip
+      - Scores

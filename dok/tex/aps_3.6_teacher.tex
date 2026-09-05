@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 1 \textperiodcentered\ Topic 1.13 \textperiodcentered\ B: 2026-10-05 \textperiodcentered\ E: 2026-10-16 \textperiodcentered\ TEACHER KEY}{When Blocking Earns Its Keep}
+\daybanner{AP Statistics \textperiodcentered\ Unit 1 \textperiodcentered\ Topic 1.13 \textperiodcentered\ B: 2026-10-05 \textperiodcentered\ E: 2026-10-16 \textperiodcentered\ TEACHER KEY}{Fertilizer in Two Greenhouses}
 
 \sectionbanner{CED TETHER}
 
@@ -59,18 +59,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{chooses-blocked-design} (required) --- Chooses Design B and identifies greenhouse as a relevant blocking variable
-  \item \textbf{uses-relative-differences} (required) --- Cites the 3.2 kilogram greenhouse difference as larger than the 1.2 kilogram fertilizer difference
-  \item \textbf{explains-chance-imbalance} (required) --- Shows how treatment imbalance between houses could mask or reverse Design A's effect
-  \item \textbf{bounds-inference} (required) --- States a conditional causal conclusion after significance and limits generalization beyond the studied conditions
+  \item \textbf{blocking-with-numbers} (required) --- Chooses B using greenhouse difference 3.2 versus fertilizer difference 1.2 kg
+  \item \textbf{imbalance-mechanism} (required) --- Explains how A could place more of one treatment in one house and mask or exaggerate its effect
+  \item \textbf{bounded-cause} (required) --- Makes a causal conclusion conditional on significance and limited to the studied plants and conditions
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Chooses blocking, cites both numerical differences, explains the chance-imbalance risk, and gives a properly conditional causal conclusion with a population limit. \\ \hline
-\textbf{P} & Chooses blocking with a greenhouse-based reason but omits a numerical comparison, the imbalance mechanism, statistical significance, or the generalization limit. \\ \hline
-\textbf{I} & Chooses a design only because it sounds simpler, says blocking itself proves significance, or generalizes the result to all tomato plants and settings. \\ \hline
+\textbf{E} & All three elements are correct and linked to this problem. Accept equivalent plain-language reasoning. \\ \hline
+\textbf{P} & At least one element includes a correct evidence-to-reason link, but another is missing or incorrect. \\ \hline
+\textbf{I} & No correct evidence-to-reason link; only a choice, copied numbers, or unsupported statements. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -101,13 +100,13 @@ Which design would you use to detect the fertilizer effect most clearly? Name on
 
 \textit{Rules callout ``BLOCK, RANDOMIZE, THEN INFER (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} Identify the treatments, response variable with units, and blocking variable in Design B.\par
-\answer{Treatments: fertilizer and no fertilizer. Response: fruit yield in kilograms per plant. Blocking variable: greenhouse light condition, sunny or shaded.}
+\dokbadge{1}~\textbf{(a)} Name the blocking variable and the response variable, with units.\par
+\answer{Block: greenhouse light condition (sunny or shaded). Response: fruit yield in kilograms per plant.}
 
-\dokbadge{2}~\textbf{(b)} Compute the fertilizer-minus-control difference within each greenhouse and the sunny-minus-shaded difference within each treatment.\par
-\answer{Fertilizer effect within sunny: $7.2-6.0=1.2$ kg per plant. Within shaded: $4.0-2.8=1.2$ kg per plant. Greenhouse difference with fertilizer: $7.2-4.0=3.2$ kg; without fertilizer: $6.0-2.8=3.2$ kg.}
+\dokbadge{2}~\textbf{(b)} For the sunny greenhouse, find fertilizer minus no fertilizer. For the fertilized plants, find sunny minus shaded. Compare the two differences.\par
+\answer{Fertilizer difference in sunny house: $7.2-6.0=1.2$ kg per plant. Greenhouse difference for fertilized plants: $7.2-4.0=3.2$ kg per plant, larger than 1.2.}
 
-\dokbadge{3}~\textbf{(c)} Which design should the grower use? Cite the relative sizes of the greenhouse and fertilizer differences that settle your choice, and explain what chance imbalance could do to Design A. If Design B produced a statistically significant fertilizer difference, state the causal conclusion it would permit and one limit on generalizing it.\par
+\dokbadge{3}~\textbf{(c)} Which design should the grower use? Use the two differences to explain your choice and how chance imbalance could affect Design A. If Design B gives a statistically significant difference, state a causal conclusion limited to the plants and conditions studied.\par
 \answer{Use Design B. The $3.2$ kg greenhouse difference is larger than the $1.2$ kg fertilizer difference, so blocking on greenhouse removes a major source of natural variability before comparing treatments. In Design A, random assignment could by chance place more fertilized plants in the shaded house and more controls in the sunny house, masking or reversing the fertilizer difference. If the within-block fertilizer difference is statistically significant, random assignment permits the conclusion that fertilizer caused a change in mean yield for these experimental conditions. The result does not automatically generalize to all tomato varieties, greenhouses, or growers because the 24 plants and two houses were not randomly selected from those populations.}
 
 \begin{summaryexitbox}{EXIT}

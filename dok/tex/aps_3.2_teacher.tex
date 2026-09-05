@@ -62,18 +62,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-randomized-plan} (required) --- Selects Plan B and identifies random assignment, not volunteering, as the feature supporting causation
-  \item \textbf{explains-plan-a-alternative} (required) --- Explains how a named self-selection or lurking variable could produce Plan A's difference
-  \item \textbf{bounds-causal-scope} (required) --- Limits the causal conclusion to the volunteers studied unless broader representativeness is justified
-  \item \textbf{separates-assignment-from-selection} (required) --- Distinguishes random assignment for cause from random selection or representativeness for generalization
+  \item \textbf{random-assignment} (required) --- Chooses B and links random assignment to balancing outside factors
+  \item \textbf{alternative-cause} (required) --- Connects a plausible outside factor to both tutoring choice and scores in A
+  \item \textbf{volunteer-scope} (required) --- Explains why assigning the volunteers does not make them representative of all students
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Chooses Plan B because of random assignment, gives a linked lurking-variable explanation for Plan A, and correctly limits generalization beyond the volunteers. \\ \hline
-\textbf{P} & Chooses Plan B and mentions random assignment but gives an unlinked lurking variable or omits the generalization limit, or states the two limits without clearly separating selection from assignment. \\ \hline
-\textbf{I} & Claims Plan A establishes cause, says volunteering makes Plan B representative, or gives no design-based reason. \\ \hline
+\textbf{E} & All three elements are correct and linked to this problem. Accept equivalent plain-language reasoning. \\ \hline
+\textbf{P} & At least one element includes a correct evidence-to-reason link, but another is missing or incorrect. \\ \hline
+\textbf{I} & No correct evidence-to-reason link; only a choice, copied numbers, or unsupported statements. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
@@ -104,13 +103,13 @@ Which plan gives stronger evidence that the center raises scores? Name the featu
 
 \textit{Rules callout ``SELECTION, ASSIGNMENT, AND SCOPE (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} Identify Plan A as an observational study or experiment, and do the same for Plan B. State why for each.\par
+\dokbadge{1}~\textbf{(a)} Identify each plan as an observational study or an experiment.\par
 \answer{Plan A is observational because students choose whether to attend; no treatment is assigned. Plan B is an experiment because attendance is assigned to volunteers by a coin flip.}
 
-\dokbadge{2}~\textbf{(b)} Name one lurking variable that could make Plan A's groups differ, and explain how it could be related to both attendance and test score.\par
+\dokbadge{2}~\textbf{(b)} Name one outside factor that could affect both choosing tutoring and test scores in Plan A. Explain both links in two sentences.\par
 \answer{One example is motivation: more motivated students may be more likely to choose tutoring and may also study more or perform better even without the center. Prior achievement, available time, or family support are acceptable if both links are explained.}
 
-\dokbadge{3}~\textbf{(c)} Which plan could support the claim that the center raises scores? Cite the design feature that settles it and explain what Plan A's result could mean instead. Then state one conclusion Plan B still could not support about students beyond the volunteers.\par
+\dokbadge{3}~\textbf{(c)} Which plan offers stronger evidence that tutoring causes a change in scores? Explain why its design helps with the outside factor from (b). Then state why its result may not apply to all students at the school.\par
 \answer{Plan B could support a causal claim for these volunteers because random assignment tends to balance lurking variables between the attendance and no-attendance groups. Under Plan A, a score difference could be due to motivation or another preexisting difference rather than tutoring. Because the 40 participants volunteered rather than being randomly selected from a named population, Plan B cannot automatically generalize the effect to all students at the school or to students elsewhere.}
 
 \begin{summaryexitbox}{EXIT}

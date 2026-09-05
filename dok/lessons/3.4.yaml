@@ -1,55 +1,79 @@
-# Topic 3.4 — Potential Problems with Sampling
 topic: "3.4"
-ced2026: { unit: 1, topic: "1.12", label: "Potential Problems with Sampling" }
-title: "Two Surveys, Two Biases"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How do response behavior and question wording limit the estimate a survey can support?"
-worksheet: "u3_lesson4_live.html"
-
+ced2026:
+  unit: 1
+  topic: '1.12'
+  label: Potential Problems with Sampling
+title: Two Surveys of Park Fees
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How do response behavior and question wording limit the estimate a survey can support?
+worksheet: u3_lesson4_live.html
 rules_callout:
-  title: "BIAS FAVORS SOME RESPONSES (keep on the page)"
-  body: |
-    \textbf{Bias} systematically favors some responses over others. \textbf{Nonresponse bias} is possible when
-    selected people who do not respond differ from those who do; the response rate is
-    $\text{responses}/\text{selected}$. \textbf{Response bias} can come from confusing or leading wording.
-    A larger sample or response rate does not repair a different design flaw. Match the fix to the source of bias.
+  title: BIAS FAVORS SOME RESPONSES (keep on the page)
+  body: '\textbf{Bias} systematically favors some responses over others. \textbf{Nonresponse bias} is
+    possible when
 
+    selected people who do not respond differ from those who do; the response rate is
+
+    $\text{responses}/\text{selected}$. \textbf{Response bias} can come from confusing or leading wording.
+
+    A larger sample or response rate does not repair a different design flaw. Match the fix to the source
+    of bias.
+
+    '
 focus: aps-3.4-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.8in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
+    + turn in)
   teacher_does:
-    - "Board slide up at the bell. Read both council claims without confirming either."
-    - "Begin the video follow-along at minute 5."
-    - "Return to the board slide at minute 33. Circulate and require a separate diagnosis for each survey."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Board slide up at the bell. Read both council claims without confirming either.
+  - Begin the video follow-along at minute 5.
+  - Return to the board slide at minute 33. Circulate and require a separate diagnosis for each survey.
+  - Collect at the door. Score part (c) only, E/P/I.
   students_do:
-    - "Choose one estimate or neither and cite one survey detail."
-    - "Complete the video follow-along about undercoverage, nonresponse, voluntary response, and response bias."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Choose one estimate or neither and cite one survey detail.
+  - Complete the video follow-along about undercoverage, nonresponse, voluntary response, and response
+    bias.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Who is missing from the mail results even though the original sample was random?"
-    - "Can you know whether the nonresponders oppose the fee more or less?"
-    - "Which words in the phone question could move an answer, and in what direction?"
-    - "Does knowing one bias's likely direction tell you which final estimate is closer?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to connect each flaw to a mechanism and a repair; do not accept a percentage choice based only on which sample is larger."
+  - Who is missing from the mail results even though the original sample was random?
+  - Can you know whether the nonresponders oppose the fee more or less?
+  - Which words in the phone question could move an answer, and in what direction?
+  - Does knowing one bias's likely direction tell you which final estimate is closer?
+  adult_role: Solo teacher. Circulate ~5 pairs. Require students to connect each flaw to a mechanism and
+    a repair; do not accept a percentage choice based only on which sample is larger.
   watch_for:
-    - "Confusing nonresponse with voluntary response; the households were selected but did not reply."
-    - "Assuming an 80 percent response rate protects against loaded wording."
-    - "Claiming the exact size of either bias or ranking closeness without truth data."
-  first_take_note: "Not graded. Either number may feel safer; the goal is to separate known flaws from unknowable bias size."
-
+  - Confusing nonresponse with voluntary response; the households were selected but did not reply.
+  - Assuming an 80 percent response rate protects against loaded wording.
+  - Claiming the exact size of either bias or ranking closeness without truth data.
+  first_take_note: Not graded. Either number may feel safer; the goal is to separate known flaws from
+    unknowable bias size.
 visuals:
   survey_table:
     kind: two_way_table
-    col_label: "Park-fee surveys"
-    row_label: ""
-    cols: ["Selected", "Replied", "Oppose"]
-    rows: ["Mail", "Phone"]
+    col_label: Park-fee surveys
+    row_label: ''
+    cols:
+    - Selected
+    - Replied
+    - Oppose
+    rows:
+    - Mail
+    - Phone
     cells:
-      - ["500", "120", "$78\\%$"]
-      - ["300", "240", "$62\\%$"]
+    - - '500'
+      - '120'
+      - $78\%$
+    - - '300'
+      - '240'
+      - $62\%$

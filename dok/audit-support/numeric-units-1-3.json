@@ -1,0 +1,168 @@
+{
+  "1.1": {
+    "full_percent": 25.0,
+    "omitted_percent": 10.0
+  },
+  "1.2": {
+    "mean_of_zip_digits": 1903.5,
+    "students": 6
+  },
+  "1.3": {
+    "chess_yes_percent": 83.33333333333333,
+    "chess_no_percent": 16.666666666666668,
+    "robotics_yes_percent": 60.0,
+    "robotics_no_percent": 40.0,
+    "yes_difference": 12,
+    "club_size_difference": 27
+  },
+  "1.4": {
+    "percents": [
+      28.26086956521739,
+      25.543478260869566,
+      23.91304347826087,
+      22.282608695652176
+    ],
+    "visible_heights": [
+      12,
+      1
+    ],
+    "actual_difference": 11,
+    "percent_increase": 26.829268292682926
+  },
+  "1.5": {
+    "fine_bin_counts": [
+      0,
+      5,
+      6,
+      7,
+      3,
+      0,
+      0,
+      3,
+      3,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "coarse_bin_counts": [
+      0,
+      21,
+      8,
+      1
+    ],
+    "total": 30,
+    "key_correction": "Only bin boundaries, not exact values, are available to students."
+  },
+  "1.6": {
+    "total": 40,
+    "under_30": 26,
+    "midpoint_mean_estimate": 26.75,
+    "key_correction": "Midpoint estimate is 27.25, but neither exact mean nor endpoints are known."
+  },
+  "1.7": {
+    "n": 15,
+    "sum": 126,
+    "mean": 8.4,
+    "sd": 7.538472751729718,
+    "median": 8,
+    "q1": 4,
+    "q3": 12,
+    "iqr": 8,
+    "lower_fence": -8.0,
+    "upper_fence": 24.0,
+    "sum_squared_deviations": 795.6,
+    "included_median_quartiles": [
+      4.5,
+      11.0
+    ]
+  },
+  "1.8": {
+    "five_number_summary": [
+      22,
+      24.0,
+      32.0,
+      40.5,
+      55
+    ],
+    "over_30": 12,
+    "total": 24,
+    "upper_fence": 65.25
+  },
+  "1.9": {
+    "b_iqr": 11,
+    "e_iqr": 8,
+    "b_range": 35,
+    "e_range": 20,
+    "b_lower_fence": 5.5,
+    "b_upper_fence": 49.5,
+    "e_lower_fence": 14.0,
+    "e_upper_fence": 46.0,
+    "bus_mean_difference": 0.5,
+    "bus_median_difference": 2,
+    "bus_sd_ratio": 3.611111111111111
+  },
+  "1.10": {
+    "total": 60,
+    "over_70": 4,
+    "observed_percent": 6.666666666666667,
+    "z_52": 1.0,
+    "z_70": 2.5,
+    "empirical_tail_percent": 16.0,
+    "normal_tail_percent": 0.6209665325776139,
+    "table_tail_percent": 0.6199999999999983
+  },
+  "3.1": {
+    "response_counts": [
+      412,
+      68
+    ],
+    "possible_rounded_yes_counts": [
+      293,
+      30
+    ],
+    "rounded_percents": [
+      71,
+      44
+    ]
+  },
+  "3.2": {
+    "volunteers": 40,
+    "assignment": "independent coin flip; no fixed group totals asserted"
+  },
+  "3.3": {
+    "population": 1200,
+    "sample": 50,
+    "systematic_interval": 24,
+    "possible_systematic_starts": 24
+  },
+  "3.4": {
+    "mail_response_percent": 24.0,
+    "phone_response_percent": 80.0,
+    "mail_nonresponse_percent": 76.0,
+    "compatible_opposition_percent": [
+      78,
+      62
+    ]
+  },
+  "3.5": {
+    "volunteers": 30,
+    "signup_total": 30,
+    "assignment": "coin flip; random group sizes need not equal 15"
+  },
+  "3.6": {
+    "plants": 24,
+    "per_block": 12,
+    "treatment_differences": [
+      1.2000000000000002,
+      1.2000000000000002
+    ],
+    "greenhouse_differences": [
+      3.2,
+      3.2
+    ]
+  }
+}
