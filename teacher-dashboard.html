@@ -10,6 +10,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#161616">
   <title>AP Stats — Teacher Dashboard</title>
+  <link rel="stylesheet" href="css/teacher-wallet-loading.css">
   <style>
     :root {
       --sg-bg: #E5E3D2;        /* Tango: platinum */
@@ -574,6 +575,7 @@
     <div class="section">
       <div class="btn-row" style="justify-content:space-between;align-items:center">
         <h2 class="section-title" style="margin-bottom:0">🍬 Reward Disbursement <span class="dim" style="font-size:0.8rem">(effort → candy / Dogecoin)</span></h2>
+        <button type="button" class="btn" id="wallet-load-btn">📥 Load wallets</button>
         <button type="button" class="btn" id="payout-plan-btn" disabled>⚡ Deposit all ready (Ɖ 0 to 0 students)</button>
       </div>
       <div class="payout-status-strip hint" id="payout-status" role="status" aria-live="polite"></div>
@@ -965,6 +967,9 @@
   <!-- Pure readiness logic shared with the student wallet (My Ledger) so the
        pacing overview shows the SAME colors each student sees. -->
   <script src="js/wallet_logic.js"></script>
+  <script src="doge-keys.js"></script>
+  <script src="js/wallet-qr-scanner.js"></script>
+  <script src="js/teacher-wallet-loading.js"></script>
 
   <script>
     // ===== guardrails =====
@@ -1767,6 +1772,21 @@
       });
     }
 
+    var _walletLoader = window.TeacherWalletLoading ? window.TeacherWalletLoading.create({
+      get: function (path) { return fetchJson(path, teacherSecret()); },
+      post: function (path, body) { return postJson(path, body, teacherSecret()); },
+      changed: function () {
+        _fetchRewardWallets().then(function (wallets) {
+          _rewardWallets = wallets;
+          if (_rewardRepaint) _rewardRepaint();
+        });
+      }
+    }) : null;
+    $('wallet-load-btn').addEventListener('click', function () {
+      if (_walletLoader) _walletLoader.openBulk();
+      else showError('Wallet import tools did not load. Reload this page.');
+    });
+
     function renderRewardDisbursement(payload) {
       var tbody = $('reward-tbody'), wrap = $('reward-wrap'), empty = $('reward-empty');
       var rateEl = $('reward-rate'), totalsEl = $('reward-totals'), noteEl = $('reward-note');
@@ -1912,6 +1932,7 @@
             span.textContent = addr ? (addr.slice(0, 6) + '…' + addr.slice(-4)) : '(none)';
             addrTd.appendChild(span);
             addrTd.appendChild(btn(addr ? 'edit' : 'set', function () { _rewardSetAddress(s.studentId, addr); }));
+            if (_walletLoader) _walletLoader.decorateAddressCell(addrTd, s);
           }
           tr.appendChild(addrTd);
           tbody.appendChild(tr);

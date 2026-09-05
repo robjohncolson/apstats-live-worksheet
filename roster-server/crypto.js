@@ -32,10 +32,13 @@ export function cryptoEnabled() {
 
 // plain → "v1:b64(iv):b64(tag):b64(ct)", or null when disabled / empty / on any error.
 export function encryptPassword(plain) {
+  return encryptValue(plain, resolveKey());
+}
+
+function encryptValue(plain, key) {
   if (plain == null || plain === '') return null;
 
   try {
-    const key = resolveKey();
     if (!key) return null;
 
     const iv = randomBytes(12);
@@ -56,10 +59,13 @@ export function encryptPassword(plain) {
 
 // "v1:..." blob → plain, or null for anything not decryptable (no throw).
 export function decryptPassword(blob) {
+  return decryptValue(blob, resolveKey());
+}
+
+function decryptValue(blob, key) {
   if (!blob || typeof blob !== 'string') return null;
 
   try {
-    const key = resolveKey();
     if (!key) return null;
 
     const parts = blob.split(':');
@@ -76,4 +82,25 @@ export function decryptPassword(blob) {
   } catch {
     return null;
   }
+}
+
+// Custody has its own required secret and domain; password recovery is unchanged.
+// Secrets are UTF-8 strings of at least 32 bytes. Store a random secret once and
+// retain its backup: changing it makes already-held wallets unreadable.
+function resolveWalletKey() {
+  const raw = process.env.WALLET_KEY_SECRET;
+  if (!raw || Buffer.byteLength(raw, 'utf8') < 32) return null;
+  return createHash('sha256').update('wallet-custody:v1\0').update(raw).digest();
+}
+
+export function walletCryptoEnabled() {
+  return resolveWalletKey() !== null;
+}
+
+export function encryptWalletWif(wif) {
+  return encryptValue(wif, resolveWalletKey());
+}
+
+export function decryptWalletWif(blob) {
+  return decryptValue(blob, resolveWalletKey());
 }

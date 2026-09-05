@@ -4,6 +4,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+// Public wallet reads never fetch custody ciphertext. Optional columns are
+// retried without a missing field so older wallet migrations keep working.
+const DOGE_PUBLIC_COLUMNS = [
+  'student_id', 'doge_address', 'candy_eaten', 'candy_given', 'doge_balance',
+  'doge_sent', 'doge_cost_basis', 'updated_at', 'chain_doge', 'chain_unconfirmed',
+  'chain_tx_count', 'chain_synced_at', 'candy_gifted_out', 'candy_gifted_in',
+  'candy_realized', 'candy_escrowed', 'candy_bonus', 'candy_returned',
+  'proposed_address', 'proposed_at', 'proposal_rejection_reason',
+];
+
 // ── Real Supabase DB ──────────────────────────────────────────────────────────
 
 export function createLiveDb() {
@@ -21,7 +31,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -298,12 +308,55 @@ export function createDb(client) {
 
   // ── DOGE Effort Wallet (migration 0019) ───────────────────────────────────
   async function getDogeAccount(studentId) {
-    return client.from('doge_account').select('*').eq('student_id', studentId).maybeSingle();
+    return readPublicDogeAccounts((query) => query.eq('student_id', studentId).maybeSingle());
   }
   async function listDogeAccounts(studentIds) {
-    let q = client.from('doge_account').select('*');
-    if (Array.isArray(studentIds) && studentIds.length) q = q.in('student_id', studentIds);
-    return q;
+    return readPublicDogeAccounts((query) => Array.isArray(studentIds) && studentIds.length
+      ? query.in('student_id', studentIds) : query);
+  }
+  async function readPublicDogeAccounts(scope) {
+    let columns = [...DOGE_PUBLIC_COLUMNS];
+    while (columns.length) {
+      const result = await scope(client.from('doge_account').select(columns.join(', ')));
+      const error = result && result.error;
+      if (!error || !['42703', 'PGRST204'].includes(String(error.code))) return result;
+      const message = String(error.message || '');
+      const missing = columns.find((column) => message.includes(`.${column} does not exist`)
+        || message.includes(`'${column}' column`) || message.includes(`"${column}" does not exist`));
+      // Never hide a missing base table/column or unrelated database failure.
+      if (!missing || DOGE_PUBLIC_COLUMNS.indexOf(missing) < 8) return result;
+      columns = columns.filter((column) => column !== missing);
+    }
+  }
+
+  // Only teacher custody routes call these. The store and reveal-audit RPCs
+  // compare the key's address against the live row while holding its lock.
+  async function storeWalletCustody(studentId, address, ciphertext, label) {
+    return client.rpc('doge_store_wallet_custody', {
+      p_sid: studentId, p_address: address, p_ciphertext: ciphertext, p_label: label,
+    });
+  }
+  async function getWalletCustody(studentId) {
+    return client.from('doge_account')
+      .select('student_id, doge_address, doge_wif_enc, doge_wallet_label')
+      .eq('student_id', studentId).maybeSingle();
+  }
+  async function auditWalletKeyReveal(studentId, address, ciphertext) {
+    return client.rpc('doge_audit_key_reveal', {
+      p_sid: studentId, p_address: address, p_expected_ciphertext: ciphertext,
+    });
+  }
+  async function deleteWalletCustody(studentId) {
+    return client.from('doge_account')
+      .update({ doge_wif_enc: null, doge_wallet_label: null, doge_key_held_at: null })
+      .eq('student_id', studentId).select('student_id').maybeSingle();
+  }
+  async function listWalletCustody(studentIds) {
+    // held_at and ciphertext are paired by migration 0035's check constraint.
+    let query = client.from('doge_account')
+      .select('student_id, doge_wallet_label, doge_key_held_at');
+    if (Array.isArray(studentIds)) query = query.in('student_id', studentIds);
+    return query;
   }
   // Full-row upsert (the caller reads-modifies-writes; numeric fields are totals,
   // not increments, so the whole row is supplied).

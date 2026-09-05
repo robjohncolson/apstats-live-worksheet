@@ -3,7 +3,8 @@
 //
 // ⚠ RUN OFFLINE. These private keys control real money. After printing, DELETE
 //   the HTML file or store it on an offline drive. The app only ever needs the
-//   ADDRESS (watch-only) — never paste a private key into the web.
+//   ADDRESS (watch-only). Teacher-custody imports belong only in the trusted
+//   teacher dashboard; never paste a key into an unrelated website.
 // ⚠ VERIFY before funding: generate with --testnet, send a tiny test amount to a
 //   generated testnet address, and confirm it shows + is spendable in a real
 //   wallet (e.g. import the WIF) BEFORE you fund any mainnet address with real DOGE.
@@ -15,70 +16,14 @@
 // Usage:
 //   node tools/doge-wallet-gen.mjs --count 30 [--testnet] [--prefix P] \
 //        [--out wallets.html] [--backup wallets-KEYS.csv]
+//   node tools/doge-wallet-gen.mjs --reprint --wif <WIF> --label "Wallet #17"
 
 import crypto from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
-
-// ── base58 / base58check (Bitcoin alphabet; identical algorithm for DOGE) ──────
-const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-
-export function base58encode(buf) {
-  let zeros = 0;
-  while (zeros < buf.length && buf[zeros] === 0) zeros++;
-  let num = 0n;
-  for (const b of buf) num = num * 256n + BigInt(b);
-  let out = '';
-  while (num > 0n) { out = B58[Number(num % 58n)] + out; num /= 58n; }
-  return '1'.repeat(zeros) + out;
-}
-
-export function base58decode(str) {
-  let num = 0n;
-  for (const ch of str) {
-    const idx = B58.indexOf(ch);
-    if (idx < 0) throw new Error('invalid base58 char: ' + ch);
-    num = num * 58n + BigInt(idx);
-  }
-  const bytes = [];
-  while (num > 0n) { bytes.unshift(Number(num % 256n)); num /= 256n; }
-  let zeros = 0;
-  while (zeros < str.length && str[zeros] === '1') zeros++;
-  return Buffer.from([...new Array(zeros).fill(0), ...bytes]);
-}
-
-const sha256 = (b) => crypto.createHash('sha256').update(b).digest();
-const dsha256 = (b) => sha256(sha256(b));
-export const hash160 = (b) => crypto.createHash('ripemd160').update(sha256(b)).digest();
-
-export function base58check(payload) {
-  return base58encode(Buffer.concat([payload, dsha256(payload).subarray(0, 4)]));
-}
-
-export function base58checkDecode(str) {
-  const full = base58decode(str);
-  const payload = full.subarray(0, full.length - 4);
-  const checksum = full.subarray(full.length - 4);
-  if (!checksum.equals(dsha256(payload).subarray(0, 4))) throw new Error('bad checksum');
-  return payload;
-}
-
-// ── Dogecoin networks ─────────────────────────────────────────────────────────
-export const NETWORKS = {
-  mainnet: { p2pkh: 0x1e, wif: 0x9e, label: 'Dogecoin' },   // addresses start with 'D'
-  testnet: { p2pkh: 0x71, wif: 0xf1, label: 'Dogecoin testnet' }, // start with 'n'
-};
-
-export function deriveAddress(pubkey, version) {
-  return base58check(Buffer.concat([Buffer.from([version]), hash160(pubkey)]));
-}
-
-export function deriveWIF(priv32, version, compressed = true) {
-  const parts = [Buffer.from([version]), priv32];
-  if (compressed) parts.push(Buffer.from([0x01]));
-  return base58check(Buffer.concat(parts));
-}
+import { base58check, base58checkDecode, deriveAddress, deriveWIF, NETWORKS, decodeWIF } from './lib/doge-keys.mjs';
+export { base58encode, base58decode, base58check, base58checkDecode, hash160, deriveAddress, deriveWIF, NETWORKS, decodeWIF, addressFromWIF } from './lib/doge-keys.mjs';
 
 // One keypair → { address, wif, privHex, pubHex }. Pads the private key to a full
 // 32 bytes (ECDH can drop leading zero bytes) so the WIF is always well-formed.
@@ -127,7 +72,13 @@ export function selfTest() {
 }
 
 // ── printable sheet ───────────────────────────────────────────────────────────
-async function renderSheet(wallets, net) {
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[ch]);
+}
+
+async function renderSheet(wallets, net, reprint = false) {
   const QRCode = (await import('qrcode')).default;
   const qr = (text) => QRCode.toString(text, { type: 'svg', margin: 1, width: 120 });
   const cards = [];
@@ -135,7 +86,7 @@ async function renderSheet(wallets, net) {
     const w = wallets[i];
     const [aQr, kQr] = await Promise.all([qr(w.address), qr(w.wif)]);
     cards.push(`<div class="card">
-      <div class="lbl">${w.label}</div>
+      <div class="lbl">${escapeHtml(w.label)}</div>
       <div class="row"><div class="qr">${aQr}</div><div class="kv">
         <div class="k">Address (public — fund this, watch-only):</div>
         <div class="mono pub">${w.address}</div></div></div>
@@ -159,10 +110,11 @@ async function renderSheet(wallets, net) {
   .pub{color:#0a5}
   @media print{.warn{break-after:avoid}}
 </style></head><body>
-<h1>${net.label} paper wallets — ${wallets.length} generated</h1>
+<h1>${net.label} paper wallets — ${wallets.length} ${reprint ? 'reprinted' : 'generated'}</h1>
 <div class="warn"><b>Handle offline.</b> Each card's private key controls real money.
 Print, cut, hand out — then <b>delete this file</b> or move it to an offline drive.
-The app only needs the <b>address</b> (green). Never paste a private key into a website.
+Student surfaces use only the <b>address</b> (green). Import a private key only into
+your trusted teacher-custody dashboard or wallet software.
 <b>Test on testnet before funding mainnet.</b></div>
 <div class="grid">${cards.join('\n')}</div>
 </body></html>`;
@@ -170,21 +122,44 @@ The app only needs the <b>address</b> (green). Never paste a private key into a 
 
 // ── CLI ───────────────────────────────────────────────────────────────────────
 function parseArgs(argv) {
-  const a = { count: 30, testnet: false, prefix: 'Wallet', out: null, backup: null };
+  const a = { count: 30, testnet: false, prefix: 'Wallet', out: null, backup: null, reprint: false, wif: null, label: 'Wallet' };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
-    if (k === '--count') a.count = parseInt(argv[++i], 10) || a.count;
-    else if (k === '--testnet') a.testnet = true;
-    else if (k === '--prefix') a.prefix = argv[++i];
-    else if (k === '--out') a.out = argv[++i];
-    else if (k === '--backup') a.backup = argv[++i];
+    if (k === '--testnet') { a.testnet = true; continue; }
+    if (k === '--reprint') { a.reprint = true; continue; }
+    if (!['--count', '--prefix', '--out', '--backup', '--wif', '--label'].includes(k)) {
+      throw new Error('Unknown command option');
+    }
+    const value = argv[++i];
+    if (!value || value.startsWith('--')) throw new Error('Missing command option value');
+    if (k === '--count') {
+      if (!/^\d+$/.test(value) || Number(value) < 1 || Number(value) > 1000) throw new Error('Wallet count must be between 1 and 1000');
+      a.count = Number(value);
+    } else {
+      a[k.slice(2)] = value;
+    }
   }
+  if (a.reprint && (!a.wif || a.testnet || a.backup || argv.includes('--count'))) {
+    throw new Error('Reprint requires a mainnet WIF and does not accept --testnet, --backup, or --count');
+  }
+  if (!a.reprint && a.wif) throw new Error('--wif requires --reprint');
   return a;
 }
 
+export async function renderReprintSheet(wif, label = 'Wallet') {
+  const { address } = decodeWIF(wif);
+  return renderSheet([{ label, address, wif: wif.trim() }], NETWORKS.mainnet, true);
+}
+
 async function main() {
-  selfTest(); // abort loudly if the encoder is broken
   const a = parseArgs(process.argv.slice(2));
+  if (a.reprint) {
+    const html = await renderReprintSheet(a.wif, a.label);
+    writeFileSync(a.out || 'doge-wallet-reprint.html', html);
+    console.log('✓ One existing mainnet wallet reprinted. Keep the sheet offline.');
+    return;
+  }
+  selfTest(); // key generation self-test is never run by the reprint path
   const net = a.testnet ? NETWORKS.testnet : NETWORKS.mainnet;
   const out = a.out || (a.testnet ? 'doge-wallets-TESTNET.html' : 'doge-wallets.html');
   const backup = a.backup || out.replace(/\.html$/i, '') + '-KEYS.csv';
@@ -210,4 +185,4 @@ async function main() {
 }
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) main().catch((e) => { console.error('ERROR:', e.message); process.exit(1); });
+if (isMain) main().catch(() => { console.error('ERROR: Wallet generation or reprint failed. Check the options and output path.'); process.exit(1); });

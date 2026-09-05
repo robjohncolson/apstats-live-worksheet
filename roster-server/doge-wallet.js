@@ -3,8 +3,8 @@
 // Student earns CANDY (effort, from the ledger) → eats it (consumed) or buys
 // DOGE at the server's LIVE price (candy→DOGE floats). Custodial-tracked balances
 // here; the real on-chain send to the kid's paper-wallet address is Phase 3 (the
-// teacher marks DOGE "sent" once deposited). The spending key never touches this
-// server — these routes only track who is owed what.
+// teacher marks DOGE "sent" once deposited). Teacher paper-wallet custody is
+// isolated in wallet-custody.js; student wallet responses remain public-only.
 //
 // All routes 503 gracefully until migration 0019 runs (doge_account/doge_ledger).
 
@@ -14,6 +14,7 @@ import {
   MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP, SELL_HOLD_HOURS,
 } from './doge-econ.js';
 import { fetchChainBalance as defaultChainFetch, detectNetwork, DOGE_MAIN_RE } from './doge-chain.js';
+import { mountWalletCustody } from './wallet-custody.js';
 
 function extractToken(req) {
   const h = req.headers['authorization'] || req.headers['Authorization'];
@@ -171,6 +172,7 @@ async function getDogePrice() {
 }
 
 export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetchChainBalance }) {
+  mountWalletCustody(app, { db });
   const priceFn = getPrice || getDogePrice;            // injectable for tests
   const chainFetch = fetchChainBalance || defaultChainFetch;   // watch-only; injectable for tests
   const sidOf = (req) => { const t = extractToken(req); try { return t ? verifyToken(t) : null; } catch (_) { return null; } };
@@ -868,7 +870,14 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
   app.get('/class/wallets', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
     const section = (req.query.section && String(req.query.section).trim()) || null;
-    const ids = await sectionIds(section);
+    let ids;
+    if (req.query.includeArchived === '1') {
+      const roster = await db.listRoster(section, { includeArchived: true });
+      ids = roster && roster.error ? { error: roster.error }
+        : ((roster && roster.data) || []).map((student) => student.student_id);
+    } else {
+      ids = await sectionIds(section);
+    }
     if (ids && ids.error) { if (isDogeMissing(ids.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
     const price = await priceFn();
     if (Array.isArray(ids) && !ids.length) return res.json({ ok: true, accounts: [], dogeUsd: price, candyPerDoge: price ? candyPerDoge(price) : null });

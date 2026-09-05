@@ -1,0 +1,22 @@
+.wallet-dialog {
+  width: min(850px, calc(100vw - 40px)); max-height: 85vh; overflow: auto;
+  color: var(--sg-text, #222); background: var(--sg-panel, #f5f0df);
+  border: 2px solid var(--sg-accent, #695338); border-radius: 6px; padding: 18px;
+  font: 14px system-ui, sans-serif;
+}
+.wallet-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+.wallet-dialog h3 { margin-top: 0; }
+.wallet-field { display: block; margin: 12px 0; }
+.wallet-field input:not([type=checkbox]), .wallet-field textarea {
+  display: block; box-sizing: border-box; width: 100%; padding: 7px; margin-top: 5px;
+}
+.wallet-field input[type=checkbox] { margin-left: 8px; }
+.wallet-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.wallet-table-wrap { overflow-x: auto; }
+.wallet-assignment-table { width: 100%; border-collapse: collapse; }
+.wallet-assignment-table th, .wallet-assignment-table td { text-align: left; padding: 7px; border-bottom: 1px solid #bbb; }
+.wallet-assignment-table select { max-width: 310px; }
+.wallet-status { min-height: 20px; }
+.wallet-camera { width: 100%; max-height: 280px; background: #222; }
+.wallet-dialog code { display: block; white-space: normal; overflow-wrap: anywhere; }
+[data-wallet-held] { margin-left: 4px; }
