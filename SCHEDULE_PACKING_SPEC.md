@@ -77,8 +77,8 @@ than as 7-minute lesson days in September.
    pacing entries becomes the NEW unit; `lessons[].unit` in the JSON stays OLD (engine + file names depend on it).
    Legend already lists the five NEW units.
 4. **Downstream checks.** Desk due chips + Do Now (same date for grouped topics → the Do Now lists all of them that day);
-   Schoology sync (two columns due the same day — fine); DOK `index.html` "today" row → show every topic due today, the
-   last one first (decision 2); the DOK coverage test unchanged; `dok/README.md` gets the doubled-day rule.
+   Schoology sync (two columns due the same day — fine); DOK `index.html` "today" row → the day's GROUP sheet (decision 2,
+   `DOK_DAY_SHEETS_SPEC.md`); the DOK coverage test is re-keyed by `dayGroups`; `dok/README.md` gets the doubled-day rule.
 5. **Tests.** `generateSchedule` group placement (one day, cell text, both periods); generator flattening + order invariant
    with groups; a snapshot of the packed unit-end dates per period so a later pacing edit that silently un-packs shows up;
    relabel test (no cell text matches `/^[6-9]\.\d/` on the SY26-27 calendar — there is no Unit 6–9 in the new CED).
@@ -88,4 +88,5 @@ than as 7-minute lesson days in September.
 ### TL;DR
 Measured every video; packing consecutive same-unit topics under "≤ 3 videos and ≤ 30 minutes" turns 87 lesson days into
 67, banks Units 1 AND 2 in Q1 for both periods, and finishes core by Jan 7 (B) / Feb 12 (E). Build = pacing groups +
-generator flattening + NEW-CED calendar labels; the DOK sheet on a doubled day is the last topic's.
+generator flattening + NEW-CED calendar labels; on a doubled day ONE DOK sheet covers all of that day's videos
+(`DOK_DAY_SHEETS_SPEC.md`).
