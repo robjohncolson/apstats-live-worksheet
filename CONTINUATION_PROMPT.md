@@ -79,6 +79,17 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
 - Schoology categories: teacher is creating them 2026-09-04; recommended **calculate by PERCENT** (each assignment counts
   equally inside its category, matching the v3 engine's mean-of-recorded slices; "by points" would let a 40-pt PC or a big
   poster swamp the category). Then the orchestrator verifies both sections via `schoology_ops.list_categories` and dry-runs.
+- ✅ 2026-09-05 GRADE-BAND FIX (roster-server, auto-deployed): `deriveQuarterBands` places a unit in the quarter holding
+  MOST of its lessons (was: latest lesson) — old Unit 1 no longer sinks into Q2 because 1.10 (Normal → CED 2.11) is in
+  November; Q1 gradebook shows the first month again. m2b goldens regenerated; bundle regenerated. Dashboard quarter
+  buttons now read "Q1 · CED U1" (from `pcUnits`; Q4 → "after the exam") instead of "Q4 · U9".
+- ⏭ SPEC written, not built: `WALLET_LOADING_SPEC.md` — paste the generator's KEYS CSV into a dashboard modal, assign
+  wallets in one click, addresses via the existing write, **private keys kept AES-encrypted (teacher custody — P8
+  relaxed by the teacher's decision)** with a teacher-only reveal for reprints; camera QR scan for one-offs; migration 0035
+  + `WALLET_KEY_SECRET`. Awaiting the teacher's OK, then implement (orchestrator or Codex).
+- ✅ Codex DOK audit + posters REVIEWED and pushed 2026-09-05 (scope confined to dok/ + concept-posters/; 271 vitest /
+  471 pytest; 198 PDFs 2/1/3; 15/15 posters). Codex has ALSO started the AP Classroom video-link task on Athena
+  (`state/ap-classroom-video-links-PLAN.md`, waiting for the teacher's College Board sign-in in the rig window).
 - ⏭ Codex NEXT (teacher's request, plan-then-implement): `state/ap-classroom-video-links-codex-prompt.md` — scrape the
   Fall-2026 AP Classroom course (`apclassroom.collegeboard.org/33/home?unit=0`, teacher signs into the rig window),
   diff every `RESOURCES[...].videos[].url` in the Desk against the new topics via `2026-crosswalk.json`, repoint `url`

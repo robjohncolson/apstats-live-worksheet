@@ -2134,8 +2134,17 @@
         var b = $('gb-q-' + q);
         if (!b) return;
         var units = sample && sample[q] ? sample[q].units : null;
-        b.textContent = units ? (q + ' · ' + gbUnitRange(units)) : q;
-        b.title = units ? ('Units whose scheduled lessons end inside ' + q + ' (derived from the schedule dates)') : '';
+        // Fall-2026 CED: label the quarter by the NEW units whose Progress Check
+        // lands in it (quarters[q].pcUnits); the old-numbering band is the tooltip.
+        // (Teacher, 2026-09-05: "the new CED has no unit 9" — Q4 used to say U9.)
+        var pc = sample && sample[q] ? sample[q].pcUnits : null;
+        var label = Array.isArray(pc)
+          ? (pc.length ? 'CED U' + pc.slice().sort(function (a, c) { return a - c; }).join(',') : 'after the exam')
+          : (units ? gbUnitRange(units) : null);
+        b.textContent = label ? (q + ' · ' + label) : q;
+        b.title = units
+          ? ('Fall-2026 CED units whose Progress Check falls in ' + q + '. Old-numbering lessons banded here: ' + gbUnitRange(units))
+          : '';
       });
     }
 
