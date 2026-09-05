@@ -287,7 +287,7 @@
         if (unavailable) { ui.status.textContent = unavailable; return; }
         ui.busy(true); ui.status.textContent = 'Loading the roster and generating wallets…';
         try {
-          const [nextSnapshot, metadataResult] = await Promise.all([snapshotRoster(), options.get('/class/wallet-custody')]);
+          const [nextSnapshot, metadataResult] = await Promise.all([snapshotRoster(), options.get('/class/wallet-custody?includeArchived=1')]);
           if (disposed) return;
           const metadata = requireOk(metadataResult, 'Could not load wallet labels.').wallets;
           if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) throw new Error('Wallet labels are unavailable.');

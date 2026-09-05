@@ -53,3 +53,9 @@ Phase 1: browser/tool gate 78 passed; server gate 1,612 passed, 3 skipped (82 fi
 Phase 1 commit: `f3829e2`.
 
 Phase 2: browser/tool gate 89 passed; server gate 1,612 passed, 3 skipped (82 files). Upstream impacts were low; staged change detection reports medium aggregate risk confined to two existing bulk-dialog flows. Generated mode forces custody, honors section selection, retains failed keys for retry, and wipes successful/unused keys. Secure generation checks both randomness and digest availability.
+
+Phase 2 commit: `992db61`.
+
+Phase 3 scope clarification from review: “every held key” includes archived students. Export uses the existing roster helper's archived-inclusive option; metadata adds an opt-in `includeArchived=1` query while ordinary badges keep their prior scope. Generation requests this metadata for collision-free class-wide label continuation. No new database methods or migration are needed.
+
+Phase 3: browser/tool gate 89 passed; server gate 1,640 passed, 3 skipped (82 files), including 51 custody tests. Individual upstream impacts are low. Staged detection reports high aggregate risk through 11 existing custody mount/auth/crypto flows and 2 bulk-dialog flows; reviewed all affected paths and confirmed no payout, crypto helper, migration, or student-route edits. Full conservation/payout suites passed.

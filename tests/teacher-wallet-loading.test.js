@@ -109,7 +109,7 @@ function generatedHarness({ section = '', failCustody = false, failGeneration = 
       { studentId: 'assigned', realName: 'Assigned', section: 'B' },
     ] });
     if (path === '/class/grades') return ok({ students: [...students, { studentId: 'teacher', role: 'teacher' }, { studentId: 'assigned' }] });
-    if (path === '/class/wallet-custody') return ok({ wallets: {
+    if (path === '/class/wallet-custody?includeArchived=1') return ok({ wallets: {
       outside: { held: true, label: 'Wallet #40' }, old: { held: false, label: 'Wallet #99' },
     } });
     return ok({ accounts: [{ studentId: 'assigned', dogeAddress: 'D' + '9'.repeat(33) }, ...accounts] });
@@ -145,7 +145,7 @@ describe('generated wallet assignments', () => {
   it('does not generate if held labels cannot be loaded', async () => {
     const h = generatedHarness();
     const normal = h.get.getMockImplementation();
-    h.get.mockImplementation(path => path === '/class/wallet-custody'
+    h.get.mockImplementation(path => path === '/class/wallet-custody?includeArchived=1'
       ? Promise.resolve({ status: 503, data: { error: 'missing schema' } }) : normal(path));
     await h.loader.openGenerate();
     expect(h.generateWallet).not.toHaveBeenCalled();

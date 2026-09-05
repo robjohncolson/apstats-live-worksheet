@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import { readFile } from 'node:fs/promises';
+import { webcrypto } from 'node:crypto';
+import { runInNewContext } from 'node:vm';
 import { mountDogeWallet } from '../doge-wallet.js';
 import { createDb } from '../db.js';
 import { signToken, verifyToken } from '../token.js';
@@ -264,6 +266,174 @@ describe('teacher-only wallet custody', () => {
     expect(normal.body.accounts.map((row) => row.studentId)).toEqual([SID]);
     expect(all.body.accounts.map((row) => row.studentId)).toEqual([SID, ARCHIVED]);
     expect((await w.request('/class/wallets?includeArchived=1', { auth: 'student' })).status).toBe(401);
+  });
+});
+
+async function exportWorld() {
+  const w = await world();
+  const people = [
+    { student_id: SID, real_name: 'Ana', login_username: 'ana', section: 'B', status: 'active', role: 'student', password_cipher: 'never export passwords' },
+    { student_id: ARCHIVED, real_name: 'Beth', login_username: 'beth', section: 'E', status: 'archived', role: 'student' },
+  ];
+  w.db.listRoster.mockImplementation(async (section, options = {}) => ({
+    data: people.filter(row => (!section || row.section === section) && (options.includeArchived || row.status !== 'archived')), error: null,
+  }));
+  await w.store();
+  await w.store({ studentId: ARCHIVED, wif: OTHER_WIF, label: 'Wallet #8' });
+  return w;
+}
+
+describe('audited bulk wallet export', () => {
+  it('includes archived held keys in export and opt-in counts while preserving ordinary badge scope', async () => {
+    const w = await exportWorld();
+    const normal = await w.request('/class/wallet-custody');
+    expect(Object.keys(normal.body.wallets)).toEqual([SID]);
+    const all = await w.request('/class/wallet-custody?includeArchived=1');
+    expect(Object.keys(all.body.wallets)).toEqual([SID, ARCHIVED]);
+    const section = await w.request('/class/wallet-custody?includeArchived=1&section=E');
+    expect(Object.keys(section.body.wallets)).toEqual([ARCHIVED]);
+    expect(w.audit).toHaveLength(0);
+    expect(JSON.stringify(all.body)).not.toContain(WIF);
+    expect((await w.request('/class/wallet-custody?includeArchived=1', { auth: 'student' })).status).toBe(401);
+    const exported = await w.request('/class/wallet-custody/export?confirm=1&section=E');
+    expect(exported.body.wallets.map(wallet => wallet.studentId)).toEqual([ARCHIVED]);
+    expect(w.audit).toHaveLength(1);
+  });
+
+  it.each(['none', 'student'])('rejects %s before accessing any held key', async auth => {
+    const w = await exportWorld();
+    const response = await w.request('/class/wallet-custody/export?confirm=1', { auth });
+    expect(response.status).toBe(401);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(w.db.getWalletCustody).not.toHaveBeenCalled();
+    expect(w.audit).toHaveLength(0);
+  });
+
+  it('rejects the published teacher fallback and accepts verified teacher sessions', async () => {
+    const w = await exportWorld();
+    expect((await w.request('/class/wallet-custody/export?confirm=1', { auth: 'none', headers: { 'x-teacher-secret': 'apteacher2627' } })).status).toBe(401);
+    expect((await w.request('/class/wallet-custody/export?confirm=1', { auth: 'bearerTeacher' })).status).toBe(200);
+    expect(w.audit).toHaveLength(2);
+  });
+
+  it.each(['', '?confirm=0', '?confirm=true', '?confirm=1&confirm=1'])('requires exact confirmation before reads (%s)', async query => {
+    const w = await exportWorld();
+    const response = await w.request('/class/wallet-custody/export' + query);
+    expect(response.status).toBe(400);
+    expect(w.db.listWalletCustody).not.toHaveBeenCalled();
+    expect(w.db.getWalletCustody).not.toHaveBeenCalled();
+    expect(w.audit).toHaveLength(0);
+  });
+
+  it.each(['', 'short', 'a'.repeat(31)])('returns 503 with missing or short custody configuration', async secret => {
+    const w = await exportWorld();
+    process.env.WALLET_KEY_SECRET = secret;
+    const response = await w.request('/class/wallet-custody/export?confirm=1');
+    expect(response.status).toBe(503);
+    expect(response.body.error).toBe('wallet custody key not configured');
+    expect(w.db.getWalletCustody).not.toHaveBeenCalled();
+    expect(w.audit).toHaveLength(0);
+  });
+
+  it('returns only safe identity fields and records exactly one row-locked audit for each exported wallet', async () => {
+    const w = await exportWorld();
+    const response = await w.request('/class/wallet-custody/export?confirm=1');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('pragma')).toBe('no-cache');
+    expect(response.body).toEqual({ ok: true, wallets: [
+      { studentId: SID, realName: 'Ana', username: 'ana', section: 'B', address: ADDRESS, wif: WIF, label: 'Wallet #7' },
+      { studentId: ARCHIVED, realName: 'Beth', username: 'beth', section: 'E', address: OTHER_ADDRESS, wif: OTHER_WIF, label: 'Wallet #8' },
+    ], skipped: [] });
+    expect(w.audit).toEqual([SID, ARCHIVED].map(id => ({ student_id: id, kind: 'key_reveal', candy_delta: 0, doge_delta: 0 })));
+    for (const id of [SID, ARCHIVED]) {
+      const account = w.accounts.get(id);
+      expect(w.db.auditWalletKeyReveal).toHaveBeenCalledWith(id, account.doge_address, account.doge_wif_enc);
+      expect(JSON.stringify(response.body)).not.toContain(account.doge_wif_enc);
+    }
+    expect(JSON.stringify(response.body)).not.toContain('password');
+  });
+
+  it('respects section scope, ignores unrelated metadata and deduplicates held records', async () => {
+    const w = await exportWorld();
+    const rows = [...w.accounts.values()];
+    w.db.listWalletCustody.mockResolvedValue({ data: [...rows, rows[0]], error: null });
+    const response = await w.request('/class/wallet-custody/export?confirm=1&section=B');
+    expect(w.db.listRoster).toHaveBeenCalledWith('B', { includeArchived: true });
+    expect(response.body.wallets.map(wallet => wallet.studentId)).toEqual([SID]);
+    expect(w.db.getWalletCustody).toHaveBeenCalledTimes(1);
+    expect(w.audit).toHaveLength(1);
+    expect(JSON.stringify(response.body)).not.toContain(OTHER_WIF);
+  });
+
+  it('ignores unheld rows and still probes provisioning for an empty section', async () => {
+    const w = await exportWorld();
+    w.accounts.get(SID).doge_key_held_at = null;
+    const response = await w.request('/class/wallet-custody/export?confirm=1&section=B');
+    expect(response.body).toEqual({ ok: true, wallets: [], skipped: [] });
+    expect(w.db.getWalletCustody).not.toHaveBeenCalled();
+    w.db.listWalletCustody.mockClear();
+    const empty = await w.request('/class/wallet-custody/export?confirm=1&section=Z');
+    expect(empty.body).toEqual({ ok: true, wallets: [], skipped: [] });
+    expect(w.db.listWalletCustody).toHaveBeenCalledWith([]);
+    expect(w.audit).toHaveLength(0);
+  });
+
+  it.each(['B', 'Z'])('reports missing migration even in section %s', async section => {
+    const w = await exportWorld();
+    w.db.listWalletCustody.mockResolvedValue({ data: null, error: { code: '42703', message: 'column doge_wif_enc does not exist' } });
+    const response = await w.request('/class/wallet-custody/export?confirm=1&section=' + section);
+    expect(response.status).toBe(503);
+    expect(response.body.error).toContain('migration 0035');
+    expect(w.audit).toHaveLength(0);
+  });
+
+  it.each(['get', 'audit'])('returns 503 if the %s custody operation is not provisioned', async operation => {
+    const w = await exportWorld();
+    const method = operation === 'get' ? 'getWalletCustody' : 'auditWalletKeyReveal';
+    w.db[method].mockResolvedValueOnce({ data: null, error: { code: operation === 'get' ? '42703' : 'PGRST202', message: operation === 'get' ? 'doge_wif_enc missing' : 'doge_audit_key_reveal missing' } });
+    const response = await w.request('/class/wallet-custody/export?confirm=1');
+    expect(response.status).toBe(503);
+    expect(response.body.error).toContain('migration 0035');
+    expect(JSON.stringify(response.body)).not.toContain(WIF);
+  });
+
+  it.each(['mismatch', 'corrupt', 'invalid WIF', 'deleted', 'get error', 'get throw', 'audit false', 'audit error', 'audit throw'])
+    ('skips a wallet with %s while still exporting and auditing its valid neighbor', async failure => {
+      const w = await exportWorld();
+      const logs = ['log', 'warn', 'error'].map(method => vi.spyOn(console, method).mockImplementation(() => {}));
+      const account = w.accounts.get(SID);
+      if (failure === 'mismatch') account.doge_address = OTHER_ADDRESS;
+      if (failure === 'corrupt') account.doge_wif_enc = 'v1:corrupt';
+      if (failure === 'invalid WIF') account.doge_wif_enc = encryptWalletWif('not-a-WIF');
+      if (failure === 'deleted') w.db.getWalletCustody.mockResolvedValueOnce({ data: null, error: null });
+      if (failure === 'get error') w.db.getWalletCustody.mockResolvedValueOnce({ data: null, error: { message: WIF } });
+      if (failure === 'get throw') w.db.getWalletCustody.mockRejectedValueOnce(new Error(WIF));
+      if (failure === 'audit false') w.db.auditWalletKeyReveal.mockResolvedValueOnce({ data: false, error: null });
+      if (failure === 'audit error') w.db.auditWalletKeyReveal.mockResolvedValueOnce({ data: null, error: { message: WIF } });
+      if (failure === 'audit throw') w.db.auditWalletKeyReveal.mockRejectedValueOnce(new Error(WIF));
+      const response = await w.request('/class/wallet-custody/export?confirm=1');
+      expect(response.status).toBe(200);
+      expect(response.body.wallets.map(wallet => wallet.studentId)).toEqual([ARCHIVED]);
+      expect(response.body.skipped).toHaveLength(1);
+      expect(response.body.skipped[0]).toEqual({ studentId: SID, reason: expect.any(String) });
+      expect(JSON.stringify(response.body)).not.toContain(WIF);
+      expect(JSON.stringify(response.body.skipped)).not.toContain(OTHER_WIF);
+      expect(w.audit).toEqual([{ student_id: ARCHIVED, kind: 'key_reveal', candy_delta: 0, doge_delta: 0 }]);
+      logs.forEach(log => expect(log).not.toHaveBeenCalled());
+    });
+
+  it('accepts a browser-generated fixed scalar and rejects it on the wrong address through the real custody handler', async () => {
+    const window = { crypto: webcrypto, isSecureContext: true };
+    runInNewContext(await readFile(new URL('../../doge-keys.js', import.meta.url), 'utf8'), { window });
+    const generated = await window.DogeKeys.generateWallet({ random(bytes) { bytes[31] = 1; } });
+    const w = await world();
+    expect((await w.store({ wif: generated.wif })).status).toBe(409);
+    w.accounts.get(SID).doge_address = generated.address;
+    expect((await w.store({ wif: generated.wif })).status).toBe(200);
+    const response = await w.request('/class/wallet-custody/export?confirm=1');
+    expect(response.body.wallets[0]).toMatchObject(generated);
+    expect(w.audit).toHaveLength(1);
   });
 });
 

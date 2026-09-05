@@ -119,9 +119,73 @@ export function mountWalletCustody(app, { db }) {
     return res.json({ ok: true, held: false });
   }));
 
+  app.get('/class/wallet-custody/export', teacherRoute(async (req, res) => {
+    if (needWalletKey(res)) return;
+    if (req.query.confirm !== '1') {
+      return res.status(400).json({ ok: false, error: 'confirm=1 required to print private keys' });
+    }
+    const section = typeof req.query.section === 'string' ? req.query.section.trim() || null : null;
+    const roster = await db.listRoster(section, { includeArchived: true });
+    if (roster.error) return custodyError(res, roster.error);
+    // Roster rows also contain password-recovery fields. Copy only print metadata.
+    const students = new Map((roster.data || []).map(student => [student.student_id, {
+      studentId: student.student_id,
+      realName: student.real_name || '',
+      username: student.login_username || '',
+      section: student.section || '',
+    }]));
+    // Probe the explicit custody columns even when the requested class is empty.
+    const metadata = await db.listWalletCustody([...students.keys()]);
+    if (metadata.error) return custodyError(res, metadata.error);
+    const heldIds = new Set((metadata.data || [])
+      .filter(row => row.doge_key_held_at && students.has(row.student_id))
+      .map(row => row.student_id));
+    const wallets = [], skipped = [];
+    for (const [studentId, student] of students) {
+      if (!heldIds.has(studentId)) continue;
+      try {
+        const result = await db.getWalletCustody(studentId);
+        if (result.error) throw result.error;
+        const account = result.data;
+        if (!account || !account.doge_wif_enc) {
+          skipped.push({ studentId, reason: 'no held wallet key' });
+          continue;
+        }
+        const wif = decryptWalletWif(account.doge_wif_enc);
+        let address;
+        try {
+          if (!wif) throw new Error();
+          address = decodeWIF(wif).address;
+        } catch {
+          skipped.push({ studentId, reason: 'held key could not be read' });
+          continue;
+        }
+        if (address !== account.doge_address) {
+          skipped.push({ studentId, reason: 'held key no longer matches the wallet address' });
+          continue;
+        }
+        // Every exported key is a reveal. The existing RPC locks the live row
+        // and checks this exact address/ciphertext before writing its audit row.
+        const audit = await db.auditWalletKeyReveal(studentId, address, account.doge_wif_enc);
+        if (audit.error) throw audit.error;
+        if (audit.data !== true) {
+          skipped.push({ studentId, reason: 'held wallet changed; refresh before printing' });
+          continue;
+        }
+        wallets.push({ ...student, address, wif, label: account.doge_wallet_label || null });
+      } catch (error) {
+        if (custodyNotProvisioned(error)) return custodyError(res, error);
+        skipped.push({ studentId, reason: 'held key could not be exported' });
+      }
+    }
+    return res.json({ ok: true, wallets, skipped });
+  }));
+
   app.get('/class/wallet-custody', teacherRoute(async (req, res) => {
     const section = typeof req.query.section === 'string' ? req.query.section.trim() || null : null;
-    const roster = await db.listRoster(section);
+    const roster = req.query.includeArchived === '1'
+      ? await db.listRoster(section, { includeArchived: true })
+      : await db.listRoster(section);
     if (roster.error) return custodyError(res, roster.error);
     const ids = (roster.data || []).map((student) => student.student_id);
     // Even an empty class probes explicit custody columns, so missing migration
