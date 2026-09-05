@@ -69,7 +69,16 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   `~/.config/apstats/.payout-agent.json` with the real key, `--once` smoke exit 0, `/payout/status` 200 with the rotated
   teacher key → migrations 0032/0033 confirmed live). It polls every 60 s; the dashboard ⚡ "Deposit all ready" button is
   now armed. `~/grade-backups/config.json` carries the new teacher key.
-- ⏭ `STUDENT_WALLET_OPTIN=true` when ready. Pilot feedback on the DOK sheets waits for Tuesday (first class 09-08 B is
+- ✅ DECIDED: **`STUDENT_WALLET_OPTIN` stays OFF.** The teacher generates paper wallets on the node (`tools/doge-wallet-gen.mjs`
+  "dogecoin bills", one address each) unless the browser self-custody path is ever proven bullet-proof; "play pretend,
+  not trustless" is fine — the teacher is the custodian. Do not re-propose flipping it.
+- Schoology categories: teacher is creating them 2026-09-04; recommended **calculate by PERCENT** (each assignment counts
+  equally inside its category, matching the v3 engine's mean-of-recorded slices; "by points" would let a 40-pt PC or a big
+  poster swamp the category). Then the orchestrator verifies both sections via `schoology_ops.list_categories` and dry-runs.
+- ⏭ Codex (GPT-6 Astra, teacher's request): `state/dok-audit-and-posters-codex-prompt.md` — (A) pedagogical audit of all 66
+  DOK-3s against the day's worksheet/flashcards/tether (alignment, ~10-min load, reading level, first-take, callout/visual
+  leaks, key correctness) with in-place fixes + `dok/AUDIT_2026-09.md`; (B) render the 12 missing concept posters
+  (P01,P03–P08,P10–P14) in `concept-posters/` so all 15 PDFs exist. No push. Pilot feedback on the DOK sheets waits for Tuesday (first class 09-08 B is
   a shortened/late-start day per the teacher). Unit 1 starts **09-08 B**.
 
 ---
