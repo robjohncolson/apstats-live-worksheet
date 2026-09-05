@@ -7,7 +7,7 @@ essential_question: "How do the original question and study design control a def
 worksheet: "u7_lesson8_live.html"
 
 rules_callout:
-  title: "LET THE QUESTION--NOT THE SAMPLE--SET THE TAIL (keep on the page)"
+  title: "HYPOTHESES FOR TWO MEANS (keep on the page)"
   body: |
     For two independent groups with a quantitative response, use a two-sample $t$ test for
     $\mu_1-\mu_2$. The null states no population difference: $H_0:\mu_1-\mu_2=0$.
@@ -24,24 +24,26 @@ exit_reflection: "One thing the video changed about my first take: \\hrulefill"
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
+    in)
   teacher_does:
-    - "Ask when each plan fixed its direction and what design produced the data."
-    - "Begin the 7.8 video at minute 5; return at minute 33 for parts (a)--(c)."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Display the board and ask for one sentence using the study description.
+  - Begin the 7.8 video follow-along at minute 5.
+  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-    - "Compare the timing, notation, and design claims in the two plans."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  - Write a one-sentence first take before the video.
+  - Complete the video follow-along worksheet.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What wording fixed the alternative before any sample was seen?"
-    - "Why inspect each sample separately when both sizes are 18?"
-    - "What does sampling support that assignment would have supported?"
-  adult_role: "Solo teacher. Trace the question and design to each inferential choice."
+  - Which specific number or study detail supports your choice?
+  - What claim would go beyond the evidence, and why?
+  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
+    a second full inference write-up.
   watch_for:
-    - "Choosing a lower tail only because the observed difference is negative."
-    - "Writing hypotheses with sample means."
-    - "Treating separate SRSs as random assignment of formula."
-  first_take_note: "Not graded. Require evidence about both timing and design."
+  - Choosing a speaker without a reason.
+  - Copying numbers without explaining what they support.
+  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
 
 visuals:
   sealant_boxplots:

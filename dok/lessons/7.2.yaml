@@ -7,7 +7,7 @@ essential_question: "How do linked measurements choose an interval and bound a c
 worksheet: "u7_lesson2_live.html"
 
 rules_callout:
-  title: "MATCH THE INTERVAL TO THE PAIRS (keep on the page)"
+  title: "ONE-SAMPLE MEAN INTERVALS (keep on the page)"
   body: |
     For paired measurements, define every difference in the same order and treat the $n$ pairs as
     one sample: $\bar d\pm t^*(s_d/\sqrt n)$ with $df=n-1$. Check conditions on the differences:
@@ -23,22 +23,32 @@ exit_reflection: "One thing the video changed about my first take: \\hrulefill"
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
+    in)
   teacher_does:
-    - "Board slide up at the bell. Ask whether two columns of measurements necessarily mean two independent samples."
-    - "Run the follow-along from minute 5 to 33; return to require procedure and scope statements."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Display the board and ask for one sentence using the study description.
+  - Begin the 7.2 video follow-along at minute 5.
+  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-    - "Choose a procedure, complete the follow-along, finish (a)--(c), revise, and turn in."
+  - Write a one-sentence first take before the video.
+  - Complete the video follow-along worksheet.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What is one observational unit here: a time or a specialist?"
-    - "What changed along with the interface between measurements?"
-  adult_role: "Solo teacher. Tie the procedure to person-level differences and separate change from causation."
+  - Which specific number or study detail supports your choice?
+  - What claim would go beyond the evidence, and why?
+  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
+    a second full inference write-up.
   watch_for:
-    - "Counting 24 independent observations or using 23 degrees of freedom."
-    - "Checking separate-interface distributions instead of the 12 differences."
-    - "Treating an interval above zero as proof that no practice or time effect exists."
-  first_take_note: "Not graded. Mateo's two-column rule is intentionally plausible; students should revise it by identifying the observational unit and the rival explanation created by fixed order."
+  - Choosing a speaker without a reason.
+  - Copying numbers without explaining what they support.
+  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
+
+tether:
+  - '\textbf{UNC-4.O / EK O.1, O.3 [Skill 1.D]} Use a one-sample $t$ interval for a mean with unknown population SD. Matched-pair differences form one sample.'
+  - '\textbf{UNC-4.P / EK P.1 [Skill 4.C]} Check random sampling or assignment, the 10 percent condition, and shape on the differences.'
+  - '\textbf{UNC-4.Q / EK Q.1--Q.3 [Skill 3.D]} With $df=n-1$, $SE=s_d/\sqrt n$ and margin of error is $t^*SE$.'
+  - '\textbf{UNC-4.R / EK R.1--R.2 [Skill 3.D]} Use $\bar d$ as the estimate and calculate $\bar d\pm t^*SE$ for the population mean difference.'
 
 visuals:
   interface_difference_dotplot:

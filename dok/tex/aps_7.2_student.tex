@@ -8,7 +8,7 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose a hospital randomly samples 12 of its 180 billing specialists. Each completes the same task with the current interface and, one week later, the redesign; everyone uses the current interface first and there is no comparison group. Let $d=\text{current}-\text{redesigned}$ time in seconds. The differences are shown.\par\smallskip \textbf{Priya:} ``Use a matched-pairs $t$ interval for $\mu_d$; fixed order limits a causal claim.''\par \textbf{Mateo:} ``Two columns require an independent two-sample interval; a positive interval proves the redesign caused faster work.''\par
+Suppose a hospital randomly samples 12 of its 180 billing specialists. Each does the same task on the current computer screen and, one week later, on a redesigned screen. Everyone uses the current screen first; there is no comparison group. Let $d=\text{current}-\text{redesigned}$ time in seconds. The plot shows the differences; $\bar d=2.000$, $s_d=1.6514$, and the 95\% critical value is $t^*=2.201$.\par\smallskip \textbf{Priya:} ``Use one sample of paired differences. Doing the tasks in a fixed order limits a cause-and-effect claim.''\par \textbf{Mateo:} ``Two columns require two independent samples. A positive interval proves the redesign caused faster work.''\par
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
@@ -35,11 +35,11 @@ Suppose a hospital randomly samples 12 of its 180 billing specialists. Each comp
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Whose procedure is more defensible, Priya's or Mateo's? Cite how the two measurements are linked.
+Which seems more useful here: each person's change in time or two separate groups of times? Explain in one sentence.
 \workspace{0.9in}
 \end{firsttakebox}
 
-\begin{callout}{\IconBook\ MATCH THE INTERVAL TO THE PAIRS (keep on the page)}{calloutgreen}
+\begin{callout}{\IconBook\ ONE-SAMPLE MEAN INTERVALS (keep on the page)}{calloutgreen}
 For paired measurements, define every difference in the same order and treat the $n$ pairs as
 one sample: $\bar d\pm t^*(s_d/\sqrt n)$ with $df=n-1$. Check conditions on the differences:
 random sampling or random assignment, $n\leq0.10N$ when sampling without replacement, and,
@@ -51,18 +51,18 @@ or an adequate randomized comparison is needed to isolate causation from practic
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} Give the number of observational units and pairs, define $\mu_d$, state $df$, and interpret a positive difference.\par
+\dokbadge{1}~\textbf{(a)} How many paired differences are there, and what does a positive difference mean?\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Check random sampling, 10 percent, and the shape of the differences. Compute $\bar d$, $s_d$, SE, and a 95 percent interval for $\mu_d$; interpret it.\par
+\dokbadge{2}~\textbf{(b)} Use the supplied summaries to calculate the 95\% interval $\bar d\pm t^*(s_d/\sqrt n)$. Show one calculation.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Choose the warranted analysis from the linked data. Use the interval for the 180 specialists, then use fixed order and no comparison group to bound causation. Explain the two consequences of the rejected procedure and causal wording.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose an analysis and justify it from the linked measurements. Interpret the interval for the 180 specialists, then explain why practice or the fixed order limits a causal claim.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} A \blank[1.1in] interval is warranted because each $d$ links \blank[2.1in], so the sample size is \blank[0.5in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I would analyze \blank[1.4in] because each person \blank[1.9in].\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} The interval supports \blank[2.3in] for the 180 specialists, but it does not prove \blank[1.8in] because \blank[2.2in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The interval suggests \blank[2.0in], but \blank[1.4in] could also explain the change.\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

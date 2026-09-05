@@ -23,26 +23,26 @@ exit_reflection: "One thing the video changed about my first take: \\hrulefill"
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
+    in)
   teacher_does:
-    - "Board slide up at the bell. Ask which interval and design details are relevant to the policy claim."
-    - "Begin the 7.7 video follow-along at minute 5."
-    - "Return at minute 33. Require separate statistical, practical, population, and causal statements."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Display the board and ask for one sentence using the study description.
+  - Begin the 7.7 video follow-along at minute 5.
+  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-    - "Commit to one account and name an interval feature or design detail needed."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  - Write a one-sentence first take before the video.
+  - Complete the video follow-along worksheet.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What does excluding zero establish about the two current population means?"
-    - "Which plausible interval values fail the cooperative's two-kWh policy threshold?"
-    - "What populations do the two random samples represent?"
-    - "What alternative explanations remain because controllers were not randomly assigned?"
-  adult_role: "Solo teacher. Test each claim layer against zero, the threshold, sampling, and assignment."
+  - Which specific number or study detail supports your choice?
+  - What claim would go beyond the evidence, and why?
+  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
+    a second full inference write-up.
   watch_for:
-    - "Calling two a guaranteed minimum merely because it is inside the interval."
-    - "Interpreting the endpoints as a range for 95 percent of individual cases."
-    - "Converting random sampling of existing groups into a causal retrofit experiment."
-  first_take_note: "Not graded. Students should identify both interval evidence and a design limit before deciding."
+  - Choosing a speaker without a reason.
+  - Copying numbers without explaining what they support.
+  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
 
 visuals:
   controller_summary:

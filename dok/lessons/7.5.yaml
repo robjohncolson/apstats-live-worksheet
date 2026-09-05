@@ -23,25 +23,26 @@ exit_reflection: 'One thing the video changed about my first take: \hrulefill'
 space: { first_take: 0.9in, a: 0.7in, b: 1.5in, c: 2.0in }
 
 teacher:
-  phase_tag: 'Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)'
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
+    in)
   teacher_does:
-    - "Board slide up at the bell. Ask what conclusion the reported evidence permits."
-    - "Begin the 7.5 video follow-along at minute 5."
-    - "Return at minute 33. Require the p-value meaning, decision, scope, and limit."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Display the board and ask for one sentence using the study description.
+  - Begin the 7.5 video follow-along at minute 5.
+  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-    - "Commit to one account and cite the numerical comparison or population claim."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  - Write a one-sentence first take before the video.
+  - Complete the video follow-along worksheet.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What assumption begins a correct interpretation of 0.0645?"
-    - "What does 0.0645 greater than 0.05 let us decide, and what does it not establish?"
-    - "Which group of tickets can this SRS represent?"
-  adult_role: "Solo teacher. Connect the lower-tail probability to the null model and bound the conclusion."
+  - Which specific number or study detail supports your choice?
+  - What claim would go beyond the evidence, and why?
+  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
+    a second full inference write-up.
   watch_for:
-    - "Interpreting the p-value as the probability that the null hypothesis is true."
-    - "Using a two-sided p-value even though the alternative is lower-tailed."
-    - "Accepting the null or claiming that the true mean equals 12 hours after failing to reject."
-  first_take_note: "Not graded. Students should distinguish the formal decision from a claim about the null value."
+  - Choosing a speaker without a reason.
+  - Copying numbers without explaining what they support.
+  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
 
 visuals:
   help_desk_sample:

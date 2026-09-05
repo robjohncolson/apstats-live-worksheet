@@ -23,25 +23,26 @@ exit_reflection: 'One thing the video changed about my first take: \hrulefill'
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: 'Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)'
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
+    in)
   teacher_does:
-    - "Board slide up at the bell. Ask which interval feature evaluates each cutoff."
-    - "Begin the 7.3 video follow-along at minute 5."
-    - "Return at minute 33. Require separate decisions for the two cutoffs and the individual-time claim."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Display the board and ask for one sentence using the study description.
+  - Begin the 7.3 video follow-along at minute 5.
+  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-    - "Commit to one approach and cite an endpoint or the parameter."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  - Write a one-sentence first take before the video.
+  - Complete the video follow-along worksheet.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Why does 44.877 settle the 45-second claim but not the 42-second claim?"
-    - "Does this interval describe a population mean or 95 percent of individual transactions?"
-    - "Which population can the random sample represent?"
-  adult_role: "Solo teacher. Test each cutoff against the interval, then separate the mean from individual times."
+  - Which specific number or study detail supports your choice?
+  - What claim would go beyond the evidence, and why?
+  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
+    a second full inference write-up.
   watch_for:
-    - "Using only the lower endpoint to support a less-than claim."
-    - "Treating 95 percent confidence as a probability that the fixed population mean is in this realized interval."
-    - "Claiming that 95 percent of individual setup times fall between the confidence-interval endpoints."
-  first_take_note: "Not graded. Students should identify the parameter and an interval feature before deciding."
+  - Choosing a speaker without a reason.
+  - Copying numbers without explaining what they support.
+  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
 
 visuals:
   kiosk_sample:

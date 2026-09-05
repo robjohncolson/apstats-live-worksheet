@@ -1,0 +1,9 @@
+# Local extraction, revision, and raster-inspection scratch.
+early-previews/
+qa-*/
+visual-u5-u6/
+source-*.txt
+revise-*.py
+report-*.py
+gate-unit.py
+*-originals.json

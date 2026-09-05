@@ -35,30 +35,28 @@
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask what links existed before service times were observed.
-  \item Begin the lesson video follow-along at minute 5.
-  \item Return at minute 33. Require students to connect each standard error to a design.
-  \item Collect at the door. Score part (c) only, E/P/I.
+  \item Display the board and ask for one sentence using the study description.
+  \item Begin the 7.6 video follow-along at minute 5.
+  \item Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  \item Collect at the door. Score part (c) only using the three required elements.
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Commit to one procedure and identify a design detail still needed.
-  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+  \item Write a one-sentence first take before the video.
+  \item Complete the video follow-along worksheet.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item What link existed between a North record and a South record before either time was seen?
-  \item Why can sorting the response values make the standard deviation of differences look small?
-  \item Which standard error preserves the original sampling design?
-  \item Which population can the random samples represent?
+  \item Which specific number or study detail supports your choice?
+  \item What claim would go beyond the evidence, and why?
 \end{itemize}
-}{Solo teacher. Trace design to standard error, interval width, interpretation, and scope.}
+}{Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or a second full inference write-up.}
 
 \begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Calling equal sample sizes a matched-pairs design.
-  \item Accepting response-based sorted pairs as if they were planned pairs.
-  \item Reading an interval containing 0 as proof that the means are equal.
+  \item Choosing a speaker without a reason.
+  \item Copying numbers without explaining what they support.
 \end{itemize}
 \end{callout}
 
@@ -66,19 +64,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-two-sample-procedure} (required) --- Uses a two-sample $t$ interval for separate SRSs
-  \item \textbf{uses-competing-intervals} (required) --- Contrasts $(-1.57,5.97)$ with $(1.18,3.22)$
-  \item \textbf{diagnoses-response-pairing} (required) --- Explains that sorting responses creates artificial association
-  \item \textbf{traces-false-precision} (required) --- Links $s_d=3.0$ and $SE=0.5$ to the changed conclusion
-  \item \textbf{interprets-and-bounds-scope} (required) --- Interprets the valid interval for the sampled monthly populations
+  \item \textbf{uses-design} (required) --- Selects independent-sample analysis from the separate SRSs
+  \item \textbf{sorting} (required) --- Explains that sorting observed records does not create design-based pairing and understates uncertainty
+  \item \textbf{compares-intervals} (required) --- Contrasts zero inside the valid interval with zero outside the artificial paired interval
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Selects the design-based procedure, contrasts both intervals, explains false precision, and gives a scoped interpretation. \\ \hline
-\textbf{P} & Selects the valid interval but incompletely explains the uncertainty change, conclusion, or scope. \\ \hline
-\textbf{I} & Treats sorted ranks as planned pairs or uses $(1.18,3.22)$ as design-based evidence. \\ \hline
+\textbf{E} & Justifies the independent procedure, explains the artificial precision, and connects both intervals to the mean-difference conclusion. \\ \hline
+\textbf{P} & Shows substantive valid reasoning for at least one required element, but does not meet all E requirements. Credit correct reasoning even when another claim is wrong. \\ \hline
+\textbf{I} & Shows no substantive valid reasoning for any required element; a name, unsupported choice, or copied number alone does not count. \\ \hline
 \end{tabular}}
 
 \clearpage
@@ -95,20 +91,20 @@ Suppose two depots independently take SRSs of 36 weekday service-time records fr
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which interval procedure matches the original design? Cite any link that did or did not exist before times were observed.\par
-\answer{Not graded. Students should identify whether any pairing existed before the responses were sorted.}
+Does sorting the times make the North and South records real pairs? Explain in one sentence.\par
+\answer{Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.}
 \end{firsttakebox}
 
 \textit{Rules callout ``LET THE DESIGN CHOOSE THE INTERVAL (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} Define $\mu_N-\mu_S$, calculate its point estimate, and name the design-based interval procedure.\par
-\answer{The parameter is the North-minus-South population mean service-time difference for that month's records. The estimate is $42.3-40.1=2.2$ minutes. Two independent SRSs require a two-sample $t$ interval.}
+\dokbadge{1}~\textbf{(a)} Find the North-minus-South difference in sample mean service times.\par
+\answer{$42.3-40.1=2.2$ minutes.}
 
-\dokbadge{2}~\textbf{(b)} Verify random, 10 percent, and shape conditions. Compute $SE$, margin of error, and the 95\% interval.\par
-\answer{The independent SRSs satisfy $36\leq0.10(900)=90$ and $36\leq0.10(1{,}200)=120$. Both $n=36>30$, supporting shape. $SE=\sqrt{8.4^2/36+7.6^2/36}=1.88797$ and $ME=1.995(1.88797)=3.7665$. Thus the interval is $2.2\pm3.7665=(-1.5665,5.9665)$ minutes.}
+\dokbadge{2}~\textbf{(b)} The independent-sample standard error is 1.88797 minutes. Use $t^*=1.995$ to calculate the 95\% interval.\par
+\answer{$2.2\pm1.995(1.88797)=2.2\pm3.7665=(-1.5665,5.9665)$ minutes.}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate the procedures using the separate SRSs, rank pairing, $s_d=3.0$, and both intervals. Explain how response-based pairing changes uncertainty and the conclusion a reader might draw; then interpret the warranted interval and bound its population scope.\par
-\answer{Mei's procedure is warranted. No North record was linked to a South record before observing times. Sorting responses manufactures association; $s_d=3.0$ yields the artificial paired $SE=3/\sqrt{36}=0.5$ and narrow interval $(1.18,3.22)$, creating false precision and an apparently positive difference. The design-based interval is $(-1.57,5.97)$. We are 95\% confident the North-minus-South mean for the two depots' weekday records that month lies in that range. The independent SRSs support those finite monthly populations, not every transaction or a causal process effect.}
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose a procedure using the original sampling design. Compare the two intervals and explain how sorting the times could mislead a reader about whether the population means differ.\par
+\answer{Mei is justified because the two samples were selected independently, without linked records. Sorting observed times does not create a paired study; the resulting $SE=3/\sqrt{36}=0.5$ makes the interval artificially narrow. The independent-sample interval $(-1.57,5.97)$ includes 0, so equal monthly population means remain plausible. The sorted-pair interval $(1.18,3.22)$ excludes 0 and could falsely suggest evidence that North has the higher population mean.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

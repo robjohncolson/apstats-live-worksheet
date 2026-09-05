@@ -23,24 +23,26 @@ exit_reflection: 'One thing the video changed about my first take: \hrulefill'
 space: { first_take: 0.7in, a: 0.6in, b: 1.25in, c: 1.65in }
 
 teacher:
-  phase_tag: 'Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)'
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
+    in)
   teacher_does:
-    - "Ask students to mark defensible and unsupported clauses in both reports."
-    - "After the video, require numerical, design, and scope evidence."
-    - "Collect and score part (c) only, E/P/I."
+  - Display the board and ask for one sentence using the study description.
+  - Begin the 7.9 video follow-along at minute 5.
+  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-    - "Commit to a clause-level comparison, then complete the 7.9 follow-along."
-    - "Synthesize one warranted report in (c), revise, and turn in."
+  - Write a one-sentence first take before the video.
+  - Complete the video follow-along worksheet.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Assuming what is 0.0263 calculated?"
-    - "Which benchmark did the test use: 0 or 3?"
-    - "What do sampling and self-selection each permit?"
-  adult_role: "Circulate. Ask students to preserve valid clauses from both reports."
+  - Which specific number or study detail supports your choice?
+  - What claim would go beyond the evidence, and why?
+  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
+    a second full inference write-up.
   watch_for:
-    - "Reading the $p$-value as $P(H_0)$."
-    - "Equating significance with a 3-minute effect."
-    - "Inferring cause from self-selected modes."
-  first_take_note: "Not graded. Credit a supported comparison of at least two clauses."
+  - Choosing a speaker without a reason.
+  - Copying numbers without explaining what they support.
+  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
 
 visuals:
   mode_samples:

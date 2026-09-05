@@ -8,7 +8,7 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose existing lines N (new formula) and S (standard) make the same sealant. Independently, a team samples 18 of 600 recent N batches and 18 of 540 recent S batches. Cure-time summaries are $\bar x_N=41.2$, $s_N=3.6$, $\bar x_S=44.0$, and $s_S=4.1$; boxplots are shown. Before sampling it asked, ``Do the two populations differ in mean cure time?'' Formula was not assigned to lines.\par\smallskip \textbf{Rhea:} ``Preserve the pre-data direction, use population means, and separate association from causation.''\par \textbf{Sol:} ``Since $41.2<44.0$, use a lower tail with sample means; significance proves formula caused faster curing.''\par
+Suppose line N uses a new formula for sealant, a material that closes gaps. Line S uses the standard formula. A team takes independent simple random samples of 18 of 600 recent N batches and 18 of 540 recent S batches. Mean cure times are 41.2 and 44.0 minutes; the boxplots are shown. Before sampling, the team asked, ``Do the two populations differ in mean cure time?'' Formula was not randomly assigned to lines.\par\smallskip \textbf{Rhea:} ``Keep the original question and use population means. A difference between lines may have other causes.''\par \textbf{Sol:} ``Since $41.2<44.0$, use a lower tail with sample means. A significant result proves the formula caused faster curing.''\par
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
@@ -25,11 +25,11 @@ Suppose existing lines N (new formula) and S (standard) make the same sealant. I
 \end{tikzpicture}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Which parts of each plan do the question's timing and the design support? Name one detail to verify.
+Did the team originally ask whether N was faster or whether the lines differed in either direction? Explain in one sentence.
 \workspace{0.9in}
 \end{firsttakebox}
 
-\begin{callout}{\IconBook\ LET THE QUESTION--NOT THE SAMPLE--SET THE TAIL (keep on the page)}{calloutgreen}
+\begin{callout}{\IconBook\ HYPOTHESES FOR TWO MEANS (keep on the page)}{calloutgreen}
 For two independent groups with a quantitative response, use a two-sample $t$ test for
 $\mu_1-\mu_2$. The null states no population difference: $H_0:\mu_1-\mu_2=0$.
 Choose $<$ or $>$ only when the research question specified that direction before seeing
@@ -42,18 +42,18 @@ supports population scope; random assignment is needed to isolate a causal treat
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} Identify the response, both samples, and $\bar x_N-\bar x_S$. Did the pre-data question specify a direction?\par
+\dokbadge{1}~\textbf{(a)} Define $\mu_N$ and $\mu_S$ in context.\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Name the procedure; define both parameters; state $H_0$ in N-minus-S order; and verify independence, 10 percent, and shape.\par
+\dokbadge{2}~\textbf{(b)} State $H_0$ and $H_a$ in N-minus-S order to match the question asked before sampling.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate both plans. Defend the alternative and notation, diagnose selecting a tail from the observed order, and bound a significant result. Explain the misleading belief invited by each rejected choice.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, judge the two plans. Explain why the original question sets the tail, why hypotheses use population means, and why these two lines cannot isolate the formula as the cause.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} The pre-data wording calls for $H_a:\blank[1.5in]$ because $\blank[2.2in]$.\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The original question asks \blank[1.8in], so the alternative should \blank[1.8in].\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} A significant result could support $\blank[2.0in]$, but not $\blank[1.6in]$, because $\blank[2.0in]$.\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The hypotheses describe \blank[1.8in]. A causal claim is limited because \blank[2.0in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

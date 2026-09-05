@@ -1,0 +1,1777 @@
+{
+  "audit_date": "2026-09-04",
+  "scope": "OLD units 7 and 8, 13 dated topics",
+  "verdict_definition": "PASS: no criterion defect found; FIX: defect found and corrected; FLAG: remaining teaching judgment described in the evidence.",
+  "order": "Sorted by actual periods.B dates: OLD unit 8 precedes OLD unit 7.",
+  "patterns": [
+    "Full inference calculations were repeatedly required before long adjudication prompts, duplicating supplied results and the worksheet work.",
+    "Pre-video hooks often required formal vocabulary or several kinds of evidence; each revised hook is a plain one-sentence question.",
+    "Several callouts stated the exact deciding flaw or hypothesis; revised callouts use general rules and supply missing decision/interval rules.",
+    "Long scoring lists mixed errors with partial-credit omissions; revised rubrics have three visible reasoning elements and disjoint E/P/I categories."
+  ],
+  "topics": [
+    {
+      "topic": "8.1",
+      "title": "Two Simulations for Mystery Tokens",
+      "period_B_date": "2026-12-18",
+      "sources_read": [
+        "u8_lesson1_live.html",
+        "u8_l1_blooket.csv",
+        "dok/lessons/8.1.yaml",
+        "dok/registry/8.1.jsonl"
+      ],
+      "source_sha256_at_audit": {
+        "u8_lesson1_live.html": "3e7af7686d0e1bc841b037afd37fdfc80ae89781823c163562d6c14de9c602ed",
+        "u8_l1_blooket.csv": "355d18a4debba33ae5fca7a897414b80674b744839b8344279f3f6cc57e6f485",
+        "dok/lessons/8.1.yaml": "88fdc2f86e8079df5ade383791bd02c0087f64674b84c43d4169120d2059f0c7",
+        "dok/registry/8.1.jsonl": "639a9e3fe2b9073745293362da3b1f5325af003b9ceac04339d86d162df36dc9"
+      },
+      "flashcard_items_read": 28,
+      "worksheet_vocabulary": [
+        "observed counts",
+        "expected counts",
+        "one-way table",
+        "random variation",
+        "chi-square statistic",
+        "good fit",
+        "simulation",
+        "sampling distribution",
+        "p-value"
+      ],
+      "worksheet_skills_and_order": "Video 0:15–7:04 uses a ten-sided die to calculate expected counts, explain squaring/dividing relative gaps, form chi-square and compare it with generated samples. Reflection and exit use simulated tail fractions and a bounded large-p conclusion. No theoretical df or large-count test conditions are taught here.",
+      "tether_learning_objectives": [
+        "VAR-1.J"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "FIX",
+          "evidence": "Removed df and formal expected-count/10% checks from the introductory simulation task; retained expected counts, a contribution and simulated surprise, matching this day's video/cards."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Three expected counts, all contributions and total, df, simulated tail, two condition checks, then mechanism/threshold/consequence/proof critique. Revised: a: three one-step expected counts; b: one contribution and one fraction, total supplied; c: 3–4 sentences with two simulation mechanisms and bounded tail judgment. Five short calculations, about 9–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Dropped premature df/conditions; supplied total chi-square; kept one contribution and simulation reasoning; clarified 1,000 Amara trials."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which simulation can reveal whether the sample's color discrepancies are unexpected? State what varies in one trial. Revised: Which plan can produce a different number of red tokens on the next trial? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "evidence": "Removed premature df and the exact fixed-observed-label flaw. General new-sample simulation and tail/cutoff rules scaffold rather than identify the losing plan."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Token table labels model probabilities and observed counts without calling a color discrepant or a simulation flawed."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: three one-step expected counts; b: one contribution and one fraction, total supplied; c: 3–4 sentences with two simulation mechanisms and bounded tail judgment. Five short calculations, about 9–10 minutes.",
+        "computed_values_including_intermediates": 5
+      },
+      "changed": true,
+      "change_summary": "Dropped premature df/conditions; supplied total chi-square; kept one contribution and simulation reasoning; clarified 1,000 Amara trials.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "chi_square": 3.35,
+        "contributions": [
+          1.6,
+          1.5,
+          0.25
+        ],
+        "df_removed_from_student_task": 2,
+        "expected": [
+          40.0,
+          24.0,
+          16.0
+        ],
+        "p_simulated": 0.186,
+        "p_theoretical_for_crosscheck_only": 0.18730817948195705,
+        "sample_total": 80.0,
+        "ten_percent_bound": 1000.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_8.1_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "ef4ed1e6d0cbb7af8dff4d7eea2156056074cca3b061a09991a12a6260a5d3bf",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_8.1_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "8e77e6ee2c33d2ef23657d23301c8cf19140d350438ecc25390aef57be384ce9",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_8.1_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "c6bf44a5e28c26c24352d201f7214c6b3972cac5ec5960f9b6db5e2d6251e4e9",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "8.4",
+      "title": "A Two-Way Table Before Inference",
+      "period_B_date": "2026-12-21",
+      "sources_read": [
+        "u8_lesson4_live.html",
+        "u8_l4_blooket.csv",
+        "dok/lessons/8.4.yaml",
+        "dok/registry/8.4.jsonl",
+        "ai-tutor/u8_l4.md"
+      ],
+      "source_sha256_at_audit": {
+        "u8_lesson4_live.html": "93fd3992af72d5db9ced49c23a1aab4778d705596ca347c840872ab8f550f412",
+        "u8_l4_blooket.csv": "612189525572648c41683ada76cf141449f713fd9b90af3e00afb9fecd1f06a9",
+        "dok/lessons/8.4.yaml": "a9d9cd2209c5deb49d68f217b3394e93646c6e83a0f6ab9fdae7ac034c917e52",
+        "dok/registry/8.4.jsonl": "0a8f7fb47f5dfeaa5297c3e571f493599c2e7e756c03e1e300f10665e788e0d2",
+        "ai-tutor/u8_l4.md": "d7ab0dbba977c28005472ba5a132313213af5280dfcce125284d542549721ebd"
+      },
+      "flashcard_items_read": 28,
+      "worksheet_vocabulary": [
+        "two-way table",
+        "expected count",
+        "observed count",
+        "row total",
+        "column total",
+        "table total",
+        "no relationship",
+        "cell",
+        "subtraction shortcut",
+        "key"
+      ],
+      "worksheet_skills_and_order": "Video 0:00–7:51 calculates expected counts from margins under no relationship and uses subtraction to preserve margins. Reflections/exit focus on totals, expected counts and observed-versus-expected labels. Chi-square condition checks are introduced on the following 8.5 video, not here.",
+      "tether_learning_objectives": [
+        "VAR-8.H",
+        "VAR-8.K",
+        "VAR-8.L"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "FLAG",
+          "evidence": "Removed df and the full test setup. The central >5 boundary judgment still uses a rule supplied in the callout ahead of the next video; retaining that bridge preserves the two competing claims. Teacher should decide whether to use it on this calculation day."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Computed two cells in (a), repeated them among all six in (b), then df, random/10% checks, plus boundary/flaw/remedy/category-merging critique. Revised: a: read three totals; b: two expected counts; c: 3–4 sentences on count type, the printed boundary rule and a larger-sample next step. About 8–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Kept only two expected-count calculations and the core boundary judgment; removed df/duplicate arithmetic/category merging; flagged the course cutoff conflict."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which claim is more defensible so far? Identify the evidence that should settle the condition check. Revised: Would you decide from the recorded counts alone or also work out what the totals predict? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FLAG",
+          "evidence": "Explicitly preserves the course's strict >5 rule. Day 8.5 video/cards use >5, while 8.6 exit/cards say at least 5. This borderline problem depends on that discrepancy and needs teacher review; no curriculum file was edited."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Observed table and totals are labeled neutrally; the expected boundary value is computed by students rather than annotated in the visual."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: read three totals; b: two expected counts; c: 3–4 sentences on count type, the printed boundary rule and a larger-sample next step. About 8–10 minutes.",
+        "computed_values_including_intermediates": 2
+      },
+      "changed": true,
+      "change_summary": "Kept only two expected-count calculations and the core boundary judgment; removed df/duplicate arithmetic/category merging; flagged the course cutoff conflict.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "chi_square": 0.3360000000000001,
+        "column_totals": [
+          50.0,
+          40.0,
+          30.0
+        ],
+        "contributions": [
+          [
+            0.0026666666666667047,
+            0.013333333333333239,
+            0.04
+          ],
+          [
+            0.01333333333333338,
+            0.06666666666666672,
+            0.2
+          ]
+        ],
+        "df": 2,
+        "expected": [
+          [
+            41.666666666666664,
+            33.333333333333336,
+            25.0
+          ],
+          [
+            8.333333333333334,
+            6.666666666666667,
+            5.0
+          ]
+        ],
+        "minimum_expected": 5.0,
+        "p_upper": 0.8453538346846586,
+        "row_totals": [
+          100.0,
+          20.0
+        ],
+        "strict_printed_rule_passes": false,
+        "table_total": 120.0,
+        "ten_percent_bound": 500.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_8.4_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "826aa3d7ce6cf3f1fbac60c33b1e138895fcf4b1c239b70d4e4b19feabd0abb8",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_8.4_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "384b8750f85d27479c33e70b723a8d538a7c8f7351567d81db47f27df26dfc26",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_8.4_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "c9928ff49779a9596e832d988780c3aec5311ed777c6b2e972210140f6b2f829",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": [
+        "Removed df and the full test setup. The central >5 boundary judgment still uses a rule supplied in the callout ahead of the next video; retaining that bridge preserves the two competing claims. Teacher should decide whether to use it on this calculation day.",
+        "Explicitly preserves the course's strict >5 rule. Day 8.5 video/cards use >5, while 8.6 exit/cards say at least 5. This borderline problem depends on that discrepancy and needs teacher review; no curriculum file was edited."
+      ]
+    },
+    {
+      "topic": "8.5",
+      "title": "One Table, Two Study Designs",
+      "period_B_date": "2026-12-22",
+      "sources_read": [
+        "u8_lesson5_live.html",
+        "u8_l5_blooket.csv",
+        "dok/lessons/8.5.yaml",
+        "dok/registry/8.5.jsonl",
+        "ai-tutor/u8_l5.md"
+      ],
+      "source_sha256_at_audit": {
+        "u8_lesson5_live.html": "29863753f7ee16e28258aaa03233c06bbe179acf27e5dbfc329ecd307c6d2027",
+        "u8_l5_blooket.csv": "2241fba8d03ce7dcdf8e33b19cb17c2777349f47e23d8bbde6e4882eed6a7b4f",
+        "dok/lessons/8.5.yaml": "11a6b9bcc64f05299dbead5531c38b63bda6ea9536e1ed3147c66e0069072727",
+        "dok/registry/8.5.jsonl": "c00bfcffad81f91e94a475f4271d827e5f376c3f710080d8f1bce113d4ea47b8",
+        "ai-tutor/u8_l5.md": "e97aee62015849dec63a70d46c06ef100b9e2d4e8f28d16edb8e65b63ca22365"
+      },
+      "flashcard_items_read": 30,
+      "worksheet_vocabulary": [
+        "chi-square homogeneity",
+        "chi-square independence",
+        "distribution",
+        "association",
+        "null",
+        "alternative",
+        "independent samples",
+        "single sample",
+        "10% condition",
+        "expected counts"
+      ],
+      "worksheet_skills_and_order": "Video 1 0:00–8:00 chooses homogeneity versus independence from data collection and writes word-based hypotheses. Video 2 0:00–6:58 checks random design/10%/expected >5. Reflections and exit compare the two procedures; theoretical df is not yet a worksheet skill.",
+      "tether_learning_objectives": [
+        "VAR-8.I",
+        "VAR-8.J",
+        "VAR-8.K"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "FIX",
+          "evidence": "Removed premature df and comparisons of test statistics/p-values; concentrated on expected counts, sampling design, procedure and null wording as taught this day."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Nine expected counts, df and both designs' condition checks, then both tests, four hypotheses, a flaw consequence and shared-statistic discussion. Revised: a: two sample-count answers; b: three expected cells and one row-total reason; c: four sentences giving the two justified tests/nulls and rejecting the table-only rule. About 9–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Reduced repeated expected arithmetic/full setup; focused on two justified nulls; reconciled three route populations with the 15,000-rider system (5,000 each)."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which claim is more defensible? Cite the sampling structure of each design. Revised: Do the same counts mean that riders were selected in the same way? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "evidence": "Removed df; retained distinct design/hypothesis rules and added the 10% condition formerly demanded without being stated here."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Shared observed table contains only route/method counts and totals; no procedure names or conclusions appear in it."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts. Reconciled the route totals with the full system population."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: two sample-count answers; b: three expected cells and one row-total reason; c: four sentences giving the two justified tests/nulls and rejecting the table-only rule. About 9–10 minutes.",
+        "computed_values_including_intermediates": 3
+      },
+      "changed": true,
+      "change_summary": "Reduced repeated expected arithmetic/full setup; focused on two justified nulls; reconciled three route populations with the 15,000-rider system (5,000 each).",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "chi_square": 7.126666666666667,
+        "column_totals": [
+          150.0,
+          90.0,
+          60.0
+        ],
+        "contributions": [
+          [
+            2.0,
+            0.8333333333333334,
+            1.25
+          ],
+          [
+            0.08,
+            0.13333333333333333,
+            0.0
+          ],
+          [
+            1.28,
+            0.3,
+            1.25
+          ]
+        ],
+        "design_a_each_ten_percent_bound": 500.0,
+        "df": 4,
+        "expected": [
+          [
+            50.0,
+            30.0,
+            20.0
+          ],
+          [
+            50.0,
+            30.0,
+            20.0
+          ],
+          [
+            50.0,
+            30.0,
+            20.0
+          ]
+        ],
+        "p_upper": 0.1293439708329178,
+        "route_population_total": 15000,
+        "row_totals": [
+          100.0,
+          100.0,
+          100.0
+        ],
+        "table_total": 300.0,
+        "ten_percent_bound": 1500.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_8.5_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "00adcd72fb2d4347f31d6b3f9d70ec7e59650a65e07d4cb5c6e53dc7d9875fa5",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_8.5_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "27db1056becab2e07271bc51e6c63f0135b9bca51dcc91c18428826ba1c47288",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_8.5_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "4fce26d5a0cb742d0bd3202086f770e8a4cc343cebb30b14e0f5fbe447a80443",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "8.6",
+      "title": "Interpreting a Chi-Square Result",
+      "period_B_date": "2027-01-04",
+      "sources_read": [
+        "u8_lesson6_live.html",
+        "u8_l6_blooket.csv",
+        "dok/lessons/8.6.yaml",
+        "dok/registry/8.6.jsonl",
+        "ai-tutor/u8_l6.md"
+      ],
+      "source_sha256_at_audit": {
+        "u8_lesson6_live.html": "f586694c03c294b35b914bdd111779672fe34ed45f933850936ca83b162df74f",
+        "u8_l6_blooket.csv": "f95c1c966247bb1ce937caab4ae2e5c6d7796302a6756fd828c5124e9ea5986f",
+        "dok/lessons/8.6.yaml": "cde4dbc1bc2993e80f7ae1b81af7a811be5001f7f503351d3c0846257518fb8a",
+        "dok/registry/8.6.jsonl": "5331662c377ddb2d980ae2c409174f6189c8f211c48321d42dbca08343762d33",
+        "ai-tutor/u8_l6.md": "e8f7df123537714150d67228cd1bc3f435a8c4c5b6c1f6622d686878cebcf059"
+      },
+      "flashcard_items_read": 32,
+      "worksheet_vocabulary": [
+        "chi-square statistic",
+        "contribution",
+        "degrees of freedom",
+        "p-value",
+        "Table C",
+        "chi-squared CDF",
+        "significance level",
+        "reject/fail to reject",
+        "follow-up analysis"
+      ],
+      "worksheet_skills_and_order": "Video 1 0:00–9:55 computes cell contributions, df and upper-tail p; video 2 0:00–9:39 interprets p, makes a decision and compares largest contributions; video 3/exit gives full testing context. Cards/worksheet explicitly teach follow-up contribution analysis and association conclusions.",
+      "tether_learning_objectives": [
+        "VAR-8.L",
+        "VAR-8.M",
+        "DAT-3.K",
+        "DAT-3.L"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "PASS",
+          "evidence": "Two disputed contributions plus a supplied overall test result match the day's calculation and follow-up interpretation; causal limits are stated generally in the callout."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Read all margins, df, checked three conditions, computed six expected counts and six contributions, total and p, then compared two cells and wrote scope/causal/consequence judgments. Revised: a: one df calculation; b: two contributions using supplied expected counts; c: 3–4 sentences comparing cells, applying p versus 0.05, and bounding causation. Three calculations, about 9–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Supplied two expected counts and overall test result; reduced 12-cell arithmetic to two contributions; printed alpha rule and focused rubric."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which account is better supported so far? Name one calculation and one design fact needed to decide. Revised: Can this study show that choosing email causes fewer late returns? Give one reason from how the study was done. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "evidence": "Added both p-versus-alpha decision branches needed by (c). Removed the explicit largest-raw-gap warning so the contribution formula supports an actual comparison."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Observed table has neutral method/late-return labels and totals; the winning cell is not marked."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: one df calculation; b: two contributions using supplied expected counts; c: 3–4 sentences comparing cells, applying p versus 0.05, and bounding causation. Three calculations, about 9–10 minutes.",
+        "computed_values_including_intermediates": 3
+      },
+      "changed": true,
+      "change_summary": "Supplied two expected counts and overall test result; reduced 12-cell arithmetic to two contributions; printed alpha rule and focused rubric.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "chi_square": 22.517162471395885,
+        "column_totals": [
+          69.0,
+          171.0
+        ],
+        "contributions": [
+          [
+            6.576086956521739,
+            2.6535087719298245
+          ],
+          [
+            0.043478260869565216,
+            0.017543859649122806
+          ],
+          [
+            9.423913043478262,
+            3.8026315789473686
+          ]
+        ],
+        "df": 2,
+        "expected": [
+          [
+            28.75,
+            71.25
+          ],
+          [
+            23.0,
+            57.0
+          ],
+          [
+            17.25,
+            42.75
+          ]
+        ],
+        "late_raw_absolute_gaps": [
+          13.75,
+          1.0,
+          12.75
+        ],
+        "p_upper": 1.2896156513280312e-05,
+        "row_totals": [
+          100.0,
+          80.0,
+          60.0
+        ],
+        "table_total": 240.0,
+        "ten_percent_bound": 600.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_8.6_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "33abc97fe5c25e6b41728e17386c9b7ad9846e63670041c8631eb80fee12b851",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_8.6_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "8384cd979af344b4a6e3e76eb2da06a04ca586fa33ae202bf43e201d2615ba2f",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_8.6_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "a507422d7908f950bc41ac82f116a0ccafdd1c3b833a239b59a76afca9a9f66d",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "7.1",
+      "title": "Can Chance Explain the Mean Difference?",
+      "period_B_date": "2027-01-12",
+      "sources_read": [
+        "u7_lesson1_live.html",
+        "u7_l1_blooket.csv",
+        "dok/lessons/7.1.yaml",
+        "dok/registry/7.1.jsonl"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson1_live.html": "66c5289be8acfbb7ae682e1b236f07109440b87c5356a3294a39bf23580d9c54",
+        "u7_l1_blooket.csv": "3a2d0c7b5c2e15f521a46ea5d3eaee09a072d0b1f98a13991aa5735b09aee620",
+        "dok/lessons/7.1.yaml": "810a13f8305045fc3bb9fec8319d4828e49ad374d2f1aa360530c665fc106684",
+        "dok/registry/7.1.jsonl": "92c031830bbb880010021c407757620a0486e6ca6733ac58a2202e587be70d3a"
+      },
+      "flashcard_items_read": 28,
+      "worksheet_vocabulary": [
+        "claim",
+        "evidence",
+        "difference in means",
+        "chance variation",
+        "random assignment",
+        "rerandomization",
+        "simulation",
+        "convincing evidence"
+      ],
+      "worksheet_skills_and_order": "Video 0:00–7:43 identifies a directional mean difference, compares chance with a treatment effect, rerandomizes fixed responses, and interprets the simulated tail. Reflection and exit repeat evidence, two explanations, and a contextual conclusion. Cards explicitly distinguish tail probability from certainty and volunteers from random sampling.",
+      "tether_learning_objectives": [
+        "VAR-1.I"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "PASS",
+          "evidence": "Simulation, direction, remaining error, assignment and population limits are in the worksheet/cards; the callout states the probability assumption in words."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Part (a) demanded claim/statistic/null center; (b) a simulation algorithm, arithmetic and interpretation; (c) five reasoning strands, three numeric anchors and an extra consequence. Revised: a: one value; b: one fraction plus one sentence; c: 3–4 sentences, one simulation anchor and one recruitment detail. About 8–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Shortened simulation prompt and critique; rewrote pre-video hook and frames; reduced grading to evidence/error/scope."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Whose use of the rerandomization result is better supported, Nia's or Owen's? Cite $-3.6$ or $18/2{,}000$. Revised: Whose claim sounds more believable, Nia's or Owen's? Give one reason from the study. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "evidence": "Replaced conditioning-bar notation and dense prose with the video's chance-alone wording; kept general rules and no speaker names."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Two-row table gives only group sizes and means. Full letter and board figures have legible data and neutral labels."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: one value; b: one fraction plus one sentence; c: 3–4 sentences, one simulation anchor and one recruitment detail. About 8–10 minutes.",
+        "computed_values_including_intermediates": 1
+      },
+      "changed": true,
+      "change_summary": "Shortened simulation prompt and critique; rewrote pre-video hook and frames; reduced grading to evidence/error/scope.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "claimed_complement_percent": 99.1,
+        "difference": -3.6000000000000014,
+        "expected_no_effect": 0,
+        "group_total": 50,
+        "simulation_fraction": 0.009,
+        "simulation_percent": 0.9
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.1_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "dc2bd525c1814dfc813c1abfd3f9dded147399c82afa125ca9542e3667cc9618",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.1_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "02f3ebee532a3ef6226d73d7145de568dd80458afcecf5eff54bea78aff1a4e5",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.1_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "4037c3ee83901783d82c9aa3f70ab9cfdc7387f9a3690db4a651a5fbe2a52ff4",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "7.2",
+      "title": "Two Interfaces, Twelve Specialists",
+      "period_B_date": "2027-01-14",
+      "sources_read": [
+        "u7_lesson2_live.html",
+        "u7_l2_blooket.csv",
+        "dok/lessons/7.2.yaml",
+        "dok/registry/7.2.jsonl",
+        "ai-tutor/u7_l2.md"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson2_live.html": "3cfe7d937029f8e6ca2b7c0aa2b7f921f42d884300d64557a6a3530d30676a66",
+        "u7_l2_blooket.csv": "1152f62d58a342b90413d5abe8bf0fd4738a779c6df9e3dfb9a9873054a68d97",
+        "dok/lessons/7.2.yaml": "2754cc579ef4a4d709d006e7026ac63ec400bfcc9e4daee6a6cc652d3351c770",
+        "dok/registry/7.2.jsonl": "5d8259bab49323f50411891bdcd05be3b1354eede72f2d70f8ba552c892150b6",
+        "ai-tutor/u7_l2.md": "e17f301b1d1ef620171948f3209c1b31d45639f6ad7dff30c13346563712346b"
+      },
+      "flashcard_items_read": 30,
+      "worksheet_vocabulary": [
+        "one-sample t-interval",
+        "critical value",
+        "standard error",
+        "margin of error",
+        "degrees of freedom",
+        "10% condition",
+        "shape condition",
+        "confidence level"
+      ],
+      "worksheet_skills_and_order": "Video 1 0:00–7:24 checks randomization/10%/shape on sugar-bag data. Video 2 0:00–9:12 calculates s/sqrt(n), t*, margin and endpoints, including calculator/Table B choices. Reflection and exit build and interpret a mean interval. Neither worksheet nor recall cards explicitly teaches paired differences; CED UNC-4.O.3 and the printed callout do.",
+      "tether_learning_objectives": [
+        "UNC-4.O",
+        "UNC-4.P",
+        "UNC-4.Q",
+        "UNC-4.R"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "FLAG",
+          "evidence": "Paired analysis is in CED UNC-4.O.3 and the printed callout, but not this day's video/cards. Identity retained; teacher should decide whether this short bridge is sufficient before the 7.5 paired-data video."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Students had to calculate mean and SD from 12 values, SE, margin and endpoints, check three conditions, interpret, and write a five-element pairing/scope/causation critique. Revised: a: one line with pair count/sign; b: one interval calculation with supplied mean, SD and critical value (SE, margin, two endpoints); c: 3–4 sentences using pairing, interval and fixed order. About 9–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Precomputed 12-value summaries/t*; cut redundant condition write-up; shortened ELL hook/frames and rubric; compacted teacher tether."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Whose procedure is more defensible, Priya's or Mateo's? Cite how the two measurements are linked. Revised: Which seems more useful here: each person's change in time or two separate groups of times? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "evidence": "Neutralized the title and supplied mean/SD/t* in the stem to keep the printed formula usable within the time limit. Paired-method definition remains general."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "evidence": "Dotplot labels and values were sound; teacher edition initially overflowed to four pages after the audit. Condensed the YAML CED tether, preserving O/P/Q/R and paired EK references; final page checks meet the limit."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: one line with pair count/sign; b: one interval calculation with supplied mean, SD and critical value (SE, margin, two endpoints); c: 3–4 sentences using pairing, interval and fixed order. About 9–10 minutes.",
+        "computed_values_including_intermediates": 4
+      },
+      "changed": true,
+      "change_summary": "Precomputed 12-value summaries/t*; cut redundant condition write-up; shortened ELL hook/frames and rubric; compacted teacher tether.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "df": 11,
+        "interval": [
+          0.9507144205352256,
+          3.049285579464774
+        ],
+        "interval_using_supplied_rounded_sd": [
+          0.9507434238890071,
+          3.049256576110993
+        ],
+        "margin": 1.0492855794647744,
+        "mean": 2.0,
+        "n": 12,
+        "sd": 1.651445647689541,
+        "se": 0.4767312946227962,
+        "sum": 24.0,
+        "sum_squared_deviations": 30.0,
+        "t95_exact": 2.200985160082949,
+        "t95_supplied": 2.201,
+        "ten_percent_bound": 18.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.2_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "c80c0738ad40efed9c67d6357d1296a998ccb4212ab491c3ac9878e02b73a668",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.2_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "e512a242433f1e02d686773b11aece501c3485525e9e30ca087a1242dfb6bfaf",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.2_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "2615f8c0d154e70627f09ef92d853b2ff501efd91c70dd311a17e0e7ea16023b",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": [
+        "Paired analysis is in CED UNC-4.O.3 and the printed callout, but not this day's video/cards. Identity retained; teacher should decide whether this short bridge is sufficient before the 7.5 paired-data video."
+      ]
+    },
+    {
+      "topic": "7.3",
+      "title": "One Interval, Two Cutoffs",
+      "period_B_date": "2027-01-15",
+      "sources_read": [
+        "u7_lesson3_live.html",
+        "u7_l3_blooket.csv",
+        "dok/lessons/7.3.yaml",
+        "dok/registry/7.3.jsonl",
+        "ai-tutor/u7_l3.md"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson3_live.html": "e7d08e268b05beb89d7235dc0debe5913aa9150df4acefa330ca03e638ff5291",
+        "u7_l3_blooket.csv": "9cd0ba47e8e552345a22831470dc45662042aac544842c50720564799fddbc53",
+        "dok/lessons/7.3.yaml": "ec1050e71fbc55612f991c147a502dc14fd5bfa37ab3a3724d60398e08aad75e",
+        "dok/registry/7.3.jsonl": "282e453cb04737cd0a71a22e74b01ca621f2c5fbe617cf04ba9cf5d3c03bd386",
+        "ai-tutor/u7_l3.md": "c8c1176730ac1a72bcc08db793f59465f4a2943de8640929ab49236fa936b577"
+      },
+      "flashcard_items_read": 28,
+      "worksheet_vocabulary": [
+        "plausible value",
+        "confidence level",
+        "repeated random sampling",
+        "capture",
+        "margin of error",
+        "interval width",
+        "directional claim",
+        "context"
+      ],
+      "worksheet_skills_and_order": "Video 1 0:00–4:30 interprets an interval and compares claimed means with the full interval. Video 2 distinguishes confidence level and margin of error; the full crow example and exit check/construct/interpret then judge a mean below a cutoff. Cards reject individual-value and fixed-interval probability interpretations.",
+      "tether_learning_objectives": [
+        "UNC-4.S",
+        "UNC-4.T",
+        "UNC-4.U"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "PASS",
+          "evidence": "Both threshold judgments and mean-versus-individual interpretation are directly in this day's materials."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Asked for a supplied interval to be rebuilt (SE, margin, endpoints), three conditions, an interpretation and a five-element two-cutoff/advertising critique. Revised: a: two location notes; b: one contextual interval sentence; c: 3–4 sentences using the two cutoffs and mean-versus-individual distinction. No arithmetic beyond reading given endpoints; about 7–9 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Used the supplied interval; removed repeated inference calculations/shape check; reduced the critique and made grading non-overlapping."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which approach is more defensible? Cite an endpoint or identify the quantity being estimated. Revised: Does the range 39.923 to 44.877 make both time claims believable? Give one reason. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "evidence": "General whole-interval and population-mean rules cover the revised critique without choosing either cutoff or speaker."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "evidence": "Original part (b) asked students to check shape while its table explicitly said symmetric/no outliers. Removed that redundant question; the neutral supplied-summary table now supports interpretation only."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts. Final PDF inspection caught and repaired an unescaped percent sign in the expected-elements description."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: two location notes; b: one contextual interval sentence; c: 3–4 sentences using the two cutoffs and mean-versus-individual distinction. No arithmetic beyond reading given endpoints; about 7–9 minutes.",
+        "computed_values_including_intermediates": 0
+      },
+      "changed": true,
+      "change_summary": "Used the supplied interval; removed repeated inference calculations/shape check; reduced the critique and made grading non-overlapping.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "cutoffs": {
+          "42_inside": true,
+          "45_above": true
+        },
+        "df": 24,
+        "interval": [
+          39.923321726046375,
+          44.87667827395362
+        ],
+        "margin": 2.476678273953625,
+        "se": 1.2,
+        "t95_exact": 2.0638985616280205,
+        "ten_percent_bound": 80.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.3_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "064c50c52fa4f2ef48eff7242ec60e09e8fd06d5cd561a32bf813e4f51fee709",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.3_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "330f45739d7067939080cdffea48fd756b4b11a62054001fd0ac86df723c48de",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.3_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "55f5c7c376eb66edcf4e7012400c519abf124483f96b2a19a024c40c5d00c0a5",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "7.4",
+      "title": "Two Measurements per Technician",
+      "period_B_date": "2027-01-19",
+      "sources_read": [
+        "u7_lesson4_live.html",
+        "u7_l4_blooket.csv",
+        "dok/lessons/7.4.yaml",
+        "dok/registry/7.4.jsonl",
+        "ai-tutor/u7_l4.md"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson4_live.html": "124746aa2379ba149bdb68d0a4824d5b8d4b32b1fbd2a6b6bf68ee9e0d704217",
+        "u7_l4_blooket.csv": "231f099c03e5b67d7e7e29c2b58730627534d07205fe063238ef8452fb50b423",
+        "dok/lessons/7.4.yaml": "da1dab42c07df3c6731282e4ebfb66db8df598eb710083de29967756ee43e51b",
+        "dok/registry/7.4.jsonl": "38caa3bf3e3f855e55666cf53fd2b9eb70868b2ce93c644a7cb93b4edcf95794",
+        "ai-tutor/u7_l4.md": "2cb3b3869a40671fe24ffca98fe1a5823737f3566835e988b0949fb957f37f64"
+      },
+      "flashcard_items_read": 28,
+      "worksheet_vocabulary": [
+        "significance test",
+        "null hypothesis",
+        "alternative hypothesis",
+        "null value",
+        "one-sided",
+        "two-sided",
+        "one-sample t-test",
+        "conditions"
+      ],
+      "worksheet_skills_and_order": "Video 1 0:00–7:07 writes population-mean hypotheses, chooses direction from the research question and defines mu. Video 2 0:00–5:20 checks random/10%/Nearly Normal; reflection and exit repeat setup, not numerical testing. Pairing is in CED VAR-7.B.2/C.2 but not this worksheet or its cards.",
+      "tether_learning_objectives": [
+        "VAR-7.B",
+        "VAR-7.C",
+        "VAR-7.D"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "FLAG",
+          "evidence": "The callout supplies the CED paired-difference bridge, but the day's video/cards teach a single mean without matched pairs. Teacher should judge readiness; the 18-value calculation was removed to keep focus on setup."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Part (b) required mean and sample SD from 18 plotted numbers plus all conditions; part (c) repeated pairing, direction, conditions and two consequences. Revised: a: one parameter sentence; b: three brief condition notes, one 10% calculation; c: 3–4 sentences with hypothesis pair, linked units and direction. About 9–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Removed 18-value arithmetic; generalized leaked hypotheses; focused the critique and rubric on pairing and the research question."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which setup better aligns with the study? Cite the measurement structure or the direction of the claim. Revised: Would you compare each technician's two times or treat them as separate people? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "evidence": "Original printed rules explicitly gave new-minus-old, reduction, H0:mu_d=0 and Ha:mu_d<0. Replaced those item-specific answers with generic subtraction-order and alternative-direction rules."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Difference dotplot has numeric labels only; students still assess small-sample shape from the actual plot."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: one parameter sentence; b: three brief condition notes, one 10% calculation; c: 3–4 sentences with hypothesis pair, linked units and direction. About 9–10 minutes.",
+        "computed_values_including_intermediates": 1
+      },
+      "changed": true,
+      "change_summary": "Removed 18-value arithmetic; generalized leaked hypotheses; focused the critique and rubric on pairing and the research question.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "df_if_test_carried_out": 17,
+        "mean": -1.7999999999999998,
+        "n_measurements": 36,
+        "n_people": 18,
+        "sd": 1.2546384527260528,
+        "sum": -32.4,
+        "ten_percent_bound": 30.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.4_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "68f9917ca88adf5b1cd9070f3294a6b8dc0eb1845248747b247027eac437b8b2",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.4_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "5923a1f24463127a7cc6e574b7e9a6fb1f18b6f5bf814417969edabb8da0eb17",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.4_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "fc29f76545d47d001b1cd1ea98f4efdb75815274c568807cad5ce2f193039af4",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": [
+        "The callout supplies the CED paired-difference bridge, but the day's video/cards teach a single mean without matched pairs. Teacher should judge readiness; the 18-value calculation was removed to keep focus on setup."
+      ]
+    },
+    {
+      "topic": "7.5",
+      "title": "A Test of Mean Resolution Time",
+      "period_B_date": "2027-01-21",
+      "sources_read": [
+        "u7_lesson5_live.html",
+        "u7_l5_blooket.csv",
+        "dok/lessons/7.5.yaml",
+        "dok/registry/7.5.jsonl",
+        "ai-tutor/u7_l5.md"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson5_live.html": "ee1aeb9d78fdf05debb7d59c48b95d398402b481c687cf9cacb575542223c2ba",
+        "u7_l5_blooket.csv": "700b1ece7afcf9f1a64c6db7b7dad738132ae3c7b210b79b4206e3e3c97b3590",
+        "dok/lessons/7.5.yaml": "44d599782ba86bd2475c2fa23954df0a1a04acc78a29c2a55b29c1536e9fc1af",
+        "dok/registry/7.5.jsonl": "e976535130dba8159c1a88f5a4e6251675ee11014e35418e431821d5bd6a35d2",
+        "ai-tutor/u7_l5.md": "fba09f9b8502b73cdc8a815ed7f5fb4ee3f64637f0f0fce6af4802a8e2da6b24"
+      },
+      "flashcard_items_read": 30,
+      "worksheet_vocabulary": [
+        "standardized test statistic",
+        "degrees of freedom",
+        "p-value",
+        "one-sided/two-sided",
+        "significance level",
+        "reject",
+        "fail to reject",
+        "matched pairs"
+      ],
+      "worksheet_skills_and_order": "Video 1 0:00–9:01 computes t and tail probabilities; video 2 0:00–5:48 interprets p under H0 and uses alpha for decisions; video 3 illustrates a paired test. Reflections and the exit require parameter, conditions and a conclusion. Cards explicitly reject treating fail-to-reject as proof.",
+      "tether_learning_objectives": [
+        "VAR-7.E",
+        "DAT-3.E",
+        "DAT-3.F"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "PASS",
+          "evidence": "Revised t calculation and conditional fail-to-reject judgment directly match the lesson and cards."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Repeated three conditions, SE, t, df, a supplied p-value, its interpretation and a five-element proof/scope/consequence critique. Revised: a: two hypotheses and population label; b: one t calculation (SE may be an intermediate); c: 3–4 sentences using p versus alpha, population conclusion and proof limits. About 8–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Kept one t computation and supplied p; cut redundant conditions and repeated calculations; simplified hook and judgment."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which account is more defensible? Cite the p-value comparison or a claim that a test can or cannot justify. Revised: Does this small study seem able to prove that the average was exactly 12 hours? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "evidence": "Already supplies t, df, conditional p-value meaning, both decision branches and the no-proof limit required by (c)."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "evidence": "Removed the shape-check demand that was answered by the table's symmetric/no-outliers row. Other rows are neutral inputs; figures remain legible."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: two hypotheses and population label; b: one t calculation (SE may be an intermediate); c: 3–4 sentences using p versus alpha, population conclusion and proof limits. About 8–10 minutes.",
+        "computed_values_including_intermediates": 2
+      },
+      "changed": true,
+      "change_summary": "Kept one t computation and supplied p; cut redundant conditions and repeated calculations; simplified hook and judgment.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "df": 23,
+        "p_lower": 0.06449427601865622,
+        "se": 0.5715476066494083,
+        "t": -1.574671977503472,
+        "ten_percent_bound": 120.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.5_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "4043ce725cc52d25577b677a5316e01b68b49e03870cff6662b3f7f04fc93490",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.5_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "33635aff492a697830db075785333991b619733a76ecefc5d50af4970f664899",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.5_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "ff3b642a7e9e0e6c7fd6be0ec4dc23000e4b460f16aaa86e2cfa0c656d0d7a4f",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "7.6",
+      "title": "Two Samples of Service Times",
+      "period_B_date": "2027-01-25",
+      "sources_read": [
+        "u7_lesson6_live.html",
+        "u7_l6_blooket.csv",
+        "dok/lessons/7.6.yaml",
+        "dok/registry/7.6.jsonl",
+        "ai-tutor/u7_l6.md"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson6_live.html": "69e40e598fdf4ade70a8275d90c4c50b4ec93fc9b009f63670f279a31cb67e74",
+        "u7_l6_blooket.csv": "0202813449b0384b038a6bfc5e8263e7ac6503a21cee52b7344a212af92d4322",
+        "dok/lessons/7.6.yaml": "bb446a4a0bdc946e204871276b60b8890aaa2dfe58bd4de91b44356b38fe4eff",
+        "dok/registry/7.6.jsonl": "271cb0a2a7b5cf24a6868881138a1eb4931d5b6e75ec465dfa6248efe5685fa2",
+        "ai-tutor/u7_l6.md": "41bd7d2cef5453d4bdb000486e0892ef8933c1e432218395c9e72f44f6350201"
+      },
+      "flashcard_items_read": 30,
+      "worksheet_vocabulary": [
+        "two-sample t-interval",
+        "independent samples",
+        "difference in means",
+        "point estimate",
+        "margin of error",
+        "critical value",
+        "standard error",
+        "pooled no"
+      ],
+      "worksheet_skills_and_order": "Video 1 0:00–7:00 chooses a two-sample mean interval and checks each group's conditions. Video 2 0:00–8:14 computes the sample difference, SE, technology df/t*, margin and interval. Reflection/exit interpret sign; cards explicitly discuss zero inside the interval.",
+      "tether_learning_objectives": [
+        "UNC-4.V",
+        "UNC-4.W",
+        "UNC-4.X",
+        "UNC-4.Y"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "PASS",
+          "evidence": "Independent groups, interval computation and zero interpretation are in the day's materials; the printed rule defines design-linked pairs."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Requested five condition checks, SE, margin/endpoints, and a long comparison of rank pairing, SD, SE, intervals, interpretation and population/causal scope. Revised: a: one subtraction; b: margin and endpoints using supplied SE; c: 3–4 sentences citing the design and the two intervals. Four short numerical outputs, about 9–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Supplied SE, removed repeated checks/scope tasks, and preserved the DOK-3 link from false pairing to false precision and conclusion."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which interval procedure matches the original design? Cite any link that did or did not exist before times were observed. Revised: Does sorting the times make the North and South records real pairs? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "evidence": "Removed the direct statement that sorting the two samples does not make pairs. Defined real pairing generally and added the zero-in-interval interpretation required by the revised (c)."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Two rows of sample summaries contain only N, n, mean and SD, with service-time units; no method verdict appears in the figure."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: one subtraction; b: margin and endpoints using supplied SE; c: 3–4 sentences citing the design and the two intervals. Four short numerical outputs, about 9–10 minutes.",
+        "computed_values_including_intermediates": 4
+      },
+      "changed": true,
+      "change_summary": "Supplied SE, removed repeated checks/scope tasks, and preserved the DOK-3 link from false pairing to false precision and conclusion.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "artificial_pair_interval": [
+          1.1849460358748287,
+          3.215053964125172
+        ],
+        "artificial_pair_se": 0.5,
+        "df_welch": 69.31034907420519,
+        "difference": 2.1999999999999957,
+        "interval": [
+          -1.5665074007626791,
+          5.966507400762671
+        ],
+        "margin": 3.766507400762675,
+        "p_upper": 0.123952107142924,
+        "se": 1.887973634467506,
+        "t": 1.165270510051638,
+        "t95_exact": 1.9947860669080273,
+        "t95_used": 1.995,
+        "ten_percent_bounds": [
+          90.0,
+          120.0
+        ]
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.6_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "4c05f33c6478fc64329a46afaf22241631e40c6cfbee4e4923bd0f5b4b57025f",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.6_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "0a41fa9fc1599de3960a73f36a4770fcc08ed7d9706771f1da00eeb49efc9856",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.6_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "0b6c91fdc525782c50aaa9456e2aaf05bf2f6c1c98a30402d4c1a73fac3f8f62",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "7.7",
+      "title": "A Controller Comparison",
+      "period_B_date": "2027-01-26",
+      "sources_read": [
+        "u7_lesson7_live.html",
+        "u7_l7_blooket.csv",
+        "dok/lessons/7.7.yaml",
+        "dok/registry/7.7.jsonl",
+        "ai-tutor/u7_l7.md"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson7_live.html": "b09d27c322858cf911e10e20d42543b43323f23739394cf487580be8d958109d",
+        "u7_l7_blooket.csv": "05e45761d445b6b1618c506f84b15c16cb8447c289970e0f7cd8dc60dd55bc2b",
+        "dok/lessons/7.7.yaml": "addcc7f8754fbb1908e6f17909183ab077cd21d3cf3a312542d74c0a0f0ac895",
+        "dok/registry/7.7.jsonl": "a4a51ccca099a6f544851150ec01ad4375987e1cc5c5dfae7b712bac3f9ba9f2",
+        "ai-tutor/u7_l7.md": "832beb128f42a6a0406aaabcb21565ed763bd11b2c2b0c8ff8d129d89605a63b"
+      },
+      "flashcard_items_read": 30,
+      "worksheet_vocabulary": [
+        "confidence-interval interpretation",
+        "subtraction order",
+        "parameter",
+        "plausible value",
+        "zero",
+        "convincing evidence",
+        "sample statistic",
+        "confidence level"
+      ],
+      "worksheet_skills_and_order": "Videos interpret the spider mean difference, reverse subtraction, distinguish population from sample/probability, and use zero to judge claims; the fire-station full process and exit repeat those moves. Cards cover zero plausible versus equality proved.",
+      "tether_learning_objectives": [
+        "UNC-4.Z",
+        "UNC-4.AA"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "PASS",
+          "evidence": "The day teaches interval/zero interpretation; the callout supplies the general practical-cutoff and sampling-versus-assignment rules."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Required repeated sampling/shape checks and SE, Welch df, margin, endpoints plus interpretation before a five-element threshold/scope/budget critique. Revised: a: two location notes; b: one interval interpretation; c: 3–4 sentences using zero, 2 kWh and absent assignment. No new arithmetic; about 8–9 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Defined the unfamiliar display-case/controller context; used supplied interval; removed full recalculation and reduced critique/rubric."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which account is better supported so far? Identify any interval feature or design detail needed to decide. Revised: Does this range seem to promise savings of at least 2 kWh? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "evidence": "General interval, practical-threshold, population and causal rules cover all remaining reasoning without evaluating 0 or 2 for this case."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Table provides only controller-group sample summaries. Context now explains refrigerated display cases and adaptive controllers; both formats remain legible."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: two location notes; b: one interval interpretation; c: 3–4 sentences using zero, 2 kWh and absent assignment. No new arithmetic; about 8–9 minutes.",
+        "computed_values_including_intermediates": 0
+      },
+      "changed": true,
+      "change_summary": "Defined the unfamiliar display-case/controller context; used supplied interval; removed full recalculation and reduced critique/rubric.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "df_welch": 78.0,
+        "difference": 3.0000000000000018,
+        "interval": [
+          1.2193322485323455,
+          4.780667751467658
+        ],
+        "margin": 1.7806677514676563,
+        "p_upper": 0.0006156592210036413,
+        "se": 0.8944271909999159,
+        "t": 3.3541019662496865,
+        "t95_exact": 1.9908470688116904,
+        "t95_used": 1.9908470688116904,
+        "ten_percent_bounds": [
+          120.0,
+          90.0
+        ]
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.7_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "0025905592841c7d5c0f2fd737a21fb169bbbd5c3173a2cc4475bd3880a9a25f",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.7_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "75a7e19e38b18e98a3e8e508e0c0de6033849dcf1382891056a32fdb882bcf88",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.7_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "1d11465d564bcfc0851905b523e8ef0ff1f7ee6cce8dcafd9e5fecbfc706785a",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "7.8",
+      "title": "Two Test Plans for Cure Time",
+      "period_B_date": "2027-01-28",
+      "sources_read": [
+        "u7_lesson8_live.html",
+        "u7_l8_blooket.csv",
+        "dok/lessons/7.8.yaml",
+        "dok/registry/7.8.jsonl",
+        "ai-tutor/u7_l8.md"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson8_live.html": "ec4e8bb1681a8ea91e525c77a725f7c17198646a51db89d586f4a54073a84c8e",
+        "u7_l8_blooket.csv": "4511776cd4178a286608725096e6c9423f5b213222487ebd2cee7eba008bf745",
+        "dok/lessons/7.8.yaml": "96285ee842d04abb0d9f33e64ecee59799f013817c175e4b6b9e5d79da124d0a",
+        "dok/registry/7.8.jsonl": "c7220f8bcd2fbfe9cc668fc81d3296d018845dfe6056f9be24fe3bcd169b1b5e",
+        "ai-tutor/u7_l8.md": "4892e59a2a26267f0998cce5422db666bcb7ffc29aff038cb0ee9643c125bb1f"
+      },
+      "flashcard_items_read": 28,
+      "worksheet_vocabulary": [
+        "null",
+        "alternative",
+        "parameter",
+        "one-sided",
+        "two-sided",
+        "treatment effect",
+        "equality",
+        "strict inequality",
+        "subtraction order",
+        "subscripts",
+        "statistic"
+      ],
+      "worksheet_skills_and_order": "Video 0:00–6:05 chooses hypotheses for yawning and textbook word length, uses context to choose direction, reverses subtraction, and excludes sample statistics from hypotheses. Reflection and exit focus on parameter definitions and hypothesis choice, not carrying out tests.",
+      "tether_learning_objectives": [
+        "VAR-7.F",
+        "VAR-7.G",
+        "VAR-7.H"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "PASS",
+          "evidence": "Revised (a)/(b) focus on the day's parameter/hypothesis skill; (c) applies timing/notation plus the explicit callout's causal-scope rule."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Demanded response, both samples, subtraction, direction, procedure, parameters, null and all conditions before a three-error/three-consequence critique. Revised: a: one line defining two means; b: two hypotheses; c: 3–4 sentences about direction, parameters and formula/line confounding. No computation; about 8–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Made random sampling explicit (key previously assumed an unstated SRS); glossed sealant; removed later full-test checks and shortened claims/frames."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which parts of each plan do the question's timing and the design support? Name one detail to verify. Revised: Did the team originally ask whether N was faster or whether the lines differed in either direction? Explain in one sentence. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "FIX",
+          "evidence": "Neutralized the title; retained general pre-data direction and population-parameter rules plus the design scope limit."
+        },
+        "Visual": {
+          "verdict": "PASS",
+          "evidence": "Paired boxplots describe two independent sample distributions with numeric axes and no answer-bearing labels; they remain readable at both sizes."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts. Repaired the original unstated-SRS assumption by explicitly specifying independent simple random samples."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: one line defining two means; b: two hypotheses; c: 3–4 sentences about direction, parameters and formula/line confounding. No computation; about 8–10 minutes.",
+        "computed_values_including_intermediates": 0
+      },
+      "changed": true,
+      "change_summary": "Made random sampling explicit (key previously assumed an unstated SRS); glossed sealant; removed later full-test checks and shortened claims/frames.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "difference": -2.799999999999997,
+        "null_difference": 0,
+        "sample_sizes": [
+          18,
+          18
+        ],
+        "ten_percent_bounds": [
+          60.0,
+          54.0
+        ]
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.8_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "4fdb1f0ea8d411e54464badcc0ace65cdb4ea0d38271dc6450d9f798199b2174",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.8_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "794fff5849509acf67d91391cd428231d741dbc49420612ebbd93ea249a04378",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.8_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "09694e04d0071ae69bed962a495758ce7bf1cf4d2ace45b06e523d40434f3fe8",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    },
+    {
+      "topic": "7.9",
+      "title": "What Does This Test Support?",
+      "period_B_date": "2027-01-29",
+      "sources_read": [
+        "u7_lesson9_live.html",
+        "u7_l9_blooket.csv",
+        "dok/lessons/7.9.yaml",
+        "dok/registry/7.9.jsonl",
+        "ai-tutor/u7_l9.md"
+      ],
+      "source_sha256_at_audit": {
+        "u7_lesson9_live.html": "5a9d5330b17edf0140058736b10c8695ada02ed1ec5fec37cce699887f31dca2",
+        "u7_l9_blooket.csv": "a000131d843ca0e6c8616aa7821832a5569ff0eb291ad2b570186e4d14e8fa20",
+        "dok/lessons/7.9.yaml": "620e40d46dc0533026e30364fc8d49aa97477fcb73247c0ece1372fe4c8fbfec",
+        "dok/registry/7.9.jsonl": "63b59f1de4fdc837978d00e1684fbf0d5c32e7ea9c4078fd595bd8fb86bf62bc",
+        "ai-tutor/u7_l9.md": "0800ef637aaa524815cd1982672949100868f72b7c071018c0af0ac46583dd52"
+      },
+      "flashcard_items_read": 28,
+      "worksheet_vocabulary": [
+        "two-sample t-test",
+        "conditions",
+        "standard error",
+        "test statistic",
+        "degrees of freedom",
+        "p-value",
+        "significance level",
+        "reject/fail to reject",
+        "significance"
+      ],
+      "worksheet_skills_and_order": "Video 0:00–5:40 checks conditions, computes the two-sample t statistic, selects tails and gives a contextual decision. Reflections/exit distinguish lack of evidence from proof. Cards explicitly distinguish practical importance, random sampling and random assignment.",
+      "tether_learning_objectives": [
+        "VAR-7.I",
+        "DAT-3.G",
+        "DAT-3.H"
+      ],
+      "criteria": {
+        "Alignment": {
+          "verdict": "PASS",
+          "evidence": "The full synthesis uses the day's significance skill and recall items on practical importance and causal scope; the callout states mean-versus-individual limits."
+        },
+        "Load": {
+          "verdict": "FIX",
+          "evidence": "Full condition check plus difference, SE, t, technology df and p, p interpretation, then five strands and two separate report-risk explanations. Revised: a: hypotheses with population labels; b: one division and one p-value sentence; c: four sentences combining supported clauses, numerical benchmark and design/individual limits. About 9–10 minutes."
+        },
+        "Reading": {
+          "verdict": "FIX",
+          "evidence": "Replaced dense adjudicate/coordinate/trace prompts with short direct requests. Kept the original context and speakers; frames now support the required evidence and limits. Supplied SE/p, kept one test-statistic calculation, and replaced the five-strand-plus-two-risks essay with four-sentence synthesis."
+        },
+        "First take": {
+          "verdict": "FIX",
+          "evidence": "Original: Which clauses in Nia's and Mateo's reports look defensible? Cite one number and one design feature. Revised: Which claim seems too strong: no average difference, or Guided helps everyone? Give one reason. One sentence from the study/figure is enough before the video."
+        },
+        "Callout": {
+          "verdict": "PASS",
+          "evidence": "Printed test, probability, significance-versus-size and scope rules cover the revised synthesis."
+        },
+        "Visual": {
+          "verdict": "FIX",
+          "evidence": "Shortened the two reports after final pdfinfo found a two-page board. The final board fits one page with the full figure, prompts, link and QR; student/key remain 2/3 pages."
+        },
+        "Key": {
+          "verdict": "FIX",
+          "evidence": "Recomputed all original and final numerical answer values with Python/SciPy. Replaced the longer partly overlapping scoring list with three required reasoning elements: E all, P some substantive valid reasoning, I none. Key was synchronized to the shortened prompts."
+        }
+      },
+      "workload": {
+        "estimated_minutes": "8–10",
+        "written_work": "a: hypotheses with population labels; b: one division and one p-value sentence; c: four sentences combining supported clauses, numerical benchmark and design/individual limits. About 9–10 minutes.",
+        "computed_values_including_intermediates": 1
+      },
+      "changed": true,
+      "change_summary": "Supplied SE/p, kept one test-statistic calculation, and replaced the five-strand-plus-two-risks essay with four-sentence synthesis. Shortened the stem again to keep the board on one page.",
+      "replaced_problem": false,
+      "preserved_identity": {
+        "id": true,
+        "frq_pattern": true,
+        "original_context_and_competing_claims": true
+      },
+      "numeric_evidence": {
+        "df_welch": 197.06493637762378,
+        "difference": 1.1999999999999957,
+        "interval": [
+          -0.013907889613676838,
+          2.413907889613668
+        ],
+        "margin": 1.2139078896136726,
+        "p_upper": 0.026328533409666715,
+        "se": 0.6155485358604957,
+        "t": 1.9494807153143106,
+        "t95_exact": 1.9720750174747965,
+        "t95_used": 1.9720750174747965,
+        "ten_percent_bounds": [
+          400.0,
+          360.0
+        ]
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-7-8.py",
+      "visual_review": {
+        "status": "PASS - full rasterized student front/back, board, and teacher pages opened and visually inspected",
+        "method": "pdftoppm at 100 DPI, native image inspection, and pdfinfo; no font/style changes",
+        "findings": "Readable figure values, labels, prompt text and sentence frames; adequate writing space; board footer and QR visible; no clipping or overlap.",
+        "editions": {
+          "student": {
+            "pdf": "dok/pdf/aps_7.9_student.pdf",
+            "pages": 2,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "8705455d9279b9f91be4289c3381694709cbbe60f0f27d2890548f9e9ab5dbb0",
+            "overfull_log_warnings": 0
+          },
+          "board": {
+            "pdf": "dok/pdf/aps_7.9_board.pdf",
+            "pages": 1,
+            "page_size": "792 x 612 pts (letter)",
+            "sha256": "2c7904a00436ebb8fc4bbb9fc8030eccfda796c347bd395c640fdd73db75b968",
+            "overfull_log_warnings": 0
+          },
+          "teacher": {
+            "pdf": "dok/pdf/aps_7.9_teacher.pdf",
+            "pages": 3,
+            "page_size": "612 x 792 pts (letter)",
+            "sha256": "9571063def028d6a3889827474b290f30dc2e21b347dba496709e2c057453623",
+            "overfull_log_warnings": 0
+          }
+        }
+      },
+      "human_review": []
+    }
+  ],
+  "counts": {
+    "Alignment": {
+      "PASS": 8,
+      "FIX": 2,
+      "FLAG": 3
+    },
+    "Load": {
+      "PASS": 0,
+      "FIX": 13,
+      "FLAG": 0
+    },
+    "Reading": {
+      "PASS": 0,
+      "FIX": 13,
+      "FLAG": 0
+    },
+    "First take": {
+      "PASS": 0,
+      "FIX": 13,
+      "FLAG": 0
+    },
+    "Callout": {
+      "PASS": 4,
+      "FIX": 8,
+      "FLAG": 1
+    },
+    "Visual": {
+      "PASS": 9,
+      "FIX": 4,
+      "FLAG": 0
+    },
+    "Key": {
+      "PASS": 0,
+      "FIX": 13,
+      "FLAG": 0
+    }
+  },
+  "validation": {
+    "numeric": "PASS: all 13 topics recomputed; see numeric-units-7-8.py/.json",
+    "build_compile": "PASS: all 39 PDFs compiled through build_ladder.py and compile.sh; final pdfinfo counts 2/1/3 and no overfull warnings",
+    "global_commit_gates": "Root agent coordinates --validate, Vitest, pytest and GitNexus detect_changes before per-unit commits."
+  }
+}
