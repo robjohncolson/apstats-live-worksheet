@@ -97,7 +97,14 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   first attempt was too short; the server silently reports 'not configured' below 32 bytes) SET 2026-09-05; live-verified:
   `/class/wallet-custody` 200 (13 B students, 0 held), no-key 401, junk WIF → 400 'invalid Dogecoin mainnet WIF'.
   **Wallet loading is LIVE** — next: the teacher pastes the KEYS CSV in the dashboard's 📥 Load wallets.
-- ⏭ SPEC + PROMPT (teacher asked 2026-09-05 evening): `WALLET_GENERATE_EXPORT_SPEC.md` + `state/wallet-generate-export-codex-prompt.md`
+- ✅ **WALLET GENERATE + EXPORT SHIPPED 2026-09-05/06** (Codex `f3829e2` `992db61` `85a815b` `ed0ee24`, reviewed): "✨ Generate
+  wallets" (browser `generateWallet`: Web Crypto only, in-range redraw, self-check, buffer wipe; keep-keys forced), audited
+  `GET /class/wallet-custody/export?confirm=1` (live-verified: no-key 401, no-confirm 400, 0 held → `{wallets:[],skipped:[]}`),
+  "🖨 Print wallet sheets" + per-student Reprint (`js/wallet-print-sheets.js`, vendored `qrcode-generator` 2.0.4, browser
+  Save-as-PDF). ⚠ PROCESS SLIP: phases 1–3 reached origin inside the orchestrator's 3e2cda3 push BEFORE review (Codex was
+  committing in the same tree concurrently) — reviewed after the fact, all invariants hold. **Rule: read `git log
+  origin/master..HEAD` before every push; if Codex is running in this tree, push nothing until its round is reviewed.**
+- (was) SPEC + PROMPT: `WALLET_GENERATE_EXPORT_SPEC.md` + `state/wallet-generate-export-codex-prompt.md`
   — generate wallets in the dashboard (browser-side via the vendored `doge-keys.js`, keep-keys forced on, saved through the
   shipped custody path) + "🖨 Print wallet sheets" (audited bulk reveal `GET /class/wallet-custody/export?confirm=1`, one
   page per student with address/WIF text + QR, browser Save-as-PDF; vendored `qrcode-generator`). No migration. Codex builds.
