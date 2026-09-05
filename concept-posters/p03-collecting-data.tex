@@ -1,0 +1,112 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+% Formula IDs: random-condition
+\colorlet{PosterAccent}{UnitGreen}
+
+\begin{document}
+\begin{posterpage}
+\PosterHeader[68pt]{UnitGreen}{1}{COLLECTING DATA \& INFERENCE}{P03}
+  {COLLECTING DATA \& SCOPE OF INFERENCE}
+  {new 1.10--1.13 \quad\textbullet\quad old 3.1--3.5 \quad\textbullet\quad \PosterStar\ old 3.6}
+
+\PosterZone{4.72in}{16.4in}{ZONE A \textbullet\ HOW THE DATA ARE COLLECTED}{%
+  \FormulaCardSized{39pt}{\text{Data from random sample or randomized experiment}}
+  \vspace{.23in}
+  \begin{minipage}[t]{6.35in}
+    \vspace{0pt}
+    \TextCard{%
+      \MiniHeading{SAMPLING METHODS}\par\vspace{.15in}
+      {\fontsize{27pt}{35pt}\selectfont
+      \textbf{SRS:} every possible sample of size \(n\) has the same chance.\par\vspace{.18in}
+      \textbf{Stratified:} divide into similar groups; randomly sample within each.\par\vspace{.18in}
+      \textbf{Cluster:} randomly choose whole groups; include everyone in them.\par\vspace{.18in}
+      \textbf{Systematic:} start randomly, then select every \(k\)th individual.}
+    }
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.35in}
+    \vspace{0pt}
+    \TextCard{%
+      \MiniHeading{SOURCES OF BIAS}\par\vspace{.15in}
+      {\fontsize{27pt}{35pt}\selectfont
+      \textbf{Undercoverage:} some groups are left out or hard to reach.\par\vspace{.15in}
+      \textbf{Nonresponse:} selected people do not respond.\par\vspace{.15in}
+      \textbf{Response bias:} wording or reporting distorts answers.\par\vspace{.15in}
+      \textbf{Voluntary response:} people choose to join the sample.\par\vspace{.15in}
+      \textbf{Convenience:} choose people who are easiest to reach.}
+    }
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.65in}
+    \vspace{0pt}
+    \TextCard{%
+      \MiniHeading{EXPERIMENTS}\par\vspace{.12in}
+      {\fontsize{25pt}{32pt}\selectfont
+      \textbf{Control:} hold other conditions alike; compare treatments.\par
+      \textbf{Random assignment:} use chance to form treatment groups.\par
+      \textbf{Replication:} use enough experimental units.\par\vspace{.14in}
+      \textbf{Completely randomized:} assign all units at random.\par
+      \textbf{Randomized block:} group similar units, then randomize within.\par
+      \textbf{Matched pairs:} compare two related measurements or units.\par\vspace{.14in}
+      \textbf{Placebo:} an inactive treatment.\par
+      \textbf{Blinding:} hide treatment identity from subjects or evaluators.\par
+      \textbf{Confounding:} effects are mixed and cannot be separated.}
+    }
+  \end{minipage}%
+}
+
+\PosterZone{16.55in}{19.9in}{ZONE B \textbullet\ WHAT THE WORDS MEAN}{%
+  \begin{minipage}[t]{6.25in}
+    \MiniHeading{THE STUDY}\par\vspace{.1in}
+    {\fontsize{27pt}{34pt}\selectfont
+      \textbf{Observational:} record what happens.\par
+      \textbf{Experiment:} impose a treatment.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.25in}
+    \MiniHeading{THE PEOPLE OR OBJECTS}\par\vspace{.1in}
+    {\fontsize{27pt}{34pt}\selectfont
+      \textbf{Population:} the full group of interest.\par
+      \textbf{Sample:} the group studied.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.65in}
+    \MiniHeading{THE MEASUREMENTS}\par\vspace{.1in}
+    {\fontsize{27pt}{34pt}\selectfont
+      \textbf{Treatment:} a condition imposed.\par
+      \textbf{Response variable:} the outcome measured.}
+  \end{minipage}%
+}
+
+\PosterZone{20.05in}{24in}{ZONE C \textbullet\ WHAT CAN WE CONCLUDE?}{%
+  {\fontsize{28pt}{35pt}\selectfont
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabularx}{\linewidth}{>{\bfseries}p{5.1in} X X}
+    & \textbf{Random assignment: YES} & \textbf{Random assignment: NO}\\
+    \midrule
+    Random sample: YES & Generalize: yes\newline Cause and effect: yes & Generalize: yes\newline Cause and effect: no\\
+    \addlinespace[.12in]
+    Random sample: NO & Generalize: no\newline Cause and effect: yes & Generalize: no\newline Cause and effect: no
+  \end{tabularx}}
+}
+
+\PosterZone{24.15in}{27.45in}{ZONE D \textbullet\ WATCH OUT + \PosterStar\ BEYOND}{%
+  \begin{minipage}[t]{9.75in}
+    \vspace{0pt}
+    {\fontsize{31pt}{40pt}\selectfont
+      Random \textbf{selection} lets you generalize to the population.\par\vspace{.12in}
+      Random \textbf{assignment} supports cause and effect.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.75in}
+    \vspace{0pt}
+    \BeyondBox{%
+      {\fontsize{25pt}{32pt}\selectfont
+        Re-randomize groups many times. If the observed difference is rare,
+        it is evidence against chance alone.}
+    }
+  \end{minipage}%
+}
+\WorksheetTag{u3\_l1--5 \textbullet\ \PosterStar\ u3\_l6}
+\end{posterpage}
+\end{document}

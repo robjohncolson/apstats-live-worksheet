@@ -1,0 +1,134 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+% Formula IDs: complement, add-rule, cond-prob, mult-rule, mult-independent
+\colorlet{PosterAccent}{UnitBlue}
+
+\begin{document}
+\begin{posterpage}
+\PosterHeader[88pt]{UnitBlue}{2}{PROBABILITY \& DISTRIBUTIONS}{P05}
+  {PROBABILITY RULES}
+  {new 2.3--2.7 \quad\textbullet\quad old 4.1--4.6}
+
+\PosterZone{4.72in}{16.08in}{ZONE A \textbullet\ THE FORMULAS}{%
+  \begin{minipage}[t]{12.25in}
+    \vspace{0pt}
+    \FormulaCardSized{46pt}{0\le P(A)\le1\qquad P(S)=1}
+    \vspace{.14in}
+    \FormulaCardSized{50pt}{P(A^c)=1-P(A)}
+    \vspace{.14in}
+    \FormulaCardSized{39pt}{\begin{gathered}
+      P(A\cup B)=P(A)+P(B)-P(A\cap B)\\[8pt]
+      \text{mutually exclusive: }P(A\cap B)=0
+    \end{gathered}}
+    \vspace{.14in}
+    \FormulaCardSized{46pt}{P(A\mid B)=\frac{P(A\cap B)}{P(B)}\quad P(B)>0}
+    \vspace{.14in}
+    \FormulaCardSized{43pt}{P(A\cap B)=P(A)\cdot P(B\mid A)}
+    \vspace{.14in}
+    \FormulaCardSized{38pt}{\begin{gathered}
+      \text{Independent}\ \Longleftrightarrow\ P(A\mid B)=P(A)\\[8pt]
+      \Longleftrightarrow\ P(A\cap B)=P(A)\cdot P(B)
+    \end{gathered}}
+    \vspace{.1in}
+    {\fontsize{25pt}{32pt}\selectfont
+      A conditional expression requires a positive probability for its given event.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{7.25in}
+    \vspace{0pt}
+    \MiniHeading{OR: COUNT THE OVERLAP ONCE}\par\vspace{.2in}
+    \begin{center}
+    \begin{tikzpicture}[x=1in,y=.85in]
+      \draw[PosterInk,line width=2.5pt] (.1,.15) rectangle (6.6,4.3);
+      \fill[PosterAccent!15] (2.45,2.3) circle (1.52);
+      \fill[PosterAccent!15] (4.15,2.3) circle (1.52);
+      \begin{scope}
+        \clip (2.45,2.3) circle (1.52);
+        \fill[PosterAccent!48] (4.15,2.3) circle (1.52);
+      \end{scope}
+      \draw[PosterAccent,line width=3pt] (2.45,2.3) circle (1.52) (4.15,2.3) circle (1.52);
+      \node[font=\bfseries\fontsize{34pt}{37pt}\selectfont] at (1.6,2.3) {$A$};
+      \node[font=\bfseries\fontsize{34pt}{37pt}\selectfont] at (5,2.3) {$B$};
+      \node[font=\fontsize{27pt}{31pt}\selectfont] at (3.3,2.3) {$A\cap B$};
+      \node[anchor=north east,font=\fontsize{26pt}{29pt}\selectfont] at (6.4,4.1) {$S$};
+    \end{tikzpicture}
+    \end{center}
+    \vspace{.2in}
+    \MiniHeading{AND: MULTIPLY ALONG A PATH}\par\vspace{.15in}
+    \begin{center}
+    \begin{tikzpicture}[x=1in,y=.75in]
+      \coordinate (start) at (.3,2.4);
+      \coordinate (a) at (3,3.6);
+      \coordinate (ac) at (3,1.2);
+      \draw[PosterAccent,line width=3pt] (start)--(a)--(6,4.4);
+      \draw[PosterInk,line width=2.5pt] (a)--(6,2.8) (start)--(ac)--(6,1.7) (ac)--(6,.4);
+      \node[anchor=south,rotate=24,font=\fontsize{24pt}{27pt}\selectfont] at (1.5,3) {$P(A)$};
+      \node[anchor=north,rotate=-24,font=\fontsize{24pt}{27pt}\selectfont] at (1.5,1.7) {$P(A^c)$};
+      \node[anchor=south,fill=white,inner sep=2pt,font=\fontsize{24pt}{27pt}\selectfont] at (4.65,4.05) {$P(B\mid A)$};
+      \node[anchor=north,fill=white,inner sep=2pt,font=\fontsize{22pt}{25pt}\selectfont] at (4.65,3.15) {$P(B^c\mid A)$};
+      \node[anchor=south,fill=white,inner sep=2pt,font=\fontsize{22pt}{25pt}\selectfont] at (4.65,1.65) {$P(B\mid A^c)$};
+      \node[anchor=north,fill=white,inner sep=2pt,font=\fontsize{22pt}{25pt}\selectfont] at (4.65,.65) {$P(B^c\mid A^c)$};
+      \node[anchor=west,font=\bfseries\fontsize{25pt}{28pt}\selectfont] at (6.1,4.4) {$B$};
+      \node[anchor=west,font=\fontsize{25pt}{28pt}\selectfont] at (6.1,2.8) {$B^c$};
+      \node[anchor=west,font=\fontsize{25pt}{28pt}\selectfont] at (6.1,1.7) {$B$};
+      \node[anchor=west,font=\fontsize{25pt}{28pt}\selectfont] at (6.1,.4) {$B^c$};
+    \end{tikzpicture}
+    \end{center}
+  \end{minipage}%
+}
+
+\PosterZone{16.23in}{20.05in}{ZONE B \textbullet\ WHAT THE SYMBOLS MEAN}{%
+  \begin{minipage}[t]{9.7in}
+    {\fontsize{32pt}{40pt}\selectfont
+      \(\cup\): \textbf{or} \quad \(\cap\): \textbf{and} \quad \(\mid\): \textbf{given}\par
+      \(A^c\): event \(A\) does \textbf{not} occur.\par
+      \textbf{Outcome:} one result.\par
+      \textbf{Event:} a set of outcomes.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.7in}
+    {\fontsize{30pt}{38pt}\selectfont
+      \textbf{Sample space \(S\):} all possible outcomes.\par\vspace{.15in}
+      \textbf{Law of large numbers:} over many repetitions, an event's
+      relative frequency approaches its probability.}
+  \end{minipage}%
+}
+
+\PosterZone{20.2in}{23.55in}{ZONE C \textbullet\ THE SIMULATION RECIPE}{%
+  \begin{minipage}[t]{6.25in}
+    \MiniHeading{1 \textbullet\ DESCRIBE ONE TRIAL}\par\vspace{.12in}
+    {\fontsize{29pt}{37pt}\selectfont
+      Use random digits or the calculator. Match the event and its chance.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.25in}
+    \MiniHeading{2 \textbullet\ REPEAT}\par\vspace{.12in}
+    {\fontsize{29pt}{37pt}\selectfont
+      Run many trials. Count the trials meeting the success rule.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{6.65in}
+    \MiniHeading{3 \textbullet\ ESTIMATE}\par\vspace{.12in}
+    {\fontsize{30pt}{39pt}\selectfont
+      \(\displaystyle P\approx\frac{\#\text{ successes}}{\#\text{ trials}}\)\par\vspace{.1in}
+      State the event in context.}
+  \end{minipage}%
+}
+
+\PosterZone{23.7in}{27.45in}{ZONE D \textbullet\ WATCH OUT}{%
+  \begin{minipage}[t]{12.2in}
+    \MiniHeading{DISJOINT IS NOT INDEPENDENT}\par\vspace{.12in}
+    {\fontsize{33pt}{42pt}\selectfont
+      Mutually exclusive events are \textbf{never independent},
+      unless at least one has probability 0.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{7.3in}
+    \MiniHeading{CHECK IT}\par\vspace{.12in}
+    {\fontsize{34pt}{43pt}\selectfont
+      Independence is checked, not assumed.}
+  \end{minipage}%
+}
+\WorksheetTag{u4\_l1--6}
+\end{posterpage}
+\end{document}

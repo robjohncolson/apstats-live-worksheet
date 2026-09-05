@@ -1,9 +1,12 @@
 TECTONIC ?= tectonic
+ENGINE ?= tectonic
+XELATEX ?= xelatex
+PYTHON ?= python
 PDFTOPPM ?= pdftoppm
 PDFTOCAIRO ?= pdftocairo
 GS ?= gs
 
-POSTERS := p02-summary-statistics p09-confidence-intervals p15-residuals-model-fit
+POSTERS := $(sort $(patsubst %.tex,%,$(wildcard p[0-9][0-9]-*.tex)))
 PDFS := $(POSTERS:%=rendered/%.pdf)
 LETTER_PDFS := $(POSTERS:%=rendered/%-letter.pdf)
 PREVIEWS := $(POSTERS:%=rendered/%.png)
@@ -22,27 +25,27 @@ letter-pdfs: $(LETTER_PDFS) rendered/apstats-concept-poster-mockups-letter.pdf
 previews: $(PREVIEWS)
 
 rendered/%.pdf: %.tex apstats-poster.sty | rendered
+ifeq ($(ENGINE),xelatex)
+	$(XELATEX) -interaction=nonstopmode -halt-on-error -output-directory=rendered $<
+	$(XELATEX) -interaction=nonstopmode -halt-on-error -output-directory=rendered $<
+else
 	$(TECTONIC) --outdir rendered $<
+endif
 
-rendered/%-letter.pdf: rendered/%.pdf | rendered
-	@safe_area_pdf="$@.safe-area.tmp.pdf"; \
-	trap 'rm -f "$$safe_area_pdf"' EXIT; \
-	$(PDFTOCAIRO) -pdf -paperw 576 -paperh 756 "$<" "$$safe_area_pdf"; \
-	$(PDFTOCAIRO) -pdf -paper letter -noshrink "$$safe_area_pdf" "$@"
+rendered/%-letter.pdf: rendered/%.pdf make_letter.py | rendered
+	$(PYTHON) make_letter.py "$<" "$@" --pdftocairo "$(PDFTOCAIRO)"
 
 rendered/%.png: rendered/%.pdf
 	$(PDFTOPPM) -png -r 55 -singlefile $< rendered/$*
 
 rendered/apstats-concept-poster-mockups.pdf: $(PDFS)
-	$(GS) -q -dNOPAUSE -dBATCH -dPDFSTOPONERROR -sDEVICE=pdfwrite \
-		-sOutputFile=$@ $(PDFS)
+	$(GS) -q -dNOPAUSE -dBATCH -dPDFSTOPONERROR -sDEVICE=pdfwrite -sOutputFile=$@ $(PDFS)
 
 rendered/apstats-concept-poster-mockups-letter.pdf: $(LETTER_PDFS)
-	$(GS) -q -dNOPAUSE -dBATCH -dPDFSTOPONERROR -sDEVICE=pdfwrite \
-		-sOutputFile=$@ $(LETTER_PDFS)
+	$(GS) -q -dNOPAUSE -dBATCH -dPDFSTOPONERROR -sDEVICE=pdfwrite -sOutputFile=$@ $(LETTER_PDFS)
 
 rendered:
-	mkdir -p rendered
+	$(PYTHON) -c "from pathlib import Path; Path('rendered').mkdir(exist_ok=True)"
 
 clean:
-	rm -f rendered/*.aux rendered/*.log rendered/*.out rendered/*.pdf rendered/*.png
+	$(PYTHON) clean_rendered.py

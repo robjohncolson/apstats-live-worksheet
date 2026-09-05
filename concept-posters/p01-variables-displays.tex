@@ -1,0 +1,123 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+% Formula IDs: none (concept-only)
+\colorlet{PosterAccent}{UnitGreen}
+
+\begin{document}
+\begin{posterpage}
+\PosterHeader[86pt]{UnitGreen}{1}{EXPLORING ONE-VARIABLE DATA}{P01}
+  {VARIABLES \& DISPLAYS}
+  {new 1.1--1.6, 1.8--1.9 \quad\textbullet\quad old 1.1--1.6, 1.8--1.9}
+
+\PosterZone{4.72in}{16.08in}{ZONE A \textbullet\ THE DISPLAYS}{%
+  \begin{minipage}[t]{9.75in}
+    \vspace{0pt}
+    \TextCard{%
+      {\posterheading\bfseries\fontsize{43pt}{48pt}\selectfont CATEGORICAL}\par
+      {\fontsize{30pt}{38pt}\selectfont Labels or groups\par\vspace{.15in}
+      Bar graph \textbullet\ pie chart\par
+      Frequency table \textbullet\ relative frequency}
+      \vspace{.25in}
+      \begin{center}
+      \begin{tikzpicture}[x=1in,y=1in]
+        \draw[PosterInk,line width=3pt,-{Stealth[length=9pt]}] (.5,.5)--(.5,3.1);
+        \draw[PosterInk,line width=3pt] (.5,.5)--(7.8,.5);
+        \foreach \x/\h/\label in {1.2/1.4/Walk,3.5/2.1/Bus,5.8/1.0/Car}{
+          \filldraw[fill=PosterAccent!30,draw=PosterAccent,line width=2.5pt]
+            (\x,.5) rectangle ++(1.3,\h);
+          \node[anchor=north,font=\fontsize{26pt}{29pt}\selectfont] at (\x+.65,.34) {\label};
+        }
+        \node[rotate=90,font=\fontsize{24pt}{27pt}\selectfont] at (.05,1.8) {Frequency};
+        \node[anchor=south,font=\bfseries\fontsize{27pt}{30pt}\selectfont] at (4.1,3.1) {GETTING TO SCHOOL};
+      \end{tikzpicture}
+      \end{center}
+      {\fontsize{27pt}{34pt}\selectfont
+        Frequency = count.\par
+        Relative frequency = share of the total.}
+    }
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.75in}
+    \vspace{0pt}
+    \TextCard{%
+      {\posterheading\bfseries\fontsize{43pt}{48pt}\selectfont QUANTITATIVE}\par
+      {\fontsize{30pt}{38pt}\selectfont Counts or measurements\par\vspace{.15in}
+      Dotplot \textbullet\ stemplot \textbullet\ histogram\par
+      Boxplot \textbullet\ cumulative graph}
+      \vspace{.18in}
+      \begin{center}
+      \begin{tikzpicture}[x=1in,y=.82in]
+        \draw[PosterInk,line width=3pt,-{Stealth[length=9pt]}] (.6,.55)--(.6,2.7);
+        \draw[PosterInk,line width=3pt] (.6,.55)--(7.8,.55);
+        \foreach \x/\h in {.9/.55,2.2/1.45,3.5/1.9,4.8/1.1,6.1/.4}
+          \filldraw[fill=PosterAccent!30,draw=PosterAccent,line width=2pt]
+            (\x,.55) rectangle ++(1.3,\h);
+        \foreach \x/\label in {.9/0,3.5/10,6.1/20}
+          \node[anchor=north,font=\fontsize{23pt}{26pt}\selectfont] at (\x,.42) {\label};
+        \node[font=\fontsize{25pt}{28pt}\selectfont] at (4.0,-.15) {Commute time (minutes)};
+        \node[rotate=90,font=\fontsize{23pt}{26pt}\selectfont] at (.05,1.7) {Frequency};
+      \end{tikzpicture}
+      \vspace{.1in}
+      \begin{tikzpicture}[x=1in,y=.85in]
+        \draw[PosterInk,line width=3pt] (.8,.75)--(2.4,.75) (5.5,.75)--(7.4,.75);
+        \draw[PosterInk,line width=3pt] (.8,.4)--(.8,1.1) (7.4,.4)--(7.4,1.1);
+        \draw[fill=PosterAccent!12,draw=PosterAccent,line width=3pt] (2.4,.25) rectangle (5.5,1.25);
+        \draw[PosterAccent,line width=5pt] (3.8,.25)--(3.8,1.25);
+        \node[anchor=north,font=\fontsize{25pt}{28pt}\selectfont] at (4.1,.1) {A boxplot summarizes position and spread};
+      \end{tikzpicture}
+      \end{center}
+    }
+  \end{minipage}%
+  \vspace{.2in}
+  \TextCard{%
+    \centering
+    {\posterheading\bfseries\fontsize{45pt}{50pt}\selectfont
+      SHAPE \textbullet\ CENTER \textbullet\ SPREAD \textbullet\ OUTLIERS}\par\vspace{.15in}
+    {\fontsize{29pt}{37pt}\selectfont
+      symmetric \textbullet\ skewed left \textbullet\ skewed right\par
+      unimodal \textbullet\ bimodal \textbullet\ uniform}
+  }
+}
+
+\PosterZone{16.23in}{19.64in}{ZONE B \textbullet\ WHAT THE WORDS MEAN}{%
+  \begin{minipage}[t]{9.7in}
+    \MiniHeading{WHO AND WHAT?}\par\vspace{.12in}
+    {\fontsize{30pt}{38pt}\selectfont
+      \textbf{Individual:} the person or object described.\par
+      \textbf{Variable:} a characteristic recorded for each individual.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.7in}
+    \MiniHeading{TWO KINDS OF QUANTITATIVE DATA}\par\vspace{.12in}
+    {\fontsize{30pt}{38pt}\selectfont
+      \textbf{Discrete:} separate, countable values.\par
+      \textbf{Continuous:} any value in an interval.}
+  \end{minipage}%
+}
+
+\PosterZone{19.79in}{23.02in}{ZONE C \textbullet\ SAY IT IN WORDS}{%
+  \SentenceFrame{``Distribution A is [more/less] \PosterBlank{2.7in} than B,
+    because \PosterBlank{5in}.''}
+  \vspace{.15in}
+  {\fontsize{28pt}{35pt}\selectfont
+    Use a shape, center, or spread comparison. Support it with numbers,
+    units, and the variable in context.}
+}
+
+\PosterZone{23.17in}{27.45in}{ZONE D \textbullet\ WATCH OUT}{%
+  \begin{minipage}[t]{9.55in}
+    \MiniHeading{NAME THE TAIL}\par\vspace{.15in}
+    {\fontsize{34pt}{43pt}\selectfont
+      Skewed \textbf{left} means the tail is on the left, not the pile.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.85in}
+    \MiniHeading{BINS OR CATEGORIES?}\par\vspace{.15in}
+    {\fontsize{31pt}{40pt}\selectfont
+      Adjacent histogram bins touch; category bars have gaps.\par\vspace{.12in}
+      An empty numeric bin can still leave blank space.}
+  \end{minipage}%
+}
+\WorksheetTag{u1\_l1--6, u1\_l8--9}
+\end{posterpage}
+\end{document}

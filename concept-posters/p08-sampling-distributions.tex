@@ -1,0 +1,105 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+% Formula IDs: phat-mean, phat-sd, xbar-mean, xbar-sd, ten-pct-condition
+\colorlet{PosterAccent}{UnitBlue}
+
+\begin{document}
+\begin{posterpage}
+\PosterHeader[70pt]{UnitBlue}{2}{PROBABILITY, RANDOM VARIABLES \& SAMPLING DISTRIBUTIONS}
+  {P08}{SAMPLING DISTRIBUTIONS \& THE CLT}
+  {new 2.12, 3.1--3.2, 4.1 \quad\textbullet\quad old 5.1--5.7}
+
+\PosterZone{4.72in}{15.90in}{ZONE A · THE FORMULAS + CONDITIONS}{%
+  \MiniHeading{1 · RANDOM: START WITH A RANDOM SAMPLE}\par\vspace{.18in}
+  \begin{minipage}[t]{9.80in}
+    \TextCard{\centering\fontsize{33pt}{40pt}\selectfont
+      \textbf{SAMPLE PROPORTION \(\hat p\)}\par
+      Population proportion \(p\)}
+    \vspace{.16in}
+    \FormulaCardSized{57pt}{\mu_{\hat p}=p}
+    \vspace{.16in}
+    \FormulaCardSized{53pt}{\sigma_{\hat p}=\sqrt{\frac{p(1-p)}n}}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.80in}
+    \TextCard{\centering\fontsize{33pt}{40pt}\selectfont
+      \textbf{SAMPLE MEAN \(\bar x\)}\par
+      Population mean \(\mu\), SD \(\sigma\)}
+    \vspace{.16in}
+    \FormulaCardSized{57pt}{\mu_{\bar x}=\mu}
+    \vspace{.16in}
+    \FormulaCardSized{53pt}{\sigma_{\bar x}=\frac{\sigma}{\sqrt n}}
+  \end{minipage}
+  \vspace{.24in}
+  \TextCard{\centering\fontsize{31pt}{39pt}\selectfont
+    \textbf{2 · 10\%:} \(\boldsymbol{n<0.10\cdot N}\) when sampling without replacement.\par
+    Draws are close enough to independent to use these SD formulas.}
+  \vspace{.24in}
+  \begin{minipage}[t]{9.80in}
+    \MiniHeading{3 · LARGE COUNTS}\par\vspace{.13in}
+    {\fontsize{31pt}{40pt}\selectfont
+      The distribution of \(\hat p\) is approximately normal when\par\vspace{.10in}
+      \(\boldsymbol{np\ge10\quad\text{and}\quad n(1-p)\ge10}\).}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.80in}
+    \RaggedRight
+    \MiniHeading{3 · NORMAL / CENTRAL LIMIT THEOREM}\par\vspace{.13in}
+    {\fontsize{29pt}{37pt}\selectfont
+      Normal population \(\Rightarrow\) normal \(\bar x\), for any \(n\).\par
+      Otherwise, CLT gives an \textbf{approximate} normal shape for large \(n\).
+      The \(n\ge30\) guideline is approximate; strong skew can need a larger sample.}
+  \end{minipage}
+}
+
+\PosterZone{16.05in}{20.70in}{ZONE B · PARAMETERS VS STATISTICS}{%
+  \begin{minipage}[t]{8.0in}
+    \vspace{0pt}
+    {\fontsize{31pt}{39pt}\selectfont
+      \renewcommand{\arraystretch}{1.24}
+      \begin{tabular}{lcc}
+        & \textbf{Parameter} & \textbf{Statistic}\\\midrule
+        Mean & \(\mu\) & \(\bar x\)\\
+        SD & \(\sigma\) & \(s\)\\
+        Proportion & \(p\) & \(\hat p\)\\
+        Slope & \(\beta\) & \(b\)
+      \end{tabular}}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{11.65in}
+    \vspace{0pt}\RaggedRight
+    {\fontsize{28pt}{36pt}\selectfont
+      \textbf{Parameters are Greek or unhatted. Statistics wear a hat or a bar}
+      (or use the sample symbols \(s\) and \(b\)).\par\vspace{.16in}
+      \textbf{Unbiased:} the sampling distribution is centered at the parameter.\par\vspace{.16in}
+      Variability shrinks with \(\sqrt n\): \textbf{quadrupling \(n\) halves the SD}.}
+  \end{minipage}
+}
+
+\PosterZone{20.85in}{23.85in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“The sampling distribution of \PosterBlank{2.8in} is the
+    distribution of that statistic from all possible samples of size
+    \(n=\) \PosterBlank{1.0in} from \PosterBlank{3.1in}.”}
+  \vspace{.12in}
+  {\fontsize{26pt}{33pt}\selectfont
+    One sample gives one statistic; repeated samples give a distribution.}
+}
+
+\PosterZone{24.00in}{27.45in}{ZONE D · WATCH OUT}{%
+  \begin{minipage}[t]{9.65in}
+    \RaggedRight
+    \MiniHeading{KEEP \(n\) AND \(N\) SEPARATE}\par\vspace{.12in}
+    {\fontsize{30pt}{38pt}\selectfont
+      \(n\) is sample size; \(N\) is population size.\par
+      Sample size controls these SDs.\par
+      Use \(N\) for the 10\% check.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.95in}
+    \RaggedRight
+    \MiniHeading{SD VS ESTIMATED SD}\par\vspace{.12in}
+    {\fontsize{29pt}{37pt}\selectfont
+      \(\sigma_{\bar x}=\sigma/\sqrt n\) needs population SD \(\sigma\).
+      With sample SD \(s\), \(s/\sqrt n\) is an \textbf{SE} estimating
+      the SD of \(\bar x\). See P13.}
+  \end{minipage}
+}
+\WorksheetTag{u5\_l1--7}
+\end{posterpage}
+\end{document}

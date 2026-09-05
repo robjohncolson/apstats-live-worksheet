@@ -1,0 +1,7 @@
+# LaTeX byproducts and local inspection evidence; deliverables remain tracked.
+rendered/*.aux
+rendered/*.log
+rendered/*.out
+rendered/*.xdv
+rendered/*.tmp.pdf
+qa/

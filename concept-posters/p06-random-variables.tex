@@ -1,0 +1,101 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+% Formula IDs: rv-mean, rv-sd, lintransform, binom-pmf, binom-mean, binom-sd, lincomb-mean, lincomb-var, geom-pmf, geom-mean, geom-sd
+\colorlet{PosterAccent}{UnitBlue}
+
+\begin{document}
+\begin{posterpage}
+\PosterHeader[77pt]{UnitBlue}{2}{PROBABILITY, RANDOM VARIABLES \& SAMPLING DISTRIBUTIONS}
+  {P06}{RANDOM VARIABLES \& BINOMIAL}
+  {new 2.8--2.10 \quad\textbullet\quad old 4.7--4.12 \quad\textbullet\quad \PosterStar\ geometric + combining}
+
+\PosterZone{4.72in}{15.20in}{ZONE A · THE FORMULAS}{%
+  \begin{minipage}[t]{9.80in}
+    \MiniHeading{ANY DISCRETE RANDOM VARIABLE}\par\vspace{.16in}
+    \FormulaCardSized{49pt}{\mu_X=\sum x_i\cdot P(x_i)}
+    \vspace{.22in}
+    \FormulaCardSized{43pt}{\sigma_X=\sqrt{\sum(x_i-\mu_X)^2\cdot P(x_i)}}
+    \vspace{.24in}
+    \TextCard{{\fontsize{29pt}{36pt}\selectfont
+      Weight each possible value by its probability.\par
+      All probabilities are nonnegative and sum to 1.}}
+    \vspace{.30in}
+    \MiniHeading{SHIFT + SCALE: \(Y=a+bX\)}\par\vspace{.13in}
+    \FormulaCardSized{43pt}{\begin{gathered}
+      \mu_Y=a+b\mu_X\\[12pt]
+      \sigma_Y=|b|\sigma_X
+    \end{gathered}}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.80in}
+    \MiniHeading{BINOMIAL: COUNT THE SUCCESSES}\par\vspace{.16in}
+    \FormulaCardSized{41pt}{P(X=x)=\binom{n}{x}p^x(1-p)^{n-x}}
+    \vspace{.22in}
+    \FormulaCardSized{47pt}{\begin{gathered}
+      \mu_X=np\\[12pt]
+      \sigma_X=\sqrt{np(1-p)}
+    \end{gathered}}
+    \vspace{.26in}
+    \TextCard{{\fontsize{31pt}{42pt}\selectfont
+      \textbf{B}inary: success or failure\par
+      \textbf{I}ndependent trials\par
+      \textbf{N}umber of trials is fixed\par
+      \textbf{S}ame success probability \(p\)}}
+    \vspace{.22in}
+    {\fontsize{29pt}{36pt}\selectfont
+      Possible counts: \(x=0,1,\ldots,n\).\par
+      Check \textbf{BINS} before using the formulas.}
+  \end{minipage}
+}
+
+\PosterZone{15.35in}{18.40in}{ZONE B · WHAT THE SYMBOLS MEAN}{%
+  \begin{minipage}[t]{9.8in}
+    {\fontsize{30pt}{39pt}\selectfont
+      \(X\): a numerical outcome of a chance process\par
+      \(x_i\): one possible value\par
+      \(\mu_X\): long-run mean \quad \(\sigma_X\): SD}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.8in}
+    {\fontsize{30pt}{39pt}\selectfont
+      Binomial \(X\): successes in \(n\) trials\par
+      \(p\): success probability on one trial\par
+      \(\binom{n}{x}\): number of success/failure orderings}
+  \end{minipage}
+}
+
+\PosterZone{18.55in}{20.80in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“If we repeated this many times, the average
+    \PosterBlank{3.5in} would be about \PosterBlank{1.4in}
+    \PosterBlank{1.8in}.”}
+  \vspace{.12in}
+  {\fontsize{25pt}{31pt}\selectfont\color{PosterMuted}
+    Name the variable, the value of \(\mu_X\), and its units.}
+}
+
+\PosterZone{20.95in}{27.45in}{ZONE D · WATCH OUT + \PosterStar\ BEYOND}{%
+  \begin{minipage}[t]{6.45in}
+    \vspace{0pt}\MiniHeading{COMBINE VARIANCES}\par\vspace{.14in}
+    {\fontsize{30pt}{39pt}\selectfont
+      For independent variables, add \textbf{variances}; then take the square root.
+      Do not add SDs.\par\vspace{.24in}
+      Subtracting variables still adds their variances.\par\vspace{.24in}
+      Use \(\boldsymbol{|b|}\), not \(b\), when scaling an SD.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{13.15in}
+    \vspace{0pt}\BeyondBox{%
+      {\fontsize{29pt}{35pt}\selectfont
+        \textbf{Combining random variables}\par
+        \(\displaystyle\mu_{aX+bY}=a\mu_X+b\mu_Y\)\par
+        \(\displaystyle\operatorname{Var}(aX+bY)=a^2\sigma_X^2+b^2\sigma_Y^2\)\par
+        {\fontsize{25pt}{30pt}\selectfont
+          Mean rule: always. Variance rule: \textbf{independent} \(X,Y\).}\par\vspace{.15in}
+        \textbf{Geometric: trial of the first success}\par
+        {\fontsize{25pt}{30pt}\selectfont
+          Independent binary trials, same \(0<p\le1\); count \(x=1,2,3,\ldots\).}\par
+        \(\displaystyle P(X=x)=(1-p)^{x-1}\cdot p\)\par\vspace{.08in}
+        \(\displaystyle\mu_X=\frac1p\qquad\sigma_X=\frac{\sqrt{1-p}}p\)}
+    }
+  \end{minipage}
+}
+\WorksheetTag{u4\_l7--12}
+\end{posterpage}
+\end{document}

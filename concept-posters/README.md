@@ -1,12 +1,9 @@
 # AP Statistics concept-poster mockups
 
-These are 22 × 28 inch portrait mockups based on
-[`CONCEPT_POSTERS_SPEC.md`](../CONCEPT_POSTERS_SPEC.md). The set deliberately
-samples three different layout challenges before all 15 posters are produced:
-
-- `p02-summary-statistics.tex` — formula-heavy plus a hand-drawable diagram
-- `p09-confidence-intervals.tex` — the shared inference recipe and conditions
-- `p15-residuals-model-fit.tex` — plots, output decoding, and a ★ bonus corner
+These are all fifteen 22 × 28 inch portrait mockups from
+[`CONCEPT_POSTERS_SPEC.md`](../CONCEPT_POSTERS_SPEC.md). They cover the five
+core units and the specified ★ Beyond the Exam corners. The Makefile discovers
+`pNN-*.tex` sources and orders the combined editions from P01 through P15.
 
 The shared `apstats-poster.sty` file holds the paper size, color system,
 typography, five-zone layout, formula cards, and reusable callouts. Each poster
@@ -26,13 +23,29 @@ cd concept-posters
 make TECTONIC=/path/to/tectonic
 ```
 
+On Windows with MiKTeX, Python, Make, Poppler, and Ghostscript on PATH:
+
+```powershell
+cd concept-posters
+make -B ENGINE=xelatex
+python verify_posters.py
+```
+
+`-B` rebuilds the committed PDFs and creates fresh local logs for verification.
+`ENGINE=xelatex` also works on other platforms. `make_letter.py` runs the same
+two Poppler scaling steps on Windows and POSIX systems, with no shell-specific
+temporary-file commands. The verification script checks formula-ID placement,
+PDF sizes and order, text bounds, and LaTeX logs; formula meaning and diagrams
+also receive manual review, recorded in [RENDER_LOG.md](RENDER_LOG.md).
+`make clean` removes generated files from `rendered/` using Python on either platform.
+
 Outputs land in `rendered/`:
 
 - one 22 × 28 inch poster-board PDF per poster
 - one `-letter.pdf` print edition per poster, on a true 8.5 × 11 inch page
 - one screen-size PNG preview per poster
-- `apstats-concept-poster-mockups.pdf`, containing all three poster-board pages
-- `apstats-concept-poster-mockups-letter.pdf`, containing all three Letter pages
+- `apstats-concept-poster-mockups.pdf`, containing all fifteen poster-board pages
+- `apstats-concept-poster-mockups-letter.pdf`, containing all fifteen Letter pages
 
 The Letter editions preserve a 0.25-inch safe area on every edge and center the
 slightly wider poster-board proportions vertically. Print them at **Actual

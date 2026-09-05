@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{apstats-poster}
+% Formula IDs: mean, std-dev, variance, iqr, outlier-iqr
 
 \colorlet{PosterAccent}{UnitGreen}
 
@@ -48,14 +49,14 @@
         \node[anchor=north,font=\fontsize{20pt}{22pt}\selectfont] at (1.48,1.40) {$Q_1$};
         \node[anchor=north,font=\bfseries\fontsize{20pt}{22pt}\selectfont] at (3.12,1.40) {median};
         \node[anchor=north,font=\fontsize{20pt}{22pt}\selectfont] at (4.72,1.40) {$Q_3$};
-        \node[anchor=north,font=\fontsize{20pt}{22pt}\selectfont] at (5.82,1.40) {max*};
+        \node[anchor=north,font=\fontsize{20pt}{22pt}\selectfont] at (5.82,1.40) {last*};
         \node[anchor=south,font=\bfseries\color{PosterAccent}\fontsize{18pt}{20pt}\selectfont]
-          at (6.34,2.82) {outlier};
+          at (6.34,2.82) {max / outlier};
       \end{tikzpicture}
     \end{center}
     \vspace{.02in}
     {\fontsize{25pt}{31pt}\selectfont
-      *The whisker stops at the last non-outlier. Plot every outlier separately.\par}
+      *The whisker stops at the last non-outlier. The maximum here is the separate point.\par}
     \vspace{.28in}
     \TextCard{%
       \centering

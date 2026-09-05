@@ -1,0 +1,124 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+% Formula IDs: none (concept-only)
+\colorlet{PosterAccent}{UnitBlue}
+
+\begin{document}
+\begin{posterpage}
+\PosterHeader[76pt]{UnitBlue}{2}{PROBABILITY \& DISTRIBUTIONS}{P04}
+  {TWO CATEGORICAL VARIABLES}
+  {new 2.1--2.2 \quad\textbullet\quad old 2.1--2.3}
+
+\PosterZone{4.72in}{16.08in}{ZONE A \textbullet\ COUNTS, SHARES, AND COMPARISONS}{%
+  \begin{minipage}[t]{9.5in}
+    \MiniHeading{DO STUDENTS HAVE A JOB?}\par\vspace{.18in}
+    \TextCard{%
+      \centering
+      \renewcommand{\arraystretch}{1.35}
+      {\fontsize{31pt}{39pt}\selectfont
+      \begin{tabular}{lrrr}
+        & Grade 11 & Grade 12 & Total\\
+        \midrule
+        Job & 12 & 36 & 48\\
+        No job & 28 & 24 & 52\\
+        \midrule
+        Total & 40 & 60 & 100
+      \end{tabular}}
+    }
+    \vspace{.22in}
+    {\fontsize{30pt}{38pt}\selectfont
+      Within Grade 11: \(12/40=30\%\) have a job.\par
+      Within Grade 12: \(36/60=60\%\) have a job.}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{10in}
+    \MiniHeading{CHOOSE THE DENOMINATOR}\par\vspace{.18in}
+    \FormulaCardSized{35pt}{\text{joint rel. freq.}=\frac{\text{cell}}{\text{grand total}}}
+    \vspace{.18in}
+    \FormulaCardSized{32pt}{\text{marginal rel. freq.}=\frac{\text{row or column total}}{\text{grand total}}}
+    \vspace{.18in}
+    \FormulaCardSized{32pt}{\text{conditional rel. freq.}=\frac{\text{cell}}{\text{row or column total}}}
+  \end{minipage}%
+  \vspace{.42in}
+  \begin{minipage}[t]{9.7in}
+    \MiniHeading{SEGMENTED BARS: EACH GROUP IS 100\%}\par
+    \begin{center}
+    \begin{tikzpicture}[x=1in,y=.027in]
+      \draw[PosterInk,line width=2.5pt] (.6,0)--(7.9,0);
+      \draw[PosterInk,line width=2.5pt] (.6,0)--(.6,105);
+      \foreach \y in {0,50,100}{
+        \draw[PosterRule,line width=1.5pt] (.6,\y)--(7.9,\y);
+        \node[anchor=east,font=\fontsize{24pt}{27pt}\selectfont] at (.45,\y) {\y};
+      }
+      \foreach \x/\p/\q/\grade in {1.5/30/70/11,4.8/60/40/12}{
+        \filldraw[fill=PosterAccent!65,draw=PosterAccent,line width=2pt] (\x,0) rectangle ++(1.6,\p);
+        \filldraw[fill=PosterAccent!12,draw=PosterAccent,line width=2pt] (\x,\p) rectangle ++(1.6,\q);
+        \node[font=\bfseries\fontsize{25pt}{28pt}\selectfont] at (\x+.8,\p/2) {\p\%};
+        \node[font=\fontsize{25pt}{28pt}\selectfont] at (\x+.8,\p+\q/2) {\q\%};
+        \node[anchor=north,font=\fontsize{25pt}{28pt}\selectfont] at (\x+.8,-4) {Grade \grade};
+      }
+      \node[anchor=south,font=\fontsize{24pt}{27pt}\selectfont] at (4.2,106) {Percent within each grade};
+    \end{tikzpicture}
+    \end{center}
+    {\centering\fontsize{25pt}{31pt}\selectfont Lower: job \qquad Upper: no job\par}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.7in}
+    \MiniHeading{SIDE-BY-SIDE BARS: COMPARE SHARES}\par
+    \begin{center}
+    \begin{tikzpicture}[x=1in,y=.027in]
+      \draw[PosterInk,line width=2.5pt] (.6,0)--(7.9,0);
+      \draw[PosterInk,line width=2.5pt] (.6,0)--(.6,105);
+      \foreach \y in {0,50,100}{
+        \draw[PosterRule,line width=1.5pt] (.6,\y)--(7.9,\y);
+        \node[anchor=east,font=\fontsize{24pt}{27pt}\selectfont] at (.45,\y) {\y};
+      }
+      \foreach \x/\p/\q/\grade in {1.3/30/70/11,4.7/60/40/12}{
+        \filldraw[fill=PosterAccent!65,draw=PosterAccent,line width=2pt] (\x,0) rectangle ++(1,\p);
+        \filldraw[fill=PosterAccent!12,draw=PosterAccent,line width=2pt] (\x+1.2,0) rectangle ++(1,\q);
+        \node[anchor=south,font=\fontsize{24pt}{27pt}\selectfont] at (\x+.5,\p+1) {\p};
+        \node[anchor=south,font=\fontsize{24pt}{27pt}\selectfont] at (\x+1.7,\q+1) {\q};
+        \node[anchor=north,font=\fontsize{25pt}{28pt}\selectfont] at (\x+1.1,-4) {Grade \grade};
+      }
+      \node[anchor=south,font=\fontsize{24pt}{27pt}\selectfont] at (4.2,106) {Percent within each grade};
+    \end{tikzpicture}
+    \end{center}
+    {\centering\fontsize{25pt}{31pt}\selectfont Left: job \qquad Right: no job\par}
+  \end{minipage}%
+}
+
+\PosterZone{16.23in}{19.64in}{ZONE B \textbullet\ WHAT THE WORDS MEAN}{%
+  \begin{minipage}[t]{9.7in}
+    {\fontsize{30pt}{38pt}\selectfont
+      \textbf{Explanatory variable:} defines the groups we compare (grade level).\par
+      \textbf{Response variable:} the outcome compared (job status).}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{9.7in}
+    \MiniHeading{CONDITIONAL ON = WITHIN}\par\vspace{.12in}
+    {\fontsize{32pt}{41pt}\selectfont
+      Restrict the total to that row or column.\par
+      Each conditional distribution adds to 100\%.}
+  \end{minipage}%
+}
+
+\PosterZone{19.79in}{23.02in}{ZONE C \textbullet\ SAY IT IN WORDS}{%
+  \SentenceFrame{``There is an association because the conditional distribution
+    of \PosterBlank{2.5in} differs across \PosterBlank{2.5in} groups:
+    \PosterBlank{1in}\% versus \PosterBlank{1in}\%.''}
+  \vspace{.12in}
+  {\fontsize{27pt}{34pt}\selectfont Name the response, the explanatory groups, and the compared category.}
+}
+
+\PosterZone{23.17in}{27.45in}{ZONE D \textbullet\ WATCH OUT}{%
+  \TextCard{%
+    {\posterheading\bfseries\fontsize{40pt}{47pt}\selectfont
+      COMPARE CONDITIONAL DISTRIBUTIONS}\par\vspace{.15in}
+    {\fontsize{34pt}{43pt}\selectfont
+      Use shares, not counts, when group sizes differ.\par
+      State which group supplies the denominator.}
+  }
+}
+\WorksheetTag{u2\_l1--3}
+\end{posterpage}
+\end{document}

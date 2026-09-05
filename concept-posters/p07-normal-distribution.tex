@@ -1,0 +1,92 @@
+\documentclass{article}
+\usepackage{apstats-poster}
+% Formula IDs: zscore, empirical-rule
+\colorlet{PosterAccent}{UnitBlue}
+
+\begin{document}
+\begin{posterpage}
+\PosterHeader[86pt]{UnitBlue}{2}{PROBABILITY, RANDOM VARIABLES \& SAMPLING DISTRIBUTIONS}
+  {P07}{THE NORMAL DISTRIBUTION}
+  {new 2.11 \quad\textbullet\quad old 1.10}
+
+\PosterZone{4.72in}{16.40in}{ZONE A · THE CURVE + THE FORMULA}{%
+  \begin{center}
+    \begin{tikzpicture}[x=2.42in,y=7in]
+      \fill[UnitBlue!15] (-3,0) -- plot[domain=-3:3,samples=100]
+        (\x,{.39894*exp(-\x*\x/2)}) -- (3,0) -- cycle;
+      \fill[UnitBlue!35] (-2,0) -- plot[domain=-2:2,samples=80]
+        (\x,{.39894*exp(-\x*\x/2)}) -- (2,0) -- cycle;
+      \fill[UnitBlue!65] (-1,0) -- plot[domain=-1:1,samples=60]
+        (\x,{.39894*exp(-\x*\x/2)}) -- (1,0) -- cycle;
+      \draw[PosterInk,line width=3pt,-{Stealth[length=12pt]}] (-3.6,0)--(3.6,0);
+      \draw[UnitBlue,line width=4pt] plot[domain=-3.5:3.5,samples=120]
+        (\x,{.39894*exp(-\x*\x/2)});
+      \foreach \v in {-3,-2,-1,0,1,2,3} {
+        \draw[PosterInk,line width=2pt] (\v,-.008)--(\v,.008);
+        \draw[white,line width=1.5pt,dashed] (\v,0)--(\v,{.39894*exp(-\v*\v/2)});
+      }
+      \foreach \v/\label in {-3/{\mu-3\sigma},-2/{\mu-2\sigma},-1/{\mu-\sigma},0/{\mu},1/{\mu+\sigma},2/{\mu+2\sigma},3/{\mu+3\sigma}}
+        \node[anchor=north,font=\fontsize{25pt}{29pt}\selectfont] at (\v,-.018) {$\label$};
+      \draw[UnitBlue,line width=3pt,{Stealth[length=9pt]}-{Stealth[length=9pt]}] (-1,-.13)--(1,-.13);
+      \node[anchor=center,fill=white,font=\bfseries\fontsize{29pt}{33pt}\selectfont] at (0,-.13) {68\% within \(1\sigma\)};
+      \draw[UnitBlue!70,line width=3pt,{Stealth[length=9pt]}-{Stealth[length=9pt]}] (-2,-.23)--(2,-.23);
+      \node[anchor=center,fill=white,font=\bfseries\fontsize{29pt}{33pt}\selectfont] at (0,-.23) {95\% within \(2\sigma\)};
+      \draw[UnitBlue!45,line width=3pt,{Stealth[length=9pt]}-{Stealth[length=9pt]}] (-3,-.33)--(3,-.33);
+      \node[anchor=center,fill=white,font=\bfseries\fontsize{29pt}{33pt}\selectfont] at (0,-.33) {99.7\% within \(3\sigma\)};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{.08in}
+  \begin{minipage}[c]{8.0in}
+    \FormulaCardSized{71pt}{z=\frac{x-\mu}{\sigma}}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{11.5in}
+    \TextCard{\centering\fontsize{37pt}{50pt}\selectfont
+      \(x\ \longrightarrow\ z\ \longrightarrow\ \text{area}\)\par
+      {\fontsize{25pt}{31pt}\selectfont normalcdf: value to probability}\par\vspace{.16in}
+      \(\text{area}\ \longrightarrow\ z\ \longrightarrow\ x\)\par
+      {\fontsize{25pt}{31pt}\selectfont invNorm: probability to value}}
+  \end{minipage}
+}
+
+\PosterZone{16.55in}{19.85in}{ZONE B · WHAT THE SYMBOLS MEAN}{%
+  \begin{minipage}[t]{9.8in}
+    \MiniHeading{CENTER + SPREAD}\par\vspace{.10in}
+    {\fontsize{32pt}{41pt}\selectfont
+      \(X\sim N(\mu,\sigma)\)\par
+      \(\mu\): mean \qquad \(\sigma\): standard deviation\par
+      Total area under the curve is 1.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.8in}
+    \MiniHeading{STANDARDIZE THE DISTANCE}\par\vspace{.10in}
+    {\fontsize{32pt}{41pt}\selectfont
+      \(z\) counts SDs from the mean.\par
+      Positive: above \(\mu\). Negative: below \(\mu\).\par
+      At the mean, \(z=0\).}
+  \end{minipage}
+}
+
+\PosterZone{20.00in}{23.75in}{ZONE C · SAY IT IN WORDS}{%
+  \SentenceFrame{“\PosterBlank{1.5in} is \PosterBlank{1.0in} standard deviations
+    [above / below] the mean of \PosterBlank{3.3in}.”}
+  \vspace{.18in}
+  \SentenceFrame{“About \PosterBlank{1.0in}\% of \PosterBlank{2.4in} have
+    \PosterBlank{2.8in} below \PosterBlank{1.3in}.”}
+}
+
+\PosterZone{23.90in}{27.45in}{ZONE D · WATCH OUT}{%
+  \begin{minipage}[t]{9.7in}
+    \MiniHeading{DRAW BEFORE YOU CALCULATE}\par\vspace{.16in}
+    {\fontsize{33pt}{42pt}\selectfont
+      Draw the curve. Mark the value.\par
+      Shade the requested region first.}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{9.7in}
+    \MiniHeading{PERCENTILE = AREA TO THE LEFT}\par\vspace{.16in}
+    {\fontsize{31pt}{40pt}\selectfont
+      Multiply the left-tail area by 100.\par
+      The 68--95--99.7 rule gives approximate percentages for a normal model.}
+  \end{minipage}
+}
+\WorksheetTag{u1\_l10}
+\end{posterpage}
+\end{document}
