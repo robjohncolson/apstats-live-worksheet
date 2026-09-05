@@ -117,6 +117,7 @@
     "quarters": {
       "Q1": {
         "units": [
+          1,
           3,
           4
         ],
@@ -124,6 +125,7 @@
           1
         ],
         "unitGrades": {
+          "U1": null,
           "U3": null,
           "U4": null
         },
@@ -135,7 +137,7 @@
         "aheadLessons": 0,
         "aheadKeys": [],
         "unitsGraded": 0,
-        "unitsTotal": 2,
+        "unitsTotal": 3,
         "ceiling": 100,
         "lessonsDue": 19,
         "lessonsGraded": 0,
@@ -157,9 +159,9 @@
       },
       "Q2": {
         "units": [
-          1,
           5,
           6,
+          7,
           8
         ],
         "pcUnits": [
@@ -167,9 +169,9 @@
           3
         ],
         "unitGrades": {
-          "U1": null,
           "U5": null,
           "U6": null,
+          "U7": null,
           "U8": null
         },
         "quarterGrade": null,
@@ -202,16 +204,14 @@
       },
       "Q3": {
         "units": [
-          2,
-          7
+          2
         ],
         "pcUnits": [
           4,
           5
         ],
         "unitGrades": {
-          "U2": null,
-          "U7": null
+          "U2": null
         },
         "quarterGrade": null,
         "quarterGradeBase": null,
@@ -221,7 +221,7 @@
         "aheadLessons": 0,
         "aheadKeys": [],
         "unitsGraded": 0,
-        "unitsTotal": 2,
+        "unitsTotal": 1,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,

@@ -162,19 +162,22 @@
           5,
           6,
           7,
-          8
+          8,
+          9
         ],
         "pcUnits": [
           5,
           6,
           7,
-          8
+          8,
+          9
         ],
         "unitGrades": {
           "U5": null,
           "U6": null,
           "U7": null,
-          "U8": null
+          "U8": null,
+          "U9": null
         },
         "quarterGrade": null,
         "quarterGradeBase": null,
@@ -184,7 +187,7 @@
         "aheadLessons": 0,
         "aheadKeys": [],
         "unitsGraded": 0,
-        "unitsTotal": 4,
+        "unitsTotal": 5,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,
@@ -205,15 +208,9 @@
         "trainerTodo": []
       },
       "Q3": {
-        "units": [
-          9
-        ],
-        "pcUnits": [
-          9
-        ],
-        "unitGrades": {
-          "U9": null
-        },
+        "units": [],
+        "pcUnits": [],
+        "unitGrades": {},
         "quarterGrade": null,
         "quarterGradeBase": null,
         "earlyBonus": 0,
@@ -222,7 +219,7 @@
         "aheadLessons": 0,
         "aheadKeys": [],
         "unitsGraded": 0,
-        "unitsTotal": 1,
+        "unitsTotal": 0,
         "ceiling": null,
         "lessonsDue": 0,
         "lessonsGraded": 0,

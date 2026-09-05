@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 9939e59e2a09
+ * engine-version: aca58a97dc19
  */
 ;(function (root) {
   'use strict';
@@ -1173,6 +1173,7 @@
     }
     
     // ── deriveQuarterBands ────────────────────────────────────────────────────────
+    // Placement rule: majority of the unit's dated lessons (ties → earlier quarter).
     //
     // Which UNITS belong to which quarter, derived from the SCHEDULE DATES — the
     // same date logic quarterOfLesson uses for lessons — instead of the static
@@ -1197,8 +1198,12 @@
       }
       if (!schedule || typeof schedule !== 'object') return configured;
     
-      // Latest in-window date per unit for this period.
-      const latestByUnit = new Map();
+      // Count each unit's in-window dated lessons per quarter for this period.
+      // A unit lands in the quarter holding MOST of its lessons (ties → the earlier
+      // quarter). SY2627 fix (2026-09-05): the previous "latest date" rule put ALL of
+      // old Unit 1 into Q2 because 1.10 (the Normal distribution, now CED 2.11) is
+      // taught in November — Q1 showed nothing while the first month's work sat in Q2.
+      const countsByUnit = new Map();   // unitNum -> Map(quarterKey -> lesson count)
       for (const entry of Object.values(schedule)) {
         if (!entry || !Number.isFinite(Number(entry.unit))) continue;
         const unitNum = Number(entry.unit);
@@ -1212,17 +1217,24 @@
         }
         const d = period ? (periods[period] || null) : (b || e || null);
         if (!d || typeof d !== 'string') continue;
-        const prev = latestByUnit.get(unitNum);
-        if (!prev || d > prev) latestByUnit.set(unitNum, d);
+        const q = quarterOfDate(d, config);
+        if (!q) continue;
+        if (!countsByUnit.has(unitNum)) countsByUnit.set(unitNum, new Map());
+        const counts = countsByUnit.get(unitNum);
+        counts.set(q, (counts.get(q) || 0) + 1);
       }
     
       const bands = {};
       for (const q of quarterKeys) bands[q] = [];
       const placed = new Set();
-      for (const [unitNum, d] of latestByUnit) {
-        const q = quarterOfDate(d, config);
-        if (!q || !bands[q]) continue;
-        bands[q].push(unitNum);
+      for (const [unitNum, counts] of countsByUnit) {
+        let bestQ = null, bestN = -1;
+        for (const q of quarterKeys) {           // quarterKeys are in calendar order → ties go earlier
+          const n = counts.get(q) || 0;
+          if (n > bestN) { bestQ = q; bestN = n; }
+        }
+        if (!bestQ || !bands[bestQ]) continue;
+        bands[bestQ].push(unitNum);
         placed.add(unitNum);
       }
       // Fallback: configured units the schedule could not place keep their quarter.
@@ -2944,7 +2956,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "9939e59e2a09",
+    _engineVersion: "aca58a97dc19",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

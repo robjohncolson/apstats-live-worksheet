@@ -18,19 +18,39 @@ describe('deriveQuarterBands', () => {
     expect(deriveQuarterBands(CFG, null, 'B', null)).toEqual({ Q1: [1, 2, 3], Q2: [4, 5], Q3: [6, 7], Q4: [8, 9] });
   });
 
-  it('places a unit in the quarter of its LATEST scheduled lesson date for the period', () => {
+  it('places a unit in the quarter holding MOST of its scheduled lessons for the period', () => {
     const s = sched([
       ['1.1', 1, '2026-09-10', '2026-09-11'],
       ['4.1', 4, '2026-10-28', '2026-10-29'],
-      ['4.9', 4, '2026-11-05', '2026-11-06'],   // unit 4 ends inside Q1 → Q1
+      ['4.9', 4, '2026-11-05', '2026-11-06'],   // unit 4: both lessons in Q1 → Q1
       ['5.1', 5, '2026-11-12', '2026-11-13'],
-      ['5.8', 5, '2026-11-20', '2026-11-23'],   // unit 5 ends in Q2 → Q2
+      ['5.8', 5, '2026-11-20', '2026-11-23'],   // unit 5: both in Q2 → Q2
     ]);
     const bands = deriveQuarterBands(CFG, s, 'B', null);
     expect(bands.Q1).toEqual([1, 2, 3, 4]);   // 2,3 fall back to config
     expect(bands.Q2).toEqual([5]);
     expect(bands.Q3).toEqual([6, 7]);
     expect(bands.Q4).toEqual([8, 9]);
+  });
+
+  it('SY2627 regression: old Unit 1 stays in Q1 even though 1.10 (Normal → CED 2.11) is taught in Q2', () => {
+    const s = sched([
+      ['1.1', 1, '2026-09-08', '2026-09-09'], ['1.2', 1, '2026-09-10', '2026-09-11'],
+      ['1.3', 1, '2026-09-11', '2026-09-14'], ['1.4', 1, '2026-09-14', '2026-09-16'],
+      ['1.5', 1, '2026-09-15', '2026-09-18'], ['1.6', 1, '2026-09-17', '2026-09-21'],
+      ['1.7', 1, '2026-09-21', '2026-09-25'], ['1.8', 1, '2026-09-22', '2026-09-28'],
+      ['1.9', 1, '2026-09-24', '2026-09-30'],
+      ['1.10', 1, '2026-11-09', '2026-12-02'],   // the one November lesson used to drag the whole unit into Q2
+    ]);
+    const bands = deriveQuarterBands(CFG, s, 'B', null);
+    expect(bands.Q1).toContain(1);
+    expect(bands.Q2).not.toContain(1);
+    expect(deriveQuarterBands(CFG, s, 'E', null).Q1).toContain(1);
+  });
+
+  it('a tie goes to the earlier quarter', () => {
+    const s = sched([['6.1', 6, '2026-11-05', null], ['6.2', 6, '2026-11-12', null]]);   // one Q1, one Q2
+    expect(deriveQuarterBands(CFG, s, 'B', null).Q1).toContain(6);
   });
 
   it('every unit lands in exactly one quarter, sorted', () => {
