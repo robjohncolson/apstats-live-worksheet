@@ -7,13 +7,14 @@ essential_question: "What must a simulation vary to decide whether observed cate
 worksheet: "u8_lesson1_live.html"
 
 rules_callout:
-  title: "BUILD DISCREPANCY FROM THE NULL MODEL (keep on the page)"
+  title: "EXPECTED COUNTS AND SIMULATION (keep on the page)"
   body: |
-    For model probability $p_i$ and sample size $n$, category $i$ has expected count $np_i$.
-    Measure total relative discrepancy with $\chi^2=\sum (O-E)^2/E$; for $k$ model categories,
-    $df=k-1$. A valid null simulation generates a new sample of size $n$ using the claimed
-    probabilities, recomputes $\chi^2$, and counts simulated values at least as large as observed.
-    Merely rearranging fixed observed labels cannot show sample-to-sample count variation.
+    For a model probability $p_i$ and sample size $n$, the expected count is $E_i=np_i$.
+    The chi-square statistic adds the relative squared gaps: $\chi^2=\sum (O-E)^2/E$.
+    To model chance variation, generate new samples of the same size using the claimed probabilities.
+    Compute the statistic each time. The fraction at least as large as the observed statistic estimates
+    how often such a mismatch occurs if the model is true. A fraction at or below a stated cutoff is
+    evidence against the model; a larger fraction does not prove the model.
 
 focus: aps-8.1-d3-1
 reinforcement: []
@@ -22,29 +23,27 @@ exit_reflection: "One thing the video changed about my first take: \\hrulefill"
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
+    in)
   teacher_does:
-    - "Board slide up at the bell. Ask students what changes from one proposed simulation trial to the next."
-    - "Begin the 8.1 video follow-along at minute 5."
-    - "Return to the board slide at minute 33. Circulate and require students to name the fixed-count flaw before judging surprise."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Display the board and ask for one sentence using the study description.
+  - Begin the 8.1 video follow-along at minute 5.
+  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-    - "Choose Leo's or Amara's simulation and cite what one trial generates."
-    - "Complete the follow-along about observed and expected counts, chi-square discrepancy, and null simulation."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Write a one-sentence first take before the video.
+  - Complete the video follow-along worksheet.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Can shuffling 32 red labels ever produce 40 red labels?"
-    - "What model should determine each new token color?"
-    - "Why do simulated statistics larger than 3.35 count too?"
-    - "What does 186 out of 1,000 say about random variation under the claim?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require model, trial, statistic, tail event, and reader consequence; do not accept `shuffle means random' without checking what the shuffle preserves."
+  - Which specific number or study detail supports your choice?
+  - What claim would go beyond the evidence, and why?
+  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
+    a second full inference write-up.
   watch_for:
-    - "Treating random order as random variation in category counts."
-    - "Adding signed observed-minus-expected differences, which always cancel to zero."
-    - "Saying a non-small simulated tail proves the company's model is true."
-  first_take_note: "Not graded. Both plans use random actions; the key distinction is whether category totals may vary under the null model."
+  - Choosing a speaker without a reason.
+  - Copying numbers without explaining what they support.
+  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
 
-# Topic 8.1 has no tutor artifact. These lines are copied from apstat_8_framework.md.
 tether:
   - '\textbf{VAR-1.J} Identify questions suggested by variation between observed and expected counts in categorical data. \textbf{[Skill 1.A]}'
   - '\textbf{VAR-1.J.1} Variation between what we find and what we expect to find may be random or not.'

@@ -8,7 +8,7 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose a transit authority obtains the shown counts under either design.\par\smallskip \textbf{Design A:} Take independent SRSs of 100 from each of three route populations of 4,000 and record ticket method.\par \textbf{Design B:} Take one SRS of 300 from 15,000 system riders and record both route and ticket method.\par\smallskip \textbf{Ari:} ``Route rows imply homogeneity; the counts are enough to choose.''\par \textbf{Bea:} ``Read how riders were sampled; identical counts can support different population claims.''\par
+Suppose a transit authority obtains the shown counts under either design.\par\smallskip \textbf{Design A:} Take independent SRSs of 100 from each of three route populations of 5,000 and record ticket method.\par \textbf{Design B:} Take one SRS of 300 from 15,000 system riders and record both route and ticket method.\par\smallskip \textbf{Ari:} ``Route rows imply homogeneity; the counts are enough to choose.''\par \textbf{Bea:} ``Read how riders were sampled; identical counts can support different population claims.''\par
 \begin{center}
 \textbf{Ticket method}\par\smallskip
 \begin{tabular}{|l|c|c|c|c|}
@@ -21,34 +21,34 @@ Suppose a transit authority obtains the shown counts under either design.\par\sm
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Which claim is more defensible? Cite the sampling structure of each design.
+Do the same counts mean that riders were selected in the same way? Explain in one sentence.
 \workspace{0.9in}
 \end{firsttakebox}
 
 \begin{callout}{\IconBook\ LET DATA COLLECTION NAME THE TEST (keep on the page)}{calloutgreen}
-Use chi-square \textbf{homogeneity} to compare one categorical distribution across independently
-sampled populations or randomized treatments: $H_0$ says the distributions are the same.
-Use chi-square \textbf{independence} for one random sample from one population with two categorical
-variables recorded: $H_0$ says the variables are not associated. Both use
-$E=(\text{row total})(\text{column total})/(\text{table total})$, require every expected count $>5$,
-and have $df=(r-1)(c-1)$. The arithmetic may match even when the inferential wording does not.
+Use chi-square homogeneity to compare one categorical distribution across independently sampled
+populations or randomized treatments: $H_0$ says the distributions are the same, and $H_a$ says at least one differs.
+Use chi-square independence for one random sample with two categorical variables: $H_0$ says there is no association,
+and $H_a$ says there is an association. Both use
+$E=(\text{row total})(\text{column total})/(\text{table total})$.
+Check the random design, each 10 percent condition when sampling without replacement, and every expected count $>5$.
 \end{callout}
 
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} For each design, state the number of random samples and the categorical variable or variables recorded.\par
+\dokbadge{1}~\textbf{(a)} How many random samples are taken in Design A and in Design B?\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Calculate the expected counts and $df$, then verify random sampling, 10 percent, and expected counts for both designs.\par
+\dokbadge{2}~\textbf{(b)} Calculate the three expected counts for the North row. Explain briefly why the other two rows have the same expected counts.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate the claims. For each design, name the procedure and state $H_0$ and $H_a$ in context. Use the sampling structure, diagnose the rejected table-only rule, and identify the numerical pieces that remain identical.\par
+\dokbadge{3}~\textbf{(c)} In 4 sentences, judge Ari's rule. Name and justify the test for each design, state each null hypothesis in context, and explain why the same table can lead to different test names.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} For Design A, the procedure is \blank[1.5in] because \blank[2.5in]; for Design B, it is \blank[1.5in] because \blank[2.3in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Design A uses \blank[1.4in] because \blank[1.8in]; its null says \blank[2.0in].\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} The rejected rule would make readers assume \blank[2.5in]; the numerical pieces that match are \blank[2.2in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Design B uses \blank[1.4in] because \blank[1.8in]; its null says \blank[2.0in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

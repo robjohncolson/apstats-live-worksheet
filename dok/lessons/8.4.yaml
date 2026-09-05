@@ -9,12 +9,12 @@ worksheet: "u8_lesson4_live.html"
 rules_callout:
   title: "EXPECTED COUNTS UNDER NO ASSOCIATION (keep on the page)"
   body: |
-    Under no association, the expected count in a cell is
-    $E=\dfrac{(\text{row total})(\text{column total})}{\text{table total}}$.
-    Expected counts preserve the observed margins and describe the null table; they need not be whole numbers.
-    For the course's conservative chi-square check, \textbf{every expected count must be greater than 5},
-    not merely every observed count. A table with $r$ rows and $c$ columns has $df=(r-1)(c-1)$.
-    Combining categories changes the question and needs a substantive reason, not just a failed condition.
+    Expected counts describe the table under no relationship between the variables.
+    For an interior cell, $E=(\text{row total})(\text{column total})/(\text{table total})$.
+    Expected counts keep the same row and column totals; they need not be whole numbers.
+    For this problem, use the course's conservative chi-square check: every expected count must be
+    greater than 5. This check concerns expected counts, not observed counts. If it fails, gather more
+    random data and recheck; a larger sample does not guarantee that every new expected count will pass.
 
 focus: aps-8.4-d3-1
 reinforcement: []
@@ -23,25 +23,26 @@ exit_reflection: "One thing the video changed about my first take: \\hrulefill"
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
+    in)
   teacher_does:
-    - "Board slide up at the bell. Ask which evidence is needed before deciding whether the approximation is ready."
-    - "Begin the 8.4 video follow-along at minute 5."
-    - "Return at minute 33. Require the margins that generate the boundary cell and a defensible next step."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Display the board and ask for one sentence using the study description.
+  - Begin the 8.4 video follow-along at minute 5.
+  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-    - "Commit to one claim and identify the evidence still needed."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in."
+  - Write a one-sentence first take before the video.
+  - Complete the video follow-along worksheet.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Which row total and column total generate the Not done/Phone cell?"
-    - "Why can an expected count equal 5 even when its observed count is 6?"
-    - "When would combining support channels preserve the research question?"
-  adult_role: "Solo teacher. Require the expected table, the strict boundary check, and a remedy that preserves the question."
+  - Which specific number or study detail supports your choice?
+  - What claim would go beyond the evidence, and why?
+  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
+    a second full inference write-up.
   watch_for:
-    - "Using the observed interior count as its own expected count."
-    - "Rounding an expected count of exactly 5 upward before checking the condition."
-    - "Combining categories solely to make the condition pass without considering meaning."
-  first_take_note: "Not graded. The observed cells were chosen to pass a tempting but incorrect checklist while one expected cell lands exactly on the boundary."
+  - Choosing a speaker without a reason.
+  - Copying numbers without explaining what they support.
+  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
 
 visuals:
   support_table:

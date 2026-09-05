@@ -21,35 +21,34 @@ Suppose a city library takes an SRS of 240 of its 6,000 active adult cardholders
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Which account is better supported so far? Name one calculation and one design fact needed to decide.
+Can this study show that choosing email causes fewer late returns? Give one reason from how the study was done.
 \workspace{0.9in}
 \end{firsttakebox}
 
 \begin{callout}{\IconBook\ SCALE EACH GAP, THEN BOUND THE CONCLUSION (keep on the page)}{calloutgreen}
-For a chi-square test of independence, $H_0$ says the two categorical variables are not
-associated in the population; $H_a$ says they are associated. Calculate
-$E=(\text{row total})(\text{column total})/(\text{table total})$ and
-$\chi^2=\sum (O-E)^2/E$ with $df=(r-1)(c-1)$. Every expected count should be greater than 5,
-and the p-value is the upper-tail probability assuming $H_0$ is true. A cell's contribution
-scales its squared gap by $E$, so the largest raw gap need not contribute most. Random sampling
-supports population scope; without random assignment, association does not establish causation.
+For independence, $H_0$ says the two categorical variables are not associated in the population;
+$H_a$ says they are associated. Use $E=(\text{row total})(\text{column total})/(\text{table total})$,
+and add cell contributions $(O-E)^2/E$ to obtain $\chi^2$.
+With $r$ rows and $c$ columns, excluding totals, $df=(r-1)(c-1)$.
+The p-value is the upper-tail probability assuming $H_0$. Reject $H_0$ if $p\leq\alpha$;
+otherwise fail to reject. Random sampling supports population claims; random assignment supports causation.
 \end{callout}
 
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} Give the row totals, column totals, table total, and degrees of freedom.\par
+\dokbadge{1}~\textbf{(a)} State the degrees of freedom, excluding the totals row and column.\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Verify random sampling, 10 percent, and expected counts. Calculate all expected counts, cell contributions, $\chi^2$, and the upper-tail p-value.\par
+\dokbadge{2}~\textbf{(b)} Expected counts are 28.75 for Email/Late and 17.25 for None/Late. Calculate these two contributions using $(O-E)^2/E$.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate the accounts. Compare the Email/Late and None/Late raw gaps and contributions, use the p-value for a population conclusion, bound causation, and state the two consequences of the rejected account.\par
+\dokbadge{3}~\textbf{(c)} Technology gives $\chi^2=22.5172$ and $p=0.0000129$. In 3--4 sentences, judge the accounts: compare the two contributions, use $\alpha=0.05$ for a population conclusion, and explain why the study does not show prevention.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} For the two cells, the raw gaps are \blank[0.8in] and \blank[0.8in], while the contributions are \blank[0.9in] and \blank[0.9in]; therefore \blank[1.8in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The two contributions are \blank[0.8in] and \blank[0.8in], so \blank[1.8in] adds more to the statistic.\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} The result supports \blank[2.2in] for \blank[1.8in]; causation is \blank[1.0in] because \blank[2.0in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The p-value supports \blank[1.7in] for \blank[1.7in]. This does not establish cause because \blank[2.0in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

@@ -33,30 +33,28 @@
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask what evidence measures a cell's effect on the statistic.
+  \item Display the board and ask for one sentence using the study description.
   \item Begin the 8.6 video follow-along at minute 5.
-  \item Return at minute 33. Require a two-cell comparison and a bounded inference conclusion.
-  \item Collect at the door. Score part (c) only, E/P/I.
+  \item Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
+  \item Collect at the door. Score part (c) only using the three required elements.
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Commit to one account and name the evidence needed to evaluate it.
-  \item Complete the follow-along, finish (a)--(c), revise, and turn in.
+  \item Write a one-sentence first take before the video.
+  \item Complete the video follow-along worksheet.
+  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Why can a 12.75 gap contribute more than a 13.75 gap?
-  \item Which expected count scales each disputed gap?
-  \item What does the upper-tail probability say under no association?
-  \item Which design feature permits population generalization, and which missing feature blocks causation?
+  \item Which specific number or study detail supports your choice?
+  \item What claim would go beyond the evidence, and why?
 \end{itemize}
-}{Solo teacher. Require cell contributions, the p-value, population scope, and a causal limit.}
+}{Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or a second full inference write-up.}
 
 \begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Selecting a driver from the largest raw observed-minus-expected gap without dividing by its expected count.
-  \item Turning the upper-tail p-value into the probability that the null hypothesis is true.
-  \item Treating an SRS of cardholders as random assignment of their chosen notification methods.
+  \item Choosing a speaker without a reason.
+  \item Copying numbers without explaining what they support.
 \end{itemize}
 \end{callout}
 
@@ -64,19 +62,17 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{selects-scaled-account} (required) --- Uses scaled contributions, not raw gaps alone
-  \item \textbf{uses-two-cell-values} (required) --- Compares both disputed gaps and contributions
-  \item \textbf{states-overall-conclusion} (required) --- Uses $p\approx0.0000129$ for an association conclusion
-  \item \textbf{bounds-population-and-causation} (required) --- Uses the SRS for scope and lack of assignment to block causation
-  \item \textbf{states-reader-consequences} (required) --- Diagnoses both false cell ranking and false causation
+  \item \textbf{cell-comparison} (required) --- Uses 9.4239 > 6.5761 to explain why raw gaps alone do not determine contribution
+  \item \textbf{population-conclusion} (required) --- Uses p < 0.05 to conclude association in the 6,000-cardholder population
+  \item \textbf{causal-limit} (required) --- Explains why chosen methods leave other personal differences as possible causes
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Compares scaled cell evidence, uses the p-value, bounds scope and causation, and states both consequences. \\ \hline
-\textbf{P} & Gives a valid association conclusion but omits a cell comparison, scope limit, or consequence. \\ \hline
-\textbf{I} & Ranks by raw gap, treats the p-value as a null probability, or claims prevention. \\ \hline
+\textbf{E} & Justifies the scaled-cell comparison, gives a threshold-based population association conclusion, and explains the causal limit. \\ \hline
+\textbf{P} & Shows substantive valid reasoning for at least one required element, but does not meet all E requirements. Credit correct reasoning even when another claim is wrong. \\ \hline
+\textbf{I} & Shows no substantive valid reasoning for any required element; a name, unsupported choice, or copied number alone does not count. \\ \hline
 \end{tabular}}
 
 \clearpage
@@ -95,20 +91,20 @@ Suppose a city library takes an SRS of 240 of its 6,000 active adult cardholders
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE (5 min)}
-Which account is better supported so far? Name one calculation and one design fact needed to decide.\par
-\answer{Not graded. Students should identify both numerical and design evidence still needed.}
+Can this study show that choosing email causes fewer late returns? Give one reason from how the study was done.\par
+\answer{Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.}
 \end{firsttakebox}
 
 \textit{Rules callout ``SCALE EACH GAP, THEN BOUND THE CONCLUSION (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} Give the row totals, column totals, table total, and degrees of freedom.\par
-\answer{Row totals are 100, 80, and 60; column totals are 69 and 171; $n=240$; and $df=(3-1)(2-1)=2$.}
+\dokbadge{1}~\textbf{(a)} State the degrees of freedom, excluding the totals row and column.\par
+\answer{$df=(3-1)(2-1)=2$.}
 
-\dokbadge{2}~\textbf{(b)} Verify random sampling, 10 percent, and expected counts. Calculate all expected counts, cell contributions, $\chi^2$, and the upper-tail p-value.\par
-\answer{The SRS satisfies $240\leq0.10(6{,}000)=600$. Expected counts are Email $(28.75,71.25)$, Text $(23,57)$, and None $(17.25,42.75)$, all greater than 5.\par Contributions are $6.5761,2.6535,0.0435$ and $0.0175,9.4239,3.8026$ in table order. Thus $\chi^2=22.5172$, $df=2$, and $p\approx0.0000129$.}
+\dokbadge{2}~\textbf{(b)} Expected counts are 28.75 for Email/Late and 17.25 for None/Late. Calculate these two contributions using $(O-E)^2/E$.\par
+\answer{Email/Late: $(15-28.75)^2/28.75=6.5761$. None/Late: $(30-17.25)^2/17.25=9.4239$.}
 
-\dokbadge{3}~\textbf{(c)} Adjudicate the accounts. Compare the Email/Late and None/Late raw gaps and contributions, use the p-value for a population conclusion, bound causation, and state the two consequences of the rejected account.\par
-\answer{Omar is warranted. Email/Late has gap $13.75$ but contribution $13.75^2/28.75=6.5761$; None/Late has gap $12.75$ but contribution $12.75^2/17.25=9.4239$, the largest. Since $p\approx0.0000129$, reject no association: chosen method and late return are associated among the 6,000 active adult cardholders. The SRS supports that scope, but methods were not assigned, so prevention is not established. The rejected account both ranks cell influence by unscaled gaps and turns observational association into causation.}
+\dokbadge{3}~\textbf{(c)} Technology gives $\chi^2=22.5172$ and $p=0.0000129$. In 3--4 sentences, judge the accounts: compare the two contributions, use $\alpha=0.05$ for a population conclusion, and explain why the study does not show prevention.\par
+\answer{Omar is justified: None/Late contributes 9.4239, more than Email/Late's 6.5761, even though its raw gap is smaller. Dividing by the different expected counts changes the comparison. Since $0.0000129<0.05$, reject no association and conclude that chosen method and late return are associated among the 6,000 active adult cardholders. Methods were chosen rather than randomly assigned, so other differences among people could explain the association; email is not shown to prevent late returns.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

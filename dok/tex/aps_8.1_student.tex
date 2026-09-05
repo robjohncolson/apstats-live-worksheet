@@ -8,7 +8,7 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose a company claims 10{,}000 mystery tokens are $50\%$ red, $30\%$ teal, and $20\%$ gold. An SRS of 80 has the shown counts.\par\smallskip \textbf{Leo:} ``Mix and redraw these same 80 tokens without replacement; recompute $\chi^2$ for 1,000 trials.''\par \textbf{Amara:} ``For each trial, generate 80 independent colors with probabilities 0.50, 0.30, and 0.20, then recompute $\chi^2$.'' In Amara's trials, 186 statistics are at least the observed value.\par
+Suppose a company claims 10{,}000 mystery tokens are $50\%$ red, $30\%$ teal, and $20\%$ gold. An SRS of 80 has the shown counts.\par\smallskip \textbf{Leo:} ``Mix and redraw these same 80 tokens without replacement; recompute $\chi^2$ for 1,000 trials.''\par \textbf{Amara:} ``For each trial, generate 80 independent colors with probabilities 0.50, 0.30, and 0.20, then recompute $\chi^2$.'' In Amara's 1,000 trials, 186 statistics are at least the observed value.\par
 \begin{center}
 \textbf{Token sample}\par\smallskip
 \begin{tabular}{|l|c|c|}
@@ -20,33 +20,34 @@ Suppose a company claims 10{,}000 mystery tokens are $50\%$ red, $30\%$ teal, an
 \end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Which simulation can reveal whether the sample's color discrepancies are unexpected? State what varies in one trial.
+Which plan can produce a different number of red tokens on the next trial? Explain in one sentence.
 \workspace{0.9in}
 \end{firsttakebox}
 
-\begin{callout}{\IconBook\ BUILD DISCREPANCY FROM THE NULL MODEL (keep on the page)}{calloutgreen}
-For model probability $p_i$ and sample size $n$, category $i$ has expected count $np_i$.
-Measure total relative discrepancy with $\chi^2=\sum (O-E)^2/E$; for $k$ model categories,
-$df=k-1$. A valid null simulation generates a new sample of size $n$ using the claimed
-probabilities, recomputes $\chi^2$, and counts simulated values at least as large as observed.
-Merely rearranging fixed observed labels cannot show sample-to-sample count variation.
+\begin{callout}{\IconBook\ EXPECTED COUNTS AND SIMULATION (keep on the page)}{calloutgreen}
+For a model probability $p_i$ and sample size $n$, the expected count is $E_i=np_i$.
+The chi-square statistic adds the relative squared gaps: $\chi^2=\sum (O-E)^2/E$.
+To model chance variation, generate new samples of the same size using the claimed probabilities.
+Compute the statistic each time. The fraction at least as large as the observed statistic estimates
+how often such a mismatch occurs if the model is true. A fraction at or below a stated cutoff is
+evidence against the model; a larger fraction does not prove the model.
 \end{callout}
 
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} Calculate the three expected counts under the company's claimed color model.\par
+\dokbadge{1}~\textbf{(a)} Find the three expected color counts from the company's percentages.\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Compute the $\chi^2$ contributions and total, give $df$, estimate the upper tail from Amara's trials, and check 10 percent and expected counts.\par
+\dokbadge{2}~\textbf{(b)} The observed statistic is $\chi^2=3.35$. Check the red contribution $(32-40)^2/40$, then compute the simulation proportion $186/1{,}000$.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Choose the simulation that answers the chance-variation question and judge surprise at 5 percent. Compare what each trial fixes or varies, use the simulated tail, explain the rejected output's false assurance, and avoid claiming the model is proved.\par
+\dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose a simulation and justify what varies from trial to trial. Use the simulated proportion to decide whether the result is unusual at a 5 percent cutoff, and explain why this does not prove the company's claim.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} Simulation \blank[0.5in] is valid because one trial allows \blank[2.4in] to vary under \blank[1.5in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I choose \blank[1.1in] because the counts \blank[1.8in] across trials. The other plan keeps \blank[1.8in] fixed.\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} The tail estimate \blank[0.8in] is \blank[0.6in] 0.05, so \blank[2.3in]; the rejected plan would mislead readers by \blank[2.1in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Since the simulated proportion is \blank[0.8in], the result \blank[1.8in]; this does not prove \blank[1.8in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par
