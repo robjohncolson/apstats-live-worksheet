@@ -79,7 +79,13 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
 - Schoology categories: teacher is creating them 2026-09-04; recommended **calculate by PERCENT** (each assignment counts
   equally inside its category, matching the v3 engine's mean-of-recorded slices; "by points" would let a 40-pt PC or a big
   poster swamp the category). Then the orchestrator verifies both sections via `schoology_ops.list_categories` and dry-runs.
-- ⏭ Codex (GPT-6 Astra, teacher's request): `state/dok-audit-and-posters-codex-prompt.md` — (A) pedagogical audit of all 66
+- ⏭ Codex NEXT (teacher's request, plan-then-implement): `state/ap-classroom-video-links-codex-prompt.md` — scrape the
+  Fall-2026 AP Classroom course (`apclassroom.collegeboard.org/33/home?unit=0`, teacher signs into the rig window),
+  diff every `RESOURCES[...].videos[].url` in the Desk against the new topics via `2026-crosswalk.json`, repoint `url`
+  ONLY; **`altUrl` (Google Drive, old recordings) is sacred until the teacher re-records.** Report + tests. No push.
+- ✅ Codex DONE (unpushed, awaiting orchestrator review): DOK audit — 65/66 corrected, `dok/AUDIT_2026-09.md`, 8 unit
+  commits (7f05d12 d90c01f d5f4306 90ecd6b 7cff7a1 9b2c0ca b47991e d53198e); posters 15/15 rendered (d35f6a4, 92ed5d1).
+- (was) Codex: `state/dok-audit-and-posters-codex-prompt.md` — (A) pedagogical audit of all 66
   DOK-3s against the day's worksheet/flashcards/tether (alignment, ~10-min load, reading level, first-take, callout/visual
   leaks, key correctness) with in-place fixes + `dok/AUDIT_2026-09.md`; (B) render the 12 missing concept posters
   (P01,P03–P08,P10–P14) in `concept-posters/` so all 15 PDFs exist. No push. Pilot feedback on the DOK sheets waits for Tuesday (first class 09-08 B is
