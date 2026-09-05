@@ -109,8 +109,10 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   for 09-08/09-09, confirm the created columns look right, then re-register each task with `-Live`:**
   `powershell -NoProfile -File tools/register_schoology_sync_task.ps1 -Section PeriodB -Time 16:30 -TaskName ApStatsSchoologySync-B -Live`
   (and `-Section PeriodE -Time 16:45 -TaskName ApStatsSchoologySync-E -Live`). The rig Edge session must stay signed in.
-- ⏭ STILL OPEN from that thread: (1) **calendar relabel to NEW CED codes/colours** (the teacher's original complaint) — a
-  standalone Desk task now (pacing `n`/`u` + `rProg`), no schedule change; (2) **wallet loading** — Codex's `330efe6` on
+- ⏭ SPEC + PROMPT (teacher, 2026-09-05 late): **`CALENDAR_CED2026_RELABEL_SPEC.md`** + `state/calendar-ced2026-relabel-codex-prompt.md`
+  — display-only: one `cedLabel()` helper, cells/progress/tooltips/resource header in the NEW five-unit numbering + ★ tier,
+  folded topics carry an `(old)` bridge, OLD keys stay under the hood; byte-identical schedule-JSON test proves no date moved.
+  Codex builds after the wallet generate/export run finishes. (2) **wallet loading** — Codex's `330efe6` on
   the parked branch implements `WALLET_LOADING_SPEC.md` (custody endpoints, migration 0035, dashboard loader, QR scanner,
   tests); cherry-pick + review + push ONLY after the teacher OKs the spec.
 - (withdrawn) `state/schedule-packing-and-day-sheets-codex-prompt.md` —
