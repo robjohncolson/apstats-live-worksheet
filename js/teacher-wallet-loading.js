@@ -78,14 +78,15 @@
       .map((student, index) => ({ student, walletIndex: available[index] ?? -1, addressSaved: false, custodySaved: false, done: false, message: '' }));
   }
 
-  async function submitAssignments({ rows, wallets, keepKeys, loadAccounts, saveAddress, saveCustody, onProgress = () => {} }) {
-    const selected = rows.filter(row => !row.done && row.walletIndex >= 0);
+  async function submitAssignments({ rows, wallets, keepKeys, loadAccounts, saveAddress, saveCustody, onProgress = () => {}, isActive = () => true }) {
+    const selected = rows.filter(row => !row.done && row.selected !== false && row.walletIndex >= 0);
     const indexes = selected.map(row => row.walletIndex);
     if (new Set(indexes).size !== indexes.length || selected.some(row => !wallets[row.walletIndex])) {
       throw new Error('Choose a different wallet for each student.');
     }
     // A failed refresh must not be interpreted as an empty account registry.
     const accounts = await loadAccounts();
+    if (!isActive()) return rows;
     const current = accountMap(accounts);
     const owners = new Map();
     accounts.forEach(account => {
@@ -94,7 +95,9 @@
       ids.add(account.studentId); owners.set(account.dogeAddress, ids);
     });
     for (const row of selected) {
+      if (!isActive()) return rows;
       const wallet = wallets[row.walletIndex], id = row.student.studentId;
+      const holdKey = keepKeys || wallet.generated === true;
       try {
         const address = current.get(id);
         if (address && address !== wallet.address) throw new Error('This student already has another address. Reload the assignment table.');
@@ -104,16 +107,20 @@
         if (!address) await saveAddress(id, wallet.address);
         row.addressSaved = true;
         current.set(id, wallet.address); owners.set(wallet.address, new Set([id]));
-        if (keepKeys && !row.custodySaved) {
+        if (!isActive()) return rows;
+        if (holdKey && !row.custodySaved) {
           await saveCustody(id, wallet.wif, wallet.label);
           row.custodySaved = true;
+          if (wallet.generated) wallet.wif = '';
         }
         row.done = true;
-        row.message = keepKeys ? '✓ Address saved; key held.' : '✓ Address saved.';
+        row.message = holdKey ? '✓ Address saved; key held.' : '✓ Address saved.';
       } catch (error) {
-        row.message = (row.addressSaved ? '✗ Address saved; key not held. ' : '✗ ') + error.message;
+        row.message = wallet.generated
+          ? (row.addressSaved ? '✗ Address saved; key not held — retry.' : '✗ Wallet was not saved. Refresh addresses and retry.')
+          : (row.addressSaved ? '✗ Address saved; key not held. ' : '✗ ') + error.message;
       }
-      onProgress(row);
+      if (isActive()) onProgress(row);
     }
     return rows;
   }
@@ -181,9 +188,9 @@
       const content = element('div');
       const status = element('p', '', 'wallet-status'); status.setAttribute('role', 'status');
       const closeButton = button('Close', close);
-      let cleanup = () => {}, busy = false;
+      let cleanup = () => {}, beforeClose = () => true, busy = false;
       function close() {
-        if (busy) return;
+        if (busy || !beforeClose()) return;
         cleanup();
         if (typeof node.close === 'function') node.close();
         node.remove();
@@ -191,24 +198,68 @@
       node.addEventListener('cancel', event => { event.preventDefault(); close(); });
       node.append(heading, content, status, closeButton); doc.body.appendChild(node);
       if (typeof node.showModal === 'function') node.showModal(); else node.setAttribute('open', '');
-      return { node, content, status, close, cleanup(fn) { cleanup = fn; }, busy(value) { busy = value; closeButton.disabled = value; } };
+      return { node, content, status, close, cleanup(fn) { cleanup = fn; }, beforeClose(fn) { beforeClose = fn; },
+        busy(value) { busy = value; closeButton.disabled = value; } };
     }
 
-    async function openBulk() {
-      const ui = dialog('📥 Load paper wallets');
+    function generationUnavailableReason() {
+      if (root.isSecureContext === false || typeof root.crypto?.getRandomValues !== 'function'
+        || typeof root.crypto?.subtle?.digest !== 'function') {
+        return 'Wallet generation requires secure browser randomness. Open this page with HTTPS or localhost.';
+      }
+      if (typeof root.DogeKeys?.generateWallet !== 'function') return 'Wallet generation did not load. Reload this page.';
+      return '';
+    }
+
+    function openGenerate() {
+      return openBulk({ generated: true });
+    }
+
+    async function openBulk({ generated = false } = {}) {
+      const section = generated && typeof options.section === 'function' ? String(options.section() || '').trim() : '';
+      const ui = dialog(generated ? '✨ Generate wallets' : '📥 Load paper wallets');
       const csv = inputField(ui.content, 'Paste the KEYS CSV', 'textarea'); csv.rows = 5; csv.spellcheck = false;
       const file = inputField(ui.content, 'Or choose the KEYS CSV', 'file'); file.accept = '.csv,text/csv';
       const keep = inputField(ui.content, 'Also keep the private keys (teacher custody)', 'checkbox'); keep.checked = true;
+      if (generated) {
+        csv.parentElement.hidden = true; file.parentElement.hidden = true; keep.disabled = true;
+        ui.content.appendChild(element('p', 'Section: ' + (section || 'All sections') + '. Generated wallets always keep their keys in teacher custody.', 'hint'));
+      }
       ui.content.appendChild(element('p', 'Keys are stored encrypted on the server, visible only to you, so a lost sheet can be reprinted.', 'hint'));
       const table = element('table', null, 'wallet-assignment-table');
       const tableWrap = element('div', null, 'wallet-table-wrap'); tableWrap.appendChild(table);
-      let wallets = [], rows = [], snapshot = null, parsed = false;
+      let wallets = [], rows = [], snapshot = null, parsed = false, disposed = false, finished = false, saving = false;
       const controls = element('div', null, 'wallet-actions');
       const parse = button('Review assignments', review);
       const ordered = button('Assign in order', assignInOrder); ordered.disabled = true;
       const submit = element('button', 'Submit assignments', 's7btn'); submit.type = 'button'; submit.disabled = true;
       controls.append(parse, ordered, submit); ui.content.append(controls, tableWrap);
-      ui.cleanup(() => { csv.value = ''; file.value = ''; wallets.forEach(wallet => { wallet.wif = ''; }); wallets = []; rows = []; });
+      if (generated) { parse.hidden = true; ordered.hidden = true; }
+      function hasUnsavedKeys() {
+        return generated && wallets.some(wallet => wallet.wif);
+      }
+      function wipeWallets() {
+        wallets.forEach(wallet => { wallet.wif = ''; });
+      }
+      function cleanupBulk() {
+        disposed = true; csv.value = ''; file.value = ''; wipeWallets(); wallets = []; rows = []; snapshot = null;
+        table.replaceChildren();
+        root.removeEventListener('beforeunload', warnBeforeUnload);
+        root.removeEventListener('pagehide', leavePage);
+      }
+      function warnBeforeUnload(event) {
+        if (!hasUnsavedKeys()) return;
+        event.preventDefault(); event.returnValue = '';
+      }
+      function leavePage() {
+        cleanupBulk(); ui.node.remove();
+      }
+      ui.cleanup(cleanupBulk);
+      ui.beforeClose(() => !hasUnsavedKeys() || root.confirm('Some generated keys are not held by the server. Closing discards them. Any student with an address saved but no held key will need a new wallet. Close anyway?'));
+      if (generated) {
+        root.addEventListener('beforeunload', warnBeforeUnload);
+        root.addEventListener('pagehide', leavePage);
+      }
       file.addEventListener('change', async () => {
         const selected = file.files && file.files[0];
         if (!selected) return;
@@ -226,9 +277,47 @@
         if (!Array.isArray(roster) || !Array.isArray(active)) throw new Error('Roster response is incomplete.');
         // /roster/list contains password-recovery fields. Retain only names/status.
         const people = roster.map(student => ({ studentId: student.studentId, realName: student.realName,
-          username: student.username, section: student.section, status: student.status }));
+          username: student.username, section: student.section, status: student.status, role: student.role }));
         const activeIds = new Set(active.filter(student => student.role !== 'teacher').map(student => student.studentId));
-        return { people, accounts, students: people.filter(student => student.status !== 'archived' && activeIds.has(student.studentId)) };
+        return { people, accounts, students: people.filter(student => student.status !== 'archived' && activeIds.has(student.studentId)
+          && (!section || student.section === section)) };
+      }
+      async function generateBatch() {
+        const unavailable = generationUnavailableReason();
+        if (unavailable) { ui.status.textContent = unavailable; return; }
+        ui.busy(true); ui.status.textContent = 'Loading the roster and generating wallets…';
+        try {
+          const [nextSnapshot, metadataResult] = await Promise.all([snapshotRoster(), options.get('/class/wallet-custody')]);
+          if (disposed) return;
+          const metadata = requireOk(metadataResult, 'Could not load wallet labels.').wallets;
+          if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) throw new Error('Wallet labels are unavailable.');
+          snapshot = nextSnapshot;
+          rows = planAssignments(snapshot.students, [], snapshot.accounts);
+          let highest = 0;
+          Object.values(metadata).forEach(held => {
+            const match = held?.held && /^Wallet #(\d+)$/.exec(held.label || '');
+            if (match) highest = Math.max(highest, Number(match[1]));
+          });
+          if (!Number.isSafeInteger(highest + rows.length)) throw new Error('Wallet labels are out of range.');
+          const addresses = new Set(snapshot.accounts.map(account => account.dogeAddress).filter(Boolean));
+          for (const row of rows) {
+            const wallet = await root.DogeKeys.generateWallet();
+            if (disposed) { if (wallet) wallet.wif = ''; return; }
+            // Retain one key object only; the generator already wiped its byte buffers.
+            wallets.push(wallet);
+            if (!wallet || !ADDRESS.test(wallet.address) || typeof wallet.wif !== 'string' || !wallet.wif || addresses.has(wallet.address)) {
+              throw new Error('Generated wallet validation failed.');
+            }
+            addresses.add(wallet.address);
+            wallet.label = 'Wallet #' + (++highest); wallet.generated = true;
+            row.walletIndex = wallets.length - 1; row.selected = true;
+          }
+          parsed = true; paint();
+          if (rows.length) ui.status.textContent = wallets.length + ' wallets generated. Untick students to skip them; nothing is written until Submit.';
+        } catch (_) {
+          wallets.filter(Boolean).forEach(wallet => { wallet.wif = ''; }); wallets = []; rows = []; parsed = false;
+          if (!disposed) ui.status.textContent = 'Could not generate the complete batch. Check the roster and custody configuration, then reopen Generate wallets.';
+        } finally { if (!disposed) ui.busy(false); }
       }
       async function review() {
         parse.disabled = true; ui.busy(true); ui.status.textContent = 'Validating wallets and loading the active roster…';
@@ -250,6 +339,7 @@
         rows = planAssignments(snapshot.students, wallets, snapshot.accounts); paint();
       }
       function paint() {
+        if (disposed || !snapshot) return;
         table.replaceChildren();
         const header = element('tr');
         ['Student', 'Section', 'Paper wallet', 'Result'].forEach(title => header.appendChild(element('th', title)));
@@ -259,6 +349,16 @@
         rows.forEach(row => {
           const tr = element('tr');
           tr.append(element('td', row.student.realName || row.student.username), element('td', row.student.section));
+          if (generated) {
+            const wallet = wallets[row.walletIndex];
+            const choice = element('input'); choice.type = 'checkbox'; choice.checked = row.selected !== false;
+            choice.setAttribute('aria-label', 'Assign wallet to ' + (row.student.realName || row.student.username));
+            choice.disabled = saving || finished || row.addressSaved || row.done;
+            choice.addEventListener('change', () => { row.selected = choice.checked; row.message = ''; paint(); });
+            const label = element('label', wallet.label + ' · …' + wallet.address.slice(-4) + ' '); label.prepend(choice);
+            const cell = element('td'); cell.appendChild(label); tr.append(cell, element('td', row.message)); table.appendChild(tr);
+            return;
+          }
           const choice = element('select'); choice.setAttribute('aria-label', 'Wallet for ' + (row.student.realName || row.student.username));
           const blank = element('option', 'Skip this student'); blank.value = '-1'; choice.appendChild(blank);
           wallets.forEach((wallet, index) => {
@@ -272,23 +372,36 @@
           choice.addEventListener('change', () => { row.walletIndex = Number(choice.value); row.message = ''; paint(); });
           const cell = element('td'); cell.appendChild(choice); tr.append(cell, element('td', row.message)); table.appendChild(tr);
         });
-        submit.disabled = !rows.some(row => !row.done && row.walletIndex >= 0);
+        submit.disabled = saving || finished || !rows.some(row => !row.done && row.selected !== false && row.walletIndex >= 0);
         ordered.disabled = rows.some(row => row.addressSaved);
         if (!rows.length) ui.status.textContent = 'Every active student already has an address. Nothing to assign.';
       }
       submit.addEventListener('click', async function () {
-        if (!parsed) return;
+        if (!parsed || disposed || saving || finished || !rows.some(row => !row.done && row.selected !== false && row.walletIndex >= 0)) return;
+        saving = true;
         ui.busy(true); submit.disabled = true; ordered.disabled = true; keep.disabled = true;
-        table.querySelectorAll('select').forEach(select => { select.disabled = true; });
+        table.querySelectorAll('select, input').forEach(choice => { choice.disabled = true; });
         ui.status.textContent = 'Saving assignments…';
         try {
-          await submitAssignments({ rows, wallets, keepKeys: keep.checked, loadAccounts, saveAddress, saveCustody,
-            onProgress() { paint(); table.querySelectorAll('select').forEach(select => { select.disabled = true; }); submit.disabled = true; ordered.disabled = true; } });
+          await submitAssignments({ rows, wallets, keepKeys: generated || keep.checked, loadAccounts, saveAddress, saveCustody,
+            isActive: () => !disposed,
+            onProgress() { paint(); table.querySelectorAll('select, input').forEach(choice => { choice.disabled = true; }); submit.disabled = true; ordered.disabled = true; } });
+          if (disposed) return;
+          if (generated && rows.filter(row => row.selected !== false).every(row => row.done)) {
+            wipeWallets(); finished = true;
+          }
           changed();
-          ui.status.textContent = rows.filter(row => row.done).length + ' saved. Any failed rows remain available for retry.';
-        } catch (error) { ui.status.textContent = error.message; }
-        finally { ui.busy(false); keep.disabled = false; paint(); }
+          ui.status.textContent = rows.filter(row => row.done).length + (finished
+            ? ' saved with keys held. Generated keys have been cleared from this dialog.'
+            : ' saved. Any failed rows remain available for retry.');
+        } catch (error) {
+          if (!disposed) ui.status.textContent = generated ? 'Could not save this batch. Refresh addresses and retry.' : error.message;
+        } finally {
+          saving = false;
+          if (!disposed) { ui.busy(false); keep.disabled = generated; keep.checked = generated || keep.checked; paint(); }
+        }
       });
+      if (generated) await generateBatch();
     }
 
     function openReveal(student) {
@@ -397,7 +510,7 @@
       reveal.dataset.walletHeld = student.studentId; cell.appendChild(reveal);
       paintBadges(); refreshBadges(false).catch(() => {});
     }
-    return { openBulk, openScan, openReveal, decorateAddressCell, refreshBadges };
+    return { openBulk, openGenerate, generationUnavailableReason, openScan, openReveal, decorateAddressCell, refreshBadges };
   }
 
   root.TeacherWalletLoading = { parseCsv, planAssignments, submitAssignments, create };

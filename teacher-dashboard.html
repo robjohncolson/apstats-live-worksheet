@@ -576,9 +576,11 @@
       <div class="btn-row" style="justify-content:space-between;align-items:center">
         <h2 class="section-title" style="margin-bottom:0">🍬 Reward Disbursement <span class="dim" style="font-size:0.8rem">(effort → candy / Dogecoin)</span></h2>
         <button type="button" class="btn" id="wallet-load-btn">📥 Load wallets</button>
+        <button type="button" class="btn" id="wallet-generate-btn">✨ Generate wallets</button>
         <button type="button" class="btn" id="payout-plan-btn" disabled>⚡ Deposit all ready (Ɖ 0 to 0 students)</button>
       </div>
       <div class="payout-status-strip hint" id="payout-status" role="status" aria-live="polite"></div>
+      <div class="hint" id="wallet-generation-unavailable" role="status" hidden></div>
       <div class="payout-status-strip hint" id="wallet-proposals-strip" role="status" aria-live="polite" style="display:none"></div>
       <div class="hint" id="reward-rate" style="margin-bottom:6px"></div>
       <div class="table-wrap" id="reward-wrap" style="display:none">
@@ -1775,6 +1777,7 @@
     var _walletLoader = window.TeacherWalletLoading ? window.TeacherWalletLoading.create({
       get: function (path) { return fetchJson(path, teacherSecret()); },
       post: function (path, body) { return postJson(path, body, teacherSecret()); },
+      section: function () { return $('section-filter').value.trim(); },
       changed: function () {
         _fetchRewardWallets().then(function (wallets) {
           _rewardWallets = wallets;
@@ -1785,6 +1788,14 @@
     $('wallet-load-btn').addEventListener('click', function () {
       if (_walletLoader) _walletLoader.openBulk();
       else showError('Wallet import tools did not load. Reload this page.');
+    });
+    var walletGenerationUnavailable = _walletLoader ? _walletLoader.generationUnavailableReason() : 'Wallet generation did not load. Reload this page.';
+    $('wallet-generate-btn').disabled = !!walletGenerationUnavailable;
+    $('wallet-generate-btn').title = walletGenerationUnavailable;
+    $('wallet-generation-unavailable').textContent = walletGenerationUnavailable;
+    $('wallet-generation-unavailable').hidden = !walletGenerationUnavailable;
+    $('wallet-generate-btn').addEventListener('click', function () {
+      if (_walletLoader) _walletLoader.openGenerate();
     });
 
     function renderRewardDisbursement(payload) {

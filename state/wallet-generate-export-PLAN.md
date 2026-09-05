@@ -49,3 +49,7 @@ Review staged scope with GitNexus and git diff; commit only phase files. Record 
 ## Results
 
 Phase 1: browser/tool gate 78 passed; server gate 1,612 passed, 3 skipped (82 files). GitNexus staged scope: 7 intended files, low risk; new generation and vendor symbols are not yet in the index.
+
+Phase 1 commit: `f3829e2`.
+
+Phase 2: browser/tool gate 89 passed; server gate 1,612 passed, 3 skipped (82 files). Upstream impacts were low; staged change detection reports medium aggregate risk confined to two existing bulk-dialog flows. Generated mode forces custody, honors section selection, retains failed keys for retry, and wipes successful/unused keys. Secure generation checks both randomness and digest availability.

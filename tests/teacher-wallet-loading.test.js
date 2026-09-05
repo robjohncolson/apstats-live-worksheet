@@ -2,6 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
+import { webcrypto } from 'node:crypto';
 import { deriveWIF, addressFromWIF, NETWORKS } from '../tools/lib/doge-keys.mjs';
 
 const SOURCE = readFileSync(new URL('../js/teacher-wallet-loading.js', import.meta.url), 'utf8');
@@ -86,6 +87,188 @@ describe('wallet CSV and assignment plan', () => {
     expect(api.planAssignments(students, wallets, [
       { studentId: 'a', dogeAddress: address }, { studentId: 'b', dogeAddress: secondAddress },
     ])).toEqual([]);
+  });
+});
+
+function generatedHarness({ section = '', failCustody = false, failGeneration = false } = {}) {
+  const h = boot();
+  Object.defineProperty(h.dom.window, 'crypto', { value: webcrypto, configurable: true });
+  h.dom.window.confirm = vi.fn(() => false);
+  const generated = [], accounts = [];
+  const generateWallet = vi.fn(async () => {
+    if (failGeneration && generated.length === 1) throw new Error('generation failed');
+    const value = { ...wallets[generated.length] };
+    generated.push(value);
+    return value;
+  });
+  h.dom.window.DogeKeys.generateWallet = generateWallet;
+  const get = vi.fn(async path => {
+    if (path === '/roster/list') return ok({ students: [...students,
+      { studentId: 'old', realName: 'Archived', section: 'B', status: 'archived' },
+      { studentId: 'teacher', realName: 'Teacher', section: 'B', role: 'teacher' },
+      { studentId: 'assigned', realName: 'Assigned', section: 'B' },
+    ] });
+    if (path === '/class/grades') return ok({ students: [...students, { studentId: 'teacher', role: 'teacher' }, { studentId: 'assigned' }] });
+    if (path === '/class/wallet-custody') return ok({ wallets: {
+      outside: { held: true, label: 'Wallet #40' }, old: { held: false, label: 'Wallet #99' },
+    } });
+    return ok({ accounts: [{ studentId: 'assigned', dogeAddress: 'D' + '9'.repeat(33) }, ...accounts] });
+  });
+  let failed = false;
+  const post = vi.fn(async (path, body) => {
+    if (path === '/wallet/address') accounts.push({ studentId: body.studentId, dogeAddress: body.address });
+    if (path === '/wallet/custody' && failCustody && !failed) {
+      failed = true;
+      return { status: 503, data: { error: 'untrusted detail ' + wif } };
+    }
+    return ok({});
+  });
+  const storage = vi.spyOn(h.dom.window.Storage.prototype, 'setItem');
+  const loader = h.api.create({ get, post, changed() {}, section: () => section });
+  return { ...h, generated, generateWallet, get, post, loader, storage };
+}
+
+describe('generated wallet assignments', () => {
+  it('warns before navigation only while generated keys remain unsaved', async () => {
+    const h = generatedHarness({ section: 'B' });
+    await h.loader.openGenerate();
+    const before = new h.dom.window.Event('beforeunload', { cancelable: true });
+    h.dom.window.dispatchEvent(before);
+    expect(before.defaultPrevented).toBe(true);
+    findButton(h.doc, 'Submit assignments').click();
+    await vi.waitFor(() => expect(h.generated[0].wif).toBe(''));
+    const after = new h.dom.window.Event('beforeunload', { cancelable: true });
+    h.dom.window.dispatchEvent(after);
+    expect(after.defaultPrevented).toBe(false);
+  });
+
+  it('does not generate if held labels cannot be loaded', async () => {
+    const h = generatedHarness();
+    const normal = h.get.getMockImplementation();
+    h.get.mockImplementation(path => path === '/class/wallet-custody'
+      ? Promise.resolve({ status: 503, data: { error: 'missing schema' } }) : normal(path));
+    await h.loader.openGenerate();
+    expect(h.generateWallet).not.toHaveBeenCalled();
+    expect(findButton(h.doc, 'Submit assignments').disabled).toBe(true);
+    expect(h.post).not.toHaveBeenCalled();
+  });
+
+  it.each([{ subtle: webcrypto.subtle }, { getRandomValues() {} }])('disables generation when a required Web Crypto API is absent', async crypto => {
+    const h = generatedHarness();
+    Object.defineProperty(h.dom.window, 'crypto', { value: crypto, configurable: true });
+    expect(h.loader.generationUnavailableReason()).not.toBe('');
+    await h.loader.openGenerate();
+    expect(h.generateWallet).not.toHaveBeenCalled();
+  });
+
+  it('prefills active unassigned students in section and continues class-wide held labels', async () => {
+    const h = generatedHarness({ section: 'B' });
+    await h.loader.openGenerate();
+    expect(h.generateWallet).toHaveBeenCalledOnce();
+    expect(h.doc.querySelector('table').textContent).toContain('Ana');
+    expect(h.doc.querySelector('table').textContent).not.toContain('Beth');
+    expect(h.generated[0].label).toBe('Wallet #41');
+    expect(h.post).not.toHaveBeenCalled();
+    const keep = Array.from(h.doc.querySelectorAll('input[type=checkbox]')).find(input => input.parentNode.textContent.includes('private keys'));
+    expect(keep.checked).toBe(true); expect(keep.disabled).toBe(true);
+    keep.checked = false; keep.dispatchEvent(new h.dom.window.Event('change'));
+    findButton(h.doc, 'Submit assignments').click();
+    await vi.waitFor(() => expect(h.post).toHaveBeenCalledTimes(2));
+    expect(h.post.mock.calls.map(call => call[0])).toEqual(['/wallet/address', '/wallet/custody']);
+    expect(h.post.mock.calls[0][1]).toEqual({ studentId: 'a', address });
+    expect(h.post.mock.calls[1][1]).toEqual({ studentId: 'a', wif, label: 'Wallet #41' });
+    await vi.waitFor(() => expect(h.generated[0].wif).toBe(''));
+    expect(h.storage).not.toHaveBeenCalled();
+    expect(h.doc.body.innerHTML).not.toContain(wif);
+  });
+
+  it('forces custody in the submission helper even when keepKeys is false', async () => {
+    const { api } = boot();
+    const generated = [{ ...wallets[0], generated: true }];
+    const rows = api.planAssignments([students[0]], generated, []);
+    const saveAddress = vi.fn(), saveCustody = vi.fn();
+    await api.submitAssignments({ rows, wallets: generated, keepKeys: false, loadAccounts: async () => [], saveAddress, saveCustody });
+    expect(saveCustody).toHaveBeenCalledWith('b', wif, 'Wallet #1');
+    expect(generated[0].wif).toBe('');
+    expect(rows[0].custodySaved).toBe(true);
+  });
+
+  it('preserves failed keys for custody-only retry, hides arbitrary errors, and warns on discard', async () => {
+    const h = generatedHarness({ section: 'B', failCustody: true });
+    await h.loader.openGenerate();
+    findButton(h.doc, 'Submit assignments').click();
+    await vi.waitFor(() => expect(findButton(h.doc, 'Submit assignments').disabled).toBe(false));
+    expect(h.generated[0].wif).toBe(wif);
+    expect(h.doc.querySelector('table').textContent.toLowerCase()).toContain('key not held');
+    expect(h.doc.body.textContent).not.toContain(wif);
+    findButton(h.doc, 'Close').click();
+    expect(h.dom.window.confirm).toHaveBeenCalledOnce();
+    expect(h.doc.querySelector('dialog')).not.toBeNull();
+    findButton(h.doc, 'Submit assignments').click();
+    await vi.waitFor(() => expect(h.generated[0].wif).toBe(''));
+    expect(h.post.mock.calls.filter(call => call[0] === '/wallet/address')).toHaveLength(1);
+    expect(h.post.mock.calls.filter(call => call[0] === '/wallet/custody')).toHaveLength(2);
+    findButton(h.doc, 'Close').click();
+    expect(h.doc.querySelector('dialog')).toBeNull();
+    expect(h.dom.window.confirm).toHaveBeenCalledOnce();
+  });
+
+  it('allows deselection and discards unused keys once the selected batch succeeds', async () => {
+    const h = generatedHarness();
+    await h.loader.openGenerate();
+    const selected = h.doc.querySelectorAll('table input[type=checkbox]');
+    expect(selected).toHaveLength(2);
+    selected[1].checked = false; selected[1].dispatchEvent(new h.dom.window.Event('change'));
+    findButton(h.doc, 'Submit assignments').click();
+    await vi.waitFor(() => expect(h.generated.every(wallet => wallet.wif === '')).toBe(true));
+    expect(h.post).toHaveBeenCalledTimes(2);
+    expect(findButton(h.doc, 'Submit assignments').disabled).toBe(true);
+    expect(h.storage).not.toHaveBeenCalled();
+    expect(h.doc.body.innerHTML).not.toContain(wif);
+    expect(h.doc.body.innerHTML).not.toContain(secondWif);
+  });
+
+  it('aborts and clears the whole batch if any generation fails', async () => {
+    const h = generatedHarness({ failGeneration: true });
+    await h.loader.openGenerate();
+    expect(h.generateWallet).toHaveBeenCalledTimes(2);
+    expect(h.generated[0].wif).toBe('');
+    expect(findButton(h.doc, 'Submit assignments').disabled).toBe(true);
+    expect(h.post).not.toHaveBeenCalled();
+    expect(h.doc.body.innerHTML).not.toContain(wif);
+  });
+
+  it('clears unsaved keys on confirmed close and prevents late pagehide generation from retaining keys', async () => {
+    const h = generatedHarness({ section: 'B' });
+    await h.loader.openGenerate();
+    h.dom.window.confirm.mockReturnValue(true);
+    findButton(h.doc, 'Close').click();
+    expect(h.generated[0].wif).toBe('');
+    expect(h.doc.querySelector('dialog')).toBeNull();
+
+    const late = generatedHarness({ section: 'B' });
+    let finish;
+    late.generateWallet.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const opened = late.loader.openGenerate();
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'));
+    late.dom.window.dispatchEvent(new late.dom.window.Event('pagehide'));
+    const wallet = { ...wallets[0] }; finish(wallet);
+    await opened;
+    expect(wallet.wif).toBe('');
+    expect(late.post).not.toHaveBeenCalled();
+  });
+
+  it('refuses unavailable secure randomness and wires the disabled-button explanation only into the teacher dashboard', async () => {
+    const h = generatedHarness();
+    Object.defineProperty(h.dom.window, 'isSecureContext', { value: false, configurable: true });
+    expect(h.loader.generationUnavailableReason()).toMatch(/HTTPS|secure/i);
+    await h.loader.openGenerate();
+    expect(h.generateWallet).not.toHaveBeenCalled();
+    expect(h.post).not.toHaveBeenCalled();
+    expect(DASH).toContain('id="wallet-generate-btn"');
+    expect(DASH).toContain('generationUnavailableReason');
+    expect(DASH).toContain('_walletLoader.openGenerate()');
+    expect(readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8')).not.toContain('wallet-generate-btn');
   });
 });
 
