@@ -97,6 +97,15 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   first attempt was too short; the server silently reports 'not configured' below 32 bytes) SET 2026-09-05; live-verified:
   `/class/wallet-custody` 200 (13 B students, 0 held), no-key 401, junk WIF → 400 'invalid Dogecoin mainnet WIF'.
   **Wallet loading is LIVE** — next: the teacher pastes the KEYS CSV in the dashboard's 📥 Load wallets.
+- ⏭ SPEC + PROMPT (teacher asked 2026-09-05 evening): `WALLET_GENERATE_EXPORT_SPEC.md` + `state/wallet-generate-export-codex-prompt.md`
+  — generate wallets in the dashboard (browser-side via the vendored `doge-keys.js`, keep-keys forced on, saved through the
+  shipped custody path) + "🖨 Print wallet sheets" (audited bulk reveal `GET /class/wallet-custody/export?confirm=1`, one
+  page per student with address/WIF text + QR, browser Save-as-PDF; vendored `qrcode-generator`). No migration. Codex builds.
+- ⚠ SCHOOLOGY 2026-09-05 evening: the SY26-27 marking periods EXIST on the new sections (MP1 9/02–11/06 … MP4 4/15–6/30 read
+  off Section 1's grade setup). **Period B's categories are STILL NOT SAVED** (`list_categories` → `{}` for 8537033028 twice;
+  Period E reads all five with the same code; last year's old Section 1 course 7945275782 has a full set — easy to confuse).
+  Teacher: open THIS YEAR's AP Statistics · Section 1 (13 students) → Grade Setup → Categories → add the five → **Save**.
+  Then the orchestrator re-verifies and the sync can go `-Live` + daily task.
 - ⏭ STILL OPEN from that thread: (1) **calendar relabel to NEW CED codes/colours** (the teacher's original complaint) — a
   standalone Desk task now (pacing `n`/`u` + `rProg`), no schedule change; (2) **wallet loading** — Codex's `330efe6` on
   the parked branch implements `WALLET_LOADING_SPEC.md` (custody endpoints, migration 0035, dashboard loader, QR scanner,
