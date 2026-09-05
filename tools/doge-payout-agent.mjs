@@ -19,6 +19,7 @@ import {
   createFileJournal,
   executeSendPlan,
   round8,
+  validateSourceAccount,
 } from './lib/doge-send-core.mjs';
 
 const JOURNAL_KIND = 'apstats-doge-payout';
@@ -195,7 +196,7 @@ export function insufficientFloatMessage(have, need) {
   const format = (value) => (
     round8(value).toFixed(8).replace(/\.?0+$/, '') || '0'
   );
-  return `insufficient float: have Ɖ${format(have)} need Ɖ${format(need)}`;
+  return `insufficient float: have Ɖ${format(Math.max(0, have))} need Ɖ${format(need)}`;
 }
 
 function parseArgs(argv) {
@@ -272,6 +273,7 @@ export function loadAgentConfig({
     teacherKey,
     dogeCli: firstText(env.DOGE_CLI, env.DOGECOIN_CLI, file.dogeCli, 'dogecoin-cli'),
     walletName: firstText(env.DOGE_WALLET, file.walletName),
+    sourceAccount: validateSourceAccount(env.DOGE_SOURCE_ACCOUNT ?? file.sourceAccount),
     feeHeadroom: configNumber(
       env.PAYOUT_FEE_HEADROOM ?? file.feeHeadroom,
       DEFAULT_FEE_BUFFER,
@@ -600,6 +602,7 @@ function createCoreJournalView(journal, { batchId, ownerNonce }) {
       if (current.batch_id !== batchId
         || coreEntry.batch_id !== batchId
         || coreEntry.comment !== current.comment
+        || coreEntry.source_account !== current.source_account
         || Number(coreEntry.total) !== Number(current.total)
         || !sameRecipientSet(coreEntry.recipients, current.complete_outputs)
         || !outputMapsEqual(coreEntry.outputs, current.send_outputs)) {
@@ -692,6 +695,7 @@ async function armBroadcast(entry, {
   const before = assertPayoutJournal(journal.read());
   if (before.batch_id !== entry.batch_id
     || before.claim_token !== entry.claim_token
+    || before.source_account !== entry.source_account
     || before.phase !== 'intent'
     || !before.owner
     || before.owner.nonce !== ownerNonce) {
@@ -711,6 +715,7 @@ async function armBroadcast(entry, {
   const current = assertPayoutJournal(journal.read());
   if (current.batch_id !== entry.batch_id
     || current.claim_token !== entry.claim_token
+    || current.source_account !== entry.source_account
     || current.phase !== 'intent'
     || !current.owner
     || current.owner.nonce !== ownerNonce) {
@@ -764,6 +769,8 @@ async function prepareObservedEntry(entry, { runCli, journal, config }) {
     wallet_fingerprint: typeof walletInfo.hdmasterkeyid === 'string'
       ? walletInfo.hdmasterkeyid
       : null,
+    // Journals from before account selection always used Core's empty account.
+    source_account: validateSourceAccount(entry.source_account),
   };
   journal.write(prepared, { exclusive: false });
   return { entry: prepared, normalized };
@@ -809,6 +816,7 @@ async function resumeObservedEntry(entry, deps) {
       runCli,
       dryRun: false,
       feeBuffer: config.feeHeadroom,
+      sourceAccount: prepared.entry.source_account,
       journal: coreJournal,
       batchId: entry.batch_id,
       comment: prepared.entry.comment,
@@ -928,6 +936,7 @@ export async function processPayoutBatch(rawBatch, {
     phase: 'observed',
     plan_hash: batch.planHash,
     plan: batch.plan,
+    source_account: validateSourceAccount(config.sourceAccount),
     observed_at: isoNow(now),
     owner: { pid, nonce: ownerNonce, started_at: isoNow(now) },
   };

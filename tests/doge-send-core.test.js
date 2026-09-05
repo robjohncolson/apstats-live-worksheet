@@ -77,6 +77,7 @@ describe('doge-send core planning', () => {
 
     expect(intent).toEqual({
       ts: '2026-09-01T00:00:00.000Z',
+      source_account: '',
       recipients: [
         { studentId: 's1', amount: 6 },
         { studentId: 's2', amount: 5 },
@@ -145,6 +146,7 @@ describe('doge-send core execution', () => {
       'getblockchaininfo',
       'validateaddress',
       'validateaddress',
+      'getbalance',
       'getbalance',
     ]);
     expect(write).not.toHaveBeenCalled();
@@ -399,6 +401,77 @@ describe('doge-send core execution', () => {
     expect(writes).toHaveLength(1);
     expect(writes[0]).not.toHaveProperty('txid');
     expect(writes[0].outputs).toEqual({ Dabc: 6, Ddef: 5 });
+  });
+});
+
+describe('doge-send source account preflight', () => {
+  it.each([
+    { sourceAccount: '', accountBalance: -250.5, walletBalance: 1000 },
+    { sourceAccount: 'class allowance', accountBalance: 15, walletBalance: 100 },
+    { sourceAccount: 'class allowance', accountBalance: 1000, walletBalance: 5 },
+  ])('blocks an underfunded account or wallet before intent and arm: $sourceAccount / $accountBalance / $walletBalance', async ({
+    sourceAccount, accountBalance, walletBalance,
+  }) => {
+    const fallback = makeRunCli();
+    const runCli = vi.fn(async (command, ...args) => {
+      if (command === 'getbalance') return String(args.length ? accountBalance : walletBalance);
+      return fallback(command, ...args);
+    });
+    const write = vi.fn();
+    const onBeforeBroadcast = vi.fn();
+
+    await expect(executeSendPlan(makePlan(), {
+      runCli,
+      sourceAccount,
+      dryRun: false,
+      journal: { exists: () => false, write },
+      onBeforeBroadcast,
+    })).rejects.toMatchObject({
+      code: DOGE_SEND_ERROR.INSUFFICIENT_FLOAT,
+      balance: Math.min(accountBalance, walletBalance),
+      accountBalance,
+      walletBalance,
+      sourceAccount,
+      needed: 16,
+    });
+
+    expect(runCli.mock.calls.filter(([command]) => command === 'getbalance')).toEqual([
+      ['getbalance', sourceAccount, '1'],
+      ['getbalance'],
+    ]);
+    expect(write).not.toHaveBeenCalled();
+    expect(onBeforeBroadcast).not.toHaveBeenCalled();
+    expect(runCli.mock.calls.some(([command]) => command === 'sendmany')).toBe(false);
+  });
+
+  it('freezes the exact account through validation, hooks, journaling, and sendmany', async () => {
+    const runCli = makeRunCli();
+    const entries = [];
+    const options = {
+      runCli,
+      sourceAccount: ' class allowance ',
+      dryRun: false,
+      journal: { exists: () => false, write: (entry) => entries.push(entry) },
+      onValidated: (validation) => {
+        options.sourceAccount = 'different account';
+        validation.sourceAccount = 'another account';
+      },
+      onBeforeBroadcast: () => { options.sourceAccount = 'third account'; },
+    };
+
+    await executeSendPlan(makePlan(), options);
+
+    expect(runCli).toHaveBeenCalledWith('getbalance', ' class allowance ', '1');
+    expect(runCli).toHaveBeenCalledWith('sendmany', ' class allowance ', JSON.stringify({ Dabc: 6, Ddef: 5 }));
+    expect(entries).toHaveLength(2);
+    expect(entries.every((entry) => entry.source_account === ' class allowance ')).toBe(true);
+    expect(Object.isFrozen(entries[0])).toBe(true);
+  });
+
+  it.each(['*', null, 1, {}])('rejects a non-spendable account setting before Core calls: %s', async (sourceAccount) => {
+    const runCli = makeRunCli();
+    await expect(executeSendPlan(makePlan(), { runCli, sourceAccount })).rejects.toThrow(/sourceAccount/);
+    expect(runCli).not.toHaveBeenCalled();
   });
 });
 

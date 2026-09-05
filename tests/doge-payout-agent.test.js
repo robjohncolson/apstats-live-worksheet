@@ -541,6 +541,110 @@ describe('DOGE payout agent happy path and pre-broadcast failures', () => {
   });
 });
 
+describe('DOGE payout source accounts', () => {
+  it.each([
+    { env: {}, file: {}, expected: '' },
+    { env: {}, file: { sourceAccount: 'class allowance' }, expected: 'class allowance' },
+    { env: { DOGE_SOURCE_ACCOUNT: ' other ' }, file: { sourceAccount: 'class allowance' }, expected: ' other ' },
+    { env: { DOGE_SOURCE_ACCOUNT: '' }, file: { sourceAccount: 'class allowance' }, expected: '' },
+  ])('loads exact source account selection with environment precedence: $expected', ({ env, file, expected }) => {
+    const config = loadAgentConfig({
+      argv: [],
+      env: { ROSTER_URL: 'https://roster.test', PAYOUT_AGENT_KEY: 'test-key', ...env },
+      readFile: () => JSON.stringify(file),
+    });
+    expect(config.sourceAccount).toBe(expected);
+    expect(Object.isFrozen(config)).toBe(true);
+  });
+
+  it.each(['*', null, 1])('rejects an invalid configured source account: %s', (sourceAccount) => {
+    expect(() => loadAgentConfig({
+      argv: [],
+      env: { ROSTER_URL: 'https://roster.test', PAYOUT_AGENT_KEY: 'test-key' },
+      readFile: () => JSON.stringify({ sourceAccount }),
+    })).toThrow(/sourceAccount/);
+  });
+
+  it('fails a negative default account before arm even when the wallet has plenty of DOGE', async () => {
+    const journal = memoryJournal();
+    const server = fakePayoutServer(batch());
+    const cli = fakeRunCli({ balance: 1000 });
+    const runCli = vi.fn(async (...args) => {
+      if (args[0] === 'getbalance' && args.length > 1) return '-250.5';
+      return cli.runCli(...args);
+    });
+
+    const result = await pollOnce(deps({ server, journal, runCli }));
+
+    expect(result).toMatchObject({ status: 'failed', error: 'insufficient float: have Ɖ0 need Ɖ17.5' });
+    expect(server.state()).toMatchObject({ status: 'failed', broadcastAt: null });
+    expect(server.callsTo('/arm')).toHaveLength(0);
+    expect(server.callsTo('/complete')).toHaveLength(0);
+    expect(journal.writes.some(({ value }) => value.phase === 'intent')).toBe(false);
+    expect(journal.exists()).toBe(false);
+    expect(runCli).toHaveBeenCalledWith('getbalance', '', '1');
+    expect(runCli.mock.calls.some(([command]) => command === 'sendmany')).toBe(false);
+  });
+
+  it('persists the configured account before claim and keeps it when config changes during claim and arm', async () => {
+    const journal = memoryJournal();
+    const config = { ...CONFIG, sourceAccount: 'class allowance' };
+    const server = fakePayoutServer(batch(), {
+      onClaim: () => {
+        expect(journal.snapshot().source_account).toBe('class allowance');
+        config.sourceAccount = 'changed at claim';
+      },
+      onArm: () => { config.sourceAccount = 'changed at arm'; },
+    });
+    const cli = fakeRunCli();
+
+    const result = await pollOnce(deps({ server, journal, runCli: cli.runCli, config }));
+
+    expect(result.status).toBe('completed');
+    expect(cli.runCli).toHaveBeenCalledWith('getbalance', 'class allowance', '1');
+    const sends = cli.calls.filter(([command]) => command === 'sendmany');
+    expect(sends).toHaveLength(1);
+    expect(sends[0][1]).toBe('class allowance');
+    expect(journal.writes.every(({ value }) => value.source_account === 'class allowance')).toBe(true);
+  });
+
+  it.each([
+    { saved: { source_account: 'original account' }, expected: 'original account' },
+    { saved: {}, expected: '' },
+  ])('resumes observed journals with their recorded account, including legacy empty account: $expected', async ({ saved, expected }) => {
+    const journal = memoryJournal(payoutJournalEntry('observed', saved));
+    const server = fakePayoutServer(batch(GOLDEN_PLAN, { status: 'claimed' }));
+    const cli = fakeRunCli();
+
+    const result = await recoverPayoutJournal(deps({
+      server,
+      journal,
+      runCli: cli.runCli,
+      config: { ...CONFIG, sourceAccount: 'new configuration' },
+    }));
+
+    expect(result.status).toBe('completed');
+    expect(cli.runCli).toHaveBeenCalledWith('getbalance', expected, '1');
+    expect(cli.calls.find(([command]) => command === 'sendmany')[1]).toBe(expected);
+  });
+
+  it('blocks broadcast if the persisted account changes during the server arm request', async () => {
+    const journal = memoryJournal();
+    const server = fakePayoutServer(batch(), {
+      onArm: () => journal.write({ ...journal.snapshot(), source_account: 'changed account' }),
+    });
+    const cli = fakeRunCli();
+
+    const result = await pollOnce(deps({ server, journal, runCli: cli.runCli }));
+
+    expect(result.status).toBe('blocked');
+    expect(server.state()).toMatchObject({ status: 'claimed', broadcastAt: NOW.toISOString() });
+    expect(journal.exists()).toBe(true);
+    expect(cli.calls.some(([command]) => command === 'sendmany')).toBe(false);
+    expect(server.callsTo('/complete')).toHaveLength(0);
+  });
+});
+
 describe('DOGE payout crash recovery — never rebroadcast', () => {
   it('re-posts complete for txid-without-complete and makes no Core call', async () => {
     const journal = memoryJournal(payoutJournalEntry('broadcast'));

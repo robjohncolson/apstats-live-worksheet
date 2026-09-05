@@ -1518,7 +1518,22 @@
         return;
       }
       if (batch.status === 'claimed') {
-        statusEl.textContent = '🔏 agent is broadcasting…';
+        if (typeof batch.txid === 'string' && /^[0-9a-f]{64}$/i.test(batch.txid)) {
+          statusEl.textContent = 'Transaction recorded — updating student balances…';
+          return;
+        }
+        if (!batch.broadcastAt) {
+          statusEl.textContent = 'Payout agent is preparing the deposit…';
+          return;
+        }
+
+        // broadcastAt records permission to send, not a confirmed transaction.
+        // An old arm may mean a rejected send or an interrupted response.
+        var armedAt = Date.parse(batch.broadcastAt);
+        var delayed = Number.isFinite(armedAt) && Date.now() - armedAt >= 120000;
+        statusEl.textContent = delayed
+          ? 'Payout delayed — send outcome is unknown. Check the payout agent logs.'
+          : 'Awaiting the node’s send result…';
         return;
       }
       if (batch.status === 'sent') {

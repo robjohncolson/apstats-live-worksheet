@@ -1,5 +1,5 @@
 {
-  "_comment": "Template for ~/.config/apstats/.payout-agent.json (the DOGE payout agent's config). Copy it there, fill in payoutAgentKey, keep the file private. Every key below is read by loadAgentConfig() in tools/doge-payout-agent.mjs; env vars ROSTER_URL / PAYOUT_AGENT_KEY / TEACHER_KEY / DOGE_CLI / DOGE_WALLET / PAYOUT_FEE_HEADROOM / POLL_SECONDS / PAYOUT_BATCH_CAP / PAYOUT_JOURNAL override the same fields. NEVER commit a filled-in copy.",
+  "_comment": "Template for ~/.config/apstats/.payout-agent.json (the DOGE payout agent's config). Copy it there, fill in payoutAgentKey, keep the file private. Every key below is read by loadAgentConfig() in tools/doge-payout-agent.mjs; env vars ROSTER_URL / PAYOUT_AGENT_KEY / TEACHER_KEY / DOGE_CLI / DOGE_WALLET / DOGE_SOURCE_ACCOUNT / PAYOUT_FEE_HEADROOM / POLL_SECONDS / PAYOUT_BATCH_CAP / PAYOUT_JOURNAL override the same fields. NEVER commit a filled-in copy.",
 
   "rosterUrl": "https://roster-production-12c1.up.railway.app",
   "payoutAgentKey": "REPLACE_WITH_THE_RAILWAY_PAYOUT_AGENT_KEY",
@@ -8,6 +8,8 @@
 
   "dogeCli": "C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe",
   "walletName": "",
+  "_sourceAccount": "Legacy Dogecoin Core account charged by sendmany, separate from walletName. Empty means the default account. Choose an account with enough bookkeeping balance; '*' is a read-only aggregate and cannot send. The agent checks both this account (1 confirmation) and the wallet's spendable balance before arming a payout.",
+  "sourceAccount": "",
 
   "feeHeadroom": 5,
   "pollSeconds": 60,

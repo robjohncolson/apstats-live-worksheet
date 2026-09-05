@@ -24,7 +24,7 @@ const KOINU_PER_DOGE = 100_000_000;
 const DECIMAL_RE = /^([+-]?)(?:(\d+)(?:\.(\d*))?|\.(\d+))(?:[eE]([+-]?\d+))?$/;
 const MAX_DECIMAL_POWER = 1_000;
 const MAX_SAFE_KOINU = BigInt(Number.MAX_SAFE_INTEGER);
-const RPC_BALANCE_RE = /^(?:0|[1-9]\d*)(?:\.\d+)?$/;
+const RPC_BALANCE_RE = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/;
 const TXID_RE = /^[0-9a-f]{64}$/i;
 
 export const DOGE_SEND_ERROR = Object.freeze({
@@ -142,6 +142,13 @@ function invalidPlan(message, details = {}) {
   throw new DogeSendError(DOGE_SEND_ERROR.INVALID_PLAN, message, details);
 }
 
+export function validateSourceAccount(sourceAccount = '') {
+  if (typeof sourceAccount !== 'string' || sourceAccount === '*') {
+    throw new TypeError('sourceAccount must be a legacy account name; "*" cannot send');
+  }
+  return sourceAccount;
+}
+
 function assertExecutablePlan(plan) {
   if (!plan || typeof plan !== 'object') {
     invalidPlan('send plan must be an object');
@@ -254,12 +261,13 @@ function isoTimestamp(now) {
 // mutate a journal object in place.
 export function createJournalIntent(
   plan,
-  { batchId, comment, now = () => new Date() } = {},
+  { batchId, comment, sourceAccount = '', now = () => new Date() } = {},
 ) {
   assertExecutablePlan(plan);
 
   const intent = {
     ts: isoTimestamp(now),
+    source_account: validateSourceAccount(sourceAccount),
     recipients: plan.sendable.map(({ studentId, amount }) => ({
       studentId,
       amount,
@@ -405,16 +413,32 @@ function parseCliJson(value, command) {
   }
 }
 
+async function readBalance(runCli, ...args) {
+  const rawBalance = await callCli(runCli, 'getbalance', ...args);
+  const balanceText = String(rawBalance).trim();
+  const balance = RPC_BALANCE_RE.test(balanceText) ? Number(balanceText) : NaN;
+  if (!Number.isFinite(balance)) {
+    throw new DogeSendError(
+      DOGE_SEND_ERROR.CLI_RESPONSE,
+      'dogecoin-cli getbalance returned a non-numeric balance',
+      { command: 'getbalance' },
+    );
+  }
+  return balance;
+}
+
 export async function validateSendPlan(
   plan,
   {
     runCli,
     feeBuffer = DEFAULT_FEE_BUFFER,
     expectedChain = 'main',
+    sourceAccount = '',
   } = {},
 ) {
   requireRunCli(runCli);
   assertExecutablePlan(plan);
+  const account = validateSourceAccount(sourceAccount);
 
   const blockchainInfo = parseCliJson(
     await callCli(runCli, 'getblockchaininfo'),
@@ -444,16 +468,11 @@ export async function validateSendPlan(
     }
   }
 
-  const rawBalance = await callCli(runCli, 'getbalance');
-  const balanceText = String(rawBalance).trim();
-  const balance = RPC_BALANCE_RE.test(balanceText) ? Number(balanceText) : NaN;
-  if (!Number.isFinite(balance)) {
-    throw new DogeSendError(
-      DOGE_SEND_ERROR.CLI_RESPONSE,
-      'dogecoin-cli getbalance returned a non-numeric balance',
-      { command: 'getbalance' },
-    );
-  }
+  // sendmany checks the legacy account with one confirmation. Its bookkeeping
+  // balance can be negative even when the wallet still owns spendable coins.
+  const accountBalance = await readBalance(runCli, account, '1');
+  const walletBalance = await readBalance(runCli);
+  const balance = Math.min(accountBalance, walletBalance);
 
   const numericFeeBuffer = Number(feeBuffer);
   if (!Number.isFinite(numericFeeBuffer) || numericFeeBuffer < 0) {
@@ -464,12 +483,27 @@ export async function validateSendPlan(
   if (balance < needed) {
     throw new DogeSendError(
       DOGE_SEND_ERROR.INSUFFICIENT_FLOAT,
-      `node balance below total + fee buffer: have ${balance}, need ${needed}`,
-      { balance, needed, feeBuffer: numericFeeBuffer },
+      `source account or wallet balance below total + fee buffer: have ${balance}, need ${needed}`,
+      {
+        balance,
+        accountBalance,
+        walletBalance,
+        sourceAccount: account,
+        needed,
+        feeBuffer: numericFeeBuffer,
+      },
     );
   }
 
-  return { chain, balance, needed, feeBuffer: numericFeeBuffer };
+  return {
+    chain,
+    balance,
+    accountBalance,
+    walletBalance,
+    sourceAccount: account,
+    needed,
+    feeBuffer: numericFeeBuffer,
+  };
 }
 
 async function hasJournal(journal) {
@@ -502,8 +536,8 @@ async function persistJournal(journal, entry, { exclusive, broadcastMayHaveRun }
   }
 }
 
-function sendmanyArgs(outputs, comment) {
-  const args = ['sendmany', '', JSON.stringify(outputs)];
+function sendmanyArgs(outputs, comment, sourceAccount) {
+  const args = ['sendmany', sourceAccount, JSON.stringify(outputs)];
   if (comment !== undefined && comment !== null && String(comment)) {
     args.push('1', String(comment));
   }
@@ -520,6 +554,7 @@ export async function executeSendPlan(
     dryRun = true,
     feeBuffer = DEFAULT_FEE_BUFFER,
     expectedChain = 'main',
+    sourceAccount = '',
     journal,
     batchId,
     comment,
@@ -534,6 +569,7 @@ export async function executeSendPlan(
   // may perform external coordination, so the caller-owned plan must never be
   // re-read after an await or diverge from the durable intent.
   const executablePlan = snapshotExecutablePlan(plan);
+  const account = validateSourceAccount(sourceAccount);
 
   if (executablePlan.sendable.length === 0) {
     return { status: 'empty', dryRun: true, txid: null, journal: null };
@@ -559,6 +595,7 @@ export async function executeSendPlan(
     runCli,
     feeBuffer,
     expectedChain,
+    sourceAccount: account,
   });
   await onValidated(validation);
 
@@ -575,6 +612,7 @@ export async function executeSendPlan(
   const journalIntent = freezeJournalIntent(createJournalIntent(executablePlan, {
     batchId,
     comment,
+    sourceAccount: account,
     now,
   }));
   await persistJournal(journal, journalIntent, {
@@ -585,7 +623,7 @@ export async function executeSendPlan(
   await onBeforeBroadcast();
   const rawTxid = await callCli(
     runCli,
-    ...sendmanyArgs(journalIntent.outputs, journalIntent.comment),
+    ...sendmanyArgs(journalIntent.outputs, journalIntent.comment, journalIntent.source_account),
   );
   const txid = String(rawTxid ?? '').trim().toLowerCase();
   const journalEntry = recordJournalTxid(journalIntent, txid);

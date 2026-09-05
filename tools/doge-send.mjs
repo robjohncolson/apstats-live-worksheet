@@ -12,7 +12,8 @@
 //
 // Needs: a running Dogecoin Core with RPC on (server=1 in dogecoin.conf, restart
 // it). Env: TEACHER_SECRET (required), ROSTER_URL (default = prod roster),
-// DOGE_CLI (optional path; defaults to dogecoin-cli on PATH).
+// DOGE_CLI (optional path; defaults to dogecoin-cli on PATH), DOGE_SOURCE_ACCOUNT
+// (optional legacy account name; defaults to Core's empty account).
 //
 // Usage:
 //   node tools/doge-send.mjs                 # DRY RUN — plan only
@@ -109,11 +110,12 @@ async function main() {
       runCli,
       dryRun: !doSend,
       feeBuffer: FEE_BUFFER,
+      sourceAccount: process.env.DOGE_SOURCE_ACCOUNT,
       journal,
-      onValidated: ({ balance }) => {
+      onValidated: ({ balance, sourceAccount }) => {
         // The core enforces chain !== 'main', runs validateaddress for every
         // recipient, and checks balance against plan.total + FEE_BUFFER.
-        console.log(`\nnode balance: Ɖ ${balance}  ·  needed: Ɖ ${plan.total} + ~fee (buffer Ɖ ${FEE_BUFFER})`);
+        console.log(`\nsource account: ${JSON.stringify(sourceAccount)} · available: Ɖ ${balance} · needed: Ɖ ${plan.total} + ~fee (buffer Ɖ ${FEE_BUFFER})`);
       },
       onBeforeBroadcast: () => console.log('\nBroadcasting sendmany …'),
     });
@@ -131,7 +133,7 @@ async function main() {
     }
 
     if (error && error.code === DOGE_SEND_ERROR.INSUFFICIENT_FLOAT) {
-      console.error('node balance below total + fee buffer — ABORTING.');
+      console.error('source account or wallet balance below total + fee buffer — ABORTING.');
       process.exitCode = 1;
       return;
     }
