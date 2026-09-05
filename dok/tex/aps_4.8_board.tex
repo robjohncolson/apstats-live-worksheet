@@ -12,7 +12,7 @@
 
 \noindent\begin{minipage}[t]{0.57\linewidth}
 \vspace{0pt}
-Suppose a dispatcher models delivery time using eight equally likely outcomes for each route, shown in the dotplots. An analyst reports that both routes have mean 30 minutes, with $\sigma_A=3$ minutes and $\sigma_B=12$ minutes.\par\smallskip The dispatcher says, \emph{The routes have the same mean, so it does not matter which one a customer gets.} A customer has 40 minutes before an appointment and places a high cost on being late.\par
+Suppose a dispatcher models delivery time using eight equally likely outcomes for each route, shown in the dotplots. An analyst reports that both routes have mean 30 minutes, with $\sigma_A=3$ minutes and $\sigma_B=12$ minutes.\par\smallskip The dispatcher says, \emph{The routes have the same mean, so it does not matter which one a customer gets.} A customer has 40 minutes before an appointment and places a high cost on being late.\par For the eight outcomes, the sums of squared distances from 30 are 72 for Route A and 1,152 for Route B.\par
 \end{minipage}\hfill
 \begin{minipage}[t]{0.40\linewidth}
 \vspace{0pt}
@@ -20,7 +20,7 @@ Suppose a dispatcher models delivery time using eight equally likely outcomes fo
 \begin{tikzpicture}
 \begin{axis}[
   width=0.90\linewidth,
-  height=0.68in,
+  height=1.0in,
   xmin=5,
   xmax=55,
   xtick={10,15,20,25,30,35,40,45,50},
@@ -31,18 +31,18 @@ Suppose a dispatcher models delivery time using eight equally likely outcomes fo
   axis x line=bottom,
   title={\textbf{Route A}},
   xlabel={Delivery time (minutes)},
-  tick label style={font=\scriptsize},
-  label style={font=\scriptsize},
+  tick label style={font=\small},
+  label style={font=\small},
   title style={font=\small}
 ]
 \addplot[only marks,mark=*,mark size=2.4pt,color=dayblue] coordinates
   {(25,1) (27,1) (29,1) (29,2) (31,1) (31,2) (33,1) (35,1)};
 \end{axis}
-\end{tikzpicture}\par\vspace{-0.08in}
+\end{tikzpicture}\par\smallskip
 \begin{tikzpicture}
 \begin{axis}[
   width=0.90\linewidth,
-  height=0.68in,
+  height=1.0in,
   xmin=5,
   xmax=55,
   xtick={10,15,20,25,30,35,40,45,50},
@@ -53,8 +53,8 @@ Suppose a dispatcher models delivery time using eight equally likely outcomes fo
   axis x line=bottom,
   title={\textbf{Route B}},
   xlabel={Delivery time (minutes)},
-  tick label style={font=\scriptsize},
-  label style={font=\scriptsize},
+  tick label style={font=\small},
+  label style={font=\small},
   title style={font=\small}
 ]
 \addplot[only marks,mark=*,mark size=2.4pt,color=dayblue] coordinates
@@ -69,9 +69,9 @@ Which route would you assign to this customer? Cite one number or dotplot featur
 \end{firsttakebox}
 
 \begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
-  \item[\dokbadge{1}~(a)] For each route, state its minimum and maximum modeled time and count the outcomes longer than 40 minutes.
-  \item[\dokbadge{2}~(b)] Verify the reported mean and population standard deviation for each route from the eight equally likely outcomes. Show the sums of squared deviations.
-  \item[\dokbadge{3}~(c)] Decide which route better matches this customer's priority. Cite the parameter and dotplot feature that settle your choice, and explain what the dispatcher's mean-only argument would mislead a reader into believing. Then suppose every delivery gets 5 minutes of loading time: state both transformed means and standard deviations and decide whether your route choice changes.
+  \item[\dokbadge{1}~(a)] Count the outcomes longer than 40 minutes for each route.
+  \item[\dokbadge{2}~(b)] Use the given sums of squared distances to verify both population standard deviations. Interpret what one of them means in minutes.
+  \item[\dokbadge{3}~(c)] Which route fits this customer's priority? Use both standard deviations and the chance of exceeding 40 minutes. Explain why the dispatcher's mean-only comparison can mislead this customer. Write 3--4 sentences.
 \end{description}
 
 \vfill

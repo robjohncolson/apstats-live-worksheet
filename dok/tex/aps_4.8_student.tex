@@ -8,12 +8,12 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose a dispatcher models delivery time using eight equally likely outcomes for each route, shown in the dotplots. An analyst reports that both routes have mean 30 minutes, with $\sigma_A=3$ minutes and $\sigma_B=12$ minutes.\par\smallskip The dispatcher says, \emph{The routes have the same mean, so it does not matter which one a customer gets.} A customer has 40 minutes before an appointment and places a high cost on being late.\par
+Suppose a dispatcher models delivery time using eight equally likely outcomes for each route, shown in the dotplots. An analyst reports that both routes have mean 30 minutes, with $\sigma_A=3$ minutes and $\sigma_B=12$ minutes.\par\smallskip The dispatcher says, \emph{The routes have the same mean, so it does not matter which one a customer gets.} A customer has 40 minutes before an appointment and places a high cost on being late.\par For the eight outcomes, the sums of squared distances from 30 are 72 for Route A and 1,152 for Route B.\par
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
   width=0.90\linewidth,
-  height=0.68in,
+  height=1.0in,
   xmin=5,
   xmax=55,
   xtick={10,15,20,25,30,35,40,45,50},
@@ -24,18 +24,18 @@ Suppose a dispatcher models delivery time using eight equally likely outcomes fo
   axis x line=bottom,
   title={\textbf{Route A}},
   xlabel={Delivery time (minutes)},
-  tick label style={font=\scriptsize},
-  label style={font=\scriptsize},
+  tick label style={font=\small},
+  label style={font=\small},
   title style={font=\small}
 ]
 \addplot[only marks,mark=*,mark size=2.4pt,color=dayblue] coordinates
   {(25,1) (27,1) (29,1) (29,2) (31,1) (31,2) (33,1) (35,1)};
 \end{axis}
-\end{tikzpicture}\par\vspace{-0.08in}
+\end{tikzpicture}\par\smallskip
 \begin{tikzpicture}
 \begin{axis}[
   width=0.90\linewidth,
-  height=0.68in,
+  height=1.0in,
   xmin=5,
   xmax=55,
   xtick={10,15,20,25,30,35,40,45,50},
@@ -46,8 +46,8 @@ Suppose a dispatcher models delivery time using eight equally likely outcomes fo
   axis x line=bottom,
   title={\textbf{Route B}},
   xlabel={Delivery time (minutes)},
-  tick label style={font=\scriptsize},
-  label style={font=\scriptsize},
+  tick label style={font=\small},
+  label style={font=\small},
   title style={font=\small}
 ]
 \addplot[only marks,mark=*,mark size=2.4pt,color=dayblue] coordinates
@@ -60,29 +60,25 @@ Which route would you assign to this customer? Cite one number or dotplot featur
 \workspace{0.9in}
 \end{firsttakebox}
 
-\begin{callout}{\IconBook\ MEAN, STANDARD DEVIATION, AND SHIFTS (keep on the page)}{calloutgreen}
-For a discrete random variable, $\mu_X=\sum xP(X=x)$ and
-$\sigma_X=\sqrt{\sum(x-\mu_X)^2P(X=x)}$. Interpret $\mu_X$ as the long-run average and
-$\sigma_X$ as a typical distance from that mean, in context and with units. If $Y=X+c$, then
-$\mu_Y=\mu_X+c$ while $\sigma_Y=\sigma_X$: adding the same constant shifts every outcome but does not change spread.
-Match the parameter to the decision; equal centers do not imply equal tail risk.
+\begin{callout}{\IconBook\ MEAN AND STANDARD DEVIATION (keep on the page)}{calloutgreen}
+For a discrete random variable, $\mu_X=\sum xP(X=x)$ and $\sigma_X=\sqrt{\sum(x-\mu_X)^2P(X=x)}$. For $n$ equally likely outcomes, divide the sum of squared distances from the mean by $n$, then take the square root. The mean is a long-run average; the standard deviation describes a typical distance from it, in the variable's units. Add probabilities of outcomes that miss a deadline.
 \end{callout}
 
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} For each route, state its minimum and maximum modeled time and count the outcomes longer than 40 minutes.\par
+\dokbadge{1}~\textbf{(a)} Count the outcomes longer than 40 minutes for each route.\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Verify the reported mean and population standard deviation for each route from the eight equally likely outcomes. Show the sums of squared deviations.\par
+\dokbadge{2}~\textbf{(b)} Use the given sums of squared distances to verify both population standard deviations. Interpret what one of them means in minutes.\par
 \workspace{1.4in}
 
-\dokbadge{3}~\textbf{(c)} Decide which route better matches this customer's priority. Cite the parameter and dotplot feature that settle your choice, and explain what the dispatcher's mean-only argument would mislead a reader into believing. Then suppose every delivery gets 5 minutes of loading time: state both transformed means and standard deviations and decide whether your route choice changes.\par
+\dokbadge{3}~\textbf{(c)} Which route fits this customer's priority? Use both standard deviations and the chance of exceeding 40 minutes. Explain why the dispatcher's mean-only comparison can mislead this customer. Write 3--4 sentences.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} Route \blank[0.4in] fits the customer because $\sigma=\blank[0.5in]$ and the dotplot shows \blank[2.2in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Route \blank[0.4in] fits because its SD is \blank[0.5in] minutes and its chance of exceeding 40 minutes is \blank[0.7in].\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} Adding 5 changes each mean to \blank[0.5in] but leaves the SDs at \blank[0.5in] and \blank[0.5in] because \blank[2.0in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} The equal means describe \blank[1.3in], but they do not show \blank[2.1in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

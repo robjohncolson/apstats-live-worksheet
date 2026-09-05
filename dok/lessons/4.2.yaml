@@ -1,55 +1,68 @@
-# Topic 4.2 — Estimating Probabilities Using Simulation
 topic: "4.2"
-ced2026: { unit: 2, topic: "2.3", label: "Estimating Probabilities Using Simulation" }
-title: "What Did Each Simulation Estimate?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How must chance labels, one trial, and the success event align with the probability question?"
-worksheet: "u4_lesson1-2_live.html"
-
+ced2026:
+  unit: 2
+  topic: '2.3'
+  label: Estimating Probabilities Using Simulation
+title: What Did Each Simulation Estimate?
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How must chance labels, one trial, and the success event align with the probability
+  question?
+worksheet: u4_lesson1-2_live.html
 rules_callout:
-  title: "THREE MATCHES MAKE A VALID SIMULATION (keep on the page)"
-  body: |
-    \textbf{Chance assignment:} the fraction of equally likely labels for each outcome must match its real probability.\\
-    \textbf{One trial:} reproduce the stated number of independent selections.\\
-    \textbf{Success event:} count exactly the outcomes named in the question; ``at least 2'' includes 2, 3, 4, and 5.
-    Repeat many trials and estimate probability with $\dfrac{\text{successful trials}}{\text{total trials}}$.
+  title: THREE MATCHES MAKE A VALID SIMULATION (keep on the page)
+  body: 'Match each outcome''s chance with the fraction of equally likely labels assigned to it.
+    One trial must reproduce the stated number of independent selections. Count the exact event named
+    in the question. More trials reduce chance variation but do not repair a wrong assignment or
+    event. Estimate probability with $\text{successful trials}/\text{total trials}$.
 
+    '
 focus: aps-4.2-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.8in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
+    (finish + turn in)
   teacher_does:
-    - "Board slide up at the bell. Record Student 1, Student 2, and neither votes without resolving them."
-    - "Begin the combined 4.1--4.2 video follow-along at minute 5."
-    - "Return to the board slide at minute 33. Circulate and ask what probability each plan actually targets."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
-    - "Choose a simulation result and name one design feature in a first take."
-    - "Complete the follow-along about outcomes, events, chance assignments, trials, and relative frequency."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Choose a simulation result and name one design feature in a first take.
+  - Complete the follow-along about outcomes, events, chance assignments, trials, and relative frequency.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What probability does one digit out of 10 represent?"
-    - "Which left-handed counts belong to the words at least 2?"
-    - "Can a reported estimate land near the target even when its design targets the wrong event?"
-    - "After your repair, can you point to the assignment, one trial, and the success event separately?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to translate each row into the probability it estimates before accepting which number looks closer."
+  - Which number or visible feature supports your claim?
+  - Why does the other claim go beyond that evidence?
+  - What would you tell someone who chose the other claim?
+  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
+    the three required reasoning elements; do not require dropped extension work.
   watch_for:
-    - "Calling Student 2 valid because its 12 percent assignment is correct."
-    - "Treating exactly 2 and at least 2 as interchangeable."
-    - "Choosing the larger decimal without discussing design or simulation variability."
-  first_take_note: "Not graded. Accept a tentative choice; the lesson should move students from decimal comparison to model-event alignment."
-
+  - A choice with copied numbers but no explanation of how they support it.
+  - Treating a model or average as a guaranteed individual outcome.
+  first_take_note: Not graded. Accept a tentative choice; the lesson should move students from decimal
+    comparison to model-event alignment.
 visuals:
   designs_table:
     kind: two_way_table
-    col_label: "Results: Student 1 = 87/1,000; Student 2 = 94/1,000"
-    row_label: "Plan"
-    cols: ["$L$ assignment", "Trial; success"]
-    rows: ["1", "2"]
+    col_label: 'Results: Student 1 = 87/1,000; Student 2 = 94/1,000'
+    row_label: Plan
+    cols:
+    - $L$ assignment
+    - Trial; success
+    rows:
+    - '1'
+    - '2'
     cells:
-      - ["0 of 0--9", "5 digits; $2+$ L"]
-      - ["00--11 of 00--99", "5 pairs; exactly 2 L"]
+    - - 0 of 0--9
+      - 5 digits; $2+$ L
+    - - 00--11 of 00--99
+      - 5 pairs; exactly 2 L

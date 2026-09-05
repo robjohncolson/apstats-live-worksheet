@@ -1,57 +1,82 @@
-# Topic 4.5 — Conditional Probability
 topic: "4.5"
-ced2026: { unit: 2, topic: "2.6", label: "Conditional Probability" }
-title: "Which Way Does the Condition Point?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "Why can reversing the condition produce a very different probability, even when both probabilities use the same table?"
-worksheet: "u4_lesson3-4-5_live.html"
-
+ced2026:
+  unit: 2
+  topic: '2.6'
+  label: Conditional Probability
+title: Which Way Does the Condition Point?
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: Why can reversing the condition produce a very different probability, even when
+  both probabilities use the same table?
+worksheet: u4_lesson3-4-5_live.html
 rules_callout:
-  title: "THE GIVEN EVENT SETS THE DENOMINATOR (keep on the page)"
-  body: |
-    $P(A\mid B)$ means the probability of $A$ \textbf{given} $B$. Restrict attention to the outcomes in $B$:
-    $P(A\mid B)=\dfrac{P(A\cap B)}{P(B)}=\dfrac{\text{count in both }A\text{ and }B}{\text{count in }B}$.
+  title: THE GIVEN EVENT SETS THE DENOMINATOR (keep on the page)
+  body: '$P(A\mid B)$ means the probability of $A$ \textbf{given} $B$. Restrict attention to the
+    outcomes in $B$:
+
+    $P(A\mid B)=\dfrac{P(A\cap B)}{P(B)}=\dfrac{\text{count in both }A\text{ and }B}{\text{count
+    in }B}$.
+
     In general, $P(A\mid B)\neq P(B\mid A)$ because the denominators are different.
+
     \textbf{Sensitivity} is $P(\text{positive}\mid\text{condition})$.
+
     The \textbf{false-positive rate} is $P(\text{positive}\mid\text{no condition})$.
 
+    '
 focus: aps-4.5-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.7in, b: 1.3in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.7in
+  b: 1.3in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
+    (finish + turn in)
   teacher_does:
-    - "Board slide up at the bell. Ask students to identify the group behind the 90 percent before confirming a claim."
-    - "Begin the combined 4.3--4.5 video follow-along at minute 5."
-    - "Return to the board slide at minute 33. Circulate and require each conditional probability to name its denominator group."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
-    - "Choose a claim and cite one cell or margin from the screening table."
-    - "Complete the follow-along about conditional probability and the general multiplication rule."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Choose a claim and cite one cell or margin from the screening table.
+  - Complete the follow-along about conditional probability and the general multiplication rule.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "Who belongs in the denominator after we already know the result was positive?"
-    - "What group supplies the denominator for the 90 percent sensitivity?"
-    - "How can a 10 percent false-positive rate create 95 false positives here?"
-    - "Which two conditional statements use the same intersection but different margins?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to say each conditional probability in words and point to its denominator margin before accepting arithmetic."
+  - Which number or visible feature supports your claim?
+  - Why does the other claim go beyond that evidence?
+  - What would you tell someone who chose the other claim?
+  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
+    the three required reasoning elements; do not require dropped extension work.
   watch_for:
-    - "Reversing the direction and reporting 45/50 for condition given positive."
-    - "Using all 1,000 screened students as the denominator after a positive result is known."
-    - "Swapping the labels on the 45 true positives and 95 false positives."
-  first_take_note: "Not graded. The familiar 90 percent number is intentionally tempting; the revision should use the full positive-test group."
-
+  - A choice with copied numbers but no explanation of how they support it.
+  - Treating a model or average as a guaranteed individual outcome.
+  first_take_note: Not graded. The familiar 90 percent number is intentionally tempting; the revision
+    should use the full positive-test group.
 visuals:
   screening_table:
     kind: two_way_table
-    col_label: "Screening results (counts)"
-    row_label: "Status"
-    cols: ["Pos.", "Neg.", "Total"]
-    rows: ["Condition", "No condition", "Total"]
+    col_label: Screening results (counts)
+    row_label: Status
+    cols:
+    - Pos.
+    - Neg.
+    - Total
+    rows:
+    - Condition
+    - No condition
+    - Total
     cells:
-      - ["45", "5", "50"]
-      - ["95", "855", "950"]
-      - ["140", "860", "1{,}000"]
+    - - '45'
+      - '5'
+      - '50'
+    - - '95'
+      - '855'
+      - '950'
+    - - '140'
+      - '860'
+      - 1{,}000

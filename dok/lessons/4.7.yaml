@@ -1,57 +1,73 @@
-# Topic 4.7 --- Introduction to Random Variables and Probability Distributions
 topic: "4.7"
-ced2026: { unit: 2, topic: "2.8", label: "Introduction to Random Variables" }
-title: "Average Payoff, Typical Ticket"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How can expected value and the most likely outcome both be true while answering different questions?"
-worksheet: "u4_lesson7-8_live.html"
-
+ced2026:
+  unit: 2
+  topic: '2.8'
+  label: Introduction to Random Variables
+title: Average Payoff, Typical Ticket
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How can an average payout and the most common outcome describe different parts
+  of the same distribution?
+worksheet: u4_lesson7-8_live.html
 rules_callout:
-  title: "DISTRIBUTION, EXPECTATION, AND ONE OUTCOME (keep on the page)"
-  body: |
-    A discrete random variable assigns a number to each random outcome. Its probability distribution lists every
-    possible value $x$ with $0\le P(X=x)\le1$, and the probabilities sum to 1. The expected value
-    $\mu_X=\sum xP(X=x)$ is the \textbf{long-run average} over many repetitions, not the result promised on one trial.
-    For a buyer's \textbf{net profit}, subtract the ticket cost from every gross prize before judging the deal.
+  title: DISTRIBUTIONS AND ONE OUTCOME (keep on the page)
+  body: 'A discrete random variable assigns a number to each random outcome. Its distribution lists
+    every possible value with a probability between 0 and 1; all probabilities add to 1. Add the
+    probabilities of the outcomes in an event. Net profit is prize minus ticket cost. An average
+    can differ from the most common outcome; large prizes can raise it, and it does not promise one
+    buyer''s result.
 
+    '
 focus: aps-4.7-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.7in
+  b: 1.4in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
+    (finish + turn in)
   teacher_does:
-    - "Board slide up at the bell. Ask for a buy-or-decline commitment without calling the raffle fair or unfair."
-    - "Begin the combined 4.7--4.8 video follow-along at minute 5."
-    - "Return to the distribution at minute 33. Circulate and separate gross payout, net profit, expected value, and modal outcome."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
-    - "Make a first decision using one number or possible outcome."
-    - "Complete the random-variable and probability-distribution portion of the follow-along."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Compare the given average with the ticket distribution, finish (a)--(c), and turn in the sheet.
   questions_to_ask:
-    - "What is subtracted from every prize when $X$ is net profit?"
-    - "How can a few rare large values move a mean while most outcomes remain zero gross payout?"
-    - "Is negative 50 cents one of the possible outcomes for a single ticket?"
-    - "Are you evaluating the ticket only as an investment, or does supporting the club have value in your criterion?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to reconcile both claims before evaluating the deal; allow different buying decisions only when the criterion and expected loss are both acknowledged."
+  - Which number or visible feature supports your claim?
+  - Why does the other claim go beyond that evidence?
+  - What would you tell someone who chose the other claim?
+  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
+    the three required reasoning elements; do not require dropped extension work.
   watch_for:
-    - "Using gross payout as net profit and forgetting the two-dollar cost."
-    - "Taking an unweighted average of the four possible values."
-    - "Treating expected value as either the most likely value or a guaranteed single-ticket result."
-  first_take_note: "Not graded. Students may focus on the top prize or on the 175 losing tickets; the distribution should connect those views."
-
+  - A choice with copied numbers but no explanation of how they support it.
+  - Treating a model or average as a guaranteed individual outcome.
+  first_take_note: Not graded. Students may focus on the top prize or on the 175 losing tickets;
+    the distribution should connect those views.
 visuals:
   raffle_distribution:
     kind: two_way_table
-    col_label: "Ticket net-profit distribution"
-    row_label: "Prize"
-    cols: ["Net $x$", "$P(X=x)$"]
-    rows: ["Top prize", "Second prize", "Small prize", "No prize"]
+    col_label: Ticket net-profit distribution
+    row_label: Prize
+    cols:
+    - Net $x$
+    - $P(X=x)$
+    rows:
+    - Top prize
+    - Second prize
+    - Small prize
+    - No prize
     cells:
-      - ["$98$", "$1/200$"]
-      - ["$23$", "$4/200$"]
-      - ["$3$", "$20/200$"]
-      - ["$-2$", "$175/200$"]
+    - - $98$
+      - $1/200$
+    - - $23$
+      - $4/200$
+    - - $3$
+      - $20/200$
+    - - $-2$
+      - $175/200$

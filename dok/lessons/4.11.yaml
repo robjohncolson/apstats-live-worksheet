@@ -1,54 +1,67 @@
-# Topic 4.11 — Parameters for a Binomial Distribution
 topic: "4.11"
-ced2026: { unit: 2, topic: "2.10", label: "The Binomial Distribution" }
-title: "Unusual Does Not Mean Impossible"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How do binomial parameters help distinguish an unusual count from an impossible one?"
-worksheet: "u4_lesson10-12_live.html"
-
+ced2026:
+  unit: 2
+  topic: '2.10'
+  label: The Binomial Distribution
+title: Unusual Does Not Mean Impossible
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How do binomial parameters help distinguish an unusual count from an impossible
+  one?
+worksheet: u4_lesson10-12_live.html
 rules_callout:
-  title: "CENTER, SPREAD, AND UNUSUAL COUNTS (keep on the page)"
-  body: |
-    For $X\sim\mathrm{Bin}(n,p)$, $\mu_X=np$ and $\sigma_X=\sqrt{np(1-p)}$; both use count units.
-    Standardize with $z=\dfrac{x-\mu_X}{\sigma_X}$. A normal approximation is reasonable when both
-    $np\geq10$ and $n(1-p)\geq10$. A count far from the mean may be unusual, but every value from 0 through
-    $n$ still has positive binomial probability when $0<p<1$.
+  title: CENTER, SPREAD, AND UNUSUAL COUNTS (keep on the page)
+  body: 'For a binomial count, $\mu_X=np$ and $\sigma_X=\sqrt{np(1-p)}$, both in count units. The
+    mean is an average over many comparable sets of trials. The standard deviation describes a typical
+    distance from that mean. A result far from the mean may be unusual, but a small positive probability
+    does not mean impossible or prove that the model changed.
 
+    '
 focus: aps-4.11-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.8in, b: 1.3in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.8in
+  b: 1.3in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
+    (finish + turn in)
   teacher_does:
-    - "Board slide up at the bell. Ask what numerical boundary, if any, the word impossible should imply."
-    - "Begin the combined 4.10--4.12 video follow-along at minute 5."
-    - "Return to the board slide at minute 33. Circulate and connect parameter calculations to claim language."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
-    - "Choose the coach or analyst and name one quantity to check before the lesson."
-    - "Complete the follow-along about binomial mean, standard deviation, and interpretation."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Choose the coach or analyst and name one quantity to check before the lesson.
+  - Complete the follow-along about binomial mean, standard deviation, and interpretation.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What does 70 describe across many 100-shot sets, and what does it not guarantee?"
-    - "How many standard deviations below 70 is 58?"
-    - "Do both expected-count checks support a normal approximation?"
-    - "What probability would the word impossible require?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to attach makes to every parameter and to distinguish distance from the mean from probability zero."
+  - Which number or visible feature supports your claim?
+  - Why does the other claim go beyond that evidence?
+  - What would you tell someone who chose the other claim?
+  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
+    the three required reasoning elements; do not require dropped extension work.
   watch_for:
-    - "Reporting 0.70 rather than 70 as the mean of the count."
-    - "Omitting the square root or the failure probability from the standard deviation."
-    - "Treating a two-standard-deviation guideline as a boundary beyond which outcomes cannot occur."
-  first_take_note: "Not graded. Listen for whether students use impossible to mean unlikely; the calculation should sharpen that language."
-
+  - A choice with copied numbers but no explanation of how they support it.
+  - Treating a model or average as a guaranteed individual outcome.
+  first_take_note: Not graded. Listen for whether students use impossible to mean unlikely; the calculation
+    should sharpen that language.
 visuals:
   hundred_shots_table:
     kind: two_way_table
-    col_label: "Career-rate model"
-    row_label: "Set"
-    cols: ["Attempts", "Rate", "Makes"]
-    rows: ["Tonight"]
+    col_label: Career-rate model
+    row_label: Set
+    cols:
+    - Attempts
+    - Rate
+    - Makes
+    rows:
+    - Tonight
     cells:
-      - ["100", "0.70", "58"]
+    - - '100'
+      - '0.70'
+      - '58'

@@ -1,56 +1,75 @@
-# Topic 4.1 — Introducing Statistics: Random and Non-Random Patterns?
 topic: "4.1"
-ced2026: { unit: 2, topic: "2.3", label: "Estimating Probabilities Using Simulation" }
-title: "Can Chance Make a Streak?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
-essential_question: "How can simulation distinguish a surprising-looking random pattern from evidence against a chance model?"
-worksheet: "u4_lesson1-2_live.html"
-
+ced2026:
+  unit: 2
+  topic: '2.3'
+  label: Estimating Probabilities Using Simulation
+title: Can Chance Make a Streak?
+minutes:
+  first_take: 5
+  video_worksheet: 28
+  finish: 10
+  turn_in: 2
+essential_question: How can simulation distinguish a surprising-looking random pattern from evidence
+  against a chance model?
+worksheet: u4_lesson1-2_live.html
 rules_callout:
-  title: "MODEL THE PATTERN, NOT THE STORY (keep on the page)"
-  body: |
-    Random processes can produce visible patterns, including streaks. To judge a pattern under a proposed chance model,
-    make each simulation trial match the original process, choose a statistic that measures how extreme the pattern is,
-    and count results \textbf{at least as extreme} as the observation. Repeat many independent trials; the successful-trial
-    proportion estimates how often chance alone would produce such a result. An unusual result is evidence against a model,
-    not proof of what caused the departure.
+  title: MODEL THE PATTERN, NOT THE STORY (keep on the page)
+  body: 'A random process can produce streaks. A simulation uses chance to imitate a process; each
+    trial must match the original number of independent flips and the stated chance of heads. Record
+    the outcome of each trial and calculate $\text{successful trials}/\text{total trials}$. Many
+    trials reduce chance variation in this estimate. A simulation result is evidence about a model,
+    not proof that a real coin is fair.
 
+    '
 focus: aps-4.1-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
-
-space: { first_take: 0.9in, a: 0.7in, b: 1.3in, c: 2.0in }
-
+exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+space:
+  first_take: 0.9in
+  a: 0.7in
+  b: 1.3in
+  c: 2.0in
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
+    (finish + turn in)
   teacher_does:
-    - "Board slide up at the bell. Let the six-head streak feel surprising without endorsing either claim."
-    - "Begin the combined 4.1--4.2 video follow-along at minute 5; leave first takes ungraded."
-    - "Return to the board slide at minute 33. Circulate and press students to match a trial to all 10 flips."
-    - "Collect at the door. Score part (c) only, E/P/I."
+  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
-    - "Commit to one claim and cite the sequence or dotplot before the lesson."
-    - "Complete the follow-along about random patterns and simulation."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
+  - Commit to one claim and cite the sequence or dotplot before the lesson.
+  - Complete the follow-along about random patterns and simulation.
+  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
-    - "What feature of HHHHHHTTTT are you measuring: total heads or consecutive outcomes?"
-    - "Why must a trial contain 10 flips rather than only the six-flip streak?"
-    - "Should a run of 7 count as at least as surprising as the observed run?"
-    - "What simulated proportion would make this result genuinely unusual under fairness?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to name model, trial, statistic, event, and repetition count before accepting a conclusion about the coin."
+  - Which number or visible feature supports your claim?
+  - Why does the other claim go beyond that evidence?
+  - What would you tell someone who chose the other claim?
+  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
+    the three required reasoning elements; do not require dropped extension work.
   watch_for:
-    - "Treating an eye-catching streak as impossible under randomness."
-    - "Counting total heads rather than longest run without explaining a different statistic."
-    - "Claiming that a 7 percent simulation estimate proves the coin fair."
-  first_take_note: "Not graded. Preserve surprise; the key move is replacing visual intuition with a matched chance model."
-
-# Topic 4.1 has no tutor artifact. These lines are copied from apstat_4_framework.md.
+  - A choice with copied numbers but no explanation of how they support it.
+  - Treating a model or average as a guaranteed individual outcome.
+  first_take_note: Not graded. Preserve surprise; the key move is replacing visual intuition with
+    a matched chance model.
 tether:
-  - '\textbf{VAR-1.F} Identify questions suggested by patterns in data. \textbf{[Skill 1.A]}'
-  - '\textbf{VAR-1.F.1} Patterns in data do not necessarily mean that variation is not random.'
-
+- \textbf{VAR-1.F} Identify questions suggested by patterns in data. \textbf{[Skill 1.A]}
+- \textbf{VAR-1.F.1} Patterns in data do not necessarily mean that variation is not random.
 visuals:
   run_dotplot:
-    kind: dotplot
-    values: [2, 2, 3, 2, 3, 6, 3, 3, 4, 4, 4, 4, 3, 3, 4, 6, 3, 4, 2, 5, 3, 4, 4, 5, 6, 2, 2, 3, 4, 2, 3, 2, 2, 5, 4, 3, 3, 2, 3, 4, 3, 3, 5, 3, 2, 5, 3, 3, 2, 4, 5, 4, 3, 3, 5, 4, 3, 3, 4, 2, 4, 5, 3, 5, 4, 4, 5, 3, 2, 3, 6, 4, 5, 2, 4, 4, 3, 3, 4, 5, 2, 4, 6, 2, 4, 5, 2, 5, 2, 3, 2, 3, 3, 2, 2, 3, 6, 6, 4, 3]
-    xlabel: "Longest run in one set of 10 fair-coin flips"
+    kind: two_way_table
+    col_label: 100 sets of 10 fair-coin flips
+    row_label: Longest run
+    cols:
+    - Sets
+    rows:
+    - '2'
+    - '3'
+    - '4'
+    - '5'
+    - '6'
+    cells:
+    - - '22'
+    - - '32'
+    - - '25'
+    - - '14'
+    - - '7'

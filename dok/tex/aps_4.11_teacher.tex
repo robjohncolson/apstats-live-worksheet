@@ -21,14 +21,13 @@
 }
 \textbf{Essential question:} How do binomial parameters help distinguish an unusual count from an impossible one?\par
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{binomial-\allowbreak{}mean-\allowbreak{}sd-\allowbreak{}unusual-\allowbreak{}vs-\allowbreak{}impossible}}\par
-\textbf{DOK rationale:} Part (c) coordinates binomial parameters, a standardized distance, approximation conditions, and competing meanings of rare and impossible to assess a coach's claim and its consequence.\par
+\textbf{DOK rationale:} Part (c) weighs competing claims using the day's numerical or graphical evidence and explains a limitation or consequence; the judgment requires linked reasoning beyond a calculation.\par
 
 \frameworkphaseheader{Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn in)}{1 $\rightarrow$ 3}{45}{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask what numerical boundary, if any, the word impossible should imply.
-  \item Begin the combined 4.10--4.12 video follow-along at minute 5.
-  \item Return to the board slide at minute 33. Circulate and connect parameter calculations to claim language.
-  \item Collect at the door. Score part (c) only, E/P/I.
+  \item Show the board at the bell and collect a one-sentence first take without confirming a claim.
+  \item Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  \item Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -38,18 +37,16 @@
 \end{itemize}
 }{%
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item What does 70 describe across many 100-shot sets, and what does it not guarantee?
-  \item How many standard deviations below 70 is 58?
-  \item Do both expected-count checks support a normal approximation?
-  \item What probability would the word impossible require?
+  \item Which number or visible feature supports your claim?
+  \item Why does the other claim go beyond that evidence?
+  \item What would you tell someone who chose the other claim?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Ask students to attach makes to every parameter and to distinguish distance from the mean from probability zero.}
+}{Circulate and ask students to connect their choice to evidence. Score part (c) using the three required reasoning elements; do not require dropped extension work.}
 
 \begin{callout}{\IconWarn\ WATCH FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Reporting 0.70 rather than 70 as the mean of the count.
-  \item Omitting the square root or the failure probability from the standard deviation.
-  \item Treating a two-standard-deviation guideline as a boundary beyond which outcomes cannot occur.
+  \item A choice with copied numbers but no explanation of how they support it.
+  \item Treating a model or average as a guaranteed individual outcome.
 \end{itemize}
 \end{callout}
 
@@ -57,32 +54,30 @@
 
 \textbf{Expected elements}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item \textbf{computes-parameters} (required) --- Computes $\mu_X=70$ and $\sigma_X=\sqrt{21}\approx4.6$ makes
-  \item \textbf{standardizes-and-checks-normality} (required) --- Computes $z\approx-2.6$ and verifies $np=70$ and $n(1-p)=30$ are both at least 10
-  \item \textbf{distinguishes-unusual-from-impossible} (required) --- Calls 58 unusual while explaining that a low-probability binomial outcome still has positive probability
-  \item \textbf{states-misleading-consequence} (required) --- Explains that the coach treats the mean or typical range as a guaranteed cutoff and overclaims from one set
+  \item \textbf{reasoning-1} (required) --- Compares 58 with mean 70 and SD about 4.6 in count units
+  \item \textbf{reasoning-2} (required) --- Uses the positive 0.0072 chance to distinguish unusual from impossible
+  \item \textbf{reasoning-3} (required) --- Supports the analyst and explains the coach's false guaranteed cutoff or proof claim
 \end{itemize}
 
 {\small\renewcommand{\arraystretch}{1.25}
 \noindent\begin{tabular}{|p{0.5in}|p{5.9in}|}
 \hline
-\textbf{E} & Correctly computes and contextualizes the parameters and z-score, verifies both approximation counts, supports the analyst, and clearly explains both the rare-versus-zero distinction and the coach's misleading cutoff. \\ \hline
-\textbf{P} & Correctly identifies 58 as unusual with most calculations but omits an approximation count, the rare-versus-zero mechanism, or the specific consequence of the coach's statement. \\ \hline
-\textbf{I} & Uses 0.70 as the mean count, omits the square root in the standard deviation, calls 58 impossible, or treats the mean as a guaranteed result. \\ \hline
+\textbf{E} & Includes all three required reasoning elements above, with correct contextual evidence. \\ \hline
+\textbf{P} & Includes at least one substantive correct reasoning link above, but omits or misstates another required element. \\ \hline
+\textbf{I} & Includes no substantive correct reasoning link above; an unsupported choice or copied number alone is insufficient. \\ \hline
 \end{tabular}}
 
 \textbf{Common mistakes}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Using $\sqrt{np}$ instead of $\sqrt{np(1-p)}$
-  \item Dividing 58 by the standard deviation instead of subtracting the mean first
-  \item Checking only $np$ and not $n(1-p)$
-  \item Equating more than two standard deviations from the mean with zero probability
+  \item Using 0.70 as the mean count instead of 70
+  \item Omitting the square root in the standard deviation
+  \item Treating an unusual outcome as impossible or as proof that the model changed
 \end{itemize}
 
 \clearpage
 \focusbanner{TODAY'S PROBLEM --- annotated}
 
-Suppose the same 70 percent free-throw shooter takes 100 attempts under comparable conditions and makes 58. Let $X$ be the number of makes if the career-rate model still applies.\par\smallskip \textbf{Coach:} ``Anything under 60 makes is impossible for a 70 percent shooter, so 58 proves the career rate no longer applies.''\par \textbf{Analyst:} ``A result can be unusual without being impossible; compare 58 with the model's mean and standard deviation.''\par
+Suppose the same 70 percent free-throw shooter takes 100 attempts under comparable conditions and makes 58. Let $X$ be the number of makes if the career-rate model still applies.\par\smallskip \textbf{Coach:} ``Anything under 60 makes is impossible for a 70 percent shooter, so 58 proves the career rate no longer applies.''\par \textbf{Analyst:} ``A result can be unusual without being impossible; compare 58 with the model's mean and standard deviation.''\par The binomial model gives a chance of about $0.0072$ for 58 or fewer makes; use this provided value.\par
 \begin{center}
 \textbf{Career-rate model}\par\smallskip
 \begin{tabular}{|l|c|c|c|}
@@ -98,14 +93,14 @@ Whose statement is more defensible, the coach's or the analyst's? Name one quant
 
 \textit{Rules callout ``CENTER, SPREAD, AND UNUSUAL COUNTS (keep on the page)'' is printed on the student sheet.}\par\medskip
 
-\dokbadge{1}~\textbf{(a)} State $n$ and $p$ for $X$ and write the formulas for the binomial mean and standard deviation.\par
-\answer{Here $n=100$ and $p=0.70$. For a binomial count, $\mu_X=np$ and $\sigma_X=\sqrt{np(1-p)}$.}
+\dokbadge{1}~\textbf{(a)} State $n$ and $p$ for this model.\par
+\answer{$n=100$ attempts and $p=0.70$ for each attempt.}
 
-\dokbadge{2}~\textbf{(b)} Without calculating yet, interpret the model's mean and standard deviation in the context of many sets of 100 free throws.\par
-\answer{Across many comparable sets of 100 shots under the 0.70 model, the number made would average $\mu_X$ makes. A set's number made would typically differ from that mean by about $\sigma_X$ makes; neither parameter guarantees the result in one set.}
+\dokbadge{2}~\textbf{(b)} Calculate the binomial mean and standard deviation. Interpret the mean for many sets of 100 shots.\par
+\answer{$\mu_X=100(0.70)=70$ makes and $\sigma_X=\sqrt{100(0.70)(0.30)}=\sqrt{21}\approx4.6$ makes. Across many comparable sets of 100 attempts, the model predicts an average of 70 makes.}
 
-\dokbadge{3}~\textbf{(c)} Compute $\mu_X$, $\sigma_X$, and the $z$-score of 58. Check $np$ and $n(1-p)$ to decide whether a normal approximation is reasonable. Is 58 unusual? Adjudicate the two statements, distinguish ``unusual'' from ``impossible,'' and explain what the coach's claim could mislead a reader into believing.\par
-\answer{$\mu_X=100(0.70)=70$ makes and $\sigma_X=\sqrt{100(0.70)(0.30)}=\sqrt{21}=4.5826\approx4.6$ makes. Thus $z=(58-70)/4.5826=-2.6186\approx-2.6$. Also, $np=70$ and $n(1-p)=30$, both at least 10, so a normal approximation is reasonable. Because 58 is about 2.6 standard deviations below the mean, it is unusual. The analyst is warranted: unusual means low probability under the model, not zero probability. In fact, the exact binomial probability $P(X\leq58)\approx0.00717$, and $P(X<60)\approx0.01250$, so fewer than 60 remains possible. The coach turns an expected center into a hard lower bound and could mislead a reader into thinking every 70 percent shooter must make at least 60 of every 100 attempts or that one unusual set proves the parameter changed.}
+\dokbadge{3}~\textbf{(c)} Whose statement is supported? Compare 58 with the mean and standard deviation, and use the given probability to distinguish unusual from impossible. Explain what the coach's claim could make a reader wrongly believe. Write 3--4 sentences.\par
+\answer{The analyst is supported: 58 is 12 makes below the mean of 70, more than twice the typical distance of about 4.6 makes. The given chance of 58 or fewer is about $0.0072$, so such a low result is unusual but has positive probability. The coach turns a typical performance level into a guaranteed lower bound. That could make a reader think one unusual set proves the career rate changed, even though chance can produce it.}
 
 \begin{summaryexitbox}{EXIT}
 One thing the video changed about my first take: \hrulefill

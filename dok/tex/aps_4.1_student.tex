@@ -8,148 +8,43 @@
 
 \focusbanner{TODAY'S PROBLEM}
 
-Suppose a coin advertised as fair is flipped 10 times and gives HHHHHHTTTT. To investigate what chance alone could produce, a class simulates 100 sets of 10 independent fair-coin flips. For each set, the class records the longest run of matching outcomes; the dotplot shows the results.\par\smallskip \textbf{Claim A:} ``The coin is rigged---six heads in a row cannot be chance.''\par \textbf{Claim B:} ``Streaks like this can happen by chance; simulation can tell us how unusual this one is.''\par
+Suppose a coin advertised as fair is flipped 10 times and gives HHHHHHTTTT. To investigate what chance alone could produce, a class simulates 100 sets of 10 independent fair-coin flips. For each set, the class records the longest run of matching outcomes; the frequency table shows the results.\par\smallskip \textbf{Claim A:} ``The coin is rigged---six heads in a row cannot be chance.''\par \textbf{Claim B:} ``Streaks like this can happen by chance; simulation can tell us how unusual this one is.''\par
 \begin{center}
-\begin{tikzpicture}
-\begin{axis}[
-  width=0.85\linewidth,
-  height=1.60in,
-  ymin=0, ymax=33, ytick=\empty, axis y line=none, axis x line=bottom,
-  xlabel={Longest run in one set of 10 fair-coin flips}, tick label style={font=\small}, label style={font=\small}
-]
-\addplot[only marks, mark=*, mark size=2.4pt, color=dayblue] coordinates {
-  (2,1)
-  (2,2)
-  (2,3)
-  (2,4)
-  (2,5)
-  (2,6)
-  (2,7)
-  (2,8)
-  (2,9)
-  (2,10)
-  (2,11)
-  (2,12)
-  (2,13)
-  (2,14)
-  (2,15)
-  (2,16)
-  (2,17)
-  (2,18)
-  (2,19)
-  (2,20)
-  (2,21)
-  (2,22)
-  (3,1)
-  (3,2)
-  (3,3)
-  (3,4)
-  (3,5)
-  (3,6)
-  (3,7)
-  (3,8)
-  (3,9)
-  (3,10)
-  (3,11)
-  (3,12)
-  (3,13)
-  (3,14)
-  (3,15)
-  (3,16)
-  (3,17)
-  (3,18)
-  (3,19)
-  (3,20)
-  (3,21)
-  (3,22)
-  (3,23)
-  (3,24)
-  (3,25)
-  (3,26)
-  (3,27)
-  (3,28)
-  (3,29)
-  (3,30)
-  (3,31)
-  (3,32)
-  (4,1)
-  (4,2)
-  (4,3)
-  (4,4)
-  (4,5)
-  (4,6)
-  (4,7)
-  (4,8)
-  (4,9)
-  (4,10)
-  (4,11)
-  (4,12)
-  (4,13)
-  (4,14)
-  (4,15)
-  (4,16)
-  (4,17)
-  (4,18)
-  (4,19)
-  (4,20)
-  (4,21)
-  (4,22)
-  (4,23)
-  (4,24)
-  (4,25)
-  (5,1)
-  (5,2)
-  (5,3)
-  (5,4)
-  (5,5)
-  (5,6)
-  (5,7)
-  (5,8)
-  (5,9)
-  (5,10)
-  (5,11)
-  (5,12)
-  (5,13)
-  (5,14)
-  (6,1)
-  (6,2)
-  (6,3)
-  (6,4)
-  (6,5)
-  (6,6)
-  (6,7)
-};
-\end{axis}
-\end{tikzpicture}
+\textbf{100 sets of 10 fair-coin flips}\par\smallskip
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Longest run} & \textbf{Sets} \\ \hline
+\textbf{2} & 22 \\ \hline
+\textbf{3} & 32 \\ \hline
+\textbf{4} & 25 \\ \hline
+\textbf{5} & 14 \\ \hline
+\textbf{6} & 7 \\ \hline
+\end{tabular}
 \end{center}
 \begin{firsttakebox}{FIRST TAKE --- before the video (5 min)}
-Which claim seems better supported right now? Cite one detail from the sequence or dotplot.
+Which claim seems better supported right now? Cite one detail from the sequence or table.
 \workspace{0.9in}
 \end{firsttakebox}
 
 \begin{callout}{\IconBook\ MODEL THE PATTERN, NOT THE STORY (keep on the page)}{calloutgreen}
-Random processes can produce visible patterns, including streaks. To judge a pattern under a proposed chance model,
-make each simulation trial match the original process, choose a statistic that measures how extreme the pattern is,
-and count results \textbf{at least as extreme} as the observation. Repeat many independent trials; the successful-trial
-proportion estimates how often chance alone would produce such a result. An unusual result is evidence against a model,
-not proof of what caused the departure.
+A random process can produce streaks. A simulation uses chance to imitate a process; each trial must match the original number of independent flips and the stated chance of heads. Record the outcome of each trial and calculate $\text{successful trials}/\text{total trials}$. Many trials reduce chance variation in this estimate. A simulation result is evidence about a model, not proof that a real coin is fair.
 \end{callout}
 
 \newpage
 \textbf{Finish after the video:}\par\smallskip
 
-\dokbadge{1}~\textbf{(a)} State the longest run in the observed sequence and the most common longest-run value among the simulated sets.\par
+\dokbadge{1}~\textbf{(a)} State the longest run in the observed sequence and the most common longest run in the simulated sets.\par
 \workspace{0.7in}
 
-\dokbadge{2}~\textbf{(b)} Use the dotplot to estimate the probability that 10 fair-coin flips have a longest run at least as long as the observed run. Interpret the estimate in context.\par
+\dokbadge{2}~\textbf{(b)} Estimate the chance of a run at least as long as the observed one. Use the number of simulated sets with such a run divided by 100.\par
 \workspace{1.3in}
 
-\dokbadge{3}~\textbf{(c)} Which claim is better supported by this evidence? Cite the simulation result that settles your choice. Then describe a larger simulation that would more precisely settle the disagreement: state what one trial is, what to record and count, how many trials to use, and what result would make you doubt that the coin is fair.\par
+\dokbadge{3}~\textbf{(c)} Which claim is better supported? Use the simulation count and explain why it does not prove the coin is fair. To improve the estimate, describe one trial, what you would count, and why you would repeat many trials. Write 3--4 sentences.\par
 \workspace{2.0in}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} Claim \blank[0.35in] is better supported because \blank[2.7in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} Claim \blank[0.4in] is supported because \blank[0.6in] of the \blank[0.6in] sets had \blank[1.7in].\end{sentenceframebox}
 
-\begin{sentenceframebox}\raggedright\textbf{Frame:} One trial is \blank[1.8in]; I would record \blank[1.8in] and doubt fairness if \blank[1.8in].\end{sentenceframebox}
+\begin{sentenceframebox}\raggedright\textbf{Frame:} One trial would be \blank[1.8in]; I would count \blank[1.8in] and repeat many trials because \blank[1.8in].\end{sentenceframebox}
 
 \begin{summaryexitbox}{EXIT --- turn this in}
 One thing the video changed about my first take: \hrulefill\par

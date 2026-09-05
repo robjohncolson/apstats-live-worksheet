@@ -1,0 +1,376 @@
+{
+  "2.1": {
+    "validated_table": [
+      [
+        35,
+        15,
+        50
+      ],
+      [
+        75,
+        75,
+        150
+      ],
+      [
+        110,
+        90,
+        200
+      ]
+    ],
+    "within_group_percents": [
+      70.0,
+      30.0,
+      50.0,
+      50.0
+    ],
+    "percentage_point_gap": 20.0,
+    "group_size_ratio": 3.0
+  },
+  "2.3": {
+    "validated_table": [
+      [
+        66,
+        9,
+        75
+      ],
+      [
+        159,
+        66,
+        225
+      ],
+      [
+        225,
+        75,
+        300
+      ]
+    ],
+    "pass_rates": [
+      75.0,
+      88.0,
+      70.66666666666667
+    ],
+    "actual_group_gap": 17.33333333333333,
+    "mixed_group_gap": 13
+  },
+  "4.4": {
+    "validated_table": [
+      [
+        35,
+        25,
+        60
+      ],
+      [
+        45,
+        15,
+        60
+      ],
+      [
+        80,
+        40,
+        120
+      ]
+    ],
+    "intersection_probability": 0.2916666666666667,
+    "union_count": 105,
+    "union_probability": 0.875,
+    "neither_count": 15,
+    "neither_probability": 0.125,
+    "incorrect_sum": 1.1666666666666667
+  },
+  "4.5": {
+    "validated_table": [
+      [
+        45,
+        5,
+        50
+      ],
+      [
+        95,
+        855,
+        950
+      ],
+      [
+        140,
+        860,
+        1000
+      ]
+    ],
+    "condition_count": 50.0,
+    "no_condition_count": 950.0,
+    "positive_with_condition": 45.0,
+    "positive_without_condition": 95.0,
+    "all_positive": 140,
+    "all_negative": 860,
+    "positive_given_condition": 0.9,
+    "condition_given_positive_percent": 32.142857142857146
+  },
+  "4.6": {
+    "validated_table": [
+      [
+        84,
+        36,
+        120
+      ],
+      [
+        16,
+        64,
+        80
+      ],
+      [
+        100,
+        100,
+        200
+      ]
+    ],
+    "pet": 0.6,
+    "instrument": 0.5,
+    "instrument_given_pet": 0.7,
+    "intersection": 0.42,
+    "union_count": 136,
+    "union": 0.68,
+    "pet_complement_product_removed": 0.24,
+    "independence_product_removed": 0.3
+  },
+  "2.2": {
+    "totals": [
+      120,
+      60
+    ],
+    "within_grade_percents": [
+      60.0,
+      40.0,
+      30.0,
+      70.0
+    ],
+    "percentage_point_gap": 30.0
+  },
+  "4.1": {
+    "simulation_frequencies": {
+      "2": 22,
+      "3": 32,
+      "4": 25,
+      "5": 14,
+      "6": 7
+    },
+    "simulated_sets": 100,
+    "observed_longest_run": 6,
+    "mode": [
+      3,
+      32
+    ],
+    "run_at_least_six_count": 7,
+    "empirical_probability": 0.07,
+    "exact_fair_coin_probability_for_audit_only": 0.09375
+  },
+  "4.2": {
+    "estimates": [
+      0.087,
+      0.094
+    ],
+    "assigned_chances": [
+      0.1,
+      0.12
+    ],
+    "target_probability_removed_from_student_demand": 0.11245086719999998,
+    "wrong_chance_target": 0.08146000000000002,
+    "exactly_two_target": 0.09813196799999999
+  },
+  "4.3": {
+    "frequencies": {
+      "1": 8,
+      "2": 6,
+      "3": 4,
+      "4": 5,
+      "5": 3,
+      "6": 6,
+      "7": 4,
+      "8": 4
+    },
+    "total": 40,
+    "wins": 18,
+    "empirical": 0.45,
+    "model": 0.375,
+    "percentage_point_gap": 7.500000000000001
+  },
+  "4.7": {
+    "ticket_total": 200,
+    "net_values": [
+      98,
+      23,
+      3,
+      -2
+    ],
+    "probability_sum": 1.0,
+    "loss_chance": 0.875,
+    "given_gross_average_verified": 1.5,
+    "net_expectation_removed_from_student_demand": -0.5
+  },
+  "4.8": {
+    "A": {
+      "values": [
+        25,
+        27,
+        29,
+        29,
+        31,
+        31,
+        33,
+        35
+      ],
+      "sum": 240,
+      "mean": 30,
+      "squared_distance_sum": 72,
+      "population_sd": 3.0,
+      "range": [
+        25,
+        35
+      ],
+      "late_probability": 0.0,
+      "shifted_mean_removed": 35,
+      "shifted_sd_removed": 3.0,
+      "shifted_range_removed": [
+        30,
+        40
+      ]
+    },
+    "B": {
+      "values": [
+        10,
+        18,
+        26,
+        26,
+        34,
+        34,
+        42,
+        50
+      ],
+      "sum": 240,
+      "mean": 30,
+      "squared_distance_sum": 1152,
+      "population_sd": 12.0,
+      "range": [
+        10,
+        50
+      ],
+      "late_probability": 0.25,
+      "shifted_mean_removed": 35,
+      "shifted_sd_removed": 12.0,
+      "shifted_range_removed": [
+        15,
+        55
+      ]
+    }
+  },
+  "4.10": {
+    "combination_10_choose_3": 120,
+    "exactly_three": 0.009001691999999995,
+    "three_or_fewer": 0.010592078399999994,
+    "pmf": [
+      5.9048999999999975e-06,
+      0.00013778099999999996,
+      0.0014467004999999993,
+      0.009001691999999995,
+      0.03675690899999998,
+      0.10291934519999994,
+      0.20012094899999994,
+      0.2668279319999998,
+      0.23347444049999988,
+      0.12106082099999993,
+      0.02824752489999998
+    ],
+    "expected_counts_per_1000": [
+      0.005904899999999998,
+      0.13778099999999996,
+      1.4467004999999993,
+      9.001691999999995,
+      36.756908999999986,
+      102.91934519999994,
+      200.12094899999994,
+      266.8279319999998,
+      233.47444049999987,
+      121.06082099999993,
+      28.24752489999998
+    ]
+  },
+  "4.11": {
+    "mean": 70.0,
+    "variance": 21.0,
+    "sd": 4.58257569495584,
+    "distance_below_mean": 12,
+    "standardized_distance_removed": -2.618614682831909,
+    "approximation_counts_removed": [
+      70,
+      30
+    ],
+    "58_or_fewer": 0.007173562599373469,
+    "fewer_than_60_removed": 0.012498407166438134
+  },
+  "2.4": {
+    "early_increase": 170,
+    "late_increase": 15,
+    "comparison_volumes": [
+      695,
+      600,
+      750
+    ],
+    "midpoint_removed": 722.5,
+    "midpoint_gap_removed": 122.5
+  },
+  "2.5": {
+    "r_full": 0.9223783376951923,
+    "r_first_seven": 0.0949157995752499
+  },
+  "2.6": {
+    "slope": -6.4,
+    "intercept": 36,
+    "observed_range": [
+      0.5,
+      2.5
+    ],
+    "predictions": [
+      24.479999999999997,
+      13.599999999999998
+    ],
+    "buffer": 1.5999999999999979,
+    "range_gap": 1.0
+  },
+  "2.7": {
+    "predictions_at_10_30_50": [
+      15.0,
+      65.0,
+      115.0
+    ],
+    "actual_at_10_30_50": [
+      19.0,
+      61.0,
+      119.0
+    ],
+    "residuals_at_10_30_50": [
+      4,
+      -4,
+      4
+    ],
+    "correlation_reconstructed_from_all_residuals": 0.996815278536125
+  },
+  "2.8": {
+    "mean_point": [
+      7,
+      28
+    ],
+    "slope": 3.2,
+    "intercept": 5.599999999999998,
+    "r_squared": 0.6400000000000001,
+    "wrong_slope": 0.2,
+    "wrong_intercept": 26.6,
+    "mean_point_predictions": [
+      28.0,
+      28.0
+    ],
+    "eight_hour_predictions_removed": [
+      31.200000000000003,
+      28.200000000000003
+    ],
+    "prediction_gap_removed": 3.0,
+    "explained_percentage_point_error_removed": 16
+  }
+}

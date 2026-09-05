@@ -1,0 +1,1579 @@
+{
+  "audited_on": "2026-09-04",
+  "scope": "OLD units 2 and 4; all 18 dated topics in Period-B order",
+  "verdict_semantics": "FIX identifies an original defect corrected in this audit; FLAG is an unresolved judgment. PASS means no defect requiring a change under that criterion.",
+  "topics": [
+    {
+      "topic": "2.1",
+      "old_unit": 2,
+      "period_B": "2026-10-13",
+      "title": "Counts or Conditional Percents?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u2_lesson1_live.html",
+        "flashcards": "u2_l1_blooket.csv",
+        "tether": "dok/lessons/2.1.yaml:tether"
+      },
+      "source_sha256": {
+        "dok/lessons/2.1.yaml": "150578b769e28712ccec34a80498e332580c5d7722d7677d9f47083dd82fb37d",
+        "dok/registry/2.1.jsonl": "a78578e93550b346ecc2597ed84c1f4733e4ed1926562f0ecc0f06b5741522e4",
+        "u2_lesson1_live.html": "c7f0658b2c73a5cc87e238932982b33819b472502997f24017597ff1768eba99",
+        "u2_l1_blooket.csv": "b3d3c1cdfcba3b150da387029fdb26687d264fc262b9c77c4bcf5d585a3da074"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet vocabulary and 2:12--3:09 introduce two categorical variables, two-way tables, conditional relative frequencies, and comparisons across unequal groups; 6:04--6:36 matches summaries to variable type. Deck asks why raw counts mislead. YAML tether is VAR-1.D/VAR-1.D.1.",
+      "workload_original_to_final": "Four sleep percentages plus categories and a multi-clause causal critique -> two percentages, one line naming variables, and 3--4 sentences linking three reasons.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 2,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Trimmed full distributions to the two at-least-8-hour percentages and shortened the adjudication. Retained sport/sleep context and causal boundary. Simplified the key to three reasoning links with disjoint E/P/I guidance.",
+      "numeric_verification": {
+        "validated_table": [
+          [
+            35,
+            15,
+            50
+          ],
+          [
+            75,
+            75,
+            150
+          ],
+          [
+            110,
+            90,
+            200
+          ]
+        ],
+        "within_group_percents": [
+          70.0,
+          30.0,
+          50.0,
+          50.0
+        ],
+        "percentage_point_gap": 20.0,
+        "group_size_ratio": 3.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/2.1-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "2.2",
+      "old_unit": 2,
+      "period_B": "2026-10-15",
+      "title": "Same Responses, Different Questions",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u2_lesson2_live.html",
+        "flashcards": "u2_l2_blooket.csv",
+        "tether": "ai-tutor/u2_l2.md"
+      },
+      "source_sha256": {
+        "dok/lessons/2.2.yaml": "b6580a80831fb6cde52f1afc8ce9a089c4bf6b64bf6b96347ddcd25189e70ccc",
+        "dok/registry/2.2.jsonl": "4d3ab1eaed07edf8783ad63849ad03fabb2011c0d32796c020f0757b80e3a393",
+        "u2_lesson2_live.html": "3f7325c8c5f2645c3baa781fe47d24de40e049ec3fc8919be5495eae5f5fdf3b",
+        "u2_l2_blooket.csv": "5a0f4c7a0bac70ef2a04192794a3d1f03502f139280a6c432a6c4d7b40ae9a00",
+        "ai-tutor/u2_l2.md": "cdf8aec02f70bd62c444fb202c55c3347e295fbb5d933d5541eb6a40e09ccdc1"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 1:19--2:49 computes group-relative percentages; 2:49--4:33 constructs segmented graphs and mosaics; 5:41--7:02 compares distributions for association. Deck distinguishes counts, group proportions, and group sizes; tether UNC-1.P.",
+      "workload_original_to_final": "Six count reads, four percentages, and a separate limitation question for each graph -> two total reads, two percentages plus their gap, and 3--4 sentences on graph choice and the count tradeoff.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Dropped redundant category reads and the second invented limitation question. Stacked the two graphs at full available width after the original side-by-side board graphs made labels and values too small. Shortened the callout and retained equal-height and group-size reasoning.",
+      "numeric_verification": {
+        "totals": [
+          120,
+          60
+        ],
+        "within_grade_percents": [
+          60.0,
+          40.0,
+          30.0,
+          70.0
+        ],
+        "percentage_point_gap": 30.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/2.2-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "2.3",
+      "old_unit": 2,
+      "period_B": "2026-10-16",
+      "title": "Which Pass Rate Answers Which Question?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u2_lesson3_live.html",
+        "flashcards": "u2_l3_blooket.csv",
+        "tether": "ai-tutor/u2_l3.md"
+      },
+      "source_sha256": {
+        "dok/lessons/2.3.yaml": "27fb8e1a416a2ab1985753a6e7fea154904fde723316a9933102ff30701092bc",
+        "dok/registry/2.3.jsonl": "5435389578225bbb68d11027a6e9f56a0b0c9f67d881b3cf6703a29a18abc287",
+        "u2_lesson3_live.html": "1152435f24158fd67e1eec7d2a88cd3b1e6a2a56a29b69f10fcb24fbeba05dd2",
+        "u2_l3_blooket.csv": "29f31c3cd29ec6fe78324e2558ae8c6d3cff6b6455e4e7f029cebb8165d73d20",
+        "ai-tutor/u2_l3.md": "c266742492437a26e432f70026a8525e49d1339b2a814bc822024919de591737"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 1:39--4:05 distinguishes joint and marginal frequencies; 4:33--6:20 chooses row/column denominators; 7:27--8:28 compares conditional distributions. Deck drills denominators and association; tether UNC-1.Q/UNC-1.R. Self-selection/causation is supported by the callout and earlier scheduled study-design work.",
+      "workload_original_to_final": "Four rate/gap calculations and a five-move critique -> two rate checks and one gap using a supplied nonuser rate, plus 3--4 explanatory sentences.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Supplied the 70.7-percent nonuser rate, retained the marginal-versus-conditional dispute, and corrected the original key's reversed subtraction wording: Elena subtracts the overall rate from the user rate. Retained the 17.3-point direct gap and self-selection limit.",
+      "numeric_verification": {
+        "validated_table": [
+          [
+            66,
+            9,
+            75
+          ],
+          [
+            159,
+            66,
+            225
+          ],
+          [
+            225,
+            75,
+            300
+          ]
+        ],
+        "pass_rates": [
+          75.0,
+          88.0,
+          70.66666666666667
+        ],
+        "actual_group_gap": 17.33333333333333,
+        "mixed_group_gap": 13
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/2.3-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.1",
+      "old_unit": 4,
+      "period_B": "2026-10-19",
+      "title": "Can Chance Make a Streak?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson1-2_live.html",
+        "flashcards": "u4_l1_l2_blooket.csv",
+        "tether": "dok/lessons/4.1.yaml:tether"
+      },
+      "source_sha256": {
+        "dok/lessons/4.1.yaml": "e39bd071535c61c72327bf70a0bbb78f6cfca49888b203f2eacaa75375118591",
+        "dok/registry/4.1.jsonl": "ef609e4171878b702e0da46a16de9266076dfbebe1319cff5992b415c4f74118",
+        "u4_lesson1-2_live.html": "53f9904f87e5b41e40351d5ecdc497300701d5c5015c133c82061e238ee79e8d",
+        "u4_l1_l2_blooket.csv": "5440ff107ffb2d647a89d9f8437281250b0ea2e05cbc0fe28471dc136623a8d3"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 4.1 video covers unpredictable outcomes, independent flips, natural streaks and long-run patterns; the paired 4.2 material and matching combined deck show simulation trials, success counts and relative frequency. YAML tether VAR-1.F explicitly warns a pattern need not be nonrandom.",
+      "workload_original_to_final": "Count a dense 100-dot plot, calculate one proportion, design five simulation details and propose a doubt threshold -> two table reads, one proportion, and a 3--4-sentence matched-trial explanation without a threshold.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 1,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Removed the extra significance-like cutoff demand. Replaced overlapping 32-high dot stacks with a neutral frequency table of the identical 100 simulated sets; updated the stem and frames. Reworded the callout in plain simulation language.",
+      "numeric_verification": {
+        "simulation_frequencies": {
+          "2": 22,
+          "3": 32,
+          "4": 25,
+          "5": 14,
+          "6": 7
+        },
+        "simulated_sets": 100,
+        "observed_longest_run": 6,
+        "mode": [
+          3,
+          32
+        ],
+        "run_at_least_six_count": 7,
+        "empirical_probability": 0.07,
+        "exact_fair_coin_probability_for_audit_only": 0.09375
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.1-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.2",
+      "old_unit": 4,
+      "period_B": "2026-10-20",
+      "title": "What Did Each Simulation Estimate?",
+      "verdicts": {
+        "Alignment": "FIX",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson1-2_live.html",
+        "flashcards": "u4_l1_l2_blooket.csv",
+        "tether": "ai-tutor/u4_l2.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.2.yaml": "2975a2c8124e9c1d7c8ec7a7b9c9ca7753ea4d4c14bc8141911f2d471add6177",
+        "dok/registry/4.2.jsonl": "081ebbd2171f83f676f6cf47d2fe694ca4618c2a990dd3696e9d23ec6f945119",
+        "u4_lesson1-2_live.html": "53f9904f87e5b41e40351d5ecdc497300701d5c5015c133c82061e238ee79e8d",
+        "u4_l1_l2_blooket.csv": "5440ff107ffb2d647a89d9f8437281250b0ea2e05cbc0fe28471dc136623a8d3",
+        "ai-tutor/u4_l2.md": "bbee167900a3ea58f87054c65efabf1a7658e8b592e897ebc18036b882ef20c7"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 4.2 videos assign random labels, define a trial, repeat and compute relative frequency; the combined deck drills those steps and the law of large numbers. Tether UNC-2.A. Binomial target-probability calculation is absent at this date.",
+      "workload_original_to_final": "Compare two estimates, diagnose both mismatches, rank expected closeness using an untaught binomial comparison, then repair the design -> two estimates, two mismatch diagnoses, and one corrected trial in 3--4 sentences.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 2,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Removed the requirement to rank which flawed simulation is closer (the old key used binomial probabilities). Kept both student plans and the DOK-3 diagnosis/repair. Removed the callout's explicit 2,3,4,5 answer and used a general event-matching rule.",
+      "numeric_verification": {
+        "estimates": [
+          0.087,
+          0.094
+        ],
+        "assigned_chances": [
+          0.1,
+          0.12
+        ],
+        "target_probability_removed_from_student_demand": 0.11245086719999998,
+        "wrong_chance_target": 0.08146000000000002,
+        "exactly_two_target": 0.09813196799999999
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.2-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.3",
+      "old_unit": 4,
+      "period_B": "2026-10-22",
+      "title": "Probability or Estimate?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "PASS",
+        "Reading": "PASS",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "PASS"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson3-4-5_live.html",
+        "flashcards": "u4_l3_l4_l5_blooket.csv",
+        "tether": "ai-tutor/u4_l3.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.3.yaml": "9823e966b753c4ba2065e84dfb3797b09e7b91a1f8dceebfd3c8f5e9314ca9c3",
+        "dok/registry/4.3.jsonl": "4d23c4f5da48d1d6d2c1eb8f31d1d9754b3ed5ae4ec1be95e775c99710ae706f",
+        "u4_lesson3-4-5_live.html": "0f40feb80062a017fabd00d867ab469b173c3c88aa0041f55e9130b23b0428d1",
+        "u4_l3_l4_l5_blooket.csv": "6070fdc79cef94ad00046d24710e1ccc61c193ed63a73a7d1d7218bcbc934e1c",
+        "ai-tutor/u4_l3.md": "f11cd35e1c322f6940f6ec4a5d9355b3e195b2e45ede6e7cf444a53dbd5b5a4c"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 4.3 introduces sample space, equally likely outcomes, probability bounds, long-run interpretation and complements; its deck repeats those ideas. Previous 4.1--4.2 materials teach empirical probability and law of large numbers, also fully stated in this lesson's callout. Tether VAR-4.A/VAR-4.B.",
+      "workload_original_to_final": "List the sample space and winning subset, count wins and compute observed/model probabilities and a 7.5-point gap, then about five sentences assigning both claims their roles and checking trial count/fairness. Within the ten-minute target with the on-page rules.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "about 5 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 4,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "No content change needed. Verified all 40 plotted outcomes, the 18 wins, both probabilities, and the gap. Inspected both student pages and the board; dots, values and wording are readable, and the key identifies the required evidence.",
+      "numeric_verification": {
+        "frequencies": {
+          "1": 8,
+          "2": 6,
+          "3": 4,
+          "4": 5,
+          "5": 3,
+          "6": 6,
+          "7": 4,
+          "8": 4
+        },
+        "total": 40,
+        "wins": 18,
+        "empirical": 0.45,
+        "model": 0.375,
+        "percentage_point_gap": 7.500000000000001
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.3-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.4",
+      "old_unit": 4,
+      "period_B": "2026-10-23",
+      "title": "Count the Overlap Once",
+      "verdicts": {
+        "Alignment": "FIX",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson3-4-5_live.html",
+        "flashcards": "u4_l3_l4_l5_blooket.csv",
+        "tether": "ai-tutor/u4_l4.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.4.yaml": "6c9907d9c5e05d4efe153691d1e467a23f82719bbb7edc6af57751b2f35fa5f8",
+        "dok/registry/4.4.jsonl": "5da720d31ef0c36a94606cb2d43f12b080fbeee590882ee92ffddb99931049ff",
+        "u4_lesson3-4-5_live.html": "0f40feb80062a017fabd00d867ab469b173c3c88aa0041f55e9130b23b0428d1",
+        "u4_l3_l4_l5_blooket.csv": "6070fdc79cef94ad00046d24710e1ccc61c193ed63a73a7d1d7218bcbc934e1c",
+        "ai-tutor/u4_l4.md": "bf2de11306b57a500e125a49a23ab833936fd941953f1c915dc584e27a0c2967"
+      },
+      "concepts_and_specific_skills_reviewed": "The worksheet's 4.4 section teaches mutually exclusive/disjoint events, intersections, Venn diagrams and nonzero joint probabilities. General unions/addition rule appear in 4.6, later in the worksheet sequence. Tether VAR-4.C.",
+      "workload_original_to_final": "Intersection/union/complement calculations and five separate argument elements including inventing a disjoint pair -> an intersection fraction, two event probabilities, and three sentences diagnosing the duplicate count.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Removed the later union notation/general addition-rule requirement and the extra invented event pair. Students now count the three distinct table cells once, using the day's intersection concept and earlier complement/count rules. Preserved pizza/tacos and Jamie/Noor's double-count dispute.",
+      "numeric_verification": {
+        "validated_table": [
+          [
+            35,
+            25,
+            60
+          ],
+          [
+            45,
+            15,
+            60
+          ],
+          [
+            80,
+            40,
+            120
+          ]
+        ],
+        "intersection_probability": 0.2916666666666667,
+        "union_count": 105,
+        "union_probability": 0.875,
+        "neither_count": 15,
+        "neither_probability": 0.125,
+        "incorrect_sum": 1.1666666666666667
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.4-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.5",
+      "old_unit": 4,
+      "period_B": "2026-10-26",
+      "title": "Which Way Does the Condition Point?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson3-4-5_live.html",
+        "flashcards": "u4_l3_l4_l5_blooket.csv",
+        "tether": "ai-tutor/u4_l5.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.5.yaml": "f2e3ea1107f6ce18fd5a7d3a85803fc23d0c52cf4bba8617e3a14876a42d8740",
+        "dok/registry/4.5.jsonl": "dbb784671c24cab64c7dbad417491f4a82a39232c8131039ac70aecadf8b6558",
+        "u4_lesson3-4-5_live.html": "0f40feb80062a017fabd00d867ab469b173c3c88aa0041f55e9130b23b0428d1",
+        "u4_l3_l4_l5_blooket.csv": "6070fdc79cef94ad00046d24710e1ccc61c193ed63a73a7d1d7218bcbc934e1c",
+        "ai-tutor/u4_l5.md": "ced455566288acc2a42eea96032402ad36df0d2004f11a40ea685cc62bc2f243"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 4.5 teaches the given group, conditional direction, table denominators and multiplication rule; 25--30 show reversed conditional questions. Deck explicitly contrasts P(A|B) with P(B|A). Tether VAR-4.D. Sensitivity/false-positive rate are defined on the sheet.",
+      "workload_original_to_final": "Two conditional calculations and a long explanation with sensitivity/base-rate/true-positive jargon -> the same two fractions with a 3--4-sentence denominator explanation and plain-language frames.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 2,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Replaced Luis's unexplained base-rate phrase and true/false-positive frame labels with students who have/do not have the condition. Kept the screen-test context and conditional reversal. Condensed the correct 45/140 key and three evidence checks.",
+      "numeric_verification": {
+        "validated_table": [
+          [
+            45,
+            5,
+            50
+          ],
+          [
+            95,
+            855,
+            950
+          ],
+          [
+            140,
+            860,
+            1000
+          ]
+        ],
+        "condition_count": 50.0,
+        "no_condition_count": 950.0,
+        "positive_with_condition": 45.0,
+        "positive_without_condition": 95.0,
+        "all_positive": 140,
+        "all_negative": 860,
+        "positive_given_condition": 0.9,
+        "condition_given_positive_percent": 32.142857142857146
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.5-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.6",
+      "old_unit": 4,
+      "period_B": "2026-10-29",
+      "title": "Overlap Does Not Decide Independence",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "FIX",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson6_live.html",
+        "flashcards": "u4_l6_blooket.csv",
+        "tether": "ai-tutor/u4_l6.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.6.yaml": "eea5c5e3d7349df28bbff93f36789a2c9756c317398b4c6bf3da3ed067d66466",
+        "dok/registry/4.6.jsonl": "ecead7b9fa013f81a3905377dde7f818b722b3f1feeafe02670e996385fb9fe7",
+        "u4_lesson6_live.html": "27333073cb65b4657d3c1f517a23f6b89786f7d39f9b4895b3de08350536c1ea",
+        "u4_l6_blooket.csv": "57cf0fefa478024345f3a92e4febf795a1c756527a63765bf5b434caafac441f",
+        "ai-tutor/u4_l6.md": "f4349c22f1a738c139b006356ce1cd223dc3e73d851587b2c30ef5746cf0f3a8"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet video 1 defines independence through unchanged conditional chance and the product check; video 2 teaches union/addition; reflection compares independence and mutual exclusivity. Deck rehearses both tests. Tether VAR-4.E.",
+      "workload_original_to_final": "Four probabilities plus an invented exclusive-but-dependent pair and two extra product checks -> three short probability calculations and three sentences distinguishing overlap from changed chance.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Replaced the before-video independence vocabulary demand with plain chance language. Dropped the invented pair and redundant product extension. Added the missing count-based conditional formula to the callout; retained the 0.70-versus-0.50 independence decision.",
+      "numeric_verification": {
+        "validated_table": [
+          [
+            84,
+            36,
+            120
+          ],
+          [
+            16,
+            64,
+            80
+          ],
+          [
+            100,
+            100,
+            200
+          ]
+        ],
+        "pet": 0.6,
+        "instrument": 0.5,
+        "instrument_given_pet": 0.7,
+        "intersection": 0.42,
+        "union_count": 136,
+        "union": 0.68,
+        "pet_complement_product_removed": 0.24,
+        "independence_product_removed": 0.3
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.6-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.7",
+      "old_unit": 4,
+      "period_B": "2026-10-30",
+      "title": "Average Payoff, Typical Ticket",
+      "verdicts": {
+        "Alignment": "FIX",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson7-8_live.html",
+        "flashcards": "u4_l7_blooket.csv",
+        "tether": "ai-tutor/u4_l7.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.7.yaml": "e211cf7f3417e289c95758983bc5c35ba3c3b93ff967669ccd5721bf7a9b65b2",
+        "dok/registry/4.7.jsonl": "4584be4faa5b6ac236998796c5de57471c6ad89d5bc19828b6de0a517fd4861a",
+        "u4_lesson7-8_live.html": "12e0fbde4735e09b857c72aa52c95962f4535c4157ee9f2b7a0c75a1a6dc0e93",
+        "u4_l7_blooket.csv": "4465d8369fa89f0639d311e59bf2af955586a0406f00603bd1482fbf98c34033",
+        "ai-tutor/u4_l7.md": "0f3a3d203d83f1a1155c6983c7ec5eb757c32d6dfd201bc74b9fcd1d7dd79f8e"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 4.7 videos cover discrete versus continuous variables, valid distributions, shape/center/spread and summed event probabilities. Expected-value calculation belongs to the later 4.8 section and separate 4.8 deck. This day's deck and tether VAR-5.A/VAR-5.B focus on distributions.",
+      "workload_original_to_final": "Probability validation plus two four-term weighted-mean calculations and an individual-buying criterion -> validate the distribution, find the 87.5-percent loss chance, and explain the supplied average versus likely individual outcomes in 3--4 sentences.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 2,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Removed required expected-value notation, weighted-mean computation and a future-lesson net-expectation rubric element. Retained the raffle, Priya's supplied 1.50-dollar average and Mateo's most-tickets claim; students adjudicate using the distribution and 2-dollar cost. Revised frames/callout/teacher directions accordingly.",
+      "numeric_verification": {
+        "ticket_total": 200,
+        "net_values": [
+          98,
+          23,
+          3,
+          -2
+        ],
+        "probability_sum": 1.0,
+        "loss_chance": 0.875,
+        "given_gross_average_verified": 1.5,
+        "net_expectation_removed_from_student_demand": -0.5
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.7-contact.png (local QA artifact)",
+        "teacher_log_note": "One 3.02225pt overfull hbox is reported for the preserved long FRQ identifier. All three teacher pages were rasterized and opened: the identifier remains fully visible with no clipping. Student and board logs have no overfull warnings."
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.8",
+      "old_unit": 4,
+      "period_B": "2026-11-02",
+      "title": "Same Mean, Different Deadline Risk",
+      "verdicts": {
+        "Alignment": "FIX",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson7-8_live.html",
+        "flashcards": "u4_l8_blooket.csv",
+        "tether": "ai-tutor/u4_l8.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.8.yaml": "784dfa7275081285389c845489462cb692ce50362574933603c9a2e243c3c10d",
+        "dok/registry/4.8.jsonl": "d176557d9a1c4cf0fe4eec51d3c50f7e38a4ae2017876b4bafbb5dedcad846c4",
+        "u4_lesson7-8_live.html": "12e0fbde4735e09b857c72aa52c95962f4535c4157ee9f2b7a0c75a1a6dc0e93",
+        "u4_l8_blooket.csv": "be53ea94742857f973ccc4f2d303caae4229e47bfa223ec0e8a869480f11c335",
+        "ai-tutor/u4_l8.md": "c153178bf276f781f83c2e1bde3c1f1e1f0ac90ac70a57e559823bcfb0f111db"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 4.8 computes probability-weighted means and SDs and interprets both in context; deck drills long-run mean and typical deviation. Tether VAR-5.C/VAR-5.D. Transforming random variables is later 4.9 material.",
+      "workload_original_to_final": "Sixteen squared deviations, two means, two SDs and four transformed parameters -> two SD calculations from supplied squared-distance sums, one deadline proportion and 3--4 decision sentences.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Supplied squared-distance sums 72 and 1152, removed the later constant-shift extension, and concentrated the decision on equal means versus deadline risk. Increased both dotplot heights so repeated values separate vertically on paper and board.",
+      "numeric_verification": {
+        "A": {
+          "values": [
+            25,
+            27,
+            29,
+            29,
+            31,
+            31,
+            33,
+            35
+          ],
+          "sum": 240,
+          "mean": 30,
+          "squared_distance_sum": 72,
+          "population_sd": 3.0,
+          "range": [
+            25,
+            35
+          ],
+          "late_probability": 0.0,
+          "shifted_mean_removed": 35,
+          "shifted_sd_removed": 3.0,
+          "shifted_range_removed": [
+            30,
+            40
+          ]
+        },
+        "B": {
+          "values": [
+            10,
+            18,
+            26,
+            26,
+            34,
+            34,
+            42,
+            50
+          ],
+          "sum": 240,
+          "mean": 30,
+          "squared_distance_sum": 1152,
+          "population_sd": 12.0,
+          "range": [
+            10,
+            50
+          ],
+          "late_probability": 0.25,
+          "shifted_mean_removed": 35,
+          "shifted_sd_removed": 12.0,
+          "shifted_range_removed": [
+            15,
+            55
+          ]
+        }
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.8-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.10",
+      "old_unit": 4,
+      "period_B": "2026-11-05",
+      "title": "Rare Is Not Never",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson10-12_live.html",
+        "flashcards": "u4_l10_blooket.csv",
+        "tether": "ai-tutor/u4_l10.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.10.yaml": "2ad87ed8d4a72cbeba9e0b570b6178f3605a6a9245dafeacb381afec714b77d4",
+        "dok/registry/4.10.jsonl": "bd9f11ed397d1df81ebf97ac68d726564ec22838ee0c751c9e96359539cb6088",
+        "u4_lesson10-12_live.html": "4bf06888d88a7dfa5d5c274166944b67dc1e80036c356213612fd1233dd9f031",
+        "u4_l10_blooket.csv": "a27ed87275f35e47bec235970621706e4a990da794f00345c33bfe9938fb56c7",
+        "ai-tutor/u4_l10.md": "9a5980437b73a252034cc44ad11864a0ee159346b21fd2e5bdfd67ec975f83ec"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 4.10 2:51--4:30 teaches BINS and count definition; 4:59--8:00 teaches exact/cumulative probabilities and calculator setup. Deck drills BINS, binompdf/binomcdf and event notation. Tether UNC-3.A/UNC-3.B.",
+      "workload_original_to_final": "Exact probability plus four-term lower-tail sum, four condition checks and a multi-part claim/evidence critique -> one exact probability, a supplied lower tail and 3--4 sentences on claims, one model assumption and useful new data.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 1,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Provided the cumulative probability, trimmed repeated condition enumeration while retaining a substantive assumption judgment, and kept both overconfident free-throw claims. Replaced interval histogram bars with discrete bars centered at integer makes (0 through 10), correcting the half-bin visual displacement.",
+      "numeric_verification": {
+        "combination_10_choose_3": 120,
+        "exactly_three": 0.009001691999999995,
+        "three_or_fewer": 0.010592078399999994,
+        "pmf": [
+          5.9048999999999975e-06,
+          0.00013778099999999996,
+          0.0014467004999999993,
+          0.009001691999999995,
+          0.03675690899999998,
+          0.10291934519999994,
+          0.20012094899999994,
+          0.2668279319999998,
+          0.23347444049999988,
+          0.12106082099999993,
+          0.02824752489999998
+        ],
+        "expected_counts_per_1000": [
+          0.005904899999999998,
+          0.13778099999999996,
+          1.4467004999999993,
+          9.001691999999995,
+          36.756908999999986,
+          102.91934519999994,
+          200.12094899999994,
+          266.8279319999998,
+          233.47444049999987,
+          121.06082099999993,
+          28.24752489999998
+        ]
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.10-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "4.11",
+      "old_unit": 4,
+      "period_B": "2026-11-06",
+      "title": "Unusual Does Not Mean Impossible",
+      "verdicts": {
+        "Alignment": "FIX",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u4_lesson10-12_live.html",
+        "flashcards": "u4_l11_blooket.csv",
+        "tether": "ai-tutor/u4_l11.md"
+      },
+      "source_sha256": {
+        "dok/lessons/4.11.yaml": "ec967a52fce93266827feb012288fdbf3ffd1db78d51b6cee706301bb9d537ce",
+        "dok/registry/4.11.jsonl": "37692967304c28c9b5fc6a5ce069bfba152d548a7d38a7160600b7a73d977891",
+        "u4_lesson10-12_live.html": "4bf06888d88a7dfa5d5c274166944b67dc1e80036c356213612fd1233dd9f031",
+        "u4_l11_blooket.csv": "eaf6e5b07152898109118cd3d6fcc427faefda1dc4b7aa885e08cd40fd42cea7",
+        "ai-tutor/u4_l11.md": "a9e335f403d34dbc5545ac752e87de63fe86e9d4d54cbdb3a387ec14fe27443d"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 4.11 1:58--2:46 calculates/interprets np and sqrt(np(1-p)); the repair-supply example compares a count to mean/SD and uses a supplied tail probability. Deck repeats these skills; tether UNC-3.C/UNC-3.D. Scheduled 1.10 z-scores/normal work is three days later (2026-11-09).",
+      "workload_original_to_final": "Compute mean, SD, z-score, np/nq approximation checks and adjudicate a rare/impossible distinction -> two parameter calculations, a count-distance comparison and a supplied tail probability, with 3--4 sentences.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Removed z-score notation and normal-approximation conditions before scheduled 1.10. Students compare 58 directly with mean 70 and SD about 4.6, using the given positive 0.0072 binomial tail. Preserved the coach/analyst dispute and rare-versus-impossible reasoning.",
+      "numeric_verification": {
+        "mean": 70.0,
+        "variance": 21.0,
+        "sd": 4.58257569495584,
+        "distance_below_mean": 12,
+        "standardized_distance_removed": -2.618614682831909,
+        "approximation_counts_removed": [
+          70,
+          30
+        ],
+        "58_or_fewer": 0.007173562599373469,
+        "fewer_than_60_removed": 0.012498407166438134
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/4.11-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "2.4",
+      "old_unit": 2,
+      "period_B": "2027-02-05",
+      "title": "One Plot, Two Reporting Strategies",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "FIX",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u2_lesson4_live.html",
+        "flashcards": "u2_l4_blooket.csv",
+        "tether": "ai-tutor/u2_l4.md"
+      },
+      "source_sha256": {
+        "dok/lessons/2.4.yaml": "87c5f7539b64837c2261b210c1b1db856405b6603181a9b01e75eb286f787316",
+        "dok/registry/2.4.jsonl": "1b8bdbb5a9ae411a03dc97c5dc17763738cd31915933de32a2f9a9c60d7ebb9c",
+        "u2_lesson4_live.html": "249ef040c612b43ce75d0a91f8d7eb885cd0a283ce078a371eaeca2d42a16ab5",
+        "u2_l4_blooket.csv": "e17850d2559a7754db29045fc97967432ca7e357428f9c703258e9e7c7ef83e8",
+        "ai-tutor/u2_l4.md": "112b0144cf7a0b53b6a755a6a8837fb870f367d686fabfc141507514665ce2b8"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet video 1 identifies explanatory/response axes and ordered pairs; video 2 describes direction, form, strength and unusual features in context. Deck distinguishes positive from linear and strength from rate. Tether UNC-1.S/DAT-1.A.",
+      "workload_original_to_final": "Four arithmetic results including an exact local midpoint from an unlabeled plot, plus six evidence features -> two volume increases with exact input pairs supplied and a 3--4-sentence complete plot description/decision.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 2,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Dropped the unnecessary midpoint benchmark and supplied the exact four measurements needed for arithmetic because the graph ticks cannot show volumes to the nearest mL. Retained the low 50-minute observation, curved growth pattern, two claims and later-growth consequence.",
+      "numeric_verification": {
+        "early_increase": 170,
+        "late_increase": 15,
+        "comparison_volumes": [
+          695,
+          600,
+          750
+        ],
+        "midpoint_removed": 722.5,
+        "midpoint_gap_removed": 122.5
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/2.4-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "2.5",
+      "old_unit": 2,
+      "period_B": "2027-02-08",
+      "title": "What Does This Correlation Support?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "FIX",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u2_lesson5_live.html",
+        "flashcards": "u2_l5_blooket.csv",
+        "tether": "ai-tutor/u2_l5.md"
+      },
+      "source_sha256": {
+        "dok/lessons/2.5.yaml": "a296fbaa686b3425a8cd0eb5a2bea10b8c2bc6728e292160c59b036beb6ba3fd",
+        "dok/registry/2.5.jsonl": "0e82f1a6189035bd410029e2c283ecdea3dc7c3753a38d5dad072c261a2b9bf7",
+        "u2_lesson5_live.html": "9c0d1820d1af1849f7b1ed6011f234500ab685ccd2850ca956152ea7614e4a74",
+        "u2_l5_blooket.csv": "4cc0b542d971c9053620242f6282c234ceddf5eb0321c6fd889e1970a3723dd0",
+        "ai-tutor/u2_l5.md": "530a012ed18fa03a6383aba04104d5ce633ab01310232d74b2b668f442db7212"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 2:01--3:33 interprets correlation sign/magnitude; 5:10--5:49 checks scatterplot form/unusual features and rejects causal inference. Deck drills both limits and uses technology to calculate r. Tether DAT-1.B/DAT-1.C.",
+      "workload_original_to_final": "Enter eight pairs and recalculate a second correlation after removing one, then reconcile them -> both values supplied, no student arithmetic, and a two-sentence plot comparison plus 3--4-sentence recommendation.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 0,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Supplied independently recomputed correlations 0.922 and 0.095 to remove repetitive calculator entry. Replaced unexplained sensitivity-analysis directions with a clearly labeled comparison with one point removed. Retained reporting the full data and the observational causal limit.",
+      "numeric_verification": {
+        "r_full": 0.9223783376951923,
+        "r_first_seven": 0.0949157995752499
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/2.5-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "2.6",
+      "old_unit": 2,
+      "period_B": "2027-02-09",
+      "title": "Two Payloads, One Regression Line",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "PASS",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u2_lesson6_live.html",
+        "flashcards": "u2_l6_blooket.csv",
+        "tether": "ai-tutor/u2_l6.md"
+      },
+      "source_sha256": {
+        "dok/lessons/2.6.yaml": "987d9a7098e7ce26059b9fac4d4d83f696a71fd21b2c17529455da1eec23aacd",
+        "dok/registry/2.6.jsonl": "2c9b67299fd23ad23f0a752f1b38802eaa4cddbadf2f413b1f6ca6d629b513fb",
+        "u2_lesson6_live.html": "9377f550346d3be7d68ebab25dd63bba84ddbe39f3ff8f32b29966af9f418250",
+        "u2_l6_blooket.csv": "aae98ae2a5abd4eb433307cf9d1f1f8c7451fda6d9b0bb5ab387b0fb3666bbad",
+        "ai-tutor/u2_l6.md": "e1b375c769200a77941dfb9f8b81d6128b9e5047f5eb690fc597165bfd0a6155"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet video 1 interprets y-hat=a+bx and makes predictions; video 2 defines extrapolation outside the observed x interval and reduced reliability. Deck contrasts interpolation/extrapolation and prediction/observation. Tether DAT-1.D.",
+      "workload_original_to_final": "Five identifications, slope interpretation, two predictions, classifications, buffer and several approval criteria -> one variable line, two predictions plus buffer, and 3--4 approval sentences with range/evidence links.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Trimmed repeated coefficient interpretation and classification around the safety decision. Kept drone payloads, Ravi/Mina, both predictions, the 1.60-minute predicted surplus and a request for tests near 3.5 kg.",
+      "numeric_verification": {
+        "slope": -6.4,
+        "intercept": 36,
+        "observed_range": [
+          0.5,
+          2.5
+        ],
+        "predictions": [
+          24.479999999999997,
+          13.599999999999998
+        ],
+        "buffer": 1.5999999999999979,
+        "range_gap": 1.0
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/2.6-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "2.7",
+      "old_unit": 2,
+      "period_B": "2027-02-11",
+      "title": "One Line, Two Model Diagnostics",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u2_lesson7_live.html",
+        "flashcards": "u2_l7_blooket.csv",
+        "tether": "ai-tutor/u2_l7.md"
+      },
+      "source_sha256": {
+        "dok/lessons/2.7.yaml": "6ce7f974c1b85c9a41b1f5c74a5ec55a4242ba9438ec34cbb51209c683799829",
+        "dok/registry/2.7.jsonl": "1699859a1b1643d2361787b648e3d5a88c213aee34578b6579306caaa7d75f73",
+        "u2_lesson7_live.html": "69267f8d693ef3906f32cb848ee79a95e3f87a1ccbc94908d40b87eeb2ea40ac",
+        "u2_l7_blooket.csv": "611b47f20a91239e3c48c0ebd8564f675480c939680b774bcf916843a5ae789e",
+        "ai-tutor/u2_l7.md": "fe79a059d59aa2eac5e4555937c12df58a6c92a99f50973bc408b58edca096c9"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet 1:47--3:36 calculates y-yhat and interprets signs; second video 1:47--4:13 judges randomness versus curvature in residual plots. Deck rehearses prediction errors and model fit. Tether DAT-1.E/DAT-1.F; correlation was taught two scheduled lessons earlier.",
+      "workload_original_to_final": "Read three residuals and calculate all three predictions/errors, then reconcile diagnostics, safety, replacement and scope -> one residual read, one prediction/error pair, a short pattern description and four decision sentences.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 2,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Explained residual in the stem so the first take is accessible before its video and changed that prompt to a safety judgment. Reduced repeated arithmetic to the 50-mph error; retained the U-shaped pattern versus r=0.997 and the vehicle/dry-surface limit.",
+      "numeric_verification": {
+        "predictions_at_10_30_50": [
+          15.0,
+          65.0,
+          115.0
+        ],
+        "actual_at_10_30_50": [
+          19.0,
+          61.0,
+          119.0
+        ],
+        "residuals_at_10_30_50": [
+          4,
+          -4,
+          4
+        ],
+        "correlation_reconstructed_from_all_residuals": 0.996815278536125
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/2.7-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    },
+    {
+      "topic": "2.8",
+      "old_unit": 2,
+      "period_B": "2027-02-12",
+      "title": "Which Regression Line Fits?",
+      "verdicts": {
+        "Alignment": "PASS",
+        "Load": "FIX",
+        "Reading": "FIX",
+        "First take": "FIX",
+        "Callout": "PASS",
+        "Visual": "PASS",
+        "Key": "FIX"
+      },
+      "source_materials": {
+        "worksheet": "u2_lesson8_live.html",
+        "flashcards": "u2_l8_blooket.csv",
+        "tether": "ai-tutor/u2_l8.md"
+      },
+      "source_sha256": {
+        "dok/lessons/2.8.yaml": "b5078de4d63052ba0015ebfb84ec1cc04fcdc4bf0ed8646f5d39218653606db1",
+        "dok/registry/2.8.jsonl": "0a062f211ec356549cea33b59d9498d4849f8023432e651e6db392999d634ee9",
+        "u2_lesson8_live.html": "f69aa76679478b91b9b973809345d53ab64490da7343afb10f4adf1c860dfc43",
+        "u2_l8_blooket.csv": "5645a8e0ce0e4416dab14a577b6743c41b262710805a74a09a45618a090fef90",
+        "ai-tutor/u2_l8.md": "ec40a1db4e48fc54cda644e3c0d9b58e3c758b689473fbf842eb08428bdc4110"
+      },
+      "concepts_and_specific_skills_reviewed": "Worksheet video 1 4:28--6:22 establishes least squares, mean point and b=r(sy/sx); video 2 interprets coefficients; video 3 defines r-squared. Deck explicitly distinguishes the SD ratio, mean-point property and response variation. Tether DAT-1.G/DAT-1.H.",
+      "workload_original_to_final": "Four recall properties, at least five calculations and a synthesis spanning units, coefficients, domain, two predictions and two quantified errors -> one mean-point read, slope/intercept/r-squared calculations and 3--4 synthesis sentences.",
+      "final_expected_work": {
+        "a": "one short line",
+        "b": "one short calculation block or 1--2 sentences",
+        "c": "3--4 sentences",
+        "student_computed_results": 3,
+        "required_reasoning_links": 3,
+        "estimated_minutes": "8--10, subject to teacher pacing judgment"
+      },
+      "issue_to_correction": "Trimmed unused intercept-domain and two prediction-error extensions while preserving the two partly correct regression claims. Replaced the pre-video formula/property demand with plain agreement-at-one-point reasoning. Added the missing English-learner sentence frames and shortened the stem.",
+      "numeric_verification": {
+        "mean_point": [
+          7,
+          28
+        ],
+        "slope": 3.2,
+        "intercept": 5.599999999999998,
+        "r_squared": 0.6400000000000001,
+        "wrong_slope": 0.2,
+        "wrong_intercept": 26.6,
+        "mean_point_predictions": [
+          28.0,
+          28.0
+        ],
+        "eight_hour_predictions_removed": [
+          31.200000000000003,
+          28.200000000000003
+        ],
+        "prediction_gap_removed": 3.0,
+        "explained_percentage_point_error_removed": 16
+      },
+      "numeric_reproduction": "python dok/audit-support/numeric-units-2-4.py",
+      "visual_qa": {
+        "method": "pdfinfo; pdftoppm rasterized student pages 1/2 and board page 1; opened contact sheets at original resolution",
+        "editions": {
+          "student": {
+            "pages": 2,
+            "size": "612 x 792 pts (letter)"
+          },
+          "board": {
+            "pages": 1,
+            "size": "792 x 612 pts (letter)"
+          },
+          "teacher": {
+            "pages": 3,
+            "size": "612 x 792 pts (letter)"
+          }
+        },
+        "status": "PASS after listed visual fixes; no clipped student or board content",
+        "contact_sheet": "dok/audit-support/qa-units-2-4/2.8-contact.png (local QA artifact)"
+      },
+      "identity": {
+        "id_preserved": true,
+        "frq_pattern_preserved": true,
+        "problem_replaced": false
+      },
+      "human_flags": []
+    }
+  ],
+  "counts": {
+    "Alignment": {
+      "PASS": 13,
+      "FIX": 5,
+      "FLAG": 0
+    },
+    "Load": {
+      "PASS": 1,
+      "FIX": 17,
+      "FLAG": 0
+    },
+    "Reading": {
+      "PASS": 1,
+      "FIX": 17,
+      "FLAG": 0
+    },
+    "First take": {
+      "PASS": 15,
+      "FIX": 3,
+      "FLAG": 0
+    },
+    "Callout": {
+      "PASS": 8,
+      "FIX": 10,
+      "FLAG": 0
+    },
+    "Visual": {
+      "PASS": 13,
+      "FIX": 5,
+      "FLAG": 0
+    },
+    "Key": {
+      "PASS": 1,
+      "FIX": 17,
+      "FLAG": 0
+    }
+  },
+  "patterns": [
+    "Many prompts bundled repeated calculations and extra extensions around a sound DOK-3 judgment.",
+    "Combined worksheets require attention to their internal lesson order: expected value, transformations, binomial ranking, and z-scores appeared before the relevant daily instruction.",
+    "Board figures and exact arithmetic need independent checks: dense dot stacks overlapped, small graphs shrank, discrete bars were displaced, and exact values were missing from graph-only calculations.",
+    "Short first takes, plain sentence frames, and three explicit reasoning elements make the work more accessible and quicker to hand-score."
+  ],
+  "human_review": [
+    "Try the revised tasks with this class to confirm the 8--10-minute reading/writing estimate.",
+    "Check the final board PDFs from the actual back-row viewing distance; raster QA confirms legibility and layout at document scale, not classroom projection conditions."
+  ]
+}

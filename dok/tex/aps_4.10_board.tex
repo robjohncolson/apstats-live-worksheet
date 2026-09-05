@@ -12,37 +12,12 @@
 
 \noindent\begin{minipage}[t]{0.57\linewidth}
 \vspace{0pt}
-Suppose a basketball player has made 70 percent of her free throws over a long career. Tonight she makes 3 of 10 attempts. Let $X$ be the number she would make in 10 attempts if her chance on each shot were still 0.70. The graph shows the binomial model as expected frequencies per 1,000 sets of 10 shots.\par\smallskip \textbf{Claim A:} ``She is in a slump---making only 3 of 10 never happens at her career rate.''\par \textbf{Claim B:} ``With only 10 shots, 3 makes is ordinary chance variation.''\par
+Suppose a basketball player has made 70 percent of her free throws over a long career. Tonight she makes 3 of 10 attempts. Let $X$ be the number she would make in 10 attempts if her chance on each shot were still 0.70. The graph shows the binomial model as expected frequencies per 1,000 sets of 10 shots.\par\smallskip \textbf{Claim A:} ``She is in a slump---making only 3 of 10 never happens at her career rate.''\par \textbf{Claim B:} ``With only 10 shots, 3 makes is ordinary chance variation.''\par Under this model, technology gives $P(X\leq3)=0.0106$ for 3 or fewer makes.\par
 \end{minipage}\hfill
 \begin{minipage}[t]{0.40\linewidth}
 \vspace{0pt}
 \begin{center}
-\begin{tikzpicture}
-\begin{axis}[
-  width=0.85\linewidth,
-  height=2.30in,
-  ybar interval, ymin=0, ymax=268.828,
-  xmin=0, xmax=11, xtick={0,1,2,3,4,5,6,7,8,9,10,11},
-  xlabel={Number of made shots, $X$}, ylabel={Expected count per 1,000},
-  ymajorgrids, tick label style={font=\small}, label style={font=\small},
-  bar shift=0pt, x tick label as interval=false
-]
-\addplot[fill=calloutblue, draw=dayblue] coordinates {
-  (0,0.006)
-  (1,0.138)
-  (2,1.447)
-  (3,9.002)
-  (4,36.757)
-  (5,102.919)
-  (6,200.121)
-  (7,266.828)
-  (8,233.474)
-  (9,121.061)
-  (10,28.248)
-  (11,0)
-};
-\end{axis}
-\end{tikzpicture}
+\begin{tikzpicture}\begin{axis}[width=0.95\linewidth,height=1.8in,ybar,bar width=7pt,xmin=-0.6,xmax=10.6,ymin=0,ymax=290,xtick={0,1,2,3,4,5,6,7,8,9,10},ytick={0,100,200},xlabel={Made shots},ylabel={Count per 1,000},tick label style={font=\small},label style={font=\small},ymajorgrids]\addplot[fill=calloutblue,draw=dayblue] coordinates {(0,0.006) (1,0.138) (2,1.447) (3,9.002) (4,36.757) (5,102.919) (6,200.121) (7,266.828) (8,233.474) (9,121.061) (10,28.248)};\end{axis}\end{tikzpicture}
 \end{center}
 \end{minipage}
 
@@ -51,9 +26,9 @@ Which claim, if either, do you trust more? Cite one detail from the result or gr
 \end{firsttakebox}
 
 \begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
-  \item[\dokbadge{1}~(a)] Define the random variable $X$ in context, state $n$ and $p$, and write a probability expression for exactly 3 makes.
-  \item[\dokbadge{2}~(b)] Calculate $P(X=3)$ using the binomial probability formula and interpret the result in context.
-  \item[\dokbadge{3}~(c)] Check all four binomial conditions for this model, explicitly assessing whether independence is plausible. Then compute $P(X\leq3)$ and adjudicate Claims A and B: which claim, if either, is warranted, and why? State what additional shooting evidence would change your conclusion.
+  \item[\dokbadge{1}~(a)] State what $X$ counts, and give $n$ and $p$.
+  \item[\dokbadge{2}~(b)] Calculate $P(X=3)$ using the binomial formula. Explain how this event differs from $X\leq3$.
+  \item[\dokbadge{3}~(c)] Is either claim fully supported? Use the given chance of 3 or fewer makes to explain what each claim gets wrong. Name one reason independence or the same success chance might fail, and one kind of new evidence that would help. Write 3--4 sentences.
 \end{description}
 
 \vfill
