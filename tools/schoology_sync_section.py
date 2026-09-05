@@ -438,12 +438,36 @@ def build_component_scope(
 # Assignment-creation helpers
 # ---------------------------------------------------------------------------
 
+def _normalize_category_name(name: str) -> str:
+    """Case/plural/space-insensitive key: 'Quizzes', 'quiz', 'Quiz ' -> 'quiz'."""
+    key = " ".join(str(name or "").lower().split())
+    if len(key) <= 3:
+        return key
+    if key.endswith("zzes"):            # quizzes -> quiz
+        return key[:-3]
+    if key.endswith(("ches", "shes", "xes", "sses")):   # matches, boxes, classes
+        return key[:-2]
+    if key.endswith("s"):               # posters -> poster, lessons -> lesson
+        return key[:-1]
+    return key
+
+
 def _resolve_category_id(cats: dict, kind: str) -> str | None:
-    """Map kind -> category_name -> category_id from live Schoology categories."""
+    """Map kind -> category_name -> category_id from live Schoology categories.
+
+    Exact name first; then a tolerant match so a teacher-typed "Quiz" still
+    resolves the sync's "Quizzes" (SY26-27 Period E was created that way).
+    """
     category_name = lib.KIND_TO_CATEGORY.get(kind)
     if category_name is None:
         return None
-    return cats.get(category_name)
+    if category_name in cats:
+        return cats[category_name]
+    wanted = _normalize_category_name(category_name)
+    for live_name, cat_id in cats.items():
+        if _normalize_category_name(live_name) == wanted:
+            return cat_id
+    return None
 
 
 def _ensure_assignment(

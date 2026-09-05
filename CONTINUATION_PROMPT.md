@@ -61,7 +61,11 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   the empty "Derrick Jimenez" dupe (`pomelo_eagle`) ARCHIVED — the account with work already had Schoology's spelling
   "Dereck Jimenez" (`avocado_koala`, uid set); Wedgina Tranchant MOVED PeriodE → PeriodB (Schoology Section 1);
   Andrew Barrios ENROLLED in PeriodE (`guava_fox`, uid 120126061; credentials sheet left in the teacher's %TEMP%).
-  **Roster == Schoology: PeriodB 13/13 mapped, PeriodE 15/15 mapped.** Next Schoology steps: configure the
+  **Roster == Schoology: PeriodB 13/13 mapped, PeriodE 15/15 mapped.** DRY RUNS DONE 2026-09-04 (both sections, new course ids): B 185 scope items / 174 grade targets deferred, E 286
+  deferred, 0 errors — nothing is due before 09-08. Categories: **PeriodE has all five** (named "Quiz", so
+  `_resolve_category_id` is now case/plural-tolerant — `TestCategoryNameTolerance`); **PeriodB has NONE yet** (teacher
+  thought she had done B; it was E). Syllabus: `syllabus/apstats-syllabus-sy2627.{tex,pdf}` (2 pages; grading rule, calendar,
+  daily flow, tools; district-policy addendum deliberately omitted for now). Next Schoology steps: configure the
   weighted categories on BOTH new sections (Lesson 15 / Quizzes 15 / Posters 15 / Blooket 5 / PC 50 — the old Sec 1
   setup does not carry over), verify SY26-27 marking periods exist, then
   `powershell -File tools/daily_schoology_sync.ps1 -Section PeriodB` (dry-run) → review → `-Live` → register the daily task.

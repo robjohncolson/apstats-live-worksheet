@@ -987,3 +987,26 @@ if __name__ == "__main__":
     else:
         print("  -- ALL PASS")
         sys.exit(0)
+
+
+import schoology_sync_section as sync  # noqa: E402  (tolerant category resolver)
+
+
+class TestCategoryNameTolerance(unittest.TestCase):
+    """SY26-27 Period E was created with 'Quiz'; the sync's kind table says 'Quizzes'."""
+
+    def test_exact_name_wins(self):
+        cats = {"Quizzes": "1", "Quiz": "2"}
+        self.assertEqual(sync._resolve_category_id(cats, "quiz"), "1")
+
+    def test_singular_and_case_tolerant(self):
+        cats = {"Blooket": "97110661", "Lesson": "97110595", "Posters": "97110658",
+                "Progress Check": "97110670", "Quiz": "97110656"}
+        self.assertEqual(sync._resolve_category_id(cats, "quiz"), "97110656")
+        self.assertEqual(sync._resolve_category_id(cats, "poster"), "97110658")
+        self.assertEqual(sync._resolve_category_id({"progress check": "9"}, "progress_check"), "9")
+        self.assertEqual(sync._resolve_category_id({"LESSONS": "7"}, "lesson"), "7")
+
+    def test_unknown_stays_none(self):
+        self.assertIsNone(sync._resolve_category_id({"Homework": "3"}, "quiz"))
+        self.assertIsNone(sync._resolve_category_id({}, "nope"))

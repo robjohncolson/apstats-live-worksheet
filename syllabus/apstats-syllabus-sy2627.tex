@@ -1,0 +1,146 @@
+% syllabus/apstats-syllabus-sy2627.tex — AP Statistics course syllabus, Lynn English High School, SY 2026–27.
+% Build: cd syllabus && pdflatex --miktex-enable-installer apstats-syllabus-sy2627.tex (twice)
+% Facts come from the repo: roster-server/grade-config.js (weights, gates, quarters), SCHEDULE_HANDOFF.md
+% (calendar, meeting days, exam date), APS_DOK_LADDER_SPEC.md (the daily flow), start-here.html (the promise).
+\documentclass[10pt]{article}
+\usepackage[letterpaper,margin=0.7in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue!60!black, linkcolor=black}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\definecolor{dayblue}{HTML}{2B5C8A}
+\definecolor{callout}{HTML}{EAF1F8}
+\definecolor{warm}{HTML}{FCEAE8}
+\definecolor{warmred}{HTML}{C0392B}
+
+\newcommand{\banner}[1]{%
+  \vspace{4pt}\begin{tcolorbox}[enhanced, boxrule=0pt, arc=1pt, colback=dayblue, left=6pt, right=6pt, top=3pt, bottom=3pt]
+  {\color{white}\bfseries\large #1}\end{tcolorbox}\vspace{-2pt}}
+
+\pagestyle{empty}
+\begin{document}
+
+{\LARGE\bfseries AP Statistics}\hfill{\large Lynn English High School \textperiodcentered\ 2026--27}\\
+{\large Mr.~Colson}\hfill{\small Period B (Mon/Tue/Thu/Fri) \textperiodcentered\ Period E (Mon/Wed/Fri)}\\
+{\small Class site: \url{https://robjohncolson.github.io/apstats-live-worksheet/} \textperiodcentered\ AP Exam: Tuesday, May 11, 2027}
+\vspace{2pt}\hrule
+
+\banner{What this course is}
+AP Statistics is a college-level course in collecting data, describing it, and using it to decide what is true.
+It follows the College Board's Fall 2026 Course and Exam Description in five units, in this order:
+
+\begin{enumerate}[leftmargin=1.6em, itemsep=1pt, topsep=2pt]
+  \item Exploring One-Variable Data \& Collecting Data
+  \item Probability, Random Variables \& Sampling Distributions
+  \item Inference for Proportions \& Categorical Data
+  \item Inference for Means
+  \item Exploring Two-Variable Data (Regression)
+\end{enumerate}
+After the exam we keep going with ``Beyond the Exam'' topics that are worth knowing even though they are not tested.
+
+\banner{My promise to you}
+\begin{tcolorbox}[enhanced, colback=callout, colframe=dayblue, boxrule=0.6pt, arc=2pt, left=7pt, right=7pt, top=4pt, bottom=4pt]
+\textbf{A grade should tell the truth about what you know.} One rough test day should not outweigh everything you can
+actually do. This class is mastery-based and the door back is always open: fall behind, have a bad week, bomb a check,
+and you can still go back, fix it, and show it again. Anyone here can earn full marks by finishing the loop: learn it, show
+it, and where it is shaky, fix it and show it again. My job is to keep that path clear and keep it open.
+\end{tcolorbox}
+
+\banner{What a class period looks like}
+\begin{enumerate}[leftmargin=1.6em, itemsep=1pt, topsep=2pt]
+  \item \textbf{The problem goes on the board at the bell.} You get a paper sheet with one real statistics problem on it.
+        Before anything is taught, you write a one-sentence \emph{first take}. No wrong answers yet.
+  \item \textbf{The lesson video and follow-along.} On your Chromebook you open the day's lesson on the class site, watch the
+        video, and fill in the follow-along worksheet as you go. The watching isn't the learning; the doing is.
+  \item \textbf{Finish the problem.} With the video done and the rules printed on your sheet, you finish parts (a), (b), (c).
+        Part (c) always asks you to \emph{decide something and defend it}: which claim the data support, which method is
+        right, what a reader would get wrong. That is the thinking the AP exam rewards.
+  \item \textbf{Turn the sheet in.} I read every one and hand it back. This sheet is the one piece of work each day that is
+        graded by me, by hand, not by software.
+\end{enumerate}
+The lesson quiz and the flashcard round (Blooket) come after the video, in class when there is time, otherwise at home.
+
+\banner{Tools you will use}
+\begin{itemize}[leftmargin=1.4em, itemsep=1pt, topsep=2pt]
+  \item \textbf{The Desk} on the class site: your home page. It shows today's lesson, what is due, your grade, and every resource.
+  \item \textbf{Follow-along worksheets}: fill-in-the-blank while you watch, with reflection questions graded by an AI reader
+        against a rubric. You can revise a worksheet any time, and a revision can only raise your score.
+  \item \textbf{Lesson quizzes}: short, AP-style, with partial credit. A wrong answer is the most useful thing on the page.
+  \item \textbf{Flashcards}: a quick Blooket on each lesson. Score 80\% or better to unlock the next lesson.
+  \item \textbf{The TI-84 trainer}: calculator fluency is a skill you build. The trainer turns it into muscle memory.
+  \item \textbf{Progress Checks}: in class, on paper, paced like the real exam, one per unit.
+\end{itemize}
+
+\banner{How your grade is computed}
+Your quarter grade comes from two tracks, so that the grade rewards \emph{either} steady work \emph{or} demonstrated mastery,
+whichever is stronger.
+
+\begin{center}\small
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{Track} & \textbf{What is in it} & \textbf{Weight inside the track} \\
+\midrule
+Work & Lessons (follow-along worksheets)   & 30\% \\
+     & Lesson quizzes                      & 30\% \\
+     & Posters (one per unit)              & 30\% \\
+     & Flashcards (Blooket)                & 10\% \\
+\midrule
+Mastery & Progress Checks (in class, paper, exam-paced) & 100\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tcolorbox}[enhanced, colback=callout, colframe=dayblue, boxrule=0.6pt, arc=2pt, left=7pt, right=7pt, top=4pt, bottom=4pt]
+\textbf{The rule.} If both tracks are at least 40\%, your quarter grade is the \textbf{higher} of the two.
+If either track is below 40\%, the grade is the best of: 70\% of your Progress Check average, 70\% of your work average,
+or the plain average of the two. Until the first Progress Check of a quarter exists, your grade is simply your work track.
+\end{tcolorbox}
+
+\begin{itemize}[leftmargin=1.4em, itemsep=1pt, topsep=2pt]
+  \item \textbf{Due dates.} A lesson counts toward the work track once its class day has passed. Undone work that is past due
+        counts as zero until you do it; the moment you do it, it counts. Nothing is ever locked.
+  \item \textbf{Early finish bonus.} Finish a lesson (80\% or more of it) before its class day and you earn one bonus point on
+        that lesson, up to five per quarter.
+  \item \textbf{Progress Checks are required.} Skip one after it is due and your grade is capped until you take it. Walk in
+        with the work done and it is upside, not a threat.
+  \item \textbf{Revisions and appeals.} Worksheets can be revised at any time; AI grading only ever raises a score, and you can
+        appeal a rubric score up to three times with your reasoning.
+  \item \textbf{Schoology} mirrors these grades in five categories (Lesson, Quizzes, Posters, Blooket, Progress Check) and is
+        updated from the class gradebook. The class gradebook on the Desk is the calculation of record; if the two ever
+        disagree, ask me and I will fix it.
+\end{itemize}
+
+\banner{Calendar}
+\begin{center}\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Quarter 1} & Sep 2 -- Nov 6 & \textbf{Quarter 3} & Jan 25 -- Apr 14 \\
+\textbf{Quarter 2} & Nov 9 -- Jan 22 & \textbf{Quarter 4} & Apr 15 -- Jun 17 \\
+\bottomrule
+\end{tabular}
+\end{center}
+The AP Exam is \textbf{Tuesday, May 11, 2027}. Everything after it is Beyond-the-Exam material and review.
+
+\banner{What I ask of you}
+\begin{itemize}[leftmargin=1.4em, itemsep=1pt, topsep=2pt]
+  \item Do the work honestly, and don't move on while something is broken.
+  \item Bring a pencil every day; the daily problem is on paper. Bring your Chromebook charged; the lesson is on it.
+  \item Use the AI tutor and the AI grader as coaches. The paper sheet you turn in is your own hand and your own thinking.
+  \item Treat a weak quiz as information, not a verdict. Go back, shore it up, keep going.
+  \item Show up for the Progress Check. It is the one thing on the calendar that cannot move.
+\end{itemize}
+
+\vspace{6pt}
+\begin{tcolorbox}[enhanced, colback=warm, colframe=warmred, boxrule=0.6pt, arc=2pt, left=7pt, right=7pt, top=4pt, bottom=4pt]
+\small\textbf{Questions?} Ask in class, message me through the Desk, or find me in my room before school.
+\end{tcolorbox}
+
+\end{document}

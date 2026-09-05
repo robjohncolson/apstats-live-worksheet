@@ -113,3 +113,8 @@ dok/tex/*.log
 dok/tex/*.out
 dok/tex/*.pdf
 dok/tex/*.synctex.gz
+
+# syllabus: LaTeX byproducts (the PDF IS committed)
+syllabus/*.aux
+syllabus/*.log
+syllabus/*.out
