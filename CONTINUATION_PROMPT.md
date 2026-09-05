@@ -83,6 +83,12 @@ unit/topic, pytest 471 vs 404 — and it was already live); the Athena run is pr
   MOST of its lessons (was: latest lesson) — old Unit 1 no longer sinks into Q2 because 1.10 (Normal → CED 2.11) is in
   November; Q1 gradebook shows the first month again. m2b goldens regenerated; bundle regenerated. Dashboard quarter
   buttons now read "Q1 · CED U1" (from `pcUnits`; Q4 → "after the exam") instead of "Q4 · U9".
+- ⏭ SPEC written, not built: `SCHEDULE_PACKING_SPEC.md` (teacher's ask 2026-09-05): measured all 147 videos (1,167 min,
+  `data/video-minutes.json`); packing consecutive same-NEW-unit topics under ≤3 videos + ≤30 min turns 87 lesson days into
+  67 → Q1 banks Units 1 AND 2 for both periods, core done Jan 7 (B) / Feb 12 (E). Build = pacing groups in the Desk def +
+  generator flattening + calendar relabel to NEW CED codes/colours. Teacher decisions in §3 (rule A vs B; DOK sheet on a
+  doubled day = the last topic's; freed days = slack). Sim script pattern: extract `d()`/pacing/SCHEDULE_DEFS from the Desk
+  into a `vm` context with R/OFF/EX/PO/NC stubbed.
 - ⏭ SPEC written, not built: `WALLET_LOADING_SPEC.md` — paste the generator's KEYS CSV into a dashboard modal, assign
   wallets in one click, addresses via the existing write, **private keys kept AES-encrypted (teacher custody — P8
   relaxed by the teacher's decision)** with a teacher-only reveal for reprints; camera QR scan for one-offs; migration 0035
