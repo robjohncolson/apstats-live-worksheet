@@ -1,5 +1,11 @@
 # WALLET_GENERATE_EXPORT_SPEC.md — generate wallets in the dashboard, and print every held key as a QR sheet
 
+> **Later policy update (2026-09-05):** The teacher explicitly requested student
+> access to their own printable wallet. [Student wallet printing](state/student-wallet-print-BUILD.md)
+> documents the authenticated, confirmed single-wallet exception. The teacher-only
+> statements below describe the original generation/export scope; class export
+> and wallet management remain teacher-only.
+
 **Purpose:** `WALLET_LOADING_SPEC.md` (shipped 2026-09-05) loads paper wallets the node generated. The teacher's follow-up:
 (1) generate the wallets **in the app** instead of on the node, and (2) an **export** that produces a PDF with every
 student's keys and QR codes. This addendum adds both on top of the shipped custody layer; nothing in it changes how a

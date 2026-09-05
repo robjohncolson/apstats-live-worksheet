@@ -292,14 +292,16 @@ describe('teacher wallet print controls', () => {
     expect(h.doc.querySelector('input[readonly]')).toBeNull();
   });
 
-  it('loads print scripts and controls only on the teacher dashboard', () => {
+  it('shares print assets while keeping class print controls on the teacher dashboard', () => {
     const desk = readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8');
     expect(DASH).toContain('id="wallet-print-btn"');
     expect(DASH).toContain('_walletLoader.openPrint()');
     for (const file of ['js/wallet-print-sheets.js', 'vendor/qrcode-generator/qrcode-2.0.4.js']) {
       expect(DASH).toContain('src="' + file + '"');
-      expect(desk).not.toContain('src="' + file + '"');
+      expect(desk).toMatch(new RegExp('src="' + file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:\\?[^"\\s]*)?"'));
     }
+    expect(desk).not.toContain('id="wallet-print-btn"');
+    expect(desk).not.toContain('_walletLoader.openPrint()');
   });
 });
 

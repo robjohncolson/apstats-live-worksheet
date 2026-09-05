@@ -1,5 +1,9 @@
 # Codex prompt — in-app wallet generation + printable key/QR export — 2026-09-05
 
+> Follow-up: the teacher subsequently authorized students to print their own
+> wallet. See [student-wallet-print-BUILD.md](student-wallet-print-BUILD.md) for
+> this narrow exception to the original teacher-only reveal policy below.
+
 Repo `C:/Users/rober/Downloads/Projects/school/follow-alongs` (Windows; forward slashes; `node`, `python` on PATH).
 **Plan first** (`state/wallet-generate-export-PLAN.md`), then implement `WALLET_GENERATE_EXPORT_SPEC.md` phases 1–4 in
 order. **Never push**; commit per phase; report hashes and test counts. Custody policy is fixed: teacher-only, encrypted at

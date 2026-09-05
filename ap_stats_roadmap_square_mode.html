@@ -2612,6 +2612,9 @@
 <script src="pwa-register.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script type="module" src="js/student-wallet.js"></script>
+<script src="vendor/qrcode-generator/qrcode-2.0.4.js"></script>
+<script src="js/wallet-print-sheets.js?v=student-print-1"></script>
+<script src="js/student-wallet-print.js"></script>
 <script src="lib/qrcode.min.js"></script>
 <script src="canvas_engine.js"></script>
 <script src="sprite_sheet.js"></script>
@@ -8306,6 +8309,7 @@ var _gradeLastRenderedState = 'unknown'; // D7: detects an unavailable->availabl
 // data. signOutStudent() already reloads the page (a stronger reset), so it
 // does not need this call.
 function _resetGradeStateForIdentitySwitch() {
+  if (window.StudentWalletPrint) window.StudentWalletPrint.clear();
   try {
     if (_gradeRetryTimer) { clearTimeout(_gradeRetryTimer); _gradeRetryTimer = null; }
     _gradeRetryCount = 0;
@@ -16069,11 +16073,13 @@ function _dogeWalletRender(box, w, pts) {
 
     // ── Header: title + a ▸ Details disclosure (the app's existing collapser idiom) ──
     var hdr = document.createElement('div');
-    hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px';
+    hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap';
     var title = document.createElement('span');
     title.className = 'chicago'; title.style.cssText = 'font-size:11px;color:#5a4500';
     title.textContent = '🍬 Candy & DOGE';
     hdr.appendChild(title);
+    // Available even before the student's assigned wallet receives its first deposit.
+    if (window.StudentWalletPrint) window.StudentWalletPrint.attach(hdr, w);
 
     var hasWalletOnboarding = !w.dogeAddress && Boolean(
         w.studentWalletOptInEnabled || w.proposedAddressMasked || w.proposalRejectionReason
@@ -16337,6 +16343,7 @@ function _studentWalletOnboardingAllowed(wallet) {
     return true;
 }
 function _clearStudentWalletCeremony() {
+    if (window.StudentWalletPrint) window.StudentWalletPrint.clear();
     var cleanup = window.__studentWalletCeremonyCleanup;
     window.__studentWalletCeremonyCleanup = null;
     if (typeof cleanup === 'function') {

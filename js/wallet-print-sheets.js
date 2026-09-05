@@ -1,13 +1,16 @@
-// Teacher-only printable wallets. Private material stays in the print window.
+// Printable wallets. Private material stays in the print window.
 (function (root) {
   'use strict';
 
   const SVG = 'http://www.w3.org/2000/svg';
   const WARNING = "Handle offline. Each card's private key controls real money. " +
     'Print, cut, hand out — then delete this file or move it to an offline drive. ' +
-    'Student surfaces use only the address (green). Import a private key only into ' +
+    'Students can print their own wallet sheet. Keep all private keys confidential. Import a private key only into ' +
     'your trusted teacher-custody dashboard or wallet software. ' +
     'Test on testnet before funding mainnet.';
+  const STUDENT_WARNING = 'Keep this sheet sealed in a safe place. Never share ' +
+    'the private key or its QR code. Anyone with the private key can spend ' +
+    'this wallet’s DOGE. Your teacher keeps a backup. If you save a PDF, keep it private too.';
   const STYLE = `
     @page { size: letter; margin: 0.6in; }
     * { box-sizing: border-box; }
@@ -29,6 +32,9 @@
     .warning strong { display: block; margin-bottom: 7px; font-size: 14px; }
     .wallet-cover { padding-top: 1in; }
     .wallet-cover p { font-size: 18px; margin: 24px 0; overflow-wrap: anywhere; }
+    .wallet-print-controls { max-width: 7.3in; margin: 0 auto 20px; }
+    .wallet-print-controls button { padding: 10px 14px; font: 16px Arial, sans-serif; }
+    @media print { .wallet-print-controls { display: none; } }
     @media screen {
       body { background: #eee; padding: 20px; }
       .wallet-sheet, .wallet-cover { background: white; width: 7.3in; max-width: 100%; padding: 24px; margin: 0 auto 20px; }
@@ -82,7 +88,7 @@
     return field;
   }
 
-  function walletPage(doc, wallet) {
+  function walletPage(doc, wallet, audience) {
     if (!wallet || typeof wallet.address !== 'string' || !wallet.address || typeof wallet.wif !== 'string' || !wallet.wif) {
       throw new Error('Incomplete wallet.');
     }
@@ -93,7 +99,11 @@
     page.appendChild(walletField(doc, 'Address (public — fund this, watch-only):', wallet.address, 'public-address', 'Public address QR'));
     page.appendChild(walletField(doc, '⚠ Private key (KEEP SECRET — controls the coins):', wallet.wif, 'private-key', 'Private key QR'));
     const warning = textElement(doc, 'div', '', 'warning');
-    warning.append(textElement(doc, 'strong', 'Anyone with this key owns the coins.'), textElement(doc, 'span', WARNING));
+    const student = audience === 'student';
+    warning.append(
+      textElement(doc, 'strong', student ? 'Anyone with this key can spend the coins.' : 'Anyone with this key owns the coins.'),
+      textElement(doc, 'span', student ? STUDENT_WARNING : WARNING)
+    );
     page.appendChild(warning);
     return page;
   }
@@ -116,7 +126,7 @@
       );
       doc.body.appendChild(cover);
     }
-    for (const wallet of wallets) doc.body.appendChild(walletPage(doc, wallet));
+    for (const wallet of wallets) doc.body.appendChild(walletPage(doc, wallet, options.audience));
   }
 
   function forgetWalletKeys(wallets) {
@@ -126,7 +136,7 @@
     }
   }
 
-  function open() {
+  function open(options = {}) {
     if (typeof root.qrcode !== 'function') throw new Error('Wallet print tools did not load. Reload this page.');
     let popup = root.open('', '_blank');
     if (!popup || popup.closed) throw new Error('Allow popups for this page, then try printing again.');
@@ -134,6 +144,9 @@
     let pending = null;
     let frame = null;
     let timer = null;
+    let isCurrent = typeof options.isCurrent === 'function' ? options.isCurrent : null;
+    let closeButton = null;
+    options = null;
 
     function isClosed() {
       return !popup || popup.closed;
@@ -156,6 +169,8 @@
     function clear() {
       cancelSchedule();
       finish(false);
+      isCurrent = null;
+      removeCloseControl();
       root.removeEventListener('pagehide', close);
       if (!popup) return;
       try {
@@ -174,12 +189,45 @@
       if (closeWindow) closeWindow();
     }
 
+    function hasCurrentSession() {
+      if (isClosed()) return false;
+      try {
+        return !isCurrent || isCurrent() === true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function removeCloseControl() {
+      if (!closeButton) return;
+      closeButton.removeEventListener('click', close);
+      closeButton = null;
+    }
+
+    function addCloseControl() {
+      const doc = popup.document;
+      const controls = textElement(doc, 'div', '', 'wallet-print-controls');
+      closeButton = textElement(doc, 'button', 'Done — close wallet sheet');
+      closeButton.type = 'button';
+      closeButton.addEventListener('click', close);
+      controls.append(
+        closeButton,
+        textElement(doc, 'p', 'After printing or saving your PDF, close this sheet to clear the private key from this window.')
+      );
+      doc.body.prepend(controls);
+    }
+
     function printReady() {
       cancelSchedule();
       if (isClosed()) { clear(); return; }
+      if (!hasCurrentSession()) { close(); return; }
       try {
         popup.focus();
+        // Focusing the window can dispatch events that invalidate the student.
+        if (!hasCurrentSession()) { close(); return; }
         popup.print();
+        // Mobile print dialogs may outlive this call and even afterprint.
+        // Keep the document until the student explicitly closes it.
         finish(true);
       } catch (_) {
         const reject = pending && pending.reject;
@@ -206,7 +254,10 @@
     function print(wallets, options = {}) {
       try {
         if (isClosed() || pending) throw new Error('Print window unavailable.');
+        if (!hasCurrentSession()) { close(); return Promise.resolve(false); }
+        removeCloseControl();
         renderPrintDocument(popup.document, wallets, options);
+        if (options.audience === 'student') addCloseControl();
       } catch (_) {
         close();
         throw new Error('Wallet sheets could not be prepared. Try printing again.');

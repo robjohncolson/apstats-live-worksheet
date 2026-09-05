@@ -192,7 +192,7 @@ describe('wallet print sheets', () => {
       for (const field of ['realName', 'section', 'label', 'address', 'wif']) expect(page.textContent).toContain(wallet[field]);
       expect(page.textContent).toContain("Handle offline. Each card's private key controls real money.");
       expect(page.textContent).toContain('Print, cut, hand out — then delete this file or move it to an offline drive.');
-      expect(page.textContent).toContain('Student surfaces use only the address (green).');
+      expect(page.textContent).toContain('Students can print their own wallet sheet. Keep all private keys confidential.');
       expect(page.textContent).toContain('Anyone with this key owns the coins.');
       const outside = doc.documentElement.cloneNode(true);
       outside.querySelectorAll('.wallet-sheet')[index].remove();
@@ -204,6 +204,7 @@ describe('wallet print sheets', () => {
     expect(h.indexedDbOpen).not.toHaveBeenCalled();
     expect(h.root.fetch).not.toHaveBeenCalled();
     expect(doc.querySelector('script, img, link, iframe')).toBeNull();
+    expect(doc.querySelector('.wallet-print-controls')).toBeNull();
     h.frame();
     expect(h.popup.print).not.toHaveBeenCalled();
     h.frame();
@@ -235,6 +236,100 @@ describe('wallet print sheets', () => {
     expect(await printing).toBe(true);
     expect(h.popup.print).toHaveBeenCalledOnce();
     session.close();
+  });
+
+  it.each(['return', 'early afterprint', 'later afterprint'])('retains a student sheet after print %s until Done clears its keys', async completedBy => {
+    const h = printHarness();
+    const wallets = printWallets().slice(0, 1);
+    const { address, wif } = wallets[0];
+    const session = h.root.WalletPrintSheets.open({ isCurrent: () => true });
+    const printing = session.print(wallets, { cover: false, audience: 'student' });
+    const doc = h.popup.document;
+    expect(doc.querySelector('.wallet-cover')).toBeNull();
+    expect(doc.querySelectorAll('.wallet-sheet')).toHaveLength(1);
+    expect(doc.body.textContent).toContain('Keep this sheet sealed in a safe place.');
+    expect(doc.body.textContent).toContain('Anyone with the private key can spend');
+    expect(doc.body.textContent).toContain('Your teacher keeps a backup.');
+    expect(doc.body.textContent).not.toContain('Student surfaces use only the address');
+    expect(doc.body.textContent).not.toContain('teacher-custody dashboard');
+    expect(wallets[0].wif).toBe('');
+    expect(h.root.document.documentElement.outerHTML).not.toContain(wif);
+    const { jsQR } = qrLibraries();
+    [...doc.querySelectorAll('.wallet-sheet svg')].forEach((svg, index) => {
+      const pixels = renderedSvgPixels(svg);
+      expect(jsQR(pixels.data, pixels.width, pixels.height).data).toBe([address, wif][index]);
+    });
+    if (completedBy === 'early afterprint') {
+      h.popup.print.mockImplementation(() => {
+        h.popup.dispatchEvent(new h.popup.Event('afterprint'));
+        expect(doc.body.textContent).toContain(wif);
+      });
+    }
+    h.timeout();
+    expect(await printing).toBe(true);
+    expect(h.popup.print).toHaveBeenCalledOnce();
+    if (completedBy === 'later afterprint') h.popup.dispatchEvent(new h.popup.Event('afterprint'));
+    expect(session.isClosed()).toBeFalsy();
+    expect(doc.body.textContent).toContain(wif);
+    expect(h.nativeClose).not.toHaveBeenCalled();
+    const closeButton = doc.querySelector('.wallet-print-controls button');
+    expect(closeButton.textContent).toBe('Done — close wallet sheet');
+    expect(doc.querySelector('style').textContent).toMatch(/@media print\s*\{\s*\.wallet-print-controls\s*\{\s*display:\s*none/);
+    closeButton.click();
+    expect(session.isClosed()).toBe(true);
+    expect(h.nativeClose).toHaveBeenCalledOnce();
+    expect(doc.documentElement.outerHTML).not.toContain(wif);
+    expect(doc.body.childNodes).toHaveLength(0);
+    expect(doc.head.childNodes).toHaveLength(0);
+    expect(h.frames.size + h.timers.size).toBe(0);
+    expect(h.localWrite).not.toHaveBeenCalled();
+    expect(h.indexedDbOpen).not.toHaveBeenCalled();
+    expect(h.root.fetch).not.toHaveBeenCalled();
+  });
+
+  it.each(['stale', 'throws'])('refuses to render private material when its session guard %s', async invalid => {
+    const h = printHarness();
+    const wallets = printWallets();
+    const secret = wallets[0].wif;
+    h.root.qrcode = vi.fn(h.root.qrcode);
+    const isCurrent = () => {
+      if (invalid === 'throws') throw new Error(secret);
+      return false;
+    };
+    const session = h.root.WalletPrintSheets.open({ isCurrent });
+    expect(await session.print(wallets, { audience: 'student', cover: false })).toBe(false);
+    expect(wallets.map(wallet => wallet.wif)).toEqual(['', '']);
+    expect(h.root.qrcode).not.toHaveBeenCalled();
+    expect(h.popup.print).not.toHaveBeenCalled();
+    expect(h.popup.document.documentElement.outerHTML).not.toContain(secret);
+    expect(session.isClosed()).toBe(true);
+    expect(h.frames.size + h.timers.size).toBe(0);
+  });
+
+  it.each(['timeout', 'frame', 'focus', 'guard error'])('cancels student printing if identity changes before %s', async boundary => {
+    const h = printHarness();
+    const wallets = printWallets().slice(0, 1);
+    const secret = wallets[0].wif;
+    let current = true;
+    let failed = false;
+    const isCurrent = () => {
+      if (failed) throw new Error(secret);
+      return current;
+    };
+    const session = h.root.WalletPrintSheets.open({ isCurrent });
+    const printing = session.print(wallets, { cover: false, audience: 'student' });
+    expect(h.popup.document.body.textContent).toContain(secret);
+    if (boundary === 'focus') h.popup.focus.mockImplementation(() => { current = false; });
+    else if (boundary === 'guard error') failed = true;
+    else current = false;
+    if (boundary === 'frame') { h.frame(); h.frame(); }
+    else h.timeout();
+    expect(await printing).toBe(false);
+    expect(h.popup.print).not.toHaveBeenCalled();
+    expect(session.isClosed()).toBe(true);
+    expect(h.popup.document.body.childNodes).toHaveLength(0);
+    expect(h.popup.document.documentElement.outerHTML).not.toContain(secret);
+    expect(h.frames.size + h.timers.size).toBe(0);
   });
 
   it('treats identity, label, section, and wallet values as text rather than markup', async () => {
