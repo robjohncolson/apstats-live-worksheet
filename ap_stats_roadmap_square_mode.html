@@ -20827,15 +20827,18 @@ const studyBreak = {
         let points = fullRows.length + (fullRows.length === 4 ? 1 : 0);
         let goldStrips = 0;
         let silverStrips = 0;
-        const brokenSquareIds = new Set();
 
+        // A row through a finished square pays the strip bonus (+10 gold / +5 silver). The REST of
+        // the square stays a square (a 4x3, then 4x2, then 4x1 remainder — rows only ever leave whole),
+        // so every later row through it pays again: four singles through a gold square ≈ a tetris.
+        // It used to shatter into dead X fragments, which made squares pay only for Tetris veterans
+        // who could dig a well and clear all four rows at once. (Teacher decision 2026-09-09.)
         for (const y of fullRows) {
             const groups = {};
             for (const cell of this.board[y]) {
                 if (cell && cell.kind === 'square' && cell.squareId != null) {
                     groups[cell.squareId] = groups[cell.squareId] || { count: 0, material: cell.material };
                     groups[cell.squareId].count++;
-                    brokenSquareIds.add(cell.squareId);
                 }
             }
             for (const square of Object.values(groups)) {
@@ -20855,23 +20858,8 @@ const studyBreak = {
         while (survivors.length < this.TOTAL_ROWS) survivors.unshift(Array(this.COLS).fill(null));
         this.board = survivors;
 
-        for (let y = 0; y < this.TOTAL_ROWS; y++) {
-            for (let x = 0; x < this.COLS; x++) {
-                const cell = this.board[y][x];
-                if (!cell) continue;
-                if (cell.kind === 'square' && brokenSquareIds.has(cell.squareId)) {
-                    this.board[y][x] = {
-                        kind: 'fragment',
-                        pieceId: null,
-                        pieceType: null,
-                        squareId: null,
-                        material: cell.material,
-                        color: cell.color
-                    };
-                }
-            }
-        }
-
+        // A cut PIECE (fewer than its 4 cells left) becomes an X fragment: it can never be part of a
+        // whole-piece square again. Squares themselves are never fragmented (see above).
         const counts = {};
         for (let y = 0; y < this.TOTAL_ROWS; y++) {
             for (let x = 0; x < this.COLS; x++) {

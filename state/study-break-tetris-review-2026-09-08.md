@@ -15,8 +15,8 @@ rtc plumbing kept). Tests: tests/study-break-improvements.test.js (33 pins/behav
 (runtime drive of the real object in jsdom).
 
 NOT done, by design:
-- Q6 stop shattering a cut square — TEACHER RULES DECISION (changes scoring).
-- B18 policy half — a confirmed Esc×2 forfeit still REFUNDS (rage-quit-voids stands) — TEACHER SIGN-OFF needed to make it settle the bet.
+- Q6 stop shattering a cut square — DONE 2026-09-09 (teacher agreed): the remainder of a cut square stays a square and keeps paying.
+- B18 policy half — a confirmed Esc×2 forfeit still REFUNDS — teacher DECIDED 2026-09-09: keep the refund. Don't re-propose.
 - Bigger B9 (lobby shows who is mid-match) — needs a curriculum_render relay change (user_online on room create/delete).
 - R1 (extract rules to lib/square-mode-rules.js) — deferred; behaviour is pinned by the two new test files instead.
 - Q18 interim touch guard — superseded by the touch strip (bigger B1).

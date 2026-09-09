@@ -135,6 +135,26 @@ describe('rules — bag, level curve, garbage', () => {
     receiveGarbage.call(ctx, 2, 'other-room');     // SB-4 stale-room guard still in force
     expect(ctx.mpState.pendingGarbage).toBe(12);
   });
+  it('Q6 (teacher decision 2026-09-09): a row through a square pays and the REST of the square stays a square', () => {
+    const clearLines = method('clearLines');
+    const TOTAL_ROWS = 24, COLS = 10;
+    const board = Array.from({ length: TOTAL_ROWS }, () => Array(COLS).fill(null));
+    // a gold square at cols 0-3, rows 20-23; row 23 is otherwise full (fragments) → one single through it
+    for (let y = 20; y < 24; y++) for (let x = 0; x < 4; x++) board[y][x] = { kind: 'square', pieceId: null, pieceType: null, squareId: 7, material: 'gold', color: '#d8b44b' };
+    for (let x = 4; x < COLS; x++) board[23][x] = { kind: 'fragment', pieceId: null, pieceType: null, squareId: null, material: null, color: '#888' };
+    const ctx = { board, TOTAL_ROWS, COLS };
+    const r1 = clearLines.call(ctx);
+    expect(r1).toEqual({ lines: 1, points: 11, goldStrips: 1, silverStrips: 0 });
+    const remainder = ctx.board.flat().filter((c) => c && c.squareId === 7);
+    expect(remainder.length).toBe(12);
+    remainder.forEach((c) => { expect(c.kind).toBe('square'); expect(c.material).toBe('gold'); });   // NOT fragments
+    // the 4x3 remainder collapsed to rows 21-23; another single through its bottom row pays again
+    for (let x = 4; x < COLS; x++) ctx.board[23][x] = { kind: 'fragment', pieceId: null, pieceType: null, squareId: null, material: null, color: '#888' };
+    const r2 = clearLines.call(ctx);
+    expect(r2).toEqual({ lines: 1, points: 11, goldStrips: 1, silverStrips: 0 });
+    expect(ctx.board.flat().filter((c) => c && c.squareId === 7).length).toBe(8);
+    expect(sb).not.toMatch(/brokenSquareIds/);
+  });
   it('Q7: squares send garbage in 1v1 (gold +2, silver +1), capped at MAX_GARBAGE', () => {
     expect(sb).toMatch(/const garbageToSend = Math\.min\(this\.MAX_GARBAGE, \(garbageTable\[clear\.lines\] \|\| 0\) \+ \(clear\.goldStrips \|\| 0\) \* 2 \+ \(clear\.silverStrips \|\| 0\)\);/);
   });
