@@ -4068,15 +4068,10 @@
     nativeButton.setAttribute('data-classroom-native', '1');
     nativeButton.setAttribute('aria-label', 'Enter APStat Park');
     nativeButton.title = 'APStat Park: walk into the door, press Up, or click to enter';
-    nativeButton.style.cssText = 'position:absolute;left:24px;top:126px;width:38px;height:50px;background:transparent;border:0;border-radius:0;cursor:pointer;z-index:4;padding:0';
-    var parkLabel = doc.createElement('span');
-    parkLabel.textContent = 'APStat Park';
-    parkLabel.style.cssText = 'position:absolute;left:50%;top:-25px;transform:translateX(-50%);white-space:nowrap;color:inherit;background:transparent;padding:3px 6px;font:inherit;font-size:11px';
-    var parkDoorArt = doc.createElement('img');
-    parkDoorArt.src = 'door_open.png'; parkDoorArt.alt = '';
-    parkDoorArt.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;filter:brightness(0)';
-    nativeButton.appendChild(parkDoorArt);
-    nativeButton.appendChild(parkLabel);
+    // Invisible click/touch + accessible target over the door. The door itself is painted on the
+    // board canvas by the park_doorway entity below, in the scenery z-band BEHIND the avatars, so
+    // a student walks across it instead of vanishing behind a DOM box. No label: it's a door.
+    nativeButton.style.cssText = 'position:absolute;left:21px;top:123px;width:44px;height:53px;background:transparent;border:0;border-radius:21px 21px 0 0;cursor:pointer;z-index:4;padding:0;-webkit-tap-highlight-color:transparent;outline-offset:2px';
     container.appendChild(nativeButton);
     if (role !== 'student') { nativeButton.style.display = 'none'; }   // students only (self-directed)
     nativeButton.onclick = function () {
@@ -4107,8 +4102,7 @@
       }).catch(function (error) {
         nativeActive = false; nativeButton.disabled = false;
         if (!destroyed && engineReady) engine.start();
-        parkLabel.textContent = 'Retry APStat Park';
-        nativeButton.title = error.message;
+        nativeButton.title = 'APStat Park did not load (' + error.message + ') \u2014 click the door to retry';
       });
     };
 
@@ -4438,7 +4432,7 @@
     var parkWalkTicks = 0;
     if (engineReady && role === 'student') engine.addEntity('park_doorway', {
       update: function () {
-        nativeButton.style.top = (engine.groundY - 50) + 'px';
+        nativeButton.style.top = (engine.groundY - 53) + 'px';
         var player = spriteEntities[username];
         if (!player || nativeActive || Date.now() - parkReturnAt < 1200 || classroomBusy()) { parkWalkTicks = 0; return; }
         var x = player.x + (player._spriteSize || 20) / 2 - (_camera.x || 0);
@@ -4448,7 +4442,27 @@
         parkWalkTicks = (inDoor && playerInput.left && !playerInput.right) ? parkWalkTicks + 1 : 0;
         if (parkWalkTicks >= 15) { parkWalkTicks = 0; nativeButton.onclick(); }
       },
-      draw: function () {}
+      zIndex: 1,   // scenery band (vote doorways are 1, avatars >= 10): sprites paint OVER the door
+      render: function (ctx) {
+        // Screen space, like GateDoor (no camera translate): the door is fixed at the left edge.
+        var x = 24, w = 38, h = 50, y = engine.groundY - h, r = 18;
+        var arch = function (px, py, pw, ph, pr) {
+          ctx.beginPath();
+          ctx.moveTo(px, py + ph);
+          ctx.lineTo(px, py + pr);
+          ctx.arcTo(px, py, px + pr, py, pr);
+          ctx.lineTo(px + pw - pr, py);
+          ctx.arcTo(px + pw, py, px + pw, py + pr, pr);
+          ctx.lineTo(px + pw, py + ph);
+          ctx.closePath();
+        };
+        ctx.save();
+        ctx.fillStyle = '#57756c';            // frame
+        arch(x - 3, y - 3, w + 6, h + 3, r + 3); ctx.fill();
+        ctx.fillStyle = '#030606';            // the black doorway
+        arch(x, y, w, h, r); ctx.fill();
+        ctx.restore();
+      }
     });
 
     // Edge-trigger callback the PlayerSprite calls when Up is pressed.
