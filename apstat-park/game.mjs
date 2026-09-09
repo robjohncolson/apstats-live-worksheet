@@ -17,6 +17,7 @@ export function mountParkGame({ container, replica, member, connected = () => tr
   let world = null, animation, last = performance.now(), disposed = false;
   const ctx = canvas.getContext('2d');
   const clearInput = () => { input.left = input.right = input.jump = false; };
+  const setText = (el, text) => { if (el.textContent !== text) el.textContent = text; };   // no 60Hz text-node churn
   const act = () => {
     if (!world || !replica.state) return;
     const action = world.nearby(member, replica.state.progress);
@@ -108,20 +109,20 @@ export function mountParkGame({ container, replica, member, connected = () => tr
       }
       draw();
       const away = state.members.filter(name => name !== member && state.online && !state.online.includes(name));
-      presence.textContent = connected() && away.length
-        ? `Waiting for ${away.join(', ')} to reconnect or join the park. Saved contributions remain. Your teacher can help advance the level.` : '';
+      setText(presence, connected() && away.length
+        ? `Waiting for ${away.join(', ')} to reconnect or join the park. Saved contributions remain. Your teacher can help advance the level.` : '');
       const parcel = state.level.samples.find(item => item.owner === member && item.destination
         && state.progress.samples.includes(item.id) && !state.progress.deliveries.includes(item.id));
       const recipient = parcel && state.level.switches.find(station => station.id === parcel.destination).owner;
-      status.textContent = state.done ? 'You brought the team home!'
+      setText(status, state.done ? 'You brought the team home!'
         : !state.running ? 'Paused by your teacher.'
         : !connected() ? 'Connection interrupted. You can keep moving; contributions will be sent when you reconnect.'
         : replica.outbox.length ? 'Saving your contribution...'
         : state.progress.arrived.length === state.members.length ? 'Everyone reached the exit! Ready for the next level.'
         : state.progress.arrived.includes(member) ? `You made it! ${state.progress.arrived.length}/${state.members.length} teammates are home.`
         : parcel ? `Carry your parcel to ${recipient}'s switch and press E or Up to deliver it.`
-        : replica.lastRejection || `${state.progress.switches.length}/${state.level.switches.length} switches saved. Arrows to move, Space to jump, E or Up to help.`;
-    } else status.textContent = 'Joining your park group...';
+        : replica.lastRejection || `${state.progress.switches.length}/${state.level.switches.length} switches saved. Arrows to move, Space to jump, E or Up to help.`);
+    } else setText(status, 'Joining your park group...');
     last = at; animation = requestAnimationFrame(frame);
   }
   animation = requestAnimationFrame(frame);

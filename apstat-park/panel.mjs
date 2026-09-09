@@ -51,6 +51,12 @@ export function mountParkPanel({ container, role, getSocket, getMembers, onClose
       game?.dispose(); game = null; replica.state = null; joinedSocket = null;
       status.textContent = message.message;
     }
+    if (message.type === 'park_error' && !message.requestId) {
+      // A command/motion rejected without a request id (e.g. the relay pruned this binding):
+      // rejoin rather than retrying the outbox head forever.
+      replica.needsResume = true;
+      return;
+    }
     if (message.type === 'park_event') {
       if (message.kind === 'stopped' && message.epoch === replica.state?.epoch) {
         game?.dispose(); game = null; replica.state = null; joinedSocket = null;
