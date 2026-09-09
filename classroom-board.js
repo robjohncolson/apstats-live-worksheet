@@ -4059,6 +4059,35 @@
     checkinBtn.setAttribute('data-classroom-checkin', '1');
     container.appendChild(checkinBtn);
 
+    var nativePanel = null;
+    var nativeActive = false;
+    var nativeButton = doc.createElement('button');
+    nativeButton.textContent = 'APStat Park';
+    nativeButton.type = 'button';
+    nativeButton.setAttribute('data-classroom-native', '1');
+    container.appendChild(nativeButton);
+    nativeButton.onclick = function () {
+      if (destroyed || nativeButton.disabled) { return; }
+      nativeButton.disabled = true;
+      import('./apstat-park/panel.mjs').then(function (module) {
+        if (destroyed) { return; }
+        nativeActive = true;
+        for (var key in playerInput) { playerInput[key] = false; }
+        nativePanel = module.mountParkPanel({
+          container: container,
+          role: role,
+          getSocket: function () { return ws; },
+          getMembers: function () { return Object.keys(state.members).map(function (name) { return state.members[name]; }); },
+          onClose: function () { nativePanel = null; nativeActive = false; nativeButton.disabled = false; }
+        });
+      }).catch(function (error) {
+        nativeActive = false;
+        nativeButton.disabled = false;
+        nativeButton.textContent = 'Retry APStat Park';
+        nativeButton.title = error.message;
+      });
+    };
+
     // --- poll vote buttons (v2) ----------------------------------------
     // One <button> per option, shown only when a poll is open and this
     // client is a student who has not yet voted.  Mirrors the check-in
@@ -4477,6 +4506,7 @@
       }
     }
     function _keyHandler(e, pressed) {
+      if (nativeActive) { return; }
       if (_isInputFocused() || _isModalOpen()) { return; }
       var prop = _keyToInputProp(e);
       if (!prop) { return; }
@@ -6387,8 +6417,12 @@
 
     var handle = {
 
+      openNativeGameplay: function () { nativeButton.onclick(); },
+
       destroy: function () {
         destroyed = true;
+        if (nativePanel) { nativePanel.dispose(); nativePanel = null; }
+        if (nativeButton.parentNode) { nativeButton.parentNode.removeChild(nativeButton); }
         clearInterval(heartbeatTimer);
         clearTimeout(reconnectTimer);
         clearTimeout(greenlightTimer);
