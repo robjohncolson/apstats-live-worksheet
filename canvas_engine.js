@@ -43,17 +43,21 @@ class CanvasEngine {
     if (!this.running) {
       this.running = true;
       this.lastTime = performance.now();
-      this.gameLoop();
+      this.gameLoop(this.lastTime);
     }
   }
-  stop() { this.running = false; }
-  gameLoop(currentTime = 0) {
+  stop() {
+    this.running = false;
+    if (this.animationFrame != null) cancelAnimationFrame(this.animationFrame);
+    this.animationFrame = null;
+  }
+  gameLoop(currentTime = performance.now()) {
     if (!this.running) return;
-    const deltaTime = (currentTime - this.lastTime) / 1000;
+    const deltaTime = Math.max(0, Math.min(0.1, (currentTime - this.lastTime) / 1000));
     this.lastTime = currentTime;
     this.update(deltaTime);
     this.render();
-    requestAnimationFrame((t) => this.gameLoop(t));
+    if (this.running) this.animationFrame = requestAnimationFrame((t) => this.gameLoop(t));
   }
   update(deltaTime) {
     this.entities.forEach((entity) => {

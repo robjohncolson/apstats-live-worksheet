@@ -4,14 +4,19 @@ const colorFor = name => 'hsl(' + [...name].reduce((h, c) => (h * 31 + c.charCod
 
 export function mountParkGame({ container, replica, member, drawAvatar, onExit = () => {}, connected = () => true }) {
   const doc = container.ownerDocument;
+  const scale = 5 / 6; // Match the calendar's 20 x 24 pixel character.
+  const assets = {};
+  for (const name of ['door_open', 'door_closed', 'button', 'coin_0']) {
+    const img = new doc.defaultView.Image(); img.src = new URL('../' + name + '.png', import.meta.url).href; assets[name] = img;
+  }
   const heading = doc.createElement('div'), hint = doc.createElement('p');
-  heading.style.cssText = 'font-weight:700;margin:4px 0';
-  hint.style.cssText = 'margin:4px 0;color:#b8d4c8;font-size:12px';
+  heading.style.cssText = 'position:absolute;top:4px;left:4px;right:120px;font:inherit;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  hint.style.cssText = 'position:absolute;top:23px;left:4px;right:4px;margin:0;font:inherit;font-size:11px;line-height:14px;pointer-events:none';
   const canvas = doc.createElement('canvas'); canvas.tabIndex = 0;
   canvas.setAttribute('aria-label', 'APStat Park puzzle. Arrows or A and D to move. Space to jump. E or Up to help or enter a door.');
-  canvas.style.cssText = 'display:block;width:100%;height:220px;background:#10282d;border-radius:8px;touch-action:none';
-  const status = doc.createElement('p'); status.setAttribute('role', 'status'); status.style.cssText = 'margin:6px 0;min-height:2.5em';
-  const controls = doc.createElement('div'); controls.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+  canvas.style.cssText = 'display:block;width:100%;height:220px;background:transparent;touch-action:none;outline-offset:-1px;image-rendering:pixelated';
+  const status = doc.createElement('p'); status.setAttribute('role', 'status'); status.style.cssText = 'position:absolute;bottom:35px;left:4px;right:4px;margin:0;font-size:11px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none';
+  const controls = doc.createElement('div'); controls.style.cssText = 'position:absolute;bottom:0;left:4px;display:flex;gap:6px';
   container.append(heading, canvas, hint, status, controls);
   const input = { left: false, right: false, jump: false };
   let world = null, worldEpoch = null, animation, last = performance.now(), disposed = false;
@@ -34,6 +39,9 @@ export function mountParkGame({ container, replica, member, drawAvatar, onExit =
   };
   const key = event => {
     const pressed = event.type === 'keydown';
+    // Exit may synchronously restore the calendar. Never let this same key
+    // bubble into its doorway handler and reopen the park.
+    event.stopPropagation();
     const bindings = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump' };
     if (bindings[event.code]) { event.preventDefault(); input[bindings[event.code]] = pressed; }
     if (pressed && !event.repeat && ['KeyE', 'ArrowUp', 'KeyW'].includes(event.code)) { event.preventDefault(); act(); }
@@ -44,15 +52,15 @@ export function mountParkGame({ container, replica, member, drawAvatar, onExit =
   doc.defaultView.addEventListener('blur', clearInput); doc.addEventListener('visibilitychange', visibility);
   for (const [label, name] of [['Left', 'left'], ['Right', 'right'], ['Jump', 'jump'], ['Help / enter', 'act']]) {
     const button = doc.createElement('button'); button.type = 'button'; button.textContent = label;
-    button.style.cssText = 'padding:8px 14px;touch-action:none;background:#254a43;color:#fff;border:1px solid #537868;border-radius:7px;cursor:pointer';
+    button.style.cssText = 'padding:4px 10px;min-height:29px;touch-action:none;background:transparent;color:inherit;border:1px solid currentColor;border-radius:0;font:inherit;font-size:11px;cursor:pointer';
     button.addEventListener('pointerdown', event => {
-      event.preventDefault(); button.setPointerCapture(event.pointerId);
+      event.preventDefault(); event.stopPropagation(); button.setPointerCapture(event.pointerId);
       if (name === 'act') act(); else input[name] = true;
     });
     // Keyboard activation remains available for the accessible control buttons.
     button.addEventListener('keydown', event => {
       if (!['Space', 'Enter'].includes(event.code)) return;
-      event.preventDefault(); if (name === 'act') { if (!event.repeat) act(); } else input[name] = true;
+      event.preventDefault(); event.stopPropagation(); if (name === 'act') { if (!event.repeat) act(); } else input[name] = true;
     });
     button.addEventListener('keyup', () => { if (name !== 'act') input[name] = false; });
     button.addEventListener('blur', clearInput);
@@ -61,45 +69,61 @@ export function mountParkGame({ container, replica, member, drawAvatar, onExit =
   }
   canvas.addEventListener('click', event => {
     const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left + cameraX, y = event.clientY - rect.top + cameraY;
+    const x = (event.clientX - rect.left) / scale + cameraX, y = (event.clientY - rect.top) / scale + cameraY;
     if (Math.abs(x - world?.level.exit.x) < 25 && Math.abs(y - (world.level.exit.y - 15)) < 45) onExit();
     else canvas.focus();
   });
 
-  function door(point, label, open) {
-    ctx.fillStyle = '#537868'; ctx.fillRect(point.x - 22, point.y - 53, 44, 69);
-    ctx.fillStyle = open ? '#020908' : '#35574e'; ctx.fillRect(point.x - 18, point.y - 49, 36, 65);
-    ctx.fillStyle = '#d9eee6'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(label, point.x, point.y - 62);
+  function sprite(image, x, y, w, h) {
+    if (!image.complete || !image.naturalWidth) return false;
+    ctx.drawImage(image, x, y, w, h); return true;
+  }
+
+  function door(point, label, open, calendar = false) {
+    ctx.save();
+    if (calendar) ctx.filter = 'brightness(0)';
+    if (!sprite(open ? assets.door_open : assets.door_closed, point.x - 23, point.y - 45, 46, 60)) {
+      ctx.fillStyle = '#111'; ctx.fillRect(point.x - 20, point.y - 43, 40, 58);
+    }
+    ctx.restore();
+    ctx.fillStyle = '#171717'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, point.x, point.y - 53);
   }
 
   function draw() {
     const state = replica.state, level = state.level, progress = state.progress;
-    cameraX = Math.max(0, Math.min(level.width - width, world.player.x - width * 0.45));
-    cameraY = Math.min(360, world.player.y - 35);
+    cameraX = Math.max(0, Math.min(level.width - width / scale, world.player.x - width / scale * 0.45));
+    cameraY = Math.min(540 - 160 / scale, world.player.y - 58 / scale);
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = '#10282d'; ctx.fillRect(0, 0, width, height);
-    ctx.save(); ctx.translate(-cameraX, -cameraY);
-    // Quiet backdrop and clear ground keep the small embedded scene readable.
-    ctx.fillStyle = '#173b38';
-    for (let x = 100; x < level.width; x += 160) { ctx.beginPath(); ctx.arc(x, 540, 120, Math.PI, 0); ctx.fill(); }
-    ctx.fillStyle = '#537868';
-    for (const platform of level.platforms) ctx.fillRect(platform.x, platform.y, platform.w, platform.h);
+    ctx.imageSmoothingEnabled = false;
+    ctx.save(); ctx.scale(scale, scale); ctx.translate(-cameraX, -cameraY);
+    // The calendar itself remains the backdrop. Only the puzzle's geometry changes.
+    ctx.fillStyle = '#aaa99e'; ctx.strokeStyle = '#45443b'; ctx.lineWidth = 1 / scale;
+    for (const platform of level.platforms) {
+      ctx.fillRect(platform.x, platform.y, platform.w, 5);
+      ctx.beginPath(); ctx.moveTo(platform.x, platform.y); ctx.lineTo(platform.x + platform.w, platform.y); ctx.stroke();
+    }
     const bridge = level.bridge;
-    if (progress.bridgeOpen) { ctx.fillStyle = '#f8b84e'; ctx.fillRect(bridge.x, bridge.y, bridge.w, bridge.h); }
+    if (progress.bridgeOpen) { ctx.fillStyle = '#d6b669'; ctx.fillRect(bridge.x, bridge.y, bridge.w, 5); }
     else { ctx.strokeStyle = '#60756e'; ctx.setLineDash([6, 6]); ctx.strokeRect(bridge.x, bridge.y, bridge.w, bridge.h); ctx.setLineDash([]); }
-    door(level.exit, 'Calendar', true); door(level.goal, 'Finish', progress.bridgeOpen);
+    door(level.exit, 'Calendar', true, true); door(level.goal, 'Finish', progress.bridgeOpen);
     for (const station of level.switches) {
       const saved = progress.switches.includes(station.id);
-      ctx.fillStyle = saved ? '#f8b84e' : '#70d3ca'; ctx.fillRect(station.x - 14, station.y - 5, 28, 20);
-      ctx.fillStyle = '#e4f0e6'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+      ctx.save(); if (saved) ctx.filter = 'hue-rotate(85deg)';
+      if (!sprite(assets.button, station.x - 16, station.y + (saved ? 7 : -3), 32, saved ? 8 : 18)) {
+        ctx.fillStyle = saved ? '#577c36' : '#a65032'; ctx.fillRect(station.x - 14, station.y, 28, 15);
+      }
+      ctx.restore();
+      ctx.fillStyle = '#171717'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(saved ? 'Saved' : 'Station ' + station.label, station.x, station.y - 17);
     }
     for (const sample of level.samples) {
       if (progress.samples.includes(sample.id)) continue;
-      ctx.fillStyle = '#f8b84e'; ctx.beginPath(); ctx.arc(sample.x, sample.y, 10, 0, Math.PI * 2); ctx.fill();
+      if (!sprite(assets.coin_0, sample.x - 10, sample.y - 10, 20, 20)) {
+        ctx.fillStyle = '#b88a18'; ctx.beginPath(); ctx.arc(sample.x, sample.y, 10, 0, Math.PI * 2); ctx.fill();
+      }
       const target = level.switches.find(station => station.id === sample.destination);
-      ctx.fillStyle = '#e4f0e6'; ctx.font = '12px system-ui'; ctx.fillText('To ' + target.label, sample.x, sample.y - 17);
+      ctx.fillStyle = '#171717'; ctx.font = '12px system-ui'; ctx.fillText('To ' + target.label, sample.x, sample.y - 17);
     }
     for (const name of state.members) {
       const p = name === member ? world.player : replica.remoteMotion.sample(name, true);
@@ -111,16 +135,16 @@ export function mountParkGame({ container, replica, member, drawAvatar, onExit =
         ctx.fillStyle = colorFor(name); ctx.fillRect(p.x - 12, p.y - 15, 24, 30);
         ctx.fillStyle = '#17343b'; ctx.fillRect(p.x - 7, p.y - 7, 4, 4); ctx.fillRect(p.x + 3, p.y - 7, 4, 4);
       }
-      ctx.fillStyle = '#fff'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = '#171717'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(name === member ? 'You' : name, p.x, p.y - 24);
     }
     ctx.globalAlpha = 1; ctx.restore(); ctx.textAlign = 'left';
     if (progress.arrived.includes(member)) {
-      ctx.fillStyle = '#254a43'; ctx.fillRect(8, 8, width - 16, 28);
-      ctx.fillStyle = '#e4f0e6'; ctx.font = 'bold 13px system-ui'; ctx.fillText('You made it! Help friends or return through the calendar door.', 16, 27, width - 32);
+      ctx.fillStyle = '#eee9d5'; ctx.fillRect(8, 53, width - 16, 23);
+      ctx.fillStyle = '#171717'; ctx.font = 'bold 13px system-ui'; ctx.fillText('You made it! Help friends or return through the calendar door.', 16, 69, width - 32);
     }
     if (progress.bridgeOpen && cameraX < 500) {
-      ctx.fillStyle = '#f8b84e'; ctx.font = 'bold 12px system-ui'; ctx.fillText('Bridge open! Finish to the right >', Math.max(8, width - 210), 20);
+      ctx.fillStyle = '#634b12'; ctx.font = '12px sans-serif'; ctx.fillText('Bridge open! Finish to the right >', Math.max(8, width - 210), 68);
     }
   }
 

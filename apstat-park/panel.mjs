@@ -6,21 +6,23 @@ export function mountParkPanel({ container, getSocket, drawAvatar, onClose = () 
   const doc = container.ownerDocument, panel = doc.createElement('section');
   panel.setAttribute('aria-label', 'APStat Park');
   panel.setAttribute('data-park-scene', '');
-  panel.style.cssText = 'position:relative;background:#10282d;color:#e4f0e6;border-radius:12px;padding:8px;font:13px system-ui';
+  panel.style.cssText = 'position:relative;height:220px;background:transparent;color:inherit;padding:0;font:inherit;font-size:12px';
   // Keep incoming classroom updates hidden without overwriting their latest
   // display state. They become visible in the correct state when we return.
   const style = doc.createElement('style');
-  style.textContent = '[data-park-active] > :not([data-park-scene]) { display:none !important; }';
+  style.textContent = '[data-park-active] > :not([data-park-scene]) { display:none !important; }'
+    + '[data-park-scene] canvas:focus { outline:none; }'
+    + '[data-park-scene] canvas:focus-visible { box-shadow:inset 0 -1px currentColor; }';
   panel.append(style);
   container.setAttribute('data-park-active', '');
   const header = doc.createElement('div');
-  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px';
-  const title = doc.createElement('strong'); title.textContent = 'APStat Park';
+  header.style.cssText = 'position:absolute;right:4px;top:2px;z-index:2';
+  const title = doc.createElement('strong'); title.textContent = 'APStat Park'; title.hidden = true;
   const exit = doc.createElement('button'); exit.type = 'button'; exit.textContent = 'Exit to calendar';
-  exit.style.cssText = 'background:#071413;color:#e4f0e6;border:1px solid #537868;border-radius:7px;padding:6px 10px;cursor:pointer';
+  exit.style.cssText = 'background:transparent;color:inherit;border:1px solid currentColor;border-radius:0;padding:3px 6px;font:inherit;font-size:11px;cursor:pointer';
   header.append(title, exit);
-  const status = doc.createElement('p'); status.setAttribute('role', 'status'); status.style.margin = '6px 0';
-  const view = doc.createElement('div');
+  const status = doc.createElement('p'); status.setAttribute('role', 'status'); status.style.cssText = 'position:absolute;top:65px;left:6px;right:6px;margin:0;z-index:2;font:inherit';
+  const view = doc.createElement('div'); view.style.cssText = 'position:relative;height:220px';
   panel.append(header, status, view); container.append(panel);
   const replica = new ParkReplica(), pending = new Map();
   const freshId = () => 'park_' + crypto.randomUUID().replaceAll('-', '');

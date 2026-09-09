@@ -4062,15 +4062,20 @@
     var nativePanel = null;
     var nativeActive = false;
     var parkReturnAt = 0;
+    var parkExitKeyHeld = false;
     var nativeButton = doc.createElement('button');
     nativeButton.type = 'button';
     nativeButton.setAttribute('data-classroom-native', '1');
     nativeButton.setAttribute('aria-label', 'Enter APStat Park');
     nativeButton.title = 'APStat Park: walk into the door, press Up, or click to enter';
-    nativeButton.style.cssText = 'position:absolute;left:24px;top:126px;width:38px;height:50px;background:#030606;border:3px solid #57756c;border-bottom:0;border-radius:18px 18px 0 0;cursor:pointer;z-index:4;padding:0';
+    nativeButton.style.cssText = 'position:absolute;left:24px;top:126px;width:38px;height:50px;background:transparent;border:0;border-radius:0;cursor:pointer;z-index:4;padding:0';
     var parkLabel = doc.createElement('span');
     parkLabel.textContent = 'APStat Park';
-    parkLabel.style.cssText = 'position:absolute;left:50%;top:-25px;transform:translateX(-50%);white-space:nowrap;color:#e4f0e6;background:#173b38;border-radius:5px;padding:3px 6px;font:11px system-ui';
+    parkLabel.style.cssText = 'position:absolute;left:50%;top:-25px;transform:translateX(-50%);white-space:nowrap;color:inherit;background:transparent;padding:3px 6px;font:inherit;font-size:11px';
+    var parkDoorArt = doc.createElement('img');
+    parkDoorArt.src = 'door_open.png'; parkDoorArt.alt = '';
+    parkDoorArt.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;filter:brightness(0)';
+    nativeButton.appendChild(parkDoorArt);
     nativeButton.appendChild(parkLabel);
     container.appendChild(nativeButton);
     if (role !== 'student') { nativeButton.style.display = 'none'; }   // students only (self-directed)
@@ -4094,6 +4099,7 @@
           onClose: function () {
             nativePanel = null; nativeActive = false; nativeButton.disabled = false;
             parkReturnAt = Date.now();
+            parkExitKeyHeld = true;
             for (var key in playerInput) playerInput[key] = false;
             if (!destroyed && engineReady) { resizeBoardToContainer(); engine.start(); }
           }
@@ -4453,7 +4459,7 @@
     function handlePlayerUp(player) {
       // Up enters only when the sprite is ON the door (±16px of its center), never from the first
       // idle slot beside it; never for teachers; never during a whole-class event.
-      if (role === 'student' && !nativeActive && !classroomBusy()
+      if (role === 'student' && !nativeActive && !classroomBusy() && Date.now() - parkReturnAt >= 1200
           && Math.abs(player.x + player._spriteSize / 2 - (_camera.x || 0) - 43) <= 16) {
         nativeButton.onclick(); return;
       }
@@ -4555,6 +4561,10 @@
       }
     }
     function _keyHandler(e, pressed) {
+      if (parkExitKeyHeld) {
+        if (!pressed || !e.repeat) parkExitKeyHeld = false;
+        else return;
+      }
       if (nativeActive) { return; }
       if (_isInputFocused() || _isModalOpen()) { return; }
       var prop = _keyToInputProp(e);

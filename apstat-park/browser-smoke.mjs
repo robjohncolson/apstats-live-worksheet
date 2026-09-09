@@ -89,6 +89,7 @@ async function act(page) {
 try {
   const alice = await open('alice'), bob = await open('bob');
   const originalURL = alice.url();
+  const originalStrip = await alice.locator('#board').boundingBox();
   await alice.screenshot({ path: path.join(output, 'doorway.png') });
   // Keyboard entry uses the existing classroom player, not a test teleport.
   const start = await alice.evaluate(() => board.getSpritePosition('alice').x);
@@ -98,6 +99,34 @@ try {
   assert.equal(alice.url(), originalURL);
   assert.equal(await alice.locator('#calendar').isVisible(), true);
   assert.equal(await alice.getByRole('button', { name: /Create group|Start|Pause|Next level/ }).count(), 0);
+  // Put the calendar avatar directly inside its doorway before entering by click.
+  // This is the position that lets a bubbled Up key immediately reopen the park.
+  await alice.getByRole('button', { name: 'Exit to calendar' }).click();
+  const approachRight = await alice.evaluate(() => board.getSpritePosition('alice').x < 32);
+  const approachKey = approachRight ? 'ArrowRight' : 'ArrowLeft';
+  await alice.keyboard.down(approachKey);
+  await alice.waitForFunction(right => right ? board.getSpritePosition('alice').x >= 32 : board.getSpritePosition('alice').x <= 32, approachRight, {polling:'raf'});
+  await alice.keyboard.up(approachKey);
+  assert.ok(await alice.evaluate(() => Math.abs(board.getSpritePosition('alice').x + 10 - 43) <= 16));
+  await alice.getByRole('button', { name: 'Enter APStat Park' }).click(); await entered(alice);
+  const parkStrip = await alice.locator('#board').boundingBox();
+  assert.equal(parkStrip.height, originalStrip.height, 'Entering must not resize the character strip');
+  assert.equal(parkStrip.width, originalStrip.width);
+  assert.equal(await alice.locator(scene).evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+  // Reproduce the reported exit loop: Up at the actual in-world return door.
+  await move(alice, 40);
+  await alice.keyboard.down('ArrowUp');
+  await alice.waitForFunction(() => !board.getParkScene());
+  await alice.waitForTimeout(1600);
+  await alice.keyboard.down('ArrowUp'); // held key auto-repeat after the cooldown
+  await alice.waitForTimeout(200);
+  assert.equal(await alice.locator(scene).count(), 0, 'Return door must stay in the calendar');
+  await alice.keyboard.up('ArrowUp');
+  await alice.getByRole('button', { name: 'Enter APStat Park' }).click(); await entered(alice);
+  // The drawn doorway also returns by pointer with the scaled camera coordinates.
+  await alice.locator(scene + ' canvas').click({position:{x:34,y:138}});
+  await alice.waitForFunction(() => !board.getParkScene());
+  await alice.getByRole('button', { name: 'Enter APStat Park' }).click(); await entered(alice);
   const before = await alice.evaluate(() => board.getSpritePosition('alice'));
   await move(alice, 220); await act(alice);
   await bob.waitForFunction(() => board.getParkScene().replica.state.progress.switches.includes('switch-0'));
@@ -202,7 +231,7 @@ try {
   assert.deepEqual(errors, []);
   const result = { passed: true, levelsCompletedWithKeyboard: 3, doorway: 'walk and click',
     samePage: true, lateJoin: true, reconnect: true, hourlyRotation: true, reloadCheckpoint: true, mobile: true,
-    actualCalendarAt650px: true, retiredControlPackets: 0, errors, calendarErrors };
+    actualCalendarAt650px: true, returnDoorUpAndClick: true, unchangedStripSize: true, retiredControlPackets: 0, errors, calendarErrors };
   writeFileSync(path.join(output, 'result.json'), JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result));
 } finally {
