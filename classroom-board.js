@@ -4073,8 +4073,9 @@
     parkLabel.style.cssText = 'position:absolute;left:50%;top:-25px;transform:translateX(-50%);white-space:nowrap;color:#e4f0e6;background:#173b38;border-radius:5px;padding:3px 6px;font:11px system-ui';
     nativeButton.appendChild(parkLabel);
     container.appendChild(nativeButton);
+    if (role !== 'student') { nativeButton.style.display = 'none'; }   // students only (self-directed)
     nativeButton.onclick = function () {
-      if (destroyed || nativeButton.disabled) { return; }
+      if (destroyed || nativeButton.disabled || role !== 'student' || classroomBusy()) { return; }
       nativeButton.disabled = true;
       import('./apstat-park/panel.mjs').then(function (module) {
         if (destroyed) { return; }
@@ -4421,14 +4422,25 @@
 
     // The doorway is part of the existing scene. Walking into it enters locally;
     // the park uses the same classroom socket, while this scene's physics sleeps.
-    if (engineReady) engine.addEntity('park_doorway', {
+    // A whole-class call from the teacher (poll, armed gate, green light, doorways, a live
+    // activity) takes priority over the park: it blocks entry and, in syncScene, brings a
+    // student who is inside back to the classroom scene.
+    function classroomBusy() {
+      return !!(state.poll || (state.gate && state.gate.armed) || state.greenlight || state.doorways
+        || (state.activity && !state.activity.finished));
+    }
+    var parkWalkTicks = 0;
+    if (engineReady && role === 'student') engine.addEntity('park_doorway', {
       update: function () {
         nativeButton.style.top = (engine.groundY - 50) + 'px';
         var player = spriteEntities[username];
-        if (!player || nativeActive || Date.now() - parkReturnAt < 1200) return;
+        if (!player || nativeActive || Date.now() - parkReturnAt < 1200 || classroomBusy()) { parkWalkTicks = 0; return; }
         var x = player.x + (player._spriteSize || 20) / 2 - (_camera.x || 0);
-        if ((playerInput.left || playerInput.right) && Math.abs(x - 43) < 16
-            && Math.abs(player.y - getSpriteY()) < 16) nativeButton.onclick();
+        // Deliberate walk-in: hold LEFT while inside the door span for ~a quarter second. The first
+        // idle slot sits right beside the door, so a single tap must not pull that student in.
+        var inDoor = x >= 27 && x <= 60 && Math.abs(player.y - getSpriteY()) < 16;
+        parkWalkTicks = (inDoor && playerInput.left && !playerInput.right) ? parkWalkTicks + 1 : 0;
+        if (parkWalkTicks >= 15) { parkWalkTicks = 0; nativeButton.onclick(); }
       },
       draw: function () {}
     });
@@ -4439,7 +4451,10 @@
     // check-in). The server's present->checkedIn transition then drives
     // the drain animation through syncScene as today -- one way out.
     function handlePlayerUp(player) {
-      if (!nativeActive && Math.abs(player.x + player._spriteSize / 2 - (_camera.x || 0) - 43) < 28) {
+      // Up enters only when the sprite is ON the door (±16px of its center), never from the first
+      // idle slot beside it; never for teachers; never during a whole-class event.
+      if (role === 'student' && !nativeActive && !classroomBusy()
+          && Math.abs(player.x + player._spriteSize / 2 - (_camera.x || 0) - 43) <= 16) {
         nativeButton.onclick(); return;
       }
       // v3 P4: doorways take priority over the gate (a doorways data
@@ -6015,6 +6030,12 @@
 
     function syncScene(newState) {
       if (!engineReady) { return; }
+      // A student inside the park cannot see the classroom substrate: a whole-class call brings
+      // them back so the poll / gate / green light / activity is answerable.
+      if (nativeActive && nativePanel && (newState.poll || (newState.gate && newState.gate.armed) || newState.greenlight
+          || newState.doorways || (newState.activity && !newState.activity.finished))) {
+        try { nativePanel.dispose(); } catch (_) {}
+      }
 
       var members = newState.members;
 

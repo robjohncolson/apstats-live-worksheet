@@ -312,7 +312,8 @@ describe('square aids — hint + ghost material', () => {
 
 describe('Desk-side guards + a11y + sound (source pins)', () => {
   it('B2: the Live Classroom capture-phase ↑/↓ handler yields to an open game', () => {
-    expect(html).toMatch(/if \(e\.key !== 'ArrowUp' && e\.key !== 'ArrowDown'\) return;\s*\/\/[^\n]*\n\s*if \(typeof studyBreak !== 'undefined' && studyBreak\.isOpen && studyBreak\.isOpen\(\)\) return;/);
+    // Other early-outs may sit between the key filter and the game guard (e.g. the APStat Park scene guard).
+    expect(html).toMatch(/if \(e\.key !== 'ArrowUp' && e\.key !== 'ArrowDown'\) return;[\s\S]{0,400}?if \(typeof studyBreak !== 'undefined' && studyBreak\.isOpen && studyBreak\.isOpen\(\)\) return;/);
   });
   it('B2: the Desk Escape router does not destroy app windows under the game', () => {
     expect(html).toMatch(/var gameOpen = !!\(typeof studyBreak[\s\S]*?querySelectorAll\('\.app-overlay'\)\.forEach\(function\(el\) \{\s*if \(gameOpen\) return;/);
