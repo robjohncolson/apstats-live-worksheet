@@ -186,6 +186,16 @@ def write_grade_to_cell(
             f"document.activeElement===document.querySelector({json.dumps(input_sel)})"
         ))
 
+    # 2026-09-09 (first live daily run): Chromium DROPS Input.dispatchKeyEvent on a page whose
+    # visibilityState is 'hidden' -- the scheduled task launches the rig Edge behind other
+    # windows, so every keystroke was silently lost (focus + Enter "succeeded", nothing typed,
+    # nothing saved). Bring the page to front and emulate focus first; both are idempotent.
+    try:
+        cdp.send("Page.bringToFront", {})
+        cdp.send("Emulation.setFocusEmulationEnabled", {"enabled": True})
+    except Exception:  # noqa: BLE001 -- best effort; the verification below is the real gate
+        pass
+
     # Focus the input. Angular's first-render timing is flaky, so retry a few
     # times, trying BOTH JS .focus() and a trusted coordinate-click, re-querying
     # the input fresh each attempt (the grid can re-render between CDP calls).
@@ -257,7 +267,31 @@ def write_grade_to_cell(
     _key(13, "Enter", "Enter", text="\r")
     time.sleep(2.0)
 
-    return {"ok": True, "typed": typed, "focused": True}
+    # VERIFY the save instead of trusting the keystrokes: the cell's aria-label carries the
+    # persisted grade ('<student>, <title>, <grade> out of <pts>'); the input value is the
+    # fallback for cells without that phrasing (overrides). Poll briefly -- the save is async.
+    persisted = False
+    for _ in range(6):
+        state = cdp.eval_js(
+            f"(function(){{var c=document.querySelector({json.dumps(selector)});var a=c?c.querySelector('input'):null;"
+            f"return {{aria:c?c.getAttribute('aria-label'):null,val:a?a.value:null}};}})()"
+        ) or {}
+        aria = str(state.get("aria") or "")
+        val = str(state.get("val") or "").strip()
+        if f", {val_str} out of" in aria or (val and _same_number(val, val_str)):
+            persisted = True
+            break
+        time.sleep(0.5)
+
+    return {"ok": persisted, "typed": typed, "focused": True,
+            **({} if persisted else {"error": f"grade {val_str} did not persist (typed={typed!r})"})}
+
+
+def _same_number(a: str, b: str) -> bool:
+    try:
+        return abs(float(a) - float(b)) < 0.05
+    except ValueError:
+        return a == b
 
 
 def write_override(cdp: EdgeCDP, row_index: int, value: float, *, gp: bool = True) -> dict:
