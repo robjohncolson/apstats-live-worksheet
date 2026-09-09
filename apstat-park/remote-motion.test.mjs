@@ -8,8 +8,8 @@ test('sparse motion interpolates locally and stops at the last anchor through an
   let clock = 0;
   const motion = new RemoteMotion(() => clock);
   motion.push('alice', pose(100));
-  clock = 250; motion.push('alice', pose(150));
-  clock = 375; assert.equal(motion.sample('alice').x, 125);
+  clock = 500; motion.push('alice', pose(150));
+  clock = 750; assert.equal(motion.sample('alice').x, 125);
   assert.equal(motion.sample('alice', false).x, 150);
   clock = 60000; assert.equal(motion.sample('alice').x, 150);
   motion.push('alice', pose(900));

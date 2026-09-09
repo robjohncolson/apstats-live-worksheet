@@ -1,126 +1,55 @@
-# APStat Park
+# APStat Park: the calendar doorway
 
-An original cooperative classroom platform game inspired by PICO PARK. Its puzzles
-use saved contributions and forgiving timing. Movement and collisions run locally;
-teammates help through shared actions rather than synchronized body physics.
+APStat Park is an original cooperative puzzle space inspired by PICO PARK. It is embedded in the calendar's existing character area. Teacher-created groups, start/pause/next/end controls, and the modal park window are retired.
 
-## Playing
+## Entering and playing
 
-Open **APStat Park** from the classroom board. The teacher chooses one to eight
-students, creates the group, and starts it. Students join their assigned group.
-Use arrows or A/D to move, Space to jump, and E/Up to interact. Touch buttons are
-also available. The teacher can pause, advance a stuck group, or end the session.
+- A black doorway stays visible in the signed-in calendar character area, including short screens. Walk into it, press Up beside it, or click/tap it.
+- Entering replaces that area's contents. The calendar stays on the same page. The existing classroom sprite sheet and each member's color are reused.
+- Everyone in the same classroom period enters the same park automatically. Teachers can enter with the same player flow. No teacher needs to go live, create a group, or start a puzzle.
+- Arrows or A/D move; Space jumps; E or Up collects, delivers, lights a switch, or enters a door. Touch controls provide the same actions.
+- Exit to calendar, Escape while the canvas is focused, or the black calendar door returns to the original classroom scene.
 
-1. **Build a bridge together:** activate each player's switch, then reach the exit.
-2. **Gather the whole sample:** jump to collect your sample before using your switch.
-3. **Pass it on:** collect your parcel and deliver it to the next player's station.
-   Each switch needs its incoming parcel. Solo players deliver to their own station.
+## Puzzles and hourly selection
 
-Contributions stay saved. Players do not need to act simultaneously. Away players
-are dimmed and named in a notice; the teacher can advance if someone cannot return.
+Three original layouts rotate: Build a bridge together, Gather the whole sample, and Pass it on. Four shared stations control the bridge. They are independent of the number of players. Anyone can collect or deliver a sample and light a station; an absent collector never locks a task. Play alone or share the work with classmates.
 
-## Implementation and network contract
+The relay selects a featured layout using the UTC epoch hour modulo three. At an hour boundary, an active attempt stays intact until everyone still connected has reached the finish, with at least eight seconds to celebrate. If everyone explicitly exits, the next entry can take the current featured layout. A socket interruption is not an explicit exit: reconnecting retains the attempt across the hour boundary. Rooms without active bindings are reclaimed after two hours of inactivity.
 
-The classroom button loads `panel.mjs`, which uses the existing classroom WebSocket.
-The matching relay is `curriculum_render/railway-server/apstat-park`. Both sides
-are wired into local application sources and must ship together. Deployment has
-not been performed. Existing native experiments remain separate and are not loaded
-by this entry point.
+Late arrivals receive saved shared milestones. Re-entering or reloading restores the finish position if already arrived, otherwise the bridge checkpoint if opened, otherwise the starting doorway. Rotation uses a unique level ID so delayed actions cannot apply to another hour's puzzle.
 
-- `world.mjs` simulates the local body at fixed 60 Hz with local jumps and respawn.
-- `game.mjs` renders locally and keeps controls responsive during a socket outage.
-- `replica.mjs` orders pending actions and recovers acknowledged shared progress.
-- `remote-motion.mjs` interpolates sparse teammate anchors with a 250 ms display
-  delay. It freezes at the latest anchor when updates stop.
-- Relay `session.mjs` validates assigned ownership, proximity, puzzle prerequisites
-  and command sequence. It stores shared milestones, not server-simulated physics.
-- Relay `service.mjs` derives identity and teacher privileges from the classroom
-  registry, scopes groups, handles connection presence and suppresses backed-up sends.
+## Network behavior
 
-Motion is capped at four small messages per second, goes only to other players,
-and produces no updates while stationary. Unsent motion is replaced by the latest
-pose; old movement is never replayed after an outage. Full world/engine snapshots,
-native memory, animation and audio state are absent from the protocol.
+Physics and collision run locally at 60 Hz. Other players are visual companions, not physics bodies. Puzzles avoid requiring synchronized jumps or player stacks over unreliable connections.
 
-A client retains at most 16 pending actions and retries only the head every 1.5
-seconds. Sequence receipts deduplicate accepted and rejected commands. The relay
-retains 128 durable events and 16 receipts per client record. Reconnect receives
-missed events, or a compact level/progress summary if history is too old. Static
-level definitions are sent at entry or summary recovery, not during motion.
-A small revision probe every 15 seconds catches a missing final event.
+The relay owns membership, presence and durable milestones. It does not simulate physics, broadcast full worlds per frame, or distribute a native engine memory image. Small movement anchors are capped at two per second per client, interpolate locally, and stop transmitting while idle. Backpressure drops movement rather than queuing old positions. A 15-second revision probe recovers a missed final event and checks rotation; it is not a game-state polling loop.
 
-Presence changes are durable events, emitted only when the set of connected park
-members changes. Idle motion silence is not treated as disconnection. Multiple
-sockets for one member preserve presence until the last leaves. Closing the panel
-sends one leave message while retaining the classroom connection and saved progress.
-Silent network failures become visible when the existing socket timeout detects them.
+Actions use a bounded 16-intent outbox, sequential acknowledgments and deduplication. Each stream retains 16 receipts; each room retains 128 durable events before falling back to a compact entry/resume summary. Four tabs per member can coexist, with inactive stream slots safely reclaimed. Sections never share progress. Up to 64 unique members fit a period's room; up to 32 rooms fit the relay.
 
-There are at most 32 groups and four client records per member. New tabs can reclaim
-inactive records; active records are protected. Each allocation has a stream ID,
-so old packets/receipts cannot affect replacements. Returning reclaimed clients
-restore progress and retry current-level intents with fresh sequences; milestones
-are idempotent. Groups expire after 30 minutes without activity from bound clients.
-If two active tabs present the same cached client ID, the relay assigns the second
-one a separate ID and the panel saves it for subsequent reconnects and reopenings.
-Existing revision probes keep open idle panels alive. Cleanup is lazy, with no extra
-timer or traffic. Relay process restarts require creating new groups.
+A 24-player continuous-motion simulation at two updates/second measured about 7.6 KB/second received per player and 313 bytes/second sent per player, excluding WebSocket framing, classroom traffic, initial entry and interactions. Stationary clients generate no motion traffic. This is an all-moving measurement, not a promise about total application bandwidth.
+
+State is retained in relay memory. Connection interruptions recover within the retention window; restarting the relay resets puzzle progress. Existing classroom join identity remains the trust boundary. There are no grade or candy writes.
 
 ## Verification
 
-Run from `school/curriculum_render/railway-server`:
+Run `npm run test:park` in this repository and in the sibling relay's `railway-server` directory. Relay tests import the browser replica from the sibling `follow-alongs` checkout.
 
-```sh
-node --test apstat-park/*.test.mjs
+The browser smoke uses a local server and isolated classroom registry:
+
+```text
+node apstat-park/browser-smoke.mjs
 ```
 
-Twenty-one relay/protocol tests cover ownership, group boundaries, teacher controls,
-pause, duplicate actions, event gaps, compact recovery, stale levels, lost receipt
-reasons, bounded queues/history, socket backpressure, handoffs for 1/2/8 players,
-presence, idle operation, expiration, and 30 closed-tab replacements.
-They also verify independent action sequences for tabs with copied client IDs.
+It needs Playwright, the sibling relay checkout and Chromium. Set PARK_PLAYWRIGHT_MODULE to an installed playwright-core index.mjs and PARK_BROWSER to the browser executable if needed. PARK_SMOKE_OUTPUT chooses the screenshot/result directory.
 
-Run from `school/follow-alongs`:
+The smoke walks into the door, clicks to join a friend, plays all three layouts with actual keyboard input, drops a socket, checks hourly rotation and reload checkpoints, tests a mobile-sized scene, and loads the actual calendar at 650px height. Production requests and sockets are blocked for the calendar test. It also checks that the old classroom activity keyboard handler does not intercept park controls.
 
-```sh
-node --test apstat-park/world.test.mjs apstat-park/remote-motion.test.mjs
-npx vitest run tests/classroom-board-level.test.js tests/classroom-board.test.js
-```
+## Integration
 
-Five physics/presentation tests and 342 existing classroom-board tests pass.
-The physics tests include a simulated minute without network access.
+- `classroom-board.js` creates the doorway, pauses the background scene during park play, and supplies its existing socket and sprite renderer.
+- `panel.mjs` manages the inline scene and resumable connection.
+- `game.mjs` renders the horizontally scrolling puzzle and controls.
+- `world.mjs` owns local physics; `replica.mjs` owns reliable shared progress; `remote-motion.mjs` presents sparse peer motion.
+- The relay's `apstat-park/service.mjs` binds students to period rooms; `session.mjs` owns milestones and rotation; `levels.mjs` defines the original puzzles.
 
-Browser tools live in `hermes/old-app/apstat-park-tools` and run from `hermes/old-app`:
-
-```sh
-node apstat-park-tools/verify_board_entry.mjs
-node apstat-park-tools/verify_browser.mjs --eight-players --full-route --rough
-node apstat-park-tools/verify_idle.mjs
-```
-
-The entry harness uses the real classroom board, registry and park service. It
-checks five panel reopenings, away notices, automatic board reconnect, preserved
-progress and absence of native module requests. The route harness drives Chromium
-students through all three levels using keyboard controls, with real WebSockets,
-message delays, dropped acknowledgments and an actual socket interruption.
-`--rough` uses 250 ms upstream and 750 ms downstream delay. Results are written to
-`apstat-park-tools/results`. These local harnesses do not boot the production relay's
-database-backed application, and the route drives students sequentially.
-
-## Measured traffic
-
-- Idle: 956 JSON bytes/minute per participant for four status request/response pairs;
-  eight students plus teacher total 8,604 bytes/minute. No idle broadcasts.
-- Eight simultaneously moving players, synthetic minute: 296,544 upstream bytes
-  total and 2,175,936 downstream bytes after fanout. Each student receives about
-  4,533 bytes/second. Motion goes to neither the sender nor the teacher.
-- Full browser route measurements include startup, interactions and recovery and
-  are recorded separately in `results/eight-player.json`, with per-member totals.
-  The eight-player route passed with a 1,000 ms simulated round trip and nine
-  dropped acknowledgments: 1,229,021 JSON bytes over 290.762 seconds for the group.
-  This measurement preceded the final copied-client join fix; the final entry
-  test and protocol tests separately verify that fix.
-
-These counts exclude WebSocket framing and existing classroom heartbeats. The
-synthetic movement test is a sustained-activity bound, not a prediction of every
-classroom connection. The implementation supports the original three-level loop;
-additional level design is future expansion rather than native-game reproduction.
+Deploy the relay before the frontend. Old cached group-management requests receive PARK_SELF_DIRECTED and tell the user to enter through the calendar. Review the changed browser and relay code together.

@@ -66,12 +66,13 @@ export class ParkWorld {
 
   nearby(member, progress) {
     const close = item => Math.hypot(this.player.x - item.x, this.player.y - item.y) <= 45;
-    const sample = this.level.samples.find(item => item.owner === member && !progress.samples.includes(item.id) && close(item));
+    const sample = this.level.samples.find(item => !progress.samples.includes(item.id) && close(item));
     if (sample) return { kind: 'sample', target: sample.id };
-    const parcel = this.level.samples.find(item => item.owner === member && item.destination
-      && progress.samples.includes(item.id) && !progress.deliveries.includes(item.id));
+    const parcel = this.level.samples.find(item => item.destination
+      && progress.samples.includes(item.id) && !progress.deliveries.includes(item.id)
+      && close(this.level.switches.find(station => station.id === item.destination)));
     if (parcel && close(this.level.switches.find(station => station.id === parcel.destination))) return { kind: 'deliver', target: parcel.id };
-    const station = this.level.switches.find(item => item.owner === member && !progress.switches.includes(item.id) && close(item));
+    const station = this.level.switches.find(item => !progress.switches.includes(item.id) && close(item));
     if (station) return { kind: 'switch', target: station.id };
     if (progress.bridgeOpen && !progress.arrived.includes(member) && close(this.level.goal)) return { kind: 'arrive', target: 'exit' };
     return null;

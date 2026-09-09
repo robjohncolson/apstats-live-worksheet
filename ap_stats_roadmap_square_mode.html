@@ -1246,7 +1246,7 @@
             #resource-body { max-height: min(60vh, 420px); }
         }
         @media (max-height: 760px) {
-            #classroom-board-mount, #classroom-board-controls { display: none; }   /* pico-park strip (~240px) */
+            /* Keep the classroom characters and park doorway available on short screens. */
             #donow-helper { display: none; }                   /* coach panel; grades stay */
             #donow-grades { gap: 2px; }
             .dc { min-height: clamp(38px, 6.5vh, 50px); }
@@ -24327,6 +24327,7 @@ function _handleActivityState(summary){
 document.addEventListener('keydown', function(e){
   try {
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    if (e.target && e.target.closest && e.target.closest('[data-park-scene]')) return;
     // Study Break owns ↑/↓ while it is open: a drop key must not nudge the student's activity value.
     if (typeof studyBreak !== 'undefined' && studyBreak.isOpen && studyBreak.isOpen()) return;
     if (!_classroomBoardHandle) return;

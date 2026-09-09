@@ -4061,10 +4061,17 @@
 
     var nativePanel = null;
     var nativeActive = false;
+    var parkReturnAt = 0;
     var nativeButton = doc.createElement('button');
-    nativeButton.textContent = 'APStat Park';
     nativeButton.type = 'button';
     nativeButton.setAttribute('data-classroom-native', '1');
+    nativeButton.setAttribute('aria-label', 'Enter APStat Park');
+    nativeButton.title = 'APStat Park: walk into the door, press Up, or click to enter';
+    nativeButton.style.cssText = 'position:absolute;left:24px;top:126px;width:38px;height:50px;background:#030606;border:3px solid #57756c;border-bottom:0;border-radius:18px 18px 0 0;cursor:pointer;z-index:4;padding:0';
+    var parkLabel = doc.createElement('span');
+    parkLabel.textContent = 'APStat Park';
+    parkLabel.style.cssText = 'position:absolute;left:50%;top:-25px;transform:translateX(-50%);white-space:nowrap;color:#e4f0e6;background:#173b38;border-radius:5px;padding:3px 6px;font:11px system-ui';
+    nativeButton.appendChild(parkLabel);
     container.appendChild(nativeButton);
     nativeButton.onclick = function () {
       if (destroyed || nativeButton.disabled) { return; }
@@ -4073,17 +4080,27 @@
         if (destroyed) { return; }
         nativeActive = true;
         for (var key in playerInput) { playerInput[key] = false; }
+        if (engineReady) engine.stop();
         nativePanel = module.mountParkPanel({
           container: container,
-          role: role,
           getSocket: function () { return ws; },
-          getMembers: function () { return Object.keys(state.members).map(function (name) { return state.members[name]; }); },
-          onClose: function () { nativePanel = null; nativeActive = false; nativeButton.disabled = false; }
+          drawAvatar: spriteSheet ? function (ctx, name, pose) {
+            var peer = state.members[name];
+            var hue = peer && peer.hue != null ? peer.hue : hashStringToHue(name);
+            var frame = Math.abs(pose.vx) > 1 ? WALK_FRAMES[Math.floor(Date.now() / 130) % WALK_FRAMES.length] : 0;
+            spriteSheet.drawFrame(ctx, frame, pose.x - 12, pose.y - 15, 0.3, hue);
+          } : null,
+          onClose: function () {
+            nativePanel = null; nativeActive = false; nativeButton.disabled = false;
+            parkReturnAt = Date.now();
+            for (var key in playerInput) playerInput[key] = false;
+            if (!destroyed && engineReady) { resizeBoardToContainer(); engine.start(); }
+          }
         });
       }).catch(function (error) {
-        nativeActive = false;
-        nativeButton.disabled = false;
-        nativeButton.textContent = 'Retry APStat Park';
+        nativeActive = false; nativeButton.disabled = false;
+        if (!destroyed && engineReady) engine.start();
+        parkLabel.textContent = 'Retry APStat Park';
         nativeButton.title = error.message;
       });
     };
@@ -4402,12 +4419,29 @@
     // and the local PlayerSprite reads from it on every update tick.
     var playerInput = { left: false, right: false, jump: false, up: false };
 
+    // The doorway is part of the existing scene. Walking into it enters locally;
+    // the park uses the same classroom socket, while this scene's physics sleeps.
+    if (engineReady) engine.addEntity('park_doorway', {
+      update: function () {
+        nativeButton.style.top = (engine.groundY - 50) + 'px';
+        var player = spriteEntities[username];
+        if (!player || nativeActive || Date.now() - parkReturnAt < 1200) return;
+        var x = player.x + (player._spriteSize || 20) / 2 - (_camera.x || 0);
+        if ((playerInput.left || playerInput.right) && Math.abs(x - 43) < 16
+            && Math.abs(player.y - getSpriteY()) < 16) nativeButton.onclick();
+      },
+      draw: function () {}
+    });
+
     // Edge-trigger callback the PlayerSprite calls when Up is pressed.
     // Fires classroom_checkin when the player's foot is inside the gate
     // door x-range AND state.gate.armed; otherwise no-op (no door, no
     // check-in). The server's present->checkedIn transition then drives
     // the drain animation through syncScene as today -- one way out.
     function handlePlayerUp(player) {
+      if (!nativeActive && Math.abs(player.x + player._spriteSize / 2 - (_camera.x || 0) - 43) < 28) {
+        nativeButton.onclick(); return;
+      }
       // v3 P4: doorways take priority over the gate (a doorways data
       // mode is mutually exclusive with the gate ritual on the server).
       if (state.doorways && doorwayEntities.length > 0) {
@@ -6418,6 +6452,7 @@
     var handle = {
 
       openNativeGameplay: function () { nativeButton.onclick(); },
+      getParkScene: function () { return nativePanel; },
 
       destroy: function () {
         destroyed = true;

@@ -1,4 +1,4 @@
-const DELAY_MS = 250;
+const DELAY_MS = 500;
 const TELEPORT_DISTANCE = 200;
 
 // Presentation only. Never predicts shared progress or adds network messages.

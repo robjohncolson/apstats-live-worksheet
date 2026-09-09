@@ -3,7 +3,7 @@ import { RemoteMotion } from './remote-motion.mjs';
 const copy = value => structuredClone(value);
 const OUTBOX_LIMIT = 16;
 const RETRY_MS = 1500;
-const MOTION_MS = 250;
+const MOTION_MS = 500;
 
 export class ParkReplica {
   constructor({ now = () => performance.now() } = {}) {
@@ -79,7 +79,8 @@ export class ParkReplica {
     if (event.revision <= this.revision) return true;
     if (event.revision !== this.revision + 1) { this.needsResume = true; return false; }
     const progress = this.state.progress;
-    if (event.kind === 'presence') this.state.online = [...event.online];
+    if (event.kind === 'members') this.state.members = [...event.members];
+    else if (event.kind === 'presence') this.state.online = [...event.online];
     else if (event.kind === 'running') this.state.running = event.running;
     else if (event.kind === 'level') {
       this.state.level = copy(event.level);

@@ -1,41 +1,45 @@
 import { ParkReplica } from './replica.mjs';
 import { mountParkGame } from './game.mjs';
 
-export function mountParkPanel({ container, role, getSocket, getMembers, onClose = () => {} }) {
-  const doc = container.ownerDocument, panel = doc.createElement('dialog');
+// Replaces the contents of the calendar's character area; never opens a dialog or page.
+export function mountParkPanel({ container, getSocket, drawAvatar, onClose = () => {} }) {
+  const doc = container.ownerDocument, panel = doc.createElement('section');
   panel.setAttribute('aria-label', 'APStat Park');
-  panel.style.cssText = 'width:min(1100px,95vw);max-height:94vh;overflow:auto;background:#10282d;color:#e4f0e6;border:1px solid #537868;border-radius:16px;padding:20px;font:16px system-ui';
-  const heading = doc.createElement('h2'); heading.textContent = 'APStat Park';
-  const status = doc.createElement('p'); status.setAttribute('role', 'status');
-  const actions = doc.createElement('div'), view = doc.createElement('div');
-  panel.append(heading, status, actions, view); container.append(panel); panel.showModal();
+  panel.setAttribute('data-park-scene', '');
+  panel.style.cssText = 'position:relative;background:#10282d;color:#e4f0e6;border-radius:12px;padding:8px;font:13px system-ui';
+  // Keep incoming classroom updates hidden without overwriting their latest
+  // display state. They become visible in the correct state when we return.
+  const style = doc.createElement('style');
+  style.textContent = '[data-park-active] > :not([data-park-scene]) { display:none !important; }';
+  panel.append(style);
+  container.setAttribute('data-park-active', '');
+  const header = doc.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px';
+  const title = doc.createElement('strong'); title.textContent = 'APStat Park';
+  const exit = doc.createElement('button'); exit.type = 'button'; exit.textContent = 'Exit to calendar';
+  exit.style.cssText = 'background:#071413;color:#e4f0e6;border:1px solid #537868;border-radius:7px;padding:6px 10px;cursor:pointer';
+  header.append(title, exit);
+  const status = doc.createElement('p'); status.setAttribute('role', 'status'); status.style.margin = '6px 0';
+  const view = doc.createElement('div');
+  panel.append(header, status, view); container.append(panel);
   const replica = new ParkReplica(), pending = new Map();
-  let clientId = doc.defaultView.sessionStorage.getItem('apstat-park-client');
-  if (!clientId) {
-    clientId = `park_${crypto.randomUUID().replaceAll('-', '')}`;
-    doc.defaultView.sessionStorage.setItem('apstat-park-client', clientId);
-  }
+  const freshId = () => 'park_' + crypto.randomUUID().replaceAll('-', '');
+  let clientId;
+  try { clientId = doc.defaultView.sessionStorage.getItem('apstat-park-client'); } catch {}
+  if (!clientId) clientId = freshId();
+  function saveClient() { try { doc.defaultView.sessionStorage.setItem('apstat-park-client', clientId); } catch {} }
+  saveClient();
+  const requestPrefix = freshId();
   let socket = null, requestId = 0, disposed = false, game = null, joining = false, joinedSocket = null;
-  let retryAt = 0, lastStatusAt = 0, groupId = 'classroom-park';
-
-  function button(label, action) {
-    const element = doc.createElement('button'); element.type = 'button'; element.textContent = label;
-    element.style.cssText = 'padding:10px 16px;margin:4px;border-radius:8px';
-    element.onclick = async () => {
-      element.disabled = true;
-      try { await action(); } catch (error) { status.textContent = error.message; }
-      finally { element.disabled = false; }
-    };
-    actions.append(element); return element;
-  }
+  let retryAt = 0, lastStatusAt = 0;
 
   function request(type, data = {}) {
-    if (!socket || socket.readyState !== 1 || pending.size >= 8) return Promise.reject(new Error('Waiting for the classroom connection'));
-    const id = `${clientId}_${++requestId}`;
+    if (!socket || socket.readyState !== 1 || socket.bufferedAmount > 4096 || pending.size >= 8) return Promise.reject(new Error('Waiting for the classroom connection'));
+    const id = requestPrefix + '_' + ++requestId;
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => { pending.delete(id); reject(new Error('Connection delayed; trying again')); }, 8000);
       pending.set(id, { resolve, reject, timeout });
-      socket.send(JSON.stringify({ type, requestId: id, groupId, ...data }));
+      socket.send(JSON.stringify({ type, requestId: id, ...data }));
     });
   }
 
@@ -43,35 +47,16 @@ export function mountParkPanel({ container, role, getSocket, getMembers, onClose
     let message;
     try { message = JSON.parse(event.data); } catch { return; }
     if (!message?.type?.startsWith('park_')) return;
-    if (message.type === 'park_error' && message.code === 'PARK_STREAM_CHANGED') {
-      replica.needsResume = true;
-      return;
-    }
-    if (message.type === 'park_error' && message.code === 'PARK_NOT_ASSIGNED') {
-      game?.dispose(); game = null; replica.state = null; joinedSocket = null;
-      status.textContent = message.message;
-    }
-    if (message.type === 'park_error' && !message.requestId) {
-      // A command/motion rejected without a request id (e.g. the relay pruned this binding):
-      // rejoin rather than retrying the outbox head forever.
-      replica.needsResume = true;
-      return;
-    }
     if (message.type === 'park_event') {
-      if (message.kind === 'stopped' && message.epoch === replica.state?.epoch) {
-        game?.dispose(); game = null; replica.state = null; joinedSocket = null;
-        status.textContent = 'Your teacher ended this park group.'; retryAt = performance.now() + 5000;
-      } else if (message.kind === 'motion') replica.peerMotion(message);
+      if (message.kind === 'motion') replica.peerMotion(message);
       else replica.event(message);
-      if (role === 'teacher' && replica.state && message.kind !== 'motion') {
-        const state = replica.state, arrived = state.progress.arrived.length;
-        status.textContent = state.done ? 'The whole group completed APStat Park!'
-          : arrived === state.members.length ? 'Everyone reached the exit. Choose Next level to continue.'
-          : `${state.level.title}: ${state.running ? 'playing' : 'paused'}. ${state.progress.switches.length}/${state.members.length} contributions saved; ${arrived}/${state.members.length} at the exit.`;
-      }
       return;
     }
     if (message.status) { replica.acknowledge(message); return; }
+    if (message.type === 'park_error') {
+      if (!message.requestId || message.code === 'PARK_STREAM_CHANGED') replica.needsResume = true;
+      status.textContent = message.message;
+    }
     const job = pending.get(message.requestId);
     if (!job) return;
     pending.delete(message.requestId); clearTimeout(job.timeout);
@@ -87,58 +72,33 @@ export function mountParkPanel({ container, role, getSocket, getMembers, onClose
     socket?.addEventListener('message', onMessage);
   }
 
-  async function join(force = false) {
+  async function join() {
     if (joining || disposed || socket?.readyState !== 1) return;
     joining = true; const current = socket;
     try {
       const response = await request('park_resume', { clientId, epoch: replica.state?.epoch,
-        since: !force && replica.state ? replica.revision : null });
+        since: replica.state ? replica.revision : null });
       if (disposed || current !== socket) return;
-      replica.resume(response); groupId = response.groupId; joinedSocket = socket;
-      if (response.clientId && response.clientId !== clientId) {
-        clientId = response.clientId;
-        doc.defaultView.sessionStorage.setItem('apstat-park-client', clientId);
-      }
-      if (role !== 'teacher' && !game) game = mountParkGame({ container: view, replica, member: response.member,
+      replica.resume(response); joinedSocket = socket;
+      if (response.clientId && response.clientId !== clientId) { clientId = response.clientId; saveClient(); }
+      if (!game) game = mountParkGame({ container: view, replica, member: response.member, drawAvatar, onExit: dispose,
         connected: () => socket?.readyState === 1 && joinedSocket === socket });
-      status.textContent = role === 'teacher' ? `Group ready: ${response.members?.join(', ') ?? replica.state.members.join(', ')}` : 'Help your group reach the exit.';
+      status.textContent = '';
     } catch (error) { if (!disposed) status.textContent = error.message; }
     finally { joining = false; retryAt = performance.now() + 2000; }
   }
 
-  if (role === 'teacher') {
-    const selection = doc.createElement('fieldset');
-    const legend = doc.createElement('legend'); legend.textContent = 'Choose up to eight students'; selection.append(legend);
-    for (const member of getMembers().filter(member => member.role === 'student' && member.online !== false)) {
-      const label = doc.createElement('label'), checkbox = doc.createElement('input'); checkbox.type = 'checkbox'; checkbox.value = member.username;
-      label.style.cssText = 'display:inline-block;margin:8px'; label.append(checkbox, doc.createTextNode(member.username)); selection.append(label);
-    }
-    actions.append(selection);
-    button('Create group', async () => {
-      const members = [...selection.querySelectorAll('input:checked')].map(input => input.value);
-      const response = await request('park_start', { members });
-      replica.resume(response); joinedSocket = socket;
-      status.textContent = `Group ready: ${members.join(', ')}`;
-    });
-    button('Start', () => request('park_run', { running: true }));
-    button('Pause', () => request('park_run', { running: false }));
-    button('Next level / help group', () => request('park_next'));
-    button('End group', () => request('park_stop'));
-  } else button('Join park', () => join(true));
-  button('Back to classroom', dispose);
-  panel.addEventListener('cancel', event => { event.preventDefault(); dispose(); });
-
   async function pump() {
     if (disposed) return;
     bindSocket();
-    const connected = socket?.readyState === 1;
-    if (connected && performance.now() >= retryAt && (joinedSocket !== socket || replica.needsResume)) await join();
-    if (disposed || !connected || joinedSocket !== socket) return;
-    if (role !== 'teacher') {
-      for (const packet of replica.outgoing({ connected, bufferedAmount: socket.bufferedAmount })) socket.send(JSON.stringify(packet));
+    if (socket?.readyState !== 1) {
+      status.textContent = replica.state ? 'Reconnecting. Your saved puzzle progress stays here.' : 'Connecting to your classroom...';
+      return;
     }
-    // Tiny revision probe recovers a dropped final event, even if nobody acts
-    // again. This is connection metadata, not a game-state polling loop.
+    if (performance.now() >= retryAt && (joinedSocket !== socket || replica.needsResume)) await join();
+    if (disposed || socket?.readyState !== 1 || joinedSocket !== socket) return;
+    for (const packet of replica.outgoing({ connected: true, bufferedAmount: socket.bufferedAmount })) socket.send(JSON.stringify(packet));
+    // A small revision probe recovers a lost last event and checks hourly rotation.
     if (performance.now() - lastStatusAt >= 15000 && !joining) {
       lastStatusAt = performance.now();
       try {
@@ -150,16 +110,18 @@ export function mountParkPanel({ container, role, getSocket, getMembers, onClose
 
   function dispose() {
     if (disposed) return;
-    if (socket?.readyState === 1 && replica.state) {
-      socket.send(JSON.stringify({ type: 'park_leave', epoch: replica.state.epoch }));
-    }
-    disposed = true; clearInterval(timer); game?.dispose();
+    disposed = true;
+    if (socket?.readyState === 1 && replica.state) socket.send(JSON.stringify({ type: 'park_leave', epoch: replica.state.epoch }));
+    clearInterval(timer); game?.dispose();
     socket?.removeEventListener('message', onMessage);
     for (const job of pending.values()) { clearTimeout(job.timeout); job.reject(new Error('Park closed')); }
-    pending.clear(); panel.close(); panel.remove(); onClose();
+    pending.clear(); panel.remove();
+    container.removeAttribute('data-park-active');
+    onClose();
   }
+  exit.onclick = dispose;
   bindSocket();
-  const timer = setInterval(() => { pump().catch(error => { if (!disposed) status.textContent = error.message; }); }, 50);
-  status.textContent = 'Joining your classroom park...';
+  const timer = setInterval(() => { pump().catch(error => { if (!disposed) status.textContent = error.message; }); }, 100);
+  status.textContent = 'Entering your classroom park...';
   return { dispose, replica, getGame: () => game };
 }
