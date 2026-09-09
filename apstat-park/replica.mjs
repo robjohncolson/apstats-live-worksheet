@@ -20,12 +20,16 @@ export class ParkReplica {
     this.lastMotionAt = -Infinity;
     this.needsResume = true;
     this.lastRejection = null;
+    this.clockAnchor = { local: this.now(), remote: 0 };
   }
+
+  clock() { return this.clockAnchor.remote + this.now() - this.clockAnchor.local; }
 
   resume(response) {
     if (!response || !['events', 'summary'].includes(response.mode)
       || !Number.isSafeInteger(response.sequence) || response.sequence < 0
       || !Number.isSafeInteger(response.revision) || response.revision < 0) throw new Error('Invalid park resume');
+    if (Number.isFinite(response.clockMs)) this.clockAnchor = { local: this.now(), remote: response.clockMs };
     const sameEpoch = this.state?.epoch === response.epoch;
     if (!sameEpoch && response.mode !== 'summary') throw new Error('A new park requires a summary');
     if (!sameEpoch) {
@@ -79,7 +83,13 @@ export class ParkReplica {
     if (event.revision <= this.revision) return true;
     if (event.revision !== this.revision + 1) { this.needsResume = true; return false; }
     const progress = this.state.progress;
-    if (event.kind === 'members') this.state.members = [...event.members];
+    if (event.kind === 'settled') {
+      this.state.poses[event.member] = copy(event.pose);
+      this.remoteMotion.push(event.member, event.pose);
+    } else if (event.kind === 'key') progress.keyHolder = event.holder;
+    else if (event.kind === 'door') progress.doorOpen = event.open;
+    else if (event.kind === 'complete') progress.complete = event.complete;
+    else if (event.kind === 'members') this.state.members = [...event.members];
     else if (event.kind === 'presence') this.state.online = [...event.online];
     else if (event.kind === 'running') this.state.running = event.running;
     else if (event.kind === 'level') {
@@ -93,7 +103,7 @@ export class ParkReplica {
       this.state.done = true;
       this.state.running = false;
     } else if (event.kind === 'contribution') {
-      if (!['switches', 'samples', 'deliveries'].includes(event.collection)) return false;
+      if (event.collection !== 'switches') return false;
       if (!progress[event.collection].includes(event.target)) progress[event.collection].push(event.target);
       progress.bridgeOpen = event.bridgeOpen;
     } else if (event.kind === 'arrived') {

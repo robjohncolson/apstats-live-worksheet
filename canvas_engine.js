@@ -60,7 +60,11 @@ class CanvasEngine {
     if (this.running) this.animationFrame = requestAnimationFrame((t) => this.gameLoop(t));
   }
   update(deltaTime) {
-    this.entities.forEach((entity) => {
+    const scene = this.sceneEntities || this.entities;
+    scene.forEach((entity) => {
+      // A doorway can change scenes during an update. Do not advance any
+      // more actors from the scene we just left in this frame.
+      if (scene !== (this.sceneEntities || this.entities)) return;
       if (entity.update) entity.update(deltaTime);
     });
   }
@@ -73,7 +77,7 @@ class CanvasEngine {
     // render loop. With zIndex, avatars get a higher z and stay visually
     // in front. Stable-sort fallback if Array.prototype.sort isn't stable
     // is fine -- ties are by insertion order, matching old behavior.
-    const ordered = Array.from(this.entities.values());
+    const ordered = Array.from((this.sceneEntities || this.entities).values());
     ordered.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
     ordered.forEach((entity) => {
       if (entity.render) entity.render(this.ctx);

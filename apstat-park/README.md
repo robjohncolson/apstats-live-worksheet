@@ -1,58 +1,37 @@
-# APStat Park: the calendar doorway
+# APStat Park: one continuous board
 
-APStat Park is an original cooperative puzzle space inspired by PICO PARK. It is embedded in the calendar's existing character area. Teacher-created groups, start/pause/next/end controls, and the modal park window are retired.
+The calendar doorway selects a local scene in the existing CanvasEngine. The canvas element, 220px height, background, 20x24 cat sprites, PlayerSprite physics, camera and keyboard handling stay the same. There is no second canvas, game panel, touch-control row or teacher group manager.
 
-## Entering and playing
+Students enter by walking left into the black doorway, pressing Up beside it, or clicking it. Arrows move, Space jumps, and Up enters a door. The starting doorway returns to the calendar; Escape also returns. At the goal, Up enters the unlocked door and a subsequent Up returns. Polls, armed gates, green light, voting doorways and live activities recall students and prevent entry while active.
 
-- A black doorway stays visible in the signed-in calendar character area, including short screens. Walk into it, press Up beside it, or click/tap it.
-- Entering changes the contents of the same 220px character strip, keeping its background, typography and character scale. There is no separate framed game panel or layout resize. The bundled door, button, coin and character sprites are reused.
-- Everyone in the same classroom period enters the same park automatically. The teacher cockpit does not show the doorway. No teacher needs to go live, create a group, or start a puzzle.
-- Arrows or A/D move; Space jumps; E or Up collects, delivers, lights a switch, or enters a door. Touch controls provide the same actions.
-- Exit to calendar, Escape while the canvas is focused, or the black calendar door returns to the original classroom scene. The door accepts Up/E or a click. Exit keys cannot reopen the park through the restored calendar, including held-key repeats.
-- Polls, gates, green light, voting doorways and live activities recall students to the classroom and prevent park entry until the activity ends.
+## Opening level
 
-## Puzzles and hourly selection
+The opening cooperative sequence is adapted from original PICO PARK: use a friend's head to reach a ledge, jump the gap, press the bridge switch so everyone can follow, collect the key and ride the lift to the door. The switch also lowers a step for the student who gave the boost. One player carries the key; that player unlocks the door, then every connected participant enters. This is an adaptation to the board's dimensions and connection model, not a pixel-exact level-data port.
 
-Three original layouts rotate: Build a bridge together, Gather the whole sample, and Pass it on. Four shared stations control the bridge. They are independent of the number of players. Anyone can collect or deliver a sample and light a station; an absent collector never locks a task. Play alone or share the work with classmates.
+The existing site character, button and key images are reused. No recovered game scripts or newly extracted artwork are included. The gameplay reference is the [opening-level walkthrough](https://picoparkmobilewalkthrough.blogspot.com/2021/09/pico-park-level-1-puzzles-walkthrough.html). Hourly rotation is paused to focus on this level. The relay keeps an inactive room for two hours. A relay restart resets progress.
 
-The relay selects a featured layout using the UTC epoch hour modulo three. At an hour boundary, an active attempt stays intact until everyone still connected has reached the finish, with at least eight seconds to celebrate. If everyone explicitly exits, the next entry can take the current featured layout. A socket interruption is not an explicit exit: reconnecting retains the attempt across the hour boundary. An empty room can rotate after three minutes without a socket, as well as after an explicit last exit. Rooms without active bindings are reclaimed after two hours of inactivity.
+A lone student can explore or return, but the opening boost needs a friend. Once the bridge is open, the checkpoint lets returning students rejoin beyond it. The key returns to its original pickup point if its holder disconnects before unlocking the door. Late arrivals share the bridge and open door, and must enter before the room is complete.
 
-Late arrivals receive saved shared milestones. Re-entering or reloading restores the finish position if already arrived, otherwise the bridge checkpoint if opened, otherwise the starting doorway. Rotation uses a unique level ID so delayed actions cannot apply to another hour's puzzle.
+## Connection behavior
 
-## Network behavior
+Local physics never waits for network frames. Changed motion anchors are coalesced to at most two per second; stationary players send no motion. Peers interpolate sparse anchors and stop at the last known position during a gap. A reliable resting-position event repairs even a dropped final motion packet. They can be stood on using the board's existing stacking physics. Moving stacks may feel delayed on poor connections; the opening boost uses a stationary teammate.
 
-Physics and collision run locally at 60 Hz. Other players are visual companions, not physics bodies. Puzzles avoid requiring synchronized jumps or player stacks over unreliable connections.
+The lift follows a local cycle anchored by the relay clock on resume. It sends no per-frame state. Resting positions, bridge, key, unlock and arrival are sequenced, retried, idempotent events. Revision probes run every 15 seconds; bounded replay or a compact summary repairs missed events. The outbox holds at most 16 intents and replaces pending movement with the latest pose when disconnected or backpressured. The park reuses the classroom socket and does not emit classroom_pos packets for park movement.
 
-The relay owns membership, presence and durable milestones. It does not simulate physics, broadcast full worlds per frame, or distribute a native engine memory image. Small movement anchors are capped at two per second per client, interpolate locally, and stop transmitting while idle. Backpressure drops movement rather than queuing old positions. A 15-second revision probe recovers a missed final event and checks rotation; it is not a game-state polling loop.
+Rooms are keyed by the joined classroom section, retaining the existing identity trust model. No grades or candy are changed. Protocol 2 is required before a client can allocate a room or occupy it; cached earlier clients receive PARK_UPDATE_REQUIRED.
 
-Actions use a bounded 16-intent outbox, sequential acknowledgments and deduplication. Each stream retains 16 receipts; each room retains 128 durable events before falling back to a compact entry/resume summary. Four tabs per member can coexist, with inactive stream slots safely reclaimed. Sections never share progress. Up to 64 unique members fit a period's room; up to 32 rooms fit the relay.
+## Verification and release
 
-A 24-player continuous-motion simulation at two updates/second measured about 7.6 KB/second received per player and 313 bytes/second sent per player, excluding WebSocket framing, classroom traffic, initial entry and interactions. Stationary clients generate no motion traffic. This is an all-moving measurement, not a promise about total application bandwidth.
+- Frontend: `npm run test:park` for sparse-motion tests, plus Vitest board/terrain/camera/scene/keyboard suites.
+- Relay railway-server: `npm run test:park` for milestones, key handoff, completion, room isolation, protocol migration, replay, stream churn and traffic bounds. These tests import the sibling frontend replica.
+- Real browser: `node apstat-park/browser-smoke.mjs`. Needs the sibling relay, Playwright and Chromium. PARK_PLAYWRIGHT_MODULE and PARK_BROWSER can point to installed copies; PARK_SMOKE_OUTPUT selects the artifact directory.
 
-State is retained in relay memory. Connection interruptions recover within the retention window; restarting the relay resets puzzle progress. Existing classroom join identity remains the trust boundary. There are no grade or candy writes.
+Run `node scripts/bump-build.mjs` before every release touching board or park modules. APP_BUILD, version.json and service-worker BUILD must match. Deploy the frontend first: it detects an old relay and explains that the park is updating. Then deploy the relay, which excludes old cached clients. Review both repositories together and obey the independent pre-push review gate.
 
-## Verification
+## Code
 
-Run `npm run test:park` in this repository and in the sibling relay's `railway-server` directory. Relay tests import the browser replica from the sibling `follow-alongs` checkout.
-
-The browser smoke uses a local server and isolated classroom registry:
-
-```text
-node apstat-park/browser-smoke.mjs
-```
-
-It needs Playwright, the sibling relay checkout and Chromium. Set PARK_PLAYWRIGHT_MODULE to an installed playwright-core index.mjs and PARK_BROWSER to the browser executable if needed. PARK_SMOKE_OUTPUT chooses the screenshot/result directory.
-
-The smoke walks into the door, clicks to join a friend, plays all three layouts with actual keyboard input, drops a socket, checks hourly rotation and reload checkpoints, tests a mobile-sized scene, and loads the actual calendar at 650px height. Production requests and sockets are blocked for the calendar test. It also checks that the old classroom activity keyboard handler does not intercept park controls, the strip dimensions do not change, and returning through the drawn door stays in the calendar. The return regression positions the classroom avatar inside its entrance before testing Up and held-key repeats.
-
-Run `node scripts/bump-build.mjs` before every release touching the board or park modules. Verify APP_BUILD, version.json and the service worker BUILD agree; a cached retired client must not remain active against the new relay.
-
-## Integration
-
-- `classroom-board.js` creates the doorway, pauses the background scene during park play, and supplies its existing socket and sprite renderer.
-- `panel.mjs` manages the inline scene and resumable connection.
-- `game.mjs` renders the horizontally scrolling puzzle and controls.
-- `world.mjs` owns local physics; `replica.mjs` owns reliable shared progress; `remote-motion.mjs` presents sparse peer motion.
-- The relay's `apstat-park/service.mjs` binds students to period rooms; `session.mjs` owns milestones and rotation; `levels.mjs` defines the original puzzles.
-
-Deploy the relay before the frontend. Old cached group-management requests receive PARK_SELF_DIRECTED and tell the user to enter through the calendar. Review the changed browser and relay code together.
+- classroom-board.js supplies the existing engine, camera, input and sprite factories, and handles classroom recall.
+- board-scene.mjs assembles scenery and actors into CanvasEngine.sceneEntities.
+- panel.mjs handles socket binding, replay and lifecycle; it creates only a status line.
+- replica.mjs handles reliable events; remote-motion.mjs interpolates bounded peer anchors.
+- Relay levels.mjs describes the opening scene; session.mjs owns milestones; service.mjs binds joined students to period rooms.

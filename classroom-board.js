@@ -1106,6 +1106,9 @@
     this.onUpPressed  = (typeof opts.onUpPressed === 'function') ? opts.onUpPressed : null;
     this._canvasW     = (typeof opts.canvasW === 'function') ? opts.canvasW : function () { return DEFAULT_BOARD_W; };
     this.groundY      = opts.y;
+    // Optional local scene terrain, in the board's CSS pixel coordinates.
+    // Omitting it preserves the calendar's flat floor and peer physics.
+    this.terrain = typeof opts.terrain === 'function' ? opts.terrain : null;
     this.vx           = 0;
     this.vy           = 0;
     this._jumpHandled = false;
@@ -1317,9 +1320,23 @@
     // Player's own horizontal motion + inherited platform velocity (if any).
     // The inherited Vx is set on jump-from-a-moving-peer (Phase 2.3) and is
     // 0 in every other case; while airborne it adds to each tick's x step.
+    var prevX = this.x;
     this.x += this.vx * dt;
     if (this.state === 'jumping' && this._jumpInheritedVx) {
       this.x += this._jumpInheritedVx * dt;
+    }
+
+    var terrain = this.terrain ? this.terrain() : null;
+    if (terrain) {
+      for (var ti = 0; ti < terrain.length; ti++) {
+        var wall = terrain[ti];
+        if (this.y + this._spriteHeight <= wall.y || this.y >= wall.y + wall.h) continue;
+        if (prevX + this._spriteSize <= wall.x && this.x + this._spriteSize > wall.x) {
+          this.x = wall.x - this._spriteSize;
+        } else if (prevX >= wall.x + wall.w && this.x < wall.x + wall.w) {
+          this.x = wall.x + wall.w;
+        }
+      }
     }
 
     // Gravity + vertical integrate, always. The floor snap below puts us
@@ -1336,8 +1353,22 @@
     var peersMap    = this.peers();
     var bestFloor   = null;
     var landingPeer = null;
-    if (prevY <= this.groundY && this.y >= this.groundY) {
+    if (!terrain && prevY <= this.groundY && this.y >= this.groundY) {
       bestFloor = this.groundY;
+    }
+    if (terrain) {
+      for (var fi = 0; fi < terrain.length; fi++) {
+        var tile = terrain[fi];
+        if (this.x + this._spriteSize <= tile.x || this.x >= tile.x + tile.w) continue;
+        var floorY = tile.y - this._spriteHeight;
+        if (prevY <= floorY + 0.01 && this.y >= floorY && (bestFloor === null || floorY < bestFloor)) {
+          bestFloor = floorY;
+        }
+        if (this.vy < 0 && prevY >= tile.y + tile.h && this.y < tile.y + tile.h) {
+          this.y = tile.y + tile.h;
+          this.vy = 0;
+        }
+      }
     }
     for (var u in peersMap) {
       var p = peersMap[u];
@@ -1505,7 +1536,15 @@
     return Math.abs(this.y - peer.y) < (this._spriteHeight / 2);
   };
   PlayerSprite.prototype._onFloor = function () {
-    if (this.y >= this.groundY - 0.01) { return true; }
+    if (!this.terrain && this.y >= this.groundY - 0.01) { return true; }
+    if (this.terrain) {
+      var terrain = this.terrain();
+      for (var i = 0; i < terrain.length; i++) {
+        var tile = terrain[i];
+        if (this.x + this._spriteSize > tile.x && this.x < tile.x + tile.w
+            && Math.abs(this.y + this._spriteHeight - tile.y) < 0.01) return true;
+      }
+    }
     var peersMap = this.peers();
     for (var u in peersMap) {
       var p = peersMap[u];
@@ -4078,29 +4117,38 @@
       if (destroyed || nativeButton.disabled || role !== 'student' || classroomBusy()) { return; }
       nativeButton.disabled = true;
       import('./apstat-park/panel.mjs').then(function (module) {
-        if (destroyed) { return; }
+        if (destroyed || classroomBusy() || !engineReady) { nativeButton.disabled = false; return; }
         nativeActive = true;
+        nativeButton.style.visibility = 'hidden';
         for (var key in playerInput) { playerInput[key] = false; }
-        if (engineReady) engine.stop();
         nativePanel = module.mountParkPanel({
           container: container,
           getSocket: function () { return ws; },
-          drawAvatar: spriteSheet ? function (ctx, name, pose) {
-            var peer = state.members[name];
-            var hue = peer && peer.hue != null ? peer.hue : hashStringToHue(name);
-            var frame = Math.abs(pose.vx) > 1 ? WALK_FRAMES[Math.floor(Date.now() / 130) % WALK_FRAMES.length] : 0;
-            spriteSheet.drawFrame(ctx, frame, pose.x - 12, pose.y - 15, 0.3, hue);
-          } : null,
+          board: {
+            engine: engine, input: playerInput, username: username, api: root.ClassroomBoard,
+            viewportW: _viewportW,
+            createPlayer: function (options) {
+              var local = spriteEntities[username];
+              return new PlayerSprite(spriteSheet, Object.assign({ scale: SPRITE_SCALE,
+                hue: local ? local.hue : hashStringToHue(username), hideLabel: true }, options));
+            },
+            createPeer: function (name, pose) {
+              var peer = state.members[name];
+              return new BoardSprite(spriteSheet, { x: pose.x, y: pose.y, scale: SPRITE_SCALE,
+                hue: peer && peer.hue != null ? peer.hue : hashStringToHue(name), hideLabel: true });
+            }
+          },
           onClose: function () {
             nativePanel = null; nativeActive = false; nativeButton.disabled = false;
+            nativeButton.style.visibility = '';
             parkReturnAt = Date.now();
             parkExitKeyHeld = true;
             for (var key in playerInput) playerInput[key] = false;
-            if (!destroyed && engineReady) { resizeBoardToContainer(); engine.start(); }
+            if (!destroyed && engineReady) _refreshCameraDims();
           }
         });
       }).catch(function (error) {
-        nativeActive = false; nativeButton.disabled = false;
+        nativeActive = false; nativeButton.disabled = false; nativeButton.style.visibility = '';
         if (!destroyed && engineReady) engine.start();
         nativeButton.title = 'APStat Park did not load (' + error.message + ') \u2014 click the door to retry';
       });
@@ -4579,7 +4627,7 @@
         if (!pressed || !e.repeat) parkExitKeyHeld = false;
         else return;
       }
-      if (nativeActive) { return; }
+      if (nativeActive && e.key === 'Escape' && pressed) { nativePanel.dispose(); return; }
       if (_isInputFocused() || _isModalOpen()) { return; }
       var prop = _keyToInputProp(e);
       if (!prop) { return; }
