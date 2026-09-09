@@ -18848,24 +18848,29 @@ const studyBreak = {
                 'ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' ',
                 'z', 'Z', 'x', 'X', 'c', 'C', 'Shift', 'p', 'P', 'Enter', 'r', 'R', 'Escape', '1', '2', 'm', 'M'
             ].includes(key);
-            if (handled) e.preventDefault();
 
             // An incoming challenge dialog owns Enter (accept) and Escape (decline) while it is up;
-            // every other key still reaches a solo game running underneath it.
+            // every other key still reaches a solo game running underneath it. A focused dialog
+            // button activates itself on Enter (keyboard users can Tab to Decline).
             const challengeDlg = document.getElementById('challenge-dialog');
             if (challengeDlg && challengeDlg.style.display === 'block' && (key === 'Enter' || key === 'Escape')) {
+                const focused = document.activeElement;
+                if (key === 'Enter' && focused && focused.tagName === 'BUTTON' && challengeDlg.contains(focused)) return;
+                e.preventDefault();
                 const btn = document.getElementById(key === 'Enter' ? 'challenge-accept-btn' : 'challenge-decline-btn');
                 if (btn && typeof btn.onclick === 'function') btn.onclick();
                 return;
             }
 
             // The lobby is a DOM panel over a hidden canvas: Enter/1/2/R must not start an invisible
-            // solo game under it. Escape steps back to the mode card (same as the Back button).
+            // solo game under it. Escape steps back to the mode card (same as the Back button); a
+            // focused lobby button keeps its native Enter/Space activation.
             const lobbyEl = document.getElementById('game-lobby');
             if (lobbyEl && lobbyEl.style.display === 'block') {
-                if (key === 'Escape') this.leaveLobby();
+                if (key === 'Escape') { e.preventDefault(); this.leaveLobby(); }
                 return;
             }
+            if (handled) e.preventDefault();
             if (key === 'm' || key === 'M') { this.toggleMute(); return; }
             if (key === 'Escape') {
                 if (this._escapeNeedsConfirm()) return;
@@ -18978,7 +18983,7 @@ const studyBreak = {
     // forfeits — one stray Esc used to hand the opponent the series instantly. Solo closes at once.
     _escapeNeedsConfirm() {
         const live = this._inLiveMatch() && !this.mpState.seriesOver
-            && (this.state === 'running' || this.state === 'countdown');
+            && (this.state === 'running' || this.state === 'countdown' || this.state === 'gameover');
         if (!live) { this._escArmedUntil = 0; return false; }
         const now = performance.now();
         if (this._escArmedUntil && now < this._escArmedUntil) { this._escArmedUntil = 0; return false; }
@@ -18992,7 +18997,11 @@ const studyBreak = {
     // Desk's mute, so muting from the Apple menu silences the game too.
     toggleMute() {
         SFX.init();
-        const muted = SFX.toggleMute();
+        // Flip from the COMBINED state (either system muted = muted), else a Desk-muted student
+        // needed two presses to hear anything.
+        const muted = !(SFX.muted || (typeof MacSFX !== 'undefined' && MacSFX.muted));
+        SFX.muted = muted;
+        try { localStorage.setItem('studybreak-muted', muted); } catch (_) {}
         try {
             if (typeof MacSFX !== 'undefined') { MacSFX.init(); MacSFX.muted = muted; localStorage.setItem('macsound-muted', muted); }
             if (typeof _renderSoundIcon === 'function') _renderSoundIcon();
@@ -19047,7 +19056,7 @@ const studyBreak = {
         if (!this.openedAt) return '';
         const m = Math.floor((Date.now() - this.openedAt) / 60000);
         if (m < this.BREAK_SOFT_MIN) return '';
-        return `Break: ${m} min \u2022 ` + (this._lessonDone === false ? 'your Do Now is waiting (Esc)' : 'Esc heads back to the Desk');
+        return `Break ${m} min \u00b7 ` + (this._lessonDone === false ? 'Do Now is waiting (Esc)' : 'Esc heads back');
     },
     // Soft Do-Now awareness: the completion oracle fails OPEN (null = unknown → neutral copy).
     _todayLessonDone() {
@@ -19075,6 +19084,7 @@ const studyBreak = {
     // Split view: mini HOLD (left gutter) + next three (right gutter) on a 215px canvas.
     _drawSplitGutters(ctx, cfg, hold, queue, holdLocked) {
         const right = cfg.BOARD_X + this.COLS * cfg.CELL + 4;
+        ctx.save();
         ctx.fillStyle = '#000000';
         ctx.font = '8px Chicago, Arial, sans-serif';
         ctx.textAlign = 'left';
@@ -19087,6 +19097,7 @@ const studyBreak = {
         ctx.fillStyle = '#000000';
         ctx.fillText('NEXT', right + 2, 34);
         (queue || []).slice(0, 3).forEach((t, i) => this.drawMiniPiece(t, right, 38 + i * 32, 50, 28, ctx));
+        ctx.restore();
     },
 
     // Rotate/hold pressed during the 150ms entry delay (no active piece yet) used to vanish; buffer
@@ -19367,6 +19378,14 @@ const studyBreak = {
         // match (a new match needs a fresh challenge → new roomId). Card says "Esc to exit".
         if (this.mode === '1v1' && ms && ms.seriesOver) return;
         if (this.mode === '1v1' && ms && !ms.seriesOver) {
+            // Skipping ahead (R / Enter / click) while this game is still uncounted — e.g. inside the
+            // 600ms cross-KO window — must count it FIRST, or my loss is never tallied and the two
+            // clients disagree (bet refunded, honest winner unpaid).
+            if (!ms.gameScored && this.state === 'gameover') {
+                ms.gameOverAt = 0;
+                this._studyBreakScoreGameOnce();
+                if (ms.seriesOver) return;   // that was the decider — stay on the series card
+            }
             clearTimeout(ms._advanceTimer);
             ms.gameNumber = (ms.gameNumber || 1) + 1;
             ms.gameScored = false;
@@ -19382,6 +19401,7 @@ const studyBreak = {
         this.hold = this.nextFromBag();   // from the bag, not a side draw (honest 9-of-each counts)
         this.fillQueueTo(6);
         this.spawnNext();
+        if (this._inLiveMatch()) this.sendGameState();   // full (empty) board: the light 10Hz updates carry none
         this.startLoop();
         this.updateHud();
         this.draw();
@@ -19667,6 +19687,9 @@ const studyBreak = {
             reply('challenge_decline');
             return;
         }
+        // A dialog is already up for someone else: decline the newcomer now (the first challenger
+        // keeps their dialog) instead of silently overwriting it and stranding the first for 30s.
+        if (this.pendingChallenger && this.pendingChallenger !== fromUser) { reply('challenge_decline'); return; }
         SFX.play('sosumi', 0.5);
         const dialog = document.getElementById('challenge-dialog');
         document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · 1 candy at stake, winner takes 2 🍬)';
@@ -20180,6 +20203,7 @@ const studyBreak = {
             this.draw();
             return;
         }
+        if (this.state === 'gameover' && ms.gameScored) return;   // my loss is already counted; don't rewrite the card
         ms._wonThisGame = true;   // I won this game of the series
         SFX.play('koWin', 0.7);
         this.state = 'gameover';
@@ -21007,7 +21031,9 @@ const studyBreak = {
             ctx.textAlign = 'center';
             ctx.fillText(`Game ${ms.gameNumber || 1} of 3 \u00b7 you ${ms.myWins || 0}\u2013${ms.oppWins || 0} ${String(ms.opponent || '').slice(0, 10)}${ms.staked ? ' \u00b7 pot 2 \ud83c\udf6c' : ' \u00b7 free'}`, this.CANVAS_W / 2, wellBottom + 16);
             ctx.fillStyle = '#666666';
-            ctx.fillText('red bars = garbage coming \u00b7 clear a line to cancel', this.CANVAS_W / 2, wellBottom + 28);
+            ctx.font = '8px Geneva, Arial, sans-serif';
+            ctx.fillText('red = incoming garbage \u00b7 clear a line to cancel', this.CANVAS_W / 2, wellBottom + 28);
+            ctx.font = '9px Geneva, Arial, sans-serif';
             ctx.fillStyle = '#000000';
             ctx.textAlign = 'left';
             // Incoming-garbage meter beside MY well: red bars = rows that land on my next
@@ -21448,8 +21474,8 @@ const studyBreak = {
         ctx.fillText('STUDY BREAK', x + w / 2, y + 11);
         // Subtitle
         ctx.font = '10px Geneva, Arial, sans-serif';
-        ctx.fillText(this._lessonDone === true ? "Today's lesson done \u2014 enjoy the break"
-            : (this._lessonDone === false ? 'Do Now not done yet \u2014 short break?' : 'Square Mode'), x + w / 2, y + 28);
+        ctx.fillText(this._lessonDone === true ? 'Lesson done \u2014 enjoy the break'
+            : (this._lessonDone === false ? 'Do Now not done \u2014 short break?' : 'Square Mode'), x + w / 2, y + 28);
         // Solo button area
         const btnW = 70, btnH = 24, gap = 16;
         const btnY = y + 38;
@@ -21483,13 +21509,13 @@ const studyBreak = {
         if (stats.best) {
             const recent = stats.recent.length ? stats.recent : [stats.best.score];
             const mean = Math.round((recent.reduce((a, b) => a + b, 0) / recent.length) * 10) / 10;
-            ctx.fillText(`Your best ${stats.best.score} \u00b7 ${recent.length} recent game${recent.length === 1 ? '' : 's'} \u00b7 mean ${mean}`, x + w / 2, lbY);
+            ctx.fillText(`Best ${stats.best.score} \u00b7 mean of last ${recent.length}: ${mean}`, x + w / 2, lbY);
         } else {
-            ctx.fillText('Your first game \u2014 fit 4 whole pieces into a 4\u00d74', x + w / 2, lbY);
+            ctx.fillText('First game: 4 whole pieces make a 4\u00d74', x + w / 2, lbY);
         }
         ctx.fillStyle = '#000000';
         // Footer
-        ctx.fillText(this._breakNote() || 'Same shape = gold \u2022 mixed = silver \u2022 row through one = bonus', x + w / 2, y + h - 8);
+        ctx.fillText(this._breakNote() || 'same shape = gold \u00b7 mixed = silver', x + w / 2, y + h - 8);
         ctx.textAlign = 'left';
         // Store button rects for click detection
         this._soloBtn = { x: soloX, y: btnY, w: btnW, h: btnH };

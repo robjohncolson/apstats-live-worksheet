@@ -3255,6 +3255,7 @@
     // filter without requiring a full Load round-trip.
     $('remediation-refresh-btn').addEventListener('click', loadRemediation);
     $('section-filter').addEventListener('change', loadRemediation);
+    $('section-filter').addEventListener('change', function () { _rewardCasino = null; });   // bets column is section-scoped
 
     // PC makeup board — same Load/Refresh/section triggers (parallel listeners).
     $('pc-makeup-refresh-btn').addEventListener('click', loadPcMakeup);

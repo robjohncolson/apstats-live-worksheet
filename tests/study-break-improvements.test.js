@@ -317,8 +317,32 @@ describe('Desk-side guards + a11y + sound (source pins)', () => {
   it('B2: the Desk Escape router does not destroy app windows under the game', () => {
     expect(html).toMatch(/var gameOpen = !!\(typeof studyBreak[\s\S]*?querySelectorAll\('\.app-overlay'\)\.forEach\(function\(el\) \{\s*if \(gameOpen\) return;/);
   });
-  it('B3: the lobby swallows Enter/1/2/R (no invisible game) and Escape steps back', () => {
-    expect(sb).toMatch(/lobbyEl && lobbyEl\.style\.display === 'block'\)\s*\{\s*if \(key === 'Escape'\) this\.leaveLobby\(\);\s*return;/);
+  it('B3: the lobby swallows Enter/1/2/R (no invisible game) and Escape steps back; focused buttons keep native activation', () => {
+    expect(sb).toMatch(/lobbyEl && lobbyEl\.style\.display === 'block'\)\s*\{\s*if \(key === 'Escape'\) \{ e\.preventDefault\(\); this\.leaveLobby\(\); \}\s*return;/);
+    // preventDefault for game keys runs AFTER the dialog/lobby branches, so a focused DOM button still works
+    const kd = sb.slice(sb.indexOf("document.addEventListener('keydown'"), sb.indexOf("document.addEventListener('keyup'"));
+    expect(kd.indexOf('if (handled) e.preventDefault();')).toBeGreaterThan(kd.indexOf('this.leaveLobby()'));
+    expect(kd).toMatch(/focused\.tagName === 'BUTTON' && challengeDlg\.contains\(focused\)\) return;/);
+  });
+  it('review: skipping ahead (R/Enter/click) inside the cross-KO window counts the game FIRST', () => {
+    expect(sb).toMatch(/if \(!ms\.gameScored && this\.state === 'gameover'\) \{\s*ms\.gameOverAt = 0;\s*this\._studyBreakScoreGameOnce\(\);\s*if \(ms\.seriesOver\) return;/);
+    expect(sb).toMatch(/if \(this\._inLiveMatch\(\)\) this\.sendGameState\(\);/);   // games 2/3 start with a fresh board on the rival's screen
+  });
+  it('review: one mute press flips BOTH sound systems from the combined state', () => {
+    const toggleMute = method('toggleMute');
+    globalThis.SFX.muted = false;
+    globalThis.MacSFX = { muted: true, init() {} };
+    const ctx = { _renderMute() {}, _announce() {} };
+    toggleMute.call(ctx);
+    expect(globalThis.SFX.muted).toBe(false);
+    expect(globalThis.MacSFX.muted).toBe(false);
+    toggleMute.call(ctx);
+    expect(globalThis.SFX.muted).toBe(true);
+    expect(globalThis.MacSFX.muted).toBe(true);
+    delete globalThis.MacSFX;
+  });
+  it('review: a second challenger while a dialog is up is declined at once', () => {
+    expect(sb).toMatch(/if \(this\.pendingChallenger && this\.pendingChallenger !== fromUser\) \{ reply\('challenge_decline'\); return; \}/);
   });
   it('B8: the doge challenge panel states the stake and escapes the challenger name', () => {
     expect(html).toMatch(/\$\{_deskEsc\(this\.incomingChallenge\.from\)\} wants to play/);

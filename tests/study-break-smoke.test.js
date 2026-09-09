@@ -255,6 +255,26 @@ describe('1v1 series', () => {
     expect(sb.isOpen()).toBe(false);
     expect(globalThis.__errors).toEqual([]);
   });
+  it('review: R inside the cross-KO window counts the loss before advancing; Esc in the 3s gap needs a second press', () => {
+    const sb = window.studyBreak;
+    sb.open(); sb.mode = '1v1';
+    sb.startMatch({ roomId: 'room-3', opponent: 'Bob', side: 'left' });
+    vi.advanceTimersByTime(3100);
+    expect(sb.state).toBe('running');
+    sb._endGame('Top out');                 // uncounted for 600ms
+    sb.draw();
+    expect(sb.mpState.gameScored).toBe(false);
+    key('r');                               // "R to skip" — must count the loss first
+    expect(sb.mpState.oppWins).toBe(1);
+    expect(sb.mpState.gameNumber).toBe(2);
+    expect(sb.state).toBe('running');
+    sb._endGame('Top out');
+    key('Escape');                          // undecided series, game-over gap: first Esc only arms
+    expect(sb.isOpen()).toBe(true);
+    key('Escape');
+    expect(sb.isOpen()).toBe(false);
+    expect(globalThis.__errors).toEqual([]);
+  });
   it('the lobby swallows Enter/1/2/R and Escape steps back to the mode card', () => {
     const sb = window.studyBreak;
     sb.open();
