@@ -586,7 +586,7 @@
       <div class="hint" id="reward-rate" style="margin-bottom:6px"></div>
       <div class="table-wrap" id="reward-wrap" style="display:none">
         <table class="grades">
-          <thead><tr><th>Student</th><th>Candy earned</th><th>Owed 🍬</th><th>DOGE to deposit</th><th>On-chain Ɖ</th><th>Address / actions</th></tr></thead>
+          <thead><tr><th>Student</th><th>Candy earned</th><th>Owed 🍬</th><th>DOGE to deposit</th><th>On-chain Ɖ</th><th title="Study Break candy bets: wins–losses (net candy)">Bets W–L</th><th>Address / actions</th></tr></thead>
           <tbody id="reward-tbody"></tbody>
           <tfoot><tr id="reward-totals" style="font-weight:bold;border-top:2px solid #888"></tr></tfoot>
         </table>
@@ -1279,6 +1279,20 @@
       }).catch(function () { return 'unprovisioned'; });
     }
 
+    // /class/casino cache: studentId → { wins, losses, games, netCandy } (Study Break candy bets).
+    // Candy moves student-to-student with no other teacher view: a spot check for a novice being
+    // farmed, and the zero-sum net column is the Casino Stats discussion data. null = not fetched.
+    var _rewardCasino = null;
+    function _fetchRewardCasino() {
+      var section = $('section-filter') ? $('section-filter').value.trim() : '';
+      var qs = section ? '?section=' + encodeURIComponent(section) : '';
+      return fetchJson('/class/casino' + qs, teacherSecret()).then(function (r) {
+        var by = {};
+        if (r.status === 200 && r.data && r.data.ok) (r.data.players || []).forEach(function (p) { by[p.studentId] = p; });
+        return by;
+      }).catch(function () { return {}; });
+    }
+
     // Student-created addresses stay in this separate teacher queue until an
     // explicit decision. The list endpoint returns masked addresses only.
     var _walletProposals = null;
@@ -1864,7 +1878,7 @@
           rateEl.appendChild(rb);
         }
         tbody.innerHTML = '';
-        var totEarned = 0, totGive = 0, totDeposit = 0, totChain = 0;
+        var totEarned = 0, totGive = 0, totDeposit = 0, totChain = 0, totBetsNet = 0, totBetsGames = 0;
         var payoutTotal = 0, payoutCount = 0;
         rows.forEach(function (s) {
           var earned = (s.effort && s.effort.candy) || 0;
@@ -1958,6 +1972,19 @@
             if (crec.explorerUrl) { var la = document.createElement('a'); la.href = crec.explorerUrl; la.target = '_blank'; la.rel = 'noopener'; la.textContent = '↗'; la.style.cssText = 'text-decoration:none'; chainTd.appendChild(la); }
           }
           tr.appendChild(chainTd);
+          // Study Break bets: W–L and net candy (candy moves student→student; this is the only teacher view).
+          var betsTd = document.createElement('td');
+          var cz = _rewardCasino ? _rewardCasino[s.studentId] : null;
+          if (_rewardCasino === null) betsTd.textContent = '·';        // not loaded yet
+          else if (!cz || !cz.games) betsTd.textContent = '—';
+          else {
+            var net = Math.round((cz.netCandy || 0) * 10) / 10;
+            betsTd.textContent = (cz.wins || 0) + 'W–' + (cz.losses || 0) + 'L (' + (net >= 0 ? '+' : '') + net + ')';
+            betsTd.title = cz.games + ' match' + (cz.games === 1 ? '' : 'es') + ' · net ' + (net >= 0 ? '+' : '') + net + ' 🍬';
+            if (net < 0) betsTd.style.color = '#b00';
+            totBetsNet += net; totBetsGames += (cz.games || 0);
+          }
+          tr.appendChild(betsTd);
           var addrTd = document.createElement('td');
           if (!prov) addrTd.textContent = '—';
           else {
@@ -1973,7 +2000,8 @@
         totalsEl.innerHTML = '<td>Class total</td><td>🍬 ' + Math.round(totEarned) + '</td><td>'
           + (prov ? '🍬 ' + Math.round(totGive) : '—') + '</td><td>'
           + (prov ? 'Ɖ ' + totDeposit.toFixed(1) : '—') + '</td><td>'
-          + (prov && _rewardChain ? 'Ɖ ' + totChain.toFixed(2) : '—') + '</td><td></td>';
+          + (prov && _rewardChain ? 'Ɖ ' + totChain.toFixed(2) : '—') + '</td><td>'
+          + (_rewardCasino && totBetsGames ? totBetsGames + ' match' + (totBetsGames === 1 ? '' : 'es') + ' · net ' + (Math.round(totBetsNet * 10) / 10) : '—') + '</td><td></td>';
         _payoutLocalTotal = Math.round(payoutTotal * 100000000) / 100000000;
         _payoutLocalCount = payoutCount;
         _payoutSetButton();
@@ -1988,9 +2016,11 @@
       // Render via _rewardRepaint (latest closure) not the captured paint, so a
       // re-render mid-fetch doesn't repaint stale rows.
       if (_rewardChain === null) { _fetchRewardChain().then(function (c) { _rewardChain = c || {}; (_rewardRepaint ? _rewardRepaint() : paint(_dashDogeUsd, _rewardWallets)); }); }
+      if (_rewardCasino === null) { _fetchRewardCasino().then(function (c) { _rewardCasino = c || {}; (_rewardRepaint ? _rewardRepaint() : paint(_dashDogeUsd, _rewardWallets)); }); }
       noteEl.textContent = 'Owed 🍬 = candy a student has earned (+ received) but not yet gifted, converted, or been '
         + 'handed — what you still owe them in real candy (sort by it, work it down weekly). To deposit = DOGE they '
-        + 'banked but you haven’t sent. Mark ✓ as you disburse. Hover a student’s earned for the full ledger.';
+        + 'banked but you haven’t sent. Mark ✓ as you disburse. Hover a student’s earned for the full ledger. '
+        + 'Bets = Study Break candy bets (wins–losses, net candy); the class net sums to zero — a big negative is a kid being farmed.';
     }
 
     function renderGradesTable(payload) {
