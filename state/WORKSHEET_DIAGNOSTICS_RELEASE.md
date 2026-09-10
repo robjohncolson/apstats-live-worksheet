@@ -34,3 +34,14 @@ A final failure-path check found a real recovery race: a successful background l
 The real worksheet also has an AI-grading background read. Restoration now opts in explicitly with `{ restore: true }`; no background reader can cancel the visible retry. The expanded regression and hydration/client suites passed 808 tests. A fresh hosted teacher dashboard now inherits the configured live service instead of silently defaulting to localhost; explicit saved choices and local development defaults are preserved (39 dashboard tests passed).
 
 A headless Edge smoke against the LIVE roster service, using candidate frontend source during review, injected one 503 for Angie's read-only teacher preview. It observed 37 answers automatically restored, a persisted `loaded` report with `lastFailure: network`, and the dashboard hiding that report by default and showing it only when teacher previews were included. No grade writes occurred; the temporary report was removed. This test is intentionally a teacher preview and makes no claim about Angie's actual laptop. Final hosted-asset and deployment verification is performed after this follow-up push.
+
+
+## Final published verification
+- Runtime source: a0d38171997f30188db1cf4354ee1041e9302d3b (implementation fa45363, recovery follow-ups e75b630 and a0d3817).
+- Pages deployment 34529696706: SUCCESS; build 2026-09-10-gpqb.
+- Railway deployment 5b8a2080-a93b-4d9e-8fd2-c50cbe8e04fe: SUCCESS at a0d3817; health HTTP 200.
+- All 69 hosted worksheet files fetched and verified to include diagnostics, final reporting, and explicit restoration reads.
+- Full smoke repeated using ONLY PUBLISHED frontend assets and live roster/storage: injected initial 503; 37 answers automatically restored; live report downloaded/matched/restored=37; outcome=loaded; lastFailure=network; mode=teacher-preview; zero attempted grade writes. Live dashboard GET=200; preview hidden by default and visible when included. Temporary diagnostic report deleted successfully.
+- Final build/diagnostic/panel selection: 49 tests passed (14 browser diagnostic, 7 panel, 28 PWA). Recovery/hydration/client selection: 808 passed. Teacher dashboard selection: 39 passed. Backend diagnostic selection: 14 passed; full roster suite previously passed 1709 with 3 skipped.
+- CI 34529696839 remains red with exactly the same 22 failing test names and 8 normalized type errors as pre-task CI 34507527813 (commit 4b2512e). No new CI failure names or type errors. Existing stale GitNexus shadows, lineage/structure pins, and grade-engine type errors are outside this change; they are not represented as green.
+- Reports from Angie's actual laptop still require that updated laptop to open the worksheet and reach the service. The smoke was an explicitly separated teacher preview, not evidence of her laptop's state.
