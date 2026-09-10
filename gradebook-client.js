@@ -312,11 +312,15 @@
       _offlineDrainInFlight = true;
       var retryDelay = null;
       try {
+        // Release-gate fix (2026-09-10): a parked answer must be announced on EVERY page load,
+        // not only on the page where the 12th failure landed — these early returns skip
+        // syncOfflineQueue (where the banner normally fires), so raise it here too.
+        var isParked = function (row) { return row.serverFailures >= 12; };
         var rows = await window.OfflineQueue.all();
-        if (!rows || !rows.some(function (row) { return !(row.serverFailures >= 12); })) { _offlineDrainBackoffMs = 30000; return; }
+        if (!rows || !rows.some(function (row) { return !isParked(row); })) { _showParkedNudge((rows || []).filter(isParked)); _offlineDrainBackoffMs = 30000; return; }
         await window.gradebookClient.syncOfflineQueue();
         rows = await window.OfflineQueue.all();
-        if (!rows || !rows.some(function (row) { return !(row.serverFailures >= 12); })) { _offlineDrainBackoffMs = 30000; return; }
+        if (!rows || !rows.some(function (row) { return !isParked(row); })) { _showParkedNudge((rows || []).filter(isParked)); _offlineDrainBackoffMs = 30000; return; }
         _offlineDrainBackoffMs = Math.min(3600000, Math.max(30000, _offlineDrainBackoffMs * 2));
         retryDelay = _offlineDrainBackoffMs;
       } catch (_) {

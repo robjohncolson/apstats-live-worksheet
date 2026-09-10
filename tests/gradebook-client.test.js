@@ -1286,6 +1286,25 @@ it('stops the offline scheduler when only parked rows remain', async () => {
 });
 
 
+it('a fresh page with only a PARKED row still shows the parked banner (release-gate fix 2026-09-10)', async () => {
+  vi.useFakeTimers();
+  const { win, OfflineQueue, gradebookClient } = makeWindowWithQueue();
+  try {
+    setToken(win, 'tok');
+    await OfflineQueue.enqueue({ source:'quiz', itemId:'park-reload', studentId:'uuid-test-student', ts:1 });
+    win.fetch = vi.fn().mockResolvedValue({ ok:false, status:500, json:async()=>({ok:false}) });
+    for (let i = 0; i < 12; i++) await gradebookClient.syncOfflineQueue();   // yesterday: parked
+    win.document.getElementById('gb-parked-nudge').remove();
+    // "next day": a fresh page load re-evaluates the client against the same durable queue
+    runInContext(CLIENT_SRC, createContext(win));
+    win.fetch = vi.fn();
+    await vi.advanceTimersByTimeAsync(5);            // boot _scheduleOfflineDrain(0)
+    expect(win.fetch).not.toHaveBeenCalled();         // parked rows are never replayed
+    expect(win.document.querySelectorAll('#gb-parked-nudge')).toHaveLength(1);
+    expect(win.document.getElementById('gb-parked-nudge').textContent).toContain('could not be saved');
+  } finally { win.close(); vi.useRealTimers(); }
+});
+
 it('coalesces online/storage triggers until the in-flight batch resolves, then sends fresh rows', async () => {
   vi.useFakeTimers();
   const { win, OfflineQueue } = makeWindowWithQueue();
