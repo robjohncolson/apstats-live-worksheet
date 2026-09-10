@@ -29,7 +29,10 @@
   // what made a worksheet's score "disappear"). Fires at most ONCE per page;
   // never throws, never blocks — record()'s return contract is unchanged.
   var _noIdentityNudgeShown = false;
-  function _showNoIdentityNudge() {
+  // kind 'expired' (2026-09-09): the session token was rejected (401/403) and the answer
+  // was CAPTURED on this device — it saves after the next sign-in. 'expired-lost': token
+  // rejected and NOTHING was captured (no offline queue on this page). Default: not signed in.
+  function _showNoIdentityNudge(kind) {
     try {
       if (_noIdentityNudgeShown) return;
       if (typeof document === 'undefined' || !document.body) return;
@@ -45,12 +48,16 @@
         + 'gap:12px;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
 
       var msg = document.createElement('span');
-      msg.textContent = '⚠️ You are not signed in — your answers are NOT being saved to your grade.';
+      msg.textContent = kind === 'expired'
+        ? '⚠️ Your sign-in session expired — your answers are being kept on this device and will be saved to your grade when you sign in again.'
+        : kind === 'expired-lost'
+          ? '⚠️ Your sign-in session expired — your answers are NOT being saved to your grade. Sign in again, then redo this work.'
+          : '⚠️ You are not signed in — your answers are NOT being saved to your grade.';
       bar.appendChild(msg);
 
       var link = document.createElement('a');
       link.href = 'ap_stats_roadmap_square_mode.html';
-      link.textContent = 'Open the Desk to sign in';
+      link.textContent = (kind === 'expired' || kind === 'expired-lost') ? 'Open the Desk and sign in again' : 'Open the Desk to sign in';
       link.style.cssText = 'color:#fff;font-weight:bold;text-decoration:underline;white-space:nowrap;';
       bar.appendChild(link);
 
@@ -270,8 +277,13 @@
     try { return !_isOfflineMode() && (!window.navigator || window.navigator.onLine !== false); }
     catch (_) { return false; }
   }
+  // 2026-09-09: a token the server already rejected (401/403) will reject every replay —
+  // don't spend N POSTs per keystroke re-learning that. Cleared by a successful send or a
+  // sign-in (storage event); a genuinely new token always differs from the failed one.
+  var _lastAuthFailToken = null;
   function _scheduleOfflineDrain(delayMs) {
     if (_offlineDrainTimer || !_canDrainOnline() || !_hasQueue()) return;
+    if (_lastAuthFailToken && _token() === _lastAuthFailToken) return;
     _offlineDrainTimer = window.setTimeout(async function () {
       _offlineDrainTimer = null;
       if (!_canDrainOnline()) return;
@@ -363,14 +375,18 @@
         // flag signals the write was captured locally — only when it actually was.
         // Attribution gate here too: a queued record must carry its owner's
         // studentId (the token alone is drain-time state, not ownership).
-        if (r.reason === 'network' && _hasQueue() && _studentId()) {
+        // 2026-09-09: an expired session (401 → 'auth') is captured too — the row carries the
+        // owner's studentId and the ownership-gated drain replays it once they sign in again.
+        if ((r.reason === 'network' || r.reason === 'auth') && _hasQueue() && _studentId()) {
           if (await _enqueueOffline(opts)) {
+            if (r.reason === 'auth') { _lastAuthFailToken = _token(); _showNoIdentityNudge('expired'); }
             _scheduleOfflineDrain(30000);
-            return { ok: false, reason: 'network', queued: true };
+            return { ok: false, reason: r.reason, queued: true };
           }
           return r;
         }
         if (r.reason === 'no-identity') _showNoIdentityNudge();
+        if (r.reason === 'auth') _showNoIdentityNudge('expired-lost');   // nothing was captured on this page
         return r;
 
       } catch (err) {
@@ -414,6 +430,8 @@
           }
           if (_isSuperseded(r)) return { ok: true, superseded: true };
           return _sendRecord(r).then(function (result) {
+            if (result && result.reason === 'auth') _lastAuthFailToken = _token();
+            if (result && result.ok) _lastAuthFailToken = null;
             if (result && result.ok && typeof r.transportSequence === 'number') {
               var key = _recordKey(r);
               _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, r.transportSequence);
@@ -484,7 +502,18 @@
           var r = data.rows[i];
           if (!r || !r.item_id) continue;
           if (out.has(r.item_id)) continue;
-          out.set(r.item_id, { response: r.response, score: r.score, source: r.source });
+          var entry = { response: r.response, score: r.score, source: r.source };
+          // W2.6 (2026-09-09): stored grader feedback + when the grade was applied, so the
+          // worksheet can explain an overnight auto-grade instead of just colouring the box.
+          if (r.frq_result && typeof r.frq_result === 'object') {
+            entry.result = {
+              score: r.frq_result.score,
+              feedback: typeof r.frq_result.feedback === 'string' ? r.frq_result.feedback : '',
+              provider: typeof r.frq_result.provider === 'string' ? r.frq_result.provider : null
+            };
+          }
+          if (r.graded_at) entry.gradedAt = r.graded_at;
+          out.set(r.item_id, entry);
         }
         return out;
       } catch (_) {
@@ -558,6 +587,18 @@
       window.addEventListener('online', function () {
         _offlineDrainBackoffMs = 30000;
         _scheduleOfflineDrain(0);
+      });
+      // 2026-09-09: a sign-in in another tab (shared roster session key) replays captured
+      // writes promptly instead of waiting out the backoff — a 401-captured row needs the
+      // NEW token, which only exists after that sign-in. Clears a pending long-backoff timer.
+      window.addEventListener('storage', function (e) {
+        try {
+          if (!e || e.key !== 'apstats_roster.v1') return;
+          if (_offlineDrainTimer) { window.clearTimeout(_offlineDrainTimer); _offlineDrainTimer = null; }
+          _lastAuthFailToken = null;
+          _offlineDrainBackoffMs = 30000;
+          _scheduleOfflineDrain(500);
+        } catch (_) { /* best-effort */ }
       });
       _scheduleOfflineDrain(0);
     }

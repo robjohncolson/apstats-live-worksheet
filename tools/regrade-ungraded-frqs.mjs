@@ -126,7 +126,8 @@ export function buildGraderRequest(worksheet, textareaId, response, prompt, less
   };
 }
 
-export function buildRegradeRequest(candidate, score, registry) {
+// verdict (optional): the grader's response — its feedback rides along so the student sees WHY.
+export function buildRegradeRequest(candidate, score, registry, verdict = null) {
   const canonicalResponse = String(candidate.response).trim();
   const responseHash = createHash('sha256')
     .update(canonicalResponse, 'utf8')
@@ -141,6 +142,8 @@ export function buildRegradeRequest(candidate, score, registry) {
     rubricVersion: `${registry?.schoolYear || 'unknown'}:${sourceDigest}`,
   };
   if (Number(candidate.attempt) !== 1) body.attempt = candidate.attempt;
+  const feedback = verdict && typeof verdict.feedback === 'string' ? verdict.feedback.trim().slice(0, 2000) : '';
+  if (feedback) body.feedback = feedback;
   return body;
 }
 
@@ -397,7 +400,7 @@ export async function runRegradeJob(options) {
           'Content-Type': 'application/json',
           'x-teacher-secret': config.teacherKey,
         },
-        body: JSON.stringify(buildRegradeRequest(candidate, score, registry)),
+        body: JSON.stringify(buildRegradeRequest(candidate, score, registry, result)),
       });
       const appliedResult = await readJsonResponse(regradeResponse);
       if (regradeResponse.status === 409 && appliedResult?.error === 'stale-response') {

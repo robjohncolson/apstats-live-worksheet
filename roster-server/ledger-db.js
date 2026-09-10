@@ -36,7 +36,15 @@ export function createLedgerDb(client) {
   // (admin-restore.js), which replays issuer-signed rows byte-for-byte and must
   // preserve the original timestamp so the recomputed commit-chain heads match.
   // Every other caller omits it and gets the original now() behavior.
-  async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt }) {
+  // [frqResult]/[gradedAt] are OPTIONAL (2026-09-09): the legacy /ledger/frq-regrade
+  // path stores the grader's verdict + feedback alongside the score so the worksheet can
+  // explain the grade. Omitted by every other caller → columns untouched.
+  async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt }) {
+    const extra = {};
+    if (frqResult && typeof frqResult === 'object') {
+      extra.frq_result = frqResult;
+      extra.graded_at  = gradedAt || new Date().toISOString();
+    }
     return client
       .from('item_ledger')
       .upsert(
@@ -51,7 +59,8 @@ export function createLedgerDb(client) {
           score:         score       ?? null,
           evidence_tier: evidenceTier,
           attempt:       attempt     ?? 1,
-          recorded_at:   recordedAt  || new Date().toISOString()
+          recorded_at:   recordedAt  || new Date().toISOString(),
+          ...extra
         }],
         { onConflict: 'student_id,source,item_id,attempt' }
       )

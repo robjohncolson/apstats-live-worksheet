@@ -10,6 +10,7 @@ export function createNudgesDb(client) {
     insertStudentDm,     // P13: student-initiated DM (fresh thread, parent_nudge_id=null)
     listForTeacher,      // teacher viewing their sent nudges
     listForStudent,      // student viewing nudges they received
+    listStudentInbox,    // 2026-09-09: every student→teacher message across the class (dashboard inbox)
     markDelivered,       // update delivered_at for a (nudge_id, recipient) pair
     findParent,          // Codex BLOCKER fold P3: ownership check for replies
     listConversation,    // P7: dyadic thread for GET /teacher/nudge-history
@@ -95,6 +96,18 @@ export function createNudgesDb(client) {
       .eq('recipient_username', recipientUsername)
       .order('created_at', { ascending: false })
       .limit(limit);
+  }
+
+  // Student-initiated messages and replies (direction='student') across the class,
+  // newest first. `section` narrows to one period; `since` (ISO) returns only newer rows.
+  async function listStudentInbox({ section = null, since = null, limit = 50 } = {}) {
+    var q = client
+      .from('nudges_log')
+      .select('*')
+      .eq('direction', 'student');
+    if (section) q = q.eq('section', section);
+    if (since) q = q.gt('created_at', since);
+    return q.order('created_at', { ascending: false }).limit(limit);
   }
 
   async function markDelivered({ nudgeId, recipientUsername }) {

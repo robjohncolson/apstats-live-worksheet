@@ -269,6 +269,18 @@ describe('pure regrade job decisions', () => {
       rubricVersion: `${REGISTRY.schoolYear}:${REGISTRY.sourceDigest.replace(/^sha256:/, '')}`,
     });
   });
+
+  it('carries the grader feedback (trimmed, capped) so the student sees WHY, and omits it when absent', () => {
+    const candidate = { studentId: 'sid-1', itemId: 'WS-U1L2-reflect2', attempt: 1, response: 'student answer' };
+    expect(buildRegradeRequest(candidate, 0.5, REGISTRY, { score: 'P', feedback: '  Name the variable type.  ' }).feedback)
+      .toBe('Name the variable type.');
+    expect(buildRegradeRequest(candidate, 0.5, REGISTRY, { score: 'P', feedback: 'x'.repeat(5000) }).feedback)
+      .toHaveLength(2000);
+    expect(buildRegradeRequest(candidate, 0.5, REGISTRY, { score: 'P', feedback: '   ' })).not.toHaveProperty('feedback');
+    expect(buildRegradeRequest(candidate, 0.5, REGISTRY, { score: 'P', feedback: 42 })).not.toHaveProperty('feedback');
+    expect(buildRegradeRequest(candidate, 0.5, REGISTRY, null)).not.toHaveProperty('feedback');
+    expect(buildRegradeRequest(candidate, 0.5, REGISTRY)).not.toHaveProperty('feedback');
+  });
 });
 
 describe('regrade job HTTP flow', () => {
@@ -335,6 +347,7 @@ describe('regrade job HTTP flow', () => {
       provenance: 'ai-batch',
       responseHash: createHash('sha256').update(studentAnswer.trim(), 'utf8').digest('hex'),
       rubricVersion: `${REGISTRY.schoolYear}:${REGISTRY.sourceDigest.replace(/^sha256:/, '')}`,
+      feedback: 'Complete.',   // 2026-09-09: the verdict's feedback reaches the ledger
     });
     expect(result.exitCode).toBe(0);
   });

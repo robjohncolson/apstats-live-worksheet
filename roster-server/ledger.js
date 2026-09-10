@@ -732,12 +732,18 @@ export function mountLedger(app, {
       provenance,
       responseHash,
       rubricVersion,
+      feedback,
     } = req.body || {};
     if (!studentId || !itemId) return res.status(400).json({ ok: false, error: 'studentId and itemId are required' });
     const incoming = Number(score);
     if (!(incoming === 1 || incoming === 0.5 || incoming === 0)) {
       return res.status(400).json({ ok: false, error: 'score must be 1, 0.5 or 0' });
     }
+    // 2026-09-09: the hourly batch grader used to send the verdict WITHOUT its feedback, so a
+    // student whose saved answers were graded overnight saw a lower grade and no reason. Keep
+    // the grader's feedback (capped like sanitizedFrqResult) and label the provider honestly.
+    const feedbackText = typeof feedback === 'string' ? feedback.trim().slice(0, 2_048) : '';
+    const providerLabel = provenance === 'teacher' ? 'teacher' : 'ai-batch';   // same default as the receipt's gradingProvenance
     const attemptNo = attempt ?? 1;
 
     if (authoritativeForStudent(
@@ -784,8 +790,9 @@ export function mountLedger(app, {
           result: {
             score: incoming,
             responseHash: String(responseHash),
-            provider: 'teacher',
+            provider: providerLabel,
             model: 'external-regrade',
+            ...(feedbackText ? { feedback: feedbackText } : {}),
           },
           rubricVersion: String(rubricVersion),
           gradedAt: new Date().toISOString(),
@@ -845,7 +852,17 @@ export function mountLedger(app, {
       response: existing.response,
       score: incoming,
       evidenceTier: existing.evidence_tier || 'practice',
-      attempt: attemptNo
+      attempt: attemptNo,
+      // 2026-09-09: the legacy path keeps the verdict + feedback too (same shape as the
+      // authoritative result) so a non-canary student's worksheet can explain the grade.
+      frqResult: {
+        score: incoming,
+        provider: providerLabel,
+        model: 'external-regrade',
+        ...(responseHash ? { responseHash: String(responseHash) } : {}),
+        ...(feedbackText ? { feedback: feedbackText } : {}),
+      },
+      gradedAt: new Date().toISOString()
     });
     if (error) {
       console.error('Ledger frq-regrade error:', error);

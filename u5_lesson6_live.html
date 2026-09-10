@@ -1510,9 +1510,14 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                             ta.classList.remove('graded-E', 'graded-P', 'graded-I');
                             ta.classList.add('graded-' + gradeClass);
                             // W2.5: rebuild gradingState so a post-reload edit clears the stale grade.
+                            // W2.6: carry the stored feedback (the hourly auto-grader saves it now) and
+                            // say WHEN the grade was applied to the saved answer — an overnight grade
+                            // with no explanation is what "my grade dropped" looked like to students.
+                            var storedFb = (entry.result && typeof entry.result.feedback === 'string') ? entry.result.feedback : '';
                             if (typeof gradingState !== 'undefined' && gradingState && typeof gradingState.set === 'function') {
-                                gradingState.set(ta.id, { result: { score: gradeClass, feedback: '' }, originalAnswer: v, appealCount: 0, history: [] });
+                                gradingState.set(ta.id, { result: { score: gradeClass, feedback: storedFb }, originalAnswer: v, appealCount: 0, history: [] });
                             }
+                            _markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider);
                         }
                     }
                     _markRestored(ta);
@@ -1520,6 +1525,61 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             } catch (_) { /* silent — never block the worksheet */ }
         }
 
+        // W2.6: a grade restored from the ledger gets a plain-language note (date, grader,
+        // grade, feedback, what to do). Dedup per textarea. The note removes itself the
+        // moment the student edits the answer or the grade class changes (a regrade), so it
+        // can never contradict the live grade. Never throws; never blocks.
+        function _markAutoGraded(ta, gradeClass, feedback, gradedAt, provider) {
+            try {
+                if (!ta || !ta.parentNode) return;
+                if (ta.parentNode.querySelector('.frq-graded-note[data-for="' + ta.id + '"]')) return;
+                var when = '';
+                try { if (gradedAt) when = new Date(gradedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) {}
+                var words = { E: 'E (full credit)', P: 'P (partial)', I: 'I (not yet)' };
+                var note = document.createElement('div');
+                note.className = 'frq-graded-note';
+                note.setAttribute('data-for', ta.id);
+                note.setAttribute('role', 'status');
+                note.style.cssText = 'margin:4px 0 8px;padding:6px 8px;font-size:0.85em;line-height:1.35;' +
+                                     'background:#f4f6fb;border-left:3px solid ' + (gradeClass === 'E' ? '#2a7' : gradeClass === 'P' ? '#d9b800' : '#c33') + ';' +
+                                     'color:#333;border-radius:0 4px 4px 0;';
+                var head = document.createElement('strong');
+                var sweep = provider === 'ai-batch' || provider === 'teacher';   // graded from the SAVED answer, not in-session
+                var who = provider === 'ai-batch' ? 'Auto-graded' : provider === 'teacher' ? 'Graded by your teacher' : 'Graded';
+                head.textContent = who + (when ? ' ' + when : '') + (sweep ? ' from your saved answer' : '') + ': ' + (words[gradeClass] || gradeClass);
+                note.appendChild(head);
+                if (feedback) {
+                    var fb = document.createElement('div');
+                    fb.textContent = feedback;
+                    note.appendChild(fb);
+                }
+                if (gradeClass !== 'E') {
+                    var tip = document.createElement('div');
+                    tip.style.cssText = 'margin-top:3px;color:#555;';
+                    tip.textContent = 'Revise your answer, then press Grade with AI — regrading only ever raises your score.';
+                    note.appendChild(tip);
+                }
+                var after = ta.nextSibling;
+                if (after && after.nodeType === 1 && after.className === 'restored-badge') after = after.nextSibling;
+                ta.parentNode.insertBefore(note, after);
+                // Self-removal: an edit (W2.2 clears the grade) or a grade-class change (regrade)
+                // makes the note stale — drop it. Other class changes (restored badge) are ignored.
+                var gradedOf = function () { var m = /graded-[EPI]/.exec(ta.className || ''); return m ? m[0] : ''; };
+                var startGrade = gradedOf();
+                var obs = null;
+                var remove = function () {
+                    try { if (note.parentNode) note.parentNode.removeChild(note); } catch (_) {}
+                    try { if (obs) obs.disconnect(); } catch (_) {}
+                };
+                ta.addEventListener('input', remove, { once: true });
+                try {
+                    if (typeof MutationObserver === 'function') {
+                        obs = new MutationObserver(function () { if (gradedOf() !== startGrade) remove(); });
+                        obs.observe(ta, { attributes: true, attributeFilter: ['class'] });
+                    }
+                } catch (_) {}
+            } catch (_) {}
+        }
         function _markRestored(el) {
             try {
                 // Dedup per-element, not per-parent: a .question container can

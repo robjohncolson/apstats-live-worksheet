@@ -579,10 +579,13 @@ describe('POST /ledger/frq-regrade mode matrix', () => {
       }], error: null });
       const result = await server.request('POST', '/ledger/frq-regrade', {
         headers: { 'x-teacher-secret': 'teacher-key' },
-        body: { studentId: 'student-a', itemId: 'WS-U1L1-reflect1', score: 0.5 },
+        body: { studentId: 'student-a', itemId: 'WS-U1L1-reflect1', score: 0.5, provenance: 'ai-batch', feedback: ' Why. ' },
       });
       expect(result.status).toBe(200);
       expect(legacyDb.writes.at(-1).score).toBe(0.5);
+      // 2026-09-09: the legacy path stores the verdict + feedback too
+      expect(legacyDb.writes.at(-1).frqResult).toEqual({ score: 0.5, provider: 'ai-batch', model: 'external-regrade', feedback: 'Why.' });
+      expect(typeof legacyDb.writes.at(-1).gradedAt).toBe('string');
     }
   });
 
@@ -617,6 +620,50 @@ describe('POST /ledger/frq-regrade mode matrix', () => {
     const floor = await endpoint({ responseHash: 'response-hash', rubricVersion: 'SY2627:digest' });
     expect(floor.status).toBe(200);
     expect(floor.body).toMatchObject({ ok: true, applied: false, score: 1 });
+  });
+
+  // 2026-09-09: the hourly batch grader now sends its feedback with the verdict; the
+  // route stores it (trimmed, capped like sanitizedFrqResult) and labels the provider
+  // honestly so the worksheet can say "Auto-graded from your saved answer: …why…".
+  it('authoritative stores the grader feedback + provider label in the applied result', async () => {
+    mode = 'authoritative';
+    frqDb.statusRows = [{
+      ledger_id: 'atomic-ledger',
+      student_id: 'student-a',
+      item_id: 'WS-U1L1-reflect1',
+      attempt: 1,
+      response: 'Original response',
+      score: null,
+      evidence_tier: 'practice',
+      frq_response_version: 2,
+      frq_response_hash: 'response-hash',
+    }];
+    frqDb.applyFrqVerdict = async (value) => {
+      frqDb.applies.push(value);
+      return { data: [{ ledger_id: value.ledgerId, applied: true, stale: false, score: value.score }] };
+    };
+    const endpoint = (body) => server.request('POST', '/ledger/frq-regrade', {
+      headers: { 'x-teacher-secret': 'teacher-key' },
+      body: { studentId: 'student-a', itemId: 'WS-U1L1-reflect1', score: 0.5,
+              responseHash: 'response-hash', rubricVersion: 'SY2627:digest', ...body },
+    });
+
+    const batch = await endpoint({ provenance: 'ai-batch', feedback: '  Name the variable type.  ' });
+    expect(batch.status).toBe(200);
+    expect(frqDb.applies.at(-1).result).toMatchObject({
+      score: 0.5, provider: 'ai-batch', model: 'external-regrade', feedback: 'Name the variable type.',
+    });
+
+    const teacher = await endpoint({ provenance: 'teacher', feedback: 'x'.repeat(3000) });
+    expect(teacher.status).toBe(200);
+    expect(frqDb.applies.at(-1).result.provider).toBe('teacher');
+    expect(frqDb.applies.at(-1).result.feedback).toHaveLength(2048);
+
+    // no provenance → 'ai-batch', matching the receipt's gradingProvenance default
+    const silent = await endpoint({ feedback: 42 });
+    expect(silent.status).toBe(200);
+    expect(frqDb.applies.at(-1).result.provider).toBe('ai-batch');
+    expect(frqDb.applies.at(-1).result).not.toHaveProperty('feedback');
   });
 
   it('keeps an authoritative-mode non-canary null row on the legacy teacher path', async () => {

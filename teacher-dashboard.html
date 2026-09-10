@@ -455,7 +455,21 @@
     }
     .tsc-nudges-older:hover { background: var(--sg-bg-card, #ffffff); border-color: var(--sg-accent, #A8330A); }
     .tsc-nudges-older[disabled] { opacity: 0.55; cursor: not-allowed; }
-  </style>
+      /* 2026-09-09: student→teacher message inbox strip (see loadStudentInbox) */
+    .inbox-strip { margin-top: 10px; border: 1px solid var(--sg-border); background: var(--sg-bg-card); border-radius: 4px; padding: 8px 10px; }
+    .inbox-strip[hidden], .inbox-badge[hidden] { display: none !important; }
+    .inbox-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .inbox-badge { background: var(--sg-accent); color: #fff; border-radius: 10px; padding: 1px 8px; font-size: 0.8rem; font-weight: bold; }
+    .inbox-list { list-style: none; margin: 6px 0 0; padding: 0; max-height: 220px; overflow: auto; }
+    .inbox-list li { display: flex; gap: 8px; align-items: baseline; padding: 4px 6px; border-top: 1px solid var(--sg-bar-track); cursor: pointer; }
+    .inbox-list li.inbox-empty { cursor: default; color: var(--sg-text-dim); }
+    .inbox-list li:hover { background: rgba(0,0,0,0.04); }
+    .inbox-list li.unread .inbox-who { font-weight: bold; }
+    .inbox-list li.unread::before { content: '●'; color: var(--sg-accent); font-size: 0.7rem; }
+    .inbox-when { color: var(--sg-text-dim); font-size: 0.8rem; white-space: nowrap; }
+    .inbox-who { white-space: nowrap; }
+    .inbox-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
 </head>
 <body>
 
@@ -514,6 +528,18 @@
       </div>
       <div class="error-banner" id="err-banner" role="alert"></div>
       <div class="info-banner" id="info-banner" role="status"></div>
+      <!-- 2026-09-09: student→teacher inbox. Messages used to be visible only inside ONE
+           student's drawer, so two "I can't see my grade" notes went unread for two weeks.
+           Filled by loadStudentInbox() after "Load class data"; polls every 60s. -->
+      <div class="inbox-strip" id="inbox-strip" hidden>
+        <div class="inbox-head">
+          <strong>📨 Student messages</strong>
+          <span class="inbox-badge" id="inbox-unread" hidden>0 new</span>
+          <span class="dim" id="inbox-meta"></span>
+          <button class="btn" id="inbox-mark-read" type="button" style="margin-left:auto">Mark all read</button>
+        </div>
+        <ul class="inbox-list" id="inbox-list"></ul>
+      </div>
     </div>
 
     <!-- Grade Backup & Recovery: off-Supabase, tamper-evident durability -->
@@ -2605,6 +2631,8 @@
         lastPacingPayload = pPayload;
         renderPacingOverview(pPayload);
         renderRewardDisbursement(pPayload);   // 🍬 effort → candy / DOGE (incl. teacher/test accounts for testing)
+        loadStudentInbox();                   // 📨 student→teacher messages (2026-09-09)
+        startInboxPolling();
         renderGradebook(gPayload);
         renderTrainerPractice(gPayload);
         renderHeatmap(mPayload);
@@ -3489,6 +3517,134 @@
     var _tscNudgeHistoryStudentUsername = null;
     var _tscNudgeHistoryLoading = false;
     var TSC_NUDGE_PAGE_SIZE = 20;
+
+    // ── Student message inbox (2026-09-09) ────────────────────────────────────
+    // Student→teacher messages were only visible inside ONE student's drawer, so
+    // "I did the quiz but can't see the grade" sat unread for two weeks. This strip
+    // lists every student message for the loaded section (newest first), badges the
+    // ones newer than the last "Mark all read", and opens the sender's drawer on click.
+    // Read-only + grade-inert. GET /teacher/nudge-inbox; polls every 60s while visible.
+    var INBOX_SEEN_KEY = 'tsc-inbox-seen-at';
+    var INBOX_POLL_MS = 60000;
+    var _inboxTimer = null;
+    var _inboxMessages = [];
+
+    // Seen-marker is per section: the list is section-filtered, so "Mark all read" on
+    // PeriodB must not silently mark unseen PeriodE messages read.
+    function _inboxSeenKey() {
+      var section = $('section-filter') ? $('section-filter').value.trim() : '';
+      return INBOX_SEEN_KEY + ':' + (section || 'all');
+    }
+
+    function _inboxSeenAt() {
+      try { return localStorage.getItem(_inboxSeenKey()) || ''; } catch (_) { return ''; }
+    }
+
+    function _inboxMarkRead() {
+      var newest = _inboxMessages.length ? String(_inboxMessages[0].createdAt) : new Date().toISOString();
+      try { localStorage.setItem(_inboxSeenKey(), newest); } catch (_) { /* private mode */ }
+      renderStudentInbox(_inboxMessages);
+    }
+
+    // Resolve a sender username to a drawer stub from the already-loaded class payloads.
+    function _inboxStubFor(username) {
+      var want = String(username || '').toLowerCase();
+      var pools = [lastPacingPayload, lastGradesPayload];
+      for (var p = 0; p < pools.length; p++) {
+        var students = (pools[p] && pools[p].students) || [];
+        for (var i = 0; i < students.length; i++) {
+          var st = students[i];
+          if (String(st.username || '').toLowerCase() === want) {
+            return { studentId: st.studentId, username: st.username, realName: st.realName || '', section: st.section || '' };
+          }
+        }
+      }
+      return null;
+    }
+
+    function _inboxWhen(iso) {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' +
+             d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function renderStudentInbox(messages) {
+      var strip = $('inbox-strip');
+      var list = $('inbox-list');
+      if (!strip || !list) return;
+      _inboxMessages = Array.isArray(messages) ? messages : [];
+      strip.hidden = false;
+      var seenAt = _inboxSeenAt();
+      var unread = 0;
+      list.innerHTML = '';
+      if (!_inboxMessages.length) {
+        var empty = document.createElement('li');
+        empty.className = 'inbox-empty';
+        empty.textContent = 'No student messages yet.';
+        list.appendChild(empty);
+      }
+      _inboxMessages.forEach(function (m) {
+        var isNew = !seenAt || String(m.createdAt) > seenAt;
+        if (isNew) unread++;
+        var li = document.createElement('li');
+        if (isNew) li.className = 'unread';
+        li.setAttribute('data-nudge-id', String(m.nudgeId || ''));
+        li.setAttribute('data-username', String(m.senderUsername || ''));
+        li.title = String(m.text || '');
+        var when = document.createElement('span');
+        when.className = 'inbox-when';
+        when.textContent = _inboxWhen(m.createdAt);
+        var stub = _inboxStubFor(m.senderUsername);
+        var who = document.createElement('span');
+        who.className = 'inbox-who';
+        who.textContent = (stub && stub.realName) ? stub.realName : ('@' + (m.senderUsername || '?'));
+        var text = document.createElement('span');
+        text.className = 'inbox-text';
+        text.textContent = String(m.text || '');     // textContent only — student text is untrusted
+        li.appendChild(when); li.appendChild(who); li.appendChild(text);
+        li.addEventListener('click', function () {
+          var st = _inboxStubFor(m.senderUsername);
+          if (st && st.studentId) { openTscDrawer(st); return; }
+          showInfo('@' + m.senderUsername + ' is not in the loaded roster — load their section, then click again. Message: ' + String(m.text || ''));
+        });
+        list.appendChild(li);
+      });
+      var badge = $('inbox-unread');
+      if (badge) {
+        badge.hidden = unread === 0;
+        badge.textContent = unread + ' new';
+      }
+      var meta = $('inbox-meta');
+      if (meta) meta.textContent = _inboxMessages.length ? (_inboxMessages.length + ' message' + (_inboxMessages.length === 1 ? '' : 's')) : '';
+    }
+
+    function loadStudentInbox() {
+      var section = $('section-filter') ? $('section-filter').value.trim() : '';
+      var url = svcUrl() + '/teacher/nudge-inbox?limit=50' + (section ? '&section=' + encodeURIComponent(section) : '');
+      return fetch(url, { headers: teacherAuthHeaders() })
+        .then(jsonOrErr)
+        .then(function (j) { renderStudentInbox((j && j.messages) || []); })
+        .catch(function (err) {
+          var strip = $('inbox-strip');
+          if (strip) strip.hidden = false;
+          var meta = $('inbox-meta');
+          if (meta) meta.textContent = 'inbox unavailable: ' + (err && err.message ? err.message : String(err));
+        });
+    }
+
+    function startInboxPolling() {
+      if (_inboxTimer) clearInterval(_inboxTimer);
+      _inboxTimer = setInterval(function () {
+        if (document.hidden) return;
+        loadStudentInbox();
+      }, INBOX_POLL_MS);
+    }
+
+    (function wireInboxControls() {
+      var btn = $('inbox-mark-read');
+      if (btn) btn.addEventListener('click', _inboxMarkRead);
+    })();
 
     function openTscDrawer(stub) {
       var drawer = $('tsc-drawer');

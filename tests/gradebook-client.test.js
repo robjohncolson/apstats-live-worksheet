@@ -1085,7 +1085,10 @@ describe('gradebook-client.js — offline capture', () => {
     expect(await OfflineQueue.all()).toHaveLength(0);
   });
 
-  it('does NOT enqueue on an auth failure (bad token is not an offline condition)', async () => {
+  // 2026-09-09: an auth failure IS captured now (reason stays 'auth', queued:true) — an
+  // expired session used to drop the grade on the floor. The ownership-gated drain
+  // replays it once the owner signs back in. See the "2026-09-09 hardening" block.
+  it('enqueues on an auth failure but keeps reason "auth" (an expired session must not lose the write)', async () => {
     const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
     setToken(win, 'expired');
     mockFetch(win, { ok: false, error: 'invalid token' }, { ok: false, status: 401 });
@@ -1093,7 +1096,8 @@ describe('gradebook-client.js — offline capture', () => {
     const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q3', response: 'x' });
 
     expect(result.reason).toBe('auth');
-    expect(await OfflineQueue.all()).toHaveLength(0);
+    expect(result.queued).toBe(true);
+    expect(await OfflineQueue.all()).toHaveLength(1);
   });
 
   it('does NOT enqueue on a server 500 (server reachable — surface the error)', async () => {
@@ -1163,5 +1167,84 @@ describe('gradebook-client.js — offline capture', () => {
     win.fetch = vi.fn().mockRejectedValue(new Error('down'));
     const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'x' });
     expect(result).toMatchObject({ ok: false, reason: 'network' }); // not 'queued'
+  });
+});
+
+// ── 2026-09-09 hardening: an expired session no longer drops a grade-bearing write,
+// and fetchPrior surfaces the stored grader result so worksheets can explain a grade.
+describe('gradebook-client.js — 2026-09-09 hardening (auth capture + fetchPrior result)', () => {
+  it('a 401 with a known studentId is CAPTURED for replay: { ok:false, reason:"auth", queued:true }', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'expired-token');
+    mockFetch(win, { ok: false, error: 'invalid token' }, { ok: false, status: 401 });
+
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'answer', score: 1 });
+
+    expect(result).toMatchObject({ ok: false, reason: 'auth', queued: true });
+    const rows = await OfflineQueue.all();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ source: 'worksheet', itemId: 'Q1', studentId: 'uuid-test-student', response: 'answer' });
+  });
+
+  it('a 401-captured write drains under the owner once the session is valid again', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'expired-token');
+    mockFetch(win, { ok: false, error: 'invalid token' }, { ok: false, status: 401 });
+    await gradebookClient.record({ source: 'worksheet', itemId: 'Q2', response: 'B', score: 1 });
+    expect(await OfflineQueue.all()).toHaveLength(1);
+
+    setToken(win, 'fresh-token');
+    const fetchFn = mockFetch(win, { ok: true, ledgerId: 'L2' });
+    const res = await gradebookClient.syncOfflineQueue();
+    expect(res.sent).toBe(1);
+    expect(await OfflineQueue.all()).toHaveLength(0);
+    const body = JSON.parse(fetchFn.mock.calls[0][1].body);
+    expect(body).toMatchObject({ source: 'worksheet', itemId: 'Q2', response: 'B', token: 'fresh-token' });
+  });
+
+  it('a 401 on a page WITHOUT the offline queue shows the "NOT being saved" banner, never "kept on this device"', async () => {
+    const { win, gradebookClient } = makeWindow();   // no offline-queue.js on this page (e.g. the TI-84 trainer)
+    setToken(win, 'expired-token');
+    mockFetch(win, { ok: false, error: 'invalid token' }, { ok: false, status: 401 });
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'answer', score: 1 });
+    expect(result).toEqual({ ok: false, reason: 'auth' });
+    const bar = win.document.getElementById('gb-no-identity-nudge');
+    expect(bar).not.toBeNull();
+    expect(bar.textContent).toContain('NOT being saved');
+    expect(bar.textContent).not.toContain('kept on this device');
+  });
+
+  it('a 401 WITH the offline queue shows the "kept on this device" banner', async () => {
+    const { win, gradebookClient } = makeWindowWithQueue();
+    setToken(win, 'expired-token');
+    mockFetch(win, { ok: false, error: 'invalid token' }, { ok: false, status: 401 });
+    await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'answer', score: 1 });
+    const bar = win.document.getElementById('gb-no-identity-nudge');
+    expect(bar).not.toBeNull();
+    expect(bar.textContent).toContain('kept on this device');
+  });
+
+  it('fetchPrior exposes the stored grader result + gradedAt only when the row carries them', async () => {
+    const { win, gradebookClient } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    mockFetch(win, { ok: true, rows: [
+      {
+        item_id: 'WS-U1L1-reflect1', response: 'my answer', score: 0.5, source: 'frq',
+        frq_result: { score: 0.5, feedback: 'Name the variable type.', provider: 'ai-batch', model: 'x', responseHash: 'h' },
+        graded_at: '2026-08-19T05:12:00.000Z',
+      },
+      { item_id: 'WS-U1L1-Q1', response: 'B', score: 1, source: 'worksheet' },
+      { item_id: 'WS-U1L1-reflect2', response: 'r2', score: 1, source: 'frq', frq_result: 'not-an-object', graded_at: null },
+    ] });
+
+    const map = await gradebookClient.fetchPrior('WS-U1L1');
+    expect(map.get('WS-U1L1-reflect1')).toEqual({
+      response: 'my answer', score: 0.5, source: 'frq',
+      result: { score: 0.5, feedback: 'Name the variable type.', provider: 'ai-batch' },
+      gradedAt: '2026-08-19T05:12:00.000Z',
+    });
+    // rows without a stored result keep the original three-field shape
+    expect(map.get('WS-U1L1-Q1')).toEqual({ response: 'B', score: 1, source: 'worksheet' });
+    expect(map.get('WS-U1L1-reflect2')).toEqual({ response: 'r2', score: 1, source: 'frq' });
   });
 });

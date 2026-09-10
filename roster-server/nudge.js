@@ -431,4 +431,50 @@ export function mountNudge(app, { db, nudgesDb }) {
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
   });
+
+  // ── GET /teacher/nudge-inbox?section=&since=&limit= (teacher-gated) ─────────
+  // 2026-09-09: student-initiated messages were only visible inside ONE student's
+  // drawer, so the teacher found two of them a fortnight late. This lists every
+  // student→teacher message across the class (optionally one section, optionally
+  // only newer than `since`), newest first, so the dashboard can show an inbox
+  // with an unread count. Read-only; grade-inert.
+  app.get('/teacher/nudge-inbox', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!nudgesDb || typeof nudgesDb.listStudentInbox !== 'function') {
+      return res.status(503).json({ ok: false, error: 'nudges not provisioned' });
+    }
+    var section = typeof req.query.section === 'string' ? req.query.section.trim() : '';
+    if (section && !/^[A-Za-z0-9_-]{1,40}$/.test(section)) {
+      return res.status(400).json({ ok: false, error: 'section must be alphanumeric (with - or _)' });
+    }
+    var since = typeof req.query.since === 'string' ? req.query.since.trim() : '';
+    if (since && Number.isNaN(Date.parse(since))) {
+      return res.status(400).json({ ok: false, error: 'since must be an ISO timestamp' });
+    }
+    if (since) since = new Date(since).toISOString();   // canonical form only reaches PostgREST
+    var limit = Number(req.query.limit);
+    if (!Number.isFinite(limit) || limit <= 0) limit = 50;
+    if (limit > 200) limit = 200;
+    try {
+      var { data, error } = await nudgesDb.listStudentInbox({ section: section || null, since: since || null, limit: limit });
+      if (error) {
+        console.error('GET /teacher/nudge-inbox error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      var messages = (data || []).map(function (row) {
+        return {
+          nudgeId: row.nudge_id,
+          senderUsername: row.sender_username,
+          section: row.section || null,
+          text: typeof row.text === 'string' ? row.text.slice(0, 2000) : '',
+          createdAt: row.created_at,
+          parentNudgeId: row.parent_nudge_id || null,
+        };
+      });
+      return res.json({ ok: true, messages: messages, count: messages.length });
+    } catch (err) {
+      console.error('GET /teacher/nudge-inbox throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+  });
 }
