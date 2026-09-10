@@ -7,9 +7,9 @@ const html = readFileSync(resolve(root, 'teacher-dashboard.html'), 'utf8');
 const source = readFileSync(resolve(root, 'teacher-worksheet-diagnostics.js'), 'utf8');
 const windows = [];
 const row = (extra = {}) => ({ studentId: 'student', realName: 'Test Student', username: 'test_login', deviceId: 'abcdef1234', worksheet: 'WS-U1L1', mode: 'student', outcome: 'loaded', downloaded: 37, saved: 37, matched: 37, restored: 37, edited: 0, filled: 37, fields: 40, build: 'test-build', observedAt: Date.now(), receivedAt: Date.now(), ...extra });
-async function boot(fetch, credentials = true) {
+async function boot(fetch, credentials = true, rosterFetch = async () => ({ ok: true, json: async () => ({ ok: true, students: [] }) })) {
   const dom = new JSDOM(html.replace(/<script\b[\s\S]*?<\/script>/gi, ''), { runScripts: 'outside-only', url: 'https://example.com', pretendToBeVisual: true });
-  const w = dom.window; windows.push(w); w.setTimeout = setTimeout; w.clearTimeout = clearTimeout; w.setInterval = setInterval; w.fetch = fetch;
+  const w = dom.window; windows.push(w); w.setTimeout = setTimeout; w.clearTimeout = clearTimeout; w.setInterval = setInterval; w.fetch = (url, options) => url.endsWith('/roster/list') ? rosterFetch(url, options) : fetch(url, options);
   w.eval(source); w.installWorksheetDiagnosticsPanel({ url: () => 'https://roster.example.com', headers: () => credentials ? { Authorization: 'Bearer teacher' } : {} });
   await vi.advanceTimersByTimeAsync(0); return w;
 }
@@ -20,6 +20,29 @@ describe('teacher worksheet report panel', () => {
     const w = await boot(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, rows: [row(), row({ mode: 'teacher-preview', outcome: 'auth' })] }) }));
     const body = w.document.getElementById('worksheet-diagnostics-rows'); expect(body.children).toHaveLength(1); expect(body.textContent).toContain('showing saved: 37');
     const toggle = w.document.getElementById('worksheet-diagnostics-previews'); toggle.checked = true; toggle.dispatchEvent(new w.Event('change')); expect(body.children).toHaveLength(2); expect(body.textContent).toContain('TEACHER PREVIEW');
+  });
+  it('lists students without reports, filters by ID and preserves selection on refresh', async () => {
+    const rosterFetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, students: [
+      { studentId: 'other', realName: 'Alex', section: 'PeriodE' },
+      { studentId: 'student', realName: 'Alex', section: 'PeriodB' },
+      { studentId: 'absent', realName: 'Zoe', section: 'PeriodB' },
+      { studentId: 'archived', realName: 'Old', status: 'archived' }
+    ] }) });
+    const w = await boot(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, rows: [row(), row({ studentId: 'other' })] }) }), true, rosterFetch);
+    const select = w.document.getElementById('worksheet-diagnostics-student');
+    const body = w.document.getElementById('worksheet-diagnostics-rows');
+    expect([...select.options].map(o => o.value)).toEqual(['', 'other', 'student', 'absent']);
+    select.value = 'student'; select.dispatchEvent(new w.Event('change')); expect(body.children).toHaveLength(1);
+    w.document.getElementById('worksheet-diagnostics-refresh').click(); await vi.advanceTimersByTimeAsync(0);
+    expect(select.value).toBe('student'); expect(body.children).toHaveLength(1);
+    select.value = 'absent'; select.dispatchEvent(new w.Event('change')); expect(body.children).toHaveLength(0);
+    expect(w.document.getElementById('worksheet-diagnostics-meta').textContent).toContain('No matching browser reports yet');
+    select.value = ''; select.dispatchEvent(new w.Event('change')); expect(body.children).toHaveLength(2);
+  });
+  it('keeps reports usable when the roster request fails', async () => {
+    const w = await boot(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, rows: [row()] }) }), true, async () => { throw new Error('offline'); });
+    expect(w.document.getElementById('worksheet-diagnostics-rows').children).toHaveLength(1);
+    expect(w.document.getElementById('worksheet-diagnostics-roster-status').textContent).toContain('Student names unavailable');
   });
   it('uses the configured live service on a fresh hosted dashboard while honoring explicit choices', () => {
     const start = html.indexOf('(function wireUrlDropdown()');

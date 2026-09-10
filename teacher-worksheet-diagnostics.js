@@ -10,8 +10,9 @@
       body.textContent = '';
       var query = $('worksheet-diagnostics-search').value.trim().toLowerCase();
       var previews = $('worksheet-diagnostics-previews').checked;
+      var studentId = $('worksheet-diagnostics-student').value;
       var visible = rows.filter(function (r) {
-        return (previews || r.mode === 'student') && (!query || ((r.realName || '') + ' ' + (r.username || '')).toLowerCase().indexOf(query) >= 0);
+        return (!studentId || r.studentId === studentId) && (previews || r.mode === 'student') && (!query || ((r.realName || '') + ' ' + (r.username || '')).toLowerCase().indexOf(query) >= 0);
       });
       visible.forEach(function (r) {
         var tr = document.createElement('tr');
@@ -60,12 +61,54 @@
         $('worksheet-diagnostics-meta').textContent = 'Browser reports unavailable. Existing rows may be out of date; use Refresh reports to retry.';
       } finally { clearTimeout(timeout); busy = false; }
     }
-    $('worksheet-diagnostics-refresh').addEventListener('click', function () { load(true); });
+    var rosterBusy = false;
+    async function loadStudents() {
+      var headers = options.headers();
+      if (rosterBusy || !Object.keys(headers).length) return;
+      rosterBusy = true;
+      var status = $('worksheet-diagnostics-roster-status');
+      status.textContent = 'Loading student names...';
+      var controller = typeof AbortController === 'function' ? new AbortController() : null;
+      var timeout;
+      try {
+        var data = await Promise.race([
+          (async function () {
+            var res = await fetch(options.url() + '/roster/list', { headers: headers, signal: controller ? controller.signal : undefined });
+            if (!res.ok) throw new Error('unavailable');
+            return res.json();
+          })(),
+          new Promise(function (_, reject) { timeout = setTimeout(function () { if (controller) controller.abort(); reject(new Error('timeout')); }, 20000); })
+        ]);
+        if (!data.ok || !Array.isArray(data.students)) throw new Error('invalid');
+        // Retain only picker fields; the roster response also contains password-recovery data.
+        var students = data.students.filter(function (s) { return s.studentId && s.status !== 'archived'; }).map(function (s) {
+          return { id: String(s.studentId), name: String(s.realName || s.username || 'Unnamed student'), username: String(s.username || ''), section: String(s.section || '') };
+        });
+        students.sort(function (a, b) { return a.name.localeCompare(b.name) || a.username.localeCompare(b.username); });
+        var select = $('worksheet-diagnostics-student');
+        var selected = select.value;
+        select.textContent = '';
+        var all = document.createElement('option'); all.value = ''; all.textContent = 'All students'; select.appendChild(all);
+        students.forEach(function (s) {
+          var option = document.createElement('option'); option.value = s.id;
+          option.textContent = s.name + (s.section ? ' (' + s.section + ')' : '') + (s.username ? ' / ' + s.username : '');
+          select.appendChild(option);
+        });
+        select.value = students.some(function (s) { return s.id === selected; }) ? selected : '';
+        status.textContent = '';
+        render();
+      } catch (_) {
+        status.textContent = 'Student names unavailable; use Refresh reports to retry.';
+      } finally { clearTimeout(timeout); rosterBusy = false; }
+    }
+    $('worksheet-diagnostics-refresh').addEventListener('click', function () { load(true); loadStudents(); });
+    $('worksheet-diagnostics-student').addEventListener('change', render);
     $('worksheet-diagnostics-search').addEventListener('input', render);
     $('worksheet-diagnostics-previews').addEventListener('change', render);
-    $('load-btn').addEventListener('click', function () { load(true); });
+    $('load-btn').addEventListener('click', function () { load(true); loadStudents(); });
     function start() {
       load(false);
+      loadStudents();
       setInterval(function () { if (!document.hidden) load(false); }, 60000);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

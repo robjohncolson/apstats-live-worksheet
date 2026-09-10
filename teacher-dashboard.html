@@ -470,7 +470,7 @@
     .inbox-who { white-space: nowrap; }
     .inbox-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       #worksheet-diagnostics-section .btn-row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
-      #worksheet-diagnostics-search { width:280px; max-width:100%; }
+      #worksheet-diagnostics-student, #worksheet-diagnostics-search { width:280px; max-width:100%; }
       #worksheet-diagnostics-section label { display:inline-flex; align-items:center; gap:6px; margin:0; }
       #worksheet-diagnostics-previews { width:auto; margin:0; }
       #worksheet-diagnostics-section th, #worksheet-diagnostics-section td { text-align:left; vertical-align:top; }
@@ -553,6 +553,8 @@
       <p class="dim">Student browser reports from the last 7 days. Teacher previews are separate; no report does not mean no work. Offline reports arrive when that browser reconnects.</p>
       <div class="btn-row">
         <button class="btn" id="worksheet-diagnostics-refresh" type="button">Refresh reports</button>
+        <label>Student <select id="worksheet-diagnostics-student"><option value="">All students</option></select></label>
+        <span id="worksheet-diagnostics-roster-status" role="status"></span>
         <input id="worksheet-diagnostics-search" aria-label="Filter worksheet reports by student" placeholder="Student name or username">
         <label><input type="checkbox" id="worksheet-diagnostics-previews"> Include teacher previews</label>
       </div>
