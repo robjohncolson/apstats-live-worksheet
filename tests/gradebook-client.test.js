@@ -1248,3 +1248,39 @@ describe('gradebook-client.js — 2026-09-09 hardening (auth capture + fetchPrio
     expect(map.get('WS-U1L1-reflect2')).toEqual({ response: 'r2', score: 1, source: 'frq' });
   });
 });
+
+
+describe('parked answer notification', () => {
+  it('12 HTTP 500s park the stored row; a 13th sync makes no fetch and shows one banner', async () => {
+    const { win } = makeWindowWithQueue(); setToken(win, 'tok');
+    try {
+      win.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({ ok: false }) });
+      await win.OfflineQueue.enqueue({ source: 'quiz', itemId: 'park-http', studentId: 'uuid-test-student', response: 'saved answer', ts: 1 });
+      for (let i=0;i<12;i++) await win.gradebookClient.syncOfflineQueue();
+      expect(win.document.querySelectorAll('#gb-parked-nudge')).toHaveLength(1);
+      expect(win.document.getElementById('gb-parked-nudge').textContent).toContain('1 answer(s) could not be saved');
+      win.document.getElementById('gb-parked-nudge').remove();
+      expect(await win.gradebookClient.syncOfflineQueue()).toEqual({sent:0,failed:0,remaining:1});
+      expect(win.document.querySelectorAll('#gb-parked-nudge')).toHaveLength(0);
+      expect(win.fetch).toHaveBeenCalledTimes(12);
+    } finally { win.document.defaultView.close(); }
+  });
+});
+
+
+it('stops the offline scheduler when only parked rows remain', async () => {
+  vi.useFakeTimers();
+  const { win, OfflineQueue, gradebookClient } = makeWindowWithQueue();
+  try {
+    setToken(win, 'tok');
+    await OfflineQueue.enqueue({ source:'quiz',itemId:'park-timer',studentId:'uuid-test-student',ts:1 });
+    win.fetch = vi.fn().mockResolvedValue({ok:false,status:500,json:async()=>({ok:false})});
+    for(let i=0;i<12;i++) await gradebookClient.syncOfflineQueue();
+    const reads = vi.spyOn(OfflineQueue, 'all');
+    await vi.advanceTimersByTimeAsync(1);
+    const count=reads.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(7200000);
+    expect(reads).toHaveBeenCalledTimes(count);
+    expect(win.fetch).toHaveBeenCalledTimes(12);
+  } finally { win.close(); vi.useRealTimers(); }
+});

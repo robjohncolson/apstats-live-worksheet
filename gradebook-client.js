@@ -28,6 +28,24 @@
   // MUST see it — a silently dropped write is lost work with no warning (this is
   // what made a worksheet's score "disappear"). Fires at most ONCE per page;
   // never throws, never blocks — record()'s return contract is unchanged.
+  var _parkedNudgeShown = false;
+  function _showParkedNudge(rows) {
+    try {
+      if (!rows.length || _parkedNudgeShown) return;
+      console.warn('gradebook-client: parked answers', rows.map(function (row) { return window.OfflineQueue.keyOf(row); }));
+      if (typeof document === 'undefined' || !document.body) return;
+      _parkedNudgeShown = true;
+      if (document.getElementById('gb-parked-nudge')) return;
+      var bar = document.createElement('div');
+      bar.id = 'gb-parked-nudge';
+      bar.setAttribute('role', 'alert');
+      bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99998;background:#b00020;color:#fff;'
+        + 'font-family:Geneva,Verdana,sans-serif;font-size:13px;padding:10px 14px;display:flex;'
+        + 'align-items:center;gap:12px;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+      bar.textContent = rows.length + ' answer(s) could not be saved to your grade after repeated server errors \u2014 tell your teacher.';
+      document.body.appendChild(bar);
+    } catch (_) { /* Reporting must never interrupt replay or destroy the saved work. */ }
+  }
   var _noIdentityNudgeShown = false;
   // kind 'expired' (2026-09-09): the session token was rejected (401/403) and the answer
   // was CAPTURED on this device — it saves after the next sign-in. 'expired-lost': token
@@ -239,13 +257,13 @@
         if (Object.prototype.hasOwnProperty.call(data, 'responseVersion')) out.responseVersion = data.responseVersion;
         return out;
       }
-      if (res && (res.status === 401 || res.status === 403)) { console.warn('gradebook-client: auth failed', data); return { ok: false, reason: 'auth' }; }
+      if (res && (res.status === 401 || res.status === 403)) { console.warn('gradebook-client: auth failed', data); return { ok: false, reason: 'auth', status: res.status }; }
       // Queue on the authenticated FRQ body contract, not a hard-coded status.
       // This covers today's 429/503 responses and future retryable statuses.
       if (opts.source === 'frq' && opts.requestGrade === true && data && data.retryable === true) {
-        return { ok: false, reason: 'network', retryable: true };
+        return { ok: false, reason: 'network', retryable: true, status: res.status };
       }
-      if (res && !res.ok) { console.warn('gradebook-client: server error', data); return { ok: false, reason: 'server' }; }
+      if (res && !res.ok) { console.warn('gradebook-client: server error', data); return { ok: false, reason: 'server', status: res.status }; }
       console.warn('gradebook-client: server returned ok:false', data);
       return { ok: false, reason: 'server' };
     } catch (err) {
@@ -289,10 +307,10 @@
       if (!_canDrainOnline()) return;
       try {
         var rows = await window.OfflineQueue.all();
-        if (!rows || !rows.length) { _offlineDrainBackoffMs = 30000; return; }
+        if (!rows || !rows.some(function (row) { return !(row.serverFailures >= 12); })) { _offlineDrainBackoffMs = 30000; return; }
         await window.gradebookClient.syncOfflineQueue();
         rows = await window.OfflineQueue.all();
-        if (!rows || !rows.length) { _offlineDrainBackoffMs = 30000; return; }
+        if (!rows || !rows.some(function (row) { return !(row.serverFailures >= 12); })) { _offlineDrainBackoffMs = 30000; return; }
         _offlineDrainBackoffMs = Math.min(3600000, Math.max(30000, _offlineDrainBackoffMs * 2));
         _scheduleOfflineDrain(_offlineDrainBackoffMs);
       } catch (_) {
@@ -370,6 +388,9 @@
           return r;
         }
 
+        // HTTP status is internal drain metadata; preserve the public record result shape.
+        delete r.status;
+
         // Reachability failure → capture for later instead of dropping the grade.
         // reason stays 'network' (the frozen whitelist); the additive `queued`
         // flag signals the write was captured locally — only when it actually was.
@@ -415,7 +436,7 @@
     syncOfflineQueue: async function () {
       try {
         if (!window.OfflineQueue || typeof window.OfflineQueue.drain !== 'function') return { sent: 0, failed: 0 };
-        return await window.OfflineQueue.drain(function (rec) {
+        var result = await window.OfflineQueue.drain(function (rec) {
           // Drain-time OWNERSHIP gate (P4): _postRecord attributes by the CURRENT
           // session token, so draining a record the signed-in student does not
           // OWN — another student's capture, or a legacy record with no owner —
@@ -439,6 +460,8 @@
             return result;
           });
         });
+        if (typeof window.OfflineQueue.parked === 'function') _showParkedNudge(await window.OfflineQueue.parked());
+        return result;
       } catch (_) {
         return { sent: 0, failed: 0 };
       }

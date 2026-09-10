@@ -136,3 +136,43 @@ describe('OfflineQueue durable API (in-memory fallback)', () => {
     expect(result.sent).toBe(0);           // the stale send did not clear the key
   });
 });
+
+
+describe('repeated server failures preserve and park answers', () => {
+  it('parks after 12 server failures, exports flagged work, and a fresh edit resets it', async () => {
+    const Q = loadFresh();
+    const row = { source: 'quiz', itemId: 'park-me', response: 'A', ts: 1 };
+    await Q.enqueue(row);
+    let calls = 0;
+    const sender = async () => { calls++; return { ok: false, status: 500 }; };
+    for (let i = 0; i < 12; i++) await Q.drain(sender);
+    expect(await Q.parked()).toEqual([expect.objectContaining({ serverFailures: 12, lastServerError: { status: 500, at: expect.any(Number) }, response: 'A' })]);
+    expect(await Q.drain(sender)).toEqual({ sent: 0, failed: 0, remaining: 1 });
+    expect(calls).toBe(12);
+    expect(Q.toBundle(await Q.all(), {}).records[0]).toMatchObject({ parked: true, response: 'A' });
+    await Q.enqueue({ ...row, ts: 2, response: 'B' });
+    expect(await Q.parked()).toEqual([]);
+    expect((await Q.all())[0]).toMatchObject({ serverFailures: 0, response: 'B' });
+    expect((await Q.all())[0].lastServerError).toBeUndefined();
+    await Q.drain(sender); expect(calls).toBe(13);
+  });
+  it('401, 429, unreachable sends and ownership/auth refusal do not consume attempts', async () => {
+    const Q = loadFresh();
+    await Q.enqueue({ source: 'quiz', itemId: 'recoverable', ts: 1 });
+    for (const result of [{ok:false,status:401}, {ok:false,status:429}, {ok:false,status:500,reason:'no-identity'}, {ok:false,status:503,reason:'auth-expired'}]) {
+      await Q.drain(async () => result);
+    }
+    await Q.drain(async () => { throw new Error('offline'); });
+    expect((await Q.all())[0].serverFailures).toBe(0);
+    expect((await Q.all())[0].lastServerError).toBeUndefined();
+  });
+  it('a failed older send does not charge a newer edit', async () => {
+    const Q = loadFresh();
+    await Q.enqueue({ source: 'quiz', itemId: 'race', ts: 1 });
+    await Q.drain(async () => {
+      await Q.enqueue({ source: 'quiz', itemId: 'race', ts: 2, response: 'new' });
+      return { ok: false, status: 500 };
+    });
+    expect((await Q.all())[0]).toMatchObject({ ts: 2, serverFailures: 0, response: 'new' });
+  });
+});
