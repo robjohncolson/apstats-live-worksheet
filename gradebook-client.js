@@ -290,6 +290,8 @@
   }
 
   var _offlineDrainTimer = null;
+  var _offlineDrainInFlight = false;
+  var _offlineDrainRerun = false;
   var _offlineDrainBackoffMs = 30000;
   function _canDrainOnline() {
     try { return !_isOfflineMode() && (!window.navigator || window.navigator.onLine !== false); }
@@ -300,11 +302,15 @@
   // sign-in (storage event); a genuinely new token always differs from the failed one.
   var _lastAuthFailToken = null;
   function _scheduleOfflineDrain(delayMs) {
+    // Coalesce reconnect/sign-in events while a batch is awaiting the network.
+    if (_offlineDrainInFlight) { _offlineDrainRerun = true; return; }
     if (_offlineDrainTimer || !_canDrainOnline() || !_hasQueue()) return;
     if (_lastAuthFailToken && _token() === _lastAuthFailToken) return;
     _offlineDrainTimer = window.setTimeout(async function () {
       _offlineDrainTimer = null;
       if (!_canDrainOnline()) return;
+      _offlineDrainInFlight = true;
+      var retryDelay = null;
       try {
         var rows = await window.OfflineQueue.all();
         if (!rows || !rows.some(function (row) { return !(row.serverFailures >= 12); })) { _offlineDrainBackoffMs = 30000; return; }
@@ -312,10 +318,18 @@
         rows = await window.OfflineQueue.all();
         if (!rows || !rows.some(function (row) { return !(row.serverFailures >= 12); })) { _offlineDrainBackoffMs = 30000; return; }
         _offlineDrainBackoffMs = Math.min(3600000, Math.max(30000, _offlineDrainBackoffMs * 2));
-        _scheduleOfflineDrain(_offlineDrainBackoffMs);
+        retryDelay = _offlineDrainBackoffMs;
       } catch (_) {
         _offlineDrainBackoffMs = Math.min(3600000, Math.max(30000, _offlineDrainBackoffMs * 2));
-        _scheduleOfflineDrain(_offlineDrainBackoffMs);
+        retryDelay = _offlineDrainBackoffMs;
+      } finally {
+        _offlineDrainInFlight = false;
+        if (_offlineDrainRerun) {
+          _offlineDrainRerun = false;
+          _scheduleOfflineDrain(0);
+        } else if (retryDelay !== null) {
+          _scheduleOfflineDrain(retryDelay);
+        }
       }
     }, Math.max(0, delayMs || 0));
   }

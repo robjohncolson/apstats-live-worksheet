@@ -1284,3 +1284,31 @@ it('stops the offline scheduler when only parked rows remain', async () => {
     expect(win.fetch).toHaveBeenCalledTimes(12);
   } finally { win.close(); vi.useRealTimers(); }
 });
+
+
+it('coalesces online/storage triggers until the in-flight batch resolves, then sends fresh rows', async () => {
+  vi.useFakeTimers();
+  const { win, OfflineQueue } = makeWindowWithQueue();
+  let finish;
+  try {
+    setToken(win, 'tok');
+    await OfflineQueue.enqueue({source:'quiz',itemId:'first',studentId:'uuid-test-student',ts:1});
+    win.fetch=vi.fn().mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}))
+      .mockResolvedValue({ok:true,status:200,json:async()=>({ok:true,ledgerId:'second'})});
+    win.dispatchEvent(new win.Event('online'));
+    await vi.advanceTimersByTimeAsync(1);
+    expect(win.fetch).toHaveBeenCalledTimes(1);
+    await OfflineQueue.enqueue({source:'quiz',itemId:'second',studentId:'uuid-test-student',ts:2});
+    win.dispatchEvent(new win.StorageEvent('storage',{key:'apstats_roster.v1'}));
+    win.dispatchEvent(new win.Event('online'));
+    await vi.advanceTimersByTimeAsync(600);
+    expect(win.fetch).toHaveBeenCalledTimes(1);
+    finish({ok:true,status:200,json:async()=>({ok:true,ledgerId:'first'})});
+    await vi.advanceTimersByTimeAsync(10);
+    expect(win.fetch).toHaveBeenCalledTimes(2);
+    expect(win.fetch.mock.calls.map(call=>JSON.parse(call[1].body).itemId)).toEqual(['first','second']);
+    expect(await OfflineQueue.all()).toEqual([]);
+    await vi.advanceTimersByTimeAsync(120000);
+    expect(win.fetch).toHaveBeenCalledTimes(2);
+  } finally { win.close();vi.useRealTimers(); }
+});
