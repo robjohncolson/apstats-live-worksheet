@@ -23,7 +23,7 @@ export class ParkReplica {
     this.clockAnchor = { local: this.now(), remote: 0 };
   }
 
-  clock() { return this.clockAnchor.remote + this.now() - this.clockAnchor.local; }
+  clock() { return this.clockAnchor.remote + (this.state && !this.state.running ? 0 : this.now() - this.clockAnchor.local); }
 
   resume(response) {
     if (!response || !['events', 'summary'].includes(response.mode)
@@ -74,6 +74,7 @@ export class ParkReplica {
     this.nextSequence = Math.max(response.sequence + 1, this.outbox.at(-1)?.packet.sequence + 1 || 1);
     if (this.outbox.length) this.outbox[0].sentAt = -Infinity;
     this.needsResume = false;
+    if (Number.isFinite(response.clockMs)) this.clockAnchor = { local: this.now(), remote: response.clockMs };
     return this.state;
   }
 
@@ -86,7 +87,9 @@ export class ParkReplica {
     if (event.kind === 'settled') {
       this.state.poses[event.member] = copy(event.pose);
       this.remoteMotion.push(event.member, event.pose);
-    } else if (event.kind === 'party') Object.assign(progress, { requiredSwitches: event.requiredSwitches, soloAssist: event.soloAssist, bridgeOpen: event.bridgeOpen });
+    } else if (event.kind === 'holds') { progress.holds = copy(event.holds); progress.switches = Object.keys(event.holds); }
+    else if (event.kind === 'mechanisms') Object.assign(progress, { gates: copy(event.gates), lifts: copy(event.lifts), bridgeOpen: event.bridgeOpen });
+    else if (event.kind === 'box') progress.boxes[event.id] = copy(event.state);
     else if (event.kind === 'reentered') {
       progress.arrived = progress.arrived.filter(name => name !== event.member);
       delete this.state.poses[event.member];
@@ -96,8 +99,9 @@ export class ParkReplica {
     else if (event.kind === 'complete') progress.complete = event.complete;
     else if (event.kind === 'members') this.state.members = [...event.members];
     else if (event.kind === 'presence') this.state.online = [...event.online];
-    else if (event.kind === 'running') this.state.running = event.running;
+    else if (event.kind === 'running') { this.state.running = event.running; if (Number.isFinite(event.clockMs)) this.clockAnchor = {local:this.now(),remote:event.clockMs}; }
     else if (event.kind === 'level') {
+      if (Number.isFinite(event.clockMs)) this.clockAnchor = {local:this.now(),remote:event.clockMs};
       this.state.level = copy(event.level);
       this.state.progress = copy(event.progress);
       this.state.poses = {};
@@ -118,12 +122,12 @@ export class ParkReplica {
     return true;
   }
 
-  queue(kind, target, pose) {
+  queue(kind, target, pose, details = {}) {
     if (!this.state || this.state.done || !this.state.running) return { status: 'paused' };
     if (this.outbox.length >= OUTBOX_LIMIT) return { status: 'full' };
     const level = this.state.level.id;
     if (this.outbox.some(row => row.packet.level === level && row.packet.kind === kind && row.packet.target === target)) return { status: 'pending' };
-    const packet = { epoch: this.state.epoch, streamId: this.streamId, level, sequence: this.nextSequence++, kind, target, pose: copy(pose) };
+    const packet = { epoch: this.state.epoch, streamId: this.streamId, level, sequence: this.nextSequence++, kind, target, pose: copy(pose), ...copy(details) };
     this.lastRejection = null;
     this.outbox.push({ packet, sentAt: -Infinity });
     return { status: 'queued' };

@@ -4,21 +4,36 @@ The calendar doorway selects a local scene in the existing CanvasEngine. The can
 
 Students enter by walking left into the black doorway, pressing Up beside it, or clicking it. Arrows move, Space jumps, and Up enters a door. The starting doorway returns to the calendar; Escape also returns. At the goal, Up enters the unlocked door and a subsequent Up returns to the puzzle lobby. A separate Levels doorway near the start also returns to that lobby. Polls, armed gates, green light, voting doorways and live activities recall students and prevent entry while active.
 
-## Three replayable levels
+## Six replayable cooperative levels
 
-The opening cooperative sequence is adapted from original PICO PARK: use a friend's head to reach a ledge, jump the gap, press the bridge switch so everyone can follow, collect the key and ride the lift to the door. The switch also lowers a step for the student who gave the boost. One player carries the key; that player unlocks the door, then every connected participant enters. This is an adaptation to the board's dimensions and connection model, not a pixel-exact level-data port.
+At least two distinct students must be online in the same period and level. A lone student waits at the entrance and can press Up to return to the lobby. Multiple tabs do not count as teammates. There is no solo assist or permanently latched pressure button.
 
-The existing site character, button and key images are reused. No recovered game scripts or newly extracted artwork are included. The gameplay reference is the [opening-level walkthrough](https://picoparkmobilewalkthrough.blogspot.com/2021/09/pico-park-level-1-puzzles-walkthrough.html). The lobby offers Hello together, Switchback (split across raised switch ledges), and Lift relay (use the central lift to reach an upper key route). Every door remains available; there is no forced hourly rotation. The relay keeps an inactive room for two hours. A relay restart resets progress.
+World 1 contains four stages. The lobby presents adaptations of those four first, followed by two additional cooperative challenges:
 
-A lone student gets a reachable step in the opening level. The new levels require up to two or three latched switches according to the players present. Requirements can ease when players disconnect, and never increase after a puzzle action; opened routes stay open. Once the bridge is open, the checkpoint lets returning students rejoin beyond it. The key returns to its original pickup point if its holder disconnects before unlocking the door. Late arrivals join the active attempt. An explicit entry after completion resets the level with a new attempt ID, clearing poses, key, switches and arrivals. Transport resumes never trigger replay. Returning before friends finish clears only the returning player's arrival. Completion checkmarks are stored per username on this browser, separate from attempt state; they do not lock levels or award grades.
+| Lobby choice | Gameplay reference | Cooperation |
+| --- | --- | --- |
+| Hello together | World 1-1 | Head boost, hold the bridge button for friends, key and exit lift |
+| Moving walls | World 1-2 | Push left to uncover the key, then push the wall into the gap; movable final step |
+| Upstairs / downstairs | World 1-3 | Upper player holds a bridge; lower player places crates on buttons to unblock the upper route |
+| Weight together | World 1-4 | Weight lowers a shelter beneath a moving pillar; collect the lower key and share a capacity-limited exit lift |
+| Switchback | Paired-button challenge | Partners alternate holding opposite ends of three crossings |
+| Lift relay | Two-rider challenge | Exactly two riders raise the lift; return for remaining friends |
+
+These are original layouts adapted to the 220px calendar board and sparse connection model, not exact level-data ports. The [World 1 walkthrough](https://picoparkmobilewalkthrough.blogspot.com/2021/09/pico-park-level-1-puzzles-walkthrough.html) and [two-player challenges](https://picoparkmobilewalkthrough.blogspot.com/2021/09/pico-park-level-10-two-players-puzzle.html) establish the mechanics. Existing site cat/key assets are reused; no recovered game scripts or newly extracted art are shipped. Blocks follow authored movement rails rather than a shared rigid-body simulation.
+
+Held buttons release when the player steps away. Crate buttons only activate when the actual block reaches the pad. Block pushing stops on release. The weighted shelter needs half the online group, rounded up and capped at four riders to fit the board; larger classes take turns. The final lift permits that many riders at once. The paired lift always needs exactly two, encouraging return trips for odd-sized groups.
+
+The key holder unlocks the door and every connected participant enters. Falling or touching the moving pillar restarts the shared attempt. Dropping below two online players pauses movement and the scene clock, releases pressure and stops pushes; it retains placed blocks, unlocked doors and arrivals. The key returns to its pickup point if its holder disconnects before unlocking. Late arrivals and replacement friends join the current attempt.
+
+Explicit entry after completion starts a fresh attempt, clearing poses, key, gates and arrivals. Socket resume never triggers replay. Returning before friends finish clears only that returning player's arrival. Browser-local completion checkmarks use a protocol-4 key per username; they never lock a door or award grades. Every level stays available, without hourly rotation. Inactive rooms expire after two hours; a relay restart resets room progress.
 
 ## Connection behavior
 
 Local physics never waits for network frames. Changed motion anchors are coalesced to at most two per second; stationary players send no motion. Peers interpolate sparse anchors and stop at the last known position during a gap. A reliable resting-position event repairs even a dropped final motion packet. They can be stood on using the board's existing stacking physics. Moving stacks may feel delayed on poor connections; the opening boost uses a stationary teammate.
 
-The lift follows a local cycle anchored by the relay clock on resume. It sends no per-frame state. Resting positions, bridge, key, unlock and arrival are sequenced, retried, idempotent events. Revision probes run every 15 seconds; bounded replay or a compact summary repairs missed events. The outbox holds at most 16 intents and replaces pending movement with the latest pose when disconnected or backpressured. The park reuses the classroom socket and does not emit classroom_pos packets for park movement.
+Automatic lifts and the pillar follow the pausable scene clock. Weighted lifts and blocks interpolate finite movements from authoritative start/target/time events. No per-frame terrain state is sent. Pressure and push changes, resting positions, key, unlock, arrival and retry are sequenced, retried events. Held inputs renew every two seconds with a six-second expiry; a 250ms relay maintenance timer expires leases and detects dock arrival without broadcasting unchanged state. Revision probes run every 15 seconds; bounded replay or a compact summary repairs missed events. The outbox holds at most 16 intents and replaces pending movement with the latest pose when disconnected or backpressured. The park reuses the classroom socket and does not emit classroom_pos packets for park movement.
 
-Rooms are keyed by the joined classroom section and chosen level, retaining the existing identity trust model. No grades or candy are changed. Protocol 3 is required before a client can allocate a room or occupy it; cached earlier clients receive PARK_UPDATE_REQUIRED.
+Rooms are keyed by the joined classroom section and chosen level, retaining the existing identity trust model. No grades or candy are changed. Protocol 4 is required before a client can allocate a room or occupy it; cached earlier clients receive PARK_UPDATE_REQUIRED.
 
 ## Verification and release
 
@@ -34,4 +49,4 @@ Run `node scripts/bump-build.mjs` before every release touching board or park mo
 - board-scene.mjs assembles scenery and actors into CanvasEngine.sceneEntities.
 - panel.mjs handles socket binding, replay and lifecycle; it creates only a status line.
 - replica.mjs handles reliable events; remote-motion.mjs interpolates bounded peer anchors.
-- Relay levels.mjs describes the three scenes; session.mjs owns milestones; service.mjs binds joined students to period rooms.
+- Relay levels.mjs describes the six scenes; session.mjs owns milestones; service.mjs binds joined students to period rooms.

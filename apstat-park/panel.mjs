@@ -13,9 +13,9 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
   let replica = new ParkReplica();
   const pending = new Map();
   let selectedLevel = null, selectionVersion = 0;
-  const completionKey = 'apstat-park-completed:' + board.username;
+  const completionKey = 'apstat-park-completed-v4:' + board.username;
   let completed = [];
-  try { const saved = JSON.parse(doc.defaultView.localStorage.getItem(completionKey)); if (Array.isArray(saved)) completed = saved.filter(index => [0, 1, 2].includes(index)); } catch {}
+  try { const saved = JSON.parse(doc.defaultView.localStorage.getItem(completionKey)); if (Array.isArray(saved)) completed = saved.filter(index => [0, 1, 2, 3, 4, 5].includes(index)); } catch {}
   function remember(index) {
     if (completed.includes(index)) return;
     completed.push(index);
@@ -75,10 +75,10 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
     if (joining || disposed || selectedLevel === null || socket?.readyState !== 1) return;
     joining = true; const current = socket, version = selectionVersion;
     try {
-      const response = await request(replica.state ? 'park_resume' : 'park_join', { protocol: 3, levelIndex: selectedLevel, clientId, epoch: replica.state?.epoch,
+      const response = await request(replica.state ? 'park_resume' : 'park_join', { protocol: 4, levelIndex: selectedLevel, clientId, epoch: replica.state?.epoch,
         since: replica.state ? replica.revision : null });
       if (disposed || current !== socket || version !== selectionVersion) return;
-      if (response.mode === 'summary' && response.level?.protocol !== 3) {
+      if (response.mode === 'summary' && response.level?.protocol !== 4) {
         incompatible = true;
         throw new Error('The park is updating. Return to the calendar and try again shortly.');
       }
