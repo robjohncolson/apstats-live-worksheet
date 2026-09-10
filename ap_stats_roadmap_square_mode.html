@@ -7028,6 +7028,13 @@ async function submitSignIn() {
     // the legacy student_progress path; clean-start cohort, non-email is harmless).
     var who = (window.rosterClient.current && window.rosterClient.current()) || {};
     var legacyKey = who.username || username;
+    // Same-tab sign-in emits no storage event. Replay only after the owner session is stored.
+    try {
+      if (!window.__VIEW_AS_STUDENT_ID__ && !(typeof _viewAsContext === 'function' && _viewAsContext())
+          && window.gradebookClient && typeof window.gradebookClient.syncOfflineQueue === 'function') {
+        Promise.resolve(window.gradebookClient.syncOfflineQueue()).catch(function () {});
+      }
+    } catch (_) { /* Replay is best-effort and must not turn a valid sign-in into an error. */ }
     // Incident review H1 — capture the PRIOR legacy value before it's
     // overwritten below, so a genuine pre-roster free-text-email marks
     // bucket for THIS transition can still be unioned in by D6's migration.
@@ -7307,6 +7314,13 @@ async function _nfSubmitPassword() {
     // SUCCESS — mirror submitSignIn()'s post-success block (kept in sync by hand).
     var who = (window.rosterClient.current && window.rosterClient.current()) || {};
     var legacyKey = who.username || r.username;
+    // Same-tab sign-in emits no storage event. Replay only after the owner session is stored.
+    try {
+      if (!window.__VIEW_AS_STUDENT_ID__ && !(typeof _viewAsContext === 'function' && _viewAsContext())
+          && window.gradebookClient && typeof window.gradebookClient.syncOfflineQueue === 'function') {
+        Promise.resolve(window.gradebookClient.syncOfflineQueue()).catch(function () {});
+      }
+    } catch (_) { /* Replay is best-effort and must not turn a valid sign-in into an error. */ }
     // Incident review H1 — capture the PRIOR legacy value before it's
     // overwritten below, so a genuine pre-roster free-text-email marks
     // bucket for THIS transition can still be unioned in by D6's migration.
@@ -8078,6 +8092,7 @@ var _gradeGradebookCache = null; // latest /grade gradebook{} — read by the "M
 // failure (auth/server/network — see renderDoNowGrades's classifier). Read
 // by rProg (D5 honest-unknown) and _renderGradeStatus (D2 banner).
 var _gradeLoadState = 'unknown';
+var _expiredSignInShown = false;    // One modal per page; dismissing never removes local evidence.
 var _gradeLoadError = null;          // null | { kind: 'auth'|'server'|'network', status: number|null }
 var _gradeRetryCount = 0;            // capped auto-retry counter (D2, <=3 per page load)
 var _gradeRetryTimer = null;         // single-flight guard so concurrent calls don't stack retries
@@ -8675,6 +8690,19 @@ async function renderDoNowGrades(baseUrl, token) {
         _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'server', status: res.status };
       }
     } catch (_) { _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'network', status: null }; }
+    // Only a live rejection of the still-current token warrants asking for sign-in.
+    // Unknown/offline state and teacher view-as must never become a sign-out.
+    if (_gradeLoadError && _gradeLoadError.kind === 'auth' && !_expiredSignInShown
+        && !window.__VIEW_AS_STUDENT_ID__
+        && !(typeof _viewAsContext === 'function' && _viewAsContext())
+        && window.rosterClient && typeof window.rosterClient.token === 'function'
+        && token && window.rosterClient.token() === token) {
+      _expiredSignInShown = true;
+      var signinOverlay = document.getElementById('signin-overlay');
+      if (!signinOverlay || signinOverlay.style.display !== 'block') openSignInModal();
+      var signinNotice = document.getElementById('signin-error');
+      if (signinNotice) signinNotice.textContent = 'Your sign-in expired \u2014 sign in again. Your work on this device is saved and will sync.';
+    }
     if (data) {
       _persistGradeCache(data);                 // write-through (skipped in view-as, now v2-enveloped)
       _phase2RefreshOnline(baseUrl, token);     // ANDROID Phase 2: refresh local signed-ledger replica + offline-inputs (fire-and-forget)
