@@ -21,6 +21,20 @@ describe('teacher worksheet report panel', () => {
     const body = w.document.getElementById('worksheet-diagnostics-rows'); expect(body.children).toHaveLength(1); expect(body.textContent).toContain('showing saved: 37');
     const toggle = w.document.getElementById('worksheet-diagnostics-previews'); toggle.checked = true; toggle.dispatchEvent(new w.Event('change')); expect(body.children).toHaveLength(2); expect(body.textContent).toContain('TEACHER PREVIEW');
   });
+  it('uses the configured live service on a fresh hosted dashboard while honoring explicit choices', () => {
+    const start = html.indexOf('(function wireUrlDropdown()');
+    const end = html.indexOf('})();', start) + 5;
+    const dom = new JSDOM(html.replace(/<script\b[\s\S]*?<\/script>/gi, ''), { runScripts: 'outside-only', url: 'https://example.com/' });
+    const w = dom.window; windows.push(w);
+    w.$ = id => w.document.getElementById(id);
+    w.URL_KEY = 'apstats_teacher_service_url'; w.GLOBAL_OVERRIDE_KEY = 'roster_service_url_override';
+    w.ROSTER_SERVICE_URL = 'https://roster-production-12c1.up.railway.app'; w.FALLBACK_SVC = w.ROSTER_SERVICE_URL;
+    w.eval(html.slice(start, end));
+    expect(w.$('svc-url').value).toBe(w.ROSTER_SERVICE_URL);
+    w.localStorage.setItem(w.URL_KEY, 'http://localhost:8091');
+    w.eval(html.slice(start, end));
+    expect(w.$('svc-url').value).toBe('http://localhost:8091');
+  });
   it('does not fetch without credentials', async () => { const f = vi.fn(); await boot(f, false); await vi.advanceTimersByTimeAsync(120000); expect(f).not.toHaveBeenCalled(); });
   it.each([401, 503])('stops automatic polling after %s and retries manually', async status => {
     const f = vi.fn().mockResolvedValue({ ok: false, status }); const w = await boot(f); await vi.advanceTimersByTimeAsync(120000); expect(f).toHaveBeenCalledTimes(1);

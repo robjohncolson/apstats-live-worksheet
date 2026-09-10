@@ -166,6 +166,8 @@ describe('cross-device worksheet answer recovery', () => {
     w.eval(html.slice(start, html.indexOf('// Heal trigger:', start)));
     w.recordBlankToGradebook = vi.fn();
     await w.healLocalAnswersToLedger();
+    // AI grading also reads prior answers without restoring the form.
+    await w.gradebookClient.fetchPrior('WS-U1L1');
     await vi.advanceTimersByTimeAsync(2000);
     expect(count(w)).toBe(37);
   });

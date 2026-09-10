@@ -636,7 +636,7 @@
         }
         // A background repair read does not put answers into the form. Only the
         // visible restoration may dismiss its warning and cancel its retries.
-        if (!options || !options.repair) {
+        if (options && options.restore) {
           _priorFailed = false;
           _priorRetries = 0;
           if (_priorRetryTimer) { clearTimeout(_priorRetryTimer); _priorRetryTimer = null; }

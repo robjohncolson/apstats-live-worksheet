@@ -2959,7 +2959,12 @@
         }
       }
       try {
-        var saved = localStorage.getItem(URL_KEY);
+        var saved = localStorage.getItem(URL_KEY) || localStorage.getItem(GLOBAL_OVERRIDE_KEY);
+        // A fresh hosted dashboard must use the Desk's service, not localhost.
+        // Keep explicit choices and the local development default intact.
+        if (!saved && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+          saved = window.ROSTER_SERVICE_URL || FALLBACK_SVC;
+        }
         if (saved) {
           var opt = null;
           for (var i = 0; i < sel.options.length; i++) {

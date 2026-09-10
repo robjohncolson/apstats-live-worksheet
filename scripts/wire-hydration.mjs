@@ -71,7 +71,7 @@ const HYDRATION_BLOCK_LF =
                 if (!window.gradebookClient || !window.gradebookClient.fetchPrior) return;
                 var prefix = gbWsPrefix();
                 if (!prefix) return;
-                prior = await window.gradebookClient.fetchPrior(prefix);
+                prior = await window.gradebookClient.fetchPrior(prefix, { restore: true });
                 if (!prior || prior.size === 0) return;
 
                 // Fill empty .blank inputs.
