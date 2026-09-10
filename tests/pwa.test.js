@@ -185,3 +185,45 @@ describe('Desk PWA wiring + build lockstep', () => {
     expect(appBuild).toBe(verBuild);
   });
 });
+
+
+describe('service-worker partial responses and cache failures', () => {
+  function boot({ mode = 'cors', range = '', status = 200, failPut = false } = {}) {
+    const handlers = {};
+    const response = { ok: status >= 200 && status < 300, status, clone() { return this; } };
+    const put = failPut ? vi.fn().mockRejectedValue(new Error('quota')) : vi.fn().mockResolvedValue();
+    const caches = { match: vi.fn().mockResolvedValue(undefined), open: vi.fn().mockResolvedValue({ put }) };
+    const fetch = vi.fn().mockResolvedValue(response);
+    runInContext(SW, createContext({
+      self: { location: { origin: 'https://example.com' }, addEventListener: (name, fn) => { handlers[name] = fn; } },
+      caches, fetch, URL,
+    }));
+    let result;
+    handlers.fetch({
+      request: { method: 'GET', url: 'https://example.com/file', mode, headers: { get: key => key === 'range' ? range : '' } },
+      respondWith: promise => { result = promise; },
+    });
+    return { result, response, fetch, caches, put };
+  }
+  it('passes range requests through without serving a cached full file', () => {
+    const b = boot({ range: 'bytes=0-1023' });
+    expect(b.result).toBeUndefined();
+    expect(b.caches.match).not.toHaveBeenCalled();
+    expect(b.fetch).not.toHaveBeenCalled();
+  });
+  it.each(['cors', 'navigate'])('returns unexpected 206 responses without caching (%s)', async mode => {
+    const b = boot({ mode, status: 206 });
+    expect(await b.result).toBe(b.response);
+    expect(b.put).not.toHaveBeenCalled();
+  });
+  it.each(['cors', 'navigate'])('returns successful network data even if cache.put rejects (%s)', async mode => {
+    const b = boot({ mode, failPut: true });
+    expect(await b.result).toBe(b.response);
+    expect(b.put).toHaveBeenCalledTimes(1);
+  });
+  it.each(['cors', 'navigate'])('does not cache HTTP errors (%s)', async mode => {
+    const b = boot({ mode, status: 503 });
+    expect(await b.result).toBe(b.response);
+    expect(b.put).not.toHaveBeenCalled();
+  });
+});

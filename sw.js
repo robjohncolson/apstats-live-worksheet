@@ -13,7 +13,7 @@
 // is just `self.addEventListener('install',()=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));`
 // to unregister-by-emptying (clears caches; pages fall back to plain network).
 
-const BUILD = '2026-09-10-nu6d'; // scripts/bump-build.mjs replaces this stamp
+const BUILD = '2026-09-10-kioi'; // scripts/bump-build.mjs replaces this stamp
 const CACHE = 'apstats-pwa-' + BUILD;
 
 const CORE = [
@@ -31,6 +31,8 @@ const CORE = [
 // Pure decision (unit-tested via extraction): 'navigate' | 'asset' | 'passthrough'.
 function cacheStrategyFor(request, selfOrigin) {
   if (request.method !== 'GET') return 'passthrough';
+  // Range requests need the browser's partial-response handling, not a cached full file.
+  if (request.headers.get('range')) return 'passthrough';
   let url;
   try { url = new URL(request.url); } catch (_) { return 'passthrough'; }
   if (url.origin !== selfOrigin) return 'passthrough';          // roster/cr/supabase APIs → network only
@@ -60,7 +62,10 @@ self.addEventListener('fetch', (e) => {
     e.respondWith((async () => {
       try {
         const net = await fetch(e.request);
-        const c = await caches.open(CACHE); c.put(e.request, net.clone());
+        // A cache failure must not discard a usable network response.
+        if (net && net.ok && net.status !== 206) {
+          try { const c = await caches.open(CACHE); await c.put(e.request, net.clone()); } catch (_) {}
+        }
         return net;
       } catch (_) {
         const cached = await caches.match(e.request);
@@ -78,7 +83,9 @@ self.addEventListener('fetch', (e) => {
     if (cached) return cached;
     try {
       const net = await fetch(e.request);
-      if (net && net.ok) { const c = await caches.open(CACHE); c.put(e.request, net.clone()); }
+      if (net && net.ok && net.status !== 206) {
+        try { const c = await caches.open(CACHE); await c.put(e.request, net.clone()); } catch (_) {}
+      }
       return net;
     } catch (_) {
       return new Response('', { status: 504 });
