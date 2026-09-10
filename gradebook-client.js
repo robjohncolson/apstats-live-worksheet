@@ -21,6 +21,73 @@
 (function () {
   'use strict';
 
+  // A failed read is not an empty worksheet. Keep recovery visible and bounded.
+  var _priorFailed = false;
+  var _priorRetryTimer = null;
+  var _priorRetries = 0;
+  var _priorRecovering = false;
+
+  function _priorNotice(message) {
+    if (typeof window.hydratePriorAnswers !== 'function' || !document.body) return;
+    var box = document.getElementById('gb-answer-recovery');
+    if (!message) { if (box) box.remove(); return; }
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'gb-answer-recovery';
+      box.setAttribute('role', 'status');
+      box.style.cssText = 'padding:12px;margin:12px;border:1px solid #a66b00;background:#fff4d6;color:#322500;';
+      var label = document.createElement('span');
+      box.appendChild(label);
+      var retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = 'Retry loading saved answers';
+      retry.style.marginLeft = '12px';
+      retry.addEventListener('click', function () { _priorRetries = 0; _recoverPrior(); });
+      box.appendChild(retry);
+      document.body.insertBefore(box, document.body.firstChild);
+    }
+    box.firstChild.textContent = message;
+  }
+
+  function _unavailablePrior() {
+    var result = new Map();
+    result.loadFailed = true;
+    return result;
+  }
+
+  function _priorReadFailed(auth) {
+    _priorFailed = true;
+    _priorNotice(auth
+      ? 'Sign in again from the Desk, then retry loading your saved answers. Your saved work has not been cleared.'
+      : 'Saved answers could not be loaded. Blank boxes do not mean your work is missing. You can keep working or retry.');
+    if (!auth && !_priorRetryTimer && _priorRetries < 3 && typeof window.hydratePriorAnswers === 'function') {
+      var delay = [2000, 5000, 15000][_priorRetries++];
+      _priorRetryTimer = setTimeout(function () { _priorRetryTimer = null; _recoverPrior(); }, delay);
+    }
+    if (auth && _priorRetryTimer) { clearTimeout(_priorRetryTimer); _priorRetryTimer = null; }
+  }
+
+  async function _recoverPrior() {
+    if (!_priorFailed || _priorRecovering || typeof window.hydratePriorAnswers !== 'function') return;
+    _priorRecovering = true;
+    if (_priorRetryTimer) { clearTimeout(_priorRetryTimer); _priorRetryTimer = null; }
+    try { await window.hydratePriorAnswers(); } finally { _priorRecovering = false; }
+  }
+
+  // A deliberately cleared answer is an edit too, not a target for restoration.
+  if (typeof document !== 'undefined') document.addEventListener('input', function (event) {
+    var target = event.target;
+    if (target && target.matches && target.matches('.blank, textarea')) target.dataset.gbEdited = '1';
+  }, true);
+  if (typeof window.addEventListener === 'function') {
+    window.addEventListener('online', _recoverPrior);
+    window.addEventListener('focus', _recoverPrior);
+    window.addEventListener('roster-session-changed', function () {
+      _priorRetries = 0;
+      _recoverPrior();
+    });
+  }
+
   // ── No-identity nudge (defense-in-depth backstop) ───────────────────────────
   // Worksheets normally gate behind the sign-in wall, but that wall FAILS OPEN
   // (roster-client unavailable, teacher-role bypass, or sign-out mid-session).
@@ -490,14 +557,16 @@
     // itemId prefix (e.g. 'WS-U4L1-2'). Returns a Map<itemId, {response,score,source}>.
     //
     // NEVER throws. NEVER rejects. Always resolves to a Map (possibly empty).
+    // loadFailed:true distinguishes unavailable history from a confirmed empty ledger;
+    // repair callers must not re-upload local work based on an unavailable history.
     // No-ops without identity or without a sane prefix. The server enforces
     // self-only access — the client adds a token+sid so the server can verify.
     fetchPrior: async function (prefix) {
       try {
-        if (!prefix || typeof prefix !== 'string') return new Map();
+        if (!prefix || typeof prefix !== 'string') return _unavailablePrior();
         // Mirror the server's strict-prefix charset: no underscore (it is a
         // SQL LIKE wildcard server-side). Real item_ids use [A-Za-z0-9-] only.
-        if (!/^[A-Za-z0-9\-]+$/.test(prefix)) return new Map();
+        if (!/^[A-Za-z0-9\-]+$/.test(prefix)) return _unavailablePrior();
 
         var token = null;
         var sid = null;
@@ -517,25 +586,56 @@
             sid = window.rosterClient.studentId();
           }
         } catch (_) {
-          return new Map();
+          return _unavailablePrior();
         }
-        if (!token || !sid) return new Map();
+        if (!token || !sid) { _priorReadFailed(true); return _unavailablePrior(); }
 
         var baseUrl = window.ROSTER_SERVICE_URL || null;
-        if (!baseUrl) return new Map();
+        if (!baseUrl) { _priorReadFailed(false); return _unavailablePrior(); }
 
         // Token goes in the Authorization header, NOT the query string —
         // query strings leak into access logs / Referer / browser history.
         var url = baseUrl + '/ledger/student/' + encodeURIComponent(sid)
                 + '?prefix=' + encodeURIComponent(prefix);
 
-        var res = await fetch(url, {
-          method: 'GET',
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-        if (!res || !res.ok) return new Map();
-        var data = await res.json();
-        if (!data || !data.ok || !Array.isArray(data.rows)) return new Map();
+        // Bound both the connection and response-body wait.
+        var timeout;
+        var controller = typeof AbortController === 'function' ? new AbortController() : null;
+        var result;
+        try {
+          result = await Promise.race([
+            (async function () {
+              var res = await fetch(url, {
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + token },
+                signal: controller ? controller.signal : undefined
+              });
+              return { res: res, data: res && res.ok ? await res.json() : null };
+            })(),
+            new Promise(function (_, reject) {
+              timeout = setTimeout(function () {
+                if (controller) controller.abort();
+                reject(new Error('Answer load timed out'));
+              }, 10000);
+            })
+          ]);
+        } finally { clearTimeout(timeout); }
+        // An old session's response must never populate a new student's page.
+        var currentSid = window.__VIEW_AS_STUDENT_ID__ || window.rosterClient.studentId();
+        if (sid !== currentSid || token !== window.rosterClient.token()) {
+          _priorReadFailed(false);
+          return _unavailablePrior();
+        }
+        var res = result.res;
+        var data = result.data;
+        if (!res || !res.ok || !data || !data.ok || !Array.isArray(data.rows)) {
+          _priorReadFailed(!!res && (res.status === 401 || res.status === 403));
+          return _unavailablePrior();
+        }
+        _priorFailed = false;
+        _priorRetries = 0;
+        if (_priorRetryTimer) { clearTimeout(_priorRetryTimer); _priorRetryTimer = null; }
+        _priorNotice(null);
 
         // Dedupe: rows are newest-first; first occurrence per item_id wins.
         var out = new Map();
@@ -558,7 +658,8 @@
         }
         return out;
       } catch (_) {
-        return new Map();
+        _priorReadFailed(false);
+        return _unavailablePrior();
       }
     },
 

@@ -77,7 +77,7 @@ const HYDRATION_BLOCK_LF =
                     var itemId = blank.dataset.questionId;
                     var entry = prior.get(itemId);
                     if (!entry || entry.response === undefined || entry.response === null) return;
-                    if (blank.value && blank.value.trim()) return;  // never clobber
+                    if (blank.dataset.gbEdited === '1' || (blank.value && blank.value.trim())) return;  // never clobber
                     var v = typeof entry.response === 'string'
                           ? entry.response
                           : String(entry.response);
@@ -92,7 +92,7 @@ const HYDRATION_BLOCK_LF =
                     var itemId = prefix + '-' + ta.id;
                     var entry = prior.get(itemId);
                     if (!entry || entry.response === undefined || entry.response === null) return;
-                    if (ta.value && ta.value.trim()) return;
+                    if (ta.dataset.gbEdited === '1' || (ta.value && ta.value.trim())) return;
                     var v = typeof entry.response === 'string'
                           ? entry.response
                           : String(entry.response);

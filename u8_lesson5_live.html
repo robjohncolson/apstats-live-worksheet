@@ -1550,7 +1550,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     var itemId = blank.dataset.questionId;
                     var entry = prior.get(itemId);
                     if (!entry || entry.response === undefined || entry.response === null) return;
-                    if (blank.value && blank.value.trim()) return;  // never clobber
+                    if (blank.dataset.gbEdited === '1' || (blank.value && blank.value.trim())) return;  // never clobber
                     var v = typeof entry.response === 'string'
                           ? entry.response
                           : String(entry.response);
@@ -1565,7 +1565,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     var itemId = prefix + '-' + ta.id;
                     var entry = prior.get(itemId);
                     if (!entry || entry.response === undefined || entry.response === null) return;
-                    if (ta.value && ta.value.trim()) return;
+                    if (ta.dataset.gbEdited === '1' || (ta.value && ta.value.trim())) return;
                     var v = typeof entry.response === 'string'
                           ? entry.response
                           : String(entry.response);
@@ -1699,6 +1699,8 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 var prefix = gbWsPrefix();
                 if (!prefix) return;
                 var prior = await window.gradebookClient.fetchPrior(prefix);
+                // A failed read cannot prove that a saved answer is missing.
+                if (!prior || prior.loadFailed) return;
                 document.querySelectorAll('.blank[data-question-id]').forEach(function (blank) {
                     try {
                         var value = (blank.value || '').trim();

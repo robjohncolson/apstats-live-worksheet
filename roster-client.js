@@ -22,7 +22,12 @@
 
   function writeSession(data) {
     try {
+      var previous = readSession();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      // storage fires only in other tabs; notify this page after credentials are durable.
+      if (!previous || previous.token !== data.token || previous.studentId !== data.studentId) {
+        window.dispatchEvent(new Event('roster-session-changed'));
+      }
     } catch (_) {
       // blocked — silently skip
     }
