@@ -65,11 +65,13 @@ const HYDRATION_BLOCK_LF =
         // Never clobbers in-progress edits. Marks restored inputs with a
         // small badge so the student sees what was restored.
         async function hydratePriorAnswers() {
+            var diagnosticRun = window.worksheetDiagnostics && window.worksheetDiagnostics.begin(gbWsPrefix());
+            var prior;
             try {
                 if (!window.gradebookClient || !window.gradebookClient.fetchPrior) return;
                 var prefix = gbWsPrefix();
                 if (!prefix) return;
-                var prior = await window.gradebookClient.fetchPrior(prefix);
+                prior = await window.gradebookClient.fetchPrior(prefix);
                 if (!prior || prior.size === 0) return;
 
                 // Fill empty .blank inputs.
@@ -101,6 +103,7 @@ const HYDRATION_BLOCK_LF =
                     _markRestored(ta);
                 });
             } catch (_) { /* silent — never block the worksheet */ }
+            finally { if (window.worksheetDiagnostics) window.worksheetDiagnostics.finish(diagnosticRun, prior); }
         }
 
         function _markRestored(el) {

@@ -49,9 +49,11 @@
     box.firstChild.textContent = message;
   }
 
-  function _unavailablePrior() {
+  function _unavailablePrior(outcome, status) {
     var result = new Map();
     result.loadFailed = true;
+    result.loadOutcome = outcome || 'network';
+    result.httpStatus = status || null;
     return result;
   }
 
@@ -588,10 +590,10 @@
         } catch (_) {
           return _unavailablePrior();
         }
-        if (!token || !sid) { _priorReadFailed(true); return _unavailablePrior(); }
+        if (!token || !sid) { _priorReadFailed(true); return _unavailablePrior('no-identity'); }
 
         var baseUrl = window.ROSTER_SERVICE_URL || null;
-        if (!baseUrl) { _priorReadFailed(false); return _unavailablePrior(); }
+        if (!baseUrl) { _priorReadFailed(false); return _unavailablePrior('config'); }
 
         // Token goes in the Authorization header, NOT the query string —
         // query strings leak into access logs / Referer / browser history.
@@ -624,13 +626,13 @@
         var currentSid = window.__VIEW_AS_STUDENT_ID__ || window.rosterClient.studentId();
         if (sid !== currentSid || token !== window.rosterClient.token()) {
           _priorReadFailed(false);
-          return _unavailablePrior();
+          return _unavailablePrior('stale-session');
         }
         var res = result.res;
         var data = result.data;
         if (!res || !res.ok || !data || !data.ok || !Array.isArray(data.rows)) {
           _priorReadFailed(!!res && (res.status === 401 || res.status === 403));
-          return _unavailablePrior();
+          return _unavailablePrior(res && (res.status === 401 || res.status === 403) ? 'auth' : res && res.ok ? 'invalid-response' : 'network', res && res.status);
         }
         _priorFailed = false;
         _priorRetries = 0;
@@ -657,9 +659,9 @@
           out.set(r.item_id, entry);
         }
         return out;
-      } catch (_) {
+      } catch (err) {
         _priorReadFailed(false);
-        return _unavailablePrior();
+        return _unavailablePrior(err && (err.name === 'AbortError' || err.message === 'Answer load timed out') ? 'timeout' : 'network');
       }
     },
 

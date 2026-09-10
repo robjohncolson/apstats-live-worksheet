@@ -859,6 +859,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
     <script src="roster-client.js"></script>
     <script src="roster-prefill.js"></script>
     <script src="offline-queue.js"></script>
+    <script src="worksheet-diagnostics.js"></script>
     <script src="gradebook-client.js"></script>
     <script>
 (function () {
@@ -1394,11 +1395,13 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
         // Never clobbers in-progress edits. Marks restored inputs with a
         // small badge so the student sees what was restored.
         async function hydratePriorAnswers() {
+            var diagnosticRun = window.worksheetDiagnostics && window.worksheetDiagnostics.begin(gbWsPrefix());
+            var prior;
             try {
                 if (!window.gradebookClient || !window.gradebookClient.fetchPrior) return;
                 var prefix = gbWsPrefix();
                 if (!prefix) return;
-                var prior = await window.gradebookClient.fetchPrior(prefix);
+                prior = await window.gradebookClient.fetchPrior(prefix);
                 if (!prior || prior.size === 0) return;
 
                 // Fill empty .blank inputs.
@@ -1448,6 +1451,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     _markRestored(ta);
                 });
             } catch (_) { /* silent — never block the worksheet */ }
+            finally { if (window.worksheetDiagnostics) window.worksheetDiagnostics.finish(diagnosticRun, prior); }
         }
 
         // W2.6: a grade restored from the ledger gets a plain-language note (date, grader,

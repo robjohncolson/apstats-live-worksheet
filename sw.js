@@ -13,12 +13,12 @@
 // is just `self.addEventListener('install',()=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));`
 // to unregister-by-emptying (clears caches; pages fall back to plain network).
 
-const BUILD = '2026-09-10-kioi'; // scripts/bump-build.mjs replaces this stamp
+const BUILD = '2026-09-10-rxfu'; // scripts/bump-build.mjs replaces this stamp
 const CACHE = 'apstats-pwa-' + BUILD;
 
 const CORE = [
   './', 'ap_stats_roadmap_square_mode.html', 'index.html', 'TOC.html',
-  'offline-queue.js', 'offline-video.js', 'gradebook-client.js',
+  'offline-queue.js', 'offline-video.js', 'gradebook-client.js', 'worksheet-diagnostics.js',
   'roster-client.js', 'roster_config.js', 'railway_client.js', 'railway_config.js',
   'roadmap-data.json', 'manifest.webmanifest', 'icon.svg', 'pwa-register.js',
   'flashcards.js', 'lib/flashcard-srs.js', 'lib/flashcard-store.js',

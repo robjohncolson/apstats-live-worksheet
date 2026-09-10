@@ -469,7 +469,13 @@
     .inbox-when { color: var(--sg-text-dim); font-size: 0.8rem; white-space: nowrap; }
     .inbox-who { white-space: nowrap; }
     .inbox-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-</style>
+      #worksheet-diagnostics-section .btn-row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+      #worksheet-diagnostics-search { width:280px; max-width:100%; }
+      #worksheet-diagnostics-section label { display:inline-flex; align-items:center; gap:6px; margin:0; }
+      #worksheet-diagnostics-previews { width:auto; margin:0; }
+      #worksheet-diagnostics-section th, #worksheet-diagnostics-section td { text-align:left; vertical-align:top; }
+      #worksheet-diagnostics-section td { border-top:1px solid #ddd; font-size:0.9rem; }
+    </style>
 </head>
 <body>
 
@@ -540,6 +546,18 @@
         </div>
         <ul class="inbox-list" id="inbox-list"></ul>
       </div>
+    </div>
+
+    <div class="section" id="worksheet-diagnostics-section">
+      <h2 class="section-title">Worksheet answer loading</h2>
+      <p class="dim">Student browser reports from the last 7 days. Teacher previews are separate; no report does not mean no work. Offline reports arrive when that browser reconnects.</p>
+      <div class="btn-row">
+        <button class="btn" id="worksheet-diagnostics-refresh" type="button">Refresh reports</button>
+        <input id="worksheet-diagnostics-search" aria-label="Filter worksheet reports by student" placeholder="Student name or username">
+        <label><input type="checkbox" id="worksheet-diagnostics-previews"> Include teacher previews</label>
+      </div>
+      <p id="worksheet-diagnostics-meta" role="status">Waiting for teacher sign-in.</p>
+      <div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Student / browser</th><th>Worksheet</th><th>Answer loading</th><th>Observed / version</th></tr></thead><tbody id="worksheet-diagnostics-rows"></tbody></table></div>
     </div>
 
     <!-- Grade Backup & Recovery: off-Supabase, tamper-evident durability -->
@@ -990,6 +1008,7 @@
   </div>
 
   <!-- Sibling config; sets window.ROSTER_SERVICE_URL -->
+  <script src="teacher-worksheet-diagnostics.js"></script>
   <script src="roster_config.js"></script>
   <!-- Roster identity client; provides window.rosterClient.token() and .current() -->
   <script src="roster-client.js"></script>
@@ -3524,6 +3543,8 @@
     // lists every student message for the loaded section (newest first), badges the
     // ones newer than the last "Mark all read", and opens the sender's drawer on click.
     // Read-only + grade-inert. GET /teacher/nudge-inbox; polls every 60s while visible.
+    if (window.installWorksheetDiagnosticsPanel) window.installWorksheetDiagnosticsPanel({ headers: teacherAuthHeaders, url: svcUrl });
+
     var INBOX_SEEN_KEY = 'tsc-inbox-seen-at';
     var INBOX_POLL_MS = 60000;
     var _inboxTimer = null;

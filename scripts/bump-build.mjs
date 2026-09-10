@@ -44,3 +44,10 @@ console.log('bumped build -> ' + stamp);
 console.log('  ' + deskPath);
 console.log('  ' + versionPath);
 console.log('  ' + swPath);
+
+// The reported version must identify the client actually running, not a network version check.
+const diagnosticsPath = resolve(root, 'worksheet-diagnostics.js');
+const diagnostics = readFileSync(diagnosticsPath, 'utf8');
+const diagnosticsRe = /(var BUILD = ')[^']*(';)/;
+if (!diagnosticsRe.test(diagnostics)) throw new Error('Missing diagnostics build marker');
+writeFileSync(diagnosticsPath, diagnostics.replace(diagnosticsRe, `$1${stamp}$2`));

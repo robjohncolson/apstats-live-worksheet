@@ -32,6 +32,7 @@ import { mountTeacherStudent } from './teacher.js';
 import { mountRemediation } from './remediation.js';
 import { mountPollArchive } from './poll-archive.js';
 import { mountNudge } from './nudge.js';
+import { mountWorksheetDiagnostics, createLiveDiagnosticsStore } from './worksheet-diagnostics.js';
 import { createLiveNudgesDb } from './nudge-db.js';
 import { mountLessonUnlock } from './lesson-unlock.js';
 import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
@@ -189,6 +190,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // (authenticated pubkey→sid binding + terminal revocation). 503 until
   // migration 0027 runs. Disjoint from the issuer trust set by construction.
   mountStudentKeys(app, { db });
+  mountWorksheetDiagnostics(app, { db, store: createLiveDiagnosticsStore() });
   // OFFLINE_GRADING_MESH_SPEC §4/§0.10 — the hub reconcile: verify + archive raw
   // student submissions (decoupled from grading, so no competing score). 503 until
   // migration 0028 runs. Teacher grades reach the ledger via /admin/restore.
