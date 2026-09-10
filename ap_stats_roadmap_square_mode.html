@@ -6298,29 +6298,10 @@ async function _refreshLessonUnlocks() {
   } catch (_) { /* fails open; gate logic still runs */ }
 }
 
-// A lesson cell is unlocked per LESSON_GATE_BUILD.md §1. Fails OPEN.
+// Students may open any lesson even while earlier work is incomplete (2026-09-10).
+// Keep this entry point for calendar callers; completion remains a grading signal.
 function _isLessonUnlocked(topic, lessonDate, prevTopic, today, marks, signedIn) {
-  try {
-    if (!signedIn) return true;          // no identity → no progression to gate
-    if (_deskIsTeacher()) return true;   // teachers see everything
-    // P5: teacher-applied override (typeof-guarded so existing vm-based
-    // tests that load _isLessonUnlocked alone don't have to inject the
-    // unlock helpers).
-    if (typeof _isTopicLessonUnlocked === 'function' && _isTopicLessonUnlocked(topic)) return true;
-    if (!prevTopic) return true;         // first lesson in the sequence
-    // PROGRESS_RESET_FIX_SPEC D4 -- indeterminate server state fails OPEN (no
-    // stranding). The server hasn't affirmatively spoken yet (no warm /grade
-    // cache this load AND no durable latch topic on this device) — never
-    // relock a student on silence. typeof-guarded so isolated vm tests that
-    // load this function alone (no _serverEvidencePresent injected) keep the
-    // strict pins.
-    if (typeof _serverEvidencePresent === 'function' && !_serverEvidencePresent()) return true;
-    // STRICT sequential (2026-06-16, LESSON_GATE_BUILD §8): a lesson opens ONLY
-    // when its predecessor is complete — no date bypass. A past-due lesson stays
-    // locked until you finish the one before it, so summer self-pacing advances by
-    // completion alone. (lessonDate/today kept in the signature for callers/tests.)
-    return _isLessonComplete(prevTopic, marks);
-  } catch (_) { return true; }
+  return true;
 }
 // Click handler for a locked lesson cell — explains why + how to unlock.
 function _showLessonLockedDialog(topic, prevTopic, dateStr) {
@@ -9157,7 +9138,7 @@ function _renderCoachPanel(panel, ctx) {
   if (Array.isArray(ctx.flashcardGate) && ctx.flashcardGate.length) {
     var fg = document.createElement('div');
     var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return cedLabel(g.lesson).text; }).join('; ');
-    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to complete it and unlock the next lesson.';
+    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to complete it. You can open other lessons while catching up.';
     facts.appendChild(fg);
   }
 
@@ -24503,7 +24484,7 @@ function _mountClassroomBoard(){
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-10-w6n9';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-10-39zv';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

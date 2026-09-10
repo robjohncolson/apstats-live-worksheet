@@ -285,10 +285,10 @@ describe('Why-so-low coach: PC-not-open + flashcard gate', () => {
     expect(body).toMatch(/_fbl\s*<\s*80/);            // flashcards still owed (same signals as _isLessonComplete)
   });
 
-  it('A3: _renderCoachPanel surfaces a flashcard-gate line (complete + unlock)', () => {
+  it('A3: _renderCoachPanel explains unfinished flashcards without blocking other lessons', () => {
     const body = fnBody(DESK, '_renderCoachPanel');
     expect(body).toMatch(/ctx\.flashcardGate/);
     expect(body).toMatch(/Flashcards to finish/);
-    expect(body).toMatch(/unlock the next lesson/);
+    expect(body).toMatch(/You can open other lessons while catching up/);
   });
 });

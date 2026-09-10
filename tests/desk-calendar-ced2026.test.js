@@ -68,7 +68,6 @@ function createDesk({ period = 'B', role = 'student', preview = false, viewAs = 
     calNextUpTopic: () => null,
     localLessonState: () => '',
     _prevTopicInSequence: () => null,
-    _isLessonUnlocked: () => true,
     paintDonowCells: () => {},
     maybeBumpThenOpen: vi.fn(),
     hTip: () => {},
@@ -84,7 +83,7 @@ function createDesk({ period = 'B', role = 'student', preview = false, viewAs = 
   const functions = [
     'd', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule',
     'eq', '_resourcePanelEsc', '_deskIsTeacher', 'cedTeacherBridgeAllowed',
-    'getRegistryEntry', 'getAllRegistryEntries', '_orderedPeriodTopics', 'quarterOfDate',
+    'getRegistryEntry', 'getAllRegistryEntries', '_orderedPeriodTopics', 'quarterOfDate', '_isLessonUnlocked',
     'cls', 'htm', 'cellAria', 'rCal', 'rProg', 'sTip', 'lookupTopic'
   ];
   win.eval('var R="review",OFF="off",EX="exam",PO="post",NC="noclass";\n'
@@ -370,6 +369,32 @@ describe('progress and teacher bridge', () => {
       expect(win.htm(lesson, 'Apr 10')).toContain('8.4');
       win.cYear = 'SUMMER26';
       expect(win.cls(lesson)).toBe('cell-u8');
+    } finally { win.close(); }
+  });
+});
+
+
+describe('student calendar access without prerequisite completion', () => {
+  it.each(['B', 'E'])('Period %s opens every scheduled lesson with empty marks and confirmed incomplete grades', period => {
+    const dom = createDesk({ period, role: 'student' });
+    const win = dom.window;
+    try {
+      win.localStorage.setItem('apstats_user_role', 'student');
+      win.getStudentEmail = () => 'fixture-student';
+      win._serverEvidencePresent = () => true;
+      win._isLessonComplete = () => false;
+      const lessons = collectCalendar(win);
+      expect(lessons.size).toBeGreaterThan(10);
+      for (const cell of lessons.values()) {
+        expect(cell.classes).not.toContain('cell-locked');
+        expect(cell.aria).not.toContain('finish the previous');
+      }
+      win._calPageOffset = 0;
+      win.rCal();
+      const cell = [...win.document.querySelectorAll('#cg .dc[data-topic]')].find(el => /^\d+\.\d+/.test(el.dataset.topic));
+      expect(cell).toBeTruthy();
+      cell.click();
+      expect(win.maybeBumpThenOpen).toHaveBeenCalled();
     } finally { win.close(); }
   });
 });

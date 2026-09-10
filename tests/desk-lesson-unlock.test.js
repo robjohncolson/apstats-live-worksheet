@@ -70,12 +70,11 @@ describe('lesson-unlock -- structure', () => {
     expect(html).toMatch(/#override-gate-modal\s+\.ogm-backdrop/);
   });
 
-  it('_isLessonUnlocked consults _isTopicLessonUnlocked when present', () => {
+  it('lesson access no longer requires a teacher override', () => {
     const b = fnBody(html, '_isLessonUnlocked');
-    expect(b).toMatch(/typeof\s+_isTopicLessonUnlocked\s*===\s*['"]function['"]/);
-    expect(b).toMatch(/_isTopicLessonUnlocked\s*\(\s*topic\s*\)/);
+    expect(b).toMatch(/return true/);
+    expect(b).not.toMatch(/_isTopicLessonUnlocked\s*\(/);
   });
-
   it('helpers are defined', () => {
     expect(() => fnBody(html, '_readLessonUnlocks')).not.toThrow();
     expect(() => fnBody(html, '_isTopicLessonUnlocked')).not.toThrow();
@@ -210,11 +209,11 @@ describe('lesson-unlock -- _isLessonUnlocked override path', () => {
     expect(f('5.3', futureDate, '5.2', today, {}, true)).toBe(true);
   });
 
-  it('locked when topic absent + prev incomplete + future date', () => {
+  it('open without an override even when previous work is incomplete', () => {
     const f = loadIsLessonUnlocked([], 'student');
     const futureDate = new Date(Date.now() + 86400000);
     const today = new Date();
-    expect(f('5.3', futureDate, '5.2', today, {}, true)).toBe(false);
+    expect(f('5.3', futureDate, '5.2', today, {}, true)).toBe(true);
   });
 
   it('teacher mode -> always unlocked (independent of cache)', () => {

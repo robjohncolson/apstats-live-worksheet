@@ -1,3 +1,4 @@
+// Sequential access retired 2026-09-10; completion helpers still determine earned credit.
 // desk-lesson-gate.test.js — the Desk calendar gates lessons sequentially:
 // a lesson is locked until its PREDECESSOR TOPIC is complete (worksheet +
 // Blooket Done). STRICT (§8, 2026-06-16): no date bypass, and the predecessor
@@ -49,19 +50,17 @@ describe('Desk: sequential lesson gate', () => {
     expect(DESK).toMatch(/function\s+_showLessonLockedDialog\s*\(/);
   });
 
-  it('02: _isLessonUnlocked fails OPEN (catch returns true — a bug never hard-locks)', () => {
+  it('02: lesson access is open without reading completion or identity state', () => {
     const body = fnBody(DESK, '_isLessonUnlocked');
-    expect(body).toMatch(/catch\s*\(_\)\s*\{\s*return true;\s*\}/);
+    expect(body).toMatch(/return true/);
+    expect(body).not.toMatch(/_isLessonComplete\s*\(/);
+    expect(body).not.toMatch(/_deskIsTeacher\s*\(/);
   });
 
-  it('03: _isLessonUnlocked checks the strict conditions (no date bypass)', () => {
-    const body = fnBody(DESK, '_isLessonUnlocked');
-    expect(body).toMatch(/signedIn/);              // not signed in → open
-    expect(body).toMatch(/_deskIsTeacher\s*\(/);   // teacher → open
-    expect(body).toMatch(/prevTopic/);             // first lesson → open
-    expect(body).toMatch(/_isLessonComplete\s*\(/);// prior complete → open
-    // STRICT (§8): the old date bypass (lessonDate <= today → open) is removed.
-    expect(body).not.toMatch(/lessonDate\.getTime\(\)\s*<=\s*today\.getTime\(\)/);
+  it('03: missing, stale, or incomplete evidence never blocks access', () => {
+    const src = fnBody(DESK, '_isLessonUnlocked');
+    const fn = new Function('return (' + src + ');')();
+    expect(fn('1.2', null, '1.1', null, null, true)).toBe(true);
   });
 
   it('04: rCal applies the gate via the canonical topic-predecessor', () => {
@@ -171,14 +170,14 @@ describe('Desk: sequential lesson gate', () => {
     expect(fn('1.1', FUTURE, null, TODAY, {}, true)).toBe(true);
   });
 
-  it('16: _isLessonUnlocked — STRICT: past-due but prior incomplete → LOCKED (no date bypass)', () => {
+  it('16: _isLessonUnlocked — past-due but prior incomplete → open despite incomplete prior work', () => {
     const fn = makeIsLessonUnlocked({ complete: false });
-    expect(fn('1.2', PAST, '1.1', TODAY, {}, true)).toBe(false);
+    expect(fn('1.2', PAST, '1.1', TODAY, {}, true)).toBe(true);
   });
 
-  it('17: _isLessonUnlocked — future date + prior incomplete → LOCKED', () => {
+  it('17: _isLessonUnlocked — future date + prior incomplete → open', () => {
     const fn = makeIsLessonUnlocked({ complete: false });
-    expect(fn('1.2', FUTURE, '1.1', TODAY, {}, true)).toBe(false);
+    expect(fn('1.2', FUTURE, '1.1', TODAY, {}, true)).toBe(true);
   });
 
   it('18: _isLessonUnlocked — future date but prior complete → unlocked', () => {
@@ -206,11 +205,11 @@ describe('Desk: sequential lesson gate', () => {
     expect(fn('none', {})).toBe(true);
   });
 
-  it('21: _isLessonUnlocked — STRICT: today\'s lesson is still gated on the prior', () => {
+  it('21: _isLessonUnlocked — today\'s lesson opens despite incomplete prior work', () => {
     // §8: the date no longer unlocks — even the current day's lesson stays
     // locked until its predecessor is complete.
     const fn = makeIsLessonUnlocked({ complete: false });
-    expect(fn('1.2', TODAY, '1.1', TODAY, {}, true)).toBe(false);
+    expect(fn('1.2', TODAY, '1.1', TODAY, {}, true)).toBe(true);
   });
 
   it('22: _prevTopicInSequence — canonical predecessor (deduped), null for the first', () => {
