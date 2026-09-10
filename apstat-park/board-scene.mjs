@@ -112,8 +112,16 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
       return;
     }
     replica.motion(pose());
-    if(!replica.state.running){if(connected())status.textContent='Waiting for a friend: at least two players are needed. Up returns to the puzzle doors.';return;}
     const hit=level.hazards.some(item=>{const h=hazardRect(item);return player.x+20>h.x&&player.x<h.x+h.w&&player.y+24>h.y&&player.y<h.y+h.h;});
+    if(!replica.state.running){
+      retrying=false;
+      // Exploring alone must not reset the shared attempt or queue puzzle actions.
+      if(player.y>level.height+20 || hit){
+        Object.assign(player,level.spawn,{vx:0,vy:0,state:'idle',standingOn:null});
+      }
+      if(connected())status.textContent='Explore while waiting for a friend. Two players are needed to solve this puzzle.';
+      return;
+    }
     if(player.y>level.height+20 || hit){
       if(!retrying)retrying=replica.queue('retry','fall',{...level.spawn,vx:0,vy:0}).status==='queued';
       if(connected())status.textContent='Try again together...';return;
@@ -180,7 +188,7 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
   entities.set('prepare',{update:prepare});entities.set('scenery',{zIndex:1,render:scenery});
   entities.set('player',{zIndex:10,update(dt){
     if(replica.state?.progress.arrived.includes(member)){if(input.up&&!player._upHandled)onLobby();player._upHandled=!!input.up;}
-    else if((level&&!replica.state.running)||retrying){player.vx=0;player.vy=0;if(input.up&&!player._upHandled)onLobby();player._upHandled=!!input.up;}
+    else if(retrying){player.vx=0;player.vy=0;if(input.up&&!player._upHandled)onLobby();player._upHandled=!!input.up;}
     else {
       // A sparse remote jump can briefly overlap an idle player's feet.
       // Do not let interpolation push a button holder off their button.

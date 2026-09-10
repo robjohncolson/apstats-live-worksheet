@@ -116,13 +116,42 @@ async function arrive(page) {
 async function gate(page,id) {await page.waitForFunction(id=>board.getParkScene().replica.state.progress.gates.includes(id),id);}
 try {
   const filter=process.env.PARK_LEVEL_FILTER;
+  const waitingOnly=process.env.PARK_WAITING_ONLY==='1';
   for(const index of [0,1,2,3,4,5].filter(i=>filter==null||filter.split(',').includes(String(i)))) {
     const a=await open('alice'+index,'coop'+index,800,index);
     assert.equal(await a.evaluate(()=>board.getParkScene().replica.state.running),false);
     const start=await position(a);await a.keyboard.down('ArrowRight');await a.waitForTimeout(800);await a.keyboard.up('ArrowRight');
-    assert.equal((await position(a)).x,start.x,'one student cannot run the puzzle');
-    const b=await open('bob'+index,'coop'+index,800,index);
+    assert.ok((await position(a)).x>start.x+50,'a waiting student can move');
+    await move(a,start.x+30);
+    await a.keyboard.down('Space');
+    await a.waitForFunction(()=>board.getParkScene().getGame().getWorld().player.y<125);
+    await a.keyboard.up('Space');await waitY(a,146);
+    const waitingState=await a.evaluate(()=>structuredClone(board.getParkScene().replica.state));
+    // Simulate a fall and reaching the locked goal; neither changes shared progress.
+    await a.evaluate(()=>{const w=board.getParkScene().getGame().getWorld();Object.assign(w.player,{y:w.level.height+40,vy:50});});
+    await a.waitForFunction(()=>board.getParkScene().getGame().getWorld().player.y===146);
+    assert.ok((await position(a)).x<200);
+    await a.evaluate(()=>{const w=board.getParkScene().getGame().getWorld();Object.assign(w.player,w.level.goal,{vx:0,vy:0});});
+    await a.keyboard.press('ArrowUp',{delay:80});
+    assert.deepEqual(await a.evaluate(()=>board.getParkScene().replica.state.progress),waitingState.progress);
+    assert.equal(await a.evaluate(()=>board.getParkScene().replica.state.level.id),waitingState.level.id);
+    assert.equal(await a.evaluate(()=>board.getParkScene().replica.outbox.length),0);
+    await a.evaluate(()=>{const w=board.getParkScene().getGame().getWorld();Object.assign(w.player,w.level.spawn,{vx:0,vy:0,state:'idle',standingOn:null});});
+    if(waitingOnly){
+      await move(a,43);await a.keyboard.press('ArrowUp',{delay:80});
+      await a.waitForFunction(()=>!board.getParkScene());
+      console.log('WAITING EXPLORATION PASS',index);await a.close();continue;
+    }
+    let b=await open('bob'+index,'coop'+index,800,index);
     await a.waitForFunction(()=>board.getParkScene().replica.state.running);
+    if(index===0){
+      const attempt=await a.evaluate(()=>board.getParkScene().replica.state.level.id);
+      await b.close();await a.waitForFunction(()=>!board.getParkScene().replica.state.running);
+      await move(a,140);await move(a,90);
+      assert.equal(await a.evaluate(()=>board.getParkScene().replica.state.level.id),attempt);
+      b=await open('bob'+index,'coop'+index,800,index);
+      await a.waitForFunction(()=>board.getParkScene().replica.state.running);
+    }
     for(const page of [a,b]){assert.equal(await page.evaluate(()=>board.getCanvas()===originalCanvas),true);assert.equal(await page.locator('canvas').count(),await page.evaluate(()=>originalCanvasCount));}
     console.log('START LEVEL',index);
     if(index===0){
@@ -130,8 +159,8 @@ try {
       await move(a,340,true);await waitY(a,82);await move(a,377);await move(a,490,true);await move(a,510);await gate(b,'bridge');
       await move(b,236);await move(b,278,true);await waitY(b,114);await move(b,340,true);await waitY(b,82);await move(b,485);
       await move(a,670);await progress(a,'keyHolder');await move(b,620);
-      await move(a,785);await waitY(a,40);await move(a,905,true);await arrive(a);
-      await move(b,785);await waitY(b,40);await move(b,905,true);await arrive(b);
+      await move(a,730);await a.waitForFunction(()=>{const g=board.getParkScene();return g.getGame().getWorld().lift.y>=169.9&&g.replica.clock()%10000<1200;},null,{timeout:12000});await move(a,785);await waitY(a,40);await a.waitForFunction(()=>board.getParkScene().getGame().getWorld().lift.y<=64.001);await move(a,905,true);await arrive(a);
+      await move(b,730);await b.waitForFunction(()=>{const g=board.getParkScene();return g.getGame().getWorld().lift.y>=169.9&&g.replica.clock()%10000<1200;},null,{timeout:12000});await move(b,785);await waitY(b,40);await b.waitForFunction(()=>board.getParkScene().getGame().getWorld().lift.y<=64.001);await move(b,905,true);await arrive(b);
     } else if(index===1){
       let holder=b,runner=a;
       for(const [i,x] of [300,700,1100].entries()){
@@ -212,7 +241,7 @@ try {
     console.log('COOPERATIVE LEVEL PASS',index);
     await a.close();await b.close();
   }
-  if(filter==null){
+  if(filter==null&&!waitingOnly){
   // Load the real calendar at Chromebook height, blocking production traffic.
   const companion = await open('calendar_buddy','F',800,0);
   const calendar = await browser.newPage({ viewport: { width:1100,height:650 } });
@@ -244,7 +273,7 @@ try {
   await calendar.close();
   }
   assert.deepEqual(errors,[]);
-  writeFileSync(path.join(output,'cooperative-result.json'),JSON.stringify({passed:true,levels:filter||'all six',errors,packets:packets.length},null,2));
+  writeFileSync(path.join(output,'cooperative-result.json'),JSON.stringify({passed:true,levels:filter||'all six',waitingOnly,errors,packets:packets.length},null,2));
   console.log('COOPERATIVE BROWSER PASS',packets.length);
 } finally {
   await browser.close(); service.close(); for(const ws of wss.clients) ws.terminate(); await new Promise(resolve=>wss.close(resolve)); await new Promise(resolve=>server.close(resolve));

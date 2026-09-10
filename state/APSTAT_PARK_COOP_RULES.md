@@ -10,9 +10,9 @@ Verified references:
 Six choices: retain indices 0 Hello Together (1-1), 1 Switchback (paired-button adaptation), 2 Lift Relay (two-rider lift adaptation); add 3 Moving Walls (1-2), 4 Upstairs / Downstairs (1-3), 5 Weight Together (1-4). Labels must not imply six stages in World 1. Layouts adapted to the board, rules based on references; no extracted game code or art.
 
 Acceptance:
-- Distinct student identities, minimum TWO online to run or finish. One student / multiple tabs cannot start. Waiting students can return to lobby/calendar. No solo step or reduced-to-one switch bypass.
+- Distinct student identities, minimum TWO online for puzzle actions or completion. One student / multiple tabs cannot solve the puzzle. Waiting students can move, jump and return through lobby/calendar doors; falls respawn locally. No solo step or reduced-to-one switch bypass.
 - Held buttons release when stepped off; box-weighted buttons depend on box position, not a permanent visit. Held intent sent reliably on changes with sparse lease renewal; stale/disconnected holders cannot keep a gate open.
-- Key-holder unlocks, all connected participants arrive, replay clears attempt state. Below two players pauses cooperative progress without revoking earned milestones; replacement can join. Explicit replay differs from transport resume.
+- Key-holder unlocks, all connected participants arrive, replay clears attempt state. Below two players allows local exploration but pauses cooperative progress without revoking earned milestones; replacement can join. Explicit replay differs from transport resume.
 - Moving blocks are physical terrain, pushed by contact and direction, synchronized by bounded movement events (not game snapshots). Mutually useful routes, actual box placement.
 - Weighted lifts derive motion from rider-count changes and relay-time anchors. No per-frame network physics. Capacity, pressure and hazard rules are readable in scene.
 - Six actual keyboard-playable levels, cooperative paths tested with separate browsers, solo attempts fail, reconnect/leave/replay and isolation tested. No arbitrarily hard timing added just for difficulty.
