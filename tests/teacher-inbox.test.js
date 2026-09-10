@@ -100,7 +100,7 @@ describe('teacher-dashboard inbox — JSDOM behavior', () => {
   it('Mark all read stores the newest createdAt and clears the badge; older seen-at keeps newer rows unread', () => {
     const dom = makeDom();
     const w = dom.window;
-    w.document.getElementById('section-filter').value = 'PeriodB';   // the page may restore a saved section
+    w._inboxSection = 'PeriodB';   // the section of the displayed fetch, not the edited input
     w.localStorage.setItem('tsc-inbox-seen-at:PeriodB', '2026-08-21T00:00:00.000Z');
     w.renderStudentInbox([
       MSG(),                                                                     // 08-27 → newer than seen-at
@@ -118,7 +118,7 @@ describe('teacher-dashboard inbox — JSDOM behavior', () => {
     expect(w.document.getElementById('inbox-unread').hidden).toBe(true);
 
     // scoped: a different section keeps its own marker, so its messages are still new
-    w.document.getElementById('section-filter').value = 'PeriodE';
+    w._inboxSection = 'PeriodE';
     w.renderStudentInbox([MSG()]);
     expect(w.localStorage.getItem('tsc-inbox-seen-at:PeriodE')).toBeNull();
     expect(w.document.querySelector('#inbox-list li').classList.contains('unread')).toBe(true);
@@ -168,5 +168,55 @@ describe('teacher-dashboard inbox — JSDOM behavior', () => {
     await expect(w.loadStudentInbox()).resolves.toBeUndefined();
     expect(w.document.getElementById('inbox-strip').hidden).toBe(false);
     expect(w.document.getElementById('inbox-meta').textContent).toContain('inbox unavailable');
+  });
+});
+
+
+describe('inbox polling lifecycle', () => {
+  it.each([401, 503])('%s stops polling until an explicit load retries it', async (status) => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn().mockResolvedValue({ok:false,status});
+    const dom = makeDom(fetchMock); const w=dom.window;
+    try {
+      const loading = w.loadStudentInbox(); w.startInboxPolling(); await loading;
+      await vi.advanceTimersByTimeAsync(120000);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(w.document.getElementById('inbox-meta').textContent).toBe('inbox unavailable ('+status+')');
+      fetchMock.mockResolvedValue({ok:true,status:200,json:async()=>({messages:[]})});
+      await w.loadStudentInbox(); w.startInboxPolling();
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    } finally { w.close(); vi.useRealTimers(); }
+  });
+  it('network errors keep polling', async () => {
+    vi.useFakeTimers();
+    const fetchMock=vi.fn().mockRejectedValue(new Error('offline'));
+    const w=makeDom(fetchMock).window;
+    try { await w.loadStudentInbox();w.startInboxPolling();await vi.advanceTimersByTimeAsync(120000);expect(fetchMock).toHaveBeenCalledTimes(3); }
+    finally {w.close();vi.useRealTimers();}
+  });
+  it.each(['teacher-token', null])('boot loads only with credentials: %s', async token => {
+    const fetchMock=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({messages:[]})});
+    const w=makeDom(fetchMock).window;
+    w.rosterClient.token=()=>token;
+    try {
+      await new Promise(resolve=>w.document.addEventListener('DOMContentLoaded',resolve,{once:true}));
+      await new Promise(resolve=>setTimeout(resolve,0));
+      expect(fetchMock.mock.calls.filter(c=>String(c[0]).includes('/teacher/nudge-inbox'))).toHaveLength(token?1:0);
+    } finally { w.close(); }
+  });
+  it('marks the fetched section even if the filter changes while loading or before mark-read', async () => {
+    let reply;
+    const w=makeDom(vi.fn(()=>new Promise(resolve=>{reply=resolve;}))).window;
+    try {
+      w.document.getElementById('section-filter').value='PeriodB';
+      const loading=w.loadStudentInbox(); await Promise.resolve();
+      w.document.getElementById('section-filter').value='PeriodE';
+      reply({ok:true,status:200,json:async()=>({messages:[MSG()]})});await loading;
+      w.document.getElementById('inbox-mark-read').click();
+      expect(w.localStorage.getItem('tsc-inbox-seen-at:PeriodB')).toBe(MSG().createdAt);
+      expect(w.localStorage.getItem('tsc-inbox-seen-at:PeriodE')).toBeNull();
+      expect(w.document.getElementById('inbox-unread').hidden).toBe(true);
+    } finally { w.close(); }
   });
 });

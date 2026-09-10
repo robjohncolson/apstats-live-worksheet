@@ -3528,12 +3528,14 @@
     var INBOX_POLL_MS = 60000;
     var _inboxTimer = null;
     var _inboxMessages = [];
+    var _inboxSection = '';
+    var _inboxOutcome = null;
+    var _inboxRequest = 0;
 
     // Seen-marker is per section: the list is section-filtered, so "Mark all read" on
     // PeriodB must not silently mark unseen PeriodE messages read.
     function _inboxSeenKey() {
-      var section = $('section-filter') ? $('section-filter').value.trim() : '';
-      return INBOX_SEEN_KEY + ':' + (section || 'all');
+      return INBOX_SEEN_KEY + ':' + (_inboxSection || 'all');
     }
 
     function _inboxSeenAt() {
@@ -3619,27 +3621,54 @@
       if (meta) meta.textContent = _inboxMessages.length ? (_inboxMessages.length + ' message' + (_inboxMessages.length === 1 ? '' : 's')) : '';
     }
 
-    function loadStudentInbox() {
+    function loadStudentInbox(polling) {
+      if (polling && (_inboxOutcome === 401 || _inboxOutcome === 503)) return Promise.resolve();
+      // An explicit class load retries a disabled inbox; timer ticks never do.
+      if (!polling) _inboxOutcome = null;
+      var request = ++_inboxRequest;
       var section = $('section-filter') ? $('section-filter').value.trim() : '';
       var url = svcUrl() + '/teacher/nudge-inbox?limit=50' + (section ? '&section=' + encodeURIComponent(section) : '');
-      return fetch(url, { headers: teacherAuthHeaders() })
-        .then(jsonOrErr)
-        .then(function (j) { renderStudentInbox((j && j.messages) || []); })
+      return Promise.resolve().then(function () { return fetch(url, { headers: teacherAuthHeaders() }); })
+        .then(function (res) {
+          if (request !== _inboxRequest) return null;
+          _inboxOutcome = res.status;
+          if (res.status === 401 || res.status === 503) {
+            if (_inboxTimer) clearInterval(_inboxTimer);
+            _inboxTimer = null;
+            throw new Error(String(res.status));
+          }
+          return jsonOrErr(res);
+        })
+        .then(function (j) {
+          if (request !== _inboxRequest || !j) return;
+          // Keep the marker bound to these messages while the input is being edited.
+          _inboxSection = section;
+          renderStudentInbox(j.messages || []);
+        })
         .catch(function (err) {
+          if (request !== _inboxRequest) return;
           var strip = $('inbox-strip');
           if (strip) strip.hidden = false;
           var meta = $('inbox-meta');
-          if (meta) meta.textContent = 'inbox unavailable: ' + (err && err.message ? err.message : String(err));
+          if (meta) meta.textContent = 'inbox unavailable (' + (err && err.message ? err.message : String(err)) + ')';
         });
     }
 
     function startInboxPolling() {
       if (_inboxTimer) clearInterval(_inboxTimer);
+      _inboxTimer = null;
+      if (_inboxOutcome === 401 || _inboxOutcome === 503) return;
       _inboxTimer = setInterval(function () {
         if (document.hidden) return;
-        loadStudentInbox();
+        loadStudentInbox(true);
       }, INBOX_POLL_MS);
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!Object.keys(teacherAuthHeaders()).length) return;
+      loadStudentInbox();
+      startInboxPolling();
+    });
 
     (function wireInboxControls() {
       var btn = $('inbox-mark-read');
