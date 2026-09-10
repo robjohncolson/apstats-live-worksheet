@@ -563,7 +563,7 @@
     // repair callers must not re-upload local work based on an unavailable history.
     // No-ops without identity or without a sane prefix. The server enforces
     // self-only access — the client adds a token+sid so the server can verify.
-    fetchPrior: async function (prefix) {
+    fetchPrior: async function (prefix, options) {
       try {
         if (!prefix || typeof prefix !== 'string') return _unavailablePrior();
         // Mirror the server's strict-prefix charset: no underscore (it is a
@@ -634,10 +634,14 @@
           _priorReadFailed(!!res && (res.status === 401 || res.status === 403));
           return _unavailablePrior(res && (res.status === 401 || res.status === 403) ? 'auth' : res && res.ok ? 'invalid-response' : 'network', res && res.status);
         }
-        _priorFailed = false;
-        _priorRetries = 0;
-        if (_priorRetryTimer) { clearTimeout(_priorRetryTimer); _priorRetryTimer = null; }
-        _priorNotice(null);
+        // A background repair read does not put answers into the form. Only the
+        // visible restoration may dismiss its warning and cancel its retries.
+        if (!options || !options.repair) {
+          _priorFailed = false;
+          _priorRetries = 0;
+          if (_priorRetryTimer) { clearTimeout(_priorRetryTimer); _priorRetryTimer = null; }
+          _priorNotice(null);
+        }
 
         // Dedupe: rows are newest-first; first occurrence per item_id wins.
         var out = new Map();

@@ -72,7 +72,7 @@ const HEAL_BLOCK_LF =
                 if (!signedIn) return;
                 var prefix = gbWsPrefix();
                 if (!prefix) return;
-                var prior = await window.gradebookClient.fetchPrior(prefix);
+                var prior = await window.gradebookClient.fetchPrior(prefix, { repair: true });
                 // A failed read cannot prove that a saved answer is missing.
                 if (!prior || prior.loadFailed) return;
                 document.querySelectorAll('.blank[data-question-id]').forEach(function (blank) {

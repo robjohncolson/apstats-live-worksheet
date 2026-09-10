@@ -158,6 +158,17 @@ describe('cross-device worksheet answer recovery', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(count(w)).toBe(37);
   });
+  it('a successful background ledger check does not cancel a failed visible restoration', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 503 }).mockResolvedValue(good());
+    const w = boot(fetch);
+    await w.hydratePriorAnswers();
+    const start = html.indexOf('async function healLocalAnswersToLedger()');
+    w.eval(html.slice(start, html.indexOf('// Heal trigger:', start)));
+    w.recordBlankToGradebook = vi.fn();
+    await w.healLocalAnswersToLedger();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(count(w)).toBe(37);
+  });
   it('protects edited fields in all 69 worksheet hydration functions', () => {
     const files = readdirSync(root).filter(f => /^u\d+_lesson.+_live\.html$/.test(f));
     expect(files).toHaveLength(69);

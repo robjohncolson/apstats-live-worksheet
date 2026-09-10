@@ -50,7 +50,7 @@ describe.each(WORKSHEETS)('%s — heal block', (file) => {
 
   it('heal is gated on identity + reuses the worksheet feeder + dedup', () => {
     const idx = html.indexOf('async function healLocalAnswersToLedger');
-    const body = html.slice(idx, idx + 1600);
+    const body = html.slice(idx, html.indexOf('// Heal trigger:', idx));
     expect(body).toContain('rosterClient.token');           // signed-in gate
     expect(body).toContain('gbWsPrefix()');                 // same vocabulary as the feeder
     expect(body).toContain('fetchPrior');                   // dedup source
@@ -59,7 +59,7 @@ describe.each(WORKSHEETS)('%s — heal block', (file) => {
 
   it("skips ONLY rows already scored with a matching response", () => {
     const idx = html.indexOf('async function healLocalAnswersToLedger');
-    const body = html.slice(idx, idx + 1600);
+    const body = html.slice(idx, html.indexOf('// Heal trigger:', idx));
     // The skip guard must require BOTH a numeric score AND a matching response.
     expect(body).toMatch(/typeof entry\.score === 'number' && entry\.response === value/);
   });

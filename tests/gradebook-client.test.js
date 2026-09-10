@@ -826,7 +826,7 @@ describe('gradebook-client.js â€” fetchPrior (happy path / dedup)', () => {
 describe('gradebook-client.js â€” fetchPrior (source-level contract)', () => {
   it('source contains a fetchPrior function on window.gradebookClient', () => {
     expect(CLIENT_SRC).toContain('fetchPrior');
-    expect(CLIENT_SRC).toContain('function (prefix)');
+    expect(CLIENT_SRC).toContain('function (prefix, options)');
   });
 
   it('source does NOT modify record() (additive only)', () => {

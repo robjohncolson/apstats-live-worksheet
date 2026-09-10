@@ -25,4 +25,6 @@
 - Real private-storage smoke: write/read succeeded; public access denied (400); temporary diagnostic objects removed.
 
 ## Deployment verification
-Pending commit, push, Railway/Pages status, and live smoke. See follow-up release verification update.
+Initial implementation: fa453638cb7e1431a638a9be5e23c55ad7edad01. Pages succeeded and served build 2026-09-10-rxfu. Railway deployment 874b9bdf-194b-452c-b851-44b1bc03f196 succeeded; the live diagnostic route correctly returned 401 without authentication.
+
+A final failure-path check found a real recovery race: a successful background ledger repair read cancelled the visible restoration retry after an initial 503. The new regression reproduced 0 restored vs 37 expected. Background repair reads are now explicitly marked and cannot cancel visible restoration retries. All 69 repair callers and the generator were updated. The regression and associated suites pass: 5 files / 636 tests. Existing static tests were adjusted only for the additive optional argument and to inspect the complete repair function rather than truncating it at 1600 characters. Follow-up build: 2026-09-10-3b6d. Final live smoke follows deployment.
