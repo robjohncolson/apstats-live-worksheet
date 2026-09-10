@@ -10,7 +10,17 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
   status.style.cssText = 'position:absolute;bottom:4px;left:8px;right:8px;font:inherit;font-size:12px;pointer-events:none';
   container.append(status);
   container.setAttribute('data-park-active', '');
-  const replica = new ParkReplica(), pending = new Map();
+  let replica = new ParkReplica();
+  const pending = new Map();
+  let selectedLevel = null, selectionVersion = 0;
+  const completionKey = 'apstat-park-completed:' + board.username;
+  let completed = [];
+  try { const saved = JSON.parse(doc.defaultView.localStorage.getItem(completionKey)); if (Array.isArray(saved)) completed = saved.filter(index => [0, 1, 2].includes(index)); } catch {}
+  function remember(index) {
+    if (completed.includes(index)) return;
+    completed.push(index);
+    try { doc.defaultView.localStorage.setItem(completionKey, JSON.stringify(completed)); } catch {}
+  }
   const freshId = () => 'park_' + crypto.randomUUID().replaceAll('-', '');
   let clientId;
   try { clientId = doc.defaultView.sessionStorage.getItem('apstat-park-client'); } catch {}
@@ -62,13 +72,13 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
   }
 
   async function join() {
-    if (joining || disposed || socket?.readyState !== 1) return;
-    joining = true; const current = socket;
+    if (joining || disposed || selectedLevel === null || socket?.readyState !== 1) return;
+    joining = true; const current = socket, version = selectionVersion;
     try {
-      const response = await request('park_resume', { protocol: 2, clientId, epoch: replica.state?.epoch,
+      const response = await request(replica.state ? 'park_resume' : 'park_join', { protocol: 3, levelIndex: selectedLevel, clientId, epoch: replica.state?.epoch,
         since: replica.state ? replica.revision : null });
-      if (disposed || current !== socket) return;
-      if (response.mode === 'summary' && response.level?.protocol !== 2) {
+      if (disposed || current !== socket || version !== selectionVersion) return;
+      if (response.mode === 'summary' && response.level?.protocol !== 3) {
         incompatible = true;
         throw new Error('The park is updating. Return to the calendar and try again shortly.');
       }
@@ -80,7 +90,7 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
   }
 
   async function pump() {
-    if (disposed || incompatible) return;
+    if (disposed || incompatible || selectedLevel === null) return;
     bindSocket();
     if (socket?.readyState !== 1) {
       status.textContent = replica.state ? 'Reconnecting. Your saved puzzle progress stays here.' : 'Connecting to your classroom...';
@@ -102,7 +112,7 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
   function dispose() {
     if (disposed) return;
     disposed = true;
-    if (socket?.readyState === 1 && replica.state) socket.send(JSON.stringify({ type: 'park_leave', epoch: replica.state.epoch }));
+    if (socket?.readyState === 1 && selectedLevel !== null) socket.send(JSON.stringify({ type: 'park_leave', epoch: replica.state?.epoch }));
     clearInterval(timer); game?.dispose();
     socket?.removeEventListener('message', onMessage);
     for (const job of pending.values()) { clearTimeout(job.timeout); job.reject(new Error('Park closed')); }
@@ -110,10 +120,19 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
     container.removeAttribute('data-park-active');
     onClose();
   }
-  game = mountBoardScene({ board, replica, member: board.username, onExit: dispose, status,
-    connected: () => !incompatible && socket?.readyState === 1 && joinedSocket === socket });
+  function showScene(index = null) {
+    if (socket?.readyState === 1 && selectedLevel !== null) socket.send(JSON.stringify({ type: 'park_leave', epoch: replica.state?.epoch }));
+    selectionVersion++;
+    game?.dispose();
+    selectedLevel = index; replica = new ParkReplica(); joinedSocket = null;
+    retryAt = 0; incompatible = false;
+    game = mountBoardScene({ board, replica, member: board.username, onExit: dispose,
+      onLobby: () => showScene(), onSelect: showScene, lobby: index === null, completed, remember, status,
+      connected: () => !incompatible && socket?.readyState === 1 && joinedSocket === socket });
+    status.textContent = index === null ? 'Walk to a puzzle door and press Up. The left door returns to the calendar.' : 'Entering your classroom puzzle...';
+  }
+  showScene();
   bindSocket();
   const timer = setInterval(() => { pump().catch(error => { if (!disposed) status.textContent = error.message; }); }, 100);
-  status.textContent = 'Entering your classroom park...';
-  return { dispose, replica, getGame: () => game };
+  return { dispose, get replica() { return replica; }, getGame: () => game };
 }

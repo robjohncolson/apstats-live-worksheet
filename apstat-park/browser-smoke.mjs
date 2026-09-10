@@ -58,15 +58,25 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch({ headless: true, ...(process.env.PARK_BROWSER ? { executablePath: process.env.PARK_BROWSER } : {}) });
 
-async function open(name, section = 'B', width = 800) {
+async function open(name, section = 'B', width = 800, levelIndex = 0) {
   const page = await browser.newPage({ viewport: { width, height: 700 } });
   page.on('pageerror', error => { errors.push(error.message); console.error('BROWSER:', error.message); });
   await page.goto(`${origin}/?user=${name}&section=${section}`);
   await page.waitForFunction(() => window.board?.getSpritePosition?.(new URL(location.href).searchParams.get('user')));
   await page.evaluate(() => { window.originalCanvas = board.getCanvas(); window.originalCanvasCount = document.querySelectorAll("canvas").length; });
   await page.getByRole('button', { name: 'Enter APStat Park', exact: true }).click();
-  await page.waitForFunction(() => !!window.board.getParkScene()?.getGame()?.getWorld().level);
+  await choose(page, levelIndex);
   return page;
+}
+async function choose(page, index = 0) {
+  await page.waitForFunction(() => board.getParkScene()?.getGame()?.getWorld().lobby);
+  await move(page, [240,460,680][index]);
+  await page.keyboard.press('ArrowUp', {delay:80});
+  await page.waitForFunction(index => board.getParkScene()?.getGame()?.getWorld().level?.index === index, index);
+}
+async function calendarExit(page) {
+  await move(page,43); await page.keyboard.press('ArrowUp',{delay:80});
+  await page.waitForFunction(()=>!board.getParkScene());
 }
 async function position(page) { return page.evaluate(() => {
   const p = board.getParkScene().getGame().getWorld().player;
@@ -143,7 +153,8 @@ try {
   await progress(alice,'complete'); await progress(bob,'complete');
   await alice.screenshot({path:path.join(output,'board-scene-complete.png')});
   await alice.keyboard.press('ArrowUp', {delay:80});
-  await alice.waitForFunction(()=>!board.getParkScene());
+  await alice.waitForFunction(()=>board.getParkScene()?.getGame()?.getWorld().lobby);
+  await calendarExit(alice);
   assert.equal(await alice.evaluate(()=>board.getCanvas()===originalCanvas),true);
 
   // A second period has independent progress, including on a narrow screen.
@@ -166,7 +177,7 @@ try {
     {activity:{id:'recall',type:'test',finished:false,state:{}}}
   ]) {
     await mobile.getByRole('button',{name:'Enter APStat Park',exact:true}).click();
-    await mobile.waitForFunction(()=>!!board.getParkScene()?.getGame()?.getWorld().level);
+    await choose(mobile);
     for (const [ws,who] of sockets) if(who.username==='mobile') send(ws,call.greenlight ? {type:'classroom_greenlight'} : {...registry.stateFor('E','student','mobile'),...call});
     await mobile.waitForFunction(()=>!board.getParkScene());
     console.log('RECALL',Object.keys(call)[0]);
@@ -175,16 +186,47 @@ try {
     for (const [ws,who] of sockets) if(who.username==='mobile') send(ws,registry.stateFor('E','student','mobile'));
     await mobile.waitForTimeout(80);
   }
-  // Rejoin completed progress, then interrupt the socket; missed events recover.
+  // Explicit entry replays; reconnecting that new attempt must preserve it.
   await alice.getByRole('button',{name:'Enter APStat Park',exact:true}).click();
-  await alice.waitForFunction(()=>board.getParkScene()?.replica.state?.progress.arrived.includes('alice'));
+  await choose(alice);
+  assert.equal(await alice.evaluate(()=>board.getParkScene().replica.state.progress.arrived.includes('alice')),false);
+  const replayId = await alice.evaluate(()=>board.getParkScene().replica.state.level.id);
+  assert.match(replayId,/attempt-/);
+  assert.ok((await position(alice)).x < 200);
   const oldEpoch = await alice.evaluate(()=>board.getParkScene().replica.state.epoch);
   for (const [ws,who] of sockets) if(who.username==='alice') ws.terminate();
   await alice.waitForFunction(()=>board.getParkScene().replica.needsResume || document.querySelector('[data-park-status]').textContent.includes('Reconnect'));
-  await alice.waitForFunction(()=>board.getParkScene().replica.state?.progress.arrived.includes('alice') && !document.querySelector('[data-park-status]').textContent.includes('Reconnect'),null,{timeout:20000});
+  await alice.waitForFunction(()=>!board.getParkScene().replica.needsResume && !document.querySelector('[data-park-status]').textContent.includes('Reconnect'),null,{timeout:20000});
   assert.equal(await alice.evaluate(()=>board.getParkScene().replica.state.epoch),oldEpoch);
-  await alice.keyboard.press('ArrowUp',{delay:80});
-  await alice.waitForFunction(()=>!board.getParkScene());
+  assert.equal(await alice.evaluate(()=>board.getParkScene().replica.state.level.id),replayId);
+  await calendarExit(alice);
+
+  // Both new layouts are completed through the real keyboard and physics.
+  for (const index of [1,2]) {
+    const page = await open('solver'+index, 'new'+index, 800, index);
+    await move(page,150); await move(page,210,true); await waitY(page,110);
+    if(index===1) {
+      await move(page,250); await move(page,320,true); await waitY(page,74);
+      await progress(page,'bridgeOpen');
+      await move(page,375); await move(page,490,true); await move(page,670);
+      await progress(page,'keyHolder'); await move(page,695); await move(page,785,true); await waitY(page,40); await move(page,905);
+    } else {
+      await progress(page,'bridgeOpen');
+      await move(page,430); await waitY(page,40);
+      await move(page,530,true); await waitY(page,40);
+      await move(page,635); await progress(page,'keyHolder');
+      await move(page,655); await move(page,715,true); await waitY(page,76);
+      await move(page,770); await move(page,850,true); await waitY(page,40); await move(page,905);
+    }
+    await progress(page,'doorOpen'); await page.keyboard.press('ArrowUp',{delay:80}); await progress(page,'complete');
+    await page.screenshot({path:path.join(output,'level-'+index+'-complete.png')});
+    await page.keyboard.press('ArrowUp',{delay:80});
+    await page.waitForFunction(()=>board.getParkScene().getGame().getWorld().lobby);
+    assert.ok(await page.evaluate(index=>JSON.parse(localStorage.getItem('apstat-park-completed:solver'+index)).includes(index),index));
+    await choose(page,index);
+    assert.equal(await page.evaluate(()=>board.getParkScene().replica.state.progress.doorOpen),false);
+    await calendarExit(page); await page.close();
+  }
   // Load the real calendar at Chromebook height, blocking production traffic.
   const calendar = await browser.newPage({ viewport: { width:1100,height:650 } });
   const calendarErrors=[];
@@ -202,7 +244,7 @@ try {
   const before=await calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
   await calendar.screenshot({path:path.join(output,'actual-calendar-before.png')});
   await calendar.getByRole('button',{name:'Enter APStat Park',exact:true}).click();
-  await calendar.waitForFunction(()=>!!board.getParkScene()?.getGame()?.getWorld().level);
+  await choose(calendar);
   const after=await calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
   assert.deepEqual(after,before);
   assert.equal(await calendar.evaluate(()=>board.getCanvas()===originalCanvas),true);
@@ -212,7 +254,7 @@ try {
   await calendar.waitForFunction(()=>!board.getParkScene());
   assert.ok(!calendarErrors.some(e=>/park|world|replica|scene|PlayerSprite/i.test(e)),JSON.stringify(calendarErrors));
   assert.deepEqual(errors,[]);
-  writeFileSync(path.join(output,'board-scene-result.json'),JSON.stringify({passed:true,sameCanvas:true,idleSilent:true,lateJoin:true,midLevelDisconnect:true,keyboardLevelCompleted:true,periodIsolation:true,teacherRecall:5,heldUpReturn:true,reconnect:true,actualCalendarAt650px:true,errors,calendarErrors,packets:packets.length},null,2));
+  writeFileSync(path.join(output,'board-scene-result.json'),JSON.stringify({passed:true,sameCanvas:true,idleSilent:true,lateJoin:true,midLevelDisconnect:true,keyboardLevelCompleted:true,newLevelsCompleted:2,replayAtSpawn:true,completionStored:true,periodIsolation:true,teacherRecall:5,heldUpReturn:true,reconnect:true,actualCalendarAt650px:true,errors,calendarErrors,packets:packets.length},null,2));
   console.log('BOARD SCENE PASS',packets.length,'packets');
 } finally {
   await browser.close(); service.close(); for(const ws of wss.clients) ws.terminate(); await new Promise(resolve=>wss.close(resolve)); await new Promise(resolve=>server.close(resolve));

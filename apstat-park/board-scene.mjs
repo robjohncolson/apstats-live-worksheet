@@ -1,7 +1,10 @@
 // A scene in the classroom's existing engine. No canvas, RAF, keyboard
 // listener, player physics implementation, or network tick is created here.
-export function mountBoardScene({ board, replica, member, onExit, status, connected }) {
+export function mountBoardScene({ board, replica, member, onExit, onLobby, onSelect, lobby = false, completed = [], remember = () => {}, status, connected }) {
   const { engine, input, api } = board;
+  const doors = [{ x: 240, y: 146, title: 'Hello together' }, { x: 460, y: 146, title: 'Switchback' }, { x: 680, y: 146, title: 'Lift relay' }];
+  const lobbyDoor = { x: 145, y: 146 };
+  let wasArrived = false;
   const entities = new Map(), peers = {};
   const oldCamera = { ...api._camera };
   let level = null, terrain = [], lift = null, disposed = false;
@@ -24,9 +27,15 @@ export function mountBoardScene({ board, replica, member, onExit, status, connec
   function act() {
     if (disposed) return;
     if (near(level?.exit || { x: 43, y: 146 })) { onExit(); return; }
+    if (lobby) {
+      const index = doors.findIndex(near);
+      if (index >= 0) onSelect(index);
+      return;
+    }
+    if (level && near(lobbyDoor)) { onLobby(); return; }
     if (!level || !near(level.goal)) return;
     const progress = replica.state.progress;
-    if (progress.arrived.includes(member)) { onExit(); return; }
+    if (progress.arrived.includes(member)) { onLobby(); return; }
     if (progress.doorOpen) replica.queue('arrive', 'door', pose());
     else if (progress.keyHolder === member) replica.queue('unlock', 'door', pose());
   }
@@ -43,6 +52,8 @@ export function mountBoardScene({ board, replica, member, onExit, status, connec
     if (identity && lastLevel !== identity) {
       level = replica.state.level; lastLevel = identity;
       lastRest = null;
+      wasArrived = false;
+      for (const name of Object.keys(peers)) { entities.delete('peer:' + name); delete peers[name]; }
       lift = { x: level.lift.x, y: liftY(replica.clock()), w: level.lift.w, h: level.lift.h };
       const saved = replica.state.poses[member];
       const spawn = saved && saved.y < level.height ? saved
@@ -63,7 +74,11 @@ export function mountBoardScene({ board, replica, member, onExit, status, connec
         && player.x + 20 > lift.x && player.x < lift.x + lift.w) player.y += nextY - lift.y;
     lift.y = nextY;
     terrain = [...level.platforms, lift];
-    if (progress.bridgeOpen) terrain.push(level.bridge, level.step);
+    if (progress.bridgeOpen) terrain.push(level.bridge);
+    if (progress.bridgeOpen || progress.soloAssist) terrain.push(level.step);
+    const arrived = progress.arrived.includes(member);
+    if (wasArrived && !arrived) Object.assign(player, level.spawn, { vx: 0, vy: 0, _hidden: false, state: 'idle' });
+    wasArrived = arrived;
     const present = replica.state.online || [];
     for (const name of Object.keys(peers)) {
       if (!present.includes(name)) { entities.delete('peer:' + name); delete peers[name]; }
@@ -102,7 +117,8 @@ export function mountBoardScene({ board, replica, member, onExit, status, connec
     const progress = replica.state.progress;
     if (progress.arrived.includes(member)) {
       player._hidden = true;
-      const text = progress.complete ? 'Together! Press Up to return to the calendar.' : 'Waiting for your friends at the door. Up returns to the calendar.';
+      remember(level.index);
+      const text = progress.complete ? 'Together! Press Up to choose another puzzle or replay.' : 'Waiting for your friends at the door. Up returns to the puzzle doors.';
       if (connected() && status.textContent !== text) status.textContent = text;
       return;
     }
@@ -116,13 +132,17 @@ export function mountBoardScene({ board, replica, member, onExit, status, connec
       const rest = player.x.toFixed(1) + ',' + player.y.toFixed(1);
       if (rest !== lastRest && replica.queue('settle', 'rest', pose()).status === 'queued') lastRest = rest;
     } else lastRest = null;
-    if (near(level.switches[0]) && !progress.bridgeOpen) replica.queue('switch', 'bridge', pose());
+    for (const item of level.switches) {
+      if (near(item) && !progress.switches.includes(item.id)) replica.queue('switch', item.id, pose());
+    }
     if (near(level.key) && !progress.keyHolder && !progress.doorOpen) replica.queue('key', 'key', pose());
-    if (near(level.goal) && progress.keyHolder === member && !progress.doorOpen) replica.queue('unlock', 'door', pose());
+    if (near(level.goal) && progress.keyHolder === member && !progress.doorOpen && (!level.requiresSwitches || progress.bridgeOpen)) replica.queue('unlock', 'door', pose());
     if (connected()) {
       const text = replica.outbox.length ? 'Saving your progress…'
-        : player.x > 225 && player.x < 300 && !progress.bridgeOpen ? 'Jump onto a friend to reach the ledge.'
-        : near(level.goal) ? (progress.doorOpen ? 'Up to enter the door.' : 'Bring the key to this door.') : '';
+        : near(lobbyDoor) ? 'Up to choose a puzzle.'
+        : level.index === 0 && player.x > 225 && player.x < 300 && !progress.bridgeOpen && !progress.soloAssist ? 'Jump onto a friend to reach the ledge.'
+        : near(level.goal) ? (progress.doorOpen ? 'Up to enter the door.' : level.requiresSwitches && !progress.bridgeOpen ? 'Light the switches first.' : 'Bring the key to this door.')
+        : level.requiresSwitches && !progress.bridgeOpen ? Math.min(progress.switches.length, progress.requiredSwitches) + '/' + progress.requiredSwitches + ' switches lit. Explore the ledges together.' : '';
       if (status.textContent !== text) status.textContent = text;
     }
   }
@@ -139,12 +159,28 @@ export function mountBoardScene({ board, replica, member, onExit, status, connec
     ctx.fillStyle = '#57756c';
     for (const tile of terrain) ctx.fillRect(tile.x, tile.y, tile.w, tile.h);
     door(ctx, 43, 170, true);
+    ctx.fillStyle = '#57756c'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Calendar', 43, 106);
+    if (lobby) {
+      ctx.font = '13px system-ui'; ctx.textAlign = 'center';
+      for (const [index, item] of doors.entries()) {
+        door(ctx, item.x + 10, 170, true);
+        ctx.fillStyle = '#57756c';
+        ctx.fillText((completed.includes(index) ? '\u2713 ' : '') + item.title, item.x + 10, 104);
+        if (near(item)) ctx.fillText('Up to enter', item.x + 10, 85);
+      }
+    }
     if (level) {
       const progress = replica.state.progress;
       door(ctx, level.goal.x + 10, level.goal.y + 24, progress.doorOpen);
-      const sw = level.switches[0];
-      if (buttonImage.complete && buttonImage.naturalWidth) ctx.drawImage(buttonImage, sw.x, sw.y + 16, 22, 8);
-      else { ctx.fillStyle = progress.bridgeOpen ? '#e2b640' : '#bc5151'; ctx.fillRect(sw.x, sw.y + 19, 22, 5); }
+      door(ctx, lobbyDoor.x + 10, 170, true);
+      ctx.fillStyle = '#57756c'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Levels', lobbyDoor.x + 10, 106);
+      for (const sw of level.switches) {
+        const lit = progress.switches.includes(sw.id);
+        if (buttonImage.complete && buttonImage.naturalWidth) ctx.drawImage(buttonImage, sw.x, sw.y + 16, 22, 8);
+        ctx.fillStyle = lit ? '#e2b640' : '#bc5151'; ctx.fillRect(sw.x, sw.y + 19, 22, 5);
+      }
       if (!progress.doorOpen) {
         const holder = progress.keyHolder === member ? player : peers[progress.keyHolder];
         const point = holder ? { x: holder.x, y: holder.y - 16 } : !progress.keyHolder ? level.key : null;
@@ -160,7 +196,7 @@ export function mountBoardScene({ board, replica, member, onExit, status, connec
     zIndex: 10,
     update(dt) {
       if (replica.state?.progress.arrived.includes(member)) {
-        if (input.up && !player._upHandled) onExit();
+        if (input.up && !player._upHandled) onLobby();
         player._upHandled = !!input.up;
       } else player.update(dt);
     },
@@ -169,7 +205,7 @@ export function mountBoardScene({ board, replica, member, onExit, status, connec
   entities.set('interact', { update: interact });
   engine.sceneEntities = entities;
   return {
-    getWorld: () => ({ player, level, terrain, lift, peers }),
+    getWorld: () => ({ player, level, terrain, lift, peers, lobby, doors }),
     dispose() {
       if (disposed) return;
       disposed = true;

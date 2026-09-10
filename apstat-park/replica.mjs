@@ -86,6 +86,11 @@ export class ParkReplica {
     if (event.kind === 'settled') {
       this.state.poses[event.member] = copy(event.pose);
       this.remoteMotion.push(event.member, event.pose);
+    } else if (event.kind === 'party') Object.assign(progress, { requiredSwitches: event.requiredSwitches, soloAssist: event.soloAssist, bridgeOpen: event.bridgeOpen });
+    else if (event.kind === 'reentered') {
+      progress.arrived = progress.arrived.filter(name => name !== event.member);
+      delete this.state.poses[event.member];
+      this.remoteMotion.reset(this.state.poses);
     } else if (event.kind === 'key') progress.keyHolder = event.holder;
     else if (event.kind === 'door') progress.doorOpen = event.open;
     else if (event.kind === 'complete') progress.complete = event.complete;
