@@ -22,6 +22,12 @@ Existing tests intentionally changed from solo/latched-switch assumptions to two
 
 Manual review checked scene/replica/service/session together. GitNexus staged scope: frontend medium, one park message flow; relay index omits the park symbols, so manual call-site and test review used. Unrelated classroom.js, server.js, AGENTS/CLAUDE, skills, logs and other work were excluded.
 
-Local validation complete; deployment verification pending. Frontend goes first, then relay; protocol mismatch reports an update instead of admitting an incompatible client. Verify served assets, Railway deployment hash/status, health and throwaway-section websocket smoke before declaring live.
+Live and verified on 2026-09-10:
+
+- Frontend code: `0f4cae17d42e62c9e73e18488fc312b24cef8e82`; Pages build `2026-09-10-rukr`, workflow `34538832746` SUCCESS. Published version.json, sw.js, panel.mjs, board-scene.mjs and replica.mjs SHA-256 match the local tested files.
+- Relay: `5ffd058b8f6b9fcabf56ea7267c44e1cbb1880cd`; Railway deployment `4d63cf2b-bb21-4f3d-95d8-ab6710f64e2e` SUCCESS, health HTTP 200.
+- Frontend deployed and verified before pushing relay. Protocol 3 clients now receive PARK_UPDATE_REQUIRED.
+- Production websocket smoke: all six levels passed with three synthetic students; minimum-two waiting, pressure release, paired lift threshold, covered-key/block movement, completion, resume without reset, explicit replay and separate-period isolation. Temporary section `park_verify_1789080327701`; all test sockets left and closed. This protocol smoke uses declared poses; the separate local keyboard run proves physical routes.
+- Full frontend CI `34538832749`: typecheck has exactly the same 15 grade.js/QuarterResult errors as prior release CI `34533933695`; no new typecheck errors. Root CI finished with the same failure names and counts as the prior release: 12 failed / 283 passed files; 21 failed / 9432 passed / 1 skipped tests. No new failing test names. Roster-server CI is skipped after root failure. The 500 targeted tests above and full browser run are green. No changes were made to unrelated grade-engine types or journey tests.
 
 Limits: no authoritative server physics or anti-cheat; existing section/username trust model retained. Browser paths use two players; larger-group thresholds/completion are exercised as protocol tests, not 24 simultaneous physical browsers. No claim that spotty connections feel identical to a local console. Room progress remains in memory across connections, not relay restarts.

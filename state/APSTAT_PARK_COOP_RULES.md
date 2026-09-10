@@ -18,4 +18,4 @@ Acceptance:
 - Six actual keyboard-playable levels, cooperative paths tested with separate browsers, solo attempts fail, reconnect/leave/replay and isolation tested. No arbitrarily hard timing added just for difficulty.
 - Build bump, targeted regression tests, code review, deploy frontend then relay, verify live rooms and served assets before completion.
 
-Status: implemented locally; all six passed the full combined two-browser keyboard run, including replay, reconnect, classroom recall and real Desk canvas checks. Deployment verification pending. Larger-group weight requirements cap at four riders so the existing board-sized platforms remain usable; blocks use authored rails. These are gameplay adaptations, not exact geometry ports.
+Status: shipped; all six passed the full combined two-browser keyboard run, including replay, reconnect, classroom recall and real Desk canvas checks. Deployed and verified; see APSTAT_PARK_COOP_RELEASE.md for hashes and evidence. Larger-group weight requirements cap at four riders so the existing board-sized platforms remain usable; blocks use authored rails. These are gameplay adaptations, not exact geometry ports.
