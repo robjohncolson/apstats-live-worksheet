@@ -1010,3 +1010,15 @@ class TestCategoryNameTolerance(unittest.TestCase):
     def test_unknown_stays_none(self):
         self.assertIsNone(sync._resolve_category_id({"Homework": "3"}, "quiz"))
         self.assertIsNone(sync._resolve_category_id({}, "nope"))
+
+
+def test_work_days_never_create_schoology_columns():
+    schedule = {
+        "lessons": {
+            "1.1": {"unit": 1, "periods": {"B": "2026-09-08"}},
+            "B-Work": {"kind": "work", "unit": 0, "periods": {"B": "2026-10-13"}},
+        },
+        "calendar": {"workDays": {"B": ["2026-10-13"], "E": []},
+                     "events": {"B": [{"id": "B-Work", "kind": "work", "date": "2026-10-13"}]}},
+    }
+    assert [item["key"] for item in build_scope(schedule, "PeriodB")] == ["1.1"]

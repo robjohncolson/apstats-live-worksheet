@@ -154,7 +154,7 @@ function fail(msg) {
 // Invariant: everything in pacing landed, in order.
 for (const period of ['B', 'E']) {
   const want = pacing[period];
-  const got = placed[period];
+  const got = placed[period].filter(item => item.kind !== 'work');
   if (got.length !== want.length) fail(`${period}: ${got.length} placed vs ${want.length} pacing items (exam too early?)`);
   for (let i = 0; i < want.length; i++) {
     if (want[i].t !== got[i].t) fail(`${period}[${i}]: pacing ${want[i].t} vs placed ${got[i].t}`);
@@ -304,6 +304,8 @@ const calendar = {
   meetingDays: { B: CFG.periods.B.meetsDays, E: CFG.periods.E.meetsDays },
   quarters,
   events,
+  workDays: Object.fromEntries(['B', 'E'].map(period => [period,
+    placed[period].filter(item => item.kind === 'work').map(item => item.date)])),
   slackMeetingsBeforeExam: { B: slackAfterLast('B'), E: slackAfterLast('E') },
 };
 

@@ -717,6 +717,7 @@
             background-size: 12px 12px;
         }
         .cell-pc .tl::before { content: '\25C6 '; }   /* red diamond glyph */
+        .cell-work { background: var(--plat); border: 2px dotted var(--plat-lo); }
         .cell-poster {
             background: #f4d03f; color: #6b5400;
             box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12);
@@ -2066,7 +2067,7 @@
               #donow-card .donow-ico{font-size:20px;line-height:1;flex:0 0 auto}
               #donow-card .donow-body{flex:1 1 auto;min-width:0}
               #donow-card .donow-ttl{font-size:11px;margin-bottom:2px}
-              #donow-card #donow-msg{font-size:12px}
+              #donow-card #donow-msg{font-size:12px;white-space:pre-line}
               #donow-card.donow-done{background:var(--second)}
               #donow-card.donow-signin{background:var(--second)}
               #donow-card.donow-flash{animation:donowFlash .8s ease-in-out 2}
@@ -4959,6 +4960,7 @@ function _hydrateMarksFromDonow(data) {
 // teacher). It is distinct from the REGISTRY lesson-readiness that feeds the
 // status dot -- that is teacher-side "materials posted", not student work.
 function localLessonState(topic, marks) {
+  if (topic === 'B-Work') return '';
   if (!topic || !marks || typeof marks !== 'object') return '';
   const members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
   if(members.length>1){
@@ -6221,6 +6223,7 @@ var _signinWallActive = false;
 // check already uses (_getCwsForTopic / _blooketScoreFor), so greying agrees with
 // the Done button.
 function _isLessonComplete(topic, marks) {
+  if (topic === 'B-Work') return true;
   try {
     if (!topic) return true;
     var members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
@@ -7804,6 +7807,7 @@ function donowLessonCovers(L, T) {
 // DN3b — roll a cell topic up to one of "", "partial", "done"
 // (worst-wins across all matching /donow lessons; "" = none/no-data → grey).
 function donowCellState(topic) {
+  if (topic === 'B-Work') return '';
   var members=typeof groupTopics==='function'?groupTopics(topic):[topic];
   if(members.length>1){
     var states=members.map(donowCellState);
@@ -9401,6 +9405,13 @@ async function renderDoNow() {
         renderDoNowGrades(baseUrl, token).catch(function () { /* never throws */ });
     }
 
+    if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'work') {
+      var workNext = _workDayNextLesson();
+      show('Work Day — nothing new today.\nFinish: ' + (workNext ? cedLabel(workNext.inf.t).text : 'All caught up.')
+        + '\nExit tickets are bonus (+5)', workNext ? 'todo' : 'done');
+      return;
+    }
+
     var nt = data.nextTask;
     // Sync with the calendar's LOCAL done signal (same as the grey-out): if the
     // server's nextTask is a lesson you've already marked Done locally (greyed),
@@ -9953,7 +9964,7 @@ const SCHEDULE_DEFS = {
       [2026,11,9],[2026,11,23],[2027,0,13],[2027,1,10],[2027,2,3],
       [2027,2,17],[2027,3,14],[2027,4,19]],
     periods: {
-      B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, schoologyCourse:null },
+      B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, workDayFrom:[2026,8,14], workDayGap:2, maxWorkDaysPerWeek:1, schoologyCourse:null },
       E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,16], maxPairsPerWeek:2, videoCapMin:30, videoCapEarlyReleaseMin:20, schoologyCourse:null }
     },
     daysOff: [
@@ -10044,13 +10055,13 @@ function generateSchedule(def){
   const queues={};
   for(const pid in def.periods) queues[pid]=[...def.pacing[pid]];
   const result=[],examDt=dateFromArr(def.examDate);
-  let placedB=0,placedE=0,pairsThisWeek=0,weekKey='';
+  let placedB=0,placedE=0,pairsThisWeek=0,workDaysThisWeek=0,weekKey='';
   for(const dt of allDays){
     const dow=dt.getDay();
     const monday=new Date(dt);
     monday.setDate(monday.getDate()-dow+1);
     const currentWeek=monday.getFullYear()+'-'+monday.getMonth()+'-'+monday.getDate();
-    if(currentWeek!==weekKey){weekKey=currentWeek;pairsThisWeek=0}
+    if(currentWeek!==weekKey){weekKey=currentWeek;pairsThisWeek=0;workDaysThisWeek=0}
     const da=[dt.getFullYear(),dt.getMonth(),dt.getDate()];
     const dk=da.join('-');
     if(offSet.has(dk)){result.push([...da,OFF,OFF]);continue}
@@ -10061,6 +10072,14 @@ function generateSchedule(def){
       if(!pDef)continue;
       if(!pDef.meetsDays.includes(dow)) cells[pid]=NC;
       else if(queues[pid].length>0){
+        // Count the lead before B places anything today; work does not consume pacing.
+        if(pid==='B'&&pDef.workDayFrom&&dt>=dateFromArr(pDef.workDayFrom)
+          &&placedB-placedE>=pDef.workDayGap&&workDaysThisWeek<pDef.maxWorkDaysPerWeek
+          &&!queues[pid][0].kind){
+          cells[pid]={t:'B-Work',n:'Work Day',u:0,kind:'work',due:'',as:''};
+          workDaysThisWeek++;
+          continue;
+        }
         const tp=queues[pid].shift();
         if(pid==='B')placedB++;
         const cell=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false);
@@ -10222,6 +10241,7 @@ function updateLegend(def){
   const el=document.getElementById('legend-bar');
   if(!el) return;
   let h='';
+  if (def === SCHEDULE_DEFS['SY26-27']) h+='<div class="legend-item"><div class="legend-sw cell-work"></div>Work Day</div>';
   for(const u of def.units) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--u'+u.id+')"></div>U'+u.id+' '+u.label+'</div>';
   if (def === SCHEDULE_DEFS['SY26-27']) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--bonus)"></div>★ Beyond the Exam</div>';
   h+='<div class="legend-item"><div class="legend-sw" style="background:var(--rev)"></div>Review</div>';
@@ -11189,8 +11209,44 @@ function _lessonCoachHtml(inf, ids, regEntry) {
         + '</div>';
 }
 
+// Reuse the calendar's earliest-gap walk for both Work Day entry points.
+function _workDayNextLesson() {
+    var topic = calNextUpTopic(_orderedPeriodTopics(), getStudentMarks());
+    if (!topic) return null;
+    for (var row of S) {
+        var cell = cP === 'B' ? row[3] : row[4];
+        if (!cell || typeof cell !== 'object' || cell.t !== topic) continue;
+        return { inf: cell, dateStr: MN[row[1]] + ' ' + row[2] };
+    }
+    return null;
+}
+
+function _showWorkDayPanel(inf, dateStr) {
+    _lastResourcePanel = { inf: inf, dateStr: dateStr };
+    var header = document.getElementById('resource-header');
+    header.textContent = 'Work Day — nothing new today.';
+    header.style.color = '';
+    header.style.fontStyle = '';
+    var body = document.getElementById('resource-body');
+    body.innerHTML = '<p>Catch up on follow-alongs, flashcards, quiz retakes, and exit tickets (bonus).</p>'
+        + '<p>Exit tickets are bonus (+5)</p>';
+    var next = _workDayNextLesson();
+    var finish = document.createElement(next ? 'button' : 'p');
+    finish.textContent = 'Finish: ' + (next ? cedLabel(next.inf.t).text : 'All caught up.');
+    if (next) {
+        finish.type = 'button';
+        finish.onclick = function () { showResourcePanel(next.inf, next.dateStr); };
+    }
+    body.appendChild(finish);
+    document.getElementById('resource-overlay').style.display = 'block';
+}
+
 function showResourcePanel(inf, dateStr) {
     if (!inf || !inf.t) return;
+    if (inf.kind === 'work') {
+        _showWorkDayPanel(inf, dateStr);
+        return;
+    }
     const topicIds = lookupTopic(inf.t);
     const ids = Array.isArray(topicIds) ? topicIds : (topicIds ? [topicIds] : []);
 
@@ -23533,6 +23589,7 @@ function cls(i){
     if(i===PO)return"cell-post";
     if(i===NC||!i)return"cell-noclass";
     if(i.kind==='pc')return"cell-pc";
+    if(i.kind==='work')return"cell-work";
     if(i.kind==='poster')return"cell-poster";
     if(i.kind==='orientation')return"cell-orient";
     if(i.kind==='baseline')return"cell-baseline";
@@ -23544,6 +23601,7 @@ function cls(i){
     return"cell-u"+i.u;
 }
 function htm(i,ds){
+    if(i&&i.kind==='work')return `<div class="dn">${ds}</div><div class="tl">Work Day</div>`;
     if(i===OFF)return`<div class="dn">${ds}</div><div class="tl"></div>`;
     if(i===EX)return`<div class="dn">${ds}</div><div class="tl">AP EXAM</div>`;
     if(i===PO)return`<div class="dn">${ds}</div><div class="tl">Done!</div>`;
@@ -23566,6 +23624,7 @@ function htm(i,ds){
 // gets the date / topic / due-date / status that sighted users get on hover.
 // rCal appends state suffixes (next up / completed / locked) where it knows them.
 function cellAria(i, ds){
+    if(i&&i.kind==='work')return ds + ', Work Day — catch up on follow-alongs, flashcards, quiz retakes, and exit tickets (bonus)';
     if(i===OFF) return ds + ', no school';
     if(i===EX) return ds + ', AP Statistics Exam';
     if(i===PO) return ds + ', post-exam';
@@ -24107,6 +24166,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
     if(inf===OFF)h+='<div class="tp">No School</div>';
     else if(inf===EX)h+='<div class="tp">AP Statistics Exam!</div>';
     else if(inf===PO)h+='<div class="tp">Post-exam</div>';
+    else if(inf.kind==='work')h+='<div class="tp">Work Day — catch up on follow-alongs, flashcards, quiz retakes, and exit tickets (bonus)</div>';
     else{
         const newLabels=typeof cYear==='undefined'||cYear==='SY26-27';
         let label=inf.t===R?inf.n:inf.t+' \u2014 '+inf.n;

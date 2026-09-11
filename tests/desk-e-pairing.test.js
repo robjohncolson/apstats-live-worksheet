@@ -4,10 +4,10 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 
 describe('E lag-targeted pairing',()=>{
-  it('preserves the captured pre-change B column byte for byte in both JSON copies',()=>{
+  it('matches the corrected Work Day B date fixture in both JSON copies',()=>{
     for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
       const column=readFileSync(path,'utf8').split(/\r?\n/).filter(line=>/^\s*"B":/.test(line)&&!/^\s*"B": \[\]/.test(line)).join('\n');
-      expect(createHash('sha256').update(column).digest('hex')).toBe('a212bb52dcca76c7b968a9b07eb882c80fa20432df6f589c84defb70bbc7f142');
+      expect(createHash('sha256').update(column).digest('hex')).toBe('b88d5ceaf557d4b6323171fb69f5a37ca734b59029ae1390e3c0039bdde5ea8b');
     }
   });
 });
@@ -39,18 +39,75 @@ const actual=generated();
 const S=actual.S;
 const first=S.find(row=>row[4]?.group)[4];
 const pairs=[
- ['2026-09-16','1.4+1.5',27],['2026-09-23','1.7+1.8',27],['2026-09-25','1.9+3.1',14],
- ['2026-10-19','2.1+2.2',16],['2026-10-21','2.3+4.1',15],['2026-10-26','4.3+4.4',15],
- ['2026-11-02','4.6+4.7',28],['2026-11-06','4.10+4.11',17],['2026-11-13','5.2+5.1',27],
- ['2026-11-25','5.4+5.5',18],['2027-01-06','8.1+8.4',16],['2027-01-22','5.7+7.1',23],
- ['2027-03-01','2.4+2.5',23]
+  [
+    "2026-09-16",
+    "1.4+1.5",
+    27
+  ],
+  [
+    "2026-09-23",
+    "1.7+1.8",
+    27
+  ],
+  [
+    "2026-09-25",
+    "1.9+3.1",
+    14
+  ],
+  [
+    "2026-10-19",
+    "2.1+2.2",
+    16
+  ],
+  [
+    "2026-10-23",
+    "4.1+4.2",
+    21
+  ],
+  [
+    "2026-11-06",
+    "4.7+4.8",
+    20
+  ],
+  [
+    "2026-11-20",
+    "5.1+5.3",
+    20
+  ],
+  [
+    "2026-12-02",
+    "5.4+5.5",
+    18
+  ],
+  [
+    "2027-01-11",
+    "8.1+8.4",
+    16
+  ],
+  [
+    "2027-01-27",
+    "5.7+7.1",
+    23
+  ],
+  [
+    "2027-03-05",
+    "2.4+2.5",
+    23
+  ],
+  [
+    "2027-03-08",
+    "2.6+2.7",
+    29
+  ]
 ];
 const iso=row=>row[0]+'-'+String(row[1]+1).padStart(2,'0')+'-'+String(row[2]).padStart(2,'0');
 describe('real extracted pairing generator',()=>{
  it('reproduces the entire acceptance table',()=>expect(S.filter(r=>r[4]?.group).map(r=>[iso(r),r[4].t,Math.round(r[4].group.reduce((sum,m)=>sum+actual.VIDEO_MINUTES[m.t],0))])).toEqual(pairs));
- it('leaves every B cell identical to the original single-block rule',()=>{
-   const old=actual.generateSchedule({...actual.def,periods:{...actual.def.periods,E:{...actual.def.periods.E,doubleFrom:null}}});
-   expect(JSON.stringify(S.map(r=>r.slice(0,4)))).toBe(JSON.stringify(old.map(r=>r.slice(0,4))));
+ it('keeps the single-block B rule when Work Days are disabled',()=>{
+   const def={...actual.def,periods:{...actual.def.periods,B:{...actual.def.periods.B,workDayFrom:null}}};
+   const paired=actual.generateSchedule(def);
+   const single=actual.generateSchedule({...def,periods:{...def.periods,E:{...def.periods.E,doubleFrom:null}}});
+   expect(JSON.stringify(paired.map(r=>r.slice(0,4)))).toBe(JSON.stringify(single.map(r=>r.slice(0,4))));
  });
  it('preserves the full shape, order and member keys',()=>{
    for(const row of S.filter(r=>r[4]?.group)){
@@ -78,8 +135,8 @@ describe('real extracted pairing generator',()=>{
    }
  });
  it('reproduces five PC Day 2 dates and the review end',()=>{
-   expect(S.filter(r=>r[4]?.kind==='pc'&&r[4].admin===2).map(iso)).toEqual(['2026-10-16','2026-11-23','2027-01-20','2027-02-26','2027-03-15']);
-   expect(S.filter(r=>r[4]?.t==='review').map(iso).at(-1)).toBe('2027-03-22');
+   expect(S.filter(r=>r[4]?.kind==='pc'&&r[4].admin===2).map(iso)).toEqual(['2026-10-16','2026-11-30','2027-01-25','2027-03-03','2027-03-17']);
+   expect(S.filter(r=>r[4]?.t==='review').map(iso).at(-1)).toBe('2027-03-24');
  });
 });
 describe('pairing guard regressions',()=>{
@@ -123,11 +180,11 @@ describe('pairing guard regressions',()=>{
  it('keeps lag at no more than nine pacing items on the real calendar',()=>{
    let b=0,e=0,maxLag=0;
    for(const r of S){
-     if(r[3]&&typeof r[3]==='object')b+=(r[3].group||[r[3]]).length;
+     if(r[3]&&typeof r[3]==='object'&&r[3].kind!=='work')b+=(r[3].group||[r[3]]).length;
      if(r[4]&&typeof r[4]==='object')e+=(r[4].group||[r[4]]).length;
      maxLag=Math.max(maxLag,b-e);
    }
-   expect(maxLag).toBe(9);
+   expect(maxLag).toBeLessThanOrEqual(9);
  });
 });
 

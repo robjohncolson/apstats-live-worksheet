@@ -333,6 +333,8 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
 
     # -- lessons --
     for topic_key, lesson in schedule.get("lessons", {}).items():
+        if lesson.get("kind") == "work":
+            continue
         date = lesson["periods"].get(period_letter)
         if not date:
             continue
