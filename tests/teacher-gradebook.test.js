@@ -93,6 +93,13 @@ describe('teacher-dashboard in-app gradebook grid', () => {
     expect(totals[1].textContent).toContain('8.5');
   });
 
+  it('renders a 105-point follow-along without clipping the number', () => {
+    const payload = synthPayload();
+    payload.students[0].gradebook.quarters.Q1.cells['FA:1.1'] = 105;
+    win.renderGradebook(payload);
+    expect([...doc.querySelectorAll('#gb-tbody td.gb-cell')].some(td => td.textContent.includes('105'))).toBe(true);
+  });
+
   it('groups columns by Schoology category in the header (structural 1:1, incl. empty Posters)', () => {
     win.renderGradebook(synthPayload());
     const groupHeaders = Array.from(doc.querySelectorAll('#gb-thead th.gb-cat')).map((th) => th.textContent);

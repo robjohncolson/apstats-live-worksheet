@@ -8,10 +8,24 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { JSDOM } from 'jsdom';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(repo, 'ap_stats_roadmap_square_mode.html');
 const DESK = existsSync(deskPath) ? readFileSync(deskPath, 'utf8') : null;
+
+it('day-grade display renders 105 and the earned exit-ticket bonus', () => {
+  const dom = new JSDOM('<div id="day-grade-overlay"></div><div id="day-grade-header"></div><div id="day-grade-body"></div>');
+  try {
+    const rows = [{ lessonKey: '1.1', lessonGrade: 105, exitBonus: 5, due: { E: '2026-09-09' } }];
+    const open = new Function('document', '_gradeLessonsCache', 'cedLabel', '_attachDayGradeKeyHandler',
+      fnBody(DESK, 'openDayGrade') + ';return openDayGrade;')(dom.window.document, rows, key => ({ text: key }), () => {});
+    open('Sep 9');
+    const text = dom.window.document.getElementById('day-grade-body').textContent;
+    expect(text).toContain('105.0');
+    expect(text).toContain('+5 exit ticket');
+  } finally { dom.window.close(); }
+});
 
 function fnBody(src, name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');

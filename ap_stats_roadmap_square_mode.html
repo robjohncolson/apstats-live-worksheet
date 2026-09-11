@@ -18441,6 +18441,11 @@ function openDayGrade(dateStr) {
             gval.textContent = gradeText;
             gradeEl.appendChild(glabel);
             gradeEl.appendChild(gval);
+            if (lesson.exitBonus) {
+                var exitLabel = document.createElement('span');
+                exitLabel.textContent = ' (+' + lesson.exitBonus + ' exit ticket)';
+                gradeEl.appendChild(exitLabel);
+            }
             card.appendChild(gradeEl);
 
             // Per-lesson Blooket score (graded warm-up), when recorded.

@@ -732,6 +732,7 @@
 
 
 
+
     (function () {
       'use strict';
 
@@ -772,7 +773,8 @@
         var n = Number(raw);
         if (isNaN(n)) return null;
         if (n < 0) n = 0;
-        if (n > 100) n = 100;
+        var maximum = Number(inp.max) || 100;
+        if (n > maximum) n = maximum;
         return n / 100;
       }
 
@@ -821,12 +823,12 @@
         pcValOut.textContent = String(Math.round(pc * 100));
         workValOut.textContent = String(Math.round(work * 100));
 
-        var grade = quarterGradeV3(pc, work);
+        var grade = Math.min(1, quarterGradeV3(pc, work));
         toyGradeOut.textContent = fmtPct(grade) + '%';
 
         // Bars + low-side colouring.
         barPc.style.height = Math.round(pc * 100) + '%';
-        barWork.style.height = Math.round(work * 100) + '%';
+        barWork.style.height = Math.min(100, Math.round(work * 100)) + '%';
         barPc.className = 'gp-bar-fill' + (pc < 0.40 ? ' low' : '');
         barWork.className = 'gp-bar-fill' + (work < 0.40 ? ' low' : '');
 
@@ -899,6 +901,7 @@
 
         // Quarter grade = combineV3 (tolerates a null track).
         var grade = combineV3(pcAvg, workAvg);
+        if (grade != null) grade = Math.min(1, grade);
 
         show(realPcOut, pcAvg);
         show(realWorkOut, workAvg);

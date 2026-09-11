@@ -99,6 +99,20 @@ describe('grade-engine bundle — client≡server parity', () => {
     expect(client).toEqual(server);
   });
 
+  it.each([0, 0.5, 1])('exit ticket %s: online, offline, and gradebook preserve extra credit', score => {
+    const rows = [...materialize(ARCHETYPES.diligent_on_pace()),
+      { item_id: 'WS-U1L1-exitTicket', source: 'frq', score, attempt: 1, recorded_at: AS_OF }];
+    const server = serverComputeGrade(rows, ANSWER_KEY, CONFIG, GRADE_OPTS);
+    const client = Engine.computeGrade(rows, ANSWER_KEY, CONFIG, GRADE_OPTS);
+    expect(client).toEqual(server);
+    const expected = 100 + (score >= 0.75 ? 5 : score >= 0.25 ? 3 : 1);
+    expect(client.lessons.find(L => L.lessonKey === '1.1').lessonGradeNoQuiz).toBe(expected);
+    const args = { lessonSchedule: GRADE_OPTS.lessonSchedule, section: SECTION, todayStr: TODAY_STR };
+    const grid = Engine.buildGradebook(client, args);
+    expect(grid).toEqual(serverBuildGradebook(server, args));
+    expect(grid.quarters.Q1.cells['FA:1.1']).toBe(expected);
+  });
+
   it('M2d: bundle empties BLOOKET_BONUS_TOPICS; opts.blooketBonusTopics stamps 2.9 online≡offline', () => {
     // Empty module default is intentional — clients MUST pass bonus via opts
     // (offline pack / Desk re-derive). Parity fixture includes real bonus 2.9.

@@ -12,9 +12,33 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { JSDOM } from 'jsdom';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const START = readFileSync(resolve(repo, 'start-here.html'), 'utf8');
+
+it('Playground accepts 105 for lesson/Work inputs, caps bars and the quarter, and explains bonuses', () => {
+  const dom = new JSDOM(START, { runScripts: 'outside-only' });
+  try {
+    const script = [...dom.window.document.querySelectorAll('script')].find(el => el.textContent.includes('function renderToy'));
+    dom.window.eval(script.textContent);
+    const document = dom.window.document;
+    const input = (id, value) => {
+      const el = document.getElementById(id);el.value = value;
+      el.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    };
+    input('gp-pc', '100');input('gp-work', '105');
+    expect(document.getElementById('gp-work-val').textContent).toBe('105');
+    expect(document.getElementById('gp-bar-work').style.height).toBe('100%');
+    expect(document.getElementById('gp-toy-grade').textContent).toBe('100.0%');
+    input('gp-w-lessons', '105');
+    expect(document.getElementById('gp-real-work').textContent).toBe('105.0%');
+    expect(document.getElementById('gp-real-grade').textContent).toBe('100.0%');
+    input('gp-w-lessons', '110');
+    expect(document.getElementById('gp-real-work').textContent).toBe('105.0%');
+    expect(document.body.textContent).toContain('+5 (E), +3 (P), or +1 (I)');
+  } finally { dom.window.close(); }
+});
 
 // ── Extract the three engine functions + the weights table from the HTML ──────
 function extractEngine(html) {

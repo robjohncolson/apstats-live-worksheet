@@ -1,4 +1,4 @@
-﻿# Part B plan
+# Part B plan
 
 Re-read the complete revised specification. Implement only after Part A.
 
@@ -13,8 +13,13 @@ Part B upstream analysis before edits: computeLessonGrades UID query returned 0 
 
 Bundle path correction from repository evidence: scripts/build-grade-engine.mjs writes ROOT grade-engine.bundle.js, not roster-server/grade-engine.bundle.js (that path does not exist). Regenerate the canonical root bundle and verify parity. No builder changes needed.
 
-B1 verification: focused server 40 passed (including 600 fixed-seed monotonicity runs); full roster-server npm test 1742 passed, 3 skipped. Four full public SY2627 stripped-ticket goldens captured from pre-bonus commit 2daef27 and pass byte comparison. No m2b expected grade changes (those ledgers contain no graded exit tickets); artifact hashes already updated in A2.
+B1 verification: focused server 40 passed (including 600 fixed-seed monotonicity runs); full roster-server npm test 1739 passed, 3 skipped. Four full public SY2627 stripped-ticket goldens captured from pre-bonus commit 2daef27 and pass byte comparison. No m2b expected grade changes (those ledgers contain no graded exit tickets); artifact hashes already updated in A2.
 
-Full root npm test after bundle regeneration: 9853 passed, 27 failures. 24 are listed baseline failures; the three additional failures were derived-shadow drift because the authorized B2 HTML edits occurred during the suite. Regenerated both shadows; verify them before B1 commit and rerun stable final root suite after B2 tests are complete. Bundle parity passed.
+Full root npm test after bundle regeneration: 9852 passed, 27 failures, 1 skipped. 24 are listed baseline failures; the three additional failures were derived-shadow drift because the authorized B2 HTML edits occurred during the suite. Regenerated both shadows; verify them before B1 commit and rerun stable final root suite after B2 tests are complete. Bundle parity passed.
 
 Additional upstream inventories: buildLessonsArray is called by computeGrade (grade.js:511), hence grade-response shape is HIGH despite the incomplete graph reporting zero. It only conditionally propagates two bonus fields. New reflectionMean and blendLessonFeeders are private pure helpers called only by the two already-reviewed grade functions. No existing simulator helper changed; added one property callback.
+
+B2 impacts and audit: see state/exit-bonus-audit.md. Upstream impact was run before readPct, renderToy, renderReal and openDayGrade edits. Playground matches were ambiguous only because test-results contains a baseline copy; live candidates showed LOW local impact. openDayGrade absent in graph; git grep maps it to rCal's two event handlers. New regression callbacks have no production callers. UI/parity focused suite: 90 passed. Schoology tools required no clamp or other production change. Final full root and Python verification now running against stable implementation files.
+
+
+Final verification: root npm test 9862 passed, 24 named baseline failures, 1 skipped; server npm test 1739 passed, 3 skipped; pytest tests/ 672 passed. Counts use assertion statuses because Vitest JSON numPassedTests includes skipped tests. Focused pairing/video 27 passed; both builder checks pass; UI/parity 90 passed; server bonus/properties 40 passed. Final root has no new failures; all 24 match the supplied baseline by full name (state/exit-bonus-failures.json). No grading, calendar or UI edits remained after final verification. Four commits total, never push.

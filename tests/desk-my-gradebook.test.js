@@ -60,6 +60,17 @@ beforeAll(async () => {
 });
 
 describe('Desk My Gradebook modal', () => {
+  it('renders 105 while keeping the visual percentage bar at 100%', () => {
+    expect(loaded).toBe(true);
+    win._activeGradebook = gradebook();
+    win._activeGradebook.quarters.Q1.cells['FA:1.1'] = 105;
+    win.renderMyGradebook('Q1');
+    const body = doc.getElementById('my-gradebook-body');
+    expect(body.textContent).toContain('105');
+    const bars = [...body.querySelectorAll('[style]')].filter(el => el.style.position === 'absolute' && el.style.width);
+    expect(bars.length).toBeGreaterThan(0);
+    for (const bar of bars) expect(parseFloat(bar.style.width)).toBeLessThanOrEqual(100);
+  });
   it('renders both totals + the component cells (or skips if the Desk cannot host in jsdom)', () => {
     if (!loaded) {
       console.warn('[desk-my-gradebook] Desk did not host in jsdom — skipping render assertions (syntax-checked + live-tested instead).');
