@@ -50,3 +50,15 @@ No grade math, grading schedule, worksheet files, progress storage, APStat Park 
 Recent class feed shows at most 100 events, drawn from eight latest distinct items per student. Student recent pane fetches the latest 100 submissions; older worksheets remain reachable through View student app. An offline device's unsynced answer cannot be displayed by the teacher workspace.
 
 GitNexus upstream checks: indexed dashboard/backend symbols LOW; Desk launcher and diagnostics helpers not indexed, checked manually. Staged change analysis and live deploy verification recorded below after release.
+
+## Release verification
+
+Runtime commit: b023ff9e201bd2f4a633965dbdd2386f0cfa2a42, pushed to master.
+Pages workflow 34547452465: SUCCESS.
+Railway roster deployment 79bf735b-ca2a-4141-8554-5b340dd0d41e: SUCCESS at the same runtime commit.
+
+Live GET checks: version.json, teacher-workspace.js, teacher-workspace.css, teacher-dashboard.html and Desk HTML all SHA-256 match the release. Health ok. Period B: 14/14 students returned available saved-work summaries, containing no answer bodies. Default class export has no savedWork addition. Unauthenticated opt-in request returns HTTP 401. No live write or message was sent by these checks.
+
+Staged GitNexus analysis covered 19 expected files and flagged HIGH because mountClass reaches six authentication/receipt flows. Reviewed mountClass context and the staged diff: authorization and receipt calls are unchanged; only opt-in metadata is added to the existing teacher-gated read route. Full server suite and unchanged golden-master exports passed. Several neighboring symbols reported touched due to shifted line locations are byte-unchanged in the diff. No unrelated files were staged.
+
+CI note: runtime run 34547452527 reports 15 grade.js/QuarterResult type errors. They exactly match previous-release run 34539889046 (same 15 messages and locations). The root CI test job was still running at verification time. Release-specific local checks above are all green; the known broader typecheck failure was not changed or bypassed in source.
