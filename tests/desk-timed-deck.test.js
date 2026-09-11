@@ -234,7 +234,10 @@ describe('Score color thresholds (executed) + one chip per row', () => {
     expect(body).toMatch(/_scoreChip\(\s*_blScore\s*,\s*80\s*\)/);     // blooket inline chip
     expect(body, 'worksheet must not also add an inline _scoreChip').not.toMatch(/_scoreChip\([^)]*_getCwsForTopic/);
     // the persistent _mkGradeChip block colors worksheet/quiz against their gates
-    expect(DESK).toMatch(/_getCwsForTopic\(slot\.getAttribute\('data-topic'\)\), DESK_WORKSHEET_DONE_THRESHOLD/);
+    // 2026-09-11: the worksheet chip now DISPLAYS the Follow-Along grade (what Schoology shows)
+    // and keeps Cws as the completion floor — still colored against the worksheet gate.
+    expect(DESK).toMatch(/_mkGradeChip\(_faDetail \? _faDetail\.grade : _faCws, DESK_WORKSHEET_DONE_THRESHOLD, _faDetail\)/);
+    expect(DESK).toMatch(/_faCws = _getCwsForTopic\(slot\.getAttribute\('data-topic'\)\)/);
     expect(DESK).toMatch(/scorePct : null, DESK_QUIZ_DONE_THRESHOLD/);
   });
 });

@@ -6412,6 +6412,30 @@ function _getCwsForTopic(topicId) {
     return null;
   } catch (_) { return null; }
 }
+// Follow-Along grade for the resource-panel chip: the SAME number the in-app
+// gradebook and the Schoology "Follow-Along" column show (lessonGradeNoQuiz =
+// worksheet blanks + AI-graded reflections, weighted 1:2, + exit-ticket bonus).
+// Cws alone is the completion floor, NOT the grade — showing Cws as "Grade" is
+// what made students see 100% on the Desk and 81% in Schoology (2026-09-11).
+function _getFollowAlongForTopic(topicId) {
+  try {
+    if (!topicId || !Array.isArray(_gradeLessonsCache)) return null;
+    for (var i = 0; i < _gradeLessonsCache.length; i++) {
+      var L = _gradeLessonsCache[i];
+      if (!L || L.lessonKey !== topicId) continue;
+      var fa = (typeof L.lessonGradeNoQuiz === 'number') ? L.lessonGradeNoQuiz
+             : (typeof L.Cws === 'number') ? L.Cws : null;
+      return {
+        grade: fa,
+        cws: (typeof L.Cws === 'number') ? L.Cws : null,
+        w: (typeof L.W === 'number') ? L.W : null,
+        exitBonus: (typeof L.exitBonus === 'number') ? L.exitBonus : 0
+      };
+    }
+  } catch (_) {}
+  return null;
+}
+
 
 // Blooket score for a topic, read from the /grade lessons[] cache. Returns the
 // resolved Blooket grade (the real game score, else the 80% flashcard make-up)
@@ -11698,7 +11722,7 @@ function showResourcePanel(inf, dateStr) {
     try {
       var _chipBody = document.getElementById('resource-body');
       if (_chipBody) {
-        var _mkGradeChip = function (pct, gate) {
+        var _mkGradeChip = function (pct, gate, detail) {
           var c = document.createElement('span');
           c.className = 'ws-grade-chip';
           c.style.cssText = 'display:inline-block;margin-left:8px;padding:1px 6px;font-size:10px;' +
@@ -11709,10 +11733,25 @@ function showResourcePanel(inf, dateStr) {
           var col = (typeof _scoreColor === 'function') ? _scoreColor(pct, gate) : null;
           if (col) c.style.color = col;
           c.title = 'Your recorded grade for this item (correctness — counts toward your class grade). "—" means nothing is recorded yet.';
+          if (detail && typeof detail === 'object') {
+            // Same number as the in-app gradebook + Schoology; say how it is built so
+            // "100% on the Desk, 81% in Schoology" cannot happen again.
+            var _r1 = function (x) { return Math.round(x * 10) / 10; };
+            var _bits = [];
+            if (detail.cws != null) _bits.push('blanks ' + _r1(detail.cws) + '%');
+            if (detail.w != null) _bits.push('AI-graded reflections ' + _r1(detail.w) + '% (weighted 2x)');
+            if (detail.exitBonus) _bits.push('+' + detail.exitBonus + ' exit ticket');
+            c.title = 'Follow-Along grade — the same number your gradebook and Schoology show. '
+              + (_bits.length ? 'Built from: ' + _bits.join(' · ') + '. ' : '')
+              + 'Reflections are revisable: Grade with AI only ever raises them.';
+          }
           return c;
         };
         _chipBody.querySelectorAll('.worksheet-done-slot[data-topic]').forEach(function (slot) {
-          slot.appendChild(_mkGradeChip(_getCwsForTopic(slot.getAttribute('data-topic')), DESK_WORKSHEET_DONE_THRESHOLD));
+          // Display the Follow-Along grade (what Schoology shows); Cws stays the completion floor.
+          var _faDetail = _getFollowAlongForTopic(slot.getAttribute('data-topic'));
+          var _faCws = _getCwsForTopic(slot.getAttribute('data-topic'));
+          slot.appendChild(_mkGradeChip(_faDetail ? _faDetail.grade : _faCws, DESK_WORKSHEET_DONE_THRESHOLD, _faDetail));
         });
         // Quiz rows only (Blooket has its own colored chip inline in its row).
         _chipBody.querySelectorAll('.desk-quiz-done-slot[data-artifact="quiz"][data-topic]').forEach(function (slot) {
@@ -18556,7 +18595,9 @@ function openDayGrade(dateStr) {
                 var wsN = worksheets.length;
                 var wsLabel = wsN + ' blank' + (wsN === 1 ? '' : 's');
                 if (lesson.Cws != null) {
-                    parts.push('Worksheet: ' + (Math.round(lesson.Cws * 10) / 10) + '% (' + wsLabel + ')');
+                    parts.push('Worksheet blanks: ' + (Math.round(lesson.Cws * 10) / 10) + '% (' + wsLabel + ')');
+                    if (typeof lesson.W === 'number') parts.push('AI reflections: ' + (Math.round(lesson.W * 10) / 10) + '%');
+                    if (typeof lesson.lessonGradeNoQuiz === 'number') parts.push('Follow-Along grade: ' + (Math.round(lesson.lessonGradeNoQuiz * 10) / 10) + '%');
                 } else {
                     parts.push('Worksheet: ' + wsLabel + ' attempted');
                 }

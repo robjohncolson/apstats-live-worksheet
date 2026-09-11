@@ -70,8 +70,21 @@ describe('Desk grade chip — source', () => {
     // _getCwsForTopic feeds the worksheet chip; _wsCompletionFor stays the gate.
     // (Window widened 2026-06: _mkGradeChip grew when it gained gate-coloring.)
     const idx = DESK.indexOf('var _mkGradeChip');
-    const block = DESK.slice(idx, idx + 2000);
+    const block = DESK.slice(idx, idx + 3600  /* widened 2026-09-11: Follow-Along tooltip breakdown */);
     expect(block).toMatch(/_getCwsForTopic\(slot\.getAttribute\('data-topic'\)\)/);
     expect(block).toMatch(/_quizPerfFor\(slot\.getAttribute\('data-topic'\)\)/);
+  });
+  it('07: the worksheet chip DISPLAYS the Follow-Along grade (lessonGradeNoQuiz), with Cws kept as the floor', () => {
+    // 2026-09-11 root cause: the chip showed Cws (blanks only) labelled "Grade", while the
+    // in-app gradebook + Schoology show lessonGradeNoQuiz (blanks + AI reflections).
+    const body = fnBody(DESK, '_getFollowAlongForTopic');
+    expect(body).toMatch(/lessonGradeNoQuiz/);
+    expect(body).toContain('L.W');
+    expect(body).toMatch(/exitBonus/);
+    const idx = DESK.indexOf("_mkGradeChip(_faDetail ? _faDetail.grade : _faCws");
+    expect(idx).toBeGreaterThan(-1);
+    const block = DESK.slice(DESK.indexOf('var _mkGradeChip = function'), idx);
+    expect(block).toMatch(/AI-graded reflections/);
+    expect(block).toMatch(/same number your gradebook and Schoology show/);
   });
 });
