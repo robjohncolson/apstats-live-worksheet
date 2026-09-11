@@ -475,7 +475,13 @@
       #worksheet-diagnostics-previews { width:auto; margin:0; }
       #worksheet-diagnostics-section th, #worksheet-diagnostics-section td { text-align:left; vertical-align:top; }
       #worksheet-diagnostics-section td { border-top:1px solid #ddd; font-size:0.9rem; }
-    </style>
+      .triage-row .skill-code { flex:1; min-width:180px; }
+    .triage-row .skill-code small { display:block; font-weight:normal; color:var(--sg-text-dim); margin-top:4px; }
+    .triage-row summary { flex-wrap:wrap; }
+    .skill-evidence { font-family:"Segoe UI",sans-serif; color:var(--sg-text-dim); display:block; font-size:0.78rem; font-weight:normal; padding:4px 0; }
+    .skill-next-step { padding:0 14px; line-height:1.5; }
+    .heat-tile .pct { font-size:1.1rem; }
+  </style>
   <link rel="stylesheet" href="teacher-workspace.css">
 </head>
 <body>
@@ -733,29 +739,29 @@
 
     <!-- Skill heatmap -->
     <div class="section">
-      <h2 class="section-title">Skill Heatmap (class)</h2>
+      <h2 class="section-title">Class skill overview</h2>
       <div class="loading-note" id="heatmap-loading" style="display:none">Loading class data...</div>
       <div class="heatmap-grid" id="heatmap-grid"></div>
       <div class="empty-note" id="heatmap-empty" style="display:none">
         No skill observations recorded yet for this section.
       </div>
       <div class="hint">
-        Tile color reflects the share of students currently flagged weak on that skill.
-        Green &lt;25%, yellow 25-50%, orange 50-75%, red &ge;75%. Sorted by %weak descending.
+        Names describe the skill; the small code is a reference, not a lesson number.
+        Colors show the share flagged for review among students with graded evidence, not the percentage of wrong answers.
       </div>
     </div>
 
     <!-- Weak-skill triage list -->
     <div class="section">
-      <h2 class="section-title">Weak-Skill Triage</h2>
+      <h2 class="section-title">Skills to review</h2>
       <div class="loading-note" id="triage-loading" style="display:none">Loading class data...</div>
       <div class="triage-list" id="triage-list"></div>
       <div class="empty-note" id="triage-empty" style="display:none">
-        No weak skills to triage.
+        No graded skill evidence available for this section yet.
       </div>
       <div class="hint">
-        Each row is a skill; expand it to see the usernames of students currently flagged weak
-        on it. Sorted by %weak descending so the highest-impact remediation rises to the top.
+        Expand a skill to see who is flagged and how much graded evidence is available, then click a name to inspect saved work.
+        These estimates do not change grades. A small amount of evidence can still produce a flag even after a correct answer; check the work before assigning extra practice.
       </div>
     </div>
 
@@ -2450,6 +2456,99 @@
       }
     }
 
+    // These labels match the legacy item map loaded by /class/mastery and the
+    // apstat_*_framework.md sources. New CED codes overlap but mean different things.
+    var TEACHER_SKILL_LABELS = {
+      "1.A": [
+            "Identify the statistical question",
+            "Ask students to state the question an investigation should answer."
+      ],
+      "1.B": [
+            "Identify the relevant information",
+            "Ask students to identify which facts are needed to answer a question."
+      ],
+      "1.C": [
+            "Plan how to collect and represent data",
+            "Ask students to describe a sampling or study method and how they would display the results."
+      ],
+      "1.D": [
+            "Choose a confidence-interval method",
+            "Ask students to choose an interval method and explain why it fits the data."
+      ],
+      "1.E": [
+            "Choose a significance test",
+            "Ask students to choose a test and explain why it fits the question."
+      ],
+      "1.F": [
+            "State null and alternative hypotheses",
+            "Ask students to write hypotheses about the population parameter in context."
+      ],
+      "2.A": [
+            "Read and describe graphs, tables, and data",
+            "Ask students to describe what a graph or table shows in the context of the question."
+      ],
+      "2.B": [
+            "Make graphs and tables",
+            "Ask students to build a graph or frequency table from a small data set; check labels, scales, and counts."
+      ],
+      "2.C": [
+            "Calculate summary statistics",
+            "Check a calculation such as a mean, standard deviation, percentile, correlation, or predicted response."
+      ],
+      "2.D": [
+            "Compare distributions and relative positions",
+            "Ask students to compare two distributions or explain where a value sits within a distribution."
+      ],
+      "3.A": [
+            "Calculate probabilities and proportions",
+            "Ask students to calculate a probability or proportion and explain the numerator and denominator."
+      ],
+      "3.B": [
+            "Find probability-distribution parameters",
+            "Ask students to identify or calculate the parameters of a probability distribution."
+      ],
+      "3.C": [
+            "Describe probability distributions",
+            "Ask students to describe the possible outcomes and their probabilities."
+      ],
+      "3.D": [
+            "Calculate confidence intervals",
+            "Check an interval calculation after the student verifies the conditions."
+      ],
+      "3.E": [
+            "Calculate test statistics and p-values",
+            "Check the test statistic and p-value after the student verifies the conditions."
+      ],
+      "4.A": [
+            "Draw a conclusion from the evidence",
+            "Ask students to state a conclusion that the evidence supports."
+      ],
+      "4.B": [
+            "Explain what a statistical result means",
+            "Ask students to interpret a calculated result in the context of the problem."
+      ],
+      "4.C": [
+            "Check conditions for statistical inference",
+            "Ask students to verify the conditions required for the chosen procedure."
+      ],
+      "4.D": [
+            "Use a confidence interval to justify a claim",
+            "Ask students to explain how an interval supports or challenges a claim."
+      ],
+      "4.E": [
+            "Use a significance test to justify a claim",
+            "Ask students to connect the p-value, decision, and conclusion in context."
+      ]
+};
+    function teacherSkillLabel(code) {
+      var entry = Object.prototype.hasOwnProperty.call(TEACHER_SKILL_LABELS, code) ? TEACHER_SKILL_LABELS[code] : null;
+      return entry ? entry[0] : 'Unlabeled skill (' + code + ')';
+    }
+    function teacherSkillAction(code) {
+      var entry = Object.prototype.hasOwnProperty.call(TEACHER_SKILL_LABELS, code) ? TEACHER_SKILL_LABELS[code] : null;
+      return entry ? entry[1] : 'Inspect the saved question before deciding what to review; this skill label is unavailable.';
+    }
+
     function renderHeatmap(payload) {
       var grid = $('heatmap-grid');
       grid.innerHTML = '';
@@ -2482,9 +2581,9 @@
       var html = tiles.map(function (t) {
         var cls = heatClass(t.pctWeak);
         return '<div class="heat-tile ' + cls + '">' +
-                 '<div class="skill mono">' + escHtml(t.skill) + '</div>' +
-                 '<div class="pct">' + escHtml(fmt1(t.pctWeak)) + '%</div>' +
-                 '<div class="frac">' + escHtml(t.weak) + ' / ' + escHtml(t.total) + ' weak</div>' +
+                 '<div class="skill">' + escHtml(teacherSkillLabel(t.skill)) + '</div><small>Skill ' + escHtml(t.skill) + '</small>' +
+                 '<div class="pct">' + escHtml(fmt1(t.pctWeak)) + '% flagged</div>' +
+                 '<div class="frac">' + escHtml(t.weak) + ' of ' + escHtml(t.total) + ' students with graded evidence</div>' +
                '</div>';
       }).join('');
       grid.innerHTML = html;
@@ -2535,15 +2634,22 @@
         users.sort(function (a, b) { return String(a.realName || a.username).localeCompare(String(b.realName || b.username)); });
         var inner = users.length
           ? users.map(function (u) {
-              return '<span class="pill">' + studentNameHtml(u) + '</span>';
+              var evidence = u.skills && u.skills[r.skill];
+              var count = evidence && evidence.observations;
+              var detail = typeof count === 'number'
+                ? count + ' graded answer' + (count === 1 ? '' : 's') + '; ' + evidence.correct + ' counted correct'
+                : 'Evidence count unavailable';
+              if (typeof count === 'number' && count < 3) detail += '; limited evidence; check another answer';
+              return '<span class="pill">' + studentNameHtml(u) + '<span class="skill-evidence">' + escHtml(detail) + '</span></span>';
             }).join('')
-          : '<span class="none">No students currently flagged weak.</span>';
+          : '<span class="none">No students with graded evidence are currently flagged for review.</span>';
         return '<details class="triage-row">' +
                  '<summary>' +
-                   '<span class="skill-code mono">' + escHtml(r.skill) + '</span>' +
-                   '<span class="pct-badge ' + cls + '">' + escHtml(fmt1(r.pctWeak)) + '%</span>' +
-                   '<span class="count">' + escHtml(r.weak) + ' / ' + escHtml(r.total) + ' weak</span>' +
+                   '<span class="skill-code">' + escHtml(teacherSkillLabel(r.skill)) + '<small>Skill ' + escHtml(r.skill) + '</small></span>' +
+                   '<span class="pct-badge ' + cls + '">' + escHtml(fmt1(r.pctWeak)) + '% flagged</span>' +
+                   '<span class="count">' + escHtml(r.weak) + ' of ' + escHtml(r.total) + ' students with graded evidence</span>' +
                  '</summary>' +
+                 '<p class="skill-next-step">First, inspect a few saved answers. ' + escHtml(teacherSkillAction(r.skill)) + '</p>' +
                  '<div class="student-list">' + inner + '</div>' +
                '</details>';
       }).join('');
