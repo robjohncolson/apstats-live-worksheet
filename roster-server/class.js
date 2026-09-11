@@ -9,7 +9,7 @@
 // Pure compute is REUSED via computeGrade / computeMastery from grade.js +
 // mastery.js — single source of truth, Phase-3 tests pin the math. READ-ONLY.
 
-import { PHASE3_CONFIG } from './grade-config.js';
+import { PHASE3_CONFIG, TEACHER_DIAGNOSTIC_CONFIG } from './grade-config.js';
 import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore, stableLedgerSort } from './scoring.js';
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
@@ -19,6 +19,8 @@ import { requireTeacher } from './teacher-auth.js';
 import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
 import { backfillStudentReceipts } from './backfill.js';
 import { computeEffort } from './doge-econ.js';
+import { computeMisconceptions } from './misconceptions.js';
+import { loadMisconceptionAssets } from './misconception-assets.js';
 
 let receiptPersistenceNotProvisionedLogged = false;
 
@@ -174,6 +176,37 @@ export function mountClass(app, {
 }) {
   const _presence = blooketPresence || blooketLessons || null;
   const _required = blooketRequired || null;
+
+  const misconceptionCache = new Map();
+  app.get('/class/misconceptions', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const section = typeof req.query.section === 'string' ? req.query.section.trim() : '';
+    const days = req.query.days === undefined
+      ? (config.misconceptions?.windowDays ?? TEACHER_DIAGNOSTIC_CONFIG.misconceptions.windowDays)
+      : Number(req.query.days);
+    if (!Number.isInteger(days) || days < 0 || days > 365) {
+      return res.status(400).json({ ok: false, error: 'days must be an integer from 0 to 365' });
+    }
+    const cacheKey = JSON.stringify([section, days]);
+    const now = Date.now();
+    const cached = misconceptionCache.get(cacheKey);
+    if (cached && now - cached.at < 60000) return res.json(cached.payload);
+    try {
+      const answerKey = answerKeyMapOrNull(await loadAnswerKey());
+      if (!answerKey) throw new Error('Answer key malformed');
+      const { rows, error } = await listRoster(db, section, false);
+      if (error) throw error;
+      const fan = await fanLedger(ledgerDb, rows);
+      const payload = computeMisconceptions(fan, loadMisconceptionAssets(answerKey),
+        { section, days, now, config: config.misconceptions });
+      for (const [key, value] of misconceptionCache) if (now - value.at >= 60000) misconceptionCache.delete(key);
+      misconceptionCache.set(cacheKey, { at: now, payload });
+      return res.json(payload);
+    } catch (error) {
+      console.error('GET /class/misconceptions error:', error);
+      return res.status(500).json({ ok: false, error: 'Could not load misconceptions' });
+    }
+  });
 
   // ── GET /class/blank/:itemId ────────────────────────────────────────────────
   // STUDENT-accessible (NOT teacher-gated). Returns the requester's SECTION's

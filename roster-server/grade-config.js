@@ -4,6 +4,17 @@
 // §1–§3 + §5). Changing a number here re-tunes the model with zero code edits;
 // because Phase 3 resolves grades at rollup time, a tweak retro-fixes history.
 
+// Keep diagnostics outside the frozen grading configuration and grade artifacts.
+export const TEACHER_DIAGNOSTIC_CONFIG = {
+  misconceptions: {
+    minAssessmentsPerStudent: 2,
+    minDaysApart: 3,
+    classShare: 0.33,
+    classMinLessons: 2,
+    windowDays: 42,
+  },
+};
+
 export const PHASE3_CONFIG = {
   // Completion ceiling: doing all the work banks at most this (flat, all units —
   // the difficulty ramp lives entirely in the per-quarter PC→P curve).

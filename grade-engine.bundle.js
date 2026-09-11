@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 8b3c4bd67f78
+ * engine-version: 0d36cad55dec
  */
 ;(function (root) {
   'use strict';
@@ -31,6 +31,17 @@
     // Every §7 pilot-tunable knob lives here and nowhere else (GRADEBOOK_PHASE3_BUILD.md
     // §1–§3 + §5). Changing a number here re-tunes the model with zero code edits;
     // because Phase 3 resolves grades at rollup time, a tweak retro-fixes history.
+    
+    // Keep diagnostics outside the frozen grading configuration and grade artifacts.
+    const TEACHER_DIAGNOSTIC_CONFIG = {
+      misconceptions: {
+        minAssessmentsPerStudent: 2,
+        minDaysApart: 3,
+        classShare: 0.33,
+        classMinLessons: 2,
+        windowDays: 42,
+      },
+    };
     
     const PHASE3_CONFIG = {
       // Completion ceiling: doing all the work banks at most this (flat, all units —
@@ -2998,7 +3009,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "8b3c4bd67f78",
+    _engineVersion: "0d36cad55dec",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;
