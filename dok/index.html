@@ -29,11 +29,15 @@
 </header>
 <main>
   <div class="today" id="today">Loading today's problem…</div>
+  <h2>Per-topic sheets</h2>
   <table>
     <thead><tr><th>CED topic</th><th>B</th><th>E</th><th>Title · DOK-3 skill</th><th>PDFs</th></tr></thead>
     <tbody id="rows"></tbody>
   </table>
   <p class="muted">Built rows are green. Pending rows come from <code>PENDING.md</code>. Student = 2 sides, Board = 1 landscape page, Teacher = key + E/P/I scoring.</p>
+  <h2 id="e-wednesday-sheets">E Wednesday (two-topic) sheets</h2>
+  <p class="muted">One paper sheet covers both topics. Teacher-scored E/P/I only; never AI-graded or auto-scored. B keeps its per-topic sheets.</p>
+  <table><thead><tr><th>Topics</th><th>E date</th><th>Title</th><th>PDFs</th></tr></thead><tbody id="group-rows"></tbody></table>
 </main>
 <script>
 (async function () {
@@ -45,7 +49,8 @@
 
   const tbody = document.getElementById('rows');
   const todayIso = new Date().toISOString().slice(0, 10);
-  let todayRow = null;
+  const todayRows = [];
+  const eGroups = schedule.dayGroups?.E || [];
 
   for (const [topic, v] of rows) {
     const b = built[topic];
@@ -58,17 +63,30 @@
       `<td>${b ? b.title + ' <span class="badge">DOK-3 · ' + b.skill + '</span>' : '<span class="muted">pending</span>'}</td>` +
       `<td class="links">${b ? pdf('student') + pdf('board') + pdf('teacher') : ''}</td>`;
     tbody.appendChild(tr);
-    if (b && !todayRow && (v.periods.B === todayIso || v.periods.E === todayIso)) todayRow = { topic, b };
+    if (b && v.periods.B === todayIso) todayRows.push({ topic, b, period: 'B' });
+    if (b && v.periods.E === todayIso && !eGroups.some(group => group.includes(topic))) todayRows.push({ topic, b, period: 'E' });
   }
 
-  const today = document.getElementById('today');
-  if (todayRow) {
-    today.innerHTML = `Today: <strong>Unit ${todayRow.b.ced_unit} · Topic ${todayRow.b.ced_topic} — ${todayRow.b.title}</strong> · ` +
-      `<a href="pdf/aps_${todayRow.topic}_board.pdf">open the board slide</a> · ` +
-      `<a href="pdf/aps_${todayRow.topic}_teacher.pdf">teacher key</a>`;
-  } else {
-    today.textContent = 'No ladder is scheduled for today. Pick a row below.';
+  for (const topics of eGroups) {
+    const key = topics.join('+');
+    const entry = built[key];
+    const slug = key.replaceAll('+', '_');
+    const date = schedule.lessons[topics[0]].periods.E;
+    const tr = document.createElement('tr');
+    tr.className = entry ? 'built' : 'pending';
+    const links = entry ? ['student', 'board', 'teacher'].map(ed => `<a href="pdf/aps_${slug}_${ed}.pdf">${ed}</a>`).join(' ') : 'Pending';
+    tr.innerHTML = `<td>${topics.join(' + ')}</td><td>${date}</td><td>${entry ? entry.title : 'Pending: see PENDING.md'}</td><td class="links">${links}</td>`;
+    document.getElementById('group-rows').appendChild(tr);
+    if (date === todayIso) todayRows.push({topic:key,b:entry,period:'E'});
   }
+  const today = document.getElementById('today');
+  today.innerHTML = todayRows.length ? todayRows.map(row => {
+    if (!row.b) return `Period ${row.period}: ${row.topic}: group sheet pending.`;
+    const slug = row.topic.replaceAll('+', '_');
+    const label = row.b.ced_topics ? row.b.ced_topics.join(' + ') : row.b.ced_topic;
+    return `Period ${row.period}: <strong>Unit ${row.b.ced_unit} &middot; ${label} &middot; ${row.b.title}</strong> &middot; ` +
+      `<a href="pdf/aps_${slug}_board.pdf">open the board slide</a> &middot; <a href="pdf/aps_${slug}_teacher.pdf">teacher key</a>`;
+  }).join('<br>') : 'No ladder is scheduled for today. Pick a row below.';
 })();
 </script>
 </body>

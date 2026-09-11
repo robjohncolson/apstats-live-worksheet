@@ -1,6 +1,6 @@
 # E Wednesday double block implementation plan
 
-Status: active; current invocation authorizes unlimited files, verification and exactly three commits. Never push.
+Status: completed; current invocation authorizes unlimited files, verification and exactly three commits. Never push.
 
 Baseline HEAD: 94394648329204c91087338b2cd1199f83bc7a0a. Existing unrelated modifications and untracked Schoology logs are excluded. Initial B-column assertion passed (1 test) before application edits. Captured SHA256 of all existing JSON B-field lines: a212bb52dcca76c7b968a9b07eb882c80fa20432df6f589c84defb70bbc7f142. The additive dayGroups.B empty array is outside the original column.
 
@@ -67,7 +67,7 @@ Source: `git show codex-packing-paused:state/schedule-packing-consumers.md`, rec
 
 ## GitNexus impact status
 
-Refreshed the line-preserving Desk shadow and rebuilt with GITNEXUS_MAX_FILE_SIZE=4096. Local meta reports HEAD 9439464 and status up-to-date. Global registry registration failed EPERM, but the existing registration resolves this rebuilt local graph and authoritative file-qualified impact queries succeed. Raw upstream results are in state/e-wednesday-audit/. The table below will record every modified existing symbol before its edit. New helpers receive caller review and are covered by the extracted-code tests.
+Refreshed the line-preserving Desk shadow and rebuilt with GITNEXUS_MAX_FILE_SIZE=4096. Local meta reports HEAD 9439464 and status up-to-date. Global registry registration failed EPERM, but the existing registration resolves this rebuilt local graph and authoritative file-qualified impact queries succeed. Raw upstream results are in state/e-wednesday-audit/. The table below records the pre-edit analysis of every modified existing symbol. New helpers receive caller review and are covered by the extracted-code tests.
 
 ## Commit sequence
 
@@ -87,18 +87,18 @@ Required final suites: focused Vitest; schedule --check; root npm test; roster-s
 
 | E Wednesday | Pair | Unit | Observed |
 | --- | --- | --- | --- |
-| 2026-09-16 | 1.4+1.5 | 1 | Not run |
-| 2026-09-23 | 1.7+1.8 | 1 | Not run |
-| 2026-10-07 | 3.5+3.6 | 1 | Not run |
-| 2026-10-28 | 4.2+4.3 | 2 | Not run |
-| 2026-12-16 | 6.2+6.3 | 3 | Not run |
-| 2027-01-06 | 5.6+6.8 | 3 | Not run |
-| 2027-01-20 | 8.4+8.5 | 3 | Not run |
-| 2027-02-03 | 7.1+7.2 | 4 | Not run |
-| 2027-02-24 | 7.7+7.8 | 4 | Not run |
-| 2027-03-10 | 2.5+2.6 | 5 | Not run |
+| 2026-09-16 | 1.4+1.5 | 1 | Verified |
+| 2026-09-23 | 1.7+1.8 | 1 | Verified |
+| 2026-10-07 | 3.5+3.6 | 1 | Verified |
+| 2026-10-28 | 4.2+4.3 | 2 | Verified |
+| 2026-12-16 | 6.2+6.3 | 3 | Verified |
+| 2027-01-06 | 5.6+6.8 | 3 | Verified |
+| 2027-01-20 | 8.4+8.5 | 3 | Verified |
+| 2027-02-03 | 7.1+7.2 | 4 | Verified |
+| 2027-02-24 | 7.7+7.8 | 4 | Verified |
+| 2027-03-10 | 2.5+2.6 | 5 | Verified |
 
-Expected E PC Day 2 dates: U1 2026-10-16; U2 2026-12-07; U3 2027-01-29; U4 2027-03-05; U5 2027-03-22. Expected E review end: 2027-03-31. None were generated or verified.
+Expected E PC Day 2 dates: U1 2026-10-16; U2 2026-12-07; U3 2027-01-29; U4 2027-03-05; U5 2027-03-22. Expected E review end: 2027-03-31. All generated and verified by the focused regression suite.
 
 ## Fresh pre-edit upstream blast radii
 
@@ -127,3 +127,25 @@ Expected E PC Day 2 dates: U1 2026-10-16; U2 2026-12-07; U3 2027-01-29; U4 2027-
 | rProg | HIGH | 5 (loadRegistry, renderDoNowGrades, loadYear, setP, ap_stats_roadmap_square_mode.inline.js) | 24 | 4 (studentMark, submitSignIn, run, loadYear) |
 | showResourcePanel | HIGH | 7 (ap_stats_roadmap_square_mode.inline.js, recordLinkVisit, open, renderDoNowGrades, _studentMarkSave, _blooketCommit, _focusTodayLessonVideo) | 40 | 3 (studentMark, run, submitSignIn) |
 | sTip | HIGH | 1 (rCal) | 25 | 4 (studentMark, submitSignIn, loadYear, run) |
+
+## Part 2/3 additional impacts
+
+Calendar harness createDesk and collectCalendar: LOW, zero indexed callers/processes. Builder litField: LOW, one caller, zero processes (only its call site needed a new literal; body unchanged). DOK builder impacts all LOW; raw file-qualified results are in the audit directory.
+- dok-build: LOW, 1 direct, 2 upstream, 1 processes.
+- dok-ced_topic_label: LOW, 2 direct, 4 upstream, 2 processes.
+- dok-emit_board: LOW, 0 direct, 0 upstream, 0 processes.
+- dok-emit_teacher: LOW, 0 direct, 0 upstream, 0 processes.
+- dok-header_line: LOW, 2 direct, 2 upstream, 2 processes.
+- dok-load_registry: LOW, 2 direct, 3 upstream, 1 processes.
+- dok-tether_lines: LOW, 1 direct, 1 upstream, 1 processes.
+- dok-validate_item: LOW, 1 direct, 3 upstream, 1 processes.
+- dok-validate_lesson: LOW, 2 direct, 4 upstream, 1 processes.
+- dok-write_manifest: LOW, 1 direct, 2 upstream, 1 processes.
+
+DOK emit_student: LOW, zero indexed callers/processes (pre-edit). Group teacher tethers retain the complete deduplicated union in two columns.
+
+## Final verification
+
+All acceptance pairs and dates verified. Period B remains byte-identical. Both group sets compile to 2 student / 1 board / 3 teacher pages; all 66 individual-topic emitters remain byte-identical. Step-6 counts and exact baseline failure names are recorded in `state/e-wednesday-audit/verification.json`. No push. Eight future group sheets remain explicitly pending as authorized.
+
+Part 3 staged detect_changes: HIGH, 24 symbols / six processes; reviewed against the staged diff. Flows are the resource-panel lookup/student identity and DOK validation/tether/label pipeline. The index predates added lines, so neighboring untouched symbols appear in the hunk mapping; direct diff review confirms no changes to their bodies.

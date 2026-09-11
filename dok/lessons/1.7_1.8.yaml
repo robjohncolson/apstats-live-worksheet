@@ -1,0 +1,63 @@
+topic: 1.7+1.8
+topics: ["1.7", "1.8"]
+ced2026:
+  unit: 1
+  topics: ["1.7", "1.8"]
+  label: Typical Hours, Exceptional Week
+title: Typical Hours, Exceptional Week
+worksheets: ["u1_lesson7_live.html", "u1_lesson8_live.html"]
+minutes:
+  first_take: 5
+  video_worksheet: 26.5
+  finish: 10
+  turn_in: 2
+essential_question: Which numerical and graphical summary communicates a typical week without hiding an
+  exception?
+rules_callout:
+  title: TWO TOPICS, ONE DATA STORY
+  body: '1.7: Median and IQR resist extremes; mean and SD are more sensitive. Here quartiles are the medians
+    of the two halves.\\ 1.8: A modified boxplot marks values beyond $Q_1-1.5\mathrm{IQR}$ or $Q_3+1.5\mathrm{IQR}$
+    separately.\\ Whiskers reach the most extreme nonoutliers; the box spans the middle half and can hide
+    repeats and gaps.'
+focus: aps-1.7_1.8-d3-1
+reinforcement: []
+exit_reflection: 'One claim I would revise after both videos: \hrulefill'
+space:
+  first_take: 0.8in
+  a: 0.6in
+  b: 1.3in
+  c: 2.1in
+teacher:
+  phase_tag: First take $\rightarrow$ both follow-alongs $\rightarrow$ finish
+  teacher_does:
+  - Read the competing reports without endorsing either. Start the first take at the bell.
+  - Play both topic videos in teaching order; pause for each follow-along.
+  - Allow ten minutes to finish (a)--(c). Collect one sheet; score (c) only, E/P/I by a human.
+  students_do:
+  - Commit one sentence before watching.
+  - Complete both follow-alongs, then finish this single problem and turn it in.
+  questions_to_ask:
+  - Which feature settles that claim?
+  - What information would your chosen display hide?
+  adult_role: Circulate and ask for evidence linked to a claim. This is the human-graded DOK-3 channel;
+    do not send it to an AI grader or auto-score it.
+  watch_for:
+  - Extending the upper whisker to 28 instead of marking it separately.
+  - Equating mean with the value most students report.
+  - Claiming that a boxplot preserves each repeated observation.
+  first_take_note: Ungraded commitment; accept any evidence-based first impression.
+visuals:
+  hours:
+    kind: dotplot
+    values:
+    - 2
+    - 3
+    - 4
+    - 4
+    - 5
+    - 5
+    - 6
+    - 6
+    - 7
+    - 28
+    xlabel: Weekly paid-work hours

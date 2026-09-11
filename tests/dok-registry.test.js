@@ -12,7 +12,7 @@ import { resolve } from 'path';
 const ROOT = resolve(__dirname, '..');
 const REGISTRY_DIR = resolve(ROOT, 'dok', 'registry');
 
-const ID_RE = /^aps-\d+\.\d+-d[123]-\d+$/;
+const ID_RE = /^aps-\d+\.\d+(?:_\d+\.\d+)*-d[123]-\d+$/;
 const SKILL_RE = /^[1-4]\.[A-F]$/;
 const BANNED = ['hard', 'easy', 'difficult'];
 
@@ -24,7 +24,7 @@ function loadRows() {
     lines.forEach((l, i) => {
       let row;
       try { row = JSON.parse(l); } catch (e) { throw new Error(`${f} line ${i + 1}: ${e.message}`); }
-      if (row.topic !== f.slice(0, -6)) throw new Error(`${f} line ${i + 1}: topic ${row.topic} must equal the file name`);
+      if (row.topic.replaceAll('+', '_') !== f.slice(0, -6)) throw new Error(`${f} line ${i + 1}: topic ${row.topic} must equal the file name`);
       rows.push(row);
     });
   }
@@ -55,7 +55,7 @@ describe('dok/registry.jsonl', () => {
     expect(r.id).toMatch(ID_RE);
     expect([1, 2, 3]).toContain(r.dok);
     expect(['focus', 'reinforcement']).toContain(r.role);
-    expect(r.topic).toBe(r.id.split('-')[1]);
+    expect(r.topic.replaceAll('+', '_')).toBe(r.id.split('-')[1]);
     expect(r.dok_rationale.length).toBeGreaterThanOrEqual(40);
     for (const w of BANNED) expect(r.dok_rationale.toLowerCase()).not.toContain(w);
     expect(r.skill).toMatch(SKILL_RE);
@@ -76,6 +76,12 @@ describe('dok/registry.jsonl', () => {
     for (const p of r.parts) {
       expect(p.skill).toMatch(SKILL_RE);
       expect(r.answers[p.label]).toBeTruthy(); // teacher key for every part
+    }
+    if(r.topic.includes('+')){
+      expect(r.topics).toEqual(r.topic.split('+'));
+      for(const part of r.parts)expect(r.topics).toContain(part.topic);
+      expect(r.parts.at(-1).topic===r.topics.at(-1)||r.parts.at(-1).integrates===true).toBe(true);
+      expect(r.feedback_channel).toBe('feedback_dok3_human_channel');
     }
     expect(r.scoring.expectedElements.length).toBeGreaterThan(0);
     for (const k of ['E', 'P', 'I']) expect(r.scoring.scoringGuide[k]).toBeTruthy();

@@ -1,0 +1,63 @@
+\documentclass[11pt]{article}
+\usepackage{preamble}
+\renewcommand{\answer}[1]{}
+
+\begin{document}
+
+\ladderheading{AP Statistics \textperiodcentered\ Unit 1 \textperiodcentered\ Topics 1.7--1.8 (CED 1.7--1.8) \textperiodcentered\ E: 2026-09-23}{Typical Hours, Exceptional Week}
+
+\focusbanner{TODAY'S PROBLEM}
+
+Suppose ten students report weekly paid-work hours: 2, 3, 4, 4, 5, 5, 6, 6, 7, 28. The mean is 7 hours.\par\smallskip \textbf{Zoe:} ``Use the median and IQR with a boxplot; the boxplot will keep every individual hour value. '' \textbf{Malik:} ``Report the mean: a typical student works 7 hours, because the mean uses every observation.''\par
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.85\linewidth,
+  height=1.60in,
+  ymin=0, ymax=3, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={Weekly paid-work hours}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.4pt, color=dayblue] coordinates {
+  (2,1)
+  (3,1)
+  (4,1)
+  (4,2)
+  (5,1)
+  (5,2)
+  (6,1)
+  (6,2)
+  (7,1)
+  (28,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{firsttakebox}{FIRST TAKE --- before the videos (5 min)}
+Which report would you send to the principal, or would you revise both? Cite a feature of the data.
+\workspace{0.8in}
+\end{firsttakebox}
+
+\begin{callout}{\IconBook\ TWO TOPICS, ONE DATA STORY}{calloutgreen}
+1.7: Median and IQR resist extremes; mean and SD are more sensitive. Here quartiles are the medians of the two halves.\\ 1.8: A modified boxplot marks values beyond $Q_1-1.5\mathrm{IQR}$ or $Q_3+1.5\mathrm{IQR}$ separately.\\ Whiskers reach the most extreme nonoutliers; the box spans the middle half and can hide repeats and gaps.
+\end{callout}
+
+\newpage
+\textbf{Finish after both topics' videos:}\par\smallskip
+
+\dokbadge{1}~\textbf{(a)} State the median weekly work hours.\par
+\workspace{0.6in}
+
+\dokbadge{2}~\textbf{(b)} Use medians of the lower and upper five values to find $Q_1$, $Q_3$, and IQR. Apply the $1.5\,\mathrm{IQR}$ rule and sketch a modified boxplot, labeling the whiskers and any outlier.\par
+\workspace{1.3in}
+
+\dokbadge{3}~\textbf{(c)} $\star$ In three to five sentences, evaluate both reports and propose a corrected report of typical hours and spread. Use the unusual value to explain your summary choice. Decide whether to keep the boxplot or dotplot, stating one benefit and one information limit of your choice.\par
+\workspace{2.1in}
+
+\begin{sentenceframebox}\raggedright\textbf{Frame:} I would report \blank[1.5in] because \blank[2.6in]; the display cannot establish \blank[2in].\end{sentenceframebox}
+
+\begin{summaryexitbox}{EXIT --- turn this in}
+One claim I would revise after both videos: \hrulefill\par
+\workspace{0.4in}
+\end{summaryexitbox}
+
+\end{document}

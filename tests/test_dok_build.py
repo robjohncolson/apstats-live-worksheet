@@ -73,13 +73,16 @@ def test_teacher_has_key_and_scoring(path: Path):
 def test_public_headers_use_current_ced_numbering(path: Path):
     lesson = _lesson(path)
     ced = lesson["ced2026"]
-    expected = f"Unit {ced['unit']} \\textperiodcentered\\ Topic {ced['topic']}"
+    if lesson.get("worksheets"):
+        expected = bl.ced_topic_label(lesson)
+    else:
+        expected = f"Unit {ced['unit']} \\textperiodcentered\\ Topic {ced['topic']}"
 
     for ed in (bl.emit_student, bl.emit_board, bl.emit_teacher):
         tex = ed(lesson, REGISTRY, SCHEDULE)
         assert expected in tex
 
-        if str(lesson["topic"]) != str(ced["topic"]):
+        if not lesson.get("worksheets") and str(lesson["topic"]) != str(ced["topic"]):
             assert f"Topic {lesson['topic']}" not in tex
 
 
@@ -93,7 +96,10 @@ def test_manifest_includes_current_ced_numbering(tmp_path: Path, monkeypatch):
         lesson = _lesson(path)
         entry = manifest[str(lesson["topic"])]
         assert entry["ced_unit"] == lesson["ced2026"]["unit"]
-        assert entry["ced_topic"] == lesson["ced2026"]["topic"]
+        assert entry["ced_topic"] == lesson["ced2026"].get("topic")
+        if lesson.get("worksheets"):
+            assert entry["topics"] == lesson["topics"]
+            assert entry["worksheets"] == lesson["worksheets"]
 
 
 def test_teacher_allows_long_frq_patterns_to_wrap():
@@ -114,7 +120,11 @@ def test_board_contents(path: Path):
     assert item["first_take"][:30] in tex
     for p in item["parts"]:
         assert p["prompt"][:30] in tex
-    assert lesson["worksheet"] in tex
+    for worksheet in lesson.get("worksheets") or [lesson["worksheet"]]:
+        assert worksheet in tex
+    if lesson.get("worksheets"):
+        assert tex.count(r"\qrcode[") == len(lesson["worksheets"])
+        assert "Watch all videos for both topics" in tex
     assert "landscape" in tex
     if lesson.get("rules_callout"):
         assert lesson["rules_callout"]["title"] not in tex  # rules stay on paper
@@ -204,3 +214,15 @@ def test_tether_lines_remove_html_breaks_and_unsupported_stats_unicode():
     assert "(t*)" in topic_72 and "equals t*" in topic_72
     assert "*p*" not in topic_86
     assert "p-value" in topic_86
+
+
+@pytest.mark.parametrize("key", ["1.4_1.5", "1.7_1.8"])
+def test_group_tether_and_emission(key):
+    lesson = bl.load_lesson(ROOT / "dok/lessons" / (key + ".yaml"))
+    assert bl.tether_lines(lesson["topics"]) == list(dict.fromkeys(
+        line for topic in lesson["topics"] for line in bl.tether_lines(topic)))
+    for emitter in [bl.emit_student, bl.emit_board, bl.emit_teacher]:
+        tex = emitter(lesson, REGISTRY, SCHEDULE)
+        assert "Topics " + "--".join(lesson["topics"]) in tex
+    student = bl.emit_student(lesson, REGISTRY, SCHEDULE)
+    assert "after both topics' videos" in student

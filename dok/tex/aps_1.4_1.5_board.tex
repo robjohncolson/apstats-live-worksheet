@@ -1,0 +1,49 @@
+\documentclass[12pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Unit 1 \textperiodcentered\ Topics 1.4--1.5 (CED 1.4--1.5) \textperiodcentered\ TODAY'S PROBLEM}{One Commute, Two Questions}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose ten students report their usual travel mode and travel time. Both graphs summarize these same students; the individual mode--time links are not shown. Histogram intervals include the left endpoint only.\par\smallskip \textbf{Ari:} ``Bus is the most common mode, so the bus riders must be the students with long trips. '' \textbf{Dev:} ``The histogram answers every question about these commutes; we can drop the mode graph.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[width=0.96\linewidth,height=1.35in,ybar,bar width=16pt,ymin=0,ymax=5,
+ symbolic x coords={Walk,Bus,Car},xtick=data,ytick={0,2,4},ylabel={Students},
+ title={Travel mode},tick label style={font=\scriptsize},label style={font=\scriptsize},title style={font=\small}]
+\addplot[fill=calloutblue,draw=dayblue] coordinates {(Walk,4) (Bus,4) (Car,2)};
+\end{axis}\end{tikzpicture}\par\smallskip
+\begin{tikzpicture}
+\begin{axis}[width=0.96\linewidth,height=1.35in,ybar interval,x tick label as interval=false,bar shift=0pt,xmin=0,xmax=30,
+ ymin=0,ymax=6,xtick={0,10,20,30},ytick={0,2,4,6},xlabel={Travel time (minutes)},ylabel={Students},
+ tick label style={font=\scriptsize},label style={font=\scriptsize}]
+\addplot[fill=calloutblue,draw=dayblue] coordinates {(0,5) (10,2) (20,3) (30,0)};
+\end{axis}\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which report would you send to the principal, or would you revise both? Name one visible feature.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Name the most common travel mode or modes and their counts.
+  \item[\dokbadge{2}~(b)] How many students have trips of at least 10 minutes? Explain how the histogram bars answer this and why they do not give each exact travel time.
+  \item[\dokbadge{3}~(c)] $\star$ In three to five sentences, judge both reports. Choose a display for comparing travel modes and a display for describing travel times. Give one corrected numerical claim and explain what extra information is needed to connect long trips with bus travel.
+\end{description}
+
+\vfill
+\begin{minipage}{0.48\linewidth}\qrcode[height=0.45in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html}\quad \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html}{Today: 1.4 follow-along}\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}\qrcode[height=0.45in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson5_live.html}\quad \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson5_live.html}{Today: 1.5 follow-along}\end{minipage}\hfill
+\textbf{Watch all videos for both topics, then finish (a)--(c). Turn in one sheet.}
+\end{document}

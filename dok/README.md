@@ -31,6 +31,18 @@ slide (1 landscape page), teacher key (≤ 3 pages, E/P/I scoring on part (c)).
 Calibration anchors per NEW unit live in `calibration/unit{n}.json` — read the unit's
 `dok3_anchors` and `not_dok3` before writing part (c).
 
+## Period E Wednesday groups
+
+Group sheets are additive: all individual topic sheets remain available. The schedule's
+`dayGroups.E` declares eligible pairs. Use `topic: 1.4+1.5`, ordered `topics` and
+`worksheets` lists, and the filename slug `1.4_1.5` for YAML, registry, TeX, and PDFs.
+Build with `powershell -NoProfile -File dok/compile.ps1 1.4_1.5`.
+
+Each group has one shared problem and one human-graded E/P/I response, parts covering
+both topics, both video follow-alongs and QR links, and the union of both CED tethers.
+It is never AI-graded or auto-scored. The first two pairs are built; the other eight
+are explicitly listed in `PENDING.md` and the teacher index.
+
 ## Files
 
 | Path | What |

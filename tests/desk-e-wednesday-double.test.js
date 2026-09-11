@@ -135,6 +135,10 @@ describe('group resources and override',()=>{
      s._renderTodayTopics();s._renderTodayTopics();expect(d.querySelectorAll('#donow-today-topics')).toHaveLength(1);
      for(const m of first.group)expect(d.getElementById('donow-today-topics').textContent).toContain(s.cedLabel(m.t).text);
      d.getElementById('donow-today-topics').click();expect(s._lastResourcePanel.inf).toBe(first);
+     s._deskIsTeacher=()=>true;
+     s.showResourcePanel(first,'Sep 16');
+     expect(d.querySelectorAll('a[href="dok/pdf/aps_1.4_1.5_student.pdf"]')).toHaveLength(1);
+     expect(d.querySelectorAll('a[href="dok/pdf/aps_1.4_student.pdf"]')).toHaveLength(0);
    }finally{dom.window.close();}
  });
  it('requires both override keys',()=>{

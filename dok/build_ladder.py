@@ -37,7 +37,7 @@ TUTOR_DIR = ROOT / "ai-tutor"
 PAGES_BASE = "https://robjohncolson.github.io/apstats-live-worksheet/"
 
 SKILL_RE = re.compile(r"^[1-4]\.[A-F]$")
-ID_RE = re.compile(r"^aps-\d+\.\d+-d[123]-\d+$")
+ID_RE = re.compile(r"^aps-\d+\.\d+(?:_\d+\.\d+)*-d[123]-\d+$")
 BANNED_RATIONALE_WORDS = ("hard", "easy", "difficult")
 DEFAULT_SPACE = {"first_take": "1.2in", "a": "0.9in", "b": "1.4in", "c": "2.4in"}
 
@@ -62,7 +62,7 @@ def load_registry() -> dict[str, dict]:
                         f"{path.name} line {lineno}: JSON decode error ({e.msg} at col {e.colno}).\n"
                         f"  first 80 chars: {hint}"
                     ) from e
-                if row.get("topic") != path.stem:
+                if str(row.get("topic", "")).replace("+", "_") != path.stem:
                     raise SystemExit(f"{path.name} line {lineno}: row topic {row.get('topic')!r} must equal the file name")
                 if row["id"] in out:
                     raise SystemExit(f"{path.name} line {lineno}: duplicate id {row['id']}")
@@ -166,12 +166,14 @@ def latex_text(s: str) -> str:
     return rendered
 
 
-def tether_lines(topic: str) -> list[str]:
+def tether_lines(topic: str | list[str]) -> list[str]:
     """The Skill / EU / LO / EK lines from the tutor artifact, LaTeX-escaped.
 
     Tutor files come in three shapes (bullets, bold bullets with nested EKs, and a
     two-column LO | EK table); all are reduced to one flat list of statements.
     """
+    if isinstance(topic, list):
+        return list(dict.fromkeys(line for member in topic for line in tether_lines(member)))
     p = tutor_path(topic)
     if not p.exists():
         return []
@@ -216,6 +218,15 @@ def validate_item(row: dict, skill_codes: set[str]) -> list[str]:
     iid = row.get("id", "?")
     if not ID_RE.match(iid):
         e.append(f"{iid}: id must match aps-{{topic}}-d{{1|2|3}}-{{k}}")
+    topics = row.get("topics") or [row.get("topic")]
+    if "+" in str(row.get("topic", "")):
+        if topics != str(row["topic"]).split("+"):
+            e.append(f"{iid}: topics must match the group key in teaching order")
+        parts = row.get("parts") or []
+        if any(part.get("topic") not in topics for part in parts):
+            e.append(f"{iid}: each part must name a member topic")
+        if parts and parts[-1].get("topic") != topics[-1] and not parts[-1].get("integrates"):
+            e.append(f"{iid}: last part must use the last topic or integrate the group")
     if row.get("dok") not in (1, 2, 3):
         e.append(f"{iid}: dok must be 1, 2 or 3")
     if row.get("role") not in ("focus", "reinforcement"):
@@ -273,7 +284,16 @@ def validate_lesson(lesson: dict, registry: dict) -> list[str]:
             e.append(f"{topic}: focus visual {vis!r} has no visuals block")
     for name, spec in (lesson.get("visuals") or {}).items():
         e.extend(f"{topic}: visual {name}: {msg}" for msg in validate_visual(spec))
-    if not lesson.get("worksheet"):
+    if "+" in topic:
+        topics = lesson.get("topics") or []
+        if topics != topic.split("+") or topics not in load_schedule().get("dayGroups", {}).get("E", []):
+            e.append(f"{topic}: group must match dayGroups.E in teaching order")
+        worksheets = lesson.get("worksheets") or []
+        if len(worksheets) != len(topics):
+            e.append(f"{topic}: one worksheet per member required")
+        if lesson.get("minutes", {}).get("finish", 11) > 10:
+            e.append(f"{topic}: finish must fit ten minutes")
+    if not (lesson.get("worksheet") or lesson.get("worksheets")):
         e.append(f"{topic}: worksheet filename required (board slide link)")
     return e
 
@@ -443,11 +463,19 @@ def bulleted(items: list[str]) -> str:
 
 def ced_topic_label(lesson: dict) -> str:
     ced = lesson.get("ced2026") or {}
+    if lesson.get("worksheets"):
+        old = "--".join([lesson["topics"][0], lesson["topics"][-1]])
+        new = "--".join([ced["topics"][0], ced["topics"][-1]])
+        return f"Unit {ced.get('unit', '?')} \\textperiodcentered\\ Topics {old} (CED {new})"
     return f"Unit {ced.get('unit', '?')} \\textperiodcentered\\ Topic {ced.get('topic', '?')}"
 
 
 def header_line(lesson: dict, schedule: dict) -> str:
     dates = schedule["lessons"].get(str(lesson["topic"]), {}).get("periods", {})
+    if lesson.get("worksheets"):
+        topics = lesson["topics"]
+        dates = {period: schedule["lessons"][topics[0]]["periods"][period]
+                 for period, groups in schedule.get("dayGroups", {}).items() if topics in groups}
     when = " \\textperiodcentered\\ ".join(f"{p}: {d}" for p, d in sorted(dates.items()))
     return (
         f"AP Statistics \\textperiodcentered\\ {ced_topic_label(lesson)}"
@@ -527,16 +555,20 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
             f"\\bankitem{{Optional \\#{k} --- not collected}}{{\\dokbadge{{{r['dok']}}}~{r['stem'].strip()}}}{{}}\n\n"
         )
     parts.append("\\end{document}\n")
-    return "".join(parts)
+    output = "".join(parts)
+    if lesson.get("worksheets"):
+        output = output.replace("before the video", "before the videos").replace("after the video", "after both topics' videos")
+    return output
 
 
 def emit_board(lesson: dict, registry: dict, schedule: dict) -> str:
     item = registry[lesson["focus"]]
-    ws_url = PAGES_BASE + lesson["worksheet"]
+    worksheets = lesson.get("worksheets") or [lesson["worksheet"]]
+    ws_url = PAGES_BASE + worksheets[0]
     part_lines = "".join(
         f"  \\item[\\dokbadge{{{p['dok']}}}~({p['label']})] {p['prompt'].strip()}\n" for p in item["parts"]
     )
-    return (
+    output = (
         "\\documentclass[14pt]{extarticle}\n\\usepackage{preamble}\n"
         "\\geometry{letterpaper, landscape, margin=0.5in}\n\\usepackage{qrcode}\n"
         "\\renewcommand{\\answer}[1]{}\n\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\\pagestyle{empty}\n\n"
@@ -551,10 +583,26 @@ def emit_board(lesson: dict, registry: dict, schedule: dict) -> str:
         f"{item['first_take'].strip()}\n\\end{{firsttakebox}}\n\n"
         "\\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]\n" + part_lines + "\\end{description}\n\n"
         "\\vfill\n\\noindent\\begin{minipage}{0.84\\linewidth}\n"
-        f"\\textbf{{Video + follow-along:}} \\href{{{ws_url}}}{{\\texttt{{\\detokenize{{{lesson['worksheet']}}}}}}} (scan the code)\\par\n"
+        f"\\textbf{{Video + follow-along:}} \\href{{{ws_url}}}{{\\texttt{{\\detokenize{{{worksheets[0]}}}}}}} (scan the code)\\par\n"
         "\\textbf{Finish (a)--(c) after the video. Turn in your sheet.}\n\\end{minipage}\\hfill\n"
         f"\\qrcode[height=0.75in]{{{ws_url}}}\n\n\\end{{document}}\n"
     )
+
+    if lesson.get("worksheets"):
+        output = output.replace("[14pt]", "[12pt]")
+        footer = output.index("\\vfill\n")
+        links = []
+        for topic, worksheet in zip(lesson["topics"], worksheets):
+            url = PAGES_BASE + worksheet
+            links.append(
+                f"\\begin{{minipage}}{{0.48\\linewidth}}\\qrcode[height=0.45in]{{{url}}}\\quad "
+                f"\\href{{{url}}}{{Today: {topic} follow-along}}\\end{{minipage}}\\hfill\n"
+            )
+        output = output[:footer] + "\\vfill\n" + "".join(links) + (
+            "\\textbf{Watch all videos for both topics, then finish (a)--(c). Turn in one sheet.}\n"
+            "\\end{document}\n"
+        )
+    return output
 
 
 def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
@@ -565,12 +613,23 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
     m = lesson["minutes"]
     total = sum(v for v in m.values() if isinstance(v, (int, float)))
     # A YAML `tether:` list (LaTeX-safe lines) overrides the tutor artifact — for topics without one.
-    tether = [str(x) for x in (lesson.get("tether") or [])] or tether_lines(str(lesson["topic"]))
+    tether = [str(x) for x in (lesson.get("tether") or [])] or tether_lines(lesson.get("topics") or str(lesson["topic"]))
     frq_pattern = str(item.get("frq_pattern", "")).replace("-", r"-\allowbreak{}")
+    tether_block = "\\sectionbanner{CED TETHER}\n\n{\\small\n" + (bulleted(tether) if tether else "\\textit{(no tutor artifact for this topic)}\n") + "}\n"
+    extra_packages = ""
+    if lesson.get("topics"):
+        extra_packages = "\\usepackage{multicol}\n"
+        tether_block = (
+            "\\sectionbanner{CED TETHER}\n\\begin{multicols}{2}\n"
+            "{\\footnotesize\\setlength{\\parskip}{0pt}\n"
+            "\\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]\n"
+            + "\n".join("\\item " + line for line in tether)
+            + "\n\\end{itemize}}\n\\end{multicols}\n\\clearpage\n\\small\n"
+        )
     parts = [
-        "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\n",
+        "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n" + extra_packages + "\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\n",
         f"\\daybanner{{{header_line(lesson, schedule)} \\textperiodcentered\\ TEACHER KEY}}{{{lesson['title']}}}\n\n",
-        "\\sectionbanner{CED TETHER}\n\n{\\small\n" + (bulleted(tether) if tether else "\\textit{(no tutor artifact for this topic)}\n") + "}\n",
+        tether_block,
         f"\\textbf{{Essential question:}} {lesson.get('essential_question', '')}\\par\n",
         f"\\textbf{{DOK-3 skill:}} {item.get('skill')} \\textperiodcentered\\ \\textbf{{FRQ pattern:}} {{\\small\\texttt{{{frq_pattern}}}}}\\par\n",
         f"\\textbf{{DOK rationale:}} {item.get('dok_rationale')}\\par\n\n",
@@ -587,7 +646,7 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
         r = registry[rid]
         parts.append(f"\\bankitem{{Optional \\#{k} --- not collected}}{{\\dokbadge{{{r['dok']}}}~{r['stem'].strip()}}}{{}}\n")
         parts.append(f"\\answer{{{(r.get('answers') or {}).get('a', r.get('answer', '(no key)'))}}}\n\n")
-    parts.append("\\clearpage\n\\focusbanner{TODAY'S PROBLEM --- annotated}\n\n")
+    parts.append("\\clearpage\n" + ("\\normalsize\n" if lesson.get("topics") else "") + "\\focusbanner{TODAY'S PROBLEM --- annotated}\n\n")
     parts.append(shared_problem(lesson, item, 0.8))
     parts.append(
         f"\\begin{{firsttakebox}}{{FIRST TAKE ({m.get('first_take', 5)} min)}}\n{item['first_take'].strip()}\\par\n"
@@ -615,7 +674,7 @@ def build(path: Path, editions: tuple[str, ...], registry: dict, schedule: dict)
     emitters = {"student": emit_student, "board": emit_board, "teacher": emit_teacher}
     for ed in editions:
         out = emitters[ed](lesson, registry, schedule)
-        target = TEX_DIR / f"aps_{topic}_{ed}.tex"
+        target = TEX_DIR / f"aps_{topic.replace('+', '_')}_{ed}.tex"
         target.write_text(out, encoding="utf-8", newline="\n")
         print(f"wrote {target.relative_to(ROOT)} ({len(out)} chars)")
 
@@ -635,6 +694,11 @@ def write_manifest(registry: dict) -> None:
             "frq_pattern": item.get("frq_pattern"),
             "worksheet": lesson.get("worksheet"),
         }
+        if lesson.get("worksheets"):
+            out[str(lesson["topic"])].update({
+                "topics": lesson["topics"], "worksheets": lesson["worksheets"],
+                "ced_topics": ced["topics"], "slug": str(lesson["topic"]).replace("+", "_"),
+            })
     (DOK / "manifest.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(f"wrote dok/manifest.json ({len(out)} built)")
 

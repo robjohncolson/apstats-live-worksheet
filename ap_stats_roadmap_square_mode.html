@@ -11137,8 +11137,15 @@ function _resourcePanelEsc(s) {
 // to the Desk's own origin — no Supabase column, works on GH Pages and the Vercel mirror.
 function _dokLadderRowHtml(topicKey) {
     if (!(typeof _deskIsTeacher === 'function' && _deskIsTeacher())) return '';
-    if (!/^\d+\.\d+$/.test(String(topicKey || ''))) return '';
-    var base = 'dok/pdf/aps_' + topicKey + '_';
+    var members=typeof groupTopics==='function'?groupTopics(topicKey):[topicKey];
+    if(!members.length||!members.every(function(topic){return /^\d+\.\d+$/.test(topic);}))return '';
+    var key=members.join('+');
+    // Additive built-sheet inventory; coverage checks it against dok/manifest.json.
+    var builtGroups=['1.4+1.5','1.7+1.8'];
+    if(members.length>1&&!builtGroups.includes(key)){
+        return '<div class="dok-ladder-row">DOK-3 group sheet pending: <a href="dok/index.html#e-wednesday-sheets" target="_blank">'+key+'</a> (teacher only)</div>';
+    }
+    var base = 'dok/pdf/aps_' + key.replace(/\+/g,'_') + '_';
     var link = function (ed, label) {
         return '<a href="' + base + ed + '.pdf" target="_blank" style="color:var(--accent-ink);text-decoration:underline">' + label + '</a>';
     };
@@ -11502,7 +11509,7 @@ function showResourcePanel(inf, dateStr) {
         }
 
         // Teacher-only DOK-3 links (never rendered for students — see _dokLadderRowHtml).
-        lessonHtml += _dokLadderRowHtml(inf.t);
+        if(!dayCell.group)lessonHtml += _dokLadderRowHtml(inf.t);
 
         if (lessonHtml) {
             html += '<div style="margin-bottom:8px"><div class="chicago" style="font-size:10px;margin-bottom:4px">Today\'s Lesson</div>' + lessonHtml + '</div>';
@@ -11510,6 +11517,7 @@ function showResourcePanel(inf, dateStr) {
     }
 
     }
+    if(dayCell.group)html += _dokLadderRowHtml(dayCell);
 
     // Due Today
     if (inf.due) {

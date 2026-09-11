@@ -16,10 +16,10 @@ const datedTopics = Object.entries(schedule.lessons)
 
 const yamlTopics = readdirSync(resolve(ROOT, 'dok', 'lessons'))
   .filter((f) => f.endsWith('.yaml'))
-  .map((f) => f.slice(0, -5));
+  .map((f) => f.slice(0, -5).replaceAll('_', '+'));
 
 const pendingTopics = existsSync(resolve(ROOT, 'dok', 'PENDING.md'))
-  ? [...readFileSync(resolve(ROOT, 'dok', 'PENDING.md'), 'utf8').matchAll(/^\| (\d+\.\d+) \|/gm)].map((m) => m[1])
+  ? [...readFileSync(resolve(ROOT, 'dok', 'PENDING.md'), 'utf8').matchAll(/^\| (\d+\.\d+(?:\+\d+\.\d+)*) \|/gm)].map((m) => m[1])
   : [];
 
 const registry = new Map(
@@ -53,7 +53,7 @@ describe('DOK ladder coverage', () => {
   });
 
   it.each(yamlTopics)('dok/lessons/%s.yaml points at a DOK-3 focus row and real reinforcement ids', (topic) => {
-    const text = readFileSync(resolve(ROOT, 'dok', 'lessons', `${topic}.yaml`), 'utf8');
+    const text = readFileSync(resolve(ROOT, 'dok', 'lessons', `${topic.replaceAll('+','_')}.yaml`), 'utf8');
     expect(yamlScalar(text, 'topic')).toBe(topic);
     const focus = yamlScalar(text, 'focus');
     expect(focus, 'focus is required — every lesson carries a DOK-3 (spec §1.3)').toBeTruthy();
@@ -63,13 +63,37 @@ describe('DOK ladder coverage', () => {
     expect(row.dok).toBe(3);
     expect(row.topic).toBe(topic);
     for (const rid of yamlList(text, 'reinforcement')) expect(registry.has(rid), `reinforcement ${rid}`).toBe(true);
-    expect(yamlScalar(text, 'worksheet')).toMatch(/^u\d+_lesson.+_live\.html$/);
-    expect(existsSync(resolve(ROOT, yamlScalar(text, 'worksheet'))), 'worksheet file exists').toBe(true);
+    const worksheets=topic.includes('+')?yamlList(text,'worksheets').map(s=>s.replace(/^['"]|['"]$/g,'')):[yamlScalar(text,'worksheet')];
+    expect(worksheets).toHaveLength(topic.split('+').length);
+    for(const worksheet of worksheets){
+      expect(worksheet).toMatch(/^u\d+_lesson.+_live\.html$/);
+      expect(existsSync(resolve(ROOT,worksheet)),'worksheet file exists').toBe(true);
+    }
   });
 
   it.each(yamlTopics)('dok/pdf/aps_%s_{student,board,teacher}.pdf are committed', (topic) => {
     for (const ed of ['student', 'board', 'teacher']) {
-      expect(existsSync(resolve(ROOT, 'dok', 'pdf', `aps_${topic}_${ed}.pdf`)), `${ed} pdf`).toBe(true);
+      expect(existsSync(resolve(ROOT, 'dok', 'pdf', `aps_${topic.replaceAll('+','_')}_${ed}.pdf`)), `${ed} pdf`).toBe(true);
     }
+  });
+});
+
+
+describe('E Wednesday additive group coverage',()=>{
+  it('keeps B single, preserves all per-topic sheets, and covers every E group',()=>{
+    expect(schedule.dayGroups.B).toEqual([]);
+    expect(schedule.dayGroups.E).toHaveLength(10);
+    for(const topics of schedule.dayGroups.E){
+      expect(yamlTopics.includes(topics.join('+'))||pendingTopics.includes(topics.join('+'))).toBe(true);
+      for(const topic of topics)expect(yamlTopics).toContain(topic);
+      expect(new Set(topics.map(topic=>schedule.lessons[topic].periods.E)).size).toBe(1);
+    }
+    expect(yamlTopics).toEqual(expect.arrayContaining(['1.4+1.5','1.7+1.8']));
+  });
+  it('the Desk built-group inventory matches the additive manifest',()=>{
+    const manifest=JSON.parse(readFileSync(resolve(ROOT,'dok/manifest.json'),'utf8'));
+    const desk=readFileSync(resolve(ROOT,'ap_stats_roadmap_square_mode.html'),'utf8');
+    const inventory=desk.match(/var builtGroups=\[([^\]]+)\]/)[1].match(/\d+\.\d+\+\d+\.\d+/g);
+    expect(inventory).toEqual(Object.keys(manifest).filter(key=>key.includes('+')));
   });
 });

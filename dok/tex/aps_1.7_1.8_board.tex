@@ -1,0 +1,58 @@
+\documentclass[12pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Unit 1 \textperiodcentered\ Topics 1.7--1.8 (CED 1.7--1.8) \textperiodcentered\ TODAY'S PROBLEM}{Typical Hours, Exceptional Week}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+Suppose ten students report weekly paid-work hours: 2, 3, 4, 4, 5, 5, 6, 6, 7, 28. The mean is 7 hours.\par\smallskip \textbf{Zoe:} ``Use the median and IQR with a boxplot; the boxplot will keep every individual hour value. '' \textbf{Malik:} ``Report the mean: a typical student works 7 hours, because the mean uses every observation.''\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.85\linewidth,
+  height=1.60in,
+  ymin=0, ymax=3, ytick=\empty, axis y line=none, axis x line=bottom,
+  xlabel={Weekly paid-work hours}, tick label style={font=\small}, label style={font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.4pt, color=dayblue] coordinates {
+  (2,1)
+  (3,1)
+  (4,1)
+  (4,2)
+  (5,1)
+  (5,2)
+  (6,1)
+  (6,2)
+  (7,1)
+  (28,1)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Which report would you send to the principal, or would you revise both? Cite a feature of the data.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] State the median weekly work hours.
+  \item[\dokbadge{2}~(b)] Use medians of the lower and upper five values to find $Q_1$, $Q_3$, and IQR. Apply the $1.5\,\mathrm{IQR}$ rule and sketch a modified boxplot, labeling the whiskers and any outlier.
+  \item[\dokbadge{3}~(c)] $\star$ In three to five sentences, evaluate both reports and propose a corrected report of typical hours and spread. Use the unusual value to explain your summary choice. Decide whether to keep the boxplot or dotplot, stating one benefit and one information limit of your choice.
+\end{description}
+
+\vfill
+\begin{minipage}{0.48\linewidth}\qrcode[height=0.45in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson7_live.html}\quad \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson7_live.html}{Today: 1.7 follow-along}\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}\qrcode[height=0.45in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson8_live.html}\quad \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson8_live.html}{Today: 1.8 follow-along}\end{minipage}\hfill
+\textbf{Watch all videos for both topics, then finish (a)--(c). Turn in one sheet.}
+\end{document}
