@@ -4960,6 +4960,12 @@ function _hydrateMarksFromDonow(data) {
 // status dot -- that is teacher-side "materials posted", not student work.
 function localLessonState(topic, marks) {
   if (!topic || !marks || typeof marks !== 'object') return '';
+  const members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
+  if(members.length>1){
+    const states=members.map(member=>localLessonState(member,marks));
+    if(states.every(state=>state==='done'))return 'done';
+    return states.some(Boolean)?'partial':'';
+  }
   const prefix = topic + '|';
   let anyVisit = false, anyDone = false;
   for (const key in marks) {
@@ -5191,12 +5197,16 @@ async function _confirmOverrideGate() {
       if (btn) btn.disabled = false;
       return;
     }
+    var members=typeof groupTopics==='function'?groupTopics(lessonKey):[lessonKey];
+    for(const member of members){
+    var saved=JSON.parse(sessionStorage.getItem('apstats_view_as_lesson_unlocks')||'[]');
+    if(Array.isArray(saved)&&saved.includes(member))continue;
     var resp = await fetch(base + '/teacher/lesson-unlock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({
         studentUsername: ctx.username,
-        lessonKey: lessonKey,
+        lessonKey: member,
         reason: reason
       })
     });
@@ -5211,16 +5221,20 @@ async function _confirmOverrideGate() {
       try {
         var raw = sessionStorage.getItem('apstats_view_as_lesson_unlocks') || '[]';
         var arr = JSON.parse(raw);
-        if (Array.isArray(arr) && arr.indexOf(lessonKey) < 0) {
-          arr.push(lessonKey);
+        if (Array.isArray(arr) && arr.indexOf(member) < 0) {
+          arr.push(member);
           sessionStorage.setItem('apstats_view_as_lesson_unlocks', JSON.stringify(arr));
         }
       } catch (_) {}
-      setTimeout(_hideOverrideGateModal, 1500);
+
     } else {
       if (statusEl) statusEl.textContent = 'Error: ' + ((data && data.error) || ('HTTP ' + (resp && resp.status)));
       if (btn) btn.disabled = false;
+      return;
     }
+    }
+    if(statusEl)statusEl.textContent='Override saved.';
+    setTimeout(_hideOverrideGateModal,1500);
   } catch (err) {
     if (statusEl) statusEl.textContent = 'Network error: ' + ((err && err.message) || 'failed');
     if (btn) btn.disabled = false;
@@ -6209,6 +6223,8 @@ var _signinWallActive = false;
 function _isLessonComplete(topic, marks) {
   try {
     if (!topic) return true;
+    var members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
+    if(members.length>1)return members.every(function(member){return _isLessonComplete(member,marks);});
     // Granularity bridge (cross-portion): a combined "A+B" lesson — the fall
     // period-E pacing (e.g. "1.2+1.3") — counts as complete when its OWN combined
     // artifacts are done OR every individual part is. So a summer student's
@@ -6268,7 +6284,7 @@ function _readLessonUnlocks() {
 function _isTopicLessonUnlocked(topic) {
   if (!topic) return false;
   var unlocks = _readLessonUnlocks();
-  return unlocks.indexOf(topic) >= 0;
+  return (typeof groupTopics==='function'?groupTopics(topic):[topic]).every(function(member){return unlocks.indexOf(member)>=0;});
 }
 
 async function _refreshLessonUnlocks() {
@@ -7788,6 +7804,12 @@ function donowLessonCovers(L, T) {
 // DN3b — roll a cell topic up to one of "", "partial", "done"
 // (worst-wins across all matching /donow lessons; "" = none/no-data → grey).
 function donowCellState(topic) {
+  var members=typeof groupTopics==='function'?groupTopics(topic):[topic];
+  if(members.length>1){
+    var states=members.map(donowCellState);
+    if(states.every(function(state){return state==='done';}))return 'done';
+    return states.some(Boolean)?'partial':'';
+  }
   if (!_donowData || !Array.isArray(_donowData.lessons)) return '';
   var seen = false, anyPartial = false, anyDone = false, anyNotDone = false;
   for (var i = 0; i < _donowData.lessons.length; i++) {
@@ -7995,7 +8017,7 @@ function maybeBumpThenOpen(inf, ds) {
         if (localLessonState(nt.lesson, getStudentMarks()) === 'done') gap = false;
       } catch (_) {}
     }
-    var isDoNow = nt && topic && donowLessonCovers(nt.lesson, topic);
+    var isDoNow = nt && topic && (typeof groupTopics==='function'?groupTopics(inf):[topic]).some(function(member){return donowLessonCovers(nt.lesson,member);});
     var ov = document.getElementById('donow-bump-overlay');
 
     if (!gap || _bumpAcked || isDoNow || !ov) { open(); return; }
@@ -9276,6 +9298,7 @@ async function renderDoNow() {
   // Desk-link step 3: refresh the calculator-skill chip on every pass — the
   // chip only exists when today's lesson has a mapped trainer skill.
   try { _renderTi84SkillBtn(); } catch (_) {}
+  if(typeof _renderTodayTopics==='function')_renderTodayTopics();
 
   // ICON_MOTION -- which app icon to breathe for the next task (curriculum work
   // lives in the Quiz app; appForNextTask refines this if the manifest grows).
@@ -9926,9 +9949,12 @@ const SCHEDULE_DEFS = {
     //   node scripts/build-lesson-schedule-sy2627.mjs
     examDate: [2027, 4, 11],
     range: { start: [2026,8,2], end: [2027,4,15] },
+    earlyRelease: [[2026,8,30],[2026,9,21],[2026,10,18],[2026,10,25],
+      [2026,11,9],[2026,11,23],[2027,0,13],[2027,1,10],[2027,2,3],
+      [2027,2,17],[2027,3,14],[2027,4,19]],
     periods: {
       B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, schoologyCourse:null },
-      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, schoologyCourse:null }
+      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,14], schoologyCourse:null }
     },
     daysOff: [
       [[2026,8,4]],                    // School Closed (Fri Sep 4)
@@ -9964,6 +9990,29 @@ function computeDefaultYear(){
 }
 let cYear = computeDefaultYear();
 
+// Explicit groups use individual OLD keys. Archived joined strings keep their legacy behavior.
+function groupTopics(cell){
+  if(!cell)return [];
+  if(typeof cell==='string'){
+    if((typeof cYear==='undefined'||cYear==='SY26-27')&&typeof S!=='undefined'){
+      for(const row of S){
+        for(const candidate of [row[3],row[4]]){
+          if(candidate&&candidate.t===cell&&Array.isArray(candidate.group))return groupTopics(candidate);
+        }
+      }
+    }
+    return [cell];
+  }
+  if(Array.isArray(cell.group))return cell.group.flatMap(groupTopics);
+  return cell.t?[cell.t]:[];
+}
+
+function groupLabel(cell){
+  const labels=groupTopics(cell).map(topic=>cedLabel(topic));
+  return {text:labels.map(label=>label.text).join(' + '),unit:labels[0]&&labels[0].unit,
+    bonus:labels.length>0&&labels.every(label=>label.bonus)};
+}
+
 function dateFromArr(a){return new Date(a[0],a[1],a[2])}
 
 function buildOffSet(daysOff){
@@ -9987,6 +10036,7 @@ function enumWeekdays(startArr,endArr){
 
 function generateSchedule(def){
   const offSet=buildOffSet(def.daysOff);
+  const earlyRelease=new Set((def.earlyRelease||[]).map(day=>day.join('-')));
   const allDays=enumWeekdays(def.range.start,def.range.end);
   const queues={};
   for(const pid in def.periods) queues[pid]=[...def.pacing[pid]];
@@ -10001,7 +10051,21 @@ function generateSchedule(def){
     for(const pid in def.periods){
       const pDef=def.periods[pid];
       if(!pDef.meetsDays.includes(dow)) cells[pid]=NC;
-      else if(queues[pid].length>0){const tp=queues[pid].shift();const cell=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false);if(tp.kind){cell.kind=tp.kind;if(tp.admin)cell.admin=tp.admin;if(tp.part)cell.part=tp.part}cells[pid]=cell}
+      else if(queues[pid].length>0){
+        const tp=queues[pid].shift();
+        const cell=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false);
+        if(tp.kind){cell.kind=tp.kind;if(tp.admin)cell.admin=tp.admin;if(tp.part)cell.part=tp.part}
+        const next=queues[pid][0];
+        const doubleDay=pid==='E'&&dow===3&&pDef.doubleDay===dow
+          &&pDef.doubleFrom&&dt>=dateFromArr(pDef.doubleFrom)&&!earlyRelease.has(dk);
+        if(doubleDay&&!tp.kind&&tp.u>0&&next&&!next.kind&&next.u===tp.u){
+          queues[pid].shift();
+          const second=d(next.t,next.n,next.u,next.due||"",next.as||"",next.db||false);
+          const group=d(cell.t+'+'+second.t,cell.n+' + '+second.n,cell.u,'','',true);
+          group.group=[cell,second];
+          cells[pid]=group;
+        }else cells[pid]=cell;
+      }
       else cells[pid]=NC;
     }
     result.push([...da,cells.B||NC,cells.E||NC]);
@@ -11124,7 +11188,7 @@ function showResourcePanel(inf, dateStr) {
     } else if (inf.kind) {
         header = inf.n;
     } else {
-        inf.ced = cedLabel(inf.t);
+        inf.ced = inf.group ? groupLabel(inf) : cedLabel(inf.t);
         header = inf.ced.text;
         if (inf.ced.unit) header += ' \u2014 CED Unit ' + inf.ced.unit;
         if (_m && cedTeacherBridgeAllowed()) {
@@ -11139,6 +11203,13 @@ function showResourcePanel(inf, dateStr) {
 
     let html = '';
 
+    // Each member retains its own resource and progress keys.
+    const dayCell=inf;
+    for(const member of (dayCell.group||[dayCell])){
+      const inf=member;
+      const topicIds=lookupTopic(inf.t);
+      const ids=Array.isArray(topicIds)?topicIds:(topicIds?[topicIds]:[]);
+      const _cedBonus=!!(typeof REGISTRY!=='undefined'&&REGISTRY.lessons&&REGISTRY.lessons[inf.t]&&REGISTRY.lessons[inf.t].ced2026&&REGISTRY.lessons[inf.t].ced2026.status==='bonus');
     // Today's Lesson
     if (ids.length > 0) {
         // topic id in dot format for student_progress (e.g. "1.7", or a
@@ -11406,10 +11477,11 @@ function showResourcePanel(inf, dateStr) {
         // button that would always 404. W1: hide entirely when not in the key set
         // (never show a control that only reports "not available yet").
         // PC tutor sits alongside only when the per-lesson tutor is shown.
+        var _tutorSuffix=dayCell.group?'-'+_stuTopicId.replace('.', '-') : '';
         var _aitm = /^(\d+)\.(\d+)$/.exec(inf.t || '');
         if (_aitm && AI_TUTOR_LESSON_KEYS.has(inf.t)) {
-            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPrompt(\'' + _aitm[1] + '\',\'' + _aitm[2] + '\')">\u{1F916} Tutor prompt \u{2014} copy to clipboard</button> <span id="ai-tutor-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
-            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPromptPc(\'' + _aitm[1] + '\')">\u{1F916} Unit ' + _aitm[1] + ' PC tutor \u{2014} copy to clipboard</button> <span id="ai-tutor-pc-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
+            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPrompt(\'' + _aitm[1] + '\',\'' + _aitm[2] + '\',\'ai-tutor-status' + _tutorSuffix + '\')">\u{1F916} Tutor prompt \u{2014} copy to clipboard</button> <span id="ai-tutor-status' + _tutorSuffix + '" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
+            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPromptPc(\'' + _aitm[1] + '\',\'ai-tutor-pc-status' + _tutorSuffix + '\')">\u{1F916} Unit ' + _aitm[1] + ' PC tutor \u{2014} copy to clipboard</button> <span id="ai-tutor-pc-status' + _tutorSuffix + '" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
         }
 
         var _rpAll = getAllRegistryEntries(inf.t);
@@ -11435,6 +11507,8 @@ function showResourcePanel(inf, dateStr) {
         if (lessonHtml) {
             html += '<div style="margin-bottom:8px"><div class="chicago" style="font-size:10px;margin-bottom:4px">Today\'s Lesson</div>' + lessonHtml + '</div>';
         }
+    }
+
     }
 
     // Due Today
@@ -18054,7 +18128,7 @@ function _lessonDateMap() {
             var inf = e[colIdx];
             if (!inf || typeof inf !== 'object' || !inf.t) continue;  // OFF/NC/EX/PO/R tokens
             var dt = new Date(e[0], e[1], e[2]);
-            var parts = String(inf.t).split('+');
+            var parts = typeof groupTopics==='function'&&inf.group ? groupTopics(inf) : String(inf.t).split('+');
             for (var p = 0; p < parts.length; p++) {
                 var key = parts[p].trim();
                 if (key && !map[key]) map[key] = dt;
@@ -18492,17 +18566,17 @@ async function _copyTutorPromptByPath(path, statusElId) {
 
 // Per-lesson tutor prompt (ai-tutor/u{U}_l{L}.md). XSS-safe: unit/lesson
 // arrive as regex-captured numeric groups from the showResourcePanel branch.
-async function copyTutorPrompt(unit, lesson) {
+async function copyTutorPrompt(unit, lesson, statusId) {
     var path = 'ai-tutor/u' + unit + '_l' + lesson + '.md';
-    await _copyTutorPromptByPath(path, 'ai-tutor-status');
+    await _copyTutorPromptByPath(path, statusId || 'ai-tutor-status');
 }
 
 // Phase 5.1: per-unit Progress Check tutor prompt (ai-tutor/u{U}_pc.md).
 // Rendered alongside the lesson button on every lesson tile; the unit comes
 // from the same regex capture so the same XSS-safety argument holds.
-async function copyTutorPromptPc(unit) {
+async function copyTutorPromptPc(unit, statusId) {
     var path = 'ai-tutor/u' + unit + '_pc.md';
-    await _copyTutorPromptByPath(path, 'ai-tutor-pc-status');
+    await _copyTutorPromptByPath(path, statusId || 'ai-tutor-pc-status');
 }
 
 /* ═══ MAC OS UI SOUND EFFECTS ═══ */
@@ -21952,8 +22026,8 @@ try {
 } catch (_) { /* no fetch (tests) — unit fallback */ }
 
 function _ti84TodayTopic() {
-    var t = _todayLessonInf && _todayLessonInf.t;
-    return (t && _ti84LessonMap && _ti84LessonMap[t]) ? t : null;
+    var topics=typeof groupTopics==='function'?groupTopics(_todayLessonInf):[_todayLessonInf&&_todayLessonInf.t];
+    return topics.find(function(topic){return topic&&_ti84LessonMap&&_ti84LessonMap[topic];})||null;
 }
 
 // "Today's calculator skill" chip on the Do-Now card — present ONLY when
@@ -23436,8 +23510,8 @@ function cls(i){
     if(i.kind==='baseline')return"cell-baseline";
     if(i.t===R)return"cell-rev";
     if(typeof cYear==='undefined'||cYear==='SY26-27'){
-        i.ced=cedLabel(i.t);
-        return"cell-"+cedUnitClass(i.t);
+        i.ced=i.group?groupLabel(i):cedLabel(i.t);
+        return"cell-"+cedUnitClass(i.group?groupTopics(i)[0]:i.t);
     }
     return"cell-u"+i.u;
 }
@@ -23454,7 +23528,7 @@ function htm(i,ds){
     if(i.t===R)return`<div class="dn">${ds}</div><div class="tl">Review</div><div class="tt">${i.n}</div>`;
     const doubleBadge=i.db?'<span class="dbl">2x</span>':'';
     if(typeof cYear==='undefined'||cYear==='SY26-27'){
-        i.ced=cedLabel(i.t);
+        i.ced=i.group?groupLabel(i):cedLabel(i.t);
         return`<div class="dn">${ds}</div><div class="tl">${_resourcePanelEsc(i.ced.text)}</div>`+doubleBadge;
     }
     return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+doubleBadge;
@@ -23475,15 +23549,15 @@ function cellAria(i, ds){
     if(i.kind==='baseline') return ds + ', Unit ' + i.u + ' Baseline — no stakes, best score kept';
     const newLabels = typeof cYear==='undefined'||cYear==='SY26-27';
     let label = (i.t===R) ? ('Review: ' + (i.n||'')) : (i.t + ' ' + (i.n||''));
-    if(newLabels&&i.t!==R){i.ced=cedLabel(i.t);label=i.ced.text;}
+    if(newLabels&&i.t!==R){i.ced=i.group?groupLabel(i):cedLabel(i.t);label=i.ced.text;}
     let parts = [ds, label.trim()];
     if(i.due) parts.push('due ' + (newLabels ? cedDisplayText(i.due) : i.due));
     if(i.db) parts.push('double topic day');
     // Resource readiness — mirror sTip's status line when the registry has the topic.
     try {
         if(typeof getRegistryEntry==='function' && i.t){
-            const re = getRegistryEntry(i.t);
-            if(re && re.status) parts.push('status ' + re.status);
+            const keys=i.group?groupTopics(i):[i.t];
+            for(const key of keys){const re=getRegistryEntry(key);if(re&&re.status)parts.push('status '+re.status);}
         }
     } catch(_) {}
     return parts.join('. ');
@@ -23538,7 +23612,7 @@ function _summerWeeks() {
   var nameByTopic = {};
   for (var si = 0; si < S.length; si++) {
     var row = S[si] || [];
-    [row[3], row[4]].forEach(function (inf) {
+    [row[3], row[4]].flatMap(function(inf){return inf&&inf.group?inf.group:[inf];}).forEach(function (inf) {
       // Summer Foundations view: strip the school-year "→ new topic" CED arrow so
       // summer cells read plainly (e.g. "1.10 · The Normal Distribution"), since the
       // summer packet is foundations, not a CED unit. School-year tiles keep the tag.
@@ -23608,6 +23682,16 @@ function rCal(){
         currentWeek.push(e);
     }
     if (currentWeek.length) W.push({ m: weekMonday, d: currentWeek });
+    // Today's lesson must survive paging away from today's week.
+    _todayLessonInf=null;_todayLessonDS='';
+    for(const row of S){
+      if(!eq(new Date(row[0],row[1],row[2]),t))continue;
+      const todayCell=cP==='B'?row[3]:row[4];
+      if(todayCell&&typeof todayCell==='object'){
+        _todayLessonInf=todayCell;_todayLessonDS=MN[row[1]]+' '+row[2];
+      }
+    }
+    if(typeof _renderTodayTopics==='function')_renderTodayTopics();
     // ── 2. Weave the summer-prep weeks in FRONT of the school-year weeks ──
     // ☀️ Weave the summer-prep weeks in FRONT of the school-year weeks during
     // summer (today < firstDayOfSchool). They're real week rows, so the focus
@@ -23643,7 +23727,7 @@ function rCal(){
             if (!!_wkr._summer !== !!wantSummer) continue;     // only scan the right track
             for (var di = 0; di < _wkr.d.length; di++) {
                 var inf2 = (cP === 'B') ? _wkr.d[di][3] : _wkr.d[di][4];
-                if (inf2 && typeof inf2 === 'object' && inf2.t === topic) return wi;
+                if (inf2 && typeof inf2 === 'object' && (inf2.t === topic || (inf2.group&&groupTopics(inf2).includes(topic)))) return wi;
             }
         }
         return -1;
@@ -23902,13 +23986,20 @@ function rCD(){
 function _computePace(topics, marks, sCells, todayTs, period){
     const isLesson = function(t){ return typeof t === 'string' && /^\d+\.\d+/.test(t); };
     const seen = {}, lessons = [];
-    for(const tp of (topics||[])){ if(isLesson(tp) && !seen[tp]){ seen[tp]=1; lessons.push(tp); } }
+    for(const day of (topics||[])){
+      for(const tp of (typeof groupTopics==='function'?groupTopics(day):[day])){
+        if(isLesson(tp)&&!seen[tp]){seen[tp]=1;lessons.push(tp);}
+      }
+    }
     let done = 0;
     for(const tp of lessons){ if(localLessonState(tp, marks)==='done') done++; }
     const seenE = {}; let expected = 0;
     for(const e of (sCells||[])){ const inf = period==='B' ? e[3] : e[4];
-        if(inf && typeof inf==='object' && isLesson(inf.t) && !seenE[inf.t]){ seenE[inf.t]=1;
-            if(+new Date(e[0],e[1],e[2]) <= todayTs) expected++; } }
+        if(!inf||typeof inf!=='object')continue;
+        for(const tp of (inf.group?groupTopics(inf):[inf.t])){
+          if(isLesson(tp)&&!seenE[tp]){seenE[tp]=1;if(+new Date(e[0],e[1],e[2])<=todayTs)expected++;}
+        }
+    }
     return { done: done, total: lessons.length, expected: expected };
 }
 function rProg(){
@@ -23919,14 +24010,15 @@ function rProg(){
         if(!inf||inf===OFF||inf===EX||inf===PO||inf===NC)continue;
         let u=inf.t===R?"Rev":"U"+inf.u;
         if(newLabels&&inf.t!==R&&!inf.kind){
-            inf.ced=cedLabel(inf.t);
+            inf.ced=inf.group?groupLabel(inf):cedLabel(inf.t);
             u=inf.ced.bonus?'★':(inf.ced.unit?'U'+inf.ced.unit:null);
         }
         if((inf.t===R&&inf.u===0)||inf.u||(newLabels&&inf.ced&&inf.ced.bonus)){
-            if(u)ut[u]=(ut[u]||0)+1;
-            tt++;
+            const count=inf.group?groupTopics(inf).length:1;
+            if(u)ut[u]=(ut[u]||0)+count;
+            tt+=count;
             const dt=new Date(e[0],e[1],e[2]);
-            if(dt<=t){if(u)ud[u]=(ud[u]||0)+1;ds++;}
+            if(dt<=t){if(u)ud[u]=(ud[u]||0)+count;ds+=count;}
         }
     }
     const def=SCHEDULE_DEFS[cYear];
@@ -23993,7 +24085,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(newLabels&&inf.t!==R){
             if(inf.kind)label=inf.n;
             else{
-                inf.ced=cedLabel(inf.t);
+                inf.ced=inf.group?groupLabel(inf):cedLabel(inf.t);
                 label=inf.ced.text;
                 if(cedTeacherBridgeAllowed())label+=' (old '+inf.t+')';
             }
@@ -24002,7 +24094,8 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(inf.due)h+=`<div class="th">Due: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.due):inf.due)}</div>`;
         if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
-        const re=getRegistryEntry(inf.t);
+        const keys=inf.group?groupTopics(inf):[inf.t];
+        const re=keys.map(getRegistryEntry).find(Boolean);
         if(re){
             // The tooltip FOLLOWS the cursor (mTip) and is pointer-events:none, so any
             // embedded link is unclickable. Just show how to open the lesson. (The old
@@ -24012,7 +24105,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
             h+='<div class="th" style="color:#2b6cb0">Click to open</div>';
             // (Removed s14: the registry Ready/Partial/Pending "readiness" line — that was
             // teacher material-tracking and contradicts the student progress glyphs.)
-            var _allE=getAllRegistryEntries(inf.t);
+            var _allE=keys.flatMap(getAllRegistryEntries);
             var _syncStates=[];
             for(var _i=0;_i<_allE.length;_i++){var _ep=_allE[_i].periods&&_allE[_i].periods[cP];
                 if(_ep&&_ep.syncStatus)_syncStates.push(_ep.syncStatus);
@@ -24106,6 +24199,16 @@ async function _fetchPollArchive() {
 // synthetic cell click, which would re-enter the calendar's lock-dialog /
 // Do-Now-bump guards and could stop a synced green-light short (Codex F3
 // review, MAJOR). Never autoplays (browser policy) and never throws.
+function _renderTodayTopics(){
+  var host=document.querySelector('#donow-card .donow-body');
+  if(!host)return;
+  var line=document.getElementById('donow-today-topics');
+  if(!_todayLessonInf||!_todayLessonInf.group){if(line)line.remove();return;}
+  if(!line){line=document.createElement('button');line.id='donow-today-topics';line.type='button';host.appendChild(line);}
+  line.textContent='Due today: '+groupLabel(_todayLessonInf).text;
+  line.onclick=_focusTodayLessonVideo;
+}
+
 function _focusTodayLessonVideo() {
   try {
     if (!_todayLessonInf || typeof showResourcePanel !== 'function') return;
