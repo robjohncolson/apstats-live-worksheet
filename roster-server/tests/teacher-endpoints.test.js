@@ -750,3 +750,60 @@ describe('GET /teacher/student/:studentId/poll-archive', () => {
     expect(r.body.error).toContain('poll_archive not provisioned');
   });
 });
+
+
+describe('teacher skill evidence', () => {
+  const path = '/teacher/student/stu_abc123/recent?skill=1.A';
+  const headers = { 'x-teacher-secret': TEACHER };
+  it('requires teacher auth and refuses student tokens', async () => {
+    ({ server: srv } = await startServer({ roster: [FIXTURE_STUDENT] }));
+    expect((await srv.get(path)).status).toBe(401);
+    expect((await srv.get(path, { Authorization: 'Bearer ' + signToken(FIXTURE_STUDENT.student_id) })).status).toBe(401);
+  });
+  it('includes every contributing attempt beyond 100 recent rows, matching the diagnostic exactly', async () => {
+    const sid = FIXTURE_STUDENT.student_id;
+    const rows = [
+      makeRow(sid, 'U1-L2-Q01', 'B', { recorded_at: '2026-09-01T00:00:00Z' }),
+      makeRow(sid, 'U1-L2-Q01', 'A', { attempt: 2, recorded_at: '2026-09-02T00:00:00Z' }),
+      makeRow(sid, 'WS-U1L1-exitTicket', 'Saved explanation', { source: 'frq', score: .5 }),
+      makeRow(sid, 'WS-U1L1-exitTicket', 'Ungraded', { source: 'frq', score: null }),
+      makeRow(sid, 'WS-U1L1-exitTicket', 'Plain worksheet', { source: 'worksheet', score: 1 }),
+      ...Array.from({ length: 110 }, () => makeRow(sid, 'U2-L1-Q01', 'A')),
+    ];
+    const key = { answerKey: { ...FIXTURE_ANSWER_KEY.answerKey, 'U1-L2-Q01': { answerKey: 'B' } } };
+    const map = { 'U1-L2-Q01': { skill: '1.A' }, 'WS-U1L1-exitTicket': { skill: '1.A' }, 'U2-L1-Q01': { skill: '2.B' } };
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT], ledger: { [sid]: rows }, loadAnswerKey: async () => key, loadSkillMap: async () => map });
+    srv = ctx.server;
+    const { body, status } = await srv.get(path + '&limit=1', headers);
+    expect(status).toBe(200);
+    expect(body.submissions).toHaveLength(3);
+    expect(body.submissions.map(r => r.correct)).toEqual([true, false, true]);
+    expect(body.submissions[0].question.prompt).toContain('roller coasters');
+    expect(body.submissions[0].question.attachments.choices).toHaveLength(5);
+    expect(body.submissions[2].question.prompt).toContain('sleep');
+    expect(body.submissions[2].response).toBe('Saved explanation');
+    const { computeMastery } = await import('../mastery.js');
+    expect(body.summary).toEqual(computeMastery(rows, key.answerKey, map, realBkt).skills['1.A']);
+    expect(ctx.ledgerDb._store._written).toBeUndefined();
+  });
+  it('keeps correct-only tentative flags and explicitly returns missing question text', async () => {
+    const sid = FIXTURE_STUDENT.student_id;
+    ({ server: srv } = await startServer({ roster: [FIXTURE_STUDENT], ledger: { [sid]: [makeRow(sid, 'U1-L1-Q01', 'B')] } }));
+    const { body } = await srv.get(path, headers);
+    expect(body.flagged).toBe(true);
+    expect(body.summary).toEqual({ observations: 1, correct: 1, pKnow: .607 });
+    expect(body.submissions[0].question).toBeNull();
+  });
+  it('distinguishes unavailable inputs from no evidence and rejects malformed skills', async () => {
+    ({ server: srv } = await startServer({ roster: [FIXTURE_STUDENT], loadSkillMap: async () => null }));
+    expect((await srv.get(path, headers)).status).toBe(503);
+    expect((await srv.get(path.replace('1.A', '%3Cimg%3E'), headers)).status).toBe(400);
+  });
+  it('returns an empty evidence view for an unobserved skill', async () => {
+    ({ server: srv } = await startServer({ roster: [FIXTURE_STUDENT] }));
+    const { body } = await srv.get(path, headers);
+    expect(body.submissions).toEqual([]);
+    expect(body.summary.observations).toBe(0);
+    expect(body.flagged).toBe(false);
+  });
+});

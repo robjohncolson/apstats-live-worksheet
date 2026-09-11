@@ -2640,7 +2640,7 @@
                 ? count + ' graded answer' + (count === 1 ? '' : 's') + '; ' + evidence.correct + ' counted correct'
                 : 'Evidence count unavailable';
               if (typeof count === 'number' && count < 3) detail += '; limited evidence; check another answer';
-              return '<span class="pill">' + studentNameHtml(u) + '<span class="skill-evidence">' + escHtml(detail) + '</span></span>';
+              return '<span class="pill">' + studentNameHtml(u, r.skill) + '<span class="skill-evidence">' + escHtml(detail) + '</span></span>';
             }).join('')
           : '<span class="none">No students with graded evidence are currently flagged for review.</span>';
         return '<details class="triage-row">' +
@@ -3714,12 +3714,12 @@
     }
 
     // Every rendered name carries identity, never a display-name lookup (names can repeat).
-    function studentNameHtml(stub) {
+    function studentNameHtml(stub, skill) {
       stub = stub || {};
       return '<button type="button" class="student-name" data-student-id="' + escHtml(stub.studentId || stub.student_id || '') +
         '" data-username="' + escHtml(stub.username || stub.login_username || '') +
         '" data-real-name="' + escHtml(stub.realName || stub.real_name || '') +
-        '" data-section="' + escHtml(stub.section || '') + '">' +
+        '" data-section="' + escHtml(stub.section || '') + '" data-skill="' + escHtml(skill || '') + '">' +
         escHtml(stub.realName || stub.real_name || stub.username || stub.login_username || stub.studentId || stub.student_id || 'Student') + '</button>';
     }
     function studentNameElement(stub) {
@@ -3741,7 +3741,7 @@
           if (_payoutSealing) return;
           _payoutClosePreview();
         }
-        openTscDrawer(stub);
+        openTscDrawer(stub, button.dataset.skill);
       }
       else showInfo("Load this student's section to open their account.");
     }, true);
@@ -3850,7 +3850,7 @@
       if (btn) btn.addEventListener('click', _inboxMarkRead);
     })();
 
-    function openTscDrawer(stub) {
+    function openTscDrawer(stub, skill) {
       var drawer = $('tsc-drawer');
       if (!drawer) return;
 
@@ -3893,7 +3893,7 @@
 
       drawer.setAttribute('aria-hidden', 'false');
       drawer.classList.add('tsc-open');
-      if (window.teacherWorkspace) window.teacherWorkspace.openStudent(stub);
+      if (window.teacherWorkspace) window.teacherWorkspace.openStudent(stub, skill);
 
       // Fetch grade + recent in parallel. Codex MAJOR fold: allSettled so a
       // failure of one pane doesn't wipe the other's successful payload.
@@ -4374,6 +4374,9 @@
     // Render session status on page load (after roster-client.js has run).
     renderSessionStatus();
   </script>
+  <script src="lib/chart.min.js"></script>
+  <script src="lib/chartjs-plugin-datalabels.min.js"></script>
+  <script src="lib/curriculum-charts.js"></script>
   <script src="teacher-workspace.js"></script>
 </body>
 </html>

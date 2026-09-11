@@ -123,3 +123,55 @@ describe('integrated teacher workspace', () => {
     expect(desk).toContain("function openNightlyReview() {\n    openTeacherTools('recent');");
   });
 });
+
+
+describe('skill evidence navigation', () => {
+  function evidence(skill, answer = '<img src=x onerror=alert(1)>') {
+    return { ok: true, skill, summary: { observations: 1, correct: 1 }, flagged: true, frqThreshold: .5,
+      submissions: [{ ...saved, source: 'curriculum_quiz', correct: true, response: answer, expectedAnswer: 'B',
+        question: { prompt: 'Which variable is categorical?', attachments: { choices: [{ key: 'B', value: 'Color' }], table: [['Variable'], ['Color']] } } }] };
+  }
+  it('opens the clicked skill and exact student, showing the question, choices and saved answer safely', async () => {
+    const { w, doc } = await make();
+    const original = w.fetch;
+    w.fetch = vi.fn(url => url.includes('recent?skill=') ? Promise.resolve(response(evidence('2.B'))) : original(url));
+    w.renderTriage({ heatmap: { '2.B': { weak: 1, total: 1, pctWeak: 100 } }, students: [{ ...student, studentId: 's2', weakSkills: ['2.B'] }] });
+    doc.querySelector('#triage-list .student-name').click(); await tick();
+    expect(w.fetch.mock.calls.some(([url]) => url.includes('/student/s2/recent?skill=2.B'))).toBe(true);
+    const pane = doc.getElementById('workspace-evidence');
+    expect(pane.hidden).toBe(false);
+    expect(pane.textContent).toContain('Which variable is categorical?');
+    expect(pane.textContent).toContain('B. Color');
+    expect(pane.textContent).toContain(saved.response);
+    expect(pane.textContent).toContain('Counted correct');
+    expect(pane.textContent).toContain('tentative flag');
+    expect(pane.querySelector('img')).toBeNull();
+    w.teacherWorkspace.recent({ ok: true, submissions: [saved] });
+    expect(pane.hidden).toBe(false);
+    expect(pane.textContent).toContain('Which variable');
+  });
+  it('ignores stale evidence after switching students and provides a retry on failure', async () => {
+    const { w, doc } = await make();
+    const original = w.fetch; let finish;
+    w.fetch = vi.fn(url => url.includes('recent?skill=') ? new Promise(resolve => { finish = resolve; }) : original(url));
+    w.openTscDrawer(student, '2.B'); await tick();
+    w.openTscDrawer({ ...student, studentId: 's2' });
+    finish(response(evidence('2.B', 'Old student answer'))); await tick();
+    expect(doc.getElementById('workspace-evidence').textContent).not.toContain('Old student answer');
+    w.fetch = vi.fn(url => url.includes('recent?skill=') ? Promise.reject(new Error('offline')) : original(url));
+    w.openTscDrawer(student, '2.B'); await tick();
+    expect(doc.getElementById('workspace-evidence').textContent).toContain('Could not load');
+    w.fetch = vi.fn(url => url.includes('recent?skill=') ? Promise.resolve(response(evidence('2.B'))) : original(url));
+    doc.querySelector('#workspace-evidence button').click(); await tick();
+    expect(doc.getElementById('workspace-evidence').textContent).toContain('Counted correct');
+  });
+  it('shows missing prompts and FRQ scores without hiding the saved response', async () => {
+    const { w, doc } = await make(); const original = w.fetch;
+    const payload = evidence('1.A'); payload.submissions[0] = { ...saved, source: 'frq', correct: true, score: .5, question: null };
+    w.fetch = vi.fn(url => url.includes('recent?skill=') ? Promise.resolve(response(payload)) : original(url));
+    w.openTscDrawer(student, '1.A'); await tick();
+    expect(doc.getElementById('workspace-evidence').textContent).toContain('Question text unavailable');
+    expect(doc.getElementById('workspace-evidence').textContent).toContain('Saved FRQ score: 50%');
+    expect(doc.getElementById('workspace-evidence').textContent).toContain(saved.response);
+  });
+});

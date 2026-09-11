@@ -1157,7 +1157,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Phase 2A adds /donow (needs loadManifest) and /poll-archive (needs pollArchiveDb).
   if (loadAnswerKey) {
     mountTeacherStudent(app, {
-      db, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey,
+      db, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, loadSkillMap, bkt,
       lessonSchedule: _sched, eventSchedule: _events,
       config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,

@@ -150,6 +150,96 @@
     });
     if (!Object.keys(seen).length) message(picker, 'No worksheet among the most recent 100 submissions. View the student app to choose an older lesson.');
   }
+  function evidenceText(value) {
+    return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+  }
+  function clearEvidence() {
+    var host = $('workspace-evidence');
+    host.querySelectorAll('canvas').forEach(function (canvas) {
+      var chart = window.chartInstances && window.chartInstances[canvas.id];
+      if (chart) { chart.destroy(); delete window.chartInstances[canvas.id]; }
+    });
+    host.textContent = '';
+  }
+  function evidenceQuestion(host, question, index) {
+    if (!question || !question.prompt) {
+      message(host, 'Question text unavailable for this item. The saved answer below still counts in the diagnostic.');
+      return;
+    }
+    host.appendChild(node('h4', 'Question'));
+    host.appendChild(node('p', question.prompt, 'workspace-question'));
+    var a = question.attachments || {};
+    if (a.table) {
+      var table = node('table');
+      a.table.forEach(function (cells, i) {
+        var tr = node('tr'); cells.forEach(function (cell) { tr.appendChild(node(i ? 'td' : 'th', cell)); }); table.appendChild(tr);
+      }); host.appendChild(table);
+    }
+    (a.choices || []).forEach(function (choice) { host.appendChild(node('p', choice.key + '. ' + choice.value, 'workspace-choice')); });
+    if (a.image && /^assets\/[a-zA-Z0-9_./-]+$/.test(a.image)) {
+      var img = node('img'); img.src = 'https://robjohncolson.github.io/curriculum_render/' + a.image;
+      img.alt = a.imageAlt || 'Question diagram'; host.appendChild(img);
+    }
+    var charts = a.chartType ? [a] : (a.charts || []);
+    charts.forEach(function (chart, c) {
+      var wrap = node('div', null, 'workspace-evidence-chart');
+      var id = 'skill-chart-' + studentRequest + '-' + index + '-' + c;
+      if (chart.title) wrap.appendChild(node('p', chart.title));
+      var canvas = node('canvas'); canvas.id = id; wrap.appendChild(canvas); host.appendChild(wrap);
+      // Render after the card is attached, without interpolating response HTML.
+      setTimeout(function () {
+        if (!canvas.isConnected) return;
+        try {
+          if (!window.renderChartNow) throw new Error('Chart renderer unavailable');
+          window.renderChartNow(chart, id);
+        } catch (_) { message(wrap, 'Chart unavailable. Chart data: ' + evidenceText(chart)); }
+      }, 0);
+    });
+    if (a.description) host.appendChild(node('p', a.description));
+    if (question.context) {
+      var context = node('details'); context.appendChild(node('summary', 'Lesson context'));
+      context.appendChild(node('pre', question.context)); host.appendChild(context);
+    }
+  }
+  async function loadSkillEvidence(skill) {
+    clearEvidence();
+    var host = $('workspace-evidence'), request = studentRequest;
+    selectStudentTab('evidence');
+    host.appendChild(node('h3', window.teacherSkillLabel(skill) + ' (Skill ' + skill + ')'));
+    var loading = node('p', 'Loading questions and saved answers...'); host.appendChild(loading);
+    try {
+      var res = await fetch(window.svcUrl() + '/teacher/student/' + encodeURIComponent(student.studentId) + '/recent?skill=' + encodeURIComponent(skill), { headers: window.teacherAuthHeaders() });
+      var payload = await res.json();
+      if (request !== studentRequest) return;
+      if (!res.ok || !payload.ok || payload.skill !== skill || !Array.isArray(payload.submissions)) throw new Error('Evidence unavailable');
+      loading.remove();
+      var summary = payload.summary;
+      message(host, summary.observations + ' graded answers; ' + summary.correct + ' counted correct. ' + (payload.flagged ? 'Currently flagged for review.' : 'Not currently flagged.'));
+      message(host, 'Every counted attempt is shown below, oldest first, including correct answers and retries. A small number of correct answers can still leave a tentative flag. This estimate does not change the grade.');
+      message(host, 'Questions use the current course text; historical wording may differ. FRQ answers count as correct for this estimate at ' + Math.round(payload.frqThreshold * 100) + '% credit or above.');
+      if (!payload.submissions.length) message(host, 'No graded answers currently contribute to this skill. Reload class data if its flag has changed.');
+      payload.submissions.forEach(function (r, index) {
+        var card = node('article', null, 'workspace-saved-item');
+        card.appendChild(node('h3', label(r) === r.itemId ? label(r) : label(r) + ' | ' + r.itemId));
+        card.appendChild(node('p', when(r.recordedAt) + ' | Attempt ' + (r.attempt || 1) + ' | ' + (r.correct ? 'Counted correct' : 'Counted incorrect'), r.correct ? 'skill-result-correct' : 'skill-result-incorrect'));
+        evidenceQuestion(card, r.question, index);
+        card.appendChild(node('h4', 'Student answer'));
+        card.appendChild(node('pre', r.response == null ? 'No answer stored' : evidenceText(r.response)));
+        if (r.source === 'frq' && r.score != null) card.appendChild(node('p', 'Saved FRQ score: ' + Math.round(Number(r.score) * 100) + '%'));
+        if (r.expectedAnswer != null) card.appendChild(node('p', 'Answer key: ' + evidenceText(r.expectedAnswer)));
+        if (r.question && /^u\d+_lesson[\d-]+_live\.html$/.test(r.question.worksheet || '')) {
+          worksheetPaths[r.itemId] = r.question.worksheet;
+          card.appendChild(button('Open saved worksheet', function () { worksheet(r); }));
+        }
+        host.appendChild(card);
+      });
+    } catch (_) {
+      if (request !== studentRequest) return;
+      loading.textContent = 'Could not load skill evidence. Your student data has not changed.';
+      host.appendChild(button('Retry evidence', function () { loadSkillEvidence(skill); }));
+    }
+  }
+
   function renderAccount(stub) {
     var host = $('workspace-account'); host.textContent = '';
     host.appendChild(node('p', 'Username: ' + (stub.username || 'Unavailable')));
@@ -200,9 +290,11 @@
     host.appendChild(node('p', 'Only reveal this on your own screen. Closing the student panel hides it.', 'dim'));
     host.appendChild(button('Roster and enrollment tools', function () { closeTscDrawer(); selectView('recovery'); openTool('teacher-roster-console.html', 'Roster and enrollment'); }));
   }
-  function openStudent(stub) {
+  function openStudent(stub, skill) {
     returnFocus = document.activeElement;
     studentRequest++;
+    clearEvidence();
+    document.querySelector('[data-student-tab=evidence]').disabled = !skill;
     student = students.filter(function (s) { return s.studentId === stub.studentId; })[0] || stub;
     selectStudentTab('overview');
     var host = $('workspace-student-overview'); host.textContent = '';
@@ -214,9 +306,11 @@
     $('tsc-recent-list').textContent = 'Loading saved work…';
     var pane = document.querySelector('.tsc-drawer-panel'); pane.setAttribute('aria-modal', 'true');
     document.querySelector('.tsc-drawer-close').focus();
+    if (skill) loadSkillEvidence(skill);
   }
   function closeStudent() {
     studentRequest++; student = null; recentRows = [];
+    clearEvidence();
     $('workspace-account').textContent = ''; $('workspace-worksheet').textContent = '';
     if (returnFocus && returnFocus.isConnected) returnFocus.focus();
   }
@@ -293,7 +387,7 @@
 
     var body = document.querySelector('.tsc-drawer-body');
     var tabs = node('nav', null, 'workspace-nav'); tabs.setAttribute('aria-label', 'Student details');
-    [['overview', 'Overview'], ['recent', 'Recent work'], ['worksheet', 'Worksheet'], ['account', 'Account'], ['messages', 'Messages']].forEach(function (entry) {
+    [['overview', 'Overview'], ['recent', 'Recent work'], ['evidence', 'Skill evidence'], ['worksheet', 'Worksheet'], ['account', 'Account'], ['messages', 'Messages']].forEach(function (entry) {
       var b = button(entry[1], function () { selectStudentTab(entry[0]); }); b.dataset.studentTab = entry[0]; tabs.appendChild(b);
     });
     body.prepend(tabs);
@@ -301,7 +395,7 @@
     ['grade', 'reconcile', 'recent', 'nudges'].forEach(function (key) {
       $('tsc-section-' + key).dataset.studentPane = key === 'recent' ? 'recent' : key === 'nudges' ? 'messages' : 'overview';
     });
-    ['worksheet', 'account'].forEach(function (key) { var el = node('section'); el.id = 'workspace-' + key; el.dataset.studentPane = key; body.appendChild(el); });
+    ['worksheet', 'account', 'evidence'].forEach(function (key) { var el = node('section'); el.id = 'workspace-' + key; el.dataset.studentPane = key; body.appendChild(el); });
     $('tsc-action-nudge').addEventListener('click', function () { selectStudentTab('messages'); });
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Tab' || !$('tsc-drawer').classList.contains('tsc-open') || $('tsc-remediation-modal').classList.contains('tsc-modal-open')) return;

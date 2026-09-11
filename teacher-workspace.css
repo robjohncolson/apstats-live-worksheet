@@ -46,3 +46,17 @@
 .teacher-workspace .tsc-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .teacher-workspace .tsc-action-btn { width:auto; }
 .teacher-workspace .tsc-recent-list .workspace-saved-item { padding:14px; }
+
+/* Questions and answers stay readable in the narrow student drawer. */
+#workspace-evidence { min-width: 0; }
+#workspace-evidence pre, .workspace-question { white-space: pre-wrap; overflow-wrap: anywhere; }
+#workspace-evidence img { max-width: 100%; }
+#workspace-evidence table { width: 100%; font-size: .85rem; }
+#workspace-evidence td, #workspace-evidence th { padding: .3rem; border: 1px solid #8886; }
+.workspace-evidence-chart { position: relative; min-height: 250px; max-width: 100%; }
+.workspace-choice { margin: .35rem 0; }
+.skill-result-correct { color: #287544; font-weight: 600; }
+.skill-result-incorrect { color: #b34b35; font-weight: 600; }
+
+#workspace-evidence .workspace-empty { margin: .65rem 0; padding: 0; text-align: left; }
+#workspace-evidence .workspace-saved-item { margin-top: 1.5rem; }

@@ -10,7 +10,9 @@
 // role resolves to 'teacher'). 401 forbidden | 404 not found | 500 db error.
 
 import { PHASE3_CONFIG } from './grade-config.js';
-import { answerKeyMapOrNull } from './scoring.js';
+import { readFile } from 'node:fs/promises';
+import { computeMastery, masteryObservations } from './mastery.js';
+import { answerKeyMapOrNull, skillMapValidOrNull } from './scoring.js';
 import { computeGrade } from './grade.js';
 import { computeDonow } from './donow.js';
 import { requireTeacher } from './teacher-auth.js';
@@ -30,6 +32,7 @@ function studentMeta(r) {
 export function mountTeacherStudent(app, {
   db, ledgerDb, loadAnswerKey, lessonSchedule, eventSchedule = null, config = PHASE3_CONFIG,
   worksheetBlankCounts = null, loadManifest = null, pollArchiveDb = null,
+  loadSkillMap = null, bkt = null,
   blooketPresence = null, blooketRequired = null, blooketLessons = null,
 }) {
   const _presence = blooketPresence || blooketLessons || null;
@@ -178,6 +181,36 @@ export function mountTeacherStudent(app, {
     } catch (err) {
       console.error('GET /teacher/student/:studentId/recent ledger throw:', err);
       return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    // A skill review must include every contributing attempt, even beyond the
+    // generic recent-work limit. Reuse the diagnostic observation stream.
+    if (req.query.skill != null) {
+      if (typeof req.query.skill !== 'string' || !/^[0-9]+\.[A-Z]$/.test(req.query.skill)) {
+        return res.status(400).json({ ok: false, error: 'Invalid skill' });
+      }
+      try {
+        const answerKey = answerKeyMapOrNull(await loadAnswerKey());
+        const skillMap = loadSkillMap && skillMapValidOrNull(await loadSkillMap());
+        if (!answerKey || !skillMap || !bkt) throw new Error('Diagnostic inputs unavailable');
+        const skill = req.query.skill;
+        const catalog = JSON.parse(await readFile(new URL('./data/teacher-question-catalog.json', import.meta.url), 'utf8'));
+        const observations = masteryObservations(rows, answerKey, skillMap, config).filter(o => o.skill === skill);
+        const mastery = computeMastery(rows, answerKey, skillMap, bkt, config);
+        const submissions = observations.map(o => ({
+          recordedAt: o.row.recorded_at, itemId: o.row.item_id, source: o.row.source,
+          response: o.row.response, score: o.row.score, attempt: o.row.attempt,
+          correct: o.correct, expectedAnswer: answerKey[o.row.item_id]?.answerKey ?? null,
+          question: catalog.questions[o.row.item_id] || null,
+        }));
+        return res.json({ ok: true, ...studentMeta(roster), skill,
+          summary: mastery.skills[skill] || { observations: 0, correct: 0, pKnow: null },
+          flagged: mastery.weakSkills.includes(skill), theta: config.diagnosticTheta,
+          frqThreshold: config.frqDiagnosticCorrectThreshold, submissions });
+      } catch (err) {
+        console.error('Teacher skill evidence unavailable:', err.message);
+        return res.status(503).json({ ok: false, error: 'Skill evidence unavailable' });
+      }
     }
 
     // Sort by recorded_at desc (ISO 8601 sorts lexicographically), then slice.

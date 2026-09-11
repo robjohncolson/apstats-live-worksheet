@@ -54,16 +54,7 @@ function correctnessSignal(row, answerKey, frqThreshold) {
 }
 
 // ── Pure compute (extracted for class fan-out reuse; behaviour-identical) ────
-// computeMastery(ledgerRows, answerKey, skillMap, bkt, config)
-//   → { skills, weakSkills, totalObservations }
-// Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
-export function computeMastery(ledgerRows, answerKey, skillMap, bkt, config = PHASE3_CONFIG) {
-  const theta = config.diagnosticTheta;
-  const pInit =
-    bkt && bkt.DEFAULT_PARAMS && Number.isFinite(bkt.DEFAULT_PARAMS.pInit)
-      ? bkt.DEFAULT_PARAMS.pInit
-      : 0.3;
-
+export function masteryObservations(ledgerRows, answerKey, skillMap, config = PHASE3_CONFIG) {
   // BKT consumes the FULL observation STREAM (every retry is evidence).
   const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
   const observations = [];
@@ -74,6 +65,7 @@ export function computeMastery(ledgerRows, answerKey, skillMap, bkt, config = PH
     const skill = entry && entry.skill ? entry.skill : null;
     if (!skill) continue;
     observations.push({
+      row,
       skill,
       correct: signal,
       at: Date.parse(row.recorded_at || '') || 0,
@@ -81,6 +73,21 @@ export function computeMastery(ledgerRows, answerKey, skillMap, bkt, config = PH
     });
   }
   observations.sort((a, b) => (a.at - b.at) || (a.attempt - b.attempt));
+
+  return observations;
+}
+
+// computeMastery(ledgerRows, answerKey, skillMap, bkt, config)
+//   → { skills, weakSkills, totalObservations }
+// Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
+export function computeMastery(ledgerRows, answerKey, skillMap, bkt, config = PHASE3_CONFIG) {
+  const theta = config.diagnosticTheta;
+  const pInit =
+    bkt && bkt.DEFAULT_PARAMS && Number.isFinite(bkt.DEFAULT_PARAMS.pInit)
+      ? bkt.DEFAULT_PARAMS.pInit
+      : 0.3;
+
+  const observations = masteryObservations(ledgerRows, answerKey, skillMap, config);
 
   const skills = {};
   for (const o of observations) {
