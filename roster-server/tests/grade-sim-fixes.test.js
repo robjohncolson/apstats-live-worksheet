@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import { computeGrade } from '../grade.js';
+import { computeLessonGrades, workAvgV3 } from '../lesson-grade.js';
 import {
   CONFIG, QUARTER_KEY, ANSWER_KEY, GRADE_OPTS, ATOMS, materialize, isDueAtom, ARCHETYPES,
 } from './fixtures/sim-world.js';
@@ -27,6 +28,42 @@ function gradeWith(plan, config) {
 const valueArb = fc.option(fc.double({ min: 0, max: 1, noNaN: true }), { nil: null });
 const planArb = fc.tuple(...ATOMS.map(() => valueArb))
   .map((vals) => new Map(ATOMS.map((a, i) => [a.id, vals[i]])));
+
+describe('exit tickets are monotone through the real engine', () => {
+  it('adding or raising an exit ticket never lowers either lesson grade, Work, or quarter', () => {
+    fc.assert(fc.property(planArb, fc.nat(),
+      fc.double({ min: 0, max: 1, noNaN: true }), fc.double({ min: 0, max: 1, noNaN: true }),
+      (plan, pick, a, b) => {
+        const targets = ATOMS.filter(atom => atom.kind === 'frq');
+        const target = targets[pick % targets.length];
+        const rows = materialize(plan);
+        const exit = score => ({ ...target.makeRow(score), item_id: target.id.replace(/-reflect1$/, '-exitTicket') });
+        const snapshots = [rows, [...rows, exit(Math.min(a, b))], [...rows, exit(Math.max(a, b))]];
+        const maps = snapshots.map(items => computeLessonGrades(items, CONFIG.frqBand, ANSWER_KEY,
+          GRADE_OPTS.lessonSchedule, { worksheetBlankCounts: GRADE_OPTS.worksheetBlankCounts }));
+        const quarters = snapshots.map(items => computeGrade(items, ANSWER_KEY, FIX_NOT_UNTIL_DUE, GRADE_OPTS).quarters[QUARTER_KEY]);
+        for (let i = 1; i < snapshots.length; i++) {
+          for (const topic of target.backingTopics) {
+            const before = maps[i - 1].get(topic), after = maps[i].get(topic);
+            for (const field of ['lessonGrade', 'lessonGradeNoQuiz']) {
+              if (before?.[field] == null) continue;
+              expect(after[field]).toBeGreaterThanOrEqual(before[field]);
+              expect(after[field]).toBeLessThanOrEqual(105);
+            }
+            if (before?.lessonGradeNoQuiz != null) {
+              const workBefore = workAvgV3({ lessons: before.lessonGradeNoQuiz / 100, quizzes: 0.7 });
+              const workAfter = workAvgV3({ lessons: after.lessonGradeNoQuiz / 100, quizzes: 0.7 });
+              expect(workAfter).toBeGreaterThanOrEqual(workBefore);
+            }
+          }
+          for (const field of ['workAvg', 'quarterGrade']) {
+            if (quarters[i - 1][field] == null) continue;
+            expect(quarters[i][field]).toBeGreaterThanOrEqual(quarters[i - 1][field]);
+          }
+        }
+      }), { numRuns: 600, seed: 20260911 });
+  });
+});
 
 // ── F1 fixed: ahead-of-schedule mediocre work no longer lowers the grade ──────
 describe('FIX F1: doing ahead-of-schedule work no longer drops the grade', () => {

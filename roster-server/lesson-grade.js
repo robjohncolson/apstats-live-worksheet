@@ -478,6 +478,20 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
       if (den > 0) Bnq = num / den;
     }
     acc.lessonGradeNoQuiz = Bnq != null ? Math.round(Bnq * 10) / 10 : null;
+
+    // Exit tickets retain all helpful credit and add a bonus. Cws and W stay
+    // unchanged: completion gates and the original feeder displays still use them.
+    const exitItem = acc.frqItems.find(f => /-exitTicket$/.test(f.itemId) && f.score != null);
+    acc.exitBonus = exitItem == null ? 0 : (exitItem.score >= frqBand.E ? 5 : exitItem.score >= frqBand.P ? 3 : 1);
+    acc.exitCounted = false;
+    if (exitItem != null) {
+      const withoutExit = blendLessonFeeders(Cws, reflectionMean(acc.frqItems), Q, weights);
+      acc.exitCounted = B != null && (withoutExit == null || B > withoutExit);
+      const base = withoutExit == null ? B : Math.max(B, withoutExit);
+      acc.lessonGrade = base == null ? null : Math.round(Math.min(105, base + acc.exitBonus) * 10) / 10;
+      const noQuiz = lessonGradeNoQuiz(acc, weights);
+      acc.lessonGradeNoQuiz = noQuiz == null ? null : Math.round(noQuiz * 10) / 10;
+    }
     // Blooket (0..100): the BETTER of the two efforts — the real game score OR the
     // flashcard score (the timed full deck can legitimately reach 100%, so a strong
     // flashcard run beats a mediocre game, and vice-versa). Either may be null; the
@@ -994,9 +1008,24 @@ export function combineV3(pcAvg, workAvg, gates = V3_GATES) {
   return quarterGradeV3(pcAvg, workAvg, gates);
 }
 
+// A missing reflection feeder stays null, so blanks/quiz carry the baseline.
+function reflectionMean(frqItems) {
+  const reflections = (frqItems || []).filter(f => f.score != null && !/-exitTicket$/.test(f.itemId));
+  if (reflections.length === 0) return null;
+  return reflections.reduce((sum, f) => sum + f.score, 0) / reflections.length;
+}
+
+function blendLessonFeeders(Cws, W, Q, weights) {
+  let num = 0, den = 0;
+  if (Cws != null) { num += weights.ws * Cws; den += weights.ws; }
+  if (W != null) { num += weights.W * W; den += weights.W; }
+  if (Q != null) { num += weights.Q * Q; den += weights.Q; }
+  return den > 0 ? num / den : null;
+}
+
 // Per-lesson grade EXCLUDING the curriculum-quiz feeder (v3 splits quizzes into
 // their own track). Weighted blend of {Cws, W} renormalized over present
-// feeders, on 0..100. null when neither feeder is present.
+// feeders, plus the exit bonus, on 0..105. null when neither feeder is present.
 function lessonGradeNoQuiz(result, weights, fixCwsReveal = false) {
   if (!result) return null;
   let num = 0, den = 0;
@@ -1009,8 +1038,16 @@ function lessonGradeNoQuiz(result, weights, fixCwsReveal = false) {
   // 0 — so doing one of four blanks drops the lesson 100→75. With the fix, doing
   // blanks can only RAISE the lesson, never fall below its FRQ-only (W) value.
   // (When W is absent, Cws stands alone unchanged.) See GRADE_FIX_F1_F3_BUILD.md.
-  if (fixCwsReveal && result.W != null) return Math.max(blended, result.W);
-  return blended;
+  const withExit = fixCwsReveal && result.W != null ? Math.max(blended, result.W) : blended;
+  if (!result.exitBonus) return withExit;
+
+  const reflections = reflectionMean(result.frqItems);
+  // Match the existing rounded W sibling used by this no-quiz track.
+  const W = reflections == null ? null : Math.round(reflections * 10) / 10;
+  let withoutExit = blendLessonFeeders(result.Cws, W, null, weights);
+  if (fixCwsReveal && W != null) withoutExit = Math.max(withoutExit, W);
+  const base = withoutExit == null ? withExit : Math.max(withExit, withoutExit);
+  return Math.min(105, base + result.exitBonus);
 }
 
 // [0,1] → 0..100 with one-decimal rounding (the 0..100 response surface).
@@ -1563,6 +1600,11 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       // "Follow-Along" cell for the in-app/Schoology gradebook (worksheet blanks +
       // AI reflections). null when neither feeder is present.
       lessonGradeNoQuiz: lessonResult ? (lessonResult.lessonGradeNoQuiz != null ? lessonResult.lessonGradeNoQuiz : null) : null,
+      // Keep no-ticket public responses byte-identical to the original engine.
+      ...(lessonResult && lessonResult.exitBonus ? {
+        exitBonus: lessonResult.exitBonus,
+        exitCounted: lessonResult.exitCounted,
+      } : {}),
       Cws: lessonResult ? (lessonResult.Cws !== undefined ? lessonResult.Cws : null) : null,
       W: lessonResult ? lessonResult.W : null,
       Q: lessonResult ? lessonResult.Q : null,
