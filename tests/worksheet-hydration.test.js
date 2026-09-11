@@ -49,12 +49,12 @@ describe.each(WORKSHEETS)('%s — hydration block', (file) => {
     expect(html).toContain('// W2.6: carry the stored feedback');
     expect(html).toContain("var storedFb = (entry.result && typeof entry.result.feedback === 'string') ? entry.result.feedback : '';");
     expect(html).toContain('result: { score: gradeClass, feedback: storedFb }');
-    expect(html).toContain('_markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider);');
+    expect(html).toContain('_markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider, entry.result && entry.result.missing);');
     // the old feedback-dropping literal is gone
     expect(html).not.toContain("result: { score: gradeClass, feedback: '' }");
     // the note names the grader honestly and tells a non-E student what to do
     expect(html).toContain("provider === 'ai-batch' ? 'Auto-graded' : provider === 'teacher' ? 'Graded by your teacher' : 'Graded'");
-    expect(html).toContain('regrading only ever raises your score');
+    expect(html).toContain('a regrade never lowers your score');
     // XSS-safe: feedback is set via textContent, never innerHTML
     const helper = html.slice(html.indexOf('function _markAutoGraded'), html.indexOf('function _markRestored'));
     expect(helper).toContain('fb.textContent = feedback;');

@@ -1525,7 +1525,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                             if (typeof gradingState !== 'undefined' && gradingState && typeof gradingState.set === 'function') {
                                 gradingState.set(ta.id, { result: { score: gradeClass, feedback: storedFb }, originalAnswer: v, appealCount: 0, history: [] });
                             }
-                            _markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider);
+                            _markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider, entry.result && entry.result.missing);
                         }
                     }
                     _markRestored(ta);
@@ -1538,13 +1538,13 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
         // grade, feedback, what to do). Dedup per textarea. The note removes itself the
         // moment the student edits the answer or the grade class changes (a regrade), so it
         // can never contradict the live grade. Never throws; never blocks.
-        function _markAutoGraded(ta, gradeClass, feedback, gradedAt, provider) {
+        function _markAutoGraded(ta, gradeClass, feedback, gradedAt, provider, missing) {
             try {
                 if (!ta || !ta.parentNode) return;
                 if (ta.parentNode.querySelector('.frq-graded-note[data-for="' + ta.id + '"]')) return;
                 var when = '';
                 try { if (gradedAt) when = new Date(gradedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) {}
-                var words = { E: 'E (full credit)', P: 'P (partial)', I: 'I (not yet)' };
+                var words = { E: 'E (full credit)', P: 'P (partial)', I: 'I (no credit yet)' };   // W2.7: frq status clarity
                 var note = document.createElement('div');
                 note.className = 'frq-graded-note';
                 note.setAttribute('data-for', ta.id);
@@ -1562,15 +1562,40 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     fb.textContent = feedback;
                     note.appendChild(fb);
                 }
+                if (gradeClass !== 'E' && Array.isArray(missing) && missing.length) {
+                    // W2.7: the rubric elements still missing are the only thing a student can act on.
+                    var miss = document.createElement('div');
+                    miss.style.cssText = 'margin-top:3px;';
+                    miss.textContent = 'Still missing: ' + missing.map(function (m) { return String(m); }).join('; ');
+                    note.appendChild(miss);
+                }
                 if (gradeClass !== 'E') {
                     var tip = document.createElement('div');
                     tip.style.cssText = 'margin-top:3px;color:#555;';
-                    tip.textContent = 'Revise your answer, then press Grade with AI — regrading only ever raises your score.';
+                    tip.textContent = 'Add the missing points above, then press Grade with AI — a regrade never lowers your score.';
                     note.appendChild(tip);
                 }
                 var after = ta.nextSibling;
                 if (after && after.nodeType === 1 && after.className === 'restored-badge') after = after.nextSibling;
                 ta.parentNode.insertBefore(note, after);
+                // W2.7: one verdict per box — when the live feedback card (.ai-feedback, rendered by
+                // showFeedback on the server's verdict) appears for this textarea, this note is
+                // redundant and could disagree with it, so it removes itself.
+                try {
+                    var liveHost = document.getElementById(ta.id + '-feedback');
+                    if (liveHost) {
+                        if (liveHost.querySelector('.ai-feedback')) { note.parentNode.removeChild(note); return; }
+                        if (typeof MutationObserver === 'function') {
+                            var liveObs = new MutationObserver(function () {
+                                if (liveHost.querySelector('.ai-feedback')) {
+                                    try { if (note.parentNode) note.parentNode.removeChild(note); } catch (_) {}
+                                    try { liveObs.disconnect(); } catch (_) {}
+                                }
+                            });
+                            liveObs.observe(liveHost, { childList: true, subtree: true });
+                        }
+                    }
+                } catch (_) {}
                 // Self-removal: an edit (W2.2 clears the grade) or a grade-class change (regrade)
                 // makes the note stale — drop it. Other class changes (restored badge) are ignored.
                 var gradedOf = function () { var m = /graded-[EPI]/.exec(ta.className || ''); return m ? m[0] : ''; };
@@ -2618,7 +2643,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             async function _aiGradeFrqs(manual) {
                 await _aiEnsureFrqConfig();
                 if (_aiIsAuthoritative()) {
-                    await _aiRequestAllFrqGrades(!!manual);
+                    window._aiFrqSentCount = await _aiRequestAllFrqGrades(!!manual);   // W2.7: surfaced in the toast
                     return 0;
                 }
                 if (!_aiGraderFn()) return 0;   // no grader available on this worksheet
@@ -3941,7 +3966,14 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                         } catch (_) { /* soft-fail: verbatim grade stands */ }
                     }
                     // FRQ pass (upgrade-only; auto path won't persist a fresh "I").
+                    window._aiFrqSentCount = 0;
                     try { frqUpgraded = (await _aiGradeFrqs(manual)) || 0; } catch (_) {}
+                    // W2.7: in server-authoritative mode the written responses were SENT, not graded here —
+                    // say so, or "no new credit" reads as "your writing was skipped".
+                    var _sentN = window._aiFrqSentCount || 0;
+                    var _sentNote = _sentN > 0
+                        ? ' · ' + _sentN + ' written response' + (_sentN > 1 ? 's' : '') + ' sent for grading — results appear under each box in ~10 s'
+                        : '';
                     window._aiLastGradedHash = hash;
                     if (manual) {
                         var parts = [];
@@ -3954,9 +3986,9 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                                 var post = Math.round((preCorrect + aiAccepted) / filledTotal * 100);
                                 scorePart = ' — Score ' + pre + '% → ' + post + '%';
                             }
-                            _aiToast('✨ AI ' + parts.join(' and ') + scorePart);
+                            _aiToast('✨ AI ' + parts.join(' and ') + scorePart + _sentNote);
                         } else {
-                            _aiToast('✨ AI check complete — no new credit this time.');
+                            _aiToast('✨ AI check complete — no new credit this time.' + _sentNote);
                         }
                     }
                 } finally {

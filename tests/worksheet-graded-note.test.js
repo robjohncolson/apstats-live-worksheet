@@ -53,7 +53,7 @@ describe('worksheet graded note — content', () => {
     expect(n.getAttribute('role')).toBe('status');
     expect(n.querySelector('strong').textContent).toMatch(/^Auto-graded Aug \d{1,2} from your saved answer: P \(partial\)$/);
     expect(n.textContent).toContain('Name the variable type.');
-    expect(n.textContent).toContain('regrading only ever raises your score');
+    expect(n.textContent).toContain('a regrade never lowers your score');
   });
 
   it('a teacher override says so; an in-session grade does NOT claim the saved-answer sweep; E has no revise tip', () => {
@@ -69,7 +69,7 @@ describe('worksheet graded note — content', () => {
 
     const c = boot();
     c.mark('I', 'Try again.', null, 'ai-batch');
-    expect(c.note().querySelector('strong').textContent).toBe('Auto-graded from your saved answer: I (not yet)');
+    expect(c.note().querySelector('strong').textContent).toBe('Auto-graded from your saved answer: I (no credit yet)');
   });
 
   it('renders feedback as text only (no HTML injection) and dedupes per textarea', () => {
@@ -110,6 +110,52 @@ describe('worksheet graded note — never stale', () => {
     ta.classList.remove('graded-P');
     ta.classList.add('graded-E');          // Grade-with-AI raised it
     await tick();
+    expect(note()).toBeNull();
+  });
+});
+
+describe('worksheet graded note — W2.7 status clarity (2026-09-11)', () => {
+  // Why: a teacher saw "✓ Graded: Incorrect" (live) AND "Graded: I (not yet)" (this note)
+  // under one box, read "(not yet)" as "ungraded", and concluded written work was never
+  // graded. One verdict per box; the note names what is still missing; wording is honest.
+  it('says "no credit yet" (not "not yet") and lists the rubric elements still missing', () => {
+    const { note, mark } = boot();
+    mark('I', 'Vague on the variable.', '2026-09-10T05:00:00.000Z', 'ai-batch', ['Names the variable', 'Explains variation']);
+    const n = note();
+    expect(n.querySelector('strong').textContent).toMatch(/: I \(no credit yet\)$/);
+    expect(n.textContent).toContain('Still missing: Names the variable; Explains variation');
+    expect(n.textContent).toContain('Add the missing points above');
+    expect(n.textContent).not.toContain('not yet');
+  });
+
+  it('omits the "Still missing" line when nothing is missing or the grade is E', () => {
+    const a = boot(); a.mark('P', 'Close.', null, 'ai-batch', []);
+    expect(a.note().textContent).not.toContain('Still missing');
+    const b = boot(); b.mark('E', 'Nice.', null, 'ai-batch', ['ignored for E']);
+    expect(b.note().textContent).not.toContain('Still missing');
+  });
+
+  it('removes itself when the live feedback card (.ai-feedback) renders for the same box', async () => {
+    const { win, note, mark } = boot();
+    const host = win.document.createElement('div');
+    host.id = 'reflect1-feedback';
+    win.document.querySelector('.question').appendChild(host);
+    mark('I', 'Try again.', null, 'ai-batch', ['x']);
+    expect(note()).not.toBeNull();
+    const card = win.document.createElement('div');
+    card.className = 'ai-feedback';
+    host.appendChild(card);                       // what showFeedback() does on the server verdict
+    await tick();
+    expect(note()).toBeNull();
+  });
+
+  it('does not render at all if the live feedback card is already there', () => {
+    const { win, note, mark } = boot();
+    const host = win.document.createElement('div');
+    host.id = 'reflect1-feedback';
+    host.innerHTML = '<div class="ai-feedback">already live</div>';
+    win.document.querySelector('.question').appendChild(host);
+    mark('I', 'Try again.', null, 'ai-batch');
     expect(note()).toBeNull();
   });
 });
