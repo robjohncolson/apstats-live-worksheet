@@ -75,6 +75,7 @@ const GEN_SRC =
   + ['d', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule'].map(fnBody).join('\n') + '\n'
   + constArray('SY2627_PACING_B') + ';\n'
   + constArray('SY2627_PACING_E') + ';\n'
+  + 'const VIDEO_MINUTES = ' + objBlock('const VIDEO_MINUTES = {') + ';\n'
   + 'const def={range:CFG.range,examDate:CFG.examDate,daysOff:CFG.daysOff,earlyRelease:CFG.earlyRelease,periods:CFG.periods,'
   + 'pacing:{B:injectPcPosterEvents(SY2627_PACING_B),E:injectPcPosterEvents(SY2627_PACING_E)}};\n'
   + 'return generateSchedule(def);';

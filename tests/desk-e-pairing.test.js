@@ -3,7 +3,7 @@ import {describe,it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 
-describe('E Wednesday double block',()=>{
+describe('E lag-targeted pairing',()=>{
   it('preserves the captured pre-change B column byte for byte in both JSON copies',()=>{
     for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
       const column=readFileSync(path,'utf8').split(/\r?\n/).filter(line=>/^\s*"B":/.test(line)&&!/^\s*"B": \[\]/.test(line)).join('\n');
@@ -30,7 +30,7 @@ function load(names,globals={}){
 }
 function generated(){
   const s=load(['dateFromArr','buildOffSet','enumWeekdays','injectPcPosterEvents','generateSchedule']);
-  for(const name of ['SY2627_PACING_B','SY2627_PACING_E']){const n=constant(name);runInContext('var '+name+'='+source.slice(n.start,n.end),s);}
+  for(const name of ['SY2627_PACING_B','SY2627_PACING_E','VIDEO_MINUTES']){const n=constant(name);runInContext('var '+name+'='+source.slice(n.start,n.end),s);}
   const n=constant('SCHEDULE_DEFS').properties.find(p=>p.key.value==='SY26-27').value;
   runInContext('var def='+source.slice(n.start,n.end)+';var S=generateSchedule(def);',s);
   return s;
@@ -39,13 +39,15 @@ const actual=generated();
 const S=actual.S;
 const first=S.find(row=>row[4]?.group)[4];
 const pairs=[
- ['2026-09-16','1.4+1.5',1],['2026-09-23','1.7+1.8',1],['2026-10-07','3.5+3.6',1],
- ['2026-10-28','4.2+4.3',2],['2026-12-16','6.2+6.3',3],['2027-01-06','5.6+6.8',3],
- ['2027-01-20','8.4+8.5',3],['2027-02-03','7.1+7.2',4],['2027-02-24','7.7+7.8',4],['2027-03-10','2.5+2.6',5]
+ ['2026-09-16','1.4+1.5',27],['2026-09-23','1.7+1.8',27],['2026-09-25','1.9+3.1',14],
+ ['2026-10-19','2.1+2.2',16],['2026-10-21','2.3+4.1',15],['2026-10-26','4.3+4.4',15],
+ ['2026-11-02','4.6+4.7',28],['2026-11-06','4.10+4.11',17],['2026-11-13','5.2+5.1',27],
+ ['2026-11-25','5.4+5.5',18],['2027-01-06','8.1+8.4',16],['2027-01-22','5.7+7.1',23],
+ ['2027-03-01','2.4+2.5',23]
 ];
 const iso=row=>row[0]+'-'+String(row[1]+1).padStart(2,'0')+'-'+String(row[2]).padStart(2,'0');
-describe('real extracted Wednesday generator',()=>{
- it('reproduces the entire acceptance table',()=>expect(S.filter(r=>r[4]?.group).map(r=>[iso(r),r[4].t,r[4].u])).toEqual(pairs));
+describe('real extracted pairing generator',()=>{
+ it('reproduces the entire acceptance table',()=>expect(S.filter(r=>r[4]?.group).map(r=>[iso(r),r[4].t,Math.round(r[4].group.reduce((sum,m)=>sum+actual.VIDEO_MINUTES[m.t],0))])).toEqual(pairs));
  it('leaves every B cell identical to the original single-block rule',()=>{
    const old=actual.generateSchedule({...actual.def,periods:{...actual.def.periods,E:{...actual.def.periods.E,doubleFrom:null}}});
    expect(JSON.stringify(S.map(r=>r.slice(0,4)))).toBe(JSON.stringify(old.map(r=>r.slice(0,4))));
@@ -57,28 +59,78 @@ describe('real extracted Wednesday generator',()=>{
      for(const m of c.group)expect(Object.keys(m)).toEqual(expect.arrayContaining(['t','n','u','due','as','db','ced']));
    }
  });
- it('never doubles B, early releases, past Wednesdays, events, or across units',()=>{
+ it('never pairs B, before Sep 16, events, across units, or above the applicable cap',()=>{
    for(const row of S){expect(row[3]?.group).toBeUndefined();if(!row[4]?.group)continue;
-     expect(new Date(row[0],row[1],row[2]).getDay()).toBe(3);expect(iso(row)>='2026-09-14').toBe(true);
-     expect(actual.def.earlyRelease.some(d=>d.join('-')===row.slice(0,3).join('-'))).toBe(false);
+     expect(iso(row)>='2026-09-16').toBe(true);
+     const early=actual.def.earlyRelease.some(d=>d.join('-')===row.slice(0,3).join('-'));
+     expect(row[4].group.reduce((sum,m)=>sum+actual.VIDEO_MINUTES[m.t],0)).toBeLessThanOrEqual(early?20:30);
      expect(row[4].group.every(m=>!m.kind&&m.u>0&&m.u===row[4].u)).toBe(true);
    }
  });
  it.each(['orientation','poster','pc','baseline','review'])('does not pair an event of kind %s',kind=>{
-   const def={...actual.def,range:{start:[2026,8,16],end:[2026,8,16]},pacing:{B:[],E:[{t:'1.4',n:'a',u:1},{t:'event',n:'event',u:1,kind}]}};
-   expect(actual.generateSchedule(def)[0][4].group).toBeUndefined();
+   const def={...actual.def,range:{start:[2026,8,14],end:[2026,8,16]},periods:{...actual.def.periods,E:{...actual.def.periods.E,meetsDays:[3]}},pacing:{B:[{t:'b1',u:1},{t:'b2',u:1}],E:[{t:'1.4',n:'a',u:1},{t:'event',n:'event',u:1,kind}]}};
+   expect(actual.generateSchedule(def).at(-1)[4].group).toBeUndefined();
  });
  it('does not pair across a unit boundary or with an untyped review',()=>{
    for(const next of [{t:'2.1',u:2},{t:'review',u:0}]){
-     const def={...actual.def,range:{start:[2026,8,16],end:[2026,8,16]},pacing:{B:[],E:[{t:'1.4',n:'a',u:1},next]}};
-     expect(actual.generateSchedule(def)[0][4].group).toBeUndefined();
+     const def={...actual.def,range:{start:[2026,8,14],end:[2026,8,16]},periods:{...actual.def.periods,E:{...actual.def.periods.E,meetsDays:[3]}},pacing:{B:[{t:'b1',u:1},{t:'b2',u:1}],E:[{t:'1.4',n:'a',u:1},next]}};
+     expect(actual.generateSchedule(def).at(-1)[4].group).toBeUndefined();
    }
  });
  it('reproduces five PC Day 2 dates and the review end',()=>{
-   expect(S.filter(r=>r[4]?.kind==='pc'&&r[4].admin===2).map(iso)).toEqual(['2026-10-16','2026-12-07','2027-01-29','2027-03-05','2027-03-22']);
-   expect(S.filter(r=>r[4]?.t==='review').map(iso).at(-1)).toBe('2027-03-31');
+   expect(S.filter(r=>r[4]?.kind==='pc'&&r[4].admin===2).map(iso)).toEqual(['2026-10-16','2026-11-23','2027-01-20','2027-02-26','2027-03-15']);
+   expect(S.filter(r=>r[4]?.t==='review').map(iso).at(-1)).toBe('2027-03-22');
  });
 });
+describe('pairing guard regressions',()=>{
+ function wednesday(topics=['1.4','1.5'], overrides={}){
+   const def={...actual.def,range:{start:[2026,8,14],end:[2026,8,16]},
+     periods:{B:{meetsDays:[1,2,3]},E:{...actual.def.periods.E,meetsDays:[3]}},
+     pacing:{B:Array.from({length:3},()=>({t:'b',u:1})),E:topics.map(t=>({t,n:t,u:1}))},...overrides};
+   return actual.generateSchedule(def).at(-1)[4];
+ }
+ it('pairs only with a real lead, counting B first on the same date',()=>{
+   expect(wednesday().group).toHaveLength(2);
+   expect(wednesday(undefined,{pacing:{B:[{t:'b',u:1}],E:[{t:'1.4',u:1},{t:'1.5',u:1}]}}).group).toBeUndefined();
+   expect(wednesday(undefined,{pacing:{B:[{t:'b',u:1},{t:'b',u:1}],E:[{t:'1.4',u:1},{t:'1.5',u:1}]}}).group).toHaveLength(2);
+ });
+ it('fails closed for missing minutes and rejects the 47-minute pair',()=>{
+   expect(wednesday(['6.2','6.3']).group).toBeUndefined();
+   expect(wednesday(['1.4','missing']).group).toBeUndefined();
+ });
+ it('uses 20 minutes on early release and 30 otherwise',()=>{
+   const earlyRelease=[[2026,8,16]];
+   expect(wednesday(undefined,{earlyRelease}).group).toBeUndefined();
+   expect(wednesday(['2.3','4.1'],{earlyRelease}).group).toHaveLength(2);
+ });
+ it('never permits a third pair in a Monday-Friday week even with a large backlog',()=>{
+   const pacing={B:Array.from({length:80},()=>({t:'1.1',u:1})),
+     E:[...Array.from({length:6},()=>({t:'event',u:1,kind:'orientation'})),...Array.from({length:74},()=>({t:'1.1',u:1}))]};
+   const def={...actual.def,range:{start:[2026,8,14],end:[2026,9,30]},daysOff:[],earlyRelease:[],pacing,
+     periods:{B:{meetsDays:[1,2,3,4,5]},E:actual.def.periods.E}};
+   const countWeeks=rows=>{
+     const counts=new Map();
+     for(const r of rows.filter(r=>r[4]?.group)){
+       const d=new Date(r[0],r[1],r[2]);d.setDate(d.getDate()-d.getDay()+1);
+       counts.set(+d,(counts.get(+d)||0)+1);
+     }
+     return [...counts.values()];
+   };
+   expect(Math.max(...countWeeks(actual.generateSchedule(def)))).toBe(2);
+   def.periods.E={...def.periods.E,maxPairsPerWeek:3};
+   expect(Math.max(...countWeeks(actual.generateSchedule(def)))).toBe(3);
+ });
+ it('keeps lag at no more than nine pacing items on the real calendar',()=>{
+   let b=0,e=0,maxLag=0;
+   for(const r of S){
+     if(r[3]&&typeof r[3]==='object')b+=(r[3].group||[r[3]]).length;
+     if(r[4]&&typeof r[4]==='object')e+=(r[4].group||[r[4]]).length;
+     maxLag=Math.max(maxLag,b-e);
+   }
+   expect(maxLag).toBe(9);
+ });
+});
+
 describe('group consumers',()=>{
  it('counts 66 lessons and maps both members to the same date',()=>{
    const s=load(['_orderedPeriodTopics','_computePace','_lessonDateMap'],{S,cP:'E',localLessonState:()=>''});

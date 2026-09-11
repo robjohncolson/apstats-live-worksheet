@@ -97,6 +97,7 @@ function createDesk({ period = 'B', role = 'student', preview = false, viewAs = 
     + declarationSource('QUARTER_BAND_LABEL', '{', '}') + '\n'
     + declarationSource('SY2627_PACING_B', '[', ']') + '\n'
     + declarationSource('SY2627_PACING_E', '[', ']') + '\n'
+    + declarationSource('VIDEO_MINUTES', '{', '}') + '\n'
     + declarationSource('SCHEDULE_DEFS', '{', '}') + '\n'
     + 'var S=generateSchedule(SCHEDULE_DEFS["SY26-27"]);');
   // Execute the actual header portion, stopping before unrelated resource,
