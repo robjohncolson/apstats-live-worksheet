@@ -14,12 +14,11 @@ Per-topic sheets remain available for B. These additive E sheets await human aut
 | --- | --- | --- |
 | 1.9+3.1 | 2026-09-25 | Pending: one human-graded DOK-3 sheet for both topics |
 | 2.1+2.2 | 2026-10-19 | Pending: one human-graded DOK-3 sheet for both topics |
-| 2.3+4.1 | 2026-10-21 | Pending: one human-graded DOK-3 sheet for both topics |
-| 4.3+4.4 | 2026-10-26 | Pending: one human-graded DOK-3 sheet for both topics |
-| 4.6+4.7 | 2026-11-02 | Pending: one human-graded DOK-3 sheet for both topics |
-| 4.10+4.11 | 2026-11-06 | Pending: one human-graded DOK-3 sheet for both topics |
-| 5.2+5.1 | 2026-11-13 | Pending: one human-graded DOK-3 sheet for both topics |
-| 5.4+5.5 | 2026-11-25 | Pending: one human-graded DOK-3 sheet for both topics |
-| 8.1+8.4 | 2027-01-06 | Pending: one human-graded DOK-3 sheet for both topics |
-| 5.7+7.1 | 2027-01-22 | Pending: one human-graded DOK-3 sheet for both topics |
-| 2.4+2.5 | 2027-03-01 | Pending: one human-graded DOK-3 sheet for both topics |
+| 4.1+4.2 | 2026-10-23 | Pending: one human-graded DOK-3 sheet for both topics |
+| 4.7+4.8 | 2026-11-06 | Pending: one human-graded DOK-3 sheet for both topics |
+| 5.1+5.3 | 2026-11-20 | Pending: one human-graded DOK-3 sheet for both topics |
+| 5.4+5.5 | 2026-12-02 | Pending: one human-graded DOK-3 sheet for both topics |
+| 8.1+8.4 | 2027-01-11 | Pending: one human-graded DOK-3 sheet for both topics |
+| 5.7+7.1 | 2027-01-27 | Pending: one human-graded DOK-3 sheet for both topics |
+| 2.4+2.5 | 2027-03-05 | Pending: one human-graded DOK-3 sheet for both topics |
+| 2.6+2.7 | 2027-03-08 | Pending: one human-graded DOK-3 sheet for both topics |

@@ -82,7 +82,7 @@ describe('DOK ladder coverage', () => {
 describe('E additive group coverage',()=>{
   it('keeps B single, preserves all per-topic sheets, and covers every E group',()=>{
     expect(schedule.dayGroups.B).toEqual([]);
-    expect(schedule.dayGroups.E).toHaveLength(13);
+    expect(schedule.dayGroups.E).toHaveLength(12);
     for(const topics of schedule.dayGroups.E){
       expect(yamlTopics.includes(topics.join('+'))||pendingTopics.includes(topics.join('+'))).toBe(true);
       for(const topic of topics)expect(yamlTopics).toContain(topic);

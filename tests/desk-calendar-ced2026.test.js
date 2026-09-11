@@ -13,9 +13,8 @@ const schedulePaths = [
   'data/lesson-schedule.json',
   'roster-server/data/lesson-schedule.json'
 ];
-// Captured before any CED relabel implementation. Dates and grade identities
-// Period B remains identical; E dates now follow E_WEDNESDAY_DOUBLE_SPEC.md.
-const scheduleSha256 = 'a212bb52dcca76c7b968a9b07eb882c80fa20432df6f589c84defb70bbc7f142';
+// Date-column fixture after B_WORK_DAYS_SPEC.md; CED labels keep grade identities.
+const scheduleSha256 = 'b88d5ceaf557d4b6323171fb69f5a37ca734b59029ae1390e3c0039bdde5ea8b';
 function bColumn(bytes) {
   return bytes.toString('utf8').split(/\r?\n/).filter(line => /^\s*"B":/.test(line) && !/^\s*"B": \[\]/.test(line)).join('\n');
 }
@@ -127,8 +126,8 @@ function collectCalendar(win) {
   return byTopic;
 }
 
-describe('CED relabel preserves B schedule bytes', () => {
-  it.each(schedulePaths)('%s matches the pre-change SHA256', (path) => {
+describe('corrected Work Day B schedule dates', () => {
+  it.each(schedulePaths)('%s matches the corrected date SHA256', (path) => {
     const bytes = readFileSync(resolve(repo, path));
     expect(createHash('sha256').update(bColumn(bytes)).digest('hex')).toBe(scheduleSha256);
   });
