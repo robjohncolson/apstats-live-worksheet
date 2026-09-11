@@ -108,6 +108,7 @@ const SY_BLOCK = objBlock('"SY26-27": {');
 const CFG = new Function('return {examDate:' + litField(SY_BLOCK, 'examDate', '[', ']')
   + ',range:' + litField(SY_BLOCK, 'range', '{', '}')
   + ',daysOff:' + litField(SY_BLOCK, 'daysOff', '[', ']')
+  + ',earlyRelease:' + litField(SY_BLOCK, 'earlyRelease', '[', ']')
   + ',periods:' + litField(SY_BLOCK, 'periods', '{', '}') + '}')();
 
 const GEN_SRC =
@@ -116,7 +117,7 @@ const GEN_SRC =
   + constArray('SY2627_PACING_B') + ';\n'
   + constArray('SY2627_PACING_E') + ';\n'
   + 'const pacing={B:injectPcPosterEvents(SY2627_PACING_B),E:injectPcPosterEvents(SY2627_PACING_E)};\n'
-  + 'const def={range:CFG.range,examDate:CFG.examDate,daysOff:CFG.daysOff,periods:CFG.periods,pacing};\n'
+  + 'const def={range:CFG.range,examDate:CFG.examDate,daysOff:CFG.daysOff,earlyRelease:CFG.earlyRelease,periods:CFG.periods,pacing};\n'
   + 'return {S:generateSchedule(def),pacing,offSet:buildOffSet(def.daysOff)};';
 // eslint-disable-next-line no-new-func
 const { S, pacing, offSet } = new Function('CFG', GEN_SRC)(CFG);
@@ -129,12 +130,18 @@ const FIRST_ISO = isoFromArr(CFG.range.start);
 
 // placed[period] = ordered [{ t, kind, part, admin, n, u, date }]
 const placed = { B: [], E: [] };
+const dayGroups = { B: [], E: [] };
 for (const row of S) {
   const [y, m0, d, cellB, cellE] = row;
   const date = iso(y, m0, d);
   for (const [period, cell] of [['B', cellB], ['E', cellE]]) {
     if (!cell || typeof cell !== 'object') continue;
-    placed[period].push({ ...cell, date });
+    if (Array.isArray(cell.group)) {
+      dayGroups[period].push(cell.group.map(member => member.t));
+      for (const member of cell.group) placed[period].push({ ...member, date, dayGroup: cell });
+    } else {
+      placed[period].push({ ...cell, date });
+    }
   }
 }
 
@@ -158,12 +165,17 @@ const DOW = (isoDate) => { const [y, m, d] = isoDate.split('-').map(Number); ret
 for (const period of ['B', 'E']) {
   const meets = CFG.periods[period].meetsDays;
   let prev = '';
+  let prevGroup = null;
   for (const item of placed[period]) {
     const [y, m, d] = item.date.split('-').map(Number);
     if (!meets.includes(DOW(item.date))) fail(`${period} ${item.t} on ${item.date} is not a meeting day`);
     if (offSet.has(`${y}-${m - 1}-${d}`)) fail(`${period} ${item.t} on ${item.date} is a closure`);
     if (item.date >= EXAM_ISO) fail(`${period} ${item.t} on ${item.date} is on/after the exam ${EXAM_ISO}`);
-    if (item.date <= prev) fail(`${period} ${item.t} on ${item.date} not after ${prev}`);
+    const sameGroup = item.dayGroup && item.dayGroup === prevGroup;
+    if (item.date < prev || (item.date === prev && !sameGroup)) {
+      fail(`${period} ${item.t} on ${item.date} not after ${prev} or in the same group`);
+    }
+    prevGroup = item.dayGroup;
     prev = item.date;
   }
 }
@@ -300,6 +312,7 @@ const output = {
   generatedBy: 'scripts/build-lesson-schedule-sy2627.mjs',
   note: 'lessons[].unit is the OLD 9-unit id (grades key off it); progressChecks/posters are keyed by the NEW CED-2026 unit (matches the Desk U{n}-PC ids and pc_bank). Bonus topics have null dates = never due.',
   calendar,
+  dayGroups,
   lessons,
   progressChecks,
   posters,

@@ -375,11 +375,15 @@ describe('lesson-schedule.json — SY26-27 date sanity', () => {
     expect(lessons['1.1'].periods.B).not.toBe(lessons['1.1'].periods.E);
   });
 
-  it('within a period, no two topics share a date', () => {
+  it('only declared E group members share a date', () => {
     for (const period of ['B', 'E']) {
       const seen = new Map();
       for (const { topicKey, date } of datedEntries().filter((x) => x.period === period)) {
-        expect(seen.has(date), `${period} ${date}: ${topicKey} vs ${seen.get(date)}`).toBe(false);
+        if (seen.has(date)) {
+          const groups = JSON.parse(readFileSync(SCHEDULE_PATH, 'utf8')).dayGroups;
+          expect(period).toBe('E');
+          expect(groups.E.some(group => group.includes(topicKey) && group.includes(seen.get(date)))).toBe(true);
+        }
         seen.set(date, topicKey);
       }
     }

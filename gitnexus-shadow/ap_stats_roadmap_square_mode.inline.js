@@ -2623,6 +2623,47 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -4554,255 +4595,9 @@ const BAKED_REGISTRY = {
       }
     }
   },
-  "progressChecks": {
-    "1": {
-      "unit": 1,
-      "title": "Unit 1 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-09-24",
-        "E": "2026-09-24"
-      },
-      "adminDay2": "2026-09-25"
-    },
-    "2": {
-      "unit": 2,
-      "title": "Unit 2 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-10-13",
-        "E": "2026-10-13"
-      },
-      "adminDay2": "2026-10-14"
-    },
-    "3": {
-      "unit": 3,
-      "title": "Unit 3 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-10-26",
-        "E": "2026-10-26"
-      },
-      "adminDay2": "2026-10-27"
-    },
-    "4": {
-      "unit": 4,
-      "title": "Unit 4 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-11-09",
-        "E": "2026-11-09"
-      },
-      "adminDay2": "2026-11-10"
-    },
-    "5": {
-      "unit": 5,
-      "title": "Unit 5 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-11-24",
-        "E": "2026-11-24"
-      },
-      "adminDay2": "2026-11-25"
-    },
-    "6": {
-      "unit": 6,
-      "title": "Unit 6 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2026-12-15",
-        "E": "2026-12-15"
-      },
-      "adminDay2": "2026-12-16"
-    },
-    "7": {
-      "unit": 7,
-      "title": "Unit 7 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2027-01-11",
-        "E": "2027-01-11"
-      },
-      "adminDay2": "2027-01-12"
-    },
-    "8": {
-      "unit": 8,
-      "title": "Unit 8 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2027-01-25",
-        "E": "2027-01-25"
-      },
-      "adminDay2": "2027-01-26"
-    },
-    "9": {
-      "unit": 9,
-      "title": "Unit 9 Progress Check",
-      "kind": "pc",
-      "duration": {
-        "adminDays": 2,
-        "reviewDays": 1
-      },
-      "periods": {
-        "B": "2027-02-04",
-        "E": "2027-02-04"
-      },
-      "adminDay2": "2027-02-05"
-    }
-  },
-  "posters": {
-    "1": {
-      "unit": 1,
-      "title": "Unit 1 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-09-23",
-        "E": "2026-09-23"
-      }
-    },
-    "2": {
-      "unit": 2,
-      "title": "Unit 2 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-10-09",
-        "E": "2026-10-09"
-      }
-    },
-    "3": {
-      "unit": 3,
-      "title": "Unit 3 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-10-23",
-        "E": "2026-10-23"
-      }
-    },
-    "4": {
-      "unit": 4,
-      "title": "Unit 4 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-11-06",
-        "E": "2026-11-06"
-      }
-    },
-    "5": {
-      "unit": 5,
-      "title": "Unit 5 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-11-23",
-        "E": "2026-11-23"
-      }
-    },
-    "6": {
-      "unit": 6,
-      "title": "Unit 6 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2026-12-14",
-        "E": "2026-12-14"
-      }
-    },
-    "7": {
-      "unit": 7,
-      "title": "Unit 7 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2027-01-08",
-        "E": "2027-01-08"
-      }
-    },
-    "8": {
-      "unit": 8,
-      "title": "Unit 8 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2027-01-22",
-        "E": "2027-01-22"
-      }
-    },
-    "9": {
-      "unit": 9,
-      "title": "Unit 9 Poster",
-      "kind": "poster",
-      "duration": {
-        "longBlocks": 1,
-        "shortBlocks": 2
-      },
-      "periods": {
-        "B": "2027-02-03",
-        "E": "2027-02-03"
-      }
-    }
-  }
 };
 let REGISTRY = BAKED_REGISTRY;
+configureCedLabels(function () { return REGISTRY; });
 
 const ROADMAP_FETCH_TIMEOUT_MS = 5500;
 const ROADMAP_REGISTRY_CACHE_KEY = 'apstats_roadmap_registry_cache_v2';
@@ -5165,6 +4960,12 @@ function _hydrateMarksFromDonow(data) {
 // status dot -- that is teacher-side "materials posted", not student work.
 function localLessonState(topic, marks) {
   if (!topic || !marks || typeof marks !== 'object') return '';
+  const members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
+  if(members.length>1){
+    const states=members.map(member=>localLessonState(member,marks));
+    if(states.every(state=>state==='done'))return 'done';
+    return states.some(Boolean)?'partial':'';
+  }
   const prefix = topic + '|';
   let anyVisit = false, anyDone = false;
   for (const key in marks) {
@@ -5396,12 +5197,16 @@ async function _confirmOverrideGate() {
       if (btn) btn.disabled = false;
       return;
     }
+    var members=typeof groupTopics==='function'?groupTopics(lessonKey):[lessonKey];
+    for(const member of members){
+    var saved=JSON.parse(sessionStorage.getItem('apstats_view_as_lesson_unlocks')||'[]');
+    if(Array.isArray(saved)&&saved.includes(member))continue;
     var resp = await fetch(base + '/teacher/lesson-unlock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({
         studentUsername: ctx.username,
-        lessonKey: lessonKey,
+        lessonKey: member,
         reason: reason
       })
     });
@@ -5416,16 +5221,20 @@ async function _confirmOverrideGate() {
       try {
         var raw = sessionStorage.getItem('apstats_view_as_lesson_unlocks') || '[]';
         var arr = JSON.parse(raw);
-        if (Array.isArray(arr) && arr.indexOf(lessonKey) < 0) {
-          arr.push(lessonKey);
+        if (Array.isArray(arr) && arr.indexOf(member) < 0) {
+          arr.push(member);
           sessionStorage.setItem('apstats_view_as_lesson_unlocks', JSON.stringify(arr));
         }
       } catch (_) {}
-      setTimeout(_hideOverrideGateModal, 1500);
+
     } else {
       if (statusEl) statusEl.textContent = 'Error: ' + ((data && data.error) || ('HTTP ' + (resp && resp.status)));
       if (btn) btn.disabled = false;
+      return;
     }
+    }
+    if(statusEl)statusEl.textContent='Override saved.';
+    setTimeout(_hideOverrideGateModal,1500);
   } catch (err) {
     if (statusEl) statusEl.textContent = 'Network error: ' + ((err && err.message) || 'failed');
     if (btn) btn.disabled = false;
@@ -6414,6 +6223,8 @@ var _signinWallActive = false;
 function _isLessonComplete(topic, marks) {
   try {
     if (!topic) return true;
+    var members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
+    if(members.length>1)return members.every(function(member){return _isLessonComplete(member,marks);});
     // Granularity bridge (cross-portion): a combined "A+B" lesson — the fall
     // period-E pacing (e.g. "1.2+1.3") — counts as complete when its OWN combined
     // artifacts are done OR every individual part is. So a summer student's
@@ -6473,7 +6284,7 @@ function _readLessonUnlocks() {
 function _isTopicLessonUnlocked(topic) {
   if (!topic) return false;
   var unlocks = _readLessonUnlocks();
-  return unlocks.indexOf(topic) >= 0;
+  return (typeof groupTopics==='function'?groupTopics(topic):[topic]).every(function(member){return unlocks.indexOf(member)>=0;});
 }
 
 async function _refreshLessonUnlocks() {
@@ -6503,37 +6314,18 @@ async function _refreshLessonUnlocks() {
   } catch (_) { /* fails open; gate logic still runs */ }
 }
 
-// A lesson cell is unlocked per LESSON_GATE_BUILD.md §1. Fails OPEN.
+// Students may open any lesson even while earlier work is incomplete (2026-09-10).
+// Keep this entry point for calendar callers; completion remains a grading signal.
 function _isLessonUnlocked(topic, lessonDate, prevTopic, today, marks, signedIn) {
-  try {
-    if (!signedIn) return true;          // no identity → no progression to gate
-    if (_deskIsTeacher()) return true;   // teachers see everything
-    // P5: teacher-applied override (typeof-guarded so existing vm-based
-    // tests that load _isLessonUnlocked alone don't have to inject the
-    // unlock helpers).
-    if (typeof _isTopicLessonUnlocked === 'function' && _isTopicLessonUnlocked(topic)) return true;
-    if (!prevTopic) return true;         // first lesson in the sequence
-    // PROGRESS_RESET_FIX_SPEC D4 -- indeterminate server state fails OPEN (no
-    // stranding). The server hasn't affirmatively spoken yet (no warm /grade
-    // cache this load AND no durable latch topic on this device) — never
-    // relock a student on silence. typeof-guarded so isolated vm tests that
-    // load this function alone (no _serverEvidencePresent injected) keep the
-    // strict pins.
-    if (typeof _serverEvidencePresent === 'function' && !_serverEvidencePresent()) return true;
-    // STRICT sequential (2026-06-16, LESSON_GATE_BUILD §8): a lesson opens ONLY
-    // when its predecessor is complete — no date bypass. A past-due lesson stays
-    // locked until you finish the one before it, so summer self-pacing advances by
-    // completion alone. (lessonDate/today kept in the signature for callers/tests.)
-    return _isLessonComplete(prevTopic, marks);
-  } catch (_) { return true; }
+  return true;
 }
 // Click handler for a locked lesson cell — explains why + how to unlock.
 function _showLessonLockedDialog(topic, prevTopic, dateStr) {
   // STRICT gate (§8): completion is the ONLY unlock — no "unlocks on <date>".
-  var msg = 'Lesson ' + topic + ' is locked. ';
-  msg += prevTopic ? ('Finish Lesson ' + prevTopic + ' first to unlock it') : 'It is not open yet';
+  var msg = cedLabel(topic).text + ' is locked. ';
+  msg += prevTopic ? ('Finish ' + cedLabel(prevTopic).text + ' first to unlock it') : 'It is not open yet';
   msg += '.';
-  try { showDialog('🔒', msg, 'OK'); } catch (_) {}
+  try { showDialog('🔒', _resourcePanelEsc(msg), 'OK'); } catch (_) {}
 }
 
 // How long the student has to spend on a resource before the Done button
@@ -7233,6 +7025,13 @@ async function submitSignIn() {
     // the legacy student_progress path; clean-start cohort, non-email is harmless).
     var who = (window.rosterClient.current && window.rosterClient.current()) || {};
     var legacyKey = who.username || username;
+    // Same-tab sign-in emits no storage event. Replay only after the owner session is stored.
+    try {
+      if (!window.__VIEW_AS_STUDENT_ID__ && !(typeof _viewAsContext === 'function' && _viewAsContext())
+          && window.gradebookClient && typeof window.gradebookClient.syncOfflineQueue === 'function') {
+        Promise.resolve(window.gradebookClient.syncOfflineQueue()).catch(function () {});
+      }
+    } catch (_) { /* Replay is best-effort and must not turn a valid sign-in into an error. */ }
     // Incident review H1 — capture the PRIOR legacy value before it's
     // overwritten below, so a genuine pre-roster free-text-email marks
     // bucket for THIS transition can still be unioned in by D6's migration.
@@ -7512,6 +7311,13 @@ async function _nfSubmitPassword() {
     // SUCCESS — mirror submitSignIn()'s post-success block (kept in sync by hand).
     var who = (window.rosterClient.current && window.rosterClient.current()) || {};
     var legacyKey = who.username || r.username;
+    // Same-tab sign-in emits no storage event. Replay only after the owner session is stored.
+    try {
+      if (!window.__VIEW_AS_STUDENT_ID__ && !(typeof _viewAsContext === 'function' && _viewAsContext())
+          && window.gradebookClient && typeof window.gradebookClient.syncOfflineQueue === 'function') {
+        Promise.resolve(window.gradebookClient.syncOfflineQueue()).catch(function () {});
+      }
+    } catch (_) { /* Replay is best-effort and must not turn a valid sign-in into an error. */ }
     // Incident review H1 — capture the PRIOR legacy value before it's
     // overwritten below, so a genuine pre-roster free-text-email marks
     // bucket for THIS transition can still be unioned in by D6's migration.
@@ -7998,6 +7804,12 @@ function donowLessonCovers(L, T) {
 // DN3b — roll a cell topic up to one of "", "partial", "done"
 // (worst-wins across all matching /donow lessons; "" = none/no-data → grey).
 function donowCellState(topic) {
+  var members=typeof groupTopics==='function'?groupTopics(topic):[topic];
+  if(members.length>1){
+    var states=members.map(donowCellState);
+    if(states.every(function(state){return state==='done';}))return 'done';
+    return states.some(Boolean)?'partial':'';
+  }
   if (!_donowData || !Array.isArray(_donowData.lessons)) return '';
   var seen = false, anyPartial = false, anyDone = false, anyNotDone = false;
   for (var i = 0; i < _donowData.lessons.length; i++) {
@@ -8205,7 +8017,7 @@ function maybeBumpThenOpen(inf, ds) {
         if (localLessonState(nt.lesson, getStudentMarks()) === 'done') gap = false;
       } catch (_) {}
     }
-    var isDoNow = nt && topic && donowLessonCovers(nt.lesson, topic);
+    var isDoNow = nt && topic && (typeof groupTopics==='function'?groupTopics(inf):[topic]).some(function(member){return donowLessonCovers(nt.lesson,member);});
     var ov = document.getElementById('donow-bump-overlay');
 
     if (!gap || _bumpAcked || isDoNow || !ov) { open(); return; }
@@ -8283,6 +8095,7 @@ var _gradeGradebookCache = null; // latest /grade gradebook{} — read by the "M
 // failure (auth/server/network — see renderDoNowGrades's classifier). Read
 // by rProg (D5 honest-unknown) and _renderGradeStatus (D2 banner).
 var _gradeLoadState = 'unknown';
+var _expiredSignInShown = false;    // One modal per page; dismissing never removes local evidence.
 var _gradeLoadError = null;          // null | { kind: 'auth'|'server'|'network', status: number|null }
 var _gradeRetryCount = 0;            // capped auto-retry counter (D2, <=3 per page load)
 var _gradeRetryTimer = null;         // single-flight guard so concurrent calls don't stack retries
@@ -8306,6 +8119,7 @@ var _gradeLastRenderedState = 'unknown'; // D7: detects an unavailable->availabl
 // data. signOutStudent() already reloads the page (a stronger reset), so it
 // does not need this call.
 function _resetGradeStateForIdentitySwitch() {
+  if (window.StudentWalletPrint) window.StudentWalletPrint.clear();
   try {
     if (_gradeRetryTimer) { clearTimeout(_gradeRetryTimer); _gradeRetryTimer = null; }
     _gradeRetryCount = 0;
@@ -8879,6 +8693,19 @@ async function renderDoNowGrades(baseUrl, token) {
         _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'server', status: res.status };
       }
     } catch (_) { _gradeLoadState = 'unavailable'; _gradeLoadError = { kind: 'network', status: null }; }
+    // Only a live rejection of the still-current token warrants asking for sign-in.
+    // Unknown/offline state and teacher view-as must never become a sign-out.
+    if (_gradeLoadError && _gradeLoadError.kind === 'auth' && !_expiredSignInShown
+        && !window.__VIEW_AS_STUDENT_ID__
+        && !(typeof _viewAsContext === 'function' && _viewAsContext())
+        && window.rosterClient && typeof window.rosterClient.token === 'function'
+        && token && window.rosterClient.token() === token) {
+      _expiredSignInShown = true;
+      var signinOverlay = document.getElementById('signin-overlay');
+      if (!signinOverlay || signinOverlay.style.display !== 'block') openSignInModal();
+      var signinNotice = document.getElementById('signin-error');
+      if (signinNotice) signinNotice.textContent = 'Your sign-in expired \u2014 sign in again. Your work on this device is saved and will sync.';
+    }
     if (data) {
       _persistGradeCache(data);                 // write-through (skipped in view-as, now v2-enveloped)
       _phase2RefreshOnline(baseUrl, token);     // ANDROID Phase 2: refresh local signed-ledger replica + offline-inputs (fire-and-forget)
@@ -9300,7 +9127,7 @@ function _renderCoachPanel(panel, ctx) {
   if (ctx.biggestWin) {
     var bw = document.createElement('div');
     bw.style.cssText = 'font-weight:bold;margin-top:3px';
-    bw.textContent = '🎯 Biggest win: your Topic ' + ctx.biggestWin.lesson + ' ' + ctx.biggestWin.label +
+    bw.textContent = '🎯 Biggest win: your ' + cedLabel(ctx.biggestWin.lesson).text + ' ' + ctx.biggestWin.label +
       ' is at ' + Math.round(ctx.biggestWin.score) + '% — fixing that lifts your grade the most.';
     facts.appendChild(bw);
   }
@@ -9320,7 +9147,7 @@ function _renderCoachPanel(panel, ctx) {
     var bTrk = (ctx.blooket.track != null) ? (Math.round(ctx.blooket.track) + '%') : '—';
     var bMsg = 'Blooket: ' + bTrk + ' (' + ctx.blooket.done + ' of ' + ctx.blooket.due + ' done).';
     if (ctx.blooket.todo && ctx.blooket.todo.length) {
-      bMsg += ' Make one up to 80% with the Desk flashcards — e.g. Topic ' + ctx.blooket.todo.slice(0, 3).join(', Topic ') + '.';
+      bMsg += ' Make one up to 80% with the Desk flashcards — e.g. ' + ctx.blooket.todo.slice(0, 3).map(function (key) { return cedLabel(key).text; }).join('; ') + '.';
     }
     blk.textContent = bMsg;
     facts.appendChild(blk);
@@ -9332,8 +9159,8 @@ function _renderCoachPanel(panel, ctx) {
   // grade — Blooket isn't a grade component yet.)
   if (Array.isArray(ctx.flashcardGate) && ctx.flashcardGate.length) {
     var fg = document.createElement('div');
-    var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return 'Topic ' + g.lesson; }).join(', ');
-    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to complete it and unlock the next lesson.';
+    var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return cedLabel(g.lesson).text; }).join('; ');
+    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to complete it. You can open other lessons while catching up.';
     facts.appendChild(fg);
   }
 
@@ -9341,8 +9168,7 @@ function _renderCoachPanel(panel, ctx) {
   // component to fix first (otherwise it competes with the biggest win above).
   if (!ctx.biggestWin && ctx.nextTask && ctx.nextTask.unit) {
     var nt = document.createElement('div');
-    nt.textContent = 'Start here: Unit ' + ctx.nextTask.unit +
-      (ctx.nextTask.lesson ? ', Topic ' + ctx.nextTask.lesson : '') +
+    nt.textContent = 'Start here: ' + (ctx.nextTask.lesson ? cedLabel(ctx.nextTask.lesson).text : ctx.nextTask.unit) +
       (ctx.nextTask.activity ? ' — ' + ctx.nextTask.activity : '') + '.';
     facts.appendChild(nt);
   }
@@ -9361,7 +9187,7 @@ function _renderCoachPanel(panel, ctx) {
       // Mention Blooket only when the lesson actually HAS one (never invent it).
       if (w.hasBlooket) bits.push((w.blooket != null) ? 'Blooket ' + Math.round(w.blooket) + '%' : 'Blooket not done');
       if (!bits.length && typeof w.grade === 'number') bits.push('grade ' + Math.round(w.grade) + '%');
-      li.textContent = 'Topic ' + w.lesson + (bits.length ? ' (' + bits.join(', ') + ')' : '');
+      li.textContent = cedLabel(w.lesson).text + (bits.length ? ' (' + bits.join(', ') + ')' : '');
       ul.appendChild(li);
     });
     facts.appendChild(ul);
@@ -9453,7 +9279,7 @@ async function _coachAsk(ctx, message, transcriptEl, history, askBtn) {
     var data = await resp.json();
     var answer = (data && data.response) ? String(data.response) : '';
     if (!answer) { setCoach(unavailable); return; }
-    setCoach(answer);
+    setCoach(cedReferenceText(answer));
     history.push({ role: 'user', content: message });
     history.push({ role: 'assistant', content: answer });
     if (history.length > 12) history.splice(0, history.length - 12);
@@ -9472,6 +9298,7 @@ async function renderDoNow() {
   // Desk-link step 3: refresh the calculator-skill chip on every pass — the
   // chip only exists when today's lesson has a mapped trainer skill.
   try { _renderTi84SkillBtn(); } catch (_) {}
+  if(typeof _renderTodayTopics==='function')_renderTodayTopics();
 
   // ICON_MOTION -- which app icon to breathe for the next task (curriculum work
   // lives in the Quiz app; appForNextTask refines this if the manifest grows).
@@ -9586,7 +9413,7 @@ async function renderDoNow() {
       if (nt && nt.lesson && _dnMarks && typeof localLessonState === 'function'
           && localLessonState(nt.lesson, _dnMarks) === 'done') {
         if (_calNextUp) {
-          show('Do Now: Topic ' + _calNextUp + ' — keep going.', 'todo');
+          show('Do Now: ' + cedLabel(_calNextUp).text + ' — keep going.', 'todo');
         } else {
           show('All caught up — every assigned item is done. 🎉', 'done');
         }
@@ -9617,7 +9444,7 @@ async function renderDoNow() {
           && typeof getStudentMarks === 'function') {
         var _sumNext = calNextUpTopic(_orderedSummerTopics(), getStudentMarks());
         if (_sumNext) {
-          show('Do Now: Topic ' + _sumNext + ' — keep going.', 'todo');
+          show('Do Now: ' + cedLabel(_sumNext).text + ' — keep going.', 'todo');
           return;
         }
         // summerNextUp null = summer track complete → fall through to server (e.g. U1 3.1)
@@ -9637,7 +9464,8 @@ async function renderDoNow() {
     var prog = (nt.progress && typeof nt.progress.done === 'number' && typeof nt.progress.total === 'number')
       ? (' (' + nt.progress.done + '/' + nt.progress.total + ' done)')
       : '';
-    var where = nt.lesson ? (nt.unit + ' ' + nt.lesson) : nt.unit;
+    // Manifest unit-only tasks are already CED keyed; lesson keys remain OLD.
+    var where = nt.lesson ? cedLabel(nt.lesson).text : nt.unit;
     var act = nt.activity || 'work';
     try {
       _dnNextApp = (window.WalletLogic && typeof WalletLogic.appForNextTask === 'function')
@@ -9737,7 +9565,7 @@ const SFX = {
     },
 
     play(name, volume = 0.5) {
-        if (this.muted) return;
+        if (this.muted || (typeof MacSFX !== 'undefined' && MacSFX.muted)) return;   // one mute (see studyBreak.toggleMute)
         this.ensureCtx();
         const fn = this.sounds[name];
         if (fn) fn.call(this, volume);
@@ -9882,7 +9710,15 @@ let SCHOOLOGY_COURSE_E = '7945275798';
 const SUPABASE_URL='https://hgvnytaqmuybzbotosyj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhndm55dGFxbXV5Ynpib3Rvc3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNTE5MTMsImV4cCI6MjA4MDcyNzkxM30.-LcH_zly4pXoX_2Vra-RbH9twPvUj6xAJp66xPi02tU';
 const _supaCache={};
-function d(t,n,u,due,as,db){return{t,n,u,due:due||"",as:as||"",db:db||false}}
+function d(t,n,u,due,as,db){return{t,n,u,due:due||"",as:as||"",db:db||false,ced:typeof cedLabel==='function'?cedLabel(t):null}}
+// Retain the DOK teacher/view-as gate and require the signed-in roster role.
+function cedTeacherBridgeAllowed() {
+    if (typeof _deskIsTeacher !== 'function' || !_deskIsTeacher()) return false;
+    try {
+        var who = window.rosterClient && window.rosterClient.current();
+        return !!who && who.role === 'teacher';
+    } catch (_) { return false; }
+}
 // Grading Model v3 (s121): inject Poster + PC Day 1 + PC Day 2 pseudo-lessons
 // at every unit transition (and at the array end). generateSchedule treats
 // them like lessons and places them on consecutive meeting days so each
@@ -10113,9 +9949,12 @@ const SCHEDULE_DEFS = {
     //   node scripts/build-lesson-schedule-sy2627.mjs
     examDate: [2027, 4, 11],
     range: { start: [2026,8,2], end: [2027,4,15] },
+    earlyRelease: [[2026,8,30],[2026,9,21],[2026,10,18],[2026,10,25],
+      [2026,11,9],[2026,11,23],[2027,0,13],[2027,1,10],[2027,2,3],
+      [2027,2,17],[2027,3,14],[2027,4,19]],
     periods: {
       B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, schoologyCourse:null },
-      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, schoologyCourse:null }
+      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,14], schoologyCourse:null }
     },
     daysOff: [
       [[2026,8,4]],                    // School Closed (Fri Sep 4)
@@ -10151,6 +9990,29 @@ function computeDefaultYear(){
 }
 let cYear = computeDefaultYear();
 
+// Explicit groups use individual OLD keys. Archived joined strings keep their legacy behavior.
+function groupTopics(cell){
+  if(!cell)return [];
+  if(typeof cell==='string'){
+    if((typeof cYear==='undefined'||cYear==='SY26-27')&&typeof S!=='undefined'){
+      for(const row of S){
+        for(const candidate of [row[3],row[4]]){
+          if(candidate&&candidate.t===cell&&Array.isArray(candidate.group))return groupTopics(candidate);
+        }
+      }
+    }
+    return [cell];
+  }
+  if(Array.isArray(cell.group))return cell.group.flatMap(groupTopics);
+  return cell.t?[cell.t]:[];
+}
+
+function groupLabel(cell){
+  const labels=groupTopics(cell).map(topic=>cedLabel(topic));
+  return {text:labels.map(label=>label.text).join(' + '),unit:labels[0]&&labels[0].unit,
+    bonus:labels.length>0&&labels.every(label=>label.bonus)};
+}
+
 function dateFromArr(a){return new Date(a[0],a[1],a[2])}
 
 function buildOffSet(daysOff){
@@ -10174,6 +10036,7 @@ function enumWeekdays(startArr,endArr){
 
 function generateSchedule(def){
   const offSet=buildOffSet(def.daysOff);
+  const earlyRelease=new Set((def.earlyRelease||[]).map(day=>day.join('-')));
   const allDays=enumWeekdays(def.range.start,def.range.end);
   const queues={};
   for(const pid in def.periods) queues[pid]=[...def.pacing[pid]];
@@ -10188,7 +10051,21 @@ function generateSchedule(def){
     for(const pid in def.periods){
       const pDef=def.periods[pid];
       if(!pDef.meetsDays.includes(dow)) cells[pid]=NC;
-      else if(queues[pid].length>0){const tp=queues[pid].shift();const cell=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false);if(tp.kind){cell.kind=tp.kind;if(tp.admin)cell.admin=tp.admin;if(tp.part)cell.part=tp.part}cells[pid]=cell}
+      else if(queues[pid].length>0){
+        const tp=queues[pid].shift();
+        const cell=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false);
+        if(tp.kind){cell.kind=tp.kind;if(tp.admin)cell.admin=tp.admin;if(tp.part)cell.part=tp.part}
+        const next=queues[pid][0];
+        const doubleDay=pid==='E'&&dow===3&&pDef.doubleDay===dow
+          &&pDef.doubleFrom&&dt>=dateFromArr(pDef.doubleFrom)&&!earlyRelease.has(dk);
+        if(doubleDay&&!tp.kind&&tp.u>0&&next&&!next.kind&&next.u===tp.u){
+          queues[pid].shift();
+          const second=d(next.t,next.n,next.u,next.due||"",next.as||"",next.db||false);
+          const group=d(cell.t+'+'+second.t,cell.n+' + '+second.n,cell.u,'','',true);
+          group.group=[cell,second];
+          cells[pid]=group;
+        }else cells[pid]=cell;
+      }
       else cells[pid]=NC;
     }
     result.push([...da,cells.B||NC,cells.E||NC]);
@@ -10331,6 +10208,7 @@ function updateLegend(def){
   if(!el) return;
   let h='';
   for(const u of def.units) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--u'+u.id+')"></div>U'+u.id+' '+u.label+'</div>';
+  if (def === SCHEDULE_DEFS['SY26-27']) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--bonus)"></div>★ Beyond the Exam</div>';
   h+='<div class="legend-item"><div class="legend-sw" style="background:var(--rev)"></div>Review</div>';
   h+='<div class="legend-item"><div class="legend-sw" style="background:var(--exam-bg);border:1px solid #999"></div>Exam</div>';
   h+='<div class="legend-item"><div class="legend-sw cell-off" style="border:1px solid #999"></div>No School</div>';
@@ -11251,6 +11129,24 @@ function _resourcePanelEsc(s) {
     });
 }
 
+// DOK ladder row (APS_DOK_LADDER_SPEC.md §8 Phase 5a) — TEACHER ONLY. The paper DOK-3
+// sheet is the teacher's hand-graded channel; students never see a link to it here
+// (teacher decision 2026-09-04: it must not compete with the AI-graded work for their
+// attention). _deskIsTeacher() is false in view-as, so a student preview hides it too.
+// URLs are derived from the OLD topic key (dok/pdf/aps_{topic}_{edition}.pdf), relative
+// to the Desk's own origin — no Supabase column, works on GH Pages and the Vercel mirror.
+function _dokLadderRowHtml(topicKey) {
+    if (!(typeof _deskIsTeacher === 'function' && _deskIsTeacher())) return '';
+    if (!/^\d+\.\d+$/.test(String(topicKey || ''))) return '';
+    var base = 'dok/pdf/aps_' + topicKey + '_';
+    var link = function (ed, label) {
+        return '<a href="' + base + ed + '.pdf" target="_blank" style="color:var(--accent-ink);text-decoration:underline">' + label + '</a>';
+    };
+    return '<div class="dok-ladder-row" style="margin:3px 0"><span class="chicago" style="font-size:9px">DOK-3</span> '
+        + link('board', 'Board') + ' \u00b7 ' + link('student', 'Sheet') + ' \u00b7 ' + link('teacher', 'Key')
+        + ' <span style="color:#888;font-size:9px">(teacher only)</span></div>';
+}
+
 function _lessonCoachHtml(inf, ids, regEntry) {
     if (!inf || !inf.t || inf.t === R) return '';
     var hasVideo = false;
@@ -11276,24 +11172,29 @@ function showResourcePanel(inf, dateStr) {
     const topicIds = lookupTopic(inf.t);
     const ids = Array.isArray(topicIds) ? topicIds : (topicIds ? [topicIds] : []);
 
-    // Fall-2026 CED relabel (display-only): OLD nomenclature leads (matches the
-    // "Unit X Lesson Y" video + "Topic X.Y" worksheet the student opens); the new CED
-    // placement is context. Labels come from the verified crosswalk (ced2026), NOT the
-    // stale pacing labels. Falls back for review days / uncrosswalked ids. Links below
-    // are unchanged \u2014 header text only.
+    // The calendar keeps OLD identity keys; students read the CED label. Only a
+    // signed-in teacher outside student preview gets the video/worksheet bridge.
     var _hdrEl = document.getElementById('resource-header');
     var _ced = (typeof REGISTRY !== 'undefined' && REGISTRY.lessons && REGISTRY.lessons[inf.t]) ? REGISTRY.lessons[inf.t].ced2026 : null;
     var _m = /^(\d+)\.(\d+)$/.exec(inf.t);
-    var _oldNom = _m ? ('Unit ' + _m[1] + ' \u00b7 Lesson ' + _m[2]) : inf.t;
-    let header = dateStr + ' \u2014 ';
+    var _newLabels = typeof cYear === 'undefined' || cYear === 'SY26-27';
+    let header;
     if (inf.t === R) {
-        header += inf.n;
-    } else if (_ced && _ced.status === 'core' && _ced.newTopic) {
-        header += _oldNom + ': ' + (_ced.newLabel || inf.n) + '  \u00b7  CED ' + _ced.newTopic + ' (New Unit ' + _ced.newUnit + ')';
-    } else if (_ced && _ced.status === 'bonus') {
-        header += _oldNom + ': ' + String(_ced.newLabel || inf.n).replace(/^Beyond the Exam:\s*/i, '') + '  \u00b7  \u2605 Beyond the Exam (not on the Fall 2026 exam)';
+        header = dateStr + ' \u2014 ' + inf.n;
+    } else if (!_newLabels) {
+        // Frozen prior-year definitions retain their original nomenclature.
+        var _oldNom = _m ? ('Unit ' + _m[1] + ' \u00b7 Lesson ' + _m[2]) : inf.t;
+        header = dateStr + ' \u2014 ' + _oldNom + ': ' + inf.n;
+    } else if (inf.kind) {
+        header = inf.n;
     } else {
-        header += (_m ? _oldNom + ': ' : inf.t + ': ') + inf.n;
+        inf.ced = inf.group ? groupLabel(inf) : cedLabel(inf.t);
+        header = inf.ced.text;
+        if (inf.ced.unit) header += ' \u2014 CED Unit ' + inf.ced.unit;
+        if (_m && cedTeacherBridgeAllowed()) {
+            header += ' (old ' + inf.t + ': video "Unit ' + _m[1] + ' Lesson ' + _m[2]
+                + '", worksheet u' + _m[1] + '_lesson' + _m[2] + ')';
+        }
     }
     _hdrEl.textContent = header;
     var _cedBonus = !!(_ced && _ced.status === 'bonus');
@@ -11302,6 +11203,13 @@ function showResourcePanel(inf, dateStr) {
 
     let html = '';
 
+    // Each member retains its own resource and progress keys.
+    const dayCell=inf;
+    for(const member of (dayCell.group||[dayCell])){
+      const inf=member;
+      const topicIds=lookupTopic(inf.t);
+      const ids=Array.isArray(topicIds)?topicIds:(topicIds?[topicIds]:[]);
+      const _cedBonus=!!(typeof REGISTRY!=='undefined'&&REGISTRY.lessons&&REGISTRY.lessons[inf.t]&&REGISTRY.lessons[inf.t].ced2026&&REGISTRY.lessons[inf.t].ced2026.status==='bonus');
     // Today's Lesson
     if (ids.length > 0) {
         // topic id in dot format for student_progress (e.g. "1.7", or a
@@ -11569,10 +11477,11 @@ function showResourcePanel(inf, dateStr) {
         // button that would always 404. W1: hide entirely when not in the key set
         // (never show a control that only reports "not available yet").
         // PC tutor sits alongside only when the per-lesson tutor is shown.
+        var _tutorSuffix=dayCell.group?'-'+_stuTopicId.replace('.', '-') : '';
         var _aitm = /^(\d+)\.(\d+)$/.exec(inf.t || '');
         if (_aitm && AI_TUTOR_LESSON_KEYS.has(inf.t)) {
-            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPrompt(\'' + _aitm[1] + '\',\'' + _aitm[2] + '\')">\u{1F916} Tutor prompt \u{2014} copy to clipboard</button> <span id="ai-tutor-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
-            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPromptPc(\'' + _aitm[1] + '\')">\u{1F916} Unit ' + _aitm[1] + ' PC tutor \u{2014} copy to clipboard</button> <span id="ai-tutor-pc-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
+            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPrompt(\'' + _aitm[1] + '\',\'' + _aitm[2] + '\',\'ai-tutor-status' + _tutorSuffix + '\')">\u{1F916} Tutor prompt \u{2014} copy to clipboard</button> <span id="ai-tutor-status' + _tutorSuffix + '" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
+            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPromptPc(\'' + _aitm[1] + '\',\'ai-tutor-pc-status' + _tutorSuffix + '\')">\u{1F916} Unit ' + _aitm[1] + ' PC tutor \u{2014} copy to clipboard</button> <span id="ai-tutor-pc-status' + _tutorSuffix + '" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
         }
 
         var _rpAll = getAllRegistryEntries(inf.t);
@@ -11592,9 +11501,14 @@ function showResourcePanel(inf, dateStr) {
             lessonHtml += '<div style="margin:3px 0;color:#3b82f6">Schoology: ' + _rpLabel + '</div>';
         }
 
+        // Teacher-only DOK-3 links (never rendered for students — see _dokLadderRowHtml).
+        lessonHtml += _dokLadderRowHtml(inf.t);
+
         if (lessonHtml) {
             html += '<div style="margin-bottom:8px"><div class="chicago" style="font-size:10px;margin-bottom:4px">Today\'s Lesson</div>' + lessonHtml + '</div>';
         }
+    }
+
     }
 
     // Due Today
@@ -11606,7 +11520,8 @@ function showResourcePanel(inf, dateStr) {
             if (!r) continue;
             if (item.type === 'quiz' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    dueHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
+                    var dueLabel = _newLabels ? cedLabel(item.topicId.replace('-', '.')).text : (b.title || 'Blooket');
+                    dueHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + _resourcePanelEsc(dueLabel) + '</a></div>';
                 });
             }
         }
@@ -11624,12 +11539,14 @@ function showResourcePanel(inf, dateStr) {
             if (!r) continue;
             if (item.type === 'drill' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Drill: ' + (b.title || 'Practice') + '</a></div>';
+                    var drillLabel = _newLabels ? cedLabel(item.topicId.replace('-', '.')).text : (b.title || 'Practice');
+                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Drill: ' + _resourcePanelEsc(drillLabel) + '</a></div>';
                 });
             }
             if (item.type === 'quiz' && r.blookets && r.blookets.length) {
                 r.blookets.forEach(b => {
-                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + (b.title || 'Blooket') + '</a></div>';
+                    var quizLabel = _newLabels ? cedLabel(item.topicId.replace('-', '.')).text : (b.title || 'Blooket');
+                    asHtml += '<div style="margin:3px 0"><a href="' + b.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">Quiz: ' + _resourcePanelEsc(quizLabel) + '</a></div>';
                 });
             }
         }
@@ -12225,7 +12142,7 @@ function _srsCoreDeckPlans() {
             csv: csv,
             path: path,
             topic: topicId,
-            label: ced.newLabel || topicId
+            label: cedLabel(topicId).text
         };
     }
     return plansByCsv;
@@ -13094,7 +13011,7 @@ function _rvRestoreActions() {
 // cards, timed, up to 100% — the real Blooket substitute).
 function _bfShowModePicker(btn, topicId) {
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Flashcards — ' + topicId;
+    if (header) header.textContent = 'Flashcards — ' + cedLabel(topicId).text;
     _bfHideQuizUI();
     var mp = document.getElementById('bf-modepick');
     if (mp) {
@@ -13238,7 +13155,7 @@ async function _rvStart(btn, topicId) {
     if (header) {
         while (header.firstChild) header.removeChild(header.firstChild);
         var title = document.createElement('span');
-        title.textContent = 'Review — ' + topicId + ' (practice, not graded)';
+        title.textContent = 'Review — ' + cedLabel(topicId).text + ' (practice, not graded)';
         var close = document.createElement('button');
         close.className = 's7btn';
         close.style.cssText = 'float:right;padding:0 5px;min-width:24px';
@@ -13790,7 +13707,7 @@ async function _bfStartQuick(btn, topicId) {
         _bfSaveProgress();
     }
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Quick check — ' + topicId + (isResume ? ' (resuming)' : '') + ' (pass ≥ 80%, caps at 80%)';
+    if (header) header.textContent = 'Quick check — ' + cedLabel(topicId).text + (isResume ? ' (resuming)' : '') + ' (pass ≥ 80%, caps at 80%)';
     _bfShowQuizUI(false);  // hide the picker, show the quiz, no timer
     document.getElementById('bf-result').style.display = 'none';
     if (finishOnResume) {
@@ -14400,7 +14317,7 @@ async function _ftStart(btn, topicId) {
     _ftState.round = _ftCreateRound(_bfShuffle(allCards));   // FULL deck — no top-10 trim
     _ftState.answered = false;
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Timed deck — ' + topicId + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
+    if (header) header.textContent = 'Timed deck — ' + cedLabel(topicId).text + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
     _bfShowQuizUI(true);   // show the quiz + the timer
     document.getElementById('bf-result').style.display = 'none';
     document.addEventListener('keydown', _ftKeydownHandler);
@@ -14893,7 +14810,7 @@ function renderMyReceipts() {
         main.style.cssText = 'min-width:0;line-height:1.35';
         var title = document.createElement('div');
         title.style.cssText = 'font-weight:bold;word-break:break-word';
-        title.textContent = _receiptSourceIcon(r.src || payload.src) + ' ' + (r.i || payload.i || 'Receipt');
+        title.textContent = _receiptSourceIcon(r.src || payload.src) + ' ' + cedDisplayText(r.i || payload.i || 'Receipt');
         main.appendChild(title);
 
         var meta = document.createElement('div');
@@ -16048,11 +15965,13 @@ function _dogeWalletRender(box, w, pts) {
 
     // ── Header: title + a ▸ Details disclosure (the app's existing collapser idiom) ──
     var hdr = document.createElement('div');
-    hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px';
+    hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap';
     var title = document.createElement('span');
     title.className = 'chicago'; title.style.cssText = 'font-size:11px;color:#5a4500';
     title.textContent = '🍬 Candy & DOGE';
     hdr.appendChild(title);
+    // Available even before the student's assigned wallet receives its first deposit.
+    if (window.StudentWalletPrint) window.StudentWalletPrint.attach(hdr, w);
 
     var hasWalletOnboarding = !w.dogeAddress && Boolean(
         w.studentWalletOptInEnabled || w.proposedAddressMasked || w.proposalRejectionReason
@@ -16316,6 +16235,7 @@ function _studentWalletOnboardingAllowed(wallet) {
     return true;
 }
 function _clearStudentWalletCeremony() {
+    if (window.StudentWalletPrint) window.StudentWalletPrint.clear();
     var cleanup = window.__studentWalletCeremonyCleanup;
     window.__studentWalletCeremonyCleanup = null;
     if (typeof cleanup === 'function') {
@@ -16851,7 +16771,7 @@ function _walletReceiptRow(r) {
     var title = document.createElement('div');
     title.style.cssText = 'font-weight:bold;word-break:break-word';
     var icon = (typeof _receiptSourceIcon === 'function') ? _receiptSourceIcon(r.src || payload.src) : '🧾';
-    title.textContent = icon + ' ' + (r.i || payload.i || 'Recorded work');
+    title.textContent = icon + ' ' + cedDisplayText(r.i || payload.i || 'Recorded work');
     main.appendChild(title);
 
     var meta = document.createElement('div');
@@ -17016,58 +16936,51 @@ async function _downloadGradeBackup() {
     alert(note);
 }
 
-var _TEACHER_TOOLS = [
-    { icon: '📋', label: 'Roster Console', sub: 'enroll · passwords · delete', act: function () { window.open('teacher-roster-console.html', '_blank'); } },
-    { icon: '📈', label: 'Gradebook Dashboard', sub: 'class grid · remediation · rewards', act: function () { window.open('teacher-dashboard.html', '_blank'); } },
-    { icon: '🌙', label: 'Nightly Review', sub: 'mark seen · comment · reward', act: function () { if (typeof openNightlyReview === 'function') openNightlyReview(); } },
-    { icon: '📈', label: 'Grade Check-in', sub: 'monthly trajectory review', act: function () { if (typeof openGradeCheckin === 'function') openGradeCheckin(); } },
-    { icon: '💾', label: 'Download Grade Backup', sub: 'signed · verified · off-Supabase', act: function () { _downloadGradeBackup(); } },
-    { icon: '👥', label: 'Live Classroom', sub: 'presence · polls', act: function () { window.open('teacher-classroom.html', '_blank'); } },
-    { icon: '🔒', label: 'Unlock Codes', sub: 'unit unlock generator', act: function () { window.open('teacher-code-generator.html', '_blank'); } },
-    { icon: '🔍', label: 'Verify (scan)', sub: 'phone QR → teacher-verify', act: function () { if (typeof openVerifyQR === 'function') openVerifyQR(); } },
-    { icon: '🧾', label: 'Verify (paste)', sub: 'paste/drag a receipt', act: function () { window.open('https://robjohncolson.github.io/curriculum_render/verify.html', '_blank', 'noopener'); } },
-];
-function openTeacherTools() {
-    // Defense-in-depth: the Teacher menu is already role-gated, but never open
-    // the launcher for a non-teacher (e.g. a stray console call / preview mode).
-    if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
+// The teacher workspace stays inside the Desk and shares its signed-in session.
+var _teacherWorkspaceFocus = null;
+function openTeacherTools(view) {
+    if (typeof _deskIsTeacher !== 'function' || !_deskIsTeacher()) return;
     var overlay = document.getElementById('app-teachertools-overlay');
     if (!overlay) return;
+    _teacherWorkspaceFocus = document.activeElement;
     var host = document.getElementById('teachertools-content');
-    if (host) _paintTeacherTools(host);
-    var win = overlay.querySelector('.app-window');
-    if (win) { win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.classList.remove('maximized'); }
+    _paintTeacherTools(host, view);
     overlay.style.display = 'block';
+    var win = overlay.querySelector('.app-window');
+    win.style.cssText = 'width:calc(100vw - 32px);max-width:1480px;height:calc(100vh - 72px);left:50%;top:50%;transform:translate(-50%,-50%)';
+    win.setAttribute('role', 'dialog');
+    win.setAttribute('aria-label', 'Teacher workspace');
+    win.setAttribute('aria-modal', 'true');
+    host.querySelector('iframe').focus();
     try { if (typeof bumpUsage === 'function') bumpUsage('teachertools'); } catch (_) {}
-    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
 }
 function destroyTeacherTools() {
-    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
     var overlay = document.getElementById('app-teachertools-overlay');
     if (overlay) overlay.style.display = 'none';
+    // Stop dashboard polls and remove rendered passwords when the workspace closes.
+    var host = document.getElementById('teachertools-content');
+    if (host) host.textContent = '';
+    if (_teacherWorkspaceFocus && _teacherWorkspaceFocus.isConnected) _teacherWorkspaceFocus.focus();
 }
-function _paintTeacherTools(host) {
-    host.innerHTML = '';
-    var grid = document.createElement('div');
-    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px;justify-content:center';
-    _TEACHER_TOOLS.forEach(function (t) {
-        var b = document.createElement('button');
-        b.className = 's7btn';
-        b.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;width:128px;padding:12px 8px;cursor:pointer;text-align:center';
-        var ic = document.createElement('div'); ic.style.cssText = 'font-size:22px;line-height:1'; ic.textContent = t.icon;
-        var lb = document.createElement('div'); lb.className = 'chicago'; lb.style.cssText = 'font-size:12px'; lb.textContent = t.label;
-        var sb = document.createElement('div'); sb.className = 'geneva'; sb.style.cssText = 'font-size:9px;color:#666'; sb.textContent = t.sub;
-        b.appendChild(ic); b.appendChild(lb); b.appendChild(sb);
-        b.onclick = function () { destroyTeacherTools(); try { t.act(); } catch (_) {} };
-        grid.appendChild(b);
-    });
-    host.appendChild(grid);
-    var note = document.createElement('div');
-    note.className = 'geneva';
-    note.style.cssText = 'font-size:9px;color:#888;margin-top:12px;border-top:1px solid #ccc;padding-top:8px;line-height:1.4';
-    note.textContent = '🔒 Roster Console & Dashboard ask for your teacher key (kept only in this browser session). The Roster Console shows student passwords — open it on your own screen.';
-    host.appendChild(note);
+function _paintTeacherTools(host, view) {
+    host.textContent = '';
+    host.style.cssText = 'padding:0;display:block;overflow:hidden;height:calc(100% - 24px)';
+    var frame = document.createElement('iframe');
+    frame.title = 'Teacher workspace';
+    var tab = ['class', 'attention', 'recent', 'recovery'].indexOf(view) >= 0 ? view : 'class';
+    frame.src = 'teacher-dashboard.html?workspace=1&view=' + tab;
+    frame.style.cssText = 'display:block;border:0;width:100%;height:100%;background:#e5e3d2';
+    host.appendChild(frame);
 }
+window.addEventListener('message', function (event) {
+    var frame = document.querySelector('#teachertools-content iframe');
+    if (event.origin !== location.origin || !frame || event.source !== frame.contentWindow) return;
+    if (!event.data || event.data.type !== 'teacher-workspace') return;
+    if (event.data.action === 'close') { destroyTeacherTools(); return; }
+    if (!_deskIsTeacher()) return;
+    if (event.data.action === 'scan') { destroyTeacherTools(); openVerifyQR(); }
+    if (event.data.action === 'checkin') { destroyTeacherTools(); openGradeCheckin(); }
+});
 
 // ── Grade Check-in (DESK_GRADE_CHECKIN_SPEC.md) ──────────────────────────────
 // A teacher-only, browser-local monthly reminder to run the private grade-
@@ -17587,20 +17500,10 @@ async function _reviewFetchByItem() {
     } catch (e) { return { error: 'network' }; }
 }
 async function _reviewBadgePoll() {
-    if (!(typeof _deskIsTeacher === 'function' && _deskIsTeacher())) { _reviewSetBadge(0); return; }
-    var data = await _reviewFetchQueue();
-    if (data && data.ok) _reviewSetBadge(Number(data.unseenTotal) || 0);
+    // Retired: saved-work browsing has no nightly mark-seen requirement.
 }
 function openNightlyReview() {
-    if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
-    var overlay = document.getElementById('app-nightlyreview-overlay');
-    if (!overlay) return;
-    var win = overlay.querySelector('.app-window');
-    if (win) { win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.classList.remove('maximized'); }
-    overlay.style.display = 'block';
-    try { if (typeof bumpUsage === 'function') bumpUsage('nightlyreview'); } catch (_) {}
-    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
-    _reviewRefresh();
+    openTeacherTools('recent');
 }
 function closeNightlyReview() {
     try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
@@ -18225,7 +18128,7 @@ function _lessonDateMap() {
             var inf = e[colIdx];
             if (!inf || typeof inf !== 'object' || !inf.t) continue;  // OFF/NC/EX/PO/R tokens
             var dt = new Date(e[0], e[1], e[2]);
-            var parts = String(inf.t).split('+');
+            var parts = typeof groupTopics==='function'&&inf.group ? groupTopics(inf) : String(inf.t).split('+');
             for (var p = 0; p < parts.length; p++) {
                 var key = parts[p].trim();
                 if (key && !map[key]) map[key] = dt;
@@ -18424,7 +18327,9 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
             }
             var nm = document.createElement('span');
             nm.style.cssText = 'position:relative;z-index:1';
-            nm.textContent = c.title;
+            nm.textContent = Array.isArray(c.topicKeys) && c.topicKeys.length
+                ? c.topicKeys.map(function (key) { return cedLabel(key).text; }).join(' / ')
+                : cedDisplayText(c.title);
             var vv = document.createElement('span');
             if (band) {
                 vv.style.cssText = 'position:relative;z-index:1;font-variant-numeric:tabular-nums;font-weight:bold;color:' + band.fg;
@@ -18499,7 +18404,7 @@ function openDayGrade(dateStr) {
 
             var titleEl = document.createElement('div');
             titleEl.style.cssText = 'font-family:Chicago,monospace;font-size:11px;font-weight:bold;margin-bottom:3px';
-            titleEl.textContent = lesson.lessonKey + (lesson.topicName ? (' — ' + lesson.topicName) : '');
+            titleEl.textContent = cedLabel(lesson.lessonKey).text;
             card.appendChild(titleEl);
 
             var gradeEl = document.createElement('div');
@@ -18661,17 +18566,17 @@ async function _copyTutorPromptByPath(path, statusElId) {
 
 // Per-lesson tutor prompt (ai-tutor/u{U}_l{L}.md). XSS-safe: unit/lesson
 // arrive as regex-captured numeric groups from the showResourcePanel branch.
-async function copyTutorPrompt(unit, lesson) {
+async function copyTutorPrompt(unit, lesson, statusId) {
     var path = 'ai-tutor/u' + unit + '_l' + lesson + '.md';
-    await _copyTutorPromptByPath(path, 'ai-tutor-status');
+    await _copyTutorPromptByPath(path, statusId || 'ai-tutor-status');
 }
 
 // Phase 5.1: per-unit Progress Check tutor prompt (ai-tutor/u{U}_pc.md).
 // Rendered alongside the lesson button on every lesson tile; the unit comes
 // from the same regex capture so the same XSS-safety argument holds.
-async function copyTutorPromptPc(unit) {
+async function copyTutorPromptPc(unit, statusId) {
     var path = 'ai-tutor/u' + unit + '_pc.md';
-    await _copyTutorPromptByPath(path, 'ai-tutor-pc-status');
+    await _copyTutorPromptByPath(path, statusId || 'ai-tutor-pc-status');
 }
 
 /* ═══ MAC OS UI SOUND EFFECTS ═══ */
@@ -18819,6 +18724,9 @@ const studyBreak = {
     COLS: 10,
     VISIBLE_ROWS: 20,
     HIDDEN_ROWS: 4,
+    SPAWN_Y: 3,           // Spawn straddling the top edge (rows 3-4) so a piece is visible on its first
+                          // frame. It used to spawn at y=0 — three hidden rows above the well — so every
+                          // piece fell blind for ~3 gravity ticks (~2.8s at level 1) before it appeared.
     TOTAL_ROWS: 24,
     CELL: 12,
     BOARD_X: 155,
@@ -18833,6 +18741,9 @@ const studyBreak = {
     DAS_DELAY: 135,
     DAS_REPEAT: 48,
     SOFT_DROP_INTERVAL: 80,
+    MAX_GARBAGE: 6,       // most rows one lock may send (tetris 4 + squares); the receive side clamps the same
+    LINES_PER_LEVEL: 6,   // level every 6 lines (was 10): a 20-40 line break now reaches real speed
+    BREAK_SOFT_MIN: 10,   // after this many minutes the cards gently point back at the Do Now (never a gate)
     soloConfig: { canvas: null, ctx: null, CELL: 12, BOARD_X: 155, BOARD_Y: 24, CANVAS_W: 430, CANVAS_H: 302 },
     splitConfig: { canvas: null, ctx: null, CELL: 10, BOARD_X: 58, BOARD_Y: 24, CANVAS_W: 215, CANVAS_H: 302 },
     opponentConfig: { canvas: null, ctx: null, CELL: 10, BOARD_X: 58, BOARD_Y: 24, CANVAS_W: 215, CANVAS_H: 302 },
@@ -18842,17 +18753,26 @@ const studyBreak = {
     mpUsername: null,
     mpOnlinePlayers: [],
     mpChallengeTimer: null,
-    leaderboardEntries: [],
+    pendingChallenger: null,   // incoming dialog up → close() declines on the student's behalf
+    _outgoing: null,           // { target, sentAt, status, text } — one outgoing challenge at a time
+    _buffered: null,           // rotate/hold pressed during the entry delay, applied at spawn
+    pieceCounts: {},           // per-type spawn counts (solo game-over histogram)
+    clearFx: null,             // { board, rows, timer } — 120ms line-clear flash
+    _boardVersion: 0,          // bumps on every board mutation (ghost-square cache key)
+    openedAt: 0,               // break clock
+    _classroomNote: '',        // Arm Gate / Green Light mirrored from Live Classroom
 
     types: ['I', 'O', 'T', 'S', 'Z', 'J', 'L'],
+    // Guideline-ish hues (O yellow, T purple, L orange). O used to be gray — indistinguishable from a
+    // silver square, so the square transformation was invisible. Gray now means made/imposed only.
     colors: {
         I: '#66ccff',
-        O: '#b7b7b7',
-        T: '#ead64d',
+        O: '#f5e04b',
+        T: '#b57edc',
         S: '#57c95f',
         Z: '#ff6b6b',
         J: '#4f7cff',
-        L: '#d36cff',
+        L: '#f0973a',
         gold: '#d8b44b',
         silver: '#d2d2d2',
         ghost: '#7f7f7f'
@@ -18975,25 +18895,67 @@ const studyBreak = {
             this.canvas.focus();
         });
 
+        // Split view (1v1): the solo canvas is hidden, so the game-over card needs its own pointer path.
+        const splitEl = document.getElementById('game-split');
+        if (splitEl) splitEl.addEventListener('mousedown', () => {
+            if (this.state !== 'gameover' || !this._inLiveMatch()) return;
+            if (this.mpState.seriesOver) this.requestRematch(); else this.startNewGame();
+        });
+
         document.addEventListener('keydown', (e) => {
             if (!this.isOpen()) return;
+            // Browser shortcuts stay browser shortcuts (Ctrl+R reload, Ctrl+P print, Ctrl+C copy):
+            // the game only ever eats an unmodified key.
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
             const key = e.key;
+            // Key repeat must not re-fire one-shot actions (a held R/P/Enter flickered restart/pause).
+            if (e.repeat && ['Enter', 'r', 'R', 'p', 'P', '1', '2', 'Escape', 'm', 'M'].includes(key)) return;
             const handled = [
                 'ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' ',
-                'z', 'Z', 'x', 'X', 'c', 'C', 'Shift', 'p', 'P', 'Enter', 'r', 'R', 'Escape', '1', '2'
+                'z', 'Z', 'x', 'X', 'c', 'C', 'Shift', 'p', 'P', 'Enter', 'r', 'R', 'Escape', '1', '2', 'm', 'M'
             ].includes(key);
-            if (handled) e.preventDefault();
 
+            // An incoming challenge dialog owns Enter (accept) and Escape (decline) while it is up;
+            // every other key still reaches a solo game running underneath it. A focused dialog
+            // button activates itself on Enter (keyboard users can Tab to Decline).
+            const challengeDlg = document.getElementById('challenge-dialog');
+            if (challengeDlg && challengeDlg.style.display === 'block' && (key === 'Enter' || key === 'Escape')) {
+                const focused = document.activeElement;
+                if (key === 'Enter' && focused && focused.tagName === 'BUTTON' && challengeDlg.contains(focused)) return;
+                e.preventDefault();
+                const btn = document.getElementById(key === 'Enter' ? 'challenge-accept-btn' : 'challenge-decline-btn');
+                if (btn && typeof btn.onclick === 'function') btn.onclick();
+                return;
+            }
+
+            // The lobby is a DOM panel over a hidden canvas: Enter/1/2/R must not start an invisible
+            // solo game under it. Escape steps back to the mode card (same as the Back button); a
+            // focused lobby button keeps its native Enter/Space activation.
+            const lobbyEl = document.getElementById('game-lobby');
+            if (lobbyEl && lobbyEl.style.display === 'block') {
+                if (key === 'Escape') { e.preventDefault(); this.leaveLobby(); }
+                return;
+            }
+            if (handled) e.preventDefault();
+            if (key === 'm' || key === 'M') { this.toggleMute(); return; }
             if (key === 'Escape') {
+                if (this._escapeNeedsConfirm()) return;
                 closeGame();
+                return;
+            }
+            // Series decided: R/Enter on the card asks the same classmate for a rematch.
+            if ((key === 'Enter' || key === 'r' || key === 'R') && this._inLiveMatch() && this.mpState.seriesOver) {
+                this.requestRematch();
                 return;
             }
             if (key === 'Enter') {
                 if (this.state === 'idle') {
                     this.mode = 'solo';
                     this.startNewGame();
-                } else if (this.state === 'gameover' || this.state === 'paused') {
+                } else if (this.state === 'gameover') {
                     this.startNewGame();
+                } else if (this.state === 'paused') {
+                    this.togglePause();   // Enter on a paused solo game resumes it (it used to wipe the board)
                 }
                 return;
             }
@@ -19003,7 +18965,9 @@ const studyBreak = {
                 return;
             }
             if (key === 'r' || key === 'R') {
-                this.startNewGame();
+                // R restarts only a FINISHED game (or a paused solo one). Mid-game R used to wipe the
+                // board instantly: a stray press lost a solo run, and in 1v1 it was a free board reset.
+                if (this.state === 'gameover' || (this.state === 'paused' && this.mode !== '1v1')) this.startNewGame();
                 return;
             }
             if (key === 'p' || key === 'P') {
@@ -19017,27 +18981,34 @@ const studyBreak = {
                 if (!this.keys.left.down) {
                     this.keys.left.down = true;
                     this.keys.left.next = now + this.DAS_DELAY;
+                    this.keys.lastDir = 'left';
                     this.tryMove(-1, 0);
                 }
             } else if (key === 'ArrowRight') {
                 if (!this.keys.right.down) {
                     this.keys.right.down = true;
                     this.keys.right.next = now + this.DAS_DELAY;
+                    this.keys.lastDir = 'right';
                     this.tryMove(1, 0);
                 }
             } else if (key === 'ArrowDown') {
                 if (!this.keys.down.down) {
                     this.keys.down.down = true;
+                    // Banked gravity time (up to ~900ms at level 1) used to drain at soft-drop speed in
+                    // ONE frame, so every Down tap lurched the piece up to 11 cells. Start the soft drop clean.
+                    this.fallTimer = 0;
                     this.tryMove(0, 1);
                 }
-            } else if (key === 'ArrowUp' || key === ' ') {
+            } else if (key === 'ArrowUp') {
                 if (!e.repeat) this.firmDrop();
+            } else if (key === ' ') {
+                if (!e.repeat) this.hardDrop();
             } else if (key === 'z' || key === 'Z') {
-                if (!e.repeat) this.tryRotate(-1);
+                if (!e.repeat) this._rotateOrBuffer(-1);
             } else if (key === 'x' || key === 'X') {
-                if (!e.repeat) this.tryRotate(1);
+                if (!e.repeat) this._rotateOrBuffer(1);
             } else if (key === 'c' || key === 'C' || key === 'Shift') {
-                if (!e.repeat) this.holdSwap();
+                if (!e.repeat) this._holdOrBuffer();
             }
         });
 
@@ -19051,11 +19022,14 @@ const studyBreak = {
         window.addEventListener('blur', () => {
             if (!this.isOpen()) return;
             this.clearKeys();
-            if (this.state === 'running') {
+            // Solo pauses on blur; a 1v1 game keeps running (see togglePause — no stalling the opponent).
+            if (this.state === 'running' && !this._inLiveMatch()) {
                 this.state = 'paused';
                 this.updateHud();
             }
         });
+
+        this._bindTouchControls();
 
         this.resetBoardState();
         this.initialized = true;
@@ -19065,6 +19039,227 @@ const studyBreak = {
 
     isOpen() {
         return this.overlay && this.overlay.style.display === 'block';
+    },
+
+    _inLiveMatch() {
+        return this.mode === '1v1' && !!this.mpState;
+    },
+
+    // A live 1v1 game (a candy bet rides on it) asks for a second Escape within 3s before it
+    // forfeits — one stray Esc used to hand the opponent the series instantly. Solo closes at once.
+    _escapeNeedsConfirm() {
+        const live = this._inLiveMatch() && !this.mpState.seriesOver
+            && (this.state === 'running' || this.state === 'countdown' || this.state === 'gameover');
+        if (!live) { this._escArmedUntil = 0; return false; }
+        const now = performance.now();
+        if (this._escArmedUntil && now < this._escArmedUntil) { this._escArmedUntil = 0; return false; }
+        this._escArmedUntil = now + 3000;
+        this.flash('Esc again to forfeit the match');
+        return true;
+    },
+
+    // One mute that actually mutes: the game button / M key silence BOTH sound systems (the Desk's
+    // Mac sounds and the game's oscillators) and the menu icon follows. SFX.play also honours the
+    // Desk's mute, so muting from the Apple menu silences the game too.
+    toggleMute() {
+        SFX.init();
+        // Flip from the COMBINED state (either system muted = muted), else a Desk-muted student
+        // needed two presses to hear anything.
+        const muted = !(SFX.muted || (typeof MacSFX !== 'undefined' && MacSFX.muted));
+        SFX.muted = muted;
+        try { localStorage.setItem('studybreak-muted', muted); } catch (_) {}
+        try {
+            if (typeof MacSFX !== 'undefined') { MacSFX.init(); MacSFX.muted = muted; localStorage.setItem('macsound-muted', muted); }
+            if (typeof _renderSoundIcon === 'function') _renderSoundIcon();
+            if (typeof _renderMenuChecks === 'function') _renderMenuChecks();
+        } catch (_) {}
+        this._renderMute();
+        this._announce(muted ? 'Sounds off' : 'Sounds on');
+    },
+    _renderMute() {
+        const btn = document.getElementById('mute-btn');
+        if (!btn) return;
+        const muted = !!(SFX.muted || (typeof MacSFX !== 'undefined' && MacSFX.muted));
+        btn.textContent = muted ? '\ud83d\udd07' : '\ud83d\udd0a';
+        btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        btn.title = muted ? 'Sound off \u2014 M or click to turn on' : 'Sound on \u2014 M or click to mute';
+    },
+
+    // Live Classroom signals (Arm Gate / Green Light) mirrored into the game so a student inside
+    // Study Break sees the teacher's whole-class call. Information only — the game never auto-closes.
+    onClassroomSignal(summary) {
+        const armed = !!(summary && summary.gate && summary.gate.armed);
+        const green = !!(summary && summary.greenlight);
+        const note = green ? 'GREEN LIGHT from your teacher \u2014 Esc to return'
+            : (armed ? 'Teacher armed the gate \u2014 Esc to return' : '');
+        if (note === (this._classroomNote || '')) return;
+        this._classroomNote = note;
+        if (note && (this.state === 'running' || this.state === 'paused')) this.flash(note);
+        this.updateHud();
+    },
+
+    _inDanger() {
+        if (this.state !== 'running') return false;
+        for (let y = this.HIDDEN_ROWS; y < this.HIDDEN_ROWS + 4; y++) {
+            for (let x = 0; x < this.COLS; x++) if (this.board[y][x]) return true;
+        }
+        return false;
+    },
+
+    // Break clock (solo): information, not a gate. After BREAK_SOFT_MIN the cards point at the Do Now.
+    _drawBreakClock(ctx) {
+        if (!this.openedAt) return;
+        const s = Math.floor((Date.now() - this.openedAt) / 1000);
+        const m = Math.floor(s / 60), ss = String(s % 60).padStart(2, '0');
+        ctx.font = '9px Geneva, Arial, sans-serif';
+        ctx.fillStyle = m >= this.BREAK_SOFT_MIN ? '#b00000' : '#666666';
+        ctx.textAlign = 'right';
+        ctx.fillText(`Break ${m}:${ss}`, this.BOARD_X + this.COLS * this.CELL, 14);
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#000000';
+    },
+    _breakNote() {
+        if (!this.openedAt) return '';
+        const m = Math.floor((Date.now() - this.openedAt) / 60000);
+        if (m < this.BREAK_SOFT_MIN) return '';
+        return `Break ${m} min \u00b7 ` + (this._lessonDone === false ? 'Do Now is waiting (Esc)' : 'Esc heads back');
+    },
+    // Soft Do-Now awareness: the completion oracle fails OPEN (null = unknown → neutral copy).
+    _todayLessonDone() {
+        try {
+            if (typeof _isLessonComplete !== 'function' || typeof getStudentMarks !== 'function') return null;
+            const t = (typeof _todayLessonInf !== 'undefined' && _todayLessonInf) ? _todayLessonInf.t : null;
+            if (!t) return null;
+            return !!_isLessonComplete(t, getStudentMarks());
+        } catch (_) { return null; }
+    },
+
+    // Grounded piece darkens as its lock delay runs out, so "it froze" reads as "about to lock".
+    _drawLockCue() {
+        if (!this.active || this.lockTimer <= 0 || !this.isGrounded(this.active)) return;
+        const t = Math.min(1, this.lockTimer / this.LOCK_DELAY);
+        const ctx = this.ctx;
+        ctx.fillStyle = `rgba(0,0,0,${(0.4 * t).toFixed(2)})`;
+        for (const cell of this.getCells(this.active)) {
+            if (cell.y < this.HIDDEN_ROWS) continue;
+            const pos = this.boardToPixel(cell.x, cell.y);
+            ctx.fillRect(pos.x + 1, pos.y + 1, this.CELL - 2, this.CELL - 2);
+        }
+    },
+
+    // Split view: mini HOLD (left gutter) + next three (right gutter) on a 215px canvas.
+    _drawSplitGutters(ctx, cfg, hold, queue, holdLocked) {
+        const right = cfg.BOARD_X + this.COLS * cfg.CELL + 4;
+        ctx.save();
+        ctx.fillStyle = '#000000';
+        ctx.font = '8px Chicago, Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('HOLD', 6, 34);
+        if (hold) {
+            if (holdLocked) ctx.globalAlpha = 0.4;
+            this.drawMiniPiece(hold, 4, 38, 50, 28, ctx);
+            ctx.globalAlpha = 1;
+        }
+        ctx.fillStyle = '#000000';
+        ctx.fillText('NEXT', right + 2, 34);
+        (queue || []).slice(0, 3).forEach((t, i) => this.drawMiniPiece(t, right, 38 + i * 32, 50, 28, ctx));
+        ctx.restore();
+    },
+
+    // Rotate/hold pressed during the 150ms entry delay (no active piece yet) used to vanish; buffer
+    // the last one and apply it the moment the next piece spawns.
+    _rotateOrBuffer(dir) {
+        if (this.active) { this.tryRotate(dir); return; }
+        this._buffered = Object.assign(this._buffered || {}, { rotate: dir });
+    },
+    _holdOrBuffer() {
+        if (this.active) { this.holdSwap(); return; }
+        this._buffered = Object.assign(this._buffered || {}, { hold: true });
+    },
+
+    // Wire palette for the 1v1 board snapshot: ONE source (colors + the garbage grey) for encode and
+    // decode, append-only so indices stay stable. Two hand-copied arrays used to drift, and received
+    // garbage rendered as I-piece cyan on the rival's screen.
+    _palette() {
+        if (!this._PALETTE) this._PALETTE = Object.values(this.colors).concat(['#888888']);
+        return this._PALETTE;
+    },
+
+    // Ghost turns gold/silver when dropping HERE completes a whole-piece square (cached per
+    // piece pose + board version; ≤16 regions checked).
+    _ghostMaterial(ghostY) {
+        const a = this.active;
+        if (!a) return null;
+        const key = `${a.type}${a.rot}${a.x}${ghostY}|${this._boardVersion}`;
+        if (this._ghostKey === key) return this._ghostMat;
+        const cells = this.getCells(a, a.rot, a.x, ghostY);
+        const virt = new Map(cells.map((c) => [c.x + ',' + c.y, { kind: 'piece', pieceId: a.id, pieceType: a.type }]));
+        const xs = cells.map((c) => c.x), ys = cells.map((c) => c.y);
+        const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+        let mat = null;
+        for (let y = Math.max(0, maxY - 3); y <= Math.min(this.TOTAL_ROWS - 4, minY) && !mat; y++) {
+            for (let x = Math.max(0, maxX - 3); x <= Math.min(this.COLS - 4, minX); x++) {
+                mat = this._regionMaterial(x, y, virt);
+                if (mat) break;
+            }
+        }
+        this._ghostKey = key; this._ghostMat = mat;
+        return mat;
+    },
+    _regionMaterial(x, y, virt) {
+        const counts = new Map();
+        const types = new Set();
+        for (let dy = 0; dy < 4; dy++) {
+            for (let dx = 0; dx < 4; dx++) {
+                const cell = virt.get((x + dx) + ',' + (y + dy)) || this.board[y + dy][x + dx];
+                if (!cell || cell.kind !== 'piece' || cell.pieceId == null) return null;
+                counts.set(cell.pieceId, (counts.get(cell.pieceId) || 0) + 1);
+                types.add(cell.pieceType);
+            }
+        }
+        if (counts.size !== 4) return null;
+        for (const n of counts.values()) if (n !== 4) return null;
+        return types.size === 1 ? 'gold' : 'silver';
+    },
+
+    // ── Touch controls (coarse-pointer devices only) ──────────────────────────────────────
+    // The strip under the canvas is hidden on keyboard devices. Holding ◀ ▶ auto-repeats through
+    // the same DAS path as the keyboard; ▼ soft-drops while held; the rest are taps.
+    _bindTouchControls() {
+        const strip = document.getElementById('game-touch');
+        if (!strip) return;
+        let coarse = false;
+        try { coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (_) {}
+        if (!coarse) return;
+        strip.classList.add('on');
+        const press = (act) => {
+            if (this.state !== 'running' || !this.active) return;
+            const now = performance.now();
+            if (act === 'left') { this.keys.left.down = true; this.keys.left.next = now + this.DAS_DELAY; this.keys.lastDir = 'left'; this.tryMove(-1, 0); }
+            else if (act === 'right') { this.keys.right.down = true; this.keys.right.next = now + this.DAS_DELAY; this.keys.lastDir = 'right'; this.tryMove(1, 0); }
+            else if (act === 'down') { this.keys.down.down = true; this.fallTimer = 0; this.tryMove(0, 1); }
+            else if (act === 'ccw') this.tryRotate(-1);
+            else if (act === 'cw') this.tryRotate(1);
+            else if (act === 'hold') this.holdSwap();
+            else if (act === 'drop') this.hardDrop();
+        };
+        const release = (act) => {
+            if (act === 'left') this.keys.left.down = false;
+            else if (act === 'right') this.keys.right.down = false;
+            else if (act === 'down') this.keys.down.down = false;
+        };
+        strip.querySelectorAll('.game-touch-btn').forEach((btn) => {
+            const act = btn.dataset.act;
+            btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+                press(act);
+            });
+            btn.addEventListener('pointerup', (e) => { e.preventDefault(); release(act); });
+            btn.addEventListener('pointercancel', () => release(act));
+            btn.addEventListener('lostpointercapture', () => release(act));
+            btn.addEventListener('contextmenu', (e) => e.preventDefault());
+        });
     },
 
     enterSplitMode() {
@@ -19088,11 +19283,18 @@ const studyBreak = {
     open() {
         this.init();
         SFX.init();
-        document.getElementById('mute-btn').textContent = SFX.muted ? '🔇' : '🔊';
-        // Always return to mode select on open
-        this.mode = 'solo';
-        this.state = 'idle';
-        this.resetBoardState();
+        this._renderMute();
+        this._prevFocus = document.activeElement;   // restored on close (keyboard users land back where they were)
+        this.openedAt = Date.now();
+        this._lessonDone = this._todayLessonDone();
+        // A solo game interrupted by Esc comes back PAUSED with its board intact (close() keeps it);
+        // anything else returns to the mode card.
+        const resumable = this.mode === 'solo' && this.state === 'paused' && this.board.some((row) => row.some(Boolean));
+        if (!resumable) {
+            this.mode = 'solo';
+            this.state = 'idle';
+            this.resetBoardState();
+        }
         this.overlay.style.display = 'block';
         this.canvas.style.display = 'block';
         document.getElementById('game-split').style.display = 'none';
@@ -19101,10 +19303,6 @@ const studyBreak = {
         this.startLoop();
         this.updateHud();
         this.draw();
-        // Fetch leaderboard
-        const lbWs = (this.mpWs && this.mpWs.readyState === 1) ? this.mpWs :
-                     (DogePresence.ws && DogePresence.ws.readyState === 1) ? DogePresence.ws : null;
-        if (lbWs) lbWs.send(JSON.stringify({ type: 'leaderboard_get' }));
     },
 
     close() {
@@ -19137,18 +19335,27 @@ const studyBreak = {
         this._pendingIce = [];   // MP-3: drop any buffered ICE from the closed match
         if (this.rtcTimeout) { clearTimeout(this.rtcTimeout); this.rtcTimeout = null; }
         this.exitSplitMode();
+        this._declinePendingChallenge();   // an open incoming dialog: decline now, don't strand the challenger 30s
+        this._clearOutgoingChallenge();
         document.getElementById('game-split').style.display = 'none';
         document.getElementById('game-lobby').style.display = 'none';
         document.getElementById('challenge-dialog').style.display = 'none';
         document.getElementById('game-score').style.display = '';
         this.canvas.style.display = 'block';
+        const was1v1 = this.mode === '1v1';
         this.mode = 'solo';
         this.overlay.style.display = 'none';
         this.clearKeys();
-        if (this.state === 'running') this.state = 'paused';
+        this.clearFx = null;
+        this.openedAt = 0;
+        this._classroomNote = '';
+        if (was1v1) { this.state = 'idle'; this.resetBoardState(); }   // a 1v1 board never resumes as solo
+        else if (this.state === 'running') this.state = 'paused';       // solo: keep the board, resume on reopen
         if (this.raf) cancelAnimationFrame(this.raf);
         this.raf = null;
         this.lastTime = 0;
+        try { if (this._prevFocus && typeof this._prevFocus.focus === 'function') this._prevFocus.focus(); } catch (_) {}
+        this._prevFocus = null;
     },
 
     startLoop() {
@@ -19165,6 +19372,16 @@ const studyBreak = {
         const delta = this.lastTime ? Math.min(40, ts - this.lastTime) : 16;
         this.lastTime = ts;
         if (this.state === 'running') this.update(delta, ts);
+        if (this.clearFx) { this.clearFx.timer -= delta; if (this.clearFx.timer <= 0) this.clearFx = null; }
+        // Light opponent updates at ~10Hz (active piece / hold / next, no board): the rival's screen
+        // used to be a 2.5s slideshow between locks. Full-board sends still happen at lock + heartbeat.
+        if (this._mpDirty && this._inLiveMatch() && this.state === 'running' && ts - (this._mpLastSend || 0) >= 100) {
+            this._mpDirty = false;
+            this._mpLastSend = ts;
+            this.sendGameMessage({ type: 'game_state', score: this.score, lines: this.lines, level: this.level,
+                active: this.active ? { type: this.active.type, rot: this.active.rot, x: this.active.x, y: this.active.y } : null,
+                hold: this.hold, queue: this.queue.slice(0, 3), state: this.state });
+        }
         if (this.flashTimer > 0) {
             this.flashTimer = Math.max(0, this.flashTimer - delta);
             if (this.flashTimer === 0 && this.flashText && this.state !== 'gameover') {
@@ -19172,7 +19389,12 @@ const studyBreak = {
                 this.updateHud();
             }
         }
-        this.draw();
+        // Idle states (mode card, paused, game over) repaint at ~10fps: a paused game left open on a
+        // shared Chromebook shouldn't burn a full-rate canvas loop next to the Desk's other canvases.
+        if (this.state === 'running' || !this._lastIdleDraw || ts - this._lastIdleDraw >= 100) {
+            this.draw();
+            this._lastIdleDraw = ts;
+        }
         this.raf = requestAnimationFrame((next) => this.loop(next));
     },
 
@@ -19196,6 +19418,15 @@ const studyBreak = {
         this.silverCount = 0;
         this.flashText = '';
         this.flashTimer = 0;
+        this._hints = [];
+        this._lastResult = null;
+        this._escArmedUntil = 0;
+        this._since = null;
+        this._buffered = null;
+        this.clearFx = null;
+        this.pieceCounts = {};
+        this.keys.lastDir = null;
+        this._boardVersion++;
         this.clearKeys();
     },
 
@@ -19213,17 +19444,30 @@ const studyBreak = {
         // match (a new match needs a fresh challenge → new roomId). Card says "Esc to exit".
         if (this.mode === '1v1' && ms && ms.seriesOver) return;
         if (this.mode === '1v1' && ms && !ms.seriesOver) {
+            // Skipping ahead (R / Enter / click) while this game is still uncounted — e.g. inside the
+            // 600ms cross-KO window — must count it FIRST, or my loss is never tallied and the two
+            // clients disagree (bet refunded, honest winner unpaid).
+            if (!ms.gameScored && this.state === 'gameover') {
+                ms.gameOverAt = 0;
+                this._studyBreakScoreGameOnce();
+                if (ms.seriesOver) return;   // that was the decider — stay on the series card
+            }
             clearTimeout(ms._advanceTimer);
             ms.gameNumber = (ms.gameNumber || 1) + 1;
             ms.gameScored = false;
             ms._wonThisGame = false;
+            ms.pendingGarbage = 0;   // garbage queued during the last game must not land in this one
+            this._seedRng(ms.roomId + ':' + ms.gameNumber);   // shared piece sequence for this game
+        } else {
+            this._rand = null;   // solo: plain Math.random
         }
         this.init();
         this.resetBoardState();
         this.state = 'running';
-        this.hold = this.randomType();
+        this.hold = this.nextFromBag();   // from the bag, not a side draw (honest 9-of-each counts)
         this.fillQueueTo(6);
         this.spawnNext();
+        if (this._inLiveMatch()) this.sendGameState();   // full (empty) board: the light 10Hz updates carry none
         this.startLoop();
         this.updateHud();
         this.draw();
@@ -19259,7 +19503,12 @@ const studyBreak = {
         // our own onmessage onto the shared socket.
         if (typeof DogePresence !== 'undefined') {
             if (!DogePresence.ws || DogePresence.ws.readyState > 1) { try { DogePresence.connect(); } catch (_) {} }
-            if (DogePresence.ws) { this.mpWs = DogePresence.ws; this.updateLobby(); return; }
+            if (DogePresence.ws) {
+                this.mpWs = DogePresence.ws;
+                this._setLobbyStatus('Connected as ' + this.mpUsername + ' \u2014 pick a classmate');
+                this.updateLobby();
+                return;
+            }
         }
 
         // Fallback (DogePresence somehow unavailable): open our own socket under the real identity.
@@ -19278,7 +19527,9 @@ const studyBreak = {
         };
 
         this.mpWs.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+            let data;
+            try { data = JSON.parse(event.data); } catch (_) { return; }
+            if (!data || typeof data !== 'object') return;
             this.handleMpMessage(data);
         };
 
@@ -19323,11 +19574,13 @@ const studyBreak = {
                 break;
 
             case 'challenge_declined':
+                this._onChallengeOutcome('declined', data);
                 this.flash(data.by + ' declined' + (data.reason === 'timeout' ? ' (timed out)' : ''));
                 this.updateLobby();
                 break;
 
             case 'challenge_error':
+                this._onChallengeOutcome('error', data);
                 this.flash(data.error || 'Challenge failed');
                 break;
 
@@ -19380,10 +19633,6 @@ const studyBreak = {
             case 'rtc_ice':
                 if (data.candidate) this._addIce(data.candidate);   // MP-3: buffers if no remote desc yet
                 break;
-
-            case 'leaderboard_data':
-                this.leaderboardEntries = data.entries || [];
-                break;
         }
     },
 
@@ -19398,9 +19647,17 @@ const studyBreak = {
         // who is on the Desk can receive a challenge, so don't offer a doomed one. Locations come
         // from the auto-connected DogePresence socket (single source of truth, always populated).
         const locs = (typeof DogePresence !== 'undefined' && DogePresence.locations) ? DogePresence.locations : {};
+        const pending = this._outgoing ? this._outgoing.target : null;
         el.innerHTML = this.mpOnlinePlayers.map((name) => {
             const onDesk = !!(locs[name] && locs[name].onDesk);
             const nameEsc = _deskEsc(name);   // untrusted (presence WS) \u2014 escape before innerHTML
+            if (pending) {
+                // One challenge at a time: rows are inert until it resolves (accept / decline / 30s).
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);opacity:${name === pending ? '1' : '.5'}">
+                <span class="geneva" style="font-size:11px">${nameEsc}</span>
+                <span style="font-size:9px">${name === pending ? 'waiting\u2026' : ''}</span>
+            </div>`;
+            }
             if (onDesk) {
                 // _deskEsc(JSON.stringify(name)) is XSS-safe inside the onclick="" attribute.
                 return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);cursor:pointer" onmouseenter="this.style.background='var(--black)';this.style.color='var(--white)'" onmouseleave="this.style.background='';this.style.color=''" onclick="studyBreak.sendChallenge(${_deskEsc(JSON.stringify(name))})">
@@ -19416,10 +19673,62 @@ const studyBreak = {
     },
 
     sendChallenge(target) {
-        if (!this.mpWs || this.mpWs.readyState !== 1) return;
-        this.mpWs.send(JSON.stringify({ type: 'game_challenge', target }));
-        const statusEl = document.getElementById('lobby-status');
-        if (statusEl) statusEl.textContent = 'Challenging ' + target + '...';
+        // MP-1 pattern: resolve the live presence socket (a cached mpWs goes stale on reconnect).
+        const ws = this._liveWs();
+        if (!ws) { this._setLobbyStatus('Not connected \u2014 try again in a moment'); return; }
+        // One outgoing challenge at a time. Every extra click used to be a separate server challenge,
+        // and a second accept could rebind the live room mid-match.
+        if (this._outgoing) { this._setLobbyStatus('Still waiting on ' + this._outgoing.target + '\u2026'); return; }
+        ws.send(JSON.stringify({ type: 'game_challenge', target }));
+        this._outgoing = { target, sentAt: Date.now(), status: 'sent', text: '' };
+        if (typeof DogePresence !== 'undefined') DogePresence.challengePending = target;   // shared single-pending guard
+        this.updateLobby();
+        this._tickOutgoing();
+        clearInterval(this._outgoingTimer);
+        this._outgoingTimer = setInterval(() => this._tickOutgoing(), 1000);
+    },
+
+    _setLobbyStatus(text) {
+        const el = document.getElementById('lobby-status');
+        if (el) el.textContent = text;
+    },
+    // Outgoing-challenge lifecycle: a countdown in the lobby (and on the series card for a rematch),
+    // 'no answer' at the server's 30s expiry. Cleared by declined / error / match_start / close.
+    _tickOutgoing() {
+        const o = this._outgoing;
+        if (!o) return;
+        const left = 30 - Math.floor((Date.now() - o.sentAt) / 1000);
+        if (left <= 0) { this._onChallengeOutcome('timeout', { by: o.target }); return; }
+        this._setLobbyStatus('Challenging ' + o.target + '\u2026 ' + left + 's');
+        o.text = 'Rematch sent to ' + o.target + '\u2026 ' + left + 's';
+    },
+    _onChallengeOutcome(kind, data) {
+        const o = this._outgoing;
+        if (!o) return;
+        if (kind === 'match') { this._clearOutgoingChallenge(); return; }
+        const who = (data && data.by) || o.target;
+        const err = data && data.error;
+        const text = kind === 'declined' ? who + ' declined' + (data && data.reason === 'timeout' ? ' (no answer)' : '')
+            : kind === 'timeout' ? 'No answer from ' + who
+            : (err === 'User not found' ? who + ' is offline' : (err || 'Challenge failed'));
+        this._clearOutgoingChallenge();
+        this._setLobbyStatus(text + ' \u2014 pick a classmate');
+        this._rematchNote = text;   // shown on the series-over card
+        this.updateLobby();
+    },
+    _clearOutgoingChallenge() {
+        clearInterval(this._outgoingTimer); this._outgoingTimer = null;
+        if (this._outgoing && typeof DogePresence !== 'undefined' && DogePresence.challengePending === this._outgoing.target) DogePresence.challengePending = null;
+        this._outgoing = null;
+    },
+    // Series decided → R/Enter/click asks the same classmate again (a fresh roomId + escrow via the
+    // normal accept path). No game_leave: the old room is simply rebound when they accept.
+    requestRematch() {
+        const ms = this.mpState;
+        if (!ms || !ms.seriesOver || !ms.opponent || this._outgoing) return;
+        this._rematchNote = '';
+        this.sendChallenge(ms.opponent);
+        this.draw();
     },
 
     leaveLobby() {
@@ -19444,35 +19753,48 @@ const studyBreak = {
             reply('challenge_decline');
             return;
         }
+        // A dialog is already up for someone else: decline the newcomer now (the first challenger
+        // keeps their dialog) instead of silently overwriting it and stranding the first for 30s.
+        if (this.pendingChallenger && this.pendingChallenger !== fromUser) { reply('challenge_decline'); return; }
         SFX.play('sosumi', 0.5);
         const dialog = document.getElementById('challenge-dialog');
-        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · winner takes 2 🍬)';
+        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · 1 candy at stake, winner takes 2 🍬)';
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-modal', 'true');
         dialog.style.display = 'block';
+        // Remembered so close() (Esc, the close box) declines on the student's behalf instead of
+        // leaving the challenger hanging until the server's 30s sweep.
+        if (this.mpChallengeTimer) clearInterval(this.mpChallengeTimer);
+        this.pendingChallenger = fromUser;
+        this._announce(fromUser + ' challenged you. Enter accepts, Escape declines.');
 
-        let countdown = 30;
+        // 25s client-side so this client's own decline beats the server's 30s expiry.
+        let countdown = 25;
         const timerEl = document.getElementById('challenge-timer');
         timerEl.textContent = countdown + 's';
-
-        document.getElementById('challenge-accept-btn').onclick = () => {
-            clearInterval(this.mpChallengeTimer);
+        const finish = (type) => {
+            clearInterval(this.mpChallengeTimer); this.mpChallengeTimer = null;
+            this.pendingChallenger = null;
             dialog.style.display = 'none';
-            reply('challenge_accept');
+            reply(type);
         };
-        document.getElementById('challenge-decline-btn').onclick = () => {
-            clearInterval(this.mpChallengeTimer);
-            dialog.style.display = 'none';
-            reply('challenge_decline');
-        };
+        document.getElementById('challenge-accept-btn').onclick = () => finish('challenge_accept');
+        document.getElementById('challenge-decline-btn').onclick = () => finish('challenge_decline');
 
         this.mpChallengeTimer = setInterval(() => {
             countdown--;
             timerEl.textContent = countdown + 's';
-            if (countdown <= 0) {
-                clearInterval(this.mpChallengeTimer);
-                dialog.style.display = 'none';
-                reply('challenge_decline');
-            }
+            if (countdown <= 0) finish('challenge_decline');
         }, 1000);
+    },
+
+    _declinePendingChallenge() {
+        const from = this.pendingChallenger;
+        if (!from) return;
+        this.pendingChallenger = null;
+        if (this.mpChallengeTimer) { clearInterval(this.mpChallengeTimer); this.mpChallengeTimer = null; }
+        const ws = this._liveWs();
+        if (ws) { try { ws.send(JSON.stringify({ type: 'challenge_decline', from })); } catch (_) {} }
     },
 
     startMatch(data) {
@@ -19486,6 +19808,10 @@ const studyBreak = {
             if (this.mpState.garbageTimer) { clearTimeout(this.mpState.garbageTimer); this.mpState.garbageTimer = 0; }
         }
         if (this.countdownTimer) { clearInterval(this.countdownTimer); this.countdownTimer = null; }
+        this._clearOutgoingChallenge();
+        this._rematchNote = '';
+        this._declinePendingChallenge();   // a dialog from a THIRD student is stale once this match starts
+        this.clearFx = null;
         SFX.play('wildEep', 0.6);
         document.getElementById('challenge-dialog').style.display = 'none';
         document.getElementById('game-lobby').style.display = 'none';
@@ -19546,9 +19872,10 @@ const studyBreak = {
             this.draw();
             if (this.countdownValue <= 0) {
                 clearInterval(this.countdownTimer); this.countdownTimer = null;
+                this._seedRng(this.mpState.roomId + ':1');   // shared piece sequence for game 1
                 this.resetBoardState();
                 this.state = 'running';
-                this.hold = this.randomType();
+                this.hold = this.nextFromBag();   // from the bag, not a side draw (honest 9-of-each counts)
                 this.fillQueueTo(6);
                 this.spawnNext();
                 this.startLoop();
@@ -19556,15 +19883,17 @@ const studyBreak = {
             }
         }, 1000);
 
-        // Attempt WebRTC P2P connection
-        this.setupWebRTC();
+        // WebRTC P2P is OFF: it never connected (the relay mints side 'left'/'right', the offer path
+        // tested `side === 0`; rtc_* messages carry no `to`, so the relay dropped them) — every match
+        // just sat through a STUN call + 5s timeout before running on the WS relay anyway. The rtc_*
+        // plumbing is kept for a future P2P that fixes both; the WS relay is the one transport today.
     },
 
     // Send game state to server after each piece lock
     sendGameState() {
         if (!this.mpState || !this.board) return;   // MP-5: heartbeat can tick pre-resetBoardState (countdown)
         // Compress board: only send non-null cells as [row, col, colorIndex]
-        const colorPalette = ['#66ccff','#b7b7b7','#ead64d','#57c95f','#ff6b6b','#4f7cff','#d36cff','#d8b44b','#d2d2d2','#7f7f7f'];
+        const colorPalette = this._palette();
         const compressed = [];
         for (let y = 0; y < this.TOTAL_ROWS; y++) {
             for (let x = 0; x < this.COLS; x++) {
@@ -19635,17 +19964,46 @@ const studyBreak = {
         if (ws) ws.send(json);
     },
 
-    submitLeaderboardScore() {
-        const ws = (this.mpWs && this.mpWs.readyState === 1) ? this.mpWs :
-                   (DogePresence.ws && DogePresence.ws.readyState === 1) ? DogePresence.ws : null;
-        if (ws && this.score > 0) {
-            ws.send(JSON.stringify({
-                type: 'leaderboard_submit',
-                name: this.mpUsername || localStorage.getItem('student-name') || 'Unknown',
-                score: this.score,
-                mode: this.mode
-            }));
+    // ── Solo personal record (per signed-in student, on this device) ──────────────────────
+    // The relay's Hall of Fame is class-wide and in-memory; this is the student's own history:
+    // best score + the last 10 solo scores. The game-over card shows the best and the mean of
+    // the recent runs — the same "center of your distribution" idea the course teaches.
+    _statsKey() {
+        let who = this.mpUsername;
+        try { if (!who && typeof DogePresence !== 'undefined' && DogePresence.getUsername) who = DogePresence.getUsername(); } catch (_) {}
+        return 'studybreak-stats:' + (who || 'anon');
+    },
+    _loadStats() {
+        try {
+            const raw = JSON.parse(localStorage.getItem(this._statsKey()) || 'null');
+            if (raw && typeof raw === 'object') return { best: raw.best || null, recent: Array.isArray(raw.recent) ? raw.recent : [] };
+        } catch (_) {}
+        return { best: null, recent: [] };
+    },
+    _recordSoloResult() {
+        if (this.mode === '1v1' || this.state !== 'gameover') return;
+        const stats = this._loadStats();
+        const isBest = this.score > 0 && (!stats.best || this.score > stats.best.score);
+        if (isBest) stats.best = { score: this.score, lines: this.lines, level: this.level, at: Date.now() };
+        stats.recent = stats.recent.concat([this.score]).slice(-10);
+        try { localStorage.setItem(this._statsKey(), JSON.stringify(stats)); } catch (_) {}
+        this._lastResult = { isBest, best: stats.best, recent: stats.recent };
+        if (isBest && stats.recent.length > 1) SFX.play('goldChime', 0.6);
+    },
+
+    // Every loss funnels through here: state, the opponent's game_over, sound, flash, and (solo)
+    // the personal record.
+    _endGame(message) {
+        this.state = 'gameover';
+        this.clearFx = null;
+        if (this.mode === '1v1') {
+            if (this.mpState) this.mpState.gameOverAt = Date.now();   // 600ms cross-KO window (see opponentKO)
+            this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
         }
+        SFX.play('monkey', 0.6);
+        this.flash(message);
+        this._recordSoloResult();
+        this._announce(message + ' — game over, score ' + this.score + '. Enter or R plays again, Escape exits.');
     },
 
     // MP-3: buffer remote ICE candidates that arrive before setRemoteDescription, then flush.
@@ -19717,7 +20075,9 @@ const studyBreak = {
             console.log('WebRTC DataChannel closed, falling back to WS');
         };
         channel.onmessage = (e) => {
-            const data = JSON.parse(e.data);
+            let data;
+            try { data = JSON.parse(e.data); } catch (_) { return; }
+            if (!data || typeof data !== 'object') return;
             // Translate raw game messages to server-style types
             if (data.type === 'game_state') data.type = 'opponent_state';
             else if (data.type === 'game_garbage') { data.type = 'garbage_incoming'; }
@@ -19730,19 +20090,27 @@ const studyBreak = {
         if (!this.mpState) return;
         if (data && data.roomId && data.roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game state
         this.mpState.lastOpponentMs = Date.now();   // MP-5: opponent is alive
-        const colorPalette = ['#66ccff','#b7b7b7','#ead64d','#57c95f','#ff6b6b','#4f7cff','#d36cff','#d8b44b','#d2d2d2','#7f7f7f'];
-        // Decompress board
-        const board = Array.from({ length: this.TOTAL_ROWS }, () => Array(this.COLS).fill(null));
-        if (data.board && Array.isArray(data.board)) {
-            for (const [y, x, ci] of data.board) {
+        const colorPalette = this._palette();
+        // Decompress board. Every field is peer-supplied: range-check before indexing.
+        const inRange = (v, max) => Number.isInteger(v) && v >= 0 && v < max;
+        if (Array.isArray(data.board)) {
+            const board = Array.from({ length: this.TOTAL_ROWS }, () => Array(this.COLS).fill(null));
+            for (const entry of data.board) {
+                if (!Array.isArray(entry)) continue;
+                const [y, x, ci] = entry;
+                if (!inRange(y, this.TOTAL_ROWS) || !inRange(x, this.COLS)) continue;
                 board[y][x] = { color: colorPalette[ci] || '#888888' };
             }
+            this.mpState.opponentBoard = board;   // a light (board-less) update keeps the last board
         }
-        this.mpState.opponentBoard = board;
-        this.mpState.opponentScore = data.score || 0;
-        this.mpState.opponentLines = data.lines || 0;
-        this.mpState.opponentLevel = data.level || 1;
-        this.mpState.opponentActive = data.active || null;
+        this.mpState.opponentScore = Math.max(0, Number(data.score) || 0);
+        this.mpState.opponentLines = Math.max(0, Number(data.lines) || 0);
+        this.mpState.opponentLevel = Math.max(1, Number(data.level) || 1);
+        const a = data.active;
+        this.mpState.opponentActive = (a && typeof a === 'object' && this.pieces[a.type] && inRange(a.rot, 4) && Number.isInteger(a.x) && Number.isInteger(a.y))
+            ? { type: a.type, rot: a.rot, x: a.x, y: a.y } : null;
+        this.mpState.opponentHold = (typeof data.hold === 'string' && this.pieces[data.hold]) ? data.hold : null;
+        this.mpState.opponentQueue = Array.isArray(data.queue) ? data.queue.filter((t) => typeof t === 'string' && !!this.pieces[t]).slice(0, 3) : [];
         // Render opponent board
         this.drawOpponentBoard();
     },
@@ -19785,10 +20153,7 @@ const studyBreak = {
                 if (!cell) continue;
                 const px = bx + x * cfg.CELL;
                 const py = by + (y - this.HIDDEN_ROWS) * cfg.CELL;
-                ctx.fillStyle = cell.color;
-                ctx.fillRect(px, py, cfg.CELL, cfg.CELL);
-                ctx.strokeStyle = '#000000';
-                ctx.strokeRect(px + 0.5, py + 0.5, cfg.CELL - 1, cfg.CELL - 1);
+                this.drawCell(px, py, cfg.CELL, cell.color, false, ctx);   // same bevel as my board
             }
         }
 
@@ -19816,14 +20181,11 @@ const studyBreak = {
         ctx.font = '9px Geneva, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(`Score ${this.mpState.opponentScore} | L${this.mpState.opponentLevel}`, cfg.CANVAS_W / 2, 14);
+        // Their hold + next three in the gutters (mirrors my side of the split).
+        this._drawSplitGutters(ctx, cfg, this.mpState.opponentHold, this.mpState.opponentQueue || [], false);
 
-        // Garbage warning
-        if (this.mpState.pendingGarbage > 0) {
-            ctx.fillStyle = '#ff0000';
-            for (let i = 0; i < this.mpState.pendingGarbage; i++) {
-                ctx.fillRect(bx - 6, by + bh - (i + 1) * cfg.CELL, 4, cfg.CELL - 1);
-            }
-        }
+        // (The incoming-garbage meter now sits beside YOUR board in draw(): it is garbage aimed
+        // at you, and drawing it next to the opponent's well read as theirs.)
         ctx.textAlign = 'left';
     },
 
@@ -19831,22 +20193,29 @@ const studyBreak = {
         if (!this.mpState) return;
         if (roomId && roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game garbage
         this.mpState.lastOpponentMs = Date.now();   // MP-5: opponent is alive
-        SFX.play('logjam', 0.5);
-        this.mpState.pendingGarbage += lines;
-        // Insert garbage after 1 second delay
-        if (!this.mpState.garbageTimer) {
-            this.mpState.garbageTimer = setTimeout(() => {
-                this.insertGarbage();
-                this.mpState.garbageTimer = 0;
-            }, 1000);
-        }
+        // Queue it. Garbage lands when the NEXT piece locks without clearing a line (lockPiece) —
+        // standard versus rules — so the red meter beside your board is a real warning and a
+        // line clear can still cancel it. It used to land on a 1s timer, mid-air, burying the
+        // active piece and giving the cancel logic almost no window.
+        // Clamp to what one legitimate lock can send (MAX_GARBAGE) and bound the queue: a forged
+        // {lines: 24} from DevTools on a shared Chromebook must not bury the opponent.
+        const n = Math.min(this.MAX_GARBAGE, Math.max(0, Math.floor(Number(lines) || 0)));
+        if (!n) return;
+        this.mpState.pendingGarbage = Math.min(this.MAX_GARBAGE * 2, this.mpState.pendingGarbage + n);
+        SFX.play('logjam', 0.3);
     },
 
     insertGarbage() {
         if (!this.mpState || this.mpState.pendingGarbage <= 0) return;
         const count = this.mpState.pendingGarbage;
         this.mpState.pendingGarbage = 0;
+        this._boardVersion++;
+        this.clearFx = null;
 
+        // ONE hole column per batch (standard): a per-row random hole made 2+ rows of garbage
+        // effectively undiggable. Local Math.random on purpose — the shared match RNG (_rng)
+        // must only be consumed by the piece bag so both clients stay in lockstep.
+        const gap = Math.floor(Math.random() * this.COLS);
         for (let i = 0; i < count; i++) {
             // Remove top row
             this.board.shift();
@@ -19854,13 +20223,17 @@ const studyBreak = {
             const garbageRow = Array(this.COLS).fill(null).map(() => ({
                 kind: 'fragment', pieceId: null, pieceType: null, squareId: null, material: null, color: '#888888'
             }));
-            // Random gap
-            const gap = Math.floor(Math.random() * this.COLS);
             garbageRow[gap] = null;
             this.board.push(garbageRow);
         }
 
-        // Check if active piece is now invalid
+        // The stack rose under a live piece: lift it with the stack (up to `count` rows) before
+        // calling it buried. Only a piece with nowhere to go is a loss.
+        if (this.active && !this.isValid(this.active)) {
+            for (let up = 1; up <= count; up++) {
+                if (this.isValid(this.active, 0, -up)) { this.active.y -= up; break; }
+            }
+        }
         if (this.active && !this.isValid(this.active)) {
             this.state = 'gameover';
             SFX.play('monkey', 0.6);
@@ -19869,8 +20242,8 @@ const studyBreak = {
             // garbage-burial loss was never counted and the series desynced / escrow stranded.
             this.flash('Buried!');
             this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
-            this.submitLeaderboardScore();
-        }
+            }
+        this._computeHints();
         this.draw();
     },
 
@@ -19878,12 +20251,30 @@ const studyBreak = {
         if (!this.mpState) return;
         if (roomId && roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game KO
         this.mpState.lastOpponentMs = Date.now();   // MP-5: opponent is alive
-        this.mpState._wonThisGame = true;   // I won this game of the series
-        SFX.play('koWin', 1.0);
+        const ms = this.mpState;
+        if (ms.seriesOver) return;
+        const opponentName = ms.opponent || 'Opponent';
+        const theirScore = Math.max(0, Number(finalScore) || 0);
+        if (this.state === 'gameover' && !ms.gameScored && !ms._forfeit) {
+            // Both topped out in the same instant (the two game_over messages crossed). Decide it the
+            // same way on both screens: higher score wins, the server-minted 'left' side breaks a tie.
+            // Both cards used to say YOU WIN while both tallies counted a loss → 'bet refunded'.
+            const iWin = this.score > theirScore || (this.score === theirScore && ms.side === 'left');
+            ms._wonThisGame = iWin;
+            ms.gameOverAt = 0;   // decided — score it on the next frame
+            SFX.play(iWin ? 'koWin' : 'monkey', 0.7);
+            this.flash(iWin ? `YOU WIN! Both topped out \u2014 you led ${this.score} to ${theirScore}`
+                            : `Both topped out \u2014 ${opponentName} led ${theirScore} to ${this.score}`);
+            this.updateHud();
+            this.draw();
+            return;
+        }
+        if (this.state === 'gameover' && ms.gameScored) return;   // my loss is already counted; don't rewrite the card
+        ms._wonThisGame = true;   // I won this game of the series
+        SFX.play('koWin', 0.7);
         this.state = 'gameover';
-        const opponentName = this.mpState.opponent || 'Opponent';
-        this.flash(`YOU WIN! You: ${this.score} | ${opponentName}: ${finalScore}`);
-        this.submitLeaderboardScore();
+        this.clearFx = null;
+        this.flash(`YOU WIN! You: ${this.score} | ${opponentName}: ${theirScore}`);
         this.updateHud();
         this.draw();
     },
@@ -19891,6 +20282,9 @@ const studyBreak = {
     opponentLeft(reason) {
         if (!this.mpState) return;
         const ms = this.mpState;
+        // Series already decided: a late leave (the winner pressing Esc) must not replay the win
+        // jingle or rewrite the loser's card into 'Bob disconnected'.
+        if (ms.seriesOver) return;
         ms._wonThisGame = true;
         ms._forfeit = true;
         // Forfeit ends the series NOW (don't wait for / let the auto-advance fire a ghost game, and
@@ -19903,8 +20297,9 @@ const studyBreak = {
             ms.seriesOver = true;
             this._studyBreakResolveStakes();
         }
-        SFX.play('koWin', 1.0);
+        SFX.play('koWin', 0.7);
         this.state = 'gameover';
+        this.clearFx = null;
         const opponentName = this.mpState.opponent || 'Opponent';
         const myScore = this.score;
         const theirScore = this.mpState.opponentScore || 0;
@@ -19913,7 +20308,6 @@ const studyBreak = {
         } else {
             this.flash(`${opponentName} disconnected. You: ${myScore} | ${opponentName}: ${theirScore}`);
         }
-        this.submitLeaderboardScore();
         this.updateHud();
         this.draw();
     },
@@ -19938,11 +20332,15 @@ const studyBreak = {
         const ms = this.mpState;
         if (this.mode !== '1v1' || !ms || ms.gameScored || ms.seriesOver) return;
         if (this.state !== 'gameover') return;
+        // A self top-out waits 600ms for a crossing opponent KO before it counts (opponentKO then
+        // decides a simultaneous top-out deterministically). Fixtures without gameOverAt count at once.
+        if (!ms._wonThisGame && !ms._forfeit && ms.gameOverAt && (Date.now() - ms.gameOverAt) < 600) return;
         ms.gameScored = true;
         if (ms._wonThisGame) ms.myWins = (ms.myWins || 0) + 1; else ms.oppWins = (ms.oppWins || 0) + 1;
         if (ms.myWins >= 2 || ms.oppWins >= 2 || ms._forfeit) {
             ms.seriesOver = true;
             this._studyBreakResolveStakes();
+            if (typeof this.updateHud === 'function') this.updateHud();   // help line: 'R = rematch · Esc = exit'
         } else {
             // series continues → auto-advance both clients to the next game (each detects its own
             // game-end ~simultaneously). R/Enter still advances immediately; Esc exits (forfeit).
@@ -19984,18 +20382,24 @@ const studyBreak = {
                 if (!j || !j.ok || !(j.games > 0)) return;   // no record yet → keep the static hint
                 const ev = j.netCandy / j.games;
                 const sgn = (n) => (n >= 0 ? '+' : '');
-                el.textContent = `Your record: ${j.wins || 0}W–${j.losses || 0}L · ${sgn(j.netCandy)}${j.netCandy} 🍬 · EV ${sgn(ev)}${ev.toFixed(2)}/game`;
+                el.textContent = `Your record: ${j.wins || 0}W–${j.losses || 0}L · ${sgn(j.netCandy)}${j.netCandy} 🍬 · EV ${sgn(ev)}${ev.toFixed(2)}/match`;
             }).catch(() => {});
     },
 
     togglePause() {
         if (!this.isOpen()) return;
+        // No pausing inside a 1v1 match: a paused player froze the opponent's match indefinitely
+        // (the heartbeat kept stamping "alive", so the freeze watchdog never fired). Solo pauses.
+        if (this._inLiveMatch()) return;
         if (this.state === 'running') {
             this.state = 'paused';
             this.clearKeys();
         } else if (this.state === 'paused') {
             this.state = 'running';
             this.lastTime = 0;
+            this.fallTimer = 0;   // no instant drop/lock on the first frame back
+            this.lockTimer = 0;
+            this.clearKeys();
             this.canvas.focus();
         }
         this.updateHud();
@@ -20010,7 +20414,7 @@ const studyBreak = {
 
         this.handleAutoShift(now);
 
-        const gravity = this.keys.down.down ? this.SOFT_DROP_INTERVAL : this.gravityInterval();
+        const gravity = this.keys.down.down ? this.softDropInterval() : this.gravityInterval();
         this.fallTimer += delta;
         while (this.fallTimer >= gravity) {
             if (!this.tryMove(0, 1)) {
@@ -20028,12 +20432,42 @@ const studyBreak = {
         }
     },
 
+    // Geometric curve (L1 920ms → L5 ≈416 → L9 ≈188 → floor 90 from L13), a level every 6 lines. The
+    // old linear −65ms/level over 10 lines meant a normal 20-40 line break never left 920-660ms.
     gravityInterval() {
-        return Math.max(90, 920 - (this.level - 1) * 65);
+        return Math.max(90, Math.round(920 * Math.pow(0.82, this.level - 1)));
+    },
+
+    // Soft drop stays meaningfully faster than gravity at every level: the fixed 80ms was barely
+    // quicker than the 90ms gravity floor from level 14 on.
+    softDropInterval() {
+        return Math.min(this.SOFT_DROP_INTERVAL, Math.max(20, Math.round(this.gravityInterval() / 4)));
+    },
+
+    // Piece randomness. Solo uses Math.random. A 1v1 match seeds a small PRNG from the
+    // server-minted roomId (shared by both clients, per game of the series) so BOTH players get
+    // the SAME piece sequence and starting hold — luck of the bag no longer decides a candy bet.
+    _rand: null,
+    _rng() {
+        return this._rand ? this._rand() : Math.random();
+    },
+    _seedRng(seedText) {
+        // FNV-1a string hash → mulberry32.
+        let h = 0x811c9dc5;
+        const s = String(seedText);
+        for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+        let a = h >>> 0;
+        this._rand = () => {
+            a = (a + 0x6D2B79F5) >>> 0;
+            let t = a;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
     },
 
     randomType() {
-        return this.types[Math.floor(Math.random() * this.types.length)];
+        return this.types[Math.floor(this._rng() * this.types.length)];
     },
 
     refillBag() {
@@ -20042,7 +20476,7 @@ const studyBreak = {
             for (const type of this.types) fresh.push(type);
         }
         for (let i = fresh.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = Math.floor(this._rng() * (i + 1));
             [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
         }
         this.bag = this.bag.concat(fresh);
@@ -20050,7 +20484,22 @@ const studyBreak = {
 
     nextFromBag() {
         if (!this.bag.length) this.refillBag();
-        return this.bag.pop();
+        // Drought guard: a type unseen for 14+ pieces jumps the queue. Pure bag reordering, so both
+        // 1v1 clients (same seed, same ops) stay in lockstep; cuts P(drought ≥ 25) from ~70% to ~5%.
+        if (this._since) {
+            for (const t of this.types) {
+                if (this._since[t] >= 14) {
+                    const i = this.bag.lastIndexOf(t);   // pop() takes from the END
+                    if (i >= 0 && i !== this.bag.length - 1) { this.bag.splice(i, 1); this.bag.push(t); }
+                    break;
+                }
+            }
+        }
+        const type = this.bag.pop();
+        if (!this._since) this._since = {};
+        for (const t of this.types) this._since[t] = (this._since[t] || 0) + 1;
+        this._since[type] = 0;
+        return type;
     },
 
     fillQueueTo(n) {
@@ -20062,7 +20511,7 @@ const studyBreak = {
             type,
             rot: 0,
             x: 3,
-            y: 0,
+            y: this.SPAWN_Y,
             id: this.nextPieceId++
         };
     },
@@ -20074,13 +20523,7 @@ const studyBreak = {
         const piece = this.createPiece(type);
         if (!this.isValid(piece)) {
             this.active = null;
-            this.state = 'gameover';
-            if (this.mode === '1v1') {
-                this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
-            }
-            SFX.play('monkey', 0.6);
-            this.flash('Stack jammed');
-            this.submitLeaderboardScore();
+            this._endGame('Stack jammed');
             this.updateHud();
             return;
         }
@@ -20089,6 +20532,13 @@ const studyBreak = {
         this.fallTimer = 0;
         this.lockTimer = 0;
         this.lockResets = 0;   // SB-1(core): fresh lock-reset budget for the new piece
+        this.pieceCounts[type] = (this.pieceCounts[type] || 0) + 1;   // solo game-over histogram
+        const buffered = this._buffered; this._buffered = null;
+        if (buffered) {
+            if (buffered.rotate) this.tryRotate(buffered.rotate);
+            if (buffered.hold) this.holdSwap();
+        }
+        this._mpDirty = true;
         this.updateHud();
     },
 
@@ -20125,6 +20575,7 @@ const studyBreak = {
         this.active.x += dx;
         this.active.y += dy;
         this._resetLockTimer();
+        this._mpDirty = true;
         this.updateHud();
         return true;
     },
@@ -20132,15 +20583,20 @@ const studyBreak = {
     tryRotate(dir) {
         if (!this.active) return false;
         const nextRot = (this.active.rot + dir + 4) % 4;
+        // Kick order: neutral, sideways (rotation-direction first), floor kick (up), then the
+        // 2-wide wall/floor kicks only the I piece needs. The old table tried DOWN second, which
+        // could sink a piece a row on rotate — surprising, and never what a wall/floor collision needs.
+        const wide = this.active.type === 'I' ? [[2,0],[-2,0],[0,-2]] : [];
         const kicks = dir === 1
-            ? [[0,0],[0,1],[1,0],[-1,0],[0,-1]]    // CW: neutral, down, right, left, up
-            : [[0,0],[0,1],[-1,0],[1,0],[0,-1]];   // CCW: neutral, down, left, right, up
+            ? [[0,0],[1,0],[-1,0],[0,-1]].concat(wide)    // CW: neutral, right, left, up
+            : [[0,0],[-1,0],[1,0],[0,-1]].concat(wide);   // CCW: neutral, left, right, up
         for (const [dx, dy] of kicks) {
             if (this.isValid(this.active, dx, dy, nextRot)) {
                 this.active.rot = nextRot;
                 this.active.x += dx;
                 this.active.y += dy;
                 this._resetLockTimer();
+                this._mpDirty = true;
                 this.updateHud();
                 return true;
             }
@@ -20158,10 +20614,7 @@ const studyBreak = {
             const replacement = this.createPiece(swap);
             if (!this.isValid(replacement)) {
                 this.active = null;
-                this.state = 'gameover';
-                if (this.mode === '1v1') this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
-                this.flash('Hold jammed the stack');
-                this.submitLeaderboardScore();
+                this._endGame('Hold jammed the stack');
                 this.updateHud();
                 return;
             }
@@ -20172,6 +20625,7 @@ const studyBreak = {
         this.holdLocked = true;
         this.lockTimer = 0;
         this.fallTimer = 0;
+        this._mpDirty = true;
         this.updateHud();
     },
 
@@ -20184,29 +20638,43 @@ const studyBreak = {
 
     firmDrop() {
         if (!this.active) return;
-        this.active.y = this.getGhostY();
+        const target = this.getGhostY();
+        // Already down: the second tap locks (a natural double-tap hard drop). It used to zero the
+        // lock timer every press, so tapping Up faster than 500ms stalled a piece forever.
+        if (target === this.active.y) { this.lockPiece(); return; }
+        this.active.y = target;
         this.fallTimer = 0;
         this.lockTimer = 0;
+        this._mpDirty = true;
         this.updateHud();
+    },
+
+    // Space: hard drop — straight down AND lock. (Up stays a firm drop: down without locking,
+    // so a piece can still be slid into a square after it lands.)
+    hardDrop() {
+        if (!this.active) return;
+        this.active.y = this.getGhostY();
+        this.lockPiece();
     },
 
     handleAutoShift(now) {
         if (!this.active) return;
-        if (this.keys.left.down && !this.keys.right.down && now >= this.keys.left.next) {
-            this.tryMove(-1, 0);
-            this.keys.left.next = now + this.DAS_REPEAT;
-        }
-        if (this.keys.right.down && !this.keys.left.down && now >= this.keys.right.next) {
-            this.tryMove(1, 0);
-            this.keys.right.next = now + this.DAS_REPEAT;
+        const L = this.keys.left, R = this.keys.right;
+        // Both arrows held: the LAST one pressed wins (overlapping presses used to freeze the piece).
+        const dir = (L.down && R.down) ? this.keys.lastDir : (L.down ? 'left' : (R.down ? 'right' : null));
+        if (!dir) return;
+        const k = dir === 'left' ? L : R;
+        if (now >= k.next) {
+            this.tryMove(dir === 'left' ? -1 : 1, 0);
+            k.next = now + this.DAS_REPEAT;
         }
     },
 
     lockPiece() {
         if (!this.active) return;
         const piece = this.active;
-        SFX.play('droplet', 0.3);
         let toppedOut = false;
+        let leveledUp = false;
         for (const cell of this.getCells(piece)) {
             if (cell.y < this.HIDDEN_ROWS) toppedOut = true;
             this.board[cell.y][cell.x] = {
@@ -20220,21 +20688,33 @@ const studyBreak = {
         }
 
         const firstSquares = this.detectSquares();
+        // Snapshot the full rows BEFORE they collapse: the clear is shown as a 120ms white flash over
+        // the old board instead of rows vanishing in the same frame the piece locks.
+        const fullRows = [];
+        for (let y = 0; y < this.TOTAL_ROWS; y++) if (this.board[y].every(Boolean)) fullRows.push(y);
+        const snapshot = fullRows.length ? this.board.map((row) => row.slice()) : null;
         const clear = this.clearLines();
         const secondSquares = clear.lines ? this.detectSquares() : { gold: 0, silver: 0 };
+        this._boardVersion++;
+        let perfect = false;
 
         if (clear.lines) {
+            this.clearFx = { board: snapshot, rows: fullRows, timer: 120 };
             this.lines += clear.lines;
             this.score += clear.points;
+            perfect = this.board.every((row) => row.every((c) => !c));   // empty well after the clear
+            if (perfect) this.score += 10;
             const prevLevel = this.level;
-            this.level = 1 + Math.floor(this.lines / 10);
-            if (this.level > prevLevel) SFX.play('indigo', 0.7);
+            this.level = 1 + Math.floor(this.lines / this.LINES_PER_LEVEL);
+            if (this.level > prevLevel) { leveledUp = true; setTimeout(() => SFX.play('indigo', 0.7), 350); }
         }
 
-        // Send garbage to opponent in 1v1 mode
+        // Send garbage to opponent in 1v1 mode. Squares matter here too: a row through a gold square
+        // adds 2 rows, through a silver square 1 (capped at MAX_GARBAGE; the receive side clamps the same).
+        let sentGarbage = 0;
         if (this.mode === '1v1' && this.mpState && clear.lines > 0) {
             const garbageTable = { 1: 0, 2: 1, 3: 2, 4: 4 };
-            const garbageToSend = garbageTable[clear.lines] || 0;
+            const garbageToSend = Math.min(this.MAX_GARBAGE, (garbageTable[clear.lines] || 0) + (clear.goldStrips || 0) * 2 + (clear.silverStrips || 0));
             // Cancel pending incoming garbage first
             if (this.mpState.pendingGarbage > 0 && garbageToSend > 0) {
                 const canceled = Math.min(this.mpState.pendingGarbage, garbageToSend);
@@ -20242,16 +20722,21 @@ const studyBreak = {
                 const netGarbage = garbageToSend - canceled;
                 if (netGarbage > 0) {
                     this.sendGameMessage({ type: 'game_garbage', lines: netGarbage });
+                    sentGarbage = netGarbage;
                 }
             } else if (garbageToSend > 0) {
                 this.sendGameMessage({ type: 'game_garbage', lines: garbageToSend });
+                sentGarbage = garbageToSend;
             }
         }
 
         const totalGold = firstSquares.gold + secondSquares.gold;
         const totalSilver = firstSquares.silver + secondSquares.silver;
+        // One cue per lock: the plain 'droplet' only when nothing else happened (no four-deep stack of
+        // oscillators on a gold tetris); otherwise the square chime and/or the clear cue below.
         if (totalGold) SFX.play('goldChime', 0.7);
         else if (totalSilver) SFX.play('silverShimmer', 0.6);
+        else if (!clear.lines) SFX.play('droplet', 0.3);
 
         const messages = [];
         if (totalGold) messages.push(totalGold === 1 ? 'Gold square!' : `${totalGold} gold squares!`);
@@ -20261,26 +20746,29 @@ const studyBreak = {
             if (clear.goldStrips) messages.push(`gold bonus +${clear.goldStrips * 10}`);
             if (clear.silverStrips) messages.push(`silver bonus +${clear.silverStrips * 5}`);
         }
+        if (perfect) messages.push('PERFECT CLEAR +10');
+        if (sentGarbage) messages.push(`+${sentGarbage} garbage sent`);
+        if (leveledUp) messages.push(`LEVEL ${this.level}`);
         if (messages.length) this.flash(messages.join(' • '));
+        if (totalGold || totalSilver) this._announce(messages.join(', '));
         if (clear.lines === 4) SFX.play('wildEep', 0.8);
         else if (clear.lines === 3) SFX.play('quack', 0.7);
         else if (clear.lines === 2) SFX.play('sosumi', 0.6);
         else if (clear.lines === 1) SFX.play('boing', 0.5);
 
         this.active = null;
-        this.spawnTimer = this.ENTRY_DELAY;
+        this.spawnTimer = this.ENTRY_DELAY + (this.clearFx ? 120 : 0);   // let the clear flash play
         this.fallTimer = 0;
         this.lockTimer = 0;
+        this._mpDirty = true;
 
         if (toppedOut) {
-            this.state = 'gameover';
-            if (this.mode === '1v1') {
-                this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
-            }
-            SFX.play('monkey', 0.6);
-            this.flash('Top out');
-            this.submitLeaderboardScore();
+            this._endGame('Top out');
+        } else if (this._inLiveMatch() && this.mpState.pendingGarbage > 0 && !clear.lines) {
+            // Queued garbage lands now — after a lock that cleared nothing (versus rules).
+            this.insertGarbage();
         }
+        this._computeHints();
         if (this.mode === '1v1') this.sendGameState();
         this.updateHud();
     },
@@ -20349,6 +20837,76 @@ const studyBreak = {
         return { gold: formedGold, silver: formedSilver };
     },
 
+    // ── Square hint: 4x4 regions that are ONE piece drop away from a square ──────────────
+    // Recomputed on every lock (and garbage insert), never per frame. A region qualifies when its
+    // 16 cells are exactly 3 whole pieces (12 cells) + a 4-cell hole that one piece can drop
+    // into: the hole is 4-connected (every connected 4-cell hole is one of the 7 tetrominoes),
+    // nothing sits above it inside the region, and the columns above it are clear to the top of
+    // the well. Gold outline when the three pieces share a type, silver otherwise. This is the
+    // one in-game demonstration of what "build a 4x4 square" means.
+    _hints: [],
+    _computeHints() {
+        const hints = [];
+        for (let y = this.HIDDEN_ROWS; y <= this.TOTAL_ROWS - 4; y++) {
+            for (let x = 0; x <= this.COLS - 4; x++) {
+                const hint = this._hintAt(x, y);
+                if (hint) hints.push(hint);
+            }
+        }
+        this._hints = hints;
+    },
+    _hintAt(x, y) {
+        const counts = new Map();
+        const types = new Set();
+        const holes = [];
+        for (let dy = 0; dy < 4; dy++) {
+            for (let dx = 0; dx < 4; dx++) {
+                const cell = this.board[y + dy][x + dx];
+                if (!cell) { holes.push({ x: x + dx, y: y + dy }); continue; }
+                if (cell.kind !== 'piece' || cell.pieceId == null) return null;
+                counts.set(cell.pieceId, (counts.get(cell.pieceId) || 0) + 1);
+                types.add(cell.pieceType);
+            }
+        }
+        if (holes.length !== 4 || counts.size !== 3) return null;
+        for (const n of counts.values()) if (n !== 4) return null;
+        const holeKeys = new Set(holes.map((h) => h.x + ',' + h.y));
+        // The hole must be open from above: every cell above each hole cell (inside the region
+        // and on up the well) is empty. A hole cell under another hole cell is fine.
+        for (const h of holes) {
+            for (let yy = h.y - 1; yy >= 0; yy--) {
+                if (holeKeys.has(h.x + ',' + yy)) continue;
+                if (this.board[yy][h.x]) return null;
+            }
+        }
+        // 4-connected hole → exactly one tetromino shape fills it.
+        const seen = new Set([holes[0].x + ',' + holes[0].y]);
+        const stack = [holes[0]];
+        while (stack.length) {
+            const c = stack.pop();
+            for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+                const k = (c.x + dx) + ',' + (c.y + dy);
+                if (holeKeys.has(k) && !seen.has(k)) { seen.add(k); stack.push({ x: c.x + dx, y: c.y + dy }); }
+            }
+        }
+        if (seen.size !== 4) return null;
+        return { x, y, material: types.size === 1 ? 'gold' : 'silver' };
+    },
+    drawHints() {
+        if (!this._hints || !this._hints.length || this.state !== 'running') return;
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.setLineDash([3, 2]);
+        ctx.lineWidth = 1;
+        for (const h of this._hints) {
+            const pos = this.boardToPixel(h.x, h.y);
+            const size = 4 * this.CELL;
+            ctx.strokeStyle = h.material === 'gold' ? '#c9a227' : '#8a8a8a';
+            ctx.strokeRect(pos.x + 1.5, pos.y + 1.5, size - 3, size - 3);
+        }
+        ctx.restore();
+    },
+
     clearLines() {
         const fullRows = [];
         for (let y = 0; y < this.TOTAL_ROWS; y++) {
@@ -20359,15 +20917,18 @@ const studyBreak = {
         let points = fullRows.length + (fullRows.length === 4 ? 1 : 0);
         let goldStrips = 0;
         let silverStrips = 0;
-        const brokenSquareIds = new Set();
 
+        // A row through a finished square pays the strip bonus (+10 gold / +5 silver). The REST of
+        // the square stays a square (a 4x3, then 4x2, then 4x1 remainder — rows only ever leave whole),
+        // so every later row through it pays again: four singles through a gold square ≈ a tetris.
+        // It used to shatter into dead X fragments, which made squares pay only for Tetris veterans
+        // who could dig a well and clear all four rows at once. (Teacher decision 2026-09-09.)
         for (const y of fullRows) {
             const groups = {};
             for (const cell of this.board[y]) {
                 if (cell && cell.kind === 'square' && cell.squareId != null) {
                     groups[cell.squareId] = groups[cell.squareId] || { count: 0, material: cell.material };
                     groups[cell.squareId].count++;
-                    brokenSquareIds.add(cell.squareId);
                 }
             }
             for (const square of Object.values(groups)) {
@@ -20387,23 +20948,8 @@ const studyBreak = {
         while (survivors.length < this.TOTAL_ROWS) survivors.unshift(Array(this.COLS).fill(null));
         this.board = survivors;
 
-        for (let y = 0; y < this.TOTAL_ROWS; y++) {
-            for (let x = 0; x < this.COLS; x++) {
-                const cell = this.board[y][x];
-                if (!cell) continue;
-                if (cell.kind === 'square' && brokenSquareIds.has(cell.squareId)) {
-                    this.board[y][x] = {
-                        kind: 'fragment',
-                        pieceId: null,
-                        pieceType: null,
-                        squareId: null,
-                        material: cell.material,
-                        color: cell.color
-                    };
-                }
-            }
-        }
-
+        // A cut PIECE (fewer than its 4 cells left) becomes an X fragment: it can never be part of a
+        // whole-piece square again. Squares themselves are never fragmented (see above).
         const counts = {};
         for (let y = 0; y < this.TOTAL_ROWS; y++) {
             for (let x = 0; x < this.COLS; x++) {
@@ -20441,14 +20987,31 @@ const studyBreak = {
     updateHud() {
         if (!this.scoreEl || !this.helpEl) return;
         this.scoreEl.textContent = `Score ${this.score} | Lines ${this.lines} | Level ${this.level} | Gold ${this.goldCount} | Silver ${this.silverCount}`;
+        const ms = this.mpState;
+        const live = this._inLiveMatch();
+        const opp = live ? String(ms.opponent || 'opponent').slice(0, 12) : '';
         let prefix = '';
-        if (this.state === 'idle') prefix = 'Enter or click to start • Build 4×4 blocks: mixed = silver, same-piece = gold';
-        else if (this.state === 'paused') prefix = 'Paused • Press P or click the window to resume';
-        else if (this.state === 'gameover') prefix = this.mode === '1v1'
-            ? `${this.flashText || 'Game over'} • Press R to rematch or Escape to exit`
-            : `Game over • Final score ${this.score} • Press Enter, R, or click to retry`;
+        if (this.state === 'idle') prefix = 'Enter or click to start • Fit 4 whole pieces into a 4×4: same shape = gold, mixed = silver';
+        else if (this.state === 'paused') prefix = 'Paused • P, Enter, or click the board to resume • R = new game';
+        else if (this.state === 'gameover') {
+            if (live && ms.seriesOver) prefix = `${this.flashText || 'Series over'} • R = rematch • Esc = exit`;
+            else if (live) prefix = `${this.flashText || 'Game over'} • next game in 3s • R to skip`;
+            else prefix = `Game over • Final score ${this.score} • Enter, R, or click to play again`;
+        }
+        else if (live) prefix = this.flashText || `vs ${opp} • Game ${ms.gameNumber || 1} of 3 • 2→1, 3→2, 4→4 garbage, squares add more • red = incoming`;
         else prefix = this.flashText || 'Marathon mode • Gold strips are worth +10, silver strips +5';
-        this.helpEl.textContent = `${prefix} • ←→ move • Z/X rotate • ↓ soft • ↑/Space firm • C/Shift hold • P pause`;
+        if (this._classroomNote) prefix = `${this._classroomNote} • ${prefix}`;
+        const legend = live
+            ? '←→ move • Z/X rotate • ↓ soft • ↑ firm • Space hard • C/Shift hold • Esc×2 forfeit'
+            : '←→ move • Z/X rotate • ↓ soft • ↑ firm • Space hard • C/Shift hold • P pause • M mute';
+        this.helpEl.textContent = `${prefix} • ${legend}`;
+        // Screen-reader line: state transitions only, never the per-move HUD churn.
+        if (this.state !== 'running' && prefix !== this._lastLive) { this._lastLive = prefix; this._announce(prefix); }
+    },
+
+    _announce(text) {
+        const el = document.getElementById('game-live');
+        if (el) el.textContent = text;
     },
 
     boardToPixel(x, y) {
@@ -20471,13 +21034,18 @@ const studyBreak = {
         this.drawBoardWell();
 
         if (this.mode !== '1v1' || !this.mpState) {
-            this.drawPanelBox(12, 14, 116, 78, 'HOLD');
+            this.drawPanelBox(12, 14, 116, 78, 'HOLD (C)');
             this.drawPanelBox(12, 102, 116, 78, 'STATUS');
             this.drawPanelBox(12, 190, 116, 96, 'SQUARES');
             this.drawPanelBox(302, 14, 116, 182, 'NEXT');
-            this.drawPanelBox(302, 206, 116, 80, 'MODE');
+            this.drawPanelBox(302, 206, 116, 80, 'KEYS');
 
-            if (this.hold) this.drawMiniPiece(this.hold, 22, 36, 96, 42);
+            if (this.hold) {
+                if (this.holdLocked) ctx.globalAlpha = 0.4;   // dimmed while the hold is spent for this piece
+                this.drawMiniPiece(this.hold, 22, 36, 96, 42);
+                ctx.globalAlpha = 1;
+            }
+            this._drawBreakClock(ctx);
 
             ctx.fillStyle = '#000000';
             ctx.font = '10px Geneva, Arial, sans-serif';
@@ -20490,39 +21058,86 @@ const studyBreak = {
             ];
             stats.forEach((line, idx) => ctx.fillText(line, 22, 122 + idx * 11));
 
+            // The whole-piece rule IS the game — say it.
+            ctx.font = '9px Geneva, Arial, sans-serif';
             const squareText = [
-                '4x4 mixed = silver',
-                '4x4 same = gold',
-                'Clear silver row +5',
-                'Clear gold row +10',
-                'Tetris bonus +1'
+                '4 WHOLE pieces in 4\u00d74',
+                'same shape = gold',
+                'mixed shapes = silver',
+                'row thru gold +10',
+                'row thru silver +5',
+                'X = broken piece'
             ];
-            squareText.forEach((line, idx) => ctx.fillText(line, 20, 210 + idx * 14));
+            squareText.forEach((line, idx) => ctx.fillText(line, 18, 208 + idx * 12));
+            ctx.font = '10px Geneva, Arial, sans-serif';
 
             this.queue.slice(0, 3).forEach((type, idx) => {
                 this.drawPreviewSlot(314, 34 + idx * 50, 92, 40);
                 this.drawMiniPiece(type, 318, 38 + idx * 50, 84, 32);
             });
 
-            const modeLines = [
-                '10×20 field',
-                '3 previews + hold',
-                'Ghost + firm drop',
-                'Mild wall kicks'
+            ctx.font = '9px Geneva, Arial, sans-serif';
+            const keyLines = [
+                '\u2190\u2192 move   \u2193 soft',
+                'Z / X rotate   \u2191 drop',
+                'Space = hard drop',
+                'C hold  P pause  M mute'
             ];
-            modeLines.forEach((line, idx) => ctx.fillText(line, 314, 226 + idx * 13));
+            keyLines.forEach((line, idx) => ctx.fillText(line, 310, 226 + idx * 13));
+            ctx.font = '10px Geneva, Arial, sans-serif';
         } else {
             // In 1v1 mode, show compact stats above the board
             ctx.fillStyle = '#000000';
             ctx.font = '9px Geneva, Arial, sans-serif';
-            ctx.fillText(`L${this.level} | ${this.lines}ln | ${this.score}pts`, this.BOARD_X, 14);
+            const ms = this.mpState;
+            ctx.fillText(`L${this.level} \u00b7 ${this.lines} ln \u00b7 ${this.score} pts`, this.BOARD_X, 14);
+            // My hold + next three in the gutters; series score + the garbage rule under the well.
+            this._drawSplitGutters(ctx, this, this.hold, this.queue, this.holdLocked);
+            const wellBottom = this.BOARD_Y + this.VISIBLE_ROWS * this.CELL;
+            ctx.textAlign = 'center';
+            ctx.fillText(`Game ${ms.gameNumber || 1} of 3 \u00b7 you ${ms.myWins || 0}\u2013${ms.oppWins || 0} ${String(ms.opponent || '').slice(0, 10)}${ms.staked ? ' \u00b7 pot 2 \ud83c\udf6c' : ' \u00b7 free'}`, this.CANVAS_W / 2, wellBottom + 16);
+            ctx.fillStyle = '#666666';
+            ctx.font = '8px Geneva, Arial, sans-serif';
+            ctx.fillText('red = incoming garbage \u00b7 clear a line to cancel', this.CANVAS_W / 2, wellBottom + 28);
+            ctx.font = '9px Geneva, Arial, sans-serif';
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'left';
+            // Incoming-garbage meter beside MY well: red bars = rows that land on my next
+            // non-clearing lock (clear lines first to cancel them).
+            const pending = this.mpState.pendingGarbage || 0;
+            if (pending > 0) {
+                const bottom = this.BOARD_Y + this.VISIBLE_ROWS * this.CELL;
+                ctx.fillStyle = '#ff0000';
+                for (let i = 0; i < Math.min(pending, this.VISIBLE_ROWS); i++) {
+                    ctx.fillRect(this.BOARD_X - 7, bottom - (i + 1) * this.CELL, 4, this.CELL - 1);
+                }
+                ctx.textAlign = 'right';
+                ctx.fillText(`\u26A0 +${pending}`, this.BOARD_X + this.COLS * this.CELL, 14);
+                ctx.textAlign = 'left';
+            }
         }
 
-        this.drawBoardCells();
+        if (this.clearFx && this.clearFx.board) {
+            // Line-clear flash: paint the pre-clear board with the full rows lit white for ~120ms.
+            const liveBoard = this.board;
+            this.board = this.clearFx.board;
+            this.drawBoardCells();
+            this.board = liveBoard;
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            for (const row of this.clearFx.rows) {
+                if (row < this.HIDDEN_ROWS) continue;
+                const pos = this.boardToPixel(0, row);
+                ctx.fillRect(pos.x, pos.y, this.COLS * this.CELL, this.CELL);
+            }
+        } else {
+            this.drawBoardCells();
+        }
+        this.drawHints();
 
         if (this.active) {
             this.drawGhostPiece();
             this.drawPiece(this.active, this.active.y, false);
+            this._drawLockCue();
         }
 
         if (this.flashText && this.state === 'running') this.drawFlashBanner(this.flashText);
@@ -20531,14 +21146,14 @@ const studyBreak = {
             return;
         }
         if (this.state === 'idle') this.drawModeSelect();
-        if (this.state === 'paused') this.drawCenterCard('PAUSED', 'Press P or click to resume');
+        if (this.state === 'paused') this.drawCenterCard('PAUSED', 'P = resume \u00b7 R = new game');
         if (this.state === 'gameover') {
             // SB-1: route 1v1 game-over through the card (the scoring choke point) whenever a
             // match is live — NOT gated on flashText, so a flash-less topout can't bypass scoring.
             if (this.mode === '1v1' && this.mpState) {
                 this.drawGameOverCard(this.flashText || '');
             } else {
-                this.drawCenterCard('GAME OVER', 'Press Enter, R, or click to restart');
+                this.drawSoloGameOverCard();
             }
         }
 
@@ -20591,7 +21206,7 @@ const studyBreak = {
         const h = this.VISIBLE_ROWS * this.CELL + 4;
         ctx.fillStyle = '#efefef';
         ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = '#000000';
+        ctx.strokeStyle = this._inDanger() ? '#b00000' : '#000000';   // quiet warning, no beep
         ctx.lineWidth = 1;
         ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
         ctx.fillStyle = '#ffffff';
@@ -20641,8 +21256,7 @@ const studyBreak = {
         }
     },
 
-    drawCell(x, y, size, color, fragment = false) {
-        const ctx = this.ctx;
+    drawCell(x, y, size, color, fragment = false, ctx = this.ctx) {
         ctx.fillStyle = color;
         ctx.fillRect(x, y, size, size);
         ctx.strokeStyle = '#000000';
@@ -20695,7 +21309,7 @@ const studyBreak = {
             if (cell.y < this.HIDDEN_ROWS) continue;
             const pos = this.boardToPixel(cell.x, cell.y);
             if (ghost) {
-                this.drawGhostCell(pos.x, pos.y, this.CELL);
+                this.drawGhostCell(pos.x, pos.y, this.CELL, color);
             } else {
                 this.drawCell(pos.x, pos.y, this.CELL, color, false);
             }
@@ -20704,17 +21318,33 @@ const studyBreak = {
 
     drawGhostPiece() {
         if (!this.active) return;
-        this.drawPiece(this.active, this.getGhostY(), true);
+        const gy = this.getGhostY();
+        const mat = this._ghostMaterial(gy);
+        this.drawPiece(this.active, gy, true);
+        if (mat) {
+            // Dropping here completes a whole-piece square: outline the ghost in gold/silver.
+            const ctx = this.ctx;
+            ctx.save();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = mat === 'gold' ? '#c9a227' : '#8a8a8a';
+            for (const cell of this.getCells(this.active, this.active.rot, this.active.x, gy)) {
+                if (cell.y < this.HIDDEN_ROWS) continue;
+                const pos = this.boardToPixel(cell.x, cell.y);
+                ctx.strokeRect(pos.x + 2, pos.y + 2, this.CELL - 4, this.CELL - 4);
+            }
+            ctx.restore();
+        }
     },
 
-    drawGhostCell(x, y, size) {
+    drawGhostCell(x, y, size, color) {
         const ctx = this.ctx;
+        // Faint fill in the piece's own colour plus the outline: at CELL=10 the hairline alone vanished.
+        if (color) { ctx.globalAlpha = 0.18; ctx.fillStyle = color; ctx.fillRect(x + 1, y + 1, size - 2, size - 2); ctx.globalAlpha = 1; }
         ctx.strokeStyle = '#7f7f7f';
         ctx.strokeRect(x + 2.5, y + 2.5, size - 5, size - 5);
     },
 
-    drawMiniPiece(type, x, y, w, h) {
-        const ctx = this.ctx;
+    drawMiniPiece(type, x, y, w, h, ctx = this.ctx) {
         const cells = this.pieces[type][0];
         const xs = cells.map((cell) => cell[0]);
         const ys = cells.map((cell) => cell[1]);
@@ -20728,7 +21358,7 @@ const studyBreak = {
         const ox = x + Math.floor((w - pw * scale) / 2) - minX * scale;
         const oy = y + Math.floor((h - ph * scale) / 2) - minY * scale;
         for (const [cx, cy] of cells) {
-            this.drawCell(ox + cx * scale, oy + cy * scale, scale, this.colors[type], false);
+            this.drawCell(ox + cx * scale, oy + cy * scale, scale, this.colors[type], false, ctx);
         }
     },
 
@@ -20737,14 +21367,29 @@ const studyBreak = {
         const w = this.COLS * this.CELL - 12;
         const x = this.BOARD_X + 6;
         const y = this.BOARD_Y + 8;
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(x, y, w, 18);
-        ctx.strokeStyle = '#ffffff';
-        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, 17);
-        ctx.fillStyle = '#ffffff';
         ctx.font = '10px Chicago, Arial, sans-serif';
+        // Pack the ' • ' parts into as few lines as fit the well (max 3), clipped to the banner: a
+        // 'SILVER SQUARE! • 2 LINES • SILVER BONUS +10' used to smear across HOLD/NEXT.
+        const parts = String(text).toUpperCase().split(' \u2022 ');
+        const lines = [];
+        let cur = '';
+        for (const p of parts) {
+            const cand = cur ? cur + ' \u2022 ' + p : p;
+            if (cur && ctx.measureText(cand).width > w - 8) { lines.push(cur); cur = p; } else cur = cand;
+        }
+        if (cur) lines.push(cur);
+        const shown = lines.slice(0, 3);
+        const h = 8 + shown.length * 11;
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+        ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.fillText(text.toUpperCase(), x + w / 2, y + 12);
+        shown.forEach((ln, i) => ctx.fillText(ln, x + w / 2, y + 12 + i * 11));
+        ctx.restore();
         ctx.textAlign = 'left';
     },
 
@@ -20766,7 +21411,51 @@ const studyBreak = {
         ctx.fillText(title, x + w / 2, y + 11);
         ctx.font = '10px Geneva, Arial, sans-serif';
         ctx.fillText(subtitle, x + w / 2, y + 35);
-        ctx.fillText('Gold = same piece  •  Silver = mixed', x + w / 2, y + 48);
+        ctx.fillText('Gold = same shape  •  Silver = mixed', x + w / 2, y + 48);
+        ctx.textAlign = 'left';
+    },
+
+    // Solo game over: this run, your best, and the mean of your last runs (see _recordSoloResult).
+    drawSoloGameOverCard() {
+        const ctx = this.ctx;
+        const r = this._lastResult || {};
+        const w = 212, h = 124;
+        const x = this.BOARD_X + (this.COLS * this.CELL - w) / 2;
+        const y = this.BOARD_Y + (this.VISIBLE_ROWS * this.CELL - h) / 2;
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#000000'; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        ctx.fillStyle = r.isBest ? this.colors.gold : '#dddddd'; ctx.fillRect(x + 1, y + 1, w - 2, 14);
+        ctx.fillStyle = '#000000'; ctx.font = '10px Chicago, Arial, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(r.isBest ? 'NEW BEST!' : 'GAME OVER', x + w / 2, y + 11);
+        ctx.font = '10px Geneva, Arial, sans-serif';
+        ctx.fillText(`Score ${this.score}  \u2022  Lines ${this.lines}  \u2022  Level ${this.level}`, x + w / 2, y + 28);
+        const best = r.best ? r.best.score : this.score;
+        const recent = Array.isArray(r.recent) && r.recent.length ? r.recent : [this.score];
+        const mean = recent.reduce((a, b) => a + b, 0) / recent.length;
+        ctx.fillStyle = '#333333'; ctx.font = '9px Geneva, Arial, sans-serif';
+        ctx.fillText(`Your best ${best}  \u2022  mean of last ${recent.length}: ${Math.round(mean * 10) / 10}`, x + w / 2, y + 42);
+        // Piece-count histogram: the 63-bag as a sampling demo (9 of each per bag, drawn without
+        // replacement — no type can pass 9 before piece 64).
+        const counts = this.pieceCounts || {};
+        const n = this.types.reduce((s, t) => s + (counts[t] || 0), 0);
+        const max = Math.max(1, ...this.types.map((t) => counts[t] || 0));
+        const barW = 14, gap = 10, baseY = y + 88, maxH = 30;
+        const startX = x + w / 2 - (this.types.length * (barW + gap) - gap) / 2;
+        ctx.font = '8px Geneva, Arial, sans-serif';
+        this.types.forEach((t, i) => {
+            const c = counts[t] || 0;
+            const bh = Math.round((c / max) * maxH);
+            const bx = startX + i * (barW + gap);
+            ctx.fillStyle = this.colors[t]; ctx.fillRect(bx, baseY - bh, barW, bh);
+            if (bh > 1) { ctx.strokeStyle = '#000000'; ctx.strokeRect(bx + 0.5, baseY - bh + 0.5, barW - 1, bh - 1); }
+            ctx.fillStyle = '#000000';
+            ctx.fillText(`${t} ${c}`, bx + barW / 2, baseY + 9);
+        });
+        ctx.fillStyle = '#666666';
+        ctx.fillText(`n = ${n} pieces  \u2022  the bag holds 9 of each shape`, x + w / 2, y + 106);
+        ctx.font = '9px Geneva, Arial, sans-serif';
+        ctx.fillStyle = '#000000';
+        ctx.fillText(this._breakNote() || 'Enter, R, or click to play again  \u2022  Esc to exit', x + w / 2, y + 118);
         ctx.textAlign = 'left';
     },
 
@@ -20793,9 +21482,10 @@ const studyBreak = {
                 else if (ms.candyOutcome === '-1') statusLine = '🍬 −1 candy (you lost the bet)';
                 else if (ms.candyOutcome === 'refunded') statusLine = 'bet refunded — no agreement';
                 else if (ms.candyOutcome === 'pending') statusLine = 'settling the bet…';
-                else statusLine = 'Esc to exit';
+                else if (!ms.staked) statusLine = 'free match — no candy moved';
+                else statusLine = 'R = rematch · Esc = exit';
             } else {
-                statusLine = `Game ${ms.gameNumber || 1} — next game soon… (R to skip)`;
+                statusLine = `Game ${ms.gameNumber || 1} — next game in 3s… (R to skip)`;
             }
         }
         const w = 212;
@@ -20816,7 +21506,11 @@ const studyBreak = {
             ctx.font = '10px Chicago, Arial, sans-serif';
             ctx.fillText(statusLine, x + w / 2, y + 68);
             ctx.fillStyle = '#666666'; ctx.font = '9px Geneva, Arial, sans-serif';
-            ctx.fillText(`Score ${this.score} · Esc to exit`, x + w / 2, y + 88);
+            const o = this._outgoing;
+            const foot = ms.seriesOver
+                ? (o && o.text ? o.text : (this._rematchNote ? this._rematchNote + ' · Esc to exit' : `Score ${this.score} · R = rematch · Esc = exit`))
+                : `Score ${this.score} · Esc to exit`;
+            ctx.fillText(foot, x + w / 2, y + 88);
         } else {
             ctx.fillStyle = '#666666'; ctx.font = '9px Geneva, Arial, sans-serif';
             ctx.fillText('R to rematch  •  Esc to exit', x + w / 2, y + 48);
@@ -20828,8 +21522,8 @@ const studyBreak = {
     drawModeSelect() {
         const ctx = this.ctx;
         const w = 200;
-        const hasLb = this.leaderboardEntries.length > 0;
-        const h = hasLb ? 150 : 90;
+        const stats = this._loadStats();
+        const h = 100;
         const x = this.BOARD_X + (this.COLS * this.CELL - w) / 2;
         const y = this.BOARD_Y + (this.VISIBLE_ROWS * this.CELL - h) / 2;
         // Card background
@@ -20846,7 +21540,8 @@ const studyBreak = {
         ctx.fillText('STUDY BREAK', x + w / 2, y + 11);
         // Subtitle
         ctx.font = '10px Geneva, Arial, sans-serif';
-        ctx.fillText('Square Mode', x + w / 2, y + 28);
+        ctx.fillText(this._lessonDone === true ? 'Lesson done \u2014 enjoy the break'
+            : (this._lessonDone === false ? 'Do Now not done \u2014 short break?' : 'Square Mode'), x + w / 2, y + 28);
         // Solo button area
         const btnW = 70, btnH = 24, gap = 16;
         const btnY = y + 38;
@@ -20861,7 +21556,7 @@ const studyBreak = {
         ctx.font = '10px Chicago, Arial, sans-serif';
         ctx.fillText('SOLO', soloX + btnW / 2, btnY + 15);
         ctx.font = '9px Geneva, Arial, sans-serif';
-        ctx.fillText('Enter', soloX + btnW / 2, btnY + 22);
+        ctx.fillText('1 / Enter', soloX + btnW / 2, btnY + 22);
         // 1v1 button
         ctx.strokeStyle = '#000000';
         ctx.strokeRect(vsX + 0.5, btnY + 0.5, btnW - 1, btnH - 1);
@@ -20871,27 +21566,22 @@ const studyBreak = {
         ctx.font = '10px Chicago, Arial, sans-serif';
         ctx.fillText('1v1', vsX + btnW / 2, btnY + 15);
         ctx.font = '9px Geneva, Arial, sans-serif';
-        ctx.fillText('Click', vsX + btnW / 2, btnY + 22);
-        // Hall of Fame
-        if (this.leaderboardEntries.length > 0) {
-            const lbY = btnY + btnH + 8;
-            ctx.fillStyle = '#999999';
-            ctx.font = '9px Geneva, Arial, sans-serif';
-            ctx.fillText('\u2500\u2500 Hall of Fame \u2500\u2500', x + w / 2, lbY);
-            ctx.font = '9px Geneva, Arial, sans-serif';
-            ctx.fillStyle = '#000000';
-            this.leaderboardEntries.forEach((entry, i) => {
-                const ey = lbY + 12 + i * 11;
-                ctx.textAlign = 'left';
-                ctx.fillText(`${i + 1}. ${entry.name}`, x + 12, ey);
-                ctx.textAlign = 'right';
-                ctx.fillText(`${entry.score}  ${entry.mode}`, x + w - 12, ey);
-                ctx.textAlign = 'center';
-            });
-        }
-        // Footer
+        ctx.fillText('2 / click', vsX + btnW / 2, btnY + 22);
+        // Your own record on this device (the relay never had a Hall of Fame; a class-wide all-time
+        // board would be an equity problem in a mixed-skill room anyway).
+        const lbY = btnY + btnH + 12;
         ctx.font = '9px Geneva, Arial, sans-serif';
-        ctx.fillText('Build 4\u00d74 blocks for bonus pts', x + w / 2, y + h - 8);
+        ctx.fillStyle = '#333333';
+        if (stats.best) {
+            const recent = stats.recent.length ? stats.recent : [stats.best.score];
+            const mean = Math.round((recent.reduce((a, b) => a + b, 0) / recent.length) * 10) / 10;
+            ctx.fillText(`Best ${stats.best.score} \u00b7 mean of last ${recent.length}: ${mean}`, x + w / 2, lbY);
+        } else {
+            ctx.fillText('First game: 4 whole pieces make a 4\u00d74', x + w / 2, lbY);
+        }
+        ctx.fillStyle = '#000000';
+        // Footer
+        ctx.fillText(this._breakNote() || 'same shape = gold \u00b7 mixed = silver', x + w / 2, y + h - 8);
         ctx.textAlign = 'left';
         // Store button rects for click detection
         this._soloBtn = { x: soloX, y: btnY, w: btnW, h: btnH };
@@ -21336,8 +22026,8 @@ try {
 } catch (_) { /* no fetch (tests) — unit fallback */ }
 
 function _ti84TodayTopic() {
-    var t = _todayLessonInf && _todayLessonInf.t;
-    return (t && _ti84LessonMap && _ti84LessonMap[t]) ? t : null;
+    var topics=typeof groupTopics==='function'?groupTopics(_todayLessonInf):[_todayLessonInf&&_todayLessonInf.t];
+    return topics.find(function(topic){return topic&&_ti84LessonMap&&_ti84LessonMap[topic];})||null;
 }
 
 // "Today's calculator skill" chip on the Do-Now card — present ONLY when
@@ -22393,7 +23083,9 @@ const DogePresence = {
         };
 
         this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+            let data;
+            try { data = JSON.parse(event.data); } catch (_) { return; }   // never trust the wire
+            if (!data || typeof data !== 'object') return;
             this.handleMessage(data);
         };
 
@@ -22464,11 +23156,13 @@ const DogePresence = {
 
             case 'challenge_declined':
                 this.challengePending = null;
+                if (typeof studyBreak !== 'undefined' && studyBreak._onChallengeOutcome) studyBreak._onChallengeOutcome('declined', data);
                 this.flash(data.by + ' declined' + (data.reason === 'timeout' ? ' (timed out)' : ''));
                 break;
 
             case 'challenge_error':
                 this.challengePending = null;
+                if (typeof studyBreak !== 'undefined' && studyBreak._onChallengeOutcome) studyBreak._onChallengeOutcome('error', data);
                 this.flash(data.error || 'Challenge failed');
                 break;
 
@@ -22506,9 +23200,6 @@ const DogePresence = {
                 if (studyBreak.peerConnection) studyBreak.handleMpMessage(data);
                 break;
 
-            case 'leaderboard_data':
-                studyBreak.leaderboardEntries = data.entries || [];
-                break;
         }
     },
 
@@ -22565,7 +23256,8 @@ const DogePresence = {
         const panel = document.getElementById('doge-challenge-panel');
         panel.innerHTML =
             `<div class="challenge-title">&#128021; Challenge!</div>` +
-            `<div>${this.incomingChallenge.from} wants to play<br>Study Break!</div>` +
+            `<div>${_deskEsc(this.incomingChallenge.from)} wants to play<br>Study Break!</div>` +
+            `<div style="font-size:9px;margin-top:2px">best of 3 \u00b7 1 candy at stake, winner takes 2 \ud83c\udf6c</div>` +
             `<div class="challenge-timer" id="challenge-countdown">${this.incomingChallenge.countdown}s</div>` +
             `<div class="challenge-btns">` +
             `<button onclick="DogePresence.declineChallenge()">Decline</button>` +
@@ -22612,6 +23304,12 @@ const DogePresence = {
         // Open the game overlay
         studyBreak.init();
         SFX.init();
+        if (!studyBreak.isOpen()) {
+            studyBreak._prevFocus = document.activeElement;
+            studyBreak.openedAt = Date.now();
+            studyBreak._lessonDone = studyBreak._todayLessonDone();
+        }
+        studyBreak._renderMute();
         studyBreak.overlay.style.display = 'block';
         studyBreak.startLoop();
 
@@ -22743,7 +23441,11 @@ document.addEventListener('keydown', (e) => {
         if (DogePresence.incomingChallenge) {
             document.getElementById('doge-challenge-panel').style.display = 'none';
         }
+        // Study Break owns Escape while it is open (it closes itself); don't also tear down an app
+        // window (TI-84 / quiz / wallet) sitting under the game.
+        var gameOpen = !!(typeof studyBreak !== 'undefined' && studyBreak.isOpen && studyBreak.isOpen());
         document.querySelectorAll('.app-overlay').forEach(function(el) {
+            if (gameOpen) return;
             if (el.style.display === 'block') {
                 var id = el.id.replace('app-', '').replace('-overlay', '');
                 destroyApp(id);
@@ -22807,6 +23509,10 @@ function cls(i){
     if(i.kind==='orientation')return"cell-orient";
     if(i.kind==='baseline')return"cell-baseline";
     if(i.t===R)return"cell-rev";
+    if(typeof cYear==='undefined'||cYear==='SY26-27'){
+        i.ced=i.group?groupLabel(i):cedLabel(i.t);
+        return"cell-"+cedUnitClass(i.group?groupTopics(i)[0]:i.t);
+    }
     return"cell-u"+i.u;
 }
 function htm(i,ds){
@@ -22821,6 +23527,10 @@ function htm(i,ds){
     if(i.kind==='baseline')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Baseline</div><div class="tt">No stakes — best score kept</div>`;
     if(i.t===R)return`<div class="dn">${ds}</div><div class="tl">Review</div><div class="tt">${i.n}</div>`;
     const doubleBadge=i.db?'<span class="dbl">2x</span>':'';
+    if(typeof cYear==='undefined'||cYear==='SY26-27'){
+        i.ced=i.group?groupLabel(i):cedLabel(i.t);
+        return`<div class="dn">${ds}</div><div class="tl">${_resourcePanelEsc(i.ced.text)}</div>`+doubleBadge;
+    }
     return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+doubleBadge;
 }
 // cellAria(i, ds) — flat, emoji-free aria-label text for a calendar cell, built
@@ -22837,15 +23547,17 @@ function cellAria(i, ds){
     if(i.kind==='poster') return ds + ', Unit ' + i.u + ' Poster gallery walk';
     if(i.kind==='orientation') return ds + ', Start Here — how grades and makeups work';
     if(i.kind==='baseline') return ds + ', Unit ' + i.u + ' Baseline — no stakes, best score kept';
+    const newLabels = typeof cYear==='undefined'||cYear==='SY26-27';
     let label = (i.t===R) ? ('Review: ' + (i.n||'')) : (i.t + ' ' + (i.n||''));
+    if(newLabels&&i.t!==R){i.ced=i.group?groupLabel(i):cedLabel(i.t);label=i.ced.text;}
     let parts = [ds, label.trim()];
-    if(i.due) parts.push('due ' + i.due);
+    if(i.due) parts.push('due ' + (newLabels ? cedDisplayText(i.due) : i.due));
     if(i.db) parts.push('double topic day');
     // Resource readiness — mirror sTip's status line when the registry has the topic.
     try {
         if(typeof getRegistryEntry==='function' && i.t){
-            const re = getRegistryEntry(i.t);
-            if(re && re.status) parts.push('status ' + re.status);
+            const keys=i.group?groupTopics(i):[i.t];
+            for(const key of keys){const re=getRegistryEntry(key);if(re&&re.status)parts.push('status '+re.status);}
         }
     } catch(_) {}
     return parts.join('. ');
@@ -22900,7 +23612,7 @@ function _summerWeeks() {
   var nameByTopic = {};
   for (var si = 0; si < S.length; si++) {
     var row = S[si] || [];
-    [row[3], row[4]].forEach(function (inf) {
+    [row[3], row[4]].flatMap(function(inf){return inf&&inf.group?inf.group:[inf];}).forEach(function (inf) {
       // Summer Foundations view: strip the school-year "→ new topic" CED arrow so
       // summer cells read plainly (e.g. "1.10 · The Normal Distribution"), since the
       // summer packet is foundations, not a CED unit. School-year tiles keep the tag.
@@ -22970,6 +23682,16 @@ function rCal(){
         currentWeek.push(e);
     }
     if (currentWeek.length) W.push({ m: weekMonday, d: currentWeek });
+    // Today's lesson must survive paging away from today's week.
+    _todayLessonInf=null;_todayLessonDS='';
+    for(const row of S){
+      if(!eq(new Date(row[0],row[1],row[2]),t))continue;
+      const todayCell=cP==='B'?row[3]:row[4];
+      if(todayCell&&typeof todayCell==='object'){
+        _todayLessonInf=todayCell;_todayLessonDS=MN[row[1]]+' '+row[2];
+      }
+    }
+    if(typeof _renderTodayTopics==='function')_renderTodayTopics();
     // ── 2. Weave the summer-prep weeks in FRONT of the school-year weeks ──
     // ☀️ Weave the summer-prep weeks in FRONT of the school-year weeks during
     // summer (today < firstDayOfSchool). They're real week rows, so the focus
@@ -23005,7 +23727,7 @@ function rCal(){
             if (!!_wkr._summer !== !!wantSummer) continue;     // only scan the right track
             for (var di = 0; di < _wkr.d.length; di++) {
                 var inf2 = (cP === 'B') ? _wkr.d[di][3] : _wkr.d[di][4];
-                if (inf2 && typeof inf2 === 'object' && inf2.t === topic) return wi;
+                if (inf2 && typeof inf2 === 'object' && (inf2.t === topic || (inf2.group&&groupTopics(inf2).includes(topic)))) return wi;
             }
         }
         return -1;
@@ -23264,26 +23986,44 @@ function rCD(){
 function _computePace(topics, marks, sCells, todayTs, period){
     const isLesson = function(t){ return typeof t === 'string' && /^\d+\.\d+/.test(t); };
     const seen = {}, lessons = [];
-    for(const tp of (topics||[])){ if(isLesson(tp) && !seen[tp]){ seen[tp]=1; lessons.push(tp); } }
+    for(const day of (topics||[])){
+      for(const tp of (typeof groupTopics==='function'?groupTopics(day):[day])){
+        if(isLesson(tp)&&!seen[tp]){seen[tp]=1;lessons.push(tp);}
+      }
+    }
     let done = 0;
     for(const tp of lessons){ if(localLessonState(tp, marks)==='done') done++; }
     const seenE = {}; let expected = 0;
     for(const e of (sCells||[])){ const inf = period==='B' ? e[3] : e[4];
-        if(inf && typeof inf==='object' && isLesson(inf.t) && !seenE[inf.t]){ seenE[inf.t]=1;
-            if(+new Date(e[0],e[1],e[2]) <= todayTs) expected++; } }
+        if(!inf||typeof inf!=='object')continue;
+        for(const tp of (inf.group?groupTopics(inf):[inf.t])){
+          if(isLesson(tp)&&!seenE[tp]){seenE[tp]=1;if(+new Date(e[0],e[1],e[2])<=todayTs)expected++;}
+        }
+    }
     return { done: done, total: lessons.length, expected: expected };
 }
 function rProg(){
     const t=tdy(),tk=document.getElementById("pb"),lb=document.getElementById("pl");
+    const newLabels=typeof cYear==='undefined'||cYear==='SY26-27';
     const ut={},ud={};let tt=0,ds=0;
     for(const e of S){const inf=cP==="B"?e[3]:e[4];
         if(!inf||inf===OFF||inf===EX||inf===PO||inf===NC)continue;
-        const u=inf.t===R?"Rev":"U"+inf.u;
-        if((inf.t===R&&inf.u===0)||inf.u){ut[u]=(ut[u]||0)+1;tt++;
-            const dt=new Date(e[0],e[1],e[2]);if(dt<=t){ud[u]=(ud[u]||0)+1;ds++;}}}
+        let u=inf.t===R?"Rev":"U"+inf.u;
+        if(newLabels&&inf.t!==R&&!inf.kind){
+            inf.ced=inf.group?groupLabel(inf):cedLabel(inf.t);
+            u=inf.ced.bonus?'★':(inf.ced.unit?'U'+inf.ced.unit:null);
+        }
+        if((inf.t===R&&inf.u===0)||inf.u||(newLabels&&inf.ced&&inf.ced.bonus)){
+            const count=inf.group?groupTopics(inf).length:1;
+            if(u)ut[u]=(ut[u]||0)+count;
+            tt+=count;
+            const dt=new Date(e[0],e[1],e[2]);
+            if(dt<=t){if(u)ud[u]=(ud[u]||0)+count;ds+=count;}
+        }
+    }
     const def=SCHEDULE_DEFS[cYear];
-    const uo=def.units.map(u=>"U"+u.id).concat(["Rev"]);
-    const uc={};const utc={};for(const u of uo){uc[u]="var(--"+(u==="Rev"?"rev":u.toLowerCase())+")";utc[u]="var(--"+(u==="Rev"?"rev":u.toLowerCase())+"-t)";}
+    const uo=def.units.map(u=>"U"+u.id).concat(newLabels?["★","Rev"]:["Rev"]);
+    const uc={};const utc={};for(const u of uo){const token=u==="Rev"?"rev":u==="★"?"bonus":u.toLowerCase();uc[u]="var(--"+token+")";utc[u]="var(--"+token+"-t)";}
     let h="";for(const u of uo){const c=ut[u]||0;if(!c)continue;
         h+=`<div class="prog-seg" style="width:${(c/tt*100).toFixed(1)}%;background:${uc[u]};color:${utc[u]}">${u}</div>`;}
     h+=`<div class="prog-mark" style="left:${tt?(ds/tt*100):0}%"></div>`;
@@ -23339,10 +24079,23 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
     if(inf===OFF)h+='<div class="tp">No School</div>';
     else if(inf===EX)h+='<div class="tp">AP Statistics Exam!</div>';
     else if(inf===PO)h+='<div class="tp">Post-exam</div>';
-    else{h+=inf.t===R?`<div class="tp">${inf.n}</div>`:`<div class="tp">${inf.t} \u2014 ${inf.n}</div>`;
-        if(inf.due)h+=`<div class="th">Due: ${inf.due}</div>`;if(inf.as)h+=`<div class="th">Assign: ${inf.as}</div>`;
+    else{
+        const newLabels=typeof cYear==='undefined'||cYear==='SY26-27';
+        let label=inf.t===R?inf.n:inf.t+' \u2014 '+inf.n;
+        if(newLabels&&inf.t!==R){
+            if(inf.kind)label=inf.n;
+            else{
+                inf.ced=inf.group?groupLabel(inf):cedLabel(inf.t);
+                label=inf.ced.text;
+                if(cedTeacherBridgeAllowed())label+=' (old '+inf.t+')';
+            }
+        }
+        h+=`<div class="tp">${_resourcePanelEsc(label)}</div>`;
+        if(inf.due)h+=`<div class="th">Due: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.due):inf.due)}</div>`;
+        if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
-        const re=getRegistryEntry(inf.t);
+        const keys=inf.group?groupTopics(inf):[inf.t];
+        const re=keys.map(getRegistryEntry).find(Boolean);
         if(re){
             // The tooltip FOLLOWS the cursor (mTip) and is pointer-events:none, so any
             // embedded link is unclickable. Just show how to open the lesson. (The old
@@ -23352,7 +24105,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
             h+='<div class="th" style="color:#2b6cb0">Click to open</div>';
             // (Removed s14: the registry Ready/Partial/Pending "readiness" line — that was
             // teacher material-tracking and contradicts the student progress glyphs.)
-            var _allE=getAllRegistryEntries(inf.t);
+            var _allE=keys.flatMap(getAllRegistryEntries);
             var _syncStates=[];
             for(var _i=0;_i<_allE.length;_i++){var _ep=_allE[_i].periods&&_allE[_i].periods[cP];
                 if(_ep&&_ep.syncStatus)_syncStates.push(_ep.syncStatus);
@@ -23446,6 +24199,16 @@ async function _fetchPollArchive() {
 // synthetic cell click, which would re-enter the calendar's lock-dialog /
 // Do-Now-bump guards and could stop a synced green-light short (Codex F3
 // review, MAJOR). Never autoplays (browser policy) and never throws.
+function _renderTodayTopics(){
+  var host=document.querySelector('#donow-card .donow-body');
+  if(!host)return;
+  var line=document.getElementById('donow-today-topics');
+  if(!_todayLessonInf||!_todayLessonInf.group){if(line)line.remove();return;}
+  if(!line){line=document.createElement('button');line.id='donow-today-topics';line.type='button';host.appendChild(line);}
+  line.textContent='Due today: '+groupLabel(_todayLessonInf).text;
+  line.onclick=_focusTodayLessonVideo;
+}
+
 function _focusTodayLessonVideo() {
   try {
     if (!_todayLessonInf || typeof showResourcePanel !== 'function') return;
@@ -23659,6 +24422,9 @@ function _handleActivityState(summary){
 document.addEventListener('keydown', function(e){
   try {
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    if (e.target && e.target.closest && e.target.closest('[data-park-scene]')) return;
+    // Study Break owns ↑/↓ while it is open: a drop key must not nudge the student's activity value.
+    if (typeof studyBreak !== 'undefined' && studyBreak.isOpen && studyBreak.isOpen()) return;
     if (!_classroomBoardHandle) return;
     var sum = _lastClassroomSummary;
     if (!sum || !sum.activity || sum.activity.finished) return;
@@ -23737,6 +24503,8 @@ function _mountClassroomBoard(){
         // V4: stash the latest summary so the capture-phase keydown
         // handler can read activity state without entering the board IIFE.
         _lastClassroomSummary = summary;
+        // Study Break mirror: a student inside the game can't see the classroom strip.
+        try { if (typeof studyBreak !== 'undefined' && studyBreak.isOpen && studyBreak.isOpen()) studyBreak.onClassroomSignal(summary); } catch (_) {}
         // v3 P1+P2: render the "Live with Mr. Colson" indicator
         // when the room transitions to live. _renderLiveIndicator
         // is a fire-and-forget no-throw helper (defined alongside).
@@ -23802,7 +24570,7 @@ function _mountClassroomBoard(){
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-03-xdp0';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-11-n9je';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

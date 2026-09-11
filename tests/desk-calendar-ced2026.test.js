@@ -14,8 +14,11 @@ const schedulePaths = [
   'roster-server/data/lesson-schedule.json'
 ];
 // Captured before any CED relabel implementation. Dates and grade identities
-// must remain identical even when calendar cells gain presentation metadata.
-const scheduleSha256 = '15393ad27a085340248de945239a8a7b7f5a0cfa740593855ba33cc92df6b90c';
+// Period B remains identical; E dates now follow E_WEDNESDAY_DOUBLE_SPEC.md.
+const scheduleSha256 = 'a212bb52dcca76c7b968a9b07eb882c80fa20432df6f589c84defb70bbc7f142';
+function bColumn(bytes) {
+  return bytes.toString('utf8').split(/\r?\n/).filter(line => /^\s*"B":/.test(line) && !/^\s*"B": \[\]/.test(line)).join('\n');
+}
 const deskSource = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
 const crosswalk = JSON.parse(readFileSync(resolve(repo, '2026-crosswalk.json'), 'utf8')).map;
 
@@ -81,7 +84,7 @@ function createDesk({ period = 'B', role = 'student', preview = false, viewAs = 
     tip: win.document.getElementById('tip')
   });
   const functions = [
-    'd', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule',
+    'd', 'groupTopics', 'groupLabel', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule',
     'eq', '_resourcePanelEsc', '_deskIsTeacher', 'cedTeacherBridgeAllowed',
     'getRegistryEntry', 'getAllRegistryEntries', '_orderedPeriodTopics', 'quarterOfDate', '_isLessonUnlocked',
     'cls', 'htm', 'cellAria', 'rCal', 'rProg', 'sTip', 'lookupTopic'
@@ -111,7 +114,7 @@ function collectCalendar(win) {
     win._calPageOffset = offset;
     win.rCal();
     for (const cell of win.document.querySelectorAll('#cg .dc[data-topic]')) {
-      byTopic.set(cell.dataset.topic, {
+      for (const member of cell.dataset.topic.split('+')) byTopic.set(member, {
         text: cell.textContent,
         heading: cell.querySelector('.tl').textContent,
         aria: cell.getAttribute('aria-label'),
@@ -123,10 +126,10 @@ function collectCalendar(win) {
   return byTopic;
 }
 
-describe('CED relabel preserves schedule bytes', () => {
+describe('CED relabel preserves B schedule bytes', () => {
   it.each(schedulePaths)('%s matches the pre-change SHA256', (path) => {
     const bytes = readFileSync(resolve(repo, path));
-    expect(createHash('sha256').update(bytes).digest('hex')).toBe(scheduleSha256);
+    expect(createHash('sha256').update(bColumn(bytes)).digest('hex')).toBe(scheduleSha256);
   });
 
   it('the real generator produces identical JSON without writing either schedule', () => {
@@ -141,7 +144,7 @@ describe('CED relabel preserves schedule bytes', () => {
     schedulePaths.forEach((path, index) => {
       const after = readFileSync(resolve(repo, path));
       expect(after.equals(before[index])).toBe(true);
-      expect(createHash('sha256').update(after).digest('hex')).toBe(scheduleSha256);
+      expect(createHash('sha256').update(bColumn(after)).digest('hex')).toBe(scheduleSha256);
     });
   });
 });
@@ -223,7 +226,7 @@ describe('student calendar CED labels', () => {
         const cell = visible.get(oldKey);
         const foldedKeys = core.filter(([, other]) => other.newTopic === entry.newTopic).map(([key]) => key);
         const day = foldedKeys.length > 1 ? ' · Day ' + (foldedKeys.indexOf(oldKey) + 1) : '';
-        expect(cell.heading).toBe(entry.newTopic + ' · ' + entry.newLabel + day);
+        expect(cell.heading).toContain(entry.newTopic + ' · ' + entry.newLabel + day);
         expect(cell.text).toContain(entry.newTopic + ' · ' + entry.newLabel);
         expect(cell.text).not.toMatch(/\b[6-9]\.\d+\b|Unit [6-9]|\(old |→/);
         expect(cell.aria).not.toMatch(/\b[6-9]\.\d+\b|Unit [6-9]|\(old |→/);

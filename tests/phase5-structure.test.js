@@ -77,10 +77,11 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
     expect(DESK).toMatch(/PC tutor/);
     // The PC button must use a distinct status span so its message doesn't
     // overwrite the lesson tutor's status.
-    expect(DESK).toMatch(/id=["']ai-tutor-pc-status["']/);
+    expect(DESK).toContain('id="ai-tutor-pc-status');
+    expect(DESK).toContain("_tutorSuffix=dayCell.group");
   });
 
-  it('Phase 5.1: PC button is rendered in the lesson-regex branch, AFTER the lesson button, with onclick=copyTutorPromptPc(_aitm[1]) only (Codex MINOR-2 fold)', () => {
+  it('Phase 5.1: PC button is rendered in the lesson-regex branch, AFTER the lesson button, with a numeric unit and member-specific status target (Codex MINOR-2 fold)', () => {
     // Slice the if-block governing both buttons. The lesson regex match is
     // `var _aitm = /^(\d+)\.(\d+)$/.exec(inf.t || '');` followed by
     // `if (_aitm && AI_TUTOR_LESSON_KEYS.has(inf.t)) { ... }`. We extract the
@@ -112,7 +113,7 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
     // dynamic insertions between the open-paren and the close-paren.
     const pcOnclickMatch = block.match(/copyTutorPromptPc\(\\'\s*'\s*\+\s*([^)]+?)\s*\+\s*'\\'\)/);
     expect(pcOnclickMatch, 'PC onclick must use string-concat form with _aitm[1]').toBeTruthy();
-    expect(pcOnclickMatch[1].trim()).toBe('_aitm[1]');
+    expect(pcOnclickMatch[1].trim()).toBe("_aitm[1] + '\\',\\'ai-tutor-pc-status' + _tutorSuffix");
   });
 
   it('Phase 5.1: copyTutorPromptPc is an async helper fetching ai-tutor/u{N}_pc.md', () => {
@@ -179,11 +180,11 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
       return DESK.slice(openBrace + 1, closeBrace);
     }
 
-    const lessonStart = DESK.indexOf('async function copyTutorPrompt(unit, lesson)');
+    const lessonStart = DESK.indexOf('async function copyTutorPrompt(unit, lesson, statusId)');
     expect(lessonStart).toBeGreaterThan(0);
     const lessonBody = bodyOf(lessonStart);
 
-    const pcStart = DESK.indexOf('async function copyTutorPromptPc(unit)');
+    const pcStart = DESK.indexOf('async function copyTutorPromptPc(unit, statusId)');
     expect(pcStart).toBeGreaterThan(0);
     const pcBody = bodyOf(pcStart);
 

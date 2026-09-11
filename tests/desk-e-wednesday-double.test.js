@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 describe('E Wednesday double block',()=>{
   it('preserves the captured pre-change B column byte for byte in both JSON copies',()=>{
     for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
-      const column=readFileSync(path,'utf8').split(/\r?\n/).filter(line=>/^\s*"B":/.test(line)).join('\n');
+      const column=readFileSync(path,'utf8').split(/\r?\n/).filter(line=>/^\s*"B":/.test(line)&&!/^\s*"B": \[\]/.test(line)).join('\n');
       expect(createHash('sha256').update(column).digest('hex')).toBe('a212bb52dcca76c7b968a9b07eb882c80fa20432df6f589c84defb70bbc7f142');
     }
   });

@@ -68,13 +68,14 @@ const SY_BLOCK = objBlock('"SY26-27": {');
 const SY_CFG = new Function('return {examDate:' + litField(SY_BLOCK, 'examDate', '[', ']')
   + ',range:' + litField(SY_BLOCK, 'range', '{', '}')
   + ',daysOff:' + litField(SY_BLOCK, 'daysOff', '[', ']')
+  + ',earlyRelease:' + litField(SY_BLOCK, 'earlyRelease', '[', ']')
   + ',periods:' + litField(SY_BLOCK, 'periods', '{', '}') + '}')();
 const GEN_SRC =
   'const R="review",OFF="off",EX="exam",PO="post",NC="noclass";\n'
   + ['d', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule'].map(fnBody).join('\n') + '\n'
   + constArray('SY2627_PACING_B') + ';\n'
   + constArray('SY2627_PACING_E') + ';\n'
-  + 'const def={range:CFG.range,examDate:CFG.examDate,daysOff:CFG.daysOff,periods:CFG.periods,'
+  + 'const def={range:CFG.range,examDate:CFG.examDate,daysOff:CFG.daysOff,earlyRelease:CFG.earlyRelease,periods:CFG.periods,'
   + 'pacing:{B:injectPcPosterEvents(SY2627_PACING_B),E:injectPcPosterEvents(SY2627_PACING_E)}};\n'
   + 'return generateSchedule(def);';
 // eslint-disable-next-line no-new-func
@@ -181,9 +182,8 @@ describe('Grade Check-in — periods derived from the real SY26-27 calendar', ()
 
   it('the final period stops before the AP Exam (May 11, 2027) — no exam/post rows leak in', () => {
     const last = realPeriods[realPeriods.length - 1];
-    // The last instructional cell (E's final review day) lands in late April
-    // now that the baseline day is gone; the invariant is "before the exam".
-    expect(last.dueISO >= '2027-04-01').toBe(true);
+    // Wednesday doubles bring E's final review day forward to March 31.
+    expect(last.dueISO).toBe('2027-03-31');
     expect(last.dueISO < '2027-05-11').toBe(true);
     for (const p of realPeriods) {
       expect(p.dueISO < '2027-05-11').toBe(true); // nothing on/after exam day

@@ -977,6 +977,8 @@
 
 
 
+
+
 (function () {
   'use strict';
 
@@ -1046,7 +1048,7 @@
       var bandLabel = QUARTER_BAND_LABEL[qKey] || '';
       var tip = qKey + ' covers ' + bandLabel;
       if (graded != null && total != null) {
-        tip += ' — ' + graded + ' of ' + total + ' unit' + (total === 1 ? '' : 's') + ' graded';
+        tip += ' — ' + graded + ' of ' + total + ' topic group' + (total === 1 ? '' : 's') + ' graded';
       }
       pill.setAttribute('title', tip);
       pill.appendChild(document.createTextNode(qKey));
@@ -1058,7 +1060,7 @@
       if (ceiling != null && grade != null) {
         pill.appendChild(el('br'));
         var ceilEl = el('small', { html: '&uarr; ' + ceiling });
-        ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' unit' + ((total - graded) === 1 ? '' : 's') + ' in ' + qKey);
+        ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' topic group' + ((total - graded) === 1 ? '' : 's') + ' in ' + qKey);
         ceilEl.style.color = '#25663F';
         ceilEl.style.fontSize = '0.85em';
         pill.appendChild(ceilEl);
@@ -1071,7 +1073,8 @@
   function renderUnitCard(uKey, u, completion) {
     var card = el('div', { class: 'wys-unit' });
     var unitNum = unitNumberFromKey(uKey);
-    card.appendChild(el('h3', { text: unitNum ? 'Unit ' + unitNum : uKey }));
+    // Preserve each server score bucket; its CED topic coverage may span units.
+    card.appendChild(el('h3', { text: cedLegacyUnitLabel(unitNum) }));
 
     var ug = fmtGrade(u && u.unitGrade);
     var graded = !!(u && u.graded) && ug != null;
