@@ -12,6 +12,7 @@ ASCII only. LF line endings.
 from __future__ import annotations
 
 import json
+import math
 import os
 import time
 from typing import Optional
@@ -142,6 +143,22 @@ def find_cell_selector(cdp: EdgeCDP, column_key: str, row_index: int) -> Optiona
 # --------------------------------------------------------------------------- #
 # Grade write                                                                  #
 # --------------------------------------------------------------------------- #
+
+def read_grade_from_cell(cdp: EdgeCDP, column_key: str, row_index: int) -> float | None:
+    """Read the persistent grade input without focus, typing, or navigation."""
+    selector = find_cell_selector(cdp, column_key, row_index)
+    if not selector:
+        return None
+    input_selector = selector + " input.grader-edit-input"
+    raw = cdp.eval_js(
+        f"document.querySelector({json.dumps(input_selector)})?.value ?? null"
+    )
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return value if math.isfinite(value) else None
+
 
 def write_grade_to_cell(
     cdp: EdgeCDP,

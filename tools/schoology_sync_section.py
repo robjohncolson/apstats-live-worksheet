@@ -592,6 +592,14 @@ def _build_last_synced_map(student_ids: list, scope_keys: list, state: StateStor
     return last_synced
 
 
+def _grade_at_least(existing, target) -> bool:
+    """Compare persisted or live numeric grades with the sync tolerance."""
+    try:
+        return float(existing) >= float(target) - 1e-9
+    except (TypeError, ValueError):
+        return False
+
+
 def _push_grades(
     targets: dict,
     scope_items_by_key: dict,
@@ -602,17 +610,22 @@ def _push_grades(
     cdp,
     dry_run: bool,
     errors: list,
-) -> tuple[int, int]:
-    """Push grade targets to Schoology.  Returns (pushed_count, skipped_count)."""
+) -> tuple[int, int, int]:
+    """Apply best-wins grades. Returns (pushed_count, skipped_count, kept_count)."""
 
     # Build last-synced map for the students + keys that appear in targets
     student_ids = {sid for sid, _ in targets}
     scope_keys = {key for _, key in targets}
     last_synced_map = _build_last_synced_map(list(student_ids), list(scope_keys), state)
 
-    actions = lib.compute_sync_actions(targets, last_synced_map)
+    # A higher hand entry recorded on KEEP already covers a lower app target.
+    covered = {key for key, target in targets.items()
+               if target is not None and _grade_at_least(last_synced_map.get(key), target)}
+    pending = {key: target for key, target in targets.items() if key not in covered}
+    actions = lib.compute_sync_actions(pending, last_synced_map)
     pushed = 0
-    skipped = len(actions["skip"])
+    kept = 0
+    skipped = len(covered) + len(actions["skip"])
 
     for composite_key in actions["push"]:
         student_id, lesson_key = composite_key
@@ -641,11 +654,21 @@ def _push_grades(
 
         row_index = student_row.get("rowIndex")
 
+        existing = ops.read_grade_from_cell(cdp, column_key, row_index)
+        keep = _grade_at_least(existing, target_value)
         if dry_run:
+            decision = "KEEP" if keep else "PUSH"
             print(
-                f"  [DRY-RUN] WOULD PUSH grade={target_value} "
-                f"student={student_id} key={lesson_key} col={column_key}"
+                f"  [DRY-RUN] WOULD {decision} student={student_id} key={lesson_key} "
+                f"existing={existing} target={target_value} col={column_key}"
             )
+            continue
+
+        if keep:
+            state.set_last_synced(str(student_id), lesson_key, existing)
+            kept += 1
+            print(f"  [KEEP] student={student_id} key={lesson_key} "
+                  f"existing={existing} >= target={target_value}")
             continue
 
         result = ops.write_grade_to_cell(cdp, column_key, row_index, target_value)
@@ -661,7 +684,7 @@ def _push_grades(
             print(f"  [ERROR] {msg}")
             errors.append(msg)
 
-    return pushed, skipped
+    return pushed, skipped, kept
 
 
 def _lookup_assignment_id(section: str, lesson_key: str, state: StateStore) -> str | None:
@@ -810,10 +833,11 @@ def sync_section(
         print("[4/5] No grade targets supplied -- skipping grade push.")
         grades_pushed = 0
         grades_skipped = 0
+        grades_kept = 0
     else:
         print(f"[4/5] Pushing grades ({len(grades)} targets) ...")
         _load_gradebook_page(ops, cdp, course_id)
-        grades_pushed, grades_skipped = _push_grades(
+        grades_pushed, grades_skipped, grades_kept = _push_grades(
             grades,
             scope_items_by_key,
             students_by_id,
@@ -834,6 +858,7 @@ def sync_section(
         "assignments_created": assignments_created,
         "grades_pushed": grades_pushed,
         "grades_skipped": grades_skipped,
+        "grades_kept": grades_kept,
         "grades_deferred": grades_deferred,
         "errors": errors,
     }
@@ -853,7 +878,8 @@ def sync_section(
 
 def _parse_args(argv=None):
     p = argparse.ArgumentParser(
-        description="Sync AP Stats grades into Schoology for one section."
+        description="Sync AP Stats grades into Schoology for one section. "
+                    "Schoology = max(app, hand-entered); the app never learns about hand entries."
     )
     p.add_argument(
         "--sync-section",

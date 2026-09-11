@@ -251,6 +251,10 @@ class FakeOps:
             "error": None if self._add_ok else "create not confirmed",
         }
 
+    def read_grade_from_cell(self, cdp, column_key, row_index):
+        self._require_page("gradebook", "read_grade_from_cell")
+        return None
+
     def write_grade_to_cell(self, cdp, column_key, row_index, value):
         self._require_page("gradebook", "write_grade_to_cell")
         self.written_grades.append((column_key, row_index, value))
