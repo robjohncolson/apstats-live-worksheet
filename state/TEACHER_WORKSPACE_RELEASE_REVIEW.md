@@ -1,6 +1,6 @@
 # Teacher workspace release review
 
-Build: 2026-09-11-75yr (UTC build stamp; implemented September 10 locally).
+Build: 2026-09-11-iaje (UTC build stamp; implemented September 10 locally).
 
 ## Delivered
 
@@ -62,3 +62,5 @@ Live GET checks: version.json, teacher-workspace.js, teacher-workspace.css, teac
 Staged GitNexus analysis covered 19 expected files and flagged HIGH because mountClass reaches six authentication/receipt flows. Reviewed mountClass context and the staged diff: authorization and receipt calls are unchanged; only opt-in metadata is added to the existing teacher-gated read route. Full server suite and unchanged golden-master exports passed. Several neighboring symbols reported touched due to shifted line locations are byte-unchanged in the diff. No unrelated files were staged.
 
 CI note: runtime run 34547452527 reports 15 grade.js/QuarterResult type errors. They exactly match previous-release run 34539889046 (same 15 messages and locations). The root CI test job was still running at verification time. Release-specific local checks above are all green; the known broader typecheck failure was not changed or bypassed in source.
+
+Final stamp correction: included worksheet-diagnostics.js, which the bump script updates without listing it in its output. Bumped all four stamps again to 2026-09-11-iaje to avoid a cached diagnostic asset retaining the previous label. No logic changes in this correction. Targeted PWA/worksheet diagnostics tests passed after the correction.
