@@ -6,17 +6,20 @@ every dated topic to have a YAML OR a line here; delete a line when its ladder l
 | Topic | B | E |
 |---|---|---|
 
-## E Wednesday two-topic sheets
+## E two-topic sheets
 
 Per-topic sheets remain available for B. These additive E sheets await human authoring and review.
 
 | Group | E date | Status |
 | --- | --- | --- |
-| 3.5+3.6 | 2026-10-07 | Pending: one human-graded DOK-3 sheet for both topics |
-| 4.2+4.3 | 2026-10-28 | Pending: one human-graded DOK-3 sheet for both topics |
-| 6.2+6.3 | 2026-12-16 | Pending: one human-graded DOK-3 sheet for both topics |
-| 5.6+6.8 | 2027-01-06 | Pending: one human-graded DOK-3 sheet for both topics |
-| 8.4+8.5 | 2027-01-20 | Pending: one human-graded DOK-3 sheet for both topics |
-| 7.1+7.2 | 2027-02-03 | Pending: one human-graded DOK-3 sheet for both topics |
-| 7.7+7.8 | 2027-02-24 | Pending: one human-graded DOK-3 sheet for both topics |
-| 2.5+2.6 | 2027-03-10 | Pending: one human-graded DOK-3 sheet for both topics |
+| 1.9+3.1 | 2026-09-25 | Pending: one human-graded DOK-3 sheet for both topics |
+| 2.1+2.2 | 2026-10-19 | Pending: one human-graded DOK-3 sheet for both topics |
+| 2.3+4.1 | 2026-10-21 | Pending: one human-graded DOK-3 sheet for both topics |
+| 4.3+4.4 | 2026-10-26 | Pending: one human-graded DOK-3 sheet for both topics |
+| 4.6+4.7 | 2026-11-02 | Pending: one human-graded DOK-3 sheet for both topics |
+| 4.10+4.11 | 2026-11-06 | Pending: one human-graded DOK-3 sheet for both topics |
+| 5.2+5.1 | 2026-11-13 | Pending: one human-graded DOK-3 sheet for both topics |
+| 5.4+5.5 | 2026-11-25 | Pending: one human-graded DOK-3 sheet for both topics |
+| 8.1+8.4 | 2027-01-06 | Pending: one human-graded DOK-3 sheet for both topics |
+| 5.7+7.1 | 2027-01-22 | Pending: one human-graded DOK-3 sheet for both topics |
+| 2.4+2.5 | 2027-03-01 | Pending: one human-graded DOK-3 sheet for both topics |

@@ -20,7 +20,8 @@ def test_shared_day_assignments_remain_distinct_and_idempotent(period):
     for group in schedule["dayGroups"][period]:
         date = schedule["lessons"][group[0]]["periods"][period]
         assert {by_key[t]["due_date"] for t in group} == {date}
-        assert keys.index(group[0]) < keys.index(group[1])
+        # Schoology orders same-day assignments by key, independently of teaching order.
+        assert [key for key in keys if key in group] == sorted(group)
         assert set(group) <= {item["key"] for item in filter_scope_through(scope, date)}
         assert "+".join(group) not in by_key
     plan = plan_assignment_work(keys, {})
