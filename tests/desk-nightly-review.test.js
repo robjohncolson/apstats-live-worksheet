@@ -11,9 +11,9 @@ import { fileURLToPath } from 'node:url';
 const DESK = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
 
 describe('Desk — Nightly Review teacher surface (Phase 2)', () => {
-  it('adds a Teacher-menu item with an unseen badge', () => {
-    expect(DESK).toMatch(/openNightlyReview\(\)/);
-    expect(DESK).toMatch(/id="menu-review-badge"\s+class="menu-nudge-badge"\s+hidden/);
+  it('replaces the nightly badge with Recent work', () => {
+    expect(DESK).toContain("openTeacherTools('recent')");
+    expect(DESK).not.toContain('id="menu-review-badge"');
   });
   it('has the Nightly Review overlay window', () => {
     expect(DESK).toMatch(/id="app-nightlyreview-overlay"/);
@@ -31,9 +31,10 @@ describe('Desk — Nightly Review teacher surface (Phase 2)', () => {
     expect(DESK).toMatch(/fetch\(cfg\.base \+ '\/class\/review'/);
     expect(DESK).toMatch(/Authorization: 'Bearer ' \+ cfg\.token/);
   });
-  it('exposes a Nightly Review tile in the teacher tools and polls the badge on role change', () => {
-    expect(DESK).toMatch(/label: 'Nightly Review'/);
-    expect(DESK).toMatch(/_reviewBadgePoll\(\);/);
+  it('routes the legacy opener to Recent work and stops review polling', () => {
+    expect(DESK).toContain("function openNightlyReview() {\n    openTeacherTools('recent');");
+    var poll = DESK.slice(DESK.indexOf('async function _reviewBadgePoll()'), DESK.indexOf('function openNightlyReview()'));
+    expect(poll).not.toContain('_reviewFetchQueue');
   });
   it('comment templates persist in localStorage with seeded defaults', () => {
     expect(DESK).toMatch(/desk_review_templates_v1/);

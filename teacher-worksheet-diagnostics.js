@@ -18,6 +18,7 @@
         var tr = document.createElement('tr');
         function cell(text) { var td = document.createElement('td'); td.textContent = text; td.style.padding = '8px'; tr.appendChild(td); }
         cell((r.realName || r.username || 'Unknown student') + ' (' + (r.username || '') + ') / browser ' + String(r.deviceId || '').slice(0, 6));
+        if (window.studentNameHtml) tr.firstChild.innerHTML = window.studentNameHtml(r) + ' / browser ' + String(r.deviceId || '').slice(0, 6).replace(/[^a-z0-9-]/gi, '');
         cell(r.worksheet + (r.mode === 'teacher-preview' ? ' / TEACHER PREVIEW' : ' / student'));
         var summary = (labels[r.outcome] || 'Unknown result') + (r.httpStatus ? ' (HTTP ' + r.httpStatus + ')' : '');
         summary += '. Downloaded: ' + r.downloaded + '; matching fields: ' + r.saved + '; showing saved: ' + r.matched + '; restored: ' + r.restored + '; edited: ' + r.edited + '; filled: ' + r.filled + '/' + r.fields + '.';

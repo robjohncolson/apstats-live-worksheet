@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#161616">
-  <title>AP Stats — Teacher Dashboard</title>
+  <title>AP Stats — Teacher workspace</title>
   <link rel="stylesheet" href="css/teacher-wallet-loading.css">
   <style>
     :root {
@@ -476,28 +476,19 @@
       #worksheet-diagnostics-section th, #worksheet-diagnostics-section td { text-align:left; vertical-align:top; }
       #worksheet-diagnostics-section td { border-top:1px solid #ddd; font-size:0.9rem; }
     </style>
+  <link rel="stylesheet" href="teacher-workspace.css">
 </head>
 <body>
 
   <div class="page-header">
-    <h1>AP Stats — Teacher Dashboard</h1>
-    <p class="subtitle">Class grades, completion, and weak-skill triage</p>
+    <h1>AP Stats — Teacher workspace</h1>
+    <p class="subtitle">Your class, saved work, and the students who need a hand.</p>
   </div>
 
   <div class="main">
 
-    <div class="security-banner">
-      &#9888; <strong>Local use only.</strong> This page calls the teacher-only class endpoints
-      and displays student grades. Do <strong>not</strong> deploy it publicly or share the URL with
-      students. By default the teacher secret is held only in this input field for the lifetime
-      of this page. You can opt into saving it on this device via the
-      <em>Remember on this device</em> checkbox below — that writes to <code>localStorage</code>
-      and survives browser restarts; use the <em>Clear saved secret</em> button to revoke. The
-      service-URL choice is saved unconditionally (URL is not a secret).
-    </div>
-
     <!-- Auth & load -->
-    <div class="section">
+    <div class="section" id="workspace-connection">
       <h2 class="section-title">Connection</h2>
       <div class="row-2">
         <div class="form-row">
@@ -916,15 +907,15 @@
           <div id="tsc-reconcile-card" class="tsc-grade-card">&mdash;</div>
         </section>
         <section class="tsc-section" id="tsc-section-recent">
-          <h3 class="tsc-section-title">Recent Submissions</h3>
+          <h3 class="tsc-section-title">Recent saved work</h3>
           <ul id="tsc-recent-list" class="tsc-recent-list"></ul>
         </section>
-        <section class="tsc-section" id="tsc-section-unlocks">
+        <section class="tsc-section" id="tsc-section-unlocks" hidden>
           <h3 class="tsc-section-title">Lesson Unlocks</h3>
           <ul id="tsc-unlocks-list" class="tsc-unlocks-list"></ul>
         </section>
         <section class="tsc-section" id="tsc-section-nudges">
-          <h3 class="tsc-section-title">Nudge History</h3>
+          <h3 class="tsc-section-title">Messages</h3>
           <ul id="tsc-nudges-list" class="tsc-nudges-list"></ul>
           <button type="button" id="tsc-nudges-older" class="tsc-nudges-older"
                   style="display:none">Load older</button>
@@ -946,10 +937,10 @@
           </div>
         </section>
         <nav class="tsc-actions" aria-label="Console actions">
-          <button type="button" class="tsc-action-btn" id="tsc-action-view-as" title="Open this student's Desk in a new tab (read-only)">View as student</button>
+          <button type="button" class="tsc-action-btn" id="tsc-action-view-as" title="Open this student's Desk in a new tab (read-only)">View student app</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-nudge" title="Message this student — or the whole class">Send message</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-remediation" title="Open the remediation form for this student">Apply remediation</button>
-          <button type="button" class="tsc-action-btn" id="tsc-action-gate" disabled title="Phase 5">Override gate</button>
+          <button type="button" class="tsc-action-btn" id="tsc-action-gate" hidden disabled title="Phase 5">Override gate</button>
         </nav>
       </div>
     </aside>
@@ -1266,7 +1257,7 @@
         var total = (rd && typeof rd.total === 'number') ? rd.total : totalLessons;
         var tr = document.createElement('tr');
         var tdName = document.createElement('td');
-        tdName.textContent = s.realName || s.username || s.studentId || '?';
+        tdName.innerHTML = studentNameHtml(s);
         if (s.role === 'teacher') {
           var badge = document.createElement('span');
           badge.textContent = ' 🧪 teacher · test';
@@ -1387,7 +1378,11 @@
       proposals.forEach(function (proposal) {
         var row = document.createElement('div');
         row.style.cssText = 'display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:3px 0';
-        var student = document.createElement('span'); student.textContent = proposal.studentName || proposal.username || proposal.studentId;
+        var student = document.createElement('button');
+        student.type = 'button'; student.className = 'student-name';
+        student.dataset.studentId = proposal.studentId || ''; student.dataset.username = proposal.username || '';
+        student.dataset.realName = proposal.studentName || '';
+        student.textContent = proposal.studentName || proposal.username || proposal.studentId;
         var address = document.createElement('span');
         address.style.cssText = 'font-family:monospace;font-weight:bold';
         address.textContent = proposal.maskedAddress;
@@ -1718,7 +1713,7 @@
         var name = document.createElement('td');
         var address = document.createElement('td');
         var amount = document.createElement('td');
-        name.textContent = _payoutStudentName(row.studentId);
+        name.innerHTML = studentNameHtml({ studentId: row.studentId, realName: _payoutStudentName(row.studentId) });
         address.textContent = _payoutShortAddress(row.address);
         address.title = row.address;
         amount.textContent = 'Ɖ ' + _payoutAmount(row.doge);
@@ -1937,7 +1932,7 @@
             payoutCount += 1;
           }
           var tr = document.createElement('tr');
-          var nameTd = document.createElement('td'); nameTd.textContent = s.realName || s.username || s.studentId || '?';
+          var nameTd = document.createElement('td'); nameTd.innerHTML = studentNameHtml(s);
           if (s.role === 'teacher') { var bdg = document.createElement('span'); bdg.textContent = ' 🧪'; bdg.title = 'teacher / test account'; nameTd.appendChild(bdg); }
           var received = acc ? (acc.candyReceived || 0) : 0, gifted = acc ? (acc.candyGiftedOut || 0) : 0;
           var converted = acc ? (acc.candyConverted || acc.dogeCostBasis || 0) : 0, materialized = acc ? (acc.candyMaterialized || acc.candyGiven || 0) : 0;
@@ -2107,7 +2102,7 @@
       var rowsHtml = [];
       sorted.forEach(function (s) {
         var cells = [];
-        cells.push('<td>' + escHtml(s.realName || '') + '</td>');
+        cells.push('<td>' + studentNameHtml(s) + '</td>');
         cells.push('<td class="uname mono">' + escHtml(s.username || '') + '</td>');
         cells.push('<td class="dim">' + escHtml(s.section || '') + '</td>');
 
@@ -2203,7 +2198,7 @@
           ? Math.round(trainer.avgScore * 100) + '%'
           : '-';
         return '<tr>' +
-          '<td>' + escHtml(s.realName || s.username || s.studentId || '') + '</td>' +
+          '<td>' + studentNameHtml(s) + '</td>' +
           '<td class="num">' + escHtml(String(trainer.procedures || 0)) + '</td>' +
           '<td class="num">' + escHtml(avg) + '</td>' +
           '<td class="dim">' + escHtml(fmtDate(trainer.lastAt)) + '</td>' +
@@ -2417,7 +2412,7 @@
           ' data-username="' + escHtml(s.username || '') + '"' +
           ' data-real-name="' + escHtml(s.realName || '') + '"' +
           ' data-section="' + escHtml(s.section || '') + '">';
-        html += '<td class="gb-name">' + escHtml(s.realName || '') + '</td>';
+        html += '<td class="gb-name">' + studentNameHtml(s) + '</td>';
         orderedCols.forEach(function (c) {
           var v = cells[c.key];
           if (v === undefined) v = null;
@@ -2516,7 +2511,7 @@
         var ws = Array.isArray(s.weakSkills) ? s.weakSkills : [];
         ws.forEach(function (sk) {
           if (!weakBySkill[sk]) weakBySkill[sk] = [];
-          weakBySkill[sk].push(s.username || s.studentId || '?');
+          weakBySkill[sk].push(s);
         });
       });
 
@@ -2537,10 +2532,10 @@
       var html = rows.map(function (r) {
         var cls = heatClass(r.pctWeak);
         var users = weakBySkill[r.skill] || [];
-        users.sort();
+        users.sort(function (a, b) { return String(a.realName || a.username).localeCompare(String(b.realName || b.username)); });
         var inner = users.length
           ? users.map(function (u) {
-              return '<span class="pill mono">' + escHtml(u) + '</span>';
+              return '<span class="pill">' + studentNameHtml(u) + '</span>';
             }).join('')
           : '<span class="none">No students currently flagged weak.</span>';
         return '<details class="triage-row">' +
@@ -2576,6 +2571,7 @@
     // ===== load handler =====
     async function loadAll() {
       clearBanners();
+      if (window.teacherWorkspace) window.teacherWorkspace.loading();
       var secret = teacherSecret();
       // If the teacher is signed in via a roster session, the Bearer token
       // in fetchJson/postJson is enough — the secret is optional.
@@ -2583,9 +2579,11 @@
         ? !!window.rosterClient.token() : false;
       if (!secret && !_hasTok) {
         showError('Enter the teacher secret, or sign in as a teacher via the Desk first.');
+        if (window.teacherWorkspace) window.teacherWorkspace.failed();
         return;
       }
       var section = $('section-filter').value.trim();
+      var loadIdentity = JSON.stringify(teacherAuthHeaders());
       var qs = section ? '?section=' + encodeURIComponent(section) : '';
 
       var btn = $('load-btn');
@@ -2597,20 +2595,27 @@
       try {
         // Fan-out both endpoints in parallel; each call re-reads the secret
         // through teacherSecret() at fetch-time (no cached value).
-        var gradesP = fetchJson('/class/grades' + qs, teacherSecret());
+        var workQs = window.teacherWorkspace ? (qs ? qs + '&' : '?') + 'includeSavedWork=1' : qs;
+        var gradesP = fetchJson('/class/grades' + workQs, teacherSecret());
         var masteryP = fetchJson('/class/mastery' + qs, teacherSecret());
         // Pacing Overview opts into teacher/test accounts (includeStaff=1) so the
         // teacher can see their OWN account drive the view before students log in.
         // Separate fetch: the grades/gradebook/trainer tables stay student-only.
         var pacingP = fetchJson('/class/grades' + (qs ? qs + '&includeStaff=1' : '?includeStaff=1'), teacherSecret());
         var results = await Promise.all([gradesP, masteryP, pacingP]);
+        if (loadIdentity !== JSON.stringify(teacherAuthHeaders())) {
+          if (window.teacherWorkspace) window.teacherWorkspace.failed();
+          return;
+        }
         var gRes = results[0];
         var mRes = results[1];
         var pRes = results[2];
 
         // 401 from either endpoint => clear, never persisting anything.
         if (gRes.status === 401 || mRes.status === 401) {
-          showError('Invalid teacher secret');
+          showError('Teacher sign-in needs a refresh. Sign in through the Desk, then load again.');
+          lastGradesPayload = null;
+          if (window.teacherWorkspace) window.teacherWorkspace.failed();
           setLoading(false);
           renderGradesTable({ students: [] });
           renderPacingOverview({ students: [] });
@@ -2649,6 +2654,7 @@
         var pPayload = (pRes && pRes.status === 200 && pRes.data && pRes.data.ok) ? pRes.data : gPayload;
         renderGradesTable(gPayload);
         lastGradesPayload = gPayload;
+        if (window.teacherWorkspace) window.teacherWorkspace.loaded(gPayload);
         lastPacingPayload = pPayload;
         renderPacingOverview(pPayload);
         renderRewardDisbursement(pPayload);   // 🍬 effort → candy / DOGE (incl. teacher/test accounts for testing)
@@ -2675,6 +2681,7 @@
       } catch (e) {
         // Last-resort guard so the UI never throws uncaught.
         showError('Unexpected error: ' + ((e && e.message) || String(e)));
+        if (window.teacherWorkspace) window.teacherWorkspace.failed();
       } finally {
         btn.disabled = false;
         setLoading(false);
@@ -2795,7 +2802,7 @@
         tr.className = 'manage-student-row' + (archived ? ' is-archived' : '');
 
         var nameCell = document.createElement('td');
-        nameCell.appendChild(document.createTextNode(student.realName || student.username || '—'));
+        nameCell.innerHTML = studentNameHtml(student);
         if (isLikelyTestStudent(student)) {
           var testBadge = document.createElement('span');
           testBadge.className = 'manage-test-badge';
@@ -3084,7 +3091,7 @@
           actions = '<span class="dim">—</span>';
         }
         return '<tr>' +
-          '<td>' + escHtml(name) + '</td>' +
+          '<td>' + studentNameHtml({ studentId: r.student_id, realName: name, username: r.student_username }) + '</td>' +
           '<td class="mono">' + escHtml(r.unit || '') + '</td>' +
           '<td class="mono">' + escHtml(r.skill || '') + '</td>' +
           '<td>' + statusBadge(r.status) + '</td>' +
@@ -3218,7 +3225,7 @@
         var uname = r.student_username || '';
         var name = names[uname] || uname || '?';
         return '<tr>' +
-          '<td>' + escHtml(name) + '</td>' +
+          '<td>' + studentNameHtml({ studentId: r.student_id, realName: name, username: r.student_username }) + '</td>' +
           '<td class="mono">U' + escHtml(r.unit) + '</td>' +
           '<td>' + escHtml(_pcPartLabel(r.part)) + '</td>' +
           '<td class="dim">' + escHtml(r.unlocked_by || '—') + '</td>' +
@@ -3343,7 +3350,7 @@
       $('qc-empty').style.display = 'none'; $('qc-wrap').style.display = '';
       tbody.innerHTML = rows.map(function (r) {
         return '<tr>' +
-          '<td>' + escHtml(r.realName || r.username || '?') + '</td>' +
+          '<td>' + studentNameHtml(r) + '</td>' +
           '<td class="mono">' + escHtml(r.frozen) + '</td>' +
           '<td class="mono">' + escHtml(r.current) + '</td>' +
           '<td class="mono" style="color:#070;font-weight:bold">+' + escHtml(r.delta) + '</td>' +
@@ -3491,6 +3498,7 @@
     }
 
     function renderTscRecent(payload) {
+      if (window.teacherWorkspace) { window.teacherWorkspace.recent(payload); return; }
       var el = $('tsc-recent-list');
       el.innerHTML = '';
       if (!payload || !payload.ok) {
@@ -3599,6 +3607,39 @@
              d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
     }
 
+    // Every rendered name carries identity, never a display-name lookup (names can repeat).
+    function studentNameHtml(stub) {
+      stub = stub || {};
+      return '<button type="button" class="student-name" data-student-id="' + escHtml(stub.studentId || stub.student_id || '') +
+        '" data-username="' + escHtml(stub.username || stub.login_username || '') +
+        '" data-real-name="' + escHtml(stub.realName || stub.real_name || '') +
+        '" data-section="' + escHtml(stub.section || '') + '">' +
+        escHtml(stub.realName || stub.real_name || stub.username || stub.login_username || stub.studentId || stub.student_id || 'Student') + '</button>';
+    }
+    function studentNameElement(stub) {
+      var host = document.createElement('span');
+      host.innerHTML = studentNameHtml(stub);
+      return host.firstChild;
+    }
+    document.addEventListener('click', function (event) {
+      var button = event.target.closest && event.target.closest('button.student-name');
+      if (!button) return;
+      // Capture avoids also firing the old grade-row and inbox-row handlers.
+      event.stopPropagation();
+      var stub = { studentId: button.dataset.studentId, username: button.dataset.username,
+        realName: button.dataset.realName, section: button.dataset.section };
+      if (!stub.studentId) stub = _inboxStubFor(stub.username);
+      if (stub && stub.studentId) {
+        var payout = $('payout-preview-modal');
+        if (payout && payout.classList.contains('tsc-modal-open')) {
+          if (_payoutSealing) return;
+          _payoutClosePreview();
+        }
+        openTscDrawer(stub);
+      }
+      else showInfo("Load this student's section to open their account.");
+    }, true);
+
     function renderStudentInbox(messages) {
       var strip = $('inbox-strip');
       var list = $('inbox-list');
@@ -3628,7 +3669,7 @@
         var stub = _inboxStubFor(m.senderUsername);
         var who = document.createElement('span');
         who.className = 'inbox-who';
-        who.textContent = (stub && stub.realName) ? stub.realName : ('@' + (m.senderUsername || '?'));
+        who.appendChild(studentNameElement(stub || { username: m.senderUsername, realName: '@' + m.senderUsername }));
         var text = document.createElement('span');
         text.className = 'inbox-text';
         text.textContent = String(m.text || '');     // textContent only — student text is untrusted
@@ -3746,6 +3787,7 @@
 
       drawer.setAttribute('aria-hidden', 'false');
       drawer.classList.add('tsc-open');
+      if (window.teacherWorkspace) window.teacherWorkspace.openStudent(stub);
 
       // Fetch grade + recent in parallel. Codex MAJOR fold: allSettled so a
       // failure of one pane doesn't wipe the other's successful payload.
@@ -3755,8 +3797,8 @@
 
       Promise.allSettled([
         fetch(base + '/teacher/student/' + sid + '/grade', { headers: headers }).then(jsonOrErr),
-        fetch(base + '/teacher/student/' + sid + '/recent?limit=20', { headers: headers }).then(jsonOrErr),
-        fetch(base + '/teacher/student/' + sid + '/lesson-unlocks', { headers: headers }).then(jsonOrErr),
+        fetch(base + '/teacher/student/' + sid + '/recent?limit=100', { headers: headers }).then(jsonOrErr),
+        Promise.resolve({ ok: true, rows: [], lessonKeys: [] }),
         fetch(base + '/teacher/nudge-history?studentUsername=' + encodeURIComponent(stub.username || '') + '&limit=20', { headers: headers }).then(jsonOrErr)
       ]).then(function(results) {
         // Stale-result guard.
@@ -3796,6 +3838,7 @@
       _tscCurrentStudentStub = null;
       drawer.classList.remove('tsc-open');
       drawer.setAttribute('aria-hidden', 'true');
+      if (window.teacherWorkspace) window.teacherWorkspace.closeStudent();
     }
 
     // ESC closes the drawer.
@@ -4225,5 +4268,6 @@
     // Render session status on page load (after roster-client.js has run).
     renderSessionStatus();
   </script>
+  <script src="teacher-workspace.js"></script>
 </body>
 </html>

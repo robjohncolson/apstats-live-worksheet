@@ -393,8 +393,8 @@ describe('Grade Check-in — Desk surfaces exist and are hidden by default', () 
     expect(DESK).toMatch(/id="gradecheckin-content"/);
     expect(DESK).toMatch(/onclick="closeGradeCheckin\(\)"/);
   });
-  it('exposes a Grade Check-in Teacher Tools tile', () => {
-    expect(DESK).toMatch(/label: 'Grade Check-in'/);
+  it('keeps Grade Check-in reachable through the workspace recovery action', () => {
+    expect(DESK).toContain("event.data.action === 'checkin'");
   });
   it('defines the full function surface', () => {
     for (const fn of ['function _gradeCheckinToday', 'function _gradeCheckinPeriods', 'function _gradeCheckinLoad',

@@ -1967,8 +1967,8 @@
         <div class="menu-dropdown" id="menu-teacher">
             <div class="menu-dd-item disabled" style="font-style:italic;font-size:10px">Teacher tools</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openTeacherTools==='function')openTeacherTools()" style="font-weight:bold">&#129520; Teacher Tools&#8230;</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openNightlyReview==='function')openNightlyReview()">&#127769; Nightly Review&#8230;<span id="menu-review-badge" class="menu-nudge-badge" hidden>0</span></div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openTeacherTools==='function')openTeacherTools()" style="font-weight:bold">&#129520; Teacher workspace&#8230;</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openTeacherTools('recent')">Recent work&#8230;</div>
             <div class="menu-dd-item" data-sfx id="menu-gradecheckin-item" style="display:none" onclick="closeMenus();if(typeof openGradeCheckin==='function')openGradeCheckin()">&#128200; Grade Check-in&#8230;<span id="menu-gradecheckin-badge" class="menu-nudge-badge" hidden>0</span></div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
@@ -2573,7 +2573,7 @@
         <div class="game-title-bar">
             <div class="close-box" onclick="destroyTeacherTools()" title="Close"></div>
             <div class="title-stripes"></div>
-            <span class="title-text chicago">Teacher Tools</span>
+            <span class="title-text chicago">Teacher workspace</span>
         </div>
         <div class="app-content" id="teachertools-content" style="flex-direction:column;overflow:auto;padding:14px">
         </div>
@@ -16862,58 +16862,51 @@ async function _downloadGradeBackup() {
     alert(note);
 }
 
-var _TEACHER_TOOLS = [
-    { icon: '📋', label: 'Roster Console', sub: 'enroll · passwords · delete', act: function () { window.open('teacher-roster-console.html', '_blank'); } },
-    { icon: '📈', label: 'Gradebook Dashboard', sub: 'class grid · remediation · rewards', act: function () { window.open('teacher-dashboard.html', '_blank'); } },
-    { icon: '🌙', label: 'Nightly Review', sub: 'mark seen · comment · reward', act: function () { if (typeof openNightlyReview === 'function') openNightlyReview(); } },
-    { icon: '📈', label: 'Grade Check-in', sub: 'monthly trajectory review', act: function () { if (typeof openGradeCheckin === 'function') openGradeCheckin(); } },
-    { icon: '💾', label: 'Download Grade Backup', sub: 'signed · verified · off-Supabase', act: function () { _downloadGradeBackup(); } },
-    { icon: '👥', label: 'Live Classroom', sub: 'presence · polls', act: function () { window.open('teacher-classroom.html', '_blank'); } },
-    { icon: '🔒', label: 'Unlock Codes', sub: 'unit unlock generator', act: function () { window.open('teacher-code-generator.html', '_blank'); } },
-    { icon: '🔍', label: 'Verify (scan)', sub: 'phone QR → teacher-verify', act: function () { if (typeof openVerifyQR === 'function') openVerifyQR(); } },
-    { icon: '🧾', label: 'Verify (paste)', sub: 'paste/drag a receipt', act: function () { window.open('https://robjohncolson.github.io/curriculum_render/verify.html', '_blank', 'noopener'); } },
-];
-function openTeacherTools() {
-    // Defense-in-depth: the Teacher menu is already role-gated, but never open
-    // the launcher for a non-teacher (e.g. a stray console call / preview mode).
-    if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
+// The teacher workspace stays inside the Desk and shares its signed-in session.
+var _teacherWorkspaceFocus = null;
+function openTeacherTools(view) {
+    if (typeof _deskIsTeacher !== 'function' || !_deskIsTeacher()) return;
     var overlay = document.getElementById('app-teachertools-overlay');
     if (!overlay) return;
+    _teacherWorkspaceFocus = document.activeElement;
     var host = document.getElementById('teachertools-content');
-    if (host) _paintTeacherTools(host);
-    var win = overlay.querySelector('.app-window');
-    if (win) { win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.classList.remove('maximized'); }
+    _paintTeacherTools(host, view);
     overlay.style.display = 'block';
+    var win = overlay.querySelector('.app-window');
+    win.style.cssText = 'width:calc(100vw - 32px);max-width:1480px;height:calc(100vh - 72px);left:50%;top:50%;transform:translate(-50%,-50%)';
+    win.setAttribute('role', 'dialog');
+    win.setAttribute('aria-label', 'Teacher workspace');
+    win.setAttribute('aria-modal', 'true');
+    host.querySelector('iframe').focus();
     try { if (typeof bumpUsage === 'function') bumpUsage('teachertools'); } catch (_) {}
-    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
 }
 function destroyTeacherTools() {
-    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
     var overlay = document.getElementById('app-teachertools-overlay');
     if (overlay) overlay.style.display = 'none';
+    // Stop dashboard polls and remove rendered passwords when the workspace closes.
+    var host = document.getElementById('teachertools-content');
+    if (host) host.textContent = '';
+    if (_teacherWorkspaceFocus && _teacherWorkspaceFocus.isConnected) _teacherWorkspaceFocus.focus();
 }
-function _paintTeacherTools(host) {
-    host.innerHTML = '';
-    var grid = document.createElement('div');
-    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px;justify-content:center';
-    _TEACHER_TOOLS.forEach(function (t) {
-        var b = document.createElement('button');
-        b.className = 's7btn';
-        b.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;width:128px;padding:12px 8px;cursor:pointer;text-align:center';
-        var ic = document.createElement('div'); ic.style.cssText = 'font-size:22px;line-height:1'; ic.textContent = t.icon;
-        var lb = document.createElement('div'); lb.className = 'chicago'; lb.style.cssText = 'font-size:12px'; lb.textContent = t.label;
-        var sb = document.createElement('div'); sb.className = 'geneva'; sb.style.cssText = 'font-size:9px;color:#666'; sb.textContent = t.sub;
-        b.appendChild(ic); b.appendChild(lb); b.appendChild(sb);
-        b.onclick = function () { destroyTeacherTools(); try { t.act(); } catch (_) {} };
-        grid.appendChild(b);
-    });
-    host.appendChild(grid);
-    var note = document.createElement('div');
-    note.className = 'geneva';
-    note.style.cssText = 'font-size:9px;color:#888;margin-top:12px;border-top:1px solid #ccc;padding-top:8px;line-height:1.4';
-    note.textContent = '🔒 Roster Console & Dashboard ask for your teacher key (kept only in this browser session). The Roster Console shows student passwords — open it on your own screen.';
-    host.appendChild(note);
+function _paintTeacherTools(host, view) {
+    host.textContent = '';
+    host.style.cssText = 'padding:0;display:block;overflow:hidden;height:calc(100% - 24px)';
+    var frame = document.createElement('iframe');
+    frame.title = 'Teacher workspace';
+    var tab = ['class', 'attention', 'recent', 'recovery'].indexOf(view) >= 0 ? view : 'class';
+    frame.src = 'teacher-dashboard.html?workspace=1&view=' + tab;
+    frame.style.cssText = 'display:block;border:0;width:100%;height:100%;background:#e5e3d2';
+    host.appendChild(frame);
 }
+window.addEventListener('message', function (event) {
+    var frame = document.querySelector('#teachertools-content iframe');
+    if (event.origin !== location.origin || !frame || event.source !== frame.contentWindow) return;
+    if (!event.data || event.data.type !== 'teacher-workspace') return;
+    if (event.data.action === 'close') { destroyTeacherTools(); return; }
+    if (!_deskIsTeacher()) return;
+    if (event.data.action === 'scan') { destroyTeacherTools(); openVerifyQR(); }
+    if (event.data.action === 'checkin') { destroyTeacherTools(); openGradeCheckin(); }
+});
 
 // ── Grade Check-in (DESK_GRADE_CHECKIN_SPEC.md) ──────────────────────────────
 // A teacher-only, browser-local monthly reminder to run the private grade-
@@ -17433,20 +17426,10 @@ async function _reviewFetchByItem() {
     } catch (e) { return { error: 'network' }; }
 }
 async function _reviewBadgePoll() {
-    if (!(typeof _deskIsTeacher === 'function' && _deskIsTeacher())) { _reviewSetBadge(0); return; }
-    var data = await _reviewFetchQueue();
-    if (data && data.ok) _reviewSetBadge(Number(data.unseenTotal) || 0);
+    // Retired: saved-work browsing has no nightly mark-seen requirement.
 }
 function openNightlyReview() {
-    if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
-    var overlay = document.getElementById('app-nightlyreview-overlay');
-    if (!overlay) return;
-    var win = overlay.querySelector('.app-window');
-    if (win) { win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.classList.remove('maximized'); }
-    overlay.style.display = 'block';
-    try { if (typeof bumpUsage === 'function') bumpUsage('nightlyreview'); } catch (_) {}
-    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
-    _reviewRefresh();
+    openTeacherTools('recent');
 }
 function closeNightlyReview() {
     try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
@@ -24484,7 +24467,7 @@ function _mountClassroomBoard(){
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-10-hn3g';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-11-75yr';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

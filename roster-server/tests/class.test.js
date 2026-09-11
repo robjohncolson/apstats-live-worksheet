@@ -232,6 +232,18 @@ describe('GET /class/grades — fan-out', () => {
     expect(r.body.students[0].role).toBe('student');                 // role surfaced (defaults to student)
   });
 
+  it('opts into saved-work metadata without changing the normal grade export', async () => {
+    const roster = [{ student_id: 's1', real_name: 'Alice', login_username: 'alpha_fox', section: 'P1' }];
+    const ctx = await startServer({ roster, ledger: { s1: [] } }); srv = ctx.server;
+    const normal = await srv.get('/class/grades', { 'x-teacher-secret': TEACHER });
+    expect(normal.body.students[0]).not.toHaveProperty('savedWork');
+    const workspace = await srv.get('/class/grades?includeSavedWork=1', { 'x-teacher-secret': TEACHER });
+    expect(workspace.body.students[0].savedWork).toEqual({ available: true, recent: [], pendingGrading: 0 });
+    const { savedWork, ...unchanged } = workspace.body.students[0];
+    expect(unchanged).toEqual(normal.body.students[0]);
+    expect((await srv.get('/class/grades?includeSavedWork=1')).status).toBe(401);
+  });
+
   it('includeStaff=1 keeps teacher rows (pacing-overview opt-in) tagged with role', async () => {
     const roster = [
       { student_id: 's1', real_name: 'Alice', login_username: 'alpha_fox', section: 'P1' },

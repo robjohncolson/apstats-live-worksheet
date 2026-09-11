@@ -252,7 +252,7 @@ describe('Row click opens drawer', () => {
 // ---------------------------------------------------------------------------
 
 describe('Fetch wiring', () => {
-  it('openTscDrawer fires four fetch calls: /grade, /recent, /lesson-unlocks, and /nudge-history (P7)', async () => {
+  it('openTscDrawer loads grade, recent work and messages without the retired unlock endpoint', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [], rows: [] }),
@@ -270,11 +270,11 @@ describe('Fetch wiring', () => {
     // Allow microtasks to flush.
     await new Promise(r => setTimeout(r, 0));
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     const urls = fetchMock.mock.calls.map(c => c[0]);
     expect(urls.some(u => u.includes('/teacher/student/stu_test/grade'))).toBe(true);
     expect(urls.some(u => u.includes('/teacher/student/stu_test/recent'))).toBe(true);
-    expect(urls.some(u => u.includes('/teacher/student/stu_test/lesson-unlocks'))).toBe(true);
+    expect(urls.some(u => u.includes('/teacher/student/stu_test/lesson-unlocks'))).toBe(false);
     expect(urls.some(u => u.includes('/teacher/nudge-history'))).toBe(true);
   });
 

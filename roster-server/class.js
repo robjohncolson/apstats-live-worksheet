@@ -88,6 +88,33 @@ async function fanLedger(ledgerDb, rosterRows) {
   return out;
 }
 
+// Metadata only: the class workspace must not download every student's answers.
+// Keep the latest attempt per item so a graded retry clears an older pending FRQ.
+export function summarizeSavedWork(rows, error) {
+  if (error) return { available: false, recent: [], pendingGrading: null };
+  const latest = new Map();
+  const ordered = rows.filter(r => r && r.item_id).slice().sort((a, b) =>
+    String(b.recorded_at || '').localeCompare(String(a.recorded_at || '')) ||
+    (Number(b.attempt) || 0) - (Number(a.attempt) || 0));
+  for (const row of ordered) {
+    const key = row.source + ':' + row.item_id;
+    if (!latest.has(key)) latest.set(key, row);
+  }
+  const current = [...latest.values()];
+  function pending(row) {
+    return row.source === 'frq' && row.score == null &&
+      row.response != null && String(row.response).trim() !== '';
+  }
+  return {
+    available: true,
+    pendingGrading: current.filter(pending).length,
+    recent: current.slice(0, 8).map(row => ({
+      itemId: row.item_id, source: row.source, recordedAt: row.recorded_at,
+      score: row.score == null ? null : row.score, pendingGrading: pending(row)
+    }))
+  };
+}
+
 // Studentizer: roster columns → the dashboard's per-student header.
 function studentMeta(r) {
   return { studentId: r.student_id, realName: r.real_name, username: r.login_username, section: r.section, role: r.role || 'student' };
@@ -247,7 +274,7 @@ export function mountClass(app, {
 
     const todayStr = todayInTz((config && config.schoolTz) || 'America/New_York');
 
-    const students = fan.map(({ roster, ledgerRows }) => {
+    const students = fan.map(({ roster, ledgerRows, error }) => {
       // Phase 6 (Codex MAJOR 1 fold): pass the lesson schedule + per-student
       // section so /class/grades uses the same lesson-weighted, date-driven
       // quarter math as /grade. Without these the teacher dashboard would
@@ -304,6 +331,7 @@ export function mountClass(app, {
         ...computed,
         trainer,
         lastActivityAt,
+        ...(req.query.includeSavedWork === '1' ? { savedWork: summarizeSavedWork(ledgerRows, error) } : {}),
         effort: computeEffort(ledgerRows),   // DOGE wallet: effort points → candy
         gradebook: buildGradebook(computed, { lessonSchedule, eventSchedule, section, todayStr }),
       };

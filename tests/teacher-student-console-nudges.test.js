@@ -113,7 +113,7 @@ describe('Nudge History DOM presence', () => {
 // ---------------------------------------------------------------------------
 
 describe('Fetch wiring', () => {
-  it('openTscDrawer now fires 4 fetches (grade + recent + lesson-unlocks + nudge-history)', async () => {
+  it('openTscDrawer now fires 3 fetches (grade + recent + nudge-history)', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [], rows: [] }),
@@ -130,11 +130,12 @@ describe('Fetch wiring', () => {
 
     await new Promise(r => setTimeout(r, 20));
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    // The independent inbox may also boot after credentials are supplied.
+    expect(fetchMock.mock.calls.filter(([url]) => !url.includes('/nudge-inbox'))).toHaveLength(3);
     const urls = fetchMock.mock.calls.map(c => c[0]);
     expect(urls.some(u => u.includes('/teacher/student/stu_4fetch/grade'))).toBe(true);
     expect(urls.some(u => u.includes('/teacher/student/stu_4fetch/recent'))).toBe(true);
-    expect(urls.some(u => u.includes('/teacher/student/stu_4fetch/lesson-unlocks'))).toBe(true);
+    expect(urls.some(u => u.includes('/teacher/student/stu_4fetch/lesson-unlocks'))).toBe(false);
     expect(urls.some(u => u.includes('/teacher/nudge-history'))).toBe(true);
   });
 
@@ -162,7 +163,7 @@ describe('Fetch wiring', () => {
     expect(nudgeUrl).toMatch(/limit=20/);
   });
 
-  it('all 4 fetches carry x-teacher-secret when a secret is set', async () => {
+  it('all 3 fetches carry x-teacher-secret when a secret is set', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [], rows: [] }),
@@ -182,7 +183,8 @@ describe('Fetch wiring', () => {
     });
     await new Promise(r => setTimeout(r, 20));
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    // The independent inbox may also boot after credentials are supplied.
+    expect(fetchMock.mock.calls.filter(([url]) => !url.includes('/nudge-inbox'))).toHaveLength(3);
     fetchMock.mock.calls.forEach(function (call) {
       expect(call[1].headers['x-teacher-secret']).toBe('my-secret');
     });

@@ -117,7 +117,7 @@ describe('Lesson Unlocks section DOM presence', () => {
 // ---------------------------------------------------------------------------
 
 describe('Fetch wiring', () => {
-  it('openTscDrawer fires 4 fetches: grade + recent + lesson-unlocks + nudge-history (P7)', async () => {
+  it('openTscDrawer fires 3 fetches without the retired lesson-unlocks route', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [], rows: [] }),
@@ -134,15 +134,15 @@ describe('Fetch wiring', () => {
 
     await new Promise(r => setTimeout(r, 20));
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     const urls = fetchMock.mock.calls.map(c => c[0]);
     expect(urls.some(u => u.includes('/teacher/student/stu_3fetch/grade'))).toBe(true);
     expect(urls.some(u => u.includes('/teacher/student/stu_3fetch/recent'))).toBe(true);
-    expect(urls.some(u => u.includes('/teacher/student/stu_3fetch/lesson-unlocks'))).toBe(true);
+    expect(urls.some(u => u.includes('/teacher/student/stu_3fetch/lesson-unlocks'))).toBe(false);
     expect(urls.some(u => u.includes('/teacher/nudge-history'))).toBe(true);
   });
 
-  it('all 4 fetches carry x-teacher-secret when a secret is set', async () => {
+  it('all 3 fetches carry x-teacher-secret when a secret is set', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [], rows: [] }),
@@ -215,6 +215,7 @@ describe('Render active unlocks', () => {
 
     window.openTscDrawer({ studentId: 'stu_2unlock', username: 'mango-seal', realName: 'Two Unlock', section: 'PeriodB' });
     await new Promise(r => setTimeout(r, 20));
+    window.renderTscUnlocks({ ok: true, rows: SAMPLE_ROWS });
 
     const items = document.querySelectorAll('#tsc-unlocks-list li');
     expect(items.length).toBe(2);
@@ -256,6 +257,7 @@ describe('Render active unlocks', () => {
 
     window.openTscDrawer({ studentId: 'stu_btn', username: 'pear-cat', realName: 'Btn User', section: 'PeriodB' });
     await new Promise(r => setTimeout(r, 20));
+    window.renderTscUnlocks({ ok: true, rows: SAMPLE_ROWS });
 
     const revokeBtns = document.querySelectorAll('#tsc-unlocks-list .tsc-unlock-revoke');
     expect(revokeBtns.length).toBe(2);
@@ -296,6 +298,9 @@ describe('Revoke flow', () => {
 
     window.openTscDrawer({ studentId: 'stu_revoke', username: 'oak-lion', realName: 'Revoke User', section: 'PeriodB' });
     await new Promise(r => setTimeout(r, 20));
+    // Explicit legacy renderer fixture; opening a student no longer fetches unlocks.
+    var fixture = await fetchMock('/teacher/student/stu_revoke/lesson-unlocks');
+    window.renderTscUnlocks(await fixture.json());
 
     return { dom, document, window };
   }
@@ -494,6 +499,7 @@ describe('Drawer switching: openTscDrawer clears stale unlock rows', () => {
     // Open student A and wait for its unlocks to render.
     window.openTscDrawer({ studentId: 'stu_A', username: 'apple-bird', realName: 'Student A', section: 'PeriodB' });
     await new Promise(r => setTimeout(r, 30));
+    window.renderTscUnlocks({ ok: true, rows: SAMPLE_ROWS });
 
     const listBeforeB = document.getElementById('tsc-unlocks-list');
     expect(listBeforeB.querySelectorAll('li.tsc-unlock-empty').length).toBe(0);
@@ -508,7 +514,7 @@ describe('Drawer switching: openTscDrawer clears stale unlock rows', () => {
     expect(listAfterB.children.length).toBe(0);
 
     // Settle B's fetch with a different set of rows; verify the new rows
-    // appear (no zombie A rows).
+    // cannot revive the retired UI (no zombie A rows).
     resolveBLockUnlocks({
       ok: true,
       json: async () => ({ ok: true, rows: [{ lesson_key: '9.9', unlocked_at: '2026-05-23T00:00:00Z', unlocked_by: 'mr.colson', reason: null, status: 'active' }] }),
@@ -517,6 +523,7 @@ describe('Drawer switching: openTscDrawer clears stale unlock rows', () => {
 
     const items = document.querySelectorAll('#tsc-unlocks-list li');
     expect(items.length).toBe(1);
-    expect(items[0].querySelector('.tsc-unlock-key').textContent).toBe('9.9');
+    expect(items[0].classList.contains('tsc-unlock-empty')).toBe(true);
+    expect(document.getElementById('tsc-section-unlocks').hidden).toBe(true);
   });
 });

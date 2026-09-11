@@ -26,7 +26,8 @@ const DASH = existsSync(DASH_PATH) ? readFileSync(DASH_PATH, 'utf8') : null;
 function makeDom(fetchMock) {
   if (!DASH) throw new Error('teacher-dashboard.html not found');
 
-  const cleaned = DASH
+  // Stylesheets are irrelevant here and localhost network failures delay DOMContentLoaded.
+  const cleaned = DASH.replace(/<link\b[^>]*>/g, '')
     .replace(/<script\s+src="[^"]*"[^>]*><\/script>/g, '');
 
   const dom = new JSDOM(cleaned, {
