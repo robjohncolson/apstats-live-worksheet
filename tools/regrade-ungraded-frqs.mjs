@@ -299,6 +299,14 @@ export async function runRegradeJob(options) {
     fetchImpl = globalThis.fetch,
     rateLimiter = new IntervalRateLimiter(),
     onEvent = () => {},
+    // 2026-09-11: the grader intermittently 500s ("Empty response from deepseek" —
+    // DeepSeek's default-on thinking mode hit the token cap). One transient 500 on
+    // one row used to fail the whole hourly run. Retry each row with backoff, and
+    // treat transient grader failures as non-fatal (the row is picked up again next
+    // hour) — only permanent classification failures or a total wipe-out fail the job.
+    graderAttempts = 3,
+    retryBackoffMs = [2_000, 6_000],
+    sleep = delay,
   } = options;
 
   let registry = providedRegistry;
@@ -327,6 +335,8 @@ export async function runRegradeJob(options) {
     invalidTimestamps: classified.invalidTimestamps.length,
     worksheetCounts: worksheetCounts(candidates),
     grader5xx: false,
+    retried: 0,
+    transientFailures: 0,
   };
 
   for (const row of classified.unknownItems) {
@@ -370,26 +380,50 @@ export async function runRegradeJob(options) {
         candidate.worksheet.lessonContext,
       );
 
-      await rateLimiter.wait();
-      const graderResponse = await fetchImpl(graderUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(graderBody),
-      });
-      if (graderResponse.status >= 500 && graderResponse.status <= 599) summary.grader5xx = true;
-      if (!graderResponse.ok) {
-        summary.failed += 1;
-        let snippet = '';
-        try { snippet = String(await graderResponse.text()).slice(0, 160).replace(/\s+/g, ' '); } catch (_) {}
-        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, reason: `grader HTTP ${graderResponse.status} ${snippet}` });
-        continue;
+      let result = null;
+      let score = null;
+      let lastReason = '';
+      for (let attempt = 1; attempt <= graderAttempts; attempt += 1) {
+        if (attempt > 1) {
+          const backoff = retryBackoffMs[Math.min(attempt - 2, retryBackoffMs.length - 1)] || 0;
+          summary.retried += 1;
+          onEvent({ type: 'retry', username: candidate.username, itemId: candidate.itemId, attempt, backoffMs: backoff, reason: lastReason });
+          if (backoff) await sleep(backoff);
+        }
+        await rateLimiter.wait();
+        let graderResponse;
+        try {
+          graderResponse = await fetchImpl(graderUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(graderBody),
+          });
+        } catch (networkError) {
+          lastReason = `grader network error: ${networkError && networkError.message}`;
+          continue;
+        }
+        if (graderResponse.status >= 500 && graderResponse.status <= 599) summary.grader5xx = true;
+        if (!graderResponse.ok) {
+          let snippet = '';
+          try { snippet = String(await graderResponse.text()).slice(0, 160).replace(/\s+/g, ' '); } catch (_) {}
+          lastReason = `grader HTTP ${graderResponse.status} ${snippet}`;
+          if (graderResponse.status < 500) break;   // 4xx is not transient — do not burn retries
+          continue;
+        }
+        const parsed = await readJsonResponse(graderResponse);
+        const parsedScore = verdictToScore(parsed);
+        if (parsedScore === null) {
+          lastReason = `unusable verdict: ${JSON.stringify(parsed && parsed.score)} (missing=${JSON.stringify(parsed && parsed.missing)})`;
+          continue;
+        }
+        result = parsed;
+        score = parsedScore;
+        break;
       }
-
-      const result = await readJsonResponse(graderResponse);
-      const score = verdictToScore(result);
       if (score === null) {
         summary.failed += 1;
-        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, reason: `unusable verdict: ${JSON.stringify(result && result.score)} (${String(result && result.feedback || '').slice(0, 80)})` });
+        if (/^grader HTTP 5[0-9][0-9]|^grader network error|^unusable verdict/.test(lastReason)) summary.transientFailures += 1;
+        onEvent({ type: 'failed', username: candidate.username, itemId: candidate.itemId, reason: lastReason });
         continue;
       }
       summary.graded += 1;
@@ -450,7 +484,13 @@ export async function runRegradeJob(options) {
     }
   }
 
-  const hasFailures = summary.failed > 0 || permanentFailureCount > 0;
+  // Exit policy (2026-09-11): permanent classification failures always fail the
+  // job; transient grader failures fail it only when NOTHING got through (every
+  // candidate failed) — a systemic outage, not one stubborn row.
+  const settled = summary.applied + summary.floorHeld + summary.stale;
+  const wipeout = candidates.length > 0 && settled === 0 && summary.failed === candidates.length;
+  const nonTransientFailures = summary.failed - summary.transientFailures;
+  const hasFailures = permanentFailureCount > 0 || nonTransientFailures > 0 || wipeout;
   return { summary, candidates, exitCode: hasFailures ? 1 : 0 };
 }
 

@@ -569,3 +569,67 @@ describe('config sources (GitHub Actions hourly sweep)', () => {
     expect(yml).toMatch(/concurrency:\s*\n\s*group: frq-regrade/);
   });
 });
+
+describe('grader retry + exit policy (2026-09-11 — one flaky 500 must not fail the hourly run)', () => {
+  const row = (itemId) => ({
+    source: 'frq', itemId, score: null, attempt: 1,
+    response: 'The values are labels for locations, not measurements that should be averaged.',
+    recorded_at: '2026-08-19T11:30:00.000Z',
+  });
+  const base = (fetchMock) => ({
+    config: { rosterUrl: 'https://roster.test/', teacherKey: 'teacher-secret' },
+    registry: REGISTRY, railwayServerUrl: 'https://grader.test', apply: true, now: NOW, rootDir: ROOT,
+    fetchImpl: fetchMock, rateLimiter: { wait: vi.fn().mockResolvedValue(undefined) }, sleep: vi.fn().mockResolvedValue(undefined),
+  });
+
+  it('retries a grader 500 with backoff and then applies the verdict (exit 0)', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([row('WS-U1L2-reflect2')])))
+      .mockResolvedValueOnce(response(500, { error: 'Empty response from deepseek' }))
+      .mockResolvedValueOnce(response(200, { score: 'P', feedback: 'ok', matched: [], missing: ['x'] }))
+      .mockResolvedValueOnce(response(200, { ok: true, applied: true, score: 0.5 }));
+    const opts = base(fetchMock);
+    const events = [];
+    const result = await runRegradeJob({ ...opts, onEvent: (e) => events.push(e) });
+    expect(result.summary).toMatchObject({ found: 1, graded: 1, applied: 1, failed: 0, retried: 1, grader5xx: true });
+    expect(opts.sleep).toHaveBeenCalledWith(2000);
+    expect(events.find((e) => e.type === 'retry')).toMatchObject({ attempt: 2, backoffMs: 2000 });
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('a row that fails every attempt is reported but does NOT fail the run when others got through', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([row('WS-U1L2-reflect1'), row('WS-U1L2-reflect2')])))
+      // row 1: three 500s
+      .mockResolvedValueOnce(response(500, { error: 'Empty response from deepseek' }))
+      .mockResolvedValueOnce(response(500, { error: 'Empty response from deepseek' }))
+      .mockResolvedValueOnce(response(500, { error: 'Empty response from deepseek' }))
+      // row 2: fine
+      .mockResolvedValueOnce(response(200, { score: 'E', feedback: 'ok', matched: [], missing: [] }))
+      .mockResolvedValueOnce(response(200, { ok: true, applied: true, score: 1 }));
+    const result = await runRegradeJob(base(fetchMock));
+    expect(result.summary).toMatchObject({ found: 2, applied: 1, failed: 1, transientFailures: 1, retried: 2 });
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('a total wipe-out (every candidate failed) still fails the run (exit 1)', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([row('WS-U1L2-reflect2')])))
+      .mockResolvedValueOnce(response(500, { error: 'x' }))
+      .mockResolvedValueOnce(response(500, { error: 'x' }))
+      .mockResolvedValueOnce(response(500, { error: 'x' }));
+    const result = await runRegradeJob(base(fetchMock));
+    expect(result.summary).toMatchObject({ found: 1, failed: 1, transientFailures: 1 });
+    expect(result.exitCode).toBe(1);
+  });
+
+  it('does not burn retries on a 4xx (not transient)', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([row('WS-U1L2-reflect2')])))
+      .mockResolvedValueOnce(response(400, { error: 'bad prompt' }));
+    const result = await runRegradeJob(base(fetchMock));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.summary).toMatchObject({ failed: 1, retried: 0, transientFailures: 0 });
+    expect(result.exitCode).toBe(1);
+  });
+});
