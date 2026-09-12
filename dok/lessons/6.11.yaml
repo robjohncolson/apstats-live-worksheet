@@ -31,7 +31,7 @@ teacher:
     - "Collect at the door. Score part (c) only, E/P/I."
   students_do:
     - "Choose Rowan's or Salma's conclusion and cite one number."
-    - "Complete the follow-along about pooled standard error, test statistic, p-value, and conclusion."
+    - "Use the printed formulas to find the pooled standard error, test statistic, and p-value."
     - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Which null difference did this test actually use?"

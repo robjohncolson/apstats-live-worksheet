@@ -29,7 +29,7 @@ teacher:
     - "Collect at the door. Score part (c) only, E/P/I."
   students_do:
     - "Choose a claim and cite one table entry before the lesson."
-    - "Complete the follow-along about point estimators, bias, and sampling variability."
+    - "Use the rules box and table to compare the two estimates, their bias, and their spread."
     - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Does Rule B landing exactly on 0.40 once tell you where it centers over all samples?"

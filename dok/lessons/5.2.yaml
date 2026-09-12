@@ -29,7 +29,7 @@ teacher:
     - "Collect at the door. Score part (c) only, E/P/I."
   students_do:
     - "Choose whether the percentile is the same and cite mean or standard deviation."
-    - "Complete the follow-along about sampling variability, normal probabilities, and normal-model appropriateness."
+    - "Use the rules box to compare the spreads and calculate both z-scores and percentiles."
     - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "How many School A standard deviations above 80 is a 92?"

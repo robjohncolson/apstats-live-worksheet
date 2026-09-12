@@ -24,11 +24,11 @@ teacher:
   phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
     - "Board slide up at the bell. Tally A, B, and need-more-information votes."
-    - "Begin the video at minute 5; return at minute 33 to translate each probability into a decision and true state."
+    - "At minute 5, read the rules box and start (a). At minute 33, ask students to name the decision and true state for each probability."
     - "Collect at the door. Score part (c) only, E/P/I."
   students_do:
     - "Choose a plan and name the prioritized error."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in the sheet."
+    - "Read the rules box, work (a)--(c), revise the first take, and turn in the sheet."
   questions_to_ask:
     - "If $p=0.10$, what decision creates the dangerous miss?"
     - "What does the complement of 0.748 represent?"

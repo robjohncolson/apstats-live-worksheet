@@ -30,12 +30,12 @@ teacher:
   phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Board slide up at the bell. Read Ben's and Ava's lines; do not say whether the model fits.
-  - Video follow-along from minute 5 (normal curves, empirical rule, and z-scores).
+  - "At minute 5, read the rules box; have students start (a)."
   - Board slide back up at minute 33. Circulate; require every model judgment to point to the histogram.
   - Collect at the door. Score part (c) only, E/P/I.
   students_do:
-  - Commit to using or rejecting the model before the video.
-  - Complete the video follow-along and check both model calculations.
+  - "Commit to using or rejecting the model before any discussion."
+  - "Use the printed rules to check both model calculations in (b)."
   - Finish (a)--(c); complete the exit line; turn in.
   questions_to_ask:
   - Which claim is about a normal curve, and which claim is about the 60 actual students?

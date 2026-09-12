@@ -29,10 +29,10 @@ space:
 teacher:
   phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
-  - Show both recommendations without endorsement; start the video at minute 5.
+  - "Show both claims without endorsement. At minute 5, read the rules box."
   - At minute 33, press calculation versus choice; collect and score part (c), E/P/I.
   students_do:
-  - Choose with evidence, follow along, then finish (a)--(c) and the exit.
+  - "Choose first; read the rules box; work (a)--(c); complete the exit; turn in."
   questions_to_ask:
   - Where does the overall median go when you form the halves?
   - Can correct arithmetic support a less representative summary?

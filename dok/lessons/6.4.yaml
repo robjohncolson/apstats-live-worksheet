@@ -25,11 +25,11 @@ teacher:
   phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
     - "Board slide up at the bell. Ask students to choose a setup before confirming it."
-    - "Begin the video at minute 5; return at minute 33 to label each number's role."
+    - "At minute 5, read the rules box and start (a). At minute 33, ask what each number represents."
     - "Collect at the door. Score part (c) only, E/P/I."
   students_do:
     - "Choose Maya or Theo and cite the direction or a condition."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in the sheet."
+    - "Read the rules box, work (a)--(c), revise the first take, and turn in the sheet."
   questions_to_ask:
     - "What do $p$ and $84/180$ each describe?"
     - "Would a lower current sample proportion count as evidence that ridership increased?"

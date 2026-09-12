@@ -31,7 +31,7 @@ teacher:
     - "Collect at the door. Score part (c) only, E/P/I."
   students_do:
     - "Choose 0.375 or 0.45 and cite either the spinner design or the observed plays."
-    - "Complete the follow-along about sample spaces, long-run interpretations, intersections, and conditional probability."
+    - "Use the rules box to list the sample space and compare the model probability with the observed fraction."
     - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Which number comes from possible outcomes, and which comes from recorded outcomes?"

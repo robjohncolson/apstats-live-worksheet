@@ -35,12 +35,12 @@ teacher:
   phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Board slide up at the bell. Read Omar's and Nia's claims aloud without confirming either.
-  - Video follow-along from minute 5 (five-number summaries and boxplots).
+  - "At minute 5, read the rules box; have students start (a)."
   - Board slide back up at minute 33. Circulate; ask students to point before they name a feature.
   - Collect at the door. Score part (c) only, E/P/I.
   students_do:
-  - Commit to Omar or Nia from the two displays before the video.
-  - Complete the video follow-along on five-number summaries and boxplots.
+  - "Commit to Omar or Nia from the two displays before any discussion."
+  - "Use the rules box to read the quartiles and describe the dotplot in (a) and (b)."
   - Finish (a)--(c); complete the exit line; turn in.
   questions_to_ask:
   - Point to 32 minutes on the dotplot. How many dots are nearby?

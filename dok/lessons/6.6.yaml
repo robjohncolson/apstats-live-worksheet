@@ -25,11 +25,11 @@ teacher:
   phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
     - "Board slide up at the bell. Record one trusted clause from each statement."
-    - "Begin the video at minute 5; return at minute 33 to separate decision, effect size, and scope."
+    - "At minute 5, read the rules box and start (a). At minute 33, ask students to separate the test decision, size of the difference, and scope of the conclusion."
     - "Collect at the door. Score part (c) only, E/P/I."
   students_do:
     - "Mark one defensible and one questionable clause."
-    - "Complete the follow-along, finish (a)--(c), revise, and turn in the sheet."
+    - "Read the rules box, work (a)--(c), revise the first take, and turn in the sheet."
   questions_to_ask:
     - "What does 0.0354 assume about the September sorting rate?"
     - "Which numbers govern the decision and describe the effect?"

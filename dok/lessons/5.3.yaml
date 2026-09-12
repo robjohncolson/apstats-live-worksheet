@@ -30,7 +30,7 @@ teacher:
     - "Collect at the door. Score part (c) only, E/P/I."
   students_do:
     - "Choose n equals 4 or n equals 40 and cite population shape or sample size."
-    - "Complete the follow-along about simulated sampling distributions, the CLT, and randomization distributions."
+    - "Use the printed formulas to find the sampling mean and standard deviation for each sample size."
     - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Does averaging four values erase a long right tail automatically?"
