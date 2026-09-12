@@ -106,4 +106,15 @@ describe('teacher misconception panel', () => {
     await load();
     expect(fetchJson).toHaveBeenCalledWith('/class/misconceptions?section=PeriodE&days=14', 'fixture-secret');
   });
+  it('lists standalone remediation sheets from the DOK manifest with student/board/teacher links (textContent only)', () => {
+    expect(html).toContain('id="misconceptions-sheets"');
+    const fn = html.slice(html.indexOf('async function loadRemediationSheets'), html.indexOf('loadRemediationSheets();'));
+    expect(fn).toContain("fetch('dok/manifest.json'");
+    expect(fn).toContain('standalone === true');
+    expect(fn).toContain("'dok/pdf/aps_' + encodeURIComponent(slug)");
+    expect(fn).toMatch(/\['student', 'Student'\], \['board', 'Board'\], \['teacher', 'Teacher key'\]/);
+    expect(fn).not.toContain('innerHTML');
+    const manifest = JSON.parse(readFileSync(resolve('dok/manifest.json'), 'utf8'));
+    expect(Object.keys(manifest).some((k) => manifest[k].standalone === true)).toBe(true);
+  });
 });

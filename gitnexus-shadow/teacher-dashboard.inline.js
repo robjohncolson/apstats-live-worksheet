@@ -1041,6 +1041,8 @@
 
 
 
+
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -3405,6 +3407,40 @@
     $('misconceptions-days').addEventListener('change', loadMisconceptions);
     $('section-filter').addEventListener('change', loadMisconceptions);
     $('load-btn').addEventListener('click', loadMisconceptions);
+    // Remediation sheets — the standalone DOK-3 sheets (human-graded, never AI-graded) built to
+    // target these labels. Read from the same manifest the DOK table of contents uses; links only,
+    // rendered with textContent/createElement. Missing manifest → the strip stays hidden.
+    async function loadRemediationSheets() {
+      var host = $('misconceptions-sheets');
+      if (!host) return;
+      var manifest = null;
+      try { var r = await fetch('dok/manifest.json', { cache: 'no-store' }); if (r.ok) manifest = await r.json(); } catch (_) { manifest = null; }
+      if (!manifest || typeof manifest !== 'object') { host.hidden = true; return; }
+      var keys = Object.keys(manifest).filter(function (k) { return manifest[k] && manifest[k].standalone === true; });
+      host.replaceChildren();
+      if (!keys.length) { host.hidden = true; return; }
+      var lead = document.createElement('strong');
+      lead.textContent = 'Remediation sheets (DOK-3, human-graded): ';
+      host.appendChild(lead);
+      keys.forEach(function (k, i) {
+        var m = manifest[k] || {};
+        var slug = String(m.slug || k.replace(/\+/g, '_'));
+        var wrap = document.createElement('span');
+        wrap.appendChild(document.createTextNode((i ? ' · ' : '') + String(m.title || k) + ' ('));
+        [['student', 'Student'], ['board', 'Board'], ['teacher', 'Teacher key']].forEach(function (ed, j) {
+          var a = document.createElement('a');
+          a.href = 'dok/pdf/aps_' + encodeURIComponent(slug) + '_' + ed[0] + '.pdf';
+          a.target = '_blank'; a.rel = 'noopener';
+          a.textContent = ed[1];
+          if (j) wrap.appendChild(document.createTextNode(' / '));
+          wrap.appendChild(a);
+        });
+        wrap.appendChild(document.createTextNode(')'));
+        host.appendChild(wrap);
+      });
+      host.hidden = false;
+    }
+    loadRemediationSheets();
     // END MISCONCEPTIONS PANEL
 
     function renderRemediation(payload) {
