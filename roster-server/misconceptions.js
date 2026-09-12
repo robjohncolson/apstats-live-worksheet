@@ -24,13 +24,17 @@ export function resolveElement(missing, elements = []) {
   return best;
 }
 
+function isQuizSource(source) {
+  return source === 'quiz' || source === 'curriculum_quiz';
+}
+
 export function extractEvents(rows, { answerKey = {}, rubricMap = {}, distractorMap = {} } = {}) {
   const events = [];
   for (const row of rows) {
     if (!row || !row.student_id || !row.item_id || !Number.isFinite(Date.parse(row.recorded_at))) continue;
     const itemId = row.item_id;
     const base = { studentId: row.student_id, ts: new Date(row.recorded_at).toISOString(), itemId };
-    if (row.source === 'quiz') {
+    if (isQuizSource(row.source)) {
       const correct = answerKey[itemId]?.answerKey;
       const chosen = typeof row.response === 'string' ? row.response.trim().toUpperCase() : '';
       if (!/^[A-E]$/.test(chosen) || !/^[A-E]$/.test(correct || '') || chosen === correct) continue;

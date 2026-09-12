@@ -27,6 +27,12 @@ function compute(rows, options = {}) {
 }
 
 describe('misconception signals', () => {
+  it('treats curriculum_quiz rows like quiz rows, including null scores', () => {
+    const rows = [quiz(), quiz(undefined, 7, 'B'), quiz(undefined, 7, '')];
+    const curriculumRows = rows.map(row => ({ ...row, source: 'curriculum_quiz', score: null }));
+    expect(extractEvents(curriculumRows, assets)).toEqual(extractEvents(rows, assets));
+    expect(extractEvents(curriculumRows, assets)).toHaveLength(1);
+  });
   it('emits wrong letters only, including untagged evidence', () => {
     const events = extractEvents([quiz(), quiz(undefined, 7, 'B'), quiz(undefined, 7, ''), quiz(undefined, 7, 'C')], assets);
     expect(events).toHaveLength(2);
