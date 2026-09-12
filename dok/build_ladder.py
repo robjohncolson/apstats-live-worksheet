@@ -27,6 +27,13 @@ from pathlib import Path
 
 import yaml
 
+if __package__:
+    from .content_policy import LEGACY_EXPLORE_KEY, validate_field_values, validate_printed_text
+else:
+    # Direct CLI execution and file-based test imports both load this sibling.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from content_policy import LEGACY_EXPLORE_KEY, validate_field_values, validate_printed_text
+
 ROOT = Path(__file__).resolve().parent.parent
 DOK = ROOT / "dok"
 REGISTRY_DIR = DOK / "registry"   # one {topic}.jsonl per lesson day — parallel authors never collide
@@ -76,6 +83,10 @@ def load_schedule() -> dict:
 
 def load_lesson(path: Path) -> dict:
     lesson = yaml.safe_load(path.read_text(encoding="utf-8"))
+    minutes = lesson.get("minutes") or {}
+    if LEGACY_EXPLORE_KEY in minutes:
+        legacy = minutes.pop(LEGACY_EXPLORE_KEY)
+        minutes.setdefault("explore", legacy)
     lesson["_path"] = str(path)
     return lesson
 
@@ -216,6 +227,7 @@ def tether_lines(topic: str | list[str]) -> list[str]:
 def validate_item(row: dict, skill_codes: set[str]) -> list[str]:
     e: list[str] = []
     iid = row.get("id", "?")
+    e.extend(validate_field_values(row, str(iid)))
     if not ID_RE.match(iid):
         e.append(f"{iid}: id must match aps-{{topic}}-d{{1|2|3}}-{{k}}")
     topics = row.get("topics") or [row.get("topic")]
@@ -270,6 +282,7 @@ def validate_item(row: dict, skill_codes: set[str]) -> list[str]:
 def validate_lesson(lesson: dict, registry: dict) -> list[str]:
     e: list[str] = []
     topic = str(lesson.get("topic", "?"))
+    e.extend(validate_field_values(lesson, topic))
     focus = lesson.get("focus")
     if not focus or focus not in registry:
         e.append(f"{topic}: focus must name a registry id (got {focus!r})")
@@ -540,13 +553,14 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
         f"\\ladderheading{{{header_line(lesson, schedule)}}}{{{lesson['title']}}}\n\n",
         "\\focusbanner{TODAY'S PROBLEM}\n\n",
         shared_problem(lesson, item, 1.0),
-        f"\\begin{{firsttakebox}}{{FIRST TAKE --- before the video ({lesson['minutes'].get('first_take', 5)} min)}}\n"
+        f"\\begin{{firsttakebox}}{{FIRST TAKE --- before we discuss ({lesson['minutes'].get('first_take', 5)} min)}}\n"
         f"{item['first_take'].strip()}\n\\workspace{{{space['first_take']}}}\n\\end{{firsttakebox}}\n\n",
     ]
     if rules:
         parts.append(callout_block(f"\\IconBook\\ {rules['title']}", "calloutgreen", rules["body"]))
     # Front = read + commit. Back = finish + turn in. A deliberate two-sided sheet.
-    parts.append("\\newpage\n\\textbf{Finish after the video:}\\par\\smallskip\n\n")
+    part_range = f"({item['parts'][0]['label']})--({item['parts'][-1]['label']})"
+    parts.append(f"\\newpage\n\\textbf{{Work {part_range} from the rules box:}}\\par\\smallskip\n\n")
     for p in item["parts"]:
         parts.append(part_block(p, space, answers=None))
     for frame in item.get("sentence_frames", []):
@@ -561,20 +575,14 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
             f"\\bankitem{{Optional \\#{k} --- not collected}}{{\\dokbadge{{{r['dok']}}}~{r['stem'].strip()}}}{{}}\n\n"
         )
     parts.append("\\end{document}\n")
-    output = "".join(parts)
-    if lesson.get("worksheets"):
-        if lesson.get("standalone") is True:
-            # A remediation sheet has no videos: first take precedes discussion, then the parts.
-            output = output.replace("before the video", "before we discuss").replace("Finish after the video:", "Work (a) to (d) in order:")
-        else:
-            output = output.replace("before the video", "before the videos").replace("after the video", "after both topics' videos")
-    return output
+    return "".join(parts)
 
 
 def emit_board(lesson: dict, registry: dict, schedule: dict) -> str:
     item = registry[lesson["focus"]]
     worksheets = lesson.get("worksheets") or [lesson["worksheet"]]
     ws_url = PAGES_BASE + worksheets[0]
+    part_range = f"({item['parts'][0]['label']})--({item['parts'][-1]['label']})"
     part_lines = "".join(
         f"  \\item[\\dokbadge{{{p['dok']}}}~({p['label']})] {p['prompt'].strip()}\n" for p in item["parts"]
     )
@@ -593,25 +601,21 @@ def emit_board(lesson: dict, registry: dict, schedule: dict) -> str:
         f"{item['first_take'].strip()}\n\\end{{firsttakebox}}\n\n"
         "\\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]\n" + part_lines + "\\end{description}\n\n"
         "\\vfill\n\\noindent\\begin{minipage}{0.84\\linewidth}\n"
-        f"\\textbf{{Video + follow-along:}} \\href{{{ws_url}}}{{\\texttt{{\\detokenize{{{worksheets[0]}}}}}}} (scan the code)\\par\n"
-        "\\textbf{Finish (a)--(c) after the video. Turn in your sheet.}\n\\end{minipage}\\hfill\n"
+        f"\\textbf{{Optional review:}} \\href{{{ws_url}}}{{follow-along}} (scan the code)\\par\n"
+        f"\\textbf{{Work {part_range} from the rules on your sheet. Turn in your sheet.}}\n\\end{{minipage}}\\hfill\n"
         f"\\qrcode[height=0.75in]{{{ws_url}}}\n\n\\end{{document}}\n"
     )
 
     if lesson.get("worksheets"):
         output = output.replace("[14pt]", "[12pt]")
         footer = output.index("\\vfill\n")
-        standalone = lesson.get("standalone") is True
-        # A remediation sheet has no videos: the QR codes are review links, and the parts are the work.
-        link_word = "Review" if standalone else "Today"
-        board_footer = ("\\textbf{Work (a)--(d) in order; scan a code to revisit a lesson. Turn in one sheet.}" if standalone
-                        else "\\textbf{Watch all videos for both topics, then finish (a)--(c). Turn in one sheet.}")
+        board_footer = f"\\textbf{{Work {part_range} in order from the rules on your sheet. Turn in one sheet.}}"
         links = []
         for topic, worksheet in zip(lesson["topics"], worksheets):
             url = PAGES_BASE + worksheet
             links.append(
                 f"\\begin{{minipage}}{{0.48\\linewidth}}\\qrcode[height=0.45in]{{{url}}}\\quad "
-                f"\\href{{{url}}}{{{link_word}: {topic} follow-along}}\\end{{minipage}}\\hfill\n"
+                f"\\href{{{url}}}{{Review: {topic} follow-along}}\\end{{minipage}}\\hfill\n"
             )
         output = output[:footer] + "\\vfill\n" + "".join(links) + (
             board_footer + "\n" +
@@ -655,7 +659,7 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
         f"{{{t.get('adult_role', '')}}}\n\n",
     ]
     if t.get("watch_for"):
-        parts.append(callout_block("\\IconWarn\\ WATCH FOR", "calloutred", bulleted(t["watch_for"])))
+        parts.append(callout_block("\\IconWarn\\ LOOK FOR", "calloutred", bulleted(t["watch_for"])))
     parts.append(scoring_table(item.get("scoring") or {}, (item.get("parts") or [{"label": "c"}])[-1]["label"]))
     for k, rid in enumerate(lesson.get("reinforcement") or [], start=1):
         r = registry[rid]
@@ -682,6 +686,9 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
 def build(path: Path, editions: tuple[str, ...], registry: dict, schedule: dict) -> None:
     lesson = load_lesson(path)
     problems = validate_lesson(lesson, registry)
+    for iid in [lesson.get("focus"), *(lesson.get("reinforcement") or [])]:
+        if iid in registry:
+            problems.extend(validate_item(registry[iid], all_skill_codes()))
     if problems:
         raise SystemExit("\n".join(problems))
     TEX_DIR.mkdir(exist_ok=True)
@@ -689,6 +696,9 @@ def build(path: Path, editions: tuple[str, ...], registry: dict, schedule: dict)
     emitters = {"student": emit_student, "board": emit_board, "teacher": emit_teacher}
     for ed in editions:
         out = emitters[ed](lesson, registry, schedule)
+        problems = validate_printed_text(out)
+        if problems:
+            raise SystemExit(f"{path.name} ({ed}): " + "\n".join(problems))
         target = TEX_DIR / f"aps_{topic.replace('+', '_')}_{ed}.tex"
         target.write_text(out, encoding="utf-8", newline="\n")
         print(f"wrote {target.relative_to(ROOT)} ({len(out)} chars)")

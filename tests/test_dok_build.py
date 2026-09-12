@@ -125,11 +125,12 @@ def test_board_contents(path: Path):
         assert worksheet in tex
     if lesson.get("worksheets"):
         assert tex.count(r"\qrcode[") == len(lesson["worksheets"])
-        if lesson.get("standalone") is True:
-            assert "Work (a)--(d) in order" in tex   # remediation sheet: no videos, QR codes are review links
-            assert "Review: " in tex
-        else:
-            assert "Watch all videos for both topics" in tex
+        top = item["parts"][-1]["label"]
+        assert f"Work (a)--({top}) in order from the rules on your sheet." in tex
+        assert "Review: " in tex
+    else:
+        assert "Optional review:" in tex
+        assert "Work (a)--(c) from the rules on your sheet." in tex
     assert "landscape" in tex
     if lesson.get("rules_callout"):
         assert lesson["rules_callout"]["title"] not in tex  # rules stay on paper
@@ -230,4 +231,80 @@ def test_group_tether_and_emission(key):
         tex = emitter(lesson, REGISTRY, SCHEDULE)
         assert "Topics " + "--".join(lesson["topics"]) in tex
     student = bl.emit_student(lesson, REGISTRY, SCHEDULE)
-    assert "after both topics' videos" in student
+    assert "Work (a)--(c) from the rules box:" in student
+
+
+@pytest.mark.parametrize('path', LESSONS, ids=[p.stem for p in LESSONS])
+def test_all_editions_use_printed_rules_without_viewing_prerequisites(path):
+    lesson = _lesson(path)
+    item = REGISTRY[lesson['focus']]
+    top = item['parts'][-1]['label']
+    student = bl.emit_student(lesson, REGISTRY, SCHEDULE)
+    assert 'FIRST TAKE --- before we discuss' in student
+    assert f'Work (a)--({top}) from the rules box:' in student
+    for emitter in (bl.emit_student, bl.emit_board, bl.emit_teacher):
+        tex = emitter(lesson, REGISTRY, SCHEDULE)
+        assert bl.validate_printed_text(tex) == []
+        assert 'watch' not in tex.lower()
+    assert 'explore' in lesson['minutes']
+    assert 'video_worksheet' not in lesson['minutes']
+
+
+@pytest.mark.parametrize('value', ['VIDEO', 'videos', 'Watch the Video.', 'u1_video_live.html'])
+def test_guard_checks_nested_registry_values(value):
+    row = json.loads(json.dumps(REGISTRY['aps-1.6-d3-1']))
+    row['parts'][0]['prompt'] = value
+    errors = bl.validate_item(row, bl.all_skill_codes())
+    assert any('parts[0].prompt: forbidden video reference' in error for error in errors)
+
+
+@pytest.mark.parametrize('field', ['teacher', 'rules_callout', 'visuals'])
+def test_guard_checks_nested_lesson_values(field):
+    lesson = _lesson(LESSONS[0])
+    lesson[field] = {**lesson.get(field, {}), 'note': ['Use the VIDEO.']}
+    # Use the recursive guard directly because an intentionally malformed visual
+    # should not need a valid renderer schema to exercise the content rule.
+    errors = bl.validate_field_values(lesson)
+    assert any(f'{field}.note[0]: forbidden video reference' in error for error in errors)
+
+
+@pytest.mark.parametrize('field', ['worksheet', 'worksheets'])
+def test_guard_allows_only_whole_filenames_in_link_fields(field):
+    wrap = (lambda x: [x]) if field == 'worksheets' else (lambda x: x)
+    assert bl.validate_field_values({field: wrap('u1_video_live.html')}) == []
+    for invalid in ['Watch video u1_lesson1_live.html', 'u1_video_live.html then video', 'video.mp4']:
+        assert bl.validate_field_values({field: wrap(invalid)})
+    assert bl.validate_field_values({'stem': 'u1_video_live.html'})
+    assert bl.validate_printed_text(r'\href{https://example.org/u1_video_live.html}{follow-along}') == []
+    assert bl.validate_printed_text(r'\href{u1_video_live.html}{watch video}')
+
+
+@pytest.mark.parametrize('minutes, expected', [
+    ({'video_worksheet': 26.8}, 26.8),
+    ({'explore': 28}, 28),
+    ({'video_worksheet': 28, 'explore': 0}, 0),
+])
+def test_loader_normalizes_time_budget_without_double_counting(tmp_path, minutes, expected):
+    path = tmp_path / 'lesson.yaml'
+    path.write_text(bl.yaml.safe_dump({'minutes': {'first_take': 5, **minutes}}), encoding='utf-8')
+    lesson = bl.load_lesson(path)
+    assert lesson['minutes'] == {'first_take': 5, 'explore': expected}
+
+
+def test_standalone_keeps_calendar_and_finish_exceptions():
+    lesson = _lesson(ROOT / 'dok/lessons/1.1_1.2_1.4_1.7.yaml')
+    assert bl.validate_lesson(lesson, REGISTRY) == []
+    assert 'remediation sheet' in bl.header_line(lesson, SCHEDULE)
+    lesson['standalone'] = False
+    errors = bl.validate_lesson(lesson, REGISTRY)
+    assert any('dayGroups.E' in error for error in errors)
+    assert any('finish must fit ten minutes' in error for error in errors)
+
+
+def test_build_rejects_registry_references_before_writing(tmp_path, monkeypatch):
+    registry = json.loads(json.dumps(REGISTRY))
+    registry['aps-1.6-d3-1']['stem'] = 'Use the VIDEO.'
+    monkeypatch.setattr(bl, 'TEX_DIR', tmp_path)
+    with pytest.raises(SystemExit, match='stem: forbidden video reference'):
+        bl.build(ROOT / 'dok/lessons/1.6.yaml', ('student',), registry, SCHEDULE)
+    assert not list(tmp_path.glob('*.tex'))
