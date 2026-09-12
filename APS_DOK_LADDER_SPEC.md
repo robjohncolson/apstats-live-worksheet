@@ -1,5 +1,7 @@
 # APS_DOK_LADDER_SPEC.md — One DOK-3 problem per AP Stats lesson day, laddered 1→2→3 inside
 
+> **2026-09-12 ? video-free doctrine:** Every sheet stands alone: first take before discussion ? printed rules box ? (a)?(c) (or the sheet's part range) ? turn in. Board follow-along links are optional review. This supersedes the viewing prerequisites below; see [DOK_VIDEO_FREE_SPEC.md](DOK_VIDEO_FREE_SPEC.md). Human E/P/I grading stays.
+
 **Purpose:** give every dated lesson day of SY26-27 ONE DOK-3 problem that bookends the
 period: it goes up on the board as the warm-up (students commit a *first take* before the
 video), the video follow-along carries the DOK-1/2 work, and students finish the problem

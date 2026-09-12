@@ -1,5 +1,7 @@
 # DOK_DAY_SHEETS_SPEC.md — one DOK-3 sheet per CLASS DAY, covering every video taught that day
 
+> **2026-09-12:** Still PARKED; all current sheets use the self-contained printed-rules flow in [DOK_VIDEO_FREE_SPEC.md](DOK_VIDEO_FREE_SPEC.md).
+
 **Purpose:** `SCHEDULE_PACKING_SPEC.md` (rule A, chosen 2026-09-05) puts up to three videos on one day. The DOK ladder was
 built one sheet per topic. Teacher decision 2026-09-05: on a doubled day the sheet must **cover all of that day's videos**,
 not one of them. This spec redefines the unit of authoring from the topic to the calendar day-group, keeps everything

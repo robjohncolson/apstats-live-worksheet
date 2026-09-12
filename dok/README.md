@@ -5,6 +5,10 @@ Spec: `../APS_DOK_LADDER_SPEC.md`. Class flow: board slide at the bell → stude
 included, carries a DOK-3 (§1.3). Three editions per day: student sheet (2 sides), board
 slide (1 landscape page), teacher key (≤ 3 pages, E/P/I scoring on part (c)).
 
+The 2026-09-12 doctrine is in [DOK_VIDEO_FREE_SPEC.md](../DOK_VIDEO_FREE_SPEC.md).
+Standalone remediation sheets use the same flow with their own part range and finish window;
+they remain outside the calendar day-groups. Sheets are graded by a human, never auto-scored.
+
 ## Author one lesson (≈ 30 min once you have the problem)
 
 1. **Registry file** — create `registry/{topic}.jsonl` with ONE line (`aps-{topic}-d3-1`, `role: focus`).
@@ -17,7 +21,10 @@ slide (1 landscape page), teacher key (≤ 3 pages, E/P/I scoring on part (c)).
    Optional: a second row `aps-{topic}-d2-1` with `role: reinforcement`.
 2. **Lesson YAML** — copy `lessons/1.6.yaml` to `lessons/{topic}.yaml`. Keep `topic` = the
    OLD topic key from `data/lesson-schedule.json`; put the NEW CED label in `ced2026`.
-   `worksheet` = the follow-along filename (printed as link + QR on the board slide).
+   `worksheet` = the optional follow-along review filename (link + QR on the board slide).
+   Use `minutes.explore` for the existing class-time budget; the loader also accepts the legacy key.
+   Field values must stand alone: the content guard rejects viewing references, except inside actual
+   `*_live.html` filenames in `worksheet` / `worksheets`.
    `visuals` carry data + labels only (`pgfplot_hist`, `dotplot`, `boxplot`, `two_way_table`,
    `scatter`, `raw_tikz`).
 3. **Delete the topic's row from `PENDING.md`.**
@@ -39,7 +46,7 @@ Group sheets are additive: all individual topic sheets remain available. The sch
 Build with `powershell -NoProfile -File dok/compile.ps1 1.4_1.5`.
 
 Each group has one shared problem and one human-graded E/P/I response, parts covering
-both topics, both video follow-alongs and QR links, and the union of both CED tethers.
+both topics, optional follow-along review links and QR codes, and the union of both CED tethers.
 It is never AI-graded or auto-scored. The first two pairs are built; the other eight
 are explicitly listed in `PENDING.md` and the teacher index.
 
