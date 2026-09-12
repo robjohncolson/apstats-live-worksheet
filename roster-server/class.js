@@ -21,6 +21,7 @@ import { backfillStudentReceipts } from './backfill.js';
 import { computeEffort } from './doge-econ.js';
 import { computeMisconceptions } from './misconceptions.js';
 import { loadMisconceptionAssets } from './misconception-assets.js';
+import { loadMisconceptionTriage } from './misconception-triage.js';
 
 let receiptPersistenceNotProvisionedLogged = false;
 
@@ -173,6 +174,7 @@ export function mountClass(app, {
   db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, eventSchedule = null,
   config = PHASE3_CONFIG, worksheetBlankCounts = null, verifyToken, resolveUsername,
   blooketPresence = null, blooketRequired = null, blooketLessons = null,
+  loadTriage = loadMisconceptionTriage,
 }) {
   const _presence = blooketPresence || blooketLessons || null;
   const _required = blooketRequired || null;
@@ -198,7 +200,7 @@ export function mountClass(app, {
       if (error) throw error;
       const fan = await fanLedger(ledgerDb, rows);
       const payload = computeMisconceptions(fan, loadMisconceptionAssets(answerKey),
-        { section, days, now, config: config.misconceptions });
+        { section, days, now, config: config.misconceptions, triage: await loadTriage() });
       for (const [key, value] of misconceptionCache) if (now - value.at >= 60000) misconceptionCache.delete(key);
       misconceptionCache.set(cacheKey, { at: now, payload });
       return res.json(payload);

@@ -1,5 +1,6 @@
 // Read-only, deterministic interpretation of recorded grading evidence.
 import { TEACHER_DIAGNOSTIC_CONFIG } from './grade-config.js';
+import { triageStatus, untriagedFirst } from './misconception-triage.js';
 const DAY = 86400000;
 const STOPWORDS = new Set('a an the is are was were be been being of to in on for and or that this it with as by from explains states describes identifies mentions'.split(' '));
 export const MISCONCEPTION_DEFAULTS = Object.freeze(TEACHER_DIAGNOSTIC_CONFIG.misconceptions);
@@ -124,8 +125,14 @@ export function computeMisconceptions(fan, assets, options = {}) {
   }
   const classEntries = [];
   const frequent = [];
+  const postTriage = [];
+  const triage = options.triage || { entries: {}, weeklyRuns: [] };
   const evidence = Object.create(null);
   for (const [key, grouped] of groups) {
+    const triagedAt = triage.entries?.[key]?.triagedAt;
+    const afterTriage = triagedAt ? grouped.filter(event => Date.parse(event.ts) > Date.parse(triagedAt)) : grouped;
+    if (afterTriage.length) postTriage.push({ key, students: new Set(afterTriage.map(event => event.studentId)).size,
+      events: afterTriage.length });
     const tag = assets.vocabulary.tags[key];
     const draft = !!tag && (assets.vocabulary.reviewed !== true || grouped.some(event =>
       (event.source === 'mcq' ? assets.distractorMap.reviewed : assets.rubricMap.reviewed) !== true));
@@ -171,9 +178,16 @@ export function computeMisconceptions(fan, assets, options = {}) {
   }
   classEntries.sort((a, b) => b.students - a.students || b.lastSeen.localeCompare(a.lastSeen) || a.key.localeCompare(b.key));
   frequent.sort((a, b) => b.students - a.students || b.events - a.events || a.key.localeCompare(b.key));
+  postTriage.sort((a, b) => b.students - a.students || b.events - a.events || a.key.localeCompare(b.key));
+  const postTriageFrequent = postTriage.slice(0, 15);
+  const qualifyingKeys = new Set(postTriageFrequent.map(row => row.key));
+  const frequentRows = frequent.slice(0, 15);
+  for (const row of [...classEntries, ...frequentRows]) Object.assign(row, triageStatus(row.key, triage, qualifyingKeys, now));
+  classEntries.sort(untriagedFirst);
+  frequentRows.sort(untriagedFirst);
   for (const student of Object.values(students)) student.persistent.sort((a, b) =>
     b.count - a.count || b.lastSeen.localeCompare(a.lastSeen) || a.key.localeCompare(b.key));
   return { ok: true, section: options.section || null, window: { days, from: floor === null ? null : new Date(floor).toISOString() },
-    vocabReviewed: assets.vocabulary.reviewed === true, class: classEntries, frequent: frequent.slice(0, 15), students, evidence,
+    vocabReviewed: assets.vocabulary.reviewed === true, class: classEntries, frequent: frequentRows, postTriageFrequent, students, evidence,
     worksheetLinks: worksheetLinksFor(assets.rubricMap.rubrics) };
 }
