@@ -3257,6 +3257,10 @@
       return box;
     }
     function renderMisconceptions(payload) {
+      // Harden against a partial payload (a proxy/mocked 200 without the arrays): never throw mid-render.
+      payload = payload && typeof payload === 'object' ? payload : {};
+      var classEntries = Array.isArray(payload.class) ? payload.class : [];
+      var studentMap = payload.students && typeof payload.students === 'object' ? payload.students : {};
       var host = $('misconceptions-class');
       var studentHost = $('misconceptions-students');
       host.replaceChildren();
@@ -3268,7 +3272,11 @@
         header.appendChild(misconceptionNode('th', label));
       });
       table.appendChild(header);
-      (payload.class || []).forEach(function (entry) {
+      classEntries.forEach(function (entry) {
+        entry = entry && typeof entry === 'object' ? entry : {};
+        var lessons = Array.isArray(entry.lessons) ? entry.lessons : [];
+        var sources = entry.sources && typeof entry.sources === 'object' ? entry.sources : {};
+        var skills = Array.isArray(entry.skills) ? entry.skills : [];
         var row = misconceptionNode('tr');
         var labelCell = misconceptionNode('td');
         var toggle = misconceptionNode('button', entry.label + (entry.draft ? ' · draft — not yet reviewed' : ''));
@@ -3276,9 +3284,9 @@
         toggle.setAttribute('aria-expanded', 'false');
         labelCell.appendChild(toggle);
         row.appendChild(labelCell);
-        [entry.students + ' / ' + entry.activeStudents, entry.lessons.join(', '),
-          'MCQ ' + entry.sources.mcq + ' / written ' + entry.sources.frq,
-          entry.lastSeen.slice(0, 10), entry.skills.join(', ')].forEach(function (text) {
+        [(entry.students || 0) + ' / ' + (entry.activeStudents || 0), lessons.join(', '),
+          'MCQ ' + (sources.mcq || 0) + ' / written ' + (sources.frq || 0),
+          String(entry.lastSeen || '').slice(0, 10), skills.join(', ')].forEach(function (text) {
           row.appendChild(misconceptionNode('td', text));
         });
         var actions = misconceptionNode('td');
@@ -3298,13 +3306,14 @@
           toggle.setAttribute('aria-expanded', String(!evidenceRow.hidden));
         });
       });
-      if (payload.class.length) host.appendChild(table);
+      if (classEntries.length) host.appendChild(table);
       var persistentCount = 0;
-      Object.keys(payload.students || {}).forEach(function (id) {
-        var student = payload.students[id];
-        if (!student.persistent.length) return;
+      Object.keys(studentMap).forEach(function (id) {
+        var student = studentMap[id] || {};
+        var persistent = Array.isArray(student.persistent) ? student.persistent : [];
+        if (!persistent.length) return;
         studentHost.appendChild(misconceptionNode('h3', student.realName || student.username || id));
-        student.persistent.forEach(function (entry) {
+        persistent.forEach(function (entry) {
           persistentCount++;
           var details = misconceptionNode('details');
           details.appendChild(misconceptionNode('summary', entry.label + ' · ' + entry.count +
@@ -3314,7 +3323,7 @@
           studentHost.appendChild(details);
         });
       });
-      $('misconceptions-status').textContent = !payload.class.length && !persistentCount
+      $('misconceptions-status').textContent = !classEntries.length && !persistentCount
         ? 'No persistent misconceptions in this window yet.' : '';
     }
     async function loadMisconceptions() {
