@@ -12,6 +12,7 @@ rules_callout:
     The percentile of $x$ is the percent of values at or below $x$.
     Use a normal table or calculator to find the area to the left of the $z$-score; multiply that area by 100.
     A larger percentile means a higher standing relative to that school's scores.
+    Printed normal table: $P(Z\leq0.8000)=0.788145$ and $P(Z\leq1.3333)=0.908789$. These left areas supply the lookup needed above.
 
 focus: aps-5.2-d3-1
 reinforcement: []

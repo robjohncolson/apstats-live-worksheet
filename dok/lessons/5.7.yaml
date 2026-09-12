@@ -14,6 +14,7 @@ rules_callout:
     \textbf{or} if the population is not normal but $n\geq30$ (Central Limit Theorem).
     A normal tail probability describes the mean of an entire random sample, not one individual value.
     For a normal probability, standardize with $z=(\text{value}-\text{mean})/\text{SD}$ and use the appropriate normal tail.
+    Printed normal table: $P(Z\leq1.5000)=0.933193$ and $P(Z\leq3.0000)=0.998650$. A right-tail area is 1 minus the left area.
 
 focus: aps-5.7-d3-1
 reinforcement: []

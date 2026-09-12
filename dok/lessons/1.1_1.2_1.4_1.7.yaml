@@ -1,7 +1,7 @@
 topic: 1.1+1.2+1.4+1.7
 # Remediation sheet (2026-09-12): targets the misconceptions the dashboard surfaced across 1.1-1.8
 # (numbers without context, individuals vs variables, counts vs percents, resistance + unusual values).
-# Not a calendar day-group; the teacher picks the day. Full-period finish window.
+# Not a calendar day-group; the teacher picks the day.
 standalone: true
 topics: ["1.1", "1.2", "1.4", "1.7"]
 ced2026:

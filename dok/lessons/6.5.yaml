@@ -14,6 +14,7 @@ rules_callout:
     in the direction of $H_a$, assuming $H_0$ and the probability model are true. Use the left tail for $H_a:p<p_0$,
     the right tail for $H_a:p>p_0$, and both tails for $H_a:p\neq p_0$.
     A p-value is a probability about possible sample results under $H_0$; it is not the probability that a hypothesis is true.
+    Printed normal table: $P(Z\leq-1.7056)=0.044041$. For a symmetric normal curve, the two-sided area is twice the smaller tail area.
 
 focus: aps-6.5-d3-1
 reinforcement: []

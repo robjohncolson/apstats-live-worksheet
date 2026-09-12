@@ -13,6 +13,7 @@ rules_callout:
     State evidence for $H_a$ in context. Failing to reject does not establish that $H_0$ is true.
     Statistical significance uses the evidence rule; practical importance asks whether an effect is large enough to matter.
     A random sample supports inference to its population. A cause requires a comparison with random assignment.
+    Printed normal table: $P(Z\leq-1.8074)=0.035351$. The left area is the lower-tail probability.
 
 focus: aps-6.6-d3-1
 reinforcement: []

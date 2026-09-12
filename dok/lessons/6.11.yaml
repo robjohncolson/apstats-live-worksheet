@@ -14,6 +14,7 @@ rules_callout:
     how often random chance would produce a difference at least as extreme. If the $p$-value is at most $\alpha$, reject
     $H_0$; otherwise fail to reject it. A test against zero addresses whether a difference exists;
     it does not by itself establish that the difference exceeds a separate practical threshold.
+    Printed normal table: $P(Z\leq2.0412)=0.979387$. A right-tail area is 1 minus the left area; the two-sided area is twice that tail.
 
 focus: aps-6.11-d3-1
 reinforcement: []
