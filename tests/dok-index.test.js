@@ -26,7 +26,7 @@ describe('Active index cards', () => {
     const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
     const fixture = { ...manifest, '9.9': { title: '<img src=x onerror=alert(1)>', misconceptions: ['label:<b>context</b>'], generated: { on: '2026-09-12' } } };
     const fetch = async (url) => {
-      expect(url).toBe('manifest.json');
+      expect(url).toMatch(/^manifest[.]json[?]t=[0-9]+$/);
       return { ok: true, json: async () => fixture };
     };
     await new Function('document', 'fetch', 'return ' + script.trim())(dom.window.document, fetch);
@@ -43,5 +43,31 @@ describe('Active index cards', () => {
     expect(dom.window.document.querySelector('article img, article b, table')).toBeNull();
     expect(html).not.toMatch(/lesson-schedule|dayGroups|PENDING/);
     dom.window.close();
+  });
+
+  async function runWith(fetch) {
+    const { JSDOM } = await import('jsdom');
+    const html = readFileSync(resolve(root, 'dok/index.html'), 'utf8');
+    const dom = new JSDOM(html);
+    const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    await new Function('document', 'fetch', 'return ' + script.trim())(dom.window.document, fetch);
+    return dom.window.document;
+  }
+
+  it('tolerates a stale manifest entry that lacks misconceptions/generated/title', async () => {
+    const doc = await runWith(async () => ({ ok: true, json: async () => ({ '1.6': { slug: '1.6' } }) }));
+    expect(doc.querySelectorAll('article')).toHaveLength(1);
+    expect(doc.querySelector('article h2').textContent).toBe('1.6');
+    expect(doc.querySelector('article').textContent).toContain('unknown date');
+    expect(doc.getElementById('status').textContent).toBe('');
+  });
+
+  it('names the failure and offers a reload when the manifest cannot be fetched', async () => {
+    const doc = await runWith(async () => ({ ok: false, status: 404 }));
+    const status = doc.getElementById('status');
+    expect(status.textContent).toMatch(/Could not load the sheet list/);
+    expect(status.querySelector('a').textContent).toBe('Reload');
+    expect(status.querySelector('a').getAttribute('href')).toMatch(/^[?]t=[0-9]+$/);
+    expect(doc.querySelectorAll('article')).toHaveLength(0);
   });
 });

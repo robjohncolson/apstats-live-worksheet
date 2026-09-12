@@ -21,24 +21,24 @@ nav a { display: inline-block; margin-right: 16px; }
 (async function () {
   const status = document.getElementById('status');
   try {
-    const response = await fetch('manifest.json');
+    const response = await fetch('manifest.json?t=' + Date.now(), { cache: 'no-store' });
     if (!response.ok) throw new Error('Manifest unavailable');
     const manifest = await response.json();
     const host = document.getElementById('sheets');
     for (const [topic, sheet] of Object.entries(manifest)) {
       const card = document.createElement('article');
       const title = document.createElement('h2');
-      title.textContent = sheet.title;
+      title.textContent = sheet.title || topic;
       card.appendChild(title);
       const targets = document.createElement('ul');
-      for (const key of sheet.misconceptions) {
+      for (const key of (Array.isArray(sheet.misconceptions) ? sheet.misconceptions : [])) {
         const label = document.createElement('li');
         label.textContent = key.startsWith('label:') ? key.slice(6) : key;
         targets.appendChild(label);
       }
       card.appendChild(targets);
       const generated = document.createElement('p');
-      generated.textContent = 'Generated on ' + sheet.generated.on;
+      generated.textContent = 'Generated on ' + ((sheet.generated && sheet.generated.on) || 'unknown date');
       card.appendChild(generated);
       const links = document.createElement('nav');
       links.setAttribute('aria-label', sheet.title + ' PDFs');
@@ -53,8 +53,12 @@ nav a { display: inline-block; margin-right: 16px; }
       host.appendChild(card);
     }
     status.textContent = Object.keys(manifest).length ? '' : 'No misconception sheets yet.';
-  } catch (_) {
-    status.textContent = 'Unable to load misconception sheets. Please try again later.';
+  } catch (err) {
+    status.textContent = 'Could not load the sheet list (' + (err && err.message ? err.message : 'unknown error') + '). ';
+    const reload = document.createElement('a');
+    reload.href = '?t=' + Date.now();
+    reload.textContent = 'Reload';
+    status.appendChild(reload);
   }
 })();
 </script>
