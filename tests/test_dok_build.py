@@ -150,7 +150,7 @@ def test_deterministic(path: Path):
 
 
 def test_focus_topping_at_dok2_is_rejected():
-    row = json.loads(json.dumps(REGISTRY["aps-1.6-d3-1"]))
+    row = json.loads(json.dumps(REGISTRY[_lesson(LESSONS[0])["focus"]]))
     row["dok"] = 2
     row["parts"][-1]["dok"] = 2
     problems = bl.validate_item(row, bl.all_skill_codes())
@@ -220,18 +220,6 @@ def test_tether_lines_remove_html_breaks_and_unsupported_stats_unicode():
     assert "p-value" in topic_86
 
 
-@pytest.mark.parametrize("key", ["1.4_1.5", "1.7_1.8"])
-def test_group_tether_and_emission(key):
-    lesson = bl.load_lesson(ROOT / "dok/lessons" / (key + ".yaml"))
-    assert bl.tether_lines(lesson["topics"]) == list(dict.fromkeys(
-        line for topic in lesson["topics"] for line in bl.tether_lines(topic)))
-    for emitter in [bl.emit_student, bl.emit_board, bl.emit_teacher]:
-        tex = emitter(lesson, REGISTRY, SCHEDULE)
-        assert "Topics " + "--".join(lesson["topics"]) in tex
-    student = bl.emit_student(lesson, REGISTRY, SCHEDULE)
-    assert "Work (a)--(c)." in student
-
-
 @pytest.mark.parametrize('path', LESSONS, ids=[p.stem for p in LESSONS])
 def test_all_editions_use_printed_rules_without_viewing_prerequisites(path):
     lesson = _lesson(path)
@@ -258,7 +246,7 @@ def test_all_editions_use_printed_rules_without_viewing_prerequisites(path):
 
 @pytest.mark.parametrize('value', ['VIDEO', 'videos', 'Watch the Video.', 'u1_video_live.html'])
 def test_guard_checks_nested_registry_values(value):
-    row = json.loads(json.dumps(REGISTRY['aps-1.6-d3-1']))
+    row = json.loads(json.dumps(REGISTRY[_lesson(LESSONS[0])['focus']]))
     row['parts'][0]['prompt'] = value
     errors = bl.validate_item(row, bl.all_skill_codes())
     assert any('parts[0].prompt: forbidden video reference' in error for error in errors)
@@ -285,35 +273,34 @@ def test_guard_allows_only_whole_filenames_in_link_fields(field):
     assert bl.validate_printed_text(r'\href{u1_video_live.html}{watch video}')
 
 
-@pytest.mark.parametrize('minutes, expected', [
-    ({'video_worksheet': 26.8}, 26.8),
-    ({'explore': 28}, 28),
-    ({'video_worksheet': 28, 'explore': 0}, 0),
+@pytest.mark.parametrize('field, value, message', [
+    ('standalone', False, 'standalone: true'),
+    ('misconceptions', [], 'non-empty list'),
+    ('misconceptions', [''], 'non-empty list'),
+    ('misconceptions', 'counts-vs-percents', 'non-empty list'),
+    ('generated', None, 'generated metadata'),
+    ('generated', {}, 'generated.by'),
+    ('generated', {'by': 'teacher', 'on': 'bad', 'window_days': 42}, 'generated.on'),
+    ('generated', {'by': 'teacher', 'on': '2026-09-12', 'window_days': 0}, 'window_days'),
 ])
-def test_loader_normalizes_time_budget_without_double_counting(tmp_path, minutes, expected):
-    path = tmp_path / 'lesson.yaml'
-    path.write_text(bl.yaml.safe_dump({'minutes': {'first_take': 5, **minutes}}), encoding='utf-8')
-    lesson = bl.load_lesson(path)
-    assert lesson['minutes'] == {'first_take': 5, **minutes}
-    assert any('retired self-paced field minutes' in error for error in bl.validate_lesson(lesson, REGISTRY))
+def test_active_schema_rejects_invalid_metadata(field, value, message):
+    lesson = _lesson(LESSONS[0])
+    lesson[field] = value
+    assert any(message in error for error in bl.validate_lesson(lesson, REGISTRY))
 
 
-def test_standalone_keeps_calendar_and_finish_exceptions():
-    lesson = _lesson(ROOT / 'dok/lessons/1.1_1.2_1.4_1.7.yaml')
+def test_standalone_does_not_require_calendar_or_one_worksheet_per_member():
+    lesson = _lesson(LESSONS[0])
+    lesson['worksheets'] = lesson['worksheets'][:1]
     assert bl.validate_lesson(lesson, REGISTRY) == []
-    assert bl.header_line(lesson, SCHEDULE) == 'AP Statistics \\textperiodcentered\\ ' + bl.ced_topic_label(lesson)
-    lesson['standalone'] = False
-    errors = bl.validate_lesson(lesson, REGISTRY)
-    assert any('dayGroups.E' in error for error in errors)
-    assert not any('finish must fit ten minutes' in error for error in errors)
 
 
 def test_build_rejects_registry_references_before_writing(tmp_path, monkeypatch):
     registry = json.loads(json.dumps(REGISTRY))
-    registry['aps-1.6-d3-1']['stem'] = 'Use the VIDEO.'
+    registry[_lesson(LESSONS[0])['focus']]['stem'] = 'Use the VIDEO.'
     monkeypatch.setattr(bl, 'TEX_DIR', tmp_path)
     with pytest.raises(SystemExit, match='stem: forbidden video reference'):
-        bl.build(ROOT / 'dok/lessons/1.6.yaml', ('student',), registry, SCHEDULE)
+        bl.build(LESSONS[0], ('student',), registry, SCHEDULE)
     assert not list(tmp_path.glob('*.tex'))
 
 
@@ -345,8 +332,8 @@ def test_retired_flow_fields_are_rejected_even_when_empty(field):
 
 def test_build_rejects_self_paced_violation_before_writing(tmp_path, monkeypatch):
     registry = json.loads(json.dumps(REGISTRY))
-    registry['aps-1.6-d3-1']['parts'][0]['prompt'] = 'Use the rules box.'
+    registry[_lesson(LESSONS[0])['focus']]['parts'][0]['prompt'] = 'Use the rules box.'
     monkeypatch.setattr(bl, 'TEX_DIR', tmp_path)
     with pytest.raises(SystemExit, match='forbidden self-paced phrase'):
-        bl.build(ROOT / 'dok/lessons/1.6.yaml', ('student',), registry, SCHEDULE)
+        bl.build(LESSONS[0], ('student',), registry, SCHEDULE)
     assert not list(tmp_path.glob('*.tex'))

@@ -17,7 +17,7 @@ const SKILL_RE = /^[1-4]\.[A-F]$/;
 const BANNED = ['hard', 'easy', 'difficult'];
 
 function loadRows() {
-  // One file per lesson day (dok/registry/{topic}.jsonl) so parallel authors never collide.
+  // One file per active misconception sheet (dok/registry/{topic}.jsonl) so parallel authors never collide.
   const rows = [];
   for (const f of readdirSync(REGISTRY_DIR).filter((n) => n.endsWith('.jsonl')).sort()) {
     const lines = readFileSync(resolve(REGISTRY_DIR, f), 'utf8').split(/\r?\n/).filter((l) => l.trim());
@@ -45,10 +45,10 @@ const rows = loadRows();
 const skills = cedSkillCodes();
 
 describe('dok/registry.jsonl', () => {
-  it('parses, has unique ids, and at least the Phase-1 focus row', () => {
+  it('parses, has unique ids, and the active Screen Time focus row', () => {
     const ids = rows.map((r) => r.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toContain('aps-1.6-d3-1');
+    expect(ids).toContain('aps-1.1_1.2_1.4_1.7-d3-1');
   });
 
   it.each(rows.map((r) => [r.id, r]))('%s satisfies the item schema', (_id, r) => {

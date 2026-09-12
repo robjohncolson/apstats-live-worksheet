@@ -16,3 +16,32 @@ describe('DOK index print destinations', () => {
     for (const worksheet of entry.worksheets || [entry.worksheet]) expect(tex).not.toContain(worksheet);
   });
 });
+
+
+describe('Active index cards', () => {
+  it('renders exactly the manifest cards, labels, dates and three PDF links safely', async () => {
+    const { JSDOM } = await import('jsdom');
+    const html = readFileSync(resolve(root, 'dok/index.html'), 'utf8');
+    const dom = new JSDOM(html);
+    const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    const fixture = { ...manifest, '9.9': { title: '<img src=x onerror=alert(1)>', misconceptions: ['label:<b>context</b>'], generated: { on: '2026-09-12' } } };
+    const fetch = async (url) => {
+      expect(url).toBe('manifest.json');
+      return { ok: true, json: async () => fixture };
+    };
+    await new Function('document', 'fetch', 'return ' + script.trim())(dom.window.document, fetch);
+    const cards = [...dom.window.document.querySelectorAll('article')];
+    expect(cards).toHaveLength(Object.keys(fixture).length);
+    cards.forEach((card, i) => {
+      const [key, sheet] = Object.entries(fixture)[i];
+      expect(card.querySelector('h2').textContent).toBe(sheet.title);
+      expect(card.querySelectorAll('li')).toHaveLength(sheet.misconceptions.length);
+      expect(card.textContent).toContain(sheet.generated.on);
+      expect([...card.querySelectorAll('a')].map(a => a.getAttribute('href'))).toEqual(
+        ['student', 'board', 'teacher'].map(ed => `pdf/aps_${sheet.slug || key.replaceAll('+', '_')}_${ed}.pdf`));
+    });
+    expect(dom.window.document.querySelector('article img, article b, table')).toBeNull();
+    expect(html).not.toMatch(/lesson-schedule|dayGroups|PENDING/);
+    dom.window.close();
+  });
+});

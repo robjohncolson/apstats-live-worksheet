@@ -229,7 +229,7 @@ describe('group resources and override',()=>{
  it('renders both resources with individual progress keys and unique IDs; lists both due today',()=>{
    const dom=page(),lessons={},resources={};
    for(const m of first.group){lessons[m.t]={urls:{worksheet:'u1_lesson'+m.t.split('.')[1]+'_live.html'},periods:{}};resources[m.t]={videos:[{url:'https://video.example/'+m.t}]};}
-   const s=load(['showResourcePanel','_lessonCoachHtml','_resourcePanelEsc','_dokLadderRowHtml','_renderTodayTopics','_focusTodayLessonVideo'],{
+   const s=load(['showResourcePanel','_lessonCoachHtml','_resourcePanelEsc','_renderTodayTopics','_focusTodayLessonVideo'],{
      S,window:dom.window,document:dom.window.document,location:dom.window.location,cP:'E',_lastResourcePanel:null,_todayLessonInf:first,_todayLessonDS:'Sep 16',_gradeLessonsCache:[],
      REGISTRY:{lessons},RESOURCES:resources,AI_TUTOR_LESSON_KEYS:new Set(['1.4','1.5']),lookupTopic:t=>t,getRegistryEntry:t=>lessons[t],getAllRegistryEntries:t=>[lessons[t]],
      getStudentEmail:()=> 'fixture',getStudentMarks:()=>({}),_deskIsTeacher:()=>false,cedTeacherBridgeAllowed:()=>false,_isApClassroomAvailable:()=>true,_wsCompletionFor:()=>null,_getCwsForTopic:()=>null,DESK_WORKSHEET_DONE_THRESHOLD:60
@@ -246,7 +246,7 @@ describe('group resources and override',()=>{
      d.getElementById('donow-today-topics').click();expect(s._lastResourcePanel.inf).toBe(first);
      s._deskIsTeacher=()=>true;
      s.showResourcePanel(first,'Sep 16');
-     expect(d.querySelectorAll('a[href="dok/pdf/aps_1.4_1.5_student.pdf"]')).toHaveLength(1);
+     expect(d.querySelectorAll('a[href^="dok/"]')).toHaveLength(0);
      expect(d.querySelectorAll('a[href="dok/pdf/aps_1.4_student.pdf"]')).toHaveLength(0);
    }finally{dom.window.close();}
  });

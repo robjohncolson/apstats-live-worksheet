@@ -3416,7 +3416,7 @@
       var manifest = null;
       try { var r = await fetch('dok/manifest.json', { cache: 'no-store' }); if (r.ok) manifest = await r.json(); } catch (_) { manifest = null; }
       if (!manifest || typeof manifest !== 'object') { host.hidden = true; return; }
-      var keys = Object.keys(manifest).filter(function (k) { return manifest[k] && manifest[k].standalone === true; });
+      var keys = Object.keys(manifest);
       host.replaceChildren();
       if (!keys.length) { host.hidden = true; return; }
       var lead = document.createElement('strong');
@@ -3436,6 +3436,11 @@
           wrap.appendChild(a);
         });
         wrap.appendChild(document.createTextNode(')'));
+        var targets = document.createElement('span');
+        targets.textContent = ' Targets: ' + (m.misconceptions || []).map(function (key) {
+          return key.startsWith('label:') ? key.slice(6) : key;
+        }).join('; ');
+        wrap.appendChild(targets);
         host.appendChild(wrap);
       });
       host.hidden = false;

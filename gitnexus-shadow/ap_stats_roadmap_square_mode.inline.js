@@ -11204,31 +11204,6 @@ function _resourcePanelEsc(s) {
     });
 }
 
-// DOK ladder row (APS_DOK_LADDER_SPEC.md §8 Phase 5a) — TEACHER ONLY. The paper DOK-3
-// sheet is the teacher's hand-graded channel; students never see a link to it here
-// (teacher decision 2026-09-04: it must not compete with the AI-graded work for their
-// attention). _deskIsTeacher() is false in view-as, so a student preview hides it too.
-// URLs are derived from the OLD topic key (dok/pdf/aps_{topic}_{edition}.pdf), relative
-// to the Desk's own origin — no Supabase column, works on GH Pages and the Vercel mirror.
-function _dokLadderRowHtml(topicKey) {
-    if (!(typeof _deskIsTeacher === 'function' && _deskIsTeacher())) return '';
-    var members=typeof groupTopics==='function'?groupTopics(topicKey):[topicKey];
-    if(!members.length||!members.every(function(topic){return /^\d+\.\d+$/.test(topic);}))return '';
-    var key=members.join('+');
-    // Additive built-sheet inventory; coverage checks it against dok/manifest.json.
-    var builtGroups=['1.4+1.5','1.7+1.8'];
-    if(members.length>1&&!builtGroups.includes(key)){
-        return '<div class="dok-ladder-row">DOK-3 group sheet pending: <a href="dok/index.html#e-wednesday-sheets" target="_blank">'+key+'</a> (teacher only)</div>';
-    }
-    var base = 'dok/pdf/aps_' + key.replace(/\+/g,'_') + '_';
-    var link = function (ed, label) {
-        return '<a href="' + base + ed + '.pdf" target="_blank" style="color:var(--accent-ink);text-decoration:underline">' + label + '</a>';
-    };
-    return '<div class="dok-ladder-row" style="margin:3px 0"><span class="chicago" style="font-size:9px">DOK-3</span> '
-        + link('board', 'Board') + ' \u00b7 ' + link('student', 'Sheet') + ' \u00b7 ' + link('teacher', 'Key')
-        + ' <span style="color:#888;font-size:9px">(teacher only)</span></div>';
-}
-
 function _lessonCoachHtml(inf, ids, regEntry) {
     if (!inf || !inf.t || inf.t === R) return '';
     var hasVideo = false;
@@ -11619,8 +11594,6 @@ function showResourcePanel(inf, dateStr) {
             lessonHtml += '<div style="margin:3px 0;color:#3b82f6">Schoology: ' + _rpLabel + '</div>';
         }
 
-        // Teacher-only DOK-3 links (never rendered for students — see _dokLadderRowHtml).
-        if(!dayCell.group)lessonHtml += _dokLadderRowHtml(inf.t);
 
         if (lessonHtml) {
             html += '<div style="margin-bottom:8px"><div class="chicago" style="font-size:10px;margin-bottom:4px">Today\'s Lesson</div>' + lessonHtml + '</div>';
@@ -11628,7 +11601,6 @@ function showResourcePanel(inf, dateStr) {
     }
 
     }
-    if(dayCell.group)html += _dokLadderRowHtml(dayCell);
 
     // Due Today
     if (inf.due) {

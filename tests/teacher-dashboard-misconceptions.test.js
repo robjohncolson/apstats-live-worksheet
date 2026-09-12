@@ -106,11 +106,12 @@ describe('teacher misconception panel', () => {
     await load();
     expect(fetchJson).toHaveBeenCalledWith('/class/misconceptions?section=PeriodE&days=14', 'fixture-secret');
   });
-  it('lists standalone remediation sheets from the DOK manifest with student/board/teacher links (textContent only)', () => {
+  it('lists all active remediation sheets from the DOK manifest with student/board/teacher links (textContent only)', () => {
     expect(html).toContain('id="misconceptions-sheets"');
     const fn = html.slice(html.indexOf('async function loadRemediationSheets'), html.indexOf('loadRemediationSheets();'));
     expect(fn).toContain("fetch('dok/manifest.json'");
-    expect(fn).toContain('standalone === true');
+    expect(fn).not.toContain('standalone === true');
+    expect(fn).toContain('m.misconceptions');
     expect(fn).toContain("'dok/pdf/aps_' + encodeURIComponent(slug)");
     expect(fn).toMatch(/\['student', 'Student'\], \['board', 'Board'\], \['teacher', 'Teacher key'\]/);
     expect(fn).not.toContain('innerHTML');
@@ -118,3 +119,23 @@ describe('teacher misconception panel', () => {
     expect(Object.keys(manifest).some((k) => manifest[k].standalone === true)).toBe(true);
   });
 });
+
+ it('renders all manifest sheets and target labels safely, and hides an empty strip', async () => {
+    const fn = html.slice(html.indexOf('async function loadRemediationSheets'), html.indexOf('loadRemediationSheets();'));
+    const manifest = JSON.parse(readFileSync(resolve('dok/manifest.json'), 'utf8'));
+    manifest.extra = { title: '<img src=x>', misconceptions: ['label:<b>context</b>'] };
+    const fetch = vi.fn(async () => ({ ok: true, json: async () => manifest }));
+    const loadSheets = new Function('$', 'fetch', fn + ';return loadRemediationSheets;')(id => document.getElementById(id), fetch);
+    await loadSheets();
+    const host = document.getElementById('misconceptions-sheets');
+    expect(host.hidden).toBe(false);
+    expect(host.querySelectorAll('a')).toHaveLength(Object.keys(manifest).length * 3);
+    for (const sheet of Object.values(manifest)) {
+      expect(host.textContent).toContain(sheet.title);
+      for (const key of sheet.misconceptions) expect(host.textContent).toContain(key.replace(/^label:/, ''));
+    }
+    expect(host.querySelector('img, b')).toBeNull();
+    fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
+    await loadSheets();
+    expect(host.hidden).toBe(true);
+ });
