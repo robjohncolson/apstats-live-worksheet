@@ -1,5 +1,9 @@
 # Weekly misconception DOK sheet; defaults to a read-only dry run.
 # Registration is printed by -Register, never executed by this script.
+# First scheduled run: Friday 2026-09-18, 21:00 local, on Athena.
+# Register once (this script does NOT execute this command):
+# schtasks /Create /TN "APStats-WeeklyDOK" /SC WEEKLY /D FRI /ST 21:00 /SD 09/18/2026 /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\rober\Downloads\Projects\school\follow-alongs\tools\weekly_dok.ps1 -Apply" /F
+# -PushOnly retries pending weekly commits without selecting another sheet.
 param(
   [switch]$Apply,
   [switch]$DryRun,

@@ -3,7 +3,7 @@
 Date: 2026-09-12
 Starting branch: master
 Starting HEAD: 9b09bfba
-Status: implementation resumed with the corrected section 5 failure contract.
+Status: complete; four local commits, no push, no apply run, no task registration. See weekly-dok-verification.json.
 
 ## Four intended commits
 

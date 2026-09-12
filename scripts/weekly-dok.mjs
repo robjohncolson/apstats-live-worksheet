@@ -102,6 +102,11 @@ export function publicationPaths(key, date) {
     'dok/manifest.json', TRIAGE_PATH, `state/weekly-dok/${date}-brief.md`];
 }
 
+export function itemSkills(row, skillMap) {
+  if (row.skills?.length) return row.skills;
+  return union((row.itemIds || []).map(id => skillMap[id]?.skill).filter(skill => /^[1-4]\.[A-Z]$/.test(skill || '')));
+}
+
 export function recordWeeklyRun(triage, payloads, date) {
   const at = `${date}T21:00:00.000Z`;
   const week = value => Math.floor((Date.parse(value) - Date.UTC(1970, 0, 5)) / (7 * 86400000));
@@ -234,6 +239,7 @@ export function createRuntime(root, overrides = {}) {
       const secret = env.ROSTER_TEACHER_SECRET || env.TEACHER_SECRET;
       if (!secret) throw new Error('Teacher secret missing from roster-server/.env');
       const payloads = [];
+      const skillMap = json('data/skill-map.json');
       for (const section of SECTIONS) {
         const url = new URL('/class/misconceptions', 'https://roster-production-12c1.up.railway.app');
         url.search = new URLSearchParams({ section, days: String(WINDOW_DAYS) });
@@ -241,6 +247,7 @@ export function createRuntime(root, overrides = {}) {
         if (!response.ok) throw new Error(`Misconceptions request failed (${response.status})`);
         const payload = { ...await response.json(), section };
         for (const row of payload.frequent || []) {
+          row.skills = itemSkills(row, skillMap);
           if (row.skills?.length) continue;
           row.skills = union((row.lessons || []).flatMap(topic => {
             if (!/^\d+\.\d+$/.test(topic)) return [];
@@ -265,6 +272,7 @@ export function createRuntime(root, overrides = {}) {
       }
     },
     recoverPending: () => {
+      if (git(['branch', '--show-current']) !== 'master') throw new Error('Weekly recovery requires master');
       git(['fetch', 'origin', 'master']);
       const pending = git(['log', '--format=%H%x09%s', 'origin/master..HEAD']).split('\n').filter(Boolean);
       if (!pending.length) {

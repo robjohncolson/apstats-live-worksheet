@@ -17,6 +17,26 @@ function fixture() {
 }
 
 describe('weekly run boundaries', () => {
+  it('restores triage if writing triage or creating the commit fails', async () => {
+    for (const step of ['writeTriage', 'commit']) {
+      const { io, original } = fixture();
+      io[step].mockImplementationOnce(() => { throw new Error('failed before commit'); });
+      await expect(runWeekly({ mode: 'apply' }, io)).rejects.toThrow('failed before commit');
+      expect(io.writeTriage).toHaveBeenLastCalledWith(original);
+      expect(io.unstage).toHaveBeenCalledOnce();
+      expect(io.push).not.toHaveBeenCalled();
+    }
+  });
+  it('persists a successful below-floor observation without staging or publishing', async () => {
+    const { io } = fixture();
+    io.fetchSections.mockResolvedValue([{ ok: true, section: 'PeriodB', frequent: [] }]);
+    const result = await runWeekly({ mode: 'apply' }, io);
+    expect(result.status).toBe('below floor');
+    expect(io.writeTriage.mock.calls[0][0].weeklyRuns).toHaveLength(1);
+    expect(io.author).not.toHaveBeenCalled();
+    expect(io.stage).not.toHaveBeenCalled();
+    expect(io.push).not.toHaveBeenCalled();
+  });
   it('dry-run defaults to zero writes, authoring or git operations', async () => {
     const { io } = fixture();
     const result = await runWeekly({}, io);
@@ -100,6 +120,7 @@ describe('weekly recurrence observations and recovery', () => {
     const calls = [];
     const command = (program, args) => {
       calls.push([program, ...args].join(' '));
+      if (args[0] === 'branch') return 'master';
       if (args[0] === 'log') return 'pending-hash\tWeekly DOK sheet 2026-09-18: Title';
       if (args[0] === 'rev-list') return '1';
       return '';
@@ -107,13 +128,14 @@ describe('weekly recurrence observations and recovery', () => {
     const io = createRuntime(process.cwd(), { command,
       approvePush: () => calls.push('approve'), push: () => calls.push('push') });
     io.recoverPending();
-    expect(calls[0]).toBe('git fetch origin master');
+    expect(calls.slice(0, 2)).toEqual(['git branch --show-current', 'git fetch origin master']);
     expect(calls.slice(-3)).toEqual(['git rebase origin/master', 'approve', 'push']);
   });
   it('aborts a conflicted rebase and reports retained hashes without approving or pushing', () => {
     const calls = [];
     const command = (program, args) => {
       calls.push(args.join(' '));
+      if (args[0] === 'branch') return 'master';
       if (args[0] === 'log') return 'pending-hash\tWeekly DOK sheet 2026-09-18: Title';
       if (args[0] === 'rev-list') return '1';
       if (args.join(' ') === 'rebase origin/master') throw new Error('conflict');
@@ -127,5 +149,12 @@ describe('weekly recurrence observations and recovery', () => {
     expect(calls).toContain('rebase --abort');
     expect(log).toHaveBeenCalledWith(expect.stringContaining('pending-hash'));
     expect(approvePush).not.toHaveBeenCalled();
+  });
+  it('refuses push-only recovery on another branch before any network or mutation', () => {
+    const command = vi.fn(() => 'feature');
+    const io = createRuntime(process.cwd(), { command });
+    expect(() => io.recoverPending()).toThrow('requires master');
+    expect(command).toHaveBeenCalledOnce();
+    expect(command).toHaveBeenCalledWith('git', ['branch', '--show-current'], undefined);
   });
 });

@@ -1,0 +1,262 @@
+{
+  "status": "complete",
+  "date": "2026-09-12",
+  "base_commit": "9b09bfba1c9927fd78e093015a3fbb03e3c5338e",
+  "implementation_commits": [
+    "269e61b928a80f3bbeeae1e2811fdb999324195f",
+    "afb8b09d869bbce59d08ac075d91c0628c37a05c",
+    "21acc66ad0096ef19d47c36417b912bff95c174d"
+  ],
+  "verification_commit": "The fourth commit containing this record.",
+  "pushed": false,
+  "apply_executed": false,
+  "scheduled_task_registered": false,
+  "scratch_directories_under_state_created": false,
+  "touched_text_files_normalized_to_lf": true,
+  "existing_dok_and_archive_artifacts_unchanged": true,
+  "author": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "prompt": "tools/weekly-dok-author-prompt.md",
+    "human_scoring": "Part (d), E/P/I; nothing auto-scores."
+  },
+  "registration_command": "schtasks /Create /TN \"APStats-WeeklyDOK\" /SC WEEKLY /D FRI /ST 21:00 /SD 09/18/2026 /TR \"powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\rober\\Downloads\\Projects\\school\\follow-alongs\\tools\\weekly_dok.ps1 -Apply\" /F",
+  "verification": {
+    "focused": {
+      "command": "npx vitest run tests/weekly-dok-select.test.js tests/weekly-dok-run.test.js tests/teacher-dashboard-misconceptions.test.js tests/dok-active.test.js",
+      "files": 4,
+      "passed": 42,
+      "failed": 0,
+      "report": "test-results/weekly-dok-focused.json"
+    },
+    "all_dok": {
+      "command": "npx vitest run tests/dok-",
+      "files": 5,
+      "passed": 14,
+      "failed": 0,
+      "report": "test-results/weekly-dok-all-dok.json"
+    },
+    "roster_server": {
+      "command": "cd roster-server; npm test",
+      "files": 92,
+      "passed": 1782,
+      "skipped": 3,
+      "failed": 0
+    },
+    "python": {
+      "command": "pytest tests/test_dok_build.py -q --basetemp <fresh test-results directory> -o cache_dir=test-results/weekly-dok-pycache",
+      "passed": 65,
+      "failed": 0,
+      "report": "test-results/weekly-dok-python.xml",
+      "initial_attempt": "62 passed and 3 setup errors because existing Windows pytest temp/cache directories were inaccessible; rerun with fresh workspace directories passed."
+    },
+    "validator": {
+      "command": "python dok/build_ladder.py --validate",
+      "exit_code": 0,
+      "registry_rows": 1,
+      "lessons": 1
+    },
+    "root": {
+      "command": "npm test -- --reporter=json --outputFile=test-results/weekly-dok-root-final.json --maxWorkers=2 --minWorkers=1",
+      "exit_code": 1,
+      "files": 317,
+      "files_passed": 302,
+      "reported_passed": 9738,
+      "reported_failed": 23,
+      "assertions": {
+        "passed": 9737,
+        "failed": 23,
+        "skipped": 1
+      },
+      "failures": [
+        {
+          "file": "tests/classroom-structure.test.js",
+          "name": "Live Classroom v1a - Desk integration D3: the Teacher menu has a Live Classroom item opening teacher-classroom.html",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/classroom-structure.test.js",
+          "name": "KEYBOARD_AVATAR Phase 1 -- player controller wiring Desk has the keyboard help-text strip below the board mount",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/desk-self-signup.test.js",
+          "name": "teacher onboarding + class gradebook (static) the Teacher menu opens the Teacher Tools launcher, which wires the Roster Console",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/desk-user-role.test.js",
+          "name": "Desk: user-role gating + sign-in teacher checkbox 12: Teacher Tools launcher reaches the teacher pages (roster console, dashboard, codegen)",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/desk-verify-tools.test.js",
+          "name": "Desk — verification tools surfaced the Teacher Tools launcher wires the scan-to-verify tool (openVerifyQR)",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/doge-payout-agent.test.js",
+          "name": "DOGE payout agent config and RPC wrapper lets environment override file config and keeps portable defaults",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/doge-send-core.test.js",
+          "name": "doge-send durable file journal atomically creates, refuses overwrite, updates, and clears a mode-0600 journal",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/lineage.test.js",
+          "name": "data lineage manifest points every automatic regeneration command at an existing script or test",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/phase4-structure.test.js",
+          "name": "teacher-dashboard.html — Phase 4a structure declares it is a teacher dashboard (title)",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/phase4-structure.test.js",
+          "name": "teacher-dashboard.html — Phase 4a structure teacher-secret persistence is OPT-IN only; localStorage writes are scoped to two known keys",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/phase4b-structure.test.js",
+          "name": "Phase 4b — teacher-dashboard.html remediation panel teacher secret persistence is opt-in only; localStorage scoped to known keys (Phase 4a security posture, updated 2026-05-19)",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/progress-reset-matrix-cleared-storage.test.js",
+          "name": "matrix row: cleared storage recovers — CONTROL (a subsequent live success) (7) flips to available, writes the latch, and the strict gate resumes",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/progress-reset-matrix-latch.test.js",
+          "name": "matrix row: strict-gate-still-strict — evidence present + genuinely incomplete predecessor stays LOCKED D4 fail-open never leaks into the affirmative-server case",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/progress-reset-matrix-loadstate.test.js",
+          "name": "matrix row: 401 -> auth classifies unavailable/auth, shows the Sign-in banner, and never clears the roster session",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/progress-reset-matrix-loadstate.test.js",
+          "name": "matrix row: 403 -> auth (classified identically to 401) classifies unavailable/auth",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/remaining-feature-contracts.test.js",
+          "name": "F004 Start Here signed-in progress preview renders the signed-out fallback when identity or service config is unavailable",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/remaining-feature-contracts.test.js",
+          "name": "F004 Start Here signed-in progress preview fetches /grade with rosterClient.token() and renders quarter/unit progress for signed-in students",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/remaining-feature-contracts.test.js",
+          "name": "F061 public worksheet table of contents index links TOC.html and TOC lists all 69 live worksheet files that exist on disk",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/journeys/j2-shared-device.journey.test.js",
+          "name": "Desk journey J2 J2 reloads a shared device across A → B → A without leaking marks, due chip, or SRS state, then hydrates a fresh marks bucket from /donow (supersedes desk-calendar-sync per-student visibility and selfDone hydration behavior)",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/journeys/j7-offline-grade.journey.test.js",
+          "name": "Desk journey J7 J7 cold reboot preserves the incident invariants after a real visible-tab 'network' /grade failure (supersedes incident-progress-reset-cache-relock, incident-progress-reset-donow-hydration, and incident-progress-reset-warm-control)",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/journeys/j7-offline-grade.journey.test.js",
+          "name": "Desk journey J7 J7 cold reboot preserves the incident invariants after a real visible-tab '401' /grade failure (supersedes incident-progress-reset-cache-relock, incident-progress-reset-donow-hydration, and incident-progress-reset-warm-control)",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/journeys/j7-offline-grade.journey.test.js",
+          "name": "Desk journey J7 J7 cold reboot preserves the incident invariants after a real visible-tab '403' /grade failure (supersedes incident-progress-reset-cache-relock, incident-progress-reset-donow-hydration, and incident-progress-reset-warm-control)",
+          "pre_existing": true
+        },
+        {
+          "file": "tests/journeys/j7-offline-grade.journey.test.js",
+          "name": "Desk journey J7 J7 cold reboot preserves the incident invariants after a real visible-tab '500' /grade failure (supersedes incident-progress-reset-cache-relock, incident-progress-reset-donow-hydration, and incident-progress-reset-warm-control)",
+          "pre_existing": true
+        }
+      ],
+      "report": "test-results/weekly-dok-root-final.json",
+      "baseline_sources": [
+        "state/pairing-v2-and-exit-bonus-verification.json",
+        "state/dok-deprecate-daily-verification.json"
+      ],
+      "initial_attempt": "26 failures: 24 recorded pre-existing failures plus two dashboard-shadow freshness regressions. Regenerated the dashboard shadow and reran. Final failures are all pre-existing.",
+      "note": "The JSON reporter includes the skipped assertion in its reported passed count; the assertions object is the actual status tally. The last branch-guard regression test was verified in the final focused run."
+    }
+  },
+  "live_dry_run": {
+    "command": "node scripts/weekly-dok.mjs --dry-run",
+    "endpoint": "https://roster-production-12c1.up.railway.app/class/misconceptions",
+    "sections": [
+      "PeriodB",
+      "PeriodE"
+    ],
+    "days": 14,
+    "exit_code": 0,
+    "brief": "# Weekly DOK brief: 2026-09-12\nWindow: 14 days\nSheet key: 1.1\n\n## label:describes how statistics can help by collecting data analyzing the data and interpreting the results to answer the principal s question\nDescribes how statistics can help by collecting data, analyzing the data, and interpreting the results to answer the principal's question\nStudents: 8; events: 8\nLessons: 1.1\nCED skills: 1.A\n- WS-U1L1-exitTicket: Describes how statistics can help by collecting data, analyzing the data, and interpreting the results to answer the principal's question\n- WS-U1L1-exitTicket: Describes how statistics can help by collecting data, analyzing the data, and interpreting the results\n- WS-U1L1-exitTicket: Describes how statistics can help by interpreting the results to answer the principal's question\n\n## label:identifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples\nIdentifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples\nStudents: 5; events: 5\nLessons: 1.1\nCED skills: 1.A\n- WS-U1L1-reflect1: Identifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples\n\n## label:states that the conclusion changed from not safe to safe when the two samples were removed\nStates that the conclusion changed from not safe to safe when the two samples were removed\nStudents: 5; events: 5\nLessons: 1.1\nCED skills: 1.A\n- WS-U1L1-reflect2: States that the conclusion changed from not safe to safe when the two samples were removed\n\n## label:describes the variable as the number of hours of sleep the night before the exam\nDescribes the variable as the number of hours of sleep the night before the exam\nStudents: 4; events: 4\nLessons: 1.1\nCED skills: 1.A\n- WS-U1L1-exitTicket: Clear description of the variable as the number of hours of sleep the night before the exam\n- WS-U1L1-exitTicket: Describes the variable as the number of hours of sleep the night before the exam\n\n## label:explains that the data vary because different students got different amounts of sleep\nExplains that the data vary because different students got different amounts of sleep\nStudents: 4; events: 4\nLessons: 1.1\nCED skills: 1.A\n- WS-U1L1-exitTicket: Explains that the data vary because different students got different amounts of sleep\n- WS-U1L1-exitTicket: Explanation that data vary because different students got different amounts of sleep\n\n## House rules\n- Author one original, standalone, self-paced bonus sheet in a fresh context.\n- Four parts: (a) DOK 1, (b) DOK 2, (c) DOK 2, (d) DOK 3 integrating the targets.\n- Scaffolds are checklists and frames with blanks; never answer-bearing hints.\n- Print all required values, tables, definitions and a titled notes callout.\n- No video, QR, timing, exit ticket or outside references.\n- Part (d) is scored E/P/I by the teacher; nothing auto-scores.\n- No student names or identifiers. Never modify existing or archived sheets.\n"
+  },
+  "gitnexus": {
+    "initial_impacts": [
+      {
+        "symbol": "computeMisconceptions",
+        "risk": "LOW",
+        "direct_callers": 4,
+        "process_groups": [
+          "mountClass",
+          "mountReview"
+        ]
+      },
+      {
+        "symbol": "mountClass",
+        "risk": "LOW",
+        "direct_callers": 1
+      },
+      {
+        "symbol": "renderMisconceptions",
+        "risk": "LOW",
+        "direct_callers": 1,
+        "processes": 0
+      },
+      {
+        "symbol": "renderFrequentMisconceptions",
+        "risk": "LOW",
+        "direct_callers": 1,
+        "processes": 0
+      },
+      {
+        "symbol": "loadRemediationSheets",
+        "risk": "LOW",
+        "direct_callers": 1,
+        "processes": 0
+      },
+      {
+        "symbol": "createRuntime",
+        "risk": "LOW",
+        "direct_callers": 1,
+        "processes": 0
+      }
+    ],
+    "staged_checks": "detect-changes ran before every commit. Server changes were rated HIGH because mountClass participates in authentication flows; the warning was reported and the full server suite passed before committing.",
+    "limitation": "Index refreshes succeeded after granting registry-write access, including a 4 MB source-limit refresh with parser timeouts. Later queries could not resolve dashboard symbols and some diff mappings named baseline-copy symbols. Earlier complete dashboard impacts, the exact staged file lists, generated-shadow freshness checks, and DOM tests supplied the remaining evidence."
+  },
+  "operational_notes": [
+    "Dry runs do not invoke Git recovery, authoring, file writes, staging, or publishing.",
+    "Build/stage/commit failures restore triage and unstage the job paths. Push failures retain and report the local commit; apply and push-only recover pending weekly commits before new selection.",
+    "Successful below-floor apply runs retain weeklyRuns locally without publication; the next successfully published sheet carries that history to the endpoint.",
+    "The five Screen Time targets are backfilled from its YAML. Zero backfill student counts mean historical targeting counts were not recorded.",
+    "Vitest 1 on Windows does not expand literal positional wildcards. The required weekly tests were explicitly expanded, and the author uses the tests/dok- substring filter.",
+    "Verification corrected item-level CED skill fallback and the push-only branch guard; those corrections are included with the verification commit.",
+    "No author invocation, new worksheet compilation, push, or actual task registration was performed, as instructed."
+  ],
+  "unmet_requirements": []
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mergeSections, selectLabels, makeBrief, LABEL_CAP, STUDENT_FLOOR } from '../scripts/weekly-dok.mjs';
+import { mergeSections, selectLabels, makeBrief, itemSkills, LABEL_CAP, STUDENT_FLOOR } from '../scripts/weekly-dok.mjs';
 
 const row = (key, students, lesson = '1.1', events = students) => ({
   key, label: key, students, events, lessons: [lesson], skills: ['4.B'], evidence: [],
@@ -9,6 +9,12 @@ const crosswalk = { map: Object.fromEntries(['1.1', '1.2', '1.8', '2.1'].map(top
 const triage = { entries: { done: {} } };
 
 describe('weekly misconception selection', () => {
+  it('fills unmapped label skills from their recorded item IDs without guessing', () => {
+    const map = { first: { skill: '1.A' }, second: { skill: '4.C' }, invalid: { skill: 'not-a-code' } };
+    expect(itemSkills({ itemIds: ['second', 'first', 'first', 'invalid', 'missing'] }, map)).toEqual(['1.A', '4.C']);
+    expect(itemSkills({ skills: ['3.B'], itemIds: ['first'] }, map)).toEqual(['3.B']);
+    expect(itemSkills({ itemIds: ['missing'] }, map)).toEqual([]);
+  });
   it('merges section counts, lessons, skills and projected evidence without names', () => {
     const payload = { ok: true, section: 'PeriodB', frequent: [row('context', 3)],
       students: { privateId: { realName: 'Example Learner', username: 'private_login' } },

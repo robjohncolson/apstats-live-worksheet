@@ -43,6 +43,16 @@ def test_registry_rows_validate():
     assert problems == []
 
 
+def test_weekly_auto_provenance_uses_the_same_validation_and_human_channel():
+    lesson = _lesson(ROOT / "dok" / "lessons" / "1.1_1.2_1.4_1.7.yaml")
+    lesson["generated"] = {"by": "weekly-auto", "on": "2026-09-18", "window_days": 14}
+    assert bl.validate_lesson(lesson, REGISTRY) == []
+    item = REGISTRY[lesson["focus"]]
+    assert item["feedback_channel"] == "feedback_dok3_human_channel"
+    assert [part["dok"] for part in item["parts"]] == [1, 2, 2, 3]
+    assert "E / P / I" in bl.emit_student(lesson, REGISTRY, SCHEDULE)
+
+
 @pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
 def test_no_leak_student_and_board(path: Path):
     lesson = _lesson(path)

@@ -40,8 +40,11 @@ Before returning, run every check and return nonzero if any fails:
 
     python dok/build_ladder.py --validate
     powershell -NoProfile -File dok/compile.ps1 <slug>
-    npx vitest run tests/dok-*.test.js
+    npx vitest run tests/dok-
     pytest tests/test_dok_build.py -q
+
+Vitest 1 uses substring filters; `tests/dok-` selects every DOK test file on
+Windows without relying on shell wildcard expansion.
 
 Re-save all newly authored text files with LF endings. Report the sheet title,
 the context choice, the resource audit, and check results. Never commit or push.
