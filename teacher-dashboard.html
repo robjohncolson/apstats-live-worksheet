@@ -3266,17 +3266,37 @@
       });
       return box;
     }
+    function misconceptionStatusCell(entry) {
+      var cell = misconceptionNode('td', 'untriaged');
+      var triage = entry.triage;
+      if (!triage) return cell;
+      if (entry.recurringAfterTriage) {
+        cell.textContent = 'still recurring after ' + triage.sheetTitle;
+        cell.style.color = '#b91c1c';
+        return cell;
+      }
+      var date = new Date(triage.triagedAt + 'T12:00:00Z');
+      var displayDate = Number.isNaN(date.getTime()) ? triage.triagedAt :
+        date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      cell.textContent = 'triaged → ' + triage.sheetTitle + ' (' + displayDate + ')';
+      return cell;
+    }
+    function sortMisconceptionsByTriage(entries) {
+      return entries.slice().sort(function (a, b) {
+        return Number(Boolean(a && a.triage)) - Number(Boolean(b && b.triage));
+      });
+    }
     function renderFrequentMisconceptions(payload) {
       var host = $('misconceptions-frequent');
       host.replaceChildren(misconceptionNode('h3', 'Most frequent this window (no persistence filter)'));
-      var entries = Array.isArray(payload.frequent) ? payload.frequent : [];
+      var entries = sortMisconceptionsByTriage(Array.isArray(payload.frequent) ? payload.frequent : []);
       if (!entries.length) {
         host.appendChild(misconceptionNode('p', 'No graded evidence in this window yet.'));
         return;
       }
       var table = misconceptionNode('table');
       var header = misconceptionNode('tr');
-      ['Label', 'Students', 'Events', 'Lessons', 'Sources', 'Last seen'].forEach(function (label) {
+      ['Label', 'Status', 'Students', 'Events', 'Lessons', 'Sources', 'Last seen'].forEach(function (label) {
         header.appendChild(misconceptionNode('th', label));
       });
       table.appendChild(header);
@@ -3293,6 +3313,7 @@
           labelCell.appendChild(pill);
         });
         row.appendChild(labelCell);
+        row.appendChild(misconceptionStatusCell(entry));
         var sources = entry.sources || {};
         [entry.students + ' / ' + entry.activeStudents, entry.events, (entry.lessons || []).join(', '),
           'MCQ ' + (sources.mcq || 0) + ' / written ' + (sources.frq || 0),
@@ -3302,7 +3323,7 @@
         var evidenceRow = misconceptionNode('tr');
         evidenceRow.hidden = true;
         var cell = misconceptionNode('td');
-        cell.colSpan = 6;
+        cell.colSpan = 7;
         cell.appendChild(misconceptionEvidence(payload, entry.key));
         cell.appendChild(misconceptionActions(payload, entry));
         evidenceRow.appendChild(cell);
@@ -3318,7 +3339,7 @@
     function renderMisconceptions(payload) {
       // Harden against a partial payload (a proxy/mocked 200 without the arrays): never throw mid-render.
       payload = payload && typeof payload === 'object' ? payload : {};
-      var classEntries = Array.isArray(payload.class) ? payload.class : [];
+      var classEntries = sortMisconceptionsByTriage(Array.isArray(payload.class) ? payload.class : []);
       var studentMap = payload.students && typeof payload.students === 'object' ? payload.students : {};
       renderFrequentMisconceptions(payload);
       var host = $('misconceptions-class');
@@ -3328,7 +3349,7 @@
       $('misconceptions-draft').hidden = payload.vocabReviewed !== false;
       var table = misconceptionNode('table');
       var header = misconceptionNode('tr');
-      ['Misconception', 'Students', 'Lessons', 'Sources', 'Last seen', 'Skill', 'Actions'].forEach(function (label) {
+      ['Misconception', 'Status', 'Students', 'Lessons', 'Sources', 'Last seen', 'Skill', 'Actions'].forEach(function (label) {
         header.appendChild(misconceptionNode('th', label));
       });
       table.appendChild(header);
@@ -3344,6 +3365,7 @@
         toggle.setAttribute('aria-expanded', 'false');
         labelCell.appendChild(toggle);
         row.appendChild(labelCell);
+        row.appendChild(misconceptionStatusCell(entry));
         [(entry.students || 0) + ' / ' + (entry.activeStudents || 0), lessons.join(', '),
           'MCQ ' + (sources.mcq || 0) + ' / written ' + (sources.frq || 0),
           String(entry.lastSeen || '').slice(0, 10), skills.join(', ')].forEach(function (text) {
@@ -3356,7 +3378,7 @@
         var evidenceRow = misconceptionNode('tr');
         evidenceRow.hidden = true;
         var cell = misconceptionNode('td');
-        cell.colSpan = 7;
+        cell.colSpan = 8;
         cell.appendChild(misconceptionEvidence(payload, entry.key));
         evidenceRow.appendChild(cell);
         table.appendChild(evidenceRow);
@@ -3416,6 +3438,11 @@
       var manifest = null;
       try { var r = await fetch('dok/manifest.json', { cache: 'no-store' }); if (r.ok) manifest = await r.json(); } catch (_) { manifest = null; }
       if (!manifest || typeof manifest !== 'object') { host.hidden = true; return; }
+      var vocabulary = {};
+      try {
+        var vocabularyResponse = await fetch('data/misconceptions.json', { cache: 'no-store' });
+        if (vocabularyResponse.ok) vocabulary = (await vocabularyResponse.json()).tags || {};
+      } catch (_) { vocabulary = {}; }
       var keys = Object.keys(manifest);
       host.replaceChildren();
       if (!keys.length) { host.hidden = true; return; }
@@ -3438,7 +3465,7 @@
         wrap.appendChild(document.createTextNode(')'));
         var targets = document.createElement('span');
         targets.textContent = ' Targets: ' + (m.misconceptions || []).map(function (key) {
-          return key.startsWith('label:') ? key.slice(6) : key;
+          return vocabulary[key] && vocabulary[key].label || (key.startsWith('label:') ? key.slice(6) : key);
         }).join('; ');
         wrap.appendChild(targets);
         host.appendChild(wrap);

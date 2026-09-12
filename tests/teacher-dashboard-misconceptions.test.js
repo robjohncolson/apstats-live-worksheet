@@ -33,13 +33,35 @@ beforeEach(() => {
 });
 
 describe('teacher misconception panel', () => {
+  it('renders all three Status states safely and sorts untriaged first in both tables', () => {
+    const triage = { sheet: '1.1', sheetTitle: '<img src=x onerror=bad()>', triagedAt: '2026-09-18' };
+    const rows = [
+      { ...fixture.class[0], key: 'done', triage },
+      { ...fixture.class[0], key: 'fresh', label: 'Fresh label', triage: null },
+      { ...fixture.class[0], key: 'recurring', triage, recurringAfterTriage: true },
+    ];
+    render({ ...fixture, frequent: rows, class: rows });
+    for (const id of ['misconceptions-frequent', 'misconceptions-class']) {
+      const host = document.getElementById(id);
+      expect([...host.querySelectorAll('th')].map(node => node.textContent)).toContain('Status');
+      const statuses = [...host.querySelectorAll('tr:not([hidden]) td:nth-child(2)')];
+      expect(statuses.map(node => node.textContent)).toEqual([
+        'untriaged', 'triaged → <img src=x onerror=bad()> (Sep 18)',
+        'still recurring after <img src=x onerror=bad()>',
+      ]);
+      expect(statuses[2].style.color).toBe('rgb(185, 28, 28)');
+      expect(host.querySelector('img')).toBeNull();
+      expect(host.querySelector('tr[hidden] td').colSpan).toBe(id.endsWith('frequent') ? 7 : 8);
+    }
+    expect(rows[0].key).toBe('done');
+  });
   it('renders frequent evidence above persistence with pills, quiz links, and the same actions', () => {
     render({ ...fixture, frequent: [{ ...fixture.class[0], events: 2, weak: true, questionId: 'U1-L4-Q01' }] });
     const host = document.getElementById('misconceptions-frequent');
     expect(host.nextElementSibling.id).toBe('misconceptions-class');
     expect(host.querySelector('h3').textContent).toBe('Most frequent this window (no persistence filter)');
     expect([...host.querySelectorAll('th')].map(node => node.textContent)).toEqual([
-      'Label', 'Students', 'Events', 'Lessons', 'Sources', 'Last seen',
+      'Label', 'Status', 'Students', 'Events', 'Lessons', 'Sources', 'Last seen',
     ]);
     expect([...host.querySelectorAll('.pct-badge')].map(node => node.textContent)).toEqual(['draft — not yet reviewed', 'weak']);
     expect(host.querySelector('img, script, svg')).toBeNull();
@@ -138,4 +160,16 @@ describe('teacher misconception panel', () => {
     fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
     await loadSheets();
     expect(host.hidden).toBe(true);
+ });
+
+ it('uses vocabulary label text for tagged remediation targets without interpreting markup', async () => {
+    const fn = html.slice(html.indexOf('async function loadRemediationSheets'), html.indexOf('loadRemediationSheets();'));
+    const fetch = vi.fn(async url => ({ ok: true, json: async () => url === 'dok/manifest.json'
+      ? { '1.1': { title: 'New sheet', misconceptions: ['counts-vs-percents', 'label:context'] } }
+      : { tags: { 'counts-vs-percents': { label: '<b>Compare percentages</b>' } } } }));
+    const loadSheets = new Function('$', 'fetch', fn + ';return loadRemediationSheets;')(id => document.getElementById(id), fetch);
+    await loadSheets();
+    const host = document.getElementById('misconceptions-sheets');
+    expect(host.textContent).toContain('Targets: <b>Compare percentages</b>; context');
+    expect(host.querySelector('b')).toBeNull();
  });
