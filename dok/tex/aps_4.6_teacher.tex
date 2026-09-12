@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.7 \textperiodcentered\ B: 2026-11-02 \textperiodcentered\ E: 2026-11-04 \textperiodcentered\ TEACHER KEY}{Overlap Does Not Decide Independence}
+\daybanner{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.7 \textperiodcentered\ TEACHER KEY}{Overlap Does Not Decide Independence}
 
 \sectionbanner{CED TETHER}
 
@@ -23,25 +23,14 @@
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{independent-\allowbreak{}vs-\allowbreak{}mutually-\allowbreak{}exclusive-\allowbreak{}decide-\allowbreak{}from-\allowbreak{}the-\allowbreak{}table}}\par
 \textbf{DOK rationale:} Part (c) weighs competing claims using the day's numerical or graphical evidence and explains a limitation or consequence; the judgment requires linked reasoning beyond a calculation.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Show the board at the bell and collect a one-sentence first take without confirming a claim.
-  \item Read the rules box; work (a) and (b). Allow about 10 minutes to finish (a)--(c).
-  \item Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Commit to an independence decision and cite one table feature.
-  \item Use the rules box and table to calculate the probabilities in (a) and (b).
-  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Which number or visible feature supports your claim?
   \item Why does the other claim go beyond that evidence?
   \item What would you tell someone who chose the other claim?
 \end{itemize}
-}{Circulate and ask students to connect their choice to evidence. Score part (c) using the three required reasoning elements; do not require dropped extension work.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -76,7 +65,7 @@
 \end{itemize}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose a school surveys 200 students about whether they own at least one pet and whether they play a musical instrument. Let $P$ be the event that a randomly selected surveyed student owns a pet and $I$ the event that the student plays an instrument.\par\smallskip \textbf{Aaliyah:} \emph{The events overlap because 84 students do both. Since they are not mutually exclusive, they must be independent.}\par \textbf{Marcus:} \emph{Overlap does not decide independence; the relevant probabilities must be compared.}\par
 \begin{center}
@@ -89,12 +78,17 @@ Suppose a school surveys 200 students about whether they own at least one pet an
 \textbf{Total} & 100 & 100 & 200 \\ \hline
 \end{tabular}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Does owning a pet seem to change the chance that a student plays an instrument? Give one table detail in one sentence.\par
 \answer{Not graded. Aaliyah reaches the correct dependence decision from an invalid overlap rule; preserve that tension.}
 \end{firsttakebox}
 
-\textit{Rules callout ``INDEPENDENCE, INTERSECTION, AND UNION (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ INDEPENDENCE, INTERSECTION, AND UNION (keep on the page)}{calloutgreen}
+Events $A$ and $B$ are \textbf{independent} exactly when knowing one does not change the probability of the other:
+$P(A\mid B)=P(A)$. Equivalently, $P(A\cap B)=P(A)P(B)$. Establish independence before using that product.
+\textbf{Mutually exclusive} events have no overlap, so $P(A\cap B)=0$; this is a different relationship.
+For any two events, $P(A\cup B)=P(A)+P(B)-P(A\cap B)$. To calculate a conditional probability from a table, divide the count in both events by the total for the given group.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} State the counts for $P$, $I$, and $P\cap I$.\par
 \answer{There are 120 students in $P$, 100 in $I$, and 84 in $P\cap I$.}
@@ -104,9 +98,5 @@ Does owning a pet seem to change the chance that a student plays an instrument? 
 
 \dokbadge{3}~\textbf{(c)} Whose reasoning is supported? Decide independence using the two instrument-playing probabilities. Explain why the 84 students in both groups settle mutual exclusivity but do not settle independence. Write 3--4 sentences.\par
 \answer{Marcus's reasoning is supported: the events are not independent because $P(I\mid P)=0.70$ differs from $P(I)=0.50$. Knowing pet ownership changes the chance of instrument playing. The 84 students who do both show the events are not mutually exclusive, but overlap alone does not tell us whether one event changes the probability of the other.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

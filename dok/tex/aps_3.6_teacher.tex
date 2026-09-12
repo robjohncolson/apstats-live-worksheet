@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 1 \textperiodcentered\ Topic 1.13 \textperiodcentered\ B: 2026-10-05 \textperiodcentered\ E: 2026-10-07 \textperiodcentered\ TEACHER KEY}{Fertilizer in Two Greenhouses}
+\daybanner{AP Statistics \textperiodcentered\ Unit 1 \textperiodcentered\ Topic 1.13 \textperiodcentered\ TEACHER KEY}{Fertilizer in Two Greenhouses}
 
 \sectionbanner{CED TETHER}
 
@@ -25,27 +25,15 @@
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{completely-\allowbreak{}randomized-\allowbreak{}vs-\allowbreak{}block-\allowbreak{}when-\allowbreak{}blocking-\allowbreak{}earns-\allowbreak{}its-\allowbreak{}keep}}\par
 \textbf{DOK rationale:} Part (c) compares designs using the relative sizes of block and treatment differences, predicts how chance imbalance could mask an effect, and bounds the causal and population conclusions the experiment can support.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask for a design choice before students calculate.
-  \item At minute 5, read the rules box aloud once; students start (a).
-  \item Return to the board slide at minute 33. Circulate and compare block variation with treatment variation.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Choose complete randomization or blocking and cite one table feature.
-  \item Use the rules box to identify the variables and compare the greenhouse differences.
-  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Which comparison estimates fertilizer effect without mixing greenhouses?
   \item Which is larger: the greenhouse gap or the treatment gap?
   \item How could complete randomization accidentally pair treatment with shade?
   \item What does random assignment permit, what does significance add, and what would broader generalization need?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Ask students to name the nuisance variation that blocking removes and to separate causal inference from population generalization.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -81,7 +69,7 @@
 \end{itemize}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose a grower has 24 similar tomato plants, 12 in a sunny greenhouse and 12 in a shaded greenhouse. The response is fruit yield in kilograms per plant.\par\smallskip \textbf{Design A:} Completely randomize all 24 plants; assign 12 to fertilizer and 12 to no fertilizer, ignoring greenhouse.\par \textbf{Design B:} Treat greenhouse as a block; within each greenhouse, randomly assign 6 plants to fertilizer and 6 to no fertilizer.\par\smallskip Pilot means from plants grown under the same conditions are shown.\par
 \begin{center}
@@ -93,12 +81,18 @@ Suppose a grower has 24 similar tomato plants, 12 in a sunny greenhouse and 12 i
 \textbf{Shaded} & 4.0 & 2.8 \\ \hline
 \end{tabular}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Which design would you use to detect the fertilizer effect most clearly? Name one detail behind your choice.\par
 \answer{Not graded. Accept either design initially if the student identifies a real tradeoff; the calculations should sharpen the revision.}
 \end{firsttakebox}
 
-\textit{Rules callout ``BLOCK, RANDOMIZE, THEN INFER (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ BLOCK, RANDOMIZE, THEN INFER (keep on the page)}{calloutgreen}
+In a \textbf{completely randomized design}, treatments are assigned across all units. In a
+\textbf{randomized block design}, first group units that are similar on a relevant variable, then randomly
+assign treatments \emph{within each block}. Blocking separates natural block-to-block variability from the
+treatment comparison. Random assignment supports cause only when the observed difference is too large for
+chance alone; generalization also requires units that represent the target population.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} Name the blocking variable and the response variable, with units.\par
 \answer{Block: greenhouse light condition (sunny or shaded). Response: fruit yield in kilograms per plant.}
@@ -108,9 +102,5 @@ Which design would you use to detect the fertilizer effect most clearly? Name on
 
 \dokbadge{3}~\textbf{(c)} Which design should the grower use? Use the two differences to explain your choice and how chance imbalance could affect Design A. If Design B gives a statistically significant difference, state a causal conclusion limited to the plants and conditions studied.\par
 \answer{Use Design B. The $3.2$ kg greenhouse difference is larger than the $1.2$ kg fertilizer difference, so blocking on greenhouse removes a major source of natural variability before comparing treatments. In Design A, random assignment could by chance place more fertilized plants in the shaded house and more controls in the sunny house, masking or reversing the fertilizer difference. If the within-block fertilizer difference is statistically significant, random assignment permits the conclusion that fertilizer caused a change in mean yield for these experimental conditions. The result does not automatically generalize to all tomato varieties, greenhouses, or growers because the 24 plants and two houses were not randomly selected from those populations.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

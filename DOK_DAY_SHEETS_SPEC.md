@@ -1,5 +1,7 @@
 # DOK_DAY_SHEETS_SPEC.md — one DOK-3 sheet per CLASS DAY, covering every video taught that day
 
+> **2026-09-12: Self-paced bonus sheets.** The flow is superseded by [DOK_SELF_PACED_SPEC.md](DOK_SELF_PACED_SPEC.md): work from the printed sheet, turn it in whenever finished, and score the final part E / P / I by hand.
+
 > **2026-09-12:** Still PARKED; all current sheets use the self-contained printed-rules flow in [DOK_VIDEO_FREE_SPEC.md](DOK_VIDEO_FREE_SPEC.md).
 
 **Purpose:** `SCHEDULE_PACKING_SPEC.md` (rule A, chosen 2026-09-05) puts up to three videos on one day. The DOK ladder was

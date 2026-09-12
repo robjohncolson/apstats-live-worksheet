@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.4 \textperiodcentered\ B: 2026-12-07 \textperiodcentered\ E: 2026-12-09 \textperiodcentered\ TEACHER KEY}{One Interval, Two Threshold Claims}
+\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.4 \textperiodcentered\ TEACHER KEY}{One Interval, Two Threshold Claims}
 
 \sectionbanner{CED TETHER}
 
@@ -32,24 +32,14 @@
 \textbf{DOK-3 skill:} 4.D \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{one-\allowbreak{}interval-\allowbreak{}two-\allowbreak{}threshold-\allowbreak{}claims-\allowbreak{}bound-\allowbreak{}the-\allowbreak{}conclusion}}\par
 \textbf{DOK rationale:} Part (c) coordinates interval construction, contextual interpretation, and two endpoint comparisons to adjudicate competing conclusions, distinguish plausibility from support, and bound what can be reported.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask for a point-estimate first take.
-  \item At minute 5, read the rules box and start (a). At minute 33, ask students to compare the lower endpoint with both thresholds.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Choose which threshold claims have support and cite one number.
-  \item Read the rules box, work (a)--(c), revise the first take, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item What uncertainty disappears if you report only $0.68$?
   \item Which endpoint should you compare with a lower-bound claim?
   \item What does $0.65$ inside the interval establish---and not establish?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Require both endpoint comparisons and a bounded conclusion.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -77,7 +67,7 @@
 \end{tabular}}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose a statewide activities association has 10,000 member students and is considering requiring reusable food containers at its tournaments. In a simple random sample of 300 member students, 204 favor the requirement. A sponsor claims that at least $65\%$ of all member students favor it; an event organizer makes the more modest claim that more than $60\%$ favor it.\par\smallskip \textbf{Kai:} ``The sample has $204/300=68\%$ in favor, above both thresholds, so it supports both claims.''\par \textbf{Mira:} ``The point estimate alone cannot settle both claims. We should construct a confidence interval and compare all of its plausible values with each threshold.''\par
 \begin{center}
@@ -88,12 +78,18 @@ Suppose a statewide activities association has 10,000 member students and is con
 \textbf{Members} & 10,000 & 300 & 204 & 96 \\ \hline
 \end{tabular}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Do the data appear to support both claims, only one, or neither? Cite one number and commit before calculating the interval.\par
 \answer{Not graded. The interval must separate plausible from justified.}
 \end{firsttakebox}
 
-\textit{Rules callout ``LET THE WHOLE INTERVAL SET THE BOUND (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ LET THE WHOLE INTERVAL SET THE BOUND (keep on the page)}{calloutgreen}
+For a one-sample $z$-interval for $p$, check random sampling, $n\le0.10N$, and at least
+10 observed successes and failures. Then use $\hat p\pm1.96\sqrt{\hat p(1-\hat p)/n}$
+for $95\%$ confidence. Interpret: ``We are $95\%$ confident that the interval captures
+the population proportion [in context].'' A claim $p>c$ is supported only when the whole
+interval lies above $c$; if $c$ is inside the interval, plausible values lie on both sides.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} Define the population proportion $p$ and calculate the sample proportion $\hat p$.\par
 \answer{Let $p$ be the proportion of all 10,000 association member students who favor requiring reusable food containers at tournaments. The sample proportion is $\hat p=204/300=0.68$.}
@@ -103,9 +99,5 @@ Do the data appear to support both claims, only one, or neither? Cite one number
 
 \dokbadge{3}~\textbf{(c)} In 3--4 sentences, decide which threshold claim the interval supports and whose reasoning is better. Compare the lower endpoint with 0.60 and 0.65. Explain why a plausible 0.65 is different from establishing at least 0.65.\par
 \answer{Mira is warranted. The entire interval $(0.627,0.733)$ exceeds $0.60$, supporting the organizer's claim. Its lower endpoint is below $0.65$, so the interval does not establish the sponsor's lower bound. Because $0.65$ is inside, it remains plausible rather than disproved. Kai treats $0.68$ as exact, hiding the margin of error and falsely suggesting that both population bounds are established.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

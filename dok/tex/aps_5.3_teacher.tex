@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.12 \textperiodcentered\ B: 2026-11-19 \textperiodcentered\ E: 2026-11-20 \textperiodcentered\ TEACHER KEY}{When Is the Mean Nearly Normal?}
+\daybanner{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.12 \textperiodcentered\ TEACHER KEY}{When Is the Mean Nearly Normal?}
 
 \sectionbanner{CED TETHER}
 
@@ -24,27 +24,15 @@
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{clt-\allowbreak{}when-\allowbreak{}does-\allowbreak{}normality-\allowbreak{}apply}}\par
 \textbf{DOK rationale:} Part (c) weighs population shape, independence, and sample size to judge two normality claims and distinguish a model for sample means from a model for individuals.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask for a sample-size choice before displaying a rule of thumb.
-  \item At minute 5, read the rules box aloud once; students start (a).
-  \item Return to the board slide at minute 33. Circulate and require students to name which distribution becomes approximately normal.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Choose n equals 4 or n equals 40 and cite population shape or sample size.
-  \item Use the printed formulas to find the sampling mean and standard deviation for each sample size.
-  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Does averaging four values erase a long right tail automatically?
   \item Which distribution does the CLT describe: commuters or sample means?
   \item What happens to $15/\sqrt{n}$ when $n$ grows from 4 to 40?
   \item Which probability calculation becomes questionable if the n equals 4 shape is not normal?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Require shape, sample size, and independence in every normality defense; redirect claims that the population itself changes shape.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -80,7 +68,7 @@
 \end{itemize}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Individual commute times in a very large city are strongly right-skewed, with population mean $\mu=25$ minutes and standard deviation $\sigma=15$ minutes. Consider independent random samples.\par\smallskip \textbf{Rae:} ``Any average is approximately normal, even for $n=4$.''\par \textbf{Sol:} ``With this long right tail, $n=4$ may be too small; $n=40$ is more defensible.''\par
 \begin{center}
@@ -108,12 +96,18 @@ Individual commute times in a very large city are strongly right-skewed, with po
 \end{axis}
 \end{tikzpicture}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Which would you expect to smooth out the long commute times more: averaging 4 people or 40? Give one reason.\par
 \answer{Not graded. Expect `averages are normal' as an initial rule; the revision should add population shape and sufficiently large n.}
 \end{firsttakebox}
 
-\textit{Rules callout ``CLT: SHAPE, SIZE, AND THE RIGHT DISTRIBUTION (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ CLT: SHAPE, SIZE, AND THE RIGHT DISTRIBUTION (keep on the page)}{calloutgreen}
+The sampling distribution of $\bar{x}$ contains the sample means from all possible random samples of one size $n$.
+For independent observations, $\mu_{\bar{x}}=\mu$ and $\sigma_{\bar{x}}=\dfrac{\sigma}{\sqrt{n}}$.
+The \textbf{central limit theorem} says that when $n$ is sufficiently large, the sampling distribution of
+$\bar{x}$ is approximately normal even if the population is not. Stronger population skew generally requires
+a larger $n$; a small sample can retain that skew. The CLT concerns sample means, not individual observations.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} Identify the population shape and state the population mean and standard deviation with units.\par
 \answer{The population distribution of individual commute times is strongly right-skewed. Its mean is $\mu=25$ minutes and its standard deviation is $\sigma=15$ minutes.}
@@ -123,9 +117,5 @@ Which would you expect to smooth out the long commute times more: averaging 4 pe
 
 \dokbadge{3}~\textbf{(c)} In 3--4 sentences, decide whose claim is better supported. Use the population shape, independence, and the two sample sizes. Explain which distribution the CLT describes and why using a normal curve for averages of 4 could be unreliable.\par
 \answer{Sol's claim is better supported: a long right tail can remain when only four commute times are averaged. Independent samples of 40 make an approximately normal distribution of sample means more defensible by the CLT. The CLT describes sample means, not individual commute times. Using a normal curve for averages of 4 could give unreliable tail probabilities.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

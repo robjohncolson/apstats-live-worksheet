@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.6 \textperiodcentered\ B: 2026-12-10 \textperiodcentered\ E: 2026-12-14 \textperiodcentered\ TEACHER KEY}{Which Tail, and Probability of What?}
+\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.6 \textperiodcentered\ TEACHER KEY}{Which Tail, and Probability of What?}
 
 \sectionbanner{CED TETHER}
 
@@ -26,27 +26,15 @@
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{one-\allowbreak{}sided-\allowbreak{}vs-\allowbreak{}two-\allowbreak{}sided-\allowbreak{}p-\allowbreak{}value-\allowbreak{}interpret-\allowbreak{}the-\allowbreak{}condition}}\par
 \textbf{DOK rationale:} Part (c) coordinates the research direction, null distribution, tail area, and conditional meaning of a p-value to adjudicate two interpretations and explain the inferential consequence of choosing the wrong tail.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask students to choose a tail and interpretation before calculating.
-  \item At minute 5, read the rules box aloud once; students start (a).
-  \item Return to the board slide at minute 33. Circulate and require every p-value sentence to begin with its null assumption.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Choose Priya or Noah and cite the word fallen, 0.49, or one proposed p-value.
-  \item Use the rules box to choose the tail, calculate the statistic, and compare the two p-values.
-  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Which sample results are stronger evidence for a less-than alternative?
   \item What different research question would make $0.088$ the relevant p-value?
   \item What must be assumed before the probability $0.044$ is calculated?
   \item Is the random object in a p-value the fixed parameter or a future sample statistic?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Ask students to name the null world, tail direction, and repeated-sample event; do not accept `the null is probably false' as an interpretation.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -74,7 +62,7 @@
 \end{tabular}}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose a city's earlier planning model says $55\%$ of households support expanded evening bus service. A researcher suspects support has \emph{fallen}. From the city's 20{,}000 households, a simple random sample of 200 finds 98 that support expansion, so $\hat p=0.49$. Conditions for a one-sample $z$-test are met.\par\smallskip \textbf{Priya:} ``For $H_0:p=0.55$ versus $H_a:p<0.55$, use the left-tail p-value, about $0.044$. If support is still $55\%$, about $4.4\%$ of random samples of 200 would produce a sample proportion of $0.49$ or lower.''\par \textbf{Noah:} ``Any difference from $0.55$ counts, so double the tail to about $0.088$. That means there is an $8.8\%$ chance that the actual support proportion differs from $0.55$.''\par
 \begin{center}
@@ -85,12 +73,20 @@ Suppose a city's earlier planning model says $55\%$ of households support expand
 \textbf{Households} & 98 & 102 & 200 \\ \hline
 \end{tabular}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Does fallen mean only a drop in support, or a change in either direction? Give one reason from the study.\par
 \answer{Not graded. The doubled value can sound more cautious; the finish should tie the tail to the question and the probability to repeated samples.}
 \end{firsttakebox}
 
-\textit{Rules callout ``A p-VALUE CONDITIONS ON THE NULL (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ A p-VALUE CONDITIONS ON THE NULL (keep on the page)}{calloutgreen}
+For a one-sample proportion test,
+$z=\dfrac{\hat p-p_0}{\sqrt{p_0(1-p_0)/n}}$.
+The p-value is the probability of a sample statistic \textbf{as extreme or more extreme} than the observed one,
+in the direction of $H_a$, assuming $H_0$ and the probability model are true. Use the left tail for $H_a:p<p_0$,
+the right tail for $H_a:p>p_0$, and both tails for $H_a:p\neq p_0$.
+A p-value is a probability about possible sample results under $H_0$; it is not the probability that a hypothesis is true.
+Printed normal table: $P(Z\leq-1.7056)=0.044041$. For a symmetric normal curve, the two-sided area is twice the smaller tail area.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} State the null and alternative hypotheses and identify the tail direction required by the research question.\par
 \answer{Let $p$ be the current proportion of all city households that support expanded evening bus service. The hypotheses are $H_0:p=0.55$ and $H_a:p<0.55$. Because fallen means less than, the p-value is a left-tail area.}
@@ -100,9 +96,5 @@ Does fallen mean only a drop in support, or a change in either direction? Give o
 
 \dokbadge{3}~\textbf{(c)} Choose the warranted p-value and interpretation. Use $H_a$ and $\hat p=0.49$ to define the tail event and null assumption, then explain what Noah's doubled area answers and what his statement gets wrong.\par
 \answer{Priya is warranted. Because $H_a:p<0.55$ and $\hat p=0.49$, more extreme means $\hat p\leq0.49$. Assuming $H_0:p=0.55$ and the model are true, that random-sample probability is about $0.044$. Noah's $0.088$ answers the two-sided question $p\neq0.55$. A p-value concerns possible samples under an assumed null, not the probability that a parameter or hypothesis is true; Noah would falsely imply an $8.8\%$ chance that the true support differs.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

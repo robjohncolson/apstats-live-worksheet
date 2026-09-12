@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 4 \textperiodcentered\ Topic 4.6 \textperiodcentered\ B: 2027-02-04 \textperiodcentered\ E: 2027-02-08 \textperiodcentered\ TEACHER KEY}{Two Samples, One Difference}
+\daybanner{AP Statistics \textperiodcentered\ Unit 4 \textperiodcentered\ Topic 4.6 \textperiodcentered\ TEACHER KEY}{Two Samples, One Difference}
 
 \sectionbanner{CED TETHER}
 
@@ -24,26 +24,15 @@
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{two-\allowbreak{}shape-\allowbreak{}routes-\allowbreak{}for-\allowbreak{}a-\allowbreak{}mean-\allowbreak{}difference}}\par
 \textbf{DOK rationale:} Part (c) coordinates a separate shape pathway for each sample mean, judges two incomplete model claims, and uses a small-sample counterfactual to trace when the tail probability loses support.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask which details govern the sampling model.
-  \item At minute 5, read the rules box aloud once; students start (a).
-  \item Return at minute 33. Require separate shape arguments and the counterfactual check.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Name one argument to retain and one that needs more evidence.
-  \item Read the rules box, work (a)--(c), revise the first take, and turn in.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Which distribution are we justifying for North: individual waits or sample means?
   \item Why can the two groups use different routes to approximate normality?
   \item What changes if the skewed South sample has size 8?
   \item What repeated-sampling event does 0.0273 describe?
 \end{itemize}
-}{Solo teacher. Justify North and South separately, then combine them using independence.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -71,7 +60,7 @@
 \end{tabular}}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose parcel pickup waits have the shown population parameters, measured in minutes. There are 600 North visits and 1,000 South visits. North waits are approximately normal; South waits are strongly right-skewed. Independent SRSs are taken without replacement, and the service wants $P(\bar X_N-\bar X_S>2.5)$.\par\smallskip \textbf{Rina:} ``South is skewed, so I would not use a normal model for the difference.''\par \textbf{Oscar:} ``North is normal and the combined sample size is 60, so the normal model is valid; the probability is $0.0273$.''\par
 \begin{center}
@@ -83,12 +72,21 @@ Suppose parcel pickup waits have the shown population parameters, measured in mi
 \textbf{South} & 48 & 4.8 & 3.0 \\ \hline
 \end{tabular}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Would you check each place's sample size separately or add them together? Give one reason from the study.\par
 \answer{Not graded. Each account contains a claim that still needs component-level justification.}
 \end{firsttakebox}
 
-\textit{Rules callout ``JUSTIFY EACH SAMPLE MEAN BEFORE THEIR DIFFERENCE (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ JUSTIFY EACH SAMPLE MEAN BEFORE THEIR DIFFERENCE (keep on the page)}{calloutgreen}
+For independent random samples, $\mu_{\bar X_1-\bar X_2}=\mu_1-\mu_2$ and
+$\sigma_{\bar X_1-\bar X_2}=\sqrt{\sigma_1^2/n_1+\sigma_2^2/n_2}$ when each
+sample has $n\leq0.10N$. Justify each component's shape: a normal population
+supports a normal sample mean even for small $n$, while the Central Limit Theorem supports
+a sample mean from a nonnormal population when its own $n\geq30$. The two groups need not
+use the same pathway. Interpret probabilities as outcomes from repeated pairs of samples.
+For a normal probability, standardize with $z=(\text{value}-\text{mean})/\text{SD}$ and use the appropriate normal tail.
+Printed normal table: $P(Z\leq1.9220)=0.972696$. A right-tail area is 1 minus the left area.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} State the mean of $\bar X_N-\bar X_S$ and translate the event above into context.\par
 \answer{The sampling distribution is centered at $\mu_N-\mu_S=6.0-4.8=1.2$ minutes. The event says the sample mean North wait exceeds the sample mean South wait by more than 2.5 minutes.}
@@ -98,9 +96,5 @@ Would you check each place's sample size separately or add them together? Give o
 
 \dokbadge{3}~\textbf{(c)} In 4--5 sentences, decide whether 0.0273 is supported and explain what each student overlooks. Justify each sample mean using its own shape and size. Then consider $n_N=48$ and $n_S=8$: explain why their total alone cannot justify the same normal-model claim.\par
 \answer{The original probability is supported, but both explanations are incomplete. North's normal population supports its sample mean at $n_N=12$, and South's $n_S=48$ supports its sample mean by the CLT. Independence then supports an approximately normal difference, so Rina rejects a supported approximation. Oscar's combined-size rule fails: with $n_N=48$ and $n_S=8$, the total is 56, but the small sample from skewed South has no normality justification. The total alone would make readers trust an unsupported tail approximation.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

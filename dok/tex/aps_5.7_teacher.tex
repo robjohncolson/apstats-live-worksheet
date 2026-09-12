@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 4 \textperiodcentered\ Topic 4.1 \textperiodcentered\ B: 2027-01-25 \textperiodcentered\ E: 2027-01-27 \textperiodcentered\ TEACHER KEY}{Two Production Lines, Two Sampling Plans}
+\daybanner{AP Statistics \textperiodcentered\ Unit 4 \textperiodcentered\ Topic 4.1 \textperiodcentered\ TEACHER KEY}{Two Production Lines, Two Sampling Plans}
 
 \sectionbanner{CED TETHER}
 
@@ -28,27 +28,15 @@
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{normal-\allowbreak{}vs-\allowbreak{}clt-\allowbreak{}model-\allowbreak{}adjudication}}\par
 \textbf{DOK rationale:} Part (c) adjudicates two incomplete normal-model claims by coordinating population shape, sample size, the 10 percent condition, sampling-distribution variability, and the consequence of rejecting a valid probability model.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask students to mark one plausible clause in each claim without confirming either.
-  \item At minute 5, read the rules box aloud once; students start (a).
-  \item Return to the board slide at minute 33. Circulate and require a separate normality justification for each line.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Mark a plausible clause in each claim and cite population shape or sample size.
-  \item Use the rules box to check each model before calculating its normal tail probability.
-  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Is 30 the only route to a normal sampling distribution?
   \item Does the Central Limit Theorem change the original population or the distribution of sample means?
   \item Why are both sampling distributions centered at 40 despite different sample sizes?
   \item How do standard deviations 4 and 2 change where 46 falls on each model?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Ask students to evaluate each clause of each claim, then connect the normality path and sampling standard deviation to its tail probability.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -76,7 +64,7 @@
 \end{tabular}}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 seconds and standard deviation 12 seconds. Line A is approximately normal and an SRS of $n_A=9$ is selected; Line B is strongly right-skewed and an SRS of $n_B=36$ is selected. An auditor wants $P(\bar X>46)$ for each.\par\smallskip \textbf{Serena:} ``Only B can use a normal model because $36\geq30$; its probability is $0.00135$. A is too small.''\par \textbf{Mateo:} ``Only A can use a normal model because its population is normal; its probability is $0.0668$. B is too skewed.''\par
 \begin{center}
@@ -88,12 +76,20 @@ Suppose Lines A and B each contain 1{,}000 cycle times with population mean 40 s
 \textbf{B} & Right-skewed & 1000 & 36 & 40 & 12 \\ \hline
 \end{tabular}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Which plan seems more likely to give averages close to 40 seconds? Give one reason from the sample sizes or shapes.\par
 \answer{Not graded. Each student is correct about one line and wrong about the other; the finish should replace either-or reasoning with the two separate normality pathways.}
 \end{firsttakebox}
 
-\textit{Rules callout ``MODEL SAMPLE MEANS, NOT INDIVIDUAL VALUES (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ MODEL SAMPLE MEANS, NOT INDIVIDUAL VALUES (keep on the page)}{calloutgreen}
+For an SRS of size $n$, $\mu_{\bar X}=\mu$ and $\sigma_{\bar X}=\sigma/\sqrt n$ when
+$n\leq0.10N$ for sampling without replacement. The sampling distribution of $\bar X$ is
+approximately normal if the population is approximately normal (for any $n$)
+\textbf{or} if the population is not normal but $n\geq30$ (Central Limit Theorem).
+A normal tail probability describes the mean of an entire random sample, not one individual value.
+For a normal probability, standardize with $z=(\text{value}-\text{mean})/\text{SD}$ and use the appropriate normal tail.
+Printed normal table: $P(Z\leq1.5000)=0.933193$ and $P(Z\leq3.0000)=0.998650$. A right-tail area is 1 minus the left area.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} State the mean of each sampling distribution and the 10\% condition for using $\sigma_{\bar X}=\sigma/\sqrt n$.\par
 \answer{Both sampling distributions have mean 40 seconds. Without replacement, each sample must be no more than 10 percent of its population to use $\sigma_{\bar X}=\sigma/\sqrt n$ without a finite-population correction.}
@@ -103,9 +99,5 @@ Which plan seems more likely to give averages close to 40 seconds? Give one reas
 
 \dokbadge{3}~\textbf{(c)} In 3--4 sentences, explain what each student gets right and wrong. Use the two normality pathways to decide which probabilities are supported. Connect the different tail probabilities to the sampling SDs in (b).\par
 \answer{Neither whole claim is complete. Serena is right about B: despite population skew, $n_B=36$ activates the CLT and supports $0.00135$; she wrongly rejects A, whose normal population supports a normal sampling distribution at $n_A=9$. Mateo is right about A and $0.0668$ but ignores B's CLT route. Their rules would each discard one valid probability. Both models center at 40, but 46 is 1.5 sampling SDs above A's center and 3 above B's, so B's larger sample produces the smaller tail.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

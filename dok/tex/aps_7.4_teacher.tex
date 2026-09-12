@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 4 \textperiodcentered\ Topic 4.4 \textperiodcentered\ B: 2027-02-01 \textperiodcentered\ E: 2027-02-03 \textperiodcentered\ TEACHER KEY}{Two Measurements per Technician}
+\daybanner{AP Statistics \textperiodcentered\ Unit 4 \textperiodcentered\ Topic 4.4 \textperiodcentered\ TEACHER KEY}{Two Measurements per Technician}
 
 \sectionbanner{CED TETHER}
 
@@ -29,25 +29,13 @@
 \textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{paired-\allowbreak{}test-\allowbreak{}setup-\allowbreak{}and-\allowbreak{}consequences}}\par
 \textbf{DOK rationale:} Part (c) coordinates repeated measures, subtraction order, tail direction, independent sample size, and shape evidence, then traces the uncertainty and research-question consequences of the rejected setup.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Display the board and ask for one sentence using the study description.
-  \item At minute 5, read the rules box aloud once; students start (a).
-  \item Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
-  \item Collect at the door. Score part (c) only using the three required elements.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Write a one-sentence first take before any discussion.
-  \item Work (a) and (b) from the rules box and the stem.
-  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Which specific number or study detail supports your choice?
   \item What claim would go beyond the evidence, and why?
 \end{itemize}
-}{Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or a second full inference write-up.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -74,7 +62,7 @@
 \end{tabular}}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose a company takes an SRS of 18 of its 300 technicians. Each completes the same task with old and new interfaces; interface order is randomly assigned. The plot shows $d=\text{new time}-\text{old time}$. Researchers ask whether the new interface reduces the population mean time.\par\smallskip \textbf{Nia:} ``The technician seems to be the independent unit, so I would build one difference per person; the subtraction order matters for the tail.''\par \textbf{Colin:} ``There are 36 recorded times, so I would use two independent samples of 18 and a two-sided alternative.''\par
 \begin{center}
@@ -108,12 +96,19 @@ Suppose a company takes an SRS of 18 of its 300 technicians. Each completes the 
 \end{axis}
 \end{tikzpicture}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Would you compare each technician's two times or treat them as separate people? Explain in one sentence.\par
-\answer{Ungraded. Everyday language is enough before the discussion; formal vocabulary belongs in the finish.}
+\answer{Ungraded commitment; accept any evidence-based first impression.}
 \end{firsttakebox}
 
-\textit{Rules callout ``SET UP A TEST FOR A MEAN (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ SET UP A TEST FOR A MEAN (keep on the page)}{calloutgreen}
+For a population mean with unknown population standard deviation, use a one-sample $t$-test.
+Matched pairs are two linked measurements: subtract in the same order and analyze one sample of differences.
+Write hypotheses about the population mean, not the sample mean. The null uses equality; the alternative
+uses $<$, $>$, or $\neq$, as determined by the research question and subtraction order.
+Check random sampling or assignment, $n\leq0.10N$ when sampling without replacement, and shape.
+For $n<30$, the values being analyzed should have no strong skewness or outliers.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} Define $\mu_d$ in context.\par
 \answer{$\mu_d$ is the mean new-minus-old task time for all 300 technicians.}
@@ -123,9 +118,5 @@ Would you compare each technician's two times or treat them as separate people? 
 
 \dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose a setup and justify it. State the hypotheses using the given subtraction order and reduction question, then explain why the 36 times are not 36 independent people.\par
 \answer{Nia is justified: use a matched-pairs one-sample $t$-test on the 18 differences. For new minus old, a reduction is negative, so $H_0:\mu_d=0$ and $H_a:\mu_d<0$. Each technician supplies two linked times, so there are 18 independent people, not 36. Treating the times as independent loses the pairing, and a two-sided alternative asks about any change rather than the planned reduction.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

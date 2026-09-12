@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ B: 2026-12-04 \textperiodcentered\ E: 2026-12-07 \textperiodcentered\ TEACHER KEY}{Two Library Survey Plans}
+\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.3 \textperiodcentered\ TEACHER KEY}{Two Library Survey Plans}
 
 \sectionbanner{CED TETHER}
 
@@ -36,24 +36,14 @@
 \textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{narrower-\allowbreak{}self-\allowbreak{}selected-\allowbreak{}interval-\allowbreak{}vs-\allowbreak{}wider-\allowbreak{}random-\allowbreak{}interval}}\par
 \textbf{DOK rationale:} Part (c) requires judging two competing interval reports by coordinating recruitment, numerical conditions, and interval width, then explaining why the more precise-looking output cannot support the target-population claim.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask students to choose a plan before calculating.
-  \item At minute 5, read the rules box and start (a). At minute 33, ask what the collection method lets them conclude.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Choose a plan and cite one collection detail.
-  \item Read the rules box, work (a)--(c), revise the first take, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Which condition depends on how cardholders entered the sample?
   \item What do the numerical conditions not establish?
   \item Why is Plan B's formula interval narrower?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Require all three checks and distinguish a formula output from a defensible interval.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -81,7 +71,7 @@
 \end{tabular}}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 A library system has 20,000 adult cardholders and wants to estimate $p$, the proportion who used a digital audiobook last month.\par\smallskip \textbf{Plan A:} A computer takes an SRS of 200 cardholder IDs. All answer; 116 say yes.\par \textbf{Plan B:} A newsletter link lets cardholders choose to respond once. Of 800 respondents, 520 say yes.\par\smallskip \textbf{Eli:} ``Use Plan B. Its larger sample gives the narrower interval.''\par \textbf{Dana:} ``Use Plan A. Entry into the sample matters more than the narrowest output.''\par\smallskip The 95\% formula output for B is $(0.6169,0.6831)$, width 0.0661. A's formula width is 0.1368.\par
 \begin{center}
@@ -93,12 +83,18 @@ A library system has 20,000 adult cardholders and wants to estimate $p$, the pro
 \textbf{B} & 20,000 & 800 & 520 & 280 \\ \hline
 \end{tabular}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Which plan, if either, should estimate all adult cardholders? Cite one collection detail.\par
 \answer{Not graded. The larger sample is intentionally attractive.}
 \end{firsttakebox}
 
-\textit{Rules callout ``ONE-SAMPLE INTERVAL FOR A PROPORTION (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ ONE-SAMPLE INTERVAL FOR A PROPORTION (keep on the page)}{calloutgreen}
+Use a one-sample $z$-interval for $p$: $\hat p\pm z^*\sqrt{\hat p(1-\hat p)/n}$;
+for $95\%$ confidence, $z^*=1.96$. Check (1) random data collection, (2) when sampling
+without replacement, $n\le 0.10N$, and (3) at least 10 observed successes and 10 failures.
+A smaller formula margin of error describes less random sampling variation; it does not repair
+systematic error caused by who chooses to respond.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} Define the population parameter $p$ in context and name the confidence-interval procedure that would be appropriate when its conditions are met.\par
 \answer{Here $p$ is the proportion of all 20,000 adult library cardholders who used a digital audiobook last month. When conditions are met, the procedure is a one-sample $z$-interval for a population proportion.}
@@ -108,9 +104,5 @@ Which plan, if either, should estimate all adult cardholders? Cite one collectio
 
 \dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose the plan that can estimate all cardholders. Use recruitment and one numerical condition. Explain why the supplied widths do or do not support Eli's recommendation.\par
 \answer{Use Plan A. Its SRS, $200\le2{,}000$, and counts 116 and 84 support the interval $(0.512,0.648)$ for all cardholders. Its width is about $0.1368$ versus Plan B's smaller formula width, $0.0661$. Plan B's volunteers may differ systematically from nonrespondents; its margin of error covers random variation, not self-selection. Reporting it would falsely suggest that a narrow range represents all cardholders with 95 percent confidence.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

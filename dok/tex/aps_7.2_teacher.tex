@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 4 \textperiodcentered\ Topic 4.2 \textperiodcentered\ B: 2027-01-28 \textperiodcentered\ E: 2027-01-29 \textperiodcentered\ TEACHER KEY}{Two Interfaces, Twelve Specialists}
+\daybanner{AP Statistics \textperiodcentered\ Unit 4 \textperiodcentered\ Topic 4.2 \textperiodcentered\ TEACHER KEY}{Two Interfaces, Twelve Specialists}
 
 \sectionbanner{CED TETHER}
 
@@ -20,25 +20,13 @@
 \textbf{DOK-3 skill:} 4.C \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{paired-\allowbreak{}vs-\allowbreak{}independent-\allowbreak{}interval-\allowbreak{}and-\allowbreak{}scope}}\par
 \textbf{DOK rationale:} Part (c) selects a procedure from the pairing, uses interval and SRS scope, diagnoses fixed-order confounding, and traces the independence and causal consequences.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Display the board and ask for one sentence using the study description.
-  \item At minute 5, read the rules box aloud once; students start (a).
-  \item Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
-  \item Collect at the door. Score part (c) only using the three required elements.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Write a one-sentence first take before any discussion.
-  \item Work (a) and (b) from the rules box and the stem.
-  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Which specific number or study detail supports your choice?
   \item What claim would go beyond the evidence, and why?
 \end{itemize}
-}{Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or a second full inference write-up.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -65,7 +53,7 @@
 \end{tabular}}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose a hospital randomly samples 12 of its 180 billing specialists. Each does the same task on the current computer screen and, one week later, on a redesigned screen. Everyone uses the current screen first; there is no comparison group. Let $d=\text{current}-\text{redesigned}$ time in seconds. The plot shows the differences; $\bar d=2.000$, $s_d=1.6514$, and the 95\% critical value is $t^*=2.201$.\par\smallskip \textbf{Priya:} ``Use one sample of paired differences. Doing the tasks in a fixed order limits a cause-and-effect claim.''\par \textbf{Mateo:} ``Two columns require two independent samples. A positive interval proves the redesign caused faster work.''\par
 \begin{center}
@@ -93,12 +81,19 @@ Suppose a hospital randomly samples 12 of its 180 billing specialists. Each does
 \end{axis}
 \end{tikzpicture}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Which seems more useful here: each person's change in time or two separate groups of times? Explain in one sentence.\par
-\answer{Ungraded. Everyday language is enough before the discussion; formal vocabulary belongs in the finish.}
+\answer{Ungraded commitment; accept any evidence-based first impression.}
 \end{firsttakebox}
 
-\textit{Rules callout ``ONE-SAMPLE MEAN INTERVALS (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ ONE-SAMPLE MEAN INTERVALS (keep on the page)}{calloutgreen}
+For paired measurements, define every difference in the same order and treat the $n$ pairs as
+one sample: $\bar d\pm t^*(s_d/\sqrt n)$ with $df=n-1$. Check conditions on the differences:
+random sampling or random assignment, $n\leq0.10N$ when sampling without replacement, and,
+for $n<30$, no strong skew or outliers. Two readings from each person are not two independent
+samples. Random sampling supports generalization to the sampled population; random assignment
+or an adequate randomized comparison is needed to isolate causation from practice or time effects.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} How many paired differences are there, and what does a positive difference mean?\par
 \answer{There are 12 paired differences. A positive current-minus-redesigned difference means the later task took less time.}
@@ -108,9 +103,5 @@ Which seems more useful here: each person's change in time or two separate group
 
 \dokbadge{3}~\textbf{(c)} In 3--4 sentences, choose an analysis and justify it from the linked measurements. Interpret the interval for the 180 specialists, then explain why practice or the fixed order limits a causal claim.\par
 \answer{Priya is better supported because each specialist supplies two linked measurements, so the 12 differences form one sample. Treating the columns as independent loses that link and changes the standard error. We are 95\% confident the mean current-minus-redesigned time for the 180 specialists under this sequence is about 0.95 to 3.05 seconds. Because the current screen always came first and there was no comparison group, practice or time could explain the improvement; the redesign alone is not shown to cause it.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

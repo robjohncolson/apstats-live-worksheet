@@ -1,13 +1,12 @@
 # dok/ — one DOK-3 problem per AP Stats lesson day
 
-Spec: `../APS_DOK_LADDER_SPEC.md`. Class flow: board slide at the bell → students write a
-**first take** → video follow-along → finish parts (a)(b)(c) → turn in. Every lesson, 1.1
-included, carries a DOK-3 (§1.3). Three editions per day: student sheet (2 sides), board
-slide (1 landscape page), teacher key (≤ 3 pages, E/P/I scoring on part (c)).
+Spec: [DOK_SELF_PACED_SPEC.md](../DOK_SELF_PACED_SPEC.md). Flow: **self-paced bonus problem; hand-scored (c)**.
+Students write a first take, work the printed parts, and turn the sheet in whenever they finish for bonus credit.
+Every sheet supplies its own stem, visual, and boxed notes. Three editions: student sheet (2 sides), board slide,
+and teacher key with answers, questions to ask, and E/P/I scoring.
 
-The 2026-09-12 doctrine is in [DOK_VIDEO_FREE_SPEC.md](../DOK_VIDEO_FREE_SPEC.md).
-Standalone remediation sheets use the same flow with their own part range and finish window;
-they remain outside the calendar day-groups. Sheets are graded by a human, never auto-scored.
+Standalone remediation sheets use identical copy and their own part range (score (d) when that is the final part).
+They remain outside calendar day-groups. Sheets are graded by a human, never AI-graded or auto-scored.
 
 ## Author one lesson (≈ 30 min once you have the problem)
 
@@ -21,10 +20,11 @@ they remain outside the calendar day-groups. Sheets are graded by a human, never
    Optional: a second row `aps-{topic}-d2-1` with `role: reinforcement`.
 2. **Lesson YAML** — copy `lessons/1.6.yaml` to `lessons/{topic}.yaml`. Keep `topic` = the
    OLD topic key from `data/lesson-schedule.json`; put the NEW CED label in `ced2026`.
-   `worksheet` = the optional follow-along review filename (link + QR on the board slide).
-   Use `minutes.explore` for the existing class-time budget; the loader also accepts the legacy key.
-   Field values must stand alone: the content guard rejects viewing references, except inside actual
-   `*_live.html` filenames in `worksheet` / `worksheets`.
+   `worksheet` / `worksheets` retain filenames only for manifest/index metadata; they are not printed.
+   Do not add `minutes`, `exit_reflection`, or teacher `phase_tag`, `teacher_does`, `students_do`, `adult_role`.
+   The validator rejects retired fields and every phrase in `self_paced_phrases.json`, case-insensitively.
+   Actual `*_live.html` filenames are exempt only in worksheet metadata. Printed TeX has no exemptions.
+   If a phrase collides with problem data, remove the phrase from the guard; never change the problem.
    `visuals` carry data + labels only (`pgfplot_hist`, `dotplot`, `boxplot`, `two_way_table`,
    `scatter`, `raw_tikz`).
 3. **Delete the topic's row from `PENDING.md`.**
@@ -46,7 +46,7 @@ Group sheets are additive: all individual topic sheets remain available. The sch
 Build with `powershell -NoProfile -File dok/compile.ps1 1.4_1.5`.
 
 Each group has one shared problem and one human-graded E/P/I response, parts covering
-both topics, optional follow-along review links and QR codes, and the union of both CED tethers.
+both topics and the union of both CED tethers. All information needed for the problem is printed.
 It is never AI-graded or auto-scored. The first two pairs are built; the other eight
 are explicitly listed in `PENDING.md` and the teacher index.
 

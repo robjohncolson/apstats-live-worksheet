@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.4 \textperiodcentered\ B: 2026-10-26 \textperiodcentered\ E: 2026-10-26 \textperiodcentered\ TEACHER KEY}{Probability or Estimate?}
+\daybanner{AP Statistics \textperiodcentered\ Unit 2 \textperiodcentered\ Topic 2.4 \textperiodcentered\ TEACHER KEY}{Probability or Estimate?}
 
 \sectionbanner{CED TETHER}
 
@@ -26,27 +26,15 @@
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{theoretical-\allowbreak{}vs-\allowbreak{}empirical-\allowbreak{}which-\allowbreak{}is-\allowbreak{}the-\allowbreak{}probability}}\par
 \textbf{DOK rationale:} Part (c) coordinates an equally likely sample-space model with an observed relative frequency, adjudicates the roles of two competing numerical claims, and bounds when the empirical estimate deserves trust.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Ask students to commit to one number without confirming either claim.
-  \item At minute 5, read the rules box aloud once; students start (a).
-  \item Return to the board slide at minute 33. Circulate and require students to label each number by its source.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Choose 0.375 or 0.45 and cite either the spinner design or the observed plays.
-  \item Use the rules box to list the sample space and compare the model probability with the observed fraction.
-  \item Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item Which number comes from possible outcomes, and which comes from recorded outcomes?
   \item Does a difference of 7.5 percentage points prove that either calculation is wrong?
   \item What exactly does the law of large numbers predict as trials accumulate?
   \item If the spinner favored one sector, which number would stop representing the actual game?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Ask for the source and role of each number; do not accept `the data are wrong' or `the model always wins' without a condition.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -83,7 +71,7 @@
 \end{itemize}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 Suppose a game uses a spinner with eight equal sectors numbered 1 through 8. A player wins when the spinner lands on 1, 2, or 3. The dotplot shows the results of 40 observed plays.\par\smallskip \textbf{Dani:} ``The probability of winning is $3/8=0.375$ because three of the eight equally likely results win.''\par \textbf{Micah:} ``The probability is $18/40=0.45$ because 18 of the 40 observed plays were wins.''\par
 \begin{center}
@@ -139,12 +127,19 @@ Suppose a game uses a spinner with eight equal sectors numbered 1 through 8. A p
 \end{axis}
 \end{tikzpicture}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Which number would you use to describe the chance of winning the next play: $0.375$ or $0.45$? Give one reason.\par
 \answer{Not graded. Expect both choices; the revision should distinguish a model probability from a data-based estimate.}
 \end{firsttakebox}
 
-\textit{Rules callout ``MODEL, DATA, AND THE LONG RUN (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ MODEL, DATA, AND THE LONG RUN (keep on the page)}{calloutgreen}
+For equally likely outcomes, $P(E)=\dfrac{\text{outcomes in }E}{\text{outcomes in the sample space}}$.
+A \textbf{theoretical probability} comes from a probability model; an \textbf{empirical probability}
+is the observed relative frequency $\dfrac{\text{times }E\text{ occurred}}{\text{number of trials}}$ and estimates it.
+The \textbf{law of large numbers} says that, as the number of independent trials made under the same
+conditions grows, the observed relative frequency tends to approach the true probability. It does not
+guarantee an exact match in a fixed number of trials. A fair model requires its stated outcomes to be equally likely.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} List the sample space and identify the outcomes in the event `win.'\par
 \answer{The sample space is $S=\{1,2,3,4,5,6,7,8\}$. The win event is $W=\{1,2,3\}$.}
@@ -154,9 +149,5 @@ Which number would you use to describe the chance of winning the next play: $0.3
 
 \dokbadge{3}~\textbf{(c)} Under the stated equal-sector model, decide which number is the theoretical probability and which is an empirical estimate. Cite both the sample-space feature and the 40-play result, use the law of large numbers to explain why the numbers can differ, and state two features of the trial process you would check before trusting the observed proportion.\par
 \answer{Dani's $3/8=0.375$ is the theoretical probability under the model because 3 of 8 equally likely sectors win. Micah's $18/40=0.45$ is an empirical estimate from this particular set of 40 plays. Random variation can make a short-run proportion differ from the theoretical probability; the law of large numbers says the observed proportion tends to approach the true probability as the number of independent, identically conducted plays grows, not that 40 plays must match exactly. Before trusting $0.45$, check whether there were enough plays and whether the spinner and spinning method made the eight outcomes equally likely. If the game was not fair, $3/8$ would not be its actual probability; if only 40 fair plays were observed, $0.45$ may simply be a variable estimate.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}

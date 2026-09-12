@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.8 \textperiodcentered\ B: 2026-12-15 \textperiodcentered\ E: 2026-12-18 \textperiodcentered\ TEACHER KEY}{Which Error Can the District Afford?}
+\daybanner{AP Statistics \textperiodcentered\ Unit 3 \textperiodcentered\ Topic 3.8 \textperiodcentered\ TEACHER KEY}{Which Error Can the District Afford?}
 
 \sectionbanner{CED TETHER}
 
@@ -45,24 +45,14 @@
 \textbf{DOK-3 skill:} 4.B \textperiodcentered\ \textbf{FRQ pattern:} {\small\texttt{alpha-\allowbreak{}vs-\allowbreak{}power-\allowbreak{}which-\allowbreak{}error-\allowbreak{}tradeoff-\allowbreak{}fits-\allowbreak{}consequences}}\par
 \textbf{DOK rationale:} Part (c) weighs both conditional error risks and their consequences to recommend a plan for a stated priority and explain why another priority can support another plan.\par
 
-\frameworkphaseheader{First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in}{1 $\rightarrow$ 3}{45}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Board slide up at the bell. Tally A, B, and need-more-information votes.
-  \item At minute 5, read the rules box and start (a). At minute 33, ask students to name the decision and true state for each probability.
-  \item Collect at the door. Score part (c) only, E/P/I.
-\end{itemize}
-}{%
-\begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
-  \item Choose a plan and name the prioritized error.
-  \item Read the rules box, work (a)--(c), revise the first take, and turn in the sheet.
-\end{itemize}
-}{%
+\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. Everything they need is printed on the sheet. Score part (c) only, E / P / I, by hand --- never AI-graded or auto-scored. (a) and (b) are the ladder up; use them to see where a thin (c) came from.\par
+
+\textbf{Questions to ask}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
   \item If $p=0.10$, what decision creates the dangerous miss?
   \item What does the complement of 0.748 represent?
   \item What does Plan B trade per 1,000 tests?
 \end{itemize}
-}{Solo teacher. Circulate ~5 pairs. Require both consequences and both sides of the tradeoff.}
 
 \begin{callout}{\IconWarn\ LOOK FOR}{calloutred}
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
@@ -90,7 +80,7 @@
 \end{tabular}}
 
 \clearpage
-\focusbanner{TODAY'S PROBLEM --- annotated}
+\focusbanner{THE PROBLEM --- annotated}
 
 A district checks an emergency-alert system. Let $p$ be the proportion of alerts that arrive late. It tests $H_0:p=0.05$ versus $H_a:p>0.05$, replacing the system if it rejects $H_0$. Both plans use $n=200$. The Safety office wants to avoid keeping a system with a 10\% late rate. The Budget office wants to avoid replacing a system with a 5\% late rate. The offices have not agreed how to compare these costs.\par\smallskip \textbf{Dev:} ``Use A. Smaller $\alpha$ lowers both error risks.''\par \textbf{Lin:} ``Use B. Its higher power has no cost when safety matters.''\par
 \begin{center}
@@ -102,12 +92,17 @@ A district checks an emergency-alert system. Let $p$ be the proportion of alerts
 \textbf{B} & 0.050 & 0.877 \\ \hline
 \end{tabular}
 \end{center}
-\begin{firsttakebox}{FIRST TAKE (5 min)}
+\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}
 Which plan would you try first? Name the office you prioritized and one competing cost.\par
 \answer{Not graded. Either plan needs a conditional defense; neither is cost-free.}
 \end{firsttakebox}
 
-\textit{Rules callout ``ERROR PROBABILITIES TRADE OFF (keep on the page)'' is printed on the student sheet.}\par\medskip
+\begin{callout}{\IconBook\ ERROR PROBABILITIES TRADE OFF (keep on the page)}{calloutgreen}
+A Type I error rejects a true $H_0$, and its probability is $\alpha$. A Type II error fails to reject a false
+$H_0$; $\beta=1-\text{power}$. With sample size fixed, increasing $\alpha$ generally raises power and lowers
+$\beta$, but it also raises the false-positive risk. Increasing sample size can raise power while keeping the
+chosen $\alpha$ fixed. Choose a plan by naming the real consequence of each error.
+\end{callout}
 
 \dokbadge{1}~\textbf{(a)} Identify what the table's power at $p=0.10$ means in this setting.\par
 \answer{Power is the probability that the test rejects $H_0$ and replaces the system when its true late-alert rate is 10\%.}
@@ -117,9 +112,5 @@ Which plan would you try first? Name the office you prioritized and one competin
 
 \dokbadge{3}~\textbf{(c)} In 4--5 sentences, recommend a plan for one office using both error risks. Explain the consequence of each error and what Dev and Lin each overlook. State why the other office might choose differently.\par
 \answer{For Safety, choose B: its chance of keeping a system with a 10\% late rate is 0.123 versus 0.252 for A. But B has a 0.050 chance of unnecessary replacement when the rate is 5\%, compared with 0.010 for A. Dev overlooks that A's lower Type I risk comes with a higher Type II risk. Lin overlooks B's higher replacement risk. Budget could reasonably choose A because it prioritizes avoiding unnecessary replacement; neither office's priority makes one plan universally best.}
-
-\begin{summaryexitbox}{EXIT}
-One thing the rules box changed about my first take: \hrulefill
-\end{summaryexitbox}
 
 \end{document}
