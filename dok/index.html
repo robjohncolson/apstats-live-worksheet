@@ -3,90 +3,59 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AP Stats · DOK Ladders</title>
+<title>DOK-3 misconception sheets</title>
 <style>
-  body { font-family: Geneva, Verdana, sans-serif; margin: 0; background: #e8e8e8; color: #111; }
-  header { background: #2B5C8A; color: #fff; padding: 14px 20px; }
-  header h1 { margin: 0; font-size: 20px; }
-  header p { margin: 4px 0 0; font-size: 13px; opacity: .9; }
-  main { padding: 16px 20px 40px; max-width: 980px; }
-  .today { background: #FFF2CC; border: 2px solid #111; box-shadow: 2px 2px 0 #111; padding: 10px 14px; margin-bottom: 16px; }
-  .today a { font-weight: bold; }
-  table { border-collapse: collapse; width: 100%; background: #fff; font-size: 14px; }
-  th, td { border: 1px solid #999; padding: 6px 8px; text-align: left; vertical-align: top; }
-  th { background: #d9d9d9; }
-  tr.built td { background: #EAF4E4; }
-  tr.pending td { color: #666; }
-  .badge { display: inline-block; font-size: 11px; padding: 1px 6px; border: 1px solid #555; border-radius: 3px; background: #F4CCCC; margin-left: 4px; }
-  .links a { margin-right: 10px; }
-  .muted { color: #666; font-size: 12px; }
+body { font-family: Geneva, Verdana, sans-serif; margin: 0; background: #e8e8e8; color: #111; }
+header { background: #2B5C8A; color: white; padding: 16px 20px; }
+h1 { font-size: 22px; }
+main { padding: 20px; max-width: 980px; }
+article { background: white; border: 1px solid #999; padding: 16px; margin-bottom: 16px; }
+nav a { display: inline-block; margin-right: 16px; }
 </style>
 </head>
 <body>
-<header>
-  <h1>AP Statistics · DOK Ladders</h1>
-  <p>One DOK-3 problem per lesson day. Board slide at the bell → first take → video follow-along → finish → turn in. Spec: <code>APS_DOK_LADDER_SPEC.md</code></p>
-</header>
-<main>
-  <div class="today" id="today">Loading today's problem…</div>
-  <h2>Per-topic sheets</h2>
-  <table>
-    <thead><tr><th>CED topic</th><th>B</th><th>E</th><th>Title · DOK-3 skill</th><th>PDFs</th></tr></thead>
-    <tbody id="rows"></tbody>
-  </table>
-  <p class="muted">Built rows are green. Pending rows come from <code>PENDING.md</code>. Student = 2 sides, Board = 1 landscape page, Teacher = key + E/P/I scoring.</p>
-  <h2 id="e-wednesday-sheets">E two-topic sheets</h2>
-  <p class="muted">One paper sheet covers both topics. Teacher-scored E/P/I only; never AI-graded or auto-scored. B keeps its per-topic sheets.</p>
-  <table><thead><tr><th>Topics</th><th>E date</th><th>Title</th><th>PDFs</th></tr></thead><tbody id="group-rows"></tbody></table>
-</main>
+<header><h1>DOK-3 misconception sheets</h1>
+<p>Self-paced bonus problems. Turn in whenever you finish. Teacher-scored E/P/I.</p></header>
+<main><p id="status" role="status">Loading sheets?</p><div id="sheets"></div></main>
 <script>
 (async function () {
-  const schedule = await (await fetch('../data/lesson-schedule.json')).json();
-  const built = await (await fetch('manifest.json')).json().catch(() => ({}));
-  const rows = Object.entries(schedule.lessons)
-    .filter(([, v]) => v.periods && v.periods.B)
-    .sort((a, b) => a[1].periods.B.localeCompare(b[1].periods.B));
-
-  const tbody = document.getElementById('rows');
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const todayRows = [];
-  const eGroups = schedule.dayGroups?.E || [];
-
-  for (const [topic, v] of rows) {
-    const b = built[topic];
-    const cedLabel = b ? `Unit ${b.ced_unit} · Topic ${b.ced_topic}` : 'Pending mapping';
-    const tr = document.createElement('tr');
-    tr.className = b ? 'built' : 'pending';
-    const pdf = (ed) => `<a href="pdf/aps_${topic}_${ed}.pdf">${ed}</a>`;
-    tr.innerHTML =
-      `<td>${cedLabel}</td><td>${v.periods.B}</td><td>${v.periods.E || ''}</td>` +
-      `<td>${b ? b.title + ' <span class="badge">DOK-3 · ' + b.skill + '</span>' : '<span class="muted">pending</span>'}</td>` +
-      `<td class="links">${b ? pdf('student') + pdf('board') + pdf('teacher') : ''}</td>`;
-    tbody.appendChild(tr);
-    if (b && v.periods.B === todayIso) todayRows.push({ topic, b, period: 'B' });
-    if (b && v.periods.E === todayIso && !eGroups.some(group => group.includes(topic))) todayRows.push({ topic, b, period: 'E' });
+  const status = document.getElementById('status');
+  try {
+    const response = await fetch('manifest.json');
+    if (!response.ok) throw new Error('Manifest unavailable');
+    const manifest = await response.json();
+    const host = document.getElementById('sheets');
+    for (const [topic, sheet] of Object.entries(manifest)) {
+      const card = document.createElement('article');
+      const title = document.createElement('h2');
+      title.textContent = sheet.title;
+      card.appendChild(title);
+      const targets = document.createElement('ul');
+      for (const key of sheet.misconceptions) {
+        const label = document.createElement('li');
+        label.textContent = key.startsWith('label:') ? key.slice(6) : key;
+        targets.appendChild(label);
+      }
+      card.appendChild(targets);
+      const generated = document.createElement('p');
+      generated.textContent = 'Generated on ' + sheet.generated.on;
+      card.appendChild(generated);
+      const links = document.createElement('nav');
+      links.setAttribute('aria-label', sheet.title + ' PDFs');
+      const slug = sheet.slug || topic.replaceAll('+', '_');
+      for (const edition of ['student', 'board', 'teacher']) {
+        const link = document.createElement('a');
+        link.href = 'pdf/aps_' + encodeURIComponent(slug) + '_' + edition + '.pdf';
+        link.textContent = edition;
+        links.appendChild(link);
+      }
+      card.appendChild(links);
+      host.appendChild(card);
+    }
+    status.textContent = Object.keys(manifest).length ? '' : 'No misconception sheets yet.';
+  } catch (_) {
+    status.textContent = 'Unable to load misconception sheets. Please try again later.';
   }
-
-  for (const topics of eGroups) {
-    const key = topics.join('+');
-    const entry = built[key];
-    const slug = key.replaceAll('+', '_');
-    const date = schedule.lessons[topics[0]].periods.E;
-    const tr = document.createElement('tr');
-    tr.className = entry ? 'built' : 'pending';
-    const links = entry ? ['student', 'board', 'teacher'].map(ed => `<a href="pdf/aps_${slug}_${ed}.pdf">${ed}</a>`).join(' ') : 'Pending';
-    tr.innerHTML = `<td>${topics.join(' + ')}</td><td>${date}</td><td>${entry ? entry.title : 'Pending: see PENDING.md'}</td><td class="links">${links}</td>`;
-    document.getElementById('group-rows').appendChild(tr);
-    if (date === todayIso) todayRows.push({topic:key,b:entry,period:'E'});
-  }
-  const today = document.getElementById('today');
-  today.innerHTML = todayRows.length ? todayRows.map(row => {
-    if (!row.b) return `Period ${row.period}: ${row.topic}: group sheet pending.`;
-    const slug = row.topic.replaceAll('+', '_');
-    const label = row.b.ced_topics ? row.b.ced_topics.join(' + ') : row.b.ced_topic;
-    return `Period ${row.period}: <strong>Unit ${row.b.ced_unit} &middot; ${label} &middot; ${row.b.title}</strong> &middot; ` +
-      `<a href="pdf/aps_${slug}_board.pdf">open the board slide</a> &middot; <a href="pdf/aps_${slug}_teacher.pdf">teacher key</a>`;
-  }).join('<br>') : 'No ladder is scheduled for today. Pick a row below.';
 })();
 </script>
 </body>

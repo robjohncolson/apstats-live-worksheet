@@ -49,3 +49,11 @@ visuals:
   screentime:
     kind: raw_tikz
     body: "\\begin{tikzpicture}\n\\begin{axis}[width=0.96\\linewidth,height=1.45in,ybar interval,x tick label as interval=false,bar shift=0pt,xmin=0,xmax=960,\n ymin=0,ymax=16,xtick={0,120,240,360,480,600,720,840,960},ytick={0,4,8,12,16},xlabel={Daily screen time (minutes)},ylabel={Students},\n tick label style={font=\\scriptsize},label style={font=\\scriptsize},title={All 40 students, before any deletion},title style={font=\\small}]\n\\addplot[fill=calloutblue,draw=dayblue] coordinates {(0,3) (120,14) (240,12) (360,6) (480,3) (600,0) (720,1) (840,1) (960,0)};\n\\end{axis}\\end{tikzpicture}"
+
+misconceptions:
+  - "label:connects the number to the real question of whether flint s water was safe to drink or whether the threshold was exceeded"
+  - "variable-vs-individual"
+  - "counts-vs-percents"
+  - "mean-resistant"
+  - "label:states that unusual features are one of the important characteristics in a full distribution description"
+generated: { by: "orchestrator+teacher", "on": "2026-09-12", window_days: 42 }

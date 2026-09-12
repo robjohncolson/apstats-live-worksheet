@@ -298,17 +298,25 @@ def validate_lesson(lesson: dict, registry: dict) -> list[str]:
         e.extend(f"{topic}: visual {name}: {msg}" for msg in validate_visual(spec))
     if "+" in topic:
         topics = lesson.get("topics") or []
-        # standalone: true (2026-09-12) = a remediation / review sheet that spans topics but is NOT a
-        # calendar day-group: it is handed out on a day the teacher chooses and may take the whole
-        # finish window. It still needs its member list in order and one worksheet per member.
-        standalone = lesson.get("standalone") is True
         if topics != topic.split("+"):
             e.append(f"{topic}: topics must match the group key in teaching order")
-        elif not standalone and topics not in load_schedule().get("dayGroups", {}).get("E", []):
-            e.append(f"{topic}: group must match dayGroups.E in teaching order")
-        worksheets = lesson.get("worksheets") or []
-        if len(worksheets) != len(topics):
-            e.append(f"{topic}: one worksheet per member required")
+    if lesson.get("standalone") is not True:
+        e.append(f"{topic}: active sheets require standalone: true")
+    misconceptions = lesson.get("misconceptions")
+    if not isinstance(misconceptions, list) or not misconceptions or any(
+        not isinstance(key, str) or not key.strip() for key in misconceptions
+    ):
+        e.append(f"{topic}: misconceptions must be a non-empty list of panel keys or labels")
+    generated = lesson.get("generated")
+    if not isinstance(generated, dict):
+        e.append(f"{topic}: generated metadata requires by, on and window_days")
+    else:
+        if not isinstance(generated.get("by"), str) or not generated["by"].strip():
+            e.append(f"{topic}: generated.by must name the author")
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(generated.get("on", ""))):
+            e.append(f"{topic}: generated.on must be an ISO date")
+        if type(generated.get("window_days")) is not int or generated["window_days"] <= 0:
+            e.append(f"{topic}: generated.window_days must be a positive integer")
     if not (lesson.get("worksheet") or lesson.get("worksheets")):
         e.append(f"{topic}: worksheet filename required (manifest metadata)")
     return e
@@ -689,6 +697,8 @@ def write_manifest(registry: dict) -> None:
             "skill": item.get("skill"),
             "frq_pattern": item.get("frq_pattern"),
             "worksheet": lesson.get("worksheet"),
+            "misconceptions": lesson["misconceptions"],
+            "generated": lesson["generated"],
         }
         if lesson.get("worksheets"):
             out[str(lesson["topic"])].update({
@@ -696,7 +706,7 @@ def write_manifest(registry: dict) -> None:
                 "ced_topics": ced["topics"], "slug": str(lesson["topic"]).replace("+", "_"),
             })
         if lesson.get("standalone") is True:
-            out[str(lesson["topic"])]["standalone"] = True   # remediation sheet, not a calendar day-group
+            out[str(lesson["topic"])]["standalone"] = True
     (DOK / "manifest.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(f"wrote dok/manifest.json ({len(out)} built)")
 
