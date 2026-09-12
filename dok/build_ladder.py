@@ -28,11 +28,11 @@ from pathlib import Path
 import yaml
 
 if __package__:
-    from .content_policy import LEGACY_EXPLORE_KEY, validate_field_values, validate_printed_text
+    from .content_policy import validate_field_values, validate_printed_text
 else:
     # Direct CLI execution and file-based test imports both load this sibling.
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from content_policy import LEGACY_EXPLORE_KEY, validate_field_values, validate_printed_text
+    from content_policy import validate_field_values, validate_printed_text
 
 ROOT = Path(__file__).resolve().parent.parent
 DOK = ROOT / "dok"
@@ -41,7 +41,6 @@ LESSONS = DOK / "lessons"
 TEX_DIR = DOK / "tex"
 SCHEDULE = ROOT / "data" / "lesson-schedule.json"
 TUTOR_DIR = ROOT / "ai-tutor"
-PAGES_BASE = "https://robjohncolson.github.io/apstats-live-worksheet/"
 
 SKILL_RE = re.compile(r"^[1-4]\.[A-F]$")
 ID_RE = re.compile(r"^aps-\d+\.\d+(?:_\d+\.\d+)*-d[123]-\d+$")
@@ -82,13 +81,7 @@ def load_schedule() -> dict:
 
 
 def load_lesson(path: Path) -> dict:
-    lesson = yaml.safe_load(path.read_text(encoding="utf-8"))
-    minutes = lesson.get("minutes") or {}
-    if LEGACY_EXPLORE_KEY in minutes:
-        legacy = minutes.pop(LEGACY_EXPLORE_KEY)
-        minutes.setdefault("explore", legacy)
-    lesson["_path"] = str(path)
-    return lesson
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
 def tutor_path(topic: str) -> Path:
@@ -283,6 +276,12 @@ def validate_lesson(lesson: dict, registry: dict) -> list[str]:
     e: list[str] = []
     topic = str(lesson.get("topic", "?"))
     e.extend(validate_field_values(lesson, topic))
+    for field in ("minutes", "exit_reflection"):
+        if field in lesson:
+            e.append(f"{topic}: retired self-paced field {field} must be deleted")
+    for field in ("phase_tag", "teacher_does", "students_do", "adult_role"):
+        if field in (lesson.get("teacher") or {}):
+            e.append(f"{topic}: retired self-paced field teacher.{field} must be deleted")
     focus = lesson.get("focus")
     if not focus or focus not in registry:
         e.append(f"{topic}: focus must name a registry id (got {focus!r})")
@@ -310,10 +309,8 @@ def validate_lesson(lesson: dict, registry: dict) -> list[str]:
         worksheets = lesson.get("worksheets") or []
         if len(worksheets) != len(topics):
             e.append(f"{topic}: one worksheet per member required")
-        if not standalone and lesson.get("minutes", {}).get("finish", 11) > 10:
-            e.append(f"{topic}: finish must fit ten minutes")
     if not (lesson.get("worksheet") or lesson.get("worksheets")):
-        e.append(f"{topic}: worksheet filename required (board slide link)")
+        e.append(f"{topic}: worksheet filename required (manifest metadata)")
     return e
 
 
@@ -490,16 +487,7 @@ def ced_topic_label(lesson: dict) -> str:
 
 
 def header_line(lesson: dict, schedule: dict) -> str:
-    dates = schedule["lessons"].get(str(lesson["topic"]), {}).get("periods", {})
-    if lesson.get("worksheets"):
-        topics = lesson["topics"]
-        dates = {period: schedule["lessons"][topics[0]]["periods"][period]
-                 for period, groups in schedule.get("dayGroups", {}).items() if topics in groups}
-    when = " \\textperiodcentered\\ ".join(f"{p}: {d}" for p, d in sorted(dates.items()))
-    if lesson.get("standalone") is True and not when:
-        when = "remediation sheet"   # not a calendar day; the teacher picks the day
-    head = f"AP Statistics \\textperiodcentered\\ {ced_topic_label(lesson)}"
-    return head + (f" \\textperiodcentered\\ {when}" if when else "")
+    return f"AP Statistics \\textperiodcentered\\ {ced_topic_label(lesson)}"
 
 
 def part_block(part: dict, space: dict, answers: dict | None) -> str:
@@ -551,23 +539,23 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
         "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n\\renewcommand{\\answer}[1]{}\n\n",
         "\\begin{document}\n\n",
         f"\\ladderheading{{{header_line(lesson, schedule)}}}{{{lesson['title']}}}\n\n",
-        "\\focusbanner{TODAY'S PROBLEM}\n\n",
+        "\\focusbanner{THE PROBLEM}\n\n",
         shared_problem(lesson, item, 1.0),
-        f"\\begin{{firsttakebox}}{{FIRST TAKE --- before we discuss ({lesson['minutes'].get('first_take', 5)} min)}}\n"
+        "\\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}\n"
         f"{item['first_take'].strip()}\n\\workspace{{{space['first_take']}}}\n\\end{{firsttakebox}}\n\n",
     ]
     if rules:
         parts.append(callout_block(f"\\IconBook\\ {rules['title']}", "calloutgreen", rules["body"]))
     # Front = read + commit. Back = finish + turn in. A deliberate two-sided sheet.
     part_range = f"({item['parts'][0]['label']})--({item['parts'][-1]['label']})"
-    parts.append(f"\\newpage\n\\textbf{{Work {part_range} from the rules box:}}\\par\\smallskip\n\n")
+    parts.append(f"\\newpage\n\\textbf{{Work {part_range}.}}\\par\\smallskip\n\n")
     for p in item["parts"]:
         parts.append(part_block(p, space, answers=None))
     for frame in item.get("sentence_frames", []):
         parts.append(f"\\begin{{sentenceframebox}}\\raggedright\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n")
     parts.append(
-        f"\\begin{{summaryexitbox}}{{EXIT --- turn this in}}\n{lesson['exit_reflection']}\\par\n"
-        "\\workspace{0.4in}\n\\end{summaryexitbox}\n\n"
+        "\\textbf{Turn this sheet in whenever you finish --- bonus credit. "
+        f"Part ({item['parts'][-1]['label']}) is scored E / P / I.}}\\par\n\n"
     )
     for k, rid in enumerate(lesson.get("reinforcement") or [], start=1):
         r = registry[rid]
@@ -580,47 +568,30 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
 
 def emit_board(lesson: dict, registry: dict, schedule: dict) -> str:
     item = registry[lesson["focus"]]
-    worksheets = lesson.get("worksheets") or [lesson["worksheet"]]
-    ws_url = PAGES_BASE + worksheets[0]
     part_range = f"({item['parts'][0]['label']})--({item['parts'][-1]['label']})"
     part_lines = "".join(
         f"  \\item[\\dokbadge{{{p['dok']}}}~({p['label']})] {p['prompt'].strip()}\n" for p in item["parts"]
     )
     output = (
         "\\documentclass[14pt]{extarticle}\n\\usepackage{preamble}\n"
-        "\\geometry{letterpaper, landscape, margin=0.5in}\n\\usepackage{qrcode}\n"
+        "\\geometry{letterpaper, landscape, margin=0.5in}\n"
         "\\renewcommand{\\answer}[1]{}\n\\setlength{\\parskip}{4pt}\n\n\\begin{document}\n\\pagestyle{empty}\n\n"
-        f"\\daybanner{{{ced_topic_label(lesson)} \\textperiodcentered\\ TODAY'S PROBLEM}}{{{lesson['title']}}}\n\n"
+        f"\\daybanner{{{ced_topic_label(lesson)} \\textperiodcentered\\ THE PROBLEM}}{{{lesson['title']}}}\n\n"
         "\\noindent\\begin{minipage}[t]{0.57\\linewidth}\n\\vspace{0pt}\n"
         + item["stem"].strip() + "\\par\n"
         + "\\end{minipage}\\hfill\n"
         "\\begin{minipage}[t]{0.40\\linewidth}\n\\vspace{0pt}\n"
         + (render_visual(lesson["visuals"][item["visual"]], 1.0) if item.get("visual") else "")
         + "\\end{minipage}\n\n"
-        f"\\begin{{firsttakebox}}{{FIRST TAKE ({lesson['minutes'].get('first_take', 5)} min, on your sheet)}}\n"
+        "\\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}\n"
         f"{item['first_take'].strip()}\n\\end{{firsttakebox}}\n\n"
         "\\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]\n" + part_lines + "\\end{description}\n\n"
-        "\\vfill\n\\noindent\\begin{minipage}{0.84\\linewidth}\n"
-        f"\\textbf{{Optional review:}} \\href{{{ws_url}}}{{follow-along}} (scan the code)\\par\n"
-        f"\\textbf{{Work {part_range} from the rules on your sheet. Turn in your sheet.}}\n\\end{{minipage}}\\hfill\n"
-        f"\\qrcode[height=0.75in]{{{ws_url}}}\n\n\\end{{document}}\n"
+        "\\vfill\n\\textbf{Self-paced bonus problem. "
+        f"Work {part_range} from this sheet; turn it in whenever you finish.}}\n\n\\end{{document}}\n"
     )
 
     if lesson.get("worksheets"):
         output = output.replace("[14pt]", "[12pt]")
-        footer = output.index("\\vfill\n")
-        board_footer = f"\\textbf{{Work {part_range} in order from the rules on your sheet. Turn in one sheet.}}"
-        links = []
-        for topic, worksheet in zip(lesson["topics"], worksheets):
-            url = PAGES_BASE + worksheet
-            links.append(
-                f"\\begin{{minipage}}{{0.48\\linewidth}}\\qrcode[height=0.45in]{{{url}}}\\quad "
-                f"\\href{{{url}}}{{Review: {topic} follow-along}}\\end{{minipage}}\\hfill\n"
-            )
-        output = output[:footer] + "\\vfill\n" + "".join(links) + (
-            board_footer + "\n" +
-            "\\end{document}\n"
-        )
     return output
 
 
@@ -629,8 +600,8 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
     space = {**DEFAULT_SPACE, **(lesson.get("space") or {})}
     t = lesson.get("teacher") or {}
     rules = lesson.get("rules_callout") or {}
-    m = lesson["minutes"]
-    total = sum(v for v in m.values() if isinstance(v, (int, float)))
+    top = item["parts"][-1]["label"]
+    ladder = " and ".join(f"({part['label']})" for part in item["parts"][:-1])
     # A YAML `tether:` list (LaTeX-safe lines) overrides the tutor artifact — for topics without one.
     tether = [str(x) for x in (lesson.get("tether") or [])] or tether_lines(lesson.get("topics") or str(lesson["topic"]))
     frq_pattern = str(item.get("frq_pattern", "")).replace("-", r"-\allowbreak{}")
@@ -652,11 +623,11 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
         f"\\textbf{{Essential question:}} {lesson.get('essential_question', '')}\\par\n",
         f"\\textbf{{DOK-3 skill:}} {item.get('skill')} \\textperiodcentered\\ \\textbf{{FRQ pattern:}} {{\\small\\texttt{{{frq_pattern}}}}}\\par\n",
         f"\\textbf{{DOK rationale:}} {item.get('dok_rationale')}\\par\n\n",
-        f"\\frameworkphaseheader{{{t.get('phase_tag', 'Do Now → Explore → Exit')}}}{{1 $\\rightarrow$ 3}}{{{total:g}}}"
-        f"{{%\n{bulleted(t.get('teacher_does', []))}}}"
-        f"{{%\n{bulleted(t.get('students_do', []))}}}"
-        f"{{%\n{bulleted(t.get('questions_to_ask', []))}}}"
-        f"{{{t.get('adult_role', '')}}}\n\n",
+        "\\textbf{Self-paced bonus sheet.} Students take it when they choose and turn it in when they finish. "
+        "Everything they need is printed on the sheet. "
+        f"Score part ({top}) only, E / P / I, by hand --- never AI-graded or auto-scored. "
+        f"{ladder} are the ladder up; use them to see where a thin ({top}) came from.\\par\n\n",
+        "\\textbf{Questions to ask}\n" + bulleted(t.get("questions_to_ask", [])) + "\n",
     ]
     if t.get("watch_for"):
         parts.append(callout_block("\\IconWarn\\ LOOK FOR", "calloutred", bulleted(t["watch_for"])))
@@ -665,17 +636,17 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
         r = registry[rid]
         parts.append(f"\\bankitem{{Optional \\#{k} --- not collected}}{{\\dokbadge{{{r['dok']}}}~{r['stem'].strip()}}}{{}}\n")
         parts.append(f"\\answer{{{(r.get('answers') or {}).get('a', r.get('answer', '(no key)'))}}}\n\n")
-    parts.append("\\clearpage\n" + ("\\normalsize\n" if lesson.get("topics") else "") + "\\focusbanner{TODAY'S PROBLEM --- annotated}\n\n")
+    parts.append("\\clearpage\n" + ("\\normalsize\n" if lesson.get("topics") else "") + "\\focusbanner{THE PROBLEM --- annotated}\n\n")
     parts.append(shared_problem(lesson, item, 0.8))
     parts.append(
-        f"\\begin{{firsttakebox}}{{FIRST TAKE ({m.get('first_take', 5)} min)}}\n{item['first_take'].strip()}\\par\n"
+        "\\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}\n"
+        f"{item['first_take'].strip()}\\par\n"
         f"\\answer{{{t.get('first_take_note', 'Not graded. Any committed sentence counts.')}}}\n\\end{{firsttakebox}}\n\n"
     )
     if rules:
-        parts.append(f"\\textit{{Rules callout ``{rules['title']}'' is printed on the student sheet.}}\\par\\medskip\n\n")
+        parts.append(callout_block(f"\\IconBook\\ {rules['title']}", "calloutgreen", rules["body"]))
     for p in item["parts"]:
         parts.append(part_block(p, space, answers=item.get("answers") or {}))
-    parts.append(f"\\begin{{summaryexitbox}}{{EXIT}}\n{lesson['exit_reflection']}\n\\end{{summaryexitbox}}\n\n")
     parts.append("\\end{document}\n")
     return "".join(parts)
 

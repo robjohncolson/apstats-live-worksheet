@@ -3,7 +3,7 @@
 Runs the generator in-process on every lesson YAML and pins:
   * student + board .tex carry NO answer text, scoring, or dok_rationale (R5 no-leak)
   * teacher .tex carries all three
-  * board .tex has the first_take, every part prompt, the worksheet link — and NOT the rules callout
+  * board .tex has the first_take and every part prompt, without external links
   * output is deterministic (two runs, byte-identical)
   * a focus row that tops out at DOK 2 is rejected naming §1.3 (every lesson carries a DOK-3)
   * visuals carry data + labels only (T4)
@@ -122,15 +122,12 @@ def test_board_contents(path: Path):
     for p in item["parts"]:
         assert p["prompt"][:30] in tex
     for worksheet in lesson.get("worksheets") or [lesson["worksheet"]]:
-        assert worksheet in tex
-    if lesson.get("worksheets"):
-        assert tex.count(r"\qrcode[") == len(lesson["worksheets"])
-        top = item["parts"][-1]["label"]
-        assert f"Work (a)--({top}) in order from the rules on your sheet." in tex
-        assert "Review: " in tex
-    else:
-        assert "Optional review:" in tex
-        assert "Work (a)--(c) from the rules on your sheet." in tex
+        assert worksheet not in tex
+    assert r"\qrcode" not in tex
+    assert r"\href" not in tex
+    top = item["parts"][-1]["label"]
+    assert f"Work (a)--({top}) from this sheet; turn it in whenever you finish." in tex
+    assert "Self-paced bonus problem." in tex
     assert "landscape" in tex
     if lesson.get("rules_callout"):
         assert lesson["rules_callout"]["title"] not in tex  # rules stay on paper
@@ -141,7 +138,8 @@ def test_student_is_two_sided(path: Path):
     tex = bl.emit_student(_lesson(path), REGISTRY, SCHEDULE)
     assert "FIRST TAKE" in tex
     assert tex.count("\\newpage") == 1  # front = read + commit, back = finish + turn in
-    assert "EXIT --- turn this in" in tex
+    assert "summaryexitbox" not in tex
+    assert "Turn this sheet in whenever you finish --- bonus credit." in tex
 
 
 @pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
@@ -231,7 +229,7 @@ def test_group_tether_and_emission(key):
         tex = emitter(lesson, REGISTRY, SCHEDULE)
         assert "Topics " + "--".join(lesson["topics"]) in tex
     student = bl.emit_student(lesson, REGISTRY, SCHEDULE)
-    assert "Work (a)--(c) from the rules box:" in student
+    assert "Work (a)--(c)." in student
 
 
 @pytest.mark.parametrize('path', LESSONS, ids=[p.stem for p in LESSONS])
@@ -240,14 +238,22 @@ def test_all_editions_use_printed_rules_without_viewing_prerequisites(path):
     item = REGISTRY[lesson['focus']]
     top = item['parts'][-1]['label']
     student = bl.emit_student(lesson, REGISTRY, SCHEDULE)
-    assert 'FIRST TAKE --- before we discuss' in student
-    assert f'Work (a)--({top}) from the rules box:' in student
+    assert 'FIRST TAKE --- one sentence before you work the parts' in student
+    assert f'Work (a)--({top}).' in student
+    assert f'Part ({top}) is scored E / P / I.' in student
     for emitter in (bl.emit_student, bl.emit_board, bl.emit_teacher):
         tex = emitter(lesson, REGISTRY, SCHEDULE)
         assert bl.validate_printed_text(tex) == []
         assert 'watch' not in tex.lower()
-    assert 'explore' in lesson['minutes']
-    assert 'video_worksheet' not in lesson['minutes']
+        assert 'summaryexitbox' not in tex
+        assert 'frameworkphaseheader' not in tex
+        assert "TODAY'S PROBLEM" not in tex
+        assert not bl.re.search(r'\d{4}-\d{2}-\d{2}', tex)
+    assert 'minutes' not in lesson
+    assert 'exit_reflection' not in lesson
+    teacher = bl.emit_teacher(lesson, REGISTRY, SCHEDULE)
+    assert f'Score part ({top}) only, E / P / I, by hand --- never AI-graded or auto-scored.' in teacher
+    assert lesson['rules_callout']['body'].strip() in teacher
 
 
 @pytest.mark.parametrize('value', ['VIDEO', 'videos', 'Watch the Video.', 'u1_video_live.html'])
@@ -275,7 +281,7 @@ def test_guard_allows_only_whole_filenames_in_link_fields(field):
     for invalid in ['Watch video u1_lesson1_live.html', 'u1_video_live.html then video', 'video.mp4']:
         assert bl.validate_field_values({field: wrap(invalid)})
     assert bl.validate_field_values({'stem': 'u1_video_live.html'})
-    assert bl.validate_printed_text(r'\href{https://example.org/u1_video_live.html}{follow-along}') == []
+    assert bl.validate_printed_text(r'\href{https://example.org/u1_video_live.html}{follow-along}')
     assert bl.validate_printed_text(r'\href{u1_video_live.html}{watch video}')
 
 
@@ -288,17 +294,18 @@ def test_loader_normalizes_time_budget_without_double_counting(tmp_path, minutes
     path = tmp_path / 'lesson.yaml'
     path.write_text(bl.yaml.safe_dump({'minutes': {'first_take': 5, **minutes}}), encoding='utf-8')
     lesson = bl.load_lesson(path)
-    assert lesson['minutes'] == {'first_take': 5, 'explore': expected}
+    assert lesson['minutes'] == {'first_take': 5, **minutes}
+    assert any('retired self-paced field minutes' in error for error in bl.validate_lesson(lesson, REGISTRY))
 
 
 def test_standalone_keeps_calendar_and_finish_exceptions():
     lesson = _lesson(ROOT / 'dok/lessons/1.1_1.2_1.4_1.7.yaml')
     assert bl.validate_lesson(lesson, REGISTRY) == []
-    assert 'remediation sheet' in bl.header_line(lesson, SCHEDULE)
+    assert bl.header_line(lesson, SCHEDULE) == 'AP Statistics \\textperiodcentered\\ ' + bl.ced_topic_label(lesson)
     lesson['standalone'] = False
     errors = bl.validate_lesson(lesson, REGISTRY)
     assert any('dayGroups.E' in error for error in errors)
-    assert any('finish must fit ten minutes' in error for error in errors)
+    assert not any('finish must fit ten minutes' in error for error in errors)
 
 
 def test_build_rejects_registry_references_before_writing(tmp_path, monkeypatch):
@@ -306,5 +313,40 @@ def test_build_rejects_registry_references_before_writing(tmp_path, monkeypatch)
     registry['aps-1.6-d3-1']['stem'] = 'Use the VIDEO.'
     monkeypatch.setattr(bl, 'TEX_DIR', tmp_path)
     with pytest.raises(SystemExit, match='stem: forbidden video reference'):
+        bl.build(ROOT / 'dok/lessons/1.6.yaml', ('student',), registry, SCHEDULE)
+    assert not list(tmp_path.glob('*.tex'))
+
+
+@pytest.mark.parametrize('phrase', json.loads((ROOT / 'dok/self_paced_phrases.json').read_text()))
+def test_self_paced_guard_rejects_every_phrase_in_fields_and_tex(phrase):
+    value = 'Prefix ' + phrase.upper() + ' suffix'
+    assert bl.validate_field_values({'nested': [{'prose': value}]})
+    assert bl.validate_printed_text(value)
+
+
+@pytest.mark.parametrize('value', ['45 minutes', 'one class of 12 students',
+                                 '3-minute benchmark', 'Over 240 minutes: 9 freshmen',
+                                 'Duration (min)', 'worksheet'])
+def test_self_paced_guard_preserves_problem_data(value):
+    assert bl.validate_field_values({'stem': value}) == []
+    assert bl.validate_printed_text(value) == []
+
+
+@pytest.mark.parametrize('field', ['minutes', 'exit_reflection', 'teacher.phase_tag',
+                                 'teacher.teacher_does', 'teacher.students_do', 'teacher.adult_role'])
+def test_retired_flow_fields_are_rejected_even_when_empty(field):
+    lesson = _lesson(LESSONS[0])
+    if field.startswith('teacher.'):
+        lesson['teacher'][field.split('.')[1]] = None
+    else:
+        lesson[field] = None
+    assert any(f'retired self-paced field {field}' in error for error in bl.validate_lesson(lesson, REGISTRY))
+
+
+def test_build_rejects_self_paced_violation_before_writing(tmp_path, monkeypatch):
+    registry = json.loads(json.dumps(REGISTRY))
+    registry['aps-1.6-d3-1']['parts'][0]['prompt'] = 'Use the rules box.'
+    monkeypatch.setattr(bl, 'TEX_DIR', tmp_path)
+    with pytest.raises(SystemExit, match='forbidden self-paced phrase'):
         bl.build(ROOT / 'dok/lessons/1.6.yaml', ('student',), registry, SCHEDULE)
     assert not list(tmp_path.glob('*.tex'))

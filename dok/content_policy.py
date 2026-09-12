@@ -1,9 +1,18 @@
 """Authoring guard and legacy schema names for self-contained DOK sheets."""
+import json
 import re
+from pathlib import Path
 
 LEGACY_EXPLORE_KEY = "video_worksheet"
 FORBIDDEN = re.compile("video", re.IGNORECASE)
 WORKSHEET_FILENAME = re.compile(r"[\w.-]+_live\.html", re.IGNORECASE)
+SELF_PACED_PHRASES = json.loads(Path(__file__).with_name("self_paced_phrases.json").read_text(encoding="utf-8"))
+
+
+def validate_self_paced_text(text, path):
+    """Literal flow phrases only: measurement units and problem data stay intact."""
+    return [f"{path}: forbidden self-paced phrase {phrase!r}"
+            for phrase in SELF_PACED_PHRASES if phrase.lower() in text.lower()]
 
 
 def validate_field_values(value, path="", worksheet=False):
@@ -23,12 +32,11 @@ def validate_field_values(value, path="", worksheet=False):
         return []
     if FORBIDDEN.search(value):
         return [f"{path}: forbidden video reference; use the printed rules, stem, or visual"]
-    return []
+    return validate_self_paced_text(value, path)
 
 
 def validate_printed_text(text):
-    """Links may contain legacy filenames; surrounding prose must stand alone."""
-    prose = WORKSHEET_FILENAME.sub("", text)
-    if FORBIDDEN.search(prose):
-        return ["emitted TeX: forbidden video reference outside a worksheet filename"]
-    return []
+    """Every emitted character is checked; filename exemptions are metadata-only."""
+    if FORBIDDEN.search(text):
+        return ["emitted TeX: forbidden video reference"]
+    return validate_self_paced_text(text, "emitted TeX")

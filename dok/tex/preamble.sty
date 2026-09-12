@@ -212,11 +212,10 @@
          fontupper=\scriptsize\bfseries]{DOK #1}%
 }
 
-% \ladderheading{topic line}{title} — name/date strip + day banner.
+% \ladderheading{topic line}{title} — name/period strip + title banner.
 \newcommand{\ladderheading}[2]{%
   \noindent\textbf{NAME:} \rule{2.6in}{0.4pt}\hfill
-  \textbf{PERIOD:} \rule{0.6in}{0.4pt}\hfill
-  \textbf{DATE:} \rule{1.1in}{0.4pt}\par\vspace{0.5em}
+  \textbf{PERIOD:} \rule{0.6in}{0.4pt}\par\vspace{0.5em}
   \daybanner{#1}{#2}%
 }
 
