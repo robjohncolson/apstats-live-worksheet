@@ -523,6 +523,7 @@ export function mountReview(app, {
       items,
       topMisconceptions: misconceptions.class.slice(0, 3).map(({ key, label, students }) => ({ key, label, students })),
       topMisconceptionsDraft: misconceptions.class.slice(0, 3).some(entry => entry.draft),
+      frequent: misconceptions.frequent,
     });
   });
 

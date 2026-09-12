@@ -90,6 +90,59 @@ describe('misconception signals', () => {
   });
 });
 
+describe('frequent misconceptions', () => {
+  it('ranks distinct students before events, breaks ties by key, and caps at 15', () => {
+    const labels = Array.from({ length: 18 }, (_, i) => `Issue ${String(i).padStart(2, '0')}`);
+    const rows = [fan([frq(labels), frq(['Issue 17']), frq(['Issue 17']), frq(['Issue 16'])]),
+      fan([frq(['Issue 15'])], 'two')];
+    const result = compute(rows);
+    expect(result.frequent).toHaveLength(15);
+    expect(result.frequent.map(entry => entry.label)).toEqual([
+      'Issue 15', 'Issue 17', 'Issue 16', ...labels.slice(0, 12),
+    ]);
+    expect(result.frequent[0]).toMatchObject({ students: 2, activeStudents: 2, events: 2, weak: false });
+    expect(result.class).toEqual([]);
+    expect(compute([...rows].reverse()).frequent).toEqual(result.frequent);
+  });
+  it('includes readable untagged MCQ and rubric labels, both sources, and weak-only groups', () => {
+    const weak = { ...frq(undefined), score: 0 };
+    const result = compute([fan([quiz(undefined, 7, 'C'), quiz(), frq([elements[0].description]), weak]),
+      fan([frq([elements[0].description]), weak], 'two')]);
+    expect(result.frequent.find(entry => entry.key === 'conditional')).toMatchObject({
+      label: assets.vocabulary.tags.conditional.label, draft: true, weak: false,
+      students: 2, events: 3, sources: { mcq: 1, frq: 2 }, skills: ['3.C'],
+    });
+    expect(result.frequent.find(entry => entry.questionId)).toMatchObject({
+      key: 'label:chose c on u1 l1 q01', label: 'U1-L1-Q01 · chose C, correct B',
+      questionId: 'U1-L1-Q01', itemIds: ['U1-L1-Q01'], lessons: ['1.1'],
+      weak: false, draft: false, sources: { mcq: 1, frq: 0 }, lastSeen: quiz().recorded_at,
+    });
+    expect(result.frequent.find(entry => entry.weak)).toMatchObject({ students: 2, events: 2, lessons: ['1.2'], sources: { mcq: 0, frq: 2 } });
+    const untagged = structuredClone(assets);
+    untagged.rubricMap.items = {};
+    expect(computeMisconceptions([fan([frq([elements[0].description])]), fan([frq([elements[0].description])], 'two')],
+      untagged, { now: NOW }).frequent[0]).toMatchObject({ label: elements[0].description, students: 2 });
+  });
+  it('flags mixed groups strong and caps items without capping events or lessons', () => {
+    const local = structuredClone(assets);
+    const rows = Array.from({ length: 12 }, (_, i) => {
+      const item_id = `WS-U1L${i + 1}-reflect1`;
+      local.rubricMap.rubrics[item_id] = { question: 'Shared issue' };
+      return { ...frq(undefined), item_id, score: 0 };
+    });
+    rows.push(frq(['Shared issue']));
+    const entry = computeMisconceptions([fan(rows)], local, { now: NOW }).frequent[0];
+    expect(entry).toMatchObject({ weak: false, students: 1, events: 13 });
+    expect(entry.itemIds).toHaveLength(10);
+    expect(entry.lessons).toHaveLength(12);
+  });
+  it('applies the window to frequent groups and returns an empty array without evidence', () => {
+    expect(compute([fan([quiz(undefined, 43)])]).frequent).toEqual([]);
+    expect(compute([fan([quiz(undefined, 43)])], { days: 0 }).frequent).toHaveLength(1);
+    expect(compute([]).frequent).toEqual([]);
+  });
+});
+
 describe('misconception persistence', () => {
   it('requires distinct items at least three days apart for a student', () => {
     const result = compute([fan([quiz(), quiz('U1-L2-Q01', 4)])]);
@@ -176,6 +229,25 @@ afterEach(async () => {
   if (server) { await new Promise(resolve => server.close(resolve)); server = null; }
 });
 describe('GET /class/misconceptions', () => {
+  it('returns nonpersistent frequent rows unchanged from the same cache', async () => {
+    vi.stubEnv('ROSTER_TEACHER_SECRET', 'misconception-test-secret');
+    const listRoster = vi.fn(async () => ({ data: [{ student_id: 'one', section: 'PeriodE' }] }));
+    const getLedgerByStudent = vi.fn(async () => ({ data: [
+      { ...quiz(undefined, 0, 'C'), recorded_at: new Date(Date.now() - 1000).toISOString() },
+    ] }));
+    const app = express();
+    mountClass(app, { db: { listRoster }, ledgerDb: { getLedgerByStudent },
+      loadAnswerKey: async () => ({ answerKey: assets.answerKey }) });
+    server = app.listen(0, '127.0.0.1');
+    await new Promise(resolve => server.once('listening', resolve));
+    const url = `http://127.0.0.1:${server.address().port}/class/misconceptions?section=PeriodE&days=42`;
+    const headers = { 'x-teacher-secret': 'misconception-test-secret' };
+    const first = await (await fetch(url, { headers })).json();
+    expect(first.class).toEqual([]);
+    expect(first.frequent[0]).toMatchObject({ questionId: 'U1-L1-Q01', students: 1, events: 1 });
+    expect(await (await fetch(url, { headers })).json()).toEqual(first);
+    expect(getLedgerByStudent).toHaveBeenCalledTimes(1);
+  });
   it('uses teacher auth, returns an empty section, caches by section/days, and rejects invalid days', async () => {
     vi.stubEnv('ROSTER_TEACHER_SECRET', 'misconception-test-secret');
     const listRoster = vi.fn(async () => ({ data: [], error: null }));
@@ -188,7 +260,7 @@ describe('GET /class/misconceptions', () => {
     const headers = { 'x-teacher-secret': 'misconception-test-secret' };
     const response = await fetch(base + '?section=Empty&days=42', { headers });
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ ok: true, section: 'Empty', class: [], students: {}, vocabReviewed: false });
+    expect(await response.json()).toMatchObject({ ok: true, section: 'Empty', class: [], frequent: [], students: {}, vocabReviewed: false });
     await fetch(base + '?section=Empty&days=42', { headers });
     expect(listRoster).toHaveBeenCalledTimes(1);
     expect((await fetch(base + '?section=Empty&days=42')).status).toBe(401);

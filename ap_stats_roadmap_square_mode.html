@@ -17935,11 +17935,16 @@ function _paintReviewByItem(host, data) {
     host.innerHTML = '';
     var recurring = document.createElement('p');
     recurring.className = 'geneva';
+    var top = data.topMisconceptions || [];
+    var usesFrequent = !top.length;
+    var entries = (usesFrequent ? (data.frequent || []) : top).slice(0, 3);
     recurring.textContent = 'Top recurring misconceptions this week: ' +
-        ((data.topMisconceptions || []).map(function (entry) {
+        (entries.map(function (entry) {
             return entry.label + ' (' + entry.students + ')';
         }).join('; ') || 'None in this window.') +
-        (data.topMisconceptionsDraft ? ' · draft — not yet reviewed' : '');
+        ((usesFrequent ? entries.some(function (entry) { return entry.draft; }) : data.topMisconceptionsDraft)
+            ? ' · draft — not yet reviewed' : '') +
+        (usesFrequent && entries.length ? ' (most frequent, not yet persistent)' : '');
     host.appendChild(recurring);
     var items = data.items || [];
 

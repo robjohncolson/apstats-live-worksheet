@@ -70,7 +70,7 @@ export function extractEvents(rows, { answerKey = {}, rubricMap = {}, distractor
 function lessonOf(event, answerKey) {
   const topic = answerKey[event.itemId]?.topic;
   if (topic) return String(topic);
-  const match = /^(?:WS-)?U(\d+)-?L([\d-]+)/.exec(event.itemId);
+  const match = /^(?:WS-)?U(\d+)-?L(\d+(?:-\d+)*)/.exec(event.itemId);
   return match ? `${match[1]}.${match[2]}` : null;
 }
 
@@ -123,6 +123,7 @@ export function computeMisconceptions(fan, assets, options = {}) {
     }
   }
   const classEntries = [];
+  const frequent = [];
   const evidence = Object.create(null);
   for (const [key, grouped] of groups) {
     const tag = assets.vocabulary.tags[key];
@@ -134,6 +135,19 @@ export function computeMisconceptions(fan, assets, options = {}) {
       if (!byStudent.has(event.studentId)) byStudent.set(event.studentId, []);
       byStudent.get(event.studentId).push(event);
     }
+    const first = grouped[0];
+    const questionId = key.startsWith('label:') && first.source === 'mcq' ? first.itemId : null;
+    frequent.push({ key,
+      label: questionId ? `${questionId} · chose ${first.evidence.chosen}, correct ${first.evidence.correct}` : label,
+      draft, weak: grouped.every(event => event.weak === true),
+      students: byStudent.size, activeStudents: active.size, events: grouped.length,
+      itemIds: [...new Set(grouped.map(event => event.itemId))].sort().slice(0, 10),
+      lessons: [...new Set(grouped.map(event => lessonOf(event, assets.answerKey)).filter(Boolean))].sort(),
+      sources: { mcq: grouped.filter(event => event.source === 'mcq').length,
+        frq: grouped.filter(event => event.source === 'frq').length },
+      lastSeen: grouped.at(-1).ts, skills: tag?.skills || [],
+      ...(questionId ? { questionId } : {}),
+    });
     for (const [studentId, own] of byStudent) {
       const itemIds = [...new Set(own.map(event => event.itemId))].sort();
       const firstSeen = own[0].ts;
@@ -156,9 +170,10 @@ export function computeMisconceptions(fan, assets, options = {}) {
       ({ studentId, ts, source, itemId, evidence, ...(weak ? { weak: true } : {}) }));
   }
   classEntries.sort((a, b) => b.students - a.students || b.lastSeen.localeCompare(a.lastSeen) || a.key.localeCompare(b.key));
+  frequent.sort((a, b) => b.students - a.students || b.events - a.events || a.key.localeCompare(b.key));
   for (const student of Object.values(students)) student.persistent.sort((a, b) =>
     b.count - a.count || b.lastSeen.localeCompare(a.lastSeen) || a.key.localeCompare(b.key));
   return { ok: true, section: options.section || null, window: { days, from: floor === null ? null : new Date(floor).toISOString() },
-    vocabReviewed: assets.vocabulary.reviewed === true, class: classEntries, students, evidence,
+    vocabReviewed: assets.vocabulary.reviewed === true, class: classEntries, frequent: frequent.slice(0, 15), students, evidence,
     worksheetLinks: worksheetLinksFor(assets.rubricMap.rubrics) };
 }

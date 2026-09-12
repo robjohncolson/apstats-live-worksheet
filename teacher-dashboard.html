@@ -780,6 +780,7 @@
         <a href="data/misconception-distractor-map.json">misconception-distractor-map.json</a>
       </span>
       <p id="misconceptions-status" class="empty-note" role="status"></p>
+      <div id="misconceptions-frequent"></div>
       <div id="misconceptions-class"></div>
       <div id="misconceptions-students"></div>
     </div>
@@ -3227,7 +3228,7 @@
       });
       if (!studentId) box.appendChild(select);
       var lessons = entry.lessons || Array.from(new Set((entry.itemIds || []).map(function (id) {
-        var match = /^(?:WS-)?U(\d+)-?L([\d-]+)/.exec(id);
+        var match = /^(?:WS-)?U(\d+)-?L(\d+(?:-\d+)*)/.exec(id);
         return match ? match[1] + '.' + match[2] : '';
       }).filter(Boolean)));
       var nudge = misconceptionNode('button', 'Nudge');
@@ -3245,6 +3246,13 @@
         text.focus();
       });
       box.appendChild(nudge);
+      var question = /^U(\d+)-L(\d+)-Q\d+$/.exec(entry.questionId || '');
+      if (question) {
+        var quizLink = misconceptionNode('a', 'Open quiz ' + entry.questionId);
+        quizLink.href = 'https://robjohncolson.github.io/curriculum_render/?u=' + question[1] + '&l=' + question[2];
+        quizLink.style.marginLeft = '8px';
+        box.appendChild(quizLink);
+      }
       lessons.forEach(function (lesson) {
         var match = /^(\d+)\.([\d-]+)$/.exec(lesson);
         if (!match) return;
@@ -3256,11 +3264,61 @@
       });
       return box;
     }
+    function renderFrequentMisconceptions(payload) {
+      var host = $('misconceptions-frequent');
+      host.replaceChildren(misconceptionNode('h3', 'Most frequent this window (no persistence filter)'));
+      var entries = Array.isArray(payload.frequent) ? payload.frequent : [];
+      if (!entries.length) {
+        host.appendChild(misconceptionNode('p', 'No graded evidence in this window yet.'));
+        return;
+      }
+      var table = misconceptionNode('table');
+      var header = misconceptionNode('tr');
+      ['Label', 'Students', 'Events', 'Lessons', 'Sources', 'Last seen'].forEach(function (label) {
+        header.appendChild(misconceptionNode('th', label));
+      });
+      table.appendChild(header);
+      entries.forEach(function (entry) {
+        var row = misconceptionNode('tr');
+        var labelCell = misconceptionNode('td');
+        var toggle = misconceptionNode('button', entry.label);
+        toggle.type = 'button';
+        toggle.setAttribute('aria-expanded', 'false');
+        labelCell.appendChild(toggle);
+        [entry.draft ? 'draft — not yet reviewed' : '', entry.weak ? 'weak' : ''].filter(Boolean).forEach(function (text) {
+          var pill = misconceptionNode('span', text);
+          pill.className = 'pct-badge';
+          labelCell.appendChild(pill);
+        });
+        row.appendChild(labelCell);
+        var sources = entry.sources || {};
+        [entry.students + ' / ' + entry.activeStudents, entry.events, (entry.lessons || []).join(', '),
+          'MCQ ' + (sources.mcq || 0) + ' / written ' + (sources.frq || 0),
+          String(entry.lastSeen || '').slice(0, 10)].forEach(function (text) {
+          row.appendChild(misconceptionNode('td', text));
+        });
+        var evidenceRow = misconceptionNode('tr');
+        evidenceRow.hidden = true;
+        var cell = misconceptionNode('td');
+        cell.colSpan = 6;
+        cell.appendChild(misconceptionEvidence(payload, entry.key));
+        cell.appendChild(misconceptionActions(payload, entry));
+        evidenceRow.appendChild(cell);
+        row.addEventListener('click', function () {
+          evidenceRow.hidden = !evidenceRow.hidden;
+          toggle.setAttribute('aria-expanded', String(!evidenceRow.hidden));
+        });
+        table.appendChild(row);
+        table.appendChild(evidenceRow);
+      });
+      host.appendChild(table);
+    }
     function renderMisconceptions(payload) {
       // Harden against a partial payload (a proxy/mocked 200 without the arrays): never throw mid-render.
       payload = payload && typeof payload === 'object' ? payload : {};
       var classEntries = Array.isArray(payload.class) ? payload.class : [];
       var studentMap = payload.students && typeof payload.students === 'object' ? payload.students : {};
+      renderFrequentMisconceptions(payload);
       var host = $('misconceptions-class');
       var studentHost = $('misconceptions-students');
       host.replaceChildren();
@@ -3328,6 +3386,7 @@
     }
     async function loadMisconceptions() {
       var request = ++misconceptionRequest;
+      $('misconceptions-frequent').replaceChildren();
       $('misconceptions-class').replaceChildren();
       $('misconceptions-students').replaceChildren();
       $('misconceptions-draft').hidden = true;

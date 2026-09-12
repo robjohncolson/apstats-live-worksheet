@@ -33,6 +33,38 @@ beforeEach(() => {
 });
 
 describe('teacher misconception panel', () => {
+  it('renders frequent evidence above persistence with pills, quiz links, and the same actions', () => {
+    render({ ...fixture, frequent: [{ ...fixture.class[0], events: 2, weak: true, questionId: 'U1-L4-Q01' }] });
+    const host = document.getElementById('misconceptions-frequent');
+    expect(host.nextElementSibling.id).toBe('misconceptions-class');
+    expect(host.querySelector('h3').textContent).toBe('Most frequent this window (no persistence filter)');
+    expect([...host.querySelectorAll('th')].map(node => node.textContent)).toEqual([
+      'Label', 'Students', 'Events', 'Lessons', 'Sources', 'Last seen',
+    ]);
+    expect([...host.querySelectorAll('.pct-badge')].map(node => node.textContent)).toEqual(['draft — not yet reviewed', 'weak']);
+    expect(host.querySelector('img, script, svg')).toBeNull();
+    const toggle = host.querySelector('button');
+    toggle.click();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    const evidence = host.querySelectorAll('tr')[2];
+    expect(evidence.hidden).toBe(false);
+    expect(evidence.textContent).toContain('<svg onload=bad()>');
+    expect(host.querySelector('a').href).toBe('https://robjohncolson.github.io/curriculum_render/?u=1&l=4');
+    [...host.querySelectorAll('button')].find(node => node.textContent === 'Nudge').click();
+    expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ studentId: 'one' }));
+    expect(fetchJson).not.toHaveBeenCalled();
+    toggle.click();
+    expect(evidence.hidden).toBe(true);
+  });
+  it('shows the frequent empty state and clears stale frequent rows while loading', async () => {
+    render({ ...fixture, frequent: [] });
+    const host = document.getElementById('misconceptions-frequent');
+    expect(host.textContent).toContain('No graded evidence in this window yet.');
+    const pending = load();
+    expect(host.children).toHaveLength(0);
+    await pending;
+    expect(host.textContent).toContain('No graded evidence in this window yet.');
+  });
   it('appears between Skills to review and Remediation with all windows and map links', () => {
     expect(html.indexOf('id="misconceptions-section"')).toBeGreaterThan(html.indexOf('Skills to review'));
     expect(html.indexOf('id="misconceptions-section"')).toBeLessThan(html.indexOf('<!-- Remediation (Phase 4b) -->'));
