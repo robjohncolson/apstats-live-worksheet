@@ -70,3 +70,40 @@ Run GitNexus detect_changes before each commit and review staged hunks. Stage
 only this task's changes, using git add -p for shared files. No scratch directories
 under state; use TEMP or test-results. If a requirement cannot be satisfied,
 stop and report the concrete blocker instead of introducing a special case.
+
+## Implementation refinements and final caller inventory
+
+- Diagnostic configuration lives in TEACHER_DIAGNOSTIC_CONFIG.misconceptions in
+  grade-config.js, outside PHASE3_CONFIG. Full-suite verification caught that
+  adding diagnostics to PHASE3_CONFIG changed frozen-config golden snapshots.
+  The separate block leaves those snapshots and all grading functions unchanged.
+- The generated grade-engine bundle is refreshed only for the new unused
+  diagnostic constant and source hash; no grading function changes.
+- Builders synchronize byte-identical roster-server/data copies for standalone
+  Railway deployments. The runtime does not require the parent repo directory.
+- The endpoint adds worksheetLinks, derived from rubric source filenames, so
+  split topics link to actual combined worksheets (for example 4.4 to
+  u4_lesson3-4-5_live.html). Nightly Review also adds topMisconceptionsDraft so
+  its one-line summary labels draft results.
+- git grep caller inventory: computeMisconceptions and loadMisconceptionAssets
+  are called in class.js and review.js; computeMisconceptions is also called by
+  the new pure-module tests and smoke script. Graph risk LOW for both through
+  mountClass/createApp; review integration was added afterward.
+- misconceptionActions is called only by renderMisconceptions for class rows
+  and student entries (teacher-dashboard.html). Its first graph lookup could
+  not resolve the newly added symbol; DOM tests cover the actual source.
+- _paintReviewByItem is called by _reviewRefresh at
+  ap_stats_roadmap_square_mode.html:17645. The first graph lookups failed because
+  the live HTML shadow was excluded or timed out; a baseline copy is not an
+  authoritative impact result. The actual HTML source was tested directly.
+- Generated HTML shadows are refreshed with scripts/gitnexus-shadow.mjs.
+- Initial map commit: 96808e6. The server commit is amended with the deployment
+  copies, combined-worksheet links, and isolated diagnostic configuration before
+  the dashboard/review commit, preserving four final commits.
+- Root test runs use two workers after the unrestricted run showed timing
+  failures under heavy concurrent load. No known pre-existing test is changed.
+- Final graph refresh succeeded: live _paintReviewByItem has one direct caller,
+  six impacted symbols, LOW risk; misconceptionActions has one direct caller,
+  two impacted symbols, LOW risk. Neither has named affected execution processes.
+- Final suites: server 1,758 passed / 3 skipped; root 9,966 passed / 23 known
+  failures / 1 skipped. Exact failure names are in the verification JSON.

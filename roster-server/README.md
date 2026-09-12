@@ -8,6 +8,14 @@ Everything in this file is a **user-action handoff**: these steps require your S
 accounts and cannot be automated from code. The service itself is fully built and locally testable
 against mocks (see `tests/`).
 
+`GET /class/misconceptions?section=PeriodE&days=42` is teacher-authenticated,
+read-only, and cached for 60 seconds per section/window (`days=0` selects all
+available history). It uses `TEACHER_DIAGNOSTIC_CONFIG.misconceptions` and the
+bundled draft vocabulary/maps in `roster-server/data/`; the two root misconception
+map builders refresh these copies and `--check` verifies them. Draft tags stay
+labeled until teacher review. The dashboard opens the existing chat composer;
+no message is sent automatically, and no score or ledger row is changed.
+
 ---
 
 ## Prerequisites
