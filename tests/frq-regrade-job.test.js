@@ -15,6 +15,7 @@ import {
   classifyUngradedFrqRows,
   loadRubricBundle,
   MINIMUM_ROW_AGE_MS,
+  parseArgs,
   runRegradeJob,
   selectUngradedFrqRows,
   verdictToScore,
@@ -82,6 +83,45 @@ function runApplyJob(fetchMock, options = {}) {
 }
 
 describe('FRQ regrade manifest', () => {
+  it('selects only scored rows lacking rubric detail for feedback backfill', () => {
+    const records = [
+      eligibleRecord({ score: 1, frq_result: null }),
+      eligibleRecord({ score: 0.5, frq_result: { feedback: 'old' } }),
+      eligibleRecord({ score: 0, frq_result: { missing: [] } }),
+      eligibleRecord(),
+    ];
+    const snapshot = snapshotWith(records);
+    expect(classifyUngradedFrqRows(snapshot, REGISTRY, { now: NOW, backfillFeedback: true })
+      .candidates.map(candidate => candidate.record)).toEqual(records.slice(0, 2));
+    expect(classifyUngradedFrqRows(snapshot, REGISTRY, { now: NOW }).candidates[0].record).toBe(records[3]);
+    expect(parseArgs(['--backfill-feedback', '--limit', '2'])).toMatchObject({ backfillFeedback: true, apply: true, limit: 2 });
+    expect(parseArgs(['--dry-run', '--backfill-feedback']).apply).toBe(false);
+    expect(parseArgs([]).backfillFeedback).toBe(false);
+  });
+  it('backfills through the existing limiter and retry flow, respecting limit and dry run', async () => {
+    const snapshot = snapshotWith([eligibleRecord({ score: 1 }), eligibleRecord({ score: 0.5 })]);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshot))
+      .mockResolvedValueOnce(response(500, {}))
+      .mockResolvedValueOnce(response(200, { score: 'I', feedback: 'Explain context', matched: [], missing: ['Context'] }))
+      .mockResolvedValueOnce(response(200, { applied: true, score: 1 }));
+    const rateLimiter = { wait: vi.fn() };
+    const sleep = vi.fn();
+    const options = { config: { rosterUrl: 'https://roster.test', teacherKey: 'key' }, registry: REGISTRY,
+      railwayServerUrl: 'https://grader.test', apply: true, backfillFeedback: true, limit: 1,
+      now: NOW, fetchImpl: fetchMock, rateLimiter, sleep };
+    const result = await runRegradeJob(options);
+    expect(result.exitCode).toBe(0);
+    expect(result.summary).toMatchObject({ found: 1, applied: 1, retried: 1, backfillFeedback: true });
+    expect(rateLimiter.wait).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledWith(2000);
+    expect(JSON.parse(fetchMock.mock.calls[3][1].body)).toMatchObject({
+      feedbackOnly: true, score: 0, missing: ['Context'], matched: [],
+    });
+    fetchMock.mockReset().mockResolvedValue(response(200, snapshot));
+    await runRegradeJob({ ...options, apply: false });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
   it('carries bounded rubric details in the sweep request, including empty missing', () => {
     const candidate = { studentId: 'sid', itemId: 'item', attempt: 1, response: 'answer' };
     const request = buildRegradeRequest(candidate, 0, REGISTRY, {
@@ -578,7 +618,10 @@ describe('config sources (GitHub Actions hourly sweep)', () => {
     expect(yml).toMatch(/cron: '37 \* \* \* \*'/);
     expect(yml).toMatch(/APSTATS_TEACHER_KEY: \$\{\{ secrets\.APSTATS_TEACHER_KEY \}\}/);
     expect(yml).toMatch(/if \[ -z "\$APSTATS_TEACHER_KEY" \]; then/);
-    expect(yml).toMatch(/node tools\/regrade-ungraded-frqs\.mjs --apply/);
+    expect(yml).toContain('args+=(--apply)');
+    expect(yml).toContain('node tools/regrade-ungraded-frqs.mjs "${args[@]}"');
+    expect(yml).toContain("github.event_name == 'workflow_dispatch' && inputs.backfill_feedback");
+    expect(yml).toMatch(/backfill_feedback:[\s\S]*?type: boolean\s+default: false/);
     expect(yml).toMatch(/concurrency:\s*\n\s*group: frq-regrade/);
   });
 });

@@ -736,6 +736,7 @@ export function mountLedger(app, {
       matched,
       missing,
       suggestion,
+      feedbackOnly,
     } = req.body || {};
     if (!studentId || !itemId) return res.status(400).json({ ok: false, error: 'studentId and itemId are required' });
     const incoming = Number(score);
@@ -749,6 +750,45 @@ export function mountLedger(app, {
     const elementDetails = sanitizedFrqResult({ matched, missing, suggestion });
     const providerLabel = provenance === 'teacher' ? 'teacher' : 'ai-batch';   // same default as the receipt's gradingProvenance
     const attemptNo = attempt ?? 1;
+
+    // Both modes use the same feedback-only write, bypassing every score and
+    // receipt path. The conditional update also protects concurrent grading.
+    if (feedbackOnly === true) {
+      if (!responseHash || !rubricVersion || !Array.isArray(missing)) {
+        return res.status(400).json({ ok: false, error: 'responseHash, rubricVersion and missing are required' });
+      }
+      if (typeof db.updateFrqFeedback !== 'function') {
+        return res.status(503).json({ ok: false, error: 'FRQ feedback unavailable' });
+      }
+      try {
+        const lookup = await db.getLedgerByStudent(studentId, { prefix: itemId });
+        if (lookup.error) throw lookup.error;
+        const existing = lookup.data?.find(row => row.item_id === itemId && row.source === 'frq'
+          && Number(row.attempt ?? 1) === Number(attemptNo));
+        if (!existing) return res.status(404).json({ ok: false, error: 'no such frq row' });
+        if (existing.score == null) return res.status(409).json({ ok: false, error: 'ungraded-row' });
+        const currentHash = createHash('sha256').update(String(existing.response).trim(), 'utf8').digest('hex');
+        if (currentHash !== responseHash) return res.status(409).json({ error: 'stale-response' });
+        if (Array.isArray(existing.frq_result?.missing)) {
+          return res.json({ ok: true, applied: false, ledgerId: existing.ledger_id, score: existing.score });
+        }
+        const result = {
+          score: existing.score,
+          responseHash,
+          provider: 'ai-backfill',
+          model: 'external-regrade',
+          ...(feedbackText ? { feedback: feedbackText } : {}),
+          ...elementDetails,
+        };
+        const saved = await db.updateFrqFeedback(existing, result);
+        if (saved.error) throw saved.error;
+        if (!saved.data?.length) return res.status(409).json({ error: 'stale-response' });
+        return res.json({ ok: true, applied: true, ledgerId: existing.ledger_id, score: saved.data[0].score });
+      } catch (error) {
+        console.error('Ledger FRQ feedback backfill error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+    }
 
     if (authoritativeForStudent(
       frqMode,

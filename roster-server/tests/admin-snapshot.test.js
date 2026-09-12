@@ -53,6 +53,11 @@ describe('admin-snapshot pure builders', () => {
     expect(receiptRootOf(['b', 'a'])).toBe(receiptRootOf(['a', 'b']));
   });
 
+  it('carries rubric detail into the snapshot for repeat-safe feedback backfills', () => {
+    expect(rowToRecord({ score: 1, frq_result: { missing: [], matched: ['context'] } }, 'sid').frq_result)
+      .toEqual({ missing: [], matched: ['context'] });
+    expect(rowToRecord({ score: 0.5 }, 'sid').frq_result).toBeNull();
+  });
   it('rowToRecord maps snake_case row to camelCase import record + keeps the receipt', () => {
     const row = mintRow('sid-1', 'WS-U1L1-Q1');
     const rec = rowToRecord(row, 'sid-1');

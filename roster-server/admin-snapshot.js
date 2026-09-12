@@ -43,6 +43,7 @@ export function rowToRecord(row, sid) {
     skill: row.skill ?? undefined,
     response: row.response,
     score: row.score ?? null,
+    frq_result: row.frq_result ?? null,
     attempt: row.attempt ?? 1,
     recorded_at: row.recorded_at,
     receipt_id: row.receipt_id || undefined,

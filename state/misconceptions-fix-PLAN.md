@@ -18,3 +18,15 @@ Baseline: master at 1cef455. Preserve all pre-existing worktree changes.
 - Live data access is read-only using roster-server/.env; only aggregate reproduction results are reported.
 - No scratch directories under state/.
 - Exactly three defect commits; stage only this task's changes.
+
+## Implementation findings
+
+- Commit 1: 74aedea recognizes both quiz source names through one predicate.
+- Commit 2: b9921a7 preserves matched/missing/suggestion through the sweep and both regrade branches. A real SQL regression test confirms migration 0031 already retains these fields. Only responseHash/response_hash are intentionally removed by the RPC; no new migration is required.
+- Legacy score-zero FRQs without missing elements produce weak item-level evidence, including browser-graded rows with no frq_result. Weak events cannot contribute class share, lesson count, source counts, or class timestamps.
+- Commit 3 adds --backfill-feedback (explicit feedback write; --dry-run overrides it), with the existing 20/minute limiter and retries. The snapshot must include frq_result so already-detailed rows are skipped.
+- Both route modes use one conditional DB update containing only frq_result. It compares response, score, and previous result to reject stale/concurrent writes, stores the score of record in the result, and labels the provider ai-backfill. No grade, timestamp, receipt, or ticket-state update occurs. Real SQL tests check preservation of every other column.
+- PeriodE read-only baseline: 4,775 rows, 386 curriculum_quiz rows, 6 FRQs with results, zero events. Same-row local result: 53 events (28 MCQ, 25 weak FRQ), zero class-persistent entries. Full aggregate evidence keys are in test-results/misconceptions-fix-repro.log.
+- No migration to apply, no push, no live backfill. Temporary verification files remain under test-results/, not state/.
+- Final server suite: 91 files passed, 1,771 tests passed, 3 skipped. Final root suite (four workers): 9,970 passed, 22 failed, 1 skipped; all 22 failures match the 24-failure baseline, with J2/J4 baseline timeouts passing on rerun. The pre-existing teacher-workspace/renderMisconceptions unhandled error remains. No new failures.
+- GitNexus impact checks completed before implementation; staged detect_changes completed for each commit. The aggregate backfill diff is flagged HIGH (14 flows), partly inflated by duplicate symbols in the pre-existing test-results/e-wednesday-baseline checkout. The actual staged file list and diff were reviewed independently and contain only the intended changes.

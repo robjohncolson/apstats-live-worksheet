@@ -19,6 +19,10 @@ on:
         description: 'Dry run (report only, no grades written)'
         type: boolean
         default: false
+      backfill_feedback:
+        description: 'Backfill FRQ feedback only (never changes scores)'
+        type: boolean
+        default: false
 
 concurrency:
   group: frq-regrade
@@ -42,13 +46,15 @@ jobs:
           cache: npm
       - run: npm ci          # the manifest evaluator needs jsdom
       - name: Sweep ungraded FRQ rows
+        env:
+          BACKFILL_FEEDBACK: ${{ github.event_name == 'workflow_dispatch' && inputs.backfill_feedback }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           if [ -z "$APSTATS_TEACHER_KEY" ]; then
             echo "::notice::APSTATS_TEACHER_KEY secret not set — sweep skipped (add it under Settings → Secrets → Actions)."
             exit 0
           fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            node tools/regrade-ungraded-frqs.mjs
-          else
-            node tools/regrade-ungraded-frqs.mjs --apply
-          fi
+          args=()
+          if [ "$BACKFILL_FEEDBACK" = "true" ]; then args+=(--backfill-feedback); fi
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); else args+=(--apply); fi
+          node tools/regrade-ungraded-frqs.mjs "${args[@]}"

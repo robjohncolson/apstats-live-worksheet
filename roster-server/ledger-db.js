@@ -28,7 +28,21 @@ export function createServiceClient() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createLedgerDb(client) {
-  return { insertLedgerRow, updateLedgerReceipt, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds };
+  return { insertLedgerRow, updateLedgerReceipt, updateFrqFeedback, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds };
+
+  // Compare-and-set only the feedback JSON. Never include score, receipts, or
+  // ticket state in this update, even when the grader suggests a higher score.
+  async function updateFrqFeedback(existing, result) {
+    let query = client.from('item_ledger').update({ frq_result: result })
+      .eq('ledger_id', existing.ledger_id)
+      .eq('source', 'frq')
+      .eq('response', JSON.stringify(existing.response))
+      .eq('score', existing.score);
+    query = existing.frq_result == null
+      ? query.is('frq_result', null)
+      : query.eq('frq_result', JSON.stringify(existing.frq_result));
+    return query.select('ledger_id, score');
+  }
 
   // Upsert a ledger row on (student_id, source, item_id, attempt).
   // Returns { data, error } — data has ledger_id and evidence_tier on success.

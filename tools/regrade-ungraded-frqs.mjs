@@ -70,7 +70,10 @@ export function classifyUngradedFrqRows(snapshot, manifest, options = {}) {
 
     for (const record of student.bundle?.records || []) {
       if (record.source !== 'frq') continue;
-      if (record.score !== null && record.score !== undefined) continue;
+      const hasScore = record.score !== null && record.score !== undefined;
+      if (options.backfillFeedback) {
+        if (!hasScore || Array.isArray(record.frq_result?.missing)) continue;
+      } else if (hasScore) continue;
       if (typeof record.response !== 'string' || record.response.trim().length < 20) continue;
 
       const itemId = record.itemId ?? record.item_id;
@@ -127,7 +130,7 @@ export function buildGraderRequest(worksheet, textareaId, response, prompt, less
 }
 
 // verdict (optional): the grader's response — its feedback rides along so the student sees WHY.
-export function buildRegradeRequest(candidate, score, registry, verdict = null) {
+export function buildRegradeRequest(candidate, score, registry, verdict = null, { feedbackOnly = false } = {}) {
   const canonicalResponse = String(candidate.response).trim();
   const responseHash = createHash('sha256')
     .update(canonicalResponse, 'utf8')
@@ -150,6 +153,7 @@ export function buildRegradeRequest(candidate, score, registry, verdict = null) 
     }
   }
   if (typeof verdict?.suggestion === 'string') body.suggestion = verdict.suggestion.slice(0, 2000);
+  if (feedbackOnly) body.feedbackOnly = true;
   return body;
 }
 
@@ -298,6 +302,7 @@ export async function runRegradeJob(options) {
     registry: providedRegistry,
     railwayServerUrl: providedRailwayServerUrl,
     apply = false,
+    backfillFeedback = false,
     limit = Number.POSITIVE_INFINITY,
     student,
     rootDir = ROOT,
@@ -325,12 +330,13 @@ export async function runRegradeJob(options) {
   validateFrqRubricRegistry(registry);
 
   const snapshot = await fetchSnapshot(config, fetchImpl);
-  const classified = classifyUngradedFrqRows(snapshot, registry, { now, student });
+  const classified = classifyUngradedFrqRows(snapshot, registry, { now, student, backfillFeedback });
   const allCandidates = classified.candidates;
   const boundedLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : allCandidates.length;
   const candidates = allCandidates.slice(0, boundedLimit);
   const summary = {
     mode: apply ? 'apply' : 'dry-run',
+    backfillFeedback,
     found: candidates.length,
     graded: 0,
     applied: 0,
@@ -418,7 +424,7 @@ export async function runRegradeJob(options) {
         }
         const parsed = await readJsonResponse(graderResponse);
         const parsedScore = verdictToScore(parsed);
-        if (parsedScore === null) {
+        if (parsedScore === null || (backfillFeedback && !Array.isArray(parsed?.missing))) {
           lastReason = `unusable verdict: ${JSON.stringify(parsed && parsed.score)} (missing=${JSON.stringify(parsed && parsed.missing)})`;
           continue;
         }
@@ -440,7 +446,7 @@ export async function runRegradeJob(options) {
           'Content-Type': 'application/json',
           'x-teacher-secret': config.teacherKey,
         },
-        body: JSON.stringify(buildRegradeRequest(candidate, score, registry, result)),
+        body: JSON.stringify(buildRegradeRequest(candidate, score, registry, result, { feedbackOnly: backfillFeedback })),
       });
       const appliedResult = await readJsonResponse(regradeResponse);
       if (regradeResponse.status === 409 && appliedResult?.error === 'stale-response') {
@@ -503,6 +509,7 @@ export async function runRegradeJob(options) {
 export function parseArgs(argv) {
   const options = {
     apply: false,
+    backfillFeedback: false,
     limit: Number.POSITIVE_INFINITY,
     student: undefined,
     configPath: DEFAULT_CONFIG_PATH,
@@ -510,6 +517,10 @@ export function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg === '--backfill-feedback') {
+      options.backfillFeedback = true;
+      continue;
+    }
     if (arg === '--apply') {
       options.apply = true;
       continue;
@@ -540,6 +551,8 @@ export function parseArgs(argv) {
     throw new Error(`unknown argument: ${arg}`);
   }
 
+  // The explicit backfill command writes feedback; --dry-run always wins.
+  if (options.backfillFeedback) options.apply = !argv.includes('--dry-run');
   return options;
 }
 
@@ -586,6 +599,7 @@ export async function main(argv = process.argv.slice(2)) {
     registry,
     railwayServerUrl,
     apply: cli.apply,
+    backfillFeedback: cli.backfillFeedback,
     limit: cli.limit,
     student: cli.student,
     onEvent(event) {

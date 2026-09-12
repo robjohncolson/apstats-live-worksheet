@@ -564,6 +564,54 @@ describe('POST /ledger/frq-appeal', () => {
 });
 
 describe('POST /ledger/frq-regrade mode matrix', () => {
+  it.each(['off', 'authoritative'])('%s feedbackOnly preserves the score bytes for lower and higher verdicts', async (selectedMode) => {
+    mode = selectedMode;
+    for (const graderScore of [0, 1]) {
+      const existing = { ledger_id: 'existing', item_id: 'WS-U1L1-reflect1', source: 'frq',
+        attempt: 1, score: '0.500', response: 'A sufficiently long reflection answer.', frq_result: null };
+      const beforeScore = JSON.stringify(existing.score);
+      legacyDb.getLedgerByStudent = async () => ({ data: [existing] });
+      legacyDb.updateFrqFeedback = vi.fn(async (row, result) => {
+        row.frq_result = result;
+        return { data: [{ ledger_id: row.ledger_id, score: row.score }] };
+      });
+      const result = await server.request('POST', '/ledger/frq-regrade', {
+        headers: { 'x-teacher-secret': 'teacher-key' },
+        body: { studentId: 'student-a', itemId: existing.item_id, score: graderScore, feedbackOnly: true,
+          responseHash: createHash('sha256').update(existing.response).digest('hex'), rubricVersion: 'version',
+          feedback: 'Why', matched: ['Known'], missing: ['Context'] },
+      });
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ applied: true, score: '0.500' });
+      expect(JSON.stringify(existing.score)).toBe(beforeScore);
+      expect(existing.frq_result).toMatchObject({ score: '0.500', provider: 'ai-backfill', missing: ['Context'] });
+      expect(legacyDb.writes).toEqual([]);
+      expect(frqDb.applies).toEqual([]);
+    }
+  });
+  it('feedbackOnly rejects stale text, ungraded rows and concurrent updates; skips detailed rows', async () => {
+    const existing = { ledger_id: 'existing', item_id: 'WS-U1L1-reflect1', source: 'frq',
+      attempt: 1, score: 1, response: 'A sufficiently long reflection answer.', frq_result: null };
+    legacyDb.getLedgerByStudent = async () => ({ data: [existing] });
+    legacyDb.updateFrqFeedback = vi.fn(async () => ({ data: [] }));
+    const body = { studentId: 'student-a', itemId: existing.item_id, score: 0, feedbackOnly: true,
+      responseHash: 'stale', rubricVersion: 'version', matched: [], missing: ['Context'] };
+    const post = () => server.request('POST', '/ledger/frq-regrade', {
+      headers: { 'x-teacher-secret': 'teacher-key' }, body,
+    });
+    expect((await post()).status).toBe(409);
+    expect(legacyDb.updateFrqFeedback).not.toHaveBeenCalled();
+    body.responseHash = createHash('sha256').update(existing.response).digest('hex');
+    existing.score = null;
+    expect((await post()).body.error).toBe('ungraded-row');
+    existing.score = 1;
+    existing.frq_result = { missing: [] };
+    expect((await post()).body.applied).toBe(false);
+    existing.frq_result = null;
+    expect((await post()).body.error).toBe('stale-response');
+    expect(legacyDb.writes).toEqual([]);
+    expect(frqDb.applies).toEqual([]);
+  });
   it.each(['off', 'authoritative'])('%s preserves bounded matched, missing and suggestion', async (selectedMode) => {
     mode = selectedMode;
     const existing = { ledger_id: 'existing', item_id: 'WS-U1L1-reflect1', source: 'frq',
