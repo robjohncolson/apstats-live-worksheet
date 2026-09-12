@@ -765,6 +765,25 @@
       </div>
     </div>
 
+    <div class="section" id="misconceptions-section">
+      <h2 class="section-title">Persistent misconceptions</h2>
+      <label for="misconceptions-days">Window</label>
+      <select id="misconceptions-days">
+        <option value="14">14 days</option>
+        <option value="42" selected>42 days</option>
+        <option value="0">Year</option>
+      </select>
+      <button id="misconceptions-refresh" type="button">Refresh</button>
+      <span id="misconceptions-draft" class="hint" hidden>
+        draft vocabulary — not yet reviewed ·
+        <a href="data/misconception-rubric-map.json">misconception-rubric-map.json</a> ·
+        <a href="data/misconception-distractor-map.json">misconception-distractor-map.json</a>
+      </span>
+      <p id="misconceptions-status" class="empty-note" role="status"></p>
+      <div id="misconceptions-class"></div>
+      <div id="misconceptions-students"></div>
+    </div>
+
     <!-- Remediation (Phase 4b) -->
     <div class="section">
       <h2 class="section-title">Remediation</h2>
@@ -3169,6 +3188,156 @@
         return d.toLocaleDateString();
       } catch (_) { return '—'; }
     }
+
+    // BEGIN MISCONCEPTIONS PANEL — data is rendered only through textContent.
+    var misconceptionRequest = 0;
+    function misconceptionNode(tag, text) {
+      var node = document.createElement(tag);
+      if (text !== undefined) node.textContent = String(text);
+      return node;
+    }
+    function misconceptionEvidence(payload, key, studentId) {
+      var list = misconceptionNode('ul');
+      (payload.evidence[key] || []).filter(function (event) {
+        return !studentId || event.studentId === studentId;
+      }).forEach(function (event) {
+        var student = payload.students[event.studentId] || {};
+        var detail = event.evidence || {};
+        var text = event.source === 'mcq'
+          ? 'chose ' + detail.chosen + ' on ' + event.itemId
+          : (detail.missing || '') + (detail.feedback ? ' — ' + detail.feedback : '');
+        list.appendChild(misconceptionNode('li', (student.realName || student.username || event.studentId) +
+          ' · ' + event.ts.slice(0, 10) + ' · ' + text));
+      });
+      if (!list.children.length) list.appendChild(misconceptionNode('li', 'No evidence in the most recent 50 entries for this key.'));
+      return list;
+    }
+    function misconceptionActions(payload, entry, studentId) {
+      var box = misconceptionNode('div');
+      var ids = studentId ? [studentId] : Array.from(new Set((payload.evidence[entry.key] || []).map(function (event) {
+        return event.studentId;
+      })));
+      var select = misconceptionNode('select');
+      select.setAttribute('aria-label', 'Student to nudge');
+      ids.forEach(function (id) {
+        var student = payload.students[id] || {};
+        var option = misconceptionNode('option', student.realName || student.username || id);
+        option.value = id;
+        select.appendChild(option);
+      });
+      if (!studentId) box.appendChild(select);
+      var lessons = entry.lessons || Array.from(new Set((entry.itemIds || []).map(function (id) {
+        var match = /^(?:WS-)?U(\d+)-?L([\d-]+)/.exec(id);
+        return match ? match[1] + '.' + match[2] : '';
+      }).filter(Boolean)));
+      var nudge = misconceptionNode('button', 'Nudge');
+      nudge.type = 'button';
+      nudge.disabled = !ids.length;
+      nudge.addEventListener('click', function () {
+        var id = studentId || select.value;
+        var student = payload.students[id];
+        if (!student) return;
+        openTscDrawer({ studentId: id, username: student.username, realName: student.realName, section: payload.section });
+        $('tsc-nudge-broadcast').checked = false;
+        var text = $('tsc-nudge-text');
+        text.value = ('Let’s review: ' + entry.label + (lessons.length ? ' · lessons ' + lessons.join(', ') : '')).slice(0, 280);
+        text.dispatchEvent(new Event('input', { bubbles: true }));
+        text.focus();
+      });
+      box.appendChild(nudge);
+      lessons.forEach(function (lesson) {
+        var match = /^(\d+)\.([\d-]+)$/.exec(lesson);
+        if (!match) return;
+        var link = misconceptionNode('a', 'Open follow-along ' + lesson);
+        link.href = (payload.worksheetLinks && payload.worksheetLinks[lesson]) ||
+          'u' + match[1] + '_lesson' + match[2] + '_live.html';
+        link.style.marginLeft = '8px';
+        box.appendChild(link);
+      });
+      return box;
+    }
+    function renderMisconceptions(payload) {
+      var host = $('misconceptions-class');
+      var studentHost = $('misconceptions-students');
+      host.replaceChildren();
+      studentHost.replaceChildren();
+      $('misconceptions-draft').hidden = payload.vocabReviewed !== false;
+      var table = misconceptionNode('table');
+      var header = misconceptionNode('tr');
+      ['Misconception', 'Students', 'Lessons', 'Sources', 'Last seen', 'Skill', 'Actions'].forEach(function (label) {
+        header.appendChild(misconceptionNode('th', label));
+      });
+      table.appendChild(header);
+      (payload.class || []).forEach(function (entry) {
+        var row = misconceptionNode('tr');
+        var labelCell = misconceptionNode('td');
+        var toggle = misconceptionNode('button', entry.label + (entry.draft ? ' · draft — not yet reviewed' : ''));
+        toggle.type = 'button';
+        toggle.setAttribute('aria-expanded', 'false');
+        labelCell.appendChild(toggle);
+        row.appendChild(labelCell);
+        [entry.students + ' / ' + entry.activeStudents, entry.lessons.join(', '),
+          'MCQ ' + entry.sources.mcq + ' / written ' + entry.sources.frq,
+          entry.lastSeen.slice(0, 10), entry.skills.join(', ')].forEach(function (text) {
+          row.appendChild(misconceptionNode('td', text));
+        });
+        var actions = misconceptionNode('td');
+        actions.appendChild(misconceptionActions(payload, entry));
+        row.appendChild(actions);
+        table.appendChild(row);
+        var evidenceRow = misconceptionNode('tr');
+        evidenceRow.hidden = true;
+        var cell = misconceptionNode('td');
+        cell.colSpan = 7;
+        cell.appendChild(misconceptionEvidence(payload, entry.key));
+        evidenceRow.appendChild(cell);
+        table.appendChild(evidenceRow);
+        row.addEventListener('click', function (event) {
+          if (actions.contains(event.target)) return;
+          evidenceRow.hidden = !evidenceRow.hidden;
+          toggle.setAttribute('aria-expanded', String(!evidenceRow.hidden));
+        });
+      });
+      if (payload.class.length) host.appendChild(table);
+      var persistentCount = 0;
+      Object.keys(payload.students || {}).forEach(function (id) {
+        var student = payload.students[id];
+        if (!student.persistent.length) return;
+        studentHost.appendChild(misconceptionNode('h3', student.realName || student.username || id));
+        student.persistent.forEach(function (entry) {
+          persistentCount++;
+          var details = misconceptionNode('details');
+          details.appendChild(misconceptionNode('summary', entry.label + ' · ' + entry.count +
+            (entry.draft ? ' · draft — not yet reviewed' : '')));
+          details.appendChild(misconceptionEvidence(payload, entry.key, id));
+          details.appendChild(misconceptionActions(payload, entry, id));
+          studentHost.appendChild(details);
+        });
+      });
+      $('misconceptions-status').textContent = !payload.class.length && !persistentCount
+        ? 'No persistent misconceptions in this window yet.' : '';
+    }
+    async function loadMisconceptions() {
+      var request = ++misconceptionRequest;
+      $('misconceptions-class').replaceChildren();
+      $('misconceptions-students').replaceChildren();
+      $('misconceptions-draft').hidden = true;
+      $('misconceptions-status').textContent = 'Loading misconceptions…';
+      var section = $('section-filter').value || '';
+      var result = await fetchJson('/class/misconceptions?section=' + encodeURIComponent(section) +
+        '&days=' + $('misconceptions-days').value, teacherSecret());
+      if (request !== misconceptionRequest) return;
+      if (result.status !== 200 || !result.data || !result.data.ok) {
+        $('misconceptions-status').textContent = 'Could not load misconceptions. Check your teacher sign-in and try again.';
+        return;
+      }
+      renderMisconceptions(result.data);
+    }
+    $('misconceptions-refresh').addEventListener('click', loadMisconceptions);
+    $('misconceptions-days').addEventListener('change', loadMisconceptions);
+    $('section-filter').addEventListener('change', loadMisconceptions);
+    $('load-btn').addEventListener('click', loadMisconceptions);
+    // END MISCONCEPTIONS PANEL
 
     function renderRemediation(payload) {
       var tbody = $('remediation-tbody');

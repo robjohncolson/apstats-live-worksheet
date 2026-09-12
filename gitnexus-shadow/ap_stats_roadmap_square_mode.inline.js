@@ -17933,6 +17933,14 @@ function _reviewScoreLabel(score) {
 }
 function _paintReviewByItem(host, data) {
     host.innerHTML = '';
+    var recurring = document.createElement('p');
+    recurring.className = 'geneva';
+    recurring.textContent = 'Top recurring misconceptions this week: ' +
+        ((data.topMisconceptions || []).map(function (entry) {
+            return entry.label + ' (' + entry.students + ')';
+        }).join('; ') || 'None in this window.') +
+        (data.topMisconceptionsDraft ? ' · draft — not yet reviewed' : '');
+    host.appendChild(recurring);
     var items = data.items || [];
 
     var hdr = document.createElement('div');

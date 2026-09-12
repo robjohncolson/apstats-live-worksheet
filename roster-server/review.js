@@ -23,6 +23,8 @@ import { issueReviewReceipt, receiptInternals } from './receipts.js';
 import { todayInTz } from './lesson-grade.js';
 import { computeGrade } from './grade.js';
 import { answerKeyMapOrNull, unitOf } from './scoring.js';
+import { computeMisconceptions } from './misconceptions.js';
+import { loadMisconceptionAssets } from './misconception-assets.js';
 
 const SESSION_GAP_MS = 25 * 60 * 1000;   // > 25 min idle starts a new session burst (mirrors commits.js)
 const N_DAYS_FLAG = 5;                    // "not reviewed in N school days" flag (spec §13 default)
@@ -419,11 +421,13 @@ export function mountReview(app, {
     // chain (Object.prototype pollution → a thrown TypeError would crash the
     // shared server on every By-item load).
     const groups = Object.create(null);
+    const misconceptionFan = [];
     let unseenTotal = 0;
     for (const r of rosterRows) {
       const sid = r.student_id;
       let rows = [];
       try { const lr = await ledgerDb.getLedgerByStudent(sid); rows = (lr && lr.data) || []; } catch (_) { rows = []; }
+      misconceptionFan.push({ roster: r, ledgerRows: rows });
       const windowed = windowFloor
         ? rows.filter((row) => (Date.parse(row.recorded_at) || 0) >= windowFloor)
         : rows;
@@ -507,6 +511,9 @@ export function mountReview(app, {
       || (b.unseen - a.unseen));
     for (const g of items) delete g._meanNorm;
 
+    const misconceptions = computeMisconceptions(misconceptionFan, loadMisconceptionAssets(answerKey || {}),
+      { section, days: days ?? 0, config: config?.misconceptions });
+
     return res.json({
       ok: true,
       asOf: new Date().toISOString(),
@@ -514,6 +521,8 @@ export function mountReview(app, {
       windowDays: days,
       unseenTotal,
       items,
+      topMisconceptions: misconceptions.class.slice(0, 3).map(({ key, label, students }) => ({ key, label, students })),
+      topMisconceptionsDraft: misconceptions.class.slice(0, 3).some(entry => entry.draft),
     });
   });
 
