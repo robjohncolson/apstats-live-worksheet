@@ -65,7 +65,8 @@ def test_teacher_has_key_and_scoring(path: Path):
     for label, ans in item["answers"].items():
         assert ans[:40] in tex, f"teacher key missing answer ({label})"
     assert item["dok_rationale"][:40] in tex
-    assert "SCORING PART (c)" in tex
+    top = (item.get("parts") or [{"label": "c"}])[-1]["label"]   # four-part remediation sheets score (d)
+    assert f"SCORING PART ({top})" in tex
     assert item["frq_pattern"].replace("-", r"-\allowbreak{}") in tex
 
 
@@ -124,7 +125,11 @@ def test_board_contents(path: Path):
         assert worksheet in tex
     if lesson.get("worksheets"):
         assert tex.count(r"\qrcode[") == len(lesson["worksheets"])
-        assert "Watch all videos for both topics" in tex
+        if lesson.get("standalone") is True:
+            assert "Work (a)--(d) in order" in tex   # remediation sheet: no videos, QR codes are review links
+            assert "Review: " in tex
+        else:
+            assert "Watch all videos for both topics" in tex
     assert "landscape" in tex
     if lesson.get("rules_callout"):
         assert lesson["rules_callout"]["title"] not in tex  # rules stay on paper

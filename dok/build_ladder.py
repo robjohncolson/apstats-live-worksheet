@@ -286,12 +286,18 @@ def validate_lesson(lesson: dict, registry: dict) -> list[str]:
         e.extend(f"{topic}: visual {name}: {msg}" for msg in validate_visual(spec))
     if "+" in topic:
         topics = lesson.get("topics") or []
-        if topics != topic.split("+") or topics not in load_schedule().get("dayGroups", {}).get("E", []):
+        # standalone: true (2026-09-12) = a remediation / review sheet that spans topics but is NOT a
+        # calendar day-group: it is handed out on a day the teacher chooses and may take the whole
+        # finish window. It still needs its member list in order and one worksheet per member.
+        standalone = lesson.get("standalone") is True
+        if topics != topic.split("+"):
+            e.append(f"{topic}: topics must match the group key in teaching order")
+        elif not standalone and topics not in load_schedule().get("dayGroups", {}).get("E", []):
             e.append(f"{topic}: group must match dayGroups.E in teaching order")
         worksheets = lesson.get("worksheets") or []
         if len(worksheets) != len(topics):
             e.append(f"{topic}: one worksheet per member required")
-        if lesson.get("minutes", {}).get("finish", 11) > 10:
+        if not standalone and lesson.get("minutes", {}).get("finish", 11) > 10:
             e.append(f"{topic}: finish must fit ten minutes")
     if not (lesson.get("worksheet") or lesson.get("worksheets")):
         e.append(f"{topic}: worksheet filename required (board slide link)")
@@ -477,10 +483,10 @@ def header_line(lesson: dict, schedule: dict) -> str:
         dates = {period: schedule["lessons"][topics[0]]["periods"][period]
                  for period, groups in schedule.get("dayGroups", {}).items() if topics in groups}
     when = " \\textperiodcentered\\ ".join(f"{p}: {d}" for p, d in sorted(dates.items()))
-    return (
-        f"AP Statistics \\textperiodcentered\\ {ced_topic_label(lesson)}"
-        f" \\textperiodcentered\\ {when}"
-    )
+    if lesson.get("standalone") is True and not when:
+        when = "remediation sheet"   # not a calendar day; the teacher picks the day
+    head = f"AP Statistics \\textperiodcentered\\ {ced_topic_label(lesson)}"
+    return head + (f" \\textperiodcentered\\ {when}" if when else "")
 
 
 def part_block(part: dict, space: dict, answers: dict | None) -> str:
@@ -493,7 +499,7 @@ def part_block(part: dict, space: dict, answers: dict | None) -> str:
     return "\n".join(out) + "\n\n"
 
 
-def scoring_table(sc: dict) -> str:
+def scoring_table(sc: dict, top_label: str = "c") -> str:
     els = bulleted([
         f"\\textbf{{{el['id']}}}{' (required)' if el.get('required') else ''} --- {el['description']}"
         for el in sc.get("expectedElements", [])
@@ -504,7 +510,7 @@ def scoring_table(sc: dict) -> str:
     )
     mistakes = bulleted(sc.get("commonMistakes", []))
     return (
-        "\\sectionbanner{SCORING PART (c) --- E / P / I}\n\n"
+        f"\\sectionbanner{{SCORING PART ({top_label}) --- E / P / I}}\n\n"
         "\\textbf{Expected elements}\n" + els + "\n"
         "{\\small\\renewcommand{\\arraystretch}{1.25}\n"
         "\\noindent\\begin{tabular}{|p{0.5in}|p{5.9in}|}\n\\hline\n" + rows + "\\end{tabular}}\n\n"
@@ -557,7 +563,11 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
     parts.append("\\end{document}\n")
     output = "".join(parts)
     if lesson.get("worksheets"):
-        output = output.replace("before the video", "before the videos").replace("after the video", "after both topics' videos")
+        if lesson.get("standalone") is True:
+            # A remediation sheet has no videos: first take precedes discussion, then the parts.
+            output = output.replace("before the video", "before we discuss").replace("Finish after the video:", "Work (a) to (d) in order:")
+        else:
+            output = output.replace("before the video", "before the videos").replace("after the video", "after both topics' videos")
     return output
 
 
@@ -591,15 +601,20 @@ def emit_board(lesson: dict, registry: dict, schedule: dict) -> str:
     if lesson.get("worksheets"):
         output = output.replace("[14pt]", "[12pt]")
         footer = output.index("\\vfill\n")
+        standalone = lesson.get("standalone") is True
+        # A remediation sheet has no videos: the QR codes are review links, and the parts are the work.
+        link_word = "Review" if standalone else "Today"
+        board_footer = ("\\textbf{Work (a)--(d) in order; scan a code to revisit a lesson. Turn in one sheet.}" if standalone
+                        else "\\textbf{Watch all videos for both topics, then finish (a)--(c). Turn in one sheet.}")
         links = []
         for topic, worksheet in zip(lesson["topics"], worksheets):
             url = PAGES_BASE + worksheet
             links.append(
                 f"\\begin{{minipage}}{{0.48\\linewidth}}\\qrcode[height=0.45in]{{{url}}}\\quad "
-                f"\\href{{{url}}}{{Today: {topic} follow-along}}\\end{{minipage}}\\hfill\n"
+                f"\\href{{{url}}}{{{link_word}: {topic} follow-along}}\\end{{minipage}}\\hfill\n"
             )
         output = output[:footer] + "\\vfill\n" + "".join(links) + (
-            "\\textbf{Watch all videos for both topics, then finish (a)--(c). Turn in one sheet.}\n"
+            board_footer + "\n" +
             "\\end{document}\n"
         )
     return output
@@ -641,7 +656,7 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
     ]
     if t.get("watch_for"):
         parts.append(callout_block("\\IconWarn\\ WATCH FOR", "calloutred", bulleted(t["watch_for"])))
-    parts.append(scoring_table(item.get("scoring") or {}))
+    parts.append(scoring_table(item.get("scoring") or {}, (item.get("parts") or [{"label": "c"}])[-1]["label"]))
     for k, rid in enumerate(lesson.get("reinforcement") or [], start=1):
         r = registry[rid]
         parts.append(f"\\bankitem{{Optional \\#{k} --- not collected}}{{\\dokbadge{{{r['dok']}}}~{r['stem'].strip()}}}{{}}\n")
@@ -699,6 +714,8 @@ def write_manifest(registry: dict) -> None:
                 "topics": lesson["topics"], "worksheets": lesson["worksheets"],
                 "ced_topics": ced["topics"], "slug": str(lesson["topic"]).replace("+", "_"),
             })
+        if lesson.get("standalone") is True:
+            out[str(lesson["topic"])]["standalone"] = True   # remediation sheet, not a calendar day-group
     (DOK / "manifest.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(f"wrote dok/manifest.json ({len(out)} built)")
 

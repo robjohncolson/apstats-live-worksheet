@@ -1,0 +1,68 @@
+topic: 1.1+1.2+1.4+1.7
+# Remediation sheet (2026-09-12): targets the misconceptions the dashboard surfaced across 1.1-1.8
+# (numbers without context, individuals vs variables, counts vs percents, resistance + unusual values).
+# Not a calendar day-group; the teacher picks the day. Full-period finish window.
+standalone: true
+topics: ["1.1", "1.2", "1.4", "1.7"]
+ced2026:
+  unit: 1
+  topics: ["1.1", "1.2", "1.4", "1.7"]
+  label: Screen Time, Two Deletions
+title: Screen Time, Two Deletions
+worksheets: ["u1_lesson1_live.html", "u1_lesson2_live.html", "u1_lesson4_live.html", "u1_lesson7_live.html"]
+minutes:
+  first_take: 5
+  video_worksheet: 0
+  finish: 25
+  turn_in: 2
+essential_question: What does a number mean, and what changes when you delete the values you do not like?
+rules_callout:
+  title: RULES YOU MUST USE (NO ANSWERS HERE)
+  body: 'A number means nothing until you say WHO was measured, WHAT was measured, the UNITS, and the QUESTION it answers.\\
+    Individuals are the things measured; variables are the characteristics recorded. A label or ID is not a measurement.\\
+    Groups of different sizes are compared with relative frequencies (percents), never raw counts alone.\\
+    A full description names shape, center, variability, AND unusual features. Some statistics resist unusual values; some do not.'
+focus: aps-1.1_1.2_1.4_1.7-d3-1
+# Short explicit tether: the union of four topics' CED lines ran the teacher key to six pages.
+tether:
+  - "VAR-1.A / UNC-1.A: identify the question to be answered and the individuals and variables in a context."
+  - "VAR-1.B: classify variables as categorical or quantitative; a label or identifier is not a measurement."
+  - "UNC-1.H / 1.I: compare groups of unequal size with relative frequencies, not raw counts."
+  - "UNC-1.J: describe a distribution with shape, center, variability, and unusual features."
+  - "UNC-1.K: the median is resistant to unusual values; the mean is not, so report the center that fits the data."
+reinforcement: []
+exit_reflection: 'One sentence I will add to my next written answer so a number is never left without context: \hrulefill'
+space:
+  first_take: 0.7in
+  a: 0.15in
+  b: 0.5in
+  c: 0.5in
+  d: 1.15in
+teacher:
+  phase_tag: First take $\rightarrow$ rules $\rightarrow$ (a)--(d) $\rightarrow$ turn in
+  teacher_does:
+  - Hand out the sheet; read the scenario aloud once. Start the first take at the bell (ungraded).
+  - Point at the printed rules box and say only that every rule will be needed. Do not interpret the rules.
+  - Allow 25 minutes for (a)--(d). Circulate; answer questions with questions. Collect one sheet; score (d) only, E/P/I by a human.
+  students_do:
+  - Commit one sentence before any discussion.
+  - Work (a) to (d) in order; each part supplies a piece the next part needs.
+  - Use the checklists and frames on the page; every blank is theirs to fill.
+  questions_to_ask:
+  - Who exactly was measured, and what is one row of the data?
+  - Which of your variables could you add up, and which could you only count?
+  - If the two groups were the same size, would your comparison change?
+  - Which number moved a lot and which barely moved when the two values were deleted? Why?
+  adult_role: Circulate and ask for evidence linked to the printed rules. This is the human-graded DOK-3 channel;
+    do not send it to an AI grader or auto-score it.
+  watch_for:
+  - Writing a number with no who/what/units (the 30\% left floating).
+  - Calling the student ID or the device name a quantitative variable.
+  - Comparing 9 freshmen to 3 seniors by counts and declaring freshmen three times worse.
+  - Saying the mean is resistant, or that deleting the two values was fine because the median barely moved.
+  - Describing the distribution without mentioning the two unusual values at all.
+  first_take_note: Ungraded commitment; accept any position that names something the first sentence leaves out.
+visuals:
+  screentime:
+    kind: raw_tikz
+    body: "\\begin{tikzpicture}\n\\begin{axis}[width=0.96\\linewidth,height=1.45in,ybar interval,x tick label as interval=false,bar shift=0pt,xmin=0,xmax=960,\n ymin=0,ymax=16,xtick={0,120,240,360,480,600,720,840,960},ytick={0,4,8,12,16},xlabel={Daily screen time (minutes)},ylabel={Students},\n tick label style={font=\\scriptsize},label style={font=\\scriptsize},title={All 40 students, before any deletion},title style={font=\\small}]\n\\addplot[fill=calloutblue,draw=dayblue] coordinates {(0,3) (120,14) (240,12) (360,6) (480,3) (600,0) (720,1) (840,1) (960,0)};\n\\end{axis}\\end{tikzpicture}"

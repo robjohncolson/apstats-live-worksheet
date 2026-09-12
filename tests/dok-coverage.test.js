@@ -94,6 +94,8 @@ describe('E additive group coverage',()=>{
     const manifest=JSON.parse(readFileSync(resolve(ROOT,'dok/manifest.json'),'utf8'));
     const desk=readFileSync(resolve(ROOT,'ap_stats_roadmap_square_mode.html'),'utf8');
     const inventory=desk.match(/var builtGroups=\[([^\]]+)\]/)[1].match(/\d+\.\d+\+\d+\.\d+/g);
-    expect(inventory).toEqual(Object.keys(manifest).filter(key=>key.includes('+')));
+    // Standalone remediation sheets (manifest.standalone) are handed out on a day the teacher picks;
+    // they are not calendar day-groups, so the Desk's per-day inventory does not list them.
+    expect(inventory).toEqual(Object.keys(manifest).filter(key=>key.includes('+')&&!manifest[key].standalone));
   });
 });

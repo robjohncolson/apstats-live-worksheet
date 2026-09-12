@@ -1,0 +1,46 @@
+\documentclass[12pt]{extarticle}
+\usepackage{preamble}
+\geometry{letterpaper, landscape, margin=0.5in}
+\usepackage{qrcode}
+\renewcommand{\answer}[1]{}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+\pagestyle{empty}
+
+\daybanner{Unit 1 \textperiodcentered\ Topics 1.1--1.7 (CED 1.1--1.7) \textperiodcentered\ TODAY'S PROBLEM}{Screen Time, Two Deletions}
+
+\noindent\begin{minipage}[t]{0.57\linewidth}
+\vspace{0pt}
+A school nurse recorded, for a random sample of 40 students, three things: grade level (Freshman or Senior), the device they use most (Phone, Laptop, or Console), and daily screen time in minutes from the phone\textquotesingle s own report. The principal asked one question: \emph{Is too much screen time a concern for our students?} The nurse\textquotesingle s first report said only: \emph{12 of the 40 are over 240, that is 30\%, so yes.}\par\smallskip Group sizes: 25 freshmen, 15 seniors. Over 240 minutes: 9 freshmen, 3 seniors.\par\smallskip The two largest values in the histogram (a 900-minute and a 720-minute entry) came from two students who logged a whole weekend by mistake. The nurse deleted both and re-computed: the mean fell from 205 to 178 minutes; the median moved from 176 to 174 minutes; the headline became \emph{10 of 38 are over 240, that is 26\%.}\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[width=0.96\linewidth,height=1.45in,ybar interval,x tick label as interval=false,bar shift=0pt,xmin=0,xmax=960,
+ ymin=0,ymax=16,xtick={0,120,240,360,480,600,720,840,960},ytick={0,4,8,12,16},xlabel={Daily screen time (minutes)},ylabel={Students},
+ tick label style={font=\scriptsize},label style={font=\scriptsize},title={All 40 students, before any deletion},title style={font=\small}]
+\addplot[fill=calloutblue,draw=dayblue] coordinates {(0,3) (120,14) (240,12) (360,6) (480,3) (600,0) (720,1) (840,1) (960,0)};
+\end{axis}\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{firsttakebox}{FIRST TAKE (5 min, on your sheet)}
+Before any calculation: does the nurse\textquotesingle s first sentence answer the principal\textquotesingle s question? Name one thing the sentence leaves out.
+\end{firsttakebox}
+
+\begin{description}[leftmargin=1.15in, labelwidth=1in, itemsep=2pt, topsep=2pt]
+  \item[\dokbadge{1}~(a)] Fill the table: who or what are the individuals, and for each recorded variable, what ONE value looks like and whether it is categorical or quantitative. Checklist: an individual is one thing measured; a name, label, or ID is not a measurement; quantitative values could sensibly be averaged.\par\smallskip \begin{tabular}{|p{1.3in}|p{2.2in}|p{1.6in}|}\hline \textbf{Individuals:} & \multicolumn{2}{l|}{\hrulefill} \\ \hline \textbf{Variable} & \textbf{One value looks like} & \textbf{Categorical / Quantitative} \\ \hline Grade level & & \\[10pt] \hline Device used most & & \\[10pt] \hline Daily screen time & & \\[10pt] \hline \end{tabular}
+  \item[\dokbadge{2}~(b)] A senior says: \emph{Nine freshmen are over 240 and only three seniors are, so freshmen are three times as bad.} Fix the comparison. Frame: \emph{Of the \underline{\hspace{0.4in}} freshmen, \underline{\hspace{0.4in}} are over 240, which is \underline{\hspace{0.4in}}\%. Of the \underline{\hspace{0.4in}} seniors, \underline{\hspace{0.4in}} are over 240, which is \underline{\hspace{0.4in}}\%. So the fair comparison is \underline{\hspace{0.9in}} because the groups \underline{\hspace{0.9in}}.} Then explain in one sentence why the count 9 versus 3 can mislead here.
+  \item[\dokbadge{2}~(c)] Deleting the two values moved the mean by 27 minutes and the median by 2 minutes. Which of these two statistics is resistant to unusual values? Explain what in the histogram caused the big move, using the words \emph{resistant} and \emph{unusual values}. Do not say which one the nurse should report yet.
+  \item[\dokbadge{3}~(d)] $\star$ Judge the nurse\textquotesingle s trimmed report in three to five sentences. Before you write, check: (1) WHO, WHAT, and the UNITS behind the 26\%; (2) what question 26\% answers, and whether that is the principal\textquotesingle s question; (3) which center to report, tied to your answer in (c); (4) whether deleting the two mistaken values was responsible and what the report must SAY about them. Use the frame below if it helps.
+\end{description}
+
+\vfill
+\begin{minipage}{0.48\linewidth}\qrcode[height=0.45in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson1_live.html}\quad \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson1_live.html}{Review: 1.1 follow-along}\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}\qrcode[height=0.45in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson2_live.html}\quad \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson2_live.html}{Review: 1.2 follow-along}\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}\qrcode[height=0.45in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html}\quad \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html}{Review: 1.4 follow-along}\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}\qrcode[height=0.45in]{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson7_live.html}\quad \href{https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson7_live.html}{Review: 1.7 follow-along}\end{minipage}\hfill
+\textbf{Work (a)--(d) in order; scan a code to revisit a lesson. Turn in one sheet.}
+\end{document}

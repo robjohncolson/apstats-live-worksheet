@@ -15,6 +15,34 @@
     "frq_pattern": "is-the-normal-model-appropriate-adjudicate-model-vs-data",
     "worksheet": "u1_lesson10_live.html"
   },
+  "1.1+1.2+1.4+1.7": {
+    "ced_unit": 1,
+    "ced_topic": null,
+    "title": "Screen Time, Two Deletions",
+    "skill": "4.B",
+    "frq_pattern": "judge-a-trimmed-report-using-context-resistance-and-relative-frequency",
+    "worksheet": null,
+    "topics": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "1.7"
+    ],
+    "worksheets": [
+      "u1_lesson1_live.html",
+      "u1_lesson2_live.html",
+      "u1_lesson4_live.html",
+      "u1_lesson7_live.html"
+    ],
+    "ced_topics": [
+      "1.1",
+      "1.2",
+      "1.4",
+      "1.7"
+    ],
+    "slug": "1.1_1.2_1.4_1.7",
+    "standalone": true
+  },
   "1.2": {
     "ced_unit": 1,
     "ced_topic": "1.2",
