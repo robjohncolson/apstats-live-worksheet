@@ -2,7 +2,6 @@
 topic: "6.11"
 ced2026: { unit: 3, topic: "3.13", label: "Carrying Out a Test (difference of two proportions)" }
 title: "One Result, Two Claims"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "What does a significant test against zero establish, and what practical claim remains untested?"
 worksheet: "u6_lesson11_live.html"
 
@@ -18,27 +17,14 @@ rules_callout:
 
 focus: aps-6.11-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Let students compare the observed gap and sample sizes before calculating."
-    - "At minute 5, read the rules box aloud once; students start (a)."
-    - "Return to the board slide at minute 33. Circulate and require separate statements about the zero-difference test and five-point deployment standard."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose Rowan's or Salma's conclusion and cite one number."
-    - "Use the printed formulas to find the pooled standard error, test statistic, and p-value."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Which null difference did this test actually use?"
     - "What does 0.041 describe under that null model?"
     - "How does the observed two-point gap compare with the five-point deployment standard?"
     - "What additional interval or test would address the five-point claim directly?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require the test decision and a separate practical-threshold judgment."
   watch_for:
     - "Using unpooled standard errors in a null test of equal proportions."
     - "Interpreting the p-value as the probability that the population proportions are equal."

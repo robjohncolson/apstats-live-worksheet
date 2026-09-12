@@ -4,11 +4,6 @@ ced2026:
   topic: '1.11'
   label: Random Sampling
 title: Three Ways to Sample Students
-minutes:
-  first_take: 5
-  explore: 28
-  finish: 10
-  turn_in: 2
 essential_question: Which random sampling method best matches the structure of the population and the
   question?
 worksheet: u3_lesson3_live.html
@@ -20,30 +15,17 @@ rules_callout:
     people and how well the method fits the population and question.
 focus: aps-3.3-d3-1
 reinforcement: []
-exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Board slide up at the bell. Ask students to compare any two methods before naming them.
-  - At minute 5, read the rules box aloud once; students start (a).
-  - Return to the board slide at minute 33. Circulate and ask what each method guarantees.
-  - Collect at the door. Score part (c) only, E/P/I.
-  students_do:
-  - Commit to whether the methods are equivalent and cite one difference.
-  - "Use the printed definitions to name the methods and explain which one is an SRS."
-  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
   - What does Method 3 require in every sample?
   - Could the hat produce no students from one grade?
   - Does a random start make every group of 50 possible?
   - Why does grade matter for this question?
-  adult_role: Solo teacher. Circulate ~5 pairs. Ask for the guarantee and the failure mode before accepting
-    a method name; do not treat all chance-based designs as interchangeable.
   watch_for:
   - Calling every random method an SRS
   - Calling sampling within every grade cluster sampling

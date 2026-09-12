@@ -4,11 +4,6 @@ ced2026:
   topic: '2.11'
   label: The Normal Distribution
 title: Check the Model
-minutes:
-  first_take: 5
-  explore: 28
-  finish: 10
-  turn_in: 2
 essential_question: When does a correct normal calculation justify a conclusion about actual data?
 worksheet: u1_lesson10_live.html
 rules_callout:
@@ -20,30 +15,17 @@ rules_callout:
     calculated area need not match the observed data.
 focus: aps-1.10-d3-1
 reinforcement: []
-exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Board slide up at the bell. Read Ben's and Ava's lines; do not say whether the model fits.
-  - "At minute 5, read the rules box; have students start (a)."
-  - Board slide back up at minute 33. Circulate; require every model judgment to point to the histogram.
-  - Collect at the door. Score part (c) only, E/P/I.
-  students_do:
-  - "Commit to using or rejecting the model before any discussion."
-  - "Use the printed rules to check both model calculations in (b)."
-  - Finish (a)--(c); complete the exit line; turn in.
   questions_to_ask:
   - Which claim is about a normal curve, and which claim is about the 60 actual students?
   - How many bars continue to the right after the peak? What would symmetry require on the left?
   - How many students does $0.62\%$ of 60 represent? How many do you actually see above 70?
   - What must you inspect before typing values into normalcdf?
-  adult_role: Solo teacher. Circulate ~5 pairs. Accept the arithmetic before pressing on the assumption;
-    do not let `correct z-score' stand in for a model check.
   watch_for:
   - Treating the school's assertion of normality as evidence stronger than the histogram.
   - Counting the 60--70 bar as above 70.

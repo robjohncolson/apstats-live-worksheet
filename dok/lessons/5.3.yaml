@@ -2,7 +2,6 @@
 topic: "5.3"
 ced2026: { unit: 2, topic: "2.12", label: "Sampling Distributions & the CLT" }
 title: "When Is the Mean Nearly Normal?"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How do population shape and sample size determine whether a normal model is trustworthy for sample means?"
 worksheet: "u5_lesson3_live.html"
 
@@ -17,27 +16,14 @@ rules_callout:
 
 focus: aps-5.3-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask for a sample-size choice before displaying a rule of thumb."
-    - "At minute 5, read the rules box aloud once; students start (a)."
-    - "Return to the board slide at minute 33. Circulate and require students to name which distribution becomes approximately normal."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose n equals 4 or n equals 40 and cite population shape or sample size."
-    - "Use the printed formulas to find the sampling mean and standard deviation for each sample size."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Does averaging four values erase a long right tail automatically?"
     - "Which distribution does the CLT describe: commuters or sample means?"
     - "What happens to $15/\\sqrt{n}$ when $n$ grows from 4 to 40?"
     - "Which probability calculation becomes questionable if the n equals 4 shape is not normal?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require shape, sample size, and independence in every normality defense; redirect claims that the population itself changes shape."
   watch_for:
     - "Invoking the CLT for n equals 4 without considering the strong population skew."
     - "Saying forty individual commute times have a normal distribution."

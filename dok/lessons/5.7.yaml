@@ -2,7 +2,6 @@
 topic: "5.7"
 ced2026: { unit: 4, topic: "4.1", label: "Sampling Distributions for Sample Means" }
 title: "Two Production Lines, Two Sampling Plans"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How do population shape, sample size, and sampling variability determine whether a normal probability for a sample mean is trustworthy?"
 worksheet: "u5_lesson7_live.html"
 
@@ -18,27 +17,14 @@ rules_callout:
 
 focus: aps-5.7-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask students to mark one plausible clause in each claim without confirming either."
-    - "At minute 5, read the rules box aloud once; students start (a)."
-    - "Return to the board slide at minute 33. Circulate and require a separate normality justification for each line."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Mark a plausible clause in each claim and cite population shape or sample size."
-    - "Use the rules box to check each model before calculating its normal tail probability."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Is 30 the only route to a normal sampling distribution?"
     - "Does the Central Limit Theorem change the original population or the distribution of sample means?"
     - "Why are both sampling distributions centered at 40 despite different sample sizes?"
     - "How do standard deviations 4 and 2 change where 46 falls on each model?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Ask students to evaluate each clause of each claim, then connect the normality path and sampling standard deviation to its tail probability."
   watch_for:
     - "Using n at least 30 as a universal requirement even for a normal population."
     - "Claiming a skewed population prevents the CLT from applying at n equals 36."

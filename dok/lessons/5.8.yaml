@@ -2,7 +2,6 @@
 topic: "5.8"
 ced2026: { unit: 4, topic: "4.6", label: "Sampling Distributions (difference of two means)" }
 title: "Two Samples, One Difference"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How can two sample means use different pathways to justify one normal model for their difference?"
 worksheet: "u5_lesson8_live.html"
 
@@ -19,26 +18,14 @@ rules_callout:
 
 focus: aps-5.8-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask which details govern the sampling model."
-    - "At minute 5, read the rules box aloud once; students start (a)."
-    - "Return at minute 33. Require separate shape arguments and the counterfactual check."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Name one argument to retain and one that needs more evidence."
-    - "Read the rules box, work (a)--(c), revise the first take, and turn in."
   questions_to_ask:
     - "Which distribution are we justifying for North: individual waits or sample means?"
     - "Why can the two groups use different routes to approximate normality?"
     - "What changes if the skewed South sample has size 8?"
     - "What repeated-sampling event does 0.0273 describe?"
-  adult_role: "Solo teacher. Justify North and South separately, then combine them using independence."
   watch_for:
     - "Requiring both samples to have size at least 30 even when one population is normal."
     - "Assuming one normal component automatically fixes an unjustified second component."

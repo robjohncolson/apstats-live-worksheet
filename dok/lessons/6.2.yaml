@@ -2,7 +2,6 @@
 topic: "6.2"
 ced2026: { unit: 3, topic: "3.3", label: "Constructing a CI for a Proportion" }
 title: "Two Library Survey Plans"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "Why can a wider interval from a random sample be more trustworthy than a narrower formula result?"
 worksheet: "u6_lesson1-2_live.html"
 
@@ -17,24 +16,13 @@ rules_callout:
 
 focus: aps-6.2-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask students to choose a plan before calculating."
-    - "At minute 5, read the rules box and start (a). At minute 33, ask what the collection method lets them conclude."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose a plan and cite one collection detail."
-    - "Read the rules box, work (a)--(c), revise the first take, and turn in the sheet."
   questions_to_ask:
     - "Which condition depends on how cardholders entered the sample?"
     - "What do the numerical conditions not establish?"
     - "Why is Plan B's formula interval narrower?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require all three checks and distinguish a formula output from a defensible interval."
   watch_for:
     - "Treating a larger self-selected group as representative."
     - "Using numerical checks as substitutes for random selection."

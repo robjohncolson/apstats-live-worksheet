@@ -10,11 +10,6 @@ ced2026:
   label: Screen Time, Two Deletions
 title: Screen Time, Two Deletions
 worksheets: ["u1_lesson1_live.html", "u1_lesson2_live.html", "u1_lesson4_live.html", "u1_lesson7_live.html"]
-minutes:
-  first_take: 5
-  explore: 0
-  finish: 25
-  turn_in: 2
 essential_question: What does a number mean, and what changes when you delete the values you do not like?
 rules_callout:
   title: RULES YOU MUST USE (NO ANSWERS HERE)
@@ -31,7 +26,6 @@ tether:
   - "UNC-1.J: describe a distribution with shape, center, variability, and unusual features."
   - "UNC-1.K: the median is resistant to unusual values; the mean is not, so report the center that fits the data."
 reinforcement: []
-exit_reflection: 'One sentence I will add to my next written answer so a number is never left without context: \hrulefill'
 space:
   first_take: 0.7in
   a: 0.15in
@@ -39,22 +33,11 @@ space:
   c: 0.5in
   d: 1.15in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(d) $\rightarrow$ turn in
-  teacher_does:
-  - Hand out the sheet; read the scenario aloud once. Start the first take at the bell (ungraded).
-  - Point at the printed rules box and say only that every rule will be needed. Do not interpret the rules.
-  - Allow 25 minutes for (a)--(d). Circulate; answer questions with questions. Collect one sheet; score (d) only, E/P/I by a human.
-  students_do:
-  - Commit one sentence before any discussion.
-  - Work (a) to (d) in order; each part supplies a piece the next part needs.
-  - Use the checklists and frames on the page; every blank is theirs to fill.
   questions_to_ask:
   - Who exactly was measured, and what is one row of the data?
   - Which of your variables could you add up, and which could you only count?
   - If the two groups were the same size, would your comparison change?
   - Which number moved a lot and which barely moved when the two values were deleted? Why?
-  adult_role: Circulate and ask for evidence linked to the printed rules. This is the human-graded DOK-3 channel;
-    do not send it to an AI grader or auto-score it.
   watch_for:
   - Writing a number with no who/what/units (the 30\% left floating).
   - Calling the student ID or the device name a quantitative variable.

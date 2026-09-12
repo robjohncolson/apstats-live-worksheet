@@ -2,7 +2,6 @@
 topic: "5.1"
 ced2026: { unit: 2, topic: "2.12", label: "Sampling Distributions & the CLT" }
 title: "One Sample Far From the Others"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "When is an unusual sample statistic evidence of an error, and when is it ordinary sampling variability?"
 worksheet: "u5_lesson1-2_live.html"
 
@@ -16,27 +15,14 @@ rules_callout:
 
 focus: aps-5.1-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask students to classify 520 before defining sampling variability."
-    - "At minute 5, read the rules box aloud once; students start (a)."
-    - "Return to the board slide at minute 33. Circulate and separate unusualness from evidence of a collection error."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose error or sampling variability and cite one feature of the dotplot."
-    - "Use the rules box to identify the parameter and statistic, then describe the sample means."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Which number belongs to the whole population, and which belongs to Elena's ten packages?"
     - "Do the other 19 sample means match one another exactly?"
     - "What evidence about the sampling procedure would you need before calling 520 an error?"
     - "Would more repetitions or more packages per sample shrink the distribution itself?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to point to both ordinary spread and the isolated value; do not equate unusual with impossible or incorrect."
   watch_for:
     - "Treating the population mean as the required result of every random sample."
     - "Calling the 12-gram gap proof of a recording mistake."

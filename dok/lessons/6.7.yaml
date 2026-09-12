@@ -2,7 +2,6 @@
 topic: "6.7"
 ced2026: { unit: 3, topic: "3.8", label: "Potential Errors When Performing Tests" }
 title: "Which Error Can the District Afford?"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How should the consequences of false positives and false negatives shape a testing plan?"
 worksheet: "u6_lesson7_live.html"
 
@@ -16,24 +15,13 @@ rules_callout:
 
 focus: aps-6.7-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Tally A, B, and need-more-information votes."
-    - "At minute 5, read the rules box and start (a). At minute 33, ask students to name the decision and true state for each probability."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose a plan and name the prioritized error."
-    - "Read the rules box, work (a)--(c), revise the first take, and turn in the sheet."
   questions_to_ask:
     - "If $p=0.10$, what decision creates the dangerous miss?"
     - "What does the complement of 0.748 represent?"
     - "What does Plan B trade per 1,000 tests?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require both consequences and both sides of the tradeoff."
   watch_for:
     - "Using $1-\\alpha$ as the probability of a Type II error."
     - "Claiming that lowering alpha lowers both error probabilities when $n$ is fixed."

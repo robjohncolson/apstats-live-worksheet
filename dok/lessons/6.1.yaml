@@ -2,7 +2,6 @@
 topic: "6.1"
 ced2026: { unit: 3, topic: "3.3", label: "Constructing a CI for a Proportion" }
 title: "Six Activations in Twelve Users"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "When should a simulated sampling distribution be trusted more than a normal approximation?"
 worksheet: "u6_lesson1-2_live.html"
 
@@ -16,27 +15,14 @@ rules_callout:
 
 focus: aps-6.1-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Let students choose between the two reported tail probabilities without confirming a method."
-    - "At minute 5, read the rules box aloud once; students start (a)."
-    - "Return to the board slide at minute 33. Circulate and require a shape or expected-count check before a probability choice."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose the normal-model or simulation estimate and cite one visible feature."
-    - "Use the rules box to work (a) and (b); keep the chance explanation tied to the stated model."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "What does one bar in this simulated distribution count?"
     - "Which expected count warns you that a symmetric curve may miss the tail?"
     - "Why do simulated samples with more than six activations still count?"
     - "Can the two methods disagree in size yet lead to the same 5 percent decision?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Ask for the model, shape check, tail event, and reader consequence; do not accept a method choice based only on which probability is smaller."
   watch_for:
     - "Treating every sampling distribution as normal regardless of expected counts."
     - "Counting exactly six activations instead of six or more."

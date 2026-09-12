@@ -4,11 +4,6 @@ ced2026:
   topic: '2.1'
   label: 'Two Categorical Variables: Tables & Graphs'
 title: Counts or Conditional Percents?
-minutes:
-  first_take: 5
-  explore: 28
-  finish: 10
-  turn_in: 2
 essential_question: When group sizes differ, which comparison reveals whether two categorical variables
   are related?
 worksheet: u2_lesson1_live.html
@@ -31,28 +26,16 @@ rules_callout:
     '
 focus: aps-2.1-d3-1
 reinforcement: []
-exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Show the board at the bell and collect a one-sentence first take without confirming a claim.
-  - Read the rules box; work (a) and (b). Allow about 10 minutes to finish (a)--(c).
-  - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
-  students_do:
-  - Choose the more useful line of reasoning and cite one table detail.
-  - "Use the rules box to name the variables and compare the within-group percentages."
-  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
   - Which number or visible feature supports your claim?
   - Why does the other claim go beyond that evidence?
   - What would you tell someone who chose the other claim?
-  adult_role: Circulate and ask students to connect their choice to evidence. Score part (c) using
-    the three required reasoning elements; do not require dropped extension work.
   watch_for:
   - A choice with copied numbers but no explanation of how they support it.
   - Treating a model or average as a guaranteed individual outcome.

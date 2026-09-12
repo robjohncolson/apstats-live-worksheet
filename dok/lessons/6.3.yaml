@@ -2,7 +2,6 @@
 topic: "6.3"
 ced2026: { unit: 3, topic: "3.4", label: "Justifying a Claim (CI, proportion)" }
 title: "One Interval, Two Threshold Claims"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How can one confidence interval support a modest lower-bound claim but not a stronger one?"
 worksheet: "u6_lesson3_live.html"
 
@@ -17,24 +16,13 @@ rules_callout:
 
 focus: aps-6.3-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask for a point-estimate first take."
-    - "At minute 5, read the rules box and start (a). At minute 33, ask students to compare the lower endpoint with both thresholds."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose which threshold claims have support and cite one number."
-    - "Read the rules box, work (a)--(c), revise the first take, and turn in the sheet."
   questions_to_ask:
     - "What uncertainty disappears if you report only $0.68$?"
     - "Which endpoint should you compare with a lower-bound claim?"
     - "What does $0.65$ inside the interval establish---and not establish?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require both endpoint comparisons and a bounded conclusion."
   watch_for:
     - "Treating the sample proportion as the population proportion."
     - "Calling an interior threshold a proved lower bound."

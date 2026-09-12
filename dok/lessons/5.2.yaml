@@ -2,7 +2,6 @@
 topic: "5.2"
 ced2026: { unit: 2, topic: "2.11", label: "The Normal Distribution" }
 title: "Comparing a Score of 92"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How can the same raw score have different relative standings in two normal distributions with the same mean?"
 worksheet: "u5_lesson1-2_live.html"
 
@@ -16,27 +15,14 @@ rules_callout:
 
 focus: aps-5.2-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask for a claim before students calculate either percentile."
-    - "At minute 5, read the rules box aloud once; students start (a)."
-    - "Return to the board slide at minute 33. Circulate and require both z-scores before a comparison."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose whether the percentile is the same and cite mean or standard deviation."
-    - "Use the rules box to compare the spreads and calculate both z-scores and percentiles."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "How many School A standard deviations above 80 is a 92?"
     - "Why does School B's wider curve place more area above the same score?"
     - "Which area gives a percentile: left of 92 or right of 92?"
     - "What exactly do you mean by `better' when the raw score is identical?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to translate raw-point distance into standard-deviation units and define better as relative standing before choosing a school."
   watch_for:
     - "Using the shared mean as evidence that all corresponding percentiles match."
     - "Reporting the upper-tail probability rather than the percentile below 92."

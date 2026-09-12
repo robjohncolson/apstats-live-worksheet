@@ -2,7 +2,6 @@
 topic: "6.10"
 ced2026: { unit: 3, topic: "3.12", label: "Setting Up a Test (difference of two proportions)" }
 title: "Two Analysts, One Planned Test"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How do the original research question and study design determine a defensible two-proportion test setup?"
 worksheet: "u6_lesson10_live.html"
 
@@ -18,27 +17,14 @@ rules_callout:
 
 focus: aps-6.10-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask which setup matches the team's question without confirming the tail."
-    - "At minute 5, read the rules box aloud once; students start (a)."
-    - "Return to the board slide at minute 33. Circulate and make students separate the question chosen before data from the sign observed afterward."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose Nia's or Omar's setup and cite wording or design evidence."
-    - "Use the rules box to set up the hypotheses and check the procedure and conditions."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "What result would matter if the meter actually lowered completion?"
     - "When was the direction of Omar's alternative chosen?"
     - "Why are pooled expected counts appropriate under equality?"
     - "What do random selection and random assignment each allow the team to claim?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require a setup, pooled-count check, and consequence of changing tails after seeing data."
   watch_for:
     - "Writing hypotheses with sample proportions instead of population parameters."
     - "Choosing a greater-than alternative only because the observed meter proportion is larger."

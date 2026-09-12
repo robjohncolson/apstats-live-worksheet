@@ -2,7 +2,6 @@
 topic: "8.5"
 ced2026: { unit: 3, topic: "3.14", label: "Setting Up a Chi-Square Test (homogeneity/independence)" }
 title: "One Table, Two Study Designs"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "Why can identical counts require different chi-square procedure names and hypotheses?"
 worksheet: "u8_lesson5_live.html"
 
@@ -18,31 +17,16 @@ rules_callout:
 
 focus: aps-8.5-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Display the board and ask for one sentence using the study description.
-  - At minute 5, read the rules box aloud once; students start (a).
-  - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
-  - Collect at the door. Score part (c) only using the three required elements.
-  students_do:
-  - Write a one-sentence first take before any discussion.
-  - Work (a) and (b) from the rules box and the stem.
-  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
   - Which specific number or study detail supports your choice?
   - What claim would go beyond the evidence, and why?
-  adult_role: Circulate and ask for evidence. Accept a concise response; do not require omitted calculations or
-    a second full inference write-up.
   watch_for:
   - Choosing a speaker without a reason.
   - Copying numbers without explaining what they support.
-  first_take_note: Ungraded. Everyday language is enough before the discussion; formal vocabulary belongs in the finish.
-
+  first_take_note: Ungraded commitment; accept any evidence-based first impression.
 visuals:
   ticket_table:
     kind: two_way_table

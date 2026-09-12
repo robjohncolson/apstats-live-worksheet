@@ -2,7 +2,6 @@
 topic: "6.8"
 ced2026: { unit: 3, topic: "3.10", label: "Confidence Intervals for a Difference in Population Proportions" }
 title: "Two Ways to Build an Interval"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How do the study design and variance structure determine a valid interval for a difference in population proportions?"
 worksheet: "u6_lesson8_live.html"
 
@@ -18,24 +17,13 @@ rules_callout:
 
 focus: aps-6.8-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Ask students to choose a method before confirming it."
-    - "At minute 5, read the rules box and start (a). At minute 33, ask students to distinguish variance, standard error, and margin of error."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose Elena or Devon and cite design, counts, or zero."
-    - "Read the rules box, work (a)--(c), revise the first take, and turn in the sheet."
   questions_to_ask:
     - "What single parameter is the town comparison trying to estimate?"
     - "Which four observed counts justify the normal approximation?"
     - "Do standard errors or variances add?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Link the formula to design and the rejected method to zero."
   watch_for:
     - "Pooling the two sample proportions even though the task is to estimate an unrestricted difference."
     - "Adding separate margins of error instead of adding estimated variance terms under the square root."

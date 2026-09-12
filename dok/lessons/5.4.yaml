@@ -2,7 +2,6 @@
 topic: "5.4"
 ced2026: { unit: 3, topic: "3.1", label: "Estimators" }
 title: "Centered or Close?"
-minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How should purpose change the way we weigh an estimator's bias and variability?"
 worksheet: "u5_lesson4_live.html"
 
@@ -16,27 +15,14 @@ rules_callout:
 
 focus: aps-5.4-d3-1
 reinforcement: []
-exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
-
 space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-    - "Board slide up at the bell. Record Lena, Omar, and depends votes without endorsing a universal rule."
-    - "At minute 5, read the rules box aloud once; students start (a); leave first takes ungraded."
-    - "Return to the board slide at minute 33. Circulate and separate one estimate from a sampling distribution."
-    - "Collect at the door. Score part (c) only, E/P/I."
-  students_do:
-    - "Choose a claim and cite one table entry before the lesson."
-    - "Use the rules box and table to compare the two estimates, their bias, and their spread."
-    - "Finish (a)--(c), revise the first take in the exit line, and turn in the sheet."
   questions_to_ask:
     - "Does Rule B landing exactly on 0.40 once tell you where it centers over all samples?"
     - "Which table column measures systematic direction, and which measures sample-to-sample spread?"
     - "What does the phrase within 0.06 make the team's loss function reward?"
     - "How could a 2.9-point upward bias matter in a threshold decision?"
-  adult_role: "Solo teacher. Circulate ~5 pairs. Require students to name the stated goal before declaring an estimator better and to critique the word always in both claims."
   watch_for:
     - "Using the $X=9$ sample to classify long-run bias."
     - "Treating smaller standard deviation as proof that Rule B is unbiased."

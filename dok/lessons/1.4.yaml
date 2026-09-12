@@ -4,11 +4,6 @@ ced2026:
   topic: '1.4'
   label: Representing a Categorical Variable with Graphs
 title: Same Counts, Different Message
-minutes:
-  first_take: 5
-  explore: 28
-  finish: 10
-  turn_in: 2
 essential_question: How can a graph use correct counts but still create a misleading comparison?
 worksheet: u1_lesson4_live.html
 rules_callout:
@@ -19,31 +14,17 @@ rules_callout:
     before writing a claim.
 focus: aps-1.4-d3-1
 reinforcement: []
-exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Board slide up at the bell. Read both captions aloud, then collect first takes without reacting.
-  - At minute 5, read the rules box aloud once; students start (a).
-  - Return to the graphs at minute 33. Circulate and require students to connect the baseline to bar height.
-  - Collect at the door. Score part (c) only, E/P/I.
-  students_do:
-  - Write a one-sentence first take that names the graph they trusted.
-  - "Use the rules box to compare the counts and visible bar heights in (a) and (b)."
-  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
   - What changed between the graphs if the votes are identical?
   - Where does each visible bar begin?
   - What do the counts support about the size of Pizza's lead?
   - What headline would tell readers both the leader and the size of the difference?
-  adult_role: Solo teacher. Circulate ~5 pairs. Do not call a graph honest or misleading for students;
-    ask them to name the baseline, quantify both comparisons, and connect the display choice to the reader's
-    question.
   watch_for:
   - Calling Graph A's counts false instead of explaining its baseline
   - Treating the visible heights as vote counts

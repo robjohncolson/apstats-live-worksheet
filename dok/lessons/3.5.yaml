@@ -4,11 +4,6 @@ ced2026:
   topic: '1.13'
   label: Experimental Design
 title: Which Design Supports Cause?
-minutes:
-  first_take: 5
-  explore: 28
-  finish: 10
-  turn_in: 2
 essential_question: Which design features let a researcher attribute a response difference to a treatment?
 worksheet: u3_lesson5_live.html
 rules_callout:
@@ -25,31 +20,17 @@ rules_callout:
     '
 focus: aps-3.5-d3-1
 reinforcement: []
-exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.8in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Board slide up at the bell. Ask for a design choice and one feature.
-  - At minute 5, read the rules box aloud once; students start (a).
-  - Return to the board slide at minute 33. Circulate and separate assignment, control, blinding, and
-    selection.
-  - Collect at the door. Score part (c) only, E/P/I.
-  students_do:
-  - Choose a design and cite one feature before the lesson.
-  - "Use the rules box to identify the units and response, then compare the two designs."
-  - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
   - What exactly did the researcher manipulate, and what was measured afterward?
   - Which feature addresses preexisting differences between early and late volunteers?
   - What does the control group reveal that one treatment group cannot?
   - Who was randomized, and from what larger population were they not randomly selected?
-  adult_role: Solo teacher. Circulate ~5 pairs. Require each named design feature to be linked to the
-    threat it addresses; do not accept a list of principles without mechanisms.
   watch_for:
   - Treating signup order or equal group size as random assignment.
   - Calling the study representative of teenagers because its treatments were randomized.

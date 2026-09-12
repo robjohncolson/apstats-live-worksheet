@@ -6,11 +6,6 @@ ced2026:
   label: One Commute, Two Questions
 title: One Commute, Two Questions
 worksheets: ["u1_lesson4_live.html", "u1_lesson5_live.html"]
-minutes:
-  first_take: 5
-  explore: 26.8
-  finish: 10
-  turn_in: 2
 essential_question: Which questions can each display answer, and which connection is lost?
 rules_callout:
   title: TWO TOPICS, ONE DATA STORY
@@ -19,26 +14,15 @@ rules_callout:
     pooled graph preserves the link between each student\textquotesingle s mode and travel time.'
 focus: aps-1.4_1.5-d3-1
 reinforcement: []
-exit_reflection: 'One claim I would revise after reading the rules box: \hrulefill'
 space:
   first_take: 0.8in
   a: 0.6in
   b: 1.3in
   c: 2.1in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Read the competing reports without endorsing either. Start the first take at the bell.
-  - Read the rules box; work (a) then (b) in teaching order.
-  - Allow ten minutes to finish (a)--(c). Collect one sheet; score (c) only, E/P/I by a human.
-  students_do:
-  - Commit one sentence before any discussion.
-  - Work (a)--(c) in order from the rules box, then turn in one sheet.
   questions_to_ask:
   - Which feature settles that claim?
   - What information would your chosen display hide?
-  adult_role: Circulate and ask for evidence linked to a claim. This is the human-graded DOK-3 channel;
-    do not send it to an AI grader or auto-score it.
   watch_for:
   - Calling Bus the unique winner despite the tie.
   - Treating a histogram interval as one exact travel time.

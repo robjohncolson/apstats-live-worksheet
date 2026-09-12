@@ -4,11 +4,6 @@ ced2026:
   topic: '1.6'
   label: Describing the Distribution of a Quantitative Variable
 title: Describing a Distribution
-minutes:
-  first_take: 5
-  explore: 28
-  finish: 10
-  turn_in: 2
 essential_question: What does a reader need from a description of a distribution before they can trust
   a summary statistic?
 worksheet: u1_lesson6_live.html
@@ -21,7 +16,6 @@ rules_callout:
 focus: aps-1.6-d3-1
 reinforcement:
 - aps-1.6-d2-1
-exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 1.0in
   a: 0.8in
@@ -29,28 +23,16 @@ space:
   c: 2.4in
   reinforcement: 1.0in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Board slide up at the bell. Read the two descriptions aloud once; do not react to either.
-  - At minute 5, read the rules box aloud once; students start (a). Collect nothing yet.
-  - Board slide back up at minute 33. Circulate with the printed prompts; confirm nothing.
-  - Collect sheets at the door. Score part (c) only, E/P/I.
-  students_do:
-  - Write a one-sentence first take before anything is taught.
-  - Work (a) and (b) from the rules box and the stem.
-  - Finish (a)--(c) with the rules callout in front of them; complete the exit line; turn in.
   questions_to_ask:
   - Which side extends farther beyond the peak?
   - What does the empty interval tell you?
   - Can the graph tell you the exact longest time?
   - What would a reader miss if you gave only a typical time?
-  adult_role: Solo teacher. Ask students to point to evidence and connect the spread to the meaning of
-    a typical time.
   watch_for:
   - Treating the isolated long commute as typical
   - Naming right skew without locating the tail
   - Reading exact endpoints or a mean from grouped data
-  first_take_note: Not graded. Expect a near-even split; the point is that they committed before the discussion.
+  first_take_note: Ungraded commitment; accept any evidence-based first impression.
 visuals:
   commute_hist:
     kind: pgfplot_hist

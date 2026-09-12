@@ -4,11 +4,6 @@ ced2026:
   topic: '1.5'
   label: Representing a Quantitative Variable with Graphs
 title: Same Data, Different Bins
-minutes:
-  first_take: 5
-  explore: 28
-  finish: 10
-  turn_in: 2
 essential_question: How can the same quantitative data tell a different visual story when the histogram
   bins change?
 worksheet: u1_lesson5_live.html
@@ -21,31 +16,17 @@ rules_callout:
     observation.
 focus: aps-1.5-d3-1
 reinforcement: []
-exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Board slide up at the bell. Read Priya's and Leo's claims once; do not endorse either.
-  - At minute 5, read the rules box aloud once; students start (a).
-  - Return to the board slide at minute 33. Circulate and press for a graph feature plus a limit on the
-    conclusion.
-  - Collect at the door. Score part (c) only, E/P/I.
-  students_do:
-  - Commit to F or C and name one visible feature before instruction.
-  - "Use the rules box to read the bin widths and describe the groups and gaps in (a) and (b)."
-  - Finish (a)--(c), complete the exit line, and turn in the sheet.
   questions_to_ask:
   - Which observations changed when the bin width changed?
   - Point to the feature Leo can see in F that Priya cannot see in C.
   - Where in either histogram is the school-day label stored?
   - Name a question for which adding five narrow-bin counts is less useful than reading one broad bar.
-  adult_role: Solo teacher. Circulate about five pairs. Ask students to separate what the graph suggests
-    from what the unlabeled graph establishes; do not confirm F until both are addressed.
   watch_for:
   - Treating the two histograms as different samples rather than two bin choices for the same 30 days.
   - Assigning the lower cluster to school days and the upper cluster to weekends without checking date

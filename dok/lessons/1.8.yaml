@@ -4,11 +4,6 @@ ced2026:
   topic: '1.8'
   label: Graphical Representations of Summary Statistics
 title: Two Displays, One Data Set
-minutes:
-  first_take: 5
-  explore: 28
-  finish: 10
-  turn_in: 2
 essential_question: What information survives when individual observations are compressed into a boxplot?
 worksheet: u1_lesson8_live.html
 rules_callout:
@@ -25,30 +20,17 @@ rules_callout:
     '
 focus: aps-1.8-d3-1
 reinforcement: []
-exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
-  teacher_does:
-  - Board slide up at the bell. Read Omar's and Nia's claims aloud without confirming either.
-  - "At minute 5, read the rules box; have students start (a)."
-  - Board slide back up at minute 33. Circulate; ask students to point before they name a feature.
-  - Collect at the door. Score part (c) only, E/P/I.
-  students_do:
-  - "Commit to Omar or Nia from the two displays before any discussion."
-  - "Use the rules box to read the quartiles and describe the dotplot in (a) and (b)."
-  - Finish (a)--(c); complete the exit line; turn in.
   questions_to_ask:
   - Point to 32 minutes on the dotplot. How many dots are nearby?
   - Could a different data set have this same five-number summary but no gap?
   - Which features disappeared when the 24 dots became five numbers?
   - For the coach's decision, do you need a center or the number of students above 30?
-  adult_role: Solo teacher. Circulate ~5 pairs. Do not say `bimodal' or confirm Nia; ask students to locate
-    the median on both displays and name what disappears.
   watch_for:
   - Treating the median as a mode or as a value an observation must equal.
   - Claiming the boxplot displays the two clusters because its box is wide.
