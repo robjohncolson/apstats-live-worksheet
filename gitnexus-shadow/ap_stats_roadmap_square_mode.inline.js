@@ -2665,6 +2665,22 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -22140,7 +22156,11 @@ const APP_REGISTRY = {
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
     // W2 / G3: Formula Lab is primary (working URL is /formula-lab.html — bare /formula-lab 404s).
     // Formula Defense deck stays Apps-menu secondary as "legacy review" until W13.
-    formulas: { url: 'https://tmux-trainer.vercel.app/formula-lab.html', sfx: 'wildEep' }
+    formulas: { url: 'https://tmux-trainer.vercel.app/formula-lab.html', sfx: 'wildEep' },
+    // 2026-09-12: DOK ladders index (this repo, GH Pages) — teacher-only entry point from the Teacher
+    // menu, so the teacher never has to remember the dok/index.html URL. The index renders from
+    // dok/manifest.json, so new sheets (incl. standalone remediation sheets) appear on their own.
+    dok:      { url: 'https://robjohncolson.github.io/apstats-live-worksheet/dok/index.html', sfx: 'wildEep' }
     // driller deprecated — removed 2026-05
 };
 

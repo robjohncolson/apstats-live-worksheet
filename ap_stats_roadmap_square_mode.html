@@ -1970,6 +1970,7 @@
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openTeacherTools==='function')openTeacherTools()" style="font-weight:bold">&#129520; Teacher workspace&#8230;</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openTeacherTools('recent')">Recent work&#8230;</div>
+            <div class="menu-dd-item" data-sfx id="menu-dok-ladders" onclick="closeMenus();openApp('dok')" title="Every DOK-3 sheet (daily ladders and remediation sheets) — student, board, and teacher-key PDFs">&#128218; DOK ladders&#8230;</div>
             <div class="menu-dd-item" data-sfx id="menu-gradecheckin-item" style="display:none" onclick="closeMenus();if(typeof openGradeCheckin==='function')openGradeCheckin()">&#128200; Grade Check-in&#8230;<span id="menu-gradecheckin-badge" class="menu-nudge-badge" hidden>0</span></div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
@@ -2496,6 +2497,21 @@
         </div>
         <div class="app-content">
             <iframe id="app-ti84-frame" class="app-iframe" allow="cross-origin-isolated"></iframe>
+        </div>
+    </div>
+</div>
+<!-- 2026-09-12: teacher-only DOK ladders window (Teacher menu → DOK ladders…) -->
+<div class="app-overlay" id="app-dok-overlay">
+    <div class="app-window">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="destroyApp('dok')" title="Close"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">DOK Ladders</span>
+            <span onclick="popOutApp('dok')" title="Open in a new window" style="position:absolute;right:22px;top:50%;transform:translateY(-50%);z-index:3;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:16px;height:13px;font-size:10px;line-height:1;color:#fff;background:#7c3aed;border:1px solid #4c1d95;border-radius:2px;box-shadow:inset 1px 1px 0 rgba(255,255,255,.4),inset -1px -1px 0 rgba(0,0,0,.3);user-select:none">&#8599;</span>
+            <div class="collapse-box" onclick="minimizeApp('dok')" title="Minimize"></div>
+        </div>
+        <div class="app-content">
+            <iframe id="app-dok-frame" class="app-iframe"></iframe>
         </div>
     </div>
 </div>
@@ -22140,7 +22156,11 @@ const APP_REGISTRY = {
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
     // W2 / G3: Formula Lab is primary (working URL is /formula-lab.html — bare /formula-lab 404s).
     // Formula Defense deck stays Apps-menu secondary as "legacy review" until W13.
-    formulas: { url: 'https://tmux-trainer.vercel.app/formula-lab.html', sfx: 'wildEep' }
+    formulas: { url: 'https://tmux-trainer.vercel.app/formula-lab.html', sfx: 'wildEep' },
+    // 2026-09-12: DOK ladders index (this repo, GH Pages) — teacher-only entry point from the Teacher
+    // menu, so the teacher never has to remember the dok/index.html URL. The index renders from
+    // dok/manifest.json, so new sheets (incl. standalone remediation sheets) appear on their own.
+    dok:      { url: 'https://robjohncolson.github.io/apstats-live-worksheet/dok/index.html', sfx: 'wildEep' }
     // driller deprecated — removed 2026-05
 };
 
