@@ -2,7 +2,7 @@
 topic: "6.3"
 ced2026: { unit: 3, topic: "3.4", label: "Justifying a Claim (CI, proportion)" }
 title: "One Interval, Two Threshold Claims"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How can one confidence interval support a modest lower-bound claim but not a stronger one?"
 worksheet: "u6_lesson3_live.html"
 
@@ -17,12 +17,12 @@ rules_callout:
 
 focus: aps-6.3-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
 
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
     - "Board slide up at the bell. Ask for a point-estimate first take."
     - "Begin the video at minute 5; return at minute 33 to compare the lower endpoint with both thresholds."

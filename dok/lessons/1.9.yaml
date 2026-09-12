@@ -6,7 +6,7 @@ ced2026:
 title: Which Class Did Better?
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: What does `did better' mean for a whole class, and which feature of a plot answers
@@ -22,15 +22,14 @@ rules_callout:
 focus: aps-1.9-d3-1
 reinforcement:
 - aps-1.9-d2-1
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.6in
   b: 1.5in
   c: 2.0in
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
-    + turn in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Board slide up at the bell. Read Sam's and Tia's lines aloud once; take a quick hand-count of first
     takes but do not react.

@@ -8,7 +8,7 @@ title: Typical Hours, Exceptional Week
 worksheets: ["u1_lesson7_live.html", "u1_lesson8_live.html"]
 minutes:
   first_take: 5
-  video_worksheet: 26.5
+  explore: 26.5
   finish: 10
   turn_in: 2
 essential_question: Which numerical and graphical summary communicates a typical week without hiding an
@@ -21,21 +21,21 @@ rules_callout:
     repeats and gaps.'
 focus: aps-1.7_1.8-d3-1
 reinforcement: []
-exit_reflection: 'One claim I would revise after both videos: \hrulefill'
+exit_reflection: 'One claim I would revise after reading the rules box: \hrulefill'
 space:
   first_take: 0.8in
   a: 0.6in
   b: 1.3in
   c: 2.1in
 teacher:
-  phase_tag: First take $\rightarrow$ both follow-alongs $\rightarrow$ finish
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Read the competing reports without endorsing either. Start the first take at the bell.
-  - Play both topic videos in teaching order; pause for each follow-along.
+  - Read the rules box; work (a) then (b) in teaching order.
   - Allow ten minutes to finish (a)--(c). Collect one sheet; score (c) only, E/P/I by a human.
   students_do:
-  - Commit one sentence before watching.
-  - Complete both follow-alongs, then finish this single problem and turn it in.
+  - Commit one sentence before any discussion.
+  - Work (a)--(c) in order from the rules box, then turn in one sheet.
   questions_to_ask:
   - Which feature settles that claim?
   - What information would your chosen display hide?

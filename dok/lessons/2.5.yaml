@@ -6,7 +6,7 @@ ced2026:
 title: What Does This Correlation Support?
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: How should a correlation, its sensitivity, and the study design shape one recommendation?
@@ -21,17 +21,17 @@ rules_callout:
     '
 focus: aps-2.5-d3-1
 reinforcement: []
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.85in
   a: 0.55in
   b: 1.1in
   c: 1.7in
 teacher:
-  phase_tag: Do Now $\rightarrow$ video follow-along $\rightarrow$ finish and turn in
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Show the board at the bell and collect a one-sentence first take without confirming a claim.
-  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Read the rules box; work (a) and (b). Allow about 10 minutes to finish (a)--(c).
   - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
   - Commit to a proposal, then complete the follow-along.

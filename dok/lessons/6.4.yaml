@@ -2,7 +2,7 @@
 topic: "6.4"
 ced2026: { unit: 3, topic: "3.5", label: "Setting Up a Test for a Proportion" }
 title: "Which Test Answers the Question Asked?"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How do the research direction and null model determine a valid one-proportion test setup?"
 worksheet: "u6_lesson4_live.html"
 
@@ -17,12 +17,12 @@ rules_callout:
 
 focus: aps-6.4-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
 
 space: { first_take: 0.9in, a: 0.7in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: "Do Now (first take) $\\rightarrow$ Explore (video + follow-along) $\\rightarrow$ Exit (finish + turn in)"
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
     - "Board slide up at the bell. Ask students to choose a setup before confirming it."
     - "Begin the video at minute 5; return at minute 33 to label each number's role."

@@ -6,7 +6,7 @@ ced2026:
 title: Which Regression Line Fits?
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: How do several regression properties distinguish lines that share the same mean
@@ -27,18 +27,17 @@ rules_callout:
     '
 focus: aps-2.8-d3-1
 reinforcement: []
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.65in
   a: 0.55in
   b: 1.0in
   c: 1.45in
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
-    (finish + turn in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Show the board at the bell and collect a one-sentence first take without confirming a claim.
-  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Read the rules box; work (a) and (b). Allow about 10 minutes to finish (a)--(c).
   - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
   - Make a first claim, then complete the 2.8 follow-along.

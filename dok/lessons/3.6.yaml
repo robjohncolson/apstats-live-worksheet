@@ -6,7 +6,7 @@ ced2026:
 title: Fertilizer in Two Greenhouses
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: When does blocking reveal a treatment effect more clearly than complete randomization?
@@ -29,18 +29,17 @@ rules_callout:
     '
 focus: aps-3.6-d3-1
 reinforcement: []
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.8in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
-    + turn in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Board slide up at the bell. Ask for a design choice before students calculate.
-  - Begin the combined 3.6--3.7 video follow-along at minute 5.
+  - At minute 5, read the rules box aloud once; students start (a).
   - Return to the board slide at minute 33. Circulate and compare block variation with treatment variation.
   - Collect at the door. Score part (c) only, E/P/I.
   students_do:

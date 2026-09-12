@@ -6,7 +6,7 @@ ced2026:
 title: Check the Model
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: When does a correct normal calculation justify a conclusion about actual data?
@@ -20,15 +20,14 @@ rules_callout:
     calculated area need not match the observed data.
 focus: aps-1.10-d3-1
 reinforcement: []
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
-    + turn in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Board slide up at the bell. Read Ben's and Ava's lines; do not say whether the model fits.
   - Video follow-along from minute 5 (normal curves, empirical rule, and z-scores).

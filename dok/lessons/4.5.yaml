@@ -6,7 +6,7 @@ ced2026:
 title: Which Way Does the Condition Point?
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: Why can reversing the condition produce a very different probability, even when
@@ -29,18 +29,17 @@ rules_callout:
     '
 focus: aps-4.5-d3-1
 reinforcement: []
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.3in
   c: 2.0in
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
-    (finish + turn in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Show the board at the bell and collect a one-sentence first take without confirming a claim.
-  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Read the rules box; work (a) and (b). Allow about 10 minutes to finish (a)--(c).
   - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
   - Choose a claim and cite one cell or margin from the screening table.

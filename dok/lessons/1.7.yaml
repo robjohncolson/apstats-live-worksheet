@@ -6,7 +6,7 @@ ced2026:
 title: Which Summary Tells the Story?
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: How can a statistic be calculated correctly but still be the wrong summary to report?
@@ -20,14 +20,14 @@ rules_callout:
     shape to choose a pair.'
 focus: aps-1.7-d3-1
 reinforcement: []
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: Do Now $\rightarrow$ Explore $\rightarrow$ Exit
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Show both recommendations without endorsement; start the video at minute 5.
   - At minute 33, press calculation versus choice; collect and score part (c), E/P/I.

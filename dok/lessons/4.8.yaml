@@ -6,7 +6,7 @@ ced2026:
 title: Same Mean, Different Deadline Risk
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: When two probability models have the same mean, how can standard deviation change
@@ -22,18 +22,17 @@ rules_callout:
     '
 focus: aps-4.8-d3-1
 reinforcement: []
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit
-    (finish + turn in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Show the board at the bell and collect a one-sentence first take without confirming a claim.
-  - Run the named video follow-along, then allow about 10 minutes for parts (a)--(c).
+  - Read the rules box; work (a) and (b). Allow about 10 minutes to finish (a)--(c).
   - Ask for evidence linked to a claim. Collect the sheet and hand-score part (c) with E/P/I.
   students_do:
   - Choose a route and cite one model feature.

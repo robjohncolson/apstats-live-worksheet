@@ -6,7 +6,7 @@ ced2026:
 title: Two Displays, One Data Set
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: What information survives when individual observations are compressed into a boxplot?
@@ -25,15 +25,14 @@ rules_callout:
     '
 focus: aps-1.8-d3-1
 reinforcement: []
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.7in
   b: 1.4in
   c: 2.0in
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
-    + turn in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Board slide up at the bell. Read Omar's and Nia's claims aloud without confirming either.
   - Video follow-along from minute 5 (five-number summaries and boxplots).

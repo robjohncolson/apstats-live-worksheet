@@ -2,7 +2,7 @@
 topic: "7.6"
 ced2026: { unit: 4, topic: "4.7", label: "CI (difference of two means)" }
 title: "Two Samples of Service Times"
-minutes: { first_take: 5, video_worksheet: 28, finish: 10, turn_in: 2 }
+minutes: { first_take: 5, explore: 28, finish: 10, turn_in: 2 }
 essential_question: "How does the sampling design determine whether a paired or independent-means confidence interval is trustworthy?"
 worksheet: "u7_lesson6_live.html"
 
@@ -18,21 +18,20 @@ rules_callout:
 
 focus: aps-7.6-d3-1
 reinforcement: []
-exit_reflection: "One thing the video changed about my first take: \\hrulefill"
+exit_reflection: "One thing the rules box changed about my first take: \\hrulefill"
 
 space: { first_take: 0.9in, a: 0.8in, b: 1.4in, c: 2.0in }
 
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish + turn
-    in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Display the board and ask for one sentence using the study description.
-  - Begin the 7.6 video follow-along at minute 5.
+  - At minute 5, read the rules box aloud once; students start (a).
   - Return to the board at minute 33. Students finish the shortened parts and justify their judgment.
   - Collect at the door. Score part (c) only using the three required elements.
   students_do:
-  - Write a one-sentence first take before the video.
-  - Complete the video follow-along worksheet.
+  - Write a one-sentence first take before any discussion.
+  - Work (a) and (b) from the rules box and the stem.
   - Finish (a)--(c), revise the first take in the exit line, and turn in the sheet.
   questions_to_ask:
   - Which specific number or study detail supports your choice?
@@ -42,7 +41,7 @@ teacher:
   watch_for:
   - Choosing a speaker without a reason.
   - Copying numbers without explaining what they support.
-  first_take_note: Ungraded. Everyday language is enough before the video; formal vocabulary belongs in the finish.
+  first_take_note: Ungraded. Everyday language is enough before the discussion; formal vocabulary belongs in the finish.
 
 visuals:
   depot_time_summaries:

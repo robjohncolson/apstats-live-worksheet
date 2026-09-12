@@ -12,7 +12,7 @@ title: Screen Time, Two Deletions
 worksheets: ["u1_lesson1_live.html", "u1_lesson2_live.html", "u1_lesson4_live.html", "u1_lesson7_live.html"]
 minutes:
   first_take: 5
-  video_worksheet: 0
+  explore: 0
   finish: 25
   turn_in: 2
 essential_question: What does a number mean, and what changes when you delete the values you do not like?
@@ -39,7 +39,7 @@ space:
   c: 0.5in
   d: 1.15in
 teacher:
-  phase_tag: First take $\rightarrow$ rules $\rightarrow$ (a)--(d) $\rightarrow$ turn in
+  phase_tag: First take $\rightarrow$ rules + (a)--(d) $\rightarrow$ turn in
   teacher_does:
   - Hand out the sheet; read the scenario aloud once. Start the first take at the bell (ungraded).
   - Point at the printed rules box and say only that every rule will be needed. Do not interpret the rules.

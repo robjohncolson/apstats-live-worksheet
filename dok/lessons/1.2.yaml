@@ -6,7 +6,7 @@ ced2026:
 title: 'Getting to School: Survey Data'
 minutes:
   first_take: 5
-  video_worksheet: 28
+  explore: 28
   finish: 10
   turn_in: 2
 essential_question: When is a number a quantity, and when is it just a label?
@@ -21,15 +21,14 @@ rules_callout:
 focus: aps-1.2-d3-1
 reinforcement:
 - aps-1.2-d2-1
-exit_reflection: 'One thing the video changed about my first take: \hrulefill'
+exit_reflection: 'One thing the rules box changed about my first take: \hrulefill'
 space:
   first_take: 0.9in
   a: 0.8in
   b: 1.3in
   c: 1.9in
 teacher:
-  phase_tag: Do Now (first take) $\rightarrow$ Explore (video + follow-along) $\rightarrow$ Exit (finish
-    + turn in)
+  phase_tag: First take $\rightarrow$ rules + (a)--(c) $\rightarrow$ turn in
   teacher_does:
   - Board slide up at the bell. Read Maya's and Jordan's lines aloud; do not react.
   - Video follow-along from minute 5.
