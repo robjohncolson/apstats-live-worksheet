@@ -1,3 +1,5 @@
+2026-09-12: the daily/pairing program is deprecated; only misconception-generated sheets are active ? see DOK_DEPRECATE_DAILY_SPEC.md.
+
 # APS_DOK_LADDER_SPEC.md — One DOK-3 problem per AP Stats lesson day, laddered 1→2→3 inside
 
 > **2026-09-12: Self-paced bonus sheets.** The flow is superseded by [DOK_SELF_PACED_SPEC.md](DOK_SELF_PACED_SPEC.md): work from the printed sheet, turn it in whenever finished, and score the final part E / P / I by hand.

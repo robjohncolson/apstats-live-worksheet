@@ -637,3 +637,12 @@ dok/pdf/aps_8.6_student.pdf -> dok/archive/pdf/aps_8.6_student.pdf
 dok/pdf/aps_8.6_board.pdf -> dok/archive/pdf/aps_8.6_board.pdf
 dok/pdf/aps_8.6_teacher.pdf -> dok/archive/pdf/aps_8.6_teacher.pdf
 dok/PENDING.md -> dok/archive/PENDING.md
+
+Resumed with explicit authorization to use git grep for the unindexable Desk.
+Desk blast radius: _dokLadderRowHtml has one direct caller (showResourcePanel), at two call sites; its nested link helper is only called inside it. Remove all three with no other panel edits.
+showResourcePanel has eight production call sites: recordLinkVisit, maybeBumpThenOpen/open, renderDoNowGrades, _showWorkDayPanel/finish.onclick, storage event listener, _studentMarkSave, _blooketCommit, and _focusTodayLessonVideo. These resource, completion-refresh and today-navigation flows make the panel HIGH risk; removal is limited to DOK output and covered by Desk regressions. Git grep line inventory at resume: 6612, 8050, 8795, 11278, 11810, 11866, 14712, 24377.
+
+Dashboard loadRemediationSheets upstream impact: LOW; one top-level initialization caller; zero affected processes. Test helper impact queries report LOW with zero callers for indexed helpers; newer test cases are absent from the index. They are test-only entry points with no production callers.
+Staged detect_changes before commits 1/2/3: no indexed changes / LOW (6 symbols, 0 processes) / LOW (9 symbols, 0 processes). The graph's Python hunk mapping includes stale baseline and unrelated symbol names; staged diff review is authoritative for those files. Desk caller inventory above is the explicitly authorized substitute.
+
+Completed implementation: 545 archive renames; active YAML content unchanged except added metadata; active TeX unchanged; one sheet compiled to three PDFs. Refreshed the Desk/dashboard generated shadows after the root lineage check exposed drift. Final focused run: 10 files / 66 passed. Python: 64 passed. Final root: 315 files, 19 failed files; 26 failed tests plus the pre-existing study-break-smoke syntax error. All failed test titles match prior reports; exact names and evidence are recorded in dok-deprecate-daily-verification.json. No new failures remain. No push; unrelated work preserved.

@@ -1,3 +1,5 @@
+2026-09-12: the daily/pairing program is deprecated; only misconception-generated sheets are active ? see DOK_DEPRECATE_DAILY_SPEC.md.
+
 # DOK_SELF_PACED_SPEC.md — DOK-3 sheets are self-paced bonus work; everything a student needs is printed on the sheet
 
 **Teacher (2026-09-12), looking at 1.4+1.5 "One Commute, Two Questions":** "it has an exit ticket that mentions 'rules

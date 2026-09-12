@@ -1,91 +1,43 @@
-# dok/ — one DOK-3 problem per AP Stats lesson day
+# DOK-3 misconception sheets
 
-Spec: [DOK_SELF_PACED_SPEC.md](../DOK_SELF_PACED_SPEC.md). Flow: **self-paced bonus problem; hand-scored (c)**.
-Students write a first take, work the printed parts, and turn the sheet in whenever they finish for bonus credit.
-Every sheet supplies its own stem, visual, and boxed notes. Three editions: student sheet (2 sides), board slide,
-and teacher key with answers, questions to ask, and E/P/I scoring.
+2026-09-12: only sheets generated from the misconceptions panel are active. See
+[DOK_DEPRECATE_DAILY_SPEC.md](../DOK_DEPRECATE_DAILY_SPEC.md).
+The 66 daily ladders and two Wednesday pairing sheets are preserved under `archive/`.
+They are excluded from active builds, the manifest, the teacher index and the dashboard.
 
-Standalone remediation sheets use identical copy and their own part range (score (d) when that is the final part).
-They remain outside calendar day-groups. Sheets are graded by a human, never AI-graded or auto-scored.
+Students write a first take, work the printed parts and turn in whenever they finish
+for bonus credit. The final part is scored E/P/I by a human, never AI-graded or auto-scored.
+All information needed to work the problem is printed on the sheet.
 
-## Author one lesson (≈ 30 min once you have the problem)
+## Author and publish a misconception sheet
 
-1. **Registry file** — create `registry/{topic}.jsonl` with ONE line (`aps-{topic}-d3-1`, `role: focus`).
-   One file per topic so parallel authors never collide. Copy `registry/1.6.jsonl` and change everything. Rules that the tests enforce:
-   `dok: 3`; `parts` (a)(b)(c) with non-decreasing `dok` ending at 3; `first_take`;
-   `frq_pattern` (kebab-case description of the released-FRQ pattern, never the item);
-   `dok_rationale` ≥ 40 chars naming the KIND of thinking (no *hard/easy/difficult*);
-   `answers` for every part; `scoring.expectedElements` + `scoringGuide.{E,P,I}`;
-   `hypothetical: true` if the stem has numbers; a `skill` code from the CED (`1.A`–`4.E`).
-   Optional: a second row `aps-{topic}-d2-1` with `role: reinforcement`.
-2. **Lesson YAML** — copy `lessons/1.6.yaml` to `lessons/{topic}.yaml`. Keep `topic` = the
-   OLD topic key from `data/lesson-schedule.json`; put the NEW CED label in `ced2026`.
-   `worksheet` / `worksheets` retain filenames only for manifest/index metadata; they are not printed.
-   Do not add `minutes`, `exit_reflection`, or teacher `phase_tag`, `teacher_does`, `students_do`, `adult_role`.
-   The validator rejects retired fields and every phrase in `self_paced_phrases.json`, case-insensitively.
-   Actual `*_live.html` filenames are exempt only in worksheet metadata. Printed TeX has no exemptions.
-   If a phrase collides with problem data, remove the phrase from the guard; never change the problem.
-   `visuals` carry data + labels only (`pgfplot_hist`, `dotplot`, `boxplot`, `two_way_table`,
-   `scatter`, `raw_tikz`).
-3. **Delete the topic's row from `PENDING.md`.**
-4. **Build + compile**: `powershell -NoProfile -File dok/compile.ps1 {topic}` (or
-   `bash dok/compile.sh {topic}`). PDFs land in `pdf/`; `manifest.json` updates for `index.html`.
-5. **Check pages**: student 2, board 1, teacher ≤ 3 (`grep "pages" tex/aps_{topic}_*.log`).
-   Tune `space:` in the YAML if part (c) needs more room.
-6. `npm test -- tests/dok-` and `python -m pytest tests/test_dok_build.py -q`, then commit
-   the YAML, the registry line, `PENDING.md`, `manifest.json`, and the three PDFs.
+1. Use the misconceptions panel's exact tag keys or normalized `label:` keys for the
+   target evidence. Read the applicable `calibration/unit*.json` anchors.
+2. Create `registry/{slug}.jsonl` and `lessons/{slug}.yaml`. Screen Time,
+   `1.1_1.2_1.4_1.7`, is the current active example. Registry items need a first take,
+   ordered parts ending at DOK 3, answers, a rationale, CED skill codes, FRQ pattern
+   and E/P/I scoring. Multi-topic keys retain their ordered `topics` list; filenames
+   replace `+` with `_`.
+3. Every active YAML requires `standalone: true`, a non-empty `misconceptions` list,
+   and `generated: { by: "orchestrator+teacher", "on": "2026-09-12", window_days: 42 }`
+   with the actual author, date and evidence window. Quote `"on"` for YAML compatibility.
+   Keep worksheet filenames as metadata. There is no calendar coverage obligation,
+   pairing eligibility rule, ten-minute limit or worksheet-per-member requirement.
+4. Run `python dok/build_ladder.py --validate`, then
+   `powershell -NoProfile -File dok/compile.ps1 -All` (or pass a single slug).
+   `--all` and `-All` enumerate only `dok/lessons/*.yaml`.
+5. Review the three editions: student (two sides), board and teacher key.
+   Run the DOK Vitest suites and `pytest tests/test_dok_build.py -q`.
+   Commit the YAML, registry, manifest, TeX and PDFs.
 
-Calibration anchors per NEW unit live in `calibration/unit{n}.json` — read the unit's
-`dok3_anchors` and `not_dok3` before writing part (c).
+Both video-free and self-paced guards remain mandatory. Retired flow fields such as
+`minutes`, `exit_reflection` and teacher phase instructions are rejected. Visuals carry
+data and labels only. Do not edit authored problem content to bypass a guard.
 
-## Period E Wednesday groups
+`index.html` renders each active manifest card with target labels, generation date and
+three PDF links. The Desk Teacher menu's DOK ladders entry opens this index; individual
+lesson resource panels have no DOK row. The dashboard Remediation sheets strip lists
+all active sheets and their targets. The manifest carries the same provenance as YAML.
 
-Group sheets are additive: all individual topic sheets remain available. The schedule's
-`dayGroups.E` declares eligible pairs. Use `topic: 1.4+1.5`, ordered `topics` and
-`worksheets` lists, and the filename slug `1.4_1.5` for YAML, registry, TeX, and PDFs.
-Build with `powershell -NoProfile -File dok/compile.ps1 1.4_1.5`.
-
-Each group has one shared problem and one human-graded E/P/I response, parts covering
-both topics and the union of both CED tethers. All information needed for the problem is printed.
-It is never AI-graded or auto-scored. The first two pairs are built; the other eight
-are explicitly listed in `PENDING.md` and the teacher index.
-
-## Files
-
-| Path | What |
-|---|---|
-| `registry/{topic}.jsonl` | item bank, one file per lesson day, one JSON object per line, ids unique |
-| `lessons/{topic}.yaml` | one per dated lesson day |
-| `calibration/unit{n}.json` | what DOK-2 / DOK-3 look like in this unit |
-| `build_ladder.py` | YAML + registry → `tex/aps_{topic}_{student,board,teacher}.tex`; `--validate`; `--all` |
-| `tex/preamble.sty` | copied from Lesson_planning (A2) + ladder macros at the end; edit here only |
-| `compile.ps1` / `compile.sh` | pdflatex × 2 per edition → `pdf/` |
-| `pdf/` | committed PDFs — GitHub Pages serves them, so `index.html` opens the board slide on the projector |
-| `index.html` + `manifest.json` | the teacher's morning tab: today's row, board + key links |
-| `PENDING.md` | dated days without a ladder yet; the coverage test reads it |
-
-## Friction log (Phase 2, 2026-09-03 — what the stress test changed)
-
-- **One registry file per topic** replaced the single `registry.jsonl`: ten parallel authors
-  would otherwise append to one line-oriented file. The loader rejects a row whose `topic`
-  differs from its file name.
-- **Two sentence frames + an optional item do not fit the back with the default `space`**
-  (the optional box spilled two lines onto a page 3 twice). Rule of thumb: with two frames,
-  set `c: 2.0in`, `b: 1.3–1.5in`, `a: 0.6–0.8in`. Check `pdfinfo` page counts every time.
-- **Boxplots need `\usepgfplotslibrary{statistics}`** (now in the preamble) and side-by-side
-  series (`series: [{label, five, outliers}]`); the labels only render with
-  `axis y line*=left` + an invisible y line, and `enlarge x limits` keeps an outlier dot off
-  the axis edge.
-- **Tutor tethers come in three shapes** (plain bullets, bold bullets with nested EKs, a
-  two-column LO/EK table); `tether_lines()` flattens all three and LaTeX-escapes the prose.
-  Anything the author writes in a registry row is LaTeX, not prose — escape it yourself.
-- **`\hrulefill`, not `\blank[4in]`, for the exit line** — a fixed rule overflowed the box.
-- **The Algebra 2 `summaryexitbox` title is invisible** (warmred on warmred); re-declared.
-- Authoring time by hand, once the problem idea exists: ~25 min per topic (registry row
-  15, YAML 5, compile + eyeball + space tuning 5). Under the 30-min gate.
-
-## Where the DOK-3 comes from on a mechanics-only day
-
-Never "the mechanic, harder." The judgment around it: which display / summary / procedure /
-conclusion is warranted, and what the alternative would mislead a reader into. Pattern:
-**choose / critique / bound.** Examples for 1.1 and 1.3 are in the spec §1.3.
+See [archive/README.md](archive/README.md) for history and restoration instructions.
+Weekly automation is a separate, pending project.

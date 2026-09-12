@@ -1,3 +1,5 @@
+2026-09-12: the daily/pairing program is deprecated; only misconception-generated sheets are active ? see DOK_DEPRECATE_DAILY_SPEC.md.
+
 # DOK_VIDEO_FREE_SPEC.md — every DOK-3 sheet stands on its own; no sheet depends on a video
 
 **Teacher (2026-09-12): "Please redo the DOK3 worksheets so they are not dependent on any videos!!!!"**
