@@ -82,6 +82,17 @@ function runApplyJob(fetchMock, options = {}) {
 }
 
 describe('FRQ regrade manifest', () => {
+  it('carries bounded rubric details in the sweep request, including empty missing', () => {
+    const candidate = { studentId: 'sid', itemId: 'item', attempt: 1, response: 'answer' };
+    const request = buildRegradeRequest(candidate, 0, REGISTRY, {
+      feedback: 'why', matched: Array(40).fill('x'.repeat(600)), missing: [], suggestion: 'y'.repeat(3000),
+    });
+    expect(request.matched).toHaveLength(32);
+    expect(request.matched[0]).toHaveLength(512);
+    expect(request.missing).toEqual([]);
+    expect(request.suggestion).toHaveLength(2000);
+    expect(buildRegradeRequest(candidate, 0, REGISTRY, { missing: 'bad' })).not.toHaveProperty('missing');
+  });
   it.each([
     ['u1_lesson2_live.html', {
       prefix: 'WS-U1L2',
@@ -348,6 +359,8 @@ describe('regrade job HTTP flow', () => {
       responseHash: createHash('sha256').update(studentAnswer.trim(), 'utf8').digest('hex'),
       rubricVersion: `${REGISTRY.schoolYear}:${REGISTRY.sourceDigest.replace(/^sha256:/, '')}`,
       feedback: 'Complete.',   // 2026-09-09: the verdict's feedback reaches the ledger
+      matched: ['labels'],
+      missing: [],
     });
     expect(result.exitCode).toBe(0);
   });

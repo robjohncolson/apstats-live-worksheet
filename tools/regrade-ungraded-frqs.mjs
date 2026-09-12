@@ -144,6 +144,12 @@ export function buildRegradeRequest(candidate, score, registry, verdict = null) 
   if (Number(candidate.attempt) !== 1) body.attempt = candidate.attempt;
   const feedback = verdict && typeof verdict.feedback === 'string' ? verdict.feedback.trim().slice(0, 2000) : '';
   if (feedback) body.feedback = feedback;
+  for (const field of ['matched', 'missing']) {
+    if (Array.isArray(verdict?.[field])) {
+      body[field] = verdict[field].slice(0, 32).map(entry => String(entry).slice(0, 512));
+    }
+  }
+  if (typeof verdict?.suggestion === 'string') body.suggestion = verdict.suggestion.slice(0, 2000);
   return body;
 }
 

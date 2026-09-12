@@ -564,6 +564,25 @@ describe('POST /ledger/frq-appeal', () => {
 });
 
 describe('POST /ledger/frq-regrade mode matrix', () => {
+  it.each(['off', 'authoritative'])('%s preserves bounded matched, missing and suggestion', async (selectedMode) => {
+    mode = selectedMode;
+    const existing = { ledger_id: 'existing', item_id: 'WS-U1L1-reflect1', source: 'frq',
+      attempt: 1, score: null, response: 'A sufficiently long reflection answer.', frq_response_version: 1 };
+    legacyDb.getLedgerByStudent = async () => ({ data: [existing] });
+    frqDb.statusRows = [existing];
+    const result = await server.request('POST', '/ledger/frq-regrade', {
+      headers: { 'x-teacher-secret': 'teacher-key' },
+      body: { studentId: 'student-a', itemId: existing.item_id, score: 0.5,
+        responseHash: 'hash', rubricVersion: 'version', feedback: 'Why',
+        matched: ['Known'], missing: Array(40).fill('x'.repeat(600)), suggestion: 's'.repeat(3000) },
+    });
+    expect(result.status).toBe(200);
+    const detail = selectedMode === 'off' ? legacyDb.writes[0].frqResult : frqDb.applies[0].result;
+    expect(detail.matched).toEqual(['Known']);
+    expect(detail.missing).toHaveLength(32);
+    expect(detail.missing[0]).toHaveLength(512);
+    expect(detail.suggestion).toHaveLength(2048);
+  });
   it('keeps legacy teacher behavior in off and shadow', async () => {
     for (const selectedMode of ['off', 'shadow']) {
       mode = selectedMode;

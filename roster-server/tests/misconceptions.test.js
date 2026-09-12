@@ -27,6 +27,35 @@ function compute(rows, options = {}) {
 }
 
 describe('misconception signals', () => {
+  it('keeps legacy I evidence weak and still extracts verbatim feedback mistakes', () => {
+    const row = { ...frq(undefined, 'Dividing by the grand total'), score: 0 };
+    expect(extractEvents([row], assets)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ weak: true, tags: [], label: row.item_id,
+        evidence: { kind: 'score-only', feedback: 'Dividing by the grand total' } }),
+      expect.objectContaining({ label: 'Dividing by the grand total' }),
+    ]));
+    expect(extractEvents([{ ...row, frq_result: null }], assets)[0].weak).toBe(true);
+    for (const score of [null, undefined, 0.5, 1]) {
+      expect(extractEvents([{ ...row, score, frq_result: { feedback: 'Try again' } }], assets)).toEqual([]);
+    }
+    expect(extractEvents([{ ...row, frq_result: { missing: [], feedback: 'Try again' } }], assets)).toEqual([]);
+  });
+  it('never lets weak evidence satisfy class share or lesson thresholds', () => {
+    const localAssets = structuredClone(assets);
+    localAssets.rubricMap.rubrics['WS-U1L1-reflect1'] = { question: 'Interpret the context' };
+    localAssets.rubricMap.rubrics['WS-U1L2-reflect1'].question = 'Interpret the context';
+    const weak = [1, 2].map((lesson, i) => ({ ...quiz(`WS-U1L${lesson}-reflect1`, 7 - i * 4),
+      source: 'frq', score: 0, frq_result: { feedback: 'Try again' } }));
+    const result = computeMisconceptions([fan(weak)], localAssets, { now: NOW });
+    expect(result.class).toEqual([]);
+    expect(result.students.one.persistent).toHaveLength(1);
+    expect(result.evidence['label:interpret the context'].every(event => event.weak)).toBe(true);
+    const strong = { ...weak[0], frq_result: { missing: ['Interpret the context'] } };
+    expect(computeMisconceptions([fan([strong, weak[1]])], localAssets, { now: NOW }).class).toEqual([]);
+    const twoStrong = [strong, { ...strong, item_id: weak[1].item_id }];
+    expect(computeMisconceptions([fan(twoStrong), fan(weak, 'two'), fan(weak, 'three'), fan(weak, 'four')],
+      localAssets, { now: NOW }).class).toEqual([]);
+  });
   it('treats curriculum_quiz rows like quiz rows, including null scores', () => {
     const rows = [quiz(), quiz(undefined, 7, 'B'), quiz(undefined, 7, '')];
     const curriculumRows = rows.map(row => ({ ...row, source: 'curriculum_quiz', score: null }));

@@ -31,6 +31,20 @@ const numeric = (value) => value == null ? null : Number(value);
 
 let db;
 
+it('the worker DB adapter and SQL RPC retain rubric elements without a new migration', async () => {
+  const draft = await recordTicket('WS-U1L1-elements');
+  const claim = await claimOne('worker-elements');
+  const adapter = createFrqLedgerDb(createPgliteFrqClient(db));
+  const result = resultFor(claim.frq_response_hash, {
+    matched: ['Names the variable'], missing: ['Explains the context'], suggestion: 'Add context',
+  });
+  await adapter.applyFrqVerdict({ ledgerId: draft.ledger_id, claimToken: claim.frq_claim_token,
+    responseVersion: claim.frq_response_version, score: 0.5, result, rubricVersion: 'test', gradedAt: at() });
+  const row = await pgFrqRow(db, draft.ledger_id);
+  const { responseHash, ...storedResult } = result;
+  expect(row.frq_result).toEqual(storedResult);
+});
+
 beforeAll(async () => {
   db = await createFrqDb();
 }, 60000);

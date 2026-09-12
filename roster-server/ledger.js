@@ -733,6 +733,9 @@ export function mountLedger(app, {
       responseHash,
       rubricVersion,
       feedback,
+      matched,
+      missing,
+      suggestion,
     } = req.body || {};
     if (!studentId || !itemId) return res.status(400).json({ ok: false, error: 'studentId and itemId are required' });
     const incoming = Number(score);
@@ -743,6 +746,7 @@ export function mountLedger(app, {
     // student whose saved answers were graded overnight saw a lower grade and no reason. Keep
     // the grader's feedback (capped like sanitizedFrqResult) and label the provider honestly.
     const feedbackText = typeof feedback === 'string' ? feedback.trim().slice(0, 2_048) : '';
+    const elementDetails = sanitizedFrqResult({ matched, missing, suggestion });
     const providerLabel = provenance === 'teacher' ? 'teacher' : 'ai-batch';   // same default as the receipt's gradingProvenance
     const attemptNo = attempt ?? 1;
 
@@ -793,6 +797,7 @@ export function mountLedger(app, {
             provider: providerLabel,
             model: 'external-regrade',
             ...(feedbackText ? { feedback: feedbackText } : {}),
+            ...elementDetails,
           },
           rubricVersion: String(rubricVersion),
           gradedAt: new Date().toISOString(),
@@ -861,6 +866,7 @@ export function mountLedger(app, {
         model: 'external-regrade',
         ...(responseHash ? { responseHash: String(responseHash) } : {}),
         ...(feedbackText ? { feedback: feedbackText } : {}),
+        ...elementDetails,
       },
       gradedAt: new Date().toISOString()
     });

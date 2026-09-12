@@ -42,10 +42,16 @@ export function extractEvents(rows, { answerKey = {}, rubricMap = {}, distractor
         tags: distractorMap.items?.[itemId]?.[chosen] || [], label: `chose ${chosen} on ${itemId}` });
       continue;
     }
-    if (row.source !== 'frq' || !row.frq_result) continue;
+    if (row.source !== 'frq') continue;
     const rubric = rubricMap.rubrics?.[itemId];
-    const feedback = typeof row.frq_result.feedback === 'string' ? row.frq_result.feedback : '';
-    const missing = Array.isArray(row.frq_result.missing) ? row.frq_result.missing : [];
+    const feedback = typeof row.frq_result?.feedback === 'string' ? row.frq_result.feedback : '';
+    const hasMissing = Array.isArray(row.frq_result?.missing);
+    const missing = hasMissing ? row.frq_result.missing : [];
+    // A legacy I identifies an item to revisit, not a particular misconception.
+    if (!hasMissing && row.score === 0) {
+      events.push({ ...base, source: 'frq', weak: true, tags: [],
+        label: rubric?.question || itemId, evidence: { kind: 'score-only', feedback } });
+    }
     for (const text of missing) {
       if (typeof text !== 'string' || !text.trim()) continue;
       const element = resolveElement(text, rubric?.elements);
@@ -137,15 +143,17 @@ export function computeMisconceptions(fan, assets, options = {}) {
         students[studentId].persistent.push({ key, label, draft, count: own.length, itemIds, firstSeen, lastSeen });
       }
     }
-    const lessons = [...new Set(grouped.map(event => lessonOf(event, assets.answerKey)).filter(Boolean))].sort();
-    if (active.size && byStudent.size / active.size >= config.classShare && lessons.length >= config.classMinLessons) {
-      classEntries.push({ key, label, draft, students: byStudent.size, activeStudents: active.size, lessons,
-        sources: { mcq: grouped.filter(event => event.source === 'mcq').length,
-          frq: grouped.filter(event => event.source === 'frq').length },
-        firstSeen: grouped[0].ts, lastSeen: grouped.at(-1).ts, skills: tag?.skills || [] });
+    const strong = grouped.filter(event => !event.weak);
+    const classStudents = new Set(strong.map(event => event.studentId));
+    const lessons = [...new Set(strong.map(event => lessonOf(event, assets.answerKey)).filter(Boolean))].sort();
+    if (active.size && classStudents.size / active.size >= config.classShare && lessons.length >= config.classMinLessons) {
+      classEntries.push({ key, label, draft, students: classStudents.size, activeStudents: active.size, lessons,
+        sources: { mcq: strong.filter(event => event.source === 'mcq').length,
+          frq: strong.filter(event => event.source === 'frq').length },
+        firstSeen: strong[0].ts, lastSeen: strong.at(-1).ts, skills: tag?.skills || [] });
     }
-    evidence[key] = grouped.slice(-50).reverse().map(({ studentId, ts, source, itemId, evidence }) =>
-      ({ studentId, ts, source, itemId, evidence }));
+    evidence[key] = grouped.slice(-50).reverse().map(({ studentId, ts, source, itemId, evidence, weak }) =>
+      ({ studentId, ts, source, itemId, evidence, ...(weak ? { weak: true } : {}) }));
   }
   classEntries.sort((a, b) => b.students - a.students || b.lastSeen.localeCompare(a.lastSeen) || a.key.localeCompare(b.key));
   for (const student of Object.values(students)) student.persistent.sort((a, b) =>
