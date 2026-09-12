@@ -68,6 +68,13 @@ if necessary, and pushes them before selecting anything new. A conflicting
 rebase is aborted and reported. Unpublished non-weekly commits require manual
 review; they are never included in an automatic push.
 
+The scheduled task fires Friday 21:00 and again Saturday 07:00 as a catch-up. It
+also starts as soon as possible after a missed start, wakes the laptop from
+sleep, and retries a failed run every 30 minutes up to three times. Apply runs
+are accepted Friday from 21:00 through Saturday before noon. A week that
+already has a recorded run (published or below floor) does nothing on a second
+apply, so the catch-up never authors a second sheet. `--now` bypasses both.
+
 Manual publication: `node scripts/weekly-dok.mjs --apply --now`.
 Scheduled publication: `powershell -NoProfile -File tools/weekly_dok.ps1 -Apply`.
 Apply requires clean tracked files and an empty index, except for local

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { runWeekly, publicationPaths, recordWeeklyRun, createRuntime } from '../scripts/weekly-dok.mjs';
+import { runWeekly, publicationPaths, recordWeeklyRun, createRuntime, alreadyRanThisWeek } from '../scripts/weekly-dok.mjs';
 
 function fixture() {
   const original = { schema: 'apstats-misconception-triage/v1', entries: {} };
@@ -37,6 +37,27 @@ describe('weekly run boundaries', () => {
     expect(io.stage).not.toHaveBeenCalled();
     expect(io.push).not.toHaveBeenCalled();
   });
+  it('a catch-up run in the same week as a completed run does nothing', async () => {
+    const { io, original } = fixture();
+    original.weeklyRuns = [{ at: '2026-09-18T21:00:00.000Z', keys: [] }];
+    io.date = () => '2026-09-19';
+    const result = await runWeekly({ mode: 'apply' }, io);
+    expect(result.status).toBe('already ran');
+    expect(io.fetchSections).not.toHaveBeenCalled();
+    expect(io.author).not.toHaveBeenCalled();
+    expect(io.writeTriage).not.toHaveBeenCalled();
+    expect(io.push).not.toHaveBeenCalled();
+  });
+
+  it('--now still runs in a week that already has a run, and a new week always runs', async () => {
+    const { io, original } = fixture();
+    original.weeklyRuns = [{ at: '2026-09-18T21:00:00.000Z', keys: [] }];
+    io.date = () => '2026-09-19';
+    expect((await runWeekly({ mode: 'apply', now: true }, io)).status).toBe('published');
+    expect(alreadyRanThisWeek(original, '2026-09-21')).toBe(false);
+    expect(alreadyRanThisWeek(original, '2026-09-20')).toBe(true);
+  });
+
   it('dry-run defaults to zero writes, authoring or git operations', async () => {
     const { io } = fixture();
     const result = await runWeekly({}, io);

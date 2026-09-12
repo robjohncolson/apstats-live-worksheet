@@ -107,9 +107,18 @@ export function itemSkills(row, skillMap) {
   return union((row.itemIds || []).map(id => skillMap[id]?.skill).filter(skill => /^[1-4]\.[A-Z]$/.test(skill || '')));
 }
 
+// Monday-to-Sunday week index; a Friday-night run and its Saturday-morning catch-up share one week.
+export function weekOf(value) {
+  return Math.floor((Date.parse(value) - Date.UTC(1970, 0, 5)) / (7 * 86400000));
+}
+
+export function alreadyRanThisWeek(triage, date) {
+  return (triage.weeklyRuns || []).some(run => weekOf(run.at) === weekOf(`${date}T21:00:00.000Z`));
+}
+
 export function recordWeeklyRun(triage, payloads, date) {
   const at = `${date}T21:00:00.000Z`;
-  const week = value => Math.floor((Date.parse(value) - Date.UTC(1970, 0, 5)) / (7 * 86400000));
+  const week = weekOf;
   const keys = union(payloads.flatMap(payload => (payload.postTriageFrequent || []).map(row => row.key)));
   const runs = (triage.weeklyRuns || []).filter(run => week(run.at) !== week(at));
   runs.push({ at, keys });
@@ -131,8 +140,13 @@ export async function runWeekly(options, io) {
     await io.preflight(options);
   }
   const date = io.date();
-  const payloads = await io.fetchSections();
   const originalTriage = await io.readTriage();
+  // The Saturday catch-up trigger must never author a second sheet after a completed Friday run.
+  if (mode === 'apply' && !options.now && alreadyRanThisWeek(originalTriage, date)) {
+    io.log('Already ran this week; nothing to do');
+    return { status: 'already ran' };
+  }
+  const payloads = await io.fetchSections();
   const triage = await io.backfill(structuredClone(originalTriage));
   const rows = mergeSections(payloads);
   const recurring = recordWeeklyRun(triage, payloads, date);
@@ -267,8 +281,10 @@ export function createRuntime(root, overrides = {}) {
       if (git(['diff', '--cached', '--name-only'])) throw new Error('Index must be empty');
       if (trackedChanges().some(file => file !== TRIAGE_PATH || !historyOnlyChange())) throw new Error('Tracked working files must be clean');
       const now = new Date();
-      if (!options.now && (now.getDay() !== 5 || now.getHours() < 21 || io.date() < '2026-09-18')) {
-        throw new Error('Outside the Friday schedule; use --now for an intentional manual run');
+      const fridayNight = now.getDay() === 5 && now.getHours() >= 21;
+      const saturdayMorning = now.getDay() === 6 && now.getHours() < 12;
+      if (!options.now && (!(fridayNight || saturdayMorning) || io.date() < '2026-09-18')) {
+        throw new Error('Outside the Friday-night / Saturday-morning window; use --now for an intentional manual run');
       }
     },
     recoverPending: () => {

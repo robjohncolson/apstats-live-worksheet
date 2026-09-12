@@ -1,8 +1,9 @@
 # Weekly misconception DOK sheet; defaults to a read-only dry run.
 # Registration is printed by -Register, never executed by this script.
 # First scheduled run: Friday 2026-09-18, 21:00 local, on Athena.
-# Register once (this script does NOT execute this command):
-# schtasks /Create /TN "APStats-WeeklyDOK" /SC WEEKLY /D FRI /ST 21:00 /SD 09/18/2026 /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\rober\Downloads\Projects\school\follow-alongs\tools\weekly_dok.ps1 -Apply" /F
+# Register once (this script does NOT execute this command): run tools/register_weekly_dok.ps1.
+# It creates APStats-WeeklyDOK with two triggers (Fri 21:00 + Sat 07:00 catch-up), start-when-missed,
+# wake-to-run, and three 30-minute retries. The script itself refuses a second apply in the same week.
 # -PushOnly retries pending weekly commits without selecting another sheet.
 param(
   [switch]$Apply,
@@ -14,7 +15,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 if ($Register) {
-  Write-Output ('schtasks /Create /TN "APStats-WeeklyDOK" /SC WEEKLY /D FRI /ST 21:00 /SD 09/18/2026 /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ' + $repo + '\tools\weekly_dok.ps1 -Apply" /F')
+  Write-Output ('powershell -NoProfile -ExecutionPolicy Bypass -File ' + $PSScriptRoot + '\register_weekly_dok.ps1')
   exit 0
 }
 if (([int]$Apply.IsPresent + [int]$DryRun.IsPresent + [int]$PushOnly.IsPresent) -gt 1) {
