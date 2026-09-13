@@ -157,19 +157,6 @@ describe('CED labels preserve Do Now and coach identities', () => {
 });
 
 describe('CED flashcard titles preserve deck and resume keys', () => {
-  it('keeps the original topic in every mode-picker action', () => {
-    const quick = vi.fn(), timed = vi.fn(), review = vi.fn();
-    const win = boot(['_bfShowModePicker'], {
-      _bfHideQuizUI: () => {}, _bfStartQuick: quick, _ftStart: timed, _rvStart: review,
-      _fcFlag: () => true, BLOOKET_FULLDECK_SECONDS: 20,
-    });
-    const launcher = win.document.createElement('button');
-    win._bfShowModePicker(launcher, '3.1');
-    expect(win.document.getElementById('bf-header').textContent).toContain(foldedTitle);
-    win.document.querySelectorAll('#bf-modepick button').forEach((button) => button.click());
-    for (const action of [quick, timed, review]) expect(action).toHaveBeenCalledWith(launcher, '3.1');
-  });
-
   it.each([
     ['_rvStart', '_rvState', 'Review'],
     ['_bfStartQuick', '_bfState', 'Quick check'],

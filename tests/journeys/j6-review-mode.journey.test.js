@@ -140,7 +140,7 @@ async function j6SettleSignIn(harness) {
   }
 }
 
-async function j6OpenPicker(harness) {
+async function j6OpenDeck(harness) {
   const tile = harness.document.querySelector(`#cg .dc[data-topic="${TOPIC}"]`);
   expect(tile, `calendar has no ${TOPIC} tile`).toBeTruthy();
   tile.click();
@@ -154,11 +154,13 @@ async function j6OpenPicker(harness) {
     )
   ), { message: 'real lesson panel has no flashcards launcher' });
   launcher.click();
+  // No mode picker: the launcher opens the timed deck directly (2026-09-13).
   await harness.waitFor(() => (
     harness.document.getElementById('bf-overlay').style.display === 'block'
-      && harness.document.getElementById('bf-modepick').style.display === 'block'
-  ), { message: 'flashcard mode picker did not open' });
-  return harness.document.getElementById('bf-modepick');
+      && harness.document.querySelector('#bf-choices .bf-choice')
+  ), { timeoutMs: 3_000, message: 'timed deck did not open directly' });
+  expect(harness.document.getElementById('bf-modepick').style.display).toBe('none');
+  return harness.document.getElementById('bf-overlay');
 }
 
 function j6LedgerPosts(harness) {
@@ -203,16 +205,19 @@ describe('Desk journey J6', () => {
         method === 'GET' && new URL(url).pathname.endsWith('/data/flashcard-flags.json')
       )), 'data/flashcard-flags.json was not served through the disk router').toBe(true);
 
-      const picker = await j6OpenPicker(harness);
-      const reviewMode = [...picker.querySelectorAll('button')]
-        .find((button) => button.firstElementChild?.textContent
-          === '🔁 Review due cards (practice — not graded)');
-      expect(reviewMode, 'all-ON flags did not expose the lesson Review mode button').toBeTruthy();
+      // The lesson launcher no longer offers Review; the Do Now chip is Review's only entry.
+      const overlay = await j6OpenDeck(harness);
+      const reviewMode = [...overlay.querySelectorAll('button')]
+        .find((button) => button.textContent.includes('Review due cards'));
+      expect(reviewMode).toBeUndefined();
 
       const cancel = [...harness.document.querySelectorAll('#bf-actions button')]
         .find((button) => button.textContent.trim() === 'Cancel');
-      expect(cancel, 'mode picker has no Cancel button').toBeTruthy();
+      expect(cancel, 'timed deck has no Cancel button').toBeTruthy();
       cancel.click();
+      await harness.waitFor(() => (
+        harness.document.getElementById('bf-overlay').style.display === 'none'
+      ), { message: 'timed deck did not close' });
       const closeResource = [...harness.document.querySelectorAll('#resource-overlay button')]
         .find((button) => button.textContent.trim() === 'OK');
       expect(closeResource, 'resource panel has no OK button').toBeTruthy();
@@ -332,8 +337,8 @@ describe('Desk journey J6', () => {
       )), { message: 'both-OFF flashcard flags were not loaded from the disk router' });
 
       expect(harness.document.getElementById('fc-due-chip')).toBeNull();
-      const picker = await j6OpenPicker(harness);
-      const reviewMode = [...picker.querySelectorAll('button')]
+      const overlay = await j6OpenDeck(harness);
+      const reviewMode = [...overlay.querySelectorAll('button')]
         .find((button) => button.textContent.includes('Review due cards'));
       expect(reviewMode).toBeUndefined();
       await j6SettleRoster(harness);

@@ -161,7 +161,9 @@ async function j4SettleRoster(harness) {
 }
 
 describe('Desk journey J4', () => {
-  it('J4 resumes answered snapshots without score inflation and commits one 8/10 Quick check (supersedes desk-blooket-flashcards it 55 “_bfSaveProgress persists the answered snapshot”, it 56 “answer saves after scoring and Next clears answered before saving”, it 57 “answer then Cancel resumes at the following card without another point”, it 58 “pass timer is canceled on close and resume commits the saved 80% once”, and it 58b “non-passing answer then Cancel resumes one card ahead without a commit”)', async () => {
+  // RETIRED 2026-09-13: the quick check is unreachable from the UI (full timed deck is the only
+  // graded mode). The engine stays for flashcards.js parity; this journey is kept for history.
+  it.skip('J4 resumes answered snapshots without score inflation and commits one 8/10 Quick check (supersedes desk-blooket-flashcards it 55 “_bfSaveProgress persists the answered snapshot”, it 56 “answer saves after scoring and Next clears answered before saving”, it 57 “answer then Cancel resumes at the following card without another point”, it 58 “pass timer is canceled on close and resume commits the saved 80% once”, and it 58b “non-passing answer then Cancel resumes one card ahead without a commit”)', async () => {
     const harness = await bootDesk({
       now: NOW,
       fakeTimers: true,
@@ -304,7 +306,7 @@ describe('Desk journey J4', () => {
     }
   });
 
-  it('J4 opens a legacy snapshot without answered at its saved card (supersedes desk-blooket-flashcards it 59 “legacy snapshot without answered resumes at its saved index”)', async () => {
+  it.skip('J4 opens a legacy snapshot without answered at its saved card (supersedes desk-blooket-flashcards it 59 “legacy snapshot without answered resumes at its saved index”)', async () => {
     const legacyDeck = J4_DECK.slice(0, 10);
     const harness = await bootDesk({
       now: NOW,

@@ -2681,6 +2681,7 @@
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -11509,18 +11510,17 @@ function showResourcePanel(inf, dateStr) {
                 // The Blooket grade = max(real game, flashcard). The chip shows the
                 // current score (colored vs the 80% gate); the launcher is ALWAYS
                 // available so a student can re-run the flashcards to IMPROVE — the
-                // quick check caps at 80%, the full timed deck reaches 100%
-                // (FLASHCARD_TIMED_DECK_BUILD.md).
+                // full timed deck is the only graded mode (80% = done, up to 100%).
                 var _blScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(_stuTopicId) : null;
                 // Label by the 80% gate, not 100: >=80 already PASSES (done) — say so, and
                 // keep the click as an optional redo. <80 = a make-up; 100 = perfected.
                 var _blLabel = (typeof _blScore === 'number')
                     ? (_blScore >= 100 ? 'Flashcards ✓ perfected'
                        : _blScore >= 80 ? 'Flashcards ✓ done — redo to improve'
-                       : 'Improve (flashcards)')
-                    : 'Do flashcards';
+                       : 'Flashcards — need 80%')
+                    : 'Do flashcards (Blooket credit)';
                 var _blBtn = _signedIn
-                    ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Quick check (caps 80%) or the full timed deck (up to 100%)" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
+                    ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="The timed flashcard deck earns your Blooket credit: 80% = done, up to 100%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
                     : '';
                 var _blDueText = '';
                 if (typeof _fcFlag === 'function' && _fcFlag('readinessBadge')) {
@@ -13059,8 +13059,11 @@ function _bfKeydownHandler(e) {
     _bfAnswer(realIdx);
 }
 
-// Entry point (from studentMark): show the mode picker, then route to the
-// quick check (existing) or the new full timed deck (FLASHCARD_TIMED_DECK_BUILD.md).
+// Entry point (from studentMark): go straight into the full timed deck — it is the
+// only graded flashcard mode (teacher, 2026-09-13: "should just be full deck timed").
+// There is no mode picker any more. Practice-only review mode is reached from the
+// Do Now "Review due (N)" chip (_rvStartMixed); the quick check engine
+// (_bfStartQuick) is retained for flashcards.js parity tests but is unreachable.
 async function openBlooketFlashcards(btn, topicId) {
     // Codex BLOCKER fold P2: opening the Blooket flashcard quiz in view-as
     // mode would let the teacher drive a quiz that writes back as themselves
@@ -13072,7 +13075,15 @@ async function openBlooketFlashcards(btn, topicId) {
       return;
     }
     try { if (typeof _srsSyncPull === 'function') _srsSyncPull(); } catch (_) {}
-    _bfShowModePicker(btn, topicId);
+    _ftStart(btn, topicId);
+}
+
+// One sentence every student sees before the first card: the deck IS the Blooket credit.
+function _bfCreditNote(topicId) {
+    var note = 'This timed deck is how you earn Blooket credit for this lesson. 80% or higher counts it as done; you can reach 100%.';
+    var best = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(topicId) : null;
+    if (typeof best === 'number') note += ' Your best so far: ' + best + '%.';
+    return note;
 }
 
 // Show/hide the quiz UI vs the mode picker (both share the bf-overlay modal).
@@ -13111,60 +13122,6 @@ function _rvRestoreActions() {
     };
     actions.appendChild(next);
     actions.appendChild(cancel);
-}
-
-// The mode picker: Quick check (top-10, untimed, caps 80%) vs Full deck (all
-// cards, timed, up to 100% — the real Blooket substitute).
-function _bfShowModePicker(btn, topicId) {
-    var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Flashcards — ' + cedLabel(topicId).text;
-    _bfHideQuizUI();
-    var mp = document.getElementById('bf-modepick');
-    if (mp) {
-        while (mp.firstChild) mp.removeChild(mp.firstChild);
-        mp.style.display = 'block';
-        var intro = document.createElement('div');
-        intro.className = 'geneva';
-        intro.style.cssText = 'font-size:12px;margin-bottom:10px';
-        intro.textContent = 'How do you want to do this Blooket?';
-        mp.appendChild(intro);
-        var statusText = '';
-        var bestScore = null;
-        if (typeof _blooketScoreFor === 'function') bestScore = _blooketScoreFor(topicId);
-        if (typeof bestScore === 'number') statusText = 'Your best so far: ' + bestScore + '%';
-        var resume = null;
-        if (typeof _bfLoadProgress === 'function') resume = _bfLoadProgress(topicId);
-        if (resume !== null) statusText += (statusText ? ' · ' : '') + 'Resume available';
-        if (statusText) {
-            var status = document.createElement('div');
-            status.className = 'geneva';
-            status.style.cssText = 'font-size:11px;margin-bottom:10px;color:#555';
-            status.textContent = statusText;
-            mp.appendChild(status);
-        }
-        function modeBtn(titleTxt, descTxt, onPick) {
-            var b = document.createElement('button');
-            b.className = 's7btn s7btn-default';
-            b.style.cssText = 'display:block;width:100%;text-align:left;margin-bottom:8px;padding:8px';
-            var t = document.createElement('div'); t.style.fontWeight = 'bold'; t.textContent = titleTxt;
-            var d = document.createElement('div'); d.style.fontSize = '11px'; d.textContent = descTxt;
-            b.appendChild(t); b.appendChild(d);
-            b.onclick = onPick;
-            return b;
-        }
-        mp.appendChild(modeBtn('⚡ Quick check',
-            'Top 10 cards, untimed, answers shown. Stops when you pass. Caps at 80% — the Blooket half of Done (the worksheet 60% is also needed).',
-            function () { _bfStartQuick(btn, topicId); }));
-        mp.appendChild(modeBtn('\u{1F3AF} Full deck — timed',
-            'Every card, ' + BLOOKET_FULLDECK_SECONDS + 's each; misses come back. Earn up to 100% — replaces the in-class Blooket.',
-            function () { _ftStart(btn, topicId); }));
-        if (_fcFlag('reviewMode')) {
-            mp.appendChild(modeBtn('🔁 Review due cards (practice — not graded)',
-                'Practice only — nothing is graded. Rate each card so it comes back at the right time.',
-                function () { _rvStart(btn, topicId); }));
-        }
-    }
-    document.getElementById('bf-overlay').style.display = 'block';
 }
 
 async function _rvStart(btn, topicId) {
@@ -14424,7 +14381,10 @@ async function _ftStart(btn, topicId) {
     _ftState.answered = false;
     var header = document.getElementById('bf-header');
     if (header) header.textContent = 'Timed deck — ' + cedLabel(topicId).text + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
+    var note = document.getElementById('bf-note');
+    if (note) { note.textContent = _bfCreditNote(topicId); note.style.display = 'block'; }
     _bfShowQuizUI(true);   // show the quiz + the timer
+    document.getElementById('bf-overlay').style.display = 'block';   // the picker used to open the modal
     document.getElementById('bf-result').style.display = 'none';
     document.addEventListener('keydown', _ftKeydownHandler);
     _ftRenderCard();

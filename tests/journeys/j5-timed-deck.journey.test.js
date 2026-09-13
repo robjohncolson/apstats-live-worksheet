@@ -132,11 +132,13 @@ async function j5OpenPicker(harness) {
     )
   ), { message: 'real lesson panel has no flashcards launcher' });
   launcher.click();
+  // No picker any more: the launcher opens straight into the timed deck.
   await harness.waitFor(() => (
     harness.document.getElementById('bf-overlay').style.display === 'block'
-      && harness.document.getElementById('bf-modepick').style.display === 'block'
-  ), { message: 'flashcard mode picker did not open' });
-  return harness.document.getElementById('bf-modepick');
+      && harness.document.getElementById('bf-note').style.display === 'block'
+      && harness.document.querySelector('#bf-choices .bf-choice')
+  ), { timeoutMs: 3_000, message: 'timed deck did not open directly' });
+  return harness.document.getElementById('bf-note');
 }
 
 function j5CorrectButton(harness) {
@@ -216,15 +218,12 @@ describe('Desk journey J5', () => {
       const srsLogBefore = JSON.parse(harness.window.localStorage.getItem(LOG_KEY) || '[]');
       let picker = await j5OpenPicker(harness);
       expect(picker.textContent).toContain(`Your best so far: ${INITIAL_BLOOKET}%`);
-      let fullDeck = [...picker.querySelectorAll('button')]
-        .find((button) => button.textContent.includes('Full deck'));
-      expect(fullDeck, 'mode picker has no Full deck button').toBeTruthy();
+      expect(picker.textContent).toMatch(/Blooket credit/);
       const gradeRequestsBeforeLower = harness.roster.state.requests.filter((request) => (
         request.method === 'GET' && request.path === '/grade'
       )).length;
       harness.roster.state.grades.lessons[0].blooket = FRESH_BLOOKET;
       expect(picker.textContent).not.toContain(`${FRESH_BLOOKET}%`);
-      fullDeck.click();
 
       const lowerScore = await j5CompleteTimedRun(harness, { missFirst: true });
       const expectedLower = Math.round(
@@ -258,12 +257,9 @@ describe('Desk journey J5', () => {
       ), { message: 'lower timed recap did not close' });
 
       picker = await j5OpenPicker(harness);
-      fullDeck = [...picker.querySelectorAll('button')]
-        .find((button) => button.textContent.includes('Full deck'));
       const gradeRequestsBeforeHigher = harness.roster.state.requests.filter((request) => (
         request.method === 'GET' && request.path === '/grade'
       )).length;
-      fullDeck.click();
 
       const higherScore = await j5CompleteTimedRun(harness, { missFirst: false });
       expect(higherScore).toBe(100);

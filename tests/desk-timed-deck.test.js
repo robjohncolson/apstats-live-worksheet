@@ -136,18 +136,19 @@ describe('Timed deck — UI wiring (static parse)', () => {
     expect(DESK).toMatch(/const\s+BLOOKET_FULLDECK_SECONDS\s*=\s*40/);
   });
 
-  it('11: the mode picker offers Quick check + Full timed deck, routing to each flow', () => {
-    expect(DESK).toMatch(/function\s+_bfShowModePicker\s*\(/);
-    const body = fnBody(DESK, '_bfShowModePicker');
-    expect(body).toMatch(/Quick check/);
-    expect(body).toMatch(/Full deck/);
-    expect(body).toMatch(/_bfStartQuick\s*\(\s*btn\s*,\s*topicId\s*\)/);
-    expect(body).toMatch(/_ftStart\s*\(\s*btn\s*,\s*topicId\s*\)/);
+  it('11: the mode picker is gone — no function, no Quick check offer anywhere', () => {
+    expect(DESK).not.toMatch(/function\s+_bfShowModePicker\s*\(/);
+    expect(DESK).not.toMatch(/_bfShowModePicker\s*\(/);
+    expect(DESK).not.toMatch(/modeBtn\s*\(/);
+    expect(fnBody(DESK, '_ftStart')).toMatch(/bf-overlay['"]\)\.style\.display\s*=\s*['"]block['"]/);
   });
 
-  it('12: openBlooketFlashcards now shows the mode picker (the load logic moved out)', () => {
+  it('12: openBlooketFlashcards goes straight to the timed deck and states the credit rule', () => {
     const body = fnBody(DESK, 'openBlooketFlashcards');
-    expect(body).toMatch(/_bfShowModePicker\s*\(\s*btn\s*,\s*topicId\s*\)/);
+    expect(body).toMatch(/_ftStart\s*\(\s*btn\s*,\s*topicId\s*\)/);
+    expect(body).not.toMatch(/_bfStartQuick|_bfShowModePicker/);
+    expect(fnBody(DESK, '_ftStart')).toMatch(/_bfCreditNote\(topicId\)/);
+    expect(fnBody(DESK, '_bfCreditNote')).toMatch(/Blooket credit[\s\S]*80%[\s\S]*100%[\s\S]*Your best so far/);
   });
 
   it('13: the timer ticks every second and times out the card at 0', () => {

@@ -96,13 +96,12 @@ describe('Desk flashcards — timed keyboard guards and honest picker', () => {
     expect(body).toMatch(/ov\.style\.display\s*===\s*['"]none['"]/);
   });
 
-  it('the mode picker states each mode outcome and current status honestly', () => {
-    const body = fnBody(DESK, '_bfShowModePicker');
-    expect(body).toMatch(/Quick check/);
-    expect(body).toMatch(/Full deck/);
-    expect(body).toMatch(/Caps at 80%/);
+  it('the timed deck note states the credit rule and current best honestly', () => {
+    const body = fnBody(DESK, '_bfCreditNote');
+    expect(body).toMatch(/Blooket credit/);
+    expect(body).toMatch(/80% or higher counts it as done/);
+    expect(body).toMatch(/100%/);
     expect(body).toMatch(/Your best so far/);
-    expect(body).toMatch(/Resume available/);
   });
 });
 

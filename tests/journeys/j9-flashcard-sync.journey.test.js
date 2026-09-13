@@ -240,7 +240,7 @@ async function settleSignIn(harness, username) {
   await settleRoster(harness);
 }
 
-async function openQuickCheck(harness) {
+async function openTimedDeck(harness) {
   const tile = harness.document.querySelector(`#cg .dc[data-topic="${TOPIC}"]`);
   expect(tile, `calendar has no ${TOPIC} tile`).toBeTruthy();
   tile.click();
@@ -255,27 +255,17 @@ async function openQuickCheck(harness) {
   ), { message: 'real lesson panel has no flashcards launcher' });
   launcher.click();
 
-  const picker = await harness.waitFor(() => {
-    const overlay = harness.document.getElementById('bf-overlay');
-    const candidate = harness.document.getElementById('bf-modepick');
-    return overlay.style.display === 'block' && candidate.style.display === 'block'
-      ? candidate
-      : false;
-  }, { message: 'flashcard mode picker did not open' });
-  const quickCheck = [...picker.querySelectorAll('button')]
-    .find((button) => button.textContent.includes('Quick check'));
-  expect(quickCheck, 'mode picker has no Quick check button').toBeTruthy();
-  quickCheck.click();
-
+  // No mode picker: the launcher opens the full timed deck directly (2026-09-13).
   await harness.waitFor(() => (
-    harness.document.querySelector('#bf-choices .bf-choice:not(:disabled)')
-  ), { message: 'Quick check did not render its first card' });
+    harness.document.getElementById('bf-overlay').style.display === 'block'
+      && harness.document.querySelector('#bf-choices .bf-choice:not(:disabled)')
+  ), { timeoutMs: 3_000, message: 'timed deck did not render its first card' });
 }
 
 function correctChoice(harness) {
   const question = harness.document.getElementById('bf-question').textContent.trim();
   const card = CARD_BY_QUESTION.get(question);
-  expect(card, `Quick check rendered an unknown CSV question: ${question}`).toBeTruthy();
+  expect(card, `timed deck rendered an unknown CSV question: ${question}`).toBeTruthy();
   const correctAnswer = card.choices[card.correctIdx];
   const choice = [...harness.document.querySelectorAll('#bf-choices .bf-choice')]
     .find((button) => button.textContent.trim().replace(/^[A-D]\.\s*/, '') === correctAnswer);
@@ -283,23 +273,37 @@ function correctChoice(harness) {
   return choice;
 }
 
-async function answerOneQuickCard(harness) {
+// The timed deck writes its per-card SRS entries when the run FINISHES (not per
+// answer), so one practice session = one complete, all-correct run of the deck.
+async function completeOneTimedRun(harness) {
   const before = readLog(harness).length;
-  await openQuickCheck(harness);
-  correctChoice(harness).click();
+  await openTimedDeck(harness);
+
+  for (let answer = 0; answer < DECK.length; answer += 1) {
+    const ready = await harness.waitFor(() => {
+      if (harness.document.getElementById('bf-result').style.display === 'block') return 'finished';
+      return harness.document.querySelector('#bf-choices .bf-choice:not(:disabled)');
+    }, { timeoutMs: 1_500, message: `timed deck stalled before answer ${answer + 1}` });
+    if (ready === 'finished') break;
+    correctChoice(harness).click();
+    await harness.waitFor(() => (
+      harness.document.getElementById('bf-result').style.display === 'block'
+        || harness.document.querySelector('#bf-choices .bf-choice:not(:disabled)')
+    ), { timeoutMs: 1_500, message: `timed deck did not auto-advance after answer ${answer + 1}` });
+  }
 
   const log = await harness.waitFor(() => {
     const entries = readLog(harness);
-    return entries.length === before + 1 ? entries : false;
-  }, { message: 'real Quick check did not append one SRS entry' });
+    return entries.length === before + DECK.length ? entries : false;
+  }, { timeoutMs: 1_500, message: 'timed deck did not append one SRS entry per card at finish' });
 
   const cancel = [...harness.document.querySelectorAll('#bf-actions button')]
     .find((button) => button.textContent.trim() === 'Cancel');
-  expect(cancel, 'Quick check has no Cancel button').toBeTruthy();
+  expect(cancel, 'timed deck recap has no Cancel button').toBeTruthy();
   cancel.click();
   await harness.waitFor(() => (
     harness.document.getElementById('bf-overlay').style.display === 'none'
-  ), { message: 'Quick check did not close' });
+  ), { message: 'timed deck did not close' });
 
   const closeResource = [...harness.document.querySelectorAll('#resource-overlay button')]
     .find((button) => button.textContent.trim() === 'OK');
@@ -343,11 +347,11 @@ describe('Desk journey J9', () => {
       expect(deviceA.roster).toBe(sharedRoster);
       await settleSignIn(deviceA, KID);
 
-      const aLog = await answerOneQuickCard(deviceA);
-      expect(aLog).toHaveLength(1);
+      const aLog = await completeOneTimedRun(deviceA);
+      expect(aLog).toHaveLength(DECK.length);
       expect(aLog[0]).toMatchObject({
         topic: TOPIC,
-        mode: 'quick',
+        mode: 'full',
         csv: CSV_FILE,
         surface: 'desk',
         seq: 0,
@@ -399,9 +403,9 @@ describe('Desk journey J9', () => {
       }, { message: "device B's sign-in pull did not merge device A's practice" });
       expect(logKeys(bAfterPull)).toEqual(logKeys(aLog));
 
-      const bLog = await answerOneQuickCard(deviceB);
-      expect(bLog).toHaveLength(2);
-      expect(new Set(logKeys(bLog)).size).toBe(2);
+      const bLog = await completeOneTimedRun(deviceB);
+      expect(bLog).toHaveLength(2 * DECK.length);
+      expect(new Set(logKeys(bLog)).size).toBe(2 * DECK.length);
       deviceB.clock.advance(3_001);
       await settleRoster(deviceB);
 
@@ -443,5 +447,5 @@ describe('Desk journey J9', () => {
       deviceB?.teardown();
       deviceA?.teardown();
     }
-  }, 30_000);
+  }, 90_000);   // two full timed-deck runs + two Desk boots; 30 s times out under a parallel full-suite run
 });

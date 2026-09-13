@@ -1225,15 +1225,8 @@
         _fcBodyHtml('<div class="fc-result"><h2>No deck</h2><p>This lesson has no flashcard deck.</p></div>');
         return;
       }
-      _fcBodyHtml(
-        '<div class="fc-pick">' +
-          '<h2>Choose a mode</h2>' +
-          '<p>Quick check tops out at 80% — the Blooket half of Done (the worksheet 60% is also needed). Full deck goes to 100%.</p>' +
-          '<button class="fc-mode quick" id="fc-mode-quick">⚡ Quick check<small>Top 10 cards · pass at 80%</small></button>' +
-          '<button class="fc-mode full" id="fc-mode-full">🎯 Full deck<small>Every card · 40s each · up to 100%</small></button>' +
-        '</div>');
-      document.getElementById('fc-mode-quick').onclick = function () { _fcStart(lesson, 'quick'); };
-      document.getElementById('fc-mode-full').onclick = function () { _fcStart(lesson, 'full'); };
+      // No mode picker: the full timed deck is the only graded mode (Desk parity, 2026-09-13).
+      _fcStart(lesson, 'full');
     });
   }
   window.openFlashcards = openFlashcards;

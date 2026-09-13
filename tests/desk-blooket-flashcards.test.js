@@ -51,7 +51,7 @@ describe('Desk: Blooket flashcard verification', () => {
     // The launcher routes to studentMark(..., 'blooket') and is always clickable.
     expect(body).toMatch(/studentMark\(this,[^\n]*blooket/);
     expect(body).toMatch(/Do flashcards/);
-    expect(body).toMatch(/Improve \(flashcards\)/);
+    expect(body).toMatch(/Flashcards — need 80%/);
   });
 
   it('03: _doneBtn no longer handles blooket (it is launcher + chip in its row now)', () => {
