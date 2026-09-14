@@ -605,6 +605,95 @@ describe('buildWorksheetBlankCounts — manifest parsing', () => {
   });
 });
 
+// ── FRQ_PROVISIONAL_FLOOR (2026-09-14): blanks-only lessons never fall on grading ──
+
+describe('computeLessonGrades — provisional reflection floor', () => {
+  const BAND = { E: 100, P: 85, I: 60 };
+  const COUNTS = { '1.1': 3 };
+  const WEIGHTS = { ws: 1, W: 2, Q: 3 };
+  const SINCE = '2026-09-15';
+  const NEW = '2026-09-20T14:00:00Z';   // worksheet started after the cutoff
+  const OLD = '2026-09-10T14:00:00Z';   // worksheet started before the cutoff
+  const blanks = (ts) => [
+    { item_id: 'WS-U1L1-Q1', source: 'worksheet', score: 1, response: null, recorded_at: ts },
+    { item_id: 'WS-U1L1-Q2', source: 'worksheet', score: 1, response: null, recorded_at: ts },
+    { item_id: 'WS-U1L1-Q3', source: 'worksheet', score: 1, response: null, recorded_at: ts },
+  ];
+  const run = (rows, extra = {}) => computeLessonGrades(rows, BAND, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE, {
+    worksheetBlankCounts: COUNTS, weights: WEIGHTS, frqFloorSince: SINCE, ...extra,
+  }).get('1.1');
+
+  it('blanks only, started after the cutoff → reflections count at the I band and the lesson is provisional', () => {
+    const l = run(blanks(NEW));
+    expect(l.Cws).toBe(100);
+    expect(l.W).toBe(null);                        // nothing graded — display stays honest
+    expect(l.frqProvisional).toBe(true);
+    // (1*100 + 2*60) / 3 = 73.3
+    expect(l.lessonGrade).toBe(73.3);
+    expect(l.lessonGradeNoQuiz).toBe(73.3);
+  });
+
+  it('grading the reflections can only RAISE a provisional lesson (P,P → 90; I,I → same 73.3)', () => {
+    const pp = run([...blanks(NEW),
+      makeRow('WS-U1L1-reflect1', { source: 'frq', score: 0.5, recorded_at: NEW }),
+      makeRow('WS-U1L1-reflect2', { source: 'frq', score: 0.5, recorded_at: NEW }),
+    ]);
+    expect(pp.frqProvisional).toBe(false);
+    expect(pp.W).toBe(85);
+    expect(pp.lessonGradeNoQuiz).toBe(90);        // (100 + 2*85)/3
+    const ii = run([...blanks(NEW),
+      makeRow('WS-U1L1-reflect1', { source: 'frq', score: 0, recorded_at: NEW }),
+    ]);
+    expect(ii.frqProvisional).toBe(false);
+    expect(ii.lessonGradeNoQuiz).toBe(73.3);      // never below the provisional number
+  });
+
+  it('blanks only, started BEFORE the cutoff → old behavior (blanks alone, no flag)', () => {
+    const l = run(blanks(OLD));
+    expect(l.frqProvisional).toBe(false);
+    expect(l.lessonGrade).toBe(100);
+    expect(l.lessonGradeNoQuiz).toBe(100);
+  });
+
+  it('the EARLIEST blank decides "started": editing one blank later does not pull an old lesson under the floor', () => {
+    const rows = blanks(OLD);
+    rows[2] = { ...rows[2], recorded_at: NEW };
+    const l = run(rows);
+    expect(l.frqProvisional).toBe(false);
+    expect(l.lessonGradeNoQuiz).toBe(100);
+  });
+
+  it('floor disabled (frqFloorSince null / absent) → old behavior everywhere', () => {
+    expect(run(blanks(NEW), { frqFloorSince: null }).lessonGradeNoQuiz).toBe(100);
+    const map = computeLessonGrades(blanks(NEW), BAND, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: COUNTS, weights: WEIGHTS,
+    });
+    expect(map.get('1.1').lessonGradeNoQuiz).toBe(100);
+    expect(map.get('1.1').frqProvisional).toBe(false);
+  });
+
+  it('no blanks recorded → no floor (FRQ-only and quiz-only lessons are untouched)', () => {
+    const l = computeLessonGrades([
+      makeRow('WS-U1L1-reflect1', { source: 'frq', score: 1, recorded_at: NEW }),
+    ], BAND, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE, { worksheetBlankCounts: COUNTS, weights: WEIGHTS, frqFloorSince: SINCE }).get('1.1');
+    expect(l.frqProvisional).toBe(false);
+    expect(l.lessonGradeNoQuiz).toBe(100);
+  });
+
+  it('with a quiz present the floor still enters the full blend: (1*100 + 2*60 + 3*100)/6', () => {
+    const l = run([...blanks(NEW), makeRow('U1-L1-Q01', { source: 'curriculum_quiz', response: 'B', recorded_at: NEW })]);
+    expect(l.frqProvisional).toBe(true);
+    expect(l.lessonGrade).toBe(86.7);
+    expect(l.lessonGradeNoQuiz).toBe(73.3);
+  });
+
+  it('exit ticket graded but no reflection: bonus still rides on the provisional base, never below it', () => {
+    const l = run([...blanks(NEW), makeRow('WS-U1L1-exitTicket', { source: 'frq', score: 1, recorded_at: NEW })]);
+    expect(l.exitBonus).toBe(5);
+    expect(l.lessonGradeNoQuiz).toBeGreaterThanOrEqual(73.3);
+  });
+});
+
 // ── W1: computeLessonGrades with worksheet blank scoring ──────────────────────
 
 const W1_WEIGHTS = { ws: 1, W: 2, Q: 3 };

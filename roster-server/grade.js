@@ -286,6 +286,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     weights: config.lessonFeederWeights || { ws: 1, W: 2, Q: 3 },
     trainerMap,
     bonusTopics: bonusTopicSet,
+    frqFloorSince: config.frqProvisionalFloorSince || null,
   });
 
   // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,

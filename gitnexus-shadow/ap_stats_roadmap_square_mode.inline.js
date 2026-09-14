@@ -6446,7 +6446,11 @@ function _getFollowAlongForTopic(topicId) {
         grade: fa,
         cws: (typeof L.Cws === 'number') ? L.Cws : null,
         w: (typeof L.W === 'number') ? L.W : null,
-        exitBonus: (typeof L.exitBonus === 'number') ? L.exitBonus : 0
+        exitBonus: (typeof L.exitBonus === 'number') ? L.exitBonus : 0,
+        // Server flag: blanks recorded, reflections not graded yet — the
+        // reflection feeder is counted at the minimum band, so the grade can
+        // only go UP once the reflections are graded (FRQ_PROVISIONAL_FLOOR).
+        provisional: L.frqProvisional === true
       };
     }
   } catch (_) {}
@@ -11729,9 +11733,15 @@ function showResourcePanel(inf, dateStr) {
             if (detail.cws != null) _bits.push('blanks ' + _r1(detail.cws) + '%');
             if (detail.w != null) _bits.push('AI-graded reflections ' + _r1(detail.w) + '% (weighted 2x)');
             if (detail.exitBonus) _bits.push('+' + detail.exitBonus + ' exit ticket');
+            if (detail.provisional) {
+              c.textContent += ' (reflections not graded yet)';
+              _bits.push('reflections not graded yet (counted at the minimum for now)');
+            }
             c.title = 'Follow-Along grade — the same number your gradebook and Schoology show. '
               + (_bits.length ? 'Built from: ' + _bits.join(' · ') + '. ' : '')
-              + 'Reflections are revisable: Grade with AI only ever raises them.';
+              + (detail.provisional
+                  ? 'This is provisional: grading your reflections can only RAISE it, never lower it.'
+                  : 'Reflections are revisable: Grade with AI only ever raises them.');
           }
           return c;
         };

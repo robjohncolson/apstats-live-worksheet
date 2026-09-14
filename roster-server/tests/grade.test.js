@@ -93,10 +93,10 @@ afterEach(async () => { if (srv) { await srv.stop(); srv = null; } delete proces
 
 // ── grade-config pure math ────────────────────────────────────────────────────
 describe('grade-config — frozen knobs + curves', () => {
-  it('C=85 flat, weights 1:2, FRQ band 100/70/35, θ=0.65', () => {
+  it('C=85 flat, weights 1:2, FRQ band 100/85/60, θ=0.65', () => {
     expect(PHASE3_CONFIG.C).toBe(85);
     expect(PHASE3_CONFIG.feederWeights).toEqual({ W: 1, Q: 2 });
-    expect(PHASE3_CONFIG.frqBand).toEqual({ E: 100, P: 70, I: 35 });
+    expect(PHASE3_CONFIG.frqBand).toEqual({ E: 100, P: 85, I: 60 });   // 2026-09-14 re-band (was 70/35)
     expect(PHASE3_CONFIG.diagnosticTheta).toBe(0.65);
   });
 
@@ -168,10 +168,10 @@ describe('GET /grade — model math', () => {
     const { status, body } = await srv.get(`/grade?token=${ctx.token}`);
     expect(status).toBe(200);
     const u1 = body.units.U1;
-    expect(u1.W).toBe(85);
+    expect(u1.W).toBe(92.5);                     // mean(E=100, P=85)
     expect(u1.Q).toBe(50);
-    expect(u1.B).toBeCloseTo(61.7, 1);          // (85 + 100)/3
-    expect(u1.banked).toBeCloseTo(61.7, 1);     // < 85, uncapped here
+    expect(u1.B).toBeCloseTo(64.2, 1);          // (92.5 + 100)/3
+    expect(u1.banked).toBeCloseTo(64.2, 1);     // < 85, uncapped here
     expect(u1.pcRawPct).toBe(50);
     expect(u1.P).toBe(92.5);                     // PC uncaps above banked
     expect(u1.unitGrade).toBe(92.5);            // max(61.7, 92.5)
@@ -193,13 +193,13 @@ describe('GET /grade — model math', () => {
 
   it('genuine master: minimal work, perfect PC → 100 (PC uncaps regardless)', async () => {
     const rows = [
-      makeRow('WS-U2L1-r1', 'weak', { source: 'frq', unit: 'U2', score: 0 }), // W=35, B=35
+      makeRow('WS-U2L1-r1', 'weak', { source: 'frq', unit: 'U2', score: 0 }), // W=60, B=60
       makeRow('U2-PC-MCQ-A-Q01', 'A', { source: 'pc' }),                       // raw 100
     ];
     const ctx = await startServer(rows); srv = ctx.server;
     const { body } = await srv.get(`/grade?token=${ctx.token}`);
-    expect(body.units.U2.B).toBe(35);
-    expect(body.units.U2.banked).toBe(35);
+    expect(body.units.U2.B).toBe(60);
+    expect(body.units.U2.banked).toBe(60);
     expect(body.units.U2.pcRawPct).toBe(100);
     expect(body.units.U2.P).toBe(100);           // Q1 anchor: 100 ≥ 60
     expect(body.units.U2.unitGrade).toBe(100);
@@ -503,7 +503,7 @@ describe('GET /grade — Phase 6 lessons[] field', () => {
     expect(l.items).toHaveProperty('worksheet');
   });
 
-  it('FRQ item in 1.1 → lessonGrade for 1.1 is 35 (I score)', async () => {
+  it('FRQ item in 1.1 → lessonGrade for 1.1 is 60 (I score)', async () => {
     const rows = [
       makeRow('WS-U1L1-r1', 'weak', { source: 'frq', unit: 'U1', score: 0 }),
     ];
@@ -512,8 +512,8 @@ describe('GET /grade — Phase 6 lessons[] field', () => {
     const { body } = await srv.get(`/grade?token=${ctx.token}`);
     const l11 = body.lessons.find(l => l.lessonKey === '1.1');
     expect(l11).toBeDefined();
-    expect(l11.lessonGrade).toBe(35);
-    expect(l11.W).toBe(35);
+    expect(l11.lessonGrade).toBe(60);
+    expect(l11.W).toBe(60);
     expect(l11.Q).toBe(null);
   });
 
@@ -575,7 +575,7 @@ describe('GET /grade — Phase 6 lesson-weighted quarterGrade', () => {
     expect(q1.ceiling).toBe(null);
   });
 
-  it('1 due+graded at 35, 1 due+ungraded → quarterGrade = 35/2 = 17.5', async () => {
+  it('1 due+graded at 60, 1 due+ungraded → quarterGrade = 60/2 = 30', async () => {
     // 1.1 is past, 1.2 is past; only 1.1 has a graded FRQ.
     const rows = [
       makeRow('WS-U1L1-r1', 'weak', { source: 'frq', unit: 'U1', score: 0 }), // 1.1 → 35
@@ -587,10 +587,10 @@ describe('GET /grade — Phase 6 lesson-weighted quarterGrade', () => {
     expect(q1.lessonsDue).toBe(2);
     expect(q1.lessonsGraded).toBe(1);
     // rawQuarter = 35/2 = 17.5; banked = min(17.5, 85) = 17.5.
-    expect(q1.quarterGrade).toBe(17.5);
+    expect(q1.quarterGrade).toBe(30);
   });
 
-  it('1 due+graded at 35, 1 future → quarterGrade = 35/1 = 35', async () => {
+  it('1 due+graded at 60, 1 future → quarterGrade = 60/1 = 60', async () => {
     const rows = [
       makeRow('WS-U1L1-r1', 'weak', { source: 'frq', unit: 'U1', score: 0 }), // 1.1 → 35
     ];
@@ -601,8 +601,8 @@ describe('GET /grade — Phase 6 lesson-weighted quarterGrade', () => {
     expect(q1.lessonsDue).toBe(1);
     expect(q1.lessonsGraded).toBe(1);
     // rawQuarter = 35/1 = 35; ceiling = (35 + 1*100)/2 = 67.5.
-    expect(q1.quarterGrade).toBe(35);
-    expect(q1.ceiling).toBe(67.5);
+    expect(q1.quarterGrade).toBe(60);
+    expect(q1.ceiling).toBe(80);                          // (60 + 100)/2
   });
 
   it('all due graded at 100 → banked at 85 (C cap still applies)', async () => {

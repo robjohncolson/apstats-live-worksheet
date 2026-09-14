@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 0d36cad55dec
+ * engine-version: 1a12109e2574
  */
 ;(function (root) {
   'use strict';
@@ -59,7 +59,20 @@
     
       // AI-graded FRQ band → numeric. DN2b records score ∈ {1,0.5,0} (E/P/I);
       // Phase 3 remaps that to the teacher's E/P/I numeric band.
-      frqBand: { E: 100, P: 70, I: 35 },
+      // 2026-09-14: P 70→85, I 35→60. The old band made a two-sentence homework
+      // reflection graded P cost 30 points on a 2x-weight feeder (all blanks right +
+      // P,P = 80). Students called the grading "too harsh"; the teacher agreed.
+      // Applied at rollup, so every already-graded lesson re-tunes with no data edit.
+      frqBand: { E: 100, P: 85, I: 60 },
+    
+      // Provisional reflection floor (FRQ_PROVISIONAL_FLOOR, 2026-09-14). A lesson
+      // whose blanks are recorded but whose reflections are not yet graded used to
+      // report the blanks alone as the lesson grade (100), then FALL once the
+      // 2x-weight reflection feeder was graded. For worksheets STARTED on/after this
+      // date the ungraded reflection feeder counts as frqBand.I ("provisional") so
+      // grading can only raise the number. Earlier lessons keep the old behavior —
+      // nothing already reported drops. null disables the floor entirely.
+      frqProvisionalFloorSince: '2026-09-15',
     
       // An frq row counts as "demonstrated" for the diagnostic BKT when its
       // numeric score (E=1/P=0.5/I=0) is at least this (E and P = evidence).
@@ -661,6 +674,43 @@
       return counts;
     }
     
+    // ── Provisional reflection floor (FRQ_PROVISIONAL_FLOOR, 2026-09-14) ──────────
+    // A lesson with recorded blanks but no graded reflection used to report the
+    // blanks ALONE as the lesson grade (a perfect set of blanks = 100). Grading the
+    // reflections then made the number FALL, because the 2x-weight reflection
+    // feeder only joined the blend once it existed. Students read that as "finishing
+    // the worksheet lowered my grade".
+    //
+    // Fix: for a worksheet STARTED (earliest blank recorded) on/after `floorSince`,
+    // an ungraded reflection feeder counts as frqBand.I and the lesson is flagged
+    // frqProvisional. Grading can then only move the number UP — I is the lowest
+    // verdict. Worksheets started before the cutoff keep the old behavior so no
+    // already-reported grade drops (teacher decision 2026-09-14). null = disabled.
+    function parseFloorSince(value) {
+      if (value == null || value === '') return null;
+      const ms = Date.parse(String(value));
+      return Number.isFinite(ms) ? ms : null;
+    }
+    
+    function earliestTsMs(items) {
+      let earliest = null;
+      for (const it of items || []) {
+        const ms = Date.parse(it.ts || '');
+        if (!Number.isFinite(ms)) continue;
+        if (earliest == null || ms < earliest) earliest = ms;
+      }
+      return earliest;
+    }
+    
+    function provisionalFrqFloor(acc, Cws, frqBand, floorSinceMs) {
+      if (floorSinceMs == null) return null;
+      if (Cws == null) return null;
+      if (reflectionMean(acc.frqItems) != null) return null;   // a graded reflection exists
+      const started = earliestTsMs(acc.worksheetItems);
+      if (started == null || started < floorSinceMs) return null;
+      return frqBand.I;
+    }
+    
     // ── FRQ score → percentage (mirrors grade.js frqScoreToPct) ───────────────────
     
     function frqScoreToPct(score, frqBand) {
@@ -712,6 +762,7 @@
         ? opts.bonusTopics
         : new Set((opts && opts.bonusTopics) || []);
       const weights = (opts && opts.weights) || { ws: 1, W: 2, Q: 3 };
+      const frqFloorSince = parseFloorSince(opts && opts.frqFloorSince);
     
       // lessonMap: topicKey → accumulator
       const byTopic = new Map();
@@ -924,6 +975,12 @@
         const W = gradableFrqs.length > 0
           ? gradableFrqs.reduce((s, f) => s + f.score, 0) / gradableFrqs.length
           : null;
+        // Provisional floor: with blanks recorded and no graded reflection, the
+        // reflection feeder counts as the I band instead of being absent (see
+        // provisionalFrqFloor). Wfeed is what the blends use; W stays the real
+        // graded value (null here) for display.
+        const frqFloor = provisionalFrqFloor(acc, Cws, frqBand, frqFloorSince);
+        const Wfeed = W != null ? W : frqFloor;
     
         // Q = correctness % over the WHOLE quiz (DENOMINATOR = total quiz questions
         // from the answer key, mirroring Cws — unanswered questions contribute 0 to
@@ -945,14 +1002,16 @@
         let B = null;
         {
           let num = 0, den = 0;
-          if (Cws != null) { num += wsWeight * Cws; den += wsWeight; }
-          if (W   != null) { num += wWeight  * W;   den += wWeight; }
-          if (Q   != null) { num += qWeight  * Q;   den += qWeight; }
+          if (Cws   != null) { num += wsWeight * Cws;   den += wsWeight; }
+          if (Wfeed != null) { num += wWeight  * Wfeed; den += wWeight; }
+          if (Q     != null) { num += qWeight  * Q;     den += qWeight; }
           if (den > 0) B = num / den;
         }
     
         acc.Cws = Cws != null ? Math.round(Cws * 10) / 10 : null;
         acc.W = W != null ? Math.round(W * 10) / 10 : null;
+        acc.frqFloor = frqFloor;                       // I band when provisional, else null
+        acc.frqProvisional = frqFloor != null && W == null;
         acc.Q = Q != null ? Math.round(Q * 10) / 10 : null;
         acc.lessonGrade = B != null ? Math.round(B * 10) / 10 : null;
         // Lessons-track value EXCLUDING the quiz feeder: {Cws, W} weighted (ws:W),
@@ -968,8 +1027,9 @@
         let Bnq = null;
         {
           let num = 0, den = 0;
-          if (acc.Cws != null) { num += wsWeight * acc.Cws; den += wsWeight; }
-          if (acc.W   != null) { num += wWeight  * acc.W;   den += wWeight; }
+          const accWfeed = acc.W != null ? acc.W : acc.frqFloor;
+          if (acc.Cws  != null) { num += wsWeight * acc.Cws;  den += wsWeight; }
+          if (accWfeed != null) { num += wWeight  * accWfeed; den += wWeight; }
           if (den > 0) Bnq = num / den;
         }
         acc.lessonGradeNoQuiz = Bnq != null ? Math.round(Bnq * 10) / 10 : null;
@@ -980,7 +1040,7 @@
         acc.exitBonus = exitItem == null ? 0 : (exitItem.score >= frqBand.E ? 5 : exitItem.score >= frqBand.P ? 3 : 1);
         acc.exitCounted = false;
         if (exitItem != null) {
-          const withoutExit = blendLessonFeeders(Cws, reflectionMean(acc.frqItems), Q, weights);
+          const withoutExit = blendLessonFeeders(Cws, reflectionMean(acc.frqItems, frqFloor), Q, weights);
           acc.exitCounted = B != null && (withoutExit == null || B > withoutExit);
           const base = withoutExit == null ? B : Math.max(B, withoutExit);
           acc.lessonGrade = base == null ? null : Math.round(Math.min(105, base + acc.exitBonus) * 10) / 10;
@@ -1504,9 +1564,11 @@
     }
     
     // A missing reflection feeder stays null, so blanks/quiz carry the baseline.
-    function reflectionMean(frqItems) {
+    // `floor` (optional): the provisional I-band value used when NO reflection is
+    // graded yet (see provisionalFrqFloor). Omitted/null keeps the feeder absent.
+    function reflectionMean(frqItems, floor = null) {
       const reflections = (frqItems || []).filter(f => f.score != null && !/-exitTicket$/.test(f.itemId));
-      if (reflections.length === 0) return null;
+      if (reflections.length === 0) return floor;
       return reflections.reduce((sum, f) => sum + f.score, 0) / reflections.length;
     }
     
@@ -1524,8 +1586,10 @@
     function lessonGradeNoQuiz(result, weights, fixCwsReveal = false) {
       if (!result) return null;
       let num = 0, den = 0;
+      const floor = result.frqFloor != null ? result.frqFloor : null;
+      const Wfeed = result.W != null ? result.W : floor;
       if (result.Cws != null) { num += weights.ws * result.Cws; den += weights.ws; }
-      if (result.W   != null) { num += weights.W  * result.W;   den += weights.W; }
+      if (Wfeed      != null) { num += weights.W  * Wfeed;      den += weights.W; }
       if (den === 0) return null;
       const blended = num / den;
       // FINDING F3 fix (flagged off by default): the Cws feeder is null (ignored, W
@@ -1536,7 +1600,7 @@
       const withExit = fixCwsReveal && result.W != null ? Math.max(blended, result.W) : blended;
       if (!result.exitBonus) return withExit;
     
-      const reflections = reflectionMean(result.frqItems);
+      const reflections = reflectionMean(result.frqItems, floor);
       // Match the existing rounded W sibling used by this no-quiz track.
       const W = reflections == null ? null : Math.round(reflections * 10) / 10;
       let withoutExit = blendLessonFeeders(result.Cws, W, null, weights);
@@ -2100,6 +2164,9 @@
             exitBonus: lessonResult.exitBonus,
             exitCounted: lessonResult.exitCounted,
           } : {}),
+          // Provisional: blanks recorded, reflections not graded yet — the reflection
+          // feeder is counted at the I band, so grading can only raise this lesson.
+          ...(lessonResult && lessonResult.frqProvisional ? { frqProvisional: true } : {}),
           Cws: lessonResult ? (lessonResult.Cws !== undefined ? lessonResult.Cws : null) : null,
           W: lessonResult ? lessonResult.W : null,
           Q: lessonResult ? lessonResult.Q : null,
@@ -2744,6 +2811,7 @@
         weights: config.lessonFeederWeights || { ws: 1, W: 2, Q: 3 },
         trainerMap,
         bonusTopics: bonusTopicSet,
+        frqFloorSince: config.frqProvisionalFloorSince || null,
       });
     
       // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
@@ -3009,7 +3077,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "0d36cad55dec",
+    _engineVersion: "1a12109e2574",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

@@ -175,7 +175,7 @@ ${studentAnswer}
 LESSON CONTEXT:
 ${window.LESSON_CONTEXT_U8L5}
 
-REQUIRED ELEMENTS (must address for E score):
+KEY ELEMENTS (what a complete answer usually covers):
 ${requiredElements.map(e => `- ${e.description}`).join('\n')}
 
 OPTIONAL ELEMENTS (strengthen response):
@@ -191,6 +191,12 @@ ${rubric.commonMistakes.map(m => `- ${m}`).join('\n')}
 
 CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
+
+GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
+- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
+- P: the response is on the right track but has one real gap or one substantive error.
+- I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
+If you are torn between two scores, give the higher one.
 
 Grade this response and provide:
 1. A score (E, P, or I)

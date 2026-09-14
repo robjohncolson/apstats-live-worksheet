@@ -112,7 +112,7 @@ SCORING RUBRIC:
 - P (Partially Correct): ${rubric.scoringGuide.P}
 - I (Incorrect): ${rubric.scoringGuide.I}
 
-REQUIRED ELEMENTS (must address for E):
+KEY ELEMENTS (what a complete answer usually covers):
 ${requiredElements.map((e, i) => `${i + 1}. ${e}`).join('\n')}
 
 BONUS ELEMENTS (strengthen the response):
@@ -120,6 +120,12 @@ ${optionalElements.map((e, i) => `${i + 1}. ${e}`).join('\n')}
 
 COMMON MISTAKES TO WATCH FOR:
 ${rubric.commonMistakes.map((m, i) => `${i + 1}. ${m}`).join('\n')}
+
+GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
+- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
+- P: the response is on the right track but has one real gap or one substantive error.
+- I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
+If you are torn between two scores, give the higher one.
 
 Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing. Provide a specific suggestion for improvement if the score is P or I.
 

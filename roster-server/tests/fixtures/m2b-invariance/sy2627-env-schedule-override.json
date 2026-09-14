@@ -17,9 +17,10 @@
     },
     "frqBand": {
       "E": 100,
-      "P": 70,
-      "I": 35
+      "P": 85,
+      "I": 60
     },
+    "frqProvisionalFloorSince": "2026-09-15",
     "frqDiagnosticCorrectThreshold": 0.5,
     "quarters": {
       "Q1": {

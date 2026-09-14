@@ -31,7 +31,20 @@ export const PHASE3_CONFIG = {
 
   // AI-graded FRQ band → numeric. DN2b records score ∈ {1,0.5,0} (E/P/I);
   // Phase 3 remaps that to the teacher's E/P/I numeric band.
-  frqBand: { E: 100, P: 70, I: 35 },
+  // 2026-09-14: P 70→85, I 35→60. The old band made a two-sentence homework
+  // reflection graded P cost 30 points on a 2x-weight feeder (all blanks right +
+  // P,P = 80). Students called the grading "too harsh"; the teacher agreed.
+  // Applied at rollup, so every already-graded lesson re-tunes with no data edit.
+  frqBand: { E: 100, P: 85, I: 60 },
+
+  // Provisional reflection floor (FRQ_PROVISIONAL_FLOOR, 2026-09-14). A lesson
+  // whose blanks are recorded but whose reflections are not yet graded used to
+  // report the blanks alone as the lesson grade (100), then FALL once the
+  // 2x-weight reflection feeder was graded. For worksheets STARTED on/after this
+  // date the ungraded reflection feeder counts as frqBand.I ("provisional") so
+  // grading can only raise the number. Earlier lessons keep the old behavior —
+  // nothing already reported drops. null disables the floor entirely.
+  frqProvisionalFloorSince: '2026-09-15',
 
   // An frq row counts as "demonstrated" for the diagnostic BKT when its
   // numeric score (E=1/P=0.5/I=0) is at least this (E and P = evidence).

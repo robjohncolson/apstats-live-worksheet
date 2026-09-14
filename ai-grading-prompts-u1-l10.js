@@ -150,7 +150,7 @@ ${rubric.questionText}
 ## Student's Answer
 "${studentAnswer}"
 
-## Required Elements (must be present for full credit)
+## Key Elements (what a complete answer usually covers)
 ${requiredElements}
 
 ## Optional Elements (bonus, not required)
@@ -168,6 +168,12 @@ ${rubric.commonMistakes.map((m, i) => `${i + 1}. ${m}`).join('\n')}
 ${rubric.contextFromVideo}
 
 ## Instructions
+GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
+- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
+- P: the response is on the right track but has one real gap or one substantive error.
+- I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
+If you are torn between two scores, give the higher one.
+
 Grade the student's response. Return JSON:
 {
     "score": "E", "P", or "I", // EXACTLY one uppercase letter -- no words, no lowercase, no extra text
