@@ -127,6 +127,20 @@
   bottom=5pt
 }
 
+\newtcolorbox{wordbankbox}{
+  enhanced, breakable,
+  colback=lightgray, colframe=framegray!45,
+  boxrule=0.4pt, arc=2pt,
+  left=8pt, right=8pt, top=5pt, bottom=5pt
+}
+
+\newcommand{\blankt}[2][1.6in]{%
+  \begin{tabular}[t]{@{}c@{}}%
+    \underline{\hspace{#1}}\\[-3pt]
+    {\tiny\color{framegray}\itshape #2}%
+  \end{tabular}%
+}
+
 \newtcolorbox{summaryexitbox}[1]{
   enhanced,
   breakable,

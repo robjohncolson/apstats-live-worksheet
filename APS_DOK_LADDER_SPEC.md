@@ -154,6 +154,8 @@ author cannot find one, that is an authoring failure to escalate, not a `focus: 
     "commonMistakes": ["treats the 70-min value as typical"]
   },
   "sentence_frames": ["I would report the ___ because the distribution is ___, so the ___ is pulled toward ___."],
+  "word_bank": ["median", "mean", "skewed right", "larger values", "symmetric", "smaller values"],
+  "word_bank_needed": ["median", "skewed right", "mean", "larger values"], // teacher key only; remaining entries are distractors
   "source": "original",               // original | adapted:<id>
   "hypothetical": true                // R6: data are invented
 }

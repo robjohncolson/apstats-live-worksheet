@@ -20,10 +20,12 @@ Write four laddered parts: (a) DOK 1, (b) DOK 2, (c) DOK 2, (d) DOK 3.
 Each rung targets a misconception from the brief; starred (d) integrates them.
 Part (d) is scored E/P/I by the teacher; nothing auto-scores. Preserve
 feedback_channel: feedback_dok3_human_channel and provide the teacher's E/P/I rubric.
-Scaffolds must be checklists or frames with blanks, never hints giving answers.
+Scaffolds must be checklists or frames with blanks, never hints giving answers. EVERY sentence frame ships with a `word_bank` (needed terms + at least two plausible distractors) and a `word_bank_needed` subset; use `\blankt[width]{role}` so each blank names what kind of thing goes in it (statistic, reason, number, action, ...).
 Print a notes callout with its own title, stating rules without applying them.
 Audit each part: all requested tables, graphs, normal-table areas, values and
 definitions must be printed on the sheet. Add anything missing to the page.
+Resource audit: the word bank contains every term the frames need.
+Use 6-12 unique, LaTeX-safe bank entries, at most 5 words each; needed entries are teacher-key metadata only.
 This is self-paced bonus work with no timing or exit ticket.
 
 Forbidden phrases, verbatim from DOK_SELF_PACED_SPEC.md section 1:

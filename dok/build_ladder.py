@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import re
 import sys
 from pathlib import Path
@@ -217,10 +218,68 @@ def tether_lines(topic: str | list[str]) -> list[str]:
 # ---- Validation (spec §2.1 / §7 T1) -------------------------------------
 
 
-def validate_item(row: dict, skill_codes: set[str]) -> list[str]:
+def is_misconception_lesson(lesson: dict) -> bool:
+    return (lesson.get("standalone") is True
+            or (lesson.get("generated") or {}).get("by") == "weekly-auto"
+            or "misconceptions" in lesson)
+
+
+def needs_word_bank(row: dict, lesson: dict | None = None) -> bool:
+    if not row.get("sentence_frames"):
+        return False
+    if lesson is not None:
+        return is_misconception_lesson(lesson)
+    for path in LESSONS.glob("*.yaml"):
+        candidate = load_lesson(path)
+        ids = [candidate.get("focus"), *(candidate.get("reinforcement") or [])]
+        if row.get("id") in ids and is_misconception_lesson(candidate):
+            return True
+    return False
+
+
+def validate_word_bank(row: dict, lesson: dict | None = None) -> list[str]:
+    iid = row.get("id", "?")
+    if "word_bank" not in row:
+        if needs_word_bank(row, lesson):
+            return [f"{iid}: sentence_frames require word_bank on misconception sheets"]
+        if "word_bank_needed" in row:
+            return [f"{iid}: word_bank_needed requires word_bank"]
+        return []
+    bank = row["word_bank"]
+    if not isinstance(bank, list) or not 6 <= len(bank) <= 12:
+        return [f"{iid}: word_bank must be a list of 6-12 short strings"]
+    errors = []
+    for entry in bank:
+        if not isinstance(entry, str) or not 1 <= len(entry.split()) <= 5 or entry != entry.strip():
+            errors.append(f"{iid}: word_bank entries must be non-empty strings of at most 5 words")
+            continue
+        # Only escaped special characters are allowed, never arbitrary TeX commands.
+        unescaped = re.sub(r"\\[&%$#_{}~^\\]", "", entry)
+        if re.search(r"[&%$#_{}~^\\]", unescaped) or "\n" in entry or "\r" in entry:
+            errors.append(f"{iid}: word_bank entries must be LaTeX-safe single-line strings")
+    if errors:
+        return errors
+    if len(set(bank)) != len(bank):
+        errors.append(f"{iid}: word_bank entries must be unique")
+    needed = row.get("word_bank_needed", [])
+    if not isinstance(needed, list) or any(not isinstance(entry, str) for entry in needed):
+        return errors + [f"{iid}: word_bank_needed must be a list of strings"]
+    if len(set(needed)) != len(needed):
+        errors.append(f"{iid}: word_bank_needed entries must be unique")
+    if not set(needed) <= set(bank):
+        errors.append(f"{iid}: word_bank_needed must be a subset of word_bank")
+    if len(set(bank) - set(needed)) < 2:
+        errors.append(f"{iid}: word_bank needs at least 2 distractors")
+    if needs_word_bank(row, lesson) and not needed:
+        errors.append(f"{iid}: misconception sentence_frames require a non-empty word_bank_needed subset")
+    return errors
+
+
+def validate_item(row: dict, skill_codes: set[str], lesson: dict | None = None) -> list[str]:
     e: list[str] = []
     iid = row.get("id", "?")
     e.extend(validate_field_values(row, str(iid)))
+    e.extend(validate_word_bank(row, lesson))
     if not ID_RE.match(iid):
         e.append(f"{iid}: id must match aps-{{topic}}-d{{1|2|3}}-{{k}}")
     topics = row.get("topics") or [row.get("topic")]
@@ -276,6 +335,9 @@ def validate_lesson(lesson: dict, registry: dict) -> list[str]:
     e: list[str] = []
     topic = str(lesson.get("topic", "?"))
     e.extend(validate_field_values(lesson, topic))
+    for iid in [lesson.get("focus"), *(lesson.get("reinforcement") or [])]:
+        if iid in registry:
+            e.extend(validate_word_bank(registry[iid], lesson))
     for field in ("minutes", "exit_reflection"):
         if field in lesson:
             e.append(f"{topic}: retired self-paced field {field} must be deleted")
@@ -539,6 +601,23 @@ def shared_problem(lesson: dict, item: dict, scale: float) -> str:
     return "".join(out)
 
 
+def word_bank_block(item: dict, teacher: bool = False) -> str:
+    if not item.get("word_bank"):
+        return ""
+    # Canonicalize first: author order must not influence the printed order.
+    entries = sorted(item["word_bank"])
+    random.Random(item["id"]).shuffle(entries)
+    needed = set(item.get("word_bank_needed", [])) if teacher else set()
+    entries = [r"\textbf{" + entry + "}" if entry in needed else entry for entry in entries]
+    note = "bold = needed; the rest are distractors" if teacher else "Some words are not needed."
+    return (
+        "\\begin{wordbankbox}\\raggedright\n\\textbf{Word bank:} "
+        + r" \ensuremath{\;\cdot\;} ".join(entries)
+        + "\n\\par\\smallskip{\\footnotesize\\color{framegray} " + note + "}"
+        + "\n\\end{wordbankbox}\n\n"
+    )
+
+
 def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
     item = registry[lesson["focus"]]
     space = {**DEFAULT_SPACE, **(lesson.get("space") or {})}
@@ -561,6 +640,7 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
         parts.append(part_block(p, space, answers=None))
     for frame in item.get("sentence_frames", []):
         parts.append(f"\\begin{{sentenceframebox}}\\raggedright\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n")
+    parts.append(word_bank_block(item))
     parts.append(
         "\\textbf{Turn this sheet in whenever you finish --- bonus credit. "
         f"Part ({item['parts'][-1]['label']}) is scored E / P / I.}}\\par\n\n"
@@ -655,6 +735,7 @@ def emit_teacher(lesson: dict, registry: dict, schedule: dict) -> str:
         parts.append(callout_block(f"\\IconBook\\ {rules['title']}", "calloutgreen", rules["body"]))
     for p in item["parts"]:
         parts.append(part_block(p, space, answers=item.get("answers") or {}))
+    parts.append(word_bank_block(item, teacher=True))
     parts.append("\\end{document}\n")
     return "".join(parts)
 

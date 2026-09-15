@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import copy
+import random
 import sys
 from pathlib import Path
 
@@ -347,3 +349,125 @@ def test_build_rejects_self_paced_violation_before_writing(tmp_path, monkeypatch
     with pytest.raises(SystemExit, match='forbidden self-paced phrase'):
         bl.build(LESSONS[0], ('student',), registry, SCHEDULE)
     assert not list(tmp_path.glob('*.tex'))
+
+
+def word_bank_fixture():
+    lesson = _lesson(ROOT / 'dok/lessons/1.1_1.2_1.4_1.7.yaml')
+    return lesson, copy.deepcopy(REGISTRY[lesson['focus']])
+
+
+def test_archived_registry_does_not_require_word_banks():
+    paths = sorted((ROOT / 'dok/archive/registry').glob('*.jsonl'))
+    assert paths
+    for path in paths:
+        for line in path.read_text(encoding='utf-8').splitlines():
+            if line.strip():
+                assert bl.validate_word_bank(json.loads(line), {}) == []
+
+
+def test_compliant_word_bank_and_legacy_items():
+    lesson, item = word_bank_fixture()
+    assert bl.validate_item(item, bl.all_skill_codes(), lesson) == []
+    item.pop('word_bank')
+    item.pop('word_bank_needed')
+    assert bl.validate_item(item, bl.all_skill_codes(), {}) == []
+    # An item outside active lesson membership remains compatible without a bank.
+    item['id'] = 'aps-1.1-d3-999'
+    assert bl.validate_item(item, bl.all_skill_codes()) == []
+
+
+@pytest.mark.parametrize('metadata', [
+    {'standalone': True}, {'generated': {'by': 'weekly-auto'}},
+    {'misconceptions': ['mean-resistant']},
+])
+def test_misconception_frames_require_bank(metadata):
+    _, item = word_bank_fixture()
+    item.pop('word_bank')
+    assert any('require word_bank' in error for error in bl.validate_item(item, bl.all_skill_codes(), metadata))
+
+
+def test_active_membership_requires_bank_in_item_lesson_and_build(tmp_path, monkeypatch):
+    lesson, item = word_bank_fixture()
+    item.pop('word_bank')
+    registry = {**REGISTRY, item['id']: item}
+    assert any('require word_bank' in error for error in bl.validate_item(item, bl.all_skill_codes()))
+    assert any('require word_bank' in error for error in bl.validate_lesson(lesson, registry))
+    monkeypatch.setattr(bl, 'TEX_DIR', tmp_path)
+    with pytest.raises(SystemExit, match='require word_bank'):
+        bl.build(ROOT / 'dok/lessons/1.1_1.2_1.4_1.7.yaml', ('student',), registry, SCHEDULE)
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize('change, message', [
+    ({'word_bank_needed': ['not in bank']}, 'subset'),
+    ({'word_bank_needed': []}, 'non-empty'),
+    ({'word_bank': ['a', 'b', 'c', 'd', 'e', 'f'], 'word_bank_needed': ['a', 'b', 'c', 'd', 'e']}, '2 distractors'),
+    ({'word_bank': ['mean'] * 6}, 'unique'),
+    ({'word_bank': ['a'] * 5}, '6-12'),
+    ({'word_bank': ['a'] * 13}, '6-12'),
+    ({'word_bank': 'median'}, '6-12'),
+    ({'word_bank_needed': 'median'}, 'list'),
+    ({'word_bank_needed': ['median', 'median']}, 'unique'),
+])
+def test_word_bank_schema_rejections(change, message):
+    lesson, item = word_bank_fixture()
+    item.update(change)
+    assert any(message in error for error in bl.validate_item(item, bl.all_skill_codes(), lesson))
+
+
+@pytest.mark.parametrize('entry', ['', 42, 'one two three four five six', ' mean '])
+def test_word_bank_rejects_invalid_terms(entry):
+    lesson, item = word_bank_fixture()
+    item['word_bank'][-1] = entry
+    assert bl.validate_item(item, bl.all_skill_codes(), lesson)
+
+
+@pytest.mark.parametrize('character', list('&%$#_{}~^\\') + ['\n', '\r'])
+def test_word_bank_rejects_unescaped_tex(character):
+    lesson, item = word_bank_fixture()
+    item['word_bank'][-1] = 'bad' + character + 'term'
+    assert any('LaTeX-safe' in error for error in bl.validate_item(item, bl.all_skill_codes(), lesson))
+
+
+@pytest.mark.parametrize('entry', [r'30\%', r'count\_total', r'A\&B'])
+def test_word_bank_accepts_escaped_tex(entry):
+    lesson, item = word_bank_fixture()
+    item['word_bank'][-1] = entry
+    assert bl.validate_item(item, bl.all_skill_codes(), lesson) == []
+
+
+@pytest.mark.parametrize('entry', ['VIDEO', 'rules box', 'before we discuss'])
+def test_word_bank_uses_printed_phrase_policy(entry):
+    lesson, item = word_bank_fixture()
+    item['word_bank'][-1] = entry
+    assert any('forbidden' in error for error in bl.validate_item(item, bl.all_skill_codes(), lesson))
+
+
+def test_word_bank_editions_shuffle_and_no_needed_metadata_leak():
+    lesson, item = word_bank_fixture()
+    registry = {**REGISTRY, item['id']: item}
+    student = bl.emit_student(lesson, registry, SCHEDULE)
+    teacher = bl.emit_teacher(lesson, registry, SCHEDULE)
+    board = bl.emit_board(lesson, registry, SCHEDULE)
+    student_bank = student.split(r'\begin{wordbankbox}')[1].split(r'\end{wordbankbox}')[0]
+    teacher_bank = teacher.split(r'\begin{wordbankbox}')[1].split(r'\end{wordbankbox}')[0]
+    assert student.count(r'\begin{wordbankbox}') == 1
+    assert 'Some words are not needed.' in student_bank
+    assert 'bold = needed; the rest are distractors' in teacher_bank
+    assert 'word_bank_needed' not in student
+    expected = sorted(item['word_bank'])
+    random.Random(item['id']).shuffle(expected)
+    assert [student_bank.index(entry) for entry in expected] == sorted(student_bank.index(entry) for entry in expected)
+    for entry in item['word_bank']:
+        assert entry in student_bank
+        assert (r'\textbf{' + entry + '}') not in student_bank
+        assert ((r'\textbf{' + entry + '}') in teacher_bank) == (entry in item['word_bank_needed'])
+    assert 'wordbankbox' not in board
+    assert 'Word bank:' not in board
+    assert student == bl.emit_student(lesson, registry, SCHEDULE)
+    item['word_bank_needed'] = item['word_bank'][-2:]
+    assert student == bl.emit_student(lesson, registry, SCHEDULE)
+    assert board == bl.emit_board(lesson, registry, SCHEDULE)
+    item['word_bank'].reverse()
+    assert student == bl.emit_student(lesson, registry, SCHEDULE)
+    assert r'\blankt[0.8in]{statistic}' in student

@@ -12,7 +12,7 @@ export const TRIAGE_PATH = 'roster-server/data/misconception-triage.json';
 export const HOUSE_RULES = [
   'Author one original, standalone, self-paced bonus sheet in a fresh context.',
   'Four parts: (a) DOK 1, (b) DOK 2, (c) DOK 2, (d) DOK 3 integrating the targets.',
-  'Scaffolds are checklists and frames with blanks; never answer-bearing hints.',
+  'Scaffolds are checklists and typed frames with blanks; never answer-bearing hints. Every frame needs word_bank and word_bank_needed, including at least two plausible distractors.',
   'Print all required values, tables, definitions and a titled notes callout.',
   'No video, QR, timing, exit ticket or outside references.',
   'Part (d) is scored E/P/I by the teacher; nothing auto-scores.',
@@ -197,6 +197,30 @@ export async function runWeekly(options, io) {
   return { status: 'published', commit, brief };
 }
 
+export function validateAuthoredWordBank(item, lesson) {
+  const misconception = lesson.standalone === true || lesson.generated?.by === 'weekly-auto' ||
+    Object.hasOwn(lesson, 'misconceptions');
+  const required = misconception && Boolean(item.sentence_frames?.length);
+  const bank = item.word_bank;
+  if (bank === undefined) {
+    if (required || item.word_bank_needed !== undefined) throw new Error('Authored frames require word_bank');
+    return;
+  }
+  if (!Array.isArray(bank) || bank.length < 6 || bank.length > 12 ||
+      bank.some(entry => typeof entry !== 'string' || !entry.trim() || entry !== entry.trim() ||
+        entry.split(/\s+/).length > 5 || /[\r\n]/.test(entry) ||
+        /[&%$#_{}~^\\]/.test(entry.replace(/\\[&%$#_{}~^\\]/g, ''))) ||
+      new Set(bank).size !== bank.length) {
+    throw new Error('Authored word_bank must contain 6-12 unique LaTeX-safe short strings');
+  }
+  const needed = item.word_bank_needed ?? [];
+  if (!Array.isArray(needed) || (required && !needed.length) ||
+      needed.some(entry => !bank.includes(entry)) || new Set(needed).size !== needed.length) {
+    throw new Error('Authored word_bank_needed must be a unique subset of word_bank');
+  }
+  if (bank.length - needed.length < 2) throw new Error('Authored word_bank needs at least 2 distractors');
+}
+
 export function createRuntime(root, overrides = {}) {
   const read = file => fs.readFileSync(path.join(root, file), 'utf8');
   const json = file => JSON.parse(read(file));
@@ -347,6 +371,7 @@ export function createRuntime(root, overrides = {}) {
       const rows = read(paths[1]).trim().split('\n').map(line => JSON.parse(line));
       if (rows.length !== 1 || rows[0].feedback_channel !== 'feedback_dok3_human_channel' ||
           JSON.stringify(rows[0].parts.map(part => part.dok)) !== '[1,2,2,3]') throw new Error('Authored ladder mismatch');
+      validateAuthoredWordBank(rows[0], lesson);
       if (trackedChanges().some(file => file !== 'dok/manifest.json' && (file !== TRIAGE_PATH || !historyOnlyChange()))) {
         throw new Error('Author changed existing tracked files');
       }

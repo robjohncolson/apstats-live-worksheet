@@ -29,9 +29,9 @@ reinforcement: []
 space:
   first_take: 0.7in
   a: 0.15in
-  b: 0.5in
-  c: 0.5in
-  d: 1.15in
+  b: 0.4in
+  c: 0.4in
+  d: 0.85in
 teacher:
   questions_to_ask:
   - Who exactly was measured, and what is one row of the data?
