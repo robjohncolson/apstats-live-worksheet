@@ -1,7 +1,36 @@
 // All six puzzles share the calendar canvas, sprites, input and physics.
-export function mountBoardScene({ board, replica, member, onExit, onLobby, onSelect, lobby = false, completed = [], remember = () => {}, status, connected }) {
+export const LEVEL_TITLES = ['Hello together','Switchback','Lift relay','Moving walls','Upstairs / downstairs','Weight together'];
+
+// Usernames inside a level, for the label under its lobby door. At most `max`
+// names, then "+N" so two doors 190px apart never overlap.
+export function occupantLabel(names, max = 2) {
+  const list = (names || []).filter(name => typeof name === 'string' && name);
+  if (!list.length) return '';
+  const shown = list.slice(0, max).join(', ');
+  return list.length > max ? shown + ' +' + (list.length - max) : shown;
+}
+
+// Usernames inside `levelIndex` from a park_lobby reply, excluding the viewer
+// (a second tab of their own is not a teammate).
+export function occupantsOf(levels, levelIndex, member) {
+  const row = (Array.isArray(levels) ? levels : []).find(item => item && item.levelIndex === levelIndex);
+  return ((row && row.online) || []).filter(name => typeof name === 'string' && name && name !== member);
+}
+
+// One status line for the lobby: "Friends inside: Moving walls (alice, bob) · Switchback (carol)".
+// '' when every level is empty.
+export function lobbySummary(levels, member) {
+  const parts = [];
+  for (let index = 0; index < LEVEL_TITLES.length; index++) {
+    const names = occupantsOf(levels, index, member);
+    if (names.length) parts.push(LEVEL_TITLES[index] + ' (' + occupantLabel(names, 3) + ')');
+  }
+  return parts.length ? 'Friends inside: ' + parts.join(' · ') : '';
+}
+
+export function mountBoardScene({ board, replica, member, onExit, onLobby, onSelect, lobby = false, completed = [], remember = () => {}, status, connected, occupancy = () => [] }) {
   const { engine, input, api } = board;
-  const titles = ['Hello together','Switchback','Lift relay','Moving walls','Upstairs / downstairs','Weight together'];
+  const titles = LEVEL_TITLES;
   const doors = [0,3,4,5,1,2].map((index,i)=>({index,x:220+i*190,y:146,title:titles[index],reference:index===0?'World 1-1':index>=3?'World 1-'+(index-1):'Cooperative challenge'}));
   const lobbyDoor = {x:145,y:146}, entities = new Map(), peers = {};
   const oldCamera = {...api._camera}, holdSent = new Map(), moving = new Map();
@@ -164,7 +193,13 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
     for(const tile of terrain)ctx.fillRect(tile.x,tile.y,tile.w,tile.h);
     door(ctx,43,170,true);ctx.fillStyle='#57756c';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('Calendar',43,106);
     if(lobby){
-      for(const item of doors){door(ctx,item.x+10,170,true);ctx.fillStyle='#57756c';ctx.fillText((completed.includes(item.index)?'\u2713 ':'')+item.title,item.x+10,104);ctx.fillText(item.reference,item.x+10,84);if(near(item))ctx.fillText('Up to enter',item.x+10,65);}
+      for(const item of doors){
+        door(ctx,item.x+10,170,true);ctx.fillStyle='#57756c';ctx.fillText((completed.includes(item.index)?'\u2713 ':'')+item.title,item.x+10,104);ctx.fillText(item.reference,item.x+10,84);
+        // Who is inside this level right now (park_lobby poll), so friends can meet without planning.
+        const inside=occupantsOf(occupancy(),item.index,member);
+        if(near(item))ctx.fillText(inside.length?'Up to join them':'Up to enter',item.x+10,65);
+        if(inside.length){ctx.fillStyle='#b8862b';ctx.font='11px system-ui';ctx.fillText('\u{1F431} '+occupantLabel(inside),item.x+10,46);ctx.fillStyle='#57756c';ctx.font='12px system-ui';}
+      }
     }
     if(level){
       const p=replica.state.progress;

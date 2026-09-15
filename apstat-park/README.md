@@ -27,6 +27,10 @@ The key holder unlocks the door and every connected participant enters. Falling 
 
 Explicit entry after completion starts a fresh attempt, clearing poses, key, gates and arrivals. Socket resume never triggers replay. Returning before friends finish clears only that returning player's arrival. Browser-local completion checkmarks use a protocol-4 key per username; they never lock a door or award grades. Every level stays available, without hourly rotation. Inactive rooms expire after two hours; a relay restart resets room progress.
 
+## Finding each other
+
+A puzzle needs two students in the same level, so the lobby shows who is inside each one. While a student stands at the doors the panel asks the relay (`park_lobby`, every 3 s) which usernames are bound to each of the period's rooms; the answer is drawn under each door (two names then "+N", the viewer's own username omitted) and summarised in the status line ("Friends inside: Moving walls (alice, bob)"). A door with people in it says "Up to join them". Only the student's own period is reported. The poll stops on entering a level, and an older relay that does not know the request simply leaves the doors unlabeled.
+
 ## Connection behavior
 
 Local physics never waits for network frames. Changed motion anchors are coalesced to at most two per second; stationary players send no motion. Peers interpolate sparse anchors and stop at the last known position during a gap. A reliable resting-position event repairs even a dropped final motion packet. They can be stood on using the board's existing stacking physics. Moving stacks may feel delayed on poor connections; the opening boost uses a stationary teammate.
