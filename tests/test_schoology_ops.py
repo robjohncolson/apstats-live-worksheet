@@ -25,19 +25,25 @@ sys.modules.setdefault(
     types.SimpleNamespace(WebSocketTimeoutException=TimeoutError, create_connection=None),
 )
 
+import re
 import schoology_ops as ops  # noqa: E402
+from unittest import mock  # noqa: E402
 
 
 class FakeCDP:
     """Stand-in for EdgeCDP that scripts eval_js + wait_for_response."""
 
     def __init__(self, *, wfr_result=None, body_text="",
-                 delete_form_present=False, title_lookup=None):
+                 delete_form_present=False, title_lookup=None,
+                 select_ready=True, reject_fields=()):
         self.wfr_result = wfr_result
         self.wfr_calls = []
         self.body_text = body_text
         self.delete_form_present = delete_form_present
         self.title_lookup = title_lookup     # what find_assignment_id_by_title sees
+        self.select_ready = select_ready     # do the <select>s carry the wanted options?
+        self.reject_fields = set(reject_fields)   # field names whose set value is silently dropped
+        self.form_values = {}                # name -> value the form actually holds
         self.clicks = []
         self.urls = []
         self.evals = []
@@ -56,6 +62,21 @@ class FakeCDP:
         self.evals.append(expr)
         if "s-grade-item-add-form" in expr:
             return True
+        # add_assignment readiness poll: every wanted <option> present?
+        if "el.options" in expr:
+            return self.select_ready
+        # add_assignment form fill: remember what the form now holds (unless rejected).
+        m = re.search(r'\[name="([^"]+)"\]', expr)
+        if m and "el.value = " in expr:
+            v = re.search(r'el\.value = (".*?");', expr)
+            if m.group(1) not in self.reject_fields and v:
+                self.form_values[m.group(1)] = json.loads(v.group(1))
+            return None
+        # add_assignment read-back before submit.
+        if "String(el.value)" in expr:
+            sel = re.search(r'querySelector\((".*?")\)', expr)
+            name = re.search(r'\[name="([^"]+)"\]', json.loads(sel.group(1))) if sel else None
+            return self.form_values.get(name.group(1)) if name else None
         if "s-grade-item-delete-form" in expr:
             return self.delete_form_present
         if "getBoundingClientRect" in expr:   # submit rect (delete coordinate click)
@@ -94,6 +115,27 @@ class TestAddAssignmentFilter(unittest.TestCase):
         ops.add_assignment(fake, "123", title="T", category_id="c", grading_period_id="g")
         self.assertEqual(fake.clicks, [])
         self.assertTrue(any("edit-submit" in e and "click()" in e for e in fake.evals))
+
+    def test_waits_for_select_options_and_never_submits_a_half_rendered_form(self):
+        # 2026-09-15: the first create after a cold form load failed twice because the
+        # category <select> had no options yet; the value went blank and the submit hung.
+        fake = FakeCDP(wfr_result={"body": json.dumps({"assignment_nid": "1"})}, select_ready=False)
+        with mock.patch.object(ops.time, "sleep"), mock.patch.object(ops.time, "time",
+                                                                     side_effect=[0, 0, 5, 11, 12, 13]):
+            res = ops.add_assignment(fake, "123", title="T", category_id="c", grading_period_id="g")
+        self.assertFalse(res["ok"])
+        self.assertIn("category/period options", res["error"])
+        self.assertFalse(any("edit-submit" in e and "click()" in e for e in fake.evals))
+        self.assertEqual(fake.wfr_calls, [])
+
+    def test_reads_the_form_back_and_refuses_a_rejected_select_value(self):
+        fake = FakeCDP(wfr_result={"body": json.dumps({"assignment_nid": "1"})},
+                       reject_fields=("grading_category_id",))
+        res = ops.add_assignment(fake, "123", title="T", category_id="c", grading_period_id="g")
+        self.assertFalse(res["ok"])
+        self.assertIn("rejected", res["error"])
+        self.assertIn("grading_category_id", res["error"])
+        self.assertFalse(any("edit-submit" in e and "click()" in e for e in fake.evals))
 
     def test_corrected_filter_matches_real_post_url(self):
         # Documents the root cause: the filter must match the POST URL, not the

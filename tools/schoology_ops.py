@@ -380,6 +380,35 @@ def find_assignment_id_by_title(cdp: EdgeCDP, title: str) -> Optional[str]:
 # Add Assignment form                                                          #
 # --------------------------------------------------------------------------- #
 
+def _wait_for_select_options(cdp: EdgeCDP, wanted: dict, timeout_s: float = 10.0) -> bool:
+    """Poll until every select[name] in `wanted` has an <option> whose value matches."""
+    checks = " && ".join(
+        "(function(){var el=document.querySelector('select[name=\"%s\"]');"
+        "return !!el && [].some.call(el.options,function(o){return o.value===%s;});})()"
+        % (name, json.dumps(str(value)))
+        for name, value in wanted.items()
+    )
+    deadline = time.time() + timeout_s
+    while True:
+        if cdp.eval_js("(" + checks + ")"):
+            return True
+        if time.time() >= deadline:
+            return False
+        time.sleep(0.25)
+
+
+def _form_mismatch(cdp: EdgeCDP, expected: dict) -> Optional[str]:
+    """Return 'selector=got (wanted x)' for the first field whose live value differs, else None."""
+    for selector, value in expected.items():
+        got = cdp.eval_js(
+            "(function(){var el=document.querySelector(%s);return el ? String(el.value) : null;})()"
+            % json.dumps(selector)
+        )
+        if got != str(value):
+            return "%s=%r (wanted %r)" % (selector, got, str(value))
+    return None
+
+
 def add_assignment(
     cdp: EdgeCDP,
     course_id: str,
@@ -419,6 +448,19 @@ def add_assignment(
     form_present = cdp.eval_js("!!document.querySelector('form#s-grade-item-add-form')")
     if not form_present:
         return {"ok": False, "assignment_id": None, "error": "Add Assignment form not found"}
+
+    # Wait for the category/period <select>s to carry the options we are about to pick.
+    # 2026-09-15: the FIRST create after a cold form load failed twice in a row
+    # ('1.5 Follow-Along', Period B) while the next creates in the same run succeeded.
+    # Setting select.value with no matching option leaves it blank and the submit never
+    # completes, so poll for the options (~10 s) instead of filling a half-rendered form.
+    ready = _wait_for_select_options(cdp, {
+        "grading_category_id": str(category_id),
+        "grading_period_id": str(grading_period_id),
+    })
+    if not ready:
+        return {"ok": False, "assignment_id": None,
+                "error": "Add Assignment form did not load its category/period options"}
 
     def _set_input(name: str, val: str) -> None:
         js = (
@@ -475,6 +517,16 @@ def add_assignment(
     _set_checkbox("sync_to_sis_wrapper[sync_to_sis_option]", sync_to_sis)
 
     time.sleep(0.5)
+
+    # Read the form back before submitting: a silently-rejected select value must be a
+    # clear error, not a create that never confirms.
+    mismatch = _form_mismatch(cdp, {
+        "input[name=\"title\"]": title,
+        "select[name=\"grading_category_id\"]": str(category_id),
+        "select[name=\"grading_period_id\"]": str(grading_period_id),
+    })
+    if mismatch:
+        return {"ok": False, "assignment_id": None, "error": "Add Assignment form rejected " + mismatch}
 
     # Submit with a JS click on input#edit-submit (op=Create). Live smoke
     # 2026-05-30: a coordinate-click MISSED -- the long form put the button below
