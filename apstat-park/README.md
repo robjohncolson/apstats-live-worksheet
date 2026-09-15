@@ -6,7 +6,7 @@ Three black doorways sit at the left of the calendar board, numbered 1 to 3: Hel
 
 ## Six replayable cooperative levels
 
-At least two distinct students must be online in the same period and level. A lone student can walk and jump while waiting, and use the Calendar door normally. Puzzle actions and completion wait for a second student. Falling off the bottom of a level, alone or together, is continuous as in PICO PARK: the cat drops back in from the top above the last solid ground it stood on (the lip it fell from), speed reset and steering locked until it lands, with no reset of shared progress. That keeps a fall from bridging a crevasse or accelerating across wraps. Multiple tabs do not count as teammates. There is no solo assist or permanently latched pressure button.
+At least two distinct students must be online in the same period and level. A lone student can walk and jump while waiting, and use the Calendar door normally. Puzzle actions and completion wait for a second student. Falling off the bottom of a level, alone or together, is continuous as in PICO PARK: the cat drops back in from the top above the last solid ground it stood on (the lip it fell from), speed reset and steering locked until it lands, with no reset of shared progress. It never returns to the start point; if that ground has moved away (a lift), the nearest solid ground to where it last stood is used. That keeps a fall from bridging a crevasse or accelerating across wraps. Multiple tabs do not count as teammates. There is no solo assist or permanently latched pressure button.
 
 World 1 contains four stages. The relay carries adaptations of those four plus two additional cooperative challenges; the calendar board exposes the first three below as doors 1 to 3:
 

@@ -26,7 +26,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   let pushAt=0, pushing=null;
   // Fall wrap state: where the cat last stood on solid ground, and whether it is
   // mid-drop from the top (steering locked until it lands).
-  let lastGround=null, wrapDrop=null, lastWrapAt=-Infinity;
+  let lastGround=null, wrapDrop=null;
   const keyImage = new Image();keyImage.src='key.png';
   const pose = ()=>({x:player.x,y:player.y,vx:player.vx,vy:player.vy});
   const near = item=>item && Math.hypot(player.x-item.x,player.y-item.y)<22;
@@ -113,6 +113,18 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     if(active && held && at-(holdSent.get(id)||0)<2000)return;
     if(replica.queue('hold',id,pose(),{active}).status==='queued')holdSent.set(id,at);
   }
+  // Where a wrapped fall re-enters: the x of the last solid ground the cat stood on, if that
+  // ground is still there; else the nearest point on any current terrain tile to that spot.
+  function landingX() {
+    const last=lastGround||level.spawn;
+    if(terrain.some(t=>Math.abs(last.y+24-t.y)<0.1&&last.x+20>t.x&&last.x<t.x+t.w))return last.x;
+    let best=last.x,bestD=Infinity;
+    for(const t of terrain){
+      const x=Math.min(Math.max(last.x,t.x),t.x+t.w-20),d=Math.hypot(x-last.x,t.y-24-last.y);
+      if(d<bestD){bestD=d;best=x;}
+    }
+    return best;
+  }
   function hazardRect(item) {
     const phase=((replica.clock()%item.cycleMs)+item.cycleMs)%item.cycleMs/item.cycleMs;
     const t=phase<0.5?phase*2:(1-phase)*2;
@@ -130,19 +142,18 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
       return;
     }
     // PICO PARK fall: drop off the bottom and come back down from the top. Continuous, no shared
-    // reset (only the moving pillar restarts the attempt). The cat re-enters ABOVE THE LAST SOLID
-    // GROUND IT STOOD ON (the lip it fell from), with its speed reset, and cannot steer until it
-    // lands: same x + steering would let a fall bridge a crevasse, and gravity would otherwise
-    // keep accumulating across wraps. Ground that moved away (a lift) could loop the cat, so a
-    // second wrap within 2 s falls back to the spawn point. Wrap before the top edge passes
-    // level.height so the relay never sees an out-of-range pose; the ~250px jump exceeds
-    // RemoteMotion's teleport distance, so peers see a snap, not a sweep.
+    // reset (only the moving pillar restarts the attempt). The cat ALWAYS re-enters above the
+    // last solid ground it stood on (the lip it fell from), with its speed reset, and cannot
+    // steer until it lands: same x + steering would let a fall bridge a crevasse, and gravity
+    // would otherwise keep accumulating across wraps. Never the spawn point. If that ground has
+    // moved away (a lift), the nearest solid ground to where the cat last stood is used instead.
+    // Wrap before the top edge passes level.height so the relay never sees an out-of-range pose;
+    // the ~250px jump exceeds RemoteMotion's teleport distance, so peers see a snap, not a sweep.
     const grounded=terrain.some(t=>Math.abs(player.y+24-t.y)<0.1&&player.x+20>t.x&&player.x<t.x+t.w);
     if(grounded&&!wrapDrop)lastGround={x:player.x,y:player.y};
     if(player.y>level.height){
-      const at=replica.now(),safe=lastGround&&at-lastWrapAt>2000?lastGround:level.spawn;
-      lastWrapAt=at;wrapDrop={x:safe.x};
-      Object.assign(player,{x:safe.x,y:-28,vx:0,vy:0,standingOn:null});
+      wrapDrop={x:landingX()};
+      Object.assign(player,{x:wrapDrop.x,y:-28,vx:0,vy:0,standingOn:null});
     }
     if(wrapDrop){player.x=wrapDrop.x;player.vx=0;if(grounded)wrapDrop=null;}
     replica.motion(pose());

@@ -11,9 +11,14 @@ test('a fall wraps to the top above the last solid ground, speed reset, before t
   const send = scene.indexOf('replica.motion(pose());');
   assert.ok(wrap > 0, 'wrap rule present');
   assert.ok(wrap < send, 'wrap happens before the pose is sent, so the relay never sees y > height');
-  assert.match(scene, /Object\.assign\(player,\{x:safe\.x,y:-28,vx:0,vy:0,standingOn:null\}\)/);   // speed reset
-  assert.match(scene, /safe=lastGround&&at-lastWrapAt>2000\?lastGround:level\.spawn/);           // lip, with a loop guard
+  assert.match(scene, /Object\.assign\(player,\{x:wrapDrop\.x,y:-28,vx:0,vy:0,standingOn:null\}\)/);   // speed reset
+  assert.match(scene, /wrapDrop=\{x:landingX\(\)\}/);                                                   // always the lip
   assert.match(scene, /if\(grounded&&!wrapDrop\)lastGround=\{x:player\.x,y:player\.y\}/);
+  assert.doesNotMatch(scene, /lastWrapAt/);                                                          // no timed fallback to spawn
+  // landingX: the last ground's x while that ground still exists, else the nearest terrain point.
+  const body = scene.slice(scene.indexOf('function landingX()'), scene.indexOf('function hazardRect'));
+  assert.match(body, /return last\.x;/);
+  assert.match(body, /Math\.hypot\(x-last\.x,t\.y-24-last\.y\)/);
   assert.doesNotMatch(scene, /player\.y>level\.height\+20/);   // the old fall-respawn checks are gone
 });
 
