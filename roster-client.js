@@ -85,6 +85,23 @@
       return true;
     },
 
+    // Rewrite the cached session's section in place. The section is captured
+    // at sign-in and never refreshed, so a student moved between sections
+    // (e.g. the SY26-27 cutover from PeriodX to PeriodB/E) on a device that
+    // stayed signed in would keep the stale one until they signed out. The
+    // Desk calls this after matching the signed-in username against the live
+    // section rosters. No-op (returns false) when signed out or the section
+    // is not a non-empty string. Never throws.
+    updateSection: function (section) {
+      if (typeof section !== 'string' || !section) return false;
+      var session = readSession();
+      if (!session || !session.studentId) return false;
+      if (session.section === section) return false;
+      session.section = section;
+      writeSession(session);
+      return true;
+    },
+
     // POST /roster/verify — persists the session key on success.
     // Returns { ok, studentId, realName, section, spriteHue, error? }
     signIn: async function (username, password) {

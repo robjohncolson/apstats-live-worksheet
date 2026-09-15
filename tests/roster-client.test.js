@@ -161,6 +161,42 @@ describe('roster-client.js — current()', () => {
   });
 });
 
+describe('roster-client.js — updateSection()', () => {
+  function seed(localStorage, section) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      studentId: 'abc-123', username: 'mango_fox', realName: 'Jane Smith',
+      section, token: 'tok.sig'
+    }));
+  }
+
+  it('rewrites a stale cached section in place and keeps the rest of the session', () => {
+    const { localStorage, rosterClient } = makeWindow('https://mock-service.test');
+    seed(localStorage, 'PeriodX');
+    expect(rosterClient.updateSection('PeriodB')).toBe(true);
+    const after = rosterClient.current();
+    expect(after.section).toBe('PeriodB');
+    expect(after.studentId).toBe('abc-123');
+    expect(after.username).toBe('mango_fox');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).token).toBe('tok.sig');
+  });
+
+  it('is a no-op (false) when the section already matches', () => {
+    const { localStorage, rosterClient } = makeWindow('https://mock-service.test');
+    seed(localStorage, 'PeriodB');
+    expect(rosterClient.updateSection('PeriodB')).toBe(false);
+  });
+
+  it('is a no-op (false) when signed out or given a bad section', () => {
+    const { localStorage, rosterClient } = makeWindow('https://mock-service.test');
+    expect(rosterClient.updateSection('PeriodB')).toBe(false);
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    seed(localStorage, 'PeriodX');
+    expect(rosterClient.updateSection('')).toBe(false);
+    expect(rosterClient.updateSection(null)).toBe(false);
+    expect(rosterClient.current().section).toBe('PeriodX');
+  });
+});
+
 describe('roster-client.js — signIn()', () => {
   it('POSTs to /roster/verify and persists the session on ok:true', async () => {
     const { win, localStorage, rosterClient } = makeWindow('https://mock-service.test');

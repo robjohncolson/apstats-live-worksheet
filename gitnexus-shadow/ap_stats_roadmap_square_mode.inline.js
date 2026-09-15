@@ -24673,8 +24673,45 @@ function _mountClassroomBoard(){
   if(SCHEDULE_DEFS[py]) cYear=py;
   loadYear(cYear);
 })();
+
+// Boot-time section reconcile. The cached sign-in session carries the section
+// as of sign-in, so a student moved between sections (SY26-27 cutover: PeriodX
+// -> PeriodB/E) on a device that stayed signed in would see the wrong calendar
+// until they signed out. Look the signed-in username up in the live B/E rosters
+// (1h-cached, same fetch the sign-in pickers use) and correct the cached section
+// and the calendar period in place. Teachers and signed-out sessions are
+// untouched. Fails silent: a roster miss or network error changes nothing.
+// Exported for tests.
+async function _reconcileRosterSection() {
+  var who = null;
+  try {
+    who = (window.rosterClient && typeof window.rosterClient.current === 'function')
+      ? window.rosterClient.current() : null;
+  } catch (_) {}
+  if (!who || !who.username || who.role === 'teacher') return null;
+  var sections = ['PeriodB', 'PeriodE'];
+  var rosters = await Promise.all(sections.map(function (section) {
+    return _fetchSectionRoster(section);
+  }));
+  var wanted = String(who.username).toLowerCase();
+  var found = null;
+  sections.forEach(function (section, i) {
+    if (found) return;
+    var hit = (rosters[i] || []).some(function (student) {
+      return String((student && student.username) || '').toLowerCase() === wanted;
+    });
+    if (hit) found = section;
+  });
+  if (!found || found === who.section) return null;
+  try { window.rosterClient.updateSection(found); } catch (_) {}
+  var period = (found === 'PeriodB') ? 'B' : 'E';
+  if (typeof setP === 'function' && (typeof cP !== 'string' || cP !== period)) setP(period);
+  return found;
+}
+try { window._reconcileRosterSection = _reconcileRosterSection; } catch (_) {}
+try { _reconcileRosterSection().catch(function () {}); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-11-n9je';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-15-d2pm';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
