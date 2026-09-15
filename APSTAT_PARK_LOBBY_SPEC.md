@@ -55,3 +55,21 @@ New request type `park_lobby`. Reply, for the caller's classroom section only:
 
 Frontend first (`node scripts/bump-build.mjs`, push), then the relay (auto-deploys on push
 to curriculum_render `main`). Old relay + new frontend = doors simply show no names.
+
+## v2 (2026-09-15, same day): doors on the calendar board, three levels, no lobby
+
+Teacher: "instead of having the level room, the levels could be displayed in the main screen
+(with the calendar) so it's less like a labyrinth.. maybe just have 3 levels, the first three."
+
+- `classroom-board.js` replaces the single black doorway with THREE doors at the left edge
+  (`PARK_DOORS` = Hello together / Moving walls / Upstairs-downstairs = relay levels 0/3/4;
+  screen-space x = 24 + i*54, width 38). Up on a door, or a click, opens that level directly.
+  Walk-in (hold LEFT ¼ s) stays on door 1 only — doors 2 and 3 sit in the walking area.
+- The board itself polls `park_lobby` every 3 s while the student is on the board and no
+  whole-class event is running; the reply is matched in `ws.onmessage` by the
+  `board_lobby_` requestId prefix. Occupied doors show one cat per classmate (max 3) and a
+  names line above the door group ("1: alice, bob   ·   3: carol").
+- `apstat-park/panel.mjs` takes `levelIndex` and opens straight into it; `board-scene.mjs`
+  has no lobby — the goal door, the start door and Escape all return to the calendar.
+- Relay unchanged (v1's `park_lobby`). Levels 1/2/5 stay in the relay with no door.
+- `handle.openNativeGameplay(doorIndex)` picks a door (default door 1).

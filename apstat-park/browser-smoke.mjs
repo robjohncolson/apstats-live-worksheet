@@ -64,7 +64,6 @@ async function open(name, section = 'B', width = 800, levelIndex = 0) {
   await page.goto(`${origin}/?user=${name}&section=${section}`);
   await page.waitForFunction(() => window.board?.getSpritePosition?.(new URL(location.href).searchParams.get('user')));
   await page.evaluate(() => { window.originalCanvas = board.getCanvas(); window.originalCanvasCount = document.querySelectorAll("canvas").length; });
-  await page.getByRole('button', { name: 'Enter APStat Park', exact: true }).click();
   await choose(page, levelIndex);
   await page.evaluate(()=>{
     window.parkFailures=[];const r=board.getParkScene().replica,queue=r.queue;
@@ -73,10 +72,10 @@ async function open(name, section = 'B', width = 800, levelIndex = 0) {
   return page;
 }
 async function choose(page, index = 0) {
-  await page.waitForFunction(() => board.getParkScene()?.getGame()?.getWorld().lobby);
-  const x=await page.evaluate(index=>board.getParkScene().getGame().getWorld().doors.find(d=>d.index===index).x,index);
-  await move(page,x);
-  await page.keyboard.press('ArrowUp', {delay:80});
+  // The three doors live on the calendar board (levels 0/3/4 = doors 1/2/3); no lobby.
+  const doorIndex = [0, 3, 4].indexOf(index);
+  if (doorIndex < 0) throw new Error('level ' + index + ' has no door on the calendar board');
+  await page.getByRole('button', { name: 'Enter APStat Park door ' + (doorIndex + 1) + ':' }).click();
   await page.waitForFunction(index => board.getParkScene()?.getGame()?.getWorld().level?.index === index, index);
 }
 async function calendarExit(page) {

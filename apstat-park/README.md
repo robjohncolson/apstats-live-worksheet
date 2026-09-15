@@ -2,13 +2,13 @@
 
 The calendar doorway selects a local scene in the existing CanvasEngine. The canvas element, 220px height, background, 20x24 cat sprites, PlayerSprite physics, camera and keyboard handling stay the same. There is no second canvas, game panel, touch-control row or teacher group manager.
 
-Students enter by walking left into the black doorway, pressing Up beside it, or clicking it. Arrows move, Space jumps, and Up enters a door. The starting doorway returns to the calendar; Escape also returns. At the goal, Up enters the unlocked door and a subsequent Up returns to the puzzle lobby. A separate Levels doorway near the start also returns to that lobby. Polls, armed gates, green light, voting doorways and live activities recall students and prevent entry while active.
+Three black doorways sit at the left of the calendar board, numbered 1 to 3: Hello together, Moving walls, and Upstairs / downstairs. Standing on a door and pressing Up, or clicking it, opens that level directly; walking left into door 1 (the one at the edge) also enters it. There is no lobby. Arrows move, Space jumps, and Up enters a door. Inside a level the starting doorway returns to the calendar; Escape also returns. At the goal, Up enters the unlocked door and a subsequent Up returns to the calendar. Polls, armed gates, green light, voting doorways and live activities recall students and prevent entry while active. The other three levels (Switchback, Lift relay, Weight together) remain in the relay but have no door.
 
 ## Six replayable cooperative levels
 
-At least two distinct students must be online in the same period and level. A lone student can walk and jump while waiting, and use the Calendar or Levels doors normally. Puzzle actions and completion wait for a second student. Falls while waiting respawn locally without resetting shared progress. Multiple tabs do not count as teammates. There is no solo assist or permanently latched pressure button.
+At least two distinct students must be online in the same period and level. A lone student can walk and jump while waiting, and use the Calendar door normally. Puzzle actions and completion wait for a second student. Falls while waiting respawn locally without resetting shared progress. Multiple tabs do not count as teammates. There is no solo assist or permanently latched pressure button.
 
-World 1 contains four stages. The lobby presents adaptations of those four first, followed by two additional cooperative challenges:
+World 1 contains four stages. The relay carries adaptations of those four plus two additional cooperative challenges; the calendar board exposes the first three below as doors 1 to 3:
 
 | Lobby choice | Gameplay reference | Cooperation |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ Explicit entry after completion starts a fresh attempt, clearing poses, key, gat
 
 ## Finding each other
 
-A puzzle needs two students in the same level, so the lobby shows who is inside each one. While a student stands at the doors the panel asks the relay (`park_lobby`, every 3 s) which usernames are bound to each of the period's rooms; the answer is drawn under each door (two names then "+N", the viewer's own username omitted) and summarised in the status line ("Friends inside: Moving walls (alice, bob)"). A door with people in it says "Up to join them". Only the student's own period is reported. The poll stops on entering a level, and an older relay that does not know the request simply leaves the doors unlabeled.
+A puzzle needs two students in the same level, so the doors show who is inside each one. While a student is on the calendar board (not in a level, no whole-class event running) `classroom-board.js` asks the relay (`park_lobby`, every 3 s) which usernames are bound to each of the period's rooms. Each occupied door shows one cat per classmate inside (up to three), and a line above the doors names them ("1: alice, bob   ·   3: carol"; two names then "+N", the viewer's own username omitted). Only the student's own period is reported. An older relay that does not know the request simply leaves the doors unlabeled.
 
 ## Connection behavior
 
@@ -51,6 +51,6 @@ Run `node scripts/bump-build.mjs` before every release touching board or park mo
 
 - classroom-board.js supplies the existing engine, camera, input and sprite factories, and handles classroom recall.
 - board-scene.mjs assembles scenery and actors into CanvasEngine.sceneEntities.
-- panel.mjs handles socket binding, replay and lifecycle; it creates only a status line.
+- panel.mjs handles socket binding, replay and lifecycle for one level; it creates only a status line. classroom-board.js draws the three doors and polls occupancy.
 - replica.mjs handles reliable events; remote-motion.mjs interpolates bounded peer anchors.
 - Relay levels.mjs describes the six scenes; session.mjs owns milestones; service.mjs binds joined students to period rooms.

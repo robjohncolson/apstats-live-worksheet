@@ -4102,28 +4102,61 @@
     var nativeActive = false;
     var parkReturnAt = 0;
     var parkExitKeyHeld = false;
-    var nativeButton = doc.createElement('button');
-    nativeButton.type = 'button';
-    nativeButton.setAttribute('data-classroom-native', '1');
-    nativeButton.setAttribute('aria-label', 'Enter APStat Park');
-    nativeButton.title = 'APStat Park: walk into the door, press Up, or click to enter';
-    // Invisible click/touch + accessible target over the door. The door itself is painted on the
-    // board canvas by the park_doorway entity below, in the scenery z-band BEHIND the avatars, so
-    // a student walks across it instead of vanishing behind a DOM box. No label: it's a door.
-    nativeButton.style.cssText = 'position:absolute;left:21px;top:123px;width:44px;height:53px;background:transparent;border:0;border-radius:21px 21px 0 0;cursor:pointer;z-index:4;padding:0;-webkit-tap-highlight-color:transparent;outline-offset:2px';
-    container.appendChild(nativeButton);
-    if (role !== 'student') { nativeButton.style.display = 'none'; }   // students only (self-directed)
-    nativeButton.onclick = function () {
+    // APStat Park: three puzzle doors on the calendar board itself (no lobby). Door i opens
+    // PARK_DOORS[i].level straight away. Screen-space x of door i is PARK_DOOR_X0 + i*PARK_DOOR_STEP.
+    var PARK_DOORS = [
+      { level: 0, title: 'Hello together' },
+      { level: 3, title: 'Moving walls' },
+      { level: 4, title: 'Upstairs / downstairs' }
+    ];
+    var PARK_DOOR_X0 = 24, PARK_DOOR_W = 38, PARK_DOOR_STEP = 54, PARK_DOOR_H = 50;
+    function parkDoorCenter(i) { return PARK_DOOR_X0 + i * PARK_DOOR_STEP + PARK_DOOR_W / 2; }
+    // Who is inside each level (relay park_lobby, polled every 3 s while on the board):
+    // [{ levelIndex, online: [usernames] }]. Drawn on the doors so friends can meet without planning.
+    var parkOccupancy = [], parkLobbyAt = 0, parkLobbyN = 0;
+    var PARK_LOBBY_POLL_MS = 3000;
+    function parkOccupants(levelIndex) {
+      for (var i = 0; i < parkOccupancy.length; i++) {
+        var row = parkOccupancy[i];
+        if (!row || row.levelIndex !== levelIndex || !Array.isArray(row.online)) continue;
+        return row.online.filter(function (name) { return typeof name === 'string' && name && name !== username; });
+      }
+      return [];
+    }
+    function parkOccupantLabel(names, max) {
+      if (!names.length) return '';
+      var shown = names.slice(0, max).join(', ');
+      return names.length > max ? shown + ' +' + (names.length - max) : shown;
+    }
+    var nativeButtons = PARK_DOORS.map(function (door, i) {
+      var button = doc.createElement('button');
+      button.type = 'button';
+      button.setAttribute('data-classroom-native', String(i + 1));
+      button.setAttribute('aria-label', 'Enter APStat Park door ' + (i + 1) + ': ' + door.title);
+      button.title = 'APStat Park door ' + (i + 1) + ' (' + door.title + '): stand on it and press Up, or click';
+      // Invisible click/touch + accessible target over the door. The doors are painted on the
+      // board canvas by the park_doorway entity below, in the scenery z-band BEHIND the avatars,
+      // so a student walks across them instead of vanishing behind a DOM box. No label: it's a door.
+      button.style.cssText = 'position:absolute;left:' + (PARK_DOOR_X0 - 3 + i * PARK_DOOR_STEP) + 'px;top:123px;width:44px;height:53px;background:transparent;border:0;border-radius:21px 21px 0 0;cursor:pointer;z-index:4;padding:0;-webkit-tap-highlight-color:transparent;outline-offset:2px';
+      container.appendChild(button);
+      if (role !== 'student') { button.style.display = 'none'; }   // students only (self-directed)
+      button.onclick = function () { enterPark(door.level); };
+      return button;
+    });
+    var nativeButton = nativeButtons[0];   // door 1: the walk-in door at the left edge (legacy name)
+    function setParkButtons(fn) { for (var i = 0; i < nativeButtons.length; i++) fn(nativeButtons[i]); }
+    function enterPark(levelIndex) {
       if (destroyed || nativeButton.disabled || role !== 'student' || classroomBusy()) { return; }
-      nativeButton.disabled = true;
+      setParkButtons(function (b) { b.disabled = true; });
       import('./apstat-park/panel.mjs').then(function (module) {
-        if (destroyed || classroomBusy() || !engineReady) { nativeButton.disabled = false; return; }
+        if (destroyed || classroomBusy() || !engineReady) { setParkButtons(function (b) { b.disabled = false; }); return; }
         nativeActive = true;
-        nativeButton.style.visibility = 'hidden';
+        setParkButtons(function (b) { b.style.visibility = 'hidden'; });
         for (var key in playerInput) { playerInput[key] = false; }
         nativePanel = module.mountParkPanel({
           container: container,
           getSocket: function () { return ws; },
+          levelIndex: levelIndex,
           board: {
             engine: engine, input: playerInput, username: username, api: root.ClassroomBoard,
             viewportW: _viewportW,
@@ -4139,8 +4172,8 @@
             }
           },
           onClose: function () {
-            nativePanel = null; nativeActive = false; nativeButton.disabled = false;
-            nativeButton.style.visibility = '';
+            nativePanel = null; nativeActive = false;
+            setParkButtons(function (b) { b.disabled = false; b.style.visibility = ''; });
             parkReturnAt = Date.now();
             parkExitKeyHeld = true;
             for (var key in playerInput) playerInput[key] = false;
@@ -4148,11 +4181,11 @@
           }
         });
       }).catch(function (error) {
-        nativeActive = false; nativeButton.disabled = false; nativeButton.style.visibility = '';
+        nativeActive = false;
+        setParkButtons(function (b) { b.disabled = false; b.style.visibility = ''; b.title = 'APStat Park did not load (' + error.message + ') \u2014 click the door to retry'; });
         if (!destroyed && engineReady) engine.start();
-        nativeButton.title = 'APStat Park did not load (' + error.message + ') \u2014 click the door to retry';
       });
-    };
+    }
 
     // --- poll vote buttons (v2) ----------------------------------------
     // One <button> per option, shown only when a poll is open and this
@@ -4480,20 +4513,27 @@
     var parkWalkTicks = 0;
     if (engineReady && role === 'student') engine.addEntity('park_doorway', {
       update: function () {
-        nativeButton.style.top = (engine.groundY - 53) + 'px';
+        setParkButtons(function (b) { b.style.top = (engine.groundY - 53) + 'px'; });
         var player = spriteEntities[username];
         if (!player || nativeActive || Date.now() - parkReturnAt < 1200 || classroomBusy()) { parkWalkTicks = 0; return; }
+        // Ask the relay who is inside each level (park_lobby). The reply lands in ws.onmessage;
+        // an old relay answers park_error, which is simply ignored (doors stay unlabeled).
+        if (ws && ws.readyState === 1 && Date.now() - parkLobbyAt >= PARK_LOBBY_POLL_MS) {
+          parkLobbyAt = Date.now();
+          try { ws.send(JSON.stringify({ type: 'park_lobby', requestId: 'board_lobby_' + (++parkLobbyN) })); } catch (_) {}
+        }
         var x = player.x + (player._spriteSize || 20) / 2 - (_camera.x || 0);
-        // Deliberate walk-in: hold LEFT while inside the door span for ~a quarter second. The first
-        // idle slot sits right beside the door, so a single tap must not pull that student in.
+        // Deliberate walk-in applies to door 1 only (the one at the left edge, where walking LEFT
+        // naturally stops): hold LEFT inside its span for ~a quarter second. Doors 2 and 3 sit in
+        // the walking area, so they open only on Up or click; passing through them does nothing.
         var inDoor = x >= 27 && x <= 60 && Math.abs(player.y - getSpriteY()) < 16;
         parkWalkTicks = (inDoor && playerInput.left && !playerInput.right) ? parkWalkTicks + 1 : 0;
-        if (parkWalkTicks >= 15) { parkWalkTicks = 0; nativeButton.onclick(); }
+        if (parkWalkTicks >= 15) { parkWalkTicks = 0; enterPark(PARK_DOORS[0].level); }
       },
       zIndex: 1,   // scenery band (vote doorways are 1, avatars >= 10): sprites paint OVER the door
       render: function (ctx) {
-        // Screen space, like GateDoor (no camera translate): the door is fixed at the left edge.
-        var x = 24, w = 38, h = 50, y = engine.groundY - h, r = 18;
+        // Screen space, like GateDoor (no camera translate): the doors are fixed at the left edge.
+        var w = PARK_DOOR_W, h = PARK_DOOR_H, y = engine.groundY - h, r = 18;
         var arch = function (px, py, pw, ph, pr) {
           ctx.beginPath();
           ctx.moveTo(px, py + ph);
@@ -4505,10 +4545,32 @@
           ctx.closePath();
         };
         ctx.save();
-        ctx.fillStyle = '#57756c';            // frame
-        arch(x - 3, y - 3, w + 6, h + 3, r + 3); ctx.fill();
-        ctx.fillStyle = '#030606';            // the black doorway
-        arch(x, y, w, h, r); ctx.fill();
+        ctx.textAlign = 'center';
+        var summary = [];
+        for (var i = 0; i < PARK_DOORS.length; i++) {
+          var x = PARK_DOOR_X0 + i * PARK_DOOR_STEP, cx = x + w / 2;
+          ctx.fillStyle = '#57756c';            // frame
+          arch(x - 3, y - 3, w + 6, h + 3, r + 3); ctx.fill();
+          ctx.fillStyle = '#030606';            // the black doorway
+          arch(x, y, w, h, r); ctx.fill();
+          ctx.fillStyle = '#8fb3a6';            // door number, inside the arch
+          ctx.font = 'bold 11px system-ui';
+          ctx.fillText(String(i + 1), cx, y + 15);
+          var inside = parkOccupants(PARK_DOORS[i].level);
+          if (inside.length) {
+            // One cat per classmate inside (max three), so a glance shows where friends are.
+            ctx.font = '11px system-ui';
+            ctx.fillText('\u{1F431}'.repeat(Math.min(inside.length, 3)), cx, y + 34);
+            summary.push((i + 1) + ': ' + parkOccupantLabel(inside, 2));
+          }
+        }
+        if (summary.length) {
+          // Names for the occupied doors, one line above the door group.
+          ctx.fillStyle = '#b8862b';
+          ctx.font = '10px system-ui';
+          ctx.textAlign = 'left';
+          ctx.fillText(summary.join('   \u00b7   '), PARK_DOOR_X0, y - 10);
+        }
         ctx.restore();
       }
     });
@@ -4521,9 +4583,11 @@
     function handlePlayerUp(player) {
       // Up enters only when the sprite is ON the door (±16px of its center), never from the first
       // idle slot beside it; never for teachers; never during a whole-class event.
-      if (role === 'student' && !nativeActive && !classroomBusy() && Date.now() - parkReturnAt >= 1200
-          && Math.abs(player.x + player._spriteSize / 2 - (_camera.x || 0) - 43) <= 16) {
-        nativeButton.onclick(); return;
+      if (role === 'student' && !nativeActive && !classroomBusy() && Date.now() - parkReturnAt >= 1200) {
+        var footX = player.x + player._spriteSize / 2 - (_camera.x || 0);
+        for (var di = 0; di < PARK_DOORS.length; di++) {
+          if (Math.abs(footX - parkDoorCenter(di)) <= 16) { enterPark(PARK_DOORS[di].level); return; }
+        }
       }
       // v3 P4: doorways take priority over the gate (a doorways data
       // mode is mutually exclusive with the gate ritual on the server).
@@ -6490,6 +6554,12 @@
         } catch (e) {
           return;
         }
+        if (msg && msg.type === 'park_result' && typeof msg.requestId === 'string'
+            && msg.requestId.indexOf('board_lobby_') === 0) {
+          // park_lobby reply (the doors' occupancy). park_* traffic otherwise belongs to the panel.
+          if (Array.isArray(msg.levels)) parkOccupancy = msg.levels;
+          return;
+        }
         if (msg && msg.type && msg.type.indexOf('classroom_') === 0) {
           // P3: fire raw-message hook BEFORE _reduce. Caller may inspect
           // the message and trigger side effects (toast, reply panel)
@@ -6544,13 +6614,13 @@
 
     var handle = {
 
-      openNativeGameplay: function () { nativeButton.onclick(); },
+      openNativeGameplay: function (doorIndex) { enterPark((PARK_DOORS[doorIndex | 0] || PARK_DOORS[0]).level); },
       getParkScene: function () { return nativePanel; },
 
       destroy: function () {
         destroyed = true;
         if (nativePanel) { nativePanel.dispose(); nativePanel = null; }
-        if (nativeButton.parentNode) { nativeButton.parentNode.removeChild(nativeButton); }
+        setParkButtons(function (b) { if (b.parentNode) b.parentNode.removeChild(b); });
         clearInterval(heartbeatTimer);
         clearTimeout(reconnectTimer);
         clearTimeout(greenlightTimer);

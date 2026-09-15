@@ -1,11 +1,9 @@
 import { ParkReplica } from './replica.mjs';
-import { mountBoardScene, lobbySummary } from './board-scene.mjs';
+import { mountBoardScene } from './board-scene.mjs';
 
-const LOBBY_POLL_MS = 3000;
-const LOBBY_HINT = 'Walk to a puzzle door and press Up. The left door returns to the calendar.';
-
-// Transport and lifecycle only. The board owns the canvas, controls and sprites.
-export function mountParkPanel({ container, getSocket, board, onClose = () => {} }) {
+// Transport and lifecycle only. The board owns the canvas, controls and sprites,
+// and the puzzle doors: the panel opens straight into `levelIndex`.
+export function mountParkPanel({ container, getSocket, board, levelIndex = 0, onClose = () => {} }) {
   const doc = container.ownerDocument;
   const status = doc.createElement('span');
   status.setAttribute('role', 'status');
@@ -33,8 +31,6 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
   const requestPrefix = freshId();
   let socket = null, requestId = 0, disposed = false, game = null, joining = false, joinedSocket = null;
   let retryAt = 0, lastStatusAt = 0, incompatible = false;
-  // Lobby occupancy from park_lobby: [{ levelIndex, online }]. Drawn under each door.
-  let lobbyOnline = [], lastLobbyAt = 0;
 
   function request(type, data = {}) {
     if (!socket || socket.readyState !== 1 || socket.bufferedAmount > 4096 || pending.size >= 8) return Promise.reject(new Error('Waiting for the classroom connection'));
@@ -94,25 +90,9 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
     finally { joining = false; retryAt = performance.now() + 2000; }
   }
 
-  // In the lobby, ask the relay who is inside each level so friends can meet
-  // without planning. An old relay answers with park_error: ignored, no names.
-  async function pollLobby() {
-    if (socket?.readyState !== 1 || performance.now() - lastLobbyAt < LOBBY_POLL_MS) return;
-    lastLobbyAt = performance.now();
-    const current = socket, version = selectionVersion;
-    let response;
-    try { response = await request('park_lobby'); } catch { return; }
-    if (disposed || current !== socket || version !== selectionVersion || selectedLevel !== null) return;
-    if (!Array.isArray(response.levels)) return;
-    lobbyOnline = response.levels;
-    const text = lobbySummary(lobbyOnline, board.username) || LOBBY_HINT;
-    if (status.textContent !== text) status.textContent = text;
-  }
-
   async function pump() {
-    if (disposed || incompatible) return;
+    if (disposed || incompatible || selectedLevel === null) return;
     bindSocket();
-    if (selectedLevel === null) { await pollLobby(); return; }
     if (socket?.readyState !== 1) {
       status.textContent = replica.state ? 'Reconnecting. Your saved puzzle progress stays here.' : 'Connecting to your classroom...';
       return;
@@ -141,20 +121,16 @@ export function mountParkPanel({ container, getSocket, board, onClose = () => {}
     container.removeAttribute('data-park-active');
     onClose();
   }
-  function showScene(index = null) {
-    if (socket?.readyState === 1 && selectedLevel !== null) socket.send(JSON.stringify({ type: 'park_leave', epoch: replica.state?.epoch }));
+  function showScene(index) {
     selectionVersion++;
     game?.dispose();
     selectedLevel = index; replica = new ParkReplica(); joinedSocket = null;
     retryAt = 0; incompatible = false;
-    lobbyOnline = []; lastLobbyAt = 0;
-    game = mountBoardScene({ board, replica, member: board.username, onExit: dispose,
-      onLobby: () => showScene(), onSelect: showScene, lobby: index === null, completed, remember, status,
-      connected: () => !incompatible && socket?.readyState === 1 && joinedSocket === socket,
-      occupancy: () => lobbyOnline });
-    status.textContent = index === null ? LOBBY_HINT : 'Entering your classroom puzzle...';
+    game = mountBoardScene({ board, replica, member: board.username, onExit: dispose, completed, remember, status,
+      connected: () => !incompatible && socket?.readyState === 1 && joinedSocket === socket });
+    status.textContent = 'Entering your classroom puzzle...';
   }
-  showScene();
+  showScene([0, 1, 2, 3, 4, 5].includes(levelIndex) ? levelIndex : 0);
   bindSocket();
   const timer = setInterval(() => { pump().catch(error => { if (!disposed) status.textContent = error.message; }); }, 100);
   return { dispose, get replica() { return replica; }, getGame: () => game };

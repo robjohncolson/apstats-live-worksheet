@@ -1,8 +1,7 @@
 // All six puzzles share the calendar canvas, sprites, input and physics.
 export const LEVEL_TITLES = ['Hello together','Switchback','Lift relay','Moving walls','Upstairs / downstairs','Weight together'];
 
-// Usernames inside a level, for the label under its lobby door. At most `max`
-// names, then "+N" so two doors 190px apart never overlap.
+// Usernames inside a level, for a door label. At most `max` names, then "+N".
 export function occupantLabel(names, max = 2) {
   const list = (names || []).filter(name => typeof name === 'string' && name);
   if (!list.length) return '';
@@ -17,22 +16,11 @@ export function occupantsOf(levels, levelIndex, member) {
   return ((row && row.online) || []).filter(name => typeof name === 'string' && name && name !== member);
 }
 
-// One status line for the lobby: "Friends inside: Moving walls (alice, bob) · Switchback (carol)".
-// '' when every level is empty.
-export function lobbySummary(levels, member) {
-  const parts = [];
-  for (let index = 0; index < LEVEL_TITLES.length; index++) {
-    const names = occupantsOf(levels, index, member);
-    if (names.length) parts.push(LEVEL_TITLES[index] + ' (' + occupantLabel(names, 3) + ')');
-  }
-  return parts.length ? 'Friends inside: ' + parts.join(' · ') : '';
-}
-
-export function mountBoardScene({ board, replica, member, onExit, onLobby, onSelect, lobby = false, completed = [], remember = () => {}, status, connected, occupancy = () => [] }) {
+// The puzzle doors live on the calendar board (classroom-board.js draws them and
+// polls park_lobby); this scene is always one level. Every exit returns to the calendar.
+export function mountBoardScene({ board, replica, member, onExit, completed = [], remember = () => {}, status, connected }) {
   const { engine, input, api } = board;
-  const titles = LEVEL_TITLES;
-  const doors = [0,3,4,5,1,2].map((index,i)=>({index,x:220+i*190,y:146,title:titles[index],reference:index===0?'World 1-1':index>=3?'World 1-'+(index-1):'Cooperative challenge'}));
-  const lobbyDoor = {x:145,y:146}, entities = new Map(), peers = {};
+  const entities = new Map(), peers = {};
   const oldCamera = {...api._camera}, holdSent = new Map(), moving = new Map();
   let level=null, terrain=[], lift=null, disposed=false, lastLevel=null, returnWalk=0, lastRest=null, retrying=false, wasArrived=false;
   let pushAt=0, pushing=null;
@@ -40,17 +28,15 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
   const pose = ()=>({x:player.x,y:player.y,vx:player.vx,vy:player.vy});
   const near = item=>item && Math.hypot(player.x-item.x,player.y-item.y)<22;
   const onPad = item=>Math.abs(player.x-item.x)<20 && Math.abs(player.y-item.y)<3 && player.vy>=0;
-  const player = board.createPlayer({x:90,y:146,input,terrain:()=>terrain,peers:()=>peers,canvasW:()=>level?.width || (lobby?1360:960),onUpPressed:act});
+  const player = board.createPlayer({x:90,y:146,input,terrain:()=>terrain,peers:()=>peers,canvasW:()=>level?.width || 960,onUpPressed:act});
   player.engine=engine;
-  Object.assign(api._camera,{x:0,enabled:true,followFn:()=>player,levelWFn:()=>Math.max(level?.width || (lobby?1360:960),board.viewportW()),vwFn:board.viewportW,cameraStateFn:()=>null});
+  Object.assign(api._camera,{x:0,enabled:true,followFn:()=>player,levelWFn:()=>Math.max(level?.width || 960,board.viewportW()),vwFn:board.viewportW,cameraStateFn:()=>null});
   function act() {
     if(disposed)return;
     if(near(level?.exit || {x:43,y:146})){onExit();return;}
-    if(lobby){const door=doors.find(near);if(door)onSelect(door.index);return;}
-    if(level && near(lobbyDoor)){onLobby();return;}
     if(!level || !near(level.goal) || !replica.state.running)return;
     const p=replica.state.progress;
-    if(p.arrived.includes(member)){onLobby();return;}
+    if(p.arrived.includes(member)){onExit();return;}
     if(p.doorOpen)replica.queue('arrive','door',pose());
     else if(p.keyHolder===member)replica.queue('unlock','door',pose());
   }
@@ -97,7 +83,7 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
       if(replica.state.progress.arrived.includes(member))Object.assign(player,level.goal);
       if(!saved)player.x+=28*(replica.state.members.indexOf(member)%5);
     }
-    if(!level){terrain=[{x:0,y:170,w:lobby?1360:960,h:50}];api._updateCamera();return;}
+    if(!level){terrain=[{x:0,y:170,w:960,h:50}];api._updateCamera();return;}
     terrain=[...level.platforms];
     for(const gate of level.gates)if(gate.wall?!gateOpen(gate):gateOpen(gate))terrain.push(...gate.terrain);
     lift=level.lift?addMoving('auto',{...level.lift,y:liftY()}):null;
@@ -137,7 +123,7 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
     const p=replica.state.progress;
     if(p.arrived.includes(member)){
       player._hidden=true;remember(level.index);
-      if(connected())status.textContent=p.complete?'Together! Up to choose a puzzle or replay.':'Waiting for your friends. Up returns to the puzzle doors.';
+      if(connected())status.textContent=p.complete?'Together! Up returns to the calendar.':'Waiting for your friends. Up returns to the calendar.';
       return;
     }
     replica.motion(pose());
@@ -179,7 +165,7 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
     if(near(level.key)&&!p.keyHolder&&!p.doorOpen)replica.queue('key','key',pose());
     if(near(level.goal)&&p.keyHolder===member&&!p.doorOpen)replica.queue('unlock','door',pose());
     if(connected()){
-      const text=replica.outbox.length?'Saving your progress...':near(lobbyDoor)?'Up to choose a puzzle.':near(level.goal)?p.doorOpen?'Up to enter. Everyone must reach the exit.':'Bring the key to this door.':level.hint;
+      const text=replica.outbox.length?'Saving your progress...':near(level.goal)?p.doorOpen?'Up to enter. Everyone must reach the exit.':'Bring the key to this door.':level.hint;
       if(status.textContent!==text)status.textContent=text;
     }
   }
@@ -192,19 +178,9 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
     api._translateForCamera(ctx);ctx.fillStyle='#57756c';
     for(const tile of terrain)ctx.fillRect(tile.x,tile.y,tile.w,tile.h);
     door(ctx,43,170,true);ctx.fillStyle='#57756c';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('Calendar',43,106);
-    if(lobby){
-      for(const item of doors){
-        door(ctx,item.x+10,170,true);ctx.fillStyle='#57756c';ctx.fillText((completed.includes(item.index)?'\u2713 ':'')+item.title,item.x+10,104);ctx.fillText(item.reference,item.x+10,84);
-        // Who is inside this level right now (park_lobby poll), so friends can meet without planning.
-        const inside=occupantsOf(occupancy(),item.index,member);
-        if(near(item))ctx.fillText(inside.length?'Up to join them':'Up to enter',item.x+10,65);
-        if(inside.length){ctx.fillStyle='#b8862b';ctx.font='11px system-ui';ctx.fillText('\u{1F431} '+occupantLabel(inside),item.x+10,46);ctx.fillStyle='#57756c';ctx.font='12px system-ui';}
-      }
-    }
     if(level){
       const p=replica.state.progress;
-      door(ctx,level.goal.x+10,level.goal.y+24,p.doorOpen);door(ctx,lobbyDoor.x+10,170,true);
-      ctx.fillStyle='#57756c';ctx.fillText('Levels',lobbyDoor.x+10,106);
+      door(ctx,level.goal.x+10,level.goal.y+24,p.doorOpen);
       for(const sw of level.switches){ctx.fillStyle=(p.holds[sw.id]||[]).length?'#e2b640':'#bc5151';ctx.fillRect(sw.x,sw.y+19,22,5);}
       for(const box of level.boxes){
         const tile=moving.get(box.id),dock=box.nodes.at(-1);
@@ -222,8 +198,8 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
   }
   entities.set('prepare',{update:prepare});entities.set('scenery',{zIndex:1,render:scenery});
   entities.set('player',{zIndex:10,update(dt){
-    if(replica.state?.progress.arrived.includes(member)){if(input.up&&!player._upHandled)onLobby();player._upHandled=!!input.up;}
-    else if(retrying){player.vx=0;player.vy=0;if(input.up&&!player._upHandled)onLobby();player._upHandled=!!input.up;}
+    if(replica.state?.progress.arrived.includes(member)){if(input.up&&!player._upHandled)onExit();player._upHandled=!!input.up;}
+    else if(retrying){player.vx=0;player.vy=0;if(input.up&&!player._upHandled)onExit();player._upHandled=!!input.up;}
     else {
       // A sparse remote jump can briefly overlap an idle player's feet.
       // Do not let interpolation push a button holder off their button.
@@ -233,5 +209,5 @@ export function mountBoardScene({ board, replica, member, onExit, onLobby, onSel
     }
   },render:ctx=>player.render(ctx)});
   entities.set('interact',{update:interact});engine.sceneEntities=entities;
-  return {getWorld:()=>({player,level,terrain,lift,peers,lobby,doors,moving}),dispose(){if(disposed)return;disposed=true;if(engine.sceneEntities===entities)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
+  return {getWorld:()=>({player,level,terrain,lift,peers,moving}),dispose(){if(disposed)return;disposed=true;if(engine.sceneEntities===entities)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
 }
