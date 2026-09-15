@@ -24,6 +24,9 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   const oldCamera = {...api._camera}, holdSent = new Map(), moving = new Map();
   let level=null, terrain=[], lift=null, disposed=false, lastLevel=null, returnWalk=0, lastRest=null, retrying=false, wasArrived=false;
   let pushAt=0, pushing=null;
+  // Fall wrap state: where the cat last stood on solid ground, and whether it is
+  // mid-drop from the top (steering locked until it lands).
+  let lastGround=null, wrapDrop=null, lastWrapAt=-Infinity;
   const keyImage = new Image();keyImage.src='key.png';
   const pose = ()=>({x:player.x,y:player.y,vx:player.vx,vy:player.vy});
   const near = item=>item && Math.hypot(player.x-item.x,player.y-item.y)<22;
@@ -126,11 +129,22 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
       if(connected())status.textContent=p.complete?'Together! Up returns to the calendar.':'Waiting for your friends. Up returns to the calendar.';
       return;
     }
-    // PICO PARK fall: drop off the bottom and come back down from the top at the same x, still
-    // falling. Continuous, no respawn, no shared reset (only the moving pillar restarts the attempt).
-    // Wrap before the top edge passes level.height so the relay never sees an out-of-range pose;
-    // the ~250px jump exceeds RemoteMotion's teleport distance, so peers see a snap, not a sweep.
-    if(player.y>level.height){player.y=-28;player.standingOn=null;}
+    // PICO PARK fall: drop off the bottom and come back down from the top. Continuous, no shared
+    // reset (only the moving pillar restarts the attempt). The cat re-enters ABOVE THE LAST SOLID
+    // GROUND IT STOOD ON (the lip it fell from), with its speed reset, and cannot steer until it
+    // lands: same x + steering would let a fall bridge a crevasse, and gravity would otherwise
+    // keep accumulating across wraps. Ground that moved away (a lift) could loop the cat, so a
+    // second wrap within 2 s falls back to the spawn point. Wrap before the top edge passes
+    // level.height so the relay never sees an out-of-range pose; the ~250px jump exceeds
+    // RemoteMotion's teleport distance, so peers see a snap, not a sweep.
+    const grounded=terrain.some(t=>Math.abs(player.y+24-t.y)<0.1&&player.x+20>t.x&&player.x<t.x+t.w);
+    if(grounded&&!wrapDrop)lastGround={x:player.x,y:player.y};
+    if(player.y>level.height){
+      const at=replica.now(),safe=lastGround&&at-lastWrapAt>2000?lastGround:level.spawn;
+      lastWrapAt=at;wrapDrop={x:safe.x};
+      Object.assign(player,{x:safe.x,y:-28,vx:0,vy:0,standingOn:null});
+    }
+    if(wrapDrop){player.x=wrapDrop.x;player.vx=0;if(grounded)wrapDrop=null;}
     replica.motion(pose());
     const hit=level.hazards.some(item=>{const h=hazardRect(item);return player.x+20>h.x&&player.x<h.x+h.w&&player.y+24>h.y&&player.y<h.y+h.h;});
     if(!replica.state.running){
