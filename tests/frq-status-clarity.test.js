@@ -18,7 +18,7 @@ describe('W2.7 FRQ status clarity — every worksheet', () => {
       const html = readFileSync(resolve(ROOT, f), 'utf8');
       expect(html).toContain(MARKER);
       expect(html).toContain("I: 'I (no credit yet)'");
-      expect(html).toContain("'Still missing: '");
+      expect(html).toContain("checklist.className = 'ai-feedback-checklist'");
       expect(html).toContain('a regrade never lowers your score');
       expect(html).toContain('sent for grading — results appear under each box in ~10 s');
       expect(html).toContain("liveHost.querySelector('.ai-feedback')");

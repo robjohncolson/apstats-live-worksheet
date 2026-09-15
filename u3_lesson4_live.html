@@ -235,6 +235,14 @@
         .score-badge.score-I { background: #f8d7da; color: #721c24; }
         .ai-feedback-body { color: #444; }
         .ai-feedback-matched { color: #155724; margin-top: 4px; }
+        .ai-feedback-checklist { list-style: none; padding-left: 0; }
+        .ai-feedback-checklist .ai-feedback-matched { color: var(--ok, #155724); }
+        .ai-feedback-checklist .ai-feedback-missing { color: var(--partial, #856404); }
+        .frq-rubric-target { margin: 4px 0 8px; font-size: 0.85em; }
+        .frq-rubric-target summary, .frq-reader-note { color: var(--second-ink, #666); font-size: 0.9em; }
+        .frq-rubric-target summary, .ai-feedback-details summary { cursor: pointer; }
+        .ai-feedback-count { margin-left: 8px; }
+        .ai-feedback-suggestion { font-style: normal; }
         .ai-feedback-missing { color: #856404; margin-top: 4px; }
         .ai-feedback-suggestion { color: #004085; margin-top: 4px; font-style: italic; }
         textarea.graded-E { border-color: #28a745; background: #f8fff9; }
@@ -1370,7 +1378,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                             if (typeof gradingState !== 'undefined' && gradingState && typeof gradingState.set === 'function') {
                                 gradingState.set(ta.id, { result: { score: gradeClass, feedback: storedFb }, originalAnswer: v, appealCount: 0, history: [] });
                             }
-                            _markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider, entry.result && entry.result.missing);
+                            _markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider, entry.result && entry.result.missing, entry.result && entry.result.matched, entry.result && entry.result.suggestion);
                         }
                     }
                     _markRestored(ta);
@@ -1383,7 +1391,121 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
         // grade, feedback, what to do). Dedup per textarea. The note removes itself the
         // moment the student edits the answer or the grade class changes (a regrade), so it
         // can never contradict the live grade. Never throws; never blocks.
-        function _markAutoGraded(ta, gradeClass, feedback, gradedAt, provider, missing) {
+        /* FRQ_RUBRIC_TRANSPARENCY */
+        function _frqRubricElements(id) {
+            try {
+                const rubric = typeof window.getRubricU3L4 === 'function'
+                    ? window.getRubricU3L4(id) : window.RUBRICS_U3L4 && window.RUBRICS_U3L4[id];
+                if (!rubric) return null;
+                if (!Array.isArray(rubric.expectedElements) || !rubric.expectedElements.every(
+                    element => element && typeof element.description === 'string' && typeof element.required === 'boolean'
+                )) {
+                    console.error('Unsupported FRQ rubric shape for ' + id);
+                    return null;
+                }
+                return rubric.expectedElements;
+            } catch (_) { return null; }
+        }
+
+        function _renderFrqRubricTargets() {
+            const textareas = ["reflect1","reflect2","exitTicket"];
+            for (const id of textareas) {
+                const textarea = document.getElementById(id);
+                const elements = _frqRubricElements(id);
+                if (!textarea || !elements) continue;
+                if (textarea.parentNode.querySelector('.frq-rubric-target[data-for="' + id + '"]')) continue;
+                const target = document.createElement('details');
+                target.className = 'frq-rubric-target';
+                target.dataset.for = id;
+                const summary = document.createElement('summary');
+                summary.textContent = 'What an E answer includes';
+                target.appendChild(summary);
+                for (const required of [true, false]) {
+                    const group = elements.filter(element => element.required === required);
+                    if (!group.length) continue;
+                    if (!required) {
+                        const label = document.createElement('small');
+                        label.textContent = 'Bonus (strengthens the answer):';
+                        target.appendChild(label);
+                    }
+                    const list = document.createElement('ul');
+                    for (const element of group) {
+                        const item = document.createElement('li');
+                        item.textContent = element.description;
+                        list.appendChild(item);
+                    }
+                    target.appendChild(list);
+                }
+                const note = document.createElement('div');
+                note.className = 'frq-reader-note';
+                note.textContent = "AP readers score exactly this way: every element has to be on the page, in context, or it doesn't count.";
+                target.appendChild(note);
+                textarea.after(target);
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', _renderFrqRubricTargets, { once: true });
+        } else {
+            _renderFrqRubricTargets();
+        }
+
+        function _appendFrqVerdict(feedback, questionId, result, header) {
+            const elements = _frqRubricElements(questionId);
+            if ((result.score === 'P' || result.score === 'I') && Array.isArray(result.missing) && result.missing.length) {
+                const total = elements ? elements.filter(element => element.required).length : null;
+                const count = total === null ? result.missing.length : Math.min(result.missing.length, total);
+                const label = document.createElement('span');
+                label.className = 'ai-feedback-count';
+                label.textContent = 'Missing ' + count + (total === null ? '' : ' of ' + total) + ' key elements';
+                header.appendChild(label);
+            }
+            feedback.appendChild(header);
+
+                const checklist = document.createElement('ul');
+                checklist.className = 'ai-feedback-checklist';
+                for (const [entries, className, prefix] of [
+                    [result.matched, 'ai-feedback-matched', '✓ '],
+                    [result.missing, 'ai-feedback-missing', '○ ']
+                ]) {
+                    if (!Array.isArray(entries)) continue;
+                    for (const entry of entries) {
+                        const item = document.createElement('li');
+                        item.className = className;
+                        item.textContent = prefix + String(entry);
+                        checklist.appendChild(item);
+                    }
+                }
+                feedback.appendChild(checklist);
+                if (result.score !== 'E' && typeof result.suggestion === 'string' && result.suggestion.trim()) {
+                    const advice = document.createElement('div');
+                    advice.className = 'ai-feedback-suggestion';
+                    const lead = document.createElement('strong');
+                    lead.textContent = 'To reach E, add:';
+                    const text = document.createElement('span');
+                    text.textContent = ' ' + result.suggestion;
+                    advice.append(lead, text);
+                    feedback.appendChild(advice);
+                }
+
+            const details = document.createElement('details');
+            details.className = 'ai-feedback-details';
+            details.open = result.score === 'E';
+            const summary = document.createElement('summary');
+            summary.textContent = "Grader's full comments";
+            const comments = document.createElement('div');
+            comments.className = 'ai-feedback-body';
+            comments.textContent = result.feedback || '';
+            details.append(summary, comments);
+            feedback.appendChild(details);
+            if (result.score !== 'E') {
+                const note = document.createElement('div');
+                note.className = 'frq-reader-note';
+                note.textContent = "AP readers score exactly this way: every element has to be on the page, in context, or it doesn't count.";
+                feedback.appendChild(note);
+            }
+        }
+
+        function _markAutoGraded(ta, gradeClass, feedback, gradedAt, provider, missing, matched, suggestion) {
             try {
                 if (!ta || !ta.parentNode) return;
                 if (ta.parentNode.querySelector('.frq-graded-note[data-for="' + ta.id + '"]')) return;
@@ -1407,12 +1529,31 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     fb.textContent = feedback;
                     note.appendChild(fb);
                 }
-                if (gradeClass !== 'E' && Array.isArray(missing) && missing.length) {
-                    // W2.7: the rubric elements still missing are the only thing a student can act on.
-                    var miss = document.createElement('div');
-                    miss.style.cssText = 'margin-top:3px;';
-                    miss.textContent = 'Still missing: ' + missing.map(function (m) { return String(m); }).join('; ');
-                    note.appendChild(miss);
+
+                const checklist = document.createElement('ul');
+                checklist.className = 'ai-feedback-checklist';
+                for (const [entries, className, prefix] of [
+                    [matched, 'ai-feedback-matched', '✓ '],
+                    [missing, 'ai-feedback-missing', '○ ']
+                ]) {
+                    if (!Array.isArray(entries)) continue;
+                    for (const entry of entries) {
+                        const item = document.createElement('li');
+                        item.className = className;
+                        item.textContent = prefix + String(entry);
+                        checklist.appendChild(item);
+                    }
+                }
+                note.appendChild(checklist);
+                if (gradeClass !== 'E' && typeof suggestion === 'string' && suggestion.trim()) {
+                    const advice = document.createElement('div');
+                    advice.className = 'ai-feedback-suggestion';
+                    const lead = document.createElement('strong');
+                    lead.textContent = 'To reach E, add:';
+                    const text = document.createElement('span');
+                    text.textContent = ' ' + suggestion;
+                    advice.append(lead, text);
+                    note.appendChild(advice);
                 }
                 if (gradeClass !== 'E') {
                     var tip = document.createElement('div');
@@ -1831,22 +1972,13 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             container.innerHTML = '';
             const feedback = document.createElement('div');
             feedback.className = 'ai-feedback';
-            let html = `
-                <div class="ai-feedback-header">
-                    <span class="score-badge score-${result.score}">${result.score === 'E' ? 'Essentially Correct' : result.score === 'P' ? 'Partially Correct' : 'Incorrect'}</span>
-                </div>
-                <div class="ai-feedback-body">${result.feedback || ''}</div>
-            `;
-            if (result.matched && result.matched.length > 0) {
-                html += `<div class="ai-feedback-matched">\u2713 You addressed: ${result.matched.join(', ')}</div>`;
-            }
-            if (result.missing && result.missing.length > 0) {
-                html += `<div class="ai-feedback-missing">\u25CB Missing: ${result.missing.join(', ')}</div>`;
-            }
-            if (result.suggestion) {
-                html += `<div class="ai-feedback-suggestion">\uD83D\uDCA1 ${result.suggestion}</div>`;
-            }
-            feedback.innerHTML = html;
+            const header = document.createElement('div');
+            header.className = 'ai-feedback-header';
+            const badge = document.createElement('span');
+            badge.className = 'score-badge score-' + result.score;
+            badge.textContent = result.score === 'E' ? 'Essentially Correct' : result.score === 'P' ? 'Partially Correct' : 'Incorrect';
+            header.appendChild(badge);
+            _appendFrqVerdict(feedback, questionId, result, header);
 
             const state = gradingState.get(questionId);
             if (state && result.score !== 'E' && state.appealCount < 3) {

@@ -123,7 +123,7 @@ describe('worksheet graded note — W2.7 status clarity (2026-09-11)', () => {
     mark('I', 'Vague on the variable.', '2026-09-10T05:00:00.000Z', 'ai-batch', ['Names the variable', 'Explains variation']);
     const n = note();
     expect(n.querySelector('strong').textContent).toMatch(/: I \(no credit yet\)$/);
-    expect(n.textContent).toContain('Still missing: Names the variable; Explains variation');
+    expect([...n.querySelectorAll('.ai-feedback-missing')].map(item => item.textContent)).toEqual(['○ Names the variable', '○ Explains variation']);
     expect(n.textContent).toContain('Add the missing points above');
     expect(n.textContent).not.toContain('not yet');
   });

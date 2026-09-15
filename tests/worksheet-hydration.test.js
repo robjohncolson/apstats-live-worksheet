@@ -49,7 +49,7 @@ describe.each(WORKSHEETS)('%s — hydration block', (file) => {
     expect(html).toContain('// W2.6: carry the stored feedback');
     expect(html).toContain("var storedFb = (entry.result && typeof entry.result.feedback === 'string') ? entry.result.feedback : '';");
     expect(html).toContain('result: { score: gradeClass, feedback: storedFb }');
-    expect(html).toContain('_markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider, entry.result && entry.result.missing);');
+    expect(html).toContain('_markAutoGraded(ta, gradeClass, storedFb, entry.gradedAt, entry.result && entry.result.provider, entry.result && entry.result.missing, entry.result && entry.result.matched, entry.result && entry.result.suggestion);');
     // the old feedback-dropping literal is gone
     expect(html).not.toContain("result: { score: gradeClass, feedback: '' }");
     // the note names the grader honestly and tells a non-E student what to do
