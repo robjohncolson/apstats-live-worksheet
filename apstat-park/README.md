@@ -6,7 +6,7 @@ Three black doorways sit at the left of the calendar board, numbered 1 to 3: Hel
 
 ## Six replayable cooperative levels
 
-At least two distinct students must be online in the same period and level. A lone student can walk and jump while waiting, and use the Calendar door normally. Puzzle actions and completion wait for a second student. Falls while waiting respawn locally without resetting shared progress. Multiple tabs do not count as teammates. There is no solo assist or permanently latched pressure button.
+At least two distinct students must be online in the same period and level. A lone student can walk and jump while waiting, and use the Calendar door normally. Puzzle actions and completion wait for a second student. Falling off the bottom of a level, alone or together, is continuous as in PICO PARK: the cat drops back in from the top at the same x, still falling, with no respawn and no reset of shared progress. Multiple tabs do not count as teammates. There is no solo assist or permanently latched pressure button.
 
 World 1 contains four stages. The relay carries adaptations of those four plus two additional cooperative challenges; the calendar board exposes the first three below as doors 1 to 3:
 
@@ -23,7 +23,7 @@ These are original layouts adapted to the 220px calendar board and sparse connec
 
 Held buttons release when the player steps away. Crate buttons only activate when the actual block reaches the pad. Block pushing stops on release. The weighted shelter needs half the online group, rounded up and capped at four riders to fit the board; larger classes take turns. The final lift permits that many riders at once. The paired lift always needs exactly two, encouraging return trips for odd-sized groups.
 
-The key holder unlocks the door and every connected participant enters. Falling or touching the moving pillar restarts the shared attempt. Dropping below two online players pauses puzzle mechanisms and the scene clock while allowing local exploration, releases pressure and stops pushes; it retains placed blocks, unlocked doors and arrivals. The key returns to its pickup point if its holder disconnects before unlocking. Late arrivals and replacement friends join the current attempt.
+The key holder unlocks the door and every connected participant enters. Touching the moving pillar restarts the shared attempt (falling does not). Dropping below two online players pauses puzzle mechanisms and the scene clock while allowing local exploration, releases pressure and stops pushes; it retains placed blocks, unlocked doors and arrivals. The key returns to its pickup point if its holder disconnects before unlocking. Late arrivals and replacement friends join the current attempt.
 
 Explicit entry after completion starts a fresh attempt, clearing poses, key, gates and arrivals. Socket resume never triggers replay. Returning before friends finish clears only that returning player's arrival. Browser-local completion checkmarks use a protocol-4 key per username; they never lock a door or award grades. Every level stays available, without hourly rotation. Inactive rooms expire after two hours; a relay restart resets room progress.
 

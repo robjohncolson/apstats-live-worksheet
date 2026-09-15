@@ -126,19 +126,22 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
       if(connected())status.textContent=p.complete?'Together! Up returns to the calendar.':'Waiting for your friends. Up returns to the calendar.';
       return;
     }
+    // PICO PARK fall: drop off the bottom and come back down from the top at the same x, still
+    // falling. Continuous, no respawn, no shared reset (only the moving pillar restarts the attempt).
+    // Wrap before the top edge passes level.height so the relay never sees an out-of-range pose;
+    // the ~250px jump exceeds RemoteMotion's teleport distance, so peers see a snap, not a sweep.
+    if(player.y>level.height){player.y=-28;player.standingOn=null;}
     replica.motion(pose());
     const hit=level.hazards.some(item=>{const h=hazardRect(item);return player.x+20>h.x&&player.x<h.x+h.w&&player.y+24>h.y&&player.y<h.y+h.h;});
     if(!replica.state.running){
       retrying=false;
       // Exploring alone must not reset the shared attempt or queue puzzle actions.
-      if(player.y>level.height+20 || hit){
-        Object.assign(player,level.spawn,{vx:0,vy:0,state:'idle',standingOn:null});
-      }
+      if(hit)Object.assign(player,level.spawn,{vx:0,vy:0,state:'idle',standingOn:null});
       if(connected())status.textContent='Explore while waiting for a friend. Two players are needed to solve this puzzle.';
       return;
     }
-    if(player.y>level.height+20 || hit){
-      if(!retrying)retrying=replica.queue('retry','fall',{...level.spawn,vx:0,vy:0}).status==='queued';
+    if(hit){
+      if(!retrying)retrying=replica.queue('retry','hazard',{...level.spawn,vx:0,vy:0}).status==='queued';
       if(connected())status.textContent='Try again together...';return;
     }
     const riding=[...moving.values()].some(tile=>Math.abs(player.y+24-tile.y)<0.1&&player.x+20>tile.x&&player.x<tile.x+tile.w);
