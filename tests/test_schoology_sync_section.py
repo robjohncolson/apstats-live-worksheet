@@ -146,7 +146,10 @@ class FakeOps:
         marking_periods=None,
         add_ok=True,
         add_returns_id=True,
+        folder_ok=True,
     ):
+        self._folder_ok = folder_ok
+        self.filed = []                  # nids handed to move_assignments_into_folder
         # students: list of {studentId, rowIndex, name}
         self._students = students or [
             {"studentId": "S1", "rowIndex": 0, "name": "Alice"},
@@ -168,6 +171,14 @@ class FakeOps:
         self.created_assignments = []    # list of kwargs dicts
         self.written_grades = []         # list of (column_key, row_index, value)
         self.cdp = None                  # pretend cdp handle
+
+    # -- materials folder (2026-09-16) ---------------------------------------
+    def move_assignments_into_folder(self, cdp, course_id, title="Assignments", only_nids=None):
+        nids = sorted(only_nids or [])
+        self.filed.extend(nids)
+        if not self._folder_ok:
+            return {"ok": False, "folder_id": None, "moved": [], "errors": ["move form missing"]}
+        return {"ok": True, "folder_id": "F1", "moved": [{"nid": n} for n in nids], "errors": []}
 
     # -- CDP lifecycle (no-ops in tests) -----------------------------------
     def connect(self, reuse=True):
@@ -363,6 +374,41 @@ class TestFirstRunCreatesAssignments(unittest.TestCase):
         )
         self.assertEqual(len(self.state.runs), 1)
         self.assertEqual(self.state.runs[0]["section"], "PeriodB")
+
+
+class TestAssignmentsFolder(unittest.TestCase):
+    """Every created assignment is filed into the Assignments folder; a failed move is
+    reported but never blocks the create or the grade push (2026-09-16)."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.schedule_path = _write_schedule(self.tmpdir)
+        self.state = FakeStateStore()
+
+    def test_every_created_assignment_is_filed(self):
+        ops = FakeOps()
+        summary = sync_section("PeriodB", "7945275782", dry_run=False, state=self.state,
+                               grades={}, ops=ops, schedule_path=self.schedule_path)
+        created_ids = sorted(str(self.state.get_assignment("PeriodB", k)["schoology_assignment_id"])
+                             for k in EXPECTED_B_KEYS)
+        self.assertEqual(sorted(ops.filed), created_ids)
+        self.assertEqual(summary["assignments_created"], EXPECTED_B_COUNT)
+        self.assertEqual(summary["errors"], [])
+
+    def test_failed_move_is_reported_not_fatal(self):
+        ops = FakeOps(folder_ok=False)
+        summary = sync_section("PeriodB", "7945275782", dry_run=False, state=self.state,
+                               grades={}, ops=ops, schedule_path=self.schedule_path)
+        self.assertEqual(summary["assignments_created"], EXPECTED_B_COUNT)
+        self.assertEqual(len(ops.filed), EXPECTED_B_COUNT)
+        self.assertTrue(all("Assignments folder" in e for e in summary["errors"]))
+        self.assertEqual(len(summary["errors"]), EXPECTED_B_COUNT)
+
+    def test_dry_run_files_nothing(self):
+        ops = FakeOps()
+        sync_section("PeriodB", "7945275782", dry_run=True, state=self.state,
+                     grades={}, ops=ops, schedule_path=self.schedule_path)
+        self.assertEqual(ops.filed, [])
 
 
 class TestIdempotencySecondRun(unittest.TestCase):

@@ -35,7 +35,7 @@ class FakeCDP:
 
     def __init__(self, *, wfr_result=None, body_text="",
                  delete_form_present=False, title_lookup=None,
-                 select_ready=True, reject_fields=()):
+                 select_ready=True, reject_fields=(), materials=None, stubborn=()):
         self.wfr_result = wfr_result
         self.wfr_calls = []
         self.body_text = body_text
@@ -44,12 +44,17 @@ class FakeCDP:
         self.select_ready = select_ready     # do the <select>s carry the wanted options?
         self.reject_fields = set(reject_fields)   # field names whose set value is silently dropped
         self.form_values = {}                # name -> value the form actually holds
+        # materials: {folder_id_or_None: [rows]} served to list_materials by the page URL.
+        self.materials = materials if materials is not None else {None: []}
+        self.stubborn = set(stubborn)        # nids whose Move submit never takes
+        self.current_url = None
         self.clicks = []
         self.urls = []
         self.evals = []
 
     def attach_url(self, url, wait_ms=0):
         self.urls.append(url)
+        self.current_url = url
 
     def click(self, x, y):
         self.clicks.append((x, y))
@@ -62,13 +67,33 @@ class FakeCDP:
         self.evals.append(expr)
         if "s-grade-item-add-form" in expr:
             return True
+        # list_materials: rows for the folder named in the current page URL.
+        if "a.move-material" in expr and "var out = [], seen = {}" in expr:
+            m = re.search(r"[?&]f=([^&]+)", self.current_url or "")
+            return list(self.materials.get(m.group(1) if m else None, []))
+        # Move / delete form submits mutate the scripted materials.
+        if "move-item-form" in expr and "click()" in expr:
+            m = re.search(r"materials/move/([^/?]+)", self.current_url or "")
+            nid = m.group(1) if m else None
+            dest = self.form_values.get("destination_folder")
+            if nid and nid not in self.stubborn:
+                row = next((r for r in self.materials.get(None, []) if r["nid"] == nid), None)
+                if row:
+                    self.materials[None].remove(row)
+                    self.materials.setdefault(dest, []).append(row)
+            return None
+        if "folder-action-form" in expr and "click()" in expr:
+            m = re.search(r"materials/folder/([^/]+)/delete", self.current_url or "")
+            if m:
+                self.materials[None] = [r for r in self.materials.get(None, []) if r["nid"] != m.group(1)]
+            return True
         # add_assignment readiness poll: every wanted <option> present?
         if "el.options" in expr:
             return self.select_ready
         # add_assignment form fill: remember what the form now holds (unless rejected).
         m = re.search(r'\[name="([^"]+)"\]', expr)
-        if m and "el.value = " in expr:
-            v = re.search(r'el\.value = (".*?");', expr)
+        if m and re.search(r'el\.value\s*=\s*"', expr):
+            v = re.search(r'el\.value\s*=\s*(".*?");', expr)
             if m.group(1) not in self.reject_fields and v:
                 self.form_values[m.group(1)] = json.loads(v.group(1))
             return None
@@ -143,6 +168,61 @@ class TestAddAssignmentFilter(unittest.TestCase):
         url = "/course/123/materials/assignments/add?is_popup=1"
         self.assertIn("materials/assignments/add", url)
         self.assertNotIn("assignment-creation-complete", url)
+
+
+class TestAssignmentsFolder(unittest.TestCase):
+    """Materials-folder ops (2026-09-16): moves are verified against the root and retried."""
+
+    def _root(self):
+        return {None: [
+            {"nid": "F1", "kind": "folder", "title": "Assignments"},
+            {"nid": "A1", "kind": "assignment", "title": "1.1 Follow-Along"},
+            {"nid": "A2", "kind": "assignment", "title": "1.1 Blooket"},
+            {"nid": "D1", "kind": "other", "title": ""},
+        ]}
+
+    def test_moves_every_top_level_assignment_and_leaves_other_materials(self):
+        fake = FakeCDP(materials=self._root())
+        with mock.patch.object(ops.time, "sleep"):
+            res = ops.move_assignments_into_folder(fake, "123")
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["folder_id"], "F1")
+        self.assertEqual(sorted(m["nid"] for m in res["moved"]), ["A1", "A2"])
+        self.assertEqual([r["nid"] for r in fake.materials[None]], ["F1", "D1"])
+        self.assertEqual(sorted(r["nid"] for r in fake.materials["F1"]), ["A1", "A2"])
+
+    def test_only_nids_limits_the_move(self):
+        fake = FakeCDP(materials=self._root())
+        with mock.patch.object(ops.time, "sleep"):
+            res = ops.move_assignments_into_folder(fake, "123", only_nids={"A2"})
+        self.assertEqual([m["nid"] for m in res["moved"]], ["A2"])
+        self.assertIn("A1", [r["nid"] for r in fake.materials[None]])
+
+    def test_a_move_that_never_takes_is_retried_then_reported(self):
+        fake = FakeCDP(materials=self._root(), stubborn={"A1"})
+        with mock.patch.object(ops.time, "sleep"):
+            res = ops.move_assignments_into_folder(fake, "123")
+        self.assertFalse(res["ok"])
+        self.assertEqual([m["nid"] for m in res["moved"]], ["A2"])
+        self.assertEqual(len(res["errors"]), 1)
+        self.assertIn("A1", res["errors"][0])
+        self.assertEqual(sum(1 for u in fake.urls if u.endswith("/materials/move/A1")), 2)
+
+    def test_delete_refuses_a_non_empty_folder(self):
+        fake = FakeCDP(materials={None: [{"nid": "F1", "kind": "folder", "title": "Assignments"}],
+                                  "F1": [{"nid": "A1", "kind": "assignment", "title": "x"}]})
+        with mock.patch.object(ops.time, "sleep"):
+            res = ops.delete_empty_folder(fake, "123", "F1")
+        self.assertFalse(res["ok"])
+        self.assertIn("not empty", res["error"])
+        self.assertFalse(any(u.endswith("/delete") for u in fake.urls))
+
+    def test_delete_removes_an_empty_folder(self):
+        fake = FakeCDP(materials={None: [{"nid": "F1", "kind": "folder", "title": "Assignments"}], "F1": []})
+        with mock.patch.object(ops.time, "sleep"):
+            res = ops.delete_empty_folder(fake, "123", "F1")
+        self.assertTrue(res["ok"])
+        self.assertEqual(fake.materials[None], [])
 
 
 class TestDeleteVerify(unittest.TestCase):

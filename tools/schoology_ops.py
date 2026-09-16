@@ -773,3 +773,140 @@ def list_marking_periods(cdp: EdgeCDP, course_id: str) -> dict:
         "})()"
     )
     return select_result or {}
+
+# --------------------------------------------------------------------------- #
+# Materials folders (2026-09-16: every synced assignment lives in "Assignments")
+# --------------------------------------------------------------------------- #
+
+ASSIGNMENTS_FOLDER_TITLE = "Assignments"
+
+# One row per material at one folder level. Assignment rows carry a Move link
+# /materials/move/<nid>; folder rows carry /materials/folder/<nid>/move. Titles come
+# from the item's own link, skipping Schoology's "Next"/"Prev" item-to-item links
+# (which point at neighbouring materials and would otherwise be read as titles).
+_LIST_MATERIALS_JS = r"""(function(){
+  var out = [], seen = {};
+  function title(sel) {
+    var best = '';
+    document.querySelectorAll(sel).forEach(function (a) {
+      var t = (a.textContent || '').replace(/\s+/g, ' ').trim().replace(/^Folder\./, '');
+      if (!t || /^(Next|Prev)$/.test(t)) return;
+      if (t.length > best.length) best = t;
+    });
+    return best;
+  }
+  document.querySelectorAll('a.move-material').forEach(function (a) {
+    var m = (a.getAttribute('href') || '').match(/materials\/move\/(\d+)/);
+    if (!m || seen[m[1]]) return;
+    seen[m[1]] = 1;
+    // The item's own link ends in /assignment/<nid>; action-menu links (…/library_save) do not.
+    var isAssignment = !!document.querySelector('a[href$="/assignment/' + m[1] + '"]');
+    out.push({ nid: m[1], kind: isAssignment ? 'assignment' : 'other',
+               title: isAssignment ? title('a[href$="/assignment/' + m[1] + '"]') : '' });
+  });
+  document.querySelectorAll('a[href*="/materials/folder/"][href$="/move"]').forEach(function (a) {
+    var m = (a.getAttribute('href') || '').match(/materials\/folder\/(\d+)\/move/);
+    if (!m || seen[m[1]]) return;
+    seen[m[1]] = 1;
+    out.push({ nid: m[1], kind: 'folder', title: title('a[href*="/materials?f=' + m[1] + '"]') });
+  });
+  return out;
+})()"""
+
+
+def materials_url(course_id: str, folder_id: str | None = None) -> str:
+    url = f"{SCHOOLOGY_BASE}/course/{course_id}/materials"
+    return url + (f"?f={folder_id}" if folder_id else "")
+
+
+def list_materials(cdp: EdgeCDP, course_id: str, folder_id: str | None = None) -> list:
+    """Return [{nid, title, kind}] ('assignment' | 'folder' | 'other') at one materials level."""
+    cdp.attach_url(materials_url(course_id, folder_id), wait_ms=3000)
+    return cdp.eval_js(_LIST_MATERIALS_JS) or []
+
+
+def find_folder_id(cdp: EdgeCDP, course_id: str, title: str = ASSIGNMENTS_FOLDER_TITLE) -> Optional[str]:
+    for item in list_materials(cdp, course_id):
+        if item.get("kind") == "folder" and item.get("title") == title:
+            return item["nid"]
+    return None
+
+
+def create_folder(cdp: EdgeCDP, course_id: str, title: str = ASSIGNMENTS_FOLDER_TITLE) -> Optional[str]:
+    """Create a published top-level materials folder; return its nid (via a re-list) or None."""
+    cdp.attach_url(f"{SCHOOLOGY_BASE}/course/{course_id}/materials/folder/create", wait_ms=3000)
+    present = cdp.eval_js("!!document.querySelector('form#s-course-materials-folder-create-form')")
+    if not present:
+        return None
+    cdp.eval_js(
+        "(function(){var el=document.querySelector('form#s-course-materials-folder-create-form input[name=\"title\"]');"
+        "if(!el)return;el.value=" + json.dumps(title) + ";"
+        "el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));})()"
+    )
+    time.sleep(0.3)
+    cdp.eval_js("(function(){var el=document.querySelector('form#s-course-materials-folder-create-form input[type=submit]');if(el)el.click();})()")
+    time.sleep(3)
+    return find_folder_id(cdp, course_id, title)
+
+
+def delete_empty_folder(cdp: EdgeCDP, course_id: str, folder_id: str) -> dict:
+    """Delete a materials folder, refusing unless it is empty. Returns {ok, error}."""
+    if list_materials(cdp, course_id, folder_id):
+        return {"ok": False, "error": f"folder {folder_id} is not empty"}
+    cdp.attach_url(f"{SCHOOLOGY_BASE}/course/{course_id}/materials/folder/{folder_id}/delete", wait_ms=3000)
+    clicked = cdp.eval_js(
+        "(function(){var el=document.querySelector('form#s-course-materials-folder-action-form input#edit-submit');"
+        "if(!el)return false;el.click();return true;})()"
+    )
+    if not clicked:
+        return {"ok": False, "error": "delete confirm form not found"}
+    time.sleep(3)
+    still = any(f["nid"] == str(folder_id) for f in list_materials(cdp, course_id) if f["kind"] == "folder")
+    return {"ok": not still, "error": "folder still listed after delete" if still else None}
+
+
+def move_material(cdp: EdgeCDP, course_id: str, nid: str, folder_id: str, attempts: int = 2) -> dict:
+    """Move one top-level material into a folder via its Move form and VERIFY it left the root.
+
+    2026-09-16: a submitted Move form occasionally did not take (2 of 14 in the first pass),
+    so the move is confirmed by re-listing the root and retried once.
+    """
+    error = None
+    for _ in range(attempts):
+        cdp.attach_url(f"{SCHOOLOGY_BASE}/course/{course_id}/materials/move/{nid}", wait_ms=3000)
+        if not _wait_for_select_options(cdp, {"destination_folder": str(folder_id)}, timeout_s=8.0):
+            return {"ok": False, "error": f"Move form for {nid} has no folder option {folder_id}"}
+        cdp.eval_js(
+            "(function(){var el=document.querySelector('select[name=\"destination_folder\"]');"
+            "el.value=" + json.dumps(str(folder_id)) + ";el.dispatchEvent(new Event('change',{bubbles:true}));})()"
+        )
+        time.sleep(0.3)
+        mismatch = _form_mismatch(cdp, {"select[name=\"destination_folder\"]": str(folder_id)})
+        if mismatch:
+            return {"ok": False, "error": "Move form rejected " + mismatch}
+        cdp.eval_js("(function(){var el=document.querySelector('form#s-course-materials-folders-move-item-form input[type=submit]');if(el)el.click();})()")
+        time.sleep(3)
+        if not any(item["nid"] == str(nid) for item in list_materials(cdp, course_id)):
+            return {"ok": True, "error": None}
+        error = f"{nid} still at the materials root after Move"
+    return {"ok": False, "error": error}
+
+
+def move_assignments_into_folder(cdp: EdgeCDP, course_id: str, title: str = ASSIGNMENTS_FOLDER_TITLE,
+                                 only_nids: Optional[set] = None) -> dict:
+    """Ensure the folder exists and move every top-level assignment (or just only_nids) into it."""
+    folder_id = find_folder_id(cdp, course_id, title) or create_folder(cdp, course_id, title)
+    if not folder_id:
+        return {"ok": False, "folder_id": None, "moved": [], "errors": [f"Could not find or create folder {title!r}"]}
+    moved, errors = [], []
+    for item in list_materials(cdp, course_id):
+        if item.get("kind") != "assignment":
+            continue
+        if only_nids is not None and item["nid"] not in only_nids:
+            continue
+        result = move_material(cdp, course_id, item["nid"], folder_id)
+        if result["ok"]:
+            moved.append(item)
+        else:
+            errors.append(result["error"])
+    return {"ok": not errors, "folder_id": folder_id, "moved": moved, "errors": errors}
