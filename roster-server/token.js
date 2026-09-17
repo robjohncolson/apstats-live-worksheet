@@ -61,3 +61,22 @@ export function verifyToken(token) {
 
   return payload.sid;
 }
+
+// Returns the verified token's expiry (ms epoch), or null when the token is
+// missing, malformed, mis-signed, or already expired. Same checks as
+// verifyToken — a token that would not verify never reports an expiry.
+export function tokenExpiry(token) {
+  const secret = process.env.ROSTER_TOKEN_SECRET;
+  if (!secret || !token) return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [header, sig] = parts;
+  if (toBase64url(hmac(header, secret)) !== sig) return null;
+  let payload;
+  try { payload = JSON.parse(fromBase64url(header).toString('utf8')); } catch { return null; }
+  if (!payload.sid || typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) return null;
+  if (Date.now() > payload.exp) return null;
+  return payload.exp;
+}
+
+export const TOKEN_TTL_MS = THIRTY_DAYS_MS;

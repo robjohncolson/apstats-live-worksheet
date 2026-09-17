@@ -12,7 +12,7 @@ import { createFrqWorker } from './frq-worker.js';
 import { loadFrqRubricRegistry } from './frq-prompt.js';
 import { createLiveRemediationDb } from './remediation-db.js';
 import { createLivePollArchiveDb } from './poll-archive-db.js';
-import { signToken, verifyToken } from './token.js';
+import { signToken, verifyToken, tokenExpiry, TOKEN_TTL_MS } from './token.js';
 import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
 import { mountLedgerImport } from './ledger-import.js';
@@ -436,6 +436,28 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     }
 
     return res.json({ ok: true, studentId });
+  });
+
+  // ── POST /roster/refresh (sliding session, LOCAL_ANSWER_REHYDRATE_SPEC Phase C) ──
+  // Body: { token }. A valid token with fewer than REFRESH_WINDOW_MS left is
+  // re-minted for the same student; otherwise the same token is returned.
+  //   → 401 {ok:false,error:"invalid token"} (missing/invalid/expired — the client
+  //     must NOT sign the student out on this; the Desk's expiry prompt handles it)
+  //   → 200 {ok:true, token, refreshed, expiresAt}
+  // Expiry becomes a "did not open the app for 30 days" event only.
+  const REFRESH_WINDOW_MS = 10 * 24 * 60 * 60 * 1000;
+  app.post('/roster/refresh', (req, res) => {
+    const { token } = req.body || {};
+    const expiresAt = tokenExpiry(token);
+    if (!expiresAt) {
+      return res.status(401).json({ ok: false, error: 'invalid token' });
+    }
+    if (expiresAt - Date.now() > REFRESH_WINDOW_MS) {
+      return res.json({ ok: true, token, refreshed: false, expiresAt });
+    }
+    const studentId = verifyToken(token);
+    const fresh = signToken(studentId);
+    return res.json({ ok: true, token: fresh, refreshed: true, expiresAt: Date.now() + TOKEN_TTL_MS });
   });
 
   // ── POST /roster/change-password (TR1 — token-gated) ─────────────────────────

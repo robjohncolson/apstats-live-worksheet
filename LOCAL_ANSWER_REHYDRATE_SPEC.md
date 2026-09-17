@@ -1,6 +1,6 @@
 # LOCAL_ANSWER_REHYDRATE_SPEC.md — answers never look lost on a device that still has them
 
-Status: IMPLEMENTED Phases A+B (2026-09-17, Codex tasks 1-3 + review + fix pass 5). Phase C pending public-URL smoke.
+Status: IMPLEMENTED Phases A+B+C (2026-09-17). A+B fa `1c3e867a`; C = `POST /roster/refresh` + `rosterClient.refreshIfNeeded()` + Desk boot call (Desk-only; worksheet-side refresh call dropped as redundant — students reach worksheets through the Desk).
 Owner: CC main session.
 
 ## 0. The incident this fixes

@@ -257,11 +257,35 @@ function makeDeskExpiry({ expired = false, prevId = 'sid-1', nextId = 'sid-1' } 
   sandbox.window.gradebookClient = { syncOfflineQueue: async () => calls.refresh.push('syncOfflineQueue') };
   createContext(sandbox);
   const notice = html.match(/const EXPIRED_SIGNIN_NOTICE = [^\n]+/)[0];
-  runInContext(notice + '\n' + ['_reconcileRosterExpiry', 'openSignInModal', 'updateStudentMenu', 'submitSignIn']
+  runInContext(notice + '\n' + ['_reconcileRosterExpiry', '_refreshRosterSession', 'openSignInModal', 'updateStudentMenu', 'submitSignIn']
     .map(name => fnBody(html, name)).join('\n'), sandbox);
   return { sandbox, calls, el: id => dom.window.document.getElementById(id),
     clearSession: () => { who = null; }, close: () => dom.window.close() };
 }
+
+describe('Phase C — boot session refresh', () => {
+  it('a valid session asks the client to refresh; expired/offline/view-as sessions do not', () => {
+    const d = makeDeskExpiry({ expired: false });
+    try {
+      let calls = 0;
+      d.sandbox.window.rosterClient.refreshIfNeeded = async () => { calls++; return { ok: true, refreshed: false }; };
+      d.sandbox._refreshRosterSession();
+      expect(calls).toBe(1);
+      d.sandbox.window.rosterClient.isExpired = () => true;
+      d.sandbox._refreshRosterSession();
+      expect(calls).toBe(1);
+      d.sandbox.window.rosterClient.isExpired = () => false;
+      d.sandbox.window.OFFLINE_MODE = true;
+      d.sandbox._refreshRosterSession();
+      expect(calls).toBe(1);
+      d.sandbox.window.OFFLINE_MODE = false;
+      d.sandbox.window.__VIEW_AS_STUDENT_ID__ = 'other';
+      d.sandbox._refreshRosterSession();
+      expect(calls).toBe(1);
+      expect(html).toMatch(/_reconcileRosterExpiry\(\); \} catch \(_\) \{\}\n[\s\S]{0,700}try \{ _refreshRosterSession\(\); \}/);
+    } finally { d.close(); }
+  });
+});
 
 describe('B4/B5 — expired sessions and visible account controls', () => {
   it('uses the student session role over a stale teacher cache', () => {

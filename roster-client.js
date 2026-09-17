@@ -327,6 +327,41 @@
       }
     },
 
+    // POST /roster/refresh — sliding session (LOCAL_ANSWER_REHYDRATE_SPEC Phase C).
+    // Skips the network while more than 10 days remain. On a refreshed token the
+    // session is rewritten (token + signedInAt), which fires roster-session-changed.
+    // A 401 here is reported, never acted on: local expiry is advisory and the
+    // Desk's boot prompt owns the "sign in again" moment. Never throws.
+    // Returns { ok, refreshed?, reason? }.
+    refreshIfNeeded: async function () {
+      var session = readSession();
+      if (!session || !session.studentId || !session.token) return { ok: false, reason: 'no-session' };
+      var baseUrl = serviceUrl();
+      if (!baseUrl) return { ok: false, reason: 'no-url' };
+      var TEN_DAYS_MS = 10 * 24 * 3600 * 1000;
+      var exp = window.rosterClient.expiresAt();
+      if (typeof exp === 'number' && exp - Date.now() > TEN_DAYS_MS) return { ok: true, refreshed: false };
+      try {
+        var response = await fetch(baseUrl + '/roster/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: session.token })
+        });
+        if (response.status === 401 || response.status === 403) return { ok: false, reason: 'auth' };
+        var data = await response.json();
+        if (!data || !data.ok || typeof data.token !== 'string' || !data.token) return { ok: false, reason: 'server' };
+        if (!data.refreshed || data.token === session.token) return { ok: true, refreshed: false };
+        var latest = readSession();
+        if (!latest || latest.studentId !== session.studentId || latest.token !== session.token) return { ok: false, reason: 'session-changed' };
+        latest.token = data.token;
+        latest.signedInAt = new Date(Date.now()).toISOString();
+        writeSession(latest);
+        return { ok: true, refreshed: true };
+      } catch (_) {
+        return { ok: false, reason: 'network' };
+      }
+    },
+
     // Removes the localStorage key.
     signOut: function () {
       clearSession();

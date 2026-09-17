@@ -3,7 +3,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createHmac, randomBytes } from 'crypto';
-import { signToken, verifyToken } from '../token.js';
+import { signToken, verifyToken, tokenExpiry, TOKEN_TTL_MS } from '../token.js';
 
 let testSecret;
 
@@ -96,5 +96,19 @@ describe('signToken / verifyToken', () => {
   it('throws if ROSTER_TOKEN_SECRET is missing when signing', () => {
     delete process.env.ROSTER_TOKEN_SECRET;
     expect(() => signToken('some-id')).toThrow();
+  });
+
+  describe('tokenExpiry (Phase C sliding refresh)', () => {
+    it('returns the exp of a valid token and null for anything verifyToken rejects', () => {
+      const t = signToken('sid-1');
+      const exp = tokenExpiry(t);
+      expect(typeof exp).toBe('number');
+      expect(exp - Date.now()).toBeGreaterThan(TOKEN_TTL_MS - 5000);
+      expect(tokenExpiry(buildRawToken('sid-1', Date.now() - 1000, testSecret))).toBeNull();   // expired
+      expect(tokenExpiry(buildRawToken('sid-1', Date.now() + 1000, 'wrong-secret'))).toBeNull(); // bad sig
+      expect(tokenExpiry('')).toBeNull();
+      expect(tokenExpiry(null)).toBeNull();
+      expect(tokenExpiry('nodothere')).toBeNull();
+    });
   });
 });

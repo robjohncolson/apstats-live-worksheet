@@ -31,6 +31,74 @@ function makeToken(payload) {
   return Buffer.from(JSON.stringify(payload)).toString('base64url') + '.sig';
 }
 
+describe('roster-client.js refreshIfNeeded (Phase C sliding session)', () => {
+  const DAY = 86400000;
+  function seed(localStorage, signedInAgoMs, token = makeToken({ sid: 'sid', exp: Date.now() + 30 * DAY })) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ studentId: 'sid', username: 'name', token,
+      signedInAt: new Date(Date.now() - signedInAgoMs).toISOString() }));
+  }
+
+  it('skips the network while more than 10 days remain', async () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    seed(localStorage, 5 * DAY);
+    const fetch = mockFetch(win, { ok: true });
+    expect(await rosterClient.refreshIfNeeded()).toEqual({ ok: true, refreshed: false });
+    expect(fetch).not.toHaveBeenCalled();
+    win.close();
+  });
+
+  it('posts the token when under 10 days remain and rewrites the session on a refreshed token', async () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    seed(localStorage, 25 * DAY, 'old.tok');
+    const fetch = mockFetch(win, { ok: true, token: 'new.tok', refreshed: true, expiresAt: Date.now() + 30 * DAY });
+    const events = [];
+    win.addEventListener('roster-session-changed', () => events.push('changed'));
+    expect(await rosterClient.refreshIfNeeded()).toEqual({ ok: true, refreshed: true });
+    expect(fetch.mock.calls[0][0]).toMatch(/\/roster\/refresh$/);
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ token: 'old.tok' });
+    const session = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(session.token).toBe('new.tok');
+    expect(session.studentId).toBe('sid');
+    expect(Date.now() - Date.parse(session.signedInAt)).toBeLessThan(5000);
+    expect(rosterClient.isExpired()).toBe(false);
+    expect(events).toEqual(['changed']);
+    win.close();
+  });
+
+  it('a 401 is reported but NEVER signs the student out (local expiry stays advisory)', async () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    seed(localStorage, 40 * DAY, 'stale.tok');
+    mockFetch(win, { ok: false, error: 'invalid token' }, { ok: false, status: 401 });
+    expect(await rosterClient.refreshIfNeeded()).toEqual({ ok: false, reason: 'auth' });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).token).toBe('stale.tok');
+    win.close();
+  });
+
+  it('a network failure, a non-refresh reply, and a missing session are all harmless', async () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    expect(await rosterClient.refreshIfNeeded()).toEqual({ ok: false, reason: 'no-session' });
+    seed(localStorage, 25 * DAY, 'same.tok');
+    mockFetch(win, { ok: true, token: 'same.tok', refreshed: false });
+    expect(await rosterClient.refreshIfNeeded()).toEqual({ ok: true, refreshed: false });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).token).toBe('same.tok');
+    win.fetch = vi.fn().mockRejectedValue(new Error('offline'));
+    expect(await rosterClient.refreshIfNeeded()).toEqual({ ok: false, reason: 'network' });
+    win.close();
+  });
+
+  it('does not overwrite a session that changed while the request was in flight', async () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    seed(localStorage, 25 * DAY, 'old.tok');
+    win.fetch = vi.fn().mockImplementation(async () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ studentId: 'other', username: 'b', token: 'b.tok' }));
+      return { ok: true, status: 200, json: async () => ({ ok: true, token: 'new.tok', refreshed: true }) };
+    });
+    expect(await rosterClient.refreshIfNeeded()).toEqual({ ok: false, reason: 'session-changed' });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toMatchObject({ studentId: 'other', token: 'b.tok' });
+    win.close();
+  });
+});
+
 describe('roster-client.js expiry', () => {
   it('uses elapsed session duration after sign-in on an offset clock', async () => {
     const { win, localStorage, rosterClient } = makeWindow();

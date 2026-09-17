@@ -24767,8 +24767,18 @@ function _reconcileRosterExpiry() {
 }
 try { _reconcileRosterSection().catch(function () {}); } catch (_) {}
 try { if (typeof _reconcileRosterExpiry === 'function') _reconcileRosterExpiry(); } catch (_) {}
+// Phase C: keep an active student's session alive (server re-mints when <10 days remain).
+function _refreshRosterSession() {
+  if (window.OFFLINE_MODE) return;
+  if (!window.rosterClient || typeof window.rosterClient.refreshIfNeeded !== 'function') return;
+  if (typeof window.rosterClient.isExpired === 'function' && window.rosterClient.isExpired()) return;
+  if (window.__VIEW_AS_STUDENT_ID__) return;
+  if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+  try { window.rosterClient.refreshIfNeeded().catch(function () {}); } catch (_) {}
+}
+try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-17-g74j';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-17-k5zz';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

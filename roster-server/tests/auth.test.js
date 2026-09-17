@@ -7,7 +7,8 @@ import bcrypt from 'bcryptjs';
 import http from 'http';
 import { randomBytes } from 'crypto';
 import { createApp } from '../server.js';
-import { verifyToken } from '../token.js';
+import { verifyToken, signToken } from '../token.js';
+import { createHmac } from 'crypto';
 
 // ── Fake in-memory db ────────────────────────────────────────────────────────
 
@@ -602,4 +603,43 @@ describe('GET /roster/section/:section (public)', () => {
     expect(body.students.some(s => s.realName === 'Bob B')).toBe(false);
   });
 
+});
+
+describe('POST /roster/refresh (Phase C sliding session)', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  function rawToken(sid, exp) {
+    const header = Buffer.from(JSON.stringify({ sid, exp })).toString('base64url');
+    const sig = createHmac('sha256', tokenSecret).update(header).digest('base64url');
+    return `${header}.${sig}`;
+  }
+
+  it('a token with plenty of life is returned unchanged', async () => {
+    const token = signToken('sid-fresh');
+    const { status, body } = await srv.request('POST', '/roster/refresh', { body: { token } });
+    expect(status).toBe(200);
+    expect(body).toMatchObject({ ok: true, token, refreshed: false });
+    expect(body.expiresAt - Date.now()).toBeGreaterThan(29 * DAY);
+  });
+
+  it('a token with fewer than 10 days left is re-minted for the SAME student', async () => {
+    const token = rawToken('sid-old', Date.now() + 3 * DAY);
+    const { status, body } = await srv.request('POST', '/roster/refresh', { body: { token } });
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.refreshed).toBe(true);
+    expect(body.token).not.toBe(token);
+    expect(verifyToken(body.token)).toBe('sid-old');
+    expect(body.expiresAt - Date.now()).toBeGreaterThan(29 * DAY);
+  });
+
+  it.each([
+    ['expired', () => rawToken('sid-x', Date.now() - 1000)],
+    ['mis-signed', () => rawToken('sid-x', Date.now() + DAY).replace(/\.[^.]+$/, '.bad')],
+    ['missing', () => undefined],
+    ['garbage', () => 'nope']
+  ])('%s token → 401 and nothing minted', async (_label, make) => {
+    const { status, body } = await srv.request('POST', '/roster/refresh', { body: { token: make() } });
+    expect(status).toBe(401);
+    expect(body).toEqual({ ok: false, error: 'invalid token' });
+  });
 });
