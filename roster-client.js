@@ -64,8 +64,32 @@
         section: session.section,
         role: session.role || 'student',
         spriteHue: (typeof session.spriteHue === 'number') ? session.spriteHue : null,
-        mustChangePassword: !!session.mustChangePassword
+        mustChangePassword: !!session.mustChangePassword,
+        expired: window.rosterClient.isExpired()
       };
+    },
+
+    // Decode expiry locally; this does not verify the token's signature.
+    expiresAt: function () {
+      try {
+        var session = readSession();
+        if (!session || !session.token) return null;
+        // signedInAt is the ISO string signIn() has always written (older sessions may lack it).
+        var signedInAt = typeof session.signedInAt === 'number' ? session.signedInAt : Date.parse(session.signedInAt);
+        if (isFinite(signedInAt)) return signedInAt + 30 * 24 * 3600 * 1000;
+        var payload = session.token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+        while (payload.length % 4) payload += '=';
+        var data = JSON.parse(atob(payload));
+        if (!data || typeof data.exp !== 'number' || !isFinite(data.exp)) return null;
+        return data.exp;
+      } catch (_) {
+        return null;
+      }
+    },
+
+    isExpired: function (skewMs) {
+      var exp = window.rosterClient.expiresAt();
+      return typeof exp === 'number' && exp <= Date.now() + (skewMs === undefined ? 60000 : skewMs);
     },
 
     // Updates spriteHue on the persisted session so cross-app surfaces converge
@@ -132,7 +156,7 @@
           role: data.role || 'student',
           spriteHue: (typeof data.spriteHue === 'number') ? data.spriteHue : null,
           mustChangePassword: !!data.mustChangePassword,
-          signedInAt: new Date().toISOString()
+          signedInAt: new Date(Date.now()).toISOString()
         });
 
         return {
@@ -176,6 +200,7 @@
         }
 
         session.mustChangePassword = false;
+        session.signedInAt = new Date(Date.now()).toISOString();
         writeSession(session);
 
         return { ok: true };
@@ -287,7 +312,7 @@
           role: data.role || 'student',
           spriteHue: (typeof data.spriteHue === 'number') ? data.spriteHue : null,
           mustChangePassword: !!data.mustChangePassword,
-          signedInAt: new Date().toISOString()
+          signedInAt: new Date(Date.now()).toISOString()
         });
 
         return {

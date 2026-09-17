@@ -883,11 +883,43 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
     // without a signed-in roster session blocks until the student signs
     // in at the Desk. Fails OPEN — if rosterClient is unavailable, do
     // NOT wall (degrade, never brick).
+    // LR2: expired wall
+    function _lrShowExpiredBanner() {
+        try {
+            if (!document.body || document.getElementById('gb-no-identity-nudge')) return;
+            var bar = document.createElement('div');
+            bar.id = 'gb-no-identity-nudge';
+            bar.setAttribute('role', 'alert');
+            bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99998;'
+                + 'background:#b00020;color:#fff;font-family:Geneva,Verdana,sans-serif;'
+                + 'font-size:13px;padding:10px 14px;display:flex;align-items:center;'
+                + 'gap:12px;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+            var msg = document.createElement('span');
+            msg.textContent = '⚠️ Your sign-in expired — your answers are being kept on this device. Sign in again on the Desk (one click) to save them to your grade.';
+            bar.appendChild(msg);
+            var link = document.createElement('a');
+            link.href = 'ap_stats_roadmap_square_mode.html';
+            link.textContent = 'Open the Desk and sign in again';
+            link.style.cssText = 'color:#fff;font-weight:bold;text-decoration:underline;white-space:nowrap;';
+            bar.appendChild(link);
+            var x = document.createElement('button');
+            x.type = 'button';
+            x.textContent = '×';
+            x.setAttribute('aria-label', 'Dismiss');
+            x.style.cssText = 'background:transparent;border:0;color:#fff;font-size:18px;'
+                + 'line-height:1;cursor:pointer;padding:0 4px;';
+            x.onclick = function () { if (bar.parentNode) bar.parentNode.removeChild(bar); };
+            bar.appendChild(x);
+            document.body.appendChild(bar);
+        } catch (_) {}
+    }
     function _wallAccessGranted() {
         try {
             if (localStorage.getItem('apstats_user_role') === 'teacher') return true;
-            return !!(window.rosterClient && typeof rosterClient.current === 'function'
-                      && rosterClient.current());
+            var session = window.rosterClient && typeof rosterClient.current === 'function'
+                ? rosterClient.current() : null;
+            if (session && session.expired === true) _lrShowExpiredBanner();
+            return !!session;
         } catch (_) { return true; }
     }
     function _removeSigninWall() {
@@ -986,7 +1018,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 try { roster = (window.rosterClient && rosterClient.current) ? rosterClient.current() : null; } catch (_) {}
                 if (roster && roster.username) {
                     if (userEl)   userEl.value   = roster.username;
-                    if (nameEl)   nameEl.value   = roster.realName || roster.username;
+                    if (nameEl)   nameEl.value   = (roster.realName || roster.username) + (roster.expired === true ? ' (expired — sign in again)' : '');
                     if (periodEl && roster.section) periodEl.value = String(roster.section).replace(/^Period\s*/i, '');
                     if (typeof saveUser === 'function') saveUser();
                     return;
@@ -1410,6 +1442,8 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
         // Never clobbers in-progress edits. Marks restored inputs with a
         // small badge so the student sees what was restored.
         async function hydratePriorAnswers() {
+            var sid = window.__VIEW_AS_STUDENT_ID__ || (window.rosterClient && rosterClient.studentId ? rosterClient.studentId() : null);
+            _lrResetForeignRestores(sid);
             var diagnosticRun = window.worksheetDiagnostics && window.worksheetDiagnostics.begin(gbWsPrefix());
             var prior;
             try {
@@ -1417,6 +1451,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 var prefix = gbWsPrefix();
                 if (!prefix) return;
                 prior = await window.gradebookClient.fetchPrior(prefix, { restore: true });
+                if (sid !== (window.__VIEW_AS_STUDENT_ID__ || (window.rosterClient && rosterClient.studentId ? rosterClient.studentId() : null))) return;
                 if (!prior || prior.size === 0) return;
 
                 // Fill empty .blank inputs.
@@ -1430,6 +1465,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                           : String(entry.response);
                     blank.value = v;
                     blank.dataset.restored = '1';
+                    blank.dataset.restoredOwner = sid;
                     if (typeof checkAnswer === 'function') checkAnswer(blank);
                     _markRestored(blank);
                 });
@@ -1445,6 +1481,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                           : String(entry.response);
                     ta.value = v;
                     ta.dataset.restored = '1';
+                    ta.dataset.restoredOwner = sid;
                     // W2.4: restore grade class from ledger score (1->E, 0.5->P, 0->I).
                     if (entry.score !== null && entry.score !== undefined) {
                         var gradeMap = { 1: 'E', 0.5: 'P', 0: 'I' };
@@ -1466,7 +1503,7 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                     _markRestored(ta);
                 });
             } catch (_) { /* silent — never block the worksheet */ }
-            finally { if (window.worksheetDiagnostics) window.worksheetDiagnostics.finish(diagnosticRun, prior); }
+            finally { if (window.worksheetDiagnostics) window.worksheetDiagnostics.finish(diagnosticRun, prior); hydrateLocalAnswers(); } // LR1: hydrateLocalAnswers
         }
 
         // W2.6: a grade restored from the ledger gets a plain-language note (date, grader,
@@ -1682,6 +1719,102 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
                 } catch (_) {}
             } catch (_) {}
         }
+        var _lrHydratedOwner = null;
+
+        function _lrResetForeignRestores(currentSid) {
+            document.querySelectorAll('[data-restored="1"]').forEach(function (el) {
+                if (!el.dataset.restoredOwner || el.dataset.restoredOwner === currentSid) return;
+                el.value = '';
+                Array.from(el.classList).forEach(function (name) {
+                    if (['correct', 'partial', 'incorrect', 'revealed'].includes(name) || name.indexOf('graded-') === 0) el.classList.remove(name);
+                });
+                ['restored', 'localOnly', 'localKey', 'localSeq', 'restoredOwner'].forEach(function (key) { delete el.dataset[key]; });
+                var badge = el.nextElementSibling;
+                if (badge && badge.classList.contains('restored-badge')) badge.remove();
+            });
+            if (_lrHydratedOwner !== currentSid) _lrHydratedOwner = null;
+        }
+
+        function _markLocalRestored(el) {
+            try {
+                if (!el || !el.parentNode) return;
+                var sib = el.nextSibling;
+                var b = sib && sib.nodeType === 1 && sib.classList.contains('restored-badge') ? sib : null;
+                if (!b) {
+                    b = document.createElement('span');
+                    el.parentNode.insertBefore(b, el.nextSibling);
+                }
+                b.className = 'restored-badge local-only';
+                b.textContent = '↻ kept on this device — not saved to your grade yet';
+                b.title = 'Kept on this device. Sign in on the Desk to save it to your grade.';
+                b.style.cssText = 'display:inline-block;margin-left:6px;padding:1px 6px;' +
+                                  'font-size:0.75em;background:#fde7ea;border:1px solid #b00020;' +
+                                  'border-radius:4px;color:#b00020;';
+            } catch (_) {}
+        }
+
+        function _markLocalSaved(el) {
+            try {
+                if (!el) return;
+                delete el.dataset.localOnly;
+                var sib = el.nextSibling;
+                if (!sib || sib.nodeType !== 1 || !sib.classList.contains('restored-badge')) return;
+                sib.className = 'restored-badge';
+                sib.textContent = '↻ restored';
+                sib.title = 'Filled from your prior submission. Edit freely to overwrite.';
+                sib.style.cssText = 'display:inline-block;margin-left:6px;padding:1px 6px;' +
+                                    'font-size:0.75em;background:#fff7d6;border:1px solid #d9b800;' +
+                                    'border-radius:4px;color:#7a5a00;';
+            } catch (_) {}
+        }
+
+        async function hydrateLocalAnswers() {
+            try {
+                if (window.__WS_READ_ONLY__ || window.__VIEW_AS_STUDENT_ID__) return;
+                var sid = window.rosterClient && rosterClient.studentId ? rosterClient.studentId() : null;
+                _lrResetForeignRestores(sid);
+                if (!window.OfflineQueue || !OfflineQueue.all || !OfflineQueue.keyOf) return;
+                var prefix = gbWsPrefix();
+                if (!sid || !prefix) return;
+                var rows = await OfflineQueue.all();
+                // Identity can change while IndexedDB is reading.
+                if (rosterClient.studentId() !== sid) return;
+                var latest = new Map();
+                var sequence = function (row) {
+                    if (typeof row.transportSequence === 'number' && isFinite(row.transportSequence)) return row.transportSequence;
+                    return typeof row.ts === 'number' && isFinite(row.ts) ? row.ts : 0;
+                };
+                rows.forEach(function (row) {
+                    if (!row || row.studentId !== sid || String(row.itemId).indexOf(prefix + '-') !== 0) return;
+                    if (row.kind === 'appeal' || typeof row.response !== 'string' || !row.response.trim()) return;
+                    var key = OfflineQueue.keyOf(row);
+                    var prev = latest.get(key);
+                    if (!prev || sequence(row) >= sequence(prev)) latest.set(key, row);
+                });
+                latest.forEach(function (row, key) {
+                    var el = null;
+                    if (row.source === 'worksheet') {
+                        el = Array.from(document.querySelectorAll('.blank[data-question-id]')).find(function (blank) {
+                            return blank.dataset.questionId === String(row.itemId);
+                        });
+                    } else if (row.source === 'frq') {
+                        el = document.getElementById(String(row.itemId).slice(prefix.length + 1));
+                        if (el && el.tagName !== 'TEXTAREA') return;
+                    }
+                    if (!el || el.dataset.gbEdited === '1' || (el.value && el.value.trim())) return;
+                    el.value = row.response;
+                    el.dataset.restored = '1';
+                    el.dataset.localOnly = '1';
+                    el.dataset.localKey = key;
+                    el.dataset.localSeq = String(sequence(row));
+                    el.dataset.restoredOwner = sid;
+                    _lrHydratedOwner = sid;
+                    if (row.source === 'worksheet' && typeof checkAnswer === 'function') checkAnswer(el);
+                    _markLocalRestored(el);
+                });
+            } catch (_) {}
+        }
+
         function _markRestored(el) {
             try {
                 // Dedup per-element, not per-parent: a .question container can
@@ -1702,6 +1835,28 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
 
         // Hydration trigger: fire on DOMContentLoaded + on any roster-client signin event.
         (function () {
+            var savedHydrateTimer = null;
+            window.addEventListener('roster-session-changed', function () {
+                _lrResetForeignRestores(window.rosterClient && rosterClient.studentId ? rosterClient.studentId() : null);
+                hydratePriorAnswers();
+            });
+            window.addEventListener('gb-row-saved', function (e) {
+                if (!e || !e.detail || typeof e.detail.key !== 'string') return;
+                var matched = false;
+                document.querySelectorAll('[data-local-only="1"][data-local-key]').forEach(function (el) {
+                    if (el.dataset.localKey !== e.detail.key) return;
+                    matched = true;
+                    if (e.detail.studentId === el.dataset.restoredOwner &&
+                        Number(e.detail.transportSequence) >= Number(el.dataset.localSeq)) _markLocalSaved(el);
+                });
+                if (!matched) {
+                    if (savedHydrateTimer !== null) clearTimeout(savedHydrateTimer);
+                    savedHydrateTimer = setTimeout(function () {
+                        savedHydrateTimer = null;
+                        hydratePriorAnswers();
+                    }, 1500);
+                }
+            });
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', hydratePriorAnswers);
             } else {
@@ -1710,7 +1865,10 @@ textarea.graded-I { border-color: var(--bad); background: var(--white); }
             // Also fire on storage event so a different tab signin re-hydrates.
             try {
                 window.addEventListener('storage', function (e) {
-                    if (e && e.key === 'apstats_roster.v1') hydratePriorAnswers();
+                    if (e && e.key === 'apstats_roster.v1') {
+                        _lrResetForeignRestores(window.rosterClient && rosterClient.studentId ? rosterClient.studentId() : null);
+                        hydratePriorAnswers();
+                    }
                 });
             } catch (_) {}
         })();

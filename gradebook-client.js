@@ -121,9 +121,14 @@
   // rejected and NOTHING was captured (no offline queue on this page). Default: not signed in.
   function _showNoIdentityNudge(kind) {
     try {
-      if (_noIdentityNudgeShown) return;
       if (typeof document === 'undefined' || !document.body) return;
-      if (document.getElementById('gb-no-identity-nudge')) return;
+      var existing = document.getElementById('gb-no-identity-nudge');
+      if (existing && kind === 'expired-lost') {
+        var label = existing.querySelector('span');
+        if (label) label.textContent = '⚠️ Your sign-in session expired — your answers are NOT being saved to your grade. Sign in again, then redo this work.';
+        return;
+      }
+      if (_noIdentityNudgeShown || existing) return;
       _noIdentityNudgeShown = true;
 
       var bar = document.createElement('div');
@@ -282,6 +287,7 @@
   /** @param {RecordOpts} opts @returns {Promise<RecordResult>} */
   async function _postRecord(opts) {
     try {
+      if (opts.studentId && _studentId() !== opts.studentId) return { ok: false, reason: 'network' };
       var token = _token();
       if (!token) return { ok: false, reason: 'no-identity' };
       var baseUrl = window.ROSTER_SERVICE_URL || null;
@@ -491,6 +497,7 @@
             _scheduleOfflineDrain(30000);
             return { ok: false, reason: r.reason, queued: true };
           }
+          if (r.reason === 'auth') _showNoIdentityNudge('expired-lost');
           return r;
         }
         if (r.reason === 'no-identity') _showNoIdentityNudge();
@@ -543,6 +550,13 @@
             if (result && result.ok && typeof r.transportSequence === 'number') {
               var key = _recordKey(r);
               _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, r.transportSequence);
+            }
+            if (result && result.ok) {
+              try {
+                window.dispatchEvent(new CustomEvent('gb-row-saved', {
+                  detail: { key: window.OfflineQueue.keyOf(rec), itemId: rec.itemId, source: rec.source, studentId: rec.studentId, transportSequence: rec.transportSequence }
+                }));
+              } catch (_) { /* Notification must never interrupt the drain. */ }
             }
             return result;
           });

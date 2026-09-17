@@ -31,6 +31,93 @@ const OFFLINE_SRC  = readFileSync(resolve(REPO_ROOT, 'offline-queue.js'),    'ut
 
 const STORAGE_KEY = 'apstats_roster.v1';
 
+describe('gradebook-client.js advisory expiry', () => {
+  it.each(['saved', 'missing-queue', 'missing-owner', 'failed-enqueue'])('captures a server-rejected expired identity: %s', async (mode) => {
+    const { win, gradebookClient } = makeWindow();
+    try {
+      win.rosterClient = {
+        token: () => 'expired-token',
+        studentId: () => mode === 'missing-owner' ? null : 'sid',
+        isExpired: () => true
+      };
+      const enqueue = vi.fn().mockImplementation(async row => row);
+      if (mode === 'failed-enqueue') enqueue.mockRejectedValue(new Error('quota'));
+      if (mode !== 'missing-queue') win.OfflineQueue = { enqueue };
+      win.fetch = vi.fn(async () => ({ ok: false, status: 401, json: async () => ({}) }));
+      win.document.body.innerHTML = '<div id="gb-no-identity-nudge"><span>Boot: kept on this device</span></div>';
+      const result = await gradebookClient.record({ source: 'worksheet', itemId: 'A', response: 'answer' });
+      expect(win.fetch).toHaveBeenCalledTimes(1);
+      expect(enqueue).toHaveBeenCalledTimes(mode === 'saved' || mode === 'failed-enqueue' ? 1 : 0);
+      expect(result).toEqual(mode === 'saved'
+        ? { ok: false, reason: 'auth', queued: true }
+        : { ok: false, reason: 'auth' });
+      const banner = win.document.getElementById('gb-no-identity-nudge');
+      expect(banner.textContent).toContain(mode === 'saved' ? 'kept on this device' : 'NOT being saved');
+    } finally { win.close(); }
+  });
+
+  it('sends despite locally estimated expiry when the server accepts', async () => {
+    const { win, gradebookClient } = makeWindow();
+    try {
+      win.rosterClient = { token: () => 'valid', studentId: () => 'sid', isExpired: () => true };
+      const fetchFn = mockFetch(win, { ok: true, ledgerId: 'L1' });
+      const result = await gradebookClient.record({ source: 'worksheet', itemId: 'A', response: 'answer' });
+      expect(result.ok).toBe(true);
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+    } finally { win.close(); }
+  });
+});
+
+describe('gradebook-client.js saved-row signal', () => {
+  it('rechecks queued ownership after waiting behind a same-item POST', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    try {
+      setToken(win, 'token-A');
+      let finishPost;
+      const started = new Promise(resolve => {
+        win.fetch = vi.fn(() => { resolve(); return new Promise(done => { finishPost = done; }); });
+      });
+      const direct = gradebookClient.record({ source: 'worksheet', itemId: 'race', response: 'direct' });
+      await started;
+      await OfflineQueue.enqueue({ studentId: 'uuid-test-student', source: 'worksheet', itemId: 'race', response: 'queued', transportSequence: Date.now() + 100000 });
+      const ownerRead = vi.fn(() => 'uuid-test-student');
+      win.rosterClient.studentId = ownerRead;
+      const drain = gradebookClient.syncOfflineQueue();
+      await vi.waitFor(() => expect(ownerRead).toHaveBeenCalled());
+      win.rosterClient.studentId = () => 'student-B';
+      win.rosterClient.token = () => 'token-B';
+      finishPost({ ok: true, status: 200, json: async () => ({ ok: true }) });
+      await direct;
+      const result = await drain;
+      expect(result.sent).toBe(0);
+      expect(win.fetch).toHaveBeenCalledTimes(1);
+      expect((await OfflineQueue.all()).some(row => row.response === 'queued')).toBe(true);
+    } finally { win.close(); }
+  });
+
+  it.each(['success', 'failure', 'event-error'])('preserves drain result on %s', async (mode) => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    try {
+      setToken(win, 'tok');
+      const rows = ['A', 'B'].map(itemId => ({ source: 'worksheet', itemId, response: 'answer', studentId: 'uuid-test-student', transportSequence: 42 }));
+      for (const row of rows) await OfflineQueue.enqueue(row);
+      mockFetch(win, mode === 'failure' ? { ok: false } : { ok: true, ledgerId: 'L1' });
+      const saved = vi.fn();
+      win.addEventListener('gb-row-saved', saved);
+      if (mode === 'event-error') win.CustomEvent = function () { throw new Error('unsupported event'); };
+      const result = await gradebookClient.syncOfflineQueue();
+      expect(result.sent).toBe(mode === 'failure' ? 0 : 2);
+      expect(result.failed).toBe(mode === 'failure' ? 2 : 0);
+      expect(saved).toHaveBeenCalledTimes(mode === 'success' ? 2 : 0);
+      if (mode === 'success') {
+        expect(saved.mock.calls.map(([event]) => event.detail)).toEqual(rows.map(row => ({
+          key: OfflineQueue.keyOf(row), itemId: row.itemId, source: row.source, studentId: row.studentId, transportSequence: row.transportSequence
+        })));
+      }
+    } finally { win.close(); }
+  });
+});
+
 /**
  * Boot a fresh jsdom window with roster_config.js + roster-client.js +
  * gradebook-client.js evaluated.  Returns { win, gradebookClient, rosterClient }.

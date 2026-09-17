@@ -21,6 +21,8 @@ function boot(fetch) {
   w.localStorage.setItem('apstats_desk_marks', 'keep-me');
   w.eval(read('roster-client.js'));
   w.eval(read('gradebook-client.js'));
+  w.hydrateLocalAnswers = () => {};
+  w._lrResetForeignRestores = () => {};
   w.gbWsPrefix = () => 'WS-U1L1';
   w._markRestored = () => {};
   w._markAutoGraded = () => {};

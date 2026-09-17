@@ -40,6 +40,8 @@ function boot(fetchMock, viewAs = false) {
     registerStudent() {}, updateStudentMenu() {}, showDialog() {}, closeNameFinder() {},
     MacSFX: { play() {} }, gradebookClient: { syncOfflineQueue: vi.fn(async () => ({ sent: 1, failed: 0, remaining: 0 })) }
   });
+  // The expiry notice is a shared top-level const in the Desk; extract it like the functions.
+  w.eval(/const EXPIRED_SIGNIN_NOTICE = '[^']*';/.exec(html)[0].replace(/^const /, 'var '));
   for (const name of ['renderDoNowGrades', 'openSignInModal', 'closeSignInModal', 'submitSignIn', '_nfSubmitPassword']) w.eval(fn(name));
   return w;
 }

@@ -27,6 +27,107 @@ const CONFIG_SRC = readFileSync(resolve(REPO_ROOT, 'roster_config.js'), 'utf8');
 
 const STORAGE_KEY = 'apstats_roster.v1';
 
+function makeToken(payload) {
+  return Buffer.from(JSON.stringify(payload)).toString('base64url') + '.sig';
+}
+
+describe('roster-client.js expiry', () => {
+  it('uses elapsed session duration after sign-in on an offset clock', async () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    const now = Date.now() + 90 * 86400000;
+    const clock = vi.spyOn(win.Date, 'now').mockReturnValue(now);
+    try {
+      win.fetch = vi.fn(async () => ({ json: async () => ({ ok: true, studentId: 'sid', token: makeToken({ exp: now - 60 * 86400000 }) }) }));
+      expect((await rosterClient.signIn('name', 'pin')).ok).toBe(true);
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).signedInAt).toBe(new Date(now).toISOString());
+      expect(rosterClient.expiresAt()).toBe(now + 30 * 86400000);
+      expect(rosterClient.isExpired()).toBe(false);
+      clock.mockReturnValue(now + 31 * 86400000);
+      expect(rosterClient.isExpired()).toBe(true);
+      expect((await rosterClient.changePassword('new-pin')).ok).toBe(true);
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).signedInAt).toBe(new Date(now + 31 * 86400000).toISOString());
+    } finally { clock.mockRestore(); win.close(); }
+  });
+
+  it('uses the ISO signedInAt every sign-in has always written, not the token exp', () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    const signedInAt = Date.now() - 40 * 86400000;             // a summer sign-in
+    const exp = Date.now() + 120000;                            // token says otherwise; duration wins
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ signedInAt: new Date(signedInAt).toISOString(), token: makeToken({ exp }) }));
+    expect(rosterClient.expiresAt()).toBe(signedInAt + 30 * 86400000);
+    expect(rosterClient.isExpired()).toBe(true);
+    win.close();
+  });
+
+  it('falls back to the token exp when signedInAt is absent or unparseable', () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    const exp = Date.now() + 120000;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ signedInAt: 'not-a-date', token: makeToken({ exp }) }));
+    expect(rosterClient.expiresAt()).toBe(exp);
+    win.close();
+  });
+
+  it.each([false, true])('reports expired=%s without changing session fields', (expired) => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    const exp = Date.now() + (expired ? -120000 : 120000);
+    const session = { studentId: 'sid', username: 'name', token: makeToken({ sid: 'sid', exp }) };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    expect(rosterClient.expiresAt()).toBe(exp);
+    expect(rosterClient.isExpired()).toBe(expired);
+    expect(rosterClient.current()).toMatchObject({ studentId: 'sid', username: 'name', expired });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toEqual(session);
+    win.close();
+  });
+
+  it.each(['garbage.sig', '%.sig', 'bnVsbA.sig', 'e30.sig', 'eyJleHAiOjFlOTk5fQ.sig',
+    makeToken({ exp: '123' }), null, 42])('treats invalid token %s as unknown expiry', (token) => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ studentId: 'sid', token }));
+    expect(rosterClient.expiresAt()).toBeNull();
+    expect(rosterClient.isExpired()).toBe(false);
+    expect(rosterClient.current().expired).toBe(false);
+    win.close();
+  });
+
+  it('returns unknown expiry without a session or with corrupt storage', () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    expect(rosterClient.expiresAt()).toBeNull();
+    expect(rosterClient.isExpired()).toBe(false);
+    expect(rosterClient.current()).toBeNull();
+    localStorage.setItem(STORAGE_KEY, '{bad');
+    expect(rosterClient.expiresAt()).toBeNull();
+    expect(rosterClient.isExpired()).toBe(false);
+    win.close();
+  });
+
+  it('honours custom skew and the inclusive expiry boundary', () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    const now = 1800000000000;
+    const clock = vi.spyOn(win.Date, 'now').mockReturnValue(now);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: makeToken({ sid: 'sid', exp: now + 30000 }) }));
+      expect(rosterClient.isExpired()).toBe(true);
+      expect(rosterClient.isExpired(10000)).toBe(false);
+      expect(rosterClient.isExpired(30000)).toBe(true);
+      expect(rosterClient.isExpired(0)).toBe(false);
+    } finally {
+      clock.mockRestore();
+      win.close();
+    }
+  });
+
+  it('decodes both base64url substitutions and restores padding', () => {
+    const { win, localStorage, rosterClient } = makeWindow();
+    const exp = Date.now() + 120000;
+    const token = makeToken({ sid: '~~~???', exp });
+    expect(token).toContain('-');
+    expect(token).toContain('_');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token }));
+    expect(rosterClient.expiresAt()).toBe(exp);
+    win.close();
+  });
+});
+
 /**
  * Boot a fresh jsdom window with roster_config.js + roster-client.js evaluated.
  * Returns the window, its localStorage handle, and window.rosterClient.

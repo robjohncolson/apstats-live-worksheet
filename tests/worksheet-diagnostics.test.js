@@ -22,6 +22,8 @@ function boot({ loadStatus = 200, reportStatus = 200, fetchOverride, stored = []
     return { ok: loadStatus === 200, status: loadStatus, json: async () => ({ ok: true, rows: ledger }) };
   });
   w.eval(read('roster-client.js')); w.eval(read('worksheet-diagnostics.js')); w.eval(read('gradebook-client.js'));
+  w.hydrateLocalAnswers = () => {};
+  w._lrResetForeignRestores = () => {};
   w.gbWsPrefix = () => 'WS-U1L1'; w._markRestored = () => {}; w.eval(hydrate);
   return { w, reports };
 }

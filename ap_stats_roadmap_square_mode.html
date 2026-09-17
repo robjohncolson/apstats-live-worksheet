@@ -6695,7 +6695,12 @@ function updateStudentMenu() {
     var name = who.realName ? (who.realName + ' (' + who.username + ')') : who.username;
     statusText = (role === 'teacher' ? 'Teacher: ' : 'Signed in as: ') + name;
     chipText = '\u{1F464} ' + (who.realName || who.username);
-    chipTitle = statusText;
+    chipTitle = 'Signed in as ' + name + ' — click to sign in again or switch account';
+    if (who.expired) {
+      chipText = '\u26A0 Sign-in expired';
+      chipTitle = 'Your sign-in expired — click to sign in again';
+      statusText = 'Sign-in expired: ' + name;
+    }
   } else if (typeof _deskGuestOk === 'function' && _deskGuestOk()) {
     var guest = (typeof getGuestIdentity === 'function') ? getGuestIdentity() : 'Guest';
     statusText = 'Guest: ' + guest + ' — click to sign in & save your work';
@@ -6967,6 +6972,35 @@ function openSignInModal() {
   var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
   if (uInp) { uInp.value = (who && who.username) || getStudentEmail() || ''; }
   if (pInp) { pInp.value = ''; }
+  // Keep account controls next to the credentials; names are untrusted text.
+  if (typeof document.createElement === 'function') {
+    var strip = document.getElementById('signin-current-strip');
+    var usernameRow = document.getElementById('signin-username-row') || uInp;
+    if (!strip && usernameRow && usernameRow.parentNode) {
+      strip = document.createElement('div');
+      strip.id = 'signin-current-strip';
+      strip.style.cssText = 'font-size:12px;margin-bottom:12px;';
+      usernameRow.parentNode.insertBefore(strip, usernameRow);
+    }
+    if (strip) {
+      strip.textContent = '';
+      strip.style.display = who ? 'block' : 'none';
+      if (who) {
+        strip.textContent = who.expired
+          ? 'Your sign-in expired — sign in again to keep saving your work. '
+          : 'Signed in as ' + (who.realName || who.username) + '. Signing in again refreshes your session. ';
+        var signoutLink = document.createElement('a');
+        signoutLink.href = '#';
+        signoutLink.id = 'signin-signout-link';
+        signoutLink.textContent = 'Sign out';
+        signoutLink.onclick = function (event) {
+          event.preventDefault();
+          if (typeof signOutStudent === 'function') signOutStudent();
+        };
+        strip.appendChild(signoutLink);
+      }
+    }
+  }
   // 2026-05-20: refresh the username dropdown suggestions every open
   // so newly-remembered users show up immediately. Typeof-guarded for
   // DN2c's vm-test which doesn't load this helper into its sandbox.
@@ -7058,6 +7092,8 @@ async function submitSignIn() {
   if (err) err.textContent = 'Signing in…';
   try {
     var result;
+    var prevId = typeof window.rosterClient.studentId === 'function'
+      ? window.rosterClient.studentId() : null;
     try {
       result = await window.rosterClient.signIn(username, password);
     } catch (e) {
@@ -7119,6 +7155,10 @@ async function submitSignIn() {
       if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard(); // Live Classroom v1a
       if (typeof _deskPresenceResync === 'function') _deskPresenceResync(); // guests retired: join presence as the real identity
       if (typeof _fetchPollArchive === 'function') _fetchPollArchive(); // v2.1 U4: poll archive (guarded, like its neighbors)
+      if (prevId && prevId === who.studentId) {
+        if (typeof _showViewAsToast === 'function') _showViewAsToast('Session refreshed — your saved work will sync now.');
+        return;
+      }
       var roleLabel = '';
       try { if (localStorage.getItem('apstats_user_role') === 'teacher') roleLabel = ' (teacher mode)'; } catch (_) {}
       showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + roleLabel + '.','OK');
@@ -8144,6 +8184,7 @@ var _gradeGradebookCache = null; // latest /grade gradebook{} — read by the "M
 // failure (auth/server/network — see renderDoNowGrades's classifier). Read
 // by rProg (D5 honest-unknown) and _renderGradeStatus (D2 banner).
 var _gradeLoadState = 'unknown';
+const EXPIRED_SIGNIN_NOTICE = 'Your sign-in expired \u2014 sign in again. Your work on this device is saved and will sync.';
 var _expiredSignInShown = false;    // One modal per page; dismissing never removes local evidence.
 var _gradeLoadError = null;          // null | { kind: 'auth'|'server'|'network', status: number|null }
 var _gradeRetryCount = 0;            // capped auto-retry counter (D2, <=3 per page load)
@@ -8753,7 +8794,7 @@ async function renderDoNowGrades(baseUrl, token) {
       var signinOverlay = document.getElementById('signin-overlay');
       if (!signinOverlay || signinOverlay.style.display !== 'block') openSignInModal();
       var signinNotice = document.getElementById('signin-error');
-      if (signinNotice) signinNotice.textContent = 'Your sign-in expired \u2014 sign in again. Your work on this device is saved and will sync.';
+      if (signinNotice) signinNotice.textContent = EXPIRED_SIGNIN_NOTICE;
     }
     if (data) {
       _persistGradeCache(data);                 // write-through (skipped in view-as, now v2-enveloped)
@@ -24709,9 +24750,25 @@ async function _reconcileRosterSection() {
   return found;
 }
 try { window._reconcileRosterSection = _reconcileRosterSection; } catch (_) {}
+function _reconcileRosterExpiry() {
+  if (window.OFFLINE_MODE) return;
+  if (!window.rosterClient || typeof window.rosterClient.isExpired !== 'function') return;
+  if (!window.rosterClient.isExpired()) return;
+  if (window.__VIEW_AS_STUDENT_ID__) return;
+  if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
+  var session = typeof window.rosterClient.current === 'function' ? window.rosterClient.current() : null;
+  var role = session && session.role;
+  try { role = role || localStorage.getItem('apstats_user_role'); } catch (_) {}
+  if (role === 'teacher') return;
+  _expiredSignInShown = true;
+  if (typeof openSignInModal === 'function') openSignInModal();
+  var notice = document.getElementById('signin-error');
+  if (notice) notice.textContent = EXPIRED_SIGNIN_NOTICE;
+}
 try { _reconcileRosterSection().catch(function () {}); } catch (_) {}
+try { if (typeof _reconcileRosterExpiry === 'function') _reconcileRosterExpiry(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-15-7qw9';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-17-g74j';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

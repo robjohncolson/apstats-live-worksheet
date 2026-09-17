@@ -224,6 +224,140 @@ function makeDesk({ rosterClient } = {}) {
   return { api: sandbox.__api, el, store, calls, sandbox };
 }
 
+/** Real DOM for the account strip, with partial-sandbox service spies. */
+function makeDeskExpiry({ expired = false, prevId = 'sid-1', nextId = 'sid-1' } = {}) {
+  const dom = new JSDOM('<div id="signin-overlay" style="display:none"><div class="dialog">'
+    + '<div id="signin-username-row"><input id="signin-username"></div>'
+    + '<input id="signin-password"><div id="signin-error"></div><button id="signin-ok"></button>'
+    + '</div></div><div id="menu-identity"></div><div id="menu-student-status"></div>',
+    { url: 'https://desk.test/' });
+  const calls = { welcome: 0, signOut: 0, toast: [], refresh: [] };
+  let who = { studentId: prevId, username: 'coconut_shark', realName: 'Pat <Q>', expired };
+  const rosterClient = {
+    current: () => who,
+    studentId: () => who && who.studentId,
+    isExpired: () => !!(who && who.expired),
+    signIn: async () => {
+      who = { ...who, studentId: nextId, expired: false };
+      return { ok: true };
+    },
+  };
+  const sandbox = {
+    window: { rosterClient }, document: dom.window.document, localStorage: dom.window.localStorage,
+    setTimeout: fn => fn(), _expiredSignInShown: false,
+    getStudentEmail: () => '', registerStudent() {}, closeSignInModal() {},
+    showDialog: () => { calls.welcome++; },
+    signOutStudent: () => { calls.signOut++; },
+    _showViewAsToast: message => calls.toast.push(message),
+  };
+  for (const name of ['renderDoNow', '_mountClassroomBoard', '_deskPresenceResync', '_fetchPollArchive',
+    'updateUserRoleUI', '_resetGradeStateForIdentitySwitch', '_migrateMarksAliases', '_srsSyncPull']) {
+    sandbox[name] = () => calls.refresh.push(name);
+  }
+  sandbox.window.gradebookClient = { syncOfflineQueue: async () => calls.refresh.push('syncOfflineQueue') };
+  createContext(sandbox);
+  const notice = html.match(/const EXPIRED_SIGNIN_NOTICE = [^\n]+/)[0];
+  runInContext(notice + '\n' + ['_reconcileRosterExpiry', 'openSignInModal', 'updateStudentMenu', 'submitSignIn']
+    .map(name => fnBody(html, name)).join('\n'), sandbox);
+  return { sandbox, calls, el: id => dom.window.document.getElementById(id),
+    clearSession: () => { who = null; }, close: () => dom.window.close() };
+}
+
+describe('B4/B5 — expired sessions and visible account controls', () => {
+  it('uses the student session role over a stale teacher cache', () => {
+    const d = makeDeskExpiry({ expired: true });
+    try {
+      d.sandbox.window.rosterClient.current().role = 'student';
+      d.sandbox.localStorage.setItem('apstats_user_role', 'teacher');
+      d.sandbox._reconcileRosterExpiry();
+      expect(d.el('signin-overlay').style.display).toBe('block');
+    } finally { d.close(); }
+  });
+
+  it('boot opens the expired modal with the shared notice and suppresses the grade prompt', () => {
+    const d = makeDeskExpiry({ expired: true });
+    try {
+      d.sandbox._reconcileRosterExpiry();
+      expect(d.el('signin-overlay').style.display).toBe('block');
+      expect(d.el('signin-username').value).toBe('coconut_shark');
+      expect(d.el('signin-error').textContent).toBe('Your sign-in expired — sign in again. Your work on this device is saved and will sync.');
+      expect(d.sandbox._expiredSignInShown).toBe(true);
+      expect(html).toMatch(/_reconcileRosterSection\(\)\.catch[^\n]+\ntry \{ if \(typeof _reconcileRosterExpiry/);
+      expect(fnBody(html, 'renderDoNowGrades')).toContain('signinNotice.textContent = EXPIRED_SIGNIN_NOTICE');
+    } finally { d.close(); }
+  });
+
+  it.each(['valid', 'view-as flag', 'view-as context', 'teacher', 'session teacher', 'offline', 'no client', 'old client'])('%s does not prompt', mode => {
+    const d = makeDeskExpiry({ expired: mode !== 'valid' });
+    try {
+      if (mode === 'view-as flag') d.sandbox.window.__VIEW_AS_STUDENT_ID__ = 'other';
+      if (mode === 'view-as context') d.sandbox._viewAsContext = () => ({ studentId: 'other' });
+      if (mode === 'offline') d.sandbox.window.OFFLINE_MODE = true;
+      if (mode === 'session teacher') d.sandbox.window.rosterClient.current().role = 'teacher';
+      if (mode === 'teacher') d.sandbox.localStorage.setItem('apstats_user_role', 'teacher');
+      if (mode === 'no client') delete d.sandbox.window.rosterClient;
+      if (mode === 'old client') delete d.sandbox.window.rosterClient.isExpired;
+      d.sandbox._reconcileRosterExpiry();
+      expect(d.el('signin-overlay').style.display).toBe('none');
+      expect(d.sandbox._expiredSignInShown).toBe(false);
+    } finally { d.close(); }
+  });
+
+  it.each([true, false])('expired=%s updates the chip and menu', expired => {
+    const d = makeDeskExpiry({ expired });
+    try {
+      d.sandbox.updateStudentMenu();
+      if (expired) {
+        expect(d.el('menu-identity').textContent).toBe('⚠ Sign-in expired');
+        expect(d.el('menu-identity').title).toBe('Your sign-in expired — click to sign in again');
+        expect(d.el('menu-student-status').textContent).toBe('Sign-in expired: Pat <Q> (coconut_shark)');
+      } else {
+        expect(d.el('menu-identity').title).toContain('switch account');
+      }
+    } finally { d.close(); }
+  });
+
+  it.each([true, false])('expired=%s shows a safe reusable strip with working Sign out', expired => {
+    const d = makeDeskExpiry({ expired });
+    try {
+      d.sandbox.openSignInModal();
+      const strip = d.el('signin-current-strip');
+      expect(strip.style.display).toBe('block');
+      expect(strip.textContent).toContain(expired ? 'Your sign-in expired — sign in again to keep saving your work.'
+        : 'Signed in as Pat <Q>. Signing in again refreshes your session.');
+      expect(strip.querySelector('q')).toBeNull();
+      const link = d.el('signin-signout-link');
+      expect(link.textContent).toBe('Sign out');
+      link.click();
+      expect(d.calls.signOut).toBe(1);
+      d.sandbox.openSignInModal();
+      expect(d.el('signin-current-strip')).toBe(strip);
+      expect(strip.querySelectorAll('a')).toHaveLength(1);
+      d.clearSession();
+      d.sandbox.openSignInModal();
+      expect(strip.style.display).toBe('none');
+      expect(strip.textContent).toBe('');
+    } finally { d.close(); }
+  });
+
+  it.each(['sid-1', 'sid-2', null])('previous student %s keeps refreshers and selects the right greeting', async prevId => {
+    const d = makeDeskExpiry({ prevId, expired: true });
+    try {
+      d.el('signin-username').value = 'coconut_shark';
+      d.el('signin-password').value = '1234';
+      await d.sandbox.submitSignIn();
+      expect(d.calls.welcome).toBe(prevId === 'sid-1' ? 0 : 1);
+      expect(d.calls.toast).toEqual(prevId === 'sid-1' ? ['Session refreshed — your saved work will sync now.'] : []);
+      expect(d.calls.refresh).toEqual(expect.arrayContaining(['renderDoNow', '_mountClassroomBoard',
+        '_deskPresenceResync', '_fetchPollArchive', 'updateUserRoleUI', '_resetGradeStateForIdentitySwitch',
+        '_migrateMarksAliases', '_srsSyncPull', 'syncOfflineQueue']));
+      expect(d.el('menu-identity').textContent).toContain('Pat <Q>');
+      expect(d.el('signin-ok').disabled).toBe(false);
+      expect(d.sandbox.submitSignIn._pending).toBe(false);
+    } finally { d.close(); }
+  });
+});
+
 describe('DN2c runtime — submitSignIn', () => {
   it('on success: writes rosterClient.current().username (NOT the typed username) to the legacy key, only after auth', async () => {
     let signInArgs = null;
