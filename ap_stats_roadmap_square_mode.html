@@ -718,6 +718,7 @@
         }
         .cell-pc .tl::before { content: '\25C6 '; }   /* red diamond glyph */
         .cell-work { background: var(--plat); border: 2px dotted var(--plat-lo); }
+        .cell-break { background: var(--plat); border: 2px dashed var(--plat-lo); opacity: .85; }
         .cell-poster {
             background: #f4d03f; color: #6b5400;
             box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12);
@@ -4977,7 +4978,7 @@ function _hydrateMarksFromDonow(data) {
 // teacher). It is distinct from the REGISTRY lesson-readiness that feeds the
 // status dot -- that is teacher-side "materials posted", not student work.
 function localLessonState(topic, marks) {
-  if (topic === 'B-Work') return '';
+  if (topic === 'B-Work' || topic === 'B-Break') return '';
   if (!topic || !marks || typeof marks !== 'object') return '';
   const members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
   if(members.length>1){
@@ -6240,7 +6241,7 @@ var _signinWallActive = false;
 // check already uses (_getCwsForTopic / _blooketScoreFor), so greying agrees with
 // the Done button.
 function _isLessonComplete(topic, marks) {
-  if (topic === 'B-Work') return true;
+  if (topic === 'B-Work' || topic === 'B-Break') return true;
   try {
     if (!topic) return true;
     var members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
@@ -7892,7 +7893,7 @@ function donowLessonCovers(L, T) {
 // DN3b — roll a cell topic up to one of "", "partial", "done"
 // (worst-wins across all matching /donow lessons; "" = none/no-data → grey).
 function donowCellState(topic) {
-  if (topic === 'B-Work') return '';
+  if (topic === 'B-Work' || topic === 'B-Break') return '';
   var members=typeof groupTopics==='function'?groupTopics(topic):[topic];
   if(members.length>1){
     var states=members.map(donowCellState);
@@ -9491,6 +9492,10 @@ async function renderDoNow() {
         renderDoNowGrades(baseUrl, token).catch(function () { /* never throws */ });
     }
 
+    if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'break') {
+      show('Break Day — nothing due today. Enjoy it.\nEverything else moves one class later.', 'done');
+      return;
+    }
     if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'work') {
       var workNext = _workDayNextLesson();
       show('Work Day — nothing new today.\nFinish: ' + (workNext ? cedLabel(workNext.inf.t).text : 'All caught up.')
@@ -10050,7 +10055,9 @@ const SCHEDULE_DEFS = {
       [2026,11,9],[2026,11,23],[2027,0,13],[2027,1,10],[2027,2,3],
       [2027,2,17],[2027,3,14],[2027,4,19]],
     periods: {
-      B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, workDayFrom:[2026,8,14], workDayGap:2, maxWorkDaysPerWeek:1, schoologyCourse:null },
+      B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, workDayFrom:[2026,8,14], workDayGap:2, maxWorkDaysPerWeek:1, schoologyCourse:null,
+           // Section-only breaks: nothing placed, pacing shifts one meeting later. 2026-09-18 = AP Classroom down (teacher).
+           breakDays:[[2026,8,18]] },
       E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,16], maxPairsPerWeek:2, videoCapMin:30, videoCapEarlyReleaseMin:20, schoologyCourse:null }
     },
     daysOff: [
@@ -10158,6 +10165,11 @@ function generateSchedule(def){
       if(!pDef)continue;
       if(!pDef.meetsDays.includes(dow)) cells[pid]=NC;
       else if(queues[pid].length>0){
+        // A section-only break: nothing placed, nothing consumed, the lead is unchanged.
+        if(pDef.breakDays&&pDef.breakDays.some(day=>day.join('-')===dk)){
+          cells[pid]={t:pid+'-Break',n:'Break Day',u:0,kind:'break',due:'',as:''};
+          continue;
+        }
         // Count the lead before B places anything today; work does not consume pacing.
         if(pid==='B'&&pDef.workDayFrom&&dt>=dateFromArr(pDef.workDayFrom)
           &&placedB-placedE>=pDef.workDayGap&&workDaysThisWeek<pDef.maxWorkDaysPerWeek
@@ -10327,7 +10339,7 @@ function updateLegend(def){
   const el=document.getElementById('legend-bar');
   if(!el) return;
   let h='';
-  if (def === SCHEDULE_DEFS['SY26-27']) h+='<div class="legend-item"><div class="legend-sw cell-work"></div>Work Day</div>';
+  if (def === SCHEDULE_DEFS['SY26-27']) h+='<div class="legend-item"><div class="legend-sw cell-work"></div>Work Day</div><div class="legend-item"><div class="legend-sw cell-break"></div>Break Day</div>';
   for(const u of def.units) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--u'+u.id+')"></div>U'+u.id+' '+u.label+'</div>';
   if (def === SCHEDULE_DEFS['SY26-27']) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--bonus)"></div>★ Beyond the Exam</div>';
   h+='<div class="legend-item"><div class="legend-sw" style="background:var(--rev)"></div>Review</div>';
@@ -11302,8 +11314,22 @@ function _showWorkDayPanel(inf, dateStr) {
     document.getElementById('resource-overlay').style.display = 'block';
 }
 
+function _showBreakDayPanel(inf, dateStr) {
+    _lastResourcePanel = { inf: inf, dateStr: dateStr };
+    var header = document.getElementById('resource-header');
+    header.textContent = 'Break Day — nothing due today.';
+    header.style.color = '';
+    header.style.fontStyle = '';
+    document.getElementById('resource-body').innerHTML = '<p>No new topic and nothing due. Everything else moves one class later.</p>';
+    document.getElementById('resource-overlay').style.display = 'block';
+}
+
 function showResourcePanel(inf, dateStr) {
     if (!inf || !inf.t) return;
+    if (inf.kind === 'break') {
+        _showBreakDayPanel(inf, dateStr);
+        return;
+    }
     if (inf.kind === 'work') {
         _showWorkDayPanel(inf, dateStr);
         return;
@@ -23647,6 +23673,7 @@ function cls(i){
     if(i===NC||!i)return"cell-noclass";
     if(i.kind==='pc')return"cell-pc";
     if(i.kind==='work')return"cell-work";
+    if(i.kind==='break')return"cell-break";
     if(i.kind==='poster')return"cell-poster";
     if(i.kind==='orientation')return"cell-orient";
     if(i.kind==='baseline')return"cell-baseline";
@@ -23659,6 +23686,7 @@ function cls(i){
 }
 function htm(i,ds){
     if(i&&i.kind==='work')return `<div class="dn">${ds}</div><div class="tl">Work Day</div>`;
+    if(i&&i.kind==='break')return `<div class="dn">${ds}</div><div class="tl">Break Day</div>`;
     if(i===OFF)return`<div class="dn">${ds}</div><div class="tl"></div>`;
     if(i===EX)return`<div class="dn">${ds}</div><div class="tl">AP EXAM</div>`;
     if(i===PO)return`<div class="dn">${ds}</div><div class="tl">Done!</div>`;
@@ -23682,6 +23710,7 @@ function htm(i,ds){
 // rCal appends state suffixes (next up / completed / locked) where it knows them.
 function cellAria(i, ds){
     if(i&&i.kind==='work')return ds + ', Work Day — catch up on follow-alongs, flashcards, quiz retakes, and exit tickets (bonus)';
+    if(i&&i.kind==='break')return ds + ', Break Day — nothing due, no new topic';
     if(i===OFF) return ds + ', no school';
     if(i===EX) return ds + ', AP Statistics Exam';
     if(i===PO) return ds + ', post-exam';
@@ -24224,6 +24253,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
     else if(inf===EX)h+='<div class="tp">AP Statistics Exam!</div>';
     else if(inf===PO)h+='<div class="tp">Post-exam</div>';
     else if(inf.kind==='work')h+='<div class="tp">Work Day — catch up on follow-alongs, flashcards, quiz retakes, and exit tickets (bonus)</div>';
+    else if(inf.kind==='break')h+='<div class="tp">Break Day — nothing due, no new topic</div>';
     else{
         const newLabels=typeof cYear==='undefined'||cYear==='SY26-27';
         let label=inf.t===R?inf.n:inf.t+' \u2014 '+inf.n;
@@ -24778,7 +24808,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-17-k5zz';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-18-1afo';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

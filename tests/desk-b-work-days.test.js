@@ -27,10 +27,13 @@ function generated(){
 }
 const actual=generated(),S=actual.S;
 const iso=r=>r[0]+'-'+String(r[1]+1).padStart(2,'0')+'-'+String(r[2]).padStart(2,'0');
-const fixture=[['2026-10-13','2.1'],['2026-10-19','2.3'],['2026-11-13','5.2'],['2026-12-11','6.6'],['2026-12-18','6.8'],['2027-01-08','8.4'],['2027-01-22','5.7'],['2027-02-05','7.6'],['2027-02-12','7.9'],['2027-03-01','2.4'],['2027-03-19','review']];
+// Sim output (never typed from memory). 2026-09-18: B Break Day (AP Classroom down) shifted B one meeting later,
+// so the first Work Day moved Oct 13 -> Oct 16 and the Oct 19 one disappeared (10 Work Days now).
+const fixture=[['2026-10-16','2.2'],['2026-11-13','5.2'],['2026-12-11','6.6'],['2026-12-18','6.8'],['2027-01-08','8.4'],['2027-01-22','5.7'],['2027-02-05','7.6'],['2027-02-12','7.9'],['2027-03-01','2.4'],['2027-03-19','review']];
+const breakDay={t:'B-Break',n:'Break Day',u:0,kind:'break',due:'',as:''};
 const work=S.find(r=>r[3]?.kind==='work')[3];
 describe('B Work Day generator',()=>{
- it('reproduces all eleven dates and the next queued lesson, including Review 1',()=>{
+ it('reproduces all ten dates and the next queued lesson, including Review 1',()=>{
   expect(S.flatMap((r,i)=>r[3]?.kind==='work'?[[iso(r),S.slice(i+1).find(n=>typeof n[3]==='object')[3].t]]:[])).toEqual(fixture);
   expect(S.find(r=>iso(r)==='2027-03-22')[3].n).toBe(actual.def.pacing.B.at(-1).n);
   expect(work).toEqual({t:'B-Work',n:'Work Day',u:0,kind:'work',due:'',as:''});
@@ -43,10 +46,11 @@ describe('B Work Day generator',()=>{
    if(cell?.kind==='work'){
     expect(b-e).toBeGreaterThanOrEqual(2);
     expect(actual.def.pacing.B[b].kind).toBeUndefined();
-    expect(iso(r)>='2026-10-13').toBe(true);
+    expect(iso(r)>='2026-10-16').toBe(true);
     const monday=new Date(r[0],r[1],r[2]);monday.setDate(monday.getDate()-monday.getDay()+1);
     expect(weeks.has(+monday)).toBe(false);weeks.add(+monday);
-   }else if(typeof cell==='object'){placed.push(cell.t);b++;}
+   }else if(cell?.kind==='break'){expect(cell).toEqual(breakDay);}
+   else if(typeof cell==='object'){placed.push(cell.t);b++;}
    const ec=r[4];if(typeof ec==='object')e+=(ec.group||[ec]).length;
   }
   expect(placed).toEqual(actual.def.pacing.B.map(c=>c.t));
@@ -67,10 +71,12 @@ describe('B Work Day generator',()=>{
   }
  });
  it('emits corrected unit ends, review ends and additive JSON workDays with no lesson entry',()=>{
-  const ends={B:['2026-10-09','2026-11-24','2027-01-21','2027-02-26','2027-03-15'],E:['2026-10-16','2026-11-30','2027-01-25','2027-03-03','2027-03-17']};
+  const ends={B:['2026-10-13','2026-11-24','2027-01-21','2027-02-26','2027-03-15'],E:['2026-10-16','2026-11-30','2027-01-25','2027-03-03','2027-03-17']};
   for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
    const json=JSON.parse(readFileSync(path,'utf8'));
    expect(json.schemaVersion).toBe(2);expect(json.calendar.workDays).toEqual({B:fixture.map(r=>r[0]),E:[]});
+   expect(json.calendar.breakDays).toEqual({B:['2026-09-18'],E:[]});expect(json.lessons['B-Break']).toBeUndefined();
+   expect(json.progressChecks[1].mcqPartA).toEqual({B:'2026-09-21',E:'2026-09-21'});
    expect(json.lessons['B-Work']).toBeUndefined();expect(json.dayGroups.B).toEqual([]);
    expect(json.dayGroups.E).toEqual(S.filter(r=>r[4]?.group).map(r=>r[4].group.map(m=>m.t)));
    for(const [p,col] of [['B',3],['E',4]]){
@@ -81,7 +87,7 @@ describe('B Work Day generator',()=>{
   }
  });
 });
-const consumerNames=['localLessonState','donowCellState','donowLessonCovers','_isLessonComplete','calNextUpTopic','_orderedPeriodTopics','_workDayNextLesson','_showWorkDayPanel','showResourcePanel','_computePace','rProg','cls','htm','cellAria','sTip','_resourcePanelEsc','updateLegend','renderDoNow'];
+const consumerNames=['localLessonState','donowCellState','donowLessonCovers','_isLessonComplete','calNextUpTopic','_orderedPeriodTopics','_workDayNextLesson','_showWorkDayPanel','_showBreakDayPanel','showResourcePanel','_computePace','rProg','cls','htm','cellAria','sTip','_resourcePanelEsc','updateLegend','renderDoNow'];
 function page(){
  const dom=new JSDOM('<div id="pb"></div><div id="pl"></div><div id="legend-bar"></div><div id="resource-header"></div><div id="resource-body"></div><div id="resource-overlay" style="display:none"></div><div id="tip"></div><div id="donow-card"><div class="donow-body"><div id="donow-msg"></div></div></div>',{url:'https://desk.example/'});
  const s=load(consumerNames,{S,window:dom.window,document:dom.window.document,_lastResourcePanel:null,_todayLessonInf:work,_donowData:null,
@@ -124,6 +130,25 @@ describe('real Work Day Desk consumers',()=>{
    s.fetch=async()=>({json:async()=>({ok:true,nextTask:{lesson:'1.5',unit:1}})});
    await s.renderDoNow();const msg=dom.window.document.getElementById('donow-msg').textContent;
    expect(msg).toContain('Work Day — nothing new today.');expect(msg).toContain('Finish: '+s.cedLabel('1.1').text);expect(msg).toContain('Exit tickets are bonus (+5)');expect(dom.window.document.querySelector('#donow-today-topics')).toBeNull();
+  }finally{dom.window.close();}
+ });
+});
+
+describe('B Break Day (section-only, 2026-09-18)',()=>{
+ it('places nothing, consumes nothing, and moves the MCQ to the next meeting',()=>{
+  const rows=S.filter(r=>iso(r)>='2026-09-17'&&iso(r)<='2026-09-22').map(r=>[iso(r),r[3]?.t??r[3]]);
+  expect(rows).toEqual([['2026-09-17','1.6'],['2026-09-18','B-Break'],['2026-09-21','U1-PCA'],['2026-09-22','1.7']]);
+  expect(S.find(r=>iso(r)==='2026-09-18')[4].t).toBe('1.6'); // E unaffected that day
+ });
+ it('renders as a Break Day tile that is not a lesson and opens a plain panel',()=>{
+  const {dom,s}=page();try{
+   expect(s.cls(breakDay)).toBe('cell-break');expect(s.htm(breakDay,'Sep 18')).toContain('Break Day');
+   expect(s.cellAria(breakDay,'Sep 18')).toContain('Break Day');s.sTip({},new Date(2026,8,18),breakDay,'Sep 18');expect(s.tip.textContent).toContain('Break Day');
+   expect(s.localLessonState('B-Break',{})).toBe('');expect(s._isLessonComplete('B-Break',{})).toBe(true);expect(s.donowCellState('B-Break')).toBe('');
+   s.showResourcePanel(breakDay,'Sep 18');
+   expect(dom.window.document.getElementById('resource-header').textContent).toContain('Break Day');
+   expect(dom.window.document.getElementById('resource-overlay').style.display).toBe('block');
+   s.updateLegend(actual.SCHEDULE_DEFS['SY26-27']);expect(dom.window.document.getElementById('legend-bar').textContent).toContain('Break Day');
   }finally{dom.window.close();}
  });
 });
