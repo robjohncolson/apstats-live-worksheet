@@ -357,6 +357,27 @@
            to the <img>, so a loaded PNG rendered BOTH = two icons. 2026-06-03. */
         .app-icon .icon-img::after { content: attr(data-emoji); }
         .app-icon .icon-img.has-png::after { content: none; }
+        /* ZERO_WARNING (teacher 2026-09-18): a pulsing count on My Ledger for
+           worksheets whose zero date is within 3 days (or already passed with no
+           work) - so a student is never surprised when Schoology updates. */
+        .app-icon[data-app="wallet"] .wallet-zero-badge {
+            position: absolute; top: -6px; left: -6px; min-width: 16px; height: 16px;
+            padding: 0 4px; box-sizing: border-box; border-radius: 9px;
+            background: #cc0000; color: #fff; border: 1px solid var(--black);
+            font: bold 10px/14px Geneva, Arial, sans-serif; text-align: center;
+            animation: zero-pulse 1.4s ease-in-out infinite; pointer-events: none;
+        }
+        @keyframes zero-pulse {
+            0%,100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(204,0,0,0.6); }
+            50%     { transform: scale(1.18); box-shadow: 0 0 0 5px rgba(204,0,0,0); }
+        }
+        @media (prefers-reduced-motion: reduce) { .app-icon[data-app="wallet"] .wallet-zero-badge { animation: none; } }
+        .wallet-zero-card { border: 2px solid #cc0000; background: #fff3f3; padding: 8px 10px; margin-bottom: 10px; font-size: 11px; }
+        .wallet-zero-card h4 { margin: 0 0 6px; font: bold 12px Chicago, Geneva, sans-serif; color: #b00020; }
+        .wallet-zero-card .wz-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; border-top: 1px dotted #e0b0b0; }
+        .wallet-zero-card .wz-row:first-of-type { border-top: 0; }
+        .wallet-zero-card .wz-when { color: #7a0010; white-space: nowrap; margin-left: auto; }
+        .wallet-zero-card .wz-past { color: #b00020; font-weight: bold; }
         .app-icon[data-app="wallet"] .wallet-readiness-dot {
             position: absolute;
             right: -1px;
@@ -15152,7 +15173,116 @@ function _walletApplyWindowReadiness(readiness) {
     } catch (_) {}
 }
 
+// ── ZERO_WARNING (teacher 2026-09-18) ──────────────────────────────────────
+// A worksheet with no work becomes a 0 (Desk + Schoology) once lesson.zeroDate
+// [period] has ended (class day + config.dueLagDays, from /grade). Warn while
+// the zero date is within ZERO_WARN_DAYS, and keep warning after it passes —
+// the 0 is revisable, so "finish it" is still the right message. Pure over the
+// /grade lessons[] so it is testable; never throws.
+var ZERO_WARN_DAYS = 3;
+function _zeroWarnings(lessons, period, todayIso) {
+    try {
+        if (!Array.isArray(lessons) || !period || !todayIso) return [];
+        var today = new Date(todayIso + 'T00:00:00');
+        var out = [];
+        for (var i = 0; i < lessons.length; i++) {
+            var L = lessons[i];
+            if (!L || !L.lessonKey || !L.zeroDate) continue;
+            var zd = L.zeroDate[period];
+            if (!zd) continue;
+            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null || L.lessonGrade != null;
+            if (hasWork) continue;
+            var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
+            if (days > ZERO_WARN_DAYS) continue;
+            out.push({ lessonKey: L.lessonKey, zeroDate: zd, daysLeft: days, past: days < 0 });
+        }
+        out.sort(function (a, b) { return a.zeroDate < b.zeroDate ? -1 : a.zeroDate > b.zeroDate ? 1 : 0; });
+        return out;
+    } catch (_) { return []; }
+}
+function _zeroTodayIso() {
+    try { var d = (typeof tdy === 'function') ? tdy() : new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    catch (_) { return null; }
+}
+function _zeroCurrentWarnings() {
+    var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+    var period = (typeof cP === 'string') ? cP : null;
+    return _zeroWarnings(lessons, period, _zeroTodayIso());
+}
+function _zeroWhenText(w) {
+    var d = new Date(w.zeroDate + 'T00:00:00');
+    var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var when = DAYS[d.getDay()] + ' ' + (d.getMonth() + 1) + '/' + d.getDate();
+    if (w.past) return 'already a 0 \u2014 finish it to replace the 0';
+    if (w.daysLeft === 0) return '0 after TONIGHT 11:59 PM';
+    return '0 after ' + when + ' 11:59 PM';
+}
+function _updateZeroWarningBadge() {
+    try {
+        var icon = document.querySelector('.app-icon[data-app="wallet"]');
+        if (!icon) return;
+        var img = icon.querySelector('.icon-img');
+        if (!img) return;
+        var badge = img.querySelector('.wallet-zero-badge');
+        var warns = _zeroCurrentWarnings();
+        if (!warns.length) { if (badge) badge.remove(); icon.removeAttribute('data-zero-warn'); return; }
+        if (!badge) { badge = document.createElement('span'); badge.className = 'wallet-zero-badge'; img.appendChild(badge); }
+        badge.textContent = String(warns.length);
+        badge.setAttribute('role', 'status');
+        badge.setAttribute('aria-label', warns.length + ' worksheet' + (warns.length === 1 ? '' : 's') + ' about to become a 0');
+        icon.setAttribute('data-zero-warn', String(warns.length));
+        icon.title = warns.length + ' worksheet' + (warns.length === 1 ? '' : 's') + ' about to become a 0 \u2014 open My Ledger';
+    } catch (_) {}
+}
+function _zeroOpenLesson(lessonKey) {
+    try {
+        if (typeof S !== 'undefined' && Array.isArray(S) && typeof showResourcePanel === 'function') {
+            for (var i = 0; i < S.length; i++) {
+                var cell = (typeof cP === 'string' && cP === 'E') ? S[i][4] : S[i][3];
+                if (cell && typeof cell === 'object' && cell.t === lessonKey) { showResourcePanel(cell, ''); return; }
+            }
+        }
+        var e = (typeof getRegistryEntry === 'function') ? getRegistryEntry(lessonKey) : null;
+        if (e && e.urls && e.urls.worksheet) window.open(e.urls.worksheet, '_blank', 'noopener');
+    } catch (_) {}
+}
+function _walletPrependZeroCard(host) {
+    try {
+        if (!host) return;
+        var old = host.querySelector('.wallet-zero-card');
+        if (old) old.remove();
+        var warns = _zeroCurrentWarnings();
+        if (!warns.length) return;
+        var card = document.createElement('div');
+        card.className = 'wallet-zero-card';
+        var h = document.createElement('h4');
+        h.textContent = '\u26A0 About to become a 0';
+        card.appendChild(h);
+        var p = document.createElement('div');
+        p.textContent = 'No work on these yet. Each becomes a 0 in your grade and on Schoology after its date \u2014 always revisable, but finish them first.';
+        p.style.marginBottom = '6px';
+        card.appendChild(p);
+        warns.slice(0, 6).forEach(function (w) {
+            var row = document.createElement('div');
+            row.className = 'wz-row' + (w.past ? ' wz-past' : '');
+            var btn = document.createElement('button');
+            btn.type = 'button'; btn.className = 's7btn';
+            var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
+            btn.textContent = 'Open ' + label;
+            btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
+            row.appendChild(btn);
+            var when = document.createElement('span');
+            when.className = 'wz-when';
+            when.textContent = _zeroWhenText(w);
+            row.appendChild(when);
+            card.appendChild(row);
+        });
+        host.insertBefore(card, host.firstChild);
+    } catch (_) {}
+}
+
 function updateWalletReadinessIcon() {
+    try { _updateZeroWarningBadge(); } catch (_) {}
     try {
         var icon = document.querySelector('.app-icon[data-app="wallet"]');
         if (!icon) return;
@@ -17012,17 +17142,18 @@ async function renderWallet() {
     if (!host) return;
     // Instant paint from the local cache, then merge durable receipts and repaint.
     _walletPaint(host, _readDeskReceipts(), true);
+    _walletPrependZeroCard(host);
     try {
         var merged = await _walletLoadReceipts();
         var ov = document.getElementById('app-wallet-overlay');
-        if (ov && ov.style.display !== 'none') _walletPaint(host, merged, false);
+        if (ov && ov.style.display !== 'none') { _walletPaint(host, merged, false); _walletPrependZeroCard(host); }
         // ANDROID Phase 2: compute the signed-ledger verification summary once, then
         // repaint so the 🔐 chip appears (best-effort; no-op in view-as / offline).
         if (typeof _phase2RefreshVerifySummary === 'function') {
             try { if (typeof _phase2RegisterIssuer === 'function') _phase2RegisterIssuer(_phase2BaseUrl); } catch (_) {}
             _phase2RefreshVerifySummary(function () {
                 var ov2 = document.getElementById('app-wallet-overlay');
-                if (ov2 && ov2.style.display !== 'none') _walletPaint(host, merged, false);
+                if (ov2 && ov2.style.display !== 'none') { _walletPaint(host, merged, false); _walletPrependZeroCard(host); }
             });
         }
     } catch (_) {}
@@ -24828,7 +24959,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-18-p4i0';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-18-0in2';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
