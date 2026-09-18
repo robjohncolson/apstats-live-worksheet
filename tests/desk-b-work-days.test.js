@@ -140,6 +140,15 @@ describe('B Break Day (section-only, 2026-09-18)',()=>{
   expect(rows).toEqual([['2026-09-17','1.6'],['2026-09-18','B-Break'],['2026-09-21','U1-PCA'],['2026-09-22','1.7']]);
   expect(S.find(r=>iso(r)==='2026-09-18')[4].t).toBe('1.6'); // E unaffected that day
  });
+ it('leaves the OTHER section byte-identical to a run with no break at all',()=>{
+  const periods={};for(const pid in actual.def.periods){periods[pid]={...actual.def.periods[pid]};delete periods[pid].breakDays;}
+  const noBreak=actual.generateSchedule({...actual.def,periods});
+  expect(noBreak.some(r=>r[3]?.kind==='break')).toBe(false);
+  expect(S.map(r=>[iso(r),r[4]])).toEqual(noBreak.map(r=>[iso(r),r[4]]));      // E: every cell, every day
+  const bTopics=rows=>rows.filter(r=>typeof r[3]==='object'&&r[3].kind!=='work'&&r[3].kind!=='break').map(r=>r[3].t);
+  expect(bTopics(S)).toEqual(bTopics(noBreak));                                  // B: same pacing, later dates
+  expect(S.find(r=>iso(r)==='2026-09-21')[3].t).toBe(noBreak.find(r=>iso(r)==='2026-09-18')[3].t);
+ });
  it('renders as a Break Day tile that is not a lesson and opens a plain panel',()=>{
   const {dom,s}=page();try{
    expect(s.cls(breakDay)).toBe('cell-break');expect(s.htm(breakDay,'Sep 18')).toContain('Break Day');

@@ -38,7 +38,6 @@ function generated(){
 const actual=generated();
 const S=actual.S;
 const first=S.find(row=>row[4]?.group)[4];
-// Sim output after the 2026-09-18 B Break Day: the first fall pair moved 09-23 (1.7+1.8) -> 09-25 (1.8+1.9); later pairs unchanged.
 const pairs=[
   [
     "2026-09-16",
@@ -46,14 +45,14 @@ const pairs=[
     27
   ],
   [
-    "2026-09-25",
-    "1.8+1.9",
-    17
+    "2026-09-23",
+    "1.7+1.8",
+    27
   ],
   [
-    "2026-10-02",
-    "3.3+3.4",
-    27
+    "2026-09-25",
+    "1.9+3.1",
+    14
   ],
   [
     "2026-10-19",

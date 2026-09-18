@@ -13,7 +13,7 @@ const schedulePaths = [
   'data/lesson-schedule.json',
   'roster-server/data/lesson-schedule.json'
 ];
-// Date-column fixture after B_WORK_DAYS_SPEC.md + the 2026-09-18 B Break Day; CED labels keep grade identities.
+// Date-column fixture after B_WORK_DAYS_SPEC.md + the 2026-09-18 B Break Day (E untouched); CED labels keep grade identities.
 const scheduleSha256 = '67076972111e04067f53c2a31e31667adad9cb95b32fe5608e5b326841432f93';
 function bColumn(bytes) {
   return bytes.toString('utf8').split(/\r?\n/).filter(line => /^\s*"B":/.test(line) && !/^\s*"B": \[\]/.test(line)).join('\n');

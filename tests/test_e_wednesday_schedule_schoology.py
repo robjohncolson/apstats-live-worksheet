@@ -28,7 +28,7 @@ def test_shared_day_assignments_remain_distinct_and_idempotent(period):
     existing = {key: {"schoology_assignment_id": "fixture-" + key} for key in plan["create"]}
     assert plan_assignment_work(keys, existing)["create"] == []
 
-@pytest.mark.parametrize("group,date", [(["1.4", "1.5"], "2026-09-16"), (["1.8", "1.9"], "2026-09-25")])
+@pytest.mark.parametrize("group,date", [(["1.4", "1.5"], "2026-09-16"), (["1.7", "1.8"], "2026-09-23")])
 def test_two_follow_alongs_and_fixture_grades_round_trip(group, date):
     schedule = json.loads((ROOT / "data/lesson-schedule.json").read_text(encoding="utf-8"))
     cols = component_columns(schedule["lessons"], "E", quiz_topics=set(), blooket_topics=set(),

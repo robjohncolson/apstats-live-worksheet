@@ -10142,6 +10142,16 @@ function enumWeekdays(startArr,endArr){
 const VIDEO_MINUTES = {"1.1":6.7,"1.2":9.3,"1.3":8.3,"1.4":18.1,"1.5":8.7,"1.6":6.7,"1.7":18.4,"1.8":8.1,"1.9":8.9,"1.10":26.9,"2.1":7.7,"2.2":8.5,"2.3":9.2,"2.4":15.7,"2.5":7,"2.6":18.1,"2.7":10.6,"2.8":23.7,"2.9":12.9,"3.1":5.5,"3.2":8.3,"3.3":19.9,"3.4":7.4,"3.5":24.4,"3.6":12.8,"3.7":6.2,"4.1":5.3,"4.2":15.4,"4.3":8.8,"4.4":5.9,"4.5":8.5,"4.6":15.2,"4.7":13.2,"4.8":6.8,"4.9":13.1,"4.10":9.9,"4.11":7.1,"4.12":11,"5.1":7.9,"5.2":19.5,"5.3":11.6,"5.4":5.4,"5.5":12.8,"5.6":18.6,"5.7":14.6,"5.8":16.2,"6.1":9.1,"6.2":24.2,"6.3":22.9,"6.4":16.7,"6.5":16.4,"6.6":18.8,"6.7":14.7,"6.8":17.5,"6.9":16.7,"6.10":19.2,"6.11":29.9,"7.1":8.8,"7.2":26.8,"7.3":26.1,"7.4":14.9,"7.5":26.8,"7.6":17.2,"7.7":17,"7.8":13.6,"7.9":24.2,"7.10":23.8,"8.1":7.5,"8.2":25.1,"8.3":29,"8.4":8.6,"8.5":8.5,"8.6":28.4,"8.7":8.3,"9.1":6.9,"9.2":30.1,"9.3":15.3,"9.4":15.5,"9.5":24.8,"9.6":9.1};
 
 function generateSchedule(def){
+  // A section-only break must not move the OTHER section by a single day: that
+  // section's cells come from a reference run with every breakDays list removed,
+  // and its placements feed the lead exactly as they did without the break.
+  const hasBreak=pid=>!!(def.periods[pid]&&def.periods[pid].breakDays&&def.periods[pid].breakDays.length);
+  let ref=null;
+  if(['B','E'].some(hasBreak)){
+    const periods={};
+    for(const pid in def.periods){periods[pid]={...def.periods[pid]};delete periods[pid].breakDays}
+    ref=generateSchedule({...def,periods});
+  }
   const offSet=buildOffSet(def.daysOff);
   const earlyRelease=new Set((def.earlyRelease||[]).map(day=>day.join('-')));
   const allDays=enumWeekdays(def.range.start,def.range.end);
@@ -10160,9 +10170,19 @@ function generateSchedule(def){
     if(offSet.has(dk)){result.push([...da,OFF,OFF]);continue}
     if(dt>=examDt){const isEx=dt.getTime()===examDt.getTime();result.push([...da,isEx?EX:PO,isEx?EX:PO]);continue}
     const cells={};
+    const refRow=ref?ref.find(r=>r[0]===da[0]&&r[1]===da[1]&&r[2]===da[2]):null;
     for(const pid of ['B','E']){
       const pDef=def.periods[pid];
       if(!pDef)continue;
+      if(refRow&&!hasBreak(pid)){
+        const cell=refRow[pid==='B'?3:4];
+        cells[pid]=cell;
+        if(cell&&typeof cell==='object'&&cell.kind!=='work'){
+          const n=Array.isArray(cell.group)?cell.group.length:1;
+          if(pid==='B')placedB+=n; else placedE+=n;
+        }
+        continue;
+      }
       if(!pDef.meetsDays.includes(dow)) cells[pid]=NC;
       else if(queues[pid].length>0){
         // A section-only break: nothing placed, nothing consumed, the lead is unchanged.
@@ -24808,7 +24828,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-18-1afo';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-18-p4i0';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
