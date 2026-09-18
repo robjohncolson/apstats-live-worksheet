@@ -109,16 +109,18 @@
       "C": 85,
       "diagnosticTheta": 0.65,
       "dueAfterLessonDay": true,
+      "dueLagDays": 13,
       "feederWeights": {
         "Q": 2,
         "W": 1
       },
       "frqBand": {
         "E": 100,
-        "I": 35,
-        "P": 70
+        "I": 60,
+        "P": 85
       },
       "frqDiagnosticCorrectThreshold": 0.5,
+      "frqProvisionalFloorSince": "2026-09-15",
       "gradingWindowStart": "2026-09-01",
       "lessonFeederWeights": {
         "Q": 3,

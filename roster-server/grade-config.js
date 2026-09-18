@@ -137,6 +137,14 @@ export const PHASE3_CONFIG = {
   // Absent in the frozen SY2526 config → due from the start of the lesson day.
   dueAfterLessonDay: true,
 
+  // SY2627 (teacher 2026-09-18): a missing WORKSHEET becomes a 0 only
+  // config.dueLagDays after its class day (13 = "two weeks", landing the
+  // night before the same weekday) — the first two weeks were add/drop, and
+  // after that the zeros roll one lesson per class day as a focusing signal.
+  // Shifts the lesson due date only; the early bonus deadline and PC due dates
+  // keep the class date. Schoology gets an explicit 0 once this date has ended.
+  dueLagDays: 13,
+
   // SY2627 (teacher 2026-09-03): early-completion bonus — +perLesson points on
   // the quarter grade for each scheduled-due lesson whose worksheet work was all
   // submitted by 11:59 PM on its due date, capped at `cap` per quarter (0 = off,

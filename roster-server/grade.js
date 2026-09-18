@@ -518,6 +518,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
         blooketPresence,
         trainerLessons,
         blooketBonusTopics,
+        config,
       )
     : [];
 

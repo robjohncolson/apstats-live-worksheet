@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 1a12109e2574
+ * engine-version: 391c04fb5366
  */
 ;(function (root) {
   'use strict';
@@ -164,6 +164,14 @@
       // (11:59 PM schoolTz) — a missing worksheet is not a 0 until the next day.
       // Absent in the frozen SY2526 config → due from the start of the lesson day.
       dueAfterLessonDay: true,
+    
+      // SY2627 (teacher 2026-09-18): a missing WORKSHEET becomes a 0 only
+      // config.dueLagDays after its class day (13 = "two weeks", landing the
+      // night before the same weekday) — the first two weeks were add/drop, and
+      // after that the zeros roll one lesson per class day as a focusing signal.
+      // Shifts the lesson due date only; the early bonus deadline and PC due dates
+      // keep the class date. Schoology gets an explicit 0 once this date has ended.
+      dueLagDays: 13,
     
       // SY2627 (teacher 2026-09-03): early-completion bonus — +perLesson points on
       // the quarter grade for each scheduled-due lesson whose worksheet work was all
@@ -1123,6 +1131,29 @@
       return dateStr <= todayDateStr;
     }
     
+    // ── Lesson zero date (SY2627, teacher 2026-09-18) ────────────────────────────
+    //
+    // A missing WORKSHEET is not a 0 the day after class: the teacher wants "about
+    // two weeks" of grace (the first two weeks of school were add/drop), then a
+    // rolling focusing signal — 1.1 zeroes Mon 9/21, 1.2 the next class day, and so
+    // on. config.dueLagDays (13 = the same weekday two weeks later, minus one day)
+    // shifts the LESSON due date; the early-completion bonus deadline and the PC
+    // due dates keep the class date. Absent (frozen SY2526) → no shift.
+    function addDays(dateStr, n) {
+      if (!dateStr || !Number.isFinite(n)) return dateStr || null;
+      const [y, m, d] = String(dateStr).split('-').map(Number);
+      if (!y || !m || !d) return dateStr;
+      return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+    }
+    function lessonZeroDate(dateStr, config) {
+      if (!dateStr) return null;
+      const lag = config && Number.isFinite(config.dueLagDays) ? config.dueLagDays : 0;
+      return lag ? addDays(dateStr, lag) : dateStr;
+    }
+    function isLessonDue(dateStr, todayDateStr, config) {
+      return isDateDue(lessonZeroDate(dateStr, config), todayDateStr, config);
+    }
+    
     // Epoch ms of 23:59:59 on a YYYY-MM-DD date in an IANA timezone (the deadline
     // instant used by the early-completion bonus). Falls back to UTC.
     function endOfDayEpochInTz(dateStr, tz) {
@@ -1431,11 +1462,11 @@
             // No date for this period — treat as not-yet-due (future).
             return false;
           }
-          return isDateDue(dueDate, todayDateStr, config);
+          return isLessonDue(dueDate, todayDateStr, config);
         }
         // Unknown section: due if EITHER B or E is due.
-        const bDue = isDateDue(periods.B, todayDateStr, config);
-        const eDue = isDateDue(periods.E, todayDateStr, config);
+        const bDue = isLessonDue(periods.B, todayDateStr, config);
+        const eDue = isLessonDue(periods.E, todayDateStr, config);
         return !!(bDue || eDue);
       }
     
@@ -1704,10 +1735,10 @@
         const periods = entry.periods && typeof entry.periods === 'object' ? entry.periods : {};
         if (period) {
           const d = periods[period];
-          return isDateDue(d, todayDateStr, config);
+          return isLessonDue(d, todayDateStr, config);
         }
-        const bDue = isDateDue(periods.B, todayDateStr, config);
-        const eDue = isDateDue(periods.E, todayDateStr, config);
+        const bDue = isLessonDue(periods.B, todayDateStr, config);
+        const eDue = isLessonDue(periods.E, todayDateStr, config);
         return !!(bDue || eDue);
       }
     
@@ -2114,7 +2145,7 @@
     // trainerLessons: optional [topicKey] with mapped TI-84 skills → sets hasTrainer per lesson
     // blooketBonusTopics: optional [topicKey] enrichment (G4/M2d) → sets blooketBonus per lesson
     //   so teacher dashboards can label bonus vs core; never part of the required Due set.
-    function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = [], blooketBonusTopics = []) {
+    function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = [], blooketBonusTopics = [], config = null) {
       const result = [];
       const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
       const trainerSet = new Set(Array.isArray(trainerLessons) ? trainerLessons : []);
@@ -2154,6 +2185,8 @@
           worksheetKey: entry.worksheetKey,
           topicName: (topicNames && topicNames[topicKey]) || null,
           due: { B: periods.B || null, E: periods.E || null },
+          // SY2627: the date after which a missing worksheet is a 0 (due + config.dueLagDays).
+          zeroDate: { B: lessonZeroDate(periods.B, config) || null, E: lessonZeroDate(periods.E, config) || null },
           lessonGrade: lessonResult ? lessonResult.lessonGrade : null,
           // v3 Lessons-track value ({Cws, W} blend, quiz excluded) — the apples-to-apples
           // "Follow-Along" cell for the in-app/Schoology gradebook (worksheet blanks +
@@ -2200,7 +2233,7 @@
     
       return result;
     }
-    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter };
+    return { parseItemLesson: parseItemLesson, expandLessonKey: expandLessonKey, buildWorksheetBlankCounts: buildWorksheetBlankCounts, computeLessonGrades: computeLessonGrades, todayInTz: todayInTz, sectionToPeriod: sectionToPeriod, quarterOfLesson: quarterOfLesson, computeQuarterFromLessons: computeQuarterFromLessons, V3_WORK_WEIGHTS: V3_WORK_WEIGHTS, V3_GATES: V3_GATES, quarterGradeV3: quarterGradeV3, workAvgV3: workAvgV3, computeQuarterV3: computeQuarterV3, computeQuizTotals: computeQuizTotals, buildLessonsArray: buildLessonsArray, deriveQuarterBands: deriveQuarterBands, pcDatesFor: pcDatesFor, pcUnitsInQuarter: pcUnitsInQuarter, addDays: addDays, lessonZeroDate: lessonZeroDate, isLessonDue: isLessonDue };
   })();
 
   // ── gradebook-grid.js ──────────────────────────────────────────────────────
@@ -3043,6 +3076,7 @@
             blooketPresence,
             trainerLessons,
             blooketBonusTopics,
+            config,
           )
         : [];
     
@@ -3077,7 +3111,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "1a12109e2574",
+    _engineVersion: "391c04fb5366",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

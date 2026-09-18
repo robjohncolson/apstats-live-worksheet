@@ -93,6 +93,7 @@
     "v3AheadOfScheduleLessons": "not-until-due",
     "v3LessonsByDate": true,
     "dueAfterLessonDay": true,
+    "dueLagDays": 13,
     "v3EarlyBonus": {
       "perLesson": 1,
       "cap": 5,

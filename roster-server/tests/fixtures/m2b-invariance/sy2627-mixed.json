@@ -99,6 +99,7 @@
     "v3AheadOfScheduleLessons": "not-until-due",
     "v3LessonsByDate": true,
     "dueAfterLessonDay": true,
+    "dueLagDays": 13,
     "v3EarlyBonus": {
       "perLesson": 1,
       "cap": 5,
@@ -112,7 +113,7 @@
       "enabled": false
     }
   },
-  "artHash": "1d72b5941a5ac551292a0fc594a7ef4866462e64b022734849c700764bf976ba",
+  "artHash": "256594ad6959130a75b603e03748229bb1a4f5313eaf3205ae7966ad4add53f6",
   "grade": {
     "units": {
       "U1": {
@@ -151,7 +152,7 @@
         "unitsGraded": 0,
         "unitsTotal": 3,
         "ceiling": 100,
-        "lessonsDue": 17,
+        "lessonsDue": 15,
         "lessonsGraded": 0,
         "lessonsTotal": 28,
         "pcAvg": null,

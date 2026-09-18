@@ -51,8 +51,22 @@ def _lesson_key(lesson: dict):
     return None
 
 
+def _today_eastern() -> str:
+    """YYYY-MM-DD in America/New_York (the deadline clock the engine uses)."""
+    from datetime import datetime
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+    except Exception:  # pragma: no cover
+        return datetime.utcnow().strftime("%Y-%m-%d")
+
+
+_period_of = components.period_of
+_zero_due = components.zero_due
+
+
 def build_fixture(doc: dict, uid_map: dict | None = None,
-                  granularity: str = "lesson") -> dict:
+                  granularity: str = "lesson", today: str | None = None) -> dict:
     """Map a /class/grades response to {"<student>/<key>": value}.
 
     granularity 'lesson' (default) -> per-lesson lessonGrade keyed by topic;
@@ -68,9 +82,15 @@ def build_fixture(doc: dict, uid_map: dict | None = None,
         surfaced = s.get("schoologyUid")
         uid = str(surfaced) if surfaced not in (None, "") else uid_map.get(rid, rid)
         if granularity in ("lesson", "both"):
+            period = _period_of(s)
             for lesson in (s.get("lessons") or []):
                 key = _lesson_key(lesson)
                 val = lesson.get("lessonGrade")
+                # SY2627 (teacher 2026-09-18): no work + zero date passed -> an
+                # explicit 0 on Schoology (the focusing signal). Best-wins on the
+                # sync side means later work replaces it and a hand entry is kept.
+                if val is None and _zero_due(lesson, period, today):
+                    val = 0
                 if key is not None and val is not None:
                     out[f"{uid}/{key}"] = val
         if granularity in ("quarter", "both"):
@@ -187,9 +207,9 @@ def main(argv=None) -> int:
             uid_map = json.load(f)
 
     if args.granularity == "component":
-        fixture = components.component_grades_from_class_doc(doc, uid_map=uid_map)
+        fixture = components.component_grades_from_class_doc(doc, uid_map=uid_map, today=_today_eastern())
     else:
-        fixture = build_fixture(doc, uid_map=uid_map, granularity=args.granularity)
+        fixture = build_fixture(doc, uid_map=uid_map, granularity=args.granularity, today=_today_eastern())
     payload = json.dumps(fixture, indent=2)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:

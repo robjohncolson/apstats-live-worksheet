@@ -222,6 +222,32 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         self.assertEqual(out["9001/QUIZ:1.2"], 78)
         self.assertEqual(out["9001/BL:1.2"], 100)
 
+    def test_followalong_zero_once_zero_date_passed_quiz_blooket_untouched(self):
+        doc = {"students": [{
+            "studentId": "s9", "schoologyUid": "u9", "section": "PeriodB",
+            "lessons": [
+                {"lessonKey": "1.1", "unit": 1, "worksheetKey": "1", "lessonGradeNoQuiz": None, "Cws": None,
+                 "Q": None, "quizTotal": 0, "blooket": None, "hasBlooket": True,
+                 "zeroDate": {"B": "2026-09-21", "E": "2026-09-22"}},
+                {"lessonKey": "1.2", "unit": 1, "worksheetKey": "2", "lessonGradeNoQuiz": None, "Cws": None,
+                 "Q": None, "quizTotal": 3, "blooket": None, "hasBlooket": True,
+                 "zeroDate": {"B": "2026-09-23", "E": "2026-09-24"}},
+                {"lessonKey": "1.10", "unit": 1, "worksheetKey": "10", "lessonGradeNoQuiz": None, "Cws": None,
+                 "Q": None, "quizTotal": 0, "zeroDate": {"B": None, "E": None}},
+            ], "units": {}}]}
+        fa = sc.fa_key(sc.group_label(1, "1"))
+        # still open on the zero date itself
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-09-21"), {})
+        out = sc.component_grades_from_class_doc(doc, today="2026-09-22")
+        self.assertEqual(out, {f"u9/{fa}": 0})           # only 1.1, only Follow-Along
+        out = sc.component_grades_from_class_doc(doc, today="2026-09-24")
+        self.assertEqual(sorted(out), sorted([f"u9/{fa}", f"u9/{sc.fa_key(sc.group_label(1, '2'))}"]))
+        self.assertTrue(all(v == 0 for v in out.values()))
+        # legacy caller (no today) and E-period student are untouched by B's dates
+        self.assertEqual(sc.component_grades_from_class_doc(doc), {})
+        doc["students"][0]["section"] = "PeriodE"
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-09-22"), {})
+
     def test_emits_pc_from_units_and_skips_poster(self):
         # PC <- units[U#].pcRawPct (the unit mastery track). Poster has no data
         # source yet, so it is never emitted (parity with gradebook-grid.js).

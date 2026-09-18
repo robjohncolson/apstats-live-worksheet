@@ -10,8 +10,7 @@ import {
   isDateDue,
   endOfDayEpochInTz,
   lessonCompletedAt,
-  worksheetCoverageReachedAt,
-} from '../lesson-grade.js';
+  worksheetCoverageReachedAt, addDays, lessonZeroDate, isLessonDue } from '../lesson-grade.js';
 import { buildGradebookRow, buildGradebook } from '../gradebook-grid.js';
 import { PHASE3_CONFIG } from '../grade-config.js';
 
@@ -69,6 +68,45 @@ describe('isDateDue — due after the lesson day ends (11:59 PM)', () => {
   });
   it('the live config sets dueAfterLessonDay', () => {
     expect(PHASE3_CONFIG.dueAfterLessonDay).toBe(true);
+  });
+});
+
+describe('lesson zero date — config.dueLagDays (teacher 2026-09-18: two weeks of grace, then one per class day)', () => {
+  const LAG = { ...CFG, dueLagDays: 13 };
+  it('addDays crosses month ends and DST', () => {
+    expect(addDays('2026-09-08', 13)).toBe('2026-09-21');
+    expect(addDays('2026-10-30', 13)).toBe('2026-11-12');
+    expect(addDays('2026-12-25', 13)).toBe('2027-01-07');
+    expect(addDays(null, 13)).toBeNull();
+  });
+  it('lessonZeroDate shifts by the lag; no lag (frozen SY2526) leaves the class date', () => {
+    expect(lessonZeroDate('2026-09-08', LAG)).toBe('2026-09-21');
+    expect(lessonZeroDate('2026-09-08', CFG)).toBe('2026-09-08');
+    expect(lessonZeroDate(null, LAG)).toBeNull();
+  });
+  it('1.1 taught Tue 9/8 is NOT due on Mon 9/21, and IS due from Tue 9/22', () => {
+    expect(isLessonDue('2026-09-08', '2026-09-21', LAG)).toBe(false);
+    expect(isLessonDue('2026-09-08', '2026-09-22', LAG)).toBe(true);
+    // the un-lagged helper is unchanged (bonus deadline + PC dates use it)
+    expect(isDateDue('2026-09-08', '2026-09-09', LAG)).toBe(true);
+  });
+  it('the live config lags lessons by 13 days', () => {
+    expect(PHASE3_CONFIG.dueLagDays).toBe(13);
+  });
+  it('computeQuarterV3: a missing worksheet is null through the zero date and 0 the day after', () => {
+    const schedule = { '1.1': { unit: 1, periods: { B: '2026-09-08', E: '2026-09-09' } } };
+    const empty = lessonMapOf({});
+    expect(q1(empty, schedule, '2026-09-21', LAG).quarterGrade).toBeNull();
+    const after = q1(empty, schedule, '2026-09-22', LAG);
+    expect(after.lessonsDue).toBe(1);
+    expect(after.quarterGrade).not.toBeNull();
+  });
+  it('the early bonus still keys off the CLASS day and is credited once the lesson is zero-due', () => {
+    const schedule = { '1.1': { unit: 1, periods: { B: '2026-09-08', E: '2026-09-09' } } };
+    const onTime = lessonMapOf({ '1.1': lesson(100, '2026-09-08T20:00:00-04:00') });
+    const late = lessonMapOf({ '1.1': lesson(100, '2026-09-10T20:00:00-04:00') });
+    expect(q1(onTime, schedule, '2026-09-22', LAG).earlyBonus).toBe(1);
+    expect(q1(late, schedule, '2026-09-22', LAG).earlyBonus).toBe(0);
   });
 });
 

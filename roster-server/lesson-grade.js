@@ -615,6 +615,29 @@ export function isDateDue(dateStr, todayDateStr, config) {
   return dateStr <= todayDateStr;
 }
 
+// ── Lesson zero date (SY2627, teacher 2026-09-18) ────────────────────────────
+//
+// A missing WORKSHEET is not a 0 the day after class: the teacher wants "about
+// two weeks" of grace (the first two weeks of school were add/drop), then a
+// rolling focusing signal — 1.1 zeroes Mon 9/21, 1.2 the next class day, and so
+// on. config.dueLagDays (13 = the same weekday two weeks later, minus one day)
+// shifts the LESSON due date; the early-completion bonus deadline and the PC
+// due dates keep the class date. Absent (frozen SY2526) → no shift.
+export function addDays(dateStr, n) {
+  if (!dateStr || !Number.isFinite(n)) return dateStr || null;
+  const [y, m, d] = String(dateStr).split('-').map(Number);
+  if (!y || !m || !d) return dateStr;
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+export function lessonZeroDate(dateStr, config) {
+  if (!dateStr) return null;
+  const lag = config && Number.isFinite(config.dueLagDays) ? config.dueLagDays : 0;
+  return lag ? addDays(dateStr, lag) : dateStr;
+}
+export function isLessonDue(dateStr, todayDateStr, config) {
+  return isDateDue(lessonZeroDate(dateStr, config), todayDateStr, config);
+}
+
 // Epoch ms of 23:59:59 on a YYYY-MM-DD date in an IANA timezone (the deadline
 // instant used by the early-completion bonus). Falls back to UTC.
 export function endOfDayEpochInTz(dateStr, tz) {
@@ -923,11 +946,11 @@ export function computeQuarterFromLessons({
         // No date for this period — treat as not-yet-due (future).
         return false;
       }
-      return isDateDue(dueDate, todayDateStr, config);
+      return isLessonDue(dueDate, todayDateStr, config);
     }
     // Unknown section: due if EITHER B or E is due.
-    const bDue = isDateDue(periods.B, todayDateStr, config);
-    const eDue = isDateDue(periods.E, todayDateStr, config);
+    const bDue = isLessonDue(periods.B, todayDateStr, config);
+    const eDue = isLessonDue(periods.E, todayDateStr, config);
     return !!(bDue || eDue);
   }
 
@@ -1196,10 +1219,10 @@ export function computeQuarterV3({
     const periods = entry.periods && typeof entry.periods === 'object' ? entry.periods : {};
     if (period) {
       const d = periods[period];
-      return isDateDue(d, todayDateStr, config);
+      return isLessonDue(d, todayDateStr, config);
     }
-    const bDue = isDateDue(periods.B, todayDateStr, config);
-    const eDue = isDateDue(periods.E, todayDateStr, config);
+    const bDue = isLessonDue(periods.B, todayDateStr, config);
+    const eDue = isLessonDue(periods.E, todayDateStr, config);
     return !!(bDue || eDue);
   }
 
@@ -1606,7 +1629,7 @@ export function computeQuizTotals(answerKey, schedule) {
 // trainerLessons: optional [topicKey] with mapped TI-84 skills → sets hasTrainer per lesson
 // blooketBonusTopics: optional [topicKey] enrichment (G4/M2d) → sets blooketBonus per lesson
 //   so teacher dashboards can label bonus vs core; never part of the required Due set.
-export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = [], blooketBonusTopics = []) {
+export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = [], blooketBonusTopics = [], config = null) {
   const result = [];
   const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
   const trainerSet = new Set(Array.isArray(trainerLessons) ? trainerLessons : []);
@@ -1646,6 +1669,8 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       worksheetKey: entry.worksheetKey,
       topicName: (topicNames && topicNames[topicKey]) || null,
       due: { B: periods.B || null, E: periods.E || null },
+      // SY2627: the date after which a missing worksheet is a 0 (due + config.dueLagDays).
+      zeroDate: { B: lessonZeroDate(periods.B, config) || null, E: lessonZeroDate(periods.E, config) || null },
       lessonGrade: lessonResult ? lessonResult.lessonGrade : null,
       // v3 Lessons-track value ({Cws, W} blend, quiz excluded) — the apples-to-apples
       // "Follow-Along" cell for the in-app/Schoology gradebook (worksheet blanks +

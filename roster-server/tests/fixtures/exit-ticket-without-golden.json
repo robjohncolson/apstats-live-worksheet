@@ -1,5 +1,5 @@
 {
-  "baseline": "2daef27",
+  "baseline": "dueLagDays=13 (2026-09-18, post-03869a5f)",
   "opts": {
     "lessonSchedule": {
       "1.1": {
@@ -1098,7 +1098,7 @@
             "unitsGraded": 0,
             "unitsTotal": 3,
             "ceiling": 100,
-            "lessonsDue": 19,
+            "lessonsDue": 15,
             "lessonsGraded": 0,
             "lessonsTotal": 30,
             "pcAvg": null,
@@ -1248,6 +1248,10 @@
               "B": "2026-09-08",
               "E": "2026-09-09"
             },
+            "zeroDate": {
+              "B": "2026-09-21",
+              "E": "2026-09-22"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1273,6 +1277,10 @@
             "due": {
               "B": "2026-09-10",
               "E": "2026-09-11"
+            },
+            "zeroDate": {
+              "B": "2026-09-23",
+              "E": "2026-09-24"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1300,6 +1308,10 @@
               "B": "2026-09-11",
               "E": "2026-09-14"
             },
+            "zeroDate": {
+              "B": "2026-09-24",
+              "E": "2026-09-27"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1325,6 +1337,10 @@
             "due": {
               "B": "2026-09-14",
               "E": "2026-09-16"
+            },
+            "zeroDate": {
+              "B": "2026-09-27",
+              "E": "2026-09-29"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1352,6 +1368,10 @@
               "B": "2026-09-15",
               "E": "2026-09-16"
             },
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-29"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1377,6 +1397,10 @@
             "due": {
               "B": "2026-09-17",
               "E": "2026-09-18"
+            },
+            "zeroDate": {
+              "B": "2026-09-30",
+              "E": "2026-10-01"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1404,6 +1428,10 @@
               "B": "2026-09-21",
               "E": "2026-09-23"
             },
+            "zeroDate": {
+              "B": "2026-10-04",
+              "E": "2026-10-06"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1429,6 +1457,10 @@
             "due": {
               "B": "2026-09-22",
               "E": "2026-09-23"
+            },
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-06"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1456,6 +1488,10 @@
               "B": "2026-09-24",
               "E": "2026-09-25"
             },
+            "zeroDate": {
+              "B": "2026-10-07",
+              "E": "2026-10-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1481,6 +1517,10 @@
             "due": {
               "B": "2026-11-09",
               "E": "2026-11-09"
+            },
+            "zeroDate": {
+              "B": "2026-11-22",
+              "E": "2026-11-22"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1508,6 +1548,10 @@
               "B": "2026-10-13",
               "E": "2026-10-19"
             },
+            "zeroDate": {
+              "B": "2026-10-26",
+              "E": "2026-11-01"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1533,6 +1577,10 @@
             "due": {
               "B": "2026-10-15",
               "E": "2026-10-19"
+            },
+            "zeroDate": {
+              "B": "2026-10-28",
+              "E": "2026-11-01"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1560,6 +1608,10 @@
               "B": "2026-10-16",
               "E": "2026-10-21"
             },
+            "zeroDate": {
+              "B": "2026-10-29",
+              "E": "2026-11-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1585,6 +1637,10 @@
             "due": {
               "B": "2027-02-05",
               "E": "2027-03-01"
+            },
+            "zeroDate": {
+              "B": "2027-02-18",
+              "E": "2027-03-14"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1612,6 +1668,10 @@
               "B": "2027-02-08",
               "E": "2027-03-01"
             },
+            "zeroDate": {
+              "B": "2027-02-21",
+              "E": "2027-03-14"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1637,6 +1697,10 @@
             "due": {
               "B": "2027-02-09",
               "E": "2027-03-03"
+            },
+            "zeroDate": {
+              "B": "2027-02-22",
+              "E": "2027-03-16"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1664,6 +1728,10 @@
               "B": "2027-02-11",
               "E": "2027-03-05"
             },
+            "zeroDate": {
+              "B": "2027-02-24",
+              "E": "2027-03-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1690,6 +1758,10 @@
               "B": "2027-02-12",
               "E": "2027-03-08"
             },
+            "zeroDate": {
+              "B": "2027-02-25",
+              "E": "2027-03-21"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1713,6 +1785,10 @@
             "worksheetKey": "9",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -1742,6 +1818,10 @@
               "B": "2026-09-25",
               "E": "2026-09-25"
             },
+            "zeroDate": {
+              "B": "2026-10-08",
+              "E": "2026-10-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1767,6 +1847,10 @@
             "due": {
               "B": "2026-09-28",
               "E": "2026-09-28"
+            },
+            "zeroDate": {
+              "B": "2026-10-11",
+              "E": "2026-10-11"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1794,6 +1878,10 @@
               "B": "2026-09-29",
               "E": "2026-09-30"
             },
+            "zeroDate": {
+              "B": "2026-10-12",
+              "E": "2026-10-13"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1819,6 +1907,10 @@
             "due": {
               "B": "2026-10-01",
               "E": "2026-10-02"
+            },
+            "zeroDate": {
+              "B": "2026-10-14",
+              "E": "2026-10-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1846,6 +1938,10 @@
               "B": "2026-10-02",
               "E": "2026-10-05"
             },
+            "zeroDate": {
+              "B": "2026-10-15",
+              "E": "2026-10-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1872,6 +1968,10 @@
               "B": "2026-10-05",
               "E": "2026-10-07"
             },
+            "zeroDate": {
+              "B": "2026-10-18",
+              "E": "2026-10-20"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1895,6 +1995,10 @@
             "worksheetKey": "6-7",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -1924,6 +2028,10 @@
               "B": "2026-10-19",
               "E": "2026-10-21"
             },
+            "zeroDate": {
+              "B": "2026-11-01",
+              "E": "2026-11-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -1949,6 +2057,10 @@
             "due": {
               "B": "2026-10-20",
               "E": "2026-10-23"
+            },
+            "zeroDate": {
+              "B": "2026-11-02",
+              "E": "2026-11-05"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -1976,6 +2088,10 @@
               "B": "2026-10-22",
               "E": "2026-10-26"
             },
+            "zeroDate": {
+              "B": "2026-11-04",
+              "E": "2026-11-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2001,6 +2117,10 @@
             "due": {
               "B": "2026-10-23",
               "E": "2026-10-26"
+            },
+            "zeroDate": {
+              "B": "2026-11-05",
+              "E": "2026-11-08"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2028,6 +2148,10 @@
               "B": "2026-10-26",
               "E": "2026-10-28"
             },
+            "zeroDate": {
+              "B": "2026-11-08",
+              "E": "2026-11-10"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2053,6 +2177,10 @@
             "due": {
               "B": "2026-10-29",
               "E": "2026-11-02"
+            },
+            "zeroDate": {
+              "B": "2026-11-11",
+              "E": "2026-11-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2080,6 +2208,10 @@
               "B": "2026-10-30",
               "E": "2026-11-02"
             },
+            "zeroDate": {
+              "B": "2026-11-12",
+              "E": "2026-11-15"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2106,6 +2238,10 @@
               "B": "2026-11-02",
               "E": "2026-11-04"
             },
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2129,6 +2265,10 @@
             "worksheetKey": "9",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -2158,6 +2298,10 @@
               "B": "2026-11-05",
               "E": "2026-11-06"
             },
+            "zeroDate": {
+              "B": "2026-11-18",
+              "E": "2026-11-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2184,6 +2328,10 @@
               "B": "2026-11-06",
               "E": "2026-11-06"
             },
+            "zeroDate": {
+              "B": "2026-11-19",
+              "E": "2026-11-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2207,6 +2355,10 @@
             "worksheetKey": "10-12",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -2236,6 +2388,10 @@
               "B": "2026-11-12",
               "E": "2026-11-13"
             },
+            "zeroDate": {
+              "B": "2026-11-25",
+              "E": "2026-11-26"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2261,6 +2417,10 @@
             "due": {
               "B": "2026-11-10",
               "E": "2026-11-13"
+            },
+            "zeroDate": {
+              "B": "2026-11-23",
+              "E": "2026-11-26"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2288,6 +2448,10 @@
               "B": "2026-11-13",
               "E": "2026-11-16"
             },
+            "zeroDate": {
+              "B": "2026-11-26",
+              "E": "2026-11-29"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2313,6 +2477,10 @@
             "due": {
               "B": "2026-11-20",
               "E": "2026-11-25"
+            },
+            "zeroDate": {
+              "B": "2026-12-03",
+              "E": "2026-12-08"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2340,6 +2508,10 @@
               "B": "2026-11-23",
               "E": "2026-11-25"
             },
+            "zeroDate": {
+              "B": "2026-12-06",
+              "E": "2026-12-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2365,6 +2537,10 @@
             "due": {
               "B": "2026-12-10",
               "E": "2026-12-16"
+            },
+            "zeroDate": {
+              "B": "2026-12-23",
+              "E": "2026-12-29"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2392,6 +2568,10 @@
               "B": "2027-01-11",
               "E": "2027-01-22"
             },
+            "zeroDate": {
+              "B": "2027-01-24",
+              "E": "2027-02-04"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2417,6 +2597,10 @@
             "due": {
               "B": "2027-01-22",
               "E": "2027-02-03"
+            },
+            "zeroDate": {
+              "B": "2027-02-04",
+              "E": "2027-02-16"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2444,6 +2628,10 @@
               "B": "2026-11-24",
               "E": "2026-11-30"
             },
+            "zeroDate": {
+              "B": "2026-12-07",
+              "E": "2026-12-13"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2469,6 +2657,10 @@
             "due": {
               "B": "2026-11-30",
               "E": "2026-12-02"
+            },
+            "zeroDate": {
+              "B": "2026-12-13",
+              "E": "2026-12-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2496,6 +2688,10 @@
               "B": "2026-12-01",
               "E": "2026-12-04"
             },
+            "zeroDate": {
+              "B": "2026-12-14",
+              "E": "2026-12-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2521,6 +2717,10 @@
             "due": {
               "B": "2026-12-03",
               "E": "2026-12-07"
+            },
+            "zeroDate": {
+              "B": "2026-12-16",
+              "E": "2026-12-20"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2548,6 +2748,10 @@
               "B": "2026-12-04",
               "E": "2026-12-09"
             },
+            "zeroDate": {
+              "B": "2026-12-17",
+              "E": "2026-12-22"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2573,6 +2777,10 @@
             "due": {
               "B": "2026-12-07",
               "E": "2026-12-11"
+            },
+            "zeroDate": {
+              "B": "2026-12-20",
+              "E": "2026-12-24"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2600,6 +2808,10 @@
               "B": "2026-12-08",
               "E": "2026-12-14"
             },
+            "zeroDate": {
+              "B": "2026-12-21",
+              "E": "2026-12-27"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2625,6 +2837,10 @@
             "due": {
               "B": "2026-12-11",
               "E": "2026-12-18"
+            },
+            "zeroDate": {
+              "B": "2026-12-24",
+              "E": "2026-12-31"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2652,6 +2868,10 @@
               "B": "2026-12-14",
               "E": "2026-12-21"
             },
+            "zeroDate": {
+              "B": "2026-12-27",
+              "E": "2027-01-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2677,6 +2897,10 @@
             "due": {
               "B": "2026-12-15",
               "E": "2026-12-23"
+            },
+            "zeroDate": {
+              "B": "2026-12-28",
+              "E": "2027-01-05"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2704,6 +2928,10 @@
               "B": "2026-12-17",
               "E": "2027-01-04"
             },
+            "zeroDate": {
+              "B": "2026-12-30",
+              "E": "2027-01-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2729,6 +2957,10 @@
             "due": {
               "B": "2027-01-12",
               "E": "2027-01-22"
+            },
+            "zeroDate": {
+              "B": "2027-01-25",
+              "E": "2027-02-04"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2756,6 +2988,10 @@
               "B": "2027-01-14",
               "E": "2027-01-25"
             },
+            "zeroDate": {
+              "B": "2027-01-27",
+              "E": "2027-02-07"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2781,6 +3017,10 @@
             "due": {
               "B": "2027-01-15",
               "E": "2027-01-27"
+            },
+            "zeroDate": {
+              "B": "2027-01-28",
+              "E": "2027-02-09"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2808,6 +3048,10 @@
               "B": "2027-01-19",
               "E": "2027-01-29"
             },
+            "zeroDate": {
+              "B": "2027-02-01",
+              "E": "2027-02-11"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2833,6 +3077,10 @@
             "due": {
               "B": "2027-01-21",
               "E": "2027-02-01"
+            },
+            "zeroDate": {
+              "B": "2027-02-03",
+              "E": "2027-02-14"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2860,6 +3108,10 @@
               "B": "2027-01-25",
               "E": "2027-02-05"
             },
+            "zeroDate": {
+              "B": "2027-02-07",
+              "E": "2027-02-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2885,6 +3137,10 @@
             "due": {
               "B": "2027-01-26",
               "E": "2027-02-08"
+            },
+            "zeroDate": {
+              "B": "2027-02-08",
+              "E": "2027-02-21"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2912,6 +3168,10 @@
               "B": "2027-01-28",
               "E": "2027-02-10"
             },
+            "zeroDate": {
+              "B": "2027-02-10",
+              "E": "2027-02-23"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2937,6 +3197,10 @@
             "due": {
               "B": "2027-01-29",
               "E": "2027-02-12"
+            },
+            "zeroDate": {
+              "B": "2027-02-11",
+              "E": "2027-02-25"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -2964,6 +3228,10 @@
               "B": "2026-12-18",
               "E": "2027-01-06"
             },
+            "zeroDate": {
+              "B": "2026-12-31",
+              "E": "2027-01-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -2987,6 +3255,10 @@
             "worksheetKey": "2",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -3016,6 +3288,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3041,6 +3317,10 @@
             "due": {
               "B": "2026-12-21",
               "E": "2027-01-06"
+            },
+            "zeroDate": {
+              "B": "2027-01-03",
+              "E": "2027-01-19"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3068,6 +3348,10 @@
               "B": "2026-12-22",
               "E": "2027-01-08"
             },
+            "zeroDate": {
+              "B": "2027-01-04",
+              "E": "2027-01-21"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3094,6 +3378,10 @@
               "B": "2027-01-04",
               "E": "2027-01-11"
             },
+            "zeroDate": {
+              "B": "2027-01-17",
+              "E": "2027-01-24"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3117,6 +3405,10 @@
             "worksheetKey": "1",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -3146,6 +3438,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3169,6 +3465,10 @@
             "worksheetKey": "3",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -3198,6 +3498,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3221,6 +3525,10 @@
             "worksheetKey": "5",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -3306,7 +3614,7 @@
             "unitsGraded": 0,
             "unitsTotal": 3,
             "ceiling": 100,
-            "lessonsDue": 19,
+            "lessonsDue": 15,
             "lessonsGraded": 0,
             "lessonsTotal": 30,
             "pcAvg": null,
@@ -3463,6 +3771,10 @@
               "B": "2026-09-08",
               "E": "2026-09-09"
             },
+            "zeroDate": {
+              "B": "2026-09-21",
+              "E": "2026-09-22"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3488,6 +3800,10 @@
             "due": {
               "B": "2026-09-10",
               "E": "2026-09-11"
+            },
+            "zeroDate": {
+              "B": "2026-09-23",
+              "E": "2026-09-24"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3515,6 +3831,10 @@
               "B": "2026-09-11",
               "E": "2026-09-14"
             },
+            "zeroDate": {
+              "B": "2026-09-24",
+              "E": "2026-09-27"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3540,6 +3860,10 @@
             "due": {
               "B": "2026-09-14",
               "E": "2026-09-16"
+            },
+            "zeroDate": {
+              "B": "2026-09-27",
+              "E": "2026-09-29"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3567,6 +3891,10 @@
               "B": "2026-09-15",
               "E": "2026-09-16"
             },
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-29"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3592,6 +3920,10 @@
             "due": {
               "B": "2026-09-17",
               "E": "2026-09-18"
+            },
+            "zeroDate": {
+              "B": "2026-09-30",
+              "E": "2026-10-01"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3619,6 +3951,10 @@
               "B": "2026-09-21",
               "E": "2026-09-23"
             },
+            "zeroDate": {
+              "B": "2026-10-04",
+              "E": "2026-10-06"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3644,6 +3980,10 @@
             "due": {
               "B": "2026-09-22",
               "E": "2026-09-23"
+            },
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-06"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3671,6 +4011,10 @@
               "B": "2026-09-24",
               "E": "2026-09-25"
             },
+            "zeroDate": {
+              "B": "2026-10-07",
+              "E": "2026-10-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3696,6 +4040,10 @@
             "due": {
               "B": "2026-11-09",
               "E": "2026-11-09"
+            },
+            "zeroDate": {
+              "B": "2026-11-22",
+              "E": "2026-11-22"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3723,6 +4071,10 @@
               "B": "2026-10-13",
               "E": "2026-10-19"
             },
+            "zeroDate": {
+              "B": "2026-10-26",
+              "E": "2026-11-01"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3748,6 +4100,10 @@
             "due": {
               "B": "2026-10-15",
               "E": "2026-10-19"
+            },
+            "zeroDate": {
+              "B": "2026-10-28",
+              "E": "2026-11-01"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3775,6 +4131,10 @@
               "B": "2026-10-16",
               "E": "2026-10-21"
             },
+            "zeroDate": {
+              "B": "2026-10-29",
+              "E": "2026-11-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3800,6 +4160,10 @@
             "due": {
               "B": "2027-02-05",
               "E": "2027-03-01"
+            },
+            "zeroDate": {
+              "B": "2027-02-18",
+              "E": "2027-03-14"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3827,6 +4191,10 @@
               "B": "2027-02-08",
               "E": "2027-03-01"
             },
+            "zeroDate": {
+              "B": "2027-02-21",
+              "E": "2027-03-14"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3852,6 +4220,10 @@
             "due": {
               "B": "2027-02-09",
               "E": "2027-03-03"
+            },
+            "zeroDate": {
+              "B": "2027-02-22",
+              "E": "2027-03-16"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -3879,6 +4251,10 @@
               "B": "2027-02-11",
               "E": "2027-03-05"
             },
+            "zeroDate": {
+              "B": "2027-02-24",
+              "E": "2027-03-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3905,6 +4281,10 @@
               "B": "2027-02-12",
               "E": "2027-03-08"
             },
+            "zeroDate": {
+              "B": "2027-02-25",
+              "E": "2027-03-21"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3928,6 +4308,10 @@
             "worksheetKey": "9",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -3957,6 +4341,10 @@
               "B": "2026-09-25",
               "E": "2026-09-25"
             },
+            "zeroDate": {
+              "B": "2026-10-08",
+              "E": "2026-10-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -3982,6 +4370,10 @@
             "due": {
               "B": "2026-09-28",
               "E": "2026-09-28"
+            },
+            "zeroDate": {
+              "B": "2026-10-11",
+              "E": "2026-10-11"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4009,6 +4401,10 @@
               "B": "2026-09-29",
               "E": "2026-09-30"
             },
+            "zeroDate": {
+              "B": "2026-10-12",
+              "E": "2026-10-13"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4034,6 +4430,10 @@
             "due": {
               "B": "2026-10-01",
               "E": "2026-10-02"
+            },
+            "zeroDate": {
+              "B": "2026-10-14",
+              "E": "2026-10-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4061,6 +4461,10 @@
               "B": "2026-10-02",
               "E": "2026-10-05"
             },
+            "zeroDate": {
+              "B": "2026-10-15",
+              "E": "2026-10-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4087,6 +4491,10 @@
               "B": "2026-10-05",
               "E": "2026-10-07"
             },
+            "zeroDate": {
+              "B": "2026-10-18",
+              "E": "2026-10-20"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4110,6 +4518,10 @@
             "worksheetKey": "6-7",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -4139,6 +4551,10 @@
               "B": "2026-10-19",
               "E": "2026-10-21"
             },
+            "zeroDate": {
+              "B": "2026-11-01",
+              "E": "2026-11-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4164,6 +4580,10 @@
             "due": {
               "B": "2026-10-20",
               "E": "2026-10-23"
+            },
+            "zeroDate": {
+              "B": "2026-11-02",
+              "E": "2026-11-05"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4191,6 +4611,10 @@
               "B": "2026-10-22",
               "E": "2026-10-26"
             },
+            "zeroDate": {
+              "B": "2026-11-04",
+              "E": "2026-11-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4216,6 +4640,10 @@
             "due": {
               "B": "2026-10-23",
               "E": "2026-10-26"
+            },
+            "zeroDate": {
+              "B": "2026-11-05",
+              "E": "2026-11-08"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4243,6 +4671,10 @@
               "B": "2026-10-26",
               "E": "2026-10-28"
             },
+            "zeroDate": {
+              "B": "2026-11-08",
+              "E": "2026-11-10"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4268,6 +4700,10 @@
             "due": {
               "B": "2026-10-29",
               "E": "2026-11-02"
+            },
+            "zeroDate": {
+              "B": "2026-11-11",
+              "E": "2026-11-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4295,6 +4731,10 @@
               "B": "2026-10-30",
               "E": "2026-11-02"
             },
+            "zeroDate": {
+              "B": "2026-11-12",
+              "E": "2026-11-15"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4321,6 +4761,10 @@
               "B": "2026-11-02",
               "E": "2026-11-04"
             },
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4344,6 +4788,10 @@
             "worksheetKey": "9",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -4373,6 +4821,10 @@
               "B": "2026-11-05",
               "E": "2026-11-06"
             },
+            "zeroDate": {
+              "B": "2026-11-18",
+              "E": "2026-11-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4399,6 +4851,10 @@
               "B": "2026-11-06",
               "E": "2026-11-06"
             },
+            "zeroDate": {
+              "B": "2026-11-19",
+              "E": "2026-11-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4422,6 +4878,10 @@
             "worksheetKey": "10-12",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -4451,6 +4911,10 @@
               "B": "2026-11-12",
               "E": "2026-11-13"
             },
+            "zeroDate": {
+              "B": "2026-11-25",
+              "E": "2026-11-26"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4476,6 +4940,10 @@
             "due": {
               "B": "2026-11-10",
               "E": "2026-11-13"
+            },
+            "zeroDate": {
+              "B": "2026-11-23",
+              "E": "2026-11-26"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4503,6 +4971,10 @@
               "B": "2026-11-13",
               "E": "2026-11-16"
             },
+            "zeroDate": {
+              "B": "2026-11-26",
+              "E": "2026-11-29"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4528,6 +5000,10 @@
             "due": {
               "B": "2026-11-20",
               "E": "2026-11-25"
+            },
+            "zeroDate": {
+              "B": "2026-12-03",
+              "E": "2026-12-08"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4555,6 +5031,10 @@
               "B": "2026-11-23",
               "E": "2026-11-25"
             },
+            "zeroDate": {
+              "B": "2026-12-06",
+              "E": "2026-12-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4580,6 +5060,10 @@
             "due": {
               "B": "2026-12-10",
               "E": "2026-12-16"
+            },
+            "zeroDate": {
+              "B": "2026-12-23",
+              "E": "2026-12-29"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4607,6 +5091,10 @@
               "B": "2027-01-11",
               "E": "2027-01-22"
             },
+            "zeroDate": {
+              "B": "2027-01-24",
+              "E": "2027-02-04"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4632,6 +5120,10 @@
             "due": {
               "B": "2027-01-22",
               "E": "2027-02-03"
+            },
+            "zeroDate": {
+              "B": "2027-02-04",
+              "E": "2027-02-16"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4659,6 +5151,10 @@
               "B": "2026-11-24",
               "E": "2026-11-30"
             },
+            "zeroDate": {
+              "B": "2026-12-07",
+              "E": "2026-12-13"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4684,6 +5180,10 @@
             "due": {
               "B": "2026-11-30",
               "E": "2026-12-02"
+            },
+            "zeroDate": {
+              "B": "2026-12-13",
+              "E": "2026-12-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4711,6 +5211,10 @@
               "B": "2026-12-01",
               "E": "2026-12-04"
             },
+            "zeroDate": {
+              "B": "2026-12-14",
+              "E": "2026-12-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4736,6 +5240,10 @@
             "due": {
               "B": "2026-12-03",
               "E": "2026-12-07"
+            },
+            "zeroDate": {
+              "B": "2026-12-16",
+              "E": "2026-12-20"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4763,6 +5271,10 @@
               "B": "2026-12-04",
               "E": "2026-12-09"
             },
+            "zeroDate": {
+              "B": "2026-12-17",
+              "E": "2026-12-22"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4788,6 +5300,10 @@
             "due": {
               "B": "2026-12-07",
               "E": "2026-12-11"
+            },
+            "zeroDate": {
+              "B": "2026-12-20",
+              "E": "2026-12-24"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4815,6 +5331,10 @@
               "B": "2026-12-08",
               "E": "2026-12-14"
             },
+            "zeroDate": {
+              "B": "2026-12-21",
+              "E": "2026-12-27"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4840,6 +5360,10 @@
             "due": {
               "B": "2026-12-11",
               "E": "2026-12-18"
+            },
+            "zeroDate": {
+              "B": "2026-12-24",
+              "E": "2026-12-31"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4867,6 +5391,10 @@
               "B": "2026-12-14",
               "E": "2026-12-21"
             },
+            "zeroDate": {
+              "B": "2026-12-27",
+              "E": "2027-01-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4892,6 +5420,10 @@
             "due": {
               "B": "2026-12-15",
               "E": "2026-12-23"
+            },
+            "zeroDate": {
+              "B": "2026-12-28",
+              "E": "2027-01-05"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4919,6 +5451,10 @@
               "B": "2026-12-17",
               "E": "2027-01-04"
             },
+            "zeroDate": {
+              "B": "2026-12-30",
+              "E": "2027-01-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4944,6 +5480,10 @@
             "due": {
               "B": "2027-01-12",
               "E": "2027-01-22"
+            },
+            "zeroDate": {
+              "B": "2027-01-25",
+              "E": "2027-02-04"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -4971,6 +5511,10 @@
               "B": "2027-01-14",
               "E": "2027-01-25"
             },
+            "zeroDate": {
+              "B": "2027-01-27",
+              "E": "2027-02-07"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -4996,6 +5540,10 @@
             "due": {
               "B": "2027-01-15",
               "E": "2027-01-27"
+            },
+            "zeroDate": {
+              "B": "2027-01-28",
+              "E": "2027-02-09"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5023,6 +5571,10 @@
               "B": "2027-01-19",
               "E": "2027-01-29"
             },
+            "zeroDate": {
+              "B": "2027-02-01",
+              "E": "2027-02-11"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5048,6 +5600,10 @@
             "due": {
               "B": "2027-01-21",
               "E": "2027-02-01"
+            },
+            "zeroDate": {
+              "B": "2027-02-03",
+              "E": "2027-02-14"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5075,6 +5631,10 @@
               "B": "2027-01-25",
               "E": "2027-02-05"
             },
+            "zeroDate": {
+              "B": "2027-02-07",
+              "E": "2027-02-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5100,6 +5660,10 @@
             "due": {
               "B": "2027-01-26",
               "E": "2027-02-08"
+            },
+            "zeroDate": {
+              "B": "2027-02-08",
+              "E": "2027-02-21"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5127,6 +5691,10 @@
               "B": "2027-01-28",
               "E": "2027-02-10"
             },
+            "zeroDate": {
+              "B": "2027-02-10",
+              "E": "2027-02-23"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5152,6 +5720,10 @@
             "due": {
               "B": "2027-01-29",
               "E": "2027-02-12"
+            },
+            "zeroDate": {
+              "B": "2027-02-11",
+              "E": "2027-02-25"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5179,6 +5751,10 @@
               "B": "2026-12-18",
               "E": "2027-01-06"
             },
+            "zeroDate": {
+              "B": "2026-12-31",
+              "E": "2027-01-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5202,6 +5778,10 @@
             "worksheetKey": "2",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -5231,6 +5811,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5256,6 +5840,10 @@
             "due": {
               "B": "2026-12-21",
               "E": "2027-01-06"
+            },
+            "zeroDate": {
+              "B": "2027-01-03",
+              "E": "2027-01-19"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5283,6 +5871,10 @@
               "B": "2026-12-22",
               "E": "2027-01-08"
             },
+            "zeroDate": {
+              "B": "2027-01-04",
+              "E": "2027-01-21"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5309,6 +5901,10 @@
               "B": "2027-01-04",
               "E": "2027-01-11"
             },
+            "zeroDate": {
+              "B": "2027-01-17",
+              "E": "2027-01-24"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5332,6 +5928,10 @@
             "worksheetKey": "1",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -5361,6 +5961,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5384,6 +5988,10 @@
             "worksheetKey": "3",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -5413,6 +6021,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5436,6 +6048,10 @@
             "worksheetKey": "5",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -5521,7 +6137,7 @@
             "unitsGraded": 0,
             "unitsTotal": 3,
             "ceiling": 100,
-            "lessonsDue": 19,
+            "lessonsDue": 15,
             "lessonsGraded": 0,
             "lessonsTotal": 30,
             "pcAvg": null,
@@ -5678,6 +6294,10 @@
               "B": "2026-09-08",
               "E": "2026-09-09"
             },
+            "zeroDate": {
+              "B": "2026-09-21",
+              "E": "2026-09-22"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5703,6 +6323,10 @@
             "due": {
               "B": "2026-09-10",
               "E": "2026-09-11"
+            },
+            "zeroDate": {
+              "B": "2026-09-23",
+              "E": "2026-09-24"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5730,6 +6354,10 @@
               "B": "2026-09-11",
               "E": "2026-09-14"
             },
+            "zeroDate": {
+              "B": "2026-09-24",
+              "E": "2026-09-27"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5755,6 +6383,10 @@
             "due": {
               "B": "2026-09-14",
               "E": "2026-09-16"
+            },
+            "zeroDate": {
+              "B": "2026-09-27",
+              "E": "2026-09-29"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5782,6 +6414,10 @@
               "B": "2026-09-15",
               "E": "2026-09-16"
             },
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-29"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5807,6 +6443,10 @@
             "due": {
               "B": "2026-09-17",
               "E": "2026-09-18"
+            },
+            "zeroDate": {
+              "B": "2026-09-30",
+              "E": "2026-10-01"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5834,6 +6474,10 @@
               "B": "2026-09-21",
               "E": "2026-09-23"
             },
+            "zeroDate": {
+              "B": "2026-10-04",
+              "E": "2026-10-06"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5859,6 +6503,10 @@
             "due": {
               "B": "2026-09-22",
               "E": "2026-09-23"
+            },
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-06"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5886,6 +6534,10 @@
               "B": "2026-09-24",
               "E": "2026-09-25"
             },
+            "zeroDate": {
+              "B": "2026-10-07",
+              "E": "2026-10-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5911,6 +6563,10 @@
             "due": {
               "B": "2026-11-09",
               "E": "2026-11-09"
+            },
+            "zeroDate": {
+              "B": "2026-11-22",
+              "E": "2026-11-22"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5938,6 +6594,10 @@
               "B": "2026-10-13",
               "E": "2026-10-19"
             },
+            "zeroDate": {
+              "B": "2026-10-26",
+              "E": "2026-11-01"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -5963,6 +6623,10 @@
             "due": {
               "B": "2026-10-15",
               "E": "2026-10-19"
+            },
+            "zeroDate": {
+              "B": "2026-10-28",
+              "E": "2026-11-01"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -5990,6 +6654,10 @@
               "B": "2026-10-16",
               "E": "2026-10-21"
             },
+            "zeroDate": {
+              "B": "2026-10-29",
+              "E": "2026-11-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6015,6 +6683,10 @@
             "due": {
               "B": "2027-02-05",
               "E": "2027-03-01"
+            },
+            "zeroDate": {
+              "B": "2027-02-18",
+              "E": "2027-03-14"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6042,6 +6714,10 @@
               "B": "2027-02-08",
               "E": "2027-03-01"
             },
+            "zeroDate": {
+              "B": "2027-02-21",
+              "E": "2027-03-14"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6067,6 +6743,10 @@
             "due": {
               "B": "2027-02-09",
               "E": "2027-03-03"
+            },
+            "zeroDate": {
+              "B": "2027-02-22",
+              "E": "2027-03-16"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6094,6 +6774,10 @@
               "B": "2027-02-11",
               "E": "2027-03-05"
             },
+            "zeroDate": {
+              "B": "2027-02-24",
+              "E": "2027-03-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6120,6 +6804,10 @@
               "B": "2027-02-12",
               "E": "2027-03-08"
             },
+            "zeroDate": {
+              "B": "2027-02-25",
+              "E": "2027-03-21"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6143,6 +6831,10 @@
             "worksheetKey": "9",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -6172,6 +6864,10 @@
               "B": "2026-09-25",
               "E": "2026-09-25"
             },
+            "zeroDate": {
+              "B": "2026-10-08",
+              "E": "2026-10-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6197,6 +6893,10 @@
             "due": {
               "B": "2026-09-28",
               "E": "2026-09-28"
+            },
+            "zeroDate": {
+              "B": "2026-10-11",
+              "E": "2026-10-11"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6224,6 +6924,10 @@
               "B": "2026-09-29",
               "E": "2026-09-30"
             },
+            "zeroDate": {
+              "B": "2026-10-12",
+              "E": "2026-10-13"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6249,6 +6953,10 @@
             "due": {
               "B": "2026-10-01",
               "E": "2026-10-02"
+            },
+            "zeroDate": {
+              "B": "2026-10-14",
+              "E": "2026-10-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6276,6 +6984,10 @@
               "B": "2026-10-02",
               "E": "2026-10-05"
             },
+            "zeroDate": {
+              "B": "2026-10-15",
+              "E": "2026-10-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6302,6 +7014,10 @@
               "B": "2026-10-05",
               "E": "2026-10-07"
             },
+            "zeroDate": {
+              "B": "2026-10-18",
+              "E": "2026-10-20"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6325,6 +7041,10 @@
             "worksheetKey": "6-7",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -6354,6 +7074,10 @@
               "B": "2026-10-19",
               "E": "2026-10-21"
             },
+            "zeroDate": {
+              "B": "2026-11-01",
+              "E": "2026-11-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6379,6 +7103,10 @@
             "due": {
               "B": "2026-10-20",
               "E": "2026-10-23"
+            },
+            "zeroDate": {
+              "B": "2026-11-02",
+              "E": "2026-11-05"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6406,6 +7134,10 @@
               "B": "2026-10-22",
               "E": "2026-10-26"
             },
+            "zeroDate": {
+              "B": "2026-11-04",
+              "E": "2026-11-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6431,6 +7163,10 @@
             "due": {
               "B": "2026-10-23",
               "E": "2026-10-26"
+            },
+            "zeroDate": {
+              "B": "2026-11-05",
+              "E": "2026-11-08"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6458,6 +7194,10 @@
               "B": "2026-10-26",
               "E": "2026-10-28"
             },
+            "zeroDate": {
+              "B": "2026-11-08",
+              "E": "2026-11-10"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6483,6 +7223,10 @@
             "due": {
               "B": "2026-10-29",
               "E": "2026-11-02"
+            },
+            "zeroDate": {
+              "B": "2026-11-11",
+              "E": "2026-11-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6510,6 +7254,10 @@
               "B": "2026-10-30",
               "E": "2026-11-02"
             },
+            "zeroDate": {
+              "B": "2026-11-12",
+              "E": "2026-11-15"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6536,6 +7284,10 @@
               "B": "2026-11-02",
               "E": "2026-11-04"
             },
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6559,6 +7311,10 @@
             "worksheetKey": "9",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -6588,6 +7344,10 @@
               "B": "2026-11-05",
               "E": "2026-11-06"
             },
+            "zeroDate": {
+              "B": "2026-11-18",
+              "E": "2026-11-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6614,6 +7374,10 @@
               "B": "2026-11-06",
               "E": "2026-11-06"
             },
+            "zeroDate": {
+              "B": "2026-11-19",
+              "E": "2026-11-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6637,6 +7401,10 @@
             "worksheetKey": "10-12",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -6666,6 +7434,10 @@
               "B": "2026-11-12",
               "E": "2026-11-13"
             },
+            "zeroDate": {
+              "B": "2026-11-25",
+              "E": "2026-11-26"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6691,6 +7463,10 @@
             "due": {
               "B": "2026-11-10",
               "E": "2026-11-13"
+            },
+            "zeroDate": {
+              "B": "2026-11-23",
+              "E": "2026-11-26"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6718,6 +7494,10 @@
               "B": "2026-11-13",
               "E": "2026-11-16"
             },
+            "zeroDate": {
+              "B": "2026-11-26",
+              "E": "2026-11-29"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6743,6 +7523,10 @@
             "due": {
               "B": "2026-11-20",
               "E": "2026-11-25"
+            },
+            "zeroDate": {
+              "B": "2026-12-03",
+              "E": "2026-12-08"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6770,6 +7554,10 @@
               "B": "2026-11-23",
               "E": "2026-11-25"
             },
+            "zeroDate": {
+              "B": "2026-12-06",
+              "E": "2026-12-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6795,6 +7583,10 @@
             "due": {
               "B": "2026-12-10",
               "E": "2026-12-16"
+            },
+            "zeroDate": {
+              "B": "2026-12-23",
+              "E": "2026-12-29"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6822,6 +7614,10 @@
               "B": "2027-01-11",
               "E": "2027-01-22"
             },
+            "zeroDate": {
+              "B": "2027-01-24",
+              "E": "2027-02-04"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6847,6 +7643,10 @@
             "due": {
               "B": "2027-01-22",
               "E": "2027-02-03"
+            },
+            "zeroDate": {
+              "B": "2027-02-04",
+              "E": "2027-02-16"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6874,6 +7674,10 @@
               "B": "2026-11-24",
               "E": "2026-11-30"
             },
+            "zeroDate": {
+              "B": "2026-12-07",
+              "E": "2026-12-13"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6899,6 +7703,10 @@
             "due": {
               "B": "2026-11-30",
               "E": "2026-12-02"
+            },
+            "zeroDate": {
+              "B": "2026-12-13",
+              "E": "2026-12-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6926,6 +7734,10 @@
               "B": "2026-12-01",
               "E": "2026-12-04"
             },
+            "zeroDate": {
+              "B": "2026-12-14",
+              "E": "2026-12-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -6951,6 +7763,10 @@
             "due": {
               "B": "2026-12-03",
               "E": "2026-12-07"
+            },
+            "zeroDate": {
+              "B": "2026-12-16",
+              "E": "2026-12-20"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -6978,6 +7794,10 @@
               "B": "2026-12-04",
               "E": "2026-12-09"
             },
+            "zeroDate": {
+              "B": "2026-12-17",
+              "E": "2026-12-22"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7003,6 +7823,10 @@
             "due": {
               "B": "2026-12-07",
               "E": "2026-12-11"
+            },
+            "zeroDate": {
+              "B": "2026-12-20",
+              "E": "2026-12-24"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7030,6 +7854,10 @@
               "B": "2026-12-08",
               "E": "2026-12-14"
             },
+            "zeroDate": {
+              "B": "2026-12-21",
+              "E": "2026-12-27"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7055,6 +7883,10 @@
             "due": {
               "B": "2026-12-11",
               "E": "2026-12-18"
+            },
+            "zeroDate": {
+              "B": "2026-12-24",
+              "E": "2026-12-31"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7082,6 +7914,10 @@
               "B": "2026-12-14",
               "E": "2026-12-21"
             },
+            "zeroDate": {
+              "B": "2026-12-27",
+              "E": "2027-01-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7107,6 +7943,10 @@
             "due": {
               "B": "2026-12-15",
               "E": "2026-12-23"
+            },
+            "zeroDate": {
+              "B": "2026-12-28",
+              "E": "2027-01-05"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7134,6 +7974,10 @@
               "B": "2026-12-17",
               "E": "2027-01-04"
             },
+            "zeroDate": {
+              "B": "2026-12-30",
+              "E": "2027-01-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7159,6 +8003,10 @@
             "due": {
               "B": "2027-01-12",
               "E": "2027-01-22"
+            },
+            "zeroDate": {
+              "B": "2027-01-25",
+              "E": "2027-02-04"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7186,6 +8034,10 @@
               "B": "2027-01-14",
               "E": "2027-01-25"
             },
+            "zeroDate": {
+              "B": "2027-01-27",
+              "E": "2027-02-07"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7211,6 +8063,10 @@
             "due": {
               "B": "2027-01-15",
               "E": "2027-01-27"
+            },
+            "zeroDate": {
+              "B": "2027-01-28",
+              "E": "2027-02-09"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7238,6 +8094,10 @@
               "B": "2027-01-19",
               "E": "2027-01-29"
             },
+            "zeroDate": {
+              "B": "2027-02-01",
+              "E": "2027-02-11"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7263,6 +8123,10 @@
             "due": {
               "B": "2027-01-21",
               "E": "2027-02-01"
+            },
+            "zeroDate": {
+              "B": "2027-02-03",
+              "E": "2027-02-14"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7290,6 +8154,10 @@
               "B": "2027-01-25",
               "E": "2027-02-05"
             },
+            "zeroDate": {
+              "B": "2027-02-07",
+              "E": "2027-02-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7315,6 +8183,10 @@
             "due": {
               "B": "2027-01-26",
               "E": "2027-02-08"
+            },
+            "zeroDate": {
+              "B": "2027-02-08",
+              "E": "2027-02-21"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7342,6 +8214,10 @@
               "B": "2027-01-28",
               "E": "2027-02-10"
             },
+            "zeroDate": {
+              "B": "2027-02-10",
+              "E": "2027-02-23"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7367,6 +8243,10 @@
             "due": {
               "B": "2027-01-29",
               "E": "2027-02-12"
+            },
+            "zeroDate": {
+              "B": "2027-02-11",
+              "E": "2027-02-25"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7394,6 +8274,10 @@
               "B": "2026-12-18",
               "E": "2027-01-06"
             },
+            "zeroDate": {
+              "B": "2026-12-31",
+              "E": "2027-01-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7417,6 +8301,10 @@
             "worksheetKey": "2",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -7446,6 +8334,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7471,6 +8363,10 @@
             "due": {
               "B": "2026-12-21",
               "E": "2027-01-06"
+            },
+            "zeroDate": {
+              "B": "2027-01-03",
+              "E": "2027-01-19"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7498,6 +8394,10 @@
               "B": "2026-12-22",
               "E": "2027-01-08"
             },
+            "zeroDate": {
+              "B": "2027-01-04",
+              "E": "2027-01-21"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7524,6 +8424,10 @@
               "B": "2027-01-04",
               "E": "2027-01-11"
             },
+            "zeroDate": {
+              "B": "2027-01-17",
+              "E": "2027-01-24"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7547,6 +8451,10 @@
             "worksheetKey": "1",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -7576,6 +8484,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7599,6 +8511,10 @@
             "worksheetKey": "3",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -7628,6 +8544,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7651,6 +8571,10 @@
             "worksheetKey": "5",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -7756,7 +8680,7 @@
             "unitsGraded": 0,
             "unitsTotal": 3,
             "ceiling": 100,
-            "lessonsDue": 19,
+            "lessonsDue": 15,
             "lessonsGraded": 0,
             "lessonsTotal": 30,
             "pcAvg": null,
@@ -7913,6 +8837,10 @@
               "B": "2026-09-08",
               "E": "2026-09-09"
             },
+            "zeroDate": {
+              "B": "2026-09-21",
+              "E": "2026-09-22"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7938,6 +8866,10 @@
             "due": {
               "B": "2026-09-10",
               "E": "2026-09-11"
+            },
+            "zeroDate": {
+              "B": "2026-09-23",
+              "E": "2026-09-24"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -7965,6 +8897,10 @@
               "B": "2026-09-11",
               "E": "2026-09-14"
             },
+            "zeroDate": {
+              "B": "2026-09-24",
+              "E": "2026-09-27"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -7990,6 +8926,10 @@
             "due": {
               "B": "2026-09-14",
               "E": "2026-09-16"
+            },
+            "zeroDate": {
+              "B": "2026-09-27",
+              "E": "2026-09-29"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8017,6 +8957,10 @@
               "B": "2026-09-15",
               "E": "2026-09-16"
             },
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-29"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8042,6 +8986,10 @@
             "due": {
               "B": "2026-09-17",
               "E": "2026-09-18"
+            },
+            "zeroDate": {
+              "B": "2026-09-30",
+              "E": "2026-10-01"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8069,6 +9017,10 @@
               "B": "2026-09-21",
               "E": "2026-09-23"
             },
+            "zeroDate": {
+              "B": "2026-10-04",
+              "E": "2026-10-06"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8094,6 +9046,10 @@
             "due": {
               "B": "2026-09-22",
               "E": "2026-09-23"
+            },
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-06"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8121,6 +9077,10 @@
               "B": "2026-09-24",
               "E": "2026-09-25"
             },
+            "zeroDate": {
+              "B": "2026-10-07",
+              "E": "2026-10-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8146,6 +9106,10 @@
             "due": {
               "B": "2026-11-09",
               "E": "2026-11-09"
+            },
+            "zeroDate": {
+              "B": "2026-11-22",
+              "E": "2026-11-22"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8173,6 +9137,10 @@
               "B": "2026-10-13",
               "E": "2026-10-19"
             },
+            "zeroDate": {
+              "B": "2026-10-26",
+              "E": "2026-11-01"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8198,6 +9166,10 @@
             "due": {
               "B": "2026-10-15",
               "E": "2026-10-19"
+            },
+            "zeroDate": {
+              "B": "2026-10-28",
+              "E": "2026-11-01"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8225,6 +9197,10 @@
               "B": "2026-10-16",
               "E": "2026-10-21"
             },
+            "zeroDate": {
+              "B": "2026-10-29",
+              "E": "2026-11-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8250,6 +9226,10 @@
             "due": {
               "B": "2027-02-05",
               "E": "2027-03-01"
+            },
+            "zeroDate": {
+              "B": "2027-02-18",
+              "E": "2027-03-14"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8277,6 +9257,10 @@
               "B": "2027-02-08",
               "E": "2027-03-01"
             },
+            "zeroDate": {
+              "B": "2027-02-21",
+              "E": "2027-03-14"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8302,6 +9286,10 @@
             "due": {
               "B": "2027-02-09",
               "E": "2027-03-03"
+            },
+            "zeroDate": {
+              "B": "2027-02-22",
+              "E": "2027-03-16"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8329,6 +9317,10 @@
               "B": "2027-02-11",
               "E": "2027-03-05"
             },
+            "zeroDate": {
+              "B": "2027-02-24",
+              "E": "2027-03-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8355,6 +9347,10 @@
               "B": "2027-02-12",
               "E": "2027-03-08"
             },
+            "zeroDate": {
+              "B": "2027-02-25",
+              "E": "2027-03-21"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8378,6 +9374,10 @@
             "worksheetKey": "9",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -8407,6 +9407,10 @@
               "B": "2026-09-25",
               "E": "2026-09-25"
             },
+            "zeroDate": {
+              "B": "2026-10-08",
+              "E": "2026-10-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8432,6 +9436,10 @@
             "due": {
               "B": "2026-09-28",
               "E": "2026-09-28"
+            },
+            "zeroDate": {
+              "B": "2026-10-11",
+              "E": "2026-10-11"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8459,6 +9467,10 @@
               "B": "2026-09-29",
               "E": "2026-09-30"
             },
+            "zeroDate": {
+              "B": "2026-10-12",
+              "E": "2026-10-13"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8484,6 +9496,10 @@
             "due": {
               "B": "2026-10-01",
               "E": "2026-10-02"
+            },
+            "zeroDate": {
+              "B": "2026-10-14",
+              "E": "2026-10-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8511,6 +9527,10 @@
               "B": "2026-10-02",
               "E": "2026-10-05"
             },
+            "zeroDate": {
+              "B": "2026-10-15",
+              "E": "2026-10-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8537,6 +9557,10 @@
               "B": "2026-10-05",
               "E": "2026-10-07"
             },
+            "zeroDate": {
+              "B": "2026-10-18",
+              "E": "2026-10-20"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8560,6 +9584,10 @@
             "worksheetKey": "6-7",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -8589,6 +9617,10 @@
               "B": "2026-10-19",
               "E": "2026-10-21"
             },
+            "zeroDate": {
+              "B": "2026-11-01",
+              "E": "2026-11-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8614,6 +9646,10 @@
             "due": {
               "B": "2026-10-20",
               "E": "2026-10-23"
+            },
+            "zeroDate": {
+              "B": "2026-11-02",
+              "E": "2026-11-05"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8641,6 +9677,10 @@
               "B": "2026-10-22",
               "E": "2026-10-26"
             },
+            "zeroDate": {
+              "B": "2026-11-04",
+              "E": "2026-11-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8666,6 +9706,10 @@
             "due": {
               "B": "2026-10-23",
               "E": "2026-10-26"
+            },
+            "zeroDate": {
+              "B": "2026-11-05",
+              "E": "2026-11-08"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8693,6 +9737,10 @@
               "B": "2026-10-26",
               "E": "2026-10-28"
             },
+            "zeroDate": {
+              "B": "2026-11-08",
+              "E": "2026-11-10"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8718,6 +9766,10 @@
             "due": {
               "B": "2026-10-29",
               "E": "2026-11-02"
+            },
+            "zeroDate": {
+              "B": "2026-11-11",
+              "E": "2026-11-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8745,6 +9797,10 @@
               "B": "2026-10-30",
               "E": "2026-11-02"
             },
+            "zeroDate": {
+              "B": "2026-11-12",
+              "E": "2026-11-15"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8771,6 +9827,10 @@
               "B": "2026-11-02",
               "E": "2026-11-04"
             },
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8794,6 +9854,10 @@
             "worksheetKey": "9",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -8823,6 +9887,10 @@
               "B": "2026-11-05",
               "E": "2026-11-06"
             },
+            "zeroDate": {
+              "B": "2026-11-18",
+              "E": "2026-11-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8849,6 +9917,10 @@
               "B": "2026-11-06",
               "E": "2026-11-06"
             },
+            "zeroDate": {
+              "B": "2026-11-19",
+              "E": "2026-11-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8872,6 +9944,10 @@
             "worksheetKey": "10-12",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -8901,6 +9977,10 @@
               "B": "2026-11-12",
               "E": "2026-11-13"
             },
+            "zeroDate": {
+              "B": "2026-11-25",
+              "E": "2026-11-26"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8926,6 +10006,10 @@
             "due": {
               "B": "2026-11-10",
               "E": "2026-11-13"
+            },
+            "zeroDate": {
+              "B": "2026-11-23",
+              "E": "2026-11-26"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -8953,6 +10037,10 @@
               "B": "2026-11-13",
               "E": "2026-11-16"
             },
+            "zeroDate": {
+              "B": "2026-11-26",
+              "E": "2026-11-29"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -8978,6 +10066,10 @@
             "due": {
               "B": "2026-11-20",
               "E": "2026-11-25"
+            },
+            "zeroDate": {
+              "B": "2026-12-03",
+              "E": "2026-12-08"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9005,6 +10097,10 @@
               "B": "2026-11-23",
               "E": "2026-11-25"
             },
+            "zeroDate": {
+              "B": "2026-12-06",
+              "E": "2026-12-08"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9030,6 +10126,10 @@
             "due": {
               "B": "2026-12-10",
               "E": "2026-12-16"
+            },
+            "zeroDate": {
+              "B": "2026-12-23",
+              "E": "2026-12-29"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9057,6 +10157,10 @@
               "B": "2027-01-11",
               "E": "2027-01-22"
             },
+            "zeroDate": {
+              "B": "2027-01-24",
+              "E": "2027-02-04"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9082,6 +10186,10 @@
             "due": {
               "B": "2027-01-22",
               "E": "2027-02-03"
+            },
+            "zeroDate": {
+              "B": "2027-02-04",
+              "E": "2027-02-16"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9109,6 +10217,10 @@
               "B": "2026-11-24",
               "E": "2026-11-30"
             },
+            "zeroDate": {
+              "B": "2026-12-07",
+              "E": "2026-12-13"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9134,6 +10246,10 @@
             "due": {
               "B": "2026-11-30",
               "E": "2026-12-02"
+            },
+            "zeroDate": {
+              "B": "2026-12-13",
+              "E": "2026-12-15"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9161,6 +10277,10 @@
               "B": "2026-12-01",
               "E": "2026-12-04"
             },
+            "zeroDate": {
+              "B": "2026-12-14",
+              "E": "2026-12-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9186,6 +10306,10 @@
             "due": {
               "B": "2026-12-03",
               "E": "2026-12-07"
+            },
+            "zeroDate": {
+              "B": "2026-12-16",
+              "E": "2026-12-20"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9213,6 +10337,10 @@
               "B": "2026-12-04",
               "E": "2026-12-09"
             },
+            "zeroDate": {
+              "B": "2026-12-17",
+              "E": "2026-12-22"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9238,6 +10366,10 @@
             "due": {
               "B": "2026-12-07",
               "E": "2026-12-11"
+            },
+            "zeroDate": {
+              "B": "2026-12-20",
+              "E": "2026-12-24"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9265,6 +10397,10 @@
               "B": "2026-12-08",
               "E": "2026-12-14"
             },
+            "zeroDate": {
+              "B": "2026-12-21",
+              "E": "2026-12-27"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9290,6 +10426,10 @@
             "due": {
               "B": "2026-12-11",
               "E": "2026-12-18"
+            },
+            "zeroDate": {
+              "B": "2026-12-24",
+              "E": "2026-12-31"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9317,6 +10457,10 @@
               "B": "2026-12-14",
               "E": "2026-12-21"
             },
+            "zeroDate": {
+              "B": "2026-12-27",
+              "E": "2027-01-03"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9342,6 +10486,10 @@
             "due": {
               "B": "2026-12-15",
               "E": "2026-12-23"
+            },
+            "zeroDate": {
+              "B": "2026-12-28",
+              "E": "2027-01-05"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9369,6 +10517,10 @@
               "B": "2026-12-17",
               "E": "2027-01-04"
             },
+            "zeroDate": {
+              "B": "2026-12-30",
+              "E": "2027-01-17"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9394,6 +10546,10 @@
             "due": {
               "B": "2027-01-12",
               "E": "2027-01-22"
+            },
+            "zeroDate": {
+              "B": "2027-01-25",
+              "E": "2027-02-04"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9421,6 +10577,10 @@
               "B": "2027-01-14",
               "E": "2027-01-25"
             },
+            "zeroDate": {
+              "B": "2027-01-27",
+              "E": "2027-02-07"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9446,6 +10606,10 @@
             "due": {
               "B": "2027-01-15",
               "E": "2027-01-27"
+            },
+            "zeroDate": {
+              "B": "2027-01-28",
+              "E": "2027-02-09"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9473,6 +10637,10 @@
               "B": "2027-01-19",
               "E": "2027-01-29"
             },
+            "zeroDate": {
+              "B": "2027-02-01",
+              "E": "2027-02-11"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9498,6 +10666,10 @@
             "due": {
               "B": "2027-01-21",
               "E": "2027-02-01"
+            },
+            "zeroDate": {
+              "B": "2027-02-03",
+              "E": "2027-02-14"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9525,6 +10697,10 @@
               "B": "2027-01-25",
               "E": "2027-02-05"
             },
+            "zeroDate": {
+              "B": "2027-02-07",
+              "E": "2027-02-18"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9550,6 +10726,10 @@
             "due": {
               "B": "2027-01-26",
               "E": "2027-02-08"
+            },
+            "zeroDate": {
+              "B": "2027-02-08",
+              "E": "2027-02-21"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9577,6 +10757,10 @@
               "B": "2027-01-28",
               "E": "2027-02-10"
             },
+            "zeroDate": {
+              "B": "2027-02-10",
+              "E": "2027-02-23"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9602,6 +10786,10 @@
             "due": {
               "B": "2027-01-29",
               "E": "2027-02-12"
+            },
+            "zeroDate": {
+              "B": "2027-02-11",
+              "E": "2027-02-25"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9629,6 +10817,10 @@
               "B": "2026-12-18",
               "E": "2027-01-06"
             },
+            "zeroDate": {
+              "B": "2026-12-31",
+              "E": "2027-01-19"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9652,6 +10844,10 @@
             "worksheetKey": "2",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -9681,6 +10877,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9706,6 +10906,10 @@
             "due": {
               "B": "2026-12-21",
               "E": "2027-01-06"
+            },
+            "zeroDate": {
+              "B": "2027-01-03",
+              "E": "2027-01-19"
             },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
@@ -9733,6 +10937,10 @@
               "B": "2026-12-22",
               "E": "2027-01-08"
             },
+            "zeroDate": {
+              "B": "2027-01-04",
+              "E": "2027-01-21"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9759,6 +10967,10 @@
               "B": "2027-01-04",
               "E": "2027-01-11"
             },
+            "zeroDate": {
+              "B": "2027-01-17",
+              "E": "2027-01-24"
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9782,6 +10994,10 @@
             "worksheetKey": "1",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -9811,6 +11027,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9834,6 +11054,10 @@
             "worksheetKey": "3",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },
@@ -9863,6 +11087,10 @@
               "B": null,
               "E": null
             },
+            "zeroDate": {
+              "B": null,
+              "E": null
+            },
             "lessonGrade": null,
             "lessonGradeNoQuiz": null,
             "Cws": null,
@@ -9886,6 +11114,10 @@
             "worksheetKey": "5",
             "topicName": null,
             "due": {
+              "B": null,
+              "E": null
+            },
+            "zeroDate": {
               "B": null,
               "E": null
             },

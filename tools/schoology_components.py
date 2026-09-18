@@ -350,7 +350,25 @@ def component_columns(
 # Live producer: /class/grades -> component fixture
 # ---------------------------------------------------------------------------
 
-def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None) -> dict:
+def period_of(student: dict):
+    """'PeriodB' -> 'B'; anything else -> None."""
+    sec = str(student.get("section") or "")
+    return sec[-1] if sec.startswith("Period") and len(sec) == 7 else None
+
+
+def zero_due(lesson: dict, period, today: str | None) -> bool:
+    """SY2627 (teacher 2026-09-18): True once the lesson's zero date (class day +
+    config.dueLagDays, surfaced by /class/grades as lesson.zeroDate[period]) HAS
+    ENDED, i.e. zeroDate < today. No zero date for this period (bonus topic,
+    unknown section) never zeroes; today=None disables zeroing."""
+    if not today or not period:
+        return False
+    zd = (lesson.get("zeroDate") or {}).get(period)
+    return bool(zd) and zd < today
+
+
+def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
+                                    today: str | None = None) -> dict:
     """Map a /class/grades response to {"<uid>/<component_key>": value}.
 
     Per student, per lesson:
@@ -374,6 +392,7 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None) -> d
 
         emitted_fa = set()
         emitted_bl = set()
+        period = period_of(s)
         for lesson in (s.get("lessons") or []):
             unit = lesson.get("unit")
             wk = lesson.get("worksheetKey")
@@ -388,6 +407,12 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None) -> d
             fa_val = lesson.get("lessonGradeNoQuiz")
             if fa_val is None:
                 fa_val = lesson.get("Cws")
+            # SY2627 (teacher 2026-09-18): no worksheet work + zero date passed ->
+            # an explicit 0 in the Follow-Along column (the focusing signal). Quiz
+            # and Blooket are never zeroed. Best-wins on the sync side means later
+            # work replaces the 0 and a higher hand entry is kept.
+            if fa_val is None and zero_due(lesson, period, today):
+                fa_val = 0
             if fa_val is not None and label not in emitted_fa:
                 out[f"{uid}/{fa_key(label)}"] = fa_val
                 emitted_fa.add(label)

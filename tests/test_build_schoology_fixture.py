@@ -43,6 +43,25 @@ class TestBuildFixture(unittest.TestCase):
         fx = bsf.build_fixture(DOC)
         self.assertEqual(fx, {"s1/1.2": 88, "s2/1.2": 70})
 
+    def test_zero_date_passed_emits_explicit_zero_for_missing_work(self):
+        doc = {"students": [{
+            "studentId": "s9", "username": "gamma", "section": "PeriodB",
+            "lessons": [
+                {"topicKey": "1.1", "lessonGrade": None, "due": {"B": "2026-09-08"}, "zeroDate": {"B": "2026-09-21", "E": "2026-09-22"}},
+                {"topicKey": "1.2", "lessonGrade": None, "due": {"B": "2026-09-10"}, "zeroDate": {"B": "2026-09-23", "E": "2026-09-24"}},
+                {"topicKey": "1.10", "lessonGrade": None, "due": {"B": None}, "zeroDate": {"B": None, "E": None}},
+                {"topicKey": "1.3", "lessonGrade": 55, "zeroDate": {"B": "2026-09-24", "E": "2026-09-25"}},
+            ],
+        }]}
+        # Mon 9/21 is the zero date: still open that day, 0 from Tue 9/22.
+        self.assertEqual(bsf.build_fixture(doc, today="2026-09-21"), {"s9/1.3": 55})
+        self.assertEqual(bsf.build_fixture(doc, today="2026-09-22"), {"s9/1.1": 0, "s9/1.3": 55})
+        self.assertEqual(bsf.build_fixture(doc, today="2026-09-24"), {"s9/1.1": 0, "s9/1.2": 0, "s9/1.3": 55})
+        # no today (legacy callers) or no section -> never zero
+        self.assertEqual(bsf.build_fixture(doc), {"s9/1.3": 55})
+        doc["students"][0]["section"] = None
+        self.assertEqual(bsf.build_fixture(doc, today="2026-09-24"), {"s9/1.3": 55})
+
     def test_quarter_granularity(self):
         fx = bsf.build_fixture(DOC, granularity="quarter")
         self.assertEqual(fx, {"s1/Q1": 91, "s2/Q1": 72})

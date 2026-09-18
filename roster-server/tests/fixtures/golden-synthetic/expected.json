@@ -8,8 +8,8 @@
       },
       "frqBand": {
         "E": 100,
-        "I": 35,
-        "P": 70
+        "I": 60,
+        "P": 85
       },
       "quarters": {
         "Q1": {
@@ -96,7 +96,7 @@
             "Q1": {
               "categoryAverages": {
                 "Blooket": 60,
-                "Lesson": 60,
+                "Lesson": 73.4,
                 "Progress Check": 45,
                 "Quizzes": 50
               },
@@ -106,10 +106,10 @@
                 "BL:1.5": null,
                 "BL:2.1": 40,
                 "BL:3.1": 90,
-                "FA:1.1": 80,
+                "FA:1.1": 90,
                 "FA:1.2": null,
                 "FA:1.5": null,
-                "FA:2.1": 40,
+                "FA:2.1": 56.7,
                 "FA:3.1": 100,
                 "PC:U1": 60,
                 "PC:U2": 30,
@@ -354,13 +354,13 @@
                 "delta": -4.2,
                 "earlyBonus": 0,
                 "pcAvg": 45,
-                "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 45.2), while Schoology averages the categories (49.4).",
-                "schoologyTotal": 49.4,
-                "v3Total": 45.2,
-                "workAvg": 45.2
+                "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 47.6), while Schoology averages the categories (51.8).",
+                "schoologyTotal": 51.8,
+                "v3Total": 47.6,
+                "workAvg": 47.6
               },
-              "schoologyTotal": 49.4,
-              "v3Total": 45.2
+              "schoologyTotal": 51.8,
+              "v3Total": 47.6
             },
             "Q2": {
               "categoryAverages": {},
@@ -541,7 +541,7 @@
           {
             "Cws": 100,
             "Q": 100,
-            "W": 70,
+            "W": 85,
             "blooket": 80,
             "blooketBonus": false,
             "due": {
@@ -554,7 +554,7 @@
               "frq": [
                 {
                   "itemId": "WS-U1L1-reflect1",
-                  "score": 70,
+                  "score": 85,
                   "ts": "2026-10-14T16:00:00.000Z"
                 }
               ],
@@ -574,14 +574,18 @@
                 }
               ]
             },
-            "lessonGrade": 90,
-            "lessonGradeNoQuiz": 80,
+            "lessonGrade": 95,
+            "lessonGradeNoQuiz": 90,
             "lessonKey": "1.1",
             "quizTotal": 1,
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -607,7 +611,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -633,12 +641,16 @@
             "topicName": null,
             "trainer": 90,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": 50,
             "Q": 0,
-            "W": 35,
+            "W": 60,
             "blooket": 40,
             "blooketBonus": false,
             "due": {
@@ -651,7 +663,7 @@
               "frq": [
                 {
                   "itemId": "WS-U2L1-reflect1",
-                  "score": 35,
+                  "score": 60,
                   "ts": "2026-10-14T16:00:00.000Z"
                 }
               ],
@@ -671,14 +683,18 @@
                 }
               ]
             },
-            "lessonGrade": 20,
-            "lessonGradeNoQuiz": 40,
+            "lessonGrade": 28.3,
+            "lessonGradeNoQuiz": 56.7,
             "lessonKey": "2.1",
             "quizTotal": 1,
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": 100,
@@ -723,7 +739,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -738,7 +758,7 @@
               "1.2",
               "1.5"
             ],
-            "ceiling": 77.2,
+            "ceiling": 79.6,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -752,8 +772,8 @@
               2,
               3
             ],
-            "quarterGrade": 45.2,
-            "quarterGradeBase": 45.2,
+            "quarterGrade": 47.6,
+            "quarterGradeBase": 47.6,
             "quizDone": 3,
             "quizDue": 5,
             "quizTodo": [
@@ -775,11 +795,11 @@
             ],
             "unitsGraded": 3,
             "unitsTotal": 3,
-            "workAvg": 45.2,
-            "workAvgRaw": 0.452,
+            "workAvg": 47.6,
+            "workAvgRaw": 0.476,
             "workTracks": {
               "blooket": 42,
-              "lessons": 44,
+              "lessons": 50,
               "posters": null,
               "quizzes": 40,
               "trainer": 90
@@ -939,21 +959,21 @@
         },
         "units": {
           "U1": {
-            "B": 90,
+            "B": 95,
             "P": 100,
             "Q": 100,
-            "W": 70,
+            "W": 85,
             "banked": 85,
             "graded": true,
             "pcRawPct": 60,
             "unitGrade": 100
           },
           "U2": {
-            "B": 11.7,
+            "B": 20,
             "P": 63.8,
             "Q": 0,
-            "W": 35,
-            "banked": 11.7,
+            "W": 60,
+            "banked": 20,
             "graded": true,
             "pcRawPct": 30,
             "unitGrade": 63.8
@@ -1474,7 +1494,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": 100,
@@ -1519,7 +1543,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": 100,
@@ -1564,7 +1592,11 @@
             "topicName": null,
             "trainer": 100,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -1590,7 +1622,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -1616,7 +1652,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -1854,7 +1894,7 @@
             "Q1": {
               "categoryAverages": {
                 "Blooket": 0,
-                "Lesson": 0,
+                "Lesson": 40,
                 "Progress Check": 70,
                 "Quizzes": 0
               },
@@ -1864,9 +1904,9 @@
                 "BL:1.5": 0,
                 "BL:2.1": null,
                 "BL:3.1": null,
-                "FA:1.1": 0,
-                "FA:1.2": 0,
-                "FA:1.5": 0,
+                "FA:1.1": 40,
+                "FA:1.2": 40,
+                "FA:1.5": 40,
                 "FA:2.1": null,
                 "FA:3.1": null,
                 "PC:U1": 70,
@@ -2109,15 +2149,15 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": 7.8,
+                "delta": 0.8,
                 "earlyBonus": 0,
                 "pcAvg": 70,
                 "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (49); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 41.2,
+                "schoologyTotal": 48.2,
                 "v3Total": 49,
-                "workAvg": 0
+                "workAvg": 16
               },
-              "schoologyTotal": 41.2,
+              "schoologyTotal": 48.2,
               "v3Total": 49
             },
             "Q2": {
@@ -2306,6 +2346,7 @@
               "B": "2026-09-09",
               "E": "2026-09-09"
             },
+            "frqProvisional": true,
             "hasBlooket": true,
             "hasTrainer": false,
             "items": {
@@ -2326,14 +2367,18 @@
                 }
               ]
             },
-            "lessonGrade": 0,
-            "lessonGradeNoQuiz": 0,
+            "lessonGrade": 20,
+            "lessonGradeNoQuiz": 40,
             "lessonKey": "1.1",
             "quizTotal": 1,
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": 0,
@@ -2345,6 +2390,7 @@
               "B": "2026-09-15",
               "E": "2026-09-15"
             },
+            "frqProvisional": true,
             "hasBlooket": true,
             "hasTrainer": false,
             "items": {
@@ -2365,14 +2411,18 @@
                 }
               ]
             },
-            "lessonGrade": 0,
-            "lessonGradeNoQuiz": 0,
+            "lessonGrade": 20,
+            "lessonGradeNoQuiz": 40,
             "lessonKey": "1.2",
             "quizTotal": 1,
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": 0,
@@ -2384,6 +2434,7 @@
               "B": "2026-09-22",
               "E": "2026-09-22"
             },
+            "frqProvisional": true,
             "hasBlooket": true,
             "hasTrainer": true,
             "items": {
@@ -2404,14 +2455,18 @@
                 }
               ]
             },
-            "lessonGrade": 0,
-            "lessonGradeNoQuiz": 0,
+            "lessonGrade": 20,
+            "lessonGradeNoQuiz": 40,
             "lessonKey": "1.5",
             "quizTotal": 1,
             "topicName": null,
             "trainer": 0,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -2437,7 +2492,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -2463,7 +2522,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -2473,7 +2536,7 @@
             "blooketDone": 3,
             "blooketDue": 3,
             "blooketTodo": [],
-            "ceiling": 63,
+            "ceiling": 90,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -2507,11 +2570,11 @@
             ],
             "unitsGraded": 1,
             "unitsTotal": 3,
-            "workAvg": 0,
-            "workAvgRaw": 0,
+            "workAvg": 16,
+            "workAvgRaw": 0.16,
             "workTracks": {
               "blooket": 0,
-              "lessons": 0,
+              "lessons": 40,
               "posters": null,
               "quizzes": 0,
               "trainer": 0
@@ -3186,7 +3249,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": 100,
@@ -3231,7 +3298,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": 100,
@@ -3276,7 +3347,11 @@
             "topicName": null,
             "trainer": 25,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -3302,7 +3377,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -3328,7 +3407,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -3819,13 +3902,13 @@
                 "delta": null,
                 "earlyBonus": 0,
                 "pcAvg": 0,
-                "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (12.7); Schoology applies no floor or ceiling.",
+                "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (15.9); Schoology applies no floor or ceiling.",
                 "schoologyTotal": null,
-                "v3Total": 12.7,
-                "workAvg": 18.1
+                "v3Total": 15.9,
+                "workAvg": 22.7
               },
               "schoologyTotal": null,
-              "v3Total": 12.7
+              "v3Total": 15.9
             },
             "Q2": {
               "categoryAverages": {},
@@ -4027,7 +4110,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -4053,7 +4140,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -4079,7 +4170,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -4105,7 +4200,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": 100,
@@ -4150,7 +4249,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -4160,18 +4263,17 @@
             ],
             "aheadLessons": 1,
             "blooketDone": 1,
-            "blooketDue": 5,
+            "blooketDue": 4,
             "blooketTodo": [
               "1.1",
               "1.2",
-              "1.5",
-              "2.1"
+              "1.5"
             ],
             "ceiling": 100,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
-            "lessonsDue": 5,
+            "lessonsDue": 4,
             "lessonsGraded": 1,
             "lessonsTotal": 5,
             "pcAvg": 0,
@@ -4181,15 +4283,14 @@
               2,
               3
             ],
-            "quarterGrade": 12.7,
-            "quarterGradeBase": 12.7,
+            "quarterGrade": 15.9,
+            "quarterGradeBase": 15.9,
             "quizDone": 1,
-            "quizDue": 5,
+            "quizDue": 4,
             "quizTodo": [
               "1.1",
               "1.2",
-              "1.5",
-              "2.1"
+              "1.5"
             ],
             "trainerDone": 0,
             "trainerDue": 1,
@@ -4208,13 +4309,13 @@
             ],
             "unitsGraded": 1,
             "unitsTotal": 3,
-            "workAvg": 18.1,
-            "workAvgRaw": 0.18133333333333335,
+            "workAvg": 22.7,
+            "workAvgRaw": 0.22666666666666666,
             "workTracks": {
-              "blooket": 16,
-              "lessons": 20,
+              "blooket": 20,
+              "lessons": 25,
               "posters": null,
-              "quizzes": 20,
+              "quizzes": 25,
               "trainer": 0
             }
           },
@@ -4852,7 +4953,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -4878,7 +4983,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -4904,7 +5013,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -4930,7 +5043,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -4956,7 +5073,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -4964,18 +5085,17 @@
             "aheadKeys": [],
             "aheadLessons": 0,
             "blooketDone": 0,
-            "blooketDue": 4,
+            "blooketDue": 3,
             "blooketTodo": [
               "1.1",
               "1.2",
-              "1.5",
-              "2.1"
+              "1.5"
             ],
             "ceiling": 100,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
-            "lessonsDue": 4,
+            "lessonsDue": 3,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 0,
@@ -4988,12 +5108,11 @@
             "quarterGrade": 0,
             "quarterGradeBase": 0,
             "quizDone": 0,
-            "quizDue": 4,
+            "quizDue": 3,
             "quizTodo": [
               "1.1",
               "1.2",
-              "1.5",
-              "2.1"
+              "1.5"
             ],
             "trainerDone": 0,
             "trainerDue": 1,
@@ -5661,7 +5780,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -5687,7 +5810,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -5713,7 +5840,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -5739,7 +5870,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -5765,7 +5900,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -6478,7 +6617,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -6504,7 +6647,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -6530,7 +6677,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -6556,7 +6707,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -6582,7 +6737,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -7294,7 +7453,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -7320,7 +7483,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -7346,7 +7513,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -7372,7 +7543,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -7398,7 +7573,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -7406,18 +7585,17 @@
             "aheadKeys": [],
             "aheadLessons": 0,
             "blooketDone": 0,
-            "blooketDue": 4,
+            "blooketDue": 3,
             "blooketTodo": [
               "1.1",
               "1.2",
-              "1.5",
-              "2.1"
+              "1.5"
             ],
             "ceiling": 90,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
-            "lessonsDue": 4,
+            "lessonsDue": 3,
             "lessonsGraded": 0,
             "lessonsTotal": 5,
             "pcAvg": 85,
@@ -7430,12 +7608,11 @@
             "quarterGrade": 59.5,
             "quarterGradeBase": 59.5,
             "quizDone": 0,
-            "quizDue": 4,
+            "quizDue": 3,
             "quizTodo": [
               "1.1",
               "1.2",
-              "1.5",
-              "2.1"
+              "1.5"
             ],
             "trainerDone": 0,
             "trainerDue": 1,
@@ -8117,7 +8294,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -8143,7 +8324,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -8169,7 +8354,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -8195,7 +8384,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -8221,7 +8414,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -8925,7 +9122,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -8951,7 +9152,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -8977,7 +9182,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -9003,7 +9212,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -9029,7 +9242,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -9736,7 +9953,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -9762,7 +9983,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -9788,7 +10013,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -9814,7 +10043,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -9840,7 +10073,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -10549,7 +10786,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -10575,7 +10816,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -10601,7 +10846,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": 100,
@@ -10646,7 +10895,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -10672,7 +10925,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -11377,7 +11634,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -11403,7 +11664,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -11429,7 +11694,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": 100,
@@ -11474,7 +11743,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -11500,7 +11773,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -11745,7 +12022,7 @@
           "quarters": {
             "Q1": {
               "categoryAverages": {
-                "Lesson": 100
+                "Lesson": 73.3
               },
               "cells": {
                 "BL:1.1": null,
@@ -11755,7 +12032,7 @@
                 "BL:3.1": null,
                 "FA:1.1": null,
                 "FA:1.2": null,
-                "FA:1.5": 100,
+                "FA:1.5": 73.3,
                 "FA:2.1": null,
                 "FA:3.1": null,
                 "PC:U1": null,
@@ -11998,16 +12275,16 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": -86.9,
+                "delta": -62.7,
                 "earlyBonus": 0,
                 "pcAvg": 0,
-                "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (13.1); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 100,
-                "v3Total": 13.1,
-                "workAvg": 18.7
+                "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (10.6); Schoology applies no floor or ceiling.",
+                "schoologyTotal": 73.3,
+                "v3Total": 10.6,
+                "workAvg": 15.1
               },
-              "schoologyTotal": 100,
-              "v3Total": 13.1
+              "schoologyTotal": 73.3,
+              "v3Total": 10.6
             },
             "Q2": {
               "categoryAverages": {},
@@ -12209,7 +12486,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": null,
@@ -12235,7 +12516,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": 100,
@@ -12247,6 +12532,7 @@
               "B": "2026-09-22",
               "E": "2026-09-22"
             },
+            "frqProvisional": true,
             "hasBlooket": true,
             "hasTrainer": true,
             "items": {
@@ -12260,14 +12546,18 @@
                 }
               ]
             },
-            "lessonGrade": 100,
-            "lessonGradeNoQuiz": 100,
+            "lessonGrade": 73.3,
+            "lessonGradeNoQuiz": 73.3,
             "lessonKey": "1.5",
             "quizTotal": 1,
             "topicName": null,
             "trainer": 80,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -12293,7 +12583,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -12319,7 +12613,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -12347,8 +12645,8 @@
               2,
               3
             ],
-            "quarterGrade": 13.1,
-            "quarterGradeBase": 13.1,
+            "quarterGrade": 10.6,
+            "quarterGradeBase": 10.6,
             "quizDone": 0,
             "quizDue": 3,
             "quizTodo": [
@@ -12371,11 +12669,11 @@
             ],
             "unitsGraded": 0,
             "unitsTotal": 3,
-            "workAvg": 18.7,
-            "workAvgRaw": 0.18666666666666668,
+            "workAvg": 15.1,
+            "workAvgRaw": 0.1511111111111111,
             "workTracks": {
               "blooket": 0,
-              "lessons": 33.3,
+              "lessons": 24.4,
               "posters": null,
               "quizzes": 0,
               "trainer": 80
@@ -12576,7 +12874,7 @@
           "quarters": {
             "Q1": {
               "categoryAverages": {
-                "Lesson": 100,
+                "Lesson": 86.7,
                 "Progress Check": 30
               },
               "cells": {
@@ -12586,7 +12884,7 @@
                 "BL:2.1": null,
                 "BL:3.1": null,
                 "FA:1.1": null,
-                "FA:1.2": 100,
+                "FA:1.2": 73.3,
                 "FA:1.5": null,
                 "FA:2.1": 100,
                 "FA:3.1": null,
@@ -12830,16 +13128,16 @@
               ],
               "reconciliation": {
                 "branch": "ceiling",
-                "delta": -19.2,
+                "delta": -16.2,
                 "earlyBonus": 0,
                 "pcAvg": 30,
-                "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (27); Schoology applies no floor or ceiling.",
-                "schoologyTotal": 46.2,
-                "v3Total": 27,
-                "workAvg": 24
+                "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (26.9); Schoology applies no floor or ceiling.",
+                "schoologyTotal": 43.1,
+                "v3Total": 26.9,
+                "workAvg": 23.9
               },
-              "schoologyTotal": 46.2,
-              "v3Total": 27
+              "schoologyTotal": 43.1,
+              "v3Total": 26.9
             },
             "Q2": {
               "categoryAverages": {},
@@ -13041,7 +13339,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-09-22",
+              "E": "2026-09-22"
+            }
           },
           {
             "Cws": 100,
@@ -13053,6 +13355,7 @@
               "B": "2026-09-15",
               "E": "2026-09-15"
             },
+            "frqProvisional": true,
             "hasBlooket": true,
             "hasTrainer": false,
             "items": {
@@ -13066,14 +13369,18 @@
                 }
               ]
             },
-            "lessonGrade": 100,
-            "lessonGradeNoQuiz": 100,
+            "lessonGrade": 73.3,
+            "lessonGradeNoQuiz": 73.3,
             "lessonKey": "1.2",
             "quizTotal": 1,
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "2"
+            "worksheetKey": "2",
+            "zeroDate": {
+              "B": "2026-09-28",
+              "E": "2026-09-28"
+            }
           },
           {
             "Cws": null,
@@ -13099,7 +13406,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 1,
-            "worksheetKey": "5"
+            "worksheetKey": "5",
+            "zeroDate": {
+              "B": "2026-10-05",
+              "E": "2026-10-05"
+            }
           },
           {
             "Cws": null,
@@ -13131,7 +13442,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 2,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-10-23",
+              "E": "2026-11-02"
+            }
           },
           {
             "Cws": null,
@@ -13164,7 +13479,11 @@
             "topicName": null,
             "trainer": null,
             "unit": 3,
-            "worksheetKey": "1"
+            "worksheetKey": "1",
+            "zeroDate": {
+              "B": "2026-11-15",
+              "E": "2026-11-16"
+            }
           }
         ],
         "quarters": {
@@ -13172,14 +13491,13 @@
             "aheadKeys": [],
             "aheadLessons": 0,
             "blooketDone": 0,
-            "blooketDue": 4,
+            "blooketDue": 3,
             "blooketTodo": [
               "1.1",
               "1.2",
-              "1.5",
-              "2.1"
+              "1.5"
             ],
-            "ceiling": 80,
+            "ceiling": 77.9,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -13193,15 +13511,14 @@
               2,
               3
             ],
-            "quarterGrade": 27,
-            "quarterGradeBase": 27,
+            "quarterGrade": 26.9,
+            "quarterGradeBase": 26.9,
             "quizDone": 1,
-            "quizDue": 5,
+            "quizDue": 4,
             "quizTodo": [
               "1.1",
               "1.2",
-              "1.5",
-              "2.1"
+              "1.5"
             ],
             "trainerDone": 0,
             "trainerDue": 1,
@@ -13220,13 +13537,13 @@
             ],
             "unitsGraded": 3,
             "unitsTotal": 3,
-            "workAvg": 24,
-            "workAvgRaw": 0.24,
+            "workAvg": 23.9,
+            "workAvgRaw": 0.23866666666666667,
             "workTracks": {
               "blooket": 0,
-              "lessons": 40,
+              "lessons": 34.7,
               "posters": null,
-              "quizzes": 20,
+              "quizzes": 25,
               "trainer": 0
             }
           },
@@ -13444,8 +13761,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -13504,7 +13821,7 @@
           "Q1": {
             "categoryAverages": {
               "Blooket": 60,
-              "Lesson": 60,
+              "Lesson": 73.4,
               "Progress Check": 45,
               "Quizzes": 50
             },
@@ -13514,10 +13831,10 @@
               "BL:1.5": null,
               "BL:2.1": 40,
               "BL:3.1": 90,
-              "FA:1.1": 80,
+              "FA:1.1": 90,
               "FA:1.2": null,
               "FA:1.5": null,
-              "FA:2.1": 40,
+              "FA:2.1": 56.7,
               "FA:3.1": 100,
               "PC:U1": 60,
               "PC:U2": 30,
@@ -13762,13 +14079,13 @@
               "delta": -4.2,
               "earlyBonus": 0,
               "pcAvg": 45,
-              "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 45.2), while Schoology averages the categories (49.4).",
-              "schoologyTotal": 49.4,
-              "v3Total": 45.2,
-              "workAvg": 45.2
+              "reason": "Both tracks clear the 40 floor, so v3 takes the higher (Work 47.6), while Schoology averages the categories (51.8).",
+              "schoologyTotal": 51.8,
+              "v3Total": 47.6,
+              "workAvg": 47.6
             },
-            "schoologyTotal": 49.4,
-            "v3Total": 45.2
+            "schoologyTotal": 51.8,
+            "v3Total": 47.6
           },
           "Q2": {
             "categoryAverages": {},
@@ -13948,7 +14265,7 @@
         {
           "Cws": 100,
           "Q": 100,
-          "W": 70,
+          "W": 85,
           "blooket": 80,
           "blooketBonus": false,
           "due": {
@@ -13961,7 +14278,7 @@
             "frq": [
               {
                 "itemId": "WS-U1L1-reflect1",
-                "score": 70,
+                "score": 85,
                 "ts": "2026-10-14T16:00:00.000Z"
               }
             ],
@@ -13981,14 +14298,18 @@
               }
             ]
           },
-          "lessonGrade": 90,
-          "lessonGradeNoQuiz": 80,
+          "lessonGrade": 95,
+          "lessonGradeNoQuiz": 90,
           "lessonKey": "1.1",
           "quizTotal": 1,
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -14014,7 +14335,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -14040,12 +14365,16 @@
           "topicName": null,
           "trainer": 90,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": 50,
           "Q": 0,
-          "W": 35,
+          "W": 60,
           "blooket": 40,
           "blooketBonus": false,
           "due": {
@@ -14058,7 +14387,7 @@
             "frq": [
               {
                 "itemId": "WS-U2L1-reflect1",
-                "score": 35,
+                "score": 60,
                 "ts": "2026-10-14T16:00:00.000Z"
               }
             ],
@@ -14078,14 +14407,18 @@
               }
             ]
           },
-          "lessonGrade": 20,
-          "lessonGradeNoQuiz": 40,
+          "lessonGrade": 28.3,
+          "lessonGradeNoQuiz": 56.7,
           "lessonKey": "2.1",
           "quizTotal": 1,
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": 100,
@@ -14130,7 +14463,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -14146,7 +14483,7 @@
             "1.2",
             "1.5"
           ],
-          "ceiling": 77.2,
+          "ceiling": 79.6,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
@@ -14160,8 +14497,8 @@
             2,
             3
           ],
-          "quarterGrade": 45.2,
-          "quarterGradeBase": 45.2,
+          "quarterGrade": 47.6,
+          "quarterGradeBase": 47.6,
           "quizDone": 3,
           "quizDue": 5,
           "quizTodo": [
@@ -14183,11 +14520,11 @@
           ],
           "unitsGraded": 3,
           "unitsTotal": 3,
-          "workAvg": 45.2,
-          "workAvgRaw": 0.452,
+          "workAvg": 47.6,
+          "workAvgRaw": 0.476,
           "workTracks": {
             "blooket": 42,
-            "lessons": 44,
+            "lessons": 50,
             "posters": null,
             "quizzes": 40,
             "trainer": 90
@@ -14337,21 +14674,21 @@
       },
       "units": {
         "U1": {
-          "B": 90,
+          "B": 95,
           "P": 100,
           "Q": 100,
-          "W": 70,
+          "W": 85,
           "banked": 85,
           "graded": true,
           "pcRawPct": 60,
           "unitGrade": 100
         },
         "U2": {
-          "B": 11.7,
+          "B": 20,
           "P": 63.8,
           "Q": 0,
-          "W": 35,
-          "banked": 11.7,
+          "W": 60,
+          "banked": 20,
           "graded": true,
           "pcRawPct": 30,
           "unitGrade": 63.8
@@ -14385,8 +14722,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -14929,7 +15266,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": 100,
@@ -14974,7 +15315,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": 100,
@@ -15019,7 +15364,11 @@
           "topicName": null,
           "trainer": 100,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -15045,7 +15394,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -15071,7 +15424,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -15298,8 +15655,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -15358,7 +15715,7 @@
           "Q1": {
             "categoryAverages": {
               "Blooket": 0,
-              "Lesson": 0,
+              "Lesson": 40,
               "Progress Check": 70,
               "Quizzes": 0
             },
@@ -15368,9 +15725,9 @@
               "BL:1.5": 0,
               "BL:2.1": null,
               "BL:3.1": null,
-              "FA:1.1": 0,
-              "FA:1.2": 0,
-              "FA:1.5": 0,
+              "FA:1.1": 40,
+              "FA:1.2": 40,
+              "FA:1.5": 40,
               "FA:2.1": null,
               "FA:3.1": null,
               "PC:U1": 70,
@@ -15613,15 +15970,15 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": 7.8,
+              "delta": 0.8,
               "earlyBonus": 0,
               "pcAvg": 70,
               "reason": "A track is below the 40 floor, so v3 caps at 70% of PC (49); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 41.2,
+              "schoologyTotal": 48.2,
               "v3Total": 49,
-              "workAvg": 0
+              "workAvg": 16
             },
-            "schoologyTotal": 41.2,
+            "schoologyTotal": 48.2,
             "v3Total": 49
           },
           "Q2": {
@@ -15809,6 +16166,7 @@
             "B": "2026-09-09",
             "E": "2026-09-09"
           },
+          "frqProvisional": true,
           "hasBlooket": true,
           "hasTrainer": false,
           "items": {
@@ -15829,14 +16187,18 @@
               }
             ]
           },
-          "lessonGrade": 0,
-          "lessonGradeNoQuiz": 0,
+          "lessonGrade": 20,
+          "lessonGradeNoQuiz": 40,
           "lessonKey": "1.1",
           "quizTotal": 1,
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": 0,
@@ -15848,6 +16210,7 @@
             "B": "2026-09-15",
             "E": "2026-09-15"
           },
+          "frqProvisional": true,
           "hasBlooket": true,
           "hasTrainer": false,
           "items": {
@@ -15868,14 +16231,18 @@
               }
             ]
           },
-          "lessonGrade": 0,
-          "lessonGradeNoQuiz": 0,
+          "lessonGrade": 20,
+          "lessonGradeNoQuiz": 40,
           "lessonKey": "1.2",
           "quizTotal": 1,
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": 0,
@@ -15887,6 +16254,7 @@
             "B": "2026-09-22",
             "E": "2026-09-22"
           },
+          "frqProvisional": true,
           "hasBlooket": true,
           "hasTrainer": true,
           "items": {
@@ -15907,14 +16275,18 @@
               }
             ]
           },
-          "lessonGrade": 0,
-          "lessonGradeNoQuiz": 0,
+          "lessonGrade": 20,
+          "lessonGradeNoQuiz": 40,
           "lessonKey": "1.5",
           "quizTotal": 1,
           "topicName": null,
           "trainer": 0,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -15940,7 +16312,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -15966,7 +16342,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -15977,7 +16357,7 @@
           "blooketDone": 3,
           "blooketDue": 3,
           "blooketTodo": [],
-          "ceiling": 63,
+          "ceiling": 90,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
@@ -16011,11 +16391,11 @@
           ],
           "unitsGraded": 1,
           "unitsTotal": 3,
-          "workAvg": 0,
-          "workAvgRaw": 0,
+          "workAvg": 16,
+          "workAvgRaw": 0.16,
           "workTracks": {
             "blooket": 0,
-            "lessons": 0,
+            "lessons": 40,
             "posters": null,
             "quizzes": 0,
             "trainer": 0
@@ -16193,8 +16573,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -16737,7 +17117,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": 100,
@@ -16782,7 +17166,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": 100,
@@ -16827,7 +17215,11 @@
           "topicName": null,
           "trainer": 25,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -16853,7 +17245,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -16879,7 +17275,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -17106,8 +17506,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -17419,13 +17819,13 @@
               "delta": null,
               "earlyBonus": 0,
               "pcAvg": 0,
-              "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (12.7); Schoology applies no floor or ceiling.",
+              "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (15.9); Schoology applies no floor or ceiling.",
               "schoologyTotal": null,
-              "v3Total": 12.7,
-              "workAvg": 18.1
+              "v3Total": 15.9,
+              "workAvg": 22.7
             },
             "schoologyTotal": null,
-            "v3Total": 12.7
+            "v3Total": 15.9
           },
           "Q2": {
             "categoryAverages": {},
@@ -17626,7 +18026,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -17652,7 +18056,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -17678,7 +18086,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -17704,7 +18116,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": 100,
@@ -17749,7 +18165,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -17760,18 +18180,17 @@
           ],
           "aheadLessons": 1,
           "blooketDone": 1,
-          "blooketDue": 5,
+          "blooketDue": 4,
           "blooketTodo": [
             "1.1",
             "1.2",
-            "1.5",
-            "2.1"
+            "1.5"
           ],
           "ceiling": 100,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
-          "lessonsDue": 5,
+          "lessonsDue": 4,
           "lessonsGraded": 1,
           "lessonsTotal": 5,
           "pcAvg": 0,
@@ -17781,15 +18200,14 @@
             2,
             3
           ],
-          "quarterGrade": 12.7,
-          "quarterGradeBase": 12.7,
+          "quarterGrade": 15.9,
+          "quarterGradeBase": 15.9,
           "quizDone": 1,
-          "quizDue": 5,
+          "quizDue": 4,
           "quizTodo": [
             "1.1",
             "1.2",
-            "1.5",
-            "2.1"
+            "1.5"
           ],
           "trainerDone": 0,
           "trainerDue": 1,
@@ -17808,13 +18226,13 @@
           ],
           "unitsGraded": 1,
           "unitsTotal": 3,
-          "workAvg": 18.1,
-          "workAvgRaw": 0.18133333333333335,
+          "workAvg": 22.7,
+          "workAvgRaw": 0.22666666666666666,
           "workTracks": {
-            "blooket": 16,
-            "lessons": 20,
+            "blooket": 20,
+            "lessons": 25,
             "posters": null,
-            "quizzes": 20,
+            "quizzes": 25,
             "trainer": 0
           }
         },
@@ -17983,8 +18401,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -18503,7 +18921,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -18529,7 +18951,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -18555,7 +18981,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -18581,7 +19011,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -18607,7 +19041,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -18616,18 +19054,17 @@
           "aheadKeys": [],
           "aheadLessons": 0,
           "blooketDone": 0,
-          "blooketDue": 4,
+          "blooketDue": 3,
           "blooketTodo": [
             "1.1",
             "1.2",
-            "1.5",
-            "2.1"
+            "1.5"
           ],
           "ceiling": 100,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
-          "lessonsDue": 4,
+          "lessonsDue": 3,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 0,
@@ -18640,12 +19077,11 @@
           "quarterGrade": 0,
           "quarterGradeBase": 0,
           "quizDone": 0,
-          "quizDue": 4,
+          "quizDue": 3,
           "quizTodo": [
             "1.1",
             "1.2",
-            "1.5",
-            "2.1"
+            "1.5"
           ],
           "trainerDone": 0,
           "trainerDue": 1,
@@ -18835,8 +19271,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -19364,7 +19800,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -19390,7 +19830,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -19416,7 +19860,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -19442,7 +19890,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -19468,7 +19920,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -19704,8 +20160,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -20233,7 +20689,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -20259,7 +20719,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -20285,7 +20749,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -20311,7 +20779,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -20337,7 +20809,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -20579,8 +21055,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -21101,7 +21577,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -21127,7 +21607,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -21153,7 +21637,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -21179,7 +21667,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -21205,7 +21697,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -21214,18 +21710,17 @@
           "aheadKeys": [],
           "aheadLessons": 0,
           "blooketDone": 0,
-          "blooketDue": 4,
+          "blooketDue": 3,
           "blooketTodo": [
             "1.1",
             "1.2",
-            "1.5",
-            "2.1"
+            "1.5"
           ],
           "ceiling": 90,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
-          "lessonsDue": 4,
+          "lessonsDue": 3,
           "lessonsGraded": 0,
           "lessonsTotal": 5,
           "pcAvg": 85,
@@ -21238,12 +21733,11 @@
           "quarterGrade": 59.5,
           "quarterGradeBase": 59.5,
           "quizDone": 0,
-          "quizDue": 4,
+          "quizDue": 3,
           "quizTodo": [
             "1.1",
             "1.2",
-            "1.5",
-            "2.1"
+            "1.5"
           ],
           "trainerDone": 0,
           "trainerDue": 1,
@@ -21454,8 +21948,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -21976,7 +22470,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -22002,7 +22500,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -22028,7 +22530,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -22054,7 +22560,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -22080,7 +22590,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -22316,8 +22830,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -22836,7 +23350,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -22862,7 +23380,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -22888,7 +23410,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -22914,7 +23440,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -22940,7 +23470,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -23177,8 +23711,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -23699,7 +24233,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -23725,7 +24263,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -23751,7 +24293,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -23777,7 +24323,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -23803,7 +24353,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -24039,8 +24593,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -24564,7 +25118,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -24590,7 +25148,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -24616,7 +25178,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": 100,
@@ -24661,7 +25227,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -24687,7 +25257,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -24924,8 +25498,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -25444,7 +26018,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -25470,7 +26048,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -25496,7 +26078,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": 100,
@@ -25541,7 +26127,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -25567,7 +26157,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -25806,8 +26400,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -25865,7 +26459,7 @@
         "quarters": {
           "Q1": {
             "categoryAverages": {
-              "Lesson": 100
+              "Lesson": 73.3
             },
             "cells": {
               "BL:1.1": null,
@@ -25875,7 +26469,7 @@
               "BL:3.1": null,
               "FA:1.1": null,
               "FA:1.2": null,
-              "FA:1.5": 100,
+              "FA:1.5": 73.3,
               "FA:2.1": null,
               "FA:3.1": null,
               "PC:U1": null,
@@ -26118,16 +26712,16 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": -86.9,
+              "delta": -62.7,
               "earlyBonus": 0,
               "pcAvg": 0,
-              "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (13.1); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 100,
-              "v3Total": 13.1,
-              "workAvg": 18.7
+              "reason": "A track is below the 40 floor, so v3 caps at 70% of Work (10.6); Schoology applies no floor or ceiling.",
+              "schoologyTotal": 73.3,
+              "v3Total": 10.6,
+              "workAvg": 15.1
             },
-            "schoologyTotal": 100,
-            "v3Total": 13.1
+            "schoologyTotal": 73.3,
+            "v3Total": 10.6
           },
           "Q2": {
             "categoryAverages": {},
@@ -26328,7 +26922,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": null,
@@ -26354,7 +26952,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": 100,
@@ -26366,6 +26968,7 @@
             "B": "2026-09-22",
             "E": "2026-09-22"
           },
+          "frqProvisional": true,
           "hasBlooket": true,
           "hasTrainer": true,
           "items": {
@@ -26379,14 +26982,18 @@
               }
             ]
           },
-          "lessonGrade": 100,
-          "lessonGradeNoQuiz": 100,
+          "lessonGrade": 73.3,
+          "lessonGradeNoQuiz": 73.3,
           "lessonKey": "1.5",
           "quizTotal": 1,
           "topicName": null,
           "trainer": 80,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -26412,7 +27019,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -26438,7 +27049,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -26467,8 +27082,8 @@
             2,
             3
           ],
-          "quarterGrade": 13.1,
-          "quarterGradeBase": 13.1,
+          "quarterGrade": 10.6,
+          "quarterGradeBase": 10.6,
           "quizDone": 0,
           "quizDue": 3,
           "quizTodo": [
@@ -26491,11 +27106,11 @@
           ],
           "unitsGraded": 0,
           "unitsTotal": 3,
-          "workAvg": 18.7,
-          "workAvgRaw": 0.18666666666666668,
+          "workAvg": 15.1,
+          "workAvgRaw": 0.1511111111111111,
           "workTracks": {
             "blooket": 0,
-            "lessons": 33.3,
+            "lessons": 24.4,
             "posters": null,
             "quizzes": 0,
             "trainer": 80
@@ -26685,8 +27300,8 @@
         },
         "frqBand": {
           "E": 100,
-          "I": 35,
-          "P": 70
+          "I": 60,
+          "P": 85
         },
         "quarters": {
           "Q1": {
@@ -26744,7 +27359,7 @@
         "quarters": {
           "Q1": {
             "categoryAverages": {
-              "Lesson": 100,
+              "Lesson": 86.7,
               "Progress Check": 30
             },
             "cells": {
@@ -26754,7 +27369,7 @@
               "BL:2.1": null,
               "BL:3.1": null,
               "FA:1.1": null,
-              "FA:1.2": 100,
+              "FA:1.2": 73.3,
               "FA:1.5": null,
               "FA:2.1": 100,
               "FA:3.1": null,
@@ -26998,16 +27613,16 @@
             ],
             "reconciliation": {
               "branch": "ceiling",
-              "delta": -19.2,
+              "delta": -16.2,
               "earlyBonus": 0,
               "pcAvg": 30,
-              "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (27); Schoology applies no floor or ceiling.",
-              "schoologyTotal": 46.2,
-              "v3Total": 27,
-              "workAvg": 24
+              "reason": "A track is below the 40 floor, so v3 caps at the mean of the two tracks (26.9); Schoology applies no floor or ceiling.",
+              "schoologyTotal": 43.1,
+              "v3Total": 26.9,
+              "workAvg": 23.9
             },
-            "schoologyTotal": 46.2,
-            "v3Total": 27
+            "schoologyTotal": 43.1,
+            "v3Total": 26.9
           },
           "Q2": {
             "categoryAverages": {},
@@ -27208,7 +27823,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-09-22",
+            "E": "2026-09-22"
+          }
         },
         {
           "Cws": 100,
@@ -27220,6 +27839,7 @@
             "B": "2026-09-15",
             "E": "2026-09-15"
           },
+          "frqProvisional": true,
           "hasBlooket": true,
           "hasTrainer": false,
           "items": {
@@ -27233,14 +27853,18 @@
               }
             ]
           },
-          "lessonGrade": 100,
-          "lessonGradeNoQuiz": 100,
+          "lessonGrade": 73.3,
+          "lessonGradeNoQuiz": 73.3,
           "lessonKey": "1.2",
           "quizTotal": 1,
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "2"
+          "worksheetKey": "2",
+          "zeroDate": {
+            "B": "2026-09-28",
+            "E": "2026-09-28"
+          }
         },
         {
           "Cws": null,
@@ -27266,7 +27890,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 1,
-          "worksheetKey": "5"
+          "worksheetKey": "5",
+          "zeroDate": {
+            "B": "2026-10-05",
+            "E": "2026-10-05"
+          }
         },
         {
           "Cws": null,
@@ -27298,7 +27926,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 2,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-10-23",
+            "E": "2026-11-02"
+          }
         },
         {
           "Cws": null,
@@ -27331,7 +27963,11 @@
           "topicName": null,
           "trainer": null,
           "unit": 3,
-          "worksheetKey": "1"
+          "worksheetKey": "1",
+          "zeroDate": {
+            "B": "2026-11-15",
+            "E": "2026-11-16"
+          }
         }
       ],
       "ok": true,
@@ -27340,14 +27976,13 @@
           "aheadKeys": [],
           "aheadLessons": 0,
           "blooketDone": 0,
-          "blooketDue": 4,
+          "blooketDue": 3,
           "blooketTodo": [
             "1.1",
             "1.2",
-            "1.5",
-            "2.1"
+            "1.5"
           ],
-          "ceiling": 80,
+          "ceiling": 77.9,
           "earlyBonus": 0,
           "earlyKeys": [],
           "earlyLessons": 0,
@@ -27361,15 +27996,14 @@
             2,
             3
           ],
-          "quarterGrade": 27,
-          "quarterGradeBase": 27,
+          "quarterGrade": 26.9,
+          "quarterGradeBase": 26.9,
           "quizDone": 1,
-          "quizDue": 5,
+          "quizDue": 4,
           "quizTodo": [
             "1.1",
             "1.2",
-            "1.5",
-            "2.1"
+            "1.5"
           ],
           "trainerDone": 0,
           "trainerDue": 1,
@@ -27388,13 +28022,13 @@
           ],
           "unitsGraded": 3,
           "unitsTotal": 3,
-          "workAvg": 24,
-          "workAvgRaw": 0.24,
+          "workAvg": 23.9,
+          "workAvgRaw": 0.23866666666666667,
           "workTracks": {
             "blooket": 0,
-            "lessons": 40,
+            "lessons": 34.7,
             "posters": null,
-            "quizzes": 20,
+            "quizzes": 25,
             "trainer": 0
           }
         },
