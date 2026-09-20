@@ -595,6 +595,15 @@
         #roadmap-status[data-net="degraded"] { background: #f4f4f4; color: #444; }
         /* Grade Check-in banner (DESK_GRADE_CHECKIN_SPEC). The [hidden] rule is more
            specific than the base display:flex, so a hidden banner never flashes. */
+        #school-bulletin { margin: 6px 0 8px; padding: 6px 10px; border: 2px solid var(--black); background: var(--white); box-shadow: 2px 2px 0 var(--black); font-size: 11px; }
+        #school-bulletin[hidden] { display: none; }
+        #school-bulletin summary { cursor: pointer; font-weight: bold; }
+        #school-bulletin ul { list-style: none; margin: 6px 0 0; padding: 0; }
+        #school-bulletin li { padding: 3px 0; border-top: 1px dotted #999; }
+        #school-bulletin .sb-when { display: inline-block; min-width: 74px; font-weight: bold; }
+        #school-bulletin .sb-soon .sb-when { background: var(--second); padding: 0 3px; }
+        #school-bulletin .sb-staff { font-size: 9px; border: 1px solid var(--black); padding: 0 3px; margin-right: 4px; text-transform: uppercase; }
+        #school-bulletin .sb-detail { display: block; margin-left: 78px; color: #444; }
         #grade-checkin-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 8px; }
         #grade-checkin-banner[hidden] { display: none; }
         #grade-checkin-banner .s7btn { font-size: 10px; padding: 2px 10px; }
@@ -2082,6 +2091,13 @@
                 <button type="button" id="grade-checkin-banner-open" class="s7btn" onclick="if(typeof openGradeCheckin==='function')openGradeCheckin()"><span id="grade-checkin-banner-label">Grade check-in due</span></button>
                 <button type="button" id="grade-checkin-banner-snooze" class="s7btn" onclick="if(typeof _gradeCheckinSnooze==='function')_gradeCheckinSnooze()">Snooze 3 days</button>
             </div>
+            <!-- ═══ School bulletin (data/bulletin.json) — upcoming school notices. Students see
+                 student/all items; a verified teacher also sees staff items. Hidden until
+                 _renderBulletin() finds something current, so there is no pre-JS flash. ═══ -->
+            <details id="school-bulletin" class="geneva" hidden>
+                <summary><span id="school-bulletin-summary">School bulletin</span></summary>
+                <ul id="school-bulletin-list"></ul>
+            </details>
             <!-- ═══ Do Now card (DN3a) — server-mediated via /donow; never touches Supabase ═══ -->
             <style>
               #donow-card{margin:8px 0;padding:10px 12px;border:2px solid var(--black);
@@ -6982,6 +6998,8 @@ function updateUserRoleUI() {
   // Render (teacher) or clear (student/view-as/preview) the Grade Check-in reminder.
   // Self-gated on _deskIsTeacher(), so calling it unconditionally is safe.
   try { if (typeof _renderGradeCheckinUI === 'function') _renderGradeCheckinUI(); } catch (_) {}
+  // Staff bulletin items appear/disappear with the role (sign-out, view-as, preview).
+  try { if (typeof _renderBulletin === 'function') _renderBulletin(); } catch (_) {}
 }
 
 function openSignInModal() {
@@ -10265,6 +10283,7 @@ function loadYear(yearKey){
   // The calendar (global S) is now generated — recompute the Grade Check-in
   // periods so a schedule change re-derives due dates (self-gated to teachers).
   try { if (typeof _renderGradeCheckinUI === 'function') _renderGradeCheckinUI(); } catch (_) {}
+  try { if (typeof _loadBulletin === 'function') _loadBulletin(); } catch (_) {}
   localStorage.setItem('ap-roadmap-year',yearKey);
   var pu=new URL(window.location);
   pu.searchParams.set('year',yearKey);
@@ -17275,6 +17294,109 @@ window.addEventListener('message', function (event) {
     if (event.data.action === 'scan') { destroyTeacherTools(); openVerifyQR(); }
     if (event.data.action === 'checkin') { destroyTeacherTools(); openGradeCheckin(); }
 });
+
+// ═══ School bulletin (data/bulletin.json) ═══════════════════════════════════════
+// Weekly school notices. Updating them is a data edit only — no Desk code change.
+// The JSON is a PUBLIC file; the teacher gate below is a display filter, not secrecy.
+var BULLETIN_LOOKAHEAD_DAYS = 21;
+var BULLETIN_SOON_DAYS = 3;
+var _bulletinItems = null;
+
+function _bulletinISO(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function _bulletinDaysBetween(fromISO, toISO) {
+  return Math.round((Date.parse(toISO + 'T00:00:00Z') - Date.parse(fromISO + 'T00:00:00Z')) / 86400000);
+}
+
+// Pure: which items show today, in display order. Dated items first (soonest first),
+// standing reminders last. Staff items only when isTeacher.
+function _bulletinVisible(items, todayISO, isTeacher) {
+  var visible = (items || []).filter(function (item) {
+    if (!item || !item.id || !item.title) return false;
+    if (item.audience === 'teacher' && !isTeacher) return false;
+    var lastDay = item.until || item.date;
+    if (!lastDay || todayISO > lastDay) return false;
+    if (item.showFrom) return todayISO >= item.showFrom;
+    if (!item.date) return true;
+    return _bulletinDaysBetween(todayISO, item.date) <= BULLETIN_LOOKAHEAD_DAYS;
+  });
+  return visible.sort(function (a, b) {
+    if (!a.date !== !b.date) return a.date ? -1 : 1;
+    return String(a.date || '').localeCompare(String(b.date || '')) || a.id.localeCompare(b.id);
+  });
+}
+
+function _bulletinWhenLabel(item, todayISO) {
+  if (!item.date) return 'Reminder';
+  var days = _bulletinDaysBetween(todayISO, item.date);
+  if (days <= 0 && todayISO <= (item.until || item.date)) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  var parts = item.date.split('-');
+  var day = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.getDay()] + ' ' + (+parts[1]) + '/' + (+parts[2]);
+}
+
+function _renderBulletin() {
+  var box = document.getElementById('school-bulletin');
+  var list = document.getElementById('school-bulletin-list');
+  var summary = document.getElementById('school-bulletin-summary');
+  if (!box || !list || !summary) return;
+  var isTeacher = (typeof _deskIsTeacher === 'function') ? _deskIsTeacher() : false;
+  var todayISO = _bulletinISO(_gradeCheckinToday());
+  var items = _bulletinVisible(_bulletinItems, todayISO, isTeacher);
+  list.textContent = '';
+  if (!items.length) { box.hidden = true; return; }
+  var soonCount = 0;
+  items.forEach(function (item) {
+    var soon = !!item.date && _bulletinDaysBetween(todayISO, item.date) <= BULLETIN_SOON_DAYS;
+    if (soon) soonCount++;
+    var li = document.createElement('li');
+    if (soon) li.className = 'sb-soon';
+    var when = document.createElement('span');
+    when.className = 'sb-when';
+    when.textContent = _bulletinWhenLabel(item, todayISO);
+    li.appendChild(when);
+    if (item.audience === 'teacher') {
+      var tag = document.createElement('span');
+      tag.className = 'sb-staff';
+      tag.textContent = 'staff';
+      li.appendChild(tag);
+    }
+    li.appendChild(document.createTextNode(item.title));
+    if (item.detail) {
+      var detail = document.createElement('span');
+      detail.className = 'sb-detail';
+      detail.textContent = item.detail;
+      li.appendChild(detail);
+    }
+    list.appendChild(li);
+  });
+  summary.textContent = '📌 School bulletin — ' + items.length + (items.length === 1 ? ' notice' : ' notices') +
+    (soonCount ? ' (' + soonCount + ' in the next ' + BULLETIN_SOON_DAYS + ' days)' : '');
+  // Open by itself only when something is close; otherwise it stays one quiet line.
+  if (!box.hasAttribute('data-touched')) box.open = soonCount > 0;
+  box.hidden = false;
+}
+
+function _loadBulletin() {
+  var box = document.getElementById('school-bulletin');
+  if (box && !box.hasAttribute('data-wired')) {
+    box.setAttribute('data-wired', '1');
+    // Once the viewer opens or closes it themselves, re-renders stop deciding for them.
+    box.querySelector('summary').addEventListener('click', function () { box.setAttribute('data-touched', '1'); });
+  }
+  // A weekly edit must show up without a hard refresh: no-store here, and sw.js
+  // passes this path straight to the network instead of its cache-first asset rule.
+  fetch('data/bulletin.json', { cache: 'no-store' })
+    .then(function (response) { return response.ok ? response.json() : null; })
+    .then(function (data) {
+      _bulletinItems = (data && Array.isArray(data.items)) ? data.items : [];
+      _renderBulletin();
+    })
+    .catch(function () { /* the bulletin is optional; stay hidden */ });
+}
 
 // ── Grade Check-in (DESK_GRADE_CHECKIN_SPEC.md) ──────────────────────────────
 // A teacher-only, browser-local monthly reminder to run the private grade-
@@ -24959,7 +25081,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-18-0in2';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-20-olm3';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

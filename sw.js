@@ -13,7 +13,7 @@
 // is just `self.addEventListener('install',()=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));`
 // to unregister-by-emptying (clears caches; pages fall back to plain network).
 
-const BUILD = '2026-09-18-0in2'; // scripts/bump-build.mjs replaces this stamp
+const BUILD = '2026-09-20-olm3'; // scripts/bump-build.mjs replaces this stamp
 const CACHE = 'apstats-pwa-' + BUILD;
 
 const CORE = [
@@ -37,6 +37,7 @@ function cacheStrategyFor(request, selfOrigin) {
   try { url = new URL(request.url); } catch (_) { return 'passthrough'; }
   if (url.origin !== selfOrigin) return 'passthrough';          // roster/cr/supabase APIs → network only
   if (url.pathname.endsWith('/version.json') || url.pathname.endsWith('version.json')) return 'passthrough'; // never cache the update-nudge check
+  if (url.pathname.endsWith('/data/bulletin.json')) return 'passthrough'; // weekly school notices must never go stale
   const isNav = request.mode === 'navigate' || (request.headers.get('accept') || '').includes('text/html');
   return isNav ? 'navigate' : 'asset';
 }

@@ -60,6 +60,8 @@ describe('sw.js cacheStrategyFor', () => {
   });
   it('version.json → passthrough (must not break the stale-tab update nudge)', () => {
     expect(cacheStrategyFor(req({ url: ORIGIN + '/apstats-live-worksheet/version.json' }), ORIGIN)).toBe('passthrough');
+    // Weekly school notices: a cache-first copy would show last week's bulletin until the next build.
+    expect(cacheStrategyFor(req({ url: ORIGIN + '/apstats-live-worksheet/data/bulletin.json' }), ORIGIN)).toBe('passthrough');
   });
 });
 

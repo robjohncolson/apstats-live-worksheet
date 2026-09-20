@@ -1,0 +1,79 @@
+{
+  "schema": "apstats-desk-bulletin/v1",
+  "note": "School notices shown on the Desk. PUBLIC FILE (GH Pages): no staff names, phone extensions, form links, or anything not fit for a public page. audience: all | student | teacher (teacher items render only for a verified teacher, but are still publicly readable here). date = the day it happens (null = standing reminder); showFrom = first day to show (default: 21 days before date); until = last day to show (default: date).",
+  "updated": "2026-09-20",
+  "source": "Principal's weekly update, week of 2026-09-21",
+  "items": [
+    { "id": "loaners-0922", "audience": "all", "date": "2026-09-22",
+      "title": "Loaner laptops: 7:45–9:30 a.m. only",
+      "detail": "Tuesday only. Bring your own charged device if you can — loaners will not be handed out after 9:30." },
+
+    { "id": "sbirt-0923", "audience": "all", "date": "2026-09-23",
+      "title": "SBIRT survey during Advisory",
+      "detail": "Grades 9–12." },
+
+    { "id": "halfday-0930", "audience": "all", "date": "2026-09-30",
+      "title": "District half day — dismissal at 12:00",
+      "detail": "A 7:45–8:40 · F 8:45–9:25 · G 9:30–10:10 · E 10:15–11:10 · D 11:15–12:00. Optional lunch 12:00–12:30. Period E meets for a short block (the lesson on your calendar still happens). Period B does not meet." },
+
+    { "id": "ipr-grades-1002", "audience": "student", "date": "2026-10-02",
+      "title": "Quarter 1 progress-report grades are set",
+      "detail": "Your interim progress report uses the grade on record this Friday. Finish outstanding follow-alongs and flashcards before then. Reports go home Fri 10/9." },
+
+    { "id": "neasc-1005", "audience": "all", "date": "2026-10-05", "until": "2026-10-07",
+      "title": "NEASC accreditation visit, Mon 10/5 – Wed 10/7",
+      "detail": "Visitors may sit in on classes. Wear your ID and have your Desk open to your current lesson." },
+
+    { "id": "ipr-home-1009", "audience": "student", "date": "2026-10-09",
+      "title": "Quarter 1 progress reports go home",
+      "detail": "" },
+
+    { "id": "satday-1021", "audience": "student", "date": "2026-10-21",
+      "title": "SAT Day — every grade takes an exam during the school day",
+      "detail": "Schedule and details are coming from the school." },
+
+    { "id": "ids-standing", "audience": "student", "date": null, "until": "2026-10-09",
+      "title": "IDs on at all times in the building; the electronic device policy is being enforced",
+      "detail": "" },
+
+    { "id": "t-noshow-0923", "audience": "teacher", "date": "2026-09-23",
+      "title": "No-Show form due 2:45 p.m.",
+      "detail": "Submit even with zero no-shows. A no-show = a student never seen in class. Link is in the department email." },
+
+    { "id": "t-rsvp-0923", "audience": "teacher", "date": "2026-09-23",
+      "title": "RSVP deadline — faculty pasta dinner & social",
+      "detail": "Event is Fri 9/25, 4:00–6:00 p.m., LEHS Library." },
+
+    { "id": "t-dinner-0925", "audience": "teacher", "date": "2026-09-25",
+      "title": "Faculty dinner & social, 4:00–6:00 p.m., Library",
+      "detail": "" },
+
+    { "id": "t-plc-0930", "audience": "teacher", "date": "2026-09-30",
+      "title": "Half day: department PLCs begin 12:30 sharp",
+      "detail": "Students dismissed 12:00." },
+
+    { "id": "t-ipr-1002", "audience": "teacher", "date": "2026-10-02",
+      "title": "Q1 IPR grades updated in PowerTeacher Pro",
+      "detail": "Run the Grade Check-in and confirm the Schoology sync is current before entering. IPRs are distributed Fri 10/9." },
+
+    { "id": "t-neasc-1005", "audience": "teacher", "date": "2026-10-05", "until": "2026-10-07",
+      "title": "NEASC decennial visit — expect walkthroughs",
+      "detail": "Attendance every period, hallway presence at transitions, IDs visible." },
+
+    { "id": "t-faculty-1007", "audience": "teacher", "date": "2026-10-07",
+      "title": "Faculty meeting 2:45 p.m.",
+      "detail": "" },
+
+    { "id": "t-satday-1021", "audience": "teacher", "date": "2026-10-21", "showFrom": "2026-09-20",
+      "title": "SAT Day — verify your College Board account is active NOW",
+      "detail": "Training link and logistics to follow. Heads-up: Period E has a lesson scheduled on 10/21; decide on a break day once the testing schedule is published." },
+
+    { "id": "t-training-standing", "audience": "teacher", "date": null, "until": "2026-10-31",
+      "title": "Required hands-on training: EpiPen, Narcan, Stop the Bleed",
+      "detail": "Nurses' office 7:30–7:45 a.m. or 2:30–2:45 p.m.; call ahead for a during-the-day slot. Required before you lead any after-school activity, club, or field trip." },
+
+    { "id": "t-activities-standing", "audience": "teacher", "date": null, "until": "2026-10-31",
+      "title": "School-sponsored activities (clubs included): electronic request ≥ 2 weeks before the start date",
+      "detail": "Must include the complete student list; late requests cannot be approved. District crowdfunding policy applies to any fundraising." }
+  ]
+}
