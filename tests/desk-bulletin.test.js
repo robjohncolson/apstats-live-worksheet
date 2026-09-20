@@ -108,6 +108,38 @@ describe('data/bulletin.json', () => {
   });
 });
 
+describe('remembered open/closed choice', () => {
+  vm.runInContext(fnBody('_bulletinShouldOpen'), sandbox);
+  const shouldOpen = (choice, soonIds) => sandbox._bulletinShouldOpen(choice, soonIds);
+
+  it('with no saved choice, opens only when something is close', () => {
+    expect(shouldOpen(null, [])).toBe(false);
+    expect(shouldOpen(null, ['a'])).toBe(true);
+    expect(shouldOpen({ open: false }, ['a'])).toBe(true); // malformed choice = no choice
+  });
+
+  it('stays collapsed across loads while the close notices are ones already seen', () => {
+    expect(shouldOpen({ open: false, soonIds: ['a', 'b'] }, ['a', 'b'])).toBe(false);
+    expect(shouldOpen({ open: false, soonIds: ['a', 'b'] }, ['a'])).toBe(false);
+    expect(shouldOpen({ open: false, soonIds: [] }, [])).toBe(false);
+  });
+
+  it('stays open across loads when the viewer opened it', () => {
+    expect(shouldOpen({ open: true, soonIds: [] }, [])).toBe(true);
+  });
+
+  it('reopens once when a notice the viewer has not seen becomes close', () => {
+    expect(shouldOpen({ open: false, soonIds: ['a'] }, ['a', 'c'])).toBe(true);
+  });
+
+  it('persists the choice in localStorage, saved from the summary click', () => {
+    expect(fnBody('_bulletinSaveChoice')).toMatch(/localStorage\.setItem\(BULLETIN_CHOICE_KEY/);
+    expect(fnBody('_bulletinReadChoice')).toMatch(/localStorage\.getItem\(BULLETIN_CHOICE_KEY/);
+    expect(fnBody('_loadBulletin')).toMatch(/_bulletinSaveChoice\(!box\.open\)/);
+    expect(fnBody('_renderBulletin')).toMatch(/_bulletinShouldOpen\(_bulletinReadChoice\(\), soonIds\)/);
+  });
+});
+
 describe('Desk wiring', () => {
   it('renders with textContent only and starts hidden', () => {
     const render = fnBody('_renderBulletin');

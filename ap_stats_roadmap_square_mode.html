@@ -17338,6 +17338,36 @@ function _bulletinWhenLabel(item, todayISO) {
   return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.getDay()] + ' ' + (+parts[1]) + '/' + (+parts[2]);
 }
 
+// The viewer's own open/closed choice survives reloads (this browser only). It is
+// remembered together with the "soon" notices they had in front of them, so a notice
+// that becomes urgent later can still open the strip once.
+var BULLETIN_CHOICE_KEY = 'desk_bulletin_choice_v1';
+var _bulletinChoice = null;
+var _bulletinChoiceLoaded = false;
+var _bulletinSoonIds = [];
+
+// Pure: should the strip be open? `choice` = { open, soonIds } or null.
+function _bulletinShouldOpen(choice, soonIds) {
+  var autoOpen = soonIds.length > 0;
+  if (!choice || !Array.isArray(choice.soonIds)) return autoOpen;
+  var hasUnseenSoon = soonIds.some(function (id) { return choice.soonIds.indexOf(id) === -1; });
+  if (hasUnseenSoon) return autoOpen;
+  return !!choice.open;
+}
+
+function _bulletinReadChoice() {
+  if (_bulletinChoiceLoaded) return _bulletinChoice;
+  _bulletinChoiceLoaded = true;
+  try { _bulletinChoice = JSON.parse(localStorage.getItem(BULLETIN_CHOICE_KEY) || 'null'); } catch (_) { _bulletinChoice = null; }
+  return _bulletinChoice;
+}
+
+function _bulletinSaveChoice(open) {
+  _bulletinChoice = { open: open, soonIds: _bulletinSoonIds.slice() };
+  _bulletinChoiceLoaded = true;
+  try { localStorage.setItem(BULLETIN_CHOICE_KEY, JSON.stringify(_bulletinChoice)); } catch (_) { /* still remembered for this page */ }
+}
+
 function _renderBulletin() {
   var box = document.getElementById('school-bulletin');
   var list = document.getElementById('school-bulletin-list');
@@ -17349,9 +17379,10 @@ function _renderBulletin() {
   list.textContent = '';
   if (!items.length) { box.hidden = true; return; }
   var soonCount = 0;
+  var soonIds = [];
   items.forEach(function (item) {
     var soon = !!item.date && _bulletinDaysBetween(todayISO, item.date) <= BULLETIN_SOON_DAYS;
-    if (soon) soonCount++;
+    if (soon) { soonCount++; soonIds.push(item.id); }
     var li = document.createElement('li');
     if (soon) li.className = 'sb-soon';
     var when = document.createElement('span');
@@ -17376,7 +17407,9 @@ function _renderBulletin() {
   summary.textContent = '📌 School bulletin — ' + items.length + (items.length === 1 ? ' notice' : ' notices') +
     (soonCount ? ' (' + soonCount + ' in the next ' + BULLETIN_SOON_DAYS + ' days)' : '');
   // Open by itself only when something is close; otherwise it stays one quiet line.
-  if (!box.hasAttribute('data-touched')) box.open = soonCount > 0;
+  // A remembered choice wins until a notice the viewer has not seen becomes close.
+  _bulletinSoonIds = soonIds;
+  box.open = _bulletinShouldOpen(_bulletinReadChoice(), soonIds);
   box.hidden = false;
 }
 
@@ -17384,8 +17417,9 @@ function _loadBulletin() {
   var box = document.getElementById('school-bulletin');
   if (box && !box.hasAttribute('data-wired')) {
     box.setAttribute('data-wired', '1');
-    // Once the viewer opens or closes it themselves, re-renders stop deciding for them.
-    box.querySelector('summary').addEventListener('click', function () { box.setAttribute('data-touched', '1'); });
+    // Once the viewer opens or closes it themselves, re-renders and reloads stop deciding
+    // for them. The click fires before <details> toggles, so the new state is !box.open.
+    box.querySelector('summary').addEventListener('click', function () { _bulletinSaveChoice(!box.open); });
   }
   // A weekly edit must show up without a hard refresh: no-store here, and sw.js
   // passes this path straight to the network instead of its cache-first asset rule.
