@@ -171,6 +171,17 @@ describe('weekly recurrence observations and recovery', () => {
     expect(log).toHaveBeenCalledWith(expect.stringContaining('pending-hash'));
     expect(approvePush).not.toHaveBeenCalled();
   });
+  it('lets unrelated dirty tracked files through preflight but blocks dirty DOK files', () => {
+    const dirtyTree = files => (program, args) => {
+      if (args[0] === 'branch') return 'master';
+      if (args.join(' ') === 'diff --name-only HEAD') return files.join('\n');
+      return '';
+    };
+    const unrelated = createRuntime(process.cwd(), { command: dirtyTree(['CLAUDE.md', 'data/skill-map.js']) });
+    expect(() => unrelated.preflight({ now: true })).not.toThrow();
+    const dok = createRuntime(process.cwd(), { command: dirtyTree(['CLAUDE.md', 'dok/manifest.json']) });
+    expect(() => dok.preflight({ now: true })).toThrow('DOK files must be clean: dok/manifest.json');
+  });
   it('refuses push-only recovery on another branch before any network or mutation', () => {
     const command = vi.fn(() => 'feature');
     const io = createRuntime(process.cwd(), { command });

@@ -34,7 +34,11 @@ try {
     $logDir = Join-Path $PSScriptRoot '.weekly-dok-logs'
     New-Item -ItemType Directory -Force -Path $logDir | Out-Null
     $log = Join-Path $logDir ((Get-Date -Format 'yyyy-MM-dd') + '.log')
-    & node @jobArgs 2>&1 | Tee-Object -FilePath $log -Append
+    # Under 'Stop', PowerShell 5.1 turns node's first stderr line into a terminating error and the
+    # failure reason never reaches the log. Relax it for this call and log stderr as plain text.
+    $ErrorActionPreference = 'Continue'
+    "=== $(Get-Date -Format s) $mode ===" | Out-File -FilePath $log -Append -Encoding utf8
+    & node @jobArgs 2>&1 | ForEach-Object { "$_" } | Tee-Object -FilePath $log -Append
   }
   $code = $LASTEXITCODE
 } finally { Pop-Location }

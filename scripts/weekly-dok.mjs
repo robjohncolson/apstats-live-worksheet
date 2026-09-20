@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 
 export const STUDENT_FLOOR = 4;
 export const LABEL_CAP = 5;
@@ -242,6 +243,12 @@ export function createRuntime(root, overrides = {}) {
   const yaml = file => JSON.parse(command('python', ['-c',
     'import json,sys,yaml; print(json.dumps(yaml.safe_load(open(sys.argv[1],encoding="utf-8")),default=str))', file]));
   const trackedChanges = () => git(['diff', '--name-only', 'HEAD']).split('\n').filter(Boolean);
+  // Unrelated tracked edits (tool-stamped docs, regenerated data) are routine in this tree and must not
+  // block the weekly sheet. They are fingerprinted at preflight so the audit still catches author tampering.
+  const fingerprint = file => fs.existsSync(path.join(root, file))
+    ? createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex') : 'deleted';
+  let dirtyBefore = new Map();
+  const untouchedSincePreflight = file => dirtyBefore.has(file) && dirtyBefore.get(file) === fingerprint(file);
   const historyOnlyChange = () => {
     if (!trackedChanges().includes(TRIAGE_PATH)) return false;
     const before = JSON.parse(git(['show', `HEAD:${TRIAGE_PATH}`]));
@@ -303,7 +310,11 @@ export function createRuntime(root, overrides = {}) {
     preflight: options => {
       if (git(['branch', '--show-current']) !== 'master') throw new Error('Weekly publishing requires master');
       if (git(['diff', '--cached', '--name-only'])) throw new Error('Index must be empty');
-      if (trackedChanges().some(file => file !== TRIAGE_PATH || !historyOnlyChange())) throw new Error('Tracked working files must be clean');
+      const dirty = trackedChanges();
+      if (dirty.includes(TRIAGE_PATH) && !historyOnlyChange()) throw new Error('Triage file has unpublished edits');
+      const blocking = dirty.filter(file => file.startsWith('dok/'));
+      if (blocking.length) throw new Error(`DOK files must be clean: ${blocking.join(', ')}`);
+      dirtyBefore = new Map(dirty.filter(file => file !== TRIAGE_PATH).map(file => [file, fingerprint(file)]));
       const now = new Date();
       const fridayNight = now.getDay() === 5 && now.getHours() >= 21;
       const saturdayMorning = now.getDay() === 6 && now.getHours() < 12;
@@ -372,7 +383,12 @@ export function createRuntime(root, overrides = {}) {
       if (rows.length !== 1 || rows[0].feedback_channel !== 'feedback_dok3_human_channel' ||
           JSON.stringify(rows[0].parts.map(part => part.dok)) !== '[1,2,2,3]') throw new Error('Authored ladder mismatch');
       validateAuthoredWordBank(rows[0], lesson);
-      if (trackedChanges().some(file => file !== 'dok/manifest.json' && (file !== TRIAGE_PATH || !historyOnlyChange()))) {
+      if (trackedChanges().some(file => file !== 'dok/manifest.json' && !untouchedSincePreflight(file) &&
+          (file !== TRIAGE_PATH || !historyOnlyChange()))) {
+        throw new Error('Author changed existing tracked files');
+      }
+      // A reverted file drops out of the diff, so check the preflight set directly as well.
+      if ([...dirtyBefore.keys()].some(file => !untouchedSincePreflight(file))) {
         throw new Error('Author changed existing tracked files');
       }
       for (const file of paths.filter(file => /\.(yaml|jsonl|tex)$/.test(file))) {
