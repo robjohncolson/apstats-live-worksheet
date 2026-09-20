@@ -227,6 +227,10 @@ def is_misconception_lesson(lesson: dict) -> bool:
 def needs_word_bank(row: dict, lesson: dict | None = None) -> bool:
     if not row.get("sentence_frames"):
         return False
+    return on_misconception_sheet(row, lesson)
+
+
+def on_misconception_sheet(row: dict, lesson: dict | None = None) -> bool:
     if lesson is not None:
         return is_misconception_lesson(lesson)
     for path in LESSONS.glob("*.yaml"):
@@ -275,11 +279,35 @@ def validate_word_bank(row: dict, lesson: dict | None = None) -> list[str]:
     return errors
 
 
+STUDENT_ELEMENT_MAX_WORDS = 30
+
+
+def validate_student_scoring(row: dict, lesson: dict | None = None) -> list[str]:
+    """Misconception sheets must tell the student what an E answer mentions.
+
+    `description` is the teacher's wording and may contain the answer. `student` is
+    printed on the student sheet, so it names what to mention without giving it away.
+    """
+    if row.get("role") != "focus" or not on_misconception_sheet(row, lesson):
+        return []
+    iid = row.get("id", "?")
+    errors = []
+    for el in (row.get("scoring") or {}).get("expectedElements", []):
+        text = el.get("student")
+        if not isinstance(text, str) or not text.strip():
+            errors.append(f"{iid}: scoring element {el.get('id', '?')} needs a student-facing `student` line")
+            continue
+        if len(text.split()) > STUDENT_ELEMENT_MAX_WORDS:
+            errors.append(f"{iid}: scoring element {el.get('id', '?')} `student` line exceeds {STUDENT_ELEMENT_MAX_WORDS} words")
+    return errors
+
+
 def validate_item(row: dict, skill_codes: set[str], lesson: dict | None = None) -> list[str]:
     e: list[str] = []
     iid = row.get("id", "?")
     e.extend(validate_field_values(row, str(iid)))
     e.extend(validate_word_bank(row, lesson))
+    e.extend(validate_student_scoring(row, lesson))
     if not ID_RE.match(iid):
         e.append(f"{iid}: id must match aps-{{topic}}-d{{1|2|3}}-{{k}}")
     topics = row.get("topics") or [row.get("topic")]
@@ -560,9 +588,11 @@ def header_line(lesson: dict, schedule: dict) -> str:
     return f"AP Statistics \\textperiodcentered\\ {ced_topic_label(lesson)}"
 
 
-def part_block(part: dict, space: dict, answers: dict | None) -> str:
+def part_block(part: dict, space: dict, answers: dict | None, after_prompt: str = "") -> str:
     label = part["label"]
     out = [f"\\dokbadge{{{part['dok']}}}~\\textbf{{({label})}} {part['prompt'].strip()}\\par"]
+    if after_prompt:
+        out.append(after_prompt)
     if answers is not None:
         out.append(f"\\answer{{{answers.get(label, '(no key)')}}}")
     else:
@@ -618,6 +648,24 @@ def word_bank_block(item: dict, teacher: bool = False) -> str:
     )
 
 
+def earn_an_e_block(item: dict) -> str:
+    """Tell the student exactly what an E answer mentions. Empty when a sheet has no student lines.
+
+    Printed directly under the top part's prompt, compact: the back page has no spare room.
+    """
+    lines = [el.get("student") for el in (item.get("scoring") or {}).get("expectedElements", [])]
+    if not lines or not all(lines):
+        return ""
+    # Plain-LaTeX checkbox: the preamble loads no symbol package.
+    checkbox = "{\\setlength{\\fboxsep}{0pt}\\fbox{\\rule{0pt}{0.65em}\\hspace{0.65em}}}"
+    boxes = "".join(f"  \\item[{checkbox}] {line.strip()}\n" for line in lines)
+    return (
+        "{\\small\\textbf{To earn an E, your answer must do ALL of these} "
+        "(some = P; one or none = I):\n"
+        "\\begin{itemize}[leftmargin=1.6em,itemsep=0pt,topsep=1pt,parsep=0pt]\n" + boxes + "\\end{itemize}}"
+    )
+
+
 def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
     item = registry[lesson["focus"]]
     space = {**DEFAULT_SPACE, **(lesson.get("space") or {})}
@@ -636,8 +684,10 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
     # Front = read + commit. Back = finish + turn in. A deliberate two-sided sheet.
     part_range = f"({item['parts'][0]['label']})--({item['parts'][-1]['label']})"
     parts.append(f"\\newpage\n\\textbf{{Work {part_range}.}}\\par\\smallskip\n\n")
+    top_part = item["parts"][-1]
     for p in item["parts"]:
-        parts.append(part_block(p, space, answers=None))
+        e_checklist = earn_an_e_block(item) if p is top_part else ""
+        parts.append(part_block(p, space, answers=None, after_prompt=e_checklist))
     for frame in item.get("sentence_frames", []):
         parts.append(f"\\begin{{sentenceframebox}}\\raggedright\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n")
     parts.append(word_bank_block(item))

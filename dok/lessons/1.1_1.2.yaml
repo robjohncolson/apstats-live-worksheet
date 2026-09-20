@@ -32,7 +32,7 @@ space:
   a: 0.35in
   b: 0.55in
   c: 0.6in
-  d: 0.8in
+  d: 1.5in
 teacher:
   questions_to_ask:
   - What does each numeric column represent?

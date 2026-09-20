@@ -471,3 +471,26 @@ def test_word_bank_editions_shuffle_and_no_needed_metadata_leak():
     item['word_bank'].reverse()
     assert student == bl.emit_student(lesson, registry, SCHEDULE)
     assert r'\blankt[0.8in]{statistic}' in student
+
+
+def test_student_sheet_prints_exactly_what_earns_an_e():
+    """Teacher 2026-09-20: 'E / P / I' alone is vague; the sheet must name what an E answer mentions."""
+    for path in LESSONS:
+        lesson = bl.load_lesson(path)
+        item = REGISTRY[lesson["focus"]]
+        student = bl.emit_student(lesson, REGISTRY, SCHEDULE)
+        assert "To earn an E, your answer must do ALL of these" in student
+        for el in item["scoring"]["expectedElements"]:
+            assert el["student"] in student
+            # The teacher wording may contain the answer, so it never reaches the student sheet.
+            assert el["description"] not in student
+
+
+def test_misconception_sheet_requires_student_scoring_lines():
+    lesson = bl.load_lesson(LESSONS[0])
+    row = copy.deepcopy(REGISTRY[lesson["focus"]])
+    assert bl.validate_student_scoring(row, lesson) == []
+    del row["scoring"]["expectedElements"][0]["student"]
+    assert "needs a student-facing `student` line" in bl.validate_student_scoring(row, lesson)[0]
+    row["scoring"]["expectedElements"][0]["student"] = "word " * (bl.STUDENT_ELEMENT_MAX_WORDS + 1)
+    assert "exceeds" in bl.validate_student_scoring(row, lesson)[0]

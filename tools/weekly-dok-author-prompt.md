@@ -20,6 +20,14 @@ Write four laddered parts: (a) DOK 1, (b) DOK 2, (c) DOK 2, (d) DOK 3.
 Each rung targets a misconception from the brief; starred (d) integrates them.
 Part (d) is scored E/P/I by the teacher; nothing auto-scores. Preserve
 feedback_channel: feedback_dok3_human_channel and provide the teacher's E/P/I rubric.
+The student must be told EXACTLY what an E answer mentions. Every entry of
+scoring.expectedElements carries two wordings: `description` (teacher key; may contain
+the answer) and `student` (printed as a checkbox under part (d)). Each `student` line
+is one imperative sentence of at most 18 words naming what to mention -- never the
+value, verdict, or conclusion itself. "Explain why the mean moved a lot while the
+median barely moved" is right; "Say the two unusual values pulled the mean" gives the
+answer away. Do NOT also put a "Checklist:" or "(1)...(4)" list in part (d)'s prompt;
+the printed E checklist replaces it. The student sheet must still compile to 2 pages.
 Scaffolds must be checklists or frames with blanks, never hints giving answers. EVERY sentence frame ships with a `word_bank` (needed terms + at least two plausible distractors) and a `word_bank_needed` subset; use `\blankt[width]{role}` so each blank names what kind of thing goes in it (statistic, reason, number, action, ...).
 Print a notes callout with its own title, stating rules without applying them.
 Audit each part: all requested tables, graphs, normal-table areas, values and

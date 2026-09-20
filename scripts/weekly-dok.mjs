@@ -17,6 +17,7 @@ export const HOUSE_RULES = [
   'Print all required values, tables, definitions and a titled notes callout.',
   'No video, QR, timing, exit ticket or outside references.',
   'Part (d) is scored E/P/I by the teacher; nothing auto-scores.',
+  'Every scoring element has a `student` line: one sentence naming what an E answer must mention, never the answer itself. It prints as a checkbox under part (d), so part (d) carries no other checklist.',
   'No student names or identifiers. Never modify existing or archived sheets.',
 ];
 
@@ -397,6 +398,9 @@ export function createRuntime(root, overrides = {}) {
         if (text.split(/\r?\n/).some(line => privateFilter(line) !== line.slice(0, 800))) throw new Error('Private information in authored output');
       }
       for (const file of paths.slice(0, 9)) if (!fs.existsSync(path.join(root, file))) throw new Error('Missing publication artifact');
+      // The student sheet is one two-sided page; a spill means the E checklist or a workspace no longer fits.
+      const student = fs.readFileSync(path.join(root, paths.find(file => file.endsWith('_student.pdf'))), 'latin1');
+      if ((student.match(/\/Type\s*\/Page[^s]/g) || []).length !== 2) throw new Error('Student sheet must be exactly 2 pages');
       return lesson.title;
     },
     normalize: paths => {

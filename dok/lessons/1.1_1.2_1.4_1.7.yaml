@@ -31,7 +31,7 @@ space:
   a: 0.15in
   b: 0.4in
   c: 0.4in
-  d: 0.85in
+  d: 0.7in
 teacher:
   questions_to_ask:
   - Who exactly was measured, and what is one row of the data?
