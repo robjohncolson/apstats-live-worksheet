@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 
 export const STUDENT_FLOOR = 4;
 export const LABEL_CAP = 5;
@@ -135,12 +134,42 @@ export function recordWeeklyRun(triage, payloads, date) {
 // Every effect is injected so failure tests never invoke an author, compiler or publisher.
 export async function runWeekly(options, io) {
   const mode = options.mode || 'dry-run';
-  if (!['dry-run', 'apply', 'push-only'].includes(mode)) throw new Error('Unknown mode');
-  if (mode !== 'dry-run') {
-    await io.recoverPending();
-    if (mode === 'push-only') return { status: 'push-only' };
-    await io.preflight(options);
+  if (!['dry-run', 'apply'].includes(mode)) throw new Error('Unknown mode');
+  if (mode === 'dry-run') return runPipeline(options, io);
+  await io.preflight(options);
+  try {
+    await io.prepareWorktree();
+    return await runPipeline(options, io);
+  } finally {
+    try { await io.cleanupWorktree(); }
+    catch { io.log('Weekly worktree cleanup failed'); }
   }
+}
+
+// Push the worktree's single commit; if origin moved meanwhile, rebase it and try exactly once more.
+async function publish(io, commit) {
+  await io.approvePush();
+  try {
+    await io.push();
+    return commit;
+  } catch (error) {
+    if (!error.originMoved) throw error;
+  }
+  try {
+    await io.fetchOrigin();
+    await io.rebase();
+    await io.validate();
+    await io.approvePush();
+    await io.push();
+    return await io.head();
+  } catch {
+    try { await io.abortRebase(); } catch { /* A rejected push has no active rebase. */ }
+    throw new Error('Publication failed: origin moved twice');
+  }
+}
+
+async function runPipeline(options, io) {
+  const mode = options.mode || 'dry-run';
   const date = io.date();
   const originalTriage = await io.readTriage();
   // The Saturday catch-up trigger must never author a second sheet after a completed Friday run.
@@ -158,10 +187,13 @@ export async function runWeekly(options, io) {
   io.log(brief);
   if (mode === 'dry-run') return { status: selected.length ? 'dry-run' : 'below floor', brief };
   if (!selected.length) {
-    // Successful observations must survive quiet weeks or recurrence can never accumulate.
-    // No sheet or publication is created; the history ships with the next successful sheet.
+    // The worktree is disposable, so a quiet week's observation must be published too:
+    // recurrence needs consecutive weekly runs, and the catch-up trigger needs "already ran".
+    if (JSON.stringify(triage) === JSON.stringify(originalTriage)) return { status: 'below floor', brief };
     await io.writeTriage(triage);
-    return { status: 'below floor', brief };
+    await io.stage([TRIAGE_PATH]);
+    const historyCommit = await io.commit(`Weekly DOK: no sheet ${date} (below floor)`);
+    return { status: 'below floor', brief, commit: await publish(io, historyCommit) };
   }
   const key = union(selected.flatMap(row => row.lessons)).sort(topicOrder).join('+');
   const paths = publicationPaths(key, date);
@@ -181,21 +213,17 @@ export async function runWeekly(options, io) {
     await io.writeTriage(triage);
     await io.normalize(paths);
     await io.stage(paths);
-    await io.detectChanges();
+    try { await io.detectChanges(); }
+    catch { io.log('change detection skipped'); }
     commit = await io.commit(`Weekly DOK sheet ${date}: ${title} — targets ${selected.map(row => row.key).join(', ')}`);
   } catch (error) {
     try { await io.unstage(paths); }
     finally { await io.writeTriage(originalTriage); }
     throw error;
   }
-  try {
-    await io.approvePush();
-    await io.push();
-    await io.verifyClean(paths);
-  } catch {
-    io.log(`Push failed; local weekly commit retained: ${commit}`);
-    throw new Error(`Publication incomplete; retained local commit ${commit}`);
-  }
+  commit = await publish(io, commit);
+  await io.verifyClean(paths);
+  io.log(`Published commit: ${commit}`);
   return { status: 'published', commit, brief };
 }
 
@@ -223,33 +251,30 @@ export function validateAuthoredWordBank(item, lesson) {
   if (bank.length - needed.length < 2) throw new Error('Authored word_bank needs at least 2 distractors');
 }
 
-export function createRuntime(root, overrides = {}) {
-  const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+export function createRuntime({ home, work }, overrides = {}) {
+  const read = file => fs.readFileSync(path.join(work, file), 'utf8');
   const json = file => JSON.parse(read(file));
   const write = (file, text) => {
-    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-    fs.writeFileSync(path.join(root, file), text.replace(/\r\n/g, '\n'));
+    fs.mkdirSync(path.dirname(path.join(work, file)), { recursive: true });
+    fs.writeFileSync(path.join(work, file), text.replace(/\r\n/g, '\n'));
   };
-  const command = (program, args, input) => {
-    if (overrides.command) return overrides.command(program, args, input);
+  const command = (program, args, input, cwd = work) => {
+    if (overrides.command) return overrides.command(program, args, input, cwd);
     try {
-      return execFileSync(program, args, { cwd: root, input, encoding: 'utf8',
+      return execFileSync(program, args, { cwd, input, encoding: 'utf8',
         windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 32 * 1024 * 1024 });
-    } catch {
+    } catch (error) {
       // Subprocess output can contain evidence or credentials; report the boundary only.
-      throw new Error(`${path.basename(program)} failed`);
+      const failure = new Error(`${path.basename(program)} failed`);
+      failure.originMoved = program === 'git' && args[0] === 'push' &&
+        /\[rejected\].*(fetch first|non-fast-forward)/i.test(String(error.stderr));
+      throw failure;
     }
   };
   const git = args => command('git', args).trim();
   const yaml = file => JSON.parse(command('python', ['-c',
     'import json,sys,yaml; print(json.dumps(yaml.safe_load(open(sys.argv[1],encoding="utf-8")),default=str))', file]));
   const trackedChanges = () => git(['diff', '--name-only', 'HEAD']).split('\n').filter(Boolean);
-  // Unrelated tracked edits (tool-stamped docs, regenerated data) are routine in this tree and must not
-  // block the weekly sheet. They are fingerprinted at preflight so the audit still catches author tampering.
-  const fingerprint = file => fs.existsSync(path.join(root, file))
-    ? createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex') : 'deleted';
-  let dirtyBefore = new Map();
-  const untouchedSincePreflight = file => dirtyBefore.has(file) && dirtyBefore.get(file) === fingerprint(file);
   const historyOnlyChange = () => {
     if (!trackedChanges().includes(TRIAGE_PATH)) return false;
     const before = JSON.parse(git(['show', `HEAD:${TRIAGE_PATH}`]));
@@ -258,8 +283,8 @@ export function createRuntime(root, overrides = {}) {
     delete after.weeklyRuns;
     return JSON.stringify(before) === JSON.stringify(after);
   };
-  const vitest = () => command(process.execPath, ['node_modules/vitest/vitest.mjs', 'run',
-    ...fs.readdirSync(path.join(root, 'tests')).filter(name => /^dok-.*\.test\.js$/.test(name)).map(name => `tests/${name}`)]);
+  const vitest = () => command(process.execPath, [path.join(home, 'node_modules/vitest/vitest.mjs'), 'run', '--root', work,
+    ...fs.readdirSync(path.join(work, 'tests')).filter(name => /^dok-.*\.test\.js$/.test(name)).map(name => `tests/${name}`)]);
   const empty = { schema: 'apstats-misconception-triage/v1', entries: {}, weeklyRuns: [] };
   let privateFilter = value => value;
   const io = {
@@ -267,7 +292,7 @@ export function createRuntime(root, overrides = {}) {
     date: () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York',
       year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()),
     crosswalk: () => json('2026-crosswalk.json'),
-    readTriage: () => fs.existsSync(path.join(root, TRIAGE_PATH)) ? json(TRIAGE_PATH) : structuredClone(empty),
+    readTriage: () => fs.existsSync(path.join(work, TRIAGE_PATH)) ? json(TRIAGE_PATH) : structuredClone(empty),
     writeTriage: value => write(TRIAGE_PATH, JSON.stringify(value, null, 2) + '\n'),
     backfill: triage => {
       const lesson = yaml('dok/lessons/1.1_1.2_1.4_1.7.yaml');
@@ -278,7 +303,7 @@ export function createRuntime(root, overrides = {}) {
       return triage;
     },
     fetchSections: async () => {
-      const env = Object.fromEntries(read('roster-server/.env').split(/\r?\n/).flatMap(line => {
+      const env = Object.fromEntries(fs.readFileSync(path.join(home, 'roster-server/.env'), 'utf8').split(/\r?\n/).flatMap(line => {
         const match = /^\s*(?:export\s+)?([A-Z_]+)\s*=\s*(.*?)\s*$/.exec(line);
         return match ? [[match[1], match[2].replace(/^(['"])(.*)\1$/, '$2')]] : [];
       }));
@@ -299,7 +324,7 @@ export function createRuntime(root, overrides = {}) {
             if (!/^\d+\.\d+$/.test(topic)) return [];
             const [unit, lesson] = topic.split('.');
             const file = `ai-tutor/u${unit}_l${lesson}.md`;
-            if (!fs.existsSync(path.join(root, file))) return [];
+            if (!fs.existsSync(path.join(work, file))) return [];
             return read(file).match(/\b[1-4]\.[A-F]\b/g) || [];
           }));
         }
@@ -309,13 +334,6 @@ export function createRuntime(root, overrides = {}) {
       return payloads;
     },
     preflight: options => {
-      if (git(['branch', '--show-current']) !== 'master') throw new Error('Weekly publishing requires master');
-      if (git(['diff', '--cached', '--name-only'])) throw new Error('Index must be empty');
-      const dirty = trackedChanges();
-      if (dirty.includes(TRIAGE_PATH) && !historyOnlyChange()) throw new Error('Triage file has unpublished edits');
-      const blocking = dirty.filter(file => file.startsWith('dok/'));
-      if (blocking.length) throw new Error(`DOK files must be clean: ${blocking.join(', ')}`);
-      dirtyBefore = new Map(dirty.filter(file => file !== TRIAGE_PATH).map(file => [file, fingerprint(file)]));
       const now = new Date();
       const fridayNight = now.getDay() === 5 && now.getHours() >= 21;
       const saturdayMorning = now.getDay() === 6 && now.getHours() < 12;
@@ -323,41 +341,30 @@ export function createRuntime(root, overrides = {}) {
         throw new Error('Outside the Friday-night / Saturday-morning window; use --now for an intentional manual run');
       }
     },
-    recoverPending: () => {
-      if (git(['branch', '--show-current']) !== 'master') throw new Error('Weekly recovery requires master');
-      git(['fetch', 'origin', 'master']);
-      const pending = git(['log', '--format=%H%x09%s', 'origin/master..HEAD']).split('\n').filter(Boolean);
-      if (!pending.length) {
-        if (git(['rev-list', '--count', 'HEAD..origin/master']) !== '0') git(['merge', '--ff-only', 'origin/master']);
-        return;
+    prepareWorktree: () => {
+      const homeGit = args => command('git', args, undefined, home);
+      homeGit(['fetch', 'origin', 'master']);
+      if ((overrides.exists || fs.existsSync)(work)) {
+        try { homeGit(['worktree', 'remove', '--force', work]); } catch { /* Check the directory after pruning. */ }
+        homeGit(['worktree', 'prune']);
+        if ((overrides.exists || fs.existsSync)(work)) throw new Error('Stale weekly worktree could not be removed');
       }
-      if (pending.some(line => !line.split('\t')[1]?.startsWith('Weekly DOK sheet '))) {
-        throw new Error('Unpublished non-weekly commits require manual review');
-      }
-      if (trackedChanges().length || git(['diff', '--cached', '--name-only'])) throw new Error('Pending recovery requires clean tracked files');
-      const hashes = pending.map(line => line.split('\t')[0]).join(', ');
-      try {
-        if (git(['rev-list', '--count', 'HEAD..origin/master']) !== '0') {
-          try { git(['rebase', 'origin/master']); }
-          catch { git(['rebase', '--abort']); throw new Error('Pending weekly rebase failed'); }
-        }
-        io.approvePush();
-        io.push();
-      } catch {
-        io.log(`Pending weekly publication failed; local commits retained: ${hashes}; HEAD ${git(['rev-parse', 'HEAD'])}`);
-        throw new Error('Pending weekly publication failed; no new sheet selected');
-      }
+      homeGit(['worktree', 'add', '--detach', work, 'origin/master']);
+    },
+    cleanupWorktree: () => {
+      try { command('git', ['worktree', 'remove', '--force', work], undefined, home); }
+      finally { command('git', ['worktree', 'prune'], undefined, home); }
     },
     checkCollisions: paths => {
       for (const file of paths.filter(file => !['dok/manifest.json', TRIAGE_PATH].includes(file))) {
-        if (fs.existsSync(path.join(root, file))) throw new Error('Selected sheet key or brief already exists');
+        if (fs.existsSync(path.join(work, file))) throw new Error('Selected sheet key or brief already exists');
       }
     },
     writeBrief: write,
     author: ({ key, date, brief }) => {
       const contexts = [];
       for (const directory of ['dok/lessons', 'dok/archive/lessons']) {
-        for (const file of fs.readdirSync(path.join(root, directory)).filter(file => file.endsWith('.yaml')).sort()) {
+        for (const file of fs.readdirSync(path.join(work, directory)).filter(file => file.endsWith('.yaml')).sort()) {
           const lesson = yaml(`${directory}/${file}`);
           const registry = directory.replace('/lessons', '/registry') + '/' + file.replace(/\.yaml$/, '.jsonl');
           const stems = read(registry).trim().split('\n').map(line => JSON.parse(line).stem).filter(Boolean);
@@ -384,12 +391,8 @@ export function createRuntime(root, overrides = {}) {
       if (rows.length !== 1 || rows[0].feedback_channel !== 'feedback_dok3_human_channel' ||
           JSON.stringify(rows[0].parts.map(part => part.dok)) !== '[1,2,2,3]') throw new Error('Authored ladder mismatch');
       validateAuthoredWordBank(rows[0], lesson);
-      if (trackedChanges().some(file => file !== 'dok/manifest.json' && !untouchedSincePreflight(file) &&
+      if (trackedChanges().some(file => file !== 'dok/manifest.json' &&
           (file !== TRIAGE_PATH || !historyOnlyChange()))) {
-        throw new Error('Author changed existing tracked files');
-      }
-      // A reverted file drops out of the diff, so check the preflight set directly as well.
-      if ([...dirtyBefore.keys()].some(file => !untouchedSincePreflight(file))) {
         throw new Error('Author changed existing tracked files');
       }
       for (const file of paths.filter(file => /\.(yaml|jsonl|tex)$/.test(file))) {
@@ -397,9 +400,9 @@ export function createRuntime(root, overrides = {}) {
         // Redaction changes newlines/length; compare individual lines instead.
         if (text.split(/\r?\n/).some(line => privateFilter(line) !== line.slice(0, 800))) throw new Error('Private information in authored output');
       }
-      for (const file of paths.slice(0, 9)) if (!fs.existsSync(path.join(root, file))) throw new Error('Missing publication artifact');
+      for (const file of paths.slice(0, 9)) if (!fs.existsSync(path.join(work, file))) throw new Error('Missing publication artifact');
       // The student sheet is one two-sided page; a spill means the E checklist or a workspace no longer fits.
-      const student = fs.readFileSync(path.join(root, paths.find(file => file.endsWith('_student.pdf'))), 'latin1');
+      const student = fs.readFileSync(path.join(work, paths.find(file => file.endsWith('_student.pdf'))), 'latin1');
       if ((student.match(/\/Type\s*\/Page[^s]/g) || []).length !== 2) throw new Error('Student sheet must be exactly 2 pages');
       return lesson.title;
     },
@@ -420,8 +423,12 @@ export function createRuntime(root, overrides = {}) {
       if (/"error"\s*:/.test(result)) throw new Error('GitNexus change detection failed');
     },
     commit: message => { git(['commit', '-m', message]); return git(['rev-parse', 'HEAD']); },
-    approvePush: () => fs.writeFileSync(path.resolve(root, git(['rev-parse', '--git-path', 'PUSH_APPROVED'])), ''),
-    push: () => git(['push', 'origin', 'master']),
+    approvePush: () => fs.writeFileSync(path.resolve(work, git(['rev-parse', '--git-path', 'PUSH_APPROVED'])), ''),
+    push: () => git(['push', 'origin', 'HEAD:master']),
+    fetchOrigin: () => git(['fetch', 'origin', 'master']),
+    rebase: () => git(['rebase', 'origin/master']),
+    abortRebase: () => git(['rebase', '--abort']),
+    head: () => git(['rev-parse', 'HEAD']),
     verifyClean: paths => {
       if (git(['status', '--porcelain', '--', ...paths])) throw new Error('Publication paths are dirty');
     },
@@ -431,13 +438,15 @@ export function createRuntime(root, overrides = {}) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const flags = process.argv.slice(2);
-  const modes = flags.filter(flag => ['--dry-run', '--apply', '--push-only'].includes(flag));
-  if (modes.length > 1 || flags.some(flag => !['--dry-run', '--apply', '--push-only', '--now'].includes(flag))) {
-    console.error('Usage: node scripts/weekly-dok.mjs [--dry-run|--apply|--push-only] [--now]');
+  const modes = flags.filter(flag => ['--dry-run', '--apply'].includes(flag));
+  if (modes.length > 1 || flags.some(flag => !['--dry-run', '--apply', '--now'].includes(flag))) {
+    console.error('Usage: node scripts/weekly-dok.mjs [--dry-run|--apply] [--now]');
     process.exitCode = 1;
   } else {
-    const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-    runWeekly({ mode: (modes[0] || '--dry-run').slice(2), now: flags.includes('--now') }, createRuntime(root))
+    const home = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+    const mode = (modes[0] || '--dry-run').slice(2);
+    const work = mode === 'apply' ? path.join(home, '.weekly-dok-wt') : home;
+    runWeekly({ mode, now: flags.includes('--now') }, createRuntime({ home, work }))
       .catch(error => { console.error(error.message); process.exitCode = 1; });
   }
 }

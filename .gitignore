@@ -119,3 +119,5 @@ dok/tex/*.synctex.gz
 syllabus/*.aux
 syllabus/*.log
 syllabus/*.out
+
+.weekly-dok-wt/

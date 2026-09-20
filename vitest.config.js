@@ -22,7 +22,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['tests/**/*.test.js', 'lib/**/*.test.js'],
-    exclude: [...configDefaults.exclude, ...(process.env.CI ? CI_ONLY_EXCLUDES : [])],
+    exclude: [...configDefaults.exclude, '.weekly-dok-wt/**', ...(process.env.CI ? CI_ONLY_EXCLUDES : [])],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

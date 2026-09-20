@@ -1,9 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import { runWeekly, publicationPaths, recordWeeklyRun, createRuntime, alreadyRanThisWeek } from '../scripts/weekly-dok.mjs';
 
 function fixture() {
   const original = { schema: 'apstats-misconception-triage/v1', entries: {} };
-  const io = Object.fromEntries(['log', 'recoverPending', 'preflight', 'checkCollisions', 'writeBrief', 'author',
+  const io = Object.fromEntries(['log', 'prepareWorktree', 'cleanupWorktree', 'fetchOrigin', 'rebase', 'abortRebase', 'head', 'preflight', 'checkCollisions', 'writeBrief', 'author',
     'validate', 'compile', 'tests', 'writeTriage', 'normalize', 'stage', 'detectChanges', 'unstage',
     'approvePush', 'push', 'verifyClean'].map(name => [name, vi.fn()]));
   Object.assign(io, {
@@ -27,15 +29,17 @@ describe('weekly run boundaries', () => {
       expect(io.push).not.toHaveBeenCalled();
     }
   });
-  it('persists a successful below-floor observation without staging or publishing', async () => {
+  it('publishes only the run history on a below-floor week, never an authored sheet', async () => {
     const { io } = fixture();
     io.fetchSections.mockResolvedValue([{ ok: true, section: 'PeriodB', frequent: [] }]);
     const result = await runWeekly({ mode: 'apply' }, io);
     expect(result.status).toBe('below floor');
     expect(io.writeTriage.mock.calls[0][0].weeklyRuns).toHaveLength(1);
     expect(io.author).not.toHaveBeenCalled();
-    expect(io.stage).not.toHaveBeenCalled();
-    expect(io.push).not.toHaveBeenCalled();
+    // The worktree is disposable: unpublished history would be lost and recurrence could never accumulate.
+    expect(io.stage).toHaveBeenCalledWith(['roster-server/data/misconception-triage.json']);
+    expect(io.commit).toHaveBeenCalledWith('Weekly DOK: no sheet 2026-09-18 (below floor)');
+    expect(io.push).toHaveBeenCalledOnce();
   });
   it('a catch-up run in the same week as a completed run does nothing', async () => {
     const { io, original } = fixture();
@@ -62,7 +66,7 @@ describe('weekly run boundaries', () => {
     const { io } = fixture();
     const result = await runWeekly({}, io);
     expect(result.status).toBe('dry-run');
-    for (const name of ['recoverPending', 'writeBrief', 'writeTriage', 'author', 'stage', 'commit', 'push']) {
+    for (const name of ['prepareWorktree', 'cleanupWorktree', 'fetchOrigin', 'rebase', 'abortRebase', 'head', 'writeBrief', 'writeTriage', 'author', 'stage', 'commit', 'push']) {
       expect(io[name]).not.toHaveBeenCalled();
     }
   });
@@ -76,7 +80,7 @@ describe('weekly run boundaries', () => {
     expect(io.commit.mock.invocationCallOrder[0]).toBeLessThan(io.approvePush.mock.invocationCallOrder[0]);
     expect(io.approvePush.mock.invocationCallOrder[0]).toBeLessThan(io.push.mock.invocationCallOrder[0]);
   });
-  it.each(['checkCollisions', 'writeBrief', 'author', 'validate', 'compile', 'tests', 'audit', 'normalize', 'stage', 'detectChanges'])
+  it.each(['checkCollisions', 'writeBrief', 'author', 'validate', 'compile', 'tests', 'audit', 'normalize', 'stage'])
    ('%s failure prevents commit and restores triage with an empty job index', async step => {
       const { io, original } = fixture();
       io[step].mockImplementation(() => { throw new Error('fixture failure'); });
@@ -86,30 +90,64 @@ describe('weekly run boundaries', () => {
       expect(io.unstage).toHaveBeenCalledWith(publicationPaths('1.1', '2026-09-18'));
       expect(io.writeTriage).toHaveBeenLastCalledWith(original);
     });
-  it('keeps and reports the local commit after push failure', async () => {
+  it('retries an origin rejection once with validation and fresh approval', async () => {
     const { io } = fixture();
-    io.push.mockImplementation(() => { throw new Error('offline'); });
-    await expect(runWeekly({ mode: 'apply' }, io)).rejects.toThrow('local-commit-hash');
-    expect(io.commit).toHaveBeenCalledOnce();
-    expect(io.unstage).not.toHaveBeenCalled();
-    expect(io.writeTriage).toHaveBeenCalledOnce();
+    io.push.mockRejectedValueOnce(Object.assign(new Error('rejected'), { originMoved: true }));
+    io.head.mockReturnValue('rebased-hash');
+    expect((await runWeekly({ mode: 'apply' }, io)).commit).toBe('rebased-hash');
+    expect(io.push).toHaveBeenCalledTimes(2);
+    expect(io.approvePush).toHaveBeenCalledTimes(2);
+    expect(io.validate).toHaveBeenCalledTimes(2);
+    const order = [io.push.mock.invocationCallOrder[0], io.fetchOrigin.mock.invocationCallOrder[0],
+      io.rebase.mock.invocationCallOrder[0], io.validate.mock.invocationCallOrder[1],
+      io.approvePush.mock.invocationCallOrder[1], io.push.mock.invocationCallOrder[1]];
+    expect(order).toEqual([...order].sort((a, b) => a - b));
   });
-  it('push-only recovers without fetching evidence or authoring', async () => {
+  it.each(['push', 'rebase'])('aborts and discards the worktree after repeated rejection or %s conflict', async step => {
     const { io } = fixture();
-    await runWeekly({ mode: 'push-only' }, io);
-    expect(io.recoverPending).toHaveBeenCalledOnce();
-    expect(io.fetchSections).not.toHaveBeenCalled();
-    expect(io.author).not.toHaveBeenCalled();
+    io.push.mockRejectedValue(Object.assign(new Error('rejected'), { originMoved: true }));
+    if (step === 'rebase') io.rebase.mockRejectedValue(new Error('conflict'));
+    await expect(runWeekly({ mode: 'apply' }, io)).rejects.toThrow('Publication failed: origin moved twice');
+    expect(io.abortRebase).toHaveBeenCalledOnce();
+    expect(io.cleanupWorktree).toHaveBeenCalledOnce();
   });
-  it('pending recovery failure prevents selecting a second unpublished sheet', async () => {
+  it('does not retry unrelated publication failures', async () => {
     const { io } = fixture();
-    io.recoverPending.mockImplementation(() => { throw new Error('pending'); });
-    await expect(runWeekly({ mode: 'apply' }, io)).rejects.toThrow('pending');
-    expect(io.fetchSections).not.toHaveBeenCalled();
+    io.push.mockRejectedValue(new Error('offline'));
+    await expect(runWeekly({ mode: 'apply' }, io)).rejects.toThrow('offline');
+    expect(io.push).toHaveBeenCalledOnce();
+    expect(io.cleanupWorktree).toHaveBeenCalledOnce();
   });
+  it('treats change detection as best-effort', async () => {
+    const { io } = fixture();
+    io.detectChanges.mockRejectedValue(new Error('unavailable'));
+    expect((await runWeekly({ mode: 'apply' }, io)).status).toBe('published');
+    expect(io.log).toHaveBeenCalledWith('change detection skipped');
+  });
+  it.each(['success', 'author', 'validate', 'audit'])('creates the worktree before reading and cleans up on %s', async step => {
+    const { io } = fixture();
+    io.readTriage = vi.fn(io.readTriage);
+    if (step !== 'success') io[step].mockRejectedValue(new Error('failed'));
+    if (step === 'success') await runWeekly({ mode: 'apply' }, io);
+    else await expect(runWeekly({ mode: 'apply' }, io)).rejects.toThrow('failed');
+    expect(io.prepareWorktree.mock.invocationCallOrder[0]).toBeLessThan(io.readTriage.mock.invocationCallOrder[0]);
+    expect(io.cleanupWorktree).toHaveBeenCalledOnce();
+  });
+  it('cleanup errors do not replace the run result', async () => {
+    const { io } = fixture();
+    io.cleanupWorktree.mockRejectedValue(new Error('cleanup'));
+    expect((await runWeekly({ mode: 'apply' }, io)).status).toBe('published');
+    expect(io.log).toHaveBeenCalledWith('Weekly worktree cleanup failed');
+  });
+  it('rejects the removed push-only mode without effects', async () => {
+    const { io } = fixture();
+    await expect(runWeekly({ mode: 'push-only' }, io)).rejects.toThrow('Unknown mode');
+    expect(io.prepareWorktree).not.toHaveBeenCalled();
+  });
+
 });
 
-describe('weekly recurrence observations and recovery', () => {
+describe('weekly recurrence observations', () => {
   it('counts three consecutive weeks, deduplicates a week and resets after re-triage', () => {
     const triage = { entries: { units: { triagedAt: '2026-09-12' } }, weeklyRuns: [] };
     const payload = [{ postTriageFrequent: [{ key: 'units' }] }];
@@ -130,63 +168,89 @@ describe('weekly recurrence observations and recovery', () => {
     expect(recordWeeklyRun(triage, payload, '2026-10-16').size).toBe(0);
   });
   it('backfills the five actual Screen Time targets without replacing existing triage', () => {
-    const io = createRuntime(process.cwd());
+    const io = createRuntime({ home: process.cwd(), work: process.cwd() });
     const triage = { entries: { 'mean-resistant': { sheet: 'already-triaged' } } };
     io.backfill(triage);
     expect(Object.keys(triage.entries)).toHaveLength(5);
     expect(triage.entries['mean-resistant'].sheet).toBe('already-triaged');
     expect(triage.entries['counts-vs-percents']).toMatchObject({ sheetTitle: 'Screen Time, Two Deletions', triagedAt: '2026-09-12' });
   });
-  it('fetches and rebases pending weekly commits before approving and pushing', () => {
-    const calls = [];
-    const command = (program, args) => {
-      calls.push([program, ...args].join(' '));
-      if (args[0] === 'branch') return 'master';
-      if (args[0] === 'log') return 'pending-hash\tWeekly DOK sheet 2026-09-18: Title';
-      if (args[0] === 'rev-list') return '1';
-      return '';
-    };
-    const io = createRuntime(process.cwd(), { command,
-      approvePush: () => calls.push('approve'), push: () => calls.push('push') });
-    io.recoverPending();
-    expect(calls.slice(0, 2)).toEqual(['git branch --show-current', 'git fetch origin master']);
-    expect(calls.slice(-3)).toEqual(['git rebase origin/master', 'approve', 'push']);
+});
+
+describe('isolated runtime', () => {
+  const home = process.cwd();
+  const work = path.join(home, '.weekly-dok-wt');
+  it('removes a stale worktree before adding and fails if removal leaves it behind', () => {
+    const command = vi.fn(() => '');
+    const exists = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
+    const io = createRuntime({ home, work }, { command, exists });
+    io.prepareWorktree();
+    expect(command.mock.calls.map(call => call[1])).toEqual([
+      ['fetch', 'origin', 'master'], ['worktree', 'remove', '--force', work],
+      ['worktree', 'prune'], ['worktree', 'add', '--detach', work, 'origin/master'],
+    ]);
+    expect(command.mock.calls.every(call => call[3] === home)).toBe(true);
+    exists.mockReturnValue(true);
+    expect(() => io.prepareWorktree()).toThrow('Stale weekly worktree could not be removed');
   });
-  it('aborts a conflicted rebase and reports retained hashes without approving or pushing', () => {
-    const calls = [];
-    const command = (program, args) => {
-      calls.push(args.join(' '));
-      if (args[0] === 'branch') return 'master';
-      if (args[0] === 'log') return 'pending-hash\tWeekly DOK sheet 2026-09-18: Title';
-      if (args[0] === 'rev-list') return '1';
-      if (args.join(' ') === 'rebase origin/master') throw new Error('conflict');
-      if (args[0] === 'rev-parse') return 'pending-hash';
+  it('uses work for pipeline commands and ignores a hostile home checkout', async () => {
+    const command = vi.fn((program, args) => {
+      if (args[0] === 'branch') return 'feature';
+      if (args[0] === 'diff') return 'dirty-staged-file';
+      if (args[0] === 'log') return 'unpushed non-weekly commit';
       return '';
-    };
-    const log = vi.fn();
-    const approvePush = vi.fn();
-    const io = createRuntime(process.cwd(), { command, log, approvePush });
-    expect(() => io.recoverPending()).toThrow('no new sheet selected');
-    expect(calls).toContain('rebase --abort');
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('pending-hash'));
-    expect(approvePush).not.toHaveBeenCalled();
+    });
+    const { io: effects } = fixture();
+    const io = createRuntime({ home, work }, { ...effects, command, exists: () => false });
+    const runtime = createRuntime({ home, work }, { command, exists: () => false });
+    for (const name of ['preflight', 'prepareWorktree', 'cleanupWorktree', 'push']) io[name] = runtime[name];
+    expect((await runWeekly({ mode: 'apply', now: true }, io)).status).toBe('published');
+    expect(command.mock.calls.filter(call => call[3] === work).map(call => call[1])).toEqual([['push', 'origin', 'HEAD:master']]);
+    expect(command.mock.calls.filter(call => call[3] === home).every(call => ['fetch', 'worktree'].includes(call[1][0]))).toBe(true);
+    runtime.fetchOrigin(); runtime.rebase(); runtime.abortRebase(); runtime.head(); runtime.validate();
+    expect(command.mock.calls.slice(-5).every(call => call[3] === work)).toBe(true);
   });
-  it('lets unrelated dirty tracked files through preflight but blocks dirty DOK files', () => {
-    const dirtyTree = files => (program, args) => {
-      if (args[0] === 'branch') return 'master';
-      if (args.join(' ') === 'diff --name-only HEAD') return files.join('\n');
-      return '';
-    };
-    const unrelated = createRuntime(process.cwd(), { command: dirtyTree(['CLAUDE.md', 'data/skill-map.js']) });
-    expect(() => unrelated.preflight({ now: true })).not.toThrow();
-    const dok = createRuntime(process.cwd(), { command: dirtyTree(['CLAUDE.md', 'dok/manifest.json']) });
-    expect(() => dok.preflight({ now: true })).toThrow('DOK files must be clean: dok/manifest.json');
+  it('reads secrets from home and curriculum from work', async () => {
+    const reads = [];
+    const read = vi.spyOn(fs, 'readFileSync').mockImplementation(file => {
+      reads.push(String(file));
+      if (String(file) === path.join(home, 'roster-server/.env')) return 'TEACHER_SECRET=fake';
+      if (String(file) === path.join(work, 'data/skill-map.json')) return '{}';
+      throw new Error('unexpected read');
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ ok: true, frequent: [] }) })));
+    try {
+      await createRuntime({ home, work }).fetchSections();
+      expect(reads).toEqual([path.join(home, 'roster-server/.env'), path.join(work, 'data/skill-map.json')]);
+    } finally { read.mockRestore(); vi.unstubAllGlobals(); }
   });
-  it('refuses push-only recovery on another branch before any network or mutation', () => {
-    const command = vi.fn(() => 'feature');
-    const io = createRuntime(process.cwd(), { command });
-    expect(() => io.recoverPending()).toThrow('requires master');
-    expect(command).toHaveBeenCalledOnce();
-    expect(command).toHaveBeenCalledWith('git', ['branch', '--show-current'], undefined);
+  it('writes approval to the worktree git path, never the shared git directory', () => {
+    const sentinel = path.join(home, '.git/worktrees/-weekly-dok-wt/PUSH_APPROVED');
+    const command = vi.fn(() => sentinel);
+    const write = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    try {
+      createRuntime({ home, work }, { command }).approvePush();
+      expect(command).toHaveBeenCalledWith('git', ['rev-parse', '--git-path', 'PUSH_APPROVED'], undefined, work);
+      expect(write).toHaveBeenCalledWith(sentinel, '');
+    } finally { write.mockRestore(); }
+  });
+  it('keeps the time window guard and allows an explicit manual run', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 20, 14));
+    try {
+      const io = createRuntime({ home, work });
+      expect(() => io.preflight({})).toThrow('Outside the Friday-night');
+      expect(() => io.preflight({ now: true })).not.toThrow();
+    } finally { vi.useRealTimers(); }
+  });
+  it('runs tests through home vitest with work as root and cwd', () => {
+    const read = vi.spyOn(fs, 'readdirSync').mockReturnValue(['dok-example.test.js', 'other.test.js']);
+    const command = vi.fn(() => '');
+    try {
+      createRuntime({ home, work }, { command }).tests();
+      expect(command).toHaveBeenNthCalledWith(1, process.execPath,
+        [path.join(home, 'node_modules/vitest/vitest.mjs'), 'run', '--root', work, 'tests/dok-example.test.js'], undefined, work);
+      expect(command).toHaveBeenNthCalledWith(2, 'pytest', ['tests/test_dok_build.py', '-q'], undefined, work);
+    } finally { read.mockRestore(); }
   });
 });
