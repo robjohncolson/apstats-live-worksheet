@@ -55,7 +55,90 @@
         "PeriodB",
         "PeriodE"
       ]
+    },
+    "label:identifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples": {
+      "label": "Identifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples",
+      "sheet": "1.1+1.2",
+      "sheetTitle": "Tile Thickness: Which Records Belong?",
+      "triagedAt": "2026-09-20",
+      "students": 9,
+      "sections": [
+        "PeriodB",
+        "PeriodE"
+      ]
+    },
+    "label:explains that grade level really stands for labels such as freshman sophomore junior or senior": {
+      "label": "Explains that grade level really stands for labels such as freshman, sophomore, junior, or senior",
+      "sheet": "1.1+1.2",
+      "sheetTitle": "Tile Thickness: Which Records Belong?",
+      "triagedAt": "2026-09-20",
+      "students": 7,
+      "sections": [
+        "PeriodB",
+        "PeriodE"
+      ]
+    },
+    "label:explains that the percent above 15 ppb changed from 11 3 8 of 71 to 8 7 6 of 69": {
+      "label": "Explains that the percent above 15 ppb changed from 11.3% (8 of 71) to 8.7% (6 of 69)",
+      "sheet": "1.1+1.2",
+      "sheetTitle": "Tile Thickness: Which Records Belong?",
+      "triagedAt": "2026-09-20",
+      "students": 7,
+      "sections": [
+        "PeriodB",
+        "PeriodE"
+      ]
+    },
+    "label:explains that zip code represents a location or category of place": {
+      "label": "Explains that zip code represents a location or category of place",
+      "sheet": "1.1+1.2",
+      "sheetTitle": "Tile Thickness: Which Records Belong?",
+      "triagedAt": "2026-09-20",
+      "students": 6,
+      "sections": [
+        "PeriodB",
+        "PeriodE"
+      ]
+    },
+    "label:explains that the data vary because different students got different amounts of sleep": {
+      "label": "Explains that the data vary because different students got different amounts of sleep",
+      "sheet": "1.1+1.2",
+      "sheetTitle": "Tile Thickness: Which Records Belong?",
+      "triagedAt": "2026-09-20",
+      "students": 5,
+      "sections": [
+        "PeriodB",
+        "PeriodE"
+      ]
     }
   },
-  "weeklyRuns": []
+  "weeklyRuns": [
+    {
+      "at": "2026-09-20T21:00:00.000Z",
+      "keys": [
+        "label:connects the number to the real question of whether flint s water was safe to drink or whether the threshold was exceeded",
+        "label:describes how statistics can help by collecting data analyzing the data and interpreting the results to answer the principal s question",
+        "label:describes the variable as the number of hours of sleep the night before the exam",
+        "label:distinguishes that mean and median describe center while iqr describes variability",
+        "label:explains that a dotplot or stem and leaf plot shows each individual value",
+        "label:explains that a frequency table records the number of cases in each category",
+        "label:explains that a histogram groups data into intervals or bins",
+        "label:explains that a histogram would group the data into intervals and hide the exact values for this small set",
+        "label:explains that a variable is a characteristic recorded for each individual that can change from one property to another",
+        "label:explains that grade level really stands for labels such as freshman sophomore junior or senior",
+        "label:explains that percentile is the percent of values less than or equal to a given value",
+        "label:explains that the data vary because different students got different amounts of sleep",
+        "label:explains that the percent above 15 ppb changed from 11 3 8 of 71 to 8 7 6 of 69",
+        "label:explains that zip code represents a location or category of place",
+        "label:gives at least one example of a variable from the charleston data set such as price year built pool or zip code",
+        "label:identifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples",
+        "label:states that a positive z score means above the mean and a negative z score means below the mean",
+        "label:states that both graphs display the same superpower categories or same distribution",
+        "label:states that the conclusion changed from not safe to safe when the two samples were removed",
+        "label:uses the superpower context or a correct category example such as telepathy fly or freeze time",
+        "label:uses the superpower survey context or a correct category example such as fly telepathy or invisibility",
+        "mean-resistant"
+      ]
+    }
+  ]
 }

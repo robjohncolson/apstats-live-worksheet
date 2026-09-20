@@ -1,0 +1,58 @@
+topic: 1.1+1.2
+standalone: true
+topics:
+- '1.1'
+- '1.2'
+ced2026:
+  unit: 1
+  topics:
+  - '1.1'
+  - '1.2'
+  label: 'Tile Thickness: Which Records Belong?'
+title: 'Tile Thickness: Which Records Belong?'
+worksheets:
+- u1_lesson1_live.html
+- u1_lesson2_live.html
+essential_question: When does a changed percentage answer a different question?
+rules_callout:
+  title: 'NOTES: CONTEXT, LABELS, AND PERCENTS'
+  body: Individuals are the objects described by the data; variables are recorded characteristics. Quantitative
+    variables measure amounts with units. Categorical variables identify groups; numeric codes may label ordered
+    stages or places without measuring amounts. Variation means that a variable takes different values across individuals.\par
+    A contextual report names the individuals, variable, units, and question. A percentage is $100\times\text{qualifying
+    count}/\text{total count}$; percentage-point change is new percent minus old percent. State the denominator
+    and disclose omitted records. A reporting decision should address the stated question and inclusion rule.
+focus: aps-1.1_1.2-d3-1
+tether:
+- '1.A: Identify individuals, variables, units, and variation in a statistical context.'
+- '2.A: Distinguish categorical labels from quantitative measurements.'
+reinforcement: []
+space:
+  first_take: 0.35in
+  a: 0.35in
+  b: 0.55in
+  c: 0.6in
+  d: 0.8in
+teacher:
+  questions_to_ask:
+  - What does each numeric column represent?
+  - Which records belong to the original question?
+  - What changes besides the qualifying count when records are omitted?
+  watch_for:
+  - Reporting a percentage without identifying tiles and the thickness threshold.
+  - Treating stage codes or ZIP codes as measured amounts.
+  - Changing only the numerator after removing records.
+  - Confusing differing measured thicknesses with an established cause of variation.
+  first_take_note: Ungraded initial judgment; accept a position with a reason.
+visuals: {}
+misconceptions:
+- label:identifies the context as lead level in water samples or mentions units such as parts per billion or percent
+  of samples
+- label:explains that grade level really stands for labels such as freshman sophomore junior or senior
+- label:explains that the percent above 15 ppb changed from 11 3 8 of 71 to 8 7 6 of 69
+- label:explains that zip code represents a location or category of place
+- label:explains that the data vary because different students got different amounts of sleep
+generated:
+  by: weekly-auto
+  'on': '2026-09-20'
+  window_days: 14

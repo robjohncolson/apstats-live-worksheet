@@ -1,4 +1,38 @@
 {
+  "1.1+1.2": {
+    "ced_unit": 1,
+    "ced_topic": null,
+    "title": "Tile Thickness: Which Records Belong?",
+    "skill": "4.B",
+    "frq_pattern": "defend-a-tile-inspection-report",
+    "worksheet": null,
+    "misconceptions": [
+      "label:identifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples",
+      "label:explains that grade level really stands for labels such as freshman sophomore junior or senior",
+      "label:explains that the percent above 15 ppb changed from 11 3 8 of 71 to 8 7 6 of 69",
+      "label:explains that zip code represents a location or category of place",
+      "label:explains that the data vary because different students got different amounts of sleep"
+    ],
+    "generated": {
+      "by": "weekly-auto",
+      "on": "2026-09-20",
+      "window_days": 14
+    },
+    "topics": [
+      "1.1",
+      "1.2"
+    ],
+    "worksheets": [
+      "u1_lesson1_live.html",
+      "u1_lesson2_live.html"
+    ],
+    "ced_topics": [
+      "1.1",
+      "1.2"
+    ],
+    "slug": "1.1_1.2",
+    "standalone": true
+  },
   "1.1+1.2+1.4+1.7": {
     "ced_unit": 1,
     "ced_topic": null,
