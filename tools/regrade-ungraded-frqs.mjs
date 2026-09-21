@@ -458,6 +458,10 @@ export async function runRegradeJob(options) {
           oldVerdict,
           newVerdict: verdicts[score],
           score,
+          // Report-only detail (see APSTATS_REGRADE_REPORT in main): never logged to the console.
+          response: candidate.response,
+          oldResult: candidate.record.frq_result || null,
+          newResult: result,
         });
         continue;
       }
@@ -647,6 +651,8 @@ export async function main(argv = process.argv.slice(2)) {
     lessons: cli.lessons,
     onEvent(event) {
       if (event.type === 'dry-run') {
+        // Teacher review aid: one JSON line per row, student writing included, so the path must stay out of the repo.
+        if (process.env.APSTATS_REGRADE_REPORT) appendFileSync(process.env.APSTATS_REGRADE_REPORT, JSON.stringify(event) + '\n');
         const rank = { ungraded: -1, I: 0, P: 1, E: 2 };
         const held = rank[event.newVerdict] < rank[event.oldVerdict] ? ` (server floor would hold ${event.oldVerdict})` : '';
         console.log(`Dry run ${event.username} ${event.itemId}: ${event.oldVerdict} → ${event.newVerdict}${held}`);

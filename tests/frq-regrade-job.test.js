@@ -386,10 +386,14 @@ describe('regrade job HTTP flow', () => {
     });
     expect(result.summary).toMatchObject({ mode: 'dry-run', found: 1, graded: 1, applied: 0 });
     expect(result.exitCode).toBe(0);
-    expect(events).toEqual([{
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
       type: 'dry-run', username: 'amy', itemId: 'WS-U1L2-reflect1',
       oldVerdict: 'P', newVerdict: 'E', score: 1,
-    }]);
+    });
+    // Report-only detail for the teacher's local review file.
+    expect(typeof events[0].response).toBe('string');
+    expect(events[0].newResult).toMatchObject({ score: 'E' });
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       'https://roster.test/admin/snapshot', 'https://grader.test/api/ai/grade',
     ]);
