@@ -1,9 +1,13 @@
 {
   "schema": "apstats-desk-bulletin/v1",
   "note": "School notices shown on the Desk. PUBLIC FILE (GH Pages): no staff names, phone extensions, form links, or anything not fit for a public page. audience: all | student | teacher (teacher items render only for a verified teacher, but are still publicly readable here). date = the day it happens (null = standing reminder); showFrom = first day to show (default: 21 days before date); until = last day to show (default: date).",
-  "updated": "2026-09-20",
+  "updated": "2026-09-21",
   "source": "Principal's weekly update, week of 2026-09-21",
   "items": [
+    { "id": "u1-mcq-a-0921", "audience": "student", "date": "2026-09-21",
+      "title": "Unit 1 Progress Check MCQ Part A is on AP Classroom today",
+      "detail": "Sign in with your College Board account. Click today’s tile on the calendar to open the assignment. Paper copy available if AP Classroom is down." },
+
     { "id": "loaners-0922", "audience": "all", "date": "2026-09-22",
       "title": "Loaner laptops: 7:45–9:30 a.m. only",
       "detail": "Tuesday only. Bring your own charged device if you can — loaners will not be handed out after 9:30." },

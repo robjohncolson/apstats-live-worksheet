@@ -9535,6 +9535,12 @@ async function renderDoNow() {
       show('Break Day — nothing due today. Enjoy it.\nEverything else moves one class later.', 'done');
       return;
     }
+    if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'pc') {
+      var pcLink = (typeof PC_LINKS !== 'undefined') ? PC_LINKS[_todayLessonInf.t] : null;
+      show('Today: ' + _todayLessonInf.n + ' — in AP Classroom.\n'
+        + (pcLink ? 'Click today’s tile on the calendar to open it.' : 'Your teacher shares the link in class.'), 'todo');
+      return;
+    }
     if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'work') {
       var workNext = _workDayNextLesson();
       show('Work Day — nothing new today.\nFinish: ' + (workNext ? cedLabel(workNext.inf.t).text : 'All caught up.')
@@ -9860,6 +9866,14 @@ function cedTeacherBridgeAllowed() {
         return !!who && who.role === 'teacher';
     } catch (_) { return false; }
 }
+// Progress Check launch links, keyed by the calendar's PC pseudo-lesson id
+// (U{u}-PCA = mid-unit MCQ Part A, U{u}-PC1 / U{u}-PC2 = end-of-unit days).
+// PCs are taken in AP Classroom (College Board sign-in), never inside the Desk:
+// the tile / Do Now only open the assignment. A missing key renders a
+// "your teacher shares the link in class" panel, so unlinked PCs never break.
+var PC_LINKS = {
+    'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'Unit 1 Progress Check — MCQ Part A' }
+};
 // Grading Model v3 (s121): inject Poster + PC Day 1 + PC Day 2 pseudo-lessons
 // at every unit transition (and at the array end). generateSchedule treats
 // them like lessons and places them on consecutive meeting days so each
@@ -11384,8 +11398,42 @@ function _showBreakDayPanel(inf, dateStr) {
     document.getElementById('resource-overlay').style.display = 'block';
 }
 
+function _showProgressCheckPanel(inf, dateStr) {
+    _lastResourcePanel = { inf: inf, dateStr: dateStr };
+    var header = document.getElementById('resource-header');
+    header.textContent = inf.n;
+    header.style.color = '';
+    header.style.fontStyle = '';
+    var body = document.getElementById('resource-body');
+    body.innerHTML = '';
+    var link = (typeof PC_LINKS !== 'undefined') ? PC_LINKS[inf.t] : null;
+    var p = document.createElement('p');
+    p.textContent = link
+        ? 'Taken in AP Classroom. Sign in with your College Board account, then open the assignment:'
+        : 'Taken in AP Classroom. Your teacher shares the link in class.';
+    body.appendChild(p);
+    if (link) {
+        var a = document.createElement('a');
+        a.href = link.url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.className = 's7btn chicago';
+        a.style.cssText = 'display:inline-block;padding:6px 10px;text-decoration:none';
+        a.textContent = 'Open in AP Classroom →';
+        body.appendChild(a);
+    }
+    var tip = document.createElement('p');
+    tip.textContent = 'AP Classroom down? Ask for the paper copy — same questions, same score.';
+    body.appendChild(tip);
+    document.getElementById('resource-overlay').style.display = 'block';
+}
+
 function showResourcePanel(inf, dateStr) {
     if (!inf || !inf.t) return;
+    if (inf.kind === 'pc') {
+        _showProgressCheckPanel(inf, dateStr);
+        return;
+    }
     if (inf.kind === 'break') {
         _showBreakDayPanel(inf, dateStr);
         return;
@@ -24576,6 +24624,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(inf.due)h+=`<div class="th">Due: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.due):inf.due)}</div>`;
         if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
+        if(inf.kind==='pc')h+='<div class="th" style="color:#2b6cb0">'+((typeof PC_LINKS!=='undefined'&&PC_LINKS[inf.t])?'Click to open in AP Classroom':'Taken in AP Classroom')+'</div>';
         const keys=inf.group?groupTopics(inf):[inf.t];
         const re=keys.map(getRegistryEntry).find(Boolean);
         if(re){
