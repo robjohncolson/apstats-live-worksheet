@@ -94,6 +94,10 @@ export function classifyUngradedFrqRows(snapshot, manifest, options = {}) {
         unknownItems.push(redactedRow(student, record, itemId));
         continue;
       }
+      if (options.lessons) {
+        const lesson = match.prefix.toLowerCase().replace(/^ws-/, '').replace(/^(u\d+)l/, '$1-l');
+        if (!options.lessons.includes(lesson)) continue;
+      }
 
       candidates.push({
         studentId: student.studentId,
@@ -311,6 +315,7 @@ export async function runRegradeJob(options) {
     regradeLow = false,
     limit = Number.POSITIVE_INFINITY,
     student,
+    lessons,
     rootDir = ROOT,
     now = Date.now(),
     fetchImpl = globalThis.fetch,
@@ -336,7 +341,7 @@ export async function runRegradeJob(options) {
   validateFrqRubricRegistry(registry);
 
   const snapshot = await fetchSnapshot(config, fetchImpl);
-  const classified = classifyUngradedFrqRows(snapshot, registry, { now, student, backfillFeedback, regradeLow });
+  const classified = classifyUngradedFrqRows(snapshot, registry, { now, student, lessons, backfillFeedback, regradeLow });
   const allCandidates = classified.candidates;
   const boundedLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : allCandidates.length;
   const candidates = allCandidates.slice(0, boundedLimit);
@@ -376,10 +381,6 @@ export async function runRegradeJob(options) {
   }
 
   const permanentFailureCount = summary.unknownItems + summary.invalidTimestamps;
-  if (!apply) {
-    return { summary, candidates, exitCode: permanentFailureCount > 0 ? 1 : 0 };
-  }
-
   const graderUrl = `${stripTrailingSlash(railwayServerUrl)}/api/ai/grade`;
   const regradeUrl = `${stripTrailingSlash(config.rosterUrl)}/ledger/frq-regrade`;
 
@@ -446,6 +447,20 @@ export async function runRegradeJob(options) {
         continue;
       }
       summary.graded += 1;
+
+      if (!apply) {
+        const verdicts = { 0: 'I', 0.5: 'P', 1: 'E' };
+        const oldVerdict = verdicts[candidate.record.score] ?? 'ungraded';
+        onEvent({
+          type: 'dry-run',
+          username: candidate.username,
+          itemId: candidate.itemId,
+          oldVerdict,
+          newVerdict: verdicts[score],
+          score,
+        });
+        continue;
+      }
 
       const regradeResponse = await fetchImpl(regradeUrl, {
         method: 'POST',
@@ -520,6 +535,7 @@ export function parseArgs(argv) {
     regradeLow: false,
     limit: Number.POSITIVE_INFINITY,
     student: undefined,
+    lessons: undefined,
     configPath: DEFAULT_CONFIG_PATH,
   };
 
@@ -560,6 +576,16 @@ export function parseArgs(argv) {
       index += 1;
       continue;
     }
+    if (arg === '--lessons') {
+      const value = argv[index + 1];
+      if (!value || value.startsWith('--')) throw new Error('--lessons requires a value');
+      options.lessons = value.split(',').map(lesson => lesson.trim().toLowerCase()).filter(Boolean);
+      if (!options.lessons.length) throw new Error('--lessons requires a value');
+      const badLesson = options.lessons.find(lesson => !/^u\d+-l\d+(-\d+)?$/.test(lesson));
+      if (badLesson) throw new Error(`--lessons expects forms like u1-l1 or u4-l1-2, got "${badLesson}"`);
+      index += 1;
+      continue;
+    }
     throw new Error(`unknown argument: ${arg}`);
   }
 
@@ -593,7 +619,7 @@ export function appendSummary(summary, logPath = DEFAULT_LOG_PATH) {
 
 function printSummary(summary) {
   if (summary.mode === 'dry-run') {
-    console.log(`Dry run: ${summary.found} FRQ row(s) would be graded.`);
+    console.log(`Dry run: ${summary.graded} of ${summary.found} FRQ row(s) graded; no ledger writes.`);
     for (const [filename, count] of Object.entries(summary.worksheetCounts)) {
       console.log(`${filename}: ${count}`);
     }
@@ -618,8 +644,13 @@ export async function main(argv = process.argv.slice(2)) {
     regradeLow: cli.regradeLow,
     limit: cli.limit,
     student: cli.student,
+    lessons: cli.lessons,
     onEvent(event) {
-      if (event.type === 'applied') {
+      if (event.type === 'dry-run') {
+        const rank = { ungraded: -1, I: 0, P: 1, E: 2 };
+        const held = rank[event.newVerdict] < rank[event.oldVerdict] ? ` (server floor would hold ${event.oldVerdict})` : '';
+        console.log(`Dry run ${event.username} ${event.itemId}: ${event.oldVerdict} → ${event.newVerdict}${held}`);
+      } else if (event.type === 'applied') {
         console.log(`Applied ${event.username} ${event.itemId} score=${event.score}`);
       } else if (event.type === 'floor-held') {
         console.log(`Floor held ${event.username} ${event.itemId} score=${event.score}`);

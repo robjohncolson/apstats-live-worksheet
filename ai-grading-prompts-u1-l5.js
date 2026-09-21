@@ -44,14 +44,14 @@ window.RUBRICS_U1L5 = {
         expectedElements: [
             { id: 'discrete-definition', description: 'Explains that a discrete variable has countable values or has gaps between possible values', required: true },
             { id: 'continuous-definition', description: 'Explains that a continuous variable has infinitely many possible values or no gaps between values', required: true },
-            { id: 'counting-measuring', description: 'Connects discrete to counting and continuous to measuring', required: true },
-            { id: 'lesson-example', description: 'Uses a correct lesson example such as number of siblings for discrete, height for continuous, or Flint water measurements as continuous', required: true },
+            { id: 'counting-measuring', description: 'Connects discrete to counting and continuous to measuring', required: false },
+            { id: 'lesson-example', description: 'Uses a correct lesson example such as number of siblings for discrete, height for continuous, or Flint water measurements as continuous', required: false },
             { id: 'rounded-values-note', description: 'May mention that rounded data can still come from a continuous variable when the original values included decimals', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly distinguishes discrete from continuous variables, includes the counting-versus-measuring idea, and uses a correct lesson example.',
-            P: 'Response shows part of the difference between discrete and continuous variables but leaves out a major detail or does not use the example clearly.',
-            I: 'Response does not correctly distinguish discrete and continuous quantitative variables.'
+            E: 'Explains that a discrete variable takes countable values with gaps between them, and a continuous variable can take any value in an interval. Counting-versus-measuring language, or correct examples of both types, counts as that explanation.',
+            P: 'Explains one type correctly, but the other is missing or muddled.',
+            I: 'Does not correctly distinguish discrete from continuous quantitative variables.'
         },
         commonMistakes: [
             'Saying discrete just means small numbers',
@@ -66,15 +66,15 @@ window.RUBRICS_U1L5 = {
         questionText: 'Compare a dotplot or stem-and-leaf plot with a histogram. When is a histogram more useful, and what information do you lose?',
         expectedElements: [
             { id: 'large-data-set', description: 'Explains that a histogram is more useful for a large data set', required: true },
-            { id: 'shows-individual-values', description: 'Explains that a dotplot or stem-and-leaf plot shows each individual value', required: true },
-            { id: 'histogram-intervals', description: 'Explains that a histogram groups data into intervals or bins', required: true },
+            { id: 'shows-individual-values', description: 'Explains that a dotplot or stem-and-leaf plot shows each individual value', required: false },
+            { id: 'histogram-intervals', description: 'Explains that a histogram groups data into intervals or bins', required: false },
             { id: 'lose-exact-values', description: 'States that a histogram does not show each exact individual value', required: true },
             { id: 'shape-idea', description: 'May mention that both types of displays still help show the shape of the distribution', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains that histograms are better for large data sets, contrasts them with dotplots or stem-and-leaf plots, and clearly states that exact individual values are lost.',
-            P: 'Response gives a partly correct comparison but misses either when histograms are useful or what information is lost.',
-            I: 'Response does not correctly compare histograms with dotplots or stem-and-leaf plots.'
+            E: 'Says a histogram is more useful for a large data set, and that it no longer shows each exact individual value.',
+            P: 'Gives either when a histogram is more useful or what is lost, but not both clearly.',
+            I: 'Does not correctly compare a histogram with a dotplot or stem-and-leaf plot.'
         },
         commonMistakes: [
             'Saying histograms show every exact data value',
@@ -91,13 +91,13 @@ window.RUBRICS_U1L5 = {
             { id: 'discrete-classification', description: 'Classifies number of siblings as a discrete variable', required: true },
             { id: 'countable-gaps-explanation', description: 'Explains that the values are countable whole-number counts with gaps, so values like 2.5 siblings are not possible', required: true },
             { id: 'best-display-choice', description: 'Chooses a dotplot or stem-and-leaf plot as the better display for this small data set', required: true },
-            { id: 'chosen-display-advantage', description: 'Explains that the chosen display shows each individual value and/or makes the shape easy to see', required: true },
+            { id: 'chosen-display-advantage', description: 'Explains that the chosen display shows each individual value and/or makes the shape easy to see', required: false },
             { id: 'histogram-limitation', description: 'Explains that a histogram would group the data into intervals and hide the exact values for this small set', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly classifies the variable as discrete, explains why, chooses an appropriate small-data-set display, and justifies why a histogram would hide useful information.',
-            P: 'Response includes several correct ideas but misses one major part, such as the explanation of discreteness, the graph choice, or the histogram limitation.',
-            I: 'Response omits multiple required parts or shows weak understanding of discrete data and graph choice.'
+            E: 'Classifies number of siblings as discrete with a correct reason, chooses a dotplot or stem-and-leaf plot for this small data set, and explains that a histogram would group the values and hide them.',
+            P: 'Most of those ideas are correct, but one is missing or muddled.',
+            I: 'Two or more of those ideas are missing or wrong.'
         },
         commonMistakes: [
             'Calling number of siblings continuous because the values are numbers',
@@ -150,8 +150,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 
@@ -169,5 +169,4 @@ Grade the student's response. Return JSON:
 window.getRubricU1L5 = function(questionId) {
     return window.RUBRICS_U1L5[questionId] || null;
 };
-
 

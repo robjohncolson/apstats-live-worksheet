@@ -47,13 +47,13 @@ window.RUBRICS_U1L3 = {
         expectedElements: [
             { id: 'frequency-counts', description: 'Explains that a frequency table gives the number of individuals or cases in each category', required: true },
             { id: 'relative-frequency-proportion', description: 'Explains that a relative frequency table gives the proportion or percent in each category', required: true },
-            { id: 'superpower-context', description: 'Uses the superpower survey context or a correct category example such as fly, telepathy, or invisibility', required: true },
+            { id: 'superpower-context', description: 'Uses the superpower survey context or a correct category example such as fly, telepathy, or invisibility', required: false },
             { id: 'divide-by-total', description: 'May mention that relative frequencies are found by dividing by the total of 50 students', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly distinguishes counts from proportions or percentages and explains both tables in the superpower context.',
-            P: 'Response shows the general difference between the two tables but does not explain one of them fully or does not use the survey context well.',
-            I: 'Response does not correctly distinguish a frequency table from a relative frequency table.'
+            E: 'Explains that a frequency table gives the count in each category and a relative frequency table gives the proportion or percent in each category.',
+            P: 'Explains one table correctly, but the other is missing or muddled.',
+            I: 'Does not correctly distinguish a frequency table from a relative frequency table.'
         },
         commonMistakes: [
             'Saying both tables only show counts',
@@ -68,14 +68,14 @@ window.RUBRICS_U1L3 = {
         questionText: 'How did the video use table values to decide whether a claim about categorical data was true or not supported? Use one example from the superpower or vaping scenario.',
         expectedElements: [
             { id: 'use-counts-or-percentages', description: 'Explains that counts, proportions, or percentages from the table are used to test a claim', required: true },
-            { id: 'specific-example', description: 'Uses a correct example from the lesson, such as fly plus telepathy equaling 50 percent or can\'t say drug unfamiliar being 8.5 percent', required: true },
+            { id: 'specific-example', description: 'Uses a correct example from the lesson, such as fly plus telepathy equaling 50 percent or can\'t say drug unfamiliar being 8.5 percent', required: false },
             { id: 'claim-judgment', description: 'States whether the claim is supported or not supported and why the numbers justify that decision', required: true },
             { id: 'majority-threshold', description: 'May mention a benchmark such as majority meaning more than 50 percent or over one-third meaning above about 33 percent', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains that table values justify claims and uses a correct lesson example to show why a statement is true or not supported.',
-            P: 'Response gives part of the idea or mentions an example, but does not clearly connect the numbers to the claim decision.',
-            I: 'Response does not show how counts or relative frequencies are used to evaluate claims about the data.'
+            E: 'Explains that counts or percentages from the table are compared with the claim, and states whether a claim is supported and why the numbers justify that. Any correct example works; it does not have to match the video\'s numbers.',
+            P: 'Mentions using table values or gives an example, but does not clearly connect the numbers to the decision about the claim.',
+            I: 'Does not show how counts or relative frequencies are used to evaluate a claim.'
         },
         commonMistakes: [
             'Giving an opinion instead of using table values',
@@ -93,12 +93,12 @@ window.RUBRICS_U1L3 = {
             { id: 'chips-relative-frequency', description: 'Finds chips as 18 out of 40, which is 0.45 or 45 percent', required: true },
             { id: 'yogurt-relative-frequency', description: 'Finds yogurt as 4 out of 40, which is 0.10 or 10 percent', required: true },
             { id: 'no-majority-chips', description: 'States that the claim of a majority preferring chips is not supported because 45 percent is less than 50 percent', required: true },
-            { id: 'context-justification', description: 'Uses counts or relative frequencies to justify the conclusion in the lunch-side context', required: true }
+            { id: 'context-justification', description: 'Uses counts or relative frequencies to justify the conclusion in the lunch-side context', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly explains the frequency table, computes the relative frequencies for chips and yogurt, rejects the majority claim, and justifies the answer in context.',
-            P: 'Response includes several correct ideas but misses one major part, such as an incorrect percent, no majority explanation, or weak context justification.',
-            I: 'Response omits multiple required parts or shows weak understanding of frequency tables and relative frequencies.'
+            E: 'Explains that a frequency table records the count in each category, finds chips as 18/40 = 0.45 (45%) and yogurt as 4/40 = 0.10 (10%), and rejects the majority claim because 45% is less than 50%.',
+            P: 'Most of those ideas are correct, but one is missing, miscalculated, or unjustified.',
+            I: 'Two or more of those ideas are missing or wrong.'
         },
         commonMistakes: [
             'Treating 18 students as a majority without comparing to the total of 40',
@@ -152,8 +152,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

@@ -48,13 +48,13 @@ window.RUBRICS_U1L6 = {
             { id: 'center-description', description: 'Identifies a typical value around 3 to 4 parts per billion', required: true },
             { id: 'variability-description', description: 'Describes the spread or variability as going from 0 to 104 parts per billion or gives an equivalent spread statement', required: true },
             { id: 'unusual-features', description: 'Mentions unusual features such as the cluster from 0 to 10, the gap between 42 and 104, or high outliers', required: true },
-            { id: 'context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: true },
+            { id: 'context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: false },
             { id: 'single-peak-detail', description: 'May mention that the single peak is at or near 0', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly describes the Flint distribution with shape, center, variability, unusual features, and context.',
-            P: 'Response includes some correct characteristics of the Flint distribution but leaves out one major part or uses weak context.',
-            I: 'Response does not correctly describe the Flint distribution using the four required characteristics.'
+            E: 'Describes shape, center, variability, and unusual features correctly, in context: it is clear the values are lead levels in water samples, not bare numbers. Reasonable readings of the graph are accepted; exact values are not needed.',
+            P: 'Three of the four characteristics are correct; one is missing or wrong.',
+            I: 'Two or more of the four characteristics are missing or wrong.'
         },
         commonMistakes: [
             'Describing only the shape and forgetting center or spread',
@@ -70,13 +70,13 @@ window.RUBRICS_U1L6 = {
         expectedElements: [
             { id: 'two-unusual-features', description: 'Correctly explains any two of these lesson terms: outlier, gap, and cluster', required: true },
             { id: 'flint-connection', description: 'Connects at least one unusual feature to the Flint data, such as the cluster from 0 to 10, the gap from 42 to 104, or the high outlier', required: true },
-            { id: 'distribution-description-role', description: 'States that unusual features are one of the important characteristics in a full distribution description', required: true },
+            { id: 'distribution-description-role', description: 'States that unusual features are one of the important characteristics in a full distribution description', required: false },
             { id: 'gaps-clusters-together', description: 'May mention that gaps and clusters often appear together', required: false }
         ],
         scoringGuide: {
-            E: 'Response accurately explains unusual features, uses lesson vocabulary, and connects at least one feature to the Flint example.',
-            P: 'Response shows partial understanding of unusual features but misses one major definition or the Flint connection.',
-            I: 'Response does not correctly explain unusual features in a quantitative distribution.'
+            E: 'Correctly explains two of outlier, gap, and cluster, and points to at least one of them in the Flint data.',
+            P: 'Explains the terms but makes no connection to the Flint data, or explains only one term correctly.',
+            I: 'Does not correctly explain unusual features of a quantitative distribution.'
         },
         commonMistakes: [
             'Treating a gap as a low bar rather than a region with no data',
@@ -94,12 +94,12 @@ window.RUBRICS_U1L6 = {
             { id: 'center', description: 'Gives a typical value around 4 minutes or an equivalent center statement in context', required: true },
             { id: 'variability', description: 'Describes the spread as running from 1 to 18 minutes or gives an equivalent variability statement in context', required: true },
             { id: 'unusual-features', description: 'Identifies unusual features such as a cluster from about 1 to 6, a gap before 18, or the value 18 as an outlier', required: true },
-            { id: 'context', description: 'Uses context by referring to minutes waiting for the late bus or waiting times for students', required: true }
+            { id: 'context', description: 'Uses context by referring to minutes waiting for the late bus or waiting times for students', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly describes the distribution with shape, center, variability, unusual features, and context.',
-            P: 'Response includes several correct ideas but misses one major part of the description or uses weak context.',
-            I: 'Response omits multiple required parts or shows weak understanding of how to describe a quantitative distribution.'
+            E: 'Describes shape, center, variability, and unusual features correctly, in context: it is clear the values are minutes students waited for the bus. Reasonable readings of the data are accepted.',
+            P: 'Three of the four characteristics are correct; one is missing or wrong.',
+            I: 'Two or more of the four characteristics are missing or wrong.'
         },
         commonMistakes: [
             'Giving only one shape word when the prompt asks for at least two appropriate terms',
@@ -153,8 +153,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

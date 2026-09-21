@@ -59,13 +59,13 @@ window.RUBRICS_U1L4 = {
             { id: 'frequency-counts', description: 'Explains that a frequency bar chart shows counts or frequencies for each category', required: true },
             { id: 'relative-frequency-proportions', description: 'Explains that a relative frequency bar chart shows proportions or percents for each category', required: true },
             { id: 'same-superpower-data', description: 'States that both graphs display the same superpower categories or same distribution', required: true },
-            { id: 'superpower-example', description: 'Uses the superpower context or a correct category example such as telepathy, fly, or freeze time', required: true },
+            { id: 'superpower-example', description: 'Uses the superpower context or a correct category example such as telepathy, fly, or freeze time', required: false },
             { id: 'divide-by-total', description: 'May mention that relative frequencies come from dividing by the total of 50 students', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that one graph shows counts and the other shows proportions or percents, while tying both to the same superpower data.',
-            P: 'Response shows the general difference between the graphs but leaves out part of the explanation or does not use the superpower context clearly.',
-            I: 'Response does not correctly distinguish a frequency bar chart from a relative frequency bar chart.'
+            E: 'Explains that one chart shows counts, the other shows proportions or percents, and that both display the same data (same categories, same pattern, different scale).',
+            P: 'Distinguishes the two charts but does not say they show the same data, or explains only one chart clearly.',
+            I: 'Does not correctly distinguish a frequency bar chart from a relative frequency bar chart.'
         },
         commonMistakes: [
             'Saying both graphs only show counts',
@@ -81,18 +81,18 @@ window.RUBRICS_U1L4 = {
         expectedElements: [
             { id: 'different-group-sizes', description: 'Explains that the male and female groups have different sizes, 80 males and 125 females', required: true },
             { id: 'use-proportions', description: 'Explains that relative frequencies or proportions should be used instead of just raw counts', required: true },
-            { id: 'lesson-example', description: 'Uses a correct lesson example such as freeze time being 28 and 28 but more popular among males, or telepathy being less than 10 percent of males and almost 25 percent of females', required: true },
-            { id: 'comparison-conclusion', description: 'Explains how the relative frequencies change or clarify the comparison', required: true },
+            { id: 'lesson-example', description: 'Uses a correct lesson example such as freeze time being 28 and 28 but more popular among males, or telepathy being less than 10 percent of males and almost 25 percent of females', required: false },
+            { id: 'comparison-conclusion', description: 'Explains how the relative frequencies change or clarify the comparison', required: false },
             { id: 'graph-or-table-link', description: 'May mention that relative frequency tables or side-by-side relative frequency bar charts make the comparison easier', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains that different group sizes require relative frequencies and uses a correct lesson example to show how proportions lead to the correct comparison.',
-            P: 'Response shows part of the idea or gives an example, but does not fully explain why raw counts can be misleading.',
-            I: 'Response does not show why relative frequencies are preferred when comparing groups of different sizes.'
+            E: 'Explains that the groups have different sizes, so raw counts can mislead and proportions or percents must be compared instead. Quoting the group sizes or a lesson example strengthens the answer but is not needed.',
+            P: 'Says to use relative frequencies but does not explain that different group sizes are the reason, or the reverse.',
+            I: 'Does not show why relative frequencies are preferred when comparing groups.'
         },
         commonMistakes: [
             'Comparing counts only and ignoring the different totals',
-            'Using an example that does not match the lesson numbers',
+            'Giving an example whose numbers do not support the comparison',
             'Saying equal counts mean equal popularity',
             'Not explaining how the proportion changes the conclusion'
         ],
@@ -106,12 +106,12 @@ window.RUBRICS_U1L4 = {
             { id: 'ninth-jersey-frequency', description: 'Finds Jersey Day for 9th grade as 6 out of 30, which is 0.20 or 20 percent', required: true },
             { id: 'tenth-jersey-frequency', description: 'Finds Jersey Day for 10th grade as 8 out of 20, which is 0.40 or 40 percent', required: true },
             { id: 'claim-not-supported', description: 'States that the claim Jersey Day was equally popular is not supported', required: true },
-            { id: 'context-justification', description: 'Uses the spirit day context and counts or relative frequencies to justify that Jersey Day was more popular among 10th graders', required: true }
+            { id: 'context-justification', description: 'Uses the spirit day context and counts or relative frequencies to justify that Jersey Day was more popular among 10th graders', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains why relative frequencies are better for comparing different-sized groups, correctly computes both Jersey Day proportions, rejects the equal-popularity claim, and justifies the answer in context.',
-            P: 'Response includes several correct ideas but misses one major part, such as an incorrect proportion, weak explanation of why relative frequencies are needed, or incomplete justification.',
-            I: 'Response omits multiple required parts or shows weak understanding of relative frequency comparisons.'
+            E: 'Explains that the grades are different sizes so relative frequencies are needed, finds 6/30 = 20% and 8/20 = 40%, and concludes Jersey Day was not equally popular.',
+            P: 'Most of those ideas are correct, but one is missing, miscalculated, or muddled.',
+            I: 'Two or more of those ideas are missing or wrong.'
         },
         commonMistakes: [
             'Comparing the Jersey Day counts without noticing the grades have different totals',
@@ -165,8 +165,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

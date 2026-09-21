@@ -45,13 +45,13 @@ window.RUBRICS_U1L2 = {
         expectedElements: [
             { id: 'individuals-are-properties', description: 'Identifies the individuals as the properties or homes for sale in Charleston', required: true },
             { id: 'variable-definition', description: 'Explains that a variable is a characteristic recorded for each individual that can change from one property to another', required: true },
-            { id: 'gives-example-variable', description: 'Gives at least one example of a variable from the Charleston data set, such as price, year built, pool, or zip code', required: true },
+            { id: 'gives-example-variable', description: 'Gives at least one example of a variable from the Charleston data set, such as price, year built, pool, or zip code', required: false },
             { id: 'rows-vs-columns', description: 'May note that individuals appear in rows while variables appear in columns', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly distinguishes individuals from variables in the Charleston example and includes at least one correct variable in context.',
-            P: 'Response shows partial understanding of individuals and variables but does not clearly explain one of them or does not use the Charleston example well.',
-            I: 'Response does not correctly distinguish an individual from a variable.'
+            E: 'Identifies the individuals as the properties or homes, and explains that a variable is a characteristic recorded for each individual that can differ from one to the next.',
+            P: 'Explains one of the two ideas correctly, but the other is missing or muddled.',
+            I: 'Does not correctly distinguish an individual from a variable.'
         },
         commonMistakes: [
             'Calling the houses variables instead of individuals',
@@ -66,14 +66,14 @@ window.RUBRICS_U1L2 = {
         questionText: 'Why are zip code and grade level considered categorical variables even though they can be written with numbers?',
         expectedElements: [
             { id: 'numbers-as-labels', description: 'Explains that the numbers act as labels or categories rather than measurements or counts', required: true },
-            { id: 'zip-code-location', description: 'Explains that zip code represents a location or category of place', required: true },
-            { id: 'grade-level-categories', description: 'Explains that grade level really stands for labels such as freshman, sophomore, junior, or senior', required: true },
+            { id: 'zip-code-location', description: 'Explains that zip code represents a location or category of place', required: false },
+            { id: 'grade-level-categories', description: 'Explains that grade level really stands for labels such as freshman, sophomore, junior, or senior', required: false },
             { id: 'not-average', description: 'May mention that taking an average would not be meaningful for these values', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that zip code and grade level are labels or categories, not measured or counted quantities, and correctly interprets both examples.',
-            P: 'Response correctly explains one example or gives the general idea of labels versus measurements, but not fully for both zip code and grade level.',
-            I: 'Response treats zip code or grade level as quantitative without explaining the categorical reasoning.'
+            E: 'Explains that the numbers act as labels or categories rather than measurements or counts. Applying the idea to zip code or grade level strengthens the answer but one clear explanation is enough.',
+            P: 'Gives part of the labels-versus-measurements reasoning (for example, says an average would be meaningless) without stating that the numbers are only labels or categories.',
+            I: 'Only restates that the variables are categorical, treats zip code or grade level as quantitative, or gives no reasoning.'
         },
         commonMistakes: [
             'Assuming that any variable written with numbers must be quantitative',
@@ -88,15 +88,15 @@ window.RUBRICS_U1L2 = {
         questionText: 'A school keeps a spreadsheet for 25 students who play a spring sport. The columns are student ID, sport played, resting heart rate in beats per minute, and number of practices missed this month. Identify the individuals, name two variables in context, classify sport played and resting heart rate, and explain why student ID is not a variable for this lesson.',
         expectedElements: [
             { id: 'individuals', description: 'Identifies the individuals as the 25 students who play a spring sport', required: true },
-            { id: 'two-variables', description: 'Names two actual variables from the spreadsheet in context, such as sport played, resting heart rate, or number of practices missed', required: true },
+            { id: 'two-variables', description: 'Names two actual variables from the spreadsheet in context, such as sport played, resting heart rate, or number of practices missed', required: false },
             { id: 'sport-played-categorical', description: 'Classifies sport played as categorical because it uses category names or labels', required: true },
             { id: 'heart-rate-quantitative', description: 'Classifies resting heart rate as quantitative because it is a numerical measured quantity in beats per minute', required: true },
             { id: 'id-not-variable', description: 'Explains that student ID is an identifier used to label each student, not a characteristic that varies in the lesson sense', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the individuals, names variables in context, classifies sport played and resting heart rate correctly, and explains why student ID is only an identifier.',
-            P: 'Response includes several correct ideas but misses one major part, such as explaining why student ID is not a variable or misclassifying one variable type.',
-            I: 'Response omits multiple required parts or shows weak understanding of individuals, variables, and variable type.'
+            E: 'Identifies the individuals as the students, classifies sport played as categorical and resting heart rate as quantitative with a reason, and explains that student ID is only an identifier.',
+            P: 'Most of those ideas are correct, but one is missing, muddled, or misclassified.',
+            I: 'Two or more of those ideas are missing or wrong.'
         },
         commonMistakes: [
             'Calling student ID a variable just because it is listed in a column',
@@ -150,8 +150,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

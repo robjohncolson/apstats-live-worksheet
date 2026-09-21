@@ -142,7 +142,7 @@
       "commonMistakes": [
         "Saying the number speaks for itself without needing context",
         "Mentioning the number but not what it measures",
-        "Failing to connect the number to the question about safe drinking water",
+        "Treating the number as meaningful without saying what it measures",
         "Ignoring the role of units or percent in the interpretation"
       ],
       "worksheet": "u1_lesson1_live.html"
@@ -168,7 +168,7 @@
       ],
       "commonMistakes": [
         "Stating that the omitted points did not affect the conclusion",
-        "Mentioning only that two points were removed without describing the new percentages",
+        "Mentioning only that two points were removed without saying how the conclusion changed",
         "Ignoring that the conclusion changed from unsafe to safe",
         "Failing to address why data should be handled responsibly"
       ],
@@ -431,7 +431,7 @@
       ],
       "commonMistakes": [
         "Comparing counts only and ignoring the different totals",
-        "Using an example that does not match the lesson numbers",
+        "Giving an example whose numbers do not support the comparison",
         "Saying equal counts mean equal popularity",
         "Not explaining how the proportion changes the conclusion"
       ],

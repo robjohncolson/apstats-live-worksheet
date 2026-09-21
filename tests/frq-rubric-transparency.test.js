@@ -54,7 +54,7 @@ describe('FRQ rubric transparency', () => {
       const { window: win } = dom;
       win.showFeedback('reflect1', partial);
       let card = win.document.querySelector('#reflect1-feedback .ai-feedback');
-      expect(card.querySelector('.ai-feedback-header').textContent).toContain('Missing 2 of 3 key elements');
+      expect(card.querySelector('.ai-feedback-header').textContent).toContain('Missing 2 of 2 key elements'); // u1-l1 reflect1 has 2 key elements since RUBRIC_SLIM; the count clamps to the total
       expect([...card.querySelectorAll('.ai-feedback-missing')].map(item => item.textContent)).toEqual(['○ b', '○ c']);
       expect([...card.querySelectorAll('.ai-feedback-matched')].map(item => item.textContent)).toEqual(['✓ a']);
       expect(card.querySelector('.ai-feedback-suggestion').textContent).toBe('To reach E, add: add b');

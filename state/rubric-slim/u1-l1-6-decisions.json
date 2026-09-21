@@ -1,0 +1,229 @@
+{
+  "note": "RUBRIC_SLIM_SPEC pilot. For each question: `required` lists the ONLY element ids that stay required:true; every other existing element becomes required:false. No element is added, deleted or re-id'd. `describe` optionally replaces one element's description. `scoringGuide` replaces the three strings verbatim. After the Codex review: L3 exitTicket regains frequency-definition; the one description softening was reverted; three commonMistakes lines that penalized optional recall were reworded.",
+  "files": {
+    "ai-grading-prompts-u1-l1.js": {
+      "reflect1": {
+        "required": [
+          "needs-context",
+          "units-or-variable"
+        ],
+        "scoringGuide": {
+          "E": "Explains that a number alone tells us little until we know what was measured, and says what these numbers refer to (what was measured, its units, or what the percent is a percent of).",
+          "P": "Shows the central idea that numbers need context, but does not say what these numbers actually refer to, or says it in a muddled way.",
+          "I": "Does not explain why context is needed to interpret a number."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "changed-conclusion",
+          "responsible-use"
+        ],
+        "scoringGuide": {
+          "E": "States that leaving out the two samples flipped the conclusion from not safe to safe, and explains that omitting relevant data can change results, so statistics must be used honestly. Exact percentages are not needed.",
+          "P": "Gives either the changed conclusion or the responsible-use idea, but not both clearly.",
+          "I": "Does not explain how removing the samples changed the result or what that shows about using data responsibly."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "question-in-context",
+          "variable",
+          "variation",
+          "context-for-30"
+        ],
+        "scoringGuide": {
+          "E": "Identifies a sensible question in context, describes the variable, explains that the data vary from student to student, and says what 30% means here.",
+          "P": "Most of those ideas are correct, but one is missing or muddled.",
+          "I": "Two or more of those ideas are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u1-l2.js": {
+      "reflect1": {
+        "required": [
+          "individuals-are-properties",
+          "variable-definition"
+        ],
+        "scoringGuide": {
+          "E": "Identifies the individuals as the properties or homes, and explains that a variable is a characteristic recorded for each individual that can differ from one to the next.",
+          "P": "Explains one of the two ideas correctly, but the other is missing or muddled.",
+          "I": "Does not correctly distinguish an individual from a variable."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "numbers-as-labels"
+        ],
+        "scoringGuide": {
+          "E": "Explains that the numbers act as labels or categories rather than measurements or counts. Applying the idea to zip code or grade level strengthens the answer but one clear explanation is enough.",
+          "P": "Gives part of the labels-versus-measurements reasoning (for example, says an average would be meaningless) without stating that the numbers are only labels or categories.",
+          "I": "Only restates that the variables are categorical, treats zip code or grade level as quantitative, or gives no reasoning."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "individuals",
+          "sport-played-categorical",
+          "heart-rate-quantitative",
+          "id-not-variable"
+        ],
+        "scoringGuide": {
+          "E": "Identifies the individuals as the students, classifies sport played as categorical and resting heart rate as quantitative with a reason, and explains that student ID is only an identifier.",
+          "P": "Most of those ideas are correct, but one is missing, muddled, or misclassified.",
+          "I": "Two or more of those ideas are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u1-l3.js": {
+      "reflect1": {
+        "required": [
+          "frequency-counts",
+          "relative-frequency-proportion"
+        ],
+        "scoringGuide": {
+          "E": "Explains that a frequency table gives the count in each category and a relative frequency table gives the proportion or percent in each category.",
+          "P": "Explains one table correctly, but the other is missing or muddled.",
+          "I": "Does not correctly distinguish a frequency table from a relative frequency table."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "use-counts-or-percentages",
+          "claim-judgment"
+        ],
+        "scoringGuide": {
+          "E": "Explains that counts or percentages from the table are compared with the claim, and states whether a claim is supported and why the numbers justify that. Any correct example works; it does not have to match the video's numbers.",
+          "P": "Mentions using table values or gives an example, but does not clearly connect the numbers to the decision about the claim.",
+          "I": "Does not show how counts or relative frequencies are used to evaluate a claim."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "frequency-definition",
+          "chips-relative-frequency",
+          "yogurt-relative-frequency",
+          "no-majority-chips"
+        ],
+        "scoringGuide": {
+          "E": "Explains that a frequency table records the count in each category, finds chips as 18/40 = 0.45 (45%) and yogurt as 4/40 = 0.10 (10%), and rejects the majority claim because 45% is less than 50%.",
+          "P": "Most of those ideas are correct, but one is missing, miscalculated, or unjustified.",
+          "I": "Two or more of those ideas are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u1-l4.js": {
+      "reflect1": {
+        "required": [
+          "frequency-counts",
+          "relative-frequency-proportions",
+          "same-superpower-data"
+        ],
+        "scoringGuide": {
+          "E": "Explains that one chart shows counts, the other shows proportions or percents, and that both display the same data (same categories, same pattern, different scale).",
+          "P": "Distinguishes the two charts but does not say they show the same data, or explains only one chart clearly.",
+          "I": "Does not correctly distinguish a frequency bar chart from a relative frequency bar chart."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "different-group-sizes",
+          "use-proportions"
+        ],
+        "scoringGuide": {
+          "E": "Explains that the groups have different sizes, so raw counts can mislead and proportions or percents must be compared instead. Quoting the group sizes or a lesson example strengthens the answer but is not needed.",
+          "P": "Says to use relative frequencies but does not explain that different group sizes are the reason, or the reverse.",
+          "I": "Does not show why relative frequencies are preferred when comparing groups."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "different-grade-sizes",
+          "ninth-jersey-frequency",
+          "tenth-jersey-frequency",
+          "claim-not-supported"
+        ],
+        "scoringGuide": {
+          "E": "Explains that the grades are different sizes so relative frequencies are needed, finds 6/30 = 20% and 8/20 = 40%, and concludes Jersey Day was not equally popular.",
+          "P": "Most of those ideas are correct, but one is missing, miscalculated, or muddled.",
+          "I": "Two or more of those ideas are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u1-l5.js": {
+      "reflect1": {
+        "required": [
+          "discrete-definition",
+          "continuous-definition"
+        ],
+        "scoringGuide": {
+          "E": "Explains that a discrete variable takes countable values with gaps between them, and a continuous variable can take any value in an interval. Counting-versus-measuring language, or correct examples of both types, counts as that explanation.",
+          "P": "Explains one type correctly, but the other is missing or muddled.",
+          "I": "Does not correctly distinguish discrete from continuous quantitative variables."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "large-data-set",
+          "lose-exact-values"
+        ],
+        "scoringGuide": {
+          "E": "Says a histogram is more useful for a large data set, and that it no longer shows each exact individual value.",
+          "P": "Gives either when a histogram is more useful or what is lost, but not both clearly.",
+          "I": "Does not correctly compare a histogram with a dotplot or stem-and-leaf plot."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "discrete-classification",
+          "countable-gaps-explanation",
+          "best-display-choice",
+          "histogram-limitation"
+        ],
+        "scoringGuide": {
+          "E": "Classifies number of siblings as discrete with a correct reason, chooses a dotplot or stem-and-leaf plot for this small data set, and explains that a histogram would group the values and hide them.",
+          "P": "Most of those ideas are correct, but one is missing or muddled.",
+          "I": "Two or more of those ideas are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u1-l6.js": {
+      "reflect1": {
+        "required": [
+          "shape-description",
+          "center-description",
+          "variability-description",
+          "unusual-features"
+        ],
+        "scoringGuide": {
+          "E": "Describes shape, center, variability, and unusual features correctly, in context: it is clear the values are lead levels in water samples, not bare numbers. Reasonable readings of the graph are accepted; exact values are not needed.",
+          "P": "Three of the four characteristics are correct; one is missing or wrong.",
+          "I": "Two or more of the four characteristics are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "two-unusual-features",
+          "flint-connection"
+        ],
+        "scoringGuide": {
+          "E": "Correctly explains two of outlier, gap, and cluster, and points to at least one of them in the Flint data.",
+          "P": "Explains the terms but makes no connection to the Flint data, or explains only one term correctly.",
+          "I": "Does not correctly explain unusual features of a quantitative distribution."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "shape",
+          "center",
+          "variability",
+          "unusual-features"
+        ],
+        "scoringGuide": {
+          "E": "Describes shape, center, variability, and unusual features correctly, in context: it is clear the values are minutes students waited for the bus. Reasonable readings of the data are accepted.",
+          "P": "Three of the four characteristics are correct; one is missing or wrong.",
+          "I": "Two or more of the four characteristics are missing or wrong."
+        }
+      }
+    }
+  }
+}

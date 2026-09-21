@@ -36,18 +36,18 @@ window.RUBRICS_U1L1 = {
         expectedElements: [
             { id: 'needs-context', description: 'Explains that a number by itself does not mean much unless we know what is being measured or described', required: true },
             { id: 'units-or-variable', description: 'Identifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples', required: true },
-            { id: 'links-to-question', description: 'Connects the number to the real question of whether Flint\'s water was safe to drink or whether the threshold was exceeded', required: true },
+            { id: 'links-to-question', description: 'Connects the number to the real question of whether Flint\'s water was safe to drink or whether the threshold was exceeded', required: false },
             { id: 'threshold-idea', description: 'May mention that 15 ppb and 11.3% matter because they can be compared to a cutoff or threshold', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that numbers need context, identifies what the numbers refer to, and connects them to the question or decision about water safety.',
-            P: 'Response shows some understanding of context but does not clearly explain what the numbers refer to or how they help answer the question.',
-            I: 'Response does not explain why context matters for interpreting the numbers.'
+            E: 'Explains that a number alone tells us little until we know what was measured, and says what these numbers refer to (what was measured, its units, or what the percent is a percent of).',
+            P: 'Shows the central idea that numbers need context, but does not say what these numbers actually refer to, or says it in a muddled way.',
+            I: 'Does not explain why context is needed to interpret a number.'
         },
         commonMistakes: [
             'Saying the number speaks for itself without needing context',
             'Mentioning the number but not what it measures',
-            'Failing to connect the number to the question about safe drinking water',
+            'Treating the number as meaningful without saying what it measures',
             'Ignoring the role of units or percent in the interpretation'
         ],
         contextFromVideo: 'The video emphasizes that numbers such as 15 parts per billion and 11.3% become useful only when tied to the variable, the threshold, and the question of whether the water was safe to drink.'
@@ -56,19 +56,19 @@ window.RUBRICS_U1L1 = {
     reflect2: {
         questionText: 'How did removing two water samples change the conclusion, and what does that show about using statistics responsibly?',
         expectedElements: [
-            { id: 'changed-percent', description: 'Explains that the percent above 15 ppb changed from 11.3% (8 of 71) to 8.7% (6 of 69)', required: true },
+            { id: 'changed-percent', description: 'Explains that the percent above 15 ppb changed from 11.3% (8 of 71) to 8.7% (6 of 69)', required: false },
             { id: 'changed-conclusion', description: 'States that the conclusion changed from not safe to safe when the two samples were removed', required: true },
             { id: 'responsible-use', description: 'Explains that leaving out relevant data can change results and that statistics should be used honestly and carefully', required: true },
             { id: 'real-consequences', description: 'May note that these choices can affect real people and real decisions', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly explains how the omitted samples changed both the percentage and the conclusion, and it clearly connects that change to responsible use of data.',
-            P: 'Response describes either the numerical change or the idea of responsible data use, but not both clearly and completely.',
-            I: 'Response does not correctly explain how removing the samples changed the result or what that implies.'
+            E: 'States that leaving out the two samples flipped the conclusion from not safe to safe, and explains that omitting relevant data can change results, so statistics must be used honestly. Exact percentages are not needed.',
+            P: 'Gives either the changed conclusion or the responsible-use idea, but not both clearly.',
+            I: 'Does not explain how removing the samples changed the result or what that shows about using data responsibly.'
         },
         commonMistakes: [
             'Stating that the omitted points did not affect the conclusion',
-            'Mentioning only that two points were removed without describing the new percentages',
+            'Mentioning only that two points were removed without saying how the conclusion changed',
             'Ignoring that the conclusion changed from unsafe to safe',
             'Failing to address why data should be handled responsibly'
         ],
@@ -82,12 +82,12 @@ window.RUBRICS_U1L1 = {
             { id: 'variable', description: 'Describes the variable as the number of hours of sleep the night before the exam', required: true },
             { id: 'variation', description: 'Explains that the data vary because different students got different amounts of sleep', required: true },
             { id: 'context-for-30', description: 'Explains that 9 out of 30, or 30%, is meaningful because it describes the proportion of sampled students who got fewer than 6 hours of sleep', required: true },
-            { id: 'statistics-process', description: 'Describes how statistics can help by collecting data, analyzing the data, and interpreting the results to answer the principal\'s question', required: true }
+            { id: 'statistics-process', description: 'Describes how statistics can help by collecting data, analyzing the data, and interpreting the results to answer the principal\'s question', required: false }
         ],
         scoringGuide: {
-            E: 'Response identifies the question, correctly describes the variable and variation, explains the meaning of 30% in context, and describes the basic statistical process for answering the principal\'s question.',
-            P: 'Response includes several correct ideas but misses one major component, such as the context for 30% or the explanation of variation.',
-            I: 'Response omits multiple required components or does not show understanding of the lesson focus on context and one-variable data.'
+            E: 'Identifies a sensible question in context, describes the variable, explains that the data vary from student to student, and says what 30% means here.',
+            P: 'Most of those ideas are correct, but one is missing or muddled.',
+            I: 'Two or more of those ideas are missing or wrong.'
         },
         commonMistakes: [
             'Giving a number without explaining what it represents',
@@ -141,8 +141,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

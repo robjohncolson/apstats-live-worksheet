@@ -118,9 +118,13 @@ describe('FRQ regrade manifest', () => {
     expect(JSON.parse(fetchMock.mock.calls[3][1].body)).toMatchObject({
       feedbackOnly: true, score: 0, missing: ['Context'], matched: [],
     });
-    fetchMock.mockReset().mockResolvedValue(response(200, snapshot));
-    await runRegradeJob({ ...options, apply: false });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    fetchMock.mockReset()
+      .mockResolvedValueOnce(response(200, snapshot))
+      .mockResolvedValueOnce(response(200, { score: 'I', missing: ['Context'] }));
+    const dryRun = await runRegradeJob({ ...options, apply: false });
+    expect(dryRun.summary).toMatchObject({ found: 1, graded: 1, applied: 0 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toBe('https://grader.test/api/ai/grade');
   });
   it('carries bounded rubric details in the sweep request, including empty missing', () => {
     const candidate = { studentId: 'sid', itemId: 'item', attempt: 1, response: 'answer' };
@@ -198,6 +202,32 @@ describe('FRQ regrade manifest', () => {
 });
 
 describe('pure regrade job decisions', () => {
+  it('parses a trimmed, lowercased lessons list and rejects missing values', () => {
+    expect(parseArgs(['--lessons', 'U1-L1, u1-L2', '--regrade-low'])).toMatchObject({
+      lessons: ['u1-l1', 'u1-l2'], regradeLow: true,
+    });
+    expect(parseArgs([]).lessons).toBeUndefined();
+    for (const args of [['--lessons'], ['--lessons', ''], ['--lessons', ' , '], ['--lessons', '--apply']]) {
+      expect(() => parseArgs(args)).toThrow('--lessons requires a value');
+    }
+  });
+
+  it('filters by the matched worksheet prefix with and without regrade-low', () => {
+    for (const score of [null, 0.5]) {
+      const records = [
+        eligibleRecord({ itemId: 'WS-U1L1-reflect1', score }),
+        eligibleRecord({ itemId: 'WS-U1L2-reflect1', score }),
+        eligibleRecord({ itemId: 'WS-U1L3-reflect1', score }),
+      ];
+      const options = { now: NOW, regradeLow: score !== null };
+      const snapshot = snapshotWith(records);
+      expect(selectUngradedFrqRows(snapshot, REGISTRY, options)).toHaveLength(3);
+      expect(selectUngradedFrqRows(snapshot, REGISTRY, { ...options, lessons: ['u1-l1', 'u1-l2'] })
+        .map(row => row.itemId)).toEqual(['WS-U1L1-reflect1', 'WS-U1L2-reflect1']);
+      expect(selectUngradedFrqRows(snapshot, REGISTRY, { ...options, lessons: ['u9-l99'] })).toEqual([]);
+    }
+  });
+
   it('maps tolerant E/P/I verdicts, promotes complete P, and skips junk', () => {
     expect(verdictToScore('Essentially correct')).toBe(1);
     expect(verdictToScore(' partially correct ')).toBe(0.5);
@@ -335,6 +365,36 @@ describe('pure regrade job decisions', () => {
 });
 
 describe('regrade job HTTP flow', () => {
+  it('filters lessons before the limit and previews old to new verdicts without ledger writes', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(200, snapshotWith([
+        eligibleRecord({ itemId: 'WS-U1L1-reflect1', score: 0 }),
+        eligibleRecord({ itemId: 'WS-U1L2-reflect1', score: 0.5 }),
+        eligibleRecord({ itemId: 'WS-U1L2-reflect2', score: 0 }),
+      ])))
+      .mockResolvedValueOnce(response(200, { score: 'E', missing: [] }));
+    const events = [];
+    const result = await runRegradeJob({
+      ...parseArgs(['--regrade-low', '--lessons', 'U1-L2', '--limit', '1']),
+      config: { rosterUrl: 'https://roster.test', teacherKey: 'teacher-secret' },
+      registry: REGISTRY,
+      railwayServerUrl: 'https://grader.test',
+      fetchImpl: fetchMock,
+      now: NOW,
+      rateLimiter: { wait: vi.fn().mockResolvedValue(undefined) },
+      onEvent: event => events.push(event),
+    });
+    expect(result.summary).toMatchObject({ mode: 'dry-run', found: 1, graded: 1, applied: 0 });
+    expect(result.exitCode).toBe(0);
+    expect(events).toEqual([{
+      type: 'dry-run', username: 'amy', itemId: 'WS-U1L2-reflect1',
+      oldVerdict: 'P', newVerdict: 'E', score: 1,
+    }]);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      'https://roster.test/admin/snapshot', 'https://grader.test/api/ai/grade',
+    ]);
+  });
+
   it('uses mocked snapshot, grader, and roster calls without network access', async () => {
     const entry = REGISTRY.worksheets['WS-U1L2'];
     const studentAnswer = 'The values are labels for locations, not measurements that should be averaged.';
