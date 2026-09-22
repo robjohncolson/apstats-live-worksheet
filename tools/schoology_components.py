@@ -377,7 +377,8 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                         worksheet group; combined constituents share it, dedup by group.
       - Quiz         <- lesson.Q        (only when quizTotal > 0, i.e. a quiz
                         exists; an opener like 1.1 has quizTotal 0 -> skipped)
-      - Blooket      <- lesson.blooket  (one per group; needs hasBlooket)
+      - Blooket      <- lesson.blooket  (one per group; needs hasBlooket;
+                        0 once the lesson's zero date has passed with no score)
 
     Key resolution per student (highest priority first): the server-surfaced
     schoologyUid (P4b bridge), then uid_map, then the roster id. Mirrors
@@ -408,10 +409,14 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
             if fa_val is None:
                 fa_val = lesson.get("Cws")
             # SY2627 (teacher 2026-09-18): no worksheet work + zero date passed ->
-            # an explicit 0 in the Follow-Along column (the focusing signal). Quiz
-            # and Blooket are never zeroed. Best-wins on the sync side means later
-            # work replaces the 0 and a higher hand entry is kept.
-            if fa_val is None and zero_due(lesson, period, today):
+            # an explicit 0 in the Follow-Along column (the focusing signal).
+            # 2026-09-22: the Blooket column gets the SAME lagged zero (the Desk
+            # lesson gate is gone, so the zero is the only nudge left; mirrors
+            # the engine's blooketTodo). Quiz is never zeroed here. Best-wins on
+            # the sync side means later work replaces the 0 and a higher hand
+            # entry is kept.
+            due_zero = zero_due(lesson, period, today)
+            if fa_val is None and due_zero:
                 fa_val = 0
             if fa_val is not None and label not in emitted_fa:
                 out[f"{uid}/{fa_key(label)}"] = fa_val
@@ -422,6 +427,8 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                 out[f"{uid}/{quiz_key(topic_key)}"] = q
 
             blooket = lesson.get("blooket")
+            if blooket is None and lesson.get("hasBlooket") and due_zero:
+                blooket = 0
             if blooket is not None and lesson.get("hasBlooket") and label not in emitted_bl:
                 out[f"{uid}/{bl_key(label)}"] = blooket
                 emitted_bl.add(label)

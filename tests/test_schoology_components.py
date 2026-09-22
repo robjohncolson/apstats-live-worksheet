@@ -222,7 +222,7 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         self.assertEqual(out["9001/QUIZ:1.2"], 78)
         self.assertEqual(out["9001/BL:1.2"], 100)
 
-    def test_followalong_zero_once_zero_date_passed_quiz_blooket_untouched(self):
+    def test_followalong_and_blooket_zero_once_zero_date_passed_quiz_untouched(self):
         doc = {"students": [{
             "studentId": "s9", "schoologyUid": "u9", "section": "PeriodB",
             "lessons": [
@@ -236,13 +236,19 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
                  "Q": None, "quizTotal": 0, "zeroDate": {"B": None, "E": None}},
             ], "units": {}}]}
         fa = sc.fa_key(sc.group_label(1, "1"))
+        bl = sc.bl_key(sc.group_label(1, "1"))
         # still open on the zero date itself
         self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-09-21"), {})
         out = sc.component_grades_from_class_doc(doc, today="2026-09-22")
-        self.assertEqual(out, {f"u9/{fa}": 0})           # only 1.1, only Follow-Along
+        self.assertEqual(out, {f"u9/{fa}": 0, f"u9/{bl}": 0})   # only 1.1; Follow-Along + Blooket, never Quiz
         out = sc.component_grades_from_class_doc(doc, today="2026-09-24")
-        self.assertEqual(sorted(out), sorted([f"u9/{fa}", f"u9/{sc.fa_key(sc.group_label(1, '2'))}"]))
+        g2 = sc.group_label(1, "2")
+        self.assertEqual(sorted(out), sorted([f"u9/{fa}", f"u9/{bl}", f"u9/{sc.fa_key(g2)}", f"u9/{sc.bl_key(g2)}"]))
         self.assertTrue(all(v == 0 for v in out.values()))
+        # a lesson with NO Blooket never gets a Blooket zero
+        doc["students"][0]["lessons"][0]["hasBlooket"] = False
+        self.assertNotIn(f"u9/{bl}", sc.component_grades_from_class_doc(doc, today="2026-09-22"))
+        doc["students"][0]["lessons"][0]["hasBlooket"] = True
         # legacy caller (no today) and E-period student are untouched by B's dates
         self.assertEqual(sc.component_grades_from_class_doc(doc), {})
         doc["students"][0]["section"] = "PeriodE"

@@ -15246,6 +15246,9 @@ function _walletApplyWindowReadiness(readiness) {
 // the zero date is within ZERO_WARN_DAYS, and keep warning after it passes —
 // the 0 is revisable, so "finish it" is still the right message. Pure over the
 // /grade lessons[] so it is testable; never throws.
+// 2026-09-22: an unplayed Blooket (hasBlooket, no score) warns on the same
+// date — the lesson gate is gone, so this is the nudge to finish old
+// flashcards. Each warning carries kind: 'worksheet' | 'blooket'.
 var ZERO_WARN_DAYS = 3;
 function _zeroWarnings(lessons, period, todayIso) {
     try {
@@ -15257,13 +15260,16 @@ function _zeroWarnings(lessons, period, todayIso) {
             if (!L || !L.lessonKey || !L.zeroDate) continue;
             var zd = L.zeroDate[period];
             if (!zd) continue;
-            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null || L.lessonGrade != null;
-            if (hasWork) continue;
             var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
             if (days > ZERO_WARN_DAYS) continue;
-            out.push({ lessonKey: L.lessonKey, zeroDate: zd, daysLeft: days, past: days < 0 });
+            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null || L.lessonGrade != null;
+            if (!hasWork) out.push({ lessonKey: L.lessonKey, kind: 'worksheet', zeroDate: zd, daysLeft: days, past: days < 0 });
+            if (L.hasBlooket && L.blooket == null) out.push({ lessonKey: L.lessonKey, kind: 'blooket', zeroDate: zd, daysLeft: days, past: days < 0 });
         }
-        out.sort(function (a, b) { return a.zeroDate < b.zeroDate ? -1 : a.zeroDate > b.zeroDate ? 1 : 0; });
+        out.sort(function (a, b) {
+            if (a.zeroDate !== b.zeroDate) return a.zeroDate < b.zeroDate ? -1 : 1;
+            return a.kind === b.kind ? 0 : (a.kind === 'worksheet' ? -1 : 1);
+        });
         return out;
     } catch (_) { return []; }
 }
@@ -15296,9 +15302,24 @@ function _updateZeroWarningBadge() {
         if (!badge) { badge = document.createElement('span'); badge.className = 'wallet-zero-badge'; img.appendChild(badge); }
         badge.textContent = String(warns.length);
         badge.setAttribute('role', 'status');
-        badge.setAttribute('aria-label', warns.length + ' worksheet' + (warns.length === 1 ? '' : 's') + ' about to become a 0');
+        badge.setAttribute('aria-label', _zeroCountText(warns) + ' about to become a 0');
         icon.setAttribute('data-zero-warn', String(warns.length));
-        icon.title = warns.length + ' worksheet' + (warns.length === 1 ? '' : 's') + ' about to become a 0 \u2014 open My Ledger';
+        icon.title = _zeroCountText(warns) + ' about to become a 0 \u2014 open My Ledger';
+    } catch (_) {}
+}
+// "3 worksheets" / "2 worksheets and 1 flashcard deck" for the badge + title.
+function _zeroCountText(warns) {
+    var ws = 0, bl = 0;
+    for (var i = 0; i < warns.length; i++) { if (warns[i].kind === 'blooket') bl++; else ws++; }
+    var parts = [];
+    if (ws) parts.push(ws + ' worksheet' + (ws === 1 ? '' : 's'));
+    if (bl) parts.push(bl + ' flashcard deck' + (bl === 1 ? '' : 's'));
+    return parts.join(' and ');
+}
+function _zeroOpenFlashcards(btn, lessonKey) {
+    try {
+        if (typeof openBlooketFlashcards === 'function') { openBlooketFlashcards(btn, lessonKey); return; }
+        _zeroOpenLesson(lessonKey);
     } catch (_) {}
 }
 function _zeroOpenLesson(lessonKey) {
@@ -15326,17 +15347,22 @@ function _walletPrependZeroCard(host) {
         h.textContent = '\u26A0 About to become a 0';
         card.appendChild(h);
         var p = document.createElement('div');
-        p.textContent = 'No work on these yet. Each becomes a 0 in your grade and on Schoology after its date \u2014 always revisable, but finish them first.';
+        p.textContent = 'No work on these yet. Each becomes a 0 in your grade and on Schoology after its date \u2014 always revisable, but finish them first. Flashcard decks count as your Blooket grade.';
         p.style.marginBottom = '6px';
         card.appendChild(p);
         warns.slice(0, 6).forEach(function (w) {
             var row = document.createElement('div');
-            row.className = 'wz-row' + (w.past ? ' wz-past' : '');
+            row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '');
             var btn = document.createElement('button');
             btn.type = 'button'; btn.className = 's7btn';
             var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
-            btn.textContent = 'Open ' + label;
-            btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
+            if (w.kind === 'blooket') {
+                btn.textContent = 'Flashcards ' + label;
+                btn.onclick = function () { _zeroOpenFlashcards(btn, w.lessonKey); };
+            } else {
+                btn.textContent = 'Open ' + label;
+                btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
+            }
             row.appendChild(btn);
             var when = document.createElement('span');
             when.className = 'wz-when';
@@ -25164,7 +25190,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-20-olm3';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-22-or7w';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

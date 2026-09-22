@@ -44,10 +44,11 @@ function sandbox({ lessons = LESSONS, period = 'B', today = '2026-09-21' } = {})
     cedLabel: k => ({ text: 'Topic ' + k }),
     S: [[2026, 8, 22, { t: '1.2', n: 'x' }, 'noclass']],
     opened: [], showResourcePanel(cell) { s.opened.push(cell.t); },
+    decks: [], openBlooketFlashcards(btn, topic) { s.decks.push(topic); },
     getRegistryEntry: () => ({ urls: { worksheet: 'u1_lesson2_live.html' } }),
   };
   createContext(s);
-  runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_updateZeroWarningBadge', '_zeroOpenLesson', '_walletPrependZeroCard']
+  runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText', '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_walletPrependZeroCard']
     .map(fnSrc).join('\n'), s);
   return { s, dom, close: () => dom.window.close() };
 }
@@ -142,6 +143,44 @@ describe('ZERO_WARNING — ledger card', () => {
     try {
       const w = s._zeroWarnings(LESSONS, 'B', '2026-09-23').find(x => x.lessonKey === '1.2');
       expect(s._zeroWhenText(w)).toBe('0 after TONIGHT 11:59 PM');
+    } finally { close(); }
+  });
+});
+
+describe('ZERO_WARNING — unplayed Blooket decks (2026-09-22, lesson gate gone)', () => {
+  const MIXED = [
+    { lessonKey: '1.1', zeroDate: { B: '2026-09-21' }, lessonGradeNoQuiz: 95, hasBlooket: true, blooket: null },   // worksheet done, deck unplayed, already a 0
+    { lessonKey: '1.2', zeroDate: { B: '2026-09-23' }, lessonGradeNoQuiz: null, hasBlooket: true, blooket: null }, // both missing
+    { lessonKey: '1.3', zeroDate: { B: '2026-09-24' }, lessonGradeNoQuiz: null, hasBlooket: true, blooket: 80 },   // deck done
+    { lessonKey: '1.4', zeroDate: { B: '2026-09-24' }, lessonGradeNoQuiz: null, hasBlooket: false, blooket: null }, // no deck exists
+  ];
+  it('warns per kind: an unplayed deck warns on the lesson zero date, a lesson with no deck never does', () => {
+    const { s, close } = sandbox({ lessons: MIXED });
+    try {
+      const w = s._zeroWarnings(MIXED, 'B', '2026-09-22');
+      expect(w.map(x => x.lessonKey + ':' + x.kind)).toEqual(['1.1:blooket', '1.2:worksheet', '1.2:blooket', '1.3:worksheet', '1.4:worksheet']);
+      expect(w[0].past).toBe(true);
+      expect(s._zeroCountText(w)).toBe('3 worksheets and 2 flashcard decks');
+      expect(s._zeroCountText(w.filter(x => x.kind === 'blooket').slice(0, 1))).toBe('1 flashcard deck');
+    } finally { close(); }
+  });
+  it('badge counts both kinds and the card opens the flashcard deck for a Blooket row', () => {
+    const { s, dom, close } = sandbox({ lessons: MIXED, today: '2026-09-22' });
+    try {
+      s._updateZeroWarningBadge();
+      const badge = dom.window.document.querySelector('.wallet-zero-badge');
+      expect(badge.textContent).toBe('5');
+      expect(badge.getAttribute('aria-label')).toBe('3 worksheets and 2 flashcard decks about to become a 0');
+      const host = dom.window.document.getElementById('wallet-content');
+      s._walletPrependZeroCard(host);
+      const rows = [...host.querySelectorAll('.wz-row')];
+      expect(rows[0].classList.contains('wz-blooket')).toBe(true);
+      expect(rows[0].querySelector('button').textContent).toBe('Flashcards Topic 1.1');
+      rows[0].querySelector('button').onclick();
+      expect(s.decks).toEqual(['1.1']);
+      expect(s.opened).toEqual([]);
+      rows[1].querySelector('button').onclick();      // 1.2 worksheet row still opens the lesson
+      expect(s.opened).toEqual(['1.2']);
     } finally { close(); }
   });
 });
