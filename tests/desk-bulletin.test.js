@@ -1,7 +1,7 @@
 // desk-bulletin.test.js — the Desk school bulletin (data/bulletin.json).
 //   1. The pure visibility/label helpers, extracted from the Desk and run in a VM.
 //   2. The shipped data file: schema, audience split, and the public-file privacy rule.
-//   3. Source-level guards: role gate, no innerHTML, hidden until rendered.
+//   3. Source-level guards: role gate, no innerHTML, desktop-app wiring (icon + window).
 //
 // @vitest-environment node
 
@@ -108,43 +108,22 @@ describe('data/bulletin.json', () => {
   });
 });
 
-describe('remembered open/closed choice', () => {
-  vm.runInContext(fnBody('_bulletinShouldOpen'), sandbox);
-  const shouldOpen = (choice, soonIds) => sandbox._bulletinShouldOpen(choice, soonIds);
-
-  it('with no saved choice, opens only when something is close', () => {
-    expect(shouldOpen(null, [])).toBe(false);
-    expect(shouldOpen(null, ['a'])).toBe(true);
-    expect(shouldOpen({ open: false }, ['a'])).toBe(true); // malformed choice = no choice
-  });
-
-  it('stays collapsed across loads while the close notices are ones already seen', () => {
-    expect(shouldOpen({ open: false, soonIds: ['a', 'b'] }, ['a', 'b'])).toBe(false);
-    expect(shouldOpen({ open: false, soonIds: ['a', 'b'] }, ['a'])).toBe(false);
-    expect(shouldOpen({ open: false, soonIds: [] }, [])).toBe(false);
-  });
-
-  it('stays open across loads when the viewer opened it', () => {
-    expect(shouldOpen({ open: true, soonIds: [] }, [])).toBe(true);
-  });
-
-  it('reopens once when a notice the viewer has not seen becomes close', () => {
-    expect(shouldOpen({ open: false, soonIds: ['a'] }, ['a', 'c'])).toBe(true);
-  });
-
-  it('persists the choice in localStorage, saved from the summary click', () => {
-    expect(fnBody('_bulletinSaveChoice')).toMatch(/localStorage\.setItem\(BULLETIN_CHOICE_KEY/);
-    expect(fnBody('_bulletinReadChoice')).toMatch(/localStorage\.getItem\(BULLETIN_CHOICE_KEY/);
-    expect(fnBody('_loadBulletin')).toMatch(/_bulletinSaveChoice\(!box\.open\)/);
-    expect(fnBody('_renderBulletin')).toMatch(/_bulletinShouldOpen\(_bulletinReadChoice\(\), soonIds\)/);
-  });
-});
-
 describe('Desk wiring', () => {
-  it('renders with textContent only and starts hidden', () => {
+  it('is its own desktop app: an icon under My Ledger opens a window, and no strip sits over the Do Now card', () => {
+    expect(DESK).toMatch(/<div class="app-icon" data-app="bulletin"[^>]*ondblclick="openBulletin\(\)"/);
+    expect(DESK).toMatch(/id="app-bulletin-overlay"/);
+    expect(DESK).toMatch(/onclick="minimizeApp\('bulletin'\)"/);
+    expect(DESK).not.toMatch(/<details id="school-bulletin"/);
+    expect(fnBody('openBulletin')).toMatch(/_renderBulletin\(\)/);
+    expect(fnBody('openBulletin')).toMatch(/_loadBulletin\(\)/);
+  });
+
+  it('renders with textContent only and badges the icon with the soon count', () => {
     const render = fnBody('_renderBulletin');
     expect(render).not.toMatch(/innerHTML|insertAdjacentHTML/);
-    expect(DESK).toMatch(/<details id="school-bulletin"[^>]*hidden>/);
+    expect(render).toMatch(/_updateBulletinBadge\(soonCount\)/);
+    expect(fnBody('_updateBulletinBadge')).not.toMatch(/innerHTML/);
+    expect(fnBody('_updateBulletinBadge')).toMatch(/bulletin-soon-badge/);
   });
 
   it('gates staff items on the verified-teacher check and re-renders when the role changes', () => {
