@@ -40,20 +40,20 @@ window.RUBRICS_U1L8 = {
         expectedElements: [
             { id: 'five-number-summary', description: 'Identifies that the five-number summary is the minimum, Q1, median, Q3, and maximum', required: true },
             { id: 'boxplot-feature', description: 'Correctly explains at least one requested box-plot feature: the box runs from Q1 to Q3 with the median inside it, whiskers extend to the most extreme non-outliers, or outliers are plotted separately', required: true },
-            { id: 'flint-context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: true },
-            { id: 'numerical-details', description: 'Includes at least two correct numerical values such as 0, 2, 3, 7, 13, or 104', required: true },
+            { id: 'flint-context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: false },
+            { id: 'numerical-details', description: 'Includes at least two correct numerical values such as 0, 2, 3, 7, 13, or 104', required: false },
             { id: 'quartile-meaning', description: 'May explain that the box plot splits the data into quartiles or that each section contains 25% of the data', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains how the Flint five-number summary is represented on the box plot and uses accurate numerical details.',
-            P: 'Response shows partial understanding of how the box plot represents the Flint data but misses one major feature or uses weak detail.',
-            I: 'Response does not correctly explain how the five-number summary appears on the Flint box plot.'
+            E: 'Names the five-number summary (min, Q1, median, Q3, max) and correctly describes at least one box-plot feature: the box runs Q1 to Q3 with the median inside, whiskers reach the most extreme non-outliers, or outliers are plotted separately. Lesson values strengthen the answer but are not needed.',
+            P: 'Names the summary but describes the box plot incorrectly (e.g. whiskers always reach the min and max), or describes the plot without naming what the five values are.',
+            I: 'Neither the five-number summary nor a box-plot feature is correctly explained.'
         },
         commonMistakes: [
             'Listing numbers without explaining what part of the box plot they represent',
             'Saying the whiskers always go to the minimum and maximum even when outliers exist',
             'Forgetting that the median is the line inside the box',
-            'Leaving out the Flint lead-level context'
+            'Listing five numbers without saying which part of the box plot each one becomes'
         ],
         contextFromVideo: 'The video gives the Flint five-number summary as 0, 2, 3, 7, and 104, and shows that the right whisker stops at 13 because larger values are outliers.'
     },
@@ -65,19 +65,19 @@ window.RUBRICS_U1L8 = {
             { id: 'skewed-left', description: 'States that in a skewed-left distribution the mean is usually less than the median', required: true },
             { id: 'symmetric', description: 'States that in a relatively symmetric distribution the mean and median are about equal or very close', required: true },
             { id: 'outlier-effect', description: 'Explains that outliers or a long tail pull the mean more than the median because the mean is nonresistant', required: true },
-            { id: 'flint-connection', description: 'Connects the rule to the Flint box plot or Flint lead levels by noting that the Flint distribution is skewed right and has mean 7.31 above median 3', required: true },
+            { id: 'flint-connection', description: 'Connects the rule to the Flint box plot or Flint lead levels by noting that the Flint distribution is skewed right and has mean 7.31 above median 3', required: false },
             { id: 'median-resistant', description: 'May mention that the median is resistant compared with the mean', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly explains how shape affects the relationship between mean and median and connects the rule to the Flint example.',
-            P: 'Response includes some correct comparisons but misses one major relationship, the role of outliers, or the Flint connection.',
-            I: 'Response does not correctly explain how distribution shape affects the relative positions of the mean and median.'
+            E: 'States all three relationships (skewed right: mean above median; skewed left: mean below; symmetric: about equal) and explains that the tail or outliers pull the mean because it is not resistant.',
+            P: 'Three of the four are correct; one relationship is missing or reversed, or the pulling-the-mean reason is missing.',
+            I: 'Two or more relationships are wrong or missing.'
         },
         commonMistakes: [
             'Reversing the relationships for skewed-right and skewed-left distributions',
             'Saying the mean and median are always exactly equal for symmetric distributions',
             'Ignoring the way outliers pull the mean more than the median',
-            'Failing to connect the explanation to the Flint box plot'
+            'Stating the rules without saying why the tail moves the mean'
         ],
         contextFromVideo: 'The video shows that the Flint distribution is skewed right with high outliers, so the mean is 7.31 while the median is only 3.'
     },
@@ -89,19 +89,19 @@ window.RUBRICS_U1L8 = {
             { id: 'whiskers-and-outlier', description: 'Explains that the whiskers would extend to 12 and 38 and that 58 would be shown as a separate outlier point', required: true },
             { id: 'middle-50', description: 'States that the middle 50% of homework times are between 18 and 31 minutes', required: true },
             { id: 'mean-vs-median', description: 'Predicts that the mean is greater than the median because the high outlier suggests a skewed-right distribution', required: true },
-            { id: 'context', description: 'Uses context by referring to homework times or minutes spent on homework', required: true },
+            { id: 'context', description: 'Uses context by referring to homework times or minutes spent on homework', required: false },
             { id: 'quartile-language', description: 'May mention quartiles or the five-number summary by name', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly describes the box plot, identifies the middle 50%, predicts the mean-median relationship, and uses context.',
-            P: 'Response includes several correct ideas but misses one major box-plot feature, the interval for the middle 50%, the mean-median comparison, or clear context.',
-            I: 'Response does not correctly describe the box plot or justify the expected relationship between the mean and the median.'
+            E: 'Box from 18 to 31 with the median line at 22; whiskers to 12 and 38 with 58 as a separate outlier point; middle 50% between 18 and 31 minutes; mean predicted greater than the median because of the high outlier.',
+            P: 'Three of the four are correct; one is missing or wrong (commonly the whisker sent to 58, or the mean predicted below the median).',
+            I: 'Two or more of the four are missing or wrong.'
         },
         commonMistakes: [
             'Sending the right whisker to 58 even though 58 is identified as an outlier',
             'Saying the middle 50% runs from the minimum to the maximum',
             'Predicting the mean is less than the median despite the high outlier on the right',
-            'Using generic language without mentioning homework times'
+            'Sending the whisker to the outlier instead of the largest non-outlier'
         ],
         contextFromVideo: 'The lesson says the box runs from Q1 to Q3, whiskers extend to the most extreme non-outliers, outliers are shown separately, and skewed-right distributions usually have mean greater than median.'
     }
@@ -149,8 +149,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

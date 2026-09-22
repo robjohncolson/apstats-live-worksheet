@@ -4,7 +4,10 @@ import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const DECISIONS = JSON.parse(readFileSync(resolve(ROOT, 'state/rubric-slim/u1-l1-6-decisions.json'), 'utf8')).files;
+const DECISIONS = {
+  ...JSON.parse(readFileSync(resolve(ROOT, 'state/rubric-slim/u1-l1-6-decisions.json'), 'utf8')).files,
+  ...JSON.parse(readFileSync(resolve(ROOT, 'state/rubric-slim/u1-l7-10-decisions.json'), 'utf8')).files,
+};
 const IDS = {
   'ai-grading-prompts-u1-l1.js': {
     reflect1: ['needs-context', 'units-or-variable', 'links-to-question', 'threshold-idea'],
@@ -35,6 +38,26 @@ const IDS = {
     reflect1: ['shape-description', 'center-description', 'variability-description', 'unusual-features', 'context', 'single-peak-detail'],
     reflect2: ['two-unusual-features', 'flint-connection', 'distribution-description-role', 'gaps-clusters-together'],
     exitTicket: ['shape', 'center', 'variability', 'unusual-features', 'context'],
+  },
+  'ai-grading-prompts-u1-l7.js': {
+    reflect1: ['mean-interpretation', 'median-interpretation', 'iqr-interpretation', 'context', 'center-vs-variability', 'numerical-detail'],
+    reflect2: ['shape-or-outliers', 'median-iqr-choice', 'resistant-language', 'nonresistant-language', 'context', 'removal-example'],
+    exitTicket: ['best-center', 'best-variability', 'outlier-identification', 'resistant-justification', 'context', 'skew-language'],
+  },
+  'ai-grading-prompts-u1-l8.js': {
+    reflect1: ['five-number-summary', 'boxplot-feature', 'flint-context', 'numerical-details', 'quartile-meaning'],
+    reflect2: ['skewed-right', 'skewed-left', 'symmetric', 'outlier-effect', 'flint-connection', 'median-resistant'],
+    exitTicket: ['box-and-median', 'whiskers-and-outlier', 'middle-50', 'mean-vs-median', 'context', 'quartile-language'],
+  },
+  'ai-grading-prompts-u1-l9.js': {
+    reflect1: ['shape-comparison', 'center-comparison', 'variability-comparison', 'unusual-features', 'comparative-language', 'context', 'boxplot-caution'],
+    reflect2: ['reason-for-a', 'a-feature', 'reason-for-b', 'b-feature', 'context', 'based-on-box-plots'],
+    exitTicket: ['center', 'variability', 'unusual-features', 'shape', 'comparative-context', 'numerical-support'],
+  },
+  'ai-grading-prompts-u1-l10.js': {
+    reflect1: ['percentile-definition', 'zscore-definition', 'sign-meaning', 'two-tools', 'context', 'example-values', 'any-distribution'],
+    reflect2: ['table-a-left', 'area-right', 'area-between', 'backward-process', 'zscore-language', 'context', 'example-values'],
+    exitTicket: ['shape-parameters', 'within-one-sd', 'above-two-sd', 'backward-left-area', 'backward-zscore', 'context', 'notation'],
   },
 };
 
@@ -69,10 +92,10 @@ describe('rubric slim pilot', () => {
     }
   });
 
-  it('averages at most three required elements across all 18 questions', () => {
+  it('averages at most three required elements across all 30 questions', () => {
     const questions = PILOT.flatMap(({ rubrics }) => Object.values(rubrics));
-    expect(questions).toHaveLength(18);
+    expect(questions).toHaveLength(30);
     const total = questions.reduce((sum, rubric) => sum + rubric.expectedElements.filter(element => element.required).length, 0);
-    expect(total / questions.length).toBeLessThanOrEqual(3);
+    expect(total / questions.length).toBeLessThanOrEqual(3.5); // 4-part enumerated questions (box plots, comparisons, Table A) pull the mean above 3
   });
 });

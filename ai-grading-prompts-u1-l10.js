@@ -57,21 +57,21 @@ window.RUBRICS_U1L10 = {
             { id: 'percentile-definition', description: 'Explains that percentile is the percent of values less than or equal to a given value', required: true },
             { id: 'zscore-definition', description: 'Explains that a z-score tells how many standard deviations a value is from the mean', required: true },
             { id: 'sign-meaning', description: 'States that a positive z-score means above the mean and a negative z-score means below the mean', required: true },
-            { id: 'two-tools', description: 'Makes clear that percentile and z-score are two different ways to describe relative position', required: true },
-            { id: 'context', description: 'Uses Flint water-sample context such as lead levels, water samples, or parts per billion', required: true },
+            { id: 'two-tools', description: 'Makes clear that percentile and z-score are two different ways to describe relative position', required: false },
+            { id: 'context', description: 'Uses Flint water-sample context such as lead levels, water samples, or parts per billion', required: false },
             { id: 'example-values', description: 'May reference examples such as 20 parts per billion at the 91.5th percentile and 0.88 standard deviations above the mean, or 2 parts per billion at the 39.4th percentile and 0.37 standard deviations below the mean', required: false },
             { id: 'any-distribution', description: 'May note that percentiles and z-scores can be used for any distribution and do not require a normal distribution', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains both percentiles and z-scores as measures of relative position, includes the correct meaning of positive and negative z-scores, and uses the Flint context.',
-            P: 'Response shows partial understanding of relative position but weakens one of the definitions, misses the sign interpretation, or uses little context.',
-            I: 'Response does not correctly explain how percentiles and z-scores describe relative position.'
+            E: 'Percentile = percent of values at or below a given value; z-score = number of standard deviations from the mean; positive means above the mean, negative below.',
+            P: 'Two of the three are correct; one is missing or wrong (commonly a z-score described as a percent).',
+            I: 'Fewer than two are correct.'
         },
         commonMistakes: [
             'Forgetting that percentile includes values less than or equal to the given value',
             'Describing a z-score as a percent instead of a number of standard deviations',
             'Mixing up what positive and negative z-scores mean',
-            'Ignoring the Flint water-sample context'
+            'Describing percentile and z-score as if they were the same thing'
         ],
         contextFromVideo: 'Video 1 defines percentile as the percent less than or equal to a value and z-score as the number of standard deviations above or below the mean, using Flint lead-level examples.'
     },
@@ -83,14 +83,14 @@ window.RUBRICS_U1L10 = {
             { id: 'area-right', description: 'Explains that area to the right is found by subtracting the left-tail area from 1', required: true },
             { id: 'area-between', description: 'Explains that area between two values is found by calculating two z-scores and subtracting two left-tail areas', required: true },
             { id: 'backward-process', description: 'Explains that backward problems use the target area to find a z-score first and then solve for the original value with the mean and standard deviation', required: true },
-            { id: 'zscore-language', description: 'Uses z-score language such as area to the left, z-score, mean, or standard deviation', required: true },
+            { id: 'zscore-language', description: 'Uses z-score language such as area to the left, z-score, mean, or standard deviation', required: false },
             { id: 'context', description: 'Uses normal-distribution context such as the blood-pressure examples from class', required: false },
             { id: 'example-values', description: 'May mention examples like 0.0668 for above 125, 0.13 between 120 and 129, or z = 1.28 and x = 122.8 for the highest 10%', required: false }
         ],
         scoringGuide: {
-            E: 'Response accurately explains all three Table A strategies and correctly connects them to z-scores; a correct contextual example may strengthen the explanation but is not required.',
-            P: 'Response explains some of the Table A process correctly but leaves out one problem type, weakens the connection to z-scores, or uses thin context.',
-            I: 'Response does not correctly explain how to use Table A and z-scores for these normal-distribution problems.'
+            E: 'States that Table A gives area to the left, then explains all three: right = 1 minus the left area; between = two z-scores, subtract the two left areas; backward = find the z for the target area, then solve for x with the mean and standard deviation.',
+            P: 'Three of the four are correct; one process is missing or wrong.',
+            I: 'Two or more processes are missing or wrong, or Table A is described as giving area to the right.'
         },
         commonMistakes: [
             'Forgetting that Table A gives area to the left, not area to the right',
@@ -107,15 +107,15 @@ window.RUBRICS_U1L10 = {
             { id: 'shape-parameters', description: 'States that the distribution is normal, symmetric, and mound-shaped and identifies the mean as 16 ounces and the standard deviation as 0.5 ounce', required: true },
             { id: 'within-one-sd', description: 'Uses the empirical rule to state that about 68% of loaves are between 15.5 and 16.5 ounces', required: true },
             { id: 'above-two-sd', description: 'Uses the empirical rule to state that about 2.5% of loaves are above 17 ounces', required: true },
-            { id: 'backward-left-area', description: 'Explains that the heaviest 10% means 90% is to the left before using Table A', required: true },
+            { id: 'backward-left-area', description: 'Explains that the heaviest 10% means 90% is to the left before using Table A', required: false },
             { id: 'backward-zscore', description: 'Uses a z-score of about 1.28 and solves for a cutoff of about 16.64 ounces or about 16.6 ounces', required: true },
-            { id: 'context', description: 'Uses loaf-weight context throughout the response', required: true },
+            { id: 'context', description: 'Uses loaf-weight context throughout the response', required: false },
             { id: 'notation', description: 'May refer to the parameters with symbols such as mu and sigma or mention the z-score formula', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly describes the normal model, uses the empirical rule for both percentages, and explains the Table A and z-score process for the heaviest 10% cutoff in context.',
-            P: 'Response includes several correct normal-distribution ideas but misses one major percentage or weakens the backward cutoff explanation.',
-            I: 'Response does not correctly apply the normal-distribution ideas from the lesson to the loaf-weight scenario.'
+            E: 'Says the model is normal (symmetric, bell-shaped) with mean 16 and SD 0.5; about 68% between 15.5 and 16.5; about 2.5% above 17; and finds the heaviest-10% cutoff with the work shown (90% to the left, z about 1.28, cutoff about 16.6 ounces).',
+            P: 'Three of the four are correct; one is missing or wrong (commonly 5% instead of 2.5%, or the cutoff left as a z-score).',
+            I: 'Two or more of the four are missing or wrong.'
         },
         commonMistakes: [
             'Forgetting that 15.5 to 16.5 is exactly within one standard deviation of the mean',
@@ -169,8 +169,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

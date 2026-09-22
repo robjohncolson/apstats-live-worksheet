@@ -41,18 +41,18 @@ window.RUBRICS_U1L9 = {
     reflect1: {
         questionText: 'Explain how the yearly salary distributions for corporations A and B compare in shape, center, variability, and unusual features. Use comparative words and context in your answer.',
         expectedElements: [
-            { id: 'shape-comparison', description: 'States that the salary distributions appear similar or fairly symmetric for both corporations', required: true },
+            { id: 'shape-comparison', description: 'States that the salary distributions appear similar or fairly symmetric for both corporations', required: false },
             { id: 'center-comparison', description: 'States that the medians are approximately the same for corporations A and B', required: true },
             { id: 'variability-comparison', description: 'Explains that corporation A has greater variability than corporation B, such as a larger range or IQR', required: true },
             { id: 'unusual-features', description: 'Explains that corporation A has two high outliers while corporation B has no outliers', required: true },
-            { id: 'comparative-language', description: 'Uses comparative words such as similar, same, greater, or less', required: true },
+            { id: 'comparative-language', description: 'Uses comparative words such as similar, same, greater, or less', required: false },
             { id: 'context', description: 'Uses context by referring to yearly salaries or corporations A and B', required: true },
             { id: 'boxplot-caution', description: 'May note that box plots only show that the distributions appear symmetric because values inside quartiles are hidden', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly compares the salary distributions in shape, center, variability, and unusual features, while using comparative words and context.',
-            P: 'Response shows partial understanding of the comparison but misses one major characteristic, weakens the comparison language, or lacks clear context.',
-            I: 'Response does not correctly compare the two salary distributions using the key features from the lesson.'
+            E: 'Compares, in comparative words and in the salary context, the centers (medians about the same), the variability (A greater than B), and the unusual features (A has high outliers, B none). Shape may be added; two separate descriptions with no comparison do not earn E.',
+            P: 'Three of the four are there; one comparison is missing, or the answer describes each corporation separately instead of comparing.',
+            I: 'Two or more comparisons are missing or wrong.'
         },
         commonMistakes: [
             'Describing each corporation separately without directly comparing them',
@@ -70,13 +70,13 @@ window.RUBRICS_U1L9 = {
             { id: 'a-feature', description: 'Supports the reason for corporation A with a box-plot feature such as the high outliers or the fact that at least 3 of 30 salaries at A are above the maximum at B', required: true },
             { id: 'reason-for-b', description: 'Gives a valid reason to choose corporation B, such as the higher minimum salary or less risk of never getting a raise', required: true },
             { id: 'b-feature', description: 'Supports the reason for corporation B with a box-plot feature such as the higher minimum or the absence of salaries still at the starting value', required: true },
-            { id: 'context', description: 'Uses context by referring to salary, raises, or corporations A and B', required: true },
+            { id: 'context', description: 'Uses context by referring to salary, raises, or corporations A and B', required: false },
             { id: 'based-on-box-plots', description: 'May explicitly say that the reasons come from features visible on the box plots', required: false }
         ],
         scoringGuide: {
-            E: 'Response gives one valid, well-supported reason for choosing each corporation and clearly connects each reason to a box-plot feature in context.',
-            P: 'Response gives partly correct reasons but leaves one reason unsupported, mixes up the corporation evidence, or uses weak context.',
-            I: 'Response does not correctly explain a valid reason for choosing both corporations based on the box plots.'
+            E: 'Gives one reason for A and one for B, each backed by a box-plot feature (e.g. A\'s high outliers or salaries above B\'s maximum; B\'s higher minimum).',
+            P: 'Both reasons are given, but one of them lacks a box-plot feature.',
+            I: 'One corporation is not addressed at all, neither reason is supported by a box-plot feature, or features are attributed to the wrong corporation.'
         },
         commonMistakes: [
             'Giving a preference without referring to any feature of the box plots',
@@ -93,14 +93,14 @@ window.RUBRICS_U1L9 = {
             { id: 'center', description: 'States that the centers are about the same because both medians are 60 minutes', required: true },
             { id: 'variability', description: 'Explains that Study Hall A has greater variability than Study Hall B, such as a larger IQR or range', required: true },
             { id: 'unusual-features', description: 'Notes that Study Hall A has a high outlier at 150 while Study Hall B has no outliers', required: true },
-            { id: 'shape', description: 'States that Study Hall A appears skewed right and that Study Hall B appears fairly symmetric or less skewed based on the box plots', required: true },
+            { id: 'shape', description: 'States that Study Hall A appears skewed right and that Study Hall B appears fairly symmetric or less skewed based on the box plots', required: false },
             { id: 'comparative-context', description: 'Uses comparative words and refers to nightly homework times or study halls in context', required: true },
             { id: 'numerical-support', description: 'May include supporting values such as Q1 and Q3 or describe the middle 50% for each study hall', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly compares center, variability, shape, and unusual features for the two homework-time distributions using comparative language and context.',
-            P: 'Response includes several correct comparisons but misses one major feature, uses weak comparison language, or lacks clear context.',
-            I: 'Response does not correctly compare the two homework-time distributions using the key ideas from the lesson.'
+            E: 'Compares center (both medians 60), variability (A greater), and unusual features (A\'s outlier at 150, none for B), using comparative words and referring to homework times. Shape strengthens the answer.',
+            P: 'Three of the four are there; one comparison is missing, or the answer lists the two study halls separately.',
+            I: 'Two or more comparisons are missing or wrong.'
         },
         commonMistakes: [
             'Saying the distributions have different centers even though both medians are 60',
@@ -154,8 +154,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

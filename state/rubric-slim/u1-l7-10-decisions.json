@@ -1,0 +1,185 @@
+{
+  "note": "RUBRIC_SLIM_SPEC, second U1 batch (L7-10). Same contract as u1-l1-6-decisions.json: `required` = the ONLY ids kept required:true; every other element becomes required:false; ids, descriptions, questionText, contextFromVideo untouched; scoringGuide replaced verbatim; the GRADING STANDARD E/P lines switch to the 'every key element' wording. `commonMistakes` edits listed under `mistakes` (old line -> new line) only where a line penalizes now-optional recall. After the Codex review: L10 exitTicket keeps shape-parameters (backward-left-area optional instead) and its cutoff commonMistakes line is unchanged; L9 reflect1 keeps context (comparative-language optional); L7/L9 reflect2 P and I made disjoint.",
+  "files": {
+    "ai-grading-prompts-u1-l7.js": {
+      "reflect1": {
+        "required": [
+          "mean-interpretation",
+          "median-interpretation",
+          "iqr-interpretation"
+        ],
+        "scoringGuide": {
+          "E": "Explains all three: the mean as the average lead level, the median as the middle value (about half the samples at or below it), and the IQR as the spread of the middle 50%. Numbers from the lesson strengthen the answer but are not needed.",
+          "P": "Two of the three statistics are explained correctly; one is missing, or mean and median are confused, or the IQR is treated as the full range.",
+          "I": "Fewer than two of the statistics are explained correctly."
+        },
+        "mistakes": {
+          "Leaving out the Flint lead-level context": "Describing a statistic without saying what it tells you about the data"
+        }
+      },
+      "reflect2": {
+        "required": [
+          "shape-or-outliers",
+          "resistant-language",
+          "nonresistant-language"
+        ],
+        "scoringGuide": {
+          "E": "Says the distribution is skewed or has high outliers, and explains that median and IQR are resistant to them while the mean and standard deviation get pulled by them. Naming median and IQR as the choice is implied by that explanation.",
+          "P": "Explains resistance for one pair of measures but not the other, or notes the skew/outliers with only a partial resistance reason.",
+          "I": "Chooses mean and standard deviation, or only names the measures with no resistance reasoning."
+        },
+        "mistakes": {
+          "Using generic language without connecting to Flint lead levels": "Saying which measures to use without explaining why outliers affect the other pair"
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "best-center",
+          "best-variability",
+          "outlier-identification",
+          "resistant-justification"
+        ],
+        "scoringGuide": {
+          "E": "Chooses the median and IQR, shows 22 is an outlier by a valid rule (1.5 x IQR or two standard deviations, with the work), and explains that those measures are resistant, which is why they fit a distribution with an outlier.",
+          "P": "Most of those are correct, but one is missing: no outlier rule shown, the wrong measure for one of center or variability, or no resistance reason.",
+          "I": "Two or more of those are missing or wrong."
+        },
+        "mistakes": {
+          "Describing the numbers without mentioning student wait times": "Calling 22 an outlier without showing the rule that makes it one"
+        }
+      }
+    },
+    "ai-grading-prompts-u1-l8.js": {
+      "reflect1": {
+        "required": [
+          "five-number-summary",
+          "boxplot-feature"
+        ],
+        "scoringGuide": {
+          "E": "Names the five-number summary (min, Q1, median, Q3, max) and correctly describes at least one box-plot feature: the box runs Q1 to Q3 with the median inside, whiskers reach the most extreme non-outliers, or outliers are plotted separately. Lesson values strengthen the answer but are not needed.",
+          "P": "Names the summary but describes the box plot incorrectly (e.g. whiskers always reach the min and max), or describes the plot without naming what the five values are.",
+          "I": "Neither the five-number summary nor a box-plot feature is correctly explained."
+        },
+        "mistakes": {
+          "Leaving out the Flint lead-level context": "Listing five numbers without saying which part of the box plot each one becomes"
+        }
+      },
+      "reflect2": {
+        "required": [
+          "skewed-right",
+          "skewed-left",
+          "symmetric",
+          "outlier-effect"
+        ],
+        "scoringGuide": {
+          "E": "States all three relationships (skewed right: mean above median; skewed left: mean below; symmetric: about equal) and explains that the tail or outliers pull the mean because it is not resistant.",
+          "P": "Three of the four are correct; one relationship is missing or reversed, or the pulling-the-mean reason is missing.",
+          "I": "Two or more relationships are wrong or missing."
+        },
+        "mistakes": {
+          "Failing to connect the explanation to the Flint box plot": "Stating the rules without saying why the tail moves the mean"
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "box-and-median",
+          "whiskers-and-outlier",
+          "middle-50",
+          "mean-vs-median"
+        ],
+        "scoringGuide": {
+          "E": "Box from 18 to 31 with the median line at 22; whiskers to 12 and 38 with 58 as a separate outlier point; middle 50% between 18 and 31 minutes; mean predicted greater than the median because of the high outlier.",
+          "P": "Three of the four are correct; one is missing or wrong (commonly the whisker sent to 58, or the mean predicted below the median).",
+          "I": "Two or more of the four are missing or wrong."
+        },
+        "mistakes": {
+          "Using generic language without mentioning homework times": "Sending the whisker to the outlier instead of the largest non-outlier"
+        }
+      }
+    },
+    "ai-grading-prompts-u1-l9.js": {
+      "reflect1": {
+        "required": [
+          "center-comparison",
+          "variability-comparison",
+          "unusual-features",
+          "context"
+        ],
+        "scoringGuide": {
+          "E": "Compares, in comparative words and in the salary context, the centers (medians about the same), the variability (A greater than B), and the unusual features (A has high outliers, B none). Shape may be added; two separate descriptions with no comparison do not earn E.",
+          "P": "Three of the four are there; one comparison is missing, or the answer describes each corporation separately instead of comparing.",
+          "I": "Two or more comparisons are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "reason-for-a",
+          "a-feature",
+          "reason-for-b",
+          "b-feature"
+        ],
+        "scoringGuide": {
+          "E": "Gives one reason for A and one for B, each backed by a box-plot feature (e.g. A's high outliers or salaries above B's maximum; B's higher minimum).",
+          "P": "Both reasons are given, but one of them lacks a box-plot feature.",
+          "I": "One corporation is not addressed at all, neither reason is supported by a box-plot feature, or features are attributed to the wrong corporation."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "center",
+          "variability",
+          "unusual-features",
+          "comparative-context"
+        ],
+        "scoringGuide": {
+          "E": "Compares center (both medians 60), variability (A greater), and unusual features (A's outlier at 150, none for B), using comparative words and referring to homework times. Shape strengthens the answer.",
+          "P": "Three of the four are there; one comparison is missing, or the answer lists the two study halls separately.",
+          "I": "Two or more comparisons are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u1-l10.js": {
+      "reflect1": {
+        "required": [
+          "percentile-definition",
+          "zscore-definition",
+          "sign-meaning"
+        ],
+        "scoringGuide": {
+          "E": "Percentile = percent of values at or below a given value; z-score = number of standard deviations from the mean; positive means above the mean, negative below.",
+          "P": "Two of the three are correct; one is missing or wrong (commonly a z-score described as a percent).",
+          "I": "Fewer than two are correct."
+        },
+        "mistakes": {
+          "Ignoring the Flint water-sample context": "Describing percentile and z-score as if they were the same thing"
+        }
+      },
+      "reflect2": {
+        "required": [
+          "table-a-left",
+          "area-right",
+          "area-between",
+          "backward-process"
+        ],
+        "scoringGuide": {
+          "E": "States that Table A gives area to the left, then explains all three: right = 1 minus the left area; between = two z-scores, subtract the two left areas; backward = find the z for the target area, then solve for x with the mean and standard deviation.",
+          "P": "Three of the four are correct; one process is missing or wrong.",
+          "I": "Two or more processes are missing or wrong, or Table A is described as giving area to the right."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "within-one-sd",
+          "above-two-sd",
+          "backward-zscore",
+          "shape-parameters"
+        ],
+        "scoringGuide": {
+          "E": "Says the model is normal (symmetric, bell-shaped) with mean 16 and SD 0.5; about 68% between 15.5 and 16.5; about 2.5% above 17; and finds the heaviest-10% cutoff with the work shown (90% to the left, z about 1.28, cutoff about 16.6 ounces).",
+          "P": "Three of the four are correct; one is missing or wrong (commonly 5% instead of 2.5%, or the cutoff left as a z-score).",
+          "I": "Two or more of the four are missing or wrong."
+        }
+      }
+    }
+  }
+}

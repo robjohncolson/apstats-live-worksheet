@@ -38,7 +38,7 @@
         "Forgetting that percentile includes values less than or equal to the given value",
         "Describing a z-score as a percent instead of a number of standard deviations",
         "Mixing up what positive and negative z-scores mean",
-        "Ignoring the Flint water-sample context"
+        "Describing percentile and z-score as if they were the same thing"
       ],
       "worksheet": "u1_lesson10_live.html"
     },
@@ -685,7 +685,7 @@
         "Listing the statistics without explaining what they mean",
         "Confusing the mean with the median",
         "Treating the IQR as the full range of the data",
-        "Leaving out the Flint lead-level context"
+        "Describing a statistic without saying what it tells you about the data"
       ],
       "worksheet": "u1_lesson7_live.html"
     },
@@ -720,7 +720,7 @@
         "Saying median and IQR are always better for every distribution",
         "Mentioning outliers without explaining resistance",
         "Choosing mean and standard deviation even after noting the skew or outliers",
-        "Using generic language without connecting to Flint lead levels"
+        "Saying which measures to use without explaining why outliers affect the other pair"
       ],
       "worksheet": "u1_lesson7_live.html"
     },
@@ -755,7 +755,7 @@
         "Choosing mean and standard deviation even though 22 creates a strong outlier",
         "Calling 22 unusual without connecting it to an outlier rule",
         "Giving the range instead of the IQR as the preferred variability measure",
-        "Describing the numbers without mentioning student wait times"
+        "Calling 22 an outlier without showing the rule that makes it one"
       ],
       "worksheet": "u1_lesson7_live.html"
     },
@@ -786,7 +786,7 @@
         "Listing numbers without explaining what part of the box plot they represent",
         "Saying the whiskers always go to the minimum and maximum even when outliers exist",
         "Forgetting that the median is the line inside the box",
-        "Leaving out the Flint lead-level context"
+        "Listing five numbers without saying which part of the box plot each one becomes"
       ],
       "worksheet": "u1_lesson8_live.html"
     },
@@ -821,7 +821,7 @@
         "Reversing the relationships for skewed-right and skewed-left distributions",
         "Saying the mean and median are always exactly equal for symmetric distributions",
         "Ignoring the way outliers pull the mean more than the median",
-        "Failing to connect the explanation to the Flint box plot"
+        "Stating the rules without saying why the tail moves the mean"
       ],
       "worksheet": "u1_lesson8_live.html"
     },
@@ -856,7 +856,7 @@
         "Sending the right whisker to 58 even though 58 is identified as an outlier",
         "Saying the middle 50% runs from the minimum to the maximum",
         "Predicting the mean is less than the median despite the high outlier on the right",
-        "Using generic language without mentioning homework times"
+        "Sending the whisker to the outlier instead of the largest non-outlier"
       ],
       "worksheet": "u1_lesson8_live.html"
     },

@@ -54,20 +54,20 @@ window.RUBRICS_U1L7 = {
             { id: 'mean-interpretation', description: 'Explains that the mean describes the average Flint lead level and may reference 7.31 parts per billion', required: true },
             { id: 'median-interpretation', description: 'Explains that the median is the middle ordered value and may note that at least half the Flint lead levels are at or below 3 parts per billion and at least half are at or above 3 parts per billion', required: true },
             { id: 'iqr-interpretation', description: 'Explains that the IQR describes the spread of the middle 50% of Flint lead levels and may reference IQR 5, Q1 2, or Q3 7', required: true },
-            { id: 'context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: true },
-            { id: 'center-vs-variability', description: 'Distinguishes that mean and median describe center while IQR describes variability', required: true },
-            { id: 'numerical-detail', description: 'Includes at least one correct numerical value from the lesson, such as mean 7.31, median 3, IQR 5, Q1 2, or Q3 7', required: true }
+            { id: 'context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: false },
+            { id: 'center-vs-variability', description: 'Distinguishes that mean and median describe center while IQR describes variability', required: false },
+            { id: 'numerical-detail', description: 'Includes at least one correct numerical value from the lesson, such as mean 7.31, median 3, IQR 5, Q1 2, or Q3 7', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains what the mean, median, and IQR say about the Flint data and uses correct context.',
-            P: 'Response shows partial understanding of the Flint summary statistics but misses one major interpretation or uses weak context.',
-            I: 'Response does not correctly explain what these statistics tell us about the Flint lead-level distribution.'
+            E: 'Explains all three: the mean as the average lead level, the median as the middle value (about half the samples at or below it), and the IQR as the spread of the middle 50%. Numbers from the lesson strengthen the answer but are not needed.',
+            P: 'Two of the three statistics are explained correctly; one is missing, or mean and median are confused, or the IQR is treated as the full range.',
+            I: 'Fewer than two of the statistics are explained correctly.'
         },
         commonMistakes: [
             'Listing the statistics without explaining what they mean',
             'Confusing the mean with the median',
             'Treating the IQR as the full range of the data',
-            'Leaving out the Flint lead-level context'
+            'Describing a statistic without saying what it tells you about the data'
         ],
         contextFromVideo: 'The video says the Flint mean is 7.31 parts per billion, the median is 3 parts per billion, and the IQR is 5 because Q1 is 2 and Q3 is 7.'
     },
@@ -76,22 +76,22 @@ window.RUBRICS_U1L7 = {
         questionText: 'Explain why the median and IQR are better than the mean and standard deviation for the Flint lead-level distribution. Use the ideas of skewness, outliers, and resistant versus nonresistant measures.',
         expectedElements: [
             { id: 'shape-or-outliers', description: 'States that the Flint distribution is skewed right or has large high outliers', required: true },
-            { id: 'median-iqr-choice', description: 'States that median and IQR are the best measures for the Flint distribution', required: true },
+            { id: 'median-iqr-choice', description: 'States that median and IQR are the best measures for the Flint distribution', required: false },
             { id: 'resistant-language', description: 'Explains that median and IQR are resistant measures', required: true },
             { id: 'nonresistant-language', description: 'Explains that mean and standard deviation are nonresistant and are pulled by outliers', required: true },
-            { id: 'context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: true },
+            { id: 'context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: false },
             { id: 'removal-example', description: 'May mention that removing 104 changed the mean and standard deviation a lot but changed the median and IQR very little', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly explains why resistant measures are better for the skewed Flint distribution with outliers.',
-            P: 'Response includes some correct reasoning but misses one major idea about skewness, resistance, or the choice of statistics.',
-            I: 'Response does not correctly justify why median and IQR are preferred for the Flint data.'
+            E: 'Says the distribution is skewed or has high outliers, and explains that median and IQR are resistant to them while the mean and standard deviation get pulled by them. Naming median and IQR as the choice is implied by that explanation.',
+            P: 'Explains resistance for one pair of measures but not the other, or notes the skew/outliers with only a partial resistance reason.',
+            I: 'Chooses mean and standard deviation, or only names the measures with no resistance reasoning.'
         },
         commonMistakes: [
             'Saying median and IQR are always better for every distribution',
             'Mentioning outliers without explaining resistance',
             'Choosing mean and standard deviation even after noting the skew or outliers',
-            'Using generic language without connecting to Flint lead levels'
+            'Saying which measures to use without explaining why outliers affect the other pair'
         ],
         contextFromVideo: 'The video shows that removing the outlier 104 changes the mean and standard deviation a lot, while the median stays 3 and the IQR changes only from 5 to 4, so the resistant measures are better for the Flint distribution.'
     },
@@ -103,19 +103,19 @@ window.RUBRICS_U1L7 = {
             { id: 'best-variability', description: 'Chooses the IQR as the best measure of variability and may identify it as 2 minutes or note that the middle 50% run from 4 to 6 minutes', required: true },
             { id: 'outlier-identification', description: 'Identifies 22 minutes as an outlier using a valid lesson method such as the 1.5 IQR rule or the two-standard-deviation rule', required: true },
             { id: 'resistant-justification', description: 'Explains that median and IQR are resistant and therefore appropriate because of the skew or outlier', required: true },
-            { id: 'context', description: 'Uses context by referring to minutes waiting for rides after practice or student waiting times', required: true },
+            { id: 'context', description: 'Uses context by referring to minutes waiting for rides after practice or student waiting times', required: false },
             { id: 'skew-language', description: 'May describe the distribution as right-skewed or skewed right', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly chooses and justifies the best summary statistics, identifies the outlier, and uses context.',
-            P: 'Response includes several correct ideas but misses one major part of the justification, outlier explanation, or context.',
-            I: 'Response does not correctly choose or justify appropriate statistics for this distribution.'
+            E: 'Chooses the median and IQR, shows 22 is an outlier by a valid rule (1.5 x IQR or two standard deviations, with the work), and explains that those measures are resistant, which is why they fit a distribution with an outlier.',
+            P: 'Most of those are correct, but one is missing: no outlier rule shown, the wrong measure for one of center or variability, or no resistance reason.',
+            I: 'Two or more of those are missing or wrong.'
         },
         commonMistakes: [
             'Choosing mean and standard deviation even though 22 creates a strong outlier',
             'Calling 22 unusual without connecting it to an outlier rule',
             'Giving the range instead of the IQR as the preferred variability measure',
-            'Describing the numbers without mentioning student wait times'
+            'Calling 22 an outlier without showing the rule that makes it one'
         ],
         contextFromVideo: 'The lesson says that for skewed distributions or distributions with outliers, the preferred measures are the median for center and the IQR for variability, because they are resistant.'
     }
@@ -163,8 +163,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 
