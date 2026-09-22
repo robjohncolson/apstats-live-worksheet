@@ -34,16 +34,16 @@ window.RUBRICS_U3L2 = {
     reflect1: {
         questionText: 'Why is it risky to generalize from the returning planes in Wald\'s sample to all hit planes?',
         expectedElements: [
-            { id: 'returned-only', description: 'Explains that the sample included only planes that returned from the mission', required: true },
+            { id: 'returned-only', description: 'Explains that the sample included only planes that returned from the mission', required: false },
             { id: 'shot-down-excluded', description: 'Notes that planes shot down were left out of the sample', required: true },
             { id: 'not-representative', description: 'Explains that the sample was not representative because the missing planes may have been hit in different spots', required: true },
-            { id: 'generalization-risk', description: 'States that generalizing to all hit planes is not appropriate from this sample alone', required: true },
+            { id: 'generalization-risk', description: 'States that generalizing to all hit planes is not appropriate from this sample alone', required: false },
             { id: 'tail-insight', description: 'May mention that missing bullet holes point to vulnerable areas like the tail', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that only returning planes were sampled, shot-down planes were excluded, the sample was not representative, and generalizing to all hit planes is risky.',
-            P: 'Response shows partial understanding of the sample problem in Wald\'s example but misses one major idea, such as who was left out or why that hurts generalization.',
-            I: 'Response does not correctly explain why Wald\'s sample should not be generalized to all hit planes.'
+            E: 'Explains that the shot-down planes were left out, so the sample of returning planes is not representative of all hit planes (the missing ones may have been hit elsewhere), which is why generalizing is risky.',
+            P: 'Notes the shot-down planes are missing but does not connect that to representativeness / generalization, or the reverse.',
+            I: 'Treats the returning planes as if they were all the hit planes, or gives no sample reasoning.'
         },
         commonMistakes: [
             'Saying the sample included all planes that were hit',
@@ -57,16 +57,16 @@ window.RUBRICS_U3L2 = {
     reflect2: {
         questionText: 'How do observational studies and experiments differ in the kinds of conclusions they allow statisticians to make?',
         expectedElements: [
-            { id: 'observational-no-treatment', description: 'Explains that observational studies do not impose treatments', required: true },
+            { id: 'observational-no-treatment', description: 'Explains that observational studies do not impose treatments', required: false },
             { id: 'observational-no-cause', description: 'States that observational studies cannot establish cause and effect', required: true },
             { id: 'experiment-treatment', description: 'Explains that experiments impose treatments or assign different conditions to subjects', required: true },
             { id: 'experiment-causal', description: 'States that a well-designed experiment can support a causal conclusion', required: true },
             { id: 'random-assignment', description: 'May mention random assignment or the resume experiment example', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly contrasts observational studies and experiments by treatment use and correctly states that only well-designed experiments can support causal conclusions.',
-            P: 'Response identifies some difference between observational studies and experiments but leaves out one major conclusion idea, such as the lack of causation in observational studies or the role of imposed treatments.',
-            I: 'Response does not correctly distinguish the two study types or the conclusions they allow.'
+            E: 'Explains that experiments impose treatments, so a well-designed experiment (random assignment, control of other variables) can support a cause-and-effect conclusion, while observational studies (no treatment imposed) cannot establish causation.',
+            P: 'Two of those three ideas are there; one is missing (commonly: says observational studies cannot show cause without saying why a well-designed experiment can).',
+            I: 'Claims observational studies can prove cause, or claims any experiment proves cause simply because it imposes a treatment, or does not distinguish the two designs.'
         },
         commonMistakes: [
             'Claiming observational studies can prove cause and effect',
@@ -82,15 +82,15 @@ window.RUBRICS_U3L2 = {
         expectedElements: [
             { id: 'population', description: 'Identifies the population as all students at that high school', required: true },
             { id: 'sample', description: 'Identifies the sample as the 120 randomly chosen students from the high school', required: true },
-            { id: 'observational', description: 'Identifies the study as an observational study because no treatments were imposed and existing records were used', required: true },
+            { id: 'observational', description: 'Identifies the study as an observational study because no treatments were imposed and existing records were used', required: false },
             { id: 'generalize-yes', description: 'Explains that generalization to the high school is appropriate because the sample was chosen at random from that population', required: true },
             { id: 'no-causation', description: 'Explains that the study cannot show that sports cause higher GPAs because it is observational', required: true },
             { id: 'confounding', description: 'May mention that other factors could explain GPA differences', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the population and sample, classifies the study as observational, explains why generalization to the school is appropriate, and states that no causal conclusion can be made.',
-            P: 'Response gets most of the scenario right but misses one major idea, such as the observational study classification, the reason generalization is allowed, or the lack of causal inference.',
-            I: 'Response has major errors about the population, sample, study type, generalization, or causal conclusion.'
+            E: 'Population = all students at that high school; sample = the 120 randomly chosen students; generalizing to the school IS appropriate because the sample was random from it; no causal conclusion because the study is observational (records only, no treatment imposed).',
+            P: 'Three of the four are correct; one is missing or wrong.',
+            I: 'Two or more of the four are missing or wrong, or the principal is said to be able to conclude that sports cause higher GPAs.'
         },
         commonMistakes: [
             'Confusing the sample with the population',
@@ -145,8 +145,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

@@ -71,15 +71,15 @@ window.RUBRICS_U7L6 = {
             { id: "independence", description: "States that independence requires two independent random samples or a randomized experiment", required: true },
             { id: "ten-percent", description: "States that when sampling without replacement, each sample should be no more than 10% of its respective population", required: true },
             { id: "normal-condition", description: "Explains that both sample sizes must be at least 30, or otherwise both sample distributions should be free from extreme skewness and outliers", required: true },
-            { id: "spider-example", description: "Uses the spider example to note random samples of 14 females and 14 males and that the histograms were roughly unimodal and symmetric", required: true },
-            { id: "slow-internet-assignment", description: "Uses the slow-internet example to explain that random assignment satisfies the first condition", required: true },
+            { id: "spider-example", description: "Uses the spider example to note random samples of 14 females and 14 males and that the histograms were roughly unimodal and symmetric", required: false },
+            { id: "slow-internet-assignment", description: "Uses the slow-internet example to explain that random assignment satisfies the first condition", required: false },
             { id: "slow-internet-shape", description: "Explains that the slow-internet example fails because of clear skewness and an outlier, and that you cannot just combine the groups into 36", required: true },
             { id: "large-sample-variation", description: "May mention that if both spider samples were 35, the normal condition would be easier because both sample sizes exceed 30", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly identifies the 2-sample t-interval and clearly explains the required conditions using both the spider example and the slow-internet counterexample",
-            P: "Response identifies the general procedure and some conditions but omits an important condition or uses the examples only partially",
-            I: "Response gives the wrong procedure, misstates the conditions, or misuses the examples in a way that changes the conclusion"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a 1-sample t-interval instead of a 2-sample t-interval",
@@ -94,20 +94,20 @@ window.RUBRICS_U7L6 = {
     reflect2: {
         questionText: "Explain how to calculate and interpret a 2-sample t-interval for a difference in means. Use the spider example to describe the point estimate, margin of error, how technology gives the degrees of freedom, why pooled should be set to no, and what the interval (7.956, 12.129) means in context.",
         expectedElements: [
-            { id: "general-formula", description: "States the general confidence interval form statistic plus or minus critical value times standard error", required: true },
+            { id: "general-formula", description: "States the general confidence interval form statistic plus or minus critical value times standard error", required: false },
             { id: "two-sample-formula", description: "States or describes the 2-sample t-interval formula using the difference in sample means and the standard error sqrt((s1^2 / n1) + (s2^2 / n2))", required: true },
             { id: "point-estimate", description: "Identifies the point estimate as the difference in sample means and gives 10.043 mm for female minus male", required: true },
             { id: "technology-df", description: "Explains that the degrees of freedom are found with technology and that the calculator uses pooled set to no", required: true },
-            { id: "interval-values", description: "Gives the interval (7.956, 12.129) or equivalent values from the example", required: true },
+            { id: "interval-values", description: "Gives the interval (7.956, 12.129) or equivalent values from the example", required: false },
             { id: "critical-value-or-moe", description: "Includes t* about 2.13 or the margin of error 2.086 mm", required: true },
             { id: "interpretation", description: "Interprets the interval in context as plausible values for how much longer female Argiope spiders are on average than male Argiope spiders", required: true },
             { id: "positive-interval", description: "Recognizes that because the interval is entirely positive, females are estimated to be larger on average than males", required: true },
             { id: "equivalent-form", description: "May mention that the interval can also be written as 10.043 +/- 2.086", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly explains the calculation structure, the role of technology, and the contextual interpretation of the spider interval",
-            P: "Response captures the general interval process but leaves out an important calculation detail or gives only a weak interpretation",
-            I: "Response uses the wrong formula, misstates the interval, or does not interpret the interval as a range of plausible values in context"
+            E: "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a z interval instead of a t interval",
@@ -129,14 +129,14 @@ window.RUBRICS_U7L6 = {
             { id: "shape-check-needed", description: "Explains that the shape check is needed because both sample sizes are less than 30", required: true },
             { id: "shape-result", description: "States that the histograms were roughly unimodal and symmetric with no extreme skewness or outliers, so the normal condition is reasonable", required: true },
             { id: "interpretation", description: "Interprets the 95% confidence interval as plausible values for the true difference female minus male in mean body length", required: true },
-            { id: "contextual-values", description: "States that female Argiope spiders are estimated to be about 7.956 to 12.129 millimeters longer on average than male Argiope spiders", required: true },
+            { id: "contextual-values", description: "States that female Argiope spiders are estimated to be about 7.956 to 12.129 millimeters longer on average than male Argiope spiders", required: false },
             { id: "positive-endpoints", description: "Explains that the positive endpoints suggest females tend to be larger on average than males", required: true },
             { id: "pooled-no", description: "May mention that technology should be used with pooled set to no", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly states the parameter and procedure, verifies all conditions, and gives a full contextual interpretation of the interval",
-            P: "Response gets most of the setup and interpretation right but misses an important condition or does not fully explain what the positive interval means",
-            I: "Response gives the wrong parameter or procedure, does not justify the conditions, or misinterprets the confidence interval"
+            E: "All 8 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Defining the parameter as a single mean instead of mu_F - mu_M",
@@ -193,8 +193,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

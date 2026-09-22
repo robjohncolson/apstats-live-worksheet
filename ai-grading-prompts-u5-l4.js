@@ -46,14 +46,14 @@ window.RUBRICS_U5L4 = {
         expectedElements: [
             { id: "unbiased-means-on-average", description: "Explains that 'unbiased' means the average across ALL possible samples equals the parameter, not that any single sample is correct", required: true },
             { id: "single-sample-can-miss", description: "Acknowledges that individual samples can be far from the parameter — unbiased does NOT guarantee accuracy for one sample", required: true },
-            { id: "centered-at-parameter", description: "Describes the sampling distribution as centered at μ, so the estimator has no systematic tendency to overestimate or underestimate", required: true },
+            { id: "centered-at-parameter", description: "Describes the sampling distribution as centered at μ, so the estimator has no systematic tendency to overestimate or underestimate", required: false },
             { id: "variability-is-natural", description: "Mentions that variability from sample to sample is expected and natural", required: false },
             { id: "uses-example", description: "References the Weimaraner example (2.3 vs 5) to illustrate the concept", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly explains that 'unbiased' is about the average across all possible samples (not any single sample), acknowledges individual samples can miss, and describes the sampling distribution as centered at the parameter",
-            P: "Response shows partial understanding — mentions 'on average' but doesn't clearly distinguish between single-sample accuracy and long-run centering, or misses the 'centered at parameter' idea",
-            I: "Response shows fundamental misunderstanding — thinks unbiased means every sample is correct, or confuses bias with variability, or provides no meaningful explanation"
+            E: "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Thinking 'unbiased' means every sample gives the right answer",
@@ -67,16 +67,16 @@ window.RUBRICS_U5L4 = {
     reflect2: {
         questionText: "Explain in your own words why the sample range is a biased estimator of the population range. Use the Weimaraner example to describe WHY the bias goes in one direction (always underestimating, never overestimating). Could a different statistic be biased in the opposite direction — systematically overestimating?",
         expectedElements: [
-            { id: "mean-not-equal-parameter", description: "States that the mean of all sample ranges (7.8) does not equal the population range (10), so it's biased", required: true },
+            { id: "mean-not-equal-parameter", description: "States that the mean of all sample ranges (7.8) does not equal the population range (10), so it's biased", required: false },
             { id: "direction-of-bias", description: "Explains that the sample range systematically underestimates — it tends to be LESS than the population range", required: true },
             { id: "why-one-direction", description: "Explains WHY: a sample can never have a range larger than the population range (can't get values outside population boundaries), so sample ranges can only be ≤ population range", required: true },
             { id: "overestimation-possible", description: "Explains that a different estimator can be biased upward if its sampling distribution is centered above the parameter, so it systematically overestimates", required: true },
             { id: "dot-plot-reference", description: "References the dot plot clustering to the left of 10", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly explains why range is biased (average of sample ranges ≠ population range), identifies the direction (underestimates), and gives a clear reason why it can only underestimate (samples can't exceed population boundaries). Bonus for addressing the overestimation question.",
-            P: "Response identifies range as biased and the direction, but doesn't clearly explain WHY it can only underestimate, or explanation is incomplete",
-            I: "Response shows fundamental misunderstanding of bias, doesn't explain the mechanism, or confuses bias with variability"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying the range is biased 'because 7.8 is close to 10' (closeness doesn't matter — not equal means biased)",
@@ -97,9 +97,9 @@ window.RUBRICS_U5L4 = {
             { id: "clear-reasoning", description: "Shows clear connection between the Weimaraner lesson and this new context", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly predicts sample mean is unbiased (yes, equals 75), sample range is biased (no, less than 30), gives a clear reason for the range bias (hard to capture both extremes), and identifies sample mean as the more trustworthy estimator",
-            P: "Response gets the predictions correct but reasoning is incomplete or vague, OR has one minor error but shows correct conceptual understanding",
-            I: "Response has major conceptual errors — predicts range is unbiased, doesn't understand bias, or draws incorrect conclusions"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Thinking both statistics are unbiased because 'samples are random'",
@@ -155,8 +155,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

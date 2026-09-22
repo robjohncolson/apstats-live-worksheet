@@ -39,9 +39,9 @@ window.RUBRICS_U6L4 = {
             { id: "equality-rule", description: "Notes that the null contains the equality and the alternative uses a strict inequality", required: false }
         ],
         scoringGuide: {
-            E: "Correctly defines the parameter in population language, states both hypotheses accurately, and clearly explains why the alternative is one-sided based on the direction of the claim.",
-            P: "Gets most of the setup correct but is incomplete on one part, such as vague parameter wording, missing context, or limited explanation of why the alternative is one-sided.",
-            I: "Uses the wrong hypotheses, includes p-hat instead of p, fails to define the parameter as a population proportion, or does not explain the direction of the alternative."
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using p-hat instead of p in the hypotheses",
@@ -63,9 +63,9 @@ window.RUBRICS_U6L4 = {
             { id: "use-p-zero", description: "Explains that the large counts check uses 0.35 because significance tests assume the null hypothesis is true, so the check uses p0 rather than p-hat", required: true }
         ],
         scoringGuide: {
-            E: "Correctly identifies the one-sample z test, verifies the random and large-counts conditions, states the conditional requirement for the 10% condition, and explains why the large-counts check uses the null value 0.35.",
-            P: "Identifies the procedure and most conditions correctly but is incomplete on one part, such as not explaining the 10% assumption clearly or forgetting why p0 is used in the large counts check.",
-            I: "Chooses the wrong procedure, fails to verify the conditions correctly, or uses the sample proportion instead of the null value in the large counts condition."
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Calling the procedure a confidence interval instead of a significance test",
@@ -83,15 +83,15 @@ window.RUBRICS_U6L4 = {
             { id: "define-parameter", description: "Defines the parameter as p = the proportion of all students at the school who would say they usually get at least 8 hours of sleep on school nights", required: true },
             { id: "state-hypotheses", description: "States the hypotheses correctly as H0: p = 0.65 and Ha: p < 0.65", required: true },
             { id: "identify-procedure", description: "Identifies the procedure as a one-sample z test for a population proportion", required: true },
-            { id: "check-random", description: "Checks the random condition using the fact that the principal randomly selected 90 students", required: true },
-            { id: "check-ten-percent", description: "States that the 10% condition cannot be verified from the information given and would hold if the school has at least 900 students", required: true },
+            { id: "check-random", description: "Checks the random condition using the fact that the principal randomly selected 90 students", required: false },
+            { id: "check-ten-percent", description: "States that the 10% condition cannot be verified from the information given and would hold if the school has at least 900 students", required: false },
             { id: "check-large-counts", description: "Checks large counts using the null value: 90(0.65) = 58.5 and 90(0.35) = 31.5, both at least 10", required: true },
             { id: "proceed-and-parameter", description: "Concludes that the test may proceed if the school has at least 900 students, since the other conditions are met, and explains that hypotheses use the population proportion p rather than the sample statistic p̂", required: true }
         ],
         scoringGuide: {
-            E: "Correctly sets up the full test: defines the parameter, states both hypotheses, identifies the one-sample z test, verifies all conditions using p0 = 0.65, and explains both why the test can proceed and why p-hat does not belong in the hypotheses.",
-            P: "Shows the main setup correctly but misses or weakens one part, such as incomplete condition checks, weak population wording, or limited explanation of why p-hat should not appear.",
-            I: "Misses multiple setup components, uses incorrect hypotheses or procedure, fails to check conditions correctly, or confuses the population parameter with the sample statistic."
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Writing a two-sided or greater-than alternative instead of Ha: p < 0.65",
@@ -138,8 +138,8 @@ COMMON MISTAKES TO WATCH FOR:
 ${rubric.commonMistakes.map((m, i) => `${i + 1}. ${m}`).join('\n')}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

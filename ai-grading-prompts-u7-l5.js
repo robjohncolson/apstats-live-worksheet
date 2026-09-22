@@ -79,20 +79,20 @@ window.RUBRICS_U7L5 = {
     reflect1: {
         questionText: "Explain how to calculate the test statistic and p-value in a significance test for a population mean. Use the Got Hops and Tread40 examples to describe the formula, the degrees of freedom, how the alternative hypothesis determines the tail area, and how technology or Table B can be used.",
         expectedElements: [
-            { id: "general-formula", description: "Explains that the standardized test statistic is statistic minus parameter divided by standard error", required: true },
+            { id: "general-formula", description: "Explains that the standardized test statistic is statistic minus parameter divided by standard error", required: false },
             { id: "t-formula", description: "States the one-sample t-test formula t = (x-bar - mu0) / (s / sqrt(n))", required: true },
             { id: "degrees-of-freedom", description: "States that the degrees of freedom are n - 1", required: true },
             { id: "got-hops-t", description: "May report t = 1.535 with 19 degrees of freedom for Got Hops", required: false },
-            { id: "got-hops-p", description: "Uses Got Hops as a two-sided P-value example; the exact decimal is optional", required: true },
+            { id: "got-hops-p", description: "Uses Got Hops as a two-sided P-value example; the exact decimal is optional", required: false },
             { id: "tread40-t", description: "May report t = 6.491 with 34 degrees of freedom for Tread40", required: false },
-            { id: "tread40-p", description: "Uses Tread40 as a right-tail P-value example; the exact decimal is optional", required: true },
+            { id: "tread40-p", description: "Uses Tread40 as a right-tail P-value example; the exact decimal is optional", required: false },
             { id: "tail-direction", description: "Connects the direction of the alternative hypothesis to the tail area used for the p-value", required: true },
             { id: "technology-tableb", description: "May mention that technology or Table B can be used to find or approximate the p-value", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly explains the test statistic and p-value process for both examples, including the formula, degrees of freedom, and correct tail logic",
-            P: "Response shows the main calculation structure but omits an important detail such as degrees of freedom, one example, or the correct tail area",
-            I: "Response gives the wrong formula, wrong tail area, wrong procedure, or major errors in the example calculations"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a z-test instead of a one-sample t-test",
@@ -112,15 +112,15 @@ window.RUBRICS_U7L5 = {
             { id: "got-hops-interpretation", description: "Interprets the Got Hops p-value of 0.1412 in context as getting a sample mean jump as extreme as 15.8 inches in either direction if mu = 15", required: true },
             { id: "got-hops-decision", description: "Compares 0.1412 to alpha = 0.05 and concludes fail to reject H0 for Got Hops", required: true },
             { id: "got-hops-conclusion", description: "States there is not convincing statistical evidence that the mean vertical jump for all students at the school differs from 15 inches", required: true },
-            { id: "small-large-pvalues", description: "Explains that small p-values lead toward rejecting H0 while large p-values lead toward failing to reject H0", required: true },
-            { id: "tread40-decision", description: "Compares 9.99 x 10^-8 to alpha = 0.01 and concludes reject H0 for Tread40", required: true },
+            { id: "small-large-pvalues", description: "Explains that small p-values lead toward rejecting H0 while large p-values lead toward failing to reject H0", required: false },
+            { id: "tread40-decision", description: "Compares 9.99 x 10^-8 to alpha = 0.01 and concludes reject H0 for Tread40", required: false },
             { id: "tread40-conclusion", description: "States there is convincing statistical evidence that the mean mileage for Tread40 tires is greater than 40000 miles", required: true },
             { id: "no-accept-null", description: "May note that we reject or fail to reject H0 rather than accept it", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets the p-value template and accurately gives both the fail-to-reject Got Hops conclusion and the reject Tread40 conclusion",
-            P: "Response shows the general meaning of a p-value and conclusion process but leaves out part of one example or weakly explains the role of alpha",
-            I: "Response misinterprets the p-value, makes the wrong decision, or gives conclusions that do not match the examples"
+            E: "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying the p-value is the probability that H0 is true",
@@ -135,7 +135,7 @@ window.RUBRICS_U7L5 = {
     exitTicket: {
         questionText: "In the Bakin' Bacon matched-pairs experiment, the differences were defined as (with seasoning - without seasoning). The sample of 10 pairs had x-bar_D = 9.5 grams and s_D = 12.51 grams. A dotplot of the differences showed no strong skewness or outliers, and the test results were t = 2.401 with p = 0.0199. (a) Define the parameter and state the null and alternative hypotheses in symbols and words. (b) Identify the correct significance test procedure and explain why the conditions are reasonable, including why there is no 10% condition. (c) Using alpha = 0.05, make the decision and state the conclusion in context.",
         expectedElements: [
-            { id: "paired-data", description: "Recognizes that this is a matched-pairs setting analyzed with one sample of differences", required: true },
+            { id: "paired-data", description: "Recognizes that this is a matched-pairs setting analyzed with one sample of differences", required: false },
             { id: "parameter", description: "Defines mu_D as the true mean difference in cooked weight (with seasoning minus without seasoning) for packages like those in the study", required: true },
             { id: "null", description: "States the null hypothesis as H0: mu_D = 0", required: true },
             { id: "alternative", description: "States the alternative hypothesis as Ha: mu_D > 0 because the claim is that seasoning helps bacon retain more weight", required: true },
@@ -148,9 +148,9 @@ window.RUBRICS_U7L5 = {
             { id: "alpha-default", description: "May mention that alpha = 0.05 is used because no significance level was given", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly carries out the full matched-pairs significance test, including parameter, hypotheses, procedure, conditions, decision, and contextual conclusion",
-            P: "Response sets up most of the matched-pairs test correctly but misses one important condition, the paired-difference idea, or the final decision and conclusion detail",
-            I: "Response gives the wrong hypotheses or procedure, ignores the matched-pairs structure, or makes the wrong decision from the p-value"
+            E: "All 9 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Treating the data as two independent samples instead of matched pairs",
@@ -207,8 +207,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

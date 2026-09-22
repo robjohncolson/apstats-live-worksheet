@@ -70,9 +70,9 @@ const REFLECTION_RUBRICS_U4L3 = {
       { id: "streaks-are-normal", description: "Acknowledges that streaks of 5, 6, 7, or 8+ are actually common in 100 flips", required: false }
     ],
     scoringGuide: {
-      E: "Identifies that humans avoid streaks AND that real random data has longer streaks than expected",
-      P: "Mentions one concept (avoiding streaks OR random data having streaks) but not the connection",
-      I: "Does not address the key difference between human-generated and truly random sequences"
+      E: "Explains that people avoid long runs of the same outcome, while truly random sequences contain longer streaks than people expect.",
+      P: "Gets one side (what humans do, or what random data does) but not the other.",
+      I: "Describes random as balanced / exactly 50-50, or never mentions streaks."
     },
     commonMistakes: [
       "Saying random means 'equal' or 'balanced' (e.g., exactly 50-50)",
@@ -87,14 +87,14 @@ const REFLECTION_RUBRICS_U4L3 = {
     questionText: "A friend says: 'I've flipped tails 5 times in a row, so the next flip is almost certain to be heads.' Explain why this reasoning is flawed, using the concept of independent events and the Law of Large Numbers.",
     expectedElements: [
       { id: "independence", description: "Each flip is independent - past flips don't affect future flips", required: true },
-      { id: "no-due-effect", description: "The coin is not 'due' for heads; probability remains 50%", required: true },
+      { id: "no-due-effect", description: "The coin is not 'due' for heads; probability remains 50%", required: false },
       { id: "lln-long-run", description: "Law of Large Numbers applies to LONG RUN, not next single flip", required: true },
       { id: "gamblers-fallacy", description: "This is called the gambler's fallacy (optional term)", required: false }
     ],
     scoringGuide: {
-      E: "Explains independence (50% each flip), no 'due' effect, and that LLN is about long-run convergence",
-      P: "Mentions independence OR LLN misapplication but doesn't fully connect both concepts",
-      I: "Agrees with the friend's reasoning OR does not address independence"
+      E: "Explains that each flip is independent, so the coin is not 'due' and the next flip is still 50-50, and that the Law of Large Numbers is about the long-run proportion, not the next single flip.",
+      P: "Gets independence (the next flip is still 50-50) but misstates or omits the Law of Large Numbers, or explains the long-run law without saying the next flip is still 50-50.",
+      I: "Says the coin is due / things balance out in the short run, with neither idea right."
     },
     commonMistakes: [
       "Saying the Law of Large Numbers means things 'balance out' in the short run",
@@ -109,15 +109,15 @@ const REFLECTION_RUBRICS_U4L3 = {
     questionText: "Using the record store example: If the owner says 'About 20% of albums sold are jazz,' explain what this probability means in terms of what would happen if we randomly selected many albums from the store's sales. Why is this interpretation more useful than just saying '431 out of 2105'?",
     expectedElements: [
       { id: "long-run-interpretation", description: "If we randomly select many albums, about 20% would be jazz", required: true },
-      { id: "relative-frequency", description: "Probability represents relative frequency in long run / repeated selections", required: true },
+      { id: "relative-frequency", description: "Probability represents relative frequency in long run / repeated selections", required: false },
       { id: "generalizability", description: "Explains that the proportion communicates an approximate long-run rate and can support predictions over many future selections, unlike a raw count tied to the 2,105 observed sales", required: true },
       { id: "prediction-utility", description: "Can make predictions about future selections or different sample sizes", required: false },
       { id: "with-replacement", description: "With replacement maintains the probability for each selection", required: false }
     ],
     scoringGuide: {
-      E: "Explains long-run relative frequency interpretation AND why this is more generalizable/useful than raw counts",
-      P: "Mentions relative frequency interpretation OR generalizability but doesn't fully connect both ideas",
-      I: "Does not explain what the probability means for repeated selections OR why it's more useful than counts"
+      E: "Interprets 20% as: if many albums were randomly selected from the store's sales, about 20% would be jazz in the long run, and explains that this rate can be used for predictions beyond the 2,105 sales a raw count is tied to.",
+      P: "Gives the long-run interpretation without saying why it is more useful than the count, or says why a rate generalizes without the long-run interpretation.",
+      I: "Neither idea: says exactly 20% will be jazz, or never connects probability to long-run behavior."
     },
     commonMistakes: [
       "Saying exactly 20% will be jazz (rather than approximately or on average)",
@@ -132,19 +132,19 @@ const REFLECTION_RUBRICS_U4L3 = {
     questionText: "A bag contains 8 red marbles, 5 blue marbles, and 7 green marbles. You randomly select one marble. (1) What is the sample space? (2) Calculate P(blue) and interpret what this probability means. (3) Calculate P(not red) using the complement rule. (4) If you select 100 marbles (with replacement), about how many would you expect to be green?",
     expectedElements: [
       { id: "sample-space", description: "Identifies sample space as {red, blue, green} or all 20 individual marbles", required: true },
-      { id: "total-outcomes", description: "Correctly identifies total as 20 marbles (8+5+7)", required: true },
+      { id: "total-outcomes", description: "Correctly identifies total as 20 marbles (8+5+7)", required: false },
       { id: "p-blue-calculation", description: "P(blue) = 5/20 = 0.25 or 25%", required: true },
       { id: "p-blue-interpretation", description: "Interprets P(blue) as long-run relative frequency (about 25% of many selections would be blue)", required: true },
       { id: "complement-rule", description: "Uses complement rule: P(not red) = 1 - P(red) = 1 - 8/20 = 12/20 = 0.60", required: true },
       { id: "expected-green", description: "Expected green = 100 × (7/20) = 35 marbles", required: true }
     ],
     scoringGuide: {
-      E: "Correctly calculates all probabilities, interprets P(blue), uses complement rule properly, and calculates expected value",
-      P: "Gets most calculations right but missing interpretation OR makes one computational error",
-      I: "Multiple errors in probability calculations OR fundamentally misunderstands sample space or complement rule"
+      E: "Sample space {red, blue, green} (or the 20 marbles); P(blue) = 5/20 = 0.25, interpreted as about 25% of many selections being blue in the long run; P(not red) = 1 - 8/20 = 0.60 using the complement; expected green = 100 x 7/20 = 35.",
+      P: "Four of the five are correct; one is missing or wrong (commonly no long-run interpretation, or 35 stated as a guaranteed count).",
+      I: "Two or more of the five are missing or wrong."
     },
     commonMistakes: [
-      "Forgetting to calculate total outcomes (20 marbles)",
+      "Giving P(blue) without the interpretation as a long-run relative frequency",
       "Not interpreting probability as relative frequency in long run",
       "Calculating P(not red) by adding other probabilities instead of using 1 - P(red)",
       "Not showing complement rule formula even if answer is correct",
@@ -205,8 +205,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

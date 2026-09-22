@@ -37,13 +37,13 @@ window.RUBRICS_U2L2 = {
         expectedElements: [
             { id: 'within-group-percent', description: 'Explains that dividing by the column total converts counts to percents or relative frequencies within each age group', required: true },
             { id: 'fair-comparison', description: 'Explains that this makes the comparison fair because the age groups can have different sizes', required: true },
-            { id: 'compare-distributions', description: 'Explains that using percents lets you compare the distributions across groups rather than raw counts', required: true },
+            { id: 'compare-distributions', description: 'Explains that using percents lets you compare the distributions across groups rather than raw counts', required: false },
             { id: 'sum-to-100', description: 'May mention that the percents within a group add to 100%', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that dividing by the column total creates within-group percents, makes comparisons fair across different-sized groups, and helps compare distributions rather than raw counts.',
-            P: 'Response explains part of the idea, such as using percents or accounting for different group sizes, but is incomplete.',
-            I: 'Response does not correctly explain why the column total is used.'
+            E: 'Explains that dividing by the column total turns counts into percents within each age group, which makes the comparison fair because the groups have different sizes. Comparing distributions rather than counts is the same idea.',
+            P: 'Says it gives percents but not why (different group sizes), or the reverse.',
+            I: 'Compares raw counts, or gives no reason for the division.'
         },
         commonMistakes: [
             'Saying the column total is used only because the calculator requires it',
@@ -63,9 +63,9 @@ window.RUBRICS_U2L2 = {
             { id: 'mosaic-widths', description: 'May mention that a mosaic plot also shows group sizes through bar widths', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains that segmented bar graphs or mosaic plots let you compare group distributions and that different distributions indicate an association.',
-            P: 'Response mentions graphs or association but does not clearly connect the comparison of distributions to the conclusion about association.',
-            I: 'Response does not correctly explain how these graphs are used to decide whether variables are associated.'
+            E: 'Explains that you compare the conditional distributions for the groups, and if they differ the variables are associated (if the segments line up, they are not).',
+            P: 'Says to compare the bars without stating what a difference means, or states the association rule without saying what is being compared.',
+            I: 'Bases association on group sizes or raw counts, or describes correlation instead.'
         },
         commonMistakes: [
             'Claiming there is association whenever the groups have different sizes',
@@ -80,16 +80,16 @@ window.RUBRICS_U2L2 = {
         questionText: 'A school surveyed students about grade level and whether they play a school sport. The table shows 18 yes and 12 no for 9th grade, 24 yes and 16 no for 10th grade, and 14 yes and 36 no for 11th grade. Identify the variables, explain why the table is two-way, find the conditional distributions within 9th and 11th grade, explain what a segmented bar graph would show about association, and state one advantage of a mosaic plot.',
         expectedElements: [
             { id: 'identify-variables', description: 'Identifies the variables as grade level and school sport participation and recognizes that both are categorical', required: true },
-            { id: 'two-way-table', description: 'Explains that it is a two-way table because it summarizes counts for two categorical variables together', required: true },
+            { id: 'two-way-table', description: 'Explains that it is a two-way table because it summarizes counts for two categorical variables together', required: false },
             { id: 'ninth-grade-distribution', description: 'Gives the 9th-grade conditional distribution as 60% plays a sport and 40% does not', required: true },
             { id: 'eleventh-grade-distribution', description: 'Gives the 11th-grade conditional distribution as 28% plays a sport and 72% does not, or equivalent approximations', required: true },
             { id: 'association-conclusion', description: 'Explains that the segmented bars would look different because the distributions are different, so the variables are associated', required: true },
             { id: 'mosaic-advantage', description: 'States that a mosaic plot also shows the different group sizes through bar widths', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the variables, explains the two-way table, gives the 9th-grade and 11th-grade conditional distributions, concludes the variables are associated because the distributions differ, and explains that a mosaic plot shows group sizes.',
-            P: 'Response gets most major ideas correct but misses one or two parts, such as a percentage, the reason for association, or the mosaic-plot advantage.',
-            I: 'Response has major errors about the variables, the conditional distributions, or the conclusion about association, or omits several required elements.'
+            E: 'Variables: grade level and sport participation, both categorical; 9th grade 60% / 40%, 11th grade 28% / 72% (grade-level totals as denominators); concludes the variables are associated because the conditional distributions differ; a mosaic plot also shows group sizes by bar width. Explaining \'two-way\' strengthens the answer.',
+            P: 'Four of the five are correct; one is missing or wrong (commonly the grand total used as the denominator).',
+            I: 'Two or more of the five are missing or wrong, or association is concluded from the totals alone.'
         },
         commonMistakes: [
             'Using raw counts instead of conditional percents',
@@ -143,8 +143,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

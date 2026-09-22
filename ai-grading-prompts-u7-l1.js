@@ -54,16 +54,16 @@ window.RUBRICS_U7L1 = {
         questionText: "Using the bonus vs. rebate study, explain what the evidence for the claim is and describe the two possible explanations for that evidence.",
         expectedElements: [
             { id: "evidence-statistic", description: "Identifies the evidence as the observed positive difference in sample means", required: true },
-            { id: "observed-value", description: "States that the observed difference was $12.49, or notes that 22.04 is greater than 9.55", required: true },
+            { id: "observed-value", description: "States that the observed difference was $12.49, or notes that 22.04 is greater than 9.55", required: false },
             { id: "expected-zero", description: "May explain that if wording made no difference, the expected difference in means would be 0", required: false },
             { id: "chance-explanation", description: "Describes explanation 1 as no real wording effect with the observed difference caused by chance variation in random assignment", required: true },
             { id: "treatment-explanation", description: "Describes explanation 2 as the bonus wording causing students to spend more on average", required: true },
-            { id: "context", description: "Keeps the explanation in the context of the bonus vs. rebate college student study", required: true }
+            { id: "context", description: "Keeps the explanation in the context of the bonus vs. rebate college student study", required: false }
         ],
         scoringGuide: {
-            E: "Response clearly identifies the observed evidence and accurately explains both competing explanations in context",
-            P: "Response includes some of the correct evidence and explanation ideas but omits or weakly explains one or more important parts",
-            I: "Response misses the main evidence, gives incorrect explanations, or does not connect the response to the study context"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Treating the evidence as a conclusion instead of the observed difference in means",
@@ -80,16 +80,16 @@ window.RUBRICS_U7L1 = {
         expectedElements: [
             { id: "assumption", description: "States that the simulation assumes the wording makes no difference", required: true },
             { id: "rerandomize", description: "Explains that the subjects are randomly reassigned or rerandomized into groups many times", required: true },
-            { id: "calculate-statistic", description: "Explains that each trial computes the difference in means", required: true },
-            { id: "many-trials", description: "Notes that the process is repeated many times, with 1000 trials shown in the lesson", required: true },
+            { id: "calculate-statistic", description: "Explains that each trial computes the difference in means", required: false },
+            { id: "many-trials", description: "Notes that the process is repeated many times, with 1000 trials shown in the lesson", required: false },
             { id: "tail-count", description: "States that 13 out of 1000 trials were 12.49 or greater, or gives the probability 0.013", required: true },
-            { id: "unlikely-chance", description: "Explains that 0.013 is a very small probability under chance alone", required: true },
+            { id: "unlikely-chance", description: "Explains that 0.013 is a very small probability under chance alone", required: false },
             { id: "conclusion", description: "Concludes that the chance-alone explanation is unlikely and the data provide convincing evidence for the bonus wording effect", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly explains the simulation setup, the probability estimate, and why that small probability supports a convincing-evidence conclusion",
-            P: "Response captures the main simulation idea but is incomplete about the assumption, the probability, or the final interpretation",
-            I: "Response gives an incorrect simulation process, misinterprets 0.013, or fails to connect the result to the claim"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Forgetting that the simulation assumes no wording effect",
@@ -109,13 +109,13 @@ window.RUBRICS_U7L1 = {
             { id: "chance-explanation", description: "Describes one explanation as no wording effect with chance variation in random assignment producing the observed difference", required: true },
             { id: "effect-explanation", description: "Describes the other explanation as the bonus wording causing higher average spending", required: true },
             { id: "simulation-probability", description: "Uses the simulation result 13 out of 1000 or 0.013 as the estimated probability by chance alone", required: true },
-            { id: "small-probability", description: "Explains that this probability is very small or unlikely", required: true },
+            { id: "small-probability", description: "Explains that this probability is very small or unlikely", required: false },
             { id: "convincing-evidence", description: "Concludes that the data provide convincing evidence that the bonus wording causes college students like those in the study to spend more on average", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly identifies the evidence, explains both competing explanations, and uses the simulation probability to reach the correct contextual conclusion",
-            P: "Response gets most of the significance-testing logic correct but misses or weakly explains one important piece",
-            I: "Response omits major parts of the logic, misuses the simulation result, or gives an incorrect conclusion"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Calling the evidence just 'the claim' instead of the observed difference in means",
@@ -172,8 +172,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

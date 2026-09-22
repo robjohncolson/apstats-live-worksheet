@@ -50,16 +50,16 @@ window.RUBRICS_U2L6 = {
     reflect1: {
         questionText: 'How do slope, y-intercept, and x-value work together in ŷ = a + bx, and why is the result only a prediction?',
         expectedElements: [
-            { id: 'plug-in-x', description: 'Explains that you substitute the explanatory-variable value for x in the regression equation', required: true },
+            { id: 'plug-in-x', description: 'Explains that you substitute the explanatory-variable value for x in the regression equation', required: false },
             { id: 'slope-and-intercept', description: 'Explains that you multiply the slope by x and combine it with the y-intercept to get ŷ', required: true },
             { id: 'predicted-response', description: 'States that ŷ is the predicted response rather than an exact observed value', required: true },
             { id: 'decimal-possible', description: 'Explains that the result can be a decimal because it is a model prediction, not an actual count or exact data value', required: false },
             { id: 'variability-idea', description: 'May mention that data have variability, so the model is estimating rather than giving exact values', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains how x is substituted into ŷ = a + bx, how slope and intercept combine to produce ŷ, and why the output is a predicted rather than exact value.',
-            P: 'Response gets part of the prediction process right but leaves out an important idea about the equation, the predicted response, or why the result is not exact.',
-            I: 'Response does not correctly explain how the regression equation is used or why its output is only a prediction.'
+            E: 'Explains that the x-value is multiplied by the slope and added to the intercept to get y-hat, and that y-hat is a predicted value, not the exact observed response.',
+            P: 'Describes the arithmetic without saying the result is only a prediction, or says it is a prediction without describing how the equation produces it.',
+            I: 'Neither idea is present, or y-hat is treated as the actual observed value with no arithmetic.'
         },
         commonMistakes: [
             'Mixing up the slope and y-intercept',
@@ -75,14 +75,14 @@ window.RUBRICS_U2L6 = {
         expectedElements: [
             { id: 'define-extrapolation', description: 'Defines extrapolation as predicting outside the interval of observed x-values', required: true },
             { id: 'trend-may-not-continue', description: 'Explains that extrapolation is dangerous because the existing trend may not continue', required: true },
-            { id: 'less-reliable', description: 'States that predictions made by extrapolation are less reliable', required: true },
-            { id: 'compare-to-interval', description: 'Explains that you decide by comparing the chosen x-value to the interval of x-values used to build the model', required: true },
+            { id: 'less-reliable', description: 'States that predictions made by extrapolation are less reliable', required: false },
+            { id: 'compare-to-interval', description: 'Explains that you decide by comparing the chosen x-value to the interval of x-values used to build the model', required: false },
             { id: 'example-link', description: 'May mention the 2048 example or the swine prediction at x = 0.2', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains what extrapolation is, why it is risky, and how to tell when a prediction uses an x-value outside the observed data range.',
-            P: 'Response correctly explains part of extrapolation but misses a key idea about the observed interval, reliability, or why the trend may fail to continue.',
-            I: 'Response does not correctly explain extrapolation or why it can make predictions unreliable.'
+            E: 'Defines extrapolation as predicting for an x outside the range of observed x-values, and explains it is risky because the pattern may not continue there. Deciding = comparing the x to the observed interval, which the definition carries.',
+            P: 'Names extrapolation (predicting outside the observed x-range) without the reason it is risky, or gives the risk without saying what extrapolation is.',
+            I: 'Neither idea is present.'
         },
         commonMistakes: [
             'Saying any regression prediction is reliable',
@@ -96,7 +96,7 @@ window.RUBRICS_U2L6 = {
     exitTicket: {
         questionText: 'A teacher uses the model ŷ = 61.4 + 1.8x to predict quiz score from hours of tutoring, with observed x-values from 2 to 10 hours. Identify the variables, slope, and intercept in context, predict for x = 8, explain why the prediction is not exact, and decide whether x = 15 is reliable.',
         expectedElements: [
-            { id: 'variables-context', description: 'Identifies x as hours of after-school tutoring and ŷ as the predicted quiz score', required: true },
+            { id: 'variables-context', description: 'Identifies x as hours of after-school tutoring and ŷ as the predicted quiz score', required: false },
             { id: 'slope-context', description: 'Explains that the slope 1.8 means the predicted quiz score increases by 1.8 points for each additional hour of tutoring', required: true },
             { id: 'intercept-context', description: 'Explains that the y-intercept 61.4 is the predicted quiz score for a student with 0 hours of tutoring', required: true },
             { id: 'correct-prediction', description: 'Calculates the predicted quiz score for 8 hours as 75.8', required: true },
@@ -105,9 +105,9 @@ window.RUBRICS_U2L6 = {
             { id: 'further-less-reliable', description: 'May note that predictions become less reliable the farther they are beyond the observed x-range', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the model components in context, computes the prediction for x = 8, explains that the model gives a predicted rather than exact value, and rejects x = 15 as an unreliable extrapolation.',
-            P: 'Response gets most of the exit ticket right but misses or weakly explains one major idea about model components, the calculation, prediction meaning, or extrapolation.',
-            I: 'Response has major errors about the regression model, the prediction, or the reliability of extrapolated values.'
+            E: 'Slope: predicted quiz score rises 1.8 points per additional hour of tutoring; intercept: predicted score 61.4 with 0 hours; y-hat = 61.4 + 1.8(8) = 75.8 with the substitution shown; the prediction is not exact because individual students vary around the line; x = 15 is outside 2-10 hours, so it is extrapolation and not reliable.',
+            P: 'Four of the five are correct; one is missing or wrong (commonly a slope with no \'predicted\' or no \'per hour\').',
+            I: 'Two or more of the five are missing or wrong.'
         },
         commonMistakes: [
             'Treating 75.8 as an exact quiz score',
@@ -161,8 +161,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

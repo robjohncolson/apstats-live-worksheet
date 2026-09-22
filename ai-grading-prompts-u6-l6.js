@@ -62,9 +62,9 @@ window.RUBRICS_U6L6 = {
             { id: "ha-in-context", description: "Corrected conclusion states there is NOT convincing statistical evidence for Ha (though context is generic here, the structure should reference Ha)", required: false }
         ],
         scoringGuide: {
-            E: "Response identifies both errors (accepting H0 and concluding H0 is true), explains why each is wrong, and provides a corrected conclusion that explicitly compares p-value to alpha and uses 'fail to reject' language",
-            P: "Response identifies one of the two errors and provides a partially corrected conclusion, or identifies both errors but the corrected conclusion is missing the explicit comparison or still uses problematic language",
-            I: "Response does not identify either error, or 'corrects' the conclusion with another incorrect version (e.g., still says 'accept H0' or 'H0 is true')"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Only identifying one of the two errors (accepting H0 vs. concluding H0 is true) — these are related but distinct mistakes",
@@ -81,14 +81,14 @@ window.RUBRICS_U6L6 = {
         expectedElements: [
             { id: "fail-to-reject-meaning", description: "Explains that failing to reject H0 means the data do not provide convincing evidence AGAINST H0 — the observed result could plausibly have happened by chance if H0 were true", required: true },
             { id: "not-proof", description: "Explains that this does not prove H0 is true — there could still be a real difference, but the sample evidence was not strong enough to detect it", required: true },
-            { id: "cereal-example", description: "Uses the cereal example to illustrate: p-hat = 0.169 IS less than 0.20, so there is some evidence the proportion is less, but the difference could be due to random chance (p-value = 0.2676 is too large)", required: true },
-            { id: "evidence-vs-proof", description: "Distinguishes between 'lack of convincing evidence' and 'proof' — statistics deals in probabilities, not absolute proof", required: true },
+            { id: "cereal-example", description: "Uses the cereal example to illustrate: p-hat = 0.169 IS less than 0.20, so there is some evidence the proportion is less, but the difference could be due to random chance (p-value = 0.2676 is too large)", required: false },
+            { id: "evidence-vs-proof", description: "Distinguishes between 'lack of convincing evidence' and 'proof' — statistics deals in probabilities, not absolute proof", required: false },
             { id: "plausible-explanation", description: "Notes that a 26.76% chance of getting this result under H0 means it's quite plausible the data happened by random chance alone", required: false }
         ],
         scoringGuide: {
-            E: "Response clearly explains that failing to reject means insufficient evidence (not proof of H0), uses the cereal voucher example correctly (noting p-hat was below 0.20 but the difference wasn't convincing), and conveys that statistics deals in probabilities rather than absolute proof",
-            P: "Response explains the general concept but doesn't effectively use the cereal example, or uses the example but doesn't clearly articulate why 'not enough evidence' differs from 'proof'",
-            I: "Response confuses failing to reject with accepting H0, or claims that failing to reject means H0 is definitely true, or does not address the distinction at all"
+            E: "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying that failing to reject H0 means there is no evidence at all against H0 — there was some evidence (p-hat = 0.169 < 0.20), it just wasn't convincing enough",
@@ -106,15 +106,15 @@ window.RUBRICS_U6L6 = {
             { id: "correct-hypotheses", description: "States H0: p = 0.60 and Ha: p < 0.60", required: true },
             { id: "defines-parameter", description: "Defines p as the proportion of all residents who support the new park (or equivalent)", required: true },
             { id: "explicit-comparison-05", description: "Part (b): Explicitly compares p-value of 0.1357 to alpha = 0.05 (e.g., 'Because the p-value of 0.1357 is greater than alpha = 0.05')", required: true },
-            { id: "fail-to-reject-05", description: "Part (b): Concludes we fail to reject H0", required: true },
+            { id: "fail-to-reject-05", description: "Part (b): Concludes we fail to reject H0", required: false },
             { id: "conclusion-in-context", description: "Part (b): States there is not convincing statistical evidence that the proportion of all residents who support the new park is less than 0.60", required: true },
             { id: "alpha-20-changes", description: "Part (c): Recognizes that with alpha = 0.20, the conclusion changes because 0.1357 < 0.20, so we would reject H0", required: true },
             { id: "alpha-20-conclusion", description: "Part (c): With alpha = 0.20, states there IS convincing statistical evidence that the proportion is less than 0.60", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly states hypotheses with parameter definition, writes a complete conclusion for alpha = 0.05 with explicit comparison and context, and correctly explains that the conclusion changes with alpha = 0.20 (reject H0 since 0.1357 < 0.20)",
-            P: "Response has most elements correct but makes one error — e.g., correct hypotheses and conclusion but forgets to define the parameter, or correct for parts (a) and (b) but incorrect reasoning for part (c)",
-            I: "Response has multiple errors — e.g., wrong hypotheses, no explicit comparison of p-value to alpha, accepts H0 instead of failing to reject, or concludes the same way for both alpha values without explanation"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Writing Ha: p != 0.60 instead of Ha: p < 0.60 (the council member suspects it is LESS than 0.60)",
@@ -172,8 +172,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

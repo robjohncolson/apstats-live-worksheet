@@ -58,7 +58,7 @@ window.RUBRICS_U7L9 = {
             { id: "independence-condition", description: "Checks or explains the independence or 10% condition", required: true },
             { id: "large-sample-condition", description: "Checks or explains that the sample sizes are large enough or the distributions are approximately normal", required: true },
             { id: "test-statistic-setup", description: "Explains that the test statistic compares the observed sample difference to 0 using the standard error of x-bar_C minus x-bar_P", required: true },
-            { id: "observed-difference", description: "Uses or identifies the observed sample difference as -0.32", required: true },
+            { id: "observed-difference", description: "Uses or identifies the observed sample difference as -0.32", required: false },
             { id: "test-statistic-value", description: "Gives an approximate test statistic of about -0.97 and/or interprets the negative sign correctly", required: true },
             { id: "p-value", description: "Gives an approximate two-sided P-value of about 0.33", required: true },
             { id: "decision-conclusion", description: "States fail to reject H0 at alpha = 0.05 and concludes there is not convincing evidence that the mean word lengths differ", required: true },
@@ -66,9 +66,9 @@ window.RUBRICS_U7L9 = {
             { id: "statistical-significance", description: "May note that the result is not statistically significant at the 5% level", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly states the hypotheses, checks the conditions, describes the test statistic and its value, gives the approximate P-value, and makes the correct fail-to-reject decision with a conclusion in context",
-            P: "Response shows the main structure of the test but misses one major condition, a numerical summary, or the final decision and conclusion",
-            I: "Response gives incorrect hypotheses, skips the key test steps, or makes the wrong decision or conclusion for the textbook example"
+            E: "All 8 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a one-sided alternative even though the question asks whether the means differ",
@@ -93,9 +93,9 @@ window.RUBRICS_U7L9 = {
             { id: "sampling-language", description: "May emphasize that the sample evidence was not strong enough to rule out random variation", required: false }
         ],
         scoringGuide: {
-            E: "Response clearly interprets the P-value, explains the two-sided setup and the negative sign, and gives the correct contextual conclusion without claiming the means are proven equal",
-            P: "Response understands the basic meaning of the P-value and conclusion but leaves one interpretation incomplete or weakly connected to context",
-            I: "Response misinterprets the P-value, confuses the sign or direction, or treats a fail-to-reject decision as proof that the means are equal"
+            E: "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Describing the P-value as the probability that H0 is true",
@@ -115,16 +115,16 @@ window.RUBRICS_U7L9 = {
             { id: "conditions", description: "Checks the needed conditions, including random sampling, the 10% condition or independence, and a large sample or roughly normal distributions", required: true },
             { id: "test-statistic", description: "Gives or describes a test statistic of about -0.97 using the difference in sample means and the standard error", required: true },
             { id: "p-value", description: "Gives an approximate two-sided P-value of about 0.33", required: true },
-            { id: "decision", description: "States the correct decision to fail to reject H0 at alpha = 0.05", required: true },
+            { id: "decision", description: "States the correct decision to fail to reject H0 at alpha = 0.05", required: false },
             { id: "context-conclusion", description: "Writes a conclusion in context that there is not convincing evidence that the textbook mean word lengths differ", required: true },
             { id: "not-proof-equal", description: "Explains that failing to reject H0 does not prove the population means are equal", required: true },
             { id: "negative-sign-meaning", description: "May explain that the negative sign comes from chemistry minus physics being negative in the sample", required: false },
             { id: "not-significant", description: "May note that the result is not statistically significant at the 5% level", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly sets up the two-sided test, checks the conditions, gives the approximate test statistic and P-value, makes the correct decision, and writes a valid contextual conclusion that does not overclaim",
-            P: "Response gets most of the test correct but misses one of the conditions, one numerical result, or the explanation about why fail to reject is not proof of equality",
-            I: "Response gives incorrect hypotheses, a wrong decision, or a conclusion that misstates what the sample evidence shows"
+            E: "All 7 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a one-sided alternative instead of a two-sided one",
@@ -181,8 +181,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

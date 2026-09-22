@@ -29,15 +29,20 @@ actually matters, and show it.
 For every reflection question (`reflect1`, `reflect2`, `exitTicket`):
 
 1. **At most 3 `required:true` elements; 2 is normal.** One exception: a question that explicitly lists its parts
-   (every exit ticket; L6 "all four characteristics") may require each listed part, **max 4**. CB scores those
-   part-by-part too. Pilot result: 50 required across 18 questions (avg 2.8, was 4.0).
+   (every exit ticket; L6 "all four characteristics") may require each listed part, **max 4** — **max 5 when the
+   question enumerates five or more DISTINCT statistical asks** (old-U3 data-collection tickets: population, sample,
+   bias + direction, wording, fix). CB scores those part-by-part too, and its own FRQs run 4–7 points. Identifying
+   the population and the sample IS a scored idea (Unit 1 PC FRQ 1 gives a point each) — never demote it to fit a cap. Pilot result: 50 required across 18 questions (avg 2.8, was 4.0).
 2. A required element must be a **statistical idea a CB reader would score** — tied to the lesson's CED learning
    objective — and must be answerable by a student who understood the idea but forgot the video's details.
 3. Anything that names the video's specific context, numbers, or wording becomes `required:false`. It still
    appears under "Optional Elements" in the prompt and can still tip a torn verdict upward; it can never block an E.
 4. Two required elements that are the same idea seen twice are merged into one.
 5. `scoringGuide` is rewritten to match: **E** = every key element, in the student's own words; **P** = the
-   central idea with one key element missing or muddled; **I** = the central idea is missing or wrong.
+   central idea with one key element missing or muddled; **I** = the central idea is missing or wrong. In the
+   inference units (new U3/U4) the guides are UNIFORM and DISJOINT — E all / P exactly one missing / I two or
+   more — so a guide can never name an element the list made optional (the grader reads both; a Codex review
+   found that contradiction across 14 questions).
 7. **E = every key element** (teacher decision 2026-09-21, calibrated against the Unit 1 Progress Check scoring
    guidelines). CB awards one point per narrow idea, each earned independently, and full credit needs every point;
    it asks for a calculation with its work, a comparison that names both values in context, and a determination plus
@@ -75,8 +80,9 @@ bonus-only since EXIT_TICKET_BONUS_SPEC, but it lists its parts, so it goes to �
 
 ## Steps
 
-1. **Draft** (main session, by hand — 18 questions is small; no codemod). Output: `state/rubric-slim/u1-l1-6-decisions.json` (the judgment; Codex gpt-6-astra applies it to the 6 prompt
-   files verbatim via the cross-agent runner, then reviews) plus `state/rubric-slim/u1-l1-6-review.md`, one table per question: element id · old flag · new flag · one-line reason.
+1. **Draft** (main session): `state/rubric-slim/<batch>-decisions.json` (the judgment). Apply with
+   `node scripts/rubric-slim-apply.mjs <decisions>` (deterministic; Codex's L7 write silently failed, so the
+   applier is a script and Codex is used for the REVIEW pass) plus `state/rubric-slim/u1-l1-6-review.md`, one table per question: element id · old flag · new flag · one-line reason.
 2. **Teacher review** of that table. Teacher may flip any element back. Nothing proceeds without it.
 3. **Rebuild**: `node scripts/build-frq-rubrics.mjs`; run `tests/frq-rubrics-bundle.test.js`,
    `tests/frq-grading-standard.test.js`, `tests/frq-rubric-transparency.test.js`,

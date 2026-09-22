@@ -63,18 +63,18 @@ window.RUBRICS_U7L8 = {
         questionText: "Explain how to write the null and alternative hypotheses for the contagious-yawning study. Define mu_Y and mu_N, describe the skeptic's view, write the hypotheses in words or symbols, and explain why the hypotheses must be about population parameters instead of sample statistics.",
         expectedElements: [
             { id: "define-parameters", description: "Defines mu_Y and mu_N as the true population mean number of yawns for the exposed and non-exposed groups", required: true },
-            { id: "null-no-effect", description: "Explains that the null hypothesis represents no treatment effect, no difference, or no change", required: true },
+            { id: "null-no-effect", description: "Explains that the null hypothesis represents no treatment effect, no difference, or no change", required: false },
             { id: "null-equality", description: "States a correct null hypothesis such as mu_Y = mu_N or mu_Y - mu_N = 0", required: true },
             { id: "alternative-directional", description: "States a correct directional alternative such as mu_Y > mu_N or mu_Y - mu_N > 0", required: true },
-            { id: "yawn-more-context", description: "Connects the alternative to the contextual claim that people yawn more on average when watching someone yawn", required: true },
+            { id: "yawn-more-context", description: "Connects the alternative to the contextual claim that people yawn more on average when watching someone yawn", required: false },
             { id: "parameters-not-statistics", description: "Explains that hypotheses must use population parameters rather than sample statistics like x-bar values", required: true },
             { id: "words-or-symbols", description: "May give both a verbal and symbolic version of the hypotheses", required: false },
             { id: "skeptic-language", description: "May explicitly describe the skeptic as shrugging off the claim or not expecting a treatment effect", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly defines the parameters, gives valid null and alternative hypotheses for the yawning study, and clearly explains that hypotheses are about population means rather than sample statistics",
-            P: "Response shows the main setup idea but misses either a clear parameter definition, a fully correct hypothesis statement, or the explanation about parameters versus statistics",
-            I: "Response gives incorrect hypotheses, uses statistics in the hypotheses, or does not connect the setup to the yawning context"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Writing the null hypothesis with an inequality instead of equality",
@@ -91,7 +91,7 @@ window.RUBRICS_U7L8 = {
         expectedElements: [
             { id: "one-sided-definition", description: "Explains that a one-sided alternative is used when the claim is directional and asks whether one mean is larger or smaller", required: true },
             { id: "yawning-direction", description: "Explains that the yawning study uses a one-sided alternative because the claim is that exposure increases the mean number of yawns", required: true },
-            { id: "not-two-sided-yawning", description: "States that it would not make sense to use the opposite inequality or a two-sided alternative for the yawning study", required: true },
+            { id: "not-two-sided-yawning", description: "States that it would not make sense to use the opposite inequality or a two-sided alternative for the yawning study", required: false },
             { id: "two-sided-definition", description: "Explains that a two-sided alternative is used when the question is simply whether the means are different", required: true },
             { id: "textbook-example", description: "Uses the chemistry-vs.-physics textbook example as a two-sided test because the question asks whether the mean word lengths differ", required: true },
             { id: "reverse-order", description: "Explains that reversing the subtraction order reverses the direction of a one-sided inequality", required: true },
@@ -99,9 +99,9 @@ window.RUBRICS_U7L8 = {
             { id: "context-controls-direction", description: "May explicitly say that context determines the direction of the alternative hypothesis", required: false }
         ],
         scoringGuide: {
-            E: "Response clearly distinguishes one-sided and two-sided alternatives, applies both examples correctly, and explains how reversing subtraction order changes a one-sided inequality",
-            P: "Response understands the difference between one-sided and two-sided alternatives but leaves one example vague or does not clearly explain the subtraction-order issue",
-            I: "Response confuses one-sided and two-sided alternatives, applies the wrong form to an example, or fails to explain the effect of reversing the subtraction order"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a two-sided alternative when the claim has a specific direction",
@@ -126,9 +126,9 @@ window.RUBRICS_U7L8 = {
             { id: "statistics-descriptive", description: "May note that the sample means are descriptive statistics from the samples, not the parameters being tested", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly defines both parameters, writes valid null and two-sided alternative hypotheses, explains why the test is two-sided, and states why the hypotheses must use parameters instead of sample means",
-            P: "Response gets most of the setup right but misses either one parameter definition, the reason for a two-sided alternative, or the explanation about parameters versus sample statistics",
-            I: "Response gives incorrect hypotheses, uses the sample means in the hypotheses, or does not explain why the alternative is two-sided"
+            E: "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using the sample means 5.71 and 6.03 directly in the hypotheses",
@@ -185,8 +185,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

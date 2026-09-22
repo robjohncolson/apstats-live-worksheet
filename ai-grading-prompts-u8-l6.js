@@ -97,18 +97,18 @@ window.RUBRICS_U8L6 = {
         questionText: 'Explain how to calculate the chi-square test statistic and p-value for a chi-square test for homogeneity or independence. Include observed and expected counts, the idea of contributions, the degrees of freedom formula, not counting totals in the degrees of freedom, using Table C or chi-squared CDF, and the school example values chi-square = 5.55, df = 2, and p-value = 0.062.',
         expectedElements: [
             { id: 'chi-square-formula', description: 'States that the chi-square statistic is computed by summing (observed minus expected) squared divided by expected across all cells', required: true },
-            { id: 'contributions', description: 'Explains that each cell makes a contribution and the contributions add to the overall chi-square statistic', required: true },
-            { id: 'observed-expected', description: 'Makes clear that both observed counts and expected counts are used in the calculation', required: true },
+            { id: 'contributions', description: 'Explains that each cell makes a contribution and the contributions add to the overall chi-square statistic', required: false },
+            { id: 'observed-expected', description: 'Makes clear that both observed counts and expected counts are used in the calculation', required: false },
             { id: 'df-formula', description: 'States that degrees of freedom are calculated with (rows minus 1) times (columns minus 1)', required: true },
-            { id: 'exclude-totals', description: 'States that the total row and total column are not counted when finding rows and columns for degrees of freedom', required: true },
+            { id: 'exclude-totals', description: 'States that the total row and total column are not counted when finding rows and columns for degrees of freedom', required: false },
             { id: 'p-value-methods', description: 'Explains that the p-value is found from the right tail of a chi-square distribution and can be estimated with Table C or found exactly with chi-squared CDF or other technology', required: true },
-            { id: 'school-example', description: 'Uses the school example with chi-square statistic 5.55, degrees of freedom 2, and p-value about 0.062 or between 0.05 and 0.10', required: true },
+            { id: 'school-example', description: 'Uses the school example with chi-square statistic 5.55, degrees of freedom 2, and p-value about 0.062 or between 0.05 and 0.10', required: false },
             { id: 'employment-example', description: 'May mention the employment example with chi-square statistic 14.30 and a very small p-value of about 0.0008', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains how to compute the chi-square statistic and p-value, includes the degrees of freedom rule, and correctly ties the process to the school example values.',
-            P: 'Response shows the main calculation process but misses one major element such as the degrees of freedom rule, excluding totals, or how the p-value is obtained.',
-            I: 'Response gives an incorrect chi-square process, confuses observed and expected counts, or does not explain how to find the p-value.'
+            E: 'All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Forgetting to divide by the expected count in each term',
@@ -126,16 +126,16 @@ window.RUBRICS_U8L6 = {
             { id: 'interpretation-template', description: 'Explains that a p-value interpretation starts by assuming the null hypothesis is true', required: true },
             { id: 'chance-alone', description: 'States that the p-value is the probability of getting the observed chi-square statistic or greater by chance alone in the random sample or random assignment', required: true },
             { id: 'compare-to-alpha', description: 'Explains that the statistical decision is made by comparing the p-value to alpha', required: true },
-            { id: 'large-pvalue', description: 'States that if the p-value is greater than alpha, fail to reject the null hypothesis and say there is not convincing statistical evidence for the alternative in context', required: true },
-            { id: 'small-pvalue', description: 'States that if the p-value is less than or equal to alpha, reject the null hypothesis and say there is convincing statistical evidence for the alternative in context', required: true },
+            { id: 'large-pvalue', description: 'States that if the p-value is greater than alpha, fail to reject the null hypothesis and say there is not convincing statistical evidence for the alternative in context', required: false },
+            { id: 'small-pvalue', description: 'States that if the p-value is less than or equal to alpha, reject the null hypothesis and say there is convincing statistical evidence for the alternative in context', required: false },
             { id: 'school-conclusion', description: 'Uses the school example: p-value 0.062 is greater than 0.05, so fail to reject and conclude there is not convincing statistical evidence of a difference in school-type distributions from 2019 to 2020', required: true },
-            { id: 'employment-conclusion', description: 'Uses the employment example: p-value 0.0008 is less than or equal to 0.01, so reject and conclude there is convincing statistical evidence of an association between education level and employment status', required: true },
+            { id: 'employment-conclusion', description: 'Uses the employment example: p-value 0.0008 is less than or equal to 0.01, so reject and conclude there is convincing statistical evidence of an association between education level and employment status', required: false },
             { id: 'follow-up-analysis', description: 'Explains that follow-up analysis examines the largest cell contribution to identify which cells most strongly explain the chi-square result; may use the employment example as illustration', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly explains both p-value interpretation and statistical conclusion templates and accurately applies them to the school and employment examples, including follow-up analysis.',
-            P: 'Response shows the main idea of interpreting a p-value and making a conclusion but misses one major part such as one example, the comparison to alpha, or the follow-up analysis detail.',
-            I: 'Response misinterprets the p-value, gives the wrong reject or fail-to-reject decision, or does not connect the conclusion to the alternative hypothesis in context.'
+            E: 'All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Saying the p-value is the probability that the null hypothesis is true',
@@ -153,18 +153,18 @@ window.RUBRICS_U8L6 = {
             { id: 'procedure', description: 'Identifies the procedure as a chi-square test for independence because the problem asks about association between two categorical variables in one random sample', required: true },
             { id: 'null-hypothesis', description: 'States the null hypothesis that age group at diagnosis and gender are independent or not associated for the population of people currently being treated for schizophrenia', required: true },
             { id: 'alternative-hypothesis', description: 'States the alternative hypothesis that age group at diagnosis and gender are not independent or are associated for that population', required: true },
-            { id: 'alpha', description: 'States that alpha = 0.05 can be used when no significance level is given', required: true },
+            { id: 'alpha', description: 'States that alpha = 0.05 can be used when no significance level is given', required: false },
             { id: 'conditions', description: 'Verifies the conditions using the random sample of 207 people, the 10 percent condition, and the fact that all expected counts are at least 5', required: true },
             { id: 'statistic-and-df', description: 'Reports the chi-square statistic 10.884 and degrees of freedom 3', required: true },
-            { id: 'p-value', description: 'Reports the p-value of 0.012', required: true },
+            { id: 'p-value', description: 'Reports the p-value of 0.012', required: false },
             { id: 'decision-and-conclusion', description: 'States that because 0.012 is less than 0.05 we reject the null hypothesis and conclude there is convincing statistical evidence of an association between age group at diagnosis and gender for the population currently being treated for schizophrenia', required: true },
-            { id: 'calculator', description: 'Explains one way technology helps, such as using a chi-square test with observed counts in matrix A and reading expected counts from matrix B', required: true },
+            { id: 'calculator', description: 'Explains one way technology helps, such as using a chi-square test with observed counts in matrix A and reading expected counts from matrix B', required: false },
             { id: 'interpretation-note', description: 'May mention that a p-value interpretation is not required unless the question specifically asks for it', required: false }
         ],
         scoringGuide: {
-            E: 'Response includes the full structure of the significance test, correctly states the procedure and hypotheses, verifies the conditions, reports the test results, and gives the correct conclusion in context.',
-            P: 'Response covers most of the complete test but misses one major element such as a condition, a hypothesis, the significance level, or the final contextual conclusion.',
-            I: 'Response misidentifies the procedure, gives incorrect hypotheses or decision, or does not present the full significance-test setup accurately.'
+            E: 'All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Calling the procedure homogeneity instead of independence',
@@ -221,8 +221,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

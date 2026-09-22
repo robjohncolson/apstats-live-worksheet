@@ -1,0 +1,145 @@
+{
+  "note": "RUBRIC_SLIM_SPEC batch: old U7 L7-9 (interpreting two-sample intervals, two-sample t test hypotheses and full test; NEW Unit 4). Applied with scripts/rubric-slim-apply.mjs. Revised after the Codex review of new U3/U4 (DO NOT SHIP -> fixed): a full inference procedure requires the ids that compose College Board's four compound points (hypotheses incl. parameter, procedure + every condition, mechanics with work, decision + justification in context) even when that is 6-8 ids; explicitly requested interpretations and reasons restored; E/P/I made uniform and disjoint (all / all-but-one / two-or-more).",
+  "files": {
+    "ai-grading-prompts-u7-l7.js": {
+      "reflect1": {
+        "required": [
+          "general-template",
+          "direction",
+          "sample-error",
+          "probability-error"
+        ],
+        "scoringGuide": {
+          "E": "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "zero-means-no-difference",
+          "spider-support",
+          "firestation-no-support",
+          "do-not-say-wrong"
+        ],
+        "scoringGuide": {
+          "E": "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "parameter",
+          "procedure",
+          "interval-interpretation",
+          "claim-conclusion",
+          "confidence-level",
+          "random-samples",
+          "ten-percent",
+          "large-sample",
+          "zero-plausible"
+        ],
+        "scoringGuide": {
+          "E": "All 9 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u7-l8.js": {
+      "reflect1": {
+        "required": [
+          "define-parameters",
+          "null-equality",
+          "alternative-directional",
+          "parameters-not-statistics"
+        ],
+        "scoringGuide": {
+          "E": "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "one-sided-definition",
+          "yawning-direction",
+          "two-sided-definition",
+          "textbook-example",
+          "reverse-order"
+        ],
+        "scoringGuide": {
+          "E": "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "define-mu-c",
+          "null-correct",
+          "alternative-correct",
+          "two-sided-reason",
+          "parameters-not-samples",
+          "define-mu-p"
+        ],
+        "scoringGuide": {
+          "E": "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u7-l9.js": {
+      "reflect1": {
+        "required": [
+          "correct-hypotheses",
+          "large-sample-condition",
+          "test-statistic-value",
+          "p-value",
+          "decision-conclusion",
+          "random-condition",
+          "independence-condition",
+          "test-statistic-setup"
+        ],
+        "scoringGuide": {
+          "E": "All 8 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "p-value-meaning",
+          "compare-to-alpha",
+          "not-proof-equal",
+          "contextual-conclusion",
+          "two-sided-reason",
+          "negative-sign"
+        ],
+        "scoringGuide": {
+          "E": "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "alternative-hypothesis",
+          "conditions",
+          "test-statistic",
+          "p-value",
+          "context-conclusion",
+          "null-hypothesis",
+          "not-proof-equal"
+        ],
+        "scoringGuide": {
+          "E": "All 7 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      }
+    }
+  }
+}

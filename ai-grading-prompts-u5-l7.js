@@ -59,9 +59,9 @@ window.RUBRICS_U5L7 = {
             { id: "both-unbiased", description: "Notes that both statistics are unbiased estimators of their respective parameters", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly identifies similarities (means equal parameter, SDs decrease with n) and differences (normality conditions) between x-bar and p-hat sampling distributions, with at least some reasoning for why conditions differ",
-            P: "Response identifies some similarities or differences but misses key comparisons, or confuses which conditions go with which statistic",
-            I: "Response shows fundamental confusion between x-bar and p-hat distributions, or provides no meaningful comparison"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Applying Large Counts condition to sample means instead of CLT/normal population",
@@ -82,9 +82,9 @@ window.RUBRICS_U5L7 = {
             { id: "inference-connection", description: "Connects to inference: the fact that averages are less variable is what makes them useful for making conclusions about populations", required: false }
         ],
         scoringGuide: {
-            E: "Response explains why averages are less variable (cancellation of extremes), connects to the SD formula, and correctly predicts that larger n makes 4.5 even more unusual with reasoning",
-            P: "Response explains averaging effect OR connects to SD formula, but not both; or correctly predicts n=50 effect without sufficient reasoning",
-            I: "Response does not explain why averages are less variable, or incorrectly predicts the effect of increasing n"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Thinking larger samples are MORE variable (confusing variability within a sample with variability of sample means)",
@@ -98,7 +98,7 @@ window.RUBRICS_U5L7 = {
     exitTicket: {
         questionText: "The heights of adult women in a country are normally distributed with a mean of 64 inches and a standard deviation of 3 inches. A researcher takes a random sample of n = 36 women. (a) Find the mean and SD of the sampling distribution of x-bar and interpret both in context. (b) Explain why the sampling distribution is approximately normal (which condition applies?). (c) What is the probability that the sample mean height is 65 inches or more? Calculate the z-score, find the probability, and state whether this result is unusual.",
         expectedElements: [
-            { id: "mean-calculation", description: "Calculates mean = mu = 64 inches", required: true },
+            { id: "mean-calculation", description: "Calculates mean = mu = 64 inches", required: false },
             { id: "mean-interpretation", description: "Interprets: for all random samples of 36 women, the sample mean heights will have a mean of 64 inches", required: true },
             { id: "sd-calculation", description: "Calculates SD = 3/sqrt(36) = 3/6 = 0.5 inches", required: true },
             { id: "sd-interpretation", description: "Interprets: the sample mean heights will typically vary by about 0.5 inches from the population mean of 64 inches", required: true },
@@ -108,9 +108,9 @@ window.RUBRICS_U5L7 = {
             { id: "unusual-conclusion", description: "Concludes this is unusual — only about 2.28% of samples would produce a mean of 65+ inches", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly calculates mean (64) and SD (0.5) with context interpretations using units (inches), justifies normality, calculates z-score (2.00), finds probability (≈0.0228), and interprets whether it's unusual",
-            P: "Response gets most calculations correct but misses interpretations, or has minor errors; or justifies normality but picks wrong condition; or doesn't interpret the probability",
-            I: "Response has major calculation errors, misunderstands what is being calculated, or fails to attempt the probability calculation"
+            E: "All 7 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using sigma = 3 instead of sigma_x-bar = 0.5 when calculating the z-score",
@@ -168,8 +168,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

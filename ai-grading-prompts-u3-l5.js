@@ -63,9 +63,9 @@ window.RUBRICS_U3L5 = {
             { id: 'motivation-example', description: 'May note that more motivated students may both take notes more often and earn higher grades', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the explanatory and response variables, names a reasonable confounding variable, and explains why the observational study cannot show causation.',
-            P: 'Response shows partial understanding of confounding or experimental components but misses one major idea, such as the correct variables, the role of the confounder, or the point about causation.',
-            I: 'Response does not correctly explain why the note-taking example cannot establish cause and effect.'
+            E: 'Says the study is observational so it cannot show cause; explanatory = whether a student takes notes; response = grades; names a plausible confounding variable and explains that it could affect both note-taking and grades.',
+            P: 'Four of the five are correct; commonly a confounder is named without explaining it affects both variables.',
+            I: 'Two or more of the five are missing or wrong, or note-taking is said to cause higher grades.'
         },
         commonMistakes: [
             'Claiming that higher grades for note-takers prove note-taking causes higher grades',
@@ -87,9 +87,9 @@ window.RUBRICS_U3L5 = {
             { id: 'example', description: 'May use an example such as cancer severity or matched pairs to illustrate blocking', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly distinguishes a completely randomized design from a randomized block design and accurately explains what blocking does and where random assignment occurs.',
-            P: 'Response captures part of the distinction but misses one major idea, such as the purpose of blocking or the fact that randomization still happens within blocks.',
-            I: 'Response does not correctly distinguish a completely randomized design from a randomized block design.'
+            E: 'Completely randomized: treatments assigned at random to all units. Block design: similar units grouped by a blocking variable first, treatments assigned at random within each block, so the blocking variable\'s variability is separated from the treatment effect.',
+            P: 'Three of the four are correct; one is missing (commonly: blocks described without saying treatments are still randomized inside them, or without saying why blocking helps).',
+            I: 'Blocks described as random groups, or the two designs are not distinguished.'
         },
         commonMistakes: [
             'Saying that blocks are formed randomly instead of by a relevant variable',
@@ -103,20 +103,20 @@ window.RUBRICS_U3L5 = {
     exitTicket: {
         questionText: 'A dermatologist wants to test whether a new anti-itch cream works better than a placebo cream for patients with eczema. Patients are first separated into two groups based on severity: mild eczema and severe eczema. Within each severity group, patients are randomly assigned to receive either the new cream or an identical-looking placebo cream. Neither the patients nor the nurses who rate the symptoms know which cream each patient receives. Identify the experimental units, identify the explanatory variable, the treatments, and the response variable, explain how blocking and random assignment are used, and identify the control group and why the study is double-blind.',
         expectedElements: [
-            { id: 'units', description: 'Identifies the experimental units as the patients with eczema', required: true },
-            { id: 'factor', description: 'Identifies the explanatory variable or factor as the type of cream received', required: true },
+            { id: 'units', description: 'Identifies the experimental units as the patients with eczema', required: false },
+            { id: 'factor', description: 'Identifies the explanatory variable or factor as the type of cream received', required: false },
             { id: 'treatments', description: 'Identifies the treatments as the new anti-itch cream and the placebo cream', required: true },
             { id: 'response', description: 'Identifies the response variable as the measured eczema symptoms, itching, or symptom improvement after treatment', required: true },
-            { id: 'blocking', description: 'Explains that patients are blocked by severity, such as mild versus severe eczema', required: true },
+            { id: 'blocking', description: 'Explains that patients are blocked by severity, such as mild versus severe eczema', required: false },
             { id: 'within-block-randomization', description: 'Explains that patients are randomly assigned to treatments within each severity block', required: true },
             { id: 'control-group', description: 'Identifies the placebo group as the control group', required: true },
             { id: 'double-blind', description: 'Explains that neither the patients nor the nurses who interact with them know which treatment each patient receives', required: true },
             { id: 'placebo-purpose', description: 'May note that the placebo helps researchers judge whether any effect is due to the treatment rather than the placebo effect', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the experiment components, explains the blocking and within-block random assignment, identifies the placebo control group, and explains why the design is double-blind.',
-            P: 'Response gets most of the design right but misses one major idea, such as the response variable, the role of blocking, the control group, or the explanation of double-blinding.',
-            I: 'Response has major errors about the experiment components or the design methods used in the scenario.'
+            E: 'Treatments = new cream vs placebo; response = symptom / itch rating; patients are randomly assigned to a cream within each severity block; the placebo group is the control group; double-blind because neither patients nor the nurses rating symptoms know who got which cream. Naming the units and the factor strengthens the answer (the treatments imply the factor).',
+            P: 'Four of the five are correct; one is missing or wrong.',
+            I: 'Two or more of the five are missing or wrong, or severity is called the response variable.'
         },
         commonMistakes: [
             'Confusing the blocks with the treatments',
@@ -171,8 +171,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

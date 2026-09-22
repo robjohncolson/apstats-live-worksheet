@@ -74,15 +74,15 @@ window.RUBRICS_U5L5 = {
         questionText: "In the driver's license example, the standard deviation of the sampling distribution is 0.065. Explain what this value tells us in context. Why is understanding this variability important for statistics? (Hint: Josh Tabor says this is 'one of the most important reasons to study sampling distributions.')",
         expectedElements: [
             { id: "sd-in-context", description: "Interprets sigma_p-hat = 0.065 in context: sample proportions of students with driver's licenses typically vary by about 0.065 from the population proportion of 0.30", required: true },
-            { id: "references-all-samples", description: "References 'all random samples of size 50 from this population' — not just one sample", required: true },
-            { id: "uses-typically", description: "Uses language like 'typically' or 'on average' when describing the variability", required: true },
+            { id: "references-all-samples", description: "References 'all random samples of size 50 from this population' — not just one sample", required: false },
+            { id: "uses-typically", description: "Uses language like 'typically' or 'on average' when describing the variability", required: false },
             { id: "importance-connection", description: "Explains that knowing typical sample-to-sample variability helps judge how close a statistic may be to the truth and supports later confidence intervals or significance tests.", required: true },
             { id: "not-single-sample", description: "Distinguishes that the standard deviation describes sample-to-sample variation, not variation within a single sample", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets σ_p̂ = 0.065 in the driver's-license context, refers to random samples of size 50, uses typical-variation language, and explains why knowing this variability is useful for statistical inference.",
-            P: "Response gives a partially correct interpretation — mentions variability but is missing context, doesn't reference all possible samples, or doesn't use 'typically/on average'",
-            I: "Response shows fundamental misunderstanding — confuses standard deviation of sampling distribution with population SD, or provides a vague or incorrect interpretation"
+            E: "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Interpreting 0.065 as the standard deviation of the population rather than the sampling distribution",
@@ -97,7 +97,7 @@ window.RUBRICS_U5L5 = {
     reflect2: {
         questionText: "A polling company surveys n = 100 people from a large city where 40% support a new policy (p = 0.40). (a) Calculate the mean and standard deviation of the sampling distribution of p-hat. (b) Verify that the Large Counts condition is met. (c) Would it be surprising to get a sample proportion of 0.52 or higher? Calculate the z-score and explain.",
         expectedElements: [
-            { id: "correct-mean", description: "Correctly calculates mu_p-hat = 0.40", required: true },
+            { id: "correct-mean", description: "Correctly calculates mu_p-hat = 0.40", required: false },
             { id: "correct-sd", description: "Correctly calculates sigma_p-hat = sqrt(0.40 × 0.60 / 100) = 0.049 (or approximately 0.049)", required: true },
             { id: "large-counts-check", description: "Checks Large Counts: np = 100(0.40) = 40 >= 10 and n(1-p) = 100(0.60) = 60 >= 10", required: true },
             { id: "z-score-calculation", description: "Calculates z = (0.52 - 0.40) / 0.049 = 2.45 (approximately)", required: true },
@@ -105,9 +105,9 @@ window.RUBRICS_U5L5 = {
             { id: "probability-value", description: "Calculates or estimates P(p-hat >= 0.52) ≈ 0.007 (very small probability)", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly calculates mean (0.40), SD (≈0.049), verifies Large Counts (40 ≥ 10 and 60 ≥ 10), calculates z ≈ 2.45, and correctly interprets the result as unusual/surprising",
-            P: "Response gets most calculations correct but has a minor computational error, or calculations are correct but interpretation is incomplete or vague",
-            I: "Response has major calculation errors (wrong formula, wrong values), fails to verify conditions, or fundamentally misinterprets the z-score"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using the wrong formula (e.g., sigma = p(1-p)/n without the square root)",
@@ -122,7 +122,7 @@ window.RUBRICS_U5L5 = {
     exitTicket: {
         questionText: "A factory produces light bulbs and historically 5% are defective (p = 0.05). A quality inspector takes a random sample of n = 200 bulbs. (a) Describe the sampling distribution of p-hat (shape, center, spread). Be sure to check the relevant conditions. (b) The inspector finds that 16 out of 200 bulbs are defective (p-hat = 0.08). Should the inspector be concerned that the defect rate has increased? Use a probability calculation to support your answer.",
         expectedElements: [
-            { id: "center", description: "States mu_p-hat = 0.05", required: true },
+            { id: "center", description: "States mu_p-hat = 0.05", required: false },
             { id: "spread", description: "Calculates sigma_p-hat = sqrt(0.05 × 0.95 / 200) ≈ 0.0154", required: true },
             { id: "shape-conditions", description: "Checks Large Counts: np = 200(0.05) = 10 >= 10 and n(1-p) = 200(0.95) = 190 >= 10, so approximately normal", required: true },
             { id: "z-score", description: "Calculates z = (0.08 - 0.05) / 0.0154 ≈ 1.95", required: true },
@@ -130,9 +130,9 @@ window.RUBRICS_U5L5 = {
             { id: "ten-percent-condition", description: "Notes that the 10% condition cannot be verified from the information given; it holds if the relevant population contains at least 2,000 bulbs (or it is reasonable to assume production is that large)", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly describes the sampling distribution (shape with condition check, center = 0.05, spread ≈ 0.0154), calculates z ≈ 1.95, finds the probability, and provides a well-reasoned conclusion about whether the inspector should be concerned",
-            P: "Response gets most of the description correct and attempts a probability calculation, but has a minor error or incomplete interpretation",
-            I: "Response has major errors in describing the sampling distribution, uses wrong formulas, fails to check conditions, or draws conclusions not supported by calculations"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Forgetting to check that np = 10 is EXACTLY at the boundary — it just barely meets the condition",
@@ -189,8 +189,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

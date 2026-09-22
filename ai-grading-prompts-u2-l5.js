@@ -44,15 +44,15 @@ window.RUBRICS_U2L5 = {
         questionText: 'How do the sign and magnitude of r help you interpret a linear relationship?',
         expectedElements: [
             { id: 'sign-direction', description: 'Explains that the sign of r tells the direction of the relationship', required: true },
-            { id: 'positive-negative', description: 'States that positive means y tends to increase as x increases, while negative means y tends to decrease as x increases', required: true },
+            { id: 'positive-negative', description: 'States that positive means y tends to increase as x increases, while negative means y tends to decrease as x increases', required: false },
             { id: 'magnitude-strength', description: 'Explains that the magnitude or distance from 0 tells the strength of the linear relationship', required: true },
-            { id: 'close-values', description: 'States that values closer to 0 are weaker and values closer to 1 or -1 are stronger', required: true },
+            { id: 'close-values', description: 'States that values closer to 0 are weaker and values closer to 1 or -1 are stronger', required: false },
             { id: 'linear-focus', description: 'Recognizes that r is describing a linear relationship', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that the sign of r gives direction, the magnitude gives strength, and values closer to 0 are weaker while values closer to 1 or -1 are stronger.',
-            P: 'Response correctly explains part of what sign or magnitude means, but it is incomplete or misses one of the key interpretation pieces.',
-            I: 'Response does not correctly explain how sign and magnitude help interpret correlation.'
+            E: 'The sign of r gives the direction (positive: y tends to rise with x; negative: falls) and the distance from 0 gives the strength of the linear relationship (near 1 or -1 strong, near 0 weak). Either half can be stated in either wording.',
+            P: 'Explains sign or magnitude correctly but not both.',
+            I: 'Neither sign nor magnitude is interpreted correctly.'
         },
         commonMistakes: [
             'Confusing sign with strength',
@@ -68,14 +68,14 @@ window.RUBRICS_U2L5 = {
         expectedElements: [
             { id: 'no-causation', description: 'States that correlation does not imply causation', required: true },
             { id: 'no-form', description: 'Explains that r alone does not tell the form of the relationship', required: true },
-            { id: 'no-unusual-features', description: 'Explains that r alone does not show unusual features such as outliers or clusters', required: true },
-            { id: 'need-graph-context', description: 'States that you need to look at the scatterplot or consider context to make those judgments', required: true },
+            { id: 'no-unusual-features', description: 'Explains that r alone does not show unusual features such as outliers or clusters', required: false },
+            { id: 'need-graph-context', description: 'States that you need to look at the scatterplot or consider context to make those judgments', required: false },
             { id: 'attendance-example', description: 'May mention that attendance rose while test scores stayed flat despite a strong positive correlation', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains that correlation does not prove cause and effect and that r alone cannot describe form or unusual features without the scatterplot and context.',
-            P: 'Response gets part of the limitation right, but it omits a key idea about causation, form, unusual features, or the need to inspect the graph.',
-            I: 'Response does not correctly explain the limits of correlation.'
+            E: 'States that correlation does not imply causation, and that r alone does not show the form of the relationship (or unusual features), so the scatterplot is still needed.',
+            P: 'Gives the no-causation idea but not what r fails to show, or says what r cannot show while treating the relationship as causal.',
+            I: 'Neither idea is present: r is treated as both proof of causation and a complete description.'
         },
         commonMistakes: [
             'Using strong correlation as proof of cause and effect',
@@ -93,13 +93,13 @@ window.RUBRICS_U2L5 = {
             { id: 'strong-strength', description: 'Interprets the strength as strong because 0.89 is close to 1', required: true },
             { id: 'r-alone-limit', description: 'Explains that r alone does not tell form or unusual features and that you need the scatterplot for that', required: true },
             { id: 'no-causation', description: 'Explains that the correlation does not prove that tutoring caused the higher quiz scores', required: true },
-            { id: 'technology-use', description: 'States that technology is usually used because the formula is cumbersome or because it quickly computes r accurately', required: true },
+            { id: 'technology-use', description: 'States that technology is usually used because the formula is cumbersome or because it quickly computes r accurately', required: false },
             { id: 'unit-free-range', description: 'May mention that r is unit-free and between -1 and 1', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly interprets r = 0.89 as a strong positive linear relationship in context, explains a key limit of r, rejects a causal claim, and gives a valid reason technology is used to calculate r.',
-            P: 'Response gets most of the interpretation right but misses or weakly explains one of the required ideas.',
-            I: 'Response has major errors about interpreting r, its limits, causation, or the role of technology.'
+            E: 'Interprets r = 0.89 as a strong positive linear relationship in context (more tutoring tends to go with higher quiz scores), names one thing r alone does not show (form or unusual features), and explains why it does not prove tutoring causes higher scores. The technology reason strengthens the answer.',
+            P: 'Three of the four are correct; one is missing or wrong.',
+            I: 'Two or more of the four are missing or wrong.'
         },
         commonMistakes: [
             'Saying 0.89 proves causation',
@@ -153,8 +153,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

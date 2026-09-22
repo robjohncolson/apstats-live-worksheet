@@ -1,0 +1,209 @@
+{
+  "note": "RUBRIC_SLIM_SPEC batch: old U3 L1-5 (collecting data; these map into NEW Unit 1). Calibrated on Unit 1 PC FRQ 3: study type, why generalization is / is not appropriate, population, variables — one point each, all needed. Same contract as the u1 decisions files; applied with scripts/rubric-slim-apply.mjs. Revised after the Codex review (DO NOT SHIP -> fixed): population/sample identification restored as scored ideas (Unit 1 PC FRQ 1 gives a point each); bias mechanisms required over definitions (L4 reflect2); 'well-designed' restored for causation; two commonMistakes rewrites reverted; five-part questions use the enumerated cap of 5.",
+  "files": {
+    "ai-grading-prompts-u3-l1.js": {
+      "reflect1": {
+        "required": [
+          "missing-planes",
+          "vulnerable-areas"
+        ],
+        "scoringGuide": {
+          "E": "Explains that the shot-down planes were never in the data, so the bullet holes seen are from survivors, and that the places without holes are the vulnerable spots that need armor.",
+          "P": "Says the data came only from returning planes but does not draw the conclusion about where the vulnerable areas are.",
+          "I": "Treats the returning planes as all the planes hit, or gives no reasoning about the missing planes."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "who-missed",
+          "chance-method",
+          "representative"
+        ],
+        "scoringGuide": {
+          "E": "Asks who was left out (or how they might differ), whether the sample was chosen by chance, and whether it represents the population. Asking who was included is implied.",
+          "P": "Two of those three questions are there; one is missing.",
+          "I": "Asks only about sample size, or asks none of the three questions about who is missing, chance, or representativeness."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "population",
+          "sample",
+          "difference",
+          "better-method"
+        ],
+        "scoringGuide": {
+          "E": "Population = all students at the school; sample = the students who answered on Instagram; explains HOW respondents likely differ from non-respondents (more engaged, stronger opinions, follow student council) so the 82% may not represent the school; and proposes a chance-based way to pick students from the whole school.",
+          "P": "Three of the four are correct; one is missing or wrong (commonly 'respondents may differ' with no description of how).",
+          "I": "Two or more of the four are missing or wrong, or the survey is treated as random."
+        }
+      }
+    },
+    "ai-grading-prompts-u3-l2.js": {
+      "reflect1": {
+        "required": [
+          "shot-down-excluded",
+          "not-representative"
+        ],
+        "scoringGuide": {
+          "E": "Explains that the shot-down planes were left out, so the sample of returning planes is not representative of all hit planes (the missing ones may have been hit elsewhere), which is why generalizing is risky.",
+          "P": "Notes the shot-down planes are missing but does not connect that to representativeness / generalization, or the reverse.",
+          "I": "Treats the returning planes as if they were all the hit planes, or gives no sample reasoning."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "observational-no-cause",
+          "experiment-treatment",
+          "experiment-causal"
+        ],
+        "scoringGuide": {
+          "E": "Explains that experiments impose treatments, so a well-designed experiment (random assignment, control of other variables) can support a cause-and-effect conclusion, while observational studies (no treatment imposed) cannot establish causation.",
+          "P": "Two of those three ideas are there; one is missing (commonly: says observational studies cannot show cause without saying why a well-designed experiment can).",
+          "I": "Claims observational studies can prove cause, or claims any experiment proves cause simply because it imposes a treatment, or does not distinguish the two designs."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "population",
+          "sample",
+          "generalize-yes",
+          "no-causation"
+        ],
+        "scoringGuide": {
+          "E": "Population = all students at that high school; sample = the 120 randomly chosen students; generalizing to the school IS appropriate because the sample was random from it; no causal conclusion because the study is observational (records only, no treatment imposed).",
+          "P": "Three of the four are correct; one is missing or wrong.",
+          "I": "Two or more of the four are missing or wrong, or the principal is said to be able to conclude that sports cause higher GPAs."
+        }
+      }
+    },
+    "ai-grading-prompts-u3-l3.js": {
+      "reflect1": {
+        "required": [
+          "cluster-select-groups",
+          "cluster-all-members",
+          "stratified-sample-within"
+        ],
+        "scoringGuide": {
+          "E": "Cluster: whole groups are randomly selected and everyone in the chosen groups is included. Stratified: a random sample is taken within every stratum. Combining the strata samples is implied.",
+          "P": "Two of the three are correct; one is missing or the two methods are partly swapped.",
+          "I": "Treats the two methods as the same, or swaps them."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "segregation-pattern",
+          "cluster-risk",
+          "better-estimate"
+        ],
+        "scoringGuide": {
+          "E": "Explains that incomes are alike within a region and differ across regions, so a cluster sample could land on only rich or only poor regions, while stratifying guarantees every region is represented and so gives a more reliable estimate. Mentioning the extra collection effort strengthens the answer.",
+          "P": "Two of the three are there; one is missing (commonly: no explanation of why clusters are risky here).",
+          "I": "Says cluster is better because it is easier, or gives no reason tied to how incomes vary."
+        },
+        "mistakes": {
+          "Not mentioning the practical difficulty of carrying out the stratified sample": "Saying stratified is better without connecting it to how incomes vary across regions"
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "population",
+          "stratified",
+          "appropriate-representation",
+          "not-cluster",
+          "disadvantage"
+        ],
+        "scoringGuide": {
+          "E": "Population = all students at the school; names it a stratified random sample (students chosen at random within each grade, then combined); explains why that is appropriate (every grade represented; homework may differ by grade); explains it is not cluster sampling because not every student in a chosen grade is surveyed; and gives one practical disadvantage.",
+          "P": "Four of the five are correct; one is missing or wrong.",
+          "I": "Two or more of the five are missing or wrong, or the method is called a cluster sample."
+        }
+      }
+    },
+    "ai-grading-prompts-u3-l4.js": {
+      "reflect1": {
+        "required": [
+          "population",
+          "sample",
+          "nonresponse",
+          "different-responders",
+          "overestimate"
+        ],
+        "scoringGuide": {
+          "E": "Population = all students at the university; sample = the students who actually responded; identifies nonresponse bias; explains that students without internships are less likely to respond; so the reported percentage is likely too high.",
+          "P": "Four of the five are correct; one is missing or wrong (commonly: no direction, or the sample given as everyone selected).",
+          "I": "Two or more of the five are missing or wrong, or the result is called unbiased because the selection was random."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "undercoverage-difference",
+          "volunteer-difference",
+          "direction"
+        ],
+        "scoringGuide": {
+          "E": "Explains the mechanism of each: undercoverage leaves out a subgroup whose answers differ from the rest; volunteer response over-represents people with strong interest or opinions; and either makes the estimate too high or too low because the sample is unrepresentative. A bare definition counts only when it carries that mechanism.",
+          "P": "Explains the mechanism for one bias but not the other, or explains both without the distortion / direction idea.",
+          "I": "Treats the two biases as the same, defines volunteer response as low response rate, or gives definitions with no mechanism for either."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "population",
+          "sample",
+          "overestimate",
+          "wording-bias",
+          "improvement"
+        ],
+        "scoringGuide": {
+          "E": "Population = all city residents; sample = the residents who choose to respond; explains that this voluntary response over-represents supporters (they are more likely to answer), so support is overestimated; identifies the leading wording ('important', 'safer'); proposes a fix that addresses sampling (random sample) or wording (neutral).",
+          "P": "Four of the five are correct; one is missing or wrong.",
+          "I": "Two or more of the five are missing or wrong, or the survey is called random."
+        }
+      }
+    },
+    "ai-grading-prompts-u3-l5.js": {
+      "reflect1": {
+        "required": [
+          "observational",
+          "explanatory",
+          "response",
+          "confounding-variable",
+          "confounding-explanation"
+        ],
+        "scoringGuide": {
+          "E": "Says the study is observational so it cannot show cause; explanatory = whether a student takes notes; response = grades; names a plausible confounding variable and explains that it could affect both note-taking and grades.",
+          "P": "Four of the five are correct; commonly a confounder is named without explaining it affects both variables.",
+          "I": "Two or more of the five are missing or wrong, or note-taking is said to cause higher grades."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "crd-definition",
+          "block-definition",
+          "within-block-randomization",
+          "blocking-purpose"
+        ],
+        "scoringGuide": {
+          "E": "Completely randomized: treatments assigned at random to all units. Block design: similar units grouped by a blocking variable first, treatments assigned at random within each block, so the blocking variable's variability is separated from the treatment effect.",
+          "P": "Three of the four are correct; one is missing (commonly: blocks described without saying treatments are still randomized inside them, or without saying why blocking helps).",
+          "I": "Blocks described as random groups, or the two designs are not distinguished."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "treatments",
+          "response",
+          "within-block-randomization",
+          "control-group",
+          "double-blind"
+        ],
+        "scoringGuide": {
+          "E": "Treatments = new cream vs placebo; response = symptom / itch rating; patients are randomly assigned to a cream within each severity block; the placebo group is the control group; double-blind because neither patients nor the nurses rating symptoms know who got which cream. Naming the units and the factor strengthens the answer (the treatments imply the factor).",
+          "P": "Four of the five are correct; one is missing or wrong.",
+          "I": "Two or more of the five are missing or wrong, or severity is called the response variable."
+        }
+      }
+    }
+  }
+}

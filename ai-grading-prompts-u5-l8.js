@@ -60,9 +60,9 @@ window.RUBRICS_U5L8 = {
             { id: "sd-decrease-with-n", description: "Notes that both SDs decrease as sample sizes increase", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly identifies the similarity in the mean formulas (each is a difference in population parameters), the additive variance structure of the SD formulas, and correctly contrasts the normality conditions.",
-            P: "Response identifies some similarities or differences but misses key comparisons, or confuses which normality conditions apply to which statistic",
-            I: "Response shows fundamental confusion between the two distributions, or provides no meaningful comparison"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Applying Large Counts condition to difference in sample means instead of CLT/normal populations",
@@ -79,13 +79,13 @@ window.RUBRICS_U5L8 = {
             { id: "sd-decreases", description: "Explains that increasing both sample sizes from 6 to 60 would make the SD of the sampling distribution smaller (denominators in the SD formula get larger)", required: true },
             { id: "z-increases", description: "Explains that a smaller SD means the same difference of 0.2 (numerator of z-score stays 1.2 - 1 = 0.2) is divided by a smaller number, making the z-score larger", required: true },
             { id: "probability-decreases", description: "Correctly predicts that a larger z-score means the probability P(x-bar_1 - x-bar_2 > 1.2) would decrease (smaller tail area)", required: true },
-            { id: "unusual-prediction", description: "Concludes that with both sample sizes increased to 60, a difference of 1.2 ounces would become unusual because its tail probability becomes small", required: true },
+            { id: "unusual-prediction", description: "Concludes that with both sample sizes increased to 60, a difference of 1.2 ounces would become unusual because its tail probability becomes small", required: false },
             { id: "formula-reasoning", description: "References the SD formula: sqrt(sigma_1^2/n_1 + sigma_2^2/n_2) — dividing by larger n values reduces each term", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly traces the chain: larger n → smaller SD → larger z-score → smaller probability, with reasoning connected to the SD formula",
-            P: "Response correctly identifies that SD decreases but does not clearly connect to the z-score or probability, OR correctly predicts the outcome without explaining the mechanism",
-            I: "Response incorrectly predicts the direction of change, or does not connect sample size to the SD formula"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Thinking larger samples increase variability (confusing within-sample spread with sampling distribution spread)",
@@ -99,7 +99,7 @@ window.RUBRICS_U5L8 = {
     exitTicket: {
         questionText: "A species of oak tree produces acorns with lengths approximately normally distributed with mu_1 = 50 mm and sigma_1 = 4 mm. A different species has mu_2 = 45 mm and sigma_2 = 3 mm (also approximately normal). A botanist selects 16 acorns from each species. (a) Find the mean and SD of the sampling distribution of x-bar_1 - x-bar_2 and interpret both in context. (b) Explain why the sampling distribution is approximately normal. (c) P(x-bar_1 - x-bar_2 > 7.5)? Calculate z-score, probability, and state if unusual.",
         expectedElements: [
-            { id: "mean-calculation", description: "Calculates mean = 50 - 45 = 5 mm", required: true },
+            { id: "mean-calculation", description: "Calculates mean = 50 - 45 = 5 mm", required: false },
             { id: "mean-interpretation", description: "Interprets: for all random samples of 16 acorns from each species, the differences in sample mean lengths will have a mean of 5 mm", required: true },
             { id: "sd-calculation", description: "Calculates SD = sqrt(16/16 + 9/16) = sqrt(1 + 0.5625) = sqrt(1.5625) = 1.25 mm", required: true },
             { id: "sd-interpretation", description: "Interprets: the differences in sample mean lengths will typically vary by about 1.25 mm from the true mean difference of 5 mm", required: true },
@@ -109,9 +109,9 @@ window.RUBRICS_U5L8 = {
             { id: "unusual-conclusion", description: "Concludes this is unusual — only about 2.28% of samples would produce a difference of 7.5+ mm", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly calculates mean (5 mm), SD (1.25 mm), interprets both with context and units, justifies normality, calculates z = 2.00, finds probability ≈ 0.0228, and concludes it is unusual",
-            P: "Response gets most calculations correct but misses interpretations in context, or has minor errors in the SD calculation, or does not interpret the probability",
-            I: "Response has major calculation errors (e.g., uses wrong formula, wrong values), or does not attempt the probability calculation"
+            E: "All 7 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using sigma values instead of sigma^2 in the SD formula (forgetting to square)",
@@ -169,8 +169,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

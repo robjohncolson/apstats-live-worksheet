@@ -51,13 +51,13 @@ window.RUBRICS_U2L4 = {
         expectedElements: [
             { id: 'explanatory-role', description: 'Explains that the explanatory variable is used to explain or predict the response variable', required: true },
             { id: 'x-axis', description: 'States that the explanatory variable goes on the x-axis', required: true },
-            { id: 'y-axis', description: 'States that the response variable goes on the y-axis', required: true },
+            { id: 'y-axis', description: 'States that the response variable goes on the y-axis', required: false },
             { id: 'paired-values', description: 'Explains that each point represents one observation with both an x-value and a y-value', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that the explanatory variable predicts or explains the response and correctly places the explanatory variable on the x-axis and the response variable on the y-axis.',
-            P: 'Response identifies some of the axis roles or the explanatory-response relationship, but it is incomplete or only partly correct.',
-            I: 'Response does not correctly explain how explanatory and response variables determine the axes of a scatterplot.'
+            E: 'Explains that the explanatory variable is the one used to predict or explain the response, and that it goes on the x-axis (so the response goes on y).',
+            P: 'Gives the explain/predict role but places the variables on the wrong axes, or gives correct axis placement with no explain/predict idea.',
+            I: 'Neither the roles nor the axis placement is correct.'
         },
         commonMistakes: [
             'Putting the response variable on the x-axis',
@@ -71,15 +71,15 @@ window.RUBRICS_U2L4 = {
     reflect2: {
         questionText: 'Why is it not enough to describe a scatterplot only by saying it is positive? What else belongs in a complete description?',
         expectedElements: [
-            { id: 'direction-only', description: 'Explains that positive only describes the direction of the association', required: true },
+            { id: 'direction-only', description: 'Explains that positive only describes the direction of the association', required: false },
             { id: 'form', description: 'States that a complete description should also include the form, such as linear or nonlinear', required: true },
             { id: 'strength', description: 'States that a complete description should also include the strength of the association', required: true },
             { id: 'features-context', description: 'States that a complete description should mention unusual features and the context of the variables', required: true }
         ],
         scoringGuide: {
-            E: 'Response explains that positive gives only direction and that a complete description should also include form, strength, unusual features, and context.',
-            P: 'Response mentions that more than direction is needed, but it omits one or more key parts of a complete scatterplot description.',
-            I: 'Response does not correctly explain what belongs in a complete description of a scatterplot.'
+            E: 'Explains that \'positive\' is only the direction, and a complete description also gives form (linear or not), strength, and unusual features, in the context of the variables.',
+            P: 'Two of form, strength, and features/context are named; one is missing.',
+            I: 'Only direction is discussed, or the parts of a description are not named.'
         },
         commonMistakes: [
             'Treating positive as a complete description by itself',
@@ -93,19 +93,19 @@ window.RUBRICS_U2L4 = {
     exitTicket: {
         questionText: 'A teacher recorded hours studied and quiz score for six students. Identify the explanatory and response variables and explain why, explain why a scatterplot is appropriate, describe the likely direction, form, and strength in context, and list two features a correctly constructed scatterplot should include.',
         expectedElements: [
-            { id: 'identify-variables', description: 'Identifies the variables as hours studied and quiz score and recognizes that both are quantitative', required: true },
+            { id: 'identify-variables', description: 'Identifies the variables as hours studied and quiz score and recognizes that both are quantitative', required: false },
             { id: 'explanatory-response', description: 'States that hours studied is the explanatory variable and quiz score is the response variable', required: true },
             { id: 'scatterplot-appropriate', description: 'Explains that a scatterplot is appropriate because each student has two quantitative values', required: true },
             { id: 'positive-direction', description: 'Describes the likely direction as positive, meaning higher study time tends to go with higher quiz scores', required: true },
             { id: 'linear-form', description: 'Describes the likely form as approximately linear', required: true },
             { id: 'strong-strength', description: 'Describes the likely strength as strong or notes that the points would be fairly close to a line', required: true },
-            { id: 'construction-features', description: 'Lists at least two correct scatterplot features, such as a title, labeled axes, and scale with tick marks', required: true },
+            { id: 'construction-features', description: 'Lists at least two correct scatterplot features, such as a title, labeled axes, and scale with tick marks', required: false },
             { id: 'no-obvious-unusual-features', description: 'May mention that there is no obvious unusual feature in this small data set', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the variables, assigns explanatory and response roles, explains why a scatterplot is appropriate, describes a positive, approximately linear, strong relationship in context, and lists correct construction features.',
-            P: 'Response gets most of the main ideas right but misses or weakly explains one or two required parts.',
-            I: 'Response has major errors about the variables, the role of a scatterplot, or the likely description of the relationship, or it omits several required elements.'
+            E: 'Hours studied is explanatory and quiz score is the response (with the reason); a scatterplot fits because each student supplies a pair of quantitative values; and the likely relationship is described as positive, roughly linear, and fairly strong, in context. The construction features strengthen the answer.',
+            P: 'Four of the five are correct; one is missing or wrong.',
+            I: 'Two or more of the five are missing or wrong, or the variables\' roles are swapped.'
         },
         commonMistakes: [
             'Reversing the explanatory and response variables',
@@ -160,8 +160,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

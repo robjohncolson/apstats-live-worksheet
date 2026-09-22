@@ -1,0 +1,208 @@
+{
+  "note": "RUBRIC_SLIM_SPEC batch: old U2 L4-8 (scatterplots, r, regression, residuals, LSRL; NEW Unit 5). CB regression FRQs score: slope interpreted in context with 'predicted' and 'for each one unit'; r / r-squared interpreted in context; residual = actual - predicted with its sign read as over/under-prediction; extrapolation named with the reason. Applied with scripts/rubric-slim-apply.mjs. Revised after the Codex review: requested statistical ideas restored under the cap-5 rule; P and I made disjoint (I = neither idea / central idea wrong).",
+  "files": {
+    "ai-grading-prompts-u2-l4.js": {
+      "reflect1": {
+        "required": [
+          "explanatory-role",
+          "x-axis"
+        ],
+        "scoringGuide": {
+          "E": "Explains that the explanatory variable is the one used to predict or explain the response, and that it goes on the x-axis (so the response goes on y).",
+          "P": "Gives the explain/predict role but places the variables on the wrong axes, or gives correct axis placement with no explain/predict idea.",
+          "I": "Neither the roles nor the axis placement is correct."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "form",
+          "strength",
+          "features-context"
+        ],
+        "scoringGuide": {
+          "E": "Explains that 'positive' is only the direction, and a complete description also gives form (linear or not), strength, and unusual features, in the context of the variables.",
+          "P": "Two of form, strength, and features/context are named; one is missing.",
+          "I": "Only direction is discussed, or the parts of a description are not named."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "explanatory-response",
+          "scatterplot-appropriate",
+          "positive-direction",
+          "linear-form",
+          "strong-strength"
+        ],
+        "scoringGuide": {
+          "E": "Hours studied is explanatory and quiz score is the response (with the reason); a scatterplot fits because each student supplies a pair of quantitative values; and the likely relationship is described as positive, roughly linear, and fairly strong, in context. The construction features strengthen the answer.",
+          "P": "Four of the five are correct; one is missing or wrong.",
+          "I": "Two or more of the five are missing or wrong, or the variables' roles are swapped."
+        }
+      }
+    },
+    "ai-grading-prompts-u2-l5.js": {
+      "reflect1": {
+        "required": [
+          "sign-direction",
+          "magnitude-strength"
+        ],
+        "scoringGuide": {
+          "E": "The sign of r gives the direction (positive: y tends to rise with x; negative: falls) and the distance from 0 gives the strength of the linear relationship (near 1 or -1 strong, near 0 weak). Either half can be stated in either wording.",
+          "P": "Explains sign or magnitude correctly but not both.",
+          "I": "Neither sign nor magnitude is interpreted correctly."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "no-causation",
+          "no-form"
+        ],
+        "scoringGuide": {
+          "E": "States that correlation does not imply causation, and that r alone does not show the form of the relationship (or unusual features), so the scatterplot is still needed.",
+          "P": "Gives the no-causation idea but not what r fails to show, or says what r cannot show while treating the relationship as causal.",
+          "I": "Neither idea is present: r is treated as both proof of causation and a complete description."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "positive-direction",
+          "strong-strength",
+          "r-alone-limit",
+          "no-causation"
+        ],
+        "scoringGuide": {
+          "E": "Interprets r = 0.89 as a strong positive linear relationship in context (more tutoring tends to go with higher quiz scores), names one thing r alone does not show (form or unusual features), and explains why it does not prove tutoring causes higher scores. The technology reason strengthens the answer.",
+          "P": "Three of the four are correct; one is missing or wrong.",
+          "I": "Two or more of the four are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u2-l6.js": {
+      "reflect1": {
+        "required": [
+          "slope-and-intercept",
+          "predicted-response"
+        ],
+        "scoringGuide": {
+          "E": "Explains that the x-value is multiplied by the slope and added to the intercept to get y-hat, and that y-hat is a predicted value, not the exact observed response.",
+          "P": "Describes the arithmetic without saying the result is only a prediction, or says it is a prediction without describing how the equation produces it.",
+          "I": "Neither idea is present, or y-hat is treated as the actual observed value with no arithmetic."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "define-extrapolation",
+          "trend-may-not-continue"
+        ],
+        "scoringGuide": {
+          "E": "Defines extrapolation as predicting for an x outside the range of observed x-values, and explains it is risky because the pattern may not continue there. Deciding = comparing the x to the observed interval, which the definition carries.",
+          "P": "Names extrapolation (predicting outside the observed x-range) without the reason it is risky, or gives the risk without saying what extrapolation is.",
+          "I": "Neither idea is present."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "slope-context",
+          "intercept-context",
+          "correct-prediction",
+          "prediction-not-exact",
+          "extrapolation-unreliable"
+        ],
+        "scoringGuide": {
+          "E": "Slope: predicted quiz score rises 1.8 points per additional hour of tutoring; intercept: predicted score 61.4 with 0 hours; y-hat = 61.4 + 1.8(8) = 75.8 with the substitution shown; the prediction is not exact because individual students vary around the line; x = 15 is outside 2-10 hours, so it is extrapolation and not reliable.",
+          "P": "Four of the five are correct; one is missing or wrong (commonly a slope with no 'predicted' or no 'per hour').",
+          "I": "Two or more of the five are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u2-l7.js": {
+      "reflect1": {
+        "required": [
+          "actual-minus-predicted",
+          "positive-underestimate"
+        ],
+        "scoringGuide": {
+          "E": "Residual = actual - predicted for one point, and a positive residual means the actual value was above the prediction (model underestimated); negative is the reverse. Stating the positive case with its meaning is enough; the negative case follows.",
+          "P": "Defines the residual without reading its sign, or reads the sign without defining the residual.",
+          "I": "Neither idea is present, or the residual is defined backwards with the sign read wrongly."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "no-clear-pattern",
+          "pattern-warning"
+        ],
+        "scoringGuide": {
+          "E": "A residual plot with random scatter and no pattern supports a linear model; a visible pattern such as curvature means the linear model may not be appropriate. Mentioning scatter around zero strengthens the answer.",
+          "P": "Gives the good sign without the warning sign, or the warning sign without the good sign.",
+          "I": "Neither is present, or the residual plot is not connected to model fit."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "correct-residual",
+          "context-interpretation",
+          "underpredicted",
+          "good-fit-randomness",
+          "bad-fit-pattern"
+        ],
+        "scoringGuide": {
+          "E": "Residual 84 - 51.4 = 32.6, meaning the store had 32.6 more organic items than the model predicted, so the model underpredicted; random scatter around zero with no pattern means a linear model is appropriate; a curved or systematic pattern would make a linear model questionable.",
+          "P": "Four of the five are correct; one is missing or wrong.",
+          "I": "Two or more of the five are missing or wrong, or the residual is computed backwards."
+        }
+      }
+    },
+    "ai-grading-prompts-u2-l8.js": {
+      "reflect1": {
+        "required": [
+          "canceling-problem",
+          "least-squares-definition"
+        ],
+        "scoringGuide": {
+          "E": "Explains that residuals are squared so positive and negative errors cannot cancel, and that the LSRL is the line minimizing the sum of squared residuals. The (x-bar, y-bar) and slope-formula properties strengthen the answer.",
+          "P": "Gives one of the two ideas (why residuals are squared, or what the LSRL minimizes).",
+          "I": "Neither idea is present."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "slope-change",
+          "intercept-definition",
+          "intercept-not-meaningful"
+        ],
+        "scoringGuide": {
+          "E": "Interprets a slope in context as the predicted change in the response for each one-unit increase in the explanatory variable (any suitable context; the attendance example is one), interprets the intercept as the predicted response when the explanatory variable is 0, and explains that the intercept is not meaningful when x = 0 is outside a sensible range or gives an impossible prediction. Bare definitions with no variables named do not earn E.",
+          "P": "Two of the three are correct; one is missing, muddled, or given without context.",
+          "I": "Fewer than two are correct (e.g. slope and intercept both misinterpreted)."
+        }
+      },
+      "reflect3": {
+        "required": [
+          "r-squared-meaning",
+          "output-slope",
+          "output-intercept"
+        ],
+        "scoringGuide": {
+          "E": "r-squared = the proportion of variation in the response explained by the linear relationship with the explanatory variable; in computer output the slope is the coefficient on the explanatory variable and the intercept is the constant. The 90.3% example strengthens the answer.",
+          "P": "Two of the three are correct; one is missing or muddled.",
+          "I": "Fewer than two are correct (e.g. r-squared misread AND the output not read)."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "squared-residuals",
+          "slope-interpretation",
+          "intercept-not-meaningful",
+          "r-squared-context",
+          "mean-point"
+        ],
+        "scoringGuide": {
+          "E": "Residuals are squared so errors do not cancel and the LSRL minimizes their sum; slope 0.57: predicted questions correct rise 0.57 per 1-percentage-point increase in attendance; the intercept -7.69 is the predicted score at 0% attendance and is not meaningful because 0% is unreasonable and the prediction is impossible; 0.903 means 90.3% of the variation in questions correct is explained by the linear relationship with attendance; (x-bar, y-bar) lies on the line.",
+          "P": "Four of the five are correct; one is missing or wrong.",
+          "I": "Two or more of the five are missing or wrong."
+        }
+      }
+    }
+  }
+}

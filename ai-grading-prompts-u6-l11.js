@@ -90,12 +90,12 @@ window.RUBRICS_U6L11 = {
             { id: "p-value", description: "States the p-value as 0.0122", required: true },
             { id: "right-tail-justification", description: "Explains that the p-value is a right-tail probability because the alternative is p1 > p2", required: true },
             { id: "p-value-interpretation", description: "Interprets the p-value by assuming the null hypothesis is true and describing the probability of getting a difference of 0.134 or greater by chance alone in the random assignment", required: true },
-            { id: "context-language", description: "Uses the context of azithromycin and placebo cure proportions for patients like those in the study", required: true }
+            { id: "context-language", description: "Uses the context of azithromycin and placebo cure proportions for patients like those in the study", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly gives the pooled proportion, z statistic, and p-value, explains the right-tail choice, and interprets the p-value in context under the null hypothesis",
-            P: "Response includes most major components but is incomplete or unclear about the calculation details, tail direction, or p-value interpretation",
-            I: "Response has major errors in the calculation results, tail choice, or interpretation of the p-value"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using the separate sample proportions instead of the pooled proportion in the standard error",
@@ -113,14 +113,14 @@ window.RUBRICS_U6L11 = {
             { id: "null-assumption", description: "Begins the interpretation by assuming the null hypothesis is true, meaning the population proportions are equal or their difference is zero", required: true },
             { id: "two-sided-interpretation", description: "Interprets 0.1556 as the probability of getting a sample difference of -0.037 or one more different in either direction by chance alone in the random samples", required: true },
             { id: "compare-to-alpha", description: "Compares 0.1556 to alpha = 0.10 and notes that the p-value is larger", required: true },
-            { id: "decision", description: "States the decision to fail to reject H0", required: true },
+            { id: "decision", description: "States the decision to fail to reject H0", required: false },
             { id: "context-conclusion", description: "Concludes there is not convincing statistical evidence that the Soltown and Brightville population proportions differ", required: true },
             { id: "not-proving-equality", description: "Explains that failing to reject H0 does not prove the population proportions are equal", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly interprets the two-sided p-value, compares it to alpha, gives the correct fail-to-reject decision, and explains why that does not prove equality",
-            P: "Response has the general idea but is missing part of the interpretation, conclusion, or explanation about why fail to reject does not prove the null",
-            I: "Response misinterprets the p-value, makes the wrong decision, or claims the test proves the population proportions are equal"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Forgetting to assume the null hypothesis is true when interpreting the p-value",
@@ -137,19 +137,19 @@ window.RUBRICS_U6L11 = {
         expectedElements: [
             { id: "parameter-definitions", description: "Defines pA and pB as the true population benchmark-success proportions for students using App A and App B", required: true },
             { id: "hypotheses", description: "States H0 as pA = pB or pA - pB = 0 and Ha as pA > pB or pA - pB > 0", required: true },
-            { id: "procedure", description: "Identifies the method as a two-sample z-test for a difference in population proportions", required: true },
+            { id: "procedure", description: "Identifies the method as a two-sample z-test for a difference in population proportions", required: false },
             { id: "conditions", description: "Verifies conditions by citing random samples, the given 10% condition, and large counts using the pooled proportion", required: true },
-            { id: "pooled-proportion", description: "Computes the pooled proportion as (84 + 66) / (120 + 120) = 150/240 = 0.625", required: true },
-            { id: "expected-counts", description: "Checks expected counts with pooled proportion: 120(0.625)=75 and 120(0.375)=45 in each group, all at least 10", required: true },
+            { id: "pooled-proportion", description: "Computes the pooled proportion as (84 + 66) / (120 + 120) = 150/240 = 0.625", required: false },
+            { id: "expected-counts", description: "Checks expected counts with pooled proportion: 120(0.625)=75 and 120(0.375)=45 in each group, all at least 10", required: false },
             { id: "test-statistic", description: "Computes the standardized test statistic as z = 2.40", required: true },
             { id: "p-value", description: "Computes or states the right-tail p-value as about 0.0082", required: true },
             { id: "decision-and-conclusion", description: "Compares 0.0082 to alpha = 0.05, rejects H0, and concludes there is convincing statistical evidence that App A has a higher true success proportion", required: true },
             { id: "context-language", description: "Keeps the conclusion in context rather than only reporting a symbolic decision", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly sets up the full test, verifies conditions, computes the pooled proportion, z statistic, and p-value, and gives the correct conclusion in context",
-            P: "Response includes most major parts but has minor computational errors, incomplete condition checks, or an unclear conclusion",
-            I: "Response has major errors in the hypotheses, procedure, calculations, or decision, or omits major parts of the test"
+            E: "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a two-sided alternative instead of a greater-than alternative",
@@ -206,8 +206,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

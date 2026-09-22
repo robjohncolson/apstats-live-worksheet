@@ -31,15 +31,15 @@ window.RUBRICS_U3L1 = {
     reflect1: {
         questionText: 'Why does the Wald airplane example show that the context of data collection matters?',
         expectedElements: [
-            { id: 'returned-planes', description: 'Explains that the data came only from planes that returned from the mission', required: true },
+            { id: 'returned-planes', description: 'Explains that the data came only from planes that returned from the mission', required: false },
             { id: 'missing-planes', description: 'Notes that planes shot down were not included in the sample', required: true },
             { id: 'vulnerable-areas', description: 'Explains that missing bullet holes may point to vulnerable areas where armor is needed', required: true },
             { id: 'analysis-depends', description: 'May state that the way data are collected changes how the data should be analyzed', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that the sample only included returning planes, that planes shot down were left out, and that this changes the conclusion about where armor should go.',
-            P: 'Response shows partial understanding of the Wald example but misses one major piece, such as who was left out or why missing bullet holes matter.',
-            I: 'Response does not correctly explain why the data collection context changes the conclusion.'
+            E: 'Explains that the shot-down planes were never in the data, so the bullet holes seen are from survivors, and that the places without holes are the vulnerable spots that need armor.',
+            P: 'Says the data came only from returning planes but does not draw the conclusion about where the vulnerable areas are.',
+            I: 'Treats the returning planes as all the planes hit, or gives no reasoning about the missing planes.'
         },
         commonMistakes: [
             'Saying the sample included all planes from the missions',
@@ -53,16 +53,16 @@ window.RUBRICS_U3L1 = {
     reflect2: {
         questionText: 'What questions should a statistician ask about a sample before trusting conclusions drawn from it?',
         expectedElements: [
-            { id: 'who-sampled', description: 'Asks who was included in the sample', required: true },
+            { id: 'who-sampled', description: 'Asks who was included in the sample', required: false },
             { id: 'who-missed', description: 'Asks who was left out or how unsampled individuals might differ', required: true },
             { id: 'chance-method', description: 'Asks whether the sample was collected using chance or random selection', required: true },
             { id: 'representative', description: 'Asks whether the sample is representative of the population', required: true },
             { id: 'untrustworthy', description: 'May mention that nonchance methods can lead to untrustworthy conclusions', required: false }
         ],
         scoringGuide: {
-            E: 'Response identifies the key questions about inclusion, exclusion, chance selection, and representativeness before trusting a sample.',
-            P: 'Response identifies some useful questions about the sample but leaves out one or more major ideas, such as chance selection or representativeness.',
-            I: 'Response does not show a clear understanding of what should be checked about a sample before trusting conclusions.'
+            E: 'Asks who was left out (or how they might differ), whether the sample was chosen by chance, and whether it represents the population. Asking who was included is implied.',
+            P: 'Two of those three questions are there; one is missing.',
+            I: 'Asks only about sample size, or asks none of the three questions about who is missing, chance, or representativeness.'
         },
         commonMistakes: [
             'Only asking whether the sample size is large enough',
@@ -78,15 +78,15 @@ window.RUBRICS_U3L1 = {
         expectedElements: [
             { id: 'population', description: 'Identifies the population as all students at the high school', required: true },
             { id: 'sample', description: 'Identifies the sample as the students who responded to the Instagram survey', required: true },
-            { id: 'nonchance', description: 'Explains that the method is not based on chance or is a voluntary response sample', required: true },
+            { id: 'nonchance', description: 'Explains that the method is not based on chance or is a voluntary response sample', required: false },
             { id: 'difference', description: 'Explains that respondents may differ from nonrespondents, such as being more engaged, more opinionated, or more likely to follow student council social media', required: true },
             { id: 'better-method', description: 'Suggests a random or chance-based method for selecting students from the whole school', required: true },
-            { id: 'trust-conclusion', description: 'States that the reported 82% may not be trustworthy or representative of the whole school', required: true }
+            { id: 'trust-conclusion', description: 'States that the reported 82% may not be trustworthy or representative of the whole school', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the population and sample, explains why the voluntary Instagram survey is a nonchance method, describes how respondents may differ, suggests a random sample, and states that the result may not represent the whole school.',
-            P: 'Response gets most of the situation right but misses one or two major pieces, such as the population, the nonchance problem, or the better sampling method.',
-            I: 'Response has major errors about the population, sample, or why the survey method could lead to untrustworthy conclusions.'
+            E: 'Population = all students at the school; sample = the students who answered on Instagram; explains HOW respondents likely differ from non-respondents (more engaged, stronger opinions, follow student council) so the 82% may not represent the school; and proposes a chance-based way to pick students from the whole school.',
+            P: 'Three of the four are correct; one is missing or wrong (commonly \'respondents may differ\' with no description of how).',
+            I: 'Two or more of the four are missing or wrong, or the survey is treated as random.'
         },
         commonMistakes: [
             'Confusing the sample with the population',
@@ -141,8 +141,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

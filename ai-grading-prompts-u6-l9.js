@@ -66,16 +66,16 @@ window.RUBRICS_U6L9 = {
         questionText: "For the tree-disease example, a 90% confidence interval for p_high - p_low is (-0.029, 0.079). Interpret this interval in context, and explain whether it gives convincing evidence that the disease is more lethal at one elevation.",
         expectedElements: [
             { id: "interval-interpretation", description: "Interprets the interval in context: we are 90% confident that the true difference high minus low in the proportions of trees that died from the disease is between -0.029 and 0.079", required: true },
-            { id: "parameter-context", description: "Refers to the true population proportions of trees in the two forests or elevations, not just the sample proportions", required: true },
+            { id: "parameter-context", description: "Refers to the true population proportions of trees in the two forests or elevations, not just the sample proportions", required: false },
             { id: "zero-plausible", description: "Explains that 0 is in the interval, so 0 is a plausible value for the true difference", required: true },
             { id: "claim-conclusion", description: "Concludes that there is not convincing evidence that the disease is more lethal at one elevation", required: true },
-            { id: "direction-language", description: "Uses the stated direction high minus low correctly", required: true },
+            { id: "direction-language", description: "Uses the stated direction high minus low correctly", required: false },
             { id: "positive-negative-mention", description: "May note that the interval includes both negative and positive values", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets the interval in context and clearly explains that because 0 is in the interval there is not convincing evidence that the disease is more lethal at one elevation",
-            P: "Response captures part of the interpretation or conclusion but is vague about the parameter, the context, or why the claim is not supported",
-            I: "Response misinterprets the interval, treats the interval as a probability statement about this one parameter, or gives the wrong conclusion about the claim"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Talking only about the sample proportions instead of the population proportions",
@@ -91,16 +91,16 @@ window.RUBRICS_U6L9 = {
         questionText: "For the dog tick-repellent experiment, a 95% confidence interval for p_new - p_old is (-0.2907, -0.0343). Interpret this interval in context, and explain why it supports the claim that the new formula is better.",
         expectedElements: [
             { id: "interval-interpretation", description: "Interprets the interval in context: we are 95% confident that the true proportion of similar dogs that would get ticks with the new formula is between 0.0343 and 0.2907 lower than with the old formula", required: true },
-            { id: "parameter-context", description: "Refers to the true proportions of similar dogs that would get ticks with the two formulas", required: true },
+            { id: "parameter-context", description: "Refers to the true proportions of similar dogs that would get ticks with the two formulas", required: false },
             { id: "all-negative", description: "Explains that all values in the interval are negative, so p_new - p_old is less than 0", required: true },
             { id: "claim-supported", description: "Concludes that there is convincing evidence that the new formula is better at preventing ticks than the old formula", required: true },
-            { id: "direction-language", description: "States the direction correctly by describing the new formula as lower or better, not higher", required: true },
+            { id: "direction-language", description: "States the direction correctly by describing the new formula as lower or better, not higher", required: false },
             { id: "percentage-points", description: "May describe the interval as a range of percentage points lower", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets the interval in context and explains that the entirely negative interval provides convincing evidence that the new formula produces a lower true tick rate than the old formula",
-            P: "Response gets the main idea but is incomplete about the parameter, the interpretation, or why negative values support the claim",
-            I: "Response reverses the direction, misinterprets the interval, or does not connect the interval to the claim about the new formula being better"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Reversing new minus old and saying the old formula is better",
@@ -116,17 +116,17 @@ window.RUBRICS_U6L9 = {
         questionText: "A large company compares the proportion of parts produced within specifications on its day shift and night shift. Random samples of 200 parts from each shift gave a 96% confidence interval of (-0.016, 0.096) for p_day - p_night. (a) Interpret the confidence interval in context. (b) Based only on the interval, do you think the true difference is significantly different from 0? Justify your answer. (c) Interpret the 96% confidence level.",
         expectedElements: [
             { id: "interval-interpretation", description: "Interprets the confidence interval in context: we are 96% confident that the true difference day minus night in the proportions of all parts produced within specifications is between -0.016 and 0.096", required: true },
-            { id: "parameter-context", description: "Refers to the population proportions for all parts from the day and night shifts, not just the sampled parts", required: true },
+            { id: "parameter-context", description: "Refers to the population proportions for all parts from the day and night shifts, not just the sampled parts", required: false },
             { id: "zero-plausible", description: "Explains that 0 is in the interval, so 0 is a plausible value for the true difference", required: true },
             { id: "not-significant", description: "Concludes that there is not convincing evidence that the true difference is significantly different from 0", required: true },
             { id: "confidence-level", description: "Correctly interprets the 96% confidence level using repeated random sampling and many intervals", required: true },
-            { id: "repeated-samples-details", description: "Specifies that many pairs of random samples of 200 parts from each shift would be taken and about 96% of the resulting intervals would capture the true difference", required: true },
+            { id: "repeated-samples-details", description: "Specifies that many pairs of random samples of 200 parts from each shift would be taken and about 96% of the resulting intervals would capture the true difference", required: false },
             { id: "not-probability", description: "Does not say there is a 96% probability that the true difference is in this one interval", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets the interval, explains that 0 is plausible so the difference is not significantly different from 0, and correctly interprets the 96% confidence level with repeated random sampling",
-            P: "Response has most of the ideas but is incomplete or vague about the interval interpretation, the conclusion about 0, or the meaning of the confidence level",
-            I: "Response misinterprets the interval or confidence level, gives the wrong conclusion about significance, or omits major required components"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying there is a 96% probability that the true difference is in this interval",
@@ -183,8 +183,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

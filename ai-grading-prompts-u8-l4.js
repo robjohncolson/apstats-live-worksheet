@@ -60,19 +60,19 @@ window.RUBRICS_U8L4 = {
         questionText: 'Explain how the school-type-by-year table is used to calculate expected counts. Include the assumption of no relationship, the row totals and column totals, the table total 534, the formula (row total * column total) / table total, the expected count 257.1 for Public in 2019, and how subtraction gives the remaining expected counts.',
         expectedElements: [
             { id: 'no-relationship', description: 'States that expected counts are calculated assuming there is no relationship between year and school type', required: true },
-            { id: 'totals', description: 'Identifies the row totals 429, 37, and 68, the column totals 320 and 214, and the table total 534', required: true },
+            { id: 'totals', description: 'Identifies the row totals 429, 37, and 68, the column totals 320 and 214, and the table total 534', required: false },
             { id: 'formula', description: 'Uses or states the formula expected count = (row total * column total) / table total', required: true },
             { id: 'public-2019', description: 'Gives the expected count for Public in 2019 as 257.1, or shows the calculation (429 * 320) / 534', required: true },
-            { id: 'private-2019', description: 'Gives the expected count for Private/Parochial/Charter in 2019 as about 22.2', required: true },
-            { id: 'subtraction-shortcut', description: 'Explains that subtraction with row totals or column totals can be used once some expected counts are known', required: true },
-            { id: 'remaining-counts', description: 'Identifies the remaining expected counts as about 40.7, 171.9, 14.8, and 27.3', required: true },
+            { id: 'private-2019', description: 'Gives the expected count for Private/Parochial/Charter in 2019 as about 22.2', required: false },
+            { id: 'subtraction-shortcut', description: 'Explains that subtraction with row totals or column totals can be used once some expected counts are known', required: false },
+            { id: 'remaining-counts', description: 'Identifies the remaining expected counts as about 40.7, 171.9, 14.8, and 27.3', required: false },
             { id: 'no-total-cells', description: 'May note that totals do not get expected counts', required: false },
             { id: 'key-parentheses', description: 'May note that a key should identify expected counts if they are shown in parentheses', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains the no-relationship assumption, the totals, the expected-count formula, the 257.1 calculation, and how subtraction is used to complete the school table.',
-            P: 'Response shows the main idea of how expected counts are found but misses one major element such as the formula, the totals, or how subtraction completes the remaining cells.',
-            I: 'Response confuses observed and expected counts, uses the wrong formula, or does not explain how the school example expected counts are obtained.'
+            E: 'All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Using the observed count in the cell instead of the row total or column total in the formula',
@@ -88,19 +88,19 @@ window.RUBRICS_U8L4 = {
         questionText: 'Explain how the employment example uses both the expected-count formula and the subtraction shortcut. Include the totals 1940, 60, 220, 570, 1210, and 2000, the expected counts 213.4 and 552.9 for the first two employed cells, the remaining expected counts 1173.7, 6.6, 17.1, and 36.3, and why totals do not get expected counts.',
         expectedElements: [
             { id: 'no-relationship', description: 'States that expected counts are based on the assumption of no relationship between education level and employment status', required: true },
-            { id: 'totals', description: 'Identifies the row totals 1940 and 60, the column totals 220, 570, and 1210, and the table total 2000', required: true },
+            { id: 'totals', description: 'Identifies the row totals 1940 and 60, the column totals 220, 570, and 1210, and the table total 2000', required: false },
             { id: 'formula', description: 'Uses or states the formula expected count = (row total * column total) / table total', required: true },
             { id: 'first-expected-count', description: 'Gives the expected count for Employed and No High School Diploma as 213.4', required: true },
-            { id: 'second-expected-count', description: 'Gives the expected count for Employed and High School Diploma No College as 552.9', required: true },
-            { id: 'remaining-counts', description: 'Identifies the remaining expected counts as 1173.7, 6.6, 17.1, and 36.3', required: true },
+            { id: 'second-expected-count', description: 'Gives the expected count for Employed and High School Diploma No College as 552.9', required: false },
+            { id: 'remaining-counts', description: 'Identifies the remaining expected counts as 1173.7, 6.6, 17.1, and 36.3', required: false },
             { id: 'subtraction-shortcut', description: 'Explains that subtraction from row totals or column totals can be used to find the remaining cells after calculating a few expected counts', required: true },
             { id: 'no-total-cells', description: 'Explains that totals do not get expected counts because they are already fixed sums of the interior cells', required: true },
             { id: 'variable-placement', description: 'May mention that education level is in the columns and employment status is in the rows', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly explains the employment table totals, the first expected counts from the formula, the remaining expected counts from subtraction, and why totals cells do not receive expected counts.',
-            P: 'Response gets the general process right but leaves out one major numerical result or the explanation of why subtraction or totals work the way they do.',
-            I: 'Response gives the wrong expected counts, uses the wrong totals, or does not explain how the employment example is completed.'
+            E: 'All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Using 206 or 548 directly in the expected-count formula instead of the row and column totals',
@@ -121,14 +121,14 @@ window.RUBRICS_U8L4 = {
             { id: 'first-two-expected-counts', description: 'Calculates the first two expected counts as 213.4 and 552.9', required: true },
             { id: 'remaining-four-counts', description: 'Finds the remaining expected counts as 1173.7, 6.6, 17.1, and 36.3', required: true },
             { id: 'totals-explanation', description: 'Explains that totals do not get expected counts because they are already the row and column sums of the interior cells', required: true },
-            { id: 'key-explanation', description: 'Explains that a key helps the reader know that numbers in parentheses are expected counts', required: true },
+            { id: 'key-explanation', description: 'Explains that a key helps the reader know that numbers in parentheses are expected counts', required: false },
             { id: 'column-totals', description: 'May explicitly restate the column totals 220, 570, and 1210', required: false },
             { id: 'subtraction-language', description: 'May explicitly say that subtraction preserves the row totals and column totals', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly gives the totals, assumption, formula, expected counts, subtraction results, and explanations about totals and the key.',
-            P: 'Response shows most of the expected-count process but misses one major numerical result or one of the explanations at the end.',
-            I: 'Response does not correctly compute the expected counts or does not explain the basic no-relationship model for the two-way table.'
+            E: 'All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Getting the row totals wrong by not adding across correctly',
@@ -185,8 +185,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

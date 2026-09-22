@@ -35,13 +35,13 @@ window.RUBRICS_U2L3 = {
         expectedElements: [
             { id: 'marginal-definition', description: 'Explains that a marginal relative frequency uses a row total or column total divided by the table total', required: true },
             { id: 'conditional-definition', description: 'Explains that a conditional relative frequency uses a cell count divided by a specific row total or column total', required: true },
-            { id: 'overall-vs-within-group', description: 'Explains that marginal describes an overall proportion while conditional describes a proportion within a group', required: true },
+            { id: 'overall-vs-within-group', description: 'Explains that marginal describes an overall proportion while conditional describes a proportion within a group', required: false },
             { id: 'denominator-language', description: 'May explicitly mention that the denominators are different', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly distinguishes marginal from conditional relative frequency by describing the correct denominator and the difference between overall and within-group percentages.',
-            P: 'Response identifies part of the difference, such as one correct definition or the idea of within-group percentages, but is incomplete.',
-            I: 'Response does not correctly distinguish marginal and conditional relative frequency.'
+            E: 'Marginal: a row or column total over the table total (an overall proportion). Conditional: a cell over its row or column total (a proportion within a group). The overall-vs-within-group contrast is carried by those two definitions.',
+            P: 'One of the two is defined correctly; the other is missing or muddled.',
+            I: 'Neither is defined correctly (e.g. the table total used for both), or they are treated as the same thing.'
         },
         commonMistakes: [
             'Using the table total for both statistics',
@@ -56,14 +56,14 @@ window.RUBRICS_U2L3 = {
         questionText: 'Why are conditional relative frequencies the best summary statistics for deciding whether two categorical variables are associated?',
         expectedElements: [
             { id: 'within-group-distributions', description: 'Explains that conditional relative frequencies show the distribution within each group', required: true },
-            { id: 'compare-groups', description: 'Explains that these within-group distributions can be compared across groups', required: true },
+            { id: 'compare-groups', description: 'Explains that these within-group distributions can be compared across groups', required: false },
             { id: 'different-means-association', description: 'States that if the conditional distributions are not the same, the variables are associated', required: true },
             { id: 'supports-graphical-conclusion', description: 'May mention that these summary statistics support the conclusion seen in a segmented bar graph', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains that conditional relative frequencies compare within-group distributions and that different conditional distributions indicate an association.',
-            P: 'Response mentions conditional relative frequencies or association but does not clearly connect comparing within-group distributions to the conclusion about association.',
-            I: 'Response does not correctly explain why conditional relative frequencies are used to decide association.'
+            E: 'Explains that conditional relative frequencies give the distribution within each group so the groups can be compared, and that different conditional distributions mean the variables are associated.',
+            P: 'Says they show within-group distributions without the association rule, or states the rule without saying what is compared.',
+            I: 'Uses marginal frequencies or raw counts to decide association.'
         },
         commonMistakes: [
             'Using marginal relative frequencies to decide association',
@@ -78,17 +78,17 @@ window.RUBRICS_U2L3 = {
         questionText: 'A school surveyed students about grade level and preferred study style. The table shows 18 alone and 12 group for 9th grade, 12 alone and 18 group for 10th grade, and 10 alone and 30 group for 11th grade. Identify the variables, explain why the table is two-way, find the joint relative frequency for 11th grade and prefers group, find the marginal relative frequency for 10th grade, find the conditional distributions within 9th and 11th grade, and decide whether the variables are associated.',
         expectedElements: [
             { id: 'identify-variables', description: 'Identifies the variables as grade level and preferred study style and recognizes that both are categorical', required: true },
-            { id: 'two-way-table', description: 'Explains that it is a two-way table because it summarizes counts for two categorical variables together', required: true },
+            { id: 'two-way-table', description: 'Explains that it is a two-way table because it summarizes counts for two categorical variables together', required: false },
             { id: 'joint-relative-frequency', description: 'Gives the joint relative frequency for 11th grade and prefers group as 30% or 0.30', required: true },
             { id: 'marginal-relative-frequency', description: 'Gives the marginal relative frequency for 10th grade as 30% or 0.30', required: true },
-            { id: 'conditional-ninth', description: 'Gives the 9th-grade conditional distribution as 60% alone and 40% group', required: true },
+            { id: 'conditional-ninth', description: 'Gives the 9th-grade conditional distribution as 60% alone and 40% group', required: false },
             { id: 'conditional-eleventh', description: 'Gives the 11th-grade conditional distribution as 25% alone and 75% group', required: true },
             { id: 'association-conclusion', description: 'Explains that the variables are associated because the conditional distributions are different across grade levels', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the variables, explains the two-way table, finds the joint and marginal relative frequencies, gives the 9th-grade and 11th-grade conditional distributions, and concludes the variables are associated because those conditional distributions differ.',
-            P: 'Response gets most of the major ideas correct but misses one or two parts, such as one percentage or the association explanation.',
-            I: 'Response has major errors about the variables, the relative frequencies, or the conclusion about association, or omits several required elements.'
+            E: 'Variables: grade level and preferred study style, both categorical; joint (11th grade and group) = 30/100 = 0.30; marginal (10th grade) = 30/100 = 0.30; 11th-grade conditional 25% alone / 75% group (grade total as denominator); concludes association because the conditional distributions differ across grades. The 9th-grade distribution and \'two-way\' explanation strengthen the answer.',
+            P: 'Four of the five are correct; one is missing or wrong (commonly a wrong denominator).',
+            I: 'Two or more of the five are missing or wrong, or association is concluded from totals alone.'
         },
         commonMistakes: [
             'Using the wrong denominator for the joint relative frequency',
@@ -142,8 +142,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

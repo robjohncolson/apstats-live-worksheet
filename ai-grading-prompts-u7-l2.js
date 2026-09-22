@@ -82,17 +82,17 @@ window.RUBRICS_U7L2 = {
         questionText: "Using the powdered sugar example, explain why a one-sample t-interval is the correct procedure and describe how the conditions are checked.",
         expectedElements: [
             { id: "procedure", description: "Identifies a one-sample t-interval for a population mean", required: true },
-            { id: "single-mean", description: "Explains that the goal is to estimate the mean of one population", required: true },
+            { id: "single-mean", description: "Explains that the goal is to estimate the mean of one population", required: false },
             { id: "random-condition", description: "States that the 10 bags were randomly selected", required: true },
             { id: "ten-percent", description: "States that it is reasonable that 10 bags is less than or equal to 10% of all bags from the wholesaler", required: true },
             { id: "small-sample-shape", description: "Notes that n = 10 is less than 30, so a graph must be checked for shape", required: true },
             { id: "shape-evidence", description: "Uses the boxplot evidence that there is no strong skewness or outliers", required: true },
-            { id: "conditions-met", description: "Concludes that the conditions are met", required: true }
+            { id: "conditions-met", description: "Concludes that the conditions are met", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly identifies the one-sample t-interval and clearly explains all three conditions with correct sugar-example evidence",
-            P: "Response identifies the right procedure and some correct condition checks but omits or weakly explains one or more required details",
-            I: "Response uses the wrong procedure, misses major condition checks, or gives incorrect justification for why the interval is appropriate"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Calling the procedure a z interval instead of a t interval",
@@ -107,19 +107,19 @@ window.RUBRICS_U7L2 = {
     reflect2: {
         questionText: "For the powdered sugar bags, explain how to calculate the 95% confidence interval for mu. Include the degrees of freedom, the critical value, the margin of error, and an interpretation in context.",
         expectedElements: [
-            { id: "sample-stats", description: "States the sample statistics x-bar = 906.8, s = 8.22, and n = 10", required: true },
+            { id: "sample-stats", description: "States the sample statistics x-bar = 906.8, s = 8.22, and n = 10", required: false },
             { id: "degrees-freedom", description: "Computes or states df = 9", required: true },
             { id: "critical-value", description: "States the 95% critical value t* = 2.262", required: true },
             { id: "formula", description: "Uses the confidence interval form x-bar plus or minus t* times s over square root of n", required: true },
             { id: "margin-error", description: "States or supports that the margin of error is 5.88", required: true },
-            { id: "interval", description: "Gives the interval 900.92 to 912.68", required: true },
+            { id: "interval", description: "Gives the interval 900.92 to 912.68", required: false },
             { id: "context-interpretation", description: "Interprets the interval in context for the mean weight of all bags from the wholesaler", required: true },
             { id: "confidence-language", description: "May explicitly say we are 95% confident the true mean lies between the bounds", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly describes the full t-interval calculation, gives the correct interval, and interprets it in context",
-            P: "Response shows the main calculation idea but is incomplete in the setup, arithmetic, or contextual interpretation",
-            I: "Response gives an incorrect setup or interval, or fails to connect the result to the population mean in context"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a z critical value instead of a t critical value",
@@ -138,7 +138,7 @@ window.RUBRICS_U7L2 = {
             { id: "random-sample", description: "States that the crabs came from a random sample", required: true },
             { id: "ten-percent", description: "States that it is reasonable that 40 crabs is no more than 10% of all fiddler crabs of this species", required: true },
             { id: "large-sample", description: "Uses n = 40 to justify the large-sample shape condition", required: true },
-            { id: "degrees-freedom", description: "Computes or states df = 39", required: true },
+            { id: "degrees-freedom", description: "Computes or states df = 39", required: false },
             { id: "critical-value", description: "States the 90% technology critical value t* = 1.685", required: true },
             { id: "formula", description: "Uses x-bar plus or minus t* times s over square root of n", required: true },
             { id: "margin-error", description: "Finds a margin of error of about 1.76", required: true },
@@ -147,9 +147,9 @@ window.RUBRICS_U7L2 = {
             { id: "table-note", description: "May note that Table B would use df = 30 and t* = 1.697 if technology were unavailable", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly completes the full confidence-interval process for the crab data and gives a proper contextual interpretation",
-            P: "Response includes most of the correct setup and interval work but misses one or two important details or has a weak interpretation",
-            I: "Response omits major steps, uses the wrong procedure, or gives an incorrect interval or contextual conclusion"
+            E: "All 9 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a z interval instead of a t interval",
@@ -206,8 +206,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

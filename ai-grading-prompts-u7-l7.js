@@ -74,18 +74,18 @@ window.RUBRICS_U7L7 = {
         questionText: "Explain how to correctly interpret a confidence interval for the difference of two population means. Use the spider example to discuss the general interpretation template, the direction of subtraction, why the interval must describe a parameter instead of a sample, and two incorrect interpretations students should avoid.",
         expectedElements: [
             { id: "general-template", description: "States that we are C% confident that the interval captures the true population difference being estimated", required: true },
-            { id: "spider-context", description: "Uses the spider context and identifies the parameter as the true difference in mean body lengths of female and male Argiope spiders", required: true },
+            { id: "spider-context", description: "Uses the spider context and identifies the parameter as the true difference in mean body lengths of female and male Argiope spiders", required: false },
             { id: "direction", description: "Includes the subtraction direction female minus male or explains that female spiders are 7.956 to 12.129 millimeters larger on average", required: true },
-            { id: "order-matters", description: "Explains that reversing the subtraction order negates the interval and changes the interpretation", required: true },
+            { id: "order-matters", description: "Explains that reversing the subtraction order negates the interval and changes the interpretation", required: false },
             { id: "sample-error", description: "Explains that an interpretation should not refer to the sample or use wording like these spiders", required: true },
             { id: "probability-error", description: "Explains that a 95% confidence level is not a 95% chance that the fixed parameter is in this interval", required: true },
             { id: "alternate-interpretation", description: "May give the alternate valid wording that females are between 7.956 and 12.129 millimeters larger than males", required: false },
             { id: "reverse-interval", description: "May mention the reversed interval (-12.129, -7.956) for male minus female", required: false }
         ],
         scoringGuide: {
-            E: "Response gives a correct contextual interpretation, explains why direction matters, and clearly identifies the common mistakes about samples and probability",
-            P: "Response shows the basic interpretation idea but misses either the subtraction direction, one major mistake to avoid, or a clear explanation of why reversal changes the interval",
-            I: "Response misinterprets the interval, treats confidence as probability, or focuses on the sample rather than the population parameter"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Referring to the sample instead of the population parameter",
@@ -102,17 +102,17 @@ window.RUBRICS_U7L7 = {
         expectedElements: [
             { id: "zero-means-no-difference", description: "Explains that 0 represents no difference between the two population means", required: true },
             { id: "spider-support", description: "Explains that 0 is not in the spider interval, so 0 is not plausible and the interval supports the claim that female spiders are larger on average", required: true },
-            { id: "sign-matches-claim", description: "Connects the positive spider interval to a directional claim that female minus male is greater than 0", required: true },
+            { id: "sign-matches-claim", description: "Connects the positive spider interval to a directional claim that female minus male is greater than 0", required: false },
             { id: "firestation-no-support", description: "Explains that 0 is in the fire-station interval, so no difference is plausible and the interval does not support the council member's belief of different mean response times", required: true },
-            { id: "contextual-conclusion", description: "Makes both conclusions in context rather than as abstract rules only", required: true },
+            { id: "contextual-conclusion", description: "Makes both conclusions in context rather than as abstract rules only", required: false },
             { id: "do-not-say-wrong", description: "Notes that when 0 is in the interval you should not say the council member is wrong, only that the interval does not support the claim", required: true },
-            { id: "restaurant-connection", description: "Explains that 0 is in the restaurant interval (-9.3, 3.2), so no difference is plausible and there is not convincing evidence of a difference between foam and plastic container mean temperatures", required: true },
+            { id: "restaurant-connection", description: "Explains that 0 is in the restaurant interval (-9.3, 3.2), so no difference is plausible and there is not convincing evidence of a difference between foam and plastic container mean temperatures", required: false },
             { id: "plausible-language", description: "Uses the language of plausible or not plausible values for the parameter", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly uses 0 as the decision marker, contrasts the spider and fire-station intervals, and states both contextual conclusions accurately",
-            P: "Response understands the general role of 0 but gives only one example clearly or leaves the conclusion too vague",
-            I: "Response misuses the role of 0, reaches the wrong conclusion for one of the intervals, or does not connect the interval to the claim"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Forgetting that 0 means no difference",
@@ -139,9 +139,9 @@ window.RUBRICS_U7L7 = {
             { id: "do-not-say-wrong", description: "May note that you should not say the council member is wrong or that the stations are definitely the same", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly states the parameter and procedure, justifies all conditions, interprets the interval in context, gives the correct conclusion about the claim, and explains the confidence level",
-            P: "Response gets most of the setup and conclusion right but misses one major condition, a clear interval interpretation, or the confidence-level explanation",
-            I: "Response gives the wrong parameter or procedure, does not justify the conditions, or misinterprets the interval or the role of 0"
+            E: "All 9 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Defining the parameter as a single mean instead of mu_N - mu_S",
@@ -198,8 +198,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

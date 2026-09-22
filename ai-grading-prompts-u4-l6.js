@@ -49,9 +49,9 @@ const REFLECTION_RUBRICS_U4L6 = {
       { id: "reasoning", description: "Explains that for positive-probability events, mutual exclusivity gives P(A and B)=0 while independence would require P(A and B)=P(A)P(B)>0", required: true }
     ],
     scoringGuide: {
-      E: "Correctly defines both concepts AND explains that events (with P>0) cannot be both, with valid reasoning",
-      P: "Defines both concepts but reasoning about whether they can be both is incomplete or missing",
-      I: "Confuses the concepts or incorrectly claims that two events with positive probabilities can be both independent and mutually exclusive."
+      E: "Defines independent (one event occurring does not change the other's probability) and mutually exclusive (cannot both occur), concludes two events with positive probabilities cannot be both, and gives the reason: if they cannot happen together, one occurring makes the other impossible, which changes its probability (equivalently P(A and B) = 0 but P(A)P(B) > 0).",
+      P: "Three of the four are correct; commonly the conclusion is asserted with no reason, or one definition is muddled.",
+      I: "Claims positive-probability events can be both, or fewer than two of the four are correct."
     },
     commonMistakes: [
       "Claiming two positive-probability events can be both independent and mutually exclusive.",
@@ -71,9 +71,9 @@ const REFLECTION_RUBRICS_U4L6 = {
       { id: "calculation-accuracy", description: "Main concern is ensuring the calculation is done correctly", required: false }
     ],
     scoringGuide: {
-      E: "Correctly states that one check IS sufficient, and mentions the equivalent alternative methods",
-      P: "Mentions alternative checks but is unclear about whether one check is sufficient",
-      I: "Incorrectly claims you must check multiple conditions OR doesn't understand the equivalent forms"
+      E: "Says one check is enough because P(A|B) = P(A), P(B|A) = P(B), and P(A and B) = P(A)P(B) are equivalent conditions.",
+      P: "Says one check is enough but does not name the equivalent conditions, or names the conditions without committing to whether one check suffices.",
+      I: "Says every condition must be checked, or gives no reasoning about equivalence."
     },
     commonMistakes: [
       "Thinking you must check ALL conditions (P(A|B)=P(A) AND P(B|A)=P(B) AND product rule)",
@@ -94,9 +94,9 @@ const REFLECTION_RUBRICS_U4L6 = {
       { id: "shows-work", description: "Shows the arithmetic steps clearly", required: false }
     ],
     scoringGuide: {
-      E: "Correctly determines independence (yes, with work shown) AND correctly calculates P(A or B) = 0.65",
-      P: "Gets one part correct but makes an error on the other, OR correct answers without sufficient work",
-      I: "Both parts incorrect OR fundamental misunderstanding of the formulas"
+      E: "Compares P(A)P(B) = 0.15 with the given P(A and B) = 0.15 and concludes independent; uses P(A or B) = P(A) + P(B) - P(A and B) = 0.65.",
+      P: "Three of the four are correct; one is missing or wrong (commonly the intersection not subtracted, or the product computed but not compared).",
+      I: "Two or more of the four are missing or wrong."
     },
     commonMistakes: [
       "Forgetting to subtract the intersection in the addition rule",
@@ -159,8 +159,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

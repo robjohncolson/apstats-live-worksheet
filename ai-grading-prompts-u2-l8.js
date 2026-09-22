@@ -57,14 +57,14 @@ window.RUBRICS_U2L8 = {
         expectedElements: [
             { id: 'canceling-problem', description: 'Explains that raw residuals can cancel because positive and negative values offset each other', required: true },
             { id: 'least-squares-definition', description: 'States that the LSRL minimizes the sum of squared residuals', required: true },
-            { id: 'mean-point-property', description: 'States that the LSRL contains the point (x-bar, y-bar)', required: true },
-            { id: 'slope-formula-property', description: 'States that the slope can be calculated with b = r(s_y / s_x)', required: true },
+            { id: 'mean-point-property', description: 'States that the LSRL contains the point (x-bar, y-bar)', required: false },
+            { id: 'slope-formula-property', description: 'States that the slope can be calculated with b = r(s_y / s_x)', required: false },
             { id: 'numeric-example', description: 'May mention the example where r = 0.95, s_y = 6.08, s_x = 10.2, and b = 0.57', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains why squaring residuals is necessary, states that the LSRL minimizes the sum of squared residuals, and includes the main Video 1 properties of the line.',
-            P: 'Response gets part of the least-squares idea right but misses an important point about cancellation, the minimization target, or one of the emphasized LSRL properties.',
-            I: 'Response does not correctly explain why least squares is used or does not identify the major properties from Video 1.'
+            E: 'Explains that residuals are squared so positive and negative errors cannot cancel, and that the LSRL is the line minimizing the sum of squared residuals. The (x-bar, y-bar) and slope-formula properties strengthen the answer.',
+            P: 'Gives one of the two ideas (why residuals are squared, or what the LSRL minimizes).',
+            I: 'Neither idea is present.'
         },
         commonMistakes: [
             'Saying the LSRL minimizes the sum of raw residuals',
@@ -79,15 +79,15 @@ window.RUBRICS_U2L8 = {
         questionText: 'How should you interpret the slope and y-intercept of an LSRL in context, and when might the y-intercept not be meaningful?',
         expectedElements: [
             { id: 'slope-change', description: 'Explains that the slope is the predicted change in y for every one-unit increase in x', required: true },
-            { id: 'attendance-context', description: 'Interprets the example slope by saying each 1 percentage point increase in attendance predicts about 0.57 more questions correct', required: true },
+            { id: 'attendance-context', description: 'Interprets the example slope by saying each 1 percentage point increase in attendance predicts about 0.57 more questions correct', required: false },
             { id: 'intercept-definition', description: 'Explains that the y-intercept is the predicted y-value when x = 0', required: true },
             { id: 'intercept-not-meaningful', description: 'Explains that the y-intercept may not be meaningful when x = 0 is not reasonable in context or gives an illogical prediction', required: true },
             { id: 'example-illogical-value', description: 'May mention that 0% attendance gives a prediction of -7.69 questions correct, which is not logical', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly interprets both coefficients in context and explains why a y-intercept may fail to be meaningful.',
-            P: 'Response interprets one coefficient well but misses an important point about the other coefficient or about contextual meaning.',
-            I: 'Response does not correctly explain what slope or y-intercept means in a regression context.'
+            E: 'Interprets a slope in context as the predicted change in the response for each one-unit increase in the explanatory variable (any suitable context; the attendance example is one), interprets the intercept as the predicted response when the explanatory variable is 0, and explains that the intercept is not meaningful when x = 0 is outside a sensible range or gives an impossible prediction. Bare definitions with no variables named do not earn E.',
+            P: 'Two of the three are correct; one is missing, muddled, or given without context.',
+            I: 'Fewer than two are correct (e.g. slope and intercept both misinterpreted).'
         },
         commonMistakes: [
             'Treating slope as an exact rather than predicted change',
@@ -102,16 +102,16 @@ window.RUBRICS_U2L8 = {
         questionText: 'What does r squared tell you about a regression model, and how can you identify the slope and y-intercept from computer output?',
         expectedElements: [
             { id: 'r-squared-meaning', description: 'States that r squared is the proportion or percent of variation in the response variable explained by the explanatory variable in the model', required: true },
-            { id: 'context-interpretation', description: 'Interprets the example by saying 90.3% of the variation in exam questions correct is explained by the linear relationship with attendance', required: true },
+            { id: 'context-interpretation', description: 'Interprets the example by saying 90.3% of the variation in exam questions correct is explained by the linear relationship with attendance', required: false },
             { id: 'r-squared-equals-r-squared', description: 'States that r squared equals the correlation squared', required: false },
             { id: 'output-slope', description: 'Explains that the slope is the coefficient of the explanatory variable in computer output', required: true },
             { id: 'output-intercept', description: 'Explains that the y-intercept is the constant in computer output', required: true },
             { id: 'strength-note', description: 'May mention that larger r squared values indicate a stronger relationship', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly explains what r squared measures, interprets it in context, and identifies the slope and y-intercept from regression output.',
-            P: 'Response explains some of r squared or output interpretation correctly but misses one major idea.',
-            I: 'Response does not correctly explain r squared or how to read slope and intercept from output.'
+            E: 'r-squared = the proportion of variation in the response explained by the linear relationship with the explanatory variable; in computer output the slope is the coefficient on the explanatory variable and the intercept is the constant. The 90.3% example strengthens the answer.',
+            P: 'Two of the three are correct; one is missing or muddled.',
+            I: 'Fewer than two are correct (e.g. r-squared misread AND the output not read).'
         },
         commonMistakes: [
             'Saying r squared is the percent of points on the line',
@@ -127,16 +127,16 @@ window.RUBRICS_U2L8 = {
         expectedElements: [
             { id: 'squared-residuals', description: 'Explains that squared residuals are used so positive and negative errors do not cancel and the LSRL minimizes their sum', required: true },
             { id: 'slope-interpretation', description: 'Interprets 0.57 as the predicted average increase in questions correct for each 1 percentage point increase in attendance', required: true },
-            { id: 'intercept-definition', description: 'States that -7.69 is the predicted y-value when attendance is 0%', required: true },
+            { id: 'intercept-definition', description: 'States that -7.69 is the predicted y-value when attendance is 0%', required: false },
             { id: 'intercept-not-meaningful', description: 'Explains that the y-intercept is not meaningful because 0% attendance is not a reasonable context and the prediction is illogical', required: true },
             { id: 'r-squared-context', description: 'Interprets 0.903 as 90.3% of the variation in exam questions correct being explained by the linear relationship with attendance', required: true },
             { id: 'mean-point', description: 'Names the point (x-bar, y-bar) as a point that must lie on the LSRL', required: true },
             { id: 'slope-formula-note', description: 'May mention that the slope could also be found using b = r(s_y / s_x)', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly explains the least-squares idea, interprets both coefficients, handles the contextual meaning of the intercept, interprets r squared in context, and identifies the mean point property.',
-            P: 'Response gets most of the ideas right but misses or weakly explains one major part of the least-squares idea, coefficient interpretation, r squared interpretation, or mean point property.',
-            I: 'Response has major errors about least squares, regression coefficients, r squared, or the LSRL properties.'
+            E: 'Residuals are squared so errors do not cancel and the LSRL minimizes their sum; slope 0.57: predicted questions correct rise 0.57 per 1-percentage-point increase in attendance; the intercept -7.69 is the predicted score at 0% attendance and is not meaningful because 0% is unreasonable and the prediction is impossible; 0.903 means 90.3% of the variation in questions correct is explained by the linear relationship with attendance; (x-bar, y-bar) lies on the line.',
+            P: 'Four of the five are correct; one is missing or wrong.',
+            I: 'Two or more of the five are missing or wrong.'
         },
         commonMistakes: [
             'Saying residuals should just be added instead of squared',
@@ -191,8 +191,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

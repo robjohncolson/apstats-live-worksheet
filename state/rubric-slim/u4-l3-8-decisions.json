@@ -1,0 +1,138 @@
+{
+  "note": "RUBRIC_SLIM_SPEC batch: old U4 L3, L6, L7-8 (probability, random variables; NEW Unit 2). CB probability FRQs score: the correct probability with supporting work, the interpretation as a long-run relative frequency in context, and a decision justified by the computed value — one point each. Applied with scripts/rubric-slim-apply.mjs. Revised after the Codex review: requested statistical ideas restored under the cap-5 rule; P and I made disjoint (I = neither idea / central idea wrong).",
+  "files": {
+    "ai-grading-prompts-u4-l3.js": {
+      "reflect1": {
+        "required": [
+          "humans-avoid-streaks",
+          "real-random-has-streaks"
+        ],
+        "scoringGuide": {
+          "E": "Explains that people avoid long runs of the same outcome, while truly random sequences contain longer streaks than people expect.",
+          "P": "Gets one side (what humans do, or what random data does) but not the other.",
+          "I": "Describes random as balanced / exactly 50-50, or never mentions streaks."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "independence",
+          "lln-long-run"
+        ],
+        "scoringGuide": {
+          "E": "Explains that each flip is independent, so the coin is not 'due' and the next flip is still 50-50, and that the Law of Large Numbers is about the long-run proportion, not the next single flip.",
+          "P": "Gets independence (the next flip is still 50-50) but misstates or omits the Law of Large Numbers, or explains the long-run law without saying the next flip is still 50-50.",
+          "I": "Says the coin is due / things balance out in the short run, with neither idea right."
+        }
+      },
+      "reflect3": {
+        "required": [
+          "long-run-interpretation",
+          "generalizability"
+        ],
+        "scoringGuide": {
+          "E": "Interprets 20% as: if many albums were randomly selected from the store's sales, about 20% would be jazz in the long run, and explains that this rate can be used for predictions beyond the 2,105 sales a raw count is tied to.",
+          "P": "Gives the long-run interpretation without saying why it is more useful than the count, or says why a rate generalizes without the long-run interpretation.",
+          "I": "Neither idea: says exactly 20% will be jazz, or never connects probability to long-run behavior."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "sample-space",
+          "p-blue-calculation",
+          "p-blue-interpretation",
+          "complement-rule",
+          "expected-green"
+        ],
+        "scoringGuide": {
+          "E": "Sample space {red, blue, green} (or the 20 marbles); P(blue) = 5/20 = 0.25, interpreted as about 25% of many selections being blue in the long run; P(not red) = 1 - 8/20 = 0.60 using the complement; expected green = 100 x 7/20 = 35.",
+          "P": "Four of the five are correct; one is missing or wrong (commonly no long-run interpretation, or 35 stated as a guaranteed count).",
+          "I": "Two or more of the five are missing or wrong."
+        },
+        "mistakes": {
+          "Forgetting to calculate total outcomes (20 marbles)": "Giving P(blue) without the interpretation as a long-run relative frequency"
+        }
+      }
+    },
+    "ai-grading-prompts-u4-l6.js": {
+      "reflect1": {
+        "required": [
+          "independent-def",
+          "mutually-exclusive-def",
+          "cannot-be-both",
+          "reasoning"
+        ],
+        "scoringGuide": {
+          "E": "Defines independent (one event occurring does not change the other's probability) and mutually exclusive (cannot both occur), concludes two events with positive probabilities cannot be both, and gives the reason: if they cannot happen together, one occurring makes the other impossible, which changes its probability (equivalently P(A and B) = 0 but P(A)P(B) > 0).",
+          "P": "Three of the four are correct; commonly the conclusion is asserted with no reason, or one definition is muddled.",
+          "I": "Claims positive-probability events can be both, or fewer than two of the four are correct."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "one-check-sufficient",
+          "equivalent-checks"
+        ],
+        "scoringGuide": {
+          "E": "Says one check is enough because P(A|B) = P(A), P(B|A) = P(B), and P(A and B) = P(A)P(B) are equivalent conditions.",
+          "P": "Says one check is enough but does not name the equivalent conditions, or names the conditions without committing to whether one check suffices.",
+          "I": "Says every condition must be checked, or gives no reasoning about equivalence."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "independence-check",
+          "independence-conclusion",
+          "addition-rule",
+          "correct-calculation"
+        ],
+        "scoringGuide": {
+          "E": "Compares P(A)P(B) = 0.15 with the given P(A and B) = 0.15 and concludes independent; uses P(A or B) = P(A) + P(B) - P(A and B) = 0.65.",
+          "P": "Three of the four are correct; one is missing or wrong (commonly the intersection not subtracted, or the product computed but not compared).",
+          "I": "Two or more of the four are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u4-l7-8.js": {
+      "reflect1": {
+        "required": [
+          "discrete-definition",
+          "continuous-definition",
+          "example-justification"
+        ],
+        "scoringGuide": {
+          "E": "Discrete = countable values with gaps; continuous = any value in an interval; gives an example of each and explains why it fits. The examples need not be original; a correct example with its reason earns the point.",
+          "P": "Both definitions are right but the examples are missing or unexplained, or one definition is muddled.",
+          "I": "Confuses the two types, or gives examples with no definitions."
+        },
+        "mistakes": {
+          "Using examples from the video instead of original ones": "Giving an example of only one type"
+        }
+      },
+      "reflect2": {
+        "required": [
+          "expected-value-calculation",
+          "mean-interpretation",
+          "decision-with-reasoning"
+        ],
+        "scoringGuide": {
+          "E": "E(X) = (1/3)(10000) + (1/3)(1000) + (1/3)(0) = $3,666.67 with the work; interprets it as the long-run average winnings per game; recommends playing because $3,666.67 exceeds the $3,000 fee (expected profit about $667). The 1/3 probabilities are implied by the calculation.",
+          "P": "Two of the three are correct; one is missing (commonly a yes/no with no comparison to $3,000, or no long-run interpretation).",
+          "I": "Fewer than two are correct: e.g. a wrong expected value with a decision that has no reasoning."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "net-profit-values",
+          "probabilities",
+          "expected-value",
+          "fair-game-interpretation"
+        ],
+        "scoringGuide": {
+          "E": "Net profits 8, 1, -2 with probabilities 1/6, 1/6, 4/6; E(X) = (1/6)(8) + (1/6)(1) + (4/6)(-2) = about $0.17; interprets the positive expected value as favoring the player in the long run, so the game is not fair from the carnival's side. A tidy table strengthens the answer.",
+          "P": "Three of the four are correct; one is missing or wrong (commonly gross winnings used instead of net, or P(other) = 1/6).",
+          "I": "Two or more of the four are missing or wrong."
+        }
+      }
+    }
+  }
+}

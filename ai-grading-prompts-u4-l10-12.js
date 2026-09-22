@@ -61,18 +61,18 @@ const REFLECTION_RUBRICS_U4L1012 = {
   "reflect1": {
     questionText: "A meteorologist says there is a 30% chance that a given tropical storm will become a major hurricane. Compare binomial vs geometric: (1) Binomial: probability exactly 4 of 10 storms become major hurricanes; (2) Geometric: probability 3rd storm is first to become major hurricane. State distribution with parameters, set up calculation, explain how you know which distribution to use.",
     expectedElements: [
-      { id: "binomial-identification", description: "Correctly identifies binomial for the first scenario (fixed n, counting successes)", required: true },
+      { id: "binomial-identification", description: "Correctly identifies binomial for the first scenario (fixed n, counting successes)", required: false },
       { id: "binomial-parameters", description: "States binomial parameters: n = 10, p = 0.30", required: true },
       { id: "binomial-setup", description: "Sets up calculation: P(X=4) = C(10,4) · (0.30)^4 · (0.70)^6", required: true },
-      { id: "geometric-identification", description: "Correctly identifies geometric for the second scenario (counting trials to first success)", required: true },
-      { id: "geometric-parameters", description: "States geometric parameter: p = 0.30", required: true },
+      { id: "geometric-identification", description: "Correctly identifies geometric for the second scenario (counting trials to first success)", required: false },
+      { id: "geometric-parameters", description: "States geometric parameter: p = 0.30", required: false },
       { id: "geometric-setup", description: "Sets up calculation: P(X=3) = (0.70)^2 · (0.30)", required: true },
       { id: "distinction-explanation", description: "Explains that both scenarios have binary outcomes, independent trials, and constant p = 0.30; binomial fixes n = 10 and counts successes, while geometric counts trials until the first success", required: true }
     ],
     scoringGuide: {
-      E: "Correctly identifies both distributions with parameters, sets up both formulas, and explains that both use binary outcomes, independent trials, and constant p = 0.30, while binomial fixes n = 10 and geometric counts trials until the first success",
-      P: "Correctly handles one distribution but not the other, OR missing setup for one, OR weak/missing explanation of distinction",
-      I: "Confuses binomial and geometric OR major errors in parameters OR missing critical components of both setups"
+      E: "Binomial with n = 10, p = 0.30 and P(X = 4) = C(10,4)(0.30)^4(0.70)^6; geometric with p = 0.30 and P(X = 3) = (0.70)^2(0.30); explains that both settings have binary outcomes, independent trials, and constant p = 0.30, and that the binomial fixes the number of trials and counts successes while the geometric counts trials until the first success. Naming each distribution is implied by the parameters and setups.",
+      P: "Three of the four are correct; one is missing or wrong (commonly a geometric setup with the exponent on the wrong factor, or no explanation of which distribution applies and why).",
+      I: "Two or more of the four are missing or wrong, or the distributions are swapped."
     },
     commonMistakes: [
       "Using geometric when n is fixed (counting successes out of n trials)",
@@ -89,19 +89,19 @@ const REFLECTION_RUBRICS_U4L1012 = {
   "exitTicket": {
     questionText: "40% of Atlantic hurricanes make landfall in the US. In a season with 8 hurricanes: (a) P(exactly 3 make landfall), (b) expected number that make landfall + interpretation, (c) P(first landfall is 4th hurricane), (d) average hurricanes until first landfall + interpretation.",
     expectedElements: [
-      { id: "part-a-binomial", description: "Part (a): Identifies binomial with n=8, p=0.40", required: true },
+      { id: "part-a-binomial", description: "Part (a): Identifies binomial with n=8, p=0.40", required: false },
       { id: "part-a-calculation", description: "Part (a): P(X=3) = C(8,3) · (0.40)^3 · (0.60)^5 ≈ 0.279", required: true },
       { id: "part-b-mean", description: "Part (b): μ = np = 8(0.40) = 3.2 hurricanes", required: true },
       { id: "part-b-interpretation", description: "Part (b): Interprets as 'on average' or 'in the long run' over many seasons", required: true },
-      { id: "part-c-geometric", description: "Part (c): Identifies geometric with p=0.40", required: true },
+      { id: "part-c-geometric", description: "Part (c): Identifies geometric with p=0.40", required: false },
       { id: "part-c-calculation", description: "Part (c): P(X=4) = (0.60)^3 · (0.40) ≈ 0.0864", required: true },
       { id: "part-d-mean", description: "Part (d): μ = 1/p = 1/0.40 = 2.5 hurricanes", required: true },
-      { id: "part-d-interpretation", description: "Part (d): Over many such sequences, the first landfall occurs on about the 2.5th hurricane on average, counting the hurricane that makes landfall", required: true }
+      { id: "part-d-interpretation", description: "Part (d): Over many such sequences, the first landfall occurs on about the 2.5th hurricane on average, counting the hurricane that makes landfall", required: false }
     ],
     scoringGuide: {
-      E: "All four parts are substantially correct with appropriate calculations and interpretations",
-      P: "Two or three parts are substantially correct, or all four are attempted with limited calculation or interpretation errors",
-      I: "Fewer than two parts are substantially correct or the response shows a fundamental inability to distinguish binomial from geometric settings"
+      E: "(a) C(8,3)(0.40)^3(0.60)^5 = about 0.279; (b) mean np = 8(0.40) = 3.2, interpreted as the average number making landfall over many seasons; (c) (0.60)^3(0.40) = about 0.086; (d) mean 1/p = 1/0.40 = 2.5 hurricanes until the first landfall, on average. Each calculation shows its setup; interpreting (d) in context strengthens the answer.",
+      P: "Four of the five are correct; one is missing or wrong (commonly the geometric exponent off by one, or a mean given with no interpretation in (b)).",
+      I: "Two or more of the five are missing or wrong, or the two distributions are swapped."
     },
     commonMistakes: [
       "Using geometric for part (a) or binomial for part (c)",
@@ -166,8 +166,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

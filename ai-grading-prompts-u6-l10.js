@@ -66,13 +66,13 @@ window.RUBRICS_U6L10 = {
             { id: "null-equality", description: "States the null hypothesis as p1 = p2 or p1 - p2 = 0", required: true },
             { id: "alternative-direction", description: "States the alternative as p1 > p2 or p1 - p2 > 0", required: true },
             { id: "one-sided-justification", description: "Explains that one-sided is used because the question asks whether azithromycin is more effective", required: true },
-            { id: "parameter-language", description: "Uses population-parameter language rather than just sample outcomes", required: true },
+            { id: "parameter-language", description: "Uses population-parameter language rather than just sample outcomes", required: false },
             { id: "no-sample-statistics", description: "Avoids writing hypotheses with sample statistics such as p-hat", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly defines parameters, states correct null and one-sided alternative hypotheses, and explains why the direction is greater than",
-            P: "Response has the main structure but is incomplete or vague about parameter definitions, direction, or one-sided reasoning",
-            I: "Response gives incorrect hypotheses, reverses the direction, or fails to connect hypotheses to the study question"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using p-hat symbols instead of population parameters",
@@ -95,9 +95,9 @@ window.RUBRICS_U6L10 = {
             { id: "equivalent-forms", description: "May show both equivalent forms (comparison form and difference-equals-zero form)", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly gives two-sided hypotheses with clear parameter definitions and explains why parameter form is required",
-            P: "Response gets most components correct but misses context, direction explanation, or parameter-versus-statistic distinction",
-            I: "Response uses incorrect hypothesis structure, wrong direction, or does not justify why a two-sided alternative is appropriate"
+            E: "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a one-sided alternative even though the question asks for a difference",
@@ -122,9 +122,9 @@ window.RUBRICS_U6L10 = {
             { id: "parameter-focus", description: "Keeps hypotheses in terms of parameters rather than sample statistics", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly states hypotheses and procedure, computes pooled proportion and expected counts accurately, and clearly concludes that conditions are met",
-            P: "Response includes most major parts but has minor errors or omissions in calculations, condition checks, or hypothesis detail",
-            I: "Response has major errors in hypotheses, procedure identification, or condition verification, or omits required components"
+            E: "All 7 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a two-sided alternative when the claim is that App A is higher",
@@ -181,8 +181,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

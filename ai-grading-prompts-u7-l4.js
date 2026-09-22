@@ -70,20 +70,20 @@ window.RUBRICS_U7L4 = {
         questionText: "Using the Got Hops and Tread40 tire examples, explain how to state the null and alternative hypotheses for a test about a population mean. Include why the null uses equality, why the alternative uses an inequality, how the question determines whether the test is one-sided or two-sided, and what mu means in each context.",
         expectedElements: [
             { id: "got-hops-parameter", description: "Defines mu for Got Hops as the mean vertical jump for all students at the high school", required: true },
-            { id: "got-hops-null", description: "States the Got Hops null hypothesis as H0: mu = 15 inches", required: true },
+            { id: "got-hops-null", description: "States the Got Hops null hypothesis as H0: mu = 15 inches", required: false },
             { id: "got-hops-alt", description: "States the Got Hops alternative hypothesis as Ha: mu != 15 inches because the question asks whether the mean differs from 15", required: true },
             { id: "null-equality", description: "Explains that the null hypothesis uses equality and represents no difference or no change", required: true },
             { id: "alt-inequality", description: "Explains that the alternative hypothesis uses a strict inequality and represents the claim the data are meant to support", required: true },
-            { id: "two-sided", description: "Identifies the Got Hops test as two-sided because the question asks whether the mean differs", required: true },
+            { id: "two-sided", description: "Identifies the Got Hops test as two-sided because the question asks whether the mean differs", required: false },
             { id: "tread40-parameter", description: "Defines mu for Tread40 as the mean mileage for all Tread40 tires", required: true },
             { id: "tread40-hypotheses", description: "States H0: mu = 40000 and Ha: mu > 40000 for the tire example", required: true },
-            { id: "one-sided", description: "Explains that the tire test is one-sided because the question asks whether the mean is more than 40000 miles", required: true },
+            { id: "one-sided", description: "Explains that the tire test is one-sided because the question asks whether the mean is more than 40000 miles", required: false },
             { id: "no-xbar", description: "May note that hypotheses should use mu rather than x-bar", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly states and explains the null and alternative hypotheses for both examples, including parameter definitions and one-sided versus two-sided logic",
-            P: "Response shows the main hypothesis structure but omits part of one example, weakly explains the sidedness, or leaves out parameter context",
-            I: "Response misstates the hypotheses, uses sample statistics in place of mu, or confuses when to use one-sided versus two-sided alternatives"
+            E: "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Writing x-bar instead of mu in the hypotheses",
@@ -99,18 +99,18 @@ window.RUBRICS_U7L4 = {
         questionText: "Explain how to identify the correct procedure and check the conditions for a significance test for a population mean. Use the vertical jump example and the tablet example to show the difference between a situation where the conditions are met and one where they are not.",
         expectedElements: [
             { id: "procedure", description: "Identifies the correct procedure as a one-sample t-test for a population mean", required: true },
-            { id: "why-procedure", description: "Explains that this procedure is used when testing a claim about one population mean from one sample of quantitative data", required: true },
-            { id: "random-condition", description: "States that the data should come from a random sample or randomized experiment", required: true },
-            { id: "ten-percent", description: "States that if sampling without replacement, the sample size should be less than 10% of the population", required: true },
+            { id: "why-procedure", description: "Explains that this procedure is used when testing a claim about one population mean from one sample of quantitative data", required: false },
+            { id: "random-condition", description: "States that the data should come from a random sample or randomized experiment", required: false },
+            { id: "ten-percent", description: "States that if sampling without replacement, the sample size should be less than 10% of the population", required: false },
             { id: "shape-condition", description: "States that either n is at least 30 or, if n is smaller, the sample data should show no strong skewness or outliers", required: true },
-            { id: "graph-needed", description: "Explains that when n is less than 30, a graph of the sample data should be shown as evidence", required: true },
+            { id: "graph-needed", description: "Explains that when n is less than 30, a graph of the sample data should be shown as evidence", required: false },
             { id: "jump-example", description: "Uses the vertical jump example to say the conditions were met because the sample was random, 20 is less than 10% of the school, and the graph showed no strong skewness or outliers", required: true },
             { id: "tablet-example", description: "Uses the tablet example to say the conditions were not met because there was no random sample and the dotplot showed strong skewness with a potential outlier", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly identifies the one-sample t-test and clearly explains the conditions, using both examples accurately to contrast met versus unmet conditions",
-            P: "Response gets the basic procedure and most conditions right but leaves out an important condition or does not fully explain one of the examples",
-            I: "Response names the wrong procedure, gives incorrect conditions, or fails to distinguish the valid and invalid examples"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Naming a z-test instead of a one-sample t-test",
@@ -136,9 +136,9 @@ window.RUBRICS_U7L4 = {
             { id: "no-xbar", description: "Explains that x-bar should not appear because hypotheses are about the population parameter mu, not the sample statistic", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly sets up the full test for the tire example, including hypotheses, procedure, conditions, sidedness, and the parameter-versus-statistic distinction",
-            P: "Response includes most of the correct setup but misses one important detail or gives only a partial explanation of the conditions or sidedness",
-            I: "Response gives incorrect hypotheses, names the wrong procedure, or misunderstands why the test is one-sided and why mu should be used"
+            E: "All 9 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using Ha: mu != 40000 instead of Ha: mu > 40000",
@@ -195,8 +195,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

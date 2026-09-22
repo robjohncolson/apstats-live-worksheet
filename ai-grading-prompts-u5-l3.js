@@ -45,14 +45,14 @@ window.RUBRICS_U5L3 = {
             { id: "why-amazing", description: "Explains why it's 'amazing' - no matter what the population looks like, we get normal sampling distribution with large n", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly explains CLT (sampling distribution of means is approximately normal with large n), mentions it works regardless of population shape, explains why sample size matters, and ideally references simulation examples",
-            P: "Response shows partial understanding - mentions normality or sample size but misses key components like 'regardless of population shape' or gets direction of effect wrong",
-            I: "Response shows fundamental misunderstanding, confuses sampling distribution with population distribution, or provides no relevant explanation"
+            E: "States that the sampling distribution of the sample mean becomes approximately normal for large enough n, that this holds regardless of the population's shape, and that larger n makes it closer to normal (and less variable). Simulation examples strengthen the answer.",
+            P: "Two of the three are there; one is missing (commonly: no 'regardless of population shape').",
+            I: "Confuses the population distribution with the sampling distribution, or says the CLT needs a normal population."
         },
         commonMistakes: [
             "Confusing the population distribution with the sampling distribution",
             "Thinking CLT only works for normal populations",
-            "Not understanding that it's about the distribution of SAMPLE MEANS, not individual values",
+            "Describing the distribution of individual values instead of the distribution of sample means",
             "Thinking larger samples have MORE variability (opposite is true)"
         ],
         contextFromVideo: "The video shows that even an extreme U-shaped population (opposite of normal) produces an approximately normal sampling distribution when n is large enough. The presenter calls CLT 'amazing' because it works 'no matter what the population looks like.'"
@@ -68,9 +68,9 @@ window.RUBRICS_U5L3 = {
             { id: "context", description: "Uses context of melatonin/sleep hours in explanation", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets 0.012 as meaning only 12/1000 random reallocations produced such an extreme difference, explains this provides evidence melatonin works because the result is unlikely by chance, and correctly contrasts with what a larger probability would mean",
-            P: "Response shows partial understanding - correctly interprets probability OR provides evidence reasoning, but not both, or misses the contrast with larger probability",
-            I: "Response shows fundamental misunderstanding, interprets probability incorrectly, or provides no meaningful connection to evidence for effectiveness"
+            E: "Interprets 0.012 as: if melatonin had no effect, only about 1.2% of random reallocations would give a difference of at least 1.69 hours; that small chance makes 'chance alone' an unlikely explanation, so it is evidence melatonin works; and 0.30 would mean such a difference is common under chance and gives no convincing evidence.",
+            P: "Three of the four are there; commonly the contrast with 0.30 is missing, or the interpretation is qualitative ('rare') without the at-least-1.69-hours frequency.",
+            I: "Two or more are missing, or 0.012 is read as the probability melatonin works, or a larger probability is read as stronger evidence."
         },
         commonMistakes: [
             "Thinking 0.012 is the probability melatonin works (it's not - it's probability of observing result if it doesn't work)",
@@ -91,9 +91,9 @@ window.RUBRICS_U5L3 = {
             { id: "reasoning", description: "Shows clear reasoning connecting small probability to evidence for effectiveness", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly calculates difference (2.3 cm), probability (0.025), interprets probability in context (only 2.5% of random reallocations...), and draws appropriate conclusion with reasoning (unlikely by chance, evidence fertilizer works)",
-            P: "Response gets calculations correct but interpretation or conclusion is incomplete or unclear; OR has minor calculation errors but shows correct reasoning",
-            I: "Response has major calculation errors, misinterprets probability, or draws incorrect conclusion"
+            E: "Difference 8.5 - 6.2 = 2.3 cm; 25/1000 = 0.025; interpreted as how often random reassignment alone gives a difference at least this large; concludes there is evidence the fertilizer increases growth because that is unlikely by chance (not proof).",
+            P: "Three of the four are correct; one is missing or wrong (commonly a conclusion stated as certainty, or no interpretation of 0.025).",
+            I: "Two or more of the four are missing or wrong."
         },
         commonMistakes: [
             "Subtracting in wrong order (6.2 - 8.5)",
@@ -149,8 +149,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

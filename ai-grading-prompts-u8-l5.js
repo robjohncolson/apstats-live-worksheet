@@ -68,19 +68,19 @@ window.RUBRICS_U8L5 = {
     reflect1: {
         questionText: 'Explain how you decide whether a two-way table calls for a chi-square test for homogeneity or a chi-square test for independence. Include comparing distributions across multiple populations or treatments, independent random samples or a randomized experiment, one single random sample, association between two categorical variables, the school example as homogeneity, and the employment example as independence.',
         expectedElements: [
-            { id: 'goal-matters', description: 'Explains that the choice of test depends on the goal of the study and how the data were collected', required: true },
+            { id: 'goal-matters', description: 'Explains that the choice of test depends on the goal of the study and how the data were collected', required: false },
             { id: 'homogeneity-purpose', description: 'States that homogeneity is used to compare distributions of one categorical variable across multiple populations or treatment groups', required: true },
             { id: 'homogeneity-collection', description: 'States that homogeneity uses independent random samples from each population or multiple groups in a randomized experiment', required: true },
             { id: 'independence-purpose', description: 'States that independence is used to decide whether two categorical variables are associated', required: true },
             { id: 'independence-collection', description: 'States that independence uses one random sample and measures both variables on each individual', required: true },
-            { id: 'school-example', description: 'Identifies the school-type-by-year example as a chi-square test for homogeneity because there were separate random samples from 2019 and 2020', required: true },
-            { id: 'employment-example', description: 'Identifies the education-level-by-employment example as a chi-square test for independence because one random sample of 2000 adults was used', required: true },
+            { id: 'school-example', description: 'Identifies the school-type-by-year example as a chi-square test for homogeneity because there were separate random samples from 2019 and 2020', required: false },
+            { id: 'employment-example', description: 'Identifies the education-level-by-employment example as a chi-square test for independence because one random sample of 2000 adults was used', required: false },
             { id: 'two-way-table', description: 'May mention that both situations are summarized in a two-way table of categorical data', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly distinguishes homogeneity from independence using both the study goal and the data-collection method, and correctly applies each test to the school and employment examples.',
-            P: 'Response gives the main difference between the two tests but misses one major part such as the data-collection method or one of the two examples.',
-            I: 'Response confuses the two chi-square tests, describes the wrong goal or sampling method, or misclassifies the lesson examples.'
+            E: 'All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Choosing homogeneity just because there are two variables instead of because distributions are compared across populations or groups',
@@ -97,7 +97,7 @@ window.RUBRICS_U8L5 = {
         expectedElements: [
             { id: 'homogeneity-hypotheses', description: 'States that for homogeneity the null says no difference in distributions and the alternative says there is a difference in distributions', required: true },
             { id: 'independence-hypotheses', description: 'States that for independence the null says no association or that the variables are independent, and the alternative says there is an association or that the variables are not independent', required: true },
-            { id: 'no-parameter', description: 'Explains that these chi-square hypotheses do not define a single numerical parameter', required: true },
+            { id: 'no-parameter', description: 'Explains that these chi-square hypotheses do not define a single numerical parameter', required: false },
             { id: 'many-sided', description: 'Explains that the homogeneity alternative is many-sided because several category proportions could be higher or lower', required: false },
             { id: 'design-condition', description: 'States that homogeneity uses independent random samples from the populations or groups, or multiple groups from a randomized experiment, while independence uses one random sample', required: true },
             { id: 'ten-percent', description: 'States the 10% condition when sampling without replacement', required: true },
@@ -107,9 +107,9 @@ window.RUBRICS_U8L5 = {
             { id: 'conditions-met', description: 'May explicitly conclude that the conditions are met in both lesson examples', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly states the hypothesis language for both chi-square tests and clearly explains the full set of conditions, including the 10% rule and checking expected counts at least 5.',
-            P: 'Response shows the general hypothesis and condition ideas but misses one major element such as the no-parameter point, the many-sided explanation, or one of the three conditions.',
-            I: 'Response gives incorrect hypothesis language, confuses observed and expected counts, or does not explain the chi-square conditions accurately.'
+            E: 'All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Writing hypotheses about a single proportion or mean instead of about distributions or association',
@@ -134,9 +134,9 @@ window.RUBRICS_U8L5 = {
             { id: 'expected-not-observed', description: 'Explains that expected counts are checked because the chi-square approximation is evaluated under the null model, which determines the expected counts', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies and justifies both procedures, states both contextual hypothesis pairs, and accurately explains all three conditions including why expected counts are checked.',
-            P: 'Response correctly handles most of the two setups but omits or weakly explains one procedure, hypothesis pair, or condition idea.',
-            I: 'Response substantially confuses homogeneity with independence and does not provide usable hypotheses or conditions.'
+            E: 'All 8 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.',
+            P: 'Exactly one key element is missing or wrong; the rest are correct.',
+            I: 'Two or more key elements are missing or wrong.'
         },
         commonMistakes: [
             'Calling the school study independence instead of homogeneity',
@@ -193,8 +193,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

@@ -1,0 +1,167 @@
+{
+  "note": "RUBRIC_SLIM_SPEC batch: old U6 L4-7 (one-proportion z test: hypotheses, conditions, p-value meaning, conclusions, errors and power; NEW Unit 3). CB significance-test scoring: (1) hypotheses with the parameter defined in context, (2) procedure named + conditions checked, (3) mechanics: test statistic and p-value, (4) conclusion: compare p to alpha, decision, in context of Ha. A p-value interpretation earns its point only with 'assuming H0 true', 'as extreme or more extreme', and context — those are one idea, not three. Applied with scripts/rubric-slim-apply.mjs. Revised after the Codex review of new U3/U4 (DO NOT SHIP -> fixed): a full inference procedure requires the ids that compose College Board's four compound points (hypotheses incl. parameter, procedure + every condition, mechanics with work, decision + justification in context) even when that is 6-8 ids; explicitly requested interpretations and reasons restored; E/P/I made uniform and disjoint (all / all-but-one / two-or-more).",
+  "files": {
+    "ai-grading-prompts-u6-l4.js": {
+      "reflect1": {
+        "required": [
+          "define-parameter",
+          "null-hypothesis",
+          "alternative-hypothesis",
+          "one-sided-reasoning"
+        ],
+        "scoringGuide": {
+          "E": "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "identify-procedure",
+          "random-condition",
+          "large-counts",
+          "use-p-zero",
+          "ten-percent-condition"
+        ],
+        "scoringGuide": {
+          "E": "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "define-parameter",
+          "state-hypotheses",
+          "identify-procedure",
+          "check-large-counts",
+          "proceed-and-parameter"
+        ],
+        "scoringGuide": {
+          "E": "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u6-l5.js": {
+      "reflect1": {
+        "required": [
+          "identifies-error",
+          "correct-interpretation"
+        ],
+        "scoringGuide": {
+          "E": "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "identifies-football-stronger",
+          "smaller-pvalue-stronger"
+        ],
+        "scoringGuide": {
+          "E": "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "correct-z-calculation",
+          "uses-p0-not-phat",
+          "correct-pvalue",
+          "correct-interpretation"
+        ],
+        "scoringGuide": {
+          "E": "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u6-l6.js": {
+      "reflect1": {
+        "required": [
+          "error-accept-h0",
+          "error-h0-true",
+          "correct-decision",
+          "explicit-comparison"
+        ],
+        "scoringGuide": {
+          "E": "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "fail-to-reject-meaning",
+          "not-proof"
+        ],
+        "scoringGuide": {
+          "E": "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "correct-hypotheses",
+          "explicit-comparison-05",
+          "conclusion-in-context",
+          "alpha-20-changes",
+          "defines-parameter"
+        ],
+        "scoringGuide": {
+          "E": "All 5 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u6-l7.js": {
+      "reflect1": {
+        "required": [
+          "type1-context",
+          "type2-context",
+          "consequential-choice"
+        ],
+        "scoringGuide": {
+          "E": "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "power-meaning",
+          "beta-value",
+          "increase-power"
+        ],
+        "scoringGuide": {
+          "E": "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "correct-hypotheses",
+          "type1-context",
+          "type2-context",
+          "power-interpretation",
+          "two-power-factors",
+          "type1-probability",
+          "type2-probability"
+        ],
+        "scoringGuide": {
+          "E": "All 7 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+          "P": "Exactly one key element is missing or wrong; the rest are correct.",
+          "I": "Two or more key elements are missing or wrong."
+        }
+      }
+    }
+  }
+}

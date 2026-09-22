@@ -1,0 +1,119 @@
+{
+  "note": "RUBRIC_SLIM_SPEC batch: old U2 L1-3 (two categorical variables; NEW Unit 2). Two-way-table FRQs in CB scoring: a computed conditional distribution with the right denominator, and an association conclusion justified by comparing conditional distributions, one point each. Applied with scripts/rubric-slim-apply.mjs. Revised after the Codex review: requested statistical ideas restored under the cap-5 rule; P and I made disjoint (I = neither idea / central idea wrong).",
+  "files": {
+    "ai-grading-prompts-u2-l1.js": {
+      "reflect1": {
+        "required": [
+          "categorical-tools",
+          "quantitative-tools"
+        ],
+        "scoringGuide": {
+          "E": "Says two categorical variables call for a two-way table / conditional relative frequencies with a segmented bar graph or mosaic plot, and two quantitative variables call for a scatterplot with numerical summaries such as correlation and a fitted line. Saying you identify the type first is implied.",
+          "P": "Gets the tools for one variable type but not the other (missing or incomplete), or names graphs with no numerical summaries.",
+          "I": "Gets neither variable type's tools right, or does not connect variable type to the choice at all."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "random-variation",
+          "not-automatic-proof"
+        ],
+        "scoringGuide": {
+          "E": "Explains that a visible pattern can arise from random variation / chance, so a pattern by itself does not prove a real relationship. Mentioning that graphs and summaries are used to investigate further strengthens the answer.",
+          "P": "Mentions chance or random variation but never draws the conclusion that a pattern is not proof.",
+          "I": "Claims a pattern proves the variables are related, or never mentions chance or random variation at all."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "study-a-types",
+          "study-a-tools",
+          "study-b-tools",
+          "pattern-study-a",
+          "random-variation"
+        ],
+        "scoringGuide": {
+          "E": "Study A: both variables categorical, shown with a segmented bar graph or mosaic plot and conditional relative frequencies, with a pattern such as clearly different conditional distributions across grades. Study B: both quantitative (implied by the tools), a scatterplot with correlation and a fitted line, with a pattern such as points trending up. Explains that either pattern could still be random variation.",
+          "P": "Four of the five are correct; one is missing or wrong.",
+          "I": "Two or more of the five are missing or wrong, or the tools are swapped between studies."
+        }
+      }
+    },
+    "ai-grading-prompts-u2-l2.js": {
+      "reflect1": {
+        "required": [
+          "within-group-percent",
+          "fair-comparison"
+        ],
+        "scoringGuide": {
+          "E": "Explains that dividing by the column total turns counts into percents within each age group, which makes the comparison fair because the groups have different sizes. Comparing distributions rather than counts is the same idea.",
+          "P": "Says it gives percents but not why (different group sizes), or the reverse.",
+          "I": "Compares raw counts, or gives no reason for the division."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "compare-distributions",
+          "not-same-means-association"
+        ],
+        "scoringGuide": {
+          "E": "Explains that you compare the conditional distributions for the groups, and if they differ the variables are associated (if the segments line up, they are not).",
+          "P": "Says to compare the bars without stating what a difference means, or states the association rule without saying what is being compared.",
+          "I": "Bases association on group sizes or raw counts, or describes correlation instead."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "identify-variables",
+          "ninth-grade-distribution",
+          "eleventh-grade-distribution",
+          "association-conclusion",
+          "mosaic-advantage"
+        ],
+        "scoringGuide": {
+          "E": "Variables: grade level and sport participation, both categorical; 9th grade 60% / 40%, 11th grade 28% / 72% (grade-level totals as denominators); concludes the variables are associated because the conditional distributions differ; a mosaic plot also shows group sizes by bar width. Explaining 'two-way' strengthens the answer.",
+          "P": "Four of the five are correct; one is missing or wrong (commonly the grand total used as the denominator).",
+          "I": "Two or more of the five are missing or wrong, or association is concluded from the totals alone."
+        }
+      }
+    },
+    "ai-grading-prompts-u2-l3.js": {
+      "reflect1": {
+        "required": [
+          "marginal-definition",
+          "conditional-definition"
+        ],
+        "scoringGuide": {
+          "E": "Marginal: a row or column total over the table total (an overall proportion). Conditional: a cell over its row or column total (a proportion within a group). The overall-vs-within-group contrast is carried by those two definitions.",
+          "P": "One of the two is defined correctly; the other is missing or muddled.",
+          "I": "Neither is defined correctly (e.g. the table total used for both), or they are treated as the same thing."
+        }
+      },
+      "reflect2": {
+        "required": [
+          "within-group-distributions",
+          "different-means-association"
+        ],
+        "scoringGuide": {
+          "E": "Explains that conditional relative frequencies give the distribution within each group so the groups can be compared, and that different conditional distributions mean the variables are associated.",
+          "P": "Says they show within-group distributions without the association rule, or states the rule without saying what is compared.",
+          "I": "Uses marginal frequencies or raw counts to decide association."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "identify-variables",
+          "joint-relative-frequency",
+          "marginal-relative-frequency",
+          "conditional-eleventh",
+          "association-conclusion"
+        ],
+        "scoringGuide": {
+          "E": "Variables: grade level and preferred study style, both categorical; joint (11th grade and group) = 30/100 = 0.30; marginal (10th grade) = 30/100 = 0.30; 11th-grade conditional 25% alone / 75% group (grade total as denominator); concludes association because the conditional distributions differ across grades. The 9th-grade distribution and 'two-way' explanation strengthen the answer.",
+          "P": "Four of the five are correct; one is missing or wrong (commonly a wrong denominator).",
+          "I": "Two or more of the five are missing or wrong, or association is concluded from totals alone."
+        }
+      }
+    }
+  }
+}

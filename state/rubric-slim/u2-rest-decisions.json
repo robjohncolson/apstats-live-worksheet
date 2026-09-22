@@ -1,0 +1,121 @@
+{
+  "note": "RUBRIC_SLIM_SPEC batch: old U4 L10-12, old U5 L1-2, old U5 L3 (binomial/geometric, normal calculations, sampling variability, simulation p-values; NEW Unit 2). CB scores: distribution named with parameters, the probability with supporting work, interpretation in context, and a conclusion tied to the computed value. Applied with scripts/rubric-slim-apply.mjs. Revised after the Codex review: requested statistical ideas restored under the cap-5 rule; P and I made disjoint (I = neither idea / central idea wrong).",
+  "files": {
+    "ai-grading-prompts-u4-l10-12.js": {
+      "reflect1": {
+        "required": [
+          "binomial-parameters",
+          "binomial-setup",
+          "geometric-setup",
+          "distinction-explanation"
+        ],
+        "scoringGuide": {
+          "E": "Binomial with n = 10, p = 0.30 and P(X = 4) = C(10,4)(0.30)^4(0.70)^6; geometric with p = 0.30 and P(X = 3) = (0.70)^2(0.30); explains that both settings have binary outcomes, independent trials, and constant p = 0.30, and that the binomial fixes the number of trials and counts successes while the geometric counts trials until the first success. Naming each distribution is implied by the parameters and setups.",
+          "P": "Three of the four are correct; one is missing or wrong (commonly a geometric setup with the exponent on the wrong factor, or no explanation of which distribution applies and why).",
+          "I": "Two or more of the four are missing or wrong, or the distributions are swapped."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "part-a-calculation",
+          "part-b-mean",
+          "part-b-interpretation",
+          "part-c-calculation",
+          "part-d-mean"
+        ],
+        "scoringGuide": {
+          "E": "(a) C(8,3)(0.40)^3(0.60)^5 = about 0.279; (b) mean np = 8(0.40) = 3.2, interpreted as the average number making landfall over many seasons; (c) (0.60)^3(0.40) = about 0.086; (d) mean 1/p = 1/0.40 = 2.5 hurricanes until the first landfall, on average. Each calculation shows its setup; interpreting (d) in context strengthens the answer.",
+          "P": "Four of the five are correct; one is missing or wrong (commonly the geometric exponent off by one, or a mean given with no interpretation in (b)).",
+          "I": "Two or more of the five are missing or wrong, or the two distributions are swapped."
+        }
+      }
+    },
+    "ai-grading-prompts-u5-l1-2.js": {
+      "reflect1": {
+        "required": [
+          "define-variability",
+          "single-sample-limitation"
+        ],
+        "scoringGuide": {
+          "E": "Defines sampling variability as the natural variation in a statistic from sample to sample of the same population, and explains that one sample's statistic could be far from the truth, so it cannot be trusted alone. Any correct example counts; a lesson example is not required.",
+          "P": "Defines the sample-to-sample variation but does not explain why one sample is not enough, or explains the single-sample problem without defining what varies.",
+          "I": "Neither idea is present, or sampling variability is confused with measurement error."
+        },
+        "mistakes": {
+          "Not connecting to a specific example from the lesson": "Saying only that larger samples are better without saying what varies"
+        }
+      },
+      "reflect2": {
+        "required": [
+          "z-score-work",
+          "probability-calc",
+          "interpretation"
+        ],
+        "scoringGuide": {
+          "E": "z = (4.8 - 5.0)/0.1 = -2 and z = (5.2 - 5.0)/0.1 = 2; P(rejected) = both tails = about 0.0456; interpreted as about 4.6% of bolts rejected. Defining X strengthens the answer.",
+          "P": "Two of the three are correct; commonly only one tail is counted, or the number is left uninterpreted, or the probability is right but no z-score work is shown.",
+          "I": "Fewer than two are correct (e.g. the between-probability reported as the rejection probability with no work and no interpretation)."
+        },
+        "mistakes": {
+          "Not defining the random variable": "Reporting a probability with no in-context interpretation"
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "part-a-zscore",
+          "part-b-sd",
+          "part-c-setup",
+          "part-c-probability"
+        ],
+        "scoringGuide": {
+          "E": "(a) z = -1.67, P about 0.0475; (b) SD of X - Y = sqrt(0.3^2 + 0.2^2) = about 0.361 (variances add; the mean 0.5 is implied by the part (c) setup); (c) recognizes Y > X means X - Y < 0, z = (0 - 0.5)/0.361 = about -1.39, P about 0.08.",
+          "P": "Three of the four are correct; one is missing or wrong (commonly SDs subtracted, or the square root forgotten).",
+          "I": "Two or more of the four are missing or wrong."
+        }
+      }
+    },
+    "ai-grading-prompts-u5-l3.js": {
+      "reflect1": {
+        "required": [
+          "clt-definition",
+          "regardless-population",
+          "sample-size-matters"
+        ],
+        "scoringGuide": {
+          "E": "States that the sampling distribution of the sample mean becomes approximately normal for large enough n, that this holds regardless of the population's shape, and that larger n makes it closer to normal (and less variable). Simulation examples strengthen the answer.",
+          "P": "Two of the three are there; one is missing (commonly: no 'regardless of population shape').",
+          "I": "Confuses the population distribution with the sampling distribution, or says the CLT needs a normal population."
+        },
+        "mistakes": {
+          "Not understanding that it's about the distribution of SAMPLE MEANS, not individual values": "Describing the distribution of individual values instead of the distribution of sample means"
+        }
+      },
+      "reflect2": {
+        "required": [
+          "probability-meaning",
+          "chance-alone-interpretation",
+          "evidence-for-effect",
+          "larger-probability-contrast"
+        ],
+        "scoringGuide": {
+          "E": "Interprets 0.012 as: if melatonin had no effect, only about 1.2% of random reallocations would give a difference of at least 1.69 hours; that small chance makes 'chance alone' an unlikely explanation, so it is evidence melatonin works; and 0.30 would mean such a difference is common under chance and gives no convincing evidence.",
+          "P": "Three of the four are there; commonly the contrast with 0.30 is missing, or the interpretation is qualitative ('rare') without the at-least-1.69-hours frequency.",
+          "I": "Two or more are missing, or 0.012 is read as the probability melatonin works, or a larger probability is read as stronger evidence."
+        }
+      },
+      "exitTicket": {
+        "required": [
+          "difference-calculation",
+          "probability-calculation",
+          "probability-interpretation",
+          "conclusion"
+        ],
+        "scoringGuide": {
+          "E": "Difference 8.5 - 6.2 = 2.3 cm; 25/1000 = 0.025; interpreted as how often random reassignment alone gives a difference at least this large; concludes there is evidence the fertilizer increases growth because that is unlikely by chance (not proof).",
+          "P": "Three of the four are correct; one is missing or wrong (commonly a conclusion stated as certainty, or no interpretation of 0.025).",
+          "I": "Two or more of the four are missing or wrong."
+        }
+      }
+    }
+  }
+}

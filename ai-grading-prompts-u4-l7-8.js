@@ -59,17 +59,17 @@ const REFLECTION_RUBRICS_U4L78 = {
     expectedElements: [
       { id: "discrete-definition", description: "Discrete = countable values with gaps/spaces between them", required: true },
       { id: "continuous-definition", description: "Continuous = infinite values in an interval (no gaps)", required: true },
-      { id: "discrete-example", description: "Provides a valid original example of a discrete random variable", required: true },
-      { id: "continuous-example", description: "Provides a valid original example of a continuous random variable", required: true },
+      { id: "discrete-example", description: "Provides a valid original example of a discrete random variable", required: false },
+      { id: "continuous-example", description: "Provides a valid original example of a continuous random variable", required: false },
       { id: "example-justification", description: "Explains why the discrete example has countable separated values and why the continuous example can take any value in an interval", required: true }
     ],
     scoringGuide: {
-      E: "Correctly defines both types AND gives valid original examples with reasonable justification",
-      P: "Defines both types OR gives correct examples, but missing one component or explanation is weak",
-      I: "Confuses discrete and continuous OR gives invalid/copied examples OR missing definitions"
+      E: "Discrete = countable values with gaps; continuous = any value in an interval; gives an example of each and explains why it fits. The examples need not be original; a correct example with its reason earns the point.",
+      P: "Both definitions are right but the examples are missing or unexplained, or one definition is muddled.",
+      I: "Confuses the two types, or gives examples with no definitions."
     },
     commonMistakes: [
-      "Using examples from the video instead of original ones",
+      "Giving an example of only one type",
       "Confusing 'countable' with 'finite' (discrete can be infinite but countable)",
       "Saying continuous means 'any number' without mentioning 'in an interval'",
       "Giving examples without explaining why they fit the category"
@@ -81,16 +81,16 @@ const REFLECTION_RUBRICS_U4L78 = {
   "reflect2": {
     questionText: "A game show offers a contestant three doors. Behind one door is $10,000, behind another is $1,000, and behind the third is $0. The contestant picks randomly. Calculate the expected winnings and explain what this value means. Would you recommend playing if there's a $3,000 entry fee?",
     expectedElements: [
-      { id: "probability-distribution", description: "Sets up correct probabilities (1/3 for each outcome)", required: true },
+      { id: "probability-distribution", description: "Sets up correct probabilities (1/3 for each outcome)", required: false },
       { id: "expected-value-calculation", description: "Correctly calculates E(X) = (1/3)(10000) + (1/3)(1000) + (1/3)(0) = $3,666.67", required: true },
       { id: "mean-interpretation", description: "Interprets expected value as long-run average over many games", required: true },
       { id: "decision-with-reasoning", description: "Makes recommendation based on comparing expected value ($3,666.67) to cost ($3,000)", required: true },
       { id: "expected-profit", description: "Correctly identifies expected profit is $666.67 (winnings minus fee)", required: false }
     ],
     scoringGuide: {
-      E: "Correct calculation ($3,666.67), interprets as long-run average, makes logical recommendation with reasoning",
-      P: "Calculation correct but interpretation weak OR good interpretation but calculation error OR recommendation without clear reasoning",
-      I: "Major calculation error OR misunderstands what expected value represents OR no logical decision-making"
+      E: "E(X) = (1/3)(10000) + (1/3)(1000) + (1/3)(0) = $3,666.67 with the work; interprets it as the long-run average winnings per game; recommends playing because $3,666.67 exceeds the $3,000 fee (expected profit about $667). The 1/3 probabilities are implied by the calculation.",
+      P: "Two of the three are correct; one is missing (commonly a yes/no with no comparison to $3,000, or no long-run interpretation).",
+      I: "Fewer than two are correct: e.g. a wrong expected value with a decision that has no reasoning."
     },
     commonMistakes: [
       "Using wrong probabilities (not recognizing equal 1/3 chance for each)",
@@ -107,15 +107,15 @@ const REFLECTION_RUBRICS_U4L78 = {
     expectedElements: [
       { id: "net-profit-values", description: "Correctly identifies net profits: roll 6 → $8 net, roll 1 → $1 net, other → -$2 net", required: true },
       { id: "probabilities", description: "Correct probabilities: P(6)=1/6, P(1)=1/6, P(other)=4/6", required: true },
-      { id: "distribution-format", description: "Creates clear probability distribution table or list", required: true },
+      { id: "distribution-format", description: "Creates clear probability distribution table or list", required: false },
       { id: "expected-value", description: "Calculates E(X) = (1/6)(8) + (1/6)(1) + (4/6)(-2) = $0.17 (approximately)", required: true },
       { id: "fair-game-interpretation", description: "Interprets: positive expected value means game favors player; not 'fair' from carnival's perspective", required: true },
-      { id: "long-run-context", description: "Explains that over many plays the player's net profit would average about +$0.17 per play", required: true }
+      { id: "long-run-context", description: "Explains that over many plays the player's net profit would average about +$0.17 per play", required: false }
     ],
     scoringGuide: {
-      E: "Correct net profits, probabilities, distribution, and expected value; interprets +$0.17 as a long-run average and concludes the game is not fair because the expected net profit is not 0.",
-      P: "Minor calculation error OR correct math but weak interpretation OR missing one component (distribution vs. interpretation)",
-      I: "Fundamental error in net profit calculation OR major probability error OR misunderstands 'fair game' concept"
+      E: "Net profits 8, 1, -2 with probabilities 1/6, 1/6, 4/6; E(X) = (1/6)(8) + (1/6)(1) + (4/6)(-2) = about $0.17; interprets the positive expected value as favoring the player in the long run, so the game is not fair from the carnival's side. A tidy table strengthens the answer.",
+      P: "Three of the four are correct; one is missing or wrong (commonly gross winnings used instead of net, or P(other) = 1/6).",
+      I: "Two or more of the four are missing or wrong."
     },
     commonMistakes: [
       "Using gross winnings ($10, $3, $0) instead of net profit ($8, $1, -$2)",
@@ -178,8 +178,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

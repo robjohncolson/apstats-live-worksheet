@@ -23,19 +23,19 @@ const RUBRICS_U5L12 = {
         questionText: "Explain in your own words what 'sampling variability' means and why it matters in statistics. Use the koala weight example or the election polling example from Video 1 to support your explanation. Why is a single sample statistic not enough to know the 'truth' about a population?",
         expectedElements: [
             { id: "define-variability", description: "Defines sampling variability as the natural variation in statistics from different samples of the same population", required: true },
-            { id: "example-connection", description: "Connects explanation to a specific example (koala weights clustering around 15 lbs, or election polls varying around 51%)", required: true },
+            { id: "example-connection", description: "Connects explanation to a specific example (koala weights clustering around 15 lbs, or election polls varying around 51%)", required: false },
             { id: "single-sample-limitation", description: "Explains why a single sample is insufficient — it's unpredictable like a dice roll, could be far from the truth", required: true },
             { id: "many-samples-pattern", description: "Notes that many samples form a predictable distribution/pattern that reveals the population truth", required: false }
         ],
         scoringGuide: {
-            E: "Clearly defines sampling variability, uses a specific example from the video with correct details, and explains why a single sample is insufficient with reference to the predictable pattern of many samples.",
-            P: "Defines sampling variability and references an example, but explanation is vague, lacks specific details from the video, or doesn't fully explain why a single sample is insufficient.",
-            I: "Does not demonstrate understanding of sampling variability, confuses it with other concepts, or provides no meaningful connection to the examples."
+            E: "Defines sampling variability as the natural variation in a statistic from sample to sample of the same population, and explains that one sample's statistic could be far from the truth, so it cannot be trusted alone. Any correct example counts; a lesson example is not required.",
+            P: "Defines the sample-to-sample variation but does not explain why one sample is not enough, or explains the single-sample problem without defining what varies.",
+            I: "Neither idea is present, or sampling variability is confused with measurement error."
         },
         commonMistakes: [
             "Confusing sampling variability with measurement error",
             "Saying larger samples are always better without explaining why",
-            "Not connecting to a specific example from the lesson",
+            "Saying only that larger samples are better without saying what varies",
             "Using 'it' without specifying what varies"
         ],
         contextFromVideo: "Different samples from the same population produce different statistics. If the distribution of a population is known, then the distribution of statistics from many samples of the very same size from that population is predictable. A statistic from a single random sample is not much different than a roll of the dice."
@@ -44,20 +44,20 @@ const RUBRICS_U5L12 = {
     reflect2: {
         questionText: "A factory produces bolts with lengths that are normally distributed with μ = 5.0 cm and σ = 0.1 cm. A bolt is rejected if it is shorter than 4.8 cm or longer than 5.2 cm. Calculate the probability that a randomly selected bolt is rejected. Show your work with Z-scores and interpret your result in context.",
         expectedElements: [
-            { id: "define-variable", description: "Defines the random variable (X = length of a randomly selected bolt in cm)", required: true },
+            { id: "define-variable", description: "Defines the random variable (X = length of a randomly selected bolt in cm)", required: false },
             { id: "z-score-work", description: "Correctly calculates Z-scores: z = (4.8-5.0)/0.1 = -2 and z = (5.2-5.0)/0.1 = 2", required: true },
             { id: "probability-calc", description: "Correctly determines P(rejected) = P(X < 4.8) + P(X > 5.2) ≈ 0.0228 + 0.0228 = 0.0456 (or uses complement: 1 - 0.9544 = 0.0456)", required: true },
             { id: "interpretation", description: "Interprets the result in context: approximately 4.56% of bolts will be rejected", required: true }
         ],
         scoringGuide: {
-            E: "Defines the random variable, correctly computes both Z-scores, finds the probability of rejection (≈ 0.0456 or 4.56%), and interprets in context of bolt production.",
-            P: "Shows some correct Z-score work but makes a calculation error, uses only one tail, or provides a weak interpretation without proper context.",
-            I: "Does not show Z-score work, makes fundamental errors in the probability calculation, or provides no interpretation."
+            E: "z = (4.8 - 5.0)/0.1 = -2 and z = (5.2 - 5.0)/0.1 = 2; P(rejected) = both tails = about 0.0456; interpreted as about 4.6% of bolts rejected. Defining X strengthens the answer.",
+            P: "Two of the three are correct; commonly only one tail is counted, or the number is left uninterpreted, or the probability is right but no z-score work is shown.",
+            I: "Fewer than two are correct (e.g. the between-probability reported as the rejection probability with no work and no interpretation)."
         },
         commonMistakes: [
             "Forgetting to include both tails (only calculating one side)",
             "Calculating P(4.8 < X < 5.2) instead of P(rejected)",
-            "Not defining the random variable",
+            "Reporting a probability with no in-context interpretation",
             "Using calculator syntax without showing Z-scores or identifying normal distribution"
         ],
         contextFromVideo: "Define your random variable. Use the Z formula to calculate the Z-score. Using technology or the Table A, find the probability. On the AP exam, you must define the random variable, show you're using a normal distribution, identify the parameters, show the value of interest, and give the correct probability."
@@ -67,16 +67,16 @@ const RUBRICS_U5L12 = {
         questionText: "The weights of bags of chips from Brand X are normally distributed with μ = 10.0 oz and σ = 0.3 oz. The weights of bags from Brand Y are independently and normally distributed with μ = 9.5 oz and σ = 0.2 oz.\n(a) What is the probability that a randomly selected bag of Brand X weighs less than 9.5 oz? Show your Z-score work.\n(b) Find the mean and standard deviation of the distribution of differences (X − Y).\n(c) What is the probability that a randomly selected bag of Brand Y actually weighs more than a bag of Brand X? Show your work.",
         expectedElements: [
             { id: "part-a-zscore", description: "Calculates z = (9.5 - 10.0)/0.3 = -1.67 and finds P(X < 9.5) ≈ 0.0475", required: true },
-            { id: "part-b-mean", description: "Correctly finds μ(X-Y) = 10.0 - 9.5 = 0.5 oz", required: true },
+            { id: "part-b-mean", description: "Correctly finds μ(X-Y) = 10.0 - 9.5 = 0.5 oz", required: false },
             { id: "part-b-sd", description: "Correctly finds σ(X-Y) = √(0.3² + 0.2²) = √(0.09 + 0.04) = √0.13 ≈ 0.361 oz (does NOT subtract SDs)", required: true },
             { id: "part-c-setup", description: "Recognizes that Y > X means X - Y < 0, finds z = (0 - 0.5)/0.361 ≈ -1.39", required: true },
             { id: "part-c-probability", description: "Correctly finds P(X - Y < 0) ≈ 0.0823", required: true },
             { id: "normal-justification", description: "Notes that X-Y is approximately normal because both X and Y are independently normal", required: false }
         ],
         scoringGuide: {
-            E: "Correctly answers all three parts, shows the requested Z-score work, correctly finds the parameters of the difference distribution (especially adding variances), and obtains the correct probability that Brand Y weighs more.",
-            P: "Gets 2 of 3 parts substantially correct, or gets all parts but with minor errors (e.g., subtracting SDs instead of adding variances, or rounding errors).",
-            I: "Gets fewer than 2 parts correct, shows fundamental misunderstanding of linear combinations or Z-score calculations, or provides minimal work."
+            E: "(a) z = -1.67, P about 0.0475; (b) SD of X - Y = sqrt(0.3^2 + 0.2^2) = about 0.361 (variances add; the mean 0.5 is implied by the part (c) setup); (c) recognizes Y > X means X - Y < 0, z = (0 - 0.5)/0.361 = about -1.39, P about 0.08.",
+            P: "Three of the four are correct; one is missing or wrong (commonly SDs subtracted, or the square root forgotten).",
+            I: "Two or more of the four are missing or wrong."
         },
         commonMistakes: [
             "Subtracting standard deviations instead of adding variances",
@@ -122,8 +122,8 @@ COMMON MISTAKES TO WATCH FOR:
 ${rubric.commonMistakes.map((m, i) => `${i + 1}. ${m}`).join('\n')}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

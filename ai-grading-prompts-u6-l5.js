@@ -64,15 +64,15 @@ window.RUBRICS_U6L5 = {
         questionText: "In the lemonade study, the p-value was 0.1357. A student says: 'There is a 13.57% probability that H0 is true.' Explain what is wrong with this interpretation and provide a correct interpretation of the p-value.",
         expectedElements: [
             { id: "identifies-error", description: "Identifies that the p-value is NOT the probability that H0 is true — this is a fundamental misinterpretation", required: true },
-            { id: "assumes-h0-true", description: "Explains that the p-value assumes H0 IS true from the start (it is a conditional probability given H0 is true)", required: true },
+            { id: "assumes-h0-true", description: "Explains that the p-value assumes H0 IS true from the start (it is a conditional probability given H0 is true)", required: false },
             { id: "correct-interpretation", description: "Provides a correct interpretation: assuming 50% of all students would choose the green cup, there is a 0.1357 probability of getting a sample proportion of 0.60 or greater by chance alone in a random sample of 30 students", required: true },
-            { id: "as-extreme-or-more", description: "Uses 'as extreme as or more extreme' or 'or greater' language (not just 'exactly 0.60')", required: true },
-            { id: "by-chance-alone", description: "States that the probability describes what could occur by chance alone under the null model", required: true }
+            { id: "as-extreme-or-more", description: "Uses 'as extreme as or more extreme' or 'or greater' language (not just 'exactly 0.60')", required: false },
+            { id: "by-chance-alone", description: "States that the probability describes what could occur by chance alone under the null model", required: false }
         ],
         scoringGuide: {
-            E: "Response clearly identifies why 'probability that H0 is true' is wrong, explains that the p-value assumes H0 is true, and provides a correct contextual interpretation with 'or greater' and 'by chance alone'",
-            P: "Response identifies the error but gives an incomplete correct interpretation (missing one element such as 'or greater,' 'by chance alone,' or the assumption clause)",
-            I: "Response does not identify the fundamental misinterpretation, or provides a 'corrected' interpretation that is also incorrect"
+            E: "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying the p-value is the probability of the alternative hypothesis being true",
@@ -89,14 +89,14 @@ window.RUBRICS_U6L5 = {
         expectedElements: [
             { id: "identifies-football-stronger", description: "Identifies the football study (p-value = 0.0244) as providing stronger evidence against H0", required: true },
             { id: "smaller-pvalue-stronger", description: "Explains that a smaller p-value means stronger evidence against H0 because the observed result would be less likely to occur by chance if H0 were true", required: true },
-            { id: "lemonade-not-unusual", description: "Explains that the lemonade p-value of 0.1357 means the result (p-hat = 0.60) is not that unusual if H0 is true — about a 13.6% chance", required: true },
-            { id: "football-unusual", description: "Explains that the football p-value of 0.0244 means the result is quite unusual if H0 is true — only about a 2.4% chance", required: true },
+            { id: "lemonade-not-unusual", description: "Explains that the lemonade p-value of 0.1357 means the result (p-hat = 0.60) is not that unusual if H0 is true — about a 13.6% chance", required: false },
+            { id: "football-unusual", description: "Explains that the football p-value of 0.0244 means the result is quite unusual if H0 is true — only about a 2.4% chance", required: false },
             { id: "connects-to-z-scores", description: "Optionally connects the comparison to the z-scores (1.10 vs -2.25) showing the football result is farther from the null value in standard deviation units", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly identifies the football study as having stronger evidence, explains that smaller p-values mean stronger evidence, and discusses what each p-value tells us about how surprising the data would be under H0",
-            P: "Response correctly identifies the football study as stronger but reasoning is incomplete — e.g., says 'smaller p-value = stronger evidence' without explaining why in terms of what p-values measure",
-            I: "Response incorrectly identifies the lemonade study as stronger, or shows fundamental misunderstanding of how p-values relate to evidence strength"
+            E: "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Thinking that a larger p-value means stronger evidence",
@@ -113,16 +113,16 @@ window.RUBRICS_U6L5 = {
             { id: "correct-z-calculation", description: "Correctly calculates z = (0.06 - 0.10) / sqrt(0.10 * 0.90 / 150) = -0.04 / 0.02449 = -1.63 (approximately)", required: true },
             { id: "uses-p0-not-phat", description: "Uses p0 = 0.10 (not p-hat = 0.06) in the denominator of the test statistic", required: true },
             { id: "correct-pvalue", description: "Calculates the p-value as P(z <= -1.63) which is approximately 0.0516 (area in the LEFT tail, since Ha is p < 0.10)", required: true },
-            { id: "one-sided-left", description: "Recognizes this is a one-sided test (Ha: p < 0.10) and finds area in the left tail only, not both tails", required: true },
+            { id: "one-sided-left", description: "Recognizes this is a one-sided test (Ha: p < 0.10) and finds area in the left tail only, not both tails", required: false },
             { id: "correct-interpretation", description: "Interprets the p-value: Assuming 10% of all students at the university are left-handed, there is approximately a 0.0516 probability of getting a sample proportion of 0.06 or less by chance alone in a random sample of 150 students", required: true },
-            { id: "assumes-h0", description: "Interpretation includes the assumption that H0 is true", required: true },
-            { id: "or-more-extreme", description: "Interpretation includes 'or less' / 'or more extreme' language", required: true },
-            { id: "by-chance-alone", description: "Interpretation includes 'by chance alone'", required: true }
+            { id: "assumes-h0", description: "Interpretation includes the assumption that H0 is true", required: false },
+            { id: "or-more-extreme", description: "Interpretation includes 'or less' / 'or more extreme' language", required: false },
+            { id: "by-chance-alone", description: "Interpretation includes 'by chance alone'", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly calculates z approximately -1.63 using p0 = 0.10, finds the left-tail p-value approximately 0.0516, and provides a correct contextual interpretation that assumes H0 is true and includes 'or less' and 'by chance alone'",
-            P: "Response has most elements correct but makes one error — e.g., correct z but wrong tail for p-value, or correct calculation but interpretation missing the assumption clause or 'or more extreme'",
-            I: "Response has multiple errors — e.g., uses p-hat in the denominator, finds both-tail area for a one-sided test, or interpretation is fundamentally incorrect"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using p-hat = 0.06 instead of p0 = 0.10 in the denominator",
@@ -180,8 +180,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

@@ -70,15 +70,15 @@ window.RUBRICS_U6L8 = {
         expectedElements: [
             { id: "procedure-name", description: "Identifies the correct procedure as a two-sample z-interval for a difference in proportions", required: true },
             { id: "independence", description: "Explains that the data come from two independent random samples, one from each park", required: true },
-            { id: "ten-percent", description: "States that the 10% condition requires Park A to contain at least 2,100 trees and Park B at least 1,900 trees; the word 'large' makes this plausible but does not provide exact totals", required: true },
+            { id: "ten-percent", description: "States that the 10% condition requires Park A to contain at least 2,100 trees and Park B at least 1,900 trees; the word 'large' makes this plausible but does not provide exact totals", required: false },
             { id: "large-counts", description: "Checks the large counts condition using 42, 168, 30, and 160, and notes that all are at least 10", required: true },
             { id: "conclusion", description: "Concludes that the two-sample z-interval is appropriate provided the stated 10% population-size requirements hold", required: true },
             { id: "context-language", description: "Uses the park and leaf-damage context rather than only giving abstract definitions", required: false }
         ],
         scoringGuide: {
-            E: "Response identifies the correct two-sample z-interval procedure and correctly verifies the random-sample, 10%, and large-counts conditions in context",
-            P: "Response gets the main idea but misses one condition, gives an incomplete justification, or names the procedure correctly without fully checking the conditions",
-            I: "Response identifies the wrong procedure, omits multiple conditions, or gives only vague statements without checking the conditions in context"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Naming a one-sample interval instead of a two-sample z-interval for a difference in proportions",
@@ -94,16 +94,16 @@ window.RUBRICS_U6L8 = {
         questionText: "In the dog tick experiment, a 95% confidence interval for p_new - p_old is (-0.2907, -0.0343), where the parameters are the true proportions of similar dogs that would get ticks with each formula. Interpret this interval in context, and explain what the negative values suggest about the new formula.",
         expectedElements: [
             { id: "interval-interpretation", description: "Interprets the interval in context: we are 95% confident that the true proportion of similar dogs that would get ticks with the new formula is between 0.0343 and 0.2907 lower than with the old formula", required: true },
-            { id: "parameter-context", description: "Refers to the true proportions of similar dogs that would get ticks with the two formulas, not just the sample results", required: true },
+            { id: "parameter-context", description: "Refers to the true proportions of similar dogs that would get ticks with the two formulas, not just the sample results", required: false },
             { id: "negative-values-meaning", description: "Explains that the negative values mean p_new - p_old is likely less than 0, so the new formula likely leads to a lower tick rate than the old formula", required: true },
-            { id: "direction-language", description: "States the direction correctly by describing the new formula as lower or better at preventing ticks", required: true },
+            { id: "direction-language", description: "States the direction correctly by describing the new formula as lower or better at preventing ticks", required: false },
             { id: "not-probability", description: "Does not say there is a 95% probability that the parameter is in the interval", required: false },
             { id: "percentage-points", description: "May express the interpretation in percentage points lower", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets the confidence interval in context and explains that the negative values suggest the new formula has a lower true tick proportion than the old formula",
-            P: "Response captures part of the interpretation but is vague about the parameter, the context, or what the negative values mean",
-            I: "Response misinterprets the interval, reverses the direction of the difference, or does not explain the meaning of the negative values"
+            E: "All 2 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying the interval is about sample proportions instead of population proportions",
@@ -122,16 +122,16 @@ window.RUBRICS_U6L8 = {
             { id: "independence", description: "Explains that the data come from two independent random samples, one from each high school", required: true },
             { id: "ten-percent", description: "Checks the 10% condition by noting that each sample of 150 is no more than 10% of each school's population because each school has far more than 1,500 students", required: true },
             { id: "large-counts", description: "Checks the large counts condition using 60, 90, 39, and 111, and notes that all are at least 10", required: true },
-            { id: "point-estimate", description: "Finds the point estimate p-hat_A - p-hat_B = 0.40 - 0.26 = 0.14", required: true },
+            { id: "point-estimate", description: "Finds the point estimate p-hat_A - p-hat_B = 0.40 - 0.26 = 0.14", required: false },
             { id: "confidence-interval", description: "Calculates a 95% confidence interval approximately equal to (0.035, 0.245), allowing for reasonable rounding", required: true },
             { id: "interpretation", description: "Interprets the interval in context: we are 95% confident that the proportion who buy lunch at High School A is about 3.5 to 24.5 percentage points higher than at High School B", required: true },
             { id: "difference-meaning", description: "Notes that the interval is entirely positive, suggesting High School A likely has the higher true lunch-buying proportion", required: true },
             { id: "calculation-details", description: "May show intermediate work such as the standard error or margin of error", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly names the procedure, verifies all conditions, computes an appropriate interval, and interprets the interval in context with the correct direction",
-            P: "Response has most of the structure correct but misses one meaningful component, such as one condition, the interval arithmetic, or part of the interpretation",
-            I: "Response uses the wrong procedure, fails to check the conditions, gives an incorrect interval, or misinterprets the meaning or direction of the difference"
+            E: "All 7 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a one-sample procedure instead of a two-sample z-interval for a difference in proportions",
@@ -189,8 +189,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

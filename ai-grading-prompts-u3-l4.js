@@ -44,9 +44,9 @@ window.RUBRICS_U3L4 = {
             { id: 'underrepresented', description: 'May note that students without internships are underrepresented in the responses', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the population and sample, explains why nonresponse creates bias, and states that the internship rate is likely overestimated.',
-            P: 'Response shows partial understanding of nonresponse bias but misses one major idea, such as the correct sample, how respondents differ, or the direction of the bias.',
-            I: 'Response does not correctly explain why this survey could produce nonresponse bias.'
+            E: 'Population = all students at the university; sample = the students who actually responded; identifies nonresponse bias; explains that students without internships are less likely to respond; so the reported percentage is likely too high.',
+            P: 'Four of the five are correct; one is missing or wrong (commonly: no direction, or the sample given as everyone selected).',
+            I: 'Two or more of the five are missing or wrong, or the result is called unbiased because the selection was random.'
         },
         commonMistakes: [
             'Calling the sample all selected students instead of the students who actually responded',
@@ -60,17 +60,17 @@ window.RUBRICS_U3L4 = {
     reflect2: {
         questionText: 'Describe the difference between undercoverage bias and volunteer response bias. Explain how each one makes the sample differ from the population and how either could lead to a distorted estimate.',
         expectedElements: [
-            { id: 'undercoverage-definition', description: 'Defines undercoverage bias as part of the population having a reduced chance of being included', required: true },
-            { id: 'volunteer-definition', description: 'Defines volunteer response bias as people choosing themselves to participate', required: true },
+            { id: 'undercoverage-definition', description: 'Defines undercoverage bias as part of the population having a reduced chance of being included', required: false },
+            { id: 'volunteer-definition', description: 'Defines volunteer response bias as people choosing themselves to participate', required: false },
             { id: 'undercoverage-difference', description: 'Explains that undercoverage can leave out a subgroup whose responses differ from the rest of the population', required: true },
             { id: 'volunteer-difference', description: 'Explains that volunteer response can overrepresent people with stronger interest, stronger opinions, or more favorable attitudes', required: true },
             { id: 'direction', description: 'States that either bias can distort the estimate by causing an overestimate or underestimate because the sample is not representative', required: true },
             { id: 'example', description: 'May reference an example such as nongraduates being excluded or runners volunteering', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly distinguishes undercoverage from volunteer response bias and explains how each can make the sample unrepresentative and distort the estimate.',
-            P: 'Response captures part of the difference between the two biases but misses one major distinction or leaves out how the estimate gets distorted.',
-            I: 'Response does not correctly distinguish undercoverage bias from volunteer response bias.'
+            E: 'Explains the mechanism of each: undercoverage leaves out a subgroup whose answers differ from the rest; volunteer response over-represents people with strong interest or opinions; and either makes the estimate too high or too low because the sample is unrepresentative. A bare definition counts only when it carries that mechanism.',
+            P: 'Explains the mechanism for one bias but not the other, or explains both without the distortion / direction idea.',
+            I: 'Treats the two biases as the same, defines volunteer response as low response rate, or gives definitions with no mechanism for either.'
         },
         commonMistakes: [
             'Treating undercoverage and volunteer response as the same thing',
@@ -86,15 +86,15 @@ window.RUBRICS_U3L4 = {
         expectedElements: [
             { id: 'population', description: 'Identifies the population as all city residents', required: true },
             { id: 'sample', description: 'Identifies the sample as the residents who choose to respond to the survey', required: true },
-            { id: 'volunteer-bias', description: 'Identifies volunteer or voluntary response bias because people choose whether to respond', required: true },
+            { id: 'volunteer-bias', description: 'Identifies volunteer or voluntary response bias because people choose whether to respond', required: false },
             { id: 'overestimate', description: 'Explains that support for bike lanes is likely overestimated because supporters may be more likely to respond', required: true },
             { id: 'wording-bias', description: 'Identifies question wording bias because words like "important" and "safer" are leading', required: true },
             { id: 'improvement', description: 'Suggests an improvement such as taking a random sample of residents or using neutral wording', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the population and sample, explains the voluntary response bias and likely overestimate, identifies the leading wording, and suggests a reasonable improvement.',
-            P: 'Response gets most of the scenario right but misses one major idea, such as the correct sample, the likely direction of the bias, the wording problem, or a useful improvement.',
-            I: 'Response has major errors about the population, sample, source of bias, or the survey wording problem.'
+            E: 'Population = all city residents; sample = the residents who choose to respond; explains that this voluntary response over-represents supporters (they are more likely to answer), so support is overestimated; identifies the leading wording (\'important\', \'safer\'); proposes a fix that addresses sampling (random sample) or wording (neutral).',
+            P: 'Four of the five are correct; one is missing or wrong.',
+            I: 'Two or more of the five are missing or wrong, or the survey is called random.'
         },
         commonMistakes: [
             'Calling the sample all residents instead of only the people who respond',
@@ -149,8 +149,8 @@ ${rubric.contextFromVideo}
 
 ## Instructions
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

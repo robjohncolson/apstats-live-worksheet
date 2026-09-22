@@ -1,0 +1,1840 @@
+{
+ "ai-grading-prompts-u1-l1.js": {
+  "reflect1": [
+   "needs-context",
+   "units-or-variable",
+   "links-to-question",
+   "threshold-idea"
+  ],
+  "reflect2": [
+   "changed-percent",
+   "changed-conclusion",
+   "responsible-use",
+   "real-consequences"
+  ],
+  "exitTicket": [
+   "question-in-context",
+   "variable",
+   "variation",
+   "context-for-30",
+   "statistics-process"
+  ]
+ },
+ "ai-grading-prompts-u1-l10.js": {
+  "reflect1": [
+   "percentile-definition",
+   "zscore-definition",
+   "sign-meaning",
+   "two-tools",
+   "context",
+   "example-values",
+   "any-distribution"
+  ],
+  "reflect2": [
+   "table-a-left",
+   "area-right",
+   "area-between",
+   "backward-process",
+   "zscore-language",
+   "context",
+   "example-values"
+  ],
+  "exitTicket": [
+   "shape-parameters",
+   "within-one-sd",
+   "above-two-sd",
+   "backward-left-area",
+   "backward-zscore",
+   "context",
+   "notation"
+  ]
+ },
+ "ai-grading-prompts-u1-l2.js": {
+  "reflect1": [
+   "individuals-are-properties",
+   "variable-definition",
+   "gives-example-variable",
+   "rows-vs-columns"
+  ],
+  "reflect2": [
+   "numbers-as-labels",
+   "zip-code-location",
+   "grade-level-categories",
+   "not-average"
+  ],
+  "exitTicket": [
+   "individuals",
+   "two-variables",
+   "sport-played-categorical",
+   "heart-rate-quantitative",
+   "id-not-variable"
+  ]
+ },
+ "ai-grading-prompts-u1-l3.js": {
+  "reflect1": [
+   "frequency-counts",
+   "relative-frequency-proportion",
+   "superpower-context",
+   "divide-by-total"
+  ],
+  "reflect2": [
+   "use-counts-or-percentages",
+   "specific-example",
+   "claim-judgment",
+   "majority-threshold"
+  ],
+  "exitTicket": [
+   "frequency-definition",
+   "chips-relative-frequency",
+   "yogurt-relative-frequency",
+   "no-majority-chips",
+   "context-justification"
+  ]
+ },
+ "ai-grading-prompts-u1-l4.js": {
+  "reflect1": [
+   "frequency-counts",
+   "relative-frequency-proportions",
+   "same-superpower-data",
+   "superpower-example",
+   "divide-by-total"
+  ],
+  "reflect2": [
+   "different-group-sizes",
+   "use-proportions",
+   "lesson-example",
+   "comparison-conclusion",
+   "graph-or-table-link"
+  ],
+  "exitTicket": [
+   "different-grade-sizes",
+   "ninth-jersey-frequency",
+   "tenth-jersey-frequency",
+   "claim-not-supported",
+   "context-justification"
+  ]
+ },
+ "ai-grading-prompts-u1-l5.js": {
+  "reflect1": [
+   "discrete-definition",
+   "continuous-definition",
+   "counting-measuring",
+   "lesson-example",
+   "rounded-values-note"
+  ],
+  "reflect2": [
+   "large-data-set",
+   "shows-individual-values",
+   "histogram-intervals",
+   "lose-exact-values",
+   "shape-idea"
+  ],
+  "exitTicket": [
+   "discrete-classification",
+   "countable-gaps-explanation",
+   "best-display-choice",
+   "chosen-display-advantage",
+   "histogram-limitation"
+  ]
+ },
+ "ai-grading-prompts-u1-l6.js": {
+  "reflect1": [
+   "shape-description",
+   "center-description",
+   "variability-description",
+   "unusual-features",
+   "context",
+   "single-peak-detail"
+  ],
+  "reflect2": [
+   "two-unusual-features",
+   "flint-connection",
+   "distribution-description-role",
+   "gaps-clusters-together"
+  ],
+  "exitTicket": [
+   "shape",
+   "center",
+   "variability",
+   "unusual-features",
+   "context"
+  ]
+ },
+ "ai-grading-prompts-u1-l7.js": {
+  "reflect1": [
+   "mean-interpretation",
+   "median-interpretation",
+   "iqr-interpretation",
+   "context",
+   "center-vs-variability",
+   "numerical-detail"
+  ],
+  "reflect2": [
+   "shape-or-outliers",
+   "median-iqr-choice",
+   "resistant-language",
+   "nonresistant-language",
+   "context",
+   "removal-example"
+  ],
+  "exitTicket": [
+   "best-center",
+   "best-variability",
+   "outlier-identification",
+   "resistant-justification",
+   "context",
+   "skew-language"
+  ]
+ },
+ "ai-grading-prompts-u1-l8.js": {
+  "reflect1": [
+   "five-number-summary",
+   "boxplot-feature",
+   "flint-context",
+   "numerical-details",
+   "quartile-meaning"
+  ],
+  "reflect2": [
+   "skewed-right",
+   "skewed-left",
+   "symmetric",
+   "outlier-effect",
+   "flint-connection",
+   "median-resistant"
+  ],
+  "exitTicket": [
+   "box-and-median",
+   "whiskers-and-outlier",
+   "middle-50",
+   "mean-vs-median",
+   "context",
+   "quartile-language"
+  ]
+ },
+ "ai-grading-prompts-u1-l9.js": {
+  "reflect1": [
+   "shape-comparison",
+   "center-comparison",
+   "variability-comparison",
+   "unusual-features",
+   "comparative-language",
+   "context",
+   "boxplot-caution"
+  ],
+  "reflect2": [
+   "reason-for-a",
+   "a-feature",
+   "reason-for-b",
+   "b-feature",
+   "context",
+   "based-on-box-plots"
+  ],
+  "exitTicket": [
+   "center",
+   "variability",
+   "unusual-features",
+   "shape",
+   "comparative-context",
+   "numerical-support"
+  ]
+ },
+ "ai-grading-prompts-u2-l1.js": {
+  "reflect1": [
+   "identify-type-first",
+   "categorical-tools",
+   "quantitative-tools",
+   "match-method-to-data"
+  ],
+  "reflect2": [
+   "random-variation",
+   "not-automatic-proof",
+   "need-analysis",
+   "uncertain-conclusions"
+  ],
+  "exitTicket": [
+   "study-a-types",
+   "study-a-tools",
+   "study-b-types",
+   "study-b-tools",
+   "pattern-study-a",
+   "pattern-study-b",
+   "random-variation",
+   "careful-conclusion"
+  ]
+ },
+ "ai-grading-prompts-u2-l2.js": {
+  "reflect1": [
+   "within-group-percent",
+   "fair-comparison",
+   "compare-distributions",
+   "sum-to-100"
+  ],
+  "reflect2": [
+   "compare-distributions",
+   "not-same-means-association",
+   "predictive-language",
+   "mosaic-widths"
+  ],
+  "exitTicket": [
+   "identify-variables",
+   "two-way-table",
+   "ninth-grade-distribution",
+   "eleventh-grade-distribution",
+   "association-conclusion",
+   "mosaic-advantage"
+  ]
+ },
+ "ai-grading-prompts-u2-l3.js": {
+  "reflect1": [
+   "marginal-definition",
+   "conditional-definition",
+   "overall-vs-within-group",
+   "denominator-language"
+  ],
+  "reflect2": [
+   "within-group-distributions",
+   "compare-groups",
+   "different-means-association",
+   "supports-graphical-conclusion"
+  ],
+  "exitTicket": [
+   "identify-variables",
+   "two-way-table",
+   "joint-relative-frequency",
+   "marginal-relative-frequency",
+   "conditional-ninth",
+   "conditional-eleventh",
+   "association-conclusion"
+  ]
+ },
+ "ai-grading-prompts-u2-l4.js": {
+  "reflect1": [
+   "explanatory-role",
+   "x-axis",
+   "y-axis",
+   "paired-values"
+  ],
+  "reflect2": [
+   "direction-only",
+   "form",
+   "strength",
+   "features-context"
+  ],
+  "exitTicket": [
+   "identify-variables",
+   "explanatory-response",
+   "scatterplot-appropriate",
+   "positive-direction",
+   "linear-form",
+   "strong-strength",
+   "construction-features",
+   "no-obvious-unusual-features"
+  ]
+ },
+ "ai-grading-prompts-u2-l5.js": {
+  "reflect1": [
+   "sign-direction",
+   "positive-negative",
+   "magnitude-strength",
+   "close-values",
+   "linear-focus"
+  ],
+  "reflect2": [
+   "no-causation",
+   "no-form",
+   "no-unusual-features",
+   "need-graph-context",
+   "attendance-example"
+  ],
+  "exitTicket": [
+   "positive-direction",
+   "strong-strength",
+   "r-alone-limit",
+   "no-causation",
+   "technology-use",
+   "unit-free-range"
+  ]
+ },
+ "ai-grading-prompts-u2-l6.js": {
+  "reflect1": [
+   "plug-in-x",
+   "slope-and-intercept",
+   "predicted-response",
+   "decimal-possible",
+   "variability-idea"
+  ],
+  "reflect2": [
+   "define-extrapolation",
+   "trend-may-not-continue",
+   "less-reliable",
+   "compare-to-interval",
+   "example-link"
+  ],
+  "exitTicket": [
+   "variables-context",
+   "slope-context",
+   "intercept-context",
+   "correct-prediction",
+   "prediction-not-exact",
+   "extrapolation-unreliable",
+   "further-less-reliable"
+  ]
+ },
+ "ai-grading-prompts-u2-l7.js": {
+  "reflect1": [
+   "actual-minus-predicted",
+   "single-point-difference",
+   "positive-underestimate",
+   "negative-overestimate",
+   "context-example"
+  ],
+  "reflect2": [
+   "apparent-randomness",
+   "centered-at-zero",
+   "no-clear-pattern",
+   "pattern-warning",
+   "nonlinear-next-step"
+  ],
+  "exitTicket": [
+   "correct-residual",
+   "context-interpretation",
+   "underpredicted",
+   "good-fit-randomness",
+   "bad-fit-pattern",
+   "residual-plot-role"
+  ]
+ },
+ "ai-grading-prompts-u2-l8.js": {
+  "reflect1": [
+   "canceling-problem",
+   "least-squares-definition",
+   "mean-point-property",
+   "slope-formula-property",
+   "numeric-example"
+  ],
+  "reflect2": [
+   "slope-change",
+   "attendance-context",
+   "intercept-definition",
+   "intercept-not-meaningful",
+   "example-illogical-value"
+  ],
+  "reflect3": [
+   "r-squared-meaning",
+   "context-interpretation",
+   "r-squared-equals-r-squared",
+   "output-slope",
+   "output-intercept",
+   "strength-note"
+  ],
+  "exitTicket": [
+   "squared-residuals",
+   "slope-interpretation",
+   "intercept-definition",
+   "intercept-not-meaningful",
+   "r-squared-context",
+   "mean-point",
+   "slope-formula-note"
+  ]
+ },
+ "ai-grading-prompts-u2-l9.js": {
+  "reflect1": [
+   "high-leverage-definition",
+   "outlier-definition",
+   "influential-definition",
+   "high-leverage-effect",
+   "outlier-effect",
+   "both-type"
+  ],
+  "reflect2": [
+   "nonlinear-trigger",
+   "purpose-of-transform",
+   "log-skew",
+   "residual-evidence",
+   "r-squared-evidence",
+   "numeric-example"
+  ],
+  "exitTicket": [
+   "high-leverage-identification",
+   "outlier-identification",
+   "influential-definition",
+   "different-effects",
+   "log-transform-purpose",
+   "better-fit-evidence",
+   "both-point-type"
+  ]
+ },
+ "ai-grading-prompts-u3-l1.js": {
+  "reflect1": [
+   "returned-planes",
+   "missing-planes",
+   "vulnerable-areas",
+   "analysis-depends"
+  ],
+  "reflect2": [
+   "who-sampled",
+   "who-missed",
+   "chance-method",
+   "representative",
+   "untrustworthy"
+  ],
+  "exitTicket": [
+   "population",
+   "sample",
+   "nonchance",
+   "difference",
+   "better-method",
+   "trust-conclusion"
+  ]
+ },
+ "ai-grading-prompts-u3-l2.js": {
+  "reflect1": [
+   "returned-only",
+   "shot-down-excluded",
+   "not-representative",
+   "generalization-risk",
+   "tail-insight"
+  ],
+  "reflect2": [
+   "observational-no-treatment",
+   "observational-no-cause",
+   "experiment-treatment",
+   "experiment-causal",
+   "random-assignment"
+  ],
+  "exitTicket": [
+   "population",
+   "sample",
+   "observational",
+   "generalize-yes",
+   "no-causation",
+   "confounding"
+  ]
+ },
+ "ai-grading-prompts-u3-l3.js": {
+  "reflect1": [
+   "both-group",
+   "cluster-select-groups",
+   "cluster-all-members",
+   "stratified-sample-within",
+   "stratified-combine",
+   "hetero-homo"
+  ],
+  "reflect2": [
+   "segregation-pattern",
+   "sample-each-region",
+   "cluster-risk",
+   "better-estimate",
+   "harder-to-collect",
+   "low-variability"
+  ],
+  "exitTicket": [
+   "population",
+   "stratified",
+   "strata-grade",
+   "within-each-grade",
+   "appropriate-representation",
+   "not-cluster",
+   "disadvantage"
+  ]
+ },
+ "ai-grading-prompts-u3-l4.js": {
+  "reflect1": [
+   "population",
+   "sample",
+   "nonresponse",
+   "different-responders",
+   "overestimate",
+   "underrepresented"
+  ],
+  "reflect2": [
+   "undercoverage-definition",
+   "volunteer-definition",
+   "undercoverage-difference",
+   "volunteer-difference",
+   "direction",
+   "example"
+  ],
+  "exitTicket": [
+   "population",
+   "sample",
+   "volunteer-bias",
+   "overestimate",
+   "wording-bias",
+   "improvement"
+  ]
+ },
+ "ai-grading-prompts-u3-l5.js": {
+  "reflect1": [
+   "observational",
+   "explanatory",
+   "response",
+   "confounding-variable",
+   "confounding-explanation",
+   "motivation-example"
+  ],
+  "reflect2": [
+   "crd-definition",
+   "randomization-benefit",
+   "block-definition",
+   "within-block-randomization",
+   "blocking-purpose",
+   "example"
+  ],
+  "exitTicket": [
+   "units",
+   "factor",
+   "treatments",
+   "response",
+   "blocking",
+   "within-block-randomization",
+   "control-group",
+   "double-blind",
+   "placebo-purpose"
+  ]
+ },
+ "ai-grading-prompts-u4-l10-12.js": {
+  "reflect1": [
+   "binomial-identification",
+   "binomial-parameters",
+   "binomial-setup",
+   "geometric-identification",
+   "geometric-parameters",
+   "geometric-setup",
+   "distinction-explanation"
+  ],
+  "exitTicket": [
+   "part-a-binomial",
+   "part-a-calculation",
+   "part-b-mean",
+   "part-b-interpretation",
+   "part-c-geometric",
+   "part-c-calculation",
+   "part-d-mean",
+   "part-d-interpretation"
+  ]
+ },
+ "ai-grading-prompts-u4-l3.js": {
+  "reflect1": [
+   "humans-avoid-streaks",
+   "real-random-has-streaks",
+   "humans-alternate",
+   "streaks-are-normal"
+  ],
+  "reflect2": [
+   "independence",
+   "no-due-effect",
+   "lln-long-run",
+   "gamblers-fallacy"
+  ],
+  "reflect3": [
+   "long-run-interpretation",
+   "relative-frequency",
+   "generalizability",
+   "prediction-utility",
+   "with-replacement"
+  ],
+  "exitTicket": [
+   "sample-space",
+   "total-outcomes",
+   "p-blue-calculation",
+   "p-blue-interpretation",
+   "complement-rule",
+   "expected-green"
+  ]
+ },
+ "ai-grading-prompts-u4-l345.js": {
+  "reflect1": [
+   "long-run-interpretation",
+   "relative-frequency",
+   "generalizability",
+   "prediction-utility",
+   "with-replacement"
+  ],
+  "reflect2": [
+   "mutually-exclusive-definition",
+   "low-probability-definition",
+   "mutually-exclusive-example",
+   "low-probability-example",
+   "impossibility-vs-rarity"
+  ],
+  "reflect3": [
+   "without-replacement-changes-composition",
+   "fewer-remaining",
+   "conditional-probability",
+   "with-replacement-independence",
+   "specific-values"
+  ],
+  "exitTicket": [
+   "p-math-calculation",
+   "p-math-interpretation",
+   "joint-probability",
+   "not-mutually-exclusive",
+   "conditional-freshman",
+   "conditional-sophomore",
+   "comparison"
+  ]
+ },
+ "ai-grading-prompts-u4-l6.js": {
+  "reflect1": [
+   "independent-def",
+   "mutually-exclusive-def",
+   "cannot-be-both",
+   "reasoning"
+  ],
+  "reflect2": [
+   "one-check-sufficient",
+   "equivalent-checks",
+   "any-one-works",
+   "calculation-accuracy"
+  ],
+  "exitTicket": [
+   "independence-check",
+   "independence-conclusion",
+   "addition-rule",
+   "correct-calculation",
+   "shows-work"
+  ]
+ },
+ "ai-grading-prompts-u4-l7-8.js": {
+  "reflect1": [
+   "discrete-definition",
+   "continuous-definition",
+   "discrete-example",
+   "continuous-example",
+   "example-justification"
+  ],
+  "reflect2": [
+   "probability-distribution",
+   "expected-value-calculation",
+   "mean-interpretation",
+   "decision-with-reasoning",
+   "expected-profit"
+  ],
+  "exitTicket": [
+   "net-profit-values",
+   "probabilities",
+   "distribution-format",
+   "expected-value",
+   "fair-game-interpretation",
+   "long-run-context"
+  ]
+ },
+ "ai-grading-prompts-u4-l9.js": {
+  "reflect1": [
+   "identify-error",
+   "variance-rule",
+   "correct-calculation",
+   "conceptual-explanation"
+  ],
+  "reflect2": [
+   "mean-calculation",
+   "variance-step",
+   "sd-calculation",
+   "explains-process",
+   "independence-note"
+  ],
+  "exitTicket": [
+   "total-mean",
+   "total-variance",
+   "total-sd",
+   "discount-mean",
+   "discount-sd",
+   "shows-work"
+  ]
+ },
+ "ai-grading-prompts-u5-l1-2.js": {
+  "reflect1": [
+   "define-variability",
+   "example-connection",
+   "single-sample-limitation",
+   "many-samples-pattern"
+  ],
+  "reflect2": [
+   "define-variable",
+   "z-score-work",
+   "probability-calc",
+   "interpretation"
+  ],
+  "exitTicket": [
+   "part-a-zscore",
+   "part-b-mean",
+   "part-b-sd",
+   "part-c-setup",
+   "part-c-probability",
+   "normal-justification"
+  ]
+ },
+ "ai-grading-prompts-u5-l3.js": {
+  "reflect1": [
+   "clt-definition",
+   "regardless-population",
+   "sample-size-matters",
+   "simulation-example",
+   "why-amazing"
+  ],
+  "reflect2": [
+   "probability-meaning",
+   "chance-alone-interpretation",
+   "evidence-for-effect",
+   "larger-probability-contrast",
+   "context"
+  ],
+  "exitTicket": [
+   "difference-calculation",
+   "probability-calculation",
+   "probability-interpretation",
+   "conclusion",
+   "reasoning"
+  ]
+ },
+ "ai-grading-prompts-u5-l4.js": {
+  "reflect1": [
+   "unbiased-means-on-average",
+   "single-sample-can-miss",
+   "centered-at-parameter",
+   "variability-is-natural",
+   "uses-example"
+  ],
+  "reflect2": [
+   "mean-not-equal-parameter",
+   "direction-of-bias",
+   "why-one-direction",
+   "overestimation-possible",
+   "dot-plot-reference"
+  ],
+  "exitTicket": [
+   "mean-is-unbiased",
+   "range-is-biased",
+   "range-reasoning",
+   "mean-more-trustworthy",
+   "clear-reasoning"
+  ]
+ },
+ "ai-grading-prompts-u5-l5.js": {
+  "reflect1": [
+   "sd-in-context",
+   "references-all-samples",
+   "uses-typically",
+   "importance-connection",
+   "not-single-sample"
+  ],
+  "reflect2": [
+   "correct-mean",
+   "correct-sd",
+   "large-counts-check",
+   "z-score-calculation",
+   "interprets-unusual",
+   "probability-value"
+  ],
+  "exitTicket": [
+   "center",
+   "spread",
+   "shape-conditions",
+   "z-score",
+   "probability-interpretation",
+   "ten-percent-condition"
+  ]
+ },
+ "ai-grading-prompts-u5-l6.js": {
+  "reflect1": [
+   "sd-meaning",
+   "practical-value",
+   "mean-insufficient",
+   "connection-to-inference",
+   "typically-language"
+  ],
+  "reflect2": [
+   "probability-meaning",
+   "not-unusual",
+   "small-prob-contrast",
+   "unusual-definition",
+   "context"
+  ],
+  "exitTicket": [
+   "mean-calculation",
+   "mean-interpretation",
+   "sd-calculation",
+   "sd-interpretation",
+   "large-counts-check",
+   "z-score",
+   "probability",
+   "unusual-conclusion"
+  ]
+ },
+ "ai-grading-prompts-u5-l7.js": {
+  "reflect1": [
+   "mean-similarity",
+   "sd-similarity",
+   "normality-difference",
+   "why-different",
+   "both-unbiased"
+  ],
+  "reflect2": [
+   "averaging-effect",
+   "sd-formula-connection",
+   "n50-prediction",
+   "n50-calculation-or-reasoning",
+   "inference-connection"
+  ],
+  "exitTicket": [
+   "mean-calculation",
+   "mean-interpretation",
+   "sd-calculation",
+   "sd-interpretation",
+   "normality-justification",
+   "z-score",
+   "probability",
+   "unusual-conclusion"
+  ]
+ },
+ "ai-grading-prompts-u5-l8.js": {
+  "reflect1": [
+   "mean-similarity",
+   "sd-similarity",
+   "normality-difference",
+   "variance-addition",
+   "sd-decrease-with-n"
+  ],
+  "reflect2": [
+   "sd-decreases",
+   "z-increases",
+   "probability-decreases",
+   "unusual-prediction",
+   "formula-reasoning"
+  ],
+  "exitTicket": [
+   "mean-calculation",
+   "mean-interpretation",
+   "sd-calculation",
+   "sd-interpretation",
+   "normality-justification",
+   "z-score",
+   "probability",
+   "unusual-conclusion"
+  ]
+ },
+ "ai-grading-prompts-u6-l1-2.js": {
+  "reflect1": [
+   "identify-evidence",
+   "two-explanations",
+   "simulation-purpose",
+   "conclusion-reasoning",
+   "general-logic"
+  ],
+  "reflect2": [
+   "random-condition",
+   "ten-percent-condition",
+   "large-counts-condition",
+   "ci-calculation",
+   "interpretation"
+  ],
+  "exitTicket": [
+   "conditions-verified",
+   "ci-calculation",
+   "evidence-evaluation",
+   "proper-interpretation"
+  ]
+ },
+ "ai-grading-prompts-u6-l10.js": {
+  "reflect1": [
+   "parameter-definitions",
+   "null-equality",
+   "alternative-direction",
+   "one-sided-justification",
+   "parameter-language",
+   "no-sample-statistics"
+  ],
+  "reflect2": [
+   "parameter-definitions",
+   "null-equality",
+   "two-sided-alternative",
+   "difference-rationale",
+   "parameter-not-statistic",
+   "equivalent-forms"
+  ],
+  "exitTicket": [
+   "parameter-definitions",
+   "null-hypothesis",
+   "alternative-hypothesis",
+   "procedure-name",
+   "pooled-proportion",
+   "expected-counts",
+   "conditions-conclusion",
+   "parameter-focus"
+  ]
+ },
+ "ai-grading-prompts-u6-l11.js": {
+  "reflect1": [
+   "pooled-proportion",
+   "test-statistic",
+   "p-value",
+   "right-tail-justification",
+   "p-value-interpretation",
+   "context-language"
+  ],
+  "reflect2": [
+   "null-assumption",
+   "two-sided-interpretation",
+   "compare-to-alpha",
+   "decision",
+   "context-conclusion",
+   "not-proving-equality"
+  ],
+  "exitTicket": [
+   "parameter-definitions",
+   "hypotheses",
+   "procedure",
+   "conditions",
+   "pooled-proportion",
+   "expected-counts",
+   "test-statistic",
+   "p-value",
+   "decision-and-conclusion",
+   "context-language"
+  ]
+ },
+ "ai-grading-prompts-u6-l3.js": {
+  "reflect1": [
+   "ci-interpretation",
+   "at-least-50-claim",
+   "more-than-70-claim",
+   "justification-logic"
+  ],
+  "reflect2": [
+   "repeated-sampling",
+   "not-probability",
+   "increase-sample-size",
+   "decrease-confidence-level",
+   "quadruple-rule"
+  ],
+  "exitTicket": [
+   "define-parameter",
+   "identify-procedure",
+   "check-conditions",
+   "calculate-ci",
+   "interpret-ci",
+   "justify-claim"
+  ]
+ },
+ "ai-grading-prompts-u6-l4.js": {
+  "reflect1": [
+   "define-parameter",
+   "null-hypothesis",
+   "alternative-hypothesis",
+   "one-sided-reasoning",
+   "equality-rule"
+  ],
+  "reflect2": [
+   "identify-procedure",
+   "random-condition",
+   "ten-percent-condition",
+   "large-counts",
+   "use-p-zero"
+  ],
+  "exitTicket": [
+   "define-parameter",
+   "state-hypotheses",
+   "identify-procedure",
+   "check-random",
+   "check-ten-percent",
+   "check-large-counts",
+   "proceed-and-parameter"
+  ]
+ },
+ "ai-grading-prompts-u6-l5.js": {
+  "reflect1": [
+   "identifies-error",
+   "assumes-h0-true",
+   "correct-interpretation",
+   "as-extreme-or-more",
+   "by-chance-alone"
+  ],
+  "reflect2": [
+   "identifies-football-stronger",
+   "smaller-pvalue-stronger",
+   "lemonade-not-unusual",
+   "football-unusual",
+   "connects-to-z-scores"
+  ],
+  "exitTicket": [
+   "correct-z-calculation",
+   "uses-p0-not-phat",
+   "correct-pvalue",
+   "one-sided-left",
+   "correct-interpretation",
+   "assumes-h0",
+   "or-more-extreme",
+   "by-chance-alone"
+  ]
+ },
+ "ai-grading-prompts-u6-l6.js": {
+  "reflect1": [
+   "error-accept-h0",
+   "error-h0-true",
+   "explicit-comparison",
+   "correct-decision",
+   "ha-in-context"
+  ],
+  "reflect2": [
+   "fail-to-reject-meaning",
+   "not-proof",
+   "cereal-example",
+   "evidence-vs-proof",
+   "plausible-explanation"
+  ],
+  "exitTicket": [
+   "correct-hypotheses",
+   "defines-parameter",
+   "explicit-comparison-05",
+   "fail-to-reject-05",
+   "conclusion-in-context",
+   "alpha-20-changes",
+   "alpha-20-conclusion"
+  ]
+ },
+ "ai-grading-prompts-u6-l7.js": {
+  "reflect1": [
+   "type1-context",
+   "type2-context",
+   "uses-context",
+   "consequential-choice",
+   "ha-language"
+  ],
+  "reflect2": [
+   "power-meaning",
+   "beta-value",
+   "increase-power",
+   "not-h0-probability",
+   "factor-explanation"
+  ],
+  "exitTicket": [
+   "correct-hypotheses",
+   "type1-context",
+   "type2-context",
+   "power-interpretation",
+   "type1-probability",
+   "type2-probability",
+   "two-power-factors"
+  ]
+ },
+ "ai-grading-prompts-u6-l8.js": {
+  "reflect1": [
+   "procedure-name",
+   "independence",
+   "ten-percent",
+   "large-counts",
+   "conclusion",
+   "context-language"
+  ],
+  "reflect2": [
+   "interval-interpretation",
+   "parameter-context",
+   "negative-values-meaning",
+   "direction-language",
+   "not-probability",
+   "percentage-points"
+  ],
+  "exitTicket": [
+   "procedure-name",
+   "independence",
+   "ten-percent",
+   "large-counts",
+   "point-estimate",
+   "confidence-interval",
+   "interpretation",
+   "difference-meaning",
+   "calculation-details"
+  ]
+ },
+ "ai-grading-prompts-u6-l9.js": {
+  "reflect1": [
+   "interval-interpretation",
+   "parameter-context",
+   "zero-plausible",
+   "claim-conclusion",
+   "direction-language",
+   "positive-negative-mention"
+  ],
+  "reflect2": [
+   "interval-interpretation",
+   "parameter-context",
+   "all-negative",
+   "claim-supported",
+   "direction-language",
+   "percentage-points"
+  ],
+  "exitTicket": [
+   "interval-interpretation",
+   "parameter-context",
+   "zero-plausible",
+   "not-significant",
+   "confidence-level",
+   "repeated-samples-details",
+   "not-probability"
+  ]
+ },
+ "ai-grading-prompts-u7-l1.js": {
+  "reflect1": [
+   "evidence-statistic",
+   "observed-value",
+   "expected-zero",
+   "chance-explanation",
+   "treatment-explanation",
+   "context"
+  ],
+  "reflect2": [
+   "assumption",
+   "rerandomize",
+   "calculate-statistic",
+   "many-trials",
+   "tail-count",
+   "unlikely-chance",
+   "conclusion"
+  ],
+  "exitTicket": [
+   "evidence",
+   "expected-zero",
+   "chance-explanation",
+   "effect-explanation",
+   "simulation-probability",
+   "small-probability",
+   "convincing-evidence"
+  ]
+ },
+ "ai-grading-prompts-u7-l2.js": {
+  "reflect1": [
+   "procedure",
+   "single-mean",
+   "random-condition",
+   "ten-percent",
+   "small-sample-shape",
+   "shape-evidence",
+   "conditions-met"
+  ],
+  "reflect2": [
+   "sample-stats",
+   "degrees-freedom",
+   "critical-value",
+   "formula",
+   "margin-error",
+   "interval",
+   "context-interpretation",
+   "confidence-language"
+  ],
+  "exitTicket": [
+   "procedure",
+   "random-sample",
+   "ten-percent",
+   "large-sample",
+   "degrees-freedom",
+   "critical-value",
+   "formula",
+   "margin-error",
+   "interval",
+   "context-interpretation",
+   "table-note"
+  ]
+ },
+ "ai-grading-prompts-u7-l3.js": {
+  "reflect1": [
+   "inside-plausible",
+   "no-evidence-against",
+   "sugar-interval",
+   "sugar-conclusion",
+   "all-above-logic",
+   "unit-conversion",
+   "crab-example",
+   "crab-conclusion"
+  ],
+  "reflect2": [
+   "repeated-sampling",
+   "context",
+   "capture-rate",
+   "not-probability",
+   "sample-size-effect",
+   "confidence-effect",
+   "precision",
+   "quadruple-rule"
+  ],
+  "exitTicket": [
+   "procedure",
+   "random-condition",
+   "ten-percent",
+   "shape-condition",
+   "sample-stats",
+   "degrees-freedom",
+   "critical-value",
+   "formula",
+   "margin-error",
+   "interval",
+   "interpretation",
+   "claim-logic"
+  ]
+ },
+ "ai-grading-prompts-u7-l4.js": {
+  "reflect1": [
+   "got-hops-parameter",
+   "got-hops-null",
+   "got-hops-alt",
+   "null-equality",
+   "alt-inequality",
+   "two-sided",
+   "tread40-parameter",
+   "tread40-hypotheses",
+   "one-sided",
+   "no-xbar"
+  ],
+  "reflect2": [
+   "procedure",
+   "why-procedure",
+   "random-condition",
+   "ten-percent",
+   "shape-condition",
+   "graph-needed",
+   "jump-example",
+   "tablet-example"
+  ],
+  "exitTicket": [
+   "parameter",
+   "null",
+   "alternative",
+   "procedure",
+   "random",
+   "ten-percent",
+   "large-sample",
+   "one-sided",
+   "no-xbar"
+  ]
+ },
+ "ai-grading-prompts-u7-l5.js": {
+  "reflect1": [
+   "general-formula",
+   "t-formula",
+   "degrees-of-freedom",
+   "got-hops-t",
+   "got-hops-p",
+   "tread40-t",
+   "tread40-p",
+   "tail-direction",
+   "technology-tableb"
+  ],
+  "reflect2": [
+   "assume-null",
+   "chance-alone",
+   "got-hops-interpretation",
+   "got-hops-decision",
+   "got-hops-conclusion",
+   "small-large-pvalues",
+   "tread40-decision",
+   "tread40-conclusion",
+   "no-accept-null"
+  ],
+  "exitTicket": [
+   "paired-data",
+   "parameter",
+   "null",
+   "alternative",
+   "procedure",
+   "random-assignment",
+   "no-ten-percent",
+   "shape",
+   "decision",
+   "conclusion",
+   "alpha-default"
+  ]
+ },
+ "ai-grading-prompts-u7-l6.js": {
+  "reflect1": [
+   "procedure-match",
+   "independence",
+   "ten-percent",
+   "normal-condition",
+   "spider-example",
+   "slow-internet-assignment",
+   "slow-internet-shape",
+   "large-sample-variation"
+  ],
+  "reflect2": [
+   "general-formula",
+   "two-sample-formula",
+   "point-estimate",
+   "technology-df",
+   "interval-values",
+   "critical-value-or-moe",
+   "interpretation",
+   "positive-interval",
+   "equivalent-form"
+  ],
+  "exitTicket": [
+   "parameter",
+   "procedure",
+   "independence",
+   "ten-percent",
+   "shape-check-needed",
+   "shape-result",
+   "interpretation",
+   "contextual-values",
+   "positive-endpoints",
+   "pooled-no"
+  ]
+ },
+ "ai-grading-prompts-u7-l7.js": {
+  "reflect1": [
+   "general-template",
+   "spider-context",
+   "direction",
+   "order-matters",
+   "sample-error",
+   "probability-error",
+   "alternate-interpretation",
+   "reverse-interval"
+  ],
+  "reflect2": [
+   "zero-means-no-difference",
+   "spider-support",
+   "sign-matches-claim",
+   "firestation-no-support",
+   "contextual-conclusion",
+   "do-not-say-wrong",
+   "restaurant-connection",
+   "plausible-language"
+  ],
+  "exitTicket": [
+   "parameter",
+   "procedure",
+   "random-samples",
+   "ten-percent",
+   "large-sample",
+   "interval-interpretation",
+   "zero-plausible",
+   "claim-conclusion",
+   "confidence-level",
+   "do-not-say-wrong"
+  ]
+ },
+ "ai-grading-prompts-u7-l8.js": {
+  "reflect1": [
+   "define-parameters",
+   "null-no-effect",
+   "null-equality",
+   "alternative-directional",
+   "yawn-more-context",
+   "parameters-not-statistics",
+   "words-or-symbols",
+   "skeptic-language"
+  ],
+  "reflect2": [
+   "one-sided-definition",
+   "yawning-direction",
+   "not-two-sided-yawning",
+   "two-sided-definition",
+   "textbook-example",
+   "reverse-order",
+   "not-equal-symbol",
+   "context-controls-direction"
+  ],
+  "exitTicket": [
+   "define-mu-c",
+   "define-mu-p",
+   "null-correct",
+   "alternative-correct",
+   "two-sided-reason",
+   "parameters-not-samples",
+   "consistent-order",
+   "statistics-descriptive"
+  ]
+ },
+ "ai-grading-prompts-u7-l9.js": {
+  "reflect1": [
+   "correct-hypotheses",
+   "random-condition",
+   "independence-condition",
+   "large-sample-condition",
+   "test-statistic-setup",
+   "observed-difference",
+   "test-statistic-value",
+   "p-value",
+   "decision-conclusion",
+   "standard-error-language",
+   "statistical-significance"
+  ],
+  "reflect2": [
+   "p-value-meaning",
+   "two-sided-reason",
+   "negative-sign",
+   "compare-to-alpha",
+   "not-proof-equal",
+   "contextual-conclusion",
+   "reverse-order",
+   "sampling-language"
+  ],
+  "exitTicket": [
+   "null-hypothesis",
+   "alternative-hypothesis",
+   "conditions",
+   "test-statistic",
+   "p-value",
+   "decision",
+   "context-conclusion",
+   "not-proof-equal",
+   "negative-sign-meaning",
+   "not-significant"
+  ]
+ },
+ "ai-grading-prompts-u8-l1.js": {
+  "reflect1": [
+   "expected-counts",
+   "cancellation-problem",
+   "squaring-reason",
+   "divide-by-expected",
+   "chi-square-formula",
+   "chi-square-value",
+   "larger-chi-square",
+   "absolute-values-issue",
+   "squared-sum"
+  ],
+  "reflect2": [
+   "fair-die-model",
+   "sampling-distribution",
+   "p-value-estimate",
+   "approximate-p-value",
+   "not-surprising",
+   "contextual-conclusion",
+   "good-fit-language",
+   "large-p-value-meaning"
+  ],
+  "exitTicket": [
+   "expected-count",
+   "obs-exp-problem",
+   "chi-square-computation",
+   "observed-statistic",
+   "simulation-distribution",
+   "p-value",
+   "conclusion",
+   "random-variation",
+   "good-fit",
+   "extreme-weighting"
+  ]
+ },
+ "ai-grading-prompts-u8-l2.js": {
+  "reflect1": [
+   "expected-counts",
+   "contributions",
+   "chi-square-value",
+   "chi-square-meaning",
+   "df-calculation",
+   "df-not-sample-size",
+   "df-shape-effect",
+   "non-negative",
+   "simulation-result"
+  ],
+  "reflect2": [
+   "null-hypothesis",
+   "alternative-hypothesis",
+   "alternative-in-words",
+   "procedure-identification",
+   "random-condition",
+   "ten-percent-condition",
+   "large-counts-condition",
+   "expected-count-formula",
+   "parameters-not-statistics"
+  ],
+  "exitTicket": [
+   "null-hypothesis",
+   "alternative-hypothesis",
+   "procedure",
+   "random-condition",
+   "ten-percent",
+   "expected-counts",
+   "degrees-of-freedom",
+   "distribution-shape",
+   "larger-chi-square",
+   "define-parameters"
+  ]
+ },
+ "ai-grading-prompts-u8-l3.js": {
+  "reflect1": [
+   "null-model",
+   "expected-counts",
+   "chi-square",
+   "degrees-freedom",
+   "p-value",
+   "decision-conclusion",
+   "largest-contribution",
+   "practical-meaning"
+  ],
+  "reflect2": [
+   "p-value-template",
+   "predatory-interpretation",
+   "predatory-decision",
+   "predatory-conclusion",
+   "battleship-interpretation",
+   "battleship-decision",
+   "battleship-conclusion"
+  ],
+  "exitTicket": [
+   "hypotheses",
+   "parameter-definition",
+   "procedure",
+   "conditions",
+   "expected-counts",
+   "mechanics",
+   "decision-and-conclusion",
+   "district-d",
+   "sample-size",
+   "full-test-structure"
+  ]
+ },
+ "ai-grading-prompts-u8-l4.js": {
+  "reflect1": [
+   "no-relationship",
+   "totals",
+   "formula",
+   "public-2019",
+   "private-2019",
+   "subtraction-shortcut",
+   "remaining-counts",
+   "no-total-cells",
+   "key-parentheses"
+  ],
+  "reflect2": [
+   "no-relationship",
+   "totals",
+   "formula",
+   "first-expected-count",
+   "second-expected-count",
+   "remaining-counts",
+   "subtraction-shortcut",
+   "no-total-cells",
+   "variable-placement"
+  ],
+  "exitTicket": [
+   "row-and-table-totals",
+   "assumption",
+   "formula",
+   "first-two-expected-counts",
+   "remaining-four-counts",
+   "totals-explanation",
+   "key-explanation",
+   "column-totals",
+   "subtraction-language"
+  ]
+ },
+ "ai-grading-prompts-u8-l5.js": {
+  "reflect1": [
+   "goal-matters",
+   "homogeneity-purpose",
+   "homogeneity-collection",
+   "independence-purpose",
+   "independence-collection",
+   "school-example",
+   "employment-example",
+   "two-way-table"
+  ],
+  "reflect2": [
+   "homogeneity-hypotheses",
+   "independence-hypotheses",
+   "no-parameter",
+   "many-sided",
+   "design-condition",
+   "ten-percent",
+   "expected-counts",
+   "expected-not-observed",
+   "school-minimum",
+   "conditions-met"
+  ],
+  "exitTicket": [
+   "school-test",
+   "school-hypotheses",
+   "employment-test",
+   "employment-hypotheses",
+   "design-condition",
+   "ten-percent",
+   "large-counts",
+   "expected-not-observed"
+  ]
+ },
+ "ai-grading-prompts-u8-l6.js": {
+  "reflect1": [
+   "chi-square-formula",
+   "contributions",
+   "observed-expected",
+   "df-formula",
+   "exclude-totals",
+   "p-value-methods",
+   "school-example",
+   "employment-example"
+  ],
+  "reflect2": [
+   "interpretation-template",
+   "chance-alone",
+   "compare-to-alpha",
+   "large-pvalue",
+   "small-pvalue",
+   "school-conclusion",
+   "employment-conclusion",
+   "follow-up-analysis"
+  ],
+  "exitTicket": [
+   "procedure",
+   "null-hypothesis",
+   "alternative-hypothesis",
+   "alpha",
+   "conditions",
+   "statistic-and-df",
+   "p-value",
+   "decision-and-conclusion",
+   "calculator",
+   "interpretation-note"
+  ]
+ },
+ "ai-grading-prompts-u9-l1.js": {
+  "reflect1": [
+   "population",
+   "sample-size",
+   "sample-regression-line",
+   "record-slope",
+   "random-variation",
+   "trial-values",
+   "sampling-distribution",
+   "old-model"
+  ],
+  "reflect2": [
+   "observed-slope",
+   "compare-to-distribution",
+   "unusual-language",
+   "either-direction",
+   "estimated-probability",
+   "interpretation",
+   "contextual-conclusion",
+   "left-tail"
+  ],
+  "exitTicket": [
+   "population-and-sample",
+   "regression-lines",
+   "simulation-process",
+   "sampling-distribution",
+   "unusual-slope",
+   "estimated-probability",
+   "meaning-of-probability",
+   "contextual-conclusion",
+   "trial-slopes",
+   "either-direction"
+  ]
+ },
+ "ai-grading-prompts-u9-l2.js": {
+  "reflect1": [
+   "linear-condition",
+   "equal-variance-condition",
+   "normal-condition",
+   "normal-shape",
+   "center-beta",
+   "variability-formula",
+   "old-faithful-values",
+   "ten-percent"
+  ],
+  "reflect2": [
+   "scatterplot-linearity",
+   "equal-spread",
+   "residual-normality",
+   "random-sample",
+   "estimate-sigma-x",
+   "estimate-sigma",
+   "t-interval-reason",
+   "independence",
+   "n-greater-than-30"
+  ],
+  "exitTicket": [
+   "procedure",
+   "why-appropriate",
+   "point-estimate",
+   "df-and-critical",
+   "se-and-me",
+   "final-interval",
+   "narrower-interval",
+   "sample-based-estimates",
+   "conditions"
+  ]
+ },
+ "ai-grading-prompts-u9-l3.js": {
+  "reflect1": [
+   "confidence-statement",
+   "interval-values",
+   "parameter-context",
+   "confidence-level-meaning",
+   "long-run-capture",
+   "sample-size-25",
+   "parameter-not-statistic"
+  ],
+  "reflect2": [
+   "beta-zero-meaning",
+   "old-faithful-contains-zero",
+   "old-faithful-conclusion",
+   "raoul-interval-values",
+   "raoul-conclusion",
+   "justify-claim-rule",
+   "plausible-language",
+   "negative-interval-case"
+  ],
+  "exitTicket": [
+   "parameter",
+   "procedure",
+   "b-df-tstar",
+   "se-and-me",
+   "final-interval",
+   "interpretation",
+   "claim-justification",
+   "units",
+   "sample-size"
+  ]
+ },
+ "ai-grading-prompts-u9-l4.js": {
+  "reflect1": [
+   "prevent-bias",
+   "pre-registration",
+   "integrity",
+   "one-vs-two"
+  ],
+  "reflect2": [
+   "list-conditions",
+   "validity-reason",
+   "violation-consequence",
+   "each-serves-purpose"
+  ],
+  "exitTicket": [
+   "null-hypothesis",
+   "alternative-hypothesis",
+   "define-beta",
+   "test-name",
+   "condition-linear",
+   "condition-constant-sd",
+   "condition-normality",
+   "condition-independence"
+  ]
+ },
+ "ai-grading-prompts-u9-l5.js": {
+  "reflect1": [
+   "assume-null",
+   "extreme-language",
+   "chance-alone",
+   "tail-direction"
+  ],
+  "reflect2": [
+   "full-setup",
+   "decision-rule",
+   "reject-vs-fail",
+   "context-conclusion"
+  ],
+  "exitTicket": [
+   "null-hypothesis",
+   "alternative-hypothesis",
+   "define-beta",
+   "test-statistic",
+   "degrees-freedom",
+   "one-sided-pvalue",
+   "interpret-pvalue",
+   "decision-conclusion"
+  ]
+ }
+}

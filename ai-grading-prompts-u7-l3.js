@@ -85,17 +85,17 @@ window.RUBRICS_U7L3 = {
         expectedElements: [
             { id: "inside-plausible", description: "Explains that a claimed mean inside the interval is a plausible value for the population mean", required: true },
             { id: "no-evidence-against", description: "States that if the claimed value is inside the interval, there is not convincing evidence against that claim", required: true },
-            { id: "sugar-interval", description: "Uses the powdered sugar example to explain that 907 is inside its confidence interval (exact endpoints are not required)", required: true },
-            { id: "sugar-conclusion", description: "Concludes there is not convincing evidence that the powdered sugar bags are underfilled", required: true },
+            { id: "sugar-interval", description: "Uses the powdered sugar example to explain that 907 is inside its confidence interval (exact endpoints are not required)", required: false },
+            { id: "sugar-conclusion", description: "Concludes there is not convincing evidence that the powdered sugar bags are underfilled", required: false },
             { id: "all-above-logic", description: "Explains that if the entire interval is above the comparison value, the data support a greater-than claim", required: true },
-            { id: "unit-conversion", description: "Notes that 2 scoops per second must be converted to 60 scoops per 30 seconds", required: true },
-            { id: "crab-example", description: "Uses the fiddler crab example to explain that its interval is entirely above 60 scoops per 30 seconds (exact endpoints are not required)", required: true },
+            { id: "unit-conversion", description: "Notes that 2 scoops per second must be converted to 60 scoops per 30 seconds", required: false },
+            { id: "crab-example", description: "Uses the fiddler crab example to explain that its interval is entirely above 60 scoops per 30 seconds (exact endpoints are not required)", required: false },
             { id: "crab-conclusion", description: "Concludes there is convincing evidence the mean feeding rate is greater than 2 scoops per second", required: true }
         ],
         scoringGuide: {
-            E: "Response clearly explains both interval-to-claim decision rules and correctly applies them to the powdered sugar and fiddler crab examples",
-            P: "Response shows the main inside-versus-all-above logic but omits or weakly explains one or more contextual details from the examples",
-            I: "Response misunderstands how interval location relates to a claim or gives incorrect conclusions for the examples"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying a value inside the interval proves the claim is true instead of saying it is plausible",
@@ -111,18 +111,18 @@ window.RUBRICS_U7L3 = {
         questionText: "Explain how to interpret a 95% confidence level for the body temperature example and describe how increasing sample size or decreasing confidence level affects the margin of error for a confidence interval for a population mean.",
         expectedElements: [
             { id: "repeated-sampling", description: "Interprets confidence level using repeated random sampling with the same sample size", required: true },
-            { id: "context", description: "States that many random samples of 10 people would be used to build 95% confidence intervals for the mean human body temperature of all people", required: true },
+            { id: "context", description: "States that many random samples of 10 people would be used to build 95% confidence intervals for the mean human body temperature of all people", required: false },
             { id: "capture-rate", description: "States that about 95% of those intervals would capture the population mean", required: true },
-            { id: "not-probability", description: "Explains that 95% is not the probability that one completed interval contains mu", required: true },
+            { id: "not-probability", description: "Explains that 95% is not the probability that one completed interval contains mu", required: false },
             { id: "sample-size-effect", description: "States that increasing sample size decreases the margin of error", required: true },
             { id: "confidence-effect", description: "States that decreasing the confidence level decreases the critical value and the margin of error", required: true },
             { id: "precision", description: "May note that a smaller margin of error makes the interval narrower or more precise", required: false },
             { id: "quadruple-rule", description: "May note that quadrupling the sample size cuts the margin of error in half", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets the 95% confidence level in context and accurately explains both margin-of-error effects",
-            P: "Response gives a mostly correct confidence-level interpretation or margin-of-error discussion but leaves out an important piece or context",
-            I: "Response treats confidence level as the probability for one interval or gives incorrect claims about how sample size or confidence level affects margin of error"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying there is a 95% chance that the one computed interval contains mu",
@@ -141,19 +141,19 @@ window.RUBRICS_U7L3 = {
             { id: "random-condition", description: "States that the data came from a random sample of 23 crows", required: true },
             { id: "ten-percent", description: "States that 23 is reasonably less than 10% of all crows in the region", required: true },
             { id: "shape-condition", description: "Uses the stemplot evidence of no strong skewness or outliers", required: true },
-            { id: "sample-stats", description: "Uses the sample statistics x-bar = 4.90, s = 1.12, and n = 23", required: true },
-            { id: "degrees-freedom", description: "Computes or states df = 22", required: true },
+            { id: "sample-stats", description: "Uses the sample statistics x-bar = 4.90, s = 1.12, and n = 23", required: false },
+            { id: "degrees-freedom", description: "Computes or states df = 22", required: false },
             { id: "critical-value", description: "States the 95% critical value t* = 2.074", required: true },
             { id: "formula", description: "Uses the one-sample t-interval form x-bar plus or minus t* times s over square root of n", required: true },
-            { id: "margin-error", description: "States or supports that the margin of error is 0.484", required: true },
+            { id: "margin-error", description: "States or supports that the margin of error is 0.484", required: false },
             { id: "interval", description: "Gives the interval 4.416 to 5.384 ppm", required: true },
             { id: "interpretation", description: "Interprets the interval in context for the mean lead level of all crows in the region", required: true },
             { id: "claim-logic", description: "Explains that because the entire interval is below 6.0 ppm, there is convincing evidence the population mean lead level is less than 6.0 ppm", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly completes the full one-sample t-interval process for the crow data and uses the interval correctly to justify the less-than claim",
-            P: "Response includes most of the correct setup and interval work but misses one or two important details or has a weak claim justification",
-            I: "Response uses the wrong procedure, gives an incorrect interval, or fails to justify the claim from the interval"
+            E: "All 9 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using a z interval instead of a t interval",
@@ -210,8 +210,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

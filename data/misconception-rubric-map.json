@@ -2147,7 +2147,7 @@
         "Saying cluster sampling is automatically better because it is easier to collect",
         "Ignoring that incomes vary a lot between neighborhoods",
         "Forgetting that stratified sampling includes people from every group",
-        "Not mentioning the practical difficulty of carrying out the stratified sample"
+        "Saying stratified is better without connecting it to how incomes vary across regions"
       ],
       "worksheet": "u3_lesson3_live.html"
     },
@@ -2673,7 +2673,7 @@
         }
       ],
       "commonMistakes": [
-        "Forgetting to calculate total outcomes (20 marbles)",
+        "Giving P(blue) without the interpretation as a long-run relative frequency",
         "Not interpreting probability as relative frequency in long run",
         "Calculating P(not red) by adding other probabilities instead of using 1 - P(red)",
         "Not showing complement rule formula even if answer is correct",
@@ -3089,7 +3089,7 @@
         }
       ],
       "commonMistakes": [
-        "Using examples from the video instead of original ones",
+        "Giving an example of only one type",
         "Confusing 'countable' with 'finite' (discrete can be infinite but countable)",
         "Saying continuous means 'any number' without mentioning 'in an interval'",
         "Giving examples without explaining why they fit the category"
@@ -3278,7 +3278,7 @@
       "commonMistakes": [
         "Confusing sampling variability with measurement error",
         "Saying larger samples are always better without explaining why",
-        "Not connecting to a specific example from the lesson",
+        "Saying only that larger samples are better without saying what varies",
         "Using 'it' without specifying what varies"
       ],
       "worksheet": "u5_lesson1-2_live.html"
@@ -3305,7 +3305,7 @@
       "commonMistakes": [
         "Forgetting to include both tails (only calculating one side)",
         "Calculating P(4.8 < X < 5.2) instead of P(rejected)",
-        "Not defining the random variable",
+        "Reporting a probability with no in-context interpretation",
         "Using calculator syntax without showing Z-scores or identifying normal distribution"
       ],
       "worksheet": "u5_lesson1-2_live.html"
@@ -3371,7 +3371,7 @@
       "commonMistakes": [
         "Confusing the population distribution with the sampling distribution",
         "Thinking CLT only works for normal populations",
-        "Not understanding that it's about the distribution of SAMPLE MEANS, not individual values",
+        "Describing the distribution of individual values instead of the distribution of sample means",
         "Thinking larger samples have MORE variability (opposite is true)"
       ],
       "worksheet": "u5_lesson3_live.html"

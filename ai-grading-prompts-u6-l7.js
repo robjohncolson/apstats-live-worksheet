@@ -63,14 +63,14 @@ window.RUBRICS_U6L7 = {
         expectedElements: [
             { id: "type1-context", description: "Describes a Type I error in context: concluding that more than 50% of students prefer the new lunch option when the true proportion is actually 0.50", required: true },
             { id: "type2-context", description: "Describes a Type II error in context: failing to find convincing evidence that more than 50% prefer the new lunch option when the true proportion really is greater than 0.50", required: true },
-            { id: "uses-context", description: "States the errors in the actual lunch-option context rather than only giving abstract definitions", required: true },
+            { id: "uses-context", description: "States the errors in the actual lunch-option context rather than only giving abstract definitions", required: false },
             { id: "consequential-choice", description: "Identifies which error is more consequential in this context and gives a reasonable justification tied to real consequences", required: true },
             { id: "ha-language", description: "Frames the conclusion around the alternative hypothesis being true or not supported, not around 'proving' hypotheses", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly describes both Type I and Type II errors in the lunch context and gives a clear, context-based explanation of which error is more consequential",
-            P: "Response correctly describes only one error, or describes both errors but one is vague or not fully in context, or the consequentiality explanation is weak",
-            I: "Response confuses Type I and Type II errors, gives only abstract definitions with no context, or does not explain the consequence question meaningfully"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Swapping the two errors so Type I is described as failing to reject H0 or Type II is described as rejecting a true H0",
@@ -92,9 +92,9 @@ window.RUBRICS_U6L7 = {
             { id: "factor-explanation", description: "Briefly explains why the named change increases the chance of rejecting a false H0", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly interprets power in context, computes the Type II error probability as 0.20, and gives at least one valid way to increase power",
-            P: "Response gets most of the idea but misses one part, such as giving the right context for power but not finding beta correctly, or finding beta but naming an invalid factor",
-            I: "Response confuses the meaning of power, gives the wrong Type II error probability, or does not identify a valid way to increase power"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying power is the probability that H0 is false",
@@ -118,9 +118,9 @@ window.RUBRICS_U6L7 = {
             { id: "two-power-factors", description: "Gives two valid changes that would increase power, such as increasing sample size, increasing alpha, decreasing standard error, or having the true parameter farther from the null, with brief explanation", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly states the hypotheses, describes both errors in context, interprets the given power, finds both error probabilities, and gives two valid ways to increase power with explanation",
-            P: "Response has most core ideas correct but misses one meaningful component, such as one error description, one probability, or one of the power-increasing changes",
-            I: "Response has multiple conceptual errors, such as wrong hypotheses, confused Type I/Type II descriptions, incorrect power interpretation, or missing the error probabilities"
+            E: "All 7 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Writing Ha: p != 0.40 instead of Ha: p > 0.40",
@@ -178,8 +178,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 

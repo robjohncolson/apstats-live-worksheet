@@ -52,20 +52,20 @@ window.RUBRICS_U8L1 = {
     reflect1: {
         questionText: "Explain how the chi-square statistic is built for the 10-sided die example. Include the expected counts for a fair die, why adding Obs - Exp is not enough, why the differences are squared and divided by expected count, the value chi-square = 4.2, and what a larger chi-square value would mean.",
         expectedElements: [
-            { id: "expected-counts", description: "States that a fair 10-sided die gives expected counts of 10 in each category", required: true },
+            { id: "expected-counts", description: "States that a fair 10-sided die gives expected counts of 10 in each category", required: false },
             { id: "cancellation-problem", description: "Explains that Obs - Exp values sum to 0 or cancel, so adding them is not a useful overall measure", required: true },
             { id: "squaring-reason", description: "Explains that the differences are squared so the contributions are positive and larger discrepancies get more weight", required: true },
             { id: "divide-by-expected", description: "Explains that dividing by expected count makes the discrepancy relative to what was expected", required: true },
-            { id: "chi-square-formula", description: "Describes chi-square as the sum of (Obs - Exp)^2 / Exp across categories", required: true },
-            { id: "chi-square-value", description: "Identifies the observed chi-square statistic as 4.2", required: true },
+            { id: "chi-square-formula", description: "Describes chi-square as the sum of (Obs - Exp)^2 / Exp across categories", required: false },
+            { id: "chi-square-value", description: "Identifies the observed chi-square statistic as 4.2", required: false },
             { id: "larger-chi-square", description: "Explains that a larger chi-square value means a bigger mismatch or poorer fit between observed and expected counts", required: true },
             { id: "absolute-values-issue", description: "May mention that absolute values still depend heavily on sample size", required: false },
             { id: "squared-sum", description: "May mention that the sum of squared differences was 42 before dividing by expected counts", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly explains the expected counts, the cancellation problem, the chi-square construction, the observed value 4.2, and what larger chi-square values mean",
-            P: "Response shows the main idea of building chi-square but misses one major reason, one structural step, or the interpretation of the statistic",
-            I: "Response confuses expected and observed counts, skips the core chi-square construction, or does not explain what the statistic means in this example"
+            E: "All 4 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Saying the observed minus expected differences can just be added directly",
@@ -81,18 +81,18 @@ window.RUBRICS_U8L1 = {
         questionText: "Explain how the simulation is used to decide whether the die results are surprising. Describe the fair-die model, what the sampling distribution represents, how the P-value is estimated, the approximate P-value, and the conclusion about whether the die seems weighted.",
         expectedElements: [
             { id: "fair-die-model", description: "States that the simulation assumes the die is fair and rolls 100 outcomes under that model", required: true },
-            { id: "sampling-distribution", description: "Explains that the dotplot shows the sampling distribution of chi-square values from many simulated samples", required: true },
+            { id: "sampling-distribution", description: "Explains that the dotplot shows the sampling distribution of chi-square values from many simulated samples", required: false },
             { id: "p-value-estimate", description: "Explains that the P-value is found from the proportion of simulated chi-square values at least as large as 4.2", required: true },
-            { id: "approximate-p-value", description: "Gives the approximate P-value as about 0.9110 or 932/1023", required: true },
-            { id: "not-surprising", description: "Explains that such a result is not surprising under the fair-die model because it happens over 90% of the time", required: true },
+            { id: "approximate-p-value", description: "Gives the approximate P-value as about 0.9110 or 932/1023", required: false },
+            { id: "not-surprising", description: "Explains that such a result is not surprising under the fair-die model because it happens over 90% of the time", required: false },
             { id: "contextual-conclusion", description: "Concludes that the results are consistent with random variation and there is not convincing evidence that the die is weighted", required: true },
             { id: "good-fit-language", description: "May describe the observed counts as a good fit to the expected counts", required: false },
             { id: "large-p-value-meaning", description: "May explicitly say that a large P-value means the observed statistic is typical rather than unusual under the model", required: false }
         ],
         scoringGuide: {
-            E: "Response clearly explains the fair-die simulation, the sampling distribution, the P-value estimate near 0.911, and the correct conclusion that the die does not appear weighted",
-            P: "Response understands the basic simulation idea and conclusion but leaves one major part incomplete, such as how the P-value is computed or what the sampling distribution represents",
-            I: "Response misinterprets the simulation, gives the wrong P-value or conclusion, or treats the result as strong evidence that the die is weighted"
+            E: "All 3 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Describing the P-value as the probability that the die is fair",
@@ -110,18 +110,18 @@ window.RUBRICS_U8L1 = {
             { id: "expected-count", description: "States that the expected count is 10 for each of the 10 outcomes under a fair die", required: true },
             { id: "obs-exp-problem", description: "Explains that adding Obs - Exp is not useful because the positive and negative differences cancel", required: true },
             { id: "chi-square-computation", description: "Describes chi-square as adding (Obs - Exp)^2 / Exp across categories", required: true },
-            { id: "observed-statistic", description: "Identifies the observed chi-square statistic as 4.2", required: true },
+            { id: "observed-statistic", description: "Identifies the observed chi-square statistic as 4.2", required: false },
             { id: "simulation-distribution", description: "Explains that the simulation distribution is made from many chi-square values from fair-die samples of 100 rolls", required: true },
             { id: "p-value", description: "Estimates the P-value as about 0.9110 or 932/1023 by counting simulated values at least as large as 4.2", required: true },
             { id: "conclusion", description: "Concludes that the result is not surprising and there is not convincing evidence that the die is weighted", required: true },
-            { id: "random-variation", description: "Explains that the large P-value means random variation is a very reasonable explanation for the observed counts", required: true },
+            { id: "random-variation", description: "Explains that the large P-value means random variation is a very reasonable explanation for the observed counts", required: false },
             { id: "good-fit", description: "May describe the observed counts as a good fit to the fair-die model", required: false },
             { id: "extreme-weighting", description: "May note that larger chi-square values would indicate more evidence against the fair-die model", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly explains the expected counts, chi-square setup, simulation-based P-value near 0.911, and the conclusion that the die results are consistent with random variation",
-            P: "Response gets most of the process right but misses one major explanation, one numerical summary, or the meaning of the large P-value",
-            I: "Response gives the wrong expected counts, misstates chi-square or the P-value, or draws the wrong conclusion about whether the die is weighted"
+            E: "All 6 key elements are present and correct. Any correct wording counts; exact decimals, lesson-specific numbers, and a particular example are not required where the element allows an equivalent.",
+            P: "Exactly one key element is missing or wrong; the rest are correct.",
+            I: "Two or more key elements are missing or wrong."
         },
         commonMistakes: [
             "Using the observed counts as the expected counts",
@@ -178,8 +178,8 @@ CONTEXT FROM VIDEO:
 ${rubric.contextFromVideo}
 
 GRADING STANDARD (read before scoring): This is a short reflection written right after watching a lesson video, not an AP exam response. Score the UNDERSTANDING, not the checklist.
-- E: the central idea is correct and the response covers most of the key elements in the student's own words. Do NOT withhold E for a missing specific number, a missing optional element, or informal vocabulary when the reasoning is right.
-- P: the response is on the right track but has one real gap or one substantive error.
+- E: every key element is present and correct, in the student's own words. The key elements are already only the essentials, each one a single idea, so none may be skipped. Accept any wording, informal vocabulary, and any correct example. Do NOT withhold E for a missing optional element, or for a missing specific number unless a key element asks for that calculation.
+- P: the central idea is right but one key element is missing or wrong.
 - I: the main idea is wrong or missing, the response is off-topic, or it is essentially blank.
 If you are torn between two scores, give the higher one.
 
