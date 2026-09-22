@@ -1,0 +1,3211 @@
+{
+  "generatedBy": "scripts/build-learning-objectives.mjs",
+  "source": "apstat_{1..9}_framework.md (2019 CED unit guides, old 9-unit topic numbering)",
+  "note": "Teacher-facing. LO codes carry the VAR/UNC/DAT Big Idea prefix from the 2019 CED; do not surface them to students.",
+  "topics": {
+    "1.1": {
+      "unit": 1,
+      "topicKey": "1.1",
+      "title": "Introducing Statistics: What Can We Learn from Data?",
+      "los": [
+        {
+          "code": "VAR-1.A",
+          "text": "Identify questions to be answered, based on variation in one-variable data.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.A.1",
+              "text": "Numbers may convey meaningful information, when placed in context."
+            }
+          ]
+        }
+      ]
+    },
+    "1.2": {
+      "unit": 1,
+      "topicKey": "1.2",
+      "title": "The Language of Variation: Variables",
+      "los": [
+        {
+          "code": "VAR-1.B",
+          "text": "Identify variables in a set of data.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "VAR-1.B.1",
+              "text": "A variable is a characteristic that changes from one individual to another."
+            }
+          ]
+        },
+        {
+          "code": "VAR-1.C",
+          "text": "Classify types of variables.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "VAR-1.C.1",
+              "text": "A categorical variable takes on values that are category names or group labels."
+            },
+            {
+              "code": "VAR-1.C.2",
+              "text": "A quantitative variable is one that takes on numerical values for a measured or counted quantity."
+            }
+          ]
+        }
+      ]
+    },
+    "1.3": {
+      "unit": 1,
+      "topicKey": "1.3",
+      "title": "Representing a Categorical Variable with Tables",
+      "los": [
+        {
+          "code": "UNC-1.A",
+          "text": "Represent categorical data using frequency or relative frequency tables.",
+          "skill": "2.B",
+          "ek": [
+            {
+              "code": "UNC-1.A.1",
+              "text": "A frequency table gives the number of cases falling into each category. A relative frequency table gives the proportion of cases falling into each category."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.B",
+          "text": "Describe categorical data represented in frequency or relative tables.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "UNC-1.B.1",
+              "text": "Percentages, relative frequencies, and rates all provide the same information as proportions."
+            },
+            {
+              "code": "UNC-1.B.2",
+              "text": "Counts and relative frequencies of categorical data reveal information that can be used to justify claims about the data in context."
+            }
+          ]
+        }
+      ]
+    },
+    "1.4": {
+      "unit": 1,
+      "topicKey": "1.4",
+      "title": "Representing a Categorical Variable with Graphs",
+      "los": [
+        {
+          "code": "UNC-1.C",
+          "text": "Represent categorical data graphically.",
+          "skill": "2.B",
+          "ek": [
+            {
+              "code": "UNC-1.C.1",
+              "text": "Bar charts (or bar graphs) are used to display frequencies (counts) or relative frequencies (proportions) for categorical data."
+            },
+            {
+              "code": "UNC-1.C.2",
+              "text": "The height or length of each bar in a bar graph corresponds to either the number or proportion of observations falling within each category."
+            },
+            {
+              "code": "UNC-1.C.3",
+              "text": "There are many additional ways to represent frequencies (counts) or relative frequencies (proportions) for categorical data."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.D",
+          "text": "Describe categorical data represented graphically.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "UNC-1.D.1",
+              "text": "Graphical representations of a categorical variable reveal information that can be used to justify claims about the data in context."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.E",
+          "text": "Compare multiple sets of categorical data.",
+          "skill": "2.D",
+          "ek": [
+            {
+              "code": "UNC-1.E.1",
+              "text": "Frequency tables, bar graphs, or other representations can be used to compare two or more data sets in terms of the same categorical variable."
+            }
+          ]
+        }
+      ]
+    },
+    "1.5": {
+      "unit": 1,
+      "topicKey": "1.5",
+      "title": "Representing a Quantitative Variable with Graphs",
+      "los": [
+        {
+          "code": "UNC-1.F",
+          "text": "Classify types of quantitative variables.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "UNC-1.F.1",
+              "text": "A discrete variable can take on a countable number of values. The number of values may be finite or countably infinite, as with the counting numbers."
+            },
+            {
+              "code": "UNC-1.F.2",
+              "text": "A continuous variable can take on infinitely many values, but those values cannot be counted. No matter how small the interval between two values of a continuous variable, it is always possible to determine another value between them."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.G",
+          "text": "Represent quantitative data graphically.",
+          "skill": "2.B",
+          "ek": [
+            {
+              "code": "UNC-1.G.1",
+              "text": "In a histogram, the height of each bar shows the number or proportion of observations that fall within the interval corresponding to that bar. Altering the interval widths can change the appearance of the histogram."
+            },
+            {
+              "code": "UNC-1.G.2",
+              "text": "In a stem and leaf plot, each data value is split into a “stem” (the first digit or digits) and a “leaf” (usually the last digit)."
+            },
+            {
+              "code": "UNC-1.G.3",
+              "text": "A dotplot represents each observation by a dot, with the position on the horizontal axis corresponding to the data value of that observation, with nearly identical values stacked on top of each other."
+            },
+            {
+              "code": "UNC-1.G.4",
+              "text": "A cumulative graph represents the number or proportion of a data set less than or equal to a given number."
+            },
+            {
+              "code": "UNC-1.G.5",
+              "text": "There are many additional ways to graphically represent distributions of quantitative data."
+            }
+          ]
+        }
+      ]
+    },
+    "1.6": {
+      "unit": 1,
+      "topicKey": "1.6",
+      "title": "Describing the Distribution of a Quantitative Variable",
+      "los": [
+        {
+          "code": "UNC-1.H",
+          "text": "Describe the characteristics of quantitative data distributions.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "UNC-1.H.1",
+              "text": "Descriptions of the distribution of quantitative data include shape, center, and variability (spread), as well as any unusual features such as outliers, gaps, clusters, or multiple peaks."
+            },
+            {
+              "code": "UNC-1.H.2",
+              "text": "Outliers for one-variable data are data points that are unusually small or large relative to the rest of the data."
+            },
+            {
+              "code": "UNC-1.H.3",
+              "text": "A distribution is skewed to the right (positive skew) if the right tail is longer than the left. A distribution is skewed to the left (negative skew) if the left tail is longer than the right. A distribution is symmetric if the left half is the mirror image of the right half."
+            },
+            {
+              "code": "UNC-1.H.4",
+              "text": "Univariate graphs with one main peak are known as unimodal. Graphs with two prominent peaks are bimodal. A graph where each bar height is approximately the same (no prominent peaks) is approximately uniform."
+            },
+            {
+              "code": "UNC-1.H.5",
+              "text": "A gap is a region of a distribution between two data values where there are no observed data."
+            },
+            {
+              "code": "UNC-1.H.6",
+              "text": "Clusters are concentrations of data usually separated by gaps."
+            },
+            {
+              "code": "UNC-1.H.7",
+              "text": "Descriptive statistics does not attribute properties of a data set to a larger population, but may provide the basis for conjectures for subsequent testing."
+            }
+          ]
+        }
+      ]
+    },
+    "1.7": {
+      "unit": 1,
+      "topicKey": "1.7",
+      "title": "Summary Statistics for a Quantitative Variable",
+      "los": [
+        {
+          "code": "UNC-1.I",
+          "text": "Calculate measures of center and position for quantitative data.",
+          "skill": "2.C",
+          "ek": [
+            {
+              "code": "UNC-1.I.1",
+              "text": "A statistic is a numerical summary of sample data."
+            },
+            {
+              "code": "UNC-1.I.2",
+              "text": "The mean is the sum of all the data values divided by the number of values. For a sample, the mean is denoted by x-bar: \\bar{x} = \\frac{1}{n} \\sum_{i=1}^n x_i, where x_i represents the i^{\\text{th}} data point in the sample and n represents the number of data values in the sample."
+            },
+            {
+              "code": "UNC-1.I.3",
+              "text": "The median of a data set is the middle value when data are ordered. When the number of data points is even, the median can take on any value between the two middle values. In AP Statistics, the most commonly used value for the median of a data set with an even number of values is the average of the two middle values."
+            },
+            {
+              "code": "UNC-1.I.4",
+              "text": "The first quartile, Q1, is the median of the half of the ordered data set from the minimum to the position of the median. The third quartile, Q3, is the median of the half of the ordered data set from the position of the median to the maximum. Q1 and Q3 form the boundaries for the middle 50% of values in an ordered data set."
+            },
+            {
+              "code": "UNC-1.I.5",
+              "text": "The p^{\\text{th}} percentile is interpreted as the value that has p\\% of the data less than or equal to it."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.J",
+          "text": "Calculate measures of variability for quantitative data.",
+          "skill": "2.C",
+          "ek": [
+            {
+              "code": "UNC-1.J.1",
+              "text": "Three commonly used measures of variability (or spread) in a distribution are the range, interquartile range, and standard deviation."
+            },
+            {
+              "code": "UNC-1.J.2",
+              "text": "The range is defined as the difference between the maximum data value and the minimum data value. The interquartile range (IQR) is defined as the difference between the third and first quartiles: Q3 − Q1. Both the range and the interquartile range are possible ways of measuring variability of the distribution of a quantitative variable."
+            },
+            {
+              "code": "UNC-1.J.3",
+              "text": "Standard deviation is a way to measure variability of the distribution of a quantitative variable. For a sample, the standard deviation is denoted by s_x: s_x = \\sqrt{\\frac{1}{n-1} \\sum (x_i - \\bar{x})^2}. The square of the sample standard deviation, s^2, is called the sample variance."
+            },
+            {
+              "code": "UNC-1.J.4",
+              "text": "Changing units of measurement affects the values of the calculated statistics."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.K",
+          "text": "Explain the selection of a particular measure of center and/or variability for describing a set of quantitative data.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-1.K.1",
+              "text": "There are many methods for determining outliers. Two methods frequently used in this course are: i. An outlier is a value greater than 1.5 \\times \\text{IQR} above the third quartile or more than 1.5 \\times \\text{IQR} below the first quartile. ii. An outlier is a value located 2 or more standard deviations above, or below, the mean."
+            },
+            {
+              "code": "UNC-1.K.2",
+              "text": "The mean, standard deviation, and range are considered nonresistant (or non-robust) because they are influenced by outliers. The median and IQR are considered resistant (or robust), because outliers do not greatly (if at all) affect their value."
+            }
+          ]
+        }
+      ]
+    },
+    "1.8": {
+      "unit": 1,
+      "topicKey": "1.8",
+      "title": "Graphical Representations of Summary Statistics",
+      "los": [
+        {
+          "code": "UNC-1.L",
+          "text": "Represent summary statistics for quantitative data graphically.",
+          "skill": "2.B",
+          "ek": [
+            {
+              "code": "UNC-1.L.1",
+              "text": "Taken together, the minimum data value, the first quartile (Q1), the median, the third quartile (Q3), and the maximum data value make up the five-number summary."
+            },
+            {
+              "code": "UNC-1.L.2",
+              "text": "A boxplot is a graphical representation of the five-number summary (minimum, first quartile, median, third quartile, maximum). The box represents the middle 50% of data, with a line at the median and the ends of the box corresponding to the quartiles. Lines (“whiskers”) extend from the quartiles to the most extreme point that is not an outlier, and outliers are indicated by their own symbol beyond this."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.M",
+          "text": "Describe summary statistics of quantitative data represented graphically.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "UNC-1.M.1",
+              "text": "Summary statistics of quantitative data, or of sets of quantitative data, can be used to justify claims about the data in context."
+            },
+            {
+              "code": "UNC-1.M.2",
+              "text": "If a distribution is relatively symmetric, then the mean and median are relatively close to one another. If a distribution is skewed right, then the mean is usually to the right of the median. If the distribution is skewed left, then the mean is usually to the left of the median."
+            }
+          ]
+        }
+      ]
+    },
+    "1.9": {
+      "unit": 1,
+      "topicKey": "1.9",
+      "title": "Comparing Distributions of a Quantitative Variable",
+      "los": [
+        {
+          "code": "UNC-1.N",
+          "text": "Compare graphical representations for multiple sets of quantitative data.",
+          "skill": "2.D",
+          "ek": [
+            {
+              "code": "UNC-1.N.1",
+              "text": "Any of the graphical representations, e.g., histograms, side-by-side boxplots, etc., can be used to compare two or more independent samples on center, variability, clusters, gaps, outliers, and other features."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.O",
+          "text": "Compare summary statistics for multiple sets of quantitative data.",
+          "skill": "2.D",
+          "ek": [
+            {
+              "code": "UNC-1.O.1",
+              "text": "Any of the numerical summaries (e.g., mean, standard deviation, relative frequency, etc.) can be used to compare two or more independent samples."
+            }
+          ]
+        }
+      ]
+    },
+    "1.10": {
+      "unit": 1,
+      "topicKey": "1.10",
+      "title": "The Normal Distribution",
+      "los": [
+        {
+          "code": "VAR-2.A",
+          "text": "Compare a data distribution to the normal distribution model.",
+          "skill": "2.D",
+          "ek": [
+            {
+              "code": "VAR-2.A.1",
+              "text": "A parameter is a numerical summary of a population."
+            },
+            {
+              "code": "VAR-2.A.2",
+              "text": "Some sets of data may be described as approximately normally distributed. A normal curve is mound-shaped and symmetric. The parameters of a normal distribution are the population mean, \\mu, and the population standard deviation, \\sigma."
+            },
+            {
+              "code": "VAR-2.A.3",
+              "text": "For a normal distribution, approximately 68% of the observations are within 1 standard deviation of the mean, approximately 95% of observations are within 2 standard deviations of the mean, and approximately 99.7% of observations are within 3 standard deviations of the mean. This is called the empirical rule."
+            },
+            {
+              "code": "VAR-2.A.4",
+              "text": "Many variables can be modeled by a normal distribution."
+            }
+          ]
+        },
+        {
+          "code": "VAR-2.B",
+          "text": "Determine proportions and percentiles from a normal distribution.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "VAR-2.B.1",
+              "text": "A standardized score for a particular data value is calculated as (data value – mean)/(standard deviation), and measures the number of standard deviations a data value falls above or below the mean."
+            },
+            {
+              "code": "VAR-2.B.2",
+              "text": "One example of a standardized score is a z-score, which is calculated as z\\text{-score} = \\frac{x_i - \\mu}{\\sigma}. A z-score measures how many standard deviations a data value is from the mean."
+            },
+            {
+              "code": "VAR-2.B.3",
+              "text": "Technology, such as a calculator, a standard normal table, or computer-generated output, can be used to find the proportion of data values located on a given interval of a normally distributed random variable."
+            },
+            {
+              "code": "VAR-2.B.4",
+              "text": "Given the area of a region under the graph of the normal distribution curve, it is possible to use technology, such as a calculator, a standard normal table, or computer-generated output, to estimate parameters for some populations."
+            }
+          ]
+        },
+        {
+          "code": "VAR-2.C",
+          "text": "Compare measures of relative position in data sets.",
+          "skill": "2.D",
+          "ek": [
+            {
+              "code": "VAR-2.C.1",
+              "text": "Percentiles and z-scores may be used to compare relative positions of points within a data set or between data sets."
+            }
+          ]
+        }
+      ]
+    },
+    "2.1": {
+      "unit": 2,
+      "topicKey": "2.1",
+      "title": "Introducing Statistics: Are Variables Related?",
+      "los": [
+        {
+          "code": "VAR-1.D",
+          "text": "Identify questions to be answered about possible relationships in data.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.D.1",
+              "text": "Apparent patterns and associations in data may be random or not."
+            }
+          ]
+        }
+      ]
+    },
+    "2.2": {
+      "unit": 2,
+      "topicKey": "2.2",
+      "title": "Representing Two Categorical Variables",
+      "los": [
+        {
+          "code": "UNC-1.P",
+          "text": "Compare numerical and graphical representations for two categorical variables.",
+          "skill": "2.D",
+          "ek": [
+            {
+              "code": "UNC-1.P.1",
+              "text": "Side-by-side bar graphs, segmented bar graphs, and mosaic plots are examples of bar graphs for one categorical variable, broken down by categories of another categorical variable."
+            },
+            {
+              "code": "UNC-1.P.2",
+              "text": "Graphical representations of two categorical variables can be used to compare distributions and/or determine if variables are associated."
+            },
+            {
+              "code": "UNC-1.P.3",
+              "text": "A two-way table, also called a contingency table, is used to summarize two categorical variables. The entries in the cells can be frequency counts or relative frequencies."
+            },
+            {
+              "code": "UNC-1.P.4",
+              "text": "A joint relative frequency is a cell frequency divided by the total for the entire table."
+            }
+          ]
+        }
+      ]
+    },
+    "2.3": {
+      "unit": 2,
+      "topicKey": "2.3",
+      "title": "Statistics for Two Categorical Variables",
+      "los": [
+        {
+          "code": "UNC-1.Q",
+          "text": "Calculate statistics for two categorical variables.",
+          "skill": "2.C",
+          "ek": [
+            {
+              "code": "UNC-1.Q.1",
+              "text": "The marginal relative frequencies are the row and column totals in a two-way table divided by the total for the entire table."
+            },
+            {
+              "code": "UNC-1.Q.2",
+              "text": "A conditional relative frequency is a relative frequency for a specific part of the contingency table (e.g., cell frequencies in a row divided by the total for that row)."
+            }
+          ]
+        },
+        {
+          "code": "UNC-1.R",
+          "text": "Compare statistics for two categorical variables.",
+          "skill": "2.D",
+          "ek": [
+            {
+              "code": "UNC-1.R.1",
+              "text": "Summary statistics for two categorical variables can be used to compare distributions and/or determine if variables are associated."
+            }
+          ]
+        }
+      ]
+    },
+    "2.4": {
+      "unit": 2,
+      "topicKey": "2.4",
+      "title": "Representing the Relationship Between Two Quantitative Variables",
+      "los": [
+        {
+          "code": "UNC-1.S",
+          "text": "Represent bivariate quantitative data using scatterplots.",
+          "skill": "2.B",
+          "ek": [
+            {
+              "code": "UNC-1.S.1",
+              "text": "A bivariate quantitative data set consists of observations of two different quantitative variables made on individuals in a sample or population."
+            },
+            {
+              "code": "UNC-1.S.2",
+              "text": "A scatterplot shows two numeric values for each observation, one corresponding to the value on the x-axis and one corresponding to the value on the y-axis."
+            },
+            {
+              "code": "UNC-1.S.3",
+              "text": "An explanatory variable is a variable whose values are used to explain or predict corresponding values for the response variable. continued on next page*"
+            }
+          ]
+        },
+        {
+          "code": "DAT-1.A",
+          "text": "Describe the characteristics of a scatter plot.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "DAT-1.A.1",
+              "text": "A description of a scatter plot includes form, direction, strength, and unusual features."
+            },
+            {
+              "code": "DAT-1.A.2",
+              "text": "The direction of the association shown in a scatterplot, if any, can be described as positive or negative."
+            },
+            {
+              "code": "DAT-1.A.3",
+              "text": "A positive association means that as values of one variable increase, the values of the other variable tend to increase. A negative association means that as values of one variable increase, values of the other variable tend to decrease."
+            },
+            {
+              "code": "DAT-1.A.4",
+              "text": "The form of the association shown in a scatterplot, if any, can be described as linear or non-linear to varying degrees."
+            },
+            {
+              "code": "DAT-1.A.5",
+              "text": "The strength of the association is how closely the individual points follow a specific pattern, e.g., linear, and can be shown in a scatterplot. Strength can be described as strong, moderate, or weak."
+            },
+            {
+              "code": "DAT-1.A.6",
+              "text": "Unusual features of a scatter plot include clusters of points or points with relatively large discrepancies between the value of the response variable and a predicted value for the response variable."
+            }
+          ]
+        }
+      ]
+    },
+    "2.5": {
+      "unit": 2,
+      "topicKey": "2.5",
+      "title": "Correlation",
+      "los": [
+        {
+          "code": "DAT-1.B",
+          "text": "Determine the correlation for a linear relationship.",
+          "skill": "2.C",
+          "ek": [
+            {
+              "code": "DAT-1.B.1",
+              "text": "The correlation, r, gives the direction and quantifies the strength of the linear association between two quantitative variables."
+            },
+            {
+              "code": "DAT-1.B.2",
+              "text": "The correlation coefficient can be calculated by: $r = \\frac{1}{n-1} \\sum \\left( \\frac{x_i - \\bar{x}}{s_x} \\right) \\left( \\frac{y_i - \\bar{y}}{s_y} \\right) However, the most common way to determine r is by using technology."
+            },
+            {
+              "code": "DAT-1.B.3",
+              "text": "A correlation coefficient close to 1 or −1 does not necessarily mean that a linear model is appropriate. continued on next page*"
+            }
+          ]
+        },
+        {
+          "code": "DAT-1.C",
+          "text": "Interpret the correlation for a linear relationship.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-1.C.1",
+              "text": "The correlation, r, is unit-free, and always between −1 and 1, inclusive. A value of r = 0 indicates that there is no linear association. A value of r = 1 or r = -1$ indicates that there is a perfect linear association."
+            },
+            {
+              "code": "DAT-1.C.2",
+              "text": "A perceived or real relationship between two variables does not mean that changes in one variable cause changes in the other. That is, correlation does not necessarily imply causation."
+            }
+          ]
+        }
+      ]
+    },
+    "2.6": {
+      "unit": 2,
+      "topicKey": "2.6",
+      "title": "Linear Regression Models",
+      "los": [
+        {
+          "code": "DAT-1.D",
+          "text": "Calculate a predicted response value using a linear regression model.",
+          "skill": "2.C",
+          "ek": [
+            {
+              "code": "DAT-1.D.1",
+              "text": "A simple linear regression model is an equation that uses an explanatory variable, x, to predict the response variable, y."
+            },
+            {
+              "code": "DAT-1.D.2",
+              "text": "The predicted response value, denoted by \\hat{y}, is calculated as \\hat{y} = a + bx, where a is the y-intercept and b is the slope of the regression line, and x is the value of the explanatory variable."
+            },
+            {
+              "code": "DAT-1.D.3",
+              "text": "Extrapolation is predicting a response value using a value for the explanatory variable that is beyond the interval of x-values used to determine the regression line. The predicted value is less reliable as an estimate the further we extrapolate."
+            }
+          ]
+        }
+      ]
+    },
+    "2.7": {
+      "unit": 2,
+      "topicKey": "2.7",
+      "title": "Residuals",
+      "los": [
+        {
+          "code": "DAT-1.E",
+          "text": "Represent differences between measured and predicted responses using residual plots.",
+          "skill": "2.B",
+          "ek": [
+            {
+              "code": "DAT-1.E.1",
+              "text": "The residual is the difference between the actual value and the predicted value: \\text{residual} = y - \\hat{y}."
+            },
+            {
+              "code": "DAT-1.E.2",
+              "text": "A residual plot is a plot of residuals versus explanatory variable values or predicted response values."
+            }
+          ]
+        },
+        {
+          "code": "DAT-1.F",
+          "text": "Describe the form of association of bivariate data using residual plots.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "DAT-1.F.1",
+              "text": "Apparent randomness in a residual plot for a linear model is evidence of a linear form to the association between the variables."
+            },
+            {
+              "code": "DAT-1.F.2",
+              "text": "Residual plots can be used to investigate the appropriateness of a selected model."
+            }
+          ]
+        }
+      ]
+    },
+    "2.8": {
+      "unit": 2,
+      "topicKey": "2.8",
+      "title": "Least Squares Regression",
+      "los": [
+        {
+          "code": "DAT-1.G",
+          "text": "Estimate parameters for the least-squares regression line model.",
+          "skill": "2.C",
+          "ek": [
+            {
+              "code": "DAT-1.G.1",
+              "text": "The least-squares regression model minimizes the sum of the squares of the residuals and contains the point (\\bar{x}, \\bar{y})."
+            },
+            {
+              "code": "DAT-1.G.2",
+              "text": "The slope, b, of the regression line can be calculated as b = r \\left( \\frac{s_y}{s_x} \\right) where r is the correlation between x and y, s_y is the sample standard deviation of the response variable, y, and s_x is the sample standard deviation of the explanatory variable, x."
+            },
+            {
+              "code": "DAT-1.G.3",
+              "text": "Sometimes, the y-intercept of the line does not have a logical interpretation in context."
+            },
+            {
+              "code": "DAT-1.G.4",
+              "text": "In simple linear regression, r^2 is the square of the correlation, r. It is also called the coefficient of determination. r^2 is the proportion of variation in the response variable that is explained by the explanatory variable in the model. continued on next page*"
+            }
+          ]
+        },
+        {
+          "code": "DAT-1.H",
+          "text": "Interpret coefficients for the least-squares regression line model.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-1.H.1",
+              "text": "The coefficients of the least-squares regression model are the estimated slope and y-intercept."
+            },
+            {
+              "code": "DAT-1.H.2",
+              "text": "The slope is the amount that the predicted y-value changes for every unit increase in x."
+            },
+            {
+              "code": "DAT-1.H.3",
+              "text": "The y-intercept value is the predicted value of the response variable when the explanatory variable is equal to 0. The formula for the y-intercept, a, is a = \\bar{y} - b\\bar{x}."
+            }
+          ]
+        }
+      ]
+    },
+    "2.9": {
+      "unit": 2,
+      "topicKey": "2.9",
+      "title": "Analyzing Departures from Linearity",
+      "los": [
+        {
+          "code": "DAT-1.I",
+          "text": "Identify influential points in regression.",
+          "skill": "2.A",
+          "ek": [
+            {
+              "code": "DAT-1.I.1",
+              "text": "An outlier in regression is a point that does not follow the general trend shown in the rest of the data and has a large residual when the Least Squares Regression Line (LSRL) is calculated."
+            },
+            {
+              "code": "DAT-1.I.2",
+              "text": "A high-leverage point in regression has a substantially larger or smaller x-value than the other observations have."
+            },
+            {
+              "code": "DAT-1.I.3",
+              "text": "An influential point in regression is any point that, if removed, changes the relationship substantially. Examples include much different slope, y-intercept, and/or correlation. Outliers and high leverage points are often influential. continued on next page*"
+            }
+          ]
+        },
+        {
+          "code": "DAT-1.J",
+          "text": "Calculate a predicted response using a least-squares regression line for a transformed data set.",
+          "skill": "2.C",
+          "ek": [
+            {
+              "code": "DAT-1.J.1",
+              "text": "Transformations of variables, such as evaluating the natural logarithm of each value of the response variable or squaring each value of the explanatory variable, can be used to create transformed data sets, which may be more linear in form than the untransformed data."
+            },
+            {
+              "code": "DAT-1.J.2",
+              "text": "Increased randomness in residual plots after transformation of data and/or movement of r^2 to a value closer to 1 offers evidence that the least-squares regression line for the transformed data is a more appropriate model to use to predict responses to the explanatory variable than the regression line for the untransformed data."
+            }
+          ]
+        }
+      ]
+    },
+    "3.1": {
+      "unit": 3,
+      "topicKey": "3.1",
+      "title": "Introducing Statistics: Do the Data We Collected Tell the Truth?",
+      "los": [
+        {
+          "code": "VAR-1.E",
+          "text": "Identify questions to be answered about data collection methods.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.E.1",
+              "text": "Methods for data collection that do not rely on chance result in untrustworthy conclusions."
+            }
+          ]
+        }
+      ]
+    },
+    "3.2": {
+      "unit": 3,
+      "topicKey": "3.2",
+      "title": "Introduction to Planning a Study",
+      "los": [
+        {
+          "code": "DAT-2.A",
+          "text": "Identify the type of a study.",
+          "skill": "1.C",
+          "ek": [
+            {
+              "code": "DAT-2.A.1",
+              "text": "A population consists of all items or subjects of interest."
+            },
+            {
+              "code": "DAT-2.A.2",
+              "text": "A sample selected for study is a subset of the population."
+            },
+            {
+              "code": "DAT-2.A.3",
+              "text": "In an observational study, treatments are not imposed. Investigators examine data for a sample of individuals (retrospective) or follow a sample of individuals into the future collecting data (prospective) in order to investigate a topic of interest about the population. A sample survey is a type of observational study that collects data from a sample in an attempt to learn about the population from which the sample was taken."
+            },
+            {
+              "code": "DAT-2.A.4",
+              "text": "In an experiment, different conditions (treatments) are assigned to experimental units (participants or subjects)."
+            }
+          ]
+        },
+        {
+          "code": "DAT-2.B",
+          "text": "Identify appropriate generalizations and determinations based on observational studies.",
+          "skill": "4.A",
+          "ek": [
+            {
+              "code": "DAT-2.B.1",
+              "text": "It is only appropriate to make generalizations about a population based on samples that are randomly selected or otherwise representative of that population."
+            },
+            {
+              "code": "DAT-2.B.2",
+              "text": "A sample is only generalizable to the population from which the sample was selected."
+            },
+            {
+              "code": "DAT-2.B.3",
+              "text": "It is not possible to determine causal relationships between variables using data collected in an observational study."
+            }
+          ]
+        }
+      ]
+    },
+    "3.3": {
+      "unit": 3,
+      "topicKey": "3.3",
+      "title": "Random Sampling and Data Collection",
+      "los": [
+        {
+          "code": "DAT-2.C",
+          "text": "Identify a sampling method, given a description of a study.",
+          "skill": "1.C",
+          "ek": [
+            {
+              "code": "DAT-2.C.1",
+              "text": "When an item from a population can be selected only once, this is called sampling without replacement. When an item from the population can be selected more than once, this is called sampling with replacement."
+            },
+            {
+              "code": "DAT-2.C.2",
+              "text": "A simple random sample (SRS) is a sample in which every group of a given size has an equal chance of being chosen. This method is the basis for many types of sampling mechanisms. A few examples of mechanisms used to obtain SRSs include numbering individuals and using a random number generator to select which ones to include in the sample, ignoring repeats, using a table of random numbers, or drawing a card from a deck without replacement."
+            },
+            {
+              "code": "DAT-2.C.3",
+              "text": "A stratified random sample involves the division of a population into separate groups, called strata, based on shared attributes or characteristics (homogeneous grouping). Within each stratum a simple random sample is selected, and the selected units are combined to form the sample."
+            },
+            {
+              "code": "DAT-2.C.4",
+              "text": "A cluster sample involves the division of a population into smaller groups, called clusters. Ideally, there is heterogeneity within each cluster, and clusters are similar to one another in their composition. A simple random sample of clusters is selected from the population to form the sample of clusters. Data are collected from all observations in the selected clusters."
+            },
+            {
+              "code": "DAT-2.C.5",
+              "text": "A systematic random sample is a method in which sample members from a population are selected according to a random starting point and a fixed, periodic interval."
+            },
+            {
+              "code": "DAT-2.C.6",
+              "text": "A census selects all items/subjects in a population."
+            }
+          ]
+        },
+        {
+          "code": "DAT-2.D",
+          "text": "Explain why a particular sampling method is or is not appropriate for a given situation.",
+          "skill": "1.C",
+          "ek": [
+            {
+              "code": "DAT-2.D.1",
+              "text": "There are advantages and disadvantages for each sampling method depending upon the question that is to be answered and the population from which the sample will be drawn."
+            }
+          ]
+        }
+      ]
+    },
+    "3.4": {
+      "unit": 3,
+      "topicKey": "3.4",
+      "title": "Potential Problems with Sampling",
+      "los": [
+        {
+          "code": "DAT-2.E",
+          "text": "Identify potential sources of bias in sampling methods.",
+          "skill": "1.C",
+          "ek": [
+            {
+              "code": "DAT-2.E.1",
+              "text": "Bias occurs when certain responses are systematically favored over others."
+            },
+            {
+              "code": "DAT-2.E.2",
+              "text": "When a sample is comprised entirely of volunteers or people who choose to participate, the sample will typically not be representative of the population (voluntary response bias)."
+            },
+            {
+              "code": "DAT-2.E.3",
+              "text": "When part of the population has a reduced chance of being included in the sample, the sample will typically not be representative of the population (undercoverage bias)."
+            },
+            {
+              "code": "DAT-2.E.4",
+              "text": "Individuals chosen for the sample for whom data cannot be obtained (or who refuse to respond) may differ from those for whom data can be obtained (nonresponse bias)."
+            },
+            {
+              "code": "DAT-2.E.5",
+              "text": "Problems in the data gathering instrument or process result in response bias. Examples include questions that are confusing or leading (question wording bias) and self-reported responses."
+            },
+            {
+              "code": "DAT-2.E.6",
+              "text": "Non-random sampling methods (for example, samples chosen by convenience or voluntary response) introduce potential for bias because they do not use chance to select the individuals."
+            }
+          ]
+        }
+      ]
+    },
+    "3.5": {
+      "unit": 3,
+      "topicKey": "3.5",
+      "title": "Introduction to Experimental Design",
+      "los": [
+        {
+          "code": "VAR-3.A",
+          "text": "Identify the components of an experiment.",
+          "skill": "1.C",
+          "ek": [
+            {
+              "code": "VAR-3.A.1",
+              "text": "The experimental units are the individuals (which may be people or other objects of study) that are assigned treatments. When experimental units consist of people, they are sometimes referred to as participants or subjects."
+            },
+            {
+              "code": "VAR-3.A.2",
+              "text": "An explanatory variable (or factor) in an experiment is a variable whose levels are manipulated intentionally. The levels or combination of levels of the explanatory variable(s) are called treatments."
+            },
+            {
+              "code": "VAR-3.A.3",
+              "text": "A response variable in an experiment is an outcome from the experimental units that is measured after the treatments have been administered."
+            },
+            {
+              "code": "VAR-3.A.4",
+              "text": "A confounding variable in an experiment is a variable that is related to the explanatory variable and influences the response variable and may create a false perception of association between the two."
+            }
+          ]
+        },
+        {
+          "code": "VAR-3.B",
+          "text": "Describe elements of a well-designed experiment.",
+          "skill": "1.B",
+          "ek": [
+            {
+              "code": "VAR-3.B.1",
+              "text": "A well-designed experiment should include the following: a. Comparisons of at least two treatment groups, one of which could be a control group. b. Random assignment/allocation of treatments to experimental units. c. Replication (more than one experimental unit in each treatment group). d. Control of potential confounding variables where appropriate."
+            }
+          ]
+        },
+        {
+          "code": "VAR-3.C",
+          "text": "Compare experimental designs and methods.",
+          "skill": "1.C",
+          "ek": [
+            {
+              "code": "VAR-3.C.1",
+              "text": "In a completely randomized design, treatments are assigned to experimental units completely at random. Random assignment tends to balance the effects of uncontrolled (confounding) variables so that differences in responses can be attributed to the treatments."
+            },
+            {
+              "code": "VAR-3.C.2",
+              "text": "Methods for randomly assigning treatments to experimental units in a completely randomized design include using a random number generator, a table of random values, drawing chips without replacement, etc."
+            },
+            {
+              "code": "VAR-3.C.3",
+              "text": "In a single-blind experiment, subjects do not know which treatment they are receiving, but members of the research team do, or vice versa."
+            },
+            {
+              "code": "VAR-3.C.4",
+              "text": "In a double-blind experiment neither the subjects nor the members of the research team who interact with them know which treatment a subject is receiving."
+            },
+            {
+              "code": "VAR-3.C.5",
+              "text": "A control group is a collection of experimental units either not given a treatment of interest or given a treatment with an inactive substance (placebo) in order to determine if the treatment of interest has an effect."
+            },
+            {
+              "code": "VAR-3.C.6",
+              "text": "The placebo effect occurs when experimental units have a response to a placebo."
+            },
+            {
+              "code": "VAR-3.C.7",
+              "text": "For randomized complete block designs, treatments are assigned completely at random within each block."
+            },
+            {
+              "code": "VAR-3.C.8",
+              "text": "Blocking ensures that at the beginning of the experiment the units within each block are similar to each other with respect to at least one blocking variable. A randomized block design helps to separate natural variability from differences due to the blocking variable."
+            },
+            {
+              "code": "VAR-3.C.9",
+              "text": "A matched pairs design is a special case of a randomized block design. Using a blocking variable, subjects (whether they are people or not) are arranged in pairs matched on relevant factors. Matched pairs may be formed naturally or by the experimenter. Every pair receives both treatments by randomly assigning one treatment to one member of the pair and subsequently assigning the remaining treatment to the second member of the pair. Alternately, each subject may get both treatments."
+            }
+          ]
+        }
+      ]
+    },
+    "3.6": {
+      "unit": 3,
+      "topicKey": "3.6",
+      "title": "Selecting an Experimental Design",
+      "los": [
+        {
+          "code": "VAR-3.D",
+          "text": "Explain why a particular experimental design is appropriate.",
+          "skill": "1.C",
+          "ek": [
+            {
+              "code": "VAR-3.D.1",
+              "text": "There are advantages and disadvantages for each experimental design depending on the question of interest, the resources available, and the nature of the experimental units."
+            }
+          ]
+        }
+      ]
+    },
+    "3.7": {
+      "unit": 3,
+      "topicKey": "3.7",
+      "title": "Inference and Experiments",
+      "los": [
+        {
+          "code": "VAR-3.E",
+          "text": "Interpret the results of a well-designed experiment.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "VAR-3.E.1",
+              "text": "Statistical inference attributes conclusions based on data to the distribution from which the data were collected."
+            },
+            {
+              "code": "VAR-3.E.2",
+              "text": "Random assignment of treatments to experimental units allows researchers to conclude that some observed changes are so large as to be unlikely to have occurred by chance. Such changes are said to be statistically significant."
+            },
+            {
+              "code": "VAR-3.E.3",
+              "text": "Statistically significant differences between or among experimental treatment groups are evidence that the treatments caused the effect."
+            },
+            {
+              "code": "VAR-3.E.4",
+              "text": "If the experimental units used in an experiment are representative of some larger group of units, the results of an experiment can be generalized to the larger group. Random selection of experimental units gives a better chance that the units will be representative."
+            }
+          ]
+        }
+      ]
+    },
+    "4.1": {
+      "unit": 4,
+      "topicKey": "4.1",
+      "title": "Introducing Statistics: Random and Non-Random Patterns?",
+      "los": [
+        {
+          "code": "VAR-1.F",
+          "text": "Identify questions suggested by patterns in data.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.F.1",
+              "text": "Patterns in data do not necessarily mean that variation is not random."
+            }
+          ]
+        }
+      ]
+    },
+    "4.2": {
+      "unit": 4,
+      "topicKey": "4.2",
+      "title": "Estimating Probabilities Using Simulation",
+      "los": [
+        {
+          "code": "UNC-2.A",
+          "text": "Estimate probabilities using simulation.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "UNC-2.A.1",
+              "text": "A random process generates results that are determined by chance."
+            },
+            {
+              "code": "UNC-2.A.2",
+              "text": "An outcome is the result of a trial of a random process."
+            },
+            {
+              "code": "UNC-2.A.3",
+              "text": "An event is a collection of outcomes."
+            },
+            {
+              "code": "UNC-2.A.4",
+              "text": "Simulation is a way to model random events, such that simulated outcomes closely match real-world outcomes. All possible outcomes are associated with a value to be determined by chance. Record the counts of simulated outcomes and the count total."
+            },
+            {
+              "code": "UNC-2.A.5",
+              "text": "The relative frequency of an outcome or event in simulated or empirical data can be used to estimate the probability of that outcome or event."
+            },
+            {
+              "code": "UNC-2.A.6",
+              "text": "The law of large numbers states that simulated (empirical) probabilities tend to get closer to the true probability as the number of trials increases."
+            }
+          ]
+        }
+      ]
+    },
+    "4.3": {
+      "unit": 4,
+      "topicKey": "4.3",
+      "title": "Introduction to Probability",
+      "los": [
+        {
+          "code": "VAR-4.A",
+          "text": "Calculate probabilities for events and their complements.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "VAR-4.A.1",
+              "text": "The sample space of a random process is the set of all possible non-overlapping outcomes."
+            },
+            {
+              "code": "VAR-4.A.2",
+              "text": "If all outcomes in the sample space are equally likely, then the probability an event E will occur is defined as the fraction: \\frac{\\text{number of outcomes in event E}}{\\text{total number of outcomes in sample space}}"
+            },
+            {
+              "code": "VAR-4.A.3",
+              "text": "The probability of an event is a number between 0 and 1, inclusive."
+            },
+            {
+              "code": "VAR-4.A.4",
+              "text": "The probability of the complement of an event E, E' or E^C, (i.e., not E) is equal to 1 - P(E)."
+            }
+          ]
+        },
+        {
+          "code": "VAR-4.B",
+          "text": "Interpret probabilities for events.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "VAR-4.B.1",
+              "text": "Probabilities of events in repeatable situations can be interpreted as the relative frequency with which the event will occur in the long run."
+            }
+          ]
+        }
+      ]
+    },
+    "4.4": {
+      "unit": 4,
+      "topicKey": "4.4",
+      "title": "Mutually Exclusive Events",
+      "los": [
+        {
+          "code": "VAR-4.C",
+          "text": "Explain why two events are (or are not) mutually exclusive.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "VAR-4.C.1",
+              "text": "The probability that events A and B both will occur, sometimes called the joint probability, is the probability of the intersection of A and B, denoted P(A \\cap B)."
+            },
+            {
+              "code": "VAR-4.C.2",
+              "text": "Two events are mutually exclusive or disjoint if they cannot occur at the same time. So P(A \\cap B) = 0."
+            }
+          ]
+        }
+      ]
+    },
+    "4.5": {
+      "unit": 4,
+      "topicKey": "4.5",
+      "title": "Conditional Probability",
+      "los": [
+        {
+          "code": "VAR-4.D",
+          "text": "Calculate conditional probabilities.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "VAR-4.D.1",
+              "text": "The probability that event A will occur given that event B has occurred is called a conditional probability and denoted P(A \\mid B) = \\frac{P(A \\cap B)}{P(B)}."
+            },
+            {
+              "code": "VAR-4.D.2",
+              "text": "The multiplication rule states that the probability that events A and B both will occur is equal to the probability that event A will occur multiplied by the probability that event B will occur, given that A has occurred. This is denoted P(A \\cap B) = P(A) \\cdot P(B \\mid A)."
+            }
+          ]
+        }
+      ]
+    },
+    "4.6": {
+      "unit": 4,
+      "topicKey": "4.6",
+      "title": "Independent Events and Unions of Events",
+      "los": [
+        {
+          "code": "VAR-4.E",
+          "text": "Calculate probabilities for independent events and for the union of two events.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "VAR-4.E.1",
+              "text": "Events A and B are independent if, and only if, knowing whether event A has occurred (or will occur) does not change the probability that event B will occur."
+            },
+            {
+              "code": "VAR-4.E.2",
+              "text": "If, and only if, events A and B are independent, then P(A \\mid B) = P(A), P(B \\mid A) = P(B), and P(A \\cap B) = P(A) \\cdot P(B)."
+            },
+            {
+              "code": "VAR-4.E.3",
+              "text": "The probability that event A or event B (or both) will occur is the probability of the union of A and B, denoted P(A \\cup B)."
+            },
+            {
+              "code": "VAR-4.E.4",
+              "text": "The addition rule states that the probability that event A or event B or both will occur is equal to the probability that event A will occur plus the probability that event B will occur minus the probability that both events A and B will occur. This is denoted P(A \\cup B) = P(A) + P(B) - P(A \\cap B)."
+            }
+          ]
+        }
+      ]
+    },
+    "4.7": {
+      "unit": 4,
+      "topicKey": "4.7",
+      "title": "Introduction to Random Variables and Probability Distributions",
+      "los": [
+        {
+          "code": "VAR-5.A",
+          "text": "Represent the probability distribution for a discrete random variable.",
+          "skill": "2.B",
+          "ek": [
+            {
+              "code": "VAR-5.A.1",
+              "text": "The values of a random variable are the numerical outcomes of random behavior."
+            },
+            {
+              "code": "VAR-5.A.2",
+              "text": "A discrete random variable is a variable that can only take a countable number of values. Each value has a probability associated with it. The sum of the probabilities over all of the possible values must be 1."
+            },
+            {
+              "code": "VAR-5.A.3",
+              "text": "A probability distribution can be represented as a graph, table, or function showing the probabilities associated with values of a random variable."
+            },
+            {
+              "code": "VAR-5.A.4",
+              "text": "A cumulative probability distribution can be represented as a table or function showing the probability of being less than or equal to each value of the random variable."
+            }
+          ]
+        },
+        {
+          "code": "VAR-5.B",
+          "text": "Interpret a probability distribution.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "VAR-5.B.1",
+              "text": "An interpretation of a probability distribution provides information about the shape, center, and spread of a population and allows one to make conclusions about the population of interest."
+            }
+          ]
+        }
+      ]
+    },
+    "4.8": {
+      "unit": 4,
+      "topicKey": "4.8",
+      "title": "Mean and Standard Deviation of Random Variables",
+      "los": [
+        {
+          "code": "VAR-5.C",
+          "text": "Calculate parameters for a discrete random variable.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "VAR-5.C.1",
+              "text": "A numerical value measuring a characteristic of a population or the distribution of a random variable is known as a parameter, which is a single, fixed value."
+            },
+            {
+              "code": "VAR-5.C.2",
+              "text": "The mean, or expected value, for a discrete random variable X is \\mu_X = \\sum x_i \\cdot P(x_i)."
+            },
+            {
+              "code": "VAR-5.C.3",
+              "text": "The standard deviation for a discrete random variable X is \\sigma_X = \\sqrt{\\sum (x_i - \\mu_X)^2 \\cdot P(x_i)}."
+            }
+          ]
+        },
+        {
+          "code": "VAR-5.D",
+          "text": "Interpret parameters for a discrete random variable.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "VAR-5.D.1",
+              "text": "Parameters for a discrete random variable should be interpreted using appropriate units and within the context of a specific population."
+            }
+          ]
+        }
+      ]
+    },
+    "4.9": {
+      "unit": 4,
+      "topicKey": "4.9",
+      "title": "Combining Random Variables",
+      "los": [
+        {
+          "code": "VAR-5.E",
+          "text": "Calculate parameters for linear combinations of random variables.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "VAR-5.E.1",
+              "text": "For random variables X and Y and real numbers a and b, the mean of aX + bY is a\\mu_X + b\\mu_Y."
+            },
+            {
+              "code": "VAR-5.E.2",
+              "text": "Two random variables are independent if knowing information about one of them does not change the probability distribution of the other."
+            },
+            {
+              "code": "VAR-5.E.3",
+              "text": "For independent random variables X and Y and real numbers a and b, the mean of aX + bY is a\\mu_X + b\\mu_Y, and the variance of aX + bY is a^2\\sigma_X^2 + b^2\\sigma_Y^2."
+            }
+          ]
+        },
+        {
+          "code": "VAR-5.F",
+          "text": "Describe the effects of linear transformations of parameters of random variables.",
+          "skill": "3.C",
+          "ek": [
+            {
+              "code": "VAR-5.F.1",
+              "text": "For Y = a + bX, the probability distribution of the transformed random variable, Y, has the same shape as the probability distribution for X, so long as a > 0 and b > 0. The mean of Y is \\mu_Y = a + b\\mu_X. The standard deviation of Y is \\sigma_Y = b \\sigma_X."
+            }
+          ]
+        }
+      ]
+    },
+    "4.10": {
+      "unit": 4,
+      "topicKey": "4.10",
+      "title": "Introduction to the Binomial Distribution",
+      "los": [
+        {
+          "code": "UNC-3.A",
+          "text": "Estimate probabilities of binomial random variables using data from a simulation.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "UNC-3.A.1",
+              "text": "A probability distribution can be constructed using the rules of probability or estimated with a simulation using random number generators."
+            },
+            {
+              "code": "UNC-3.A.2",
+              "text": "A binomial random variable, X, counts the number of successes in n repeated independent trials, each trial having two possible outcomes (success or failure), with the probability of success p and the probability of failure 1 - p."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.B",
+          "text": "Calculate probabilities for a binomial distribution.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "UNC-3.B.1",
+              "text": "The probability that a binomial random variable, X, has exactly x successes for n independent trials, when the probability of success is p, is calculated as $P(X = x) = \\binom{n}{x} p^x (1-p)^{n-x}, \\quad x = 0, 1, 2, \\ldots, n$ This is the binomial probability function."
+            }
+          ]
+        }
+      ]
+    },
+    "4.11": {
+      "unit": 4,
+      "topicKey": "4.11",
+      "title": "Parameters for a Binomial Distribution",
+      "los": [
+        {
+          "code": "UNC-3.C",
+          "text": "Calculate parameters for a binomial distribution.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "UNC-3.C.1",
+              "text": "If a random variable is binomial, its mean, \\mu_X, is np and its standard deviation, \\sigma_X, is \\sqrt{np(1 - p)}."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.D",
+          "text": "Interpret probabilities and parameters for a binomial distribution.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-3.D.1",
+              "text": "Probabilities and parameters for a binomial distribution should be interpreted using appropriate units and within the context of a specific population or situation."
+            }
+          ]
+        }
+      ]
+    },
+    "4.12": {
+      "unit": 4,
+      "topicKey": "4.12",
+      "title": "The Geometric Distribution",
+      "los": [
+        {
+          "code": "UNC-3.E",
+          "text": "Calculate probabilities for geometric random variables.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "UNC-3.E.1",
+              "text": "For a sequence of independent trials, a geometric random variable, X, gives the number of the trial on which the first success occurs. Each trial has two possible outcomes (success or failure) with the probability of success p and the probability of failure 1 - p."
+            },
+            {
+              "code": "UNC-3.E.2",
+              "text": "The probability that the first success for repeated independent trials with probability of success p occurs on trial x is calculated as P(X = x) = (1 - p)^{x-1} p, x = 1, 2, 3, \\ldots. This is the geometric probability function."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.F",
+          "text": "Calculate parameters of a geometric distribution.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "UNC-3.F.1",
+              "text": "If a random variable is geometric, its mean, \\mu_X, is \\frac{1}{p} and its standard deviation, \\sigma_X, is \\frac{\\sqrt{(1 - p)}}{p}."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.G",
+          "text": "Interpret probabilities and parameters for a geometric distribution.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-3.G.1",
+              "text": "Probabilities and parameters for a geometric distribution should be interpreted using appropriate units and within the context of a specific population or situation. QUICK REFERENCE FOR NOTATION AND FORMULAS FOR PROBABILITY DISTRIBUTIONS Note: Other notation could also be correct if properly defined. Incorrect notation will result in lost points on the AP exam.* Distribution Notes Parameter(s) Random Variable Conditions Mean for Distribution Standard Deviation for Distribution :"
+            }
+          ]
+        }
+      ]
+    },
+    "5.1": {
+      "unit": 5,
+      "topicKey": "5.1",
+      "title": "Introducing Statistics: Why Is My Sample Not Like Yours?",
+      "los": [
+        {
+          "code": "VAR-1.G",
+          "text": "Identify questions suggested by variation in statistics for samples collected from the same population.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.G.1",
+              "text": "Variation in statistics for samples taken from the same population may be random or not."
+            }
+          ]
+        }
+      ]
+    },
+    "5.2": {
+      "unit": 5,
+      "topicKey": "5.2",
+      "title": "The Normal Distribution, Revisited",
+      "los": [
+        {
+          "code": "VAR-6.A",
+          "text": "Calculate the probability that a particular value lies in a given interval of a normal distribution.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "VAR-6.A.1",
+              "text": "A continuous random variable is a variable that can take on any value within a specified domain. Every interval within the domain has a probability associated with it."
+            },
+            {
+              "code": "VAR-6.A.2",
+              "text": "A continuous random variable with a normal distribution is commonly used to describe populations. The distribution of a normal random variable can be described by a normal, or \"bell-shaped,\" curve."
+            },
+            {
+              "code": "VAR-6.A.3",
+              "text": "The area under a normal curve over a given interval represents the probability that a particular value lies in that interval."
+            }
+          ]
+        },
+        {
+          "code": "VAR-6.B",
+          "text": "Determine the interval associated with a given area in a normal distribution.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "VAR-6.B.1",
+              "text": "The boundaries of an interval associated with a given area in a normal distribution can be determined using z-scores or technology."
+            }
+          ]
+        },
+        {
+          "code": "VAR-6.C",
+          "text": "Determine the appropriateness of using the normal distribution to approximate probabilities for unknown distributions.",
+          "skill": "3.C",
+          "ek": [
+            {
+              "code": "VAR-6.C.1",
+              "text": "Normal distributions are symmetrical and \"bell-shaped.\" As a result, normal distributions can be used to approximate distributions with similar characteristics."
+            }
+          ]
+        }
+      ]
+    },
+    "5.3": {
+      "unit": 5,
+      "topicKey": "5.3",
+      "title": "The Central Limit Theorem",
+      "los": [
+        {
+          "code": "UNC-3.H",
+          "text": "Estimate sampling distributions using simulation.",
+          "skill": "3.C",
+          "ek": [
+            {
+              "code": "UNC-3.H.1",
+              "text": "A sampling distribution of a statistic is the distribution of values for the statistic for all possible samples of a given size from a given population."
+            },
+            {
+              "code": "UNC-3.H.2",
+              "text": "The central limit theorem (CLT) states that when the sample size is sufficiently large, a sampling distribution of the mean of a random variable will be approximately normally distributed."
+            },
+            {
+              "code": "UNC-3.H.3",
+              "text": "The central limit theorem requires that the sample values are independent of each other and that n is sufficiently large."
+            },
+            {
+              "code": "UNC-3.H.4",
+              "text": "A randomization distribution is a collection of statistics generated by simulation assuming known values for the parameters."
+            },
+            {
+              "code": "UNC-3.H.5",
+              "text": "The sampling distribution of a statistic can be simulated by generating repeated random samples from a population."
+            }
+          ]
+        }
+      ]
+    },
+    "5.4": {
+      "unit": 5,
+      "topicKey": "5.4",
+      "title": "Biased and Unbiased Point Estimates",
+      "los": [
+        {
+          "code": "UNC-3.I",
+          "text": "Explain why an estimator is or is not unbiased.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-3.I.1",
+              "text": "When estimating a population parameter, an estimator is unbiased if, on average, the value of the estimator is equal to the population parameter."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.J",
+          "text": "Calculate estimates for a population parameter.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "UNC-3.J.1",
+              "text": "When estimating a population parameter, an estimator exhibits variability that can be modeled using probability."
+            },
+            {
+              "code": "UNC-3.J.2",
+              "text": "A sample statistic is a point estimator of the corresponding population parameter."
+            }
+          ]
+        }
+      ]
+    },
+    "5.5": {
+      "unit": 5,
+      "topicKey": "5.5",
+      "title": "Sampling Distributions for Sample Proportions",
+      "los": [
+        {
+          "code": "UNC-3.K",
+          "text": "Determine parameters of a sampling distribution for sample proportions.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "UNC-3.K.1",
+              "text": "For independent samples of a categorical variable from a population with proportion p, the sampling distribution of the sample proportion has mean μ = p and a standard deviation σ = sqrt(p(1-p)/n)."
+            },
+            {
+              "code": "UNC-3.K.2",
+              "text": "If sampling without replacement, the standard deviation of the sample proportion is smaller than the formula above. If the sample size is less than 10% of the population size, the difference is negligible."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.L",
+          "text": "Determine whether a sampling distribution for a sample proportion can be described as approximately normal.",
+          "skill": "3.C",
+          "ek": [
+            {
+              "code": "UNC-3.L.1",
+              "text": "For a categorical variable, the sampling distribution of the sample proportion will have an approximate normal distribution provided the sample size is large enough: np ≥ 10 and n(1−p) ≥ 10."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.M",
+          "text": "Interpret probabilities and parameters for a sampling distribution for a sample proportion.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-3.M.1",
+              "text": "Probabilities and parameters for a sampling distribution for a sample proportion should be interpreted using appropriate units and within the context of a specific population."
+            }
+          ]
+        }
+      ]
+    },
+    "5.6": {
+      "unit": 5,
+      "topicKey": "5.6",
+      "title": "Sampling Distributions for Differences in Sample Proportions",
+      "los": [
+        {
+          "code": "UNC-3.N",
+          "text": "Determine parameters of a sampling distribution for a difference in sample proportions.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "UNC-3.N.1",
+              "text": "For a categorical variable, when randomly sampling from two independent populations with proportions p1 and p2, the sampling distribution of the difference in sample proportions has mean μ = p1 − p2."
+            },
+            {
+              "code": "UNC-3.N.2",
+              "text": "If sampling without replacement and sample sizes are less than 10% of population sizes, the difference is negligible."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.O",
+          "text": "Determine whether a sampling distribution for a difference of sample proportions can be described as approximately normal.",
+          "skill": "3.C",
+          "ek": [
+            {
+              "code": "UNC-3.O.1",
+              "text": "The sampling distribution of the difference in sample proportions will have an approximate normal distribution provided sample sizes are large enough: n1p1 ≥ 10, n1(1−p1) ≥ 10, n2p2 ≥ 10, n2(1−p2) ≥ 10."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.P",
+          "text": "Interpret probabilities and parameters for a sampling distribution for a difference in proportions.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-3.P.1",
+              "text": "Parameters for a sampling distribution for a difference of proportions should be interpreted using appropriate units and within the context of specific populations."
+            }
+          ]
+        }
+      ]
+    },
+    "5.7": {
+      "unit": 5,
+      "topicKey": "5.7",
+      "title": "Sampling Distributions for Sample Means",
+      "los": [
+        {
+          "code": "UNC-3.Q",
+          "text": "Determine parameters for a sampling distribution for sample means.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "UNC-3.Q.1",
+              "text": "For a numerical variable, when random sampling from a population with mean μ and standard deviation σ, the sampling distribution of the sample mean has mean μ_x̄ = μ and standard deviation σ_x̄ = σ/sqrt(n)."
+            },
+            {
+              "code": "UNC-3.Q.2",
+              "text": "If sampling without replacement and sample size is less than 10% of the population size, the difference is negligible."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.R",
+          "text": "Determine whether a sampling distribution of a sample mean can be described as approximately normal.",
+          "skill": "3.C",
+          "ek": [
+            {
+              "code": "UNC-3.R.1",
+              "text": "For a numerical variable, if the population distribution can be modeled with a normal distribution, the sampling distribution of the sample mean can be modeled with a normal distribution."
+            },
+            {
+              "code": "UNC-3.R.2",
+              "text": "For a numerical variable, if the population distribution cannot be modeled with a normal distribution, the sampling distribution of the sample mean can be modeled approximately by a normal distribution provided the sample size is large enough (n ≥ 30)."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.S",
+          "text": "Interpret probabilities and parameters for a sampling distribution for a sample mean.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-3.S.1",
+              "text": "Probabilities and parameters for a sampling distribution for a sample mean should be interpreted using appropriate units and within the context of a specific population."
+            }
+          ]
+        }
+      ]
+    },
+    "5.8": {
+      "unit": 5,
+      "topicKey": "5.8",
+      "title": "Sampling Distributions for Differences in Sample Means",
+      "los": [
+        {
+          "code": "UNC-3.T",
+          "text": "Determine parameters of a sampling distribution for a difference in sample means.",
+          "skill": "3.B",
+          "ek": [
+            {
+              "code": "UNC-3.T.1",
+              "text": "For a numerical variable, when randomly sampling from two independent populations with means μ1 and μ2 and standard deviations σ1 and σ2, the sampling distribution of the difference in sample means has mean μ = μ1 − μ2 and standard deviation σ = sqrt(σ1²/n1 + σ2²/n2)."
+            },
+            {
+              "code": "UNC-3.T.2",
+              "text": "If sampling without replacement and sample sizes are less than 10% of population sizes, the difference is negligible."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.U",
+          "text": "Determine whether a sampling distribution of a difference in sample means can be described as approximately normal.",
+          "skill": "3.C",
+          "ek": [
+            {
+              "code": "UNC-3.U.1",
+              "text": "The sampling distribution of the difference in sample means can be modeled with a normal distribution if both population distributions can be modeled with normal distributions."
+            },
+            {
+              "code": "UNC-3.U.2",
+              "text": "If population distributions cannot be modeled with normal distributions, the sampling distribution can be approximated by a normal distribution if both sample sizes are at least 30."
+            }
+          ]
+        },
+        {
+          "code": "UNC-3.V",
+          "text": "Interpret probabilities and parameters for a sampling distribution for a difference in sample means.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-3.V.1",
+              "text": "Probabilities and parameters for a sampling distribution for a difference of sample means should be interpreted using appropriate units and within the context of specific populations."
+            }
+          ]
+        }
+      ]
+    },
+    "6.1": {
+      "unit": 6,
+      "topicKey": "6.1",
+      "title": "Introducing Statistics: Why Be Normal?",
+      "los": [
+        {
+          "code": "VAR-1.H",
+          "text": "Identify questions suggested by variation in the shapes of distributions of samples taken from the same population.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.H.1",
+              "text": "Variation in shapes of data distributions may be random or not."
+            }
+          ]
+        }
+      ]
+    },
+    "6.2": {
+      "unit": 6,
+      "topicKey": "6.2",
+      "title": "Constructing a Confidence Interval for a Population Proportion",
+      "los": [
+        {
+          "code": "UNC-4.A",
+          "text": "Identify an appropriate confidence interval procedure for a population proportion.",
+          "skill": "1.D",
+          "ek": [
+            {
+              "code": "UNC-4.A.1",
+              "text": "The appropriate confidence interval procedure for a one-sample proportion for one categorical variable is a one sample z-interval for a proportion."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.B",
+          "text": "Verify the conditions for calculating confidence intervals for a population proportion.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "UNC-4.B.1",
+              "text": "In order to make assumptions necessary for inference on population proportions, means, and slopes, we must check for independence in data collection methods and for selection of the appropriate sampling distribution."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.C",
+          "text": "Determine the margin of error for a given sample size and an estimate for the sample size that will result in a given margin of error for a population proportion.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.C.1",
+              "text": "Based on sample data, the standard error of a statistic is an estimate for the standard deviation for the statistic. The standard error of \\hat{p} is SE_{\\hat{p}} = \\sqrt{\\frac{\\hat{p}(1-\\hat{p})}{n}}."
+            },
+            {
+              "code": "UNC-4.C.2",
+              "text": "A margin of error gives how much a value of a sample statistic is likely to vary from the value of the corresponding population parameter."
+            },
+            {
+              "code": "UNC-4.C.3",
+              "text": "For categorical variables, the margin of error is the critical value (z^) times the standard error (SE) of the relevant statistic, which equals z^ \\sqrt{\\frac{\\hat{p}(1-\\hat{p})}{n}} for a one sample proportion."
+            },
+            {
+              "code": "UNC-4.C.4",
+              "text": "The formula for margin of error can be rearranged to solve for n, the minimum sample size needed to achieve a given margin of error. For this purpose, use a guess for \\hat{p} or use \\hat{p} = 0.5 in order to find an upper bound for the sample size that will result in a given margin of error."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.D",
+          "text": "Calculate an appropriate confidence interval for a population proportion.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.D.1",
+              "text": "In general, an interval estimate can be constructed as point estimate ± (margin of error). For a one-sample proportion, the interval estimate is \\hat{p} \\pm z^* \\sqrt{\\frac{\\hat{p}(1-\\hat{p})}{n}}. CLARIFYING STATEMENT: Formulas for interval estimates do not appear explicitly on the AP Statistics Formula Sheet provided with the AP Statistics Exam. However, these formulas do not need to be memorized, as they can be constructed based on the general test statistic formula and the relevant standard error formulas that are provided on the formula sheet."
+            },
+            {
+              "code": "UNC-4.D.2",
+              "text": "Critical values represent the boundaries encompassing the middle C% of the standard normal distribution, where C% is an approximate confidence level for a proportion."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.E",
+          "text": "Calculate an interval estimate based on a confidence interval for a population proportion.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.E.1",
+              "text": "Confidence intervals for population proportions can be used to calculate interval estimates with specified units."
+            }
+          ]
+        }
+      ]
+    },
+    "6.3": {
+      "unit": 6,
+      "topicKey": "6.3",
+      "title": "Justifying a Claim Based on a Confidence Interval for a Population Proportion",
+      "los": [
+        {
+          "code": "UNC-4.F",
+          "text": "Interpret a confidence interval for a population proportion.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-4.F.1",
+              "text": "A confidence interval for a population proportion either contains the population proportion or it does not, because each interval is based on random sample data, which varies from sample to sample."
+            },
+            {
+              "code": "UNC-4.F.2",
+              "text": "We are C% confident that the confidence interval for a population proportion captures the population proportion."
+            },
+            {
+              "code": "UNC-4.F.3",
+              "text": "In repeated random sampling with the same sample size, approximately C% of confidence intervals created will capture the population proportion."
+            },
+            {
+              "code": "UNC-4.F.4",
+              "text": "Interpreting a confidence interval for a one-sample proportion should include a reference to the sample taken and details about the population it represents."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.G",
+          "text": "Justify a claim based on a confidence interval for a population proportion.",
+          "skill": "4.D",
+          "ek": [
+            {
+              "code": "UNC-4.G.1",
+              "text": "A confidence interval for a population proportion provides an interval of values that may provide sufficient evidence to support a particular claim in context."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.H",
+          "text": "Identify the relationships between sample size, width of a confidence interval, confidence level, and margin of error for a population proportion.",
+          "skill": "4.A",
+          "ek": [
+            {
+              "code": "UNC-4.H.1",
+              "text": "When all other things remain the same, the width of the confidence interval for a population proportion tends to decrease as the sample size increases. For a population proportion, the width of the interval is proportional to \\frac{1}{\\sqrt{n}}."
+            },
+            {
+              "code": "UNC-4.H.2",
+              "text": "For a given sample, the width of the confidence interval for a population proportion increases as the confidence level increases."
+            },
+            {
+              "code": "UNC-4.H.3",
+              "text": "The width of a confidence interval for a population proportion is exactly twice the margin of error."
+            }
+          ]
+        }
+      ]
+    },
+    "6.4": {
+      "unit": 6,
+      "topicKey": "6.4",
+      "title": "Setting Up a Test for a Population Proportion",
+      "los": [
+        {
+          "code": "VAR-6.D",
+          "text": "Identify the null and alternative hypotheses for a population proportion.",
+          "skill": "1.F",
+          "ek": [
+            {
+              "code": "VAR-6.D.1",
+              "text": "The null hypothesis is the situation that is assumed to be correct unless evidence suggests otherwise, and the alternative hypothesis is the situation for which evidence is being collected."
+            },
+            {
+              "code": "VAR-6.D.2",
+              "text": "For hypotheses about parameters, the null hypothesis contains an equality reference (=, \\ge, or \\le), while the alternative hypothesis contains a strict inequality (<, >, or \\neq). The type of inequality in the alternative hypothesis is based on the question of interest. Alternative hypotheses with < or > are called one-sided, and alternative hypotheses with \\neq are called two-sided. Although the null hypothesis for a one-sided test may include an inequality symbol, it is still tested at the boundary of equality."
+            },
+            {
+              "code": "VAR-6.D.3",
+              "text": "The null hypothesis for a population proportion is: H_0: p = p_0, where p_0 is the null hypothesized value for the population proportion."
+            },
+            {
+              "code": "VAR-6.D.4",
+              "text": "A one-sided alternative hypothesis for a proportion is either H_a: p < p_0 or H_a: p > p_0. A two-sided alternate hypothesis is H_a: p \\neq p_0."
+            }
+          ]
+        },
+        {
+          "code": "VAR-6.E",
+          "text": "Identify an appropriate testing method for a population proportion.",
+          "skill": "1.E",
+          "ek": [
+            {
+              "code": "VAR-6.E.1",
+              "text": "For a single categorical variable, the appropriate testing method for a population proportion is a one-sample z-test for a population proportion."
+            }
+          ]
+        },
+        {
+          "code": "VAR-6.F",
+          "text": "Verify the conditions for making statistical inferences when testing a population proportion.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "VAR-6.F.1",
+              "text": "In order to make statistical inferences when testing a population proportion, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: i. Data should be collected using a random sample or a randomized experiment. ii. When sampling without replacement, check that n \\le 10\\%N. b. To check that the sampling distribution of \\hat{p} is approximately normal (shape): i. Assuming that H_0 is true (p = p_0), verify that both the number of successes, np_0, and the number of failures, n(1 - p_0) are at least 10 so that that the sample size is large enough to support an assumption of normality."
+            }
+          ]
+        }
+      ]
+    },
+    "6.5": {
+      "unit": 6,
+      "topicKey": "6.5",
+      "title": "Interpreting p-Values",
+      "los": [
+        {
+          "code": "VAR-6.G",
+          "text": "Calculate an appropriate test statistic and p-value for a population proportion.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-6.G.1",
+              "text": "The distribution of the test statistic assuming the null hypothesis is true (null distribution) can be either a randomization distribution or when a probability model is assumed to be true, a theoretical distribution (z)."
+            },
+            {
+              "code": "VAR-6.G.2",
+              "text": "When using a z-test, the standardized test statistic can be written: $\\text{test statistic} = \\frac{\\text{sample statistic - null value of the parameter}}{\\text{standard deviation of the statistic}}. This is called a z-statistic for proportions."
+            },
+            {
+              "code": "VAR-6.G.3",
+              "text": "The test statistic for a population proportion is: z = \\frac{\\hat{p} - p_0}{\\sqrt{\\frac{p_0(1 - p_0)}{n}}} CLARIFYING STATEMENT: The formulas for test statistics do not appear explicitly on the AP Statistics Formula Sheet provided with the AP Statistics Exam. However, these formulas do not need to be memorized, as they can be constructed based on the general test statistic formula and the relevant standard error formulas that are provided on the formula sheet."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.A",
+          "text": "Interpret the p-value of a significance test for a population proportion.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-3.A.1",
+              "text": "The p-value is the proportion of values for the null distribution that are as extreme or more extreme than the observed value of the test statistic. This is: a. The proportion at or above the observed value of the test statistic, if the alternative is >. b. The proportion at or below the observed value of the test statistic, if the alternative is <. c. The proportion less than or equal to the negative of the absolute value of the test statistic plus the proportion greater than or equal to the absolute value of the test statistic, if the alternative is \\neq$."
+            },
+            {
+              "code": "DAT-3.A.2",
+              "text": "An interpretation of the p-value of a significance test for a one-sample proportion should recognize that the p-value is computed by assuming that the probability model and null hypothesis are true, i.e., by assuming that the true population proportion is equal to the particular value stated in the null hypothesis."
+            }
+          ]
+        }
+      ]
+    },
+    "6.6": {
+      "unit": 6,
+      "topicKey": "6.6",
+      "title": "Concluding a Test for a Population Proportion",
+      "los": [
+        {
+          "code": "DAT-3.B",
+          "text": "Justify a claim about the population based on the results of a significance test for a population proportion.",
+          "skill": "4.E",
+          "ek": [
+            {
+              "code": "DAT-3.B.1",
+              "text": "The significance level, \\alpha, is the predetermined probability of rejecting the null hypothesis given that it is true."
+            },
+            {
+              "code": "DAT-3.B.2",
+              "text": "A formal decision explicitly compares the p-value to the significance level, \\alpha. If the p-value \\le \\alpha, reject the null hypothesis. If the p-value > \\alpha, fail to reject the null hypothesis."
+            },
+            {
+              "code": "DAT-3.B.3",
+              "text": "Rejecting the null hypothesis means there is sufficient statistical evidence to support the alternative hypothesis. Failing to reject the null means there is insufficient statistical evidence to support the alternative hypothesis."
+            },
+            {
+              "code": "DAT-3.B.4",
+              "text": "The conclusion about the alternative hypothesis must be stated in context."
+            },
+            {
+              "code": "DAT-3.B.5",
+              "text": "A significance test can lead to rejecting or not rejecting the null hypothesis, but can never lead to concluding or proving that the null hypothesis is true. Lack of statistical evidence for the alternative hypothesis is not the same as evidence for the null hypothesis."
+            }
+          ]
+        }
+      ]
+    },
+    "6.7": {
+      "unit": 6,
+      "topicKey": "6.7",
+      "title": "Potential Errors When Performing Tests",
+      "los": [
+        {
+          "code": "UNC-5.A",
+          "text": "Identify Type I and Type II errors.",
+          "skill": "1.B",
+          "ek": [
+            {
+              "code": "UNC-5.A.1",
+              "text": "A Type I error occurs when the null hypothesis is true and is rejected (false positive)."
+            },
+            {
+              "code": "UNC-5.A.2",
+              "text": "A Type II error occurs when the null hypothesis is false and is not rejected (false negative). Table of Errors \\ \\ Actual Population Value \\ \\ :"
+            }
+          ]
+        },
+        {
+          "code": "UNC-5.B",
+          "text": "Calculate the probability of a Type I and Type II errors.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "UNC-5.B.1",
+              "text": "The significance level, \\alpha, is the probability of making a Type I error, if the null hypothesis is true."
+            },
+            {
+              "code": "UNC-5.B.2",
+              "text": "The power of a test is the probability that a test will correctly reject a false null hypothesis."
+            },
+            {
+              "code": "UNC-5.B.3",
+              "text": "The probability of making a Type II error = 1 - \\text{power}."
+            }
+          ]
+        },
+        {
+          "code": "UNC-5.C",
+          "text": "Identify factors that affect the probability of errors in significance testing.",
+          "skill": "4.A",
+          "ek": [
+            {
+              "code": "UNC-5.C.1",
+              "text": "The probability of a Type II error decreases when any of the following occurs, provided the others do not change: i. Sample size(s) increases. ii. Significance level (\\alpha) of a test increases. iii. Standard error decreases. iv. True parameter value is farther from the null."
+            }
+          ]
+        },
+        {
+          "code": "UNC-5.D",
+          "text": "Interpret Type I and Type II errors.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-5.D.1",
+              "text": "Whether a Type I or a Type II error is more consequential depends upon the situation."
+            },
+            {
+              "code": "UNC-5.D.2",
+              "text": "Since the significance level, \\alpha, is the probability of a Type I error, the consequences of a Type I error influence decisions about a significance level."
+            }
+          ]
+        }
+      ]
+    },
+    "6.8": {
+      "unit": 6,
+      "topicKey": "6.8",
+      "title": "Confidence Intervals for the Difference of Two Proportions",
+      "los": [
+        {
+          "code": "UNC-4.I",
+          "text": "Identify an appropriate confidence interval procedure for a comparison of population proportions.",
+          "skill": "1.D",
+          "ek": [
+            {
+              "code": "UNC-4.I.1",
+              "text": "The appropriate confidence interval procedure for a two-sample comparison of proportions for one categorical variable is a two-sample z-interval for a difference between population proportions."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.J",
+          "text": "Verify the conditions for calculating confidence intervals for a difference between population proportions.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "UNC-4.J.1",
+              "text": "In order to calculate confidence intervals to estimate a difference between proportions, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: i. Data should be collected using two independent, random samples or a randomized experiment. ii. When sampling without replacement, check that n_1 \\le 10\\%N_1 and n_2 \\le 10\\%N_2. b. To check that sampling distribution of \\hat{p}_1 - \\hat{p}_2 is approximately normal (shape). i. For categorical variables, check that n_1\\hat{p}_1, n_1(1 - \\hat{p}_1), n_2\\hat{p}_2, and n_2(1 - \\hat{p}_2) are all greater than or equal to some predetermined value, typically either 5 or 10."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.K",
+          "text": "Calculate an appropriate confidence interval for a comparison of population proportions.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.K.1",
+              "text": "For a comparison of proportions, the interval estimate is $(\\hat{p}_1 - \\hat{p}_2) \\pm z^* \\sqrt{\\frac{\\hat{p}_1(1 - \\hat{p}_1)}{n_1} + \\frac{\\hat{p}_2(1 - \\hat{p}_2)}{n_2}}$ . CLARIFYING STATEMENT: Formulas for interval estimates do not appear explicitly on the AP Statistics Formula Sheet provided with the AP Statistics Exam. However, these formulas do not need to be memorized, as they can be constructed based on the general test statistic formula and the relevant standard error formulas that are provided on the formula sheet."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.L",
+          "text": "Calculate an interval estimate based on a confidence interval for a difference of proportions.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.L.1",
+              "text": "Confidence intervals for a difference in proportions can be used to calculate interval estimates with specified units."
+            }
+          ]
+        }
+      ]
+    },
+    "6.9": {
+      "unit": 6,
+      "topicKey": "6.9",
+      "title": "Justifying a Claim Based on a Confidence Interval for a Difference of Population Proportions",
+      "los": [
+        {
+          "code": "UNC-4.M",
+          "text": "Interpret a confidence interval for a difference of proportions.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-4.M.1",
+              "text": "In repeated random sampling with the same sample size, approximately C% of confidence intervals created will capture the difference in population proportions."
+            },
+            {
+              "code": "UNC-4.M.2",
+              "text": "Interpreting a confidence interval for difference between population proportions should include a reference to the sample taken and details about the population it represents."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.N",
+          "text": "Justify a claim based on a confidence interval for a difference of proportions.",
+          "skill": "4.D",
+          "ek": [
+            {
+              "code": "UNC-4.N.1",
+              "text": "A confidence interval for difference in population proportions provides an interval of values that may provide sufficient evidence to support a particular claim in context."
+            }
+          ]
+        }
+      ]
+    },
+    "6.10": {
+      "unit": 6,
+      "topicKey": "6.10",
+      "title": "Setting Up a Test for the Difference of Two Population Proportion",
+      "los": [
+        {
+          "code": "VAR-6.H",
+          "text": "Identify the null and alternative hypotheses for a difference of two population proportions.",
+          "skill": "1.F",
+          "ek": [
+            {
+              "code": "VAR-6.H.1",
+              "text": "For a two-sample test for a difference of two proportions, the null hypothesis specifies a value of 0 for the difference in population proportions, indicating no difference or effect."
+            },
+            {
+              "code": "VAR-6.H.2",
+              "text": "The null hypothesis for a difference in proportions is: H_0: p_1 = p_2, or H_0: p_1 - p_2 = 0."
+            },
+            {
+              "code": "VAR-6.H.3",
+              "text": "A one-sided alternative hypothesis for a difference in proportions is H_a: p_1 < p_2, or, H_a: p_1 > p_2. A two-sided alternative hypothesis for a difference of proportions is H_a: p_1 \\neq p_2."
+            }
+          ]
+        },
+        {
+          "code": "VAR-6.I",
+          "text": "Identify an appropriate testing method for the difference of two population proportions.",
+          "skill": "1.E",
+          "ek": [
+            {
+              "code": "VAR-6.I.1",
+              "text": "For a single categorical variable, the appropriate testing method for the difference of two population proportions is a two-sample z-test for a difference between two population proportions."
+            }
+          ]
+        },
+        {
+          "code": "VAR-6.J",
+          "text": "Verify the conditions for making statistical inferences when testing a difference of two population proportions.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "VAR-6.J.1",
+              "text": "In order to make statistical inferences when testing a difference between population proportions, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: i. Data should be collected using two independent, random samples or a randomized experiment. ii. When sampling without replacement, check that n_1 \\le 10\\%N_1 and n_2 \\le 10\\%N_2. b. To check that the sampling distribution of \\hat{p}_1 - \\hat{p}_2 is approximately normal (shape): i. For the combined sample, define the combined (or pooled) proportion, \\hat{p}_c = \\frac{n_1\\hat{p}_1 + n_2\\hat{p}_2}{n_1 + n_2}. Assuming that H_0 is true (p_1 - p_2 = 0 or p_1 = p_2), check that n_1\\hat{p}_c, n_1(1 - \\hat{p}_c), n_2\\hat{p}_c, and n_2(1 - \\hat{p}_c) are all greater than or equal to some predetermined value, typically either 5 or 10."
+            }
+          ]
+        }
+      ]
+    },
+    "6.11": {
+      "unit": 6,
+      "topicKey": "6.11",
+      "title": "Carrying Out a Test for the Difference of Two Population Proportions",
+      "los": [
+        {
+          "code": "VAR-6.K",
+          "text": "Calculate an appropriate test statistic for the difference of two population proportions.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-6.K.1",
+              "text": "The test statistic for a difference in proportions is: $z = \\frac{(\\hat{p}_1 - \\hat{p}_2) - 0}{\\sqrt{\\hat{p}_c(1-\\hat{p}_c)}\\sqrt{\\frac{1}{n_1} + \\frac{1}{n_2}}}, where \\hat{p}_c = \\frac{n_1\\hat{p}_1 + n_2\\hat{p}_2}{n_1 + n_2}. CLARIFYING STATEMENT: The formulas for test statistics do not appear explicitly on the AP Statistics Formula Sheet provided with the AP Statistics Exam. However, these formulas do not need to be memorized, as they can be constructed based on the general test statistic formula and the standard error formulas for each of the relevant test statistics that are provided on the formula sheet."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.C",
+          "text": "Interpret the p-value of a significance test for a difference of population proportions.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-3.C.1",
+              "text": "An interpretation of the p-value of a significance test for a difference of two population proportions should recognize that the p-value is computed by assuming that the null hypothesis is true, i.e., by assuming that the true population proportions are equal to each other."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.D",
+          "text": "Justify a claim about the population based on the results of a significance test for a difference of population proportions.",
+          "skill": "4.E",
+          "ek": [
+            {
+              "code": "DAT-3.D.1",
+              "text": "A formal decision explicitly compares the p-value to the significance \\alpha. If the p-value \\le \\alpha, then reject the null hypothesis, H_0: p_1 = p_2, or H_0: p_1 - p_2 = 0. If the p-value > \\alpha$, then fail to reject the null hypothesis."
+            },
+            {
+              "code": "DAT-3.D.2",
+              "text": "The results of a significance test for a difference of two population proportions can serve as the statistical reasoning to support the answer to a research question about the two populations that were sampled."
+            }
+          ]
+        }
+      ]
+    },
+    "7.1": {
+      "unit": 7,
+      "topicKey": "7.1",
+      "title": "Introducing Statistics: Why Should I Worry About Error?",
+      "los": [
+        {
+          "code": "VAR-1.I",
+          "text": "Identify questions suggested by probabilities of errors in statistical inference.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.I.1",
+              "text": "Random variation may result in errors in statistical inference."
+            }
+          ]
+        }
+      ]
+    },
+    "7.2": {
+      "unit": 7,
+      "topicKey": "7.2",
+      "title": "Constructing a Confidence Interval for a Population Mean",
+      "los": [
+        {
+          "code": "VAR-7.A",
+          "text": "Describe t-distributions.",
+          "skill": "3.C",
+          "ek": [
+            {
+              "code": "VAR-7.A.1",
+              "text": "When s is used instead of \\sigma to calculate a test statistic, the corresponding distribution, known as the t-distribution, varies from the normal distribution in shape, in that more of the area is allocated to the tails of the density curve than in a normal distribution."
+            },
+            {
+              "code": "VAR-7.A.2",
+              "text": "As the degrees of freedom increase, the area in the tails of a t-distribution decreases."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.O",
+          "text": "Identify an appropriate confidence interval procedure for a population mean, including the mean difference between values in matched pairs.",
+          "skill": "1.D",
+          "ek": [
+            {
+              "code": "UNC-4.O.1",
+              "text": "Because \\sigma is typically not known for distributions of quantitative variables, the appropriate confidence interval procedure for estimating the population mean of one quantitative variable for one sample is a one-sample t-interval for a mean."
+            },
+            {
+              "code": "UNC-4.O.2",
+              "text": "For one quantitative variable, X, that is normally distributed, the distribution of t = \\frac{\\bar{x} - \\mu}{\\frac{s}{\\sqrt{n}}} is a t-distribution with n - 1 degrees of freedom."
+            },
+            {
+              "code": "UNC-4.O.3",
+              "text": "Matched pairs can be thought of as one sample of pairs. Once differences between pairs of values are found, inference for confidence intervals proceeds as for a population mean."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.P",
+          "text": "Verify the conditions for calculating confidence intervals for a population mean, including the mean difference between values in matched pairs.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "UNC-4.P.1",
+              "text": "In order to calculate confidence intervals to estimate a population mean, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: i. Data should be collected using a random sample or a randomized experiment. ii. When sampling without replacement, check that n \\le 10\\% N, where N is the size of the population. b. To check that the sampling distribution of \\bar{x} is approximately normal (shape): i. If the observed distribution is skewed, n should be greater than 30. ii. If the sample size is less than 30, the distribution of the sample data should be free from strong skewness and outliers."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.Q",
+          "text": "Determine the margin of error for a given sample size for a one-sample t-interval.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.Q.1",
+              "text": "The critical value t^ with n - 1 degrees of freedom can be found using a table or computer-generated output."
+            },
+            {
+              "code": "UNC-4.Q.2",
+              "text": "The standard error for a sample mean is given by SE = \\frac{s}{\\sqrt{n}}, where s is the sample standard deviation."
+            },
+            {
+              "code": "UNC-4.Q.3",
+              "text": "For a one-sample t-interval for a mean, the margin of error is the critical value (t^) times the standard error (SE), which equals t^* \\left(\\frac{s}{\\sqrt{n}}\\right)."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.R",
+          "text": "Calculate an appropriate confidence interval for a population mean, including the mean difference between values in matched pairs.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.R.1",
+              "text": "The point estimate for a population mean is the sample mean, \\bar{x}."
+            },
+            {
+              "code": "UNC-4.R.2",
+              "text": "For the population mean for one sample with unknown population standard deviation, the confidence interval is \\bar{x} \\pm t^* \\frac{s}{\\sqrt{n}}. CLARIFYING STATEMENT: Formulas for interval estimates do not appear explicitly on the AP Statistics Formula Sheet provided with the AP Statistics Exam. However, these formulas do not need to be memorized, as they can be constructed based on the general test statistic formula and the relevant standard error formulas that are provided on the formula sheet."
+            }
+          ]
+        }
+      ]
+    },
+    "7.3": {
+      "unit": 7,
+      "topicKey": "7.3",
+      "title": "Justifying a Claim About a Population Mean Based on a Confidence Interval",
+      "los": [
+        {
+          "code": "UNC-4.S",
+          "text": "Interpret a confidence interval for a population mean, including the mean difference between values in matched pairs.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-4.S.1",
+              "text": "A confidence interval for a population mean either contains the population mean or it does not, because each interval is based on data from a random sample, which varies from sample to sample."
+            },
+            {
+              "code": "UNC-4.S.2",
+              "text": "We are C% confident that the confidence interval for a population mean captures the population mean."
+            },
+            {
+              "code": "UNC-4.S.3",
+              "text": "An interpretation of a confidence interval for a population mean includes a reference to the sample taken and details about the population it represents."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.T",
+          "text": "Justify a claim based on a confidence interval for a population mean, including the mean difference between values in matched pairs.",
+          "skill": "4.D",
+          "ek": [
+            {
+              "code": "UNC-4.T.1",
+              "text": "A confidence interval for a population mean provides an interval of values that may provide sufficient evidence to support a particular claim in context."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.U",
+          "text": "Identify the relationships between sample size, width of a confidence interval, confidence level, and margin of error for a population mean.",
+          "skill": "4.A",
+          "ek": [
+            {
+              "code": "UNC-4.U.1",
+              "text": "When all other things remain the same, the width of a confidence interval for a population mean tends to decrease as the sample size increases."
+            },
+            {
+              "code": "UNC-4.U.2",
+              "text": "For a single mean, the width of the interval is proportional to \\frac{1}{\\sqrt{n}}."
+            },
+            {
+              "code": "UNC-4.U.3",
+              "text": "For a given sample, the width of the confidence interval for a population mean increases as the confidence level increases."
+            }
+          ]
+        }
+      ]
+    },
+    "7.4": {
+      "unit": 7,
+      "topicKey": "7.4",
+      "title": "Setting Up a Test for a Population Mean",
+      "los": [
+        {
+          "code": "VAR-7.B",
+          "text": "Identify an appropriate testing method for a population mean with unknown \\sigma, including the mean difference between values in matched pairs.",
+          "skill": "1.E",
+          "ek": [
+            {
+              "code": "VAR-7.B.1",
+              "text": "The appropriate test for a population mean with unknown \\sigma is a one-sample t-test for a population mean."
+            },
+            {
+              "code": "VAR-7.B.2",
+              "text": "Matched pairs can be thought of as one sample of pairs. Once differences between pairs of values are found, inference for significance testing proceeds as for a population mean."
+            }
+          ]
+        },
+        {
+          "code": "VAR-7.C",
+          "text": "Identify the null and alternative hypotheses for a population mean with unknown \\sigma, including the mean difference between values in matched pairs.",
+          "skill": "1.F",
+          "ek": [
+            {
+              "code": "VAR-7.C.1",
+              "text": "The null hypothesis for a one-sample t-test for a population mean is H_0: \\mu = \\mu_0, where \\mu_0 is the hypothesized value. Depending upon the situation, the alternative hypothesis is H_a: \\mu < \\mu_0, or H_a: \\mu > \\mu_0, or H_a: \\mu \\neq \\mu_0."
+            },
+            {
+              "code": "VAR-7.C.2",
+              "text": "When finding the mean difference, \\mu_d, between values in a matched pair, it is important to define the order of subtraction."
+            }
+          ]
+        },
+        {
+          "code": "VAR-7.D",
+          "text": "Verify the conditions for the test for a population mean, including the mean difference between values in matched pairs.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "VAR-7.D.1",
+              "text": "In order to make statistical inferences when testing a population mean, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: i. Data should be collected using a random sample or a randomized experiment. ii. When sampling without replacement, check that n \\le 10\\% N. b. To check that the sampling distribution of \\bar{x} is approximately normal (shape): i. If the observed distribution is skewed, n should be greater than 30. ii. If the sample size is less than 30, the distribution of the sample data should be free from strong skewness and outliers."
+            }
+          ]
+        }
+      ]
+    },
+    "7.5": {
+      "unit": 7,
+      "topicKey": "7.5",
+      "title": "Carrying Out a Test for a Population Mean",
+      "los": [
+        {
+          "code": "VAR-7.E",
+          "text": "Calculate an appropriate test statistic for a population mean, including the mean difference between values in matched pairs.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-7.E.1",
+              "text": "For a single quantitative variable when random sampling with replacement from a population that can be modeled with a normal distribution with mean \\mu and standard deviation \\sigma, the sampling distribution of t = \\frac{\\bar{x} - \\mu}{\\frac{s}{\\sqrt{n}}} has a t-distribution with n - 1 degrees of freedom. CLARIFYING STATEMENT: The formulas for test statistics do not appear explicitly on the AP Statistics Formula Sheet provided with the AP Statistics Exam. However, these formulas do not need to be memorized, as they can be constructed based on the general test statistic formula and the relevant standard error formulas that are provided on the formula sheet."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.E",
+          "text": "Interpret the p-value of a significance test for a population mean, including the mean difference between values in matched pairs.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-3.E.1",
+              "text": "An interpretation of the p-value of a significance test for a population mean should recognize that the p-value is computed by assuming that the null hypothesis is true, i.e., by assuming that the true population mean is equal to the particular value stated in the null hypothesis."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.F",
+          "text": "Justify a claim about the population based on the results of a significance test for a population mean.",
+          "skill": "4.E",
+          "ek": [
+            {
+              "code": "DAT-3.F.1",
+              "text": "A formal decision explicitly compares the p-value to the significance \\alpha. If the p-value \\le \\alpha, then reject the null hypothesis, H_0: \\mu = \\mu_0. If the p-value > \\alpha, then fail to reject the null hypothesis."
+            },
+            {
+              "code": "DAT-3.F.2",
+              "text": "The results of a significance test for a population mean can serve as the statistical reasoning to support the answer to a research question about the population that was sampled."
+            }
+          ]
+        }
+      ]
+    },
+    "7.6": {
+      "unit": 7,
+      "topicKey": "7.6",
+      "title": "Confidence Intervals for the Difference of Two Means",
+      "los": [
+        {
+          "code": "UNC-4.V",
+          "text": "Identify an appropriate confidence interval procedure for a difference of two population means.",
+          "skill": "1.D",
+          "ek": [
+            {
+              "code": "UNC-4.V.1",
+              "text": "Consider a simple random sample from population 1 of size n_1, mean \\mu_1, and standard deviation \\sigma_1 and a second simple random sample from population 2 of size n_2, mean \\mu_2, and standard deviation \\sigma_2. If the distributions of populations 1 and 2 are normal or if both n_1 and n_2 are greater than 30, then the sampling distribution of the difference of means, \\bar{x}_1 - \\bar{x}_2 is also normal. The mean for the sampling distribution of \\bar{x}_1 - \\bar{x}_2 is \\mu_1 - \\mu_2. The standard deviation of \\bar{x}_1 - \\bar{x}_2 is \\sqrt{\\frac{\\sigma_1^2}{n_1} + \\frac{\\sigma_2^2}{n_2}}."
+            },
+            {
+              "code": "UNC-4.V.2",
+              "text": "The appropriate confidence interval procedure for one quantitative variable for two independent samples is a two-sample t-interval for a difference between population means."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.W",
+          "text": "Verify the conditions to calculate confidence intervals for the difference of two population means.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "UNC-4.W.1",
+              "text": "In order to calculate confidence intervals to estimate a difference of population means, we must check for independence and that the sampling distribution is approximately normal: a. To check for independence: i. Data should be collected using two independent, random samples or a randomized experiment. ii. When sampling without replacement, check that n_1 \\le 10\\% N_1 and n_2 \\le 10\\% N_2. b. To check that the sampling distribution of (\\bar{x}_1 - \\bar{x}_2) should be approximately normal (shape): i. If the observed distributions are skewed, both n_1 and n_2 should be greater than 30."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.X",
+          "text": "Determine the margin of error for the difference of two population means.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.X.1",
+              "text": "For the difference of two sample means, the margin of error is the critical value (t^) times the standard error (SE) of the difference of two means."
+            },
+            {
+              "code": "UNC-4.X.2",
+              "text": "The standard error for the difference in two sample means with sample standard deviations, s_1 and s_2, is \\sqrt{\\frac{s_1^2}{n_1} + \\frac{s_2^2}{n_2}}."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.Y",
+          "text": "Calculate an appropriate confidence interval for a difference of two population means.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.Y.1",
+              "text": "The point estimate for the difference of two population means is the difference in sample means, \\bar{x}_1 - \\bar{x}_2."
+            },
+            {
+              "code": "UNC-4.Y.2",
+              "text": "For a difference of two population means where the population standard deviations are not known, the confidence interval is (\\bar{x}_1 - \\bar{x}_2) \\pm t^ \\sqrt{\\frac{s_1^2}{n_1} + \\frac{s_2^2}{n_2}} where \\pm t^ are the critical values for the central C% of a t-distribution with appropriate degrees of freedom that can be found using technology. CLARIFYING STATEMENT: Formulas for interval estimates do not appear explicitly on the AP Statistics Formula Sheet provided with the AP Statistics Exam. However, these formulas do not need to be memorized, as they can be constructed based on the general test statistic formula and the relevant standard error formulas that are provided on the formula sheet.*"
+            }
+          ]
+        }
+      ]
+    },
+    "7.7": {
+      "unit": 7,
+      "topicKey": "7.7",
+      "title": "Justifying a Claim About the Difference of Two Means Based on a Confidence Interval",
+      "los": [
+        {
+          "code": "UNC-4.Z",
+          "text": "Interpret a confidence interval for a difference of population means.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-4.Z.1",
+              "text": "In repeated random sampling with the same sample size, approximately C% of confidence intervals created will capture the difference of population means."
+            },
+            {
+              "code": "UNC-4.Z.2",
+              "text": "An interpretation for a confidence interval for the difference of two population means should include a reference to the samples taken and details about the populations they represent."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.AA",
+          "text": "Justify a claim based on a confidence interval for a difference of population means.",
+          "skill": "4.D",
+          "ek": [
+            {
+              "code": "UNC-4.AA.1",
+              "text": "A confidence interval for a difference of population means provides an interval of values that may provide sufficient evidence to support a particular claim in context."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.AB",
+          "text": "Identify the effects of sample size on the width of a confidence interval for the difference of two means.",
+          "skill": "4.A",
+          "ek": [
+            {
+              "code": "UNC-4.AB.1",
+              "text": "When all other things remain the same, the width of the confidence interval for the difference of two means tends to decrease as the sample sizes increase."
+            }
+          ]
+        }
+      ]
+    },
+    "7.8": {
+      "unit": 7,
+      "topicKey": "7.8",
+      "title": "Setting Up a Test for the Difference of Two Population Means",
+      "los": [
+        {
+          "code": "VAR-7.F",
+          "text": "Identify an appropriate selection of a testing method for a difference of two population means.",
+          "skill": "1.E",
+          "ek": [
+            {
+              "code": "VAR-7.F.1",
+              "text": "For a quantitative variable, the appropriate test for a difference of two population means is a two-sample t-test for a difference of two population means."
+            }
+          ]
+        },
+        {
+          "code": "VAR-7.G",
+          "text": "Identify the null and alternative hypotheses for a difference of two population means.",
+          "skill": "1.F",
+          "ek": [
+            {
+              "code": "VAR-7.G.1",
+              "text": "The null hypothesis for a two-sample t-test for a difference of two population means, \\mu_1 and \\mu_2, is: H_0: \\mu_1 - \\mu_2 = 0, or H_0: \\mu_1 = \\mu_2. The alternative hypothesis is H_a: \\mu_1 - \\mu_2 < 0, or H_a: \\mu_1 - \\mu_2 > 0, or H_a: \\mu_1 - \\mu_2 \\neq 0, or H_a: \\mu_1 > \\mu_2, or H_a: \\mu_1 < \\mu_2, or H_a: \\mu_1 \\neq \\mu_2."
+            }
+          ]
+        },
+        {
+          "code": "VAR-7.H",
+          "text": "Verify the conditions for the significance test for the difference of two population means.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "VAR-7.H.1",
+              "text": "In order to make statistical inferences when testing a difference between population means, we must check for independence and that the sampling distribution is approximately normal: a. Individual observations should be independent: i. Data should be collected using simple random samples or a randomized experiment. ii. When sampling without replacement, check that n_1 \\le 10\\% N_1 and n_2 \\le 10\\% N_2. b. The sampling distribution of \\bar{x}_1 - \\bar{x}_2 should be approximately normal (shape). i. If the observed distribution is skewed, both n_1 and n_2 should be greater than 30. ii. If the sample size is less than 30, the distribution of the sample data should be free from strong skewness and outliers. This should be checked for BOTH samples."
+            }
+          ]
+        }
+      ]
+    },
+    "7.9": {
+      "unit": 7,
+      "topicKey": "7.9",
+      "title": "Carrying Out a Test for the Difference of Two Population Means",
+      "los": [
+        {
+          "code": "VAR-7.I",
+          "text": "Calculate an appropriate test statistic for a difference of two means.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-7.I.1",
+              "text": "For a single quantitative variable, data collected using independent random samples or a randomized experiment from two populations, each of which can be modeled with a normal distribution, the sampling distribution of t = \\frac{(\\bar{x}_1 - \\bar{x}_2) - (\\mu_1 - \\mu_2)}{\\sqrt{\\frac{s_1^2}{n_1} + \\frac{s_2^2}{n_2}}} is an approximate t-distribution with degrees of freedom that can be found using technology. The degrees of freedom fall between the smaller of n_1 - 1 and n_2 - 1 and n_1 + n_2 - 2. CLARIFYING STATEMENT: The formulas for test statistics do not appear explicitly on the AP Statistics Formula Sheet provided with the AP Statistics Exam. However, these formulas do not need to be memorized, as they can be constructed based on the general test statistic formula and the standard error formulas for each of the relevant test statistics that are provided on the formula sheet."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.G",
+          "text": "Interpret the p-value of a significance test for a difference of population means.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-3.G.1",
+              "text": "An interpretation of the p-value of a significance test for a two-sample difference of population means should recognize that the p-value is computed by assuming that the null hypothesis is true, i.e., by assuming that the true population means are equal to each other."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.H",
+          "text": "Justify a claim about the population based on the results of a significance test for a difference of two population means in context.",
+          "skill": "4.E",
+          "ek": [
+            {
+              "code": "DAT-3.H.1",
+              "text": "A formal decision explicitly compares the p-value to the significance \\alpha. If the p-value \\le \\alpha, then reject the null hypothesis, H_0: \\mu_1 - \\mu_2 = 0, or H_0: \\mu_1 = \\mu_2. If the p-value > \\alpha, then fail to reject the null hypothesis."
+            },
+            {
+              "code": "DAT-3.H.2",
+              "text": "The results of a significance test for a two-sample test for a difference between two population means can serve as the statistical reasoning to support the answer to a research question about the populations that were sampled."
+            }
+          ]
+        }
+      ]
+    },
+    "7.10": {
+      "unit": 7,
+      "topicKey": "7.10",
+      "title": "Skills Focus: Selecting, Implementing, and Communicating Inference Procedures",
+      "los": []
+    },
+    "8.1": {
+      "unit": 8,
+      "topicKey": "8.1",
+      "title": "Introducing Statistics: Are My Results Unexpected?",
+      "los": [
+        {
+          "code": "VAR-1.J",
+          "text": "Identify questions suggested by variation between observed and expected counts in categorical data.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.J.1",
+              "text": "Variation between what we find and what we expect to find may be random or not."
+            }
+          ]
+        }
+      ]
+    },
+    "8.2": {
+      "unit": 8,
+      "topicKey": "8.2",
+      "title": "Setting Up a Chi-Square Goodness of Fit Test",
+      "los": [
+        {
+          "code": "VAR-8.A",
+          "text": "Describe chi-square distributions.",
+          "skill": "3.C",
+          "ek": []
+        },
+        {
+          "code": "VAR-8.B",
+          "text": "Identify the null and alternative hypotheses in a test for a distribution of proportions in a set of categorical data.",
+          "skill": "1.F",
+          "ek": []
+        },
+        {
+          "code": "VAR-8.C",
+          "text": "Identify an appropriate testing method for a distribution of proportions in a set of categorical data.",
+          "skill": "1.E",
+          "ek": [
+            {
+              "code": "VAR-8.C.1",
+              "text": "When considering a distribution of proportions for one categorical variable, the appropriate test is the chi-square test for goodness of fit."
+            }
+          ]
+        },
+        {
+          "code": "VAR-8.D",
+          "text": "Calculate expected counts for the chi-square test for goodness of fit.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "VAR-8.D.1",
+              "text": "Expected counts for a chi-square goodness-of-fit test are (sample size)(null proportion)."
+            }
+          ]
+        },
+        {
+          "code": "VAR-8.E",
+          "text": "Verify the conditions for making statistical inferences when testing goodness of fit for a chi-square distribution.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "VAR-8.E.1",
+              "text": "In order to make statistical inferences for a chi-square test for goodness of fit we must check the following: a. To check for independence: i. Data should be collected using a random sample or randomized experiment. ii. When sampling without replacement, check that n \\le 10\\%N. b. The chi-square test for goodness of fit becomes more accurate with more observations, so large counts should be used (shape). i. A conservative check for large counts is that all expected counts should be greater than 5."
+            }
+          ]
+        }
+      ]
+    },
+    "8.3": {
+      "unit": 8,
+      "topicKey": "8.3",
+      "title": "Carrying Out a Chi-Square Test for Goodness of Fit",
+      "los": [
+        {
+          "code": "VAR-8.F",
+          "text": "Calculate the appropriate statistic for the chi-square test for goodness of fit.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-8.F.1",
+              "text": "The test statistic for the chi-square test for goodness of fit is $ \\chi^2 = \\sum \\frac{(Observed\\ count - Expected\\ count)^2}{Expected\\ count}, with degrees\\ of\\ freedom = number\\ of\\ categories - 1."
+            },
+            {
+              "code": "VAR-8.F.2",
+              "text": "The distribution of the test statistic assuming the null hypothesis is true (null distribution) can be either a randomization distribution or, when a probability model is assumed to be true, a theoretical distribution (chi-square)."
+            }
+          ]
+        },
+        {
+          "code": "VAR-8.G",
+          "text": "Determine the p-value for chi-square test for goodness of fit significance test.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-8.G.1",
+              "text": "The p-value for a chi-square test for goodness of fit for a number of degrees of freedom is found using the appropriate table or computer generated output. continued on next page*"
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.I",
+          "text": "Interpret the p-value for the chi-square test for goodness of fit.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-3.I.1",
+              "text": "An interpretation of the p-value for the chi-square test for goodness of fit is the probability, given the null hypothesis and probability model are true, of obtaining a test statistic as, or more, extreme than the observed value."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.J",
+          "text": "Justify a claim about the population based on the results of a chi-square test for goodness of fit.",
+          "skill": "4.E",
+          "ek": [
+            {
+              "code": "DAT-3.J.1",
+              "text": "A decision to either reject or fail to reject the null hypothesis is based on comparison of the p-value to the significance level, \\alpha$."
+            },
+            {
+              "code": "DAT-3.J.2",
+              "text": "The results of a chi-square test for goodness of fit can serve as the statistical reasoning to support the answer to a research question about the population that was sampled."
+            }
+          ]
+        }
+      ]
+    },
+    "8.4": {
+      "unit": 8,
+      "topicKey": "8.4",
+      "title": "Expected Counts in Two-Way Tables",
+      "los": [
+        {
+          "code": "VAR-8.H",
+          "text": "Calculate expected counts for two-way tables of categorical data.",
+          "skill": "3.A",
+          "ek": [
+            {
+              "code": "VAR-8.H.1",
+              "text": "The expected count in a particular cell of a two-way table of categorical data can be calculated using the formula: $ expected\\ count = \\frac{(row\\ total)(column\\ total)}{table\\ total}. $"
+            }
+          ]
+        }
+      ]
+    },
+    "8.5": {
+      "unit": 8,
+      "topicKey": "8.5",
+      "title": "Setting Up a Chi-Square Test for Homogeneity or Independence",
+      "los": [
+        {
+          "code": "VAR-8.I",
+          "text": "Identify the null and alternative hypotheses for a chi-square test for homogeneity or independence.",
+          "skill": "1.F",
+          "ek": [
+            {
+              "code": "VAR-8.I.1",
+              "text": "The appropriate hypotheses for a chi-square test for homogeneity are: H_0: There is no difference in distributions of a categorical variable across populations or treatments. H_a: There is a difference in distributions of a categorical variable across populations or treatments."
+            },
+            {
+              "code": "VAR-8.I.2",
+              "text": "The appropriate hypotheses for a chi-square test for independence are: H_0: There is no association between two categorical variables in a given population or the two categorical variables are independent. H_a: Two categorical variables in a population are associated or dependent. continued on next page*"
+            }
+          ]
+        },
+        {
+          "code": "VAR-8.J",
+          "text": "Identify an appropriate testing method for comparing distributions in two-way tables of categorical data.",
+          "skill": "1.E",
+          "ek": [
+            {
+              "code": "VAR-8.J.1",
+              "text": "When comparing distributions to determine whether proportions in each category for categorical data collected from different populations are the same, the appropriate test is the chi-square test for homogeneity."
+            },
+            {
+              "code": "VAR-8.J.2",
+              "text": "To determine whether row and column variables in a two-way table of categorical data might be associated in the population from which the data were sampled, the appropriate test is the chi-square test for independence."
+            }
+          ]
+        },
+        {
+          "code": "VAR-8.K",
+          "text": "Verify the conditions for making statistical inferences when testing a chi-square distribution for independence or homogeneity.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "VAR-8.K.1",
+              "text": "In order to make statistical inferences for a chi-square test for two-way tables (homogeneity or independence), we must verify the following: a. To check for independence: i. For a test for independence: Data should be collected using a simple random sample. ii. For a test for homogeneity: Data should be collected using a stratified random sample or randomized experiment. iii. When sampling without replacement, check that n \\le 10\\%N. b. The chi-square tests for independence and homogeneity become more accurate with more observations, so large counts should be used (shape). i. A conservative check for large counts is that all expected counts should be greater than 5."
+            }
+          ]
+        }
+      ]
+    },
+    "8.6": {
+      "unit": 8,
+      "topicKey": "8.6",
+      "title": "Carrying Out a Chi-Square Test for Homogeneity or Independence",
+      "los": [
+        {
+          "code": "VAR-8.L",
+          "text": "Calculate the appropriate statistic for a chi-square test for homogeneity or independence.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-8.L.1",
+              "text": "The appropriate test statistic for a chi-square test for homogeneity or independence is the chi-square statistic: $ \\chi^2 = \\sum \\frac{(Observed\\ count - Expected\\ count)^2}{Expected\\ count}, with degrees of freedom equal to: (number\\ of\\ rows - 1)(number\\ of\\ columns - 1)."
+            }
+          ]
+        },
+        {
+          "code": "VAR-8.M",
+          "text": "Determine the p-value for a chi-square significance test for independence or homogeneity.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-8.M.1",
+              "text": "The p-value for a chi-square test for independence or homogeneity for a number of degrees of freedom is found using the appropriate table or technology."
+            },
+            {
+              "code": "VAR-8.M.2",
+              "text": "For a test of independence or homogeneity for a two-way table, the p-value is the proportion of values in a chi-square distribution with appropriate degrees of freedom that are equal to or larger than the test statistic. continued on next page*"
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.K",
+          "text": "Interpret the p-value for the chi-square test for homogeneity or independence.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-3.K.1",
+              "text": "An interpretation of the p-value for the chi-square test for homogeneity or independence is the probability, given the null hypothesis and probability model are true, of obtaining a test statistic as, or more, extreme than the observed value."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.L",
+          "text": "Justify a claim about the population based on the results of a chi-square test for homogeneity or independence.",
+          "skill": "4.E",
+          "ek": [
+            {
+              "code": "DAT-3.L.1",
+              "text": "A decision to either reject or fail to reject the null hypothesis for a chi-square test for homogeneity or independence is based on comparison of the p-value to the significance level, \\alpha$."
+            },
+            {
+              "code": "DAT-3.L.2",
+              "text": "The results of a chi-square test for homogeneity or independence can serve as the statistical reasoning to support the answer to a research question about the population that was sampled (independence) or the populations that were sampled (homogeneity)."
+            }
+          ]
+        }
+      ]
+    },
+    "8.7": {
+      "unit": 8,
+      "topicKey": "8.7",
+      "title": "Skills Focus: Selecting an Appropriate Inference Procedure for Categorical Data",
+      "los": []
+    },
+    "9.1": {
+      "unit": 9,
+      "topicKey": "9.1",
+      "title": "Introducing Statistics: Do Those Points Align?",
+      "los": [
+        {
+          "code": "VAR-1.K",
+          "text": "Identify questions suggested by variation in scatter plots.",
+          "skill": "1.A",
+          "ek": [
+            {
+              "code": "VAR-1.K.1",
+              "text": "Variation in points’ positions relative to a theoretical line may be random or non-random."
+            }
+          ]
+        }
+      ]
+    },
+    "9.2": {
+      "unit": 9,
+      "topicKey": "9.2",
+      "title": "Confidence Intervals for the Slope of a Regression Model",
+      "los": [
+        {
+          "code": "UNC-4.AC",
+          "text": "Identify an appropriate confidence interval procedure for a slope of a regression model.",
+          "skill": "1.D",
+          "ek": [
+            {
+              "code": "UNC-4.AC.1",
+              "text": "Consider a response variable, y, that is linearly related to an explanatory variable, x. For a simple random sample of n observations, the sample regression line, \\hat{y} = a + bx, is an estimate of the population regression line \\mu_y = \\alpha + \\beta x. For a particular observation, (x_i, y_i), the residual from the sample regression line, y_i - \\hat{y}_i = y_i - (a + bx_i), is an estimate of y_i - (\\alpha + \\beta x_i), the deviation of the response variable from the population regression line. For all points (x, y) in the population, the standard deviation of all of the deviations of the response variable from the population regression line, \\sigma, can be estimated by the standard deviation of the residuals from the sample regression line, $ s = \\sqrt{\\frac{\\sum(y_i - \\hat{y}_i)^2}{n - 2}} (Note: This formula uses n - 2 in the denominator instead of n - 1 because two parameters, \\alpha and \\beta, must be estimated to obtain the predicted values from the least-squares regression line.)"
+            },
+            {
+              "code": "UNC-4.AC.2",
+              "text": "For a simple random sample of n observations, let b represent the slope of a sample regression line. Then the mean of the sampling distribution for b equals the population slope: \\mu_b = \\beta. The standard deviation of the sampling distribution for b is \\sigma_b = \\frac{\\sigma}{\\sigma_x \\sqrt{n}}, where \\sigma_x = \\sqrt{\\frac{\\sum(x_i - \\bar{x})^2}{n}}"
+            },
+            {
+              "code": "UNC-4.AC.3",
+              "text": "The appropriate confidence interval for the slope of a regression model is a t-interval for the slope."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.AD",
+          "text": "Verify the conditions to calculate confidence intervals for the slope of a regression model.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "UNC-4.AD.1",
+              "text": "In order to calculate a confidence interval to estimate the slope of a regression line, we must check the following: a. The true relationship between x and y is linear. Analysis of residuals may be used to verify linearity. b. The standard deviation for y, \\sigma_y, does not vary with x. Analysis of residuals may be used to check for approximately equal standard deviations for all x. c. To check for independence: i. Data should be collected using a random sample or a randomized experiment. ii. When sampling without replacement, check that n \\le 10\\%N. d. For a particular value of x, the responses (y-values) are approximately normally distributed. Analysis of graphical representations of residuals may be used to check for normality. i. If the observed distribution is skewed, n should be greater than 30."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.AE",
+          "text": "Determine the given margin of error for the slope of a regression model.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.AE.1",
+              "text": "For the slope of a regression line, the margin of error is the critical value (t^) times the standard error (SE) of the slope."
+            },
+            {
+              "code": "UNC-4.AE.2",
+              "text": "The standard error for the slope of a regression line with sample standard deviation, s, is SE = \\frac{s}{s_x \\sqrt{n-1}}, where s is the estimate of \\sigma and s_x is the sample standard deviation of the x values."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.AF",
+          "text": "Calculate an appropriate confidence interval for the slope of a regression model.",
+          "skill": "3.D",
+          "ek": [
+            {
+              "code": "UNC-4.AF.1",
+              "text": "The point estimate for the slope of a regression model is the slope of the line of best fit, b."
+            },
+            {
+              "code": "UNC-4.AF.2",
+              "text": "For the slope of a regression model, the interval estimate is b \\pm t^(SE_b)$."
+            }
+          ]
+        }
+      ]
+    },
+    "9.3": {
+      "unit": 9,
+      "topicKey": "9.3",
+      "title": "Justifying a Claim About the Slope of a Regression Model Based on a Confidence Interval",
+      "los": [
+        {
+          "code": "UNC-4.AG",
+          "text": "Interpret a confidence interval for the slope of a regression model.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "UNC-4.AG.1",
+              "text": "In repeated random sampling with the same sample size, approximately C% of confidence intervals created will capture the slope of the regression model, i.e., the true slope of the population regression model."
+            },
+            {
+              "code": "UNC-4.AG.2",
+              "text": "An interpretation for a confidence interval for the slope of a regression line should include a reference to the sample taken and details about the population it represents."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.AH",
+          "text": "Justify a claim based on a confidence interval for the slope of a regression model.",
+          "skill": "4.D",
+          "ek": [
+            {
+              "code": "UNC-4.AH.1",
+              "text": "A confidence interval for the slope of a regression model provides an interval of values that may provide sufficient evidence to support a particular claim in context."
+            }
+          ]
+        },
+        {
+          "code": "UNC-4.AI",
+          "text": "Identify the effects of sample size on the width of a confidence interval for the slope of a regression model.",
+          "skill": "4.A",
+          "ek": [
+            {
+              "code": "UNC-4.AI.1",
+              "text": "When all other things remain the same, the width of the confidence interval for the slope of a regression model tends to decrease as the sample size increases."
+            }
+          ]
+        }
+      ]
+    },
+    "9.4": {
+      "unit": 9,
+      "topicKey": "9.4",
+      "title": "Setting Up a Test for the Slope of a Regression Model",
+      "los": [
+        {
+          "code": "VAR-7.J",
+          "text": "Identify the appropriate selection of a testing method for a slope of a regression model.",
+          "skill": "1.E",
+          "ek": [
+            {
+              "code": "VAR-7.J.1",
+              "text": "The appropriate test for the slope of a regression model is a t-test for a slope."
+            }
+          ]
+        },
+        {
+          "code": "VAR-7.K",
+          "text": "Identify appropriate null and alternative hypotheses for a slope of a regression model.",
+          "skill": "1.F",
+          "ek": [
+            {
+              "code": "VAR-7.K.1",
+              "text": "The null hypothesis for a t-test for a slope is: H_0: \\beta = \\beta_0, where \\beta_0 is the hypothesized value from the null hypothesis. The alternative hypothesis is H_a : \\beta < \\beta_0 or H_a : \\beta > \\beta_0, or H_a : \\beta \\neq \\beta_0."
+            }
+          ]
+        },
+        {
+          "code": "VAR-7.L",
+          "text": "Verify the conditions for the significance test for the slope of a regression model.",
+          "skill": "4.C",
+          "ek": [
+            {
+              "code": "VAR-7.L.1",
+              "text": "In order to make statistical inferences when testing for the slope of a regression model, we must check the following: a. The true relationship between x and y is linear. Analysis of residuals may be used to verify linearity. b. The standard deviation for y, \\sigma_y, does not vary with x. Analysis of residuals may be used to check for approximately equal standard deviations for all x. c. To check for independence: i. Data should be collected using a random sample or a randomized experiment. ii. When sampling without replacement, check that n \\le 10\\%N. d. For a particular value of x, the responses (y-values) are approximately normally distributed. Analysis of graphical representations of residuals may be used to check for normality. i. If the observed distribution is skewed, n should be greater than 30. ii. If the sample size is less than 30, the distribution of the sample data should be free from strong skewness and outliers."
+            }
+          ]
+        }
+      ]
+    },
+    "9.5": {
+      "unit": 9,
+      "topicKey": "9.5",
+      "title": "Carrying Out a Test for the Slope of a Regression Model",
+      "los": [
+        {
+          "code": "VAR-7.M",
+          "text": "Calculate an appropriate test statistic for the slope of a regression model.",
+          "skill": "3.E",
+          "ek": [
+            {
+              "code": "VAR-7.M.1",
+              "text": "The distribution of the slope of a regression model assuming all conditions are satisfied and the null hypothesis is true (null distribution) is a t-distribution."
+            },
+            {
+              "code": "VAR-7.M.2",
+              "text": "For simple linear regression when random sampling from a population for the response that can be modeled with a normal distribution for each value of the explanatory variable, the sampling distribution of t = \\frac{b - \\beta}{SE_b} has a t-distribution with degrees of freedom equal to n - 2. When testing the slope in a simple linear regression model with one parameter, the slope, the test for the slope has df = n - 1."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.M",
+          "text": "Interpret the p-value of a significance test for the slope of a regression model.",
+          "skill": "4.B",
+          "ek": [
+            {
+              "code": "DAT-3.M.1",
+              "text": "An interpretation of the p-value of a significance test for the slope of a regression model should recognize that the p-value is computed by assuming that the null hypothesis is true, i.e., by assuming that the true population slope is equal to the particular value stated in the null hypothesis."
+            }
+          ]
+        },
+        {
+          "code": "DAT-3.N",
+          "text": "Justify a claim about the population based on the results of a significance test for the slope of a regression model.",
+          "skill": "4.E",
+          "ek": [
+            {
+              "code": "DAT-3.N.1",
+              "text": "A formal decision explicitly compares the p-value to the significance \\alpha. If the p-value \\le \\alpha, then reject the null hypothesis, H_0: \\beta = \\beta_0. If the p-value > \\alpha, then fail to reject the null hypothesis."
+            },
+            {
+              "code": "DAT-3.N.2",
+              "text": "The results of a significance test for the slope of a regression model can serve as the statistical reasoning to support the answer to a research question about that sample."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

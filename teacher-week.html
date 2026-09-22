@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>This Week — Learning Objectives (B &amp; E)</title>
+<!--
+  teacher-week.html — TEACHER-FACING weekly learning-objective view.
+
+  For the Monday–Friday week containing the chosen date, shows what each
+  period (B, E) is covering day by day and the CED learning objectives for
+  every topic that lands that week. Static: reads data/lesson-schedule.json
+  (dates per period) + data/learning-objectives.json (LOs per topic, built by
+  scripts/build-learning-objectives.mjs from apstat_*_framework.md).
+
+  No login, no student data. LO codes carry the 2019-CED VAR/UNC/DAT prefixes;
+  this page is the teacher's planning view, not a student surface.
+
+  URL: teacher-week.html?date=YYYY-MM-DD  (defaults to today; weekends roll
+  forward to next week, since that is the week being planned).
+-->
+<style>
+  :root {
+    --bg: #e5e3d2; --panel: #f7f5ee; --ink: #24251f; --dim: #57594e;
+    --line: #b6b7a7; --b: #24649c; --e: #8a4b1d; --accent: #354e41;
+    --pc: #7a2d2d; --work: #5c5c3d; --off: #8b8b80;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: Geneva, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.45; }
+  .page-header { max-width: 1400px; margin: auto; padding: 24px 24px 8px; }
+  .page-header h1 { font-size: 1.55rem; margin: 0 0 4px; }
+  .subtitle { color: var(--dim); margin: 0; }
+  .main { max-width: 1400px; margin: auto; padding: 0 24px 40px; }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+  .toolbar .week-label { font-size: 1.15rem; font-weight: 700; margin-right: 6px; }
+  .btn { font: inherit; font-size: .86rem; border: 1px solid #aaa998; border-radius: 5px; padding: 8px 12px; color: #30332a; background: #faf9f3; cursor: pointer; }
+  .btn:hover { background: #e9ecdf; }
+  .toolbar input[type=date] { font: inherit; min-height: 36px; padding: 4px 8px; border: 1px solid #aaa998; border-radius: 5px; background: #faf9f3; }
+  .toolbar label { font-size: .8rem; font-weight: 600; margin-left: auto; }
+  :focus-visible { outline: 3px solid var(--b); outline-offset: 3px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .period { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); overflow: hidden; }
+  .period > h2 { margin: 0; padding: 12px 16px; font-size: 1.1rem; color: #fff; }
+  .period.B > h2 { background: var(--b); }
+  .period.E > h2 { background: var(--e); }
+  .period > h2 small { font-weight: 400; opacity: .85; margin-left: 8px; }
+
+  .day { border-top: 1px solid var(--line); padding: 12px 16px; }
+  .day:first-of-type { border-top: 0; }
+  .day-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .day-head .dow { font-weight: 700; min-width: 3.2em; }
+  .day-head .date { color: var(--dim); font-size: .9rem; }
+  .day-head .tag { font-size: .75rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; color: #fff; background: var(--off); }
+  .tag.pc { background: var(--pc); }
+  .tag.poster { background: var(--accent); }
+  .tag.work { background: var(--work); }
+  .tag.double { background: #b8860b; }
+  .day.today { background: #fffbe6; }
+  .day.no-class { color: var(--off); }
+  .day.no-class .dow { font-weight: 400; }
+
+  .topic { margin: 10px 0 0; padding-left: 12px; border-left: 3px solid var(--line); }
+  .period.B .topic { border-left-color: var(--b); }
+  .period.E .topic { border-left-color: var(--e); }
+  .topic-title { font-weight: 700; margin: 0; }
+  .topic-title .key { color: var(--dim); font-weight: 600; margin-right: 6px; }
+  .topic-title a { color: inherit; text-decoration: none; }
+  .topic-title a:hover { text-decoration: underline; }
+  .los { list-style: none; margin: 6px 0 0; padding: 0; }
+  .los li { margin: 4px 0; }
+  .lo-code { font-family: Monaco, Consolas, monospace; font-size: .82rem; font-weight: 700; color: var(--accent); margin-right: 6px; }
+  .lo-skill { display: inline-block; font-size: .72rem; color: var(--dim); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: middle; }
+  details.ek { margin: 2px 0 0 22px; font-size: .86rem; color: var(--dim); }
+  details.ek summary { cursor: pointer; }
+  details.ek ul { margin: 4px 0 6px; padding-left: 18px; }
+  .no-lo { color: var(--dim); font-style: italic; }
+  .nothing { color: var(--dim); font-style: italic; margin: 4px 0 0; }
+
+  .section { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); margin: 16px 0; padding: 16px; }
+  .section h2 { margin: 0 0 8px; font-size: 1.05rem; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .summary-grid { grid-template-columns: 1fr; } }
+  .summary h3 { margin: 0 0 6px; font-size: .95rem; }
+  .summary.B h3 { color: var(--b); } .summary.E h3 { color: var(--e); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-family: Monaco, Consolas, monospace; font-size: .8rem; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+  .chip.only { border-color: #b8860b; background: #fff6d6; }
+  .drift { margin-top: 10px; font-size: .9rem; color: var(--dim); }
+  .error { color: #8b1a1a; font-weight: 600; }
+
+  @media print {
+    body { background: #fff; font-size: 12px; }
+    .toolbar, .noprint { display: none !important; }
+    .period, .section { break-inside: avoid; box-shadow: none; }
+    details.ek { display: none; }
+    .grid { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>This Week — Learning Objectives</h1>
+  <p class="subtitle">What Period B and Period E are covering, with the CED learning objectives for each topic. Teacher planning view.</p>
+</div>
+
+<div class="main">
+
+  <div class="toolbar">
+    <button class="btn" id="prevWeek" type="button">◀ Previous week</button>
+    <button class="btn" id="thisWeek" type="button">This week</button>
+    <button class="btn" id="nextWeek" type="button">Next week ▶</button>
+    <span class="week-label" id="weekLabel"></span>
+    <label>Jump to date<br><input type="date" id="datePick"></label>
+    <button class="btn noprint" id="printBtn" type="button">Print</button>
+  </div>
+
+  <p id="status" class="error" hidden></p>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="section" id="summary">
+    <h2>Week at a glance — learning objectives covered</h2>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <p class="drift" id="drift"></p>
+  </div>
+
+  <p class="subtitle noprint" style="font-size:.85rem">
+    Source: <code>data/lesson-schedule.json</code> (dates) + <code>data/learning-objectives.json</code> (CED, regenerate with <code>node scripts/build-learning-objectives.mjs</code>).
+    Topic numbering is the 9-unit CED the worksheets use. Skill tags are the 2019 CED practice codes.
+  </p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const PERIODS = ['B', 'E'];
+  const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const WORKSHEET_BASE = 'https://robjohncolson.github.io/apstats-live-worksheet/';
+
+  let schedule = null;
+  let objectives = null;
+  let monday = null;
+
+  // ---- date helpers (local dates; never let UTC shift a school day) ----
+  function parseISO(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function toISO(date) {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
+  }
+  function addDays(date, n) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+  function mondayOf(date) {
+    const dow = date.getDay();
+    if (dow === 0) return addDays(date, 1);       // Sunday → next Monday
+    if (dow === 6) return addDays(date, 2);       // Saturday → next Monday
+    return addDays(date, 1 - dow);
+  }
+  function fmt(date) {
+    return `${MONTHS[date.getMonth()]} ${date.getDate()}`;
+  }
+  function inRange(iso, from, to) {
+    return iso >= from && iso <= to;
+  }
+
+  // ---- build the per-day event index once ----
+  // dayIndex[period][iso] = [{ kind, topicKey?, title }]
+  function buildDayIndex() {
+    const idx = { B: {}, E: {} };
+    const push = (period, iso, item) => {
+      if (!iso) return;
+      (idx[period][iso] = idx[period][iso] || []).push(item);
+    };
+    for (const lesson of Object.values(schedule.lessons)) {
+      for (const p of PERIODS) push(p, lesson.periods[p], { kind: 'lesson', topicKey: lesson.topicKey });
+    }
+    for (const pc of Object.values(schedule.progressChecks || {})) {
+      for (const p of PERIODS) {
+        push(p, pc.periods && pc.periods[p], { kind: 'pc', title: `${pc.title} — day 1` });
+        push(p, pc.adminDay2 && pc.adminDay2[p], { kind: 'pc', title: `${pc.title} — day 2` });
+        push(p, pc.mcqPartA && pc.mcqPartA[p], { kind: 'pc', title: `${pc.title} — MCQ Part A` });
+      }
+    }
+    for (const poster of Object.values(schedule.posters || {})) {
+      for (const p of PERIODS) push(p, poster.periods && poster.periods[p], { kind: 'poster', title: poster.title });
+    }
+    const cal = schedule.calendar;
+    for (const p of PERIODS) {
+      for (const iso of (cal.workDays && cal.workDays[p]) || []) push(p, iso, { kind: 'work', title: 'Work Day' });
+      for (const iso of (cal.breakDays && cal.breakDays[p]) || []) push(p, iso, { kind: 'break', title: 'Break Day (section)' });
+      for (const ev of (cal.events && cal.events[p]) || []) {
+        if (ev.kind === 'work' || ev.kind === 'break') continue; // already covered above
+        push(p, ev.date, { kind: ev.kind || 'event', title: ev.title });
+      }
+    }
+    return idx;
+  }
+
+  function schoolClosure(iso) {
+    const cal = schedule.calendar;
+    if (iso < cal.firstDay) return 'Before first day';
+    for (const b of cal.breaks || []) if (inRange(iso, b.from, b.to)) return 'No school';
+    return null;
+  }
+
+  function isMeetingDay(period, date) {
+    const days = (schedule.calendar.meetingDays || {})[period] || [];
+    return days.includes(date.getDay());
+  }
+
+  // ---- rendering ----
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  function worksheetUrl(topicKey) {
+    const lesson = schedule.lessons[topicKey];
+    if (!lesson || !lesson.worksheetKey) return null;
+    return `${WORKSHEET_BASE}u${lesson.unit}_lesson${lesson.worksheetKey}_live.html`;
+  }
+
+  function renderTopic(topicKey) {
+    const topic = objectives.topics[topicKey];
+    const title = topic ? topic.title : '(title unknown)';
+    const url = worksheetUrl(topicKey);
+    const titleHtml = url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(title)}</a>` : esc(title);
+    let losHtml;
+    if (!topic || !topic.los.length) {
+      losHtml = '<p class="no-lo">No CED learning objectives listed for this topic (skills-focus day).</p>';
+    } else {
+      losHtml = '<ul class="los">' + topic.los.map((lo) => `
+        <li>
+          <span class="lo-code">${esc(lo.code)}</span>${esc(lo.text)}<span class="lo-skill">Skill ${esc(lo.skill)}</span>
+          ${lo.ek && lo.ek.length ? `<details class="ek"><summary>Essential knowledge (${lo.ek.length})</summary><ul>${lo.ek.map((e) => `<li><strong>${esc(e.code)}</strong> ${esc(e.text)}</li>`).join('')}</ul></details>` : ''}
+        </li>`).join('') + '</ul>';
+    }
+    return `<div class="topic"><p class="topic-title"><span class="key">Topic ${esc(topicKey)}</span>${titleHtml}</p>${losHtml}</div>`;
+  }
+
+  function renderDay(period, date, items, todayISO) {
+    const iso = toISO(date);
+    const closure = schoolClosure(iso);
+    const meets = isMeetingDay(period, date);
+    const classes = ['day'];
+    if (iso === todayISO) classes.push('today');
+    if (closure || !meets) classes.push('no-class');
+
+    let tags = '';
+    let body = '';
+    if (closure) {
+      tags = `<span class="tag">${esc(closure)}</span>`;
+    } else if (!meets) {
+      tags = '<span class="tag">No class</span>';
+    } else {
+      const lessons = items.filter((i) => i.kind === 'lesson');
+      const others = items.filter((i) => i.kind !== 'lesson');
+      if (lessons.length > 1) tags += '<span class="tag double">Double</span>';
+      for (const o of others) tags += `<span class="tag ${esc(o.kind)}">${esc(o.title)}</span>`;
+      body = lessons.map((l) => renderTopic(l.topicKey)).join('');
+      if (!lessons.length && !others.length) body = '<p class="nothing">Nothing scheduled.</p>';
+    }
+    return `<div class="${classes.join(' ')}">
+      <div class="day-head"><span class="dow">${DOW[date.getDay()]}</span><span class="date">${fmt(date)}</span>${tags}</div>
+      ${body}
+    </div>`;
+  }
+
+  function weekTopics(period, dayIndex) {
+    const keys = [];
+    for (let i = 0; i < 5; i++) {
+      const iso = toISO(addDays(monday, i));
+      for (const item of dayIndex[period][iso] || []) if (item.kind === 'lesson') keys.push(item.topicKey);
+    }
+    return keys;
+  }
+
+  function renderSummary(dayIndex) {
+    const grid = document.getElementById('summaryGrid');
+    const topicsBy = {};
+    const losBy = {};
+    for (const p of PERIODS) {
+      topicsBy[p] = weekTopics(p, dayIndex);
+      losBy[p] = topicsBy[p].flatMap((k) => (objectives.topics[k] ? objectives.topics[k].los.map((lo) => lo.code) : []));
+    }
+    grid.innerHTML = PERIODS.map((p) => {
+      const other = PERIODS.find((q) => q !== p);
+      const chips = losBy[p].length
+        ? losBy[p].map((code) => `<span class="chip${losBy[other].includes(code) ? '' : ' only'}">${esc(code)}</span>`).join('')
+        : '<span class="nothing">No lesson topics this week.</span>';
+      const topics = topicsBy[p].length ? topicsBy[p].map((k) => 'Topic ' + k).join(', ') : '—';
+      return `<div class="summary ${p}"><h3>Period ${p} <small style="font-weight:400;color:var(--dim)">${esc(topics)}</small></h3><div class="chips">${chips}</div></div>`;
+    }).join('');
+
+    const onlyB = topicsBy.B.filter((k) => !topicsBy.E.includes(k));
+    const onlyE = topicsBy.E.filter((k) => !topicsBy.B.includes(k));
+    const drift = document.getElementById('drift');
+    if (!onlyB.length && !onlyE.length) {
+      drift.textContent = 'Both periods cover the same topics this week.';
+    } else {
+      const parts = [];
+      if (onlyB.length) parts.push(`Only B this week: Topic ${onlyB.join(', ')}`);
+      if (onlyE.length) parts.push(`Only E this week: Topic ${onlyE.join(', ')}`);
+      drift.textContent = parts.join(' · ') + '. Highlighted chips are objectives one period hits that the other does not.';
+    }
+  }
+
+  function render() {
+    const dayIndex = buildDayIndex();
+    const todayISO = toISO(new Date());
+    const friday = addDays(monday, 4);
+    document.getElementById('weekLabel').textContent = `Week of ${fmt(monday)} – ${fmt(friday)}, ${friday.getFullYear()}`;
+    document.getElementById('datePick').value = toISO(monday);
+    document.title = `Week of ${fmt(monday)} — Learning Objectives (B & E)`;
+
+    const grid = document.getElementById('grid');
+    grid.innerHTML = PERIODS.map((p) => {
+      const meetLabel = ((schedule.calendar.meetingDays || {})[p] || []).map((d) => DOW[d]).join(' ');
+      const days = [];
+      for (let i = 0; i < 5; i++) {
+        const date = addDays(monday, i);
+        days.push(renderDay(p, date, dayIndex[p][toISO(date)] || [], todayISO));
+      }
+      return `<section class="period ${p}" aria-label="Period ${p}"><h2>Period ${p}<small>meets ${esc(meetLabel)}</small></h2>${days.join('')}</section>`;
+    }).join('');
+
+    renderSummary(dayIndex);
+
+    const url = new URL(location.href);
+    url.searchParams.set('date', toISO(monday));
+    history.replaceState(null, '', url);
+  }
+
+  function setWeek(date) {
+    monday = mondayOf(date);
+    render();
+  }
+
+  // ---- boot ----
+  async function loadJSON(path) {
+    const res = await fetch(path, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+    return res.json();
+  }
+
+  async function boot() {
+    const status = document.getElementById('status');
+    try {
+      [schedule, objectives] = await Promise.all([
+        loadJSON('data/lesson-schedule.json'),
+        loadJSON('data/learning-objectives.json'),
+      ]);
+    } catch (err) {
+      status.hidden = false;
+      status.textContent = 'Could not load schedule data: ' + err.message;
+      return;
+    }
+    const param = new URLSearchParams(location.search).get('date');
+    const start = param && /^\d{4}-\d{2}-\d{2}$/.test(param) ? parseISO(param) : new Date();
+    setWeek(start);
+
+    document.getElementById('prevWeek').addEventListener('click', () => setWeek(addDays(monday, -7)));
+    document.getElementById('nextWeek').addEventListener('click', () => setWeek(addDays(monday, 7)));
+    document.getElementById('thisWeek').addEventListener('click', () => setWeek(new Date()));
+    document.getElementById('datePick').addEventListener('change', (e) => { if (e.target.value) setWeek(parseISO(e.target.value)); });
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
