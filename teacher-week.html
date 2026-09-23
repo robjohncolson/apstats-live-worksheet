@@ -70,6 +70,10 @@
   .topic-title .key { color: var(--dim); font-weight: 600; margin-right: 6px; }
   .topic-title a { color: inherit; text-decoration: none; }
   .topic-title a:hover { text-decoration: underline; }
+  .learn { margin: 6px 0 0; padding-left: 20px; }
+  .learn li { margin: 3px 0; }
+  details.ced { margin: 6px 0 0; font-size: .9rem; }
+  details.ced summary { cursor: pointer; color: var(--dim); }
   .los { list-style: none; margin: 6px 0 0; padding: 0; }
   .los li { margin: 4px 0; }
   .lo-code { font-family: Monaco, Consolas, monospace; font-size: .82rem; font-weight: 700; color: var(--accent); margin-right: 6px; }
@@ -105,7 +109,7 @@
 
 <div class="page-header">
   <h1>This Week — Learning Objectives</h1>
-  <p class="subtitle">What Period B and Period E are covering, with the CED learning objectives for each topic. Teacher planning view.</p>
+  <p class="subtitle">What Period B and Period E are covering, with each lesson video's "what will you learn" list. CED codes are one click away under each topic. Teacher planning view.</p>
 </div>
 
 <div class="main">
@@ -130,7 +134,7 @@
   </div>
 
   <p class="subtitle noprint" style="font-size:.85rem">
-    Source: <code>data/lesson-schedule.json</code> (dates) + <code>data/learning-objectives.json</code> (CED, regenerate with <code>node scripts/build-learning-objectives.mjs</code>).
+    Source: <code>data/lesson-schedule.json</code> (dates) + <code>data/video-objectives.json</code> (the worksheets' objective boxes, <code>node scripts/build-video-objectives.mjs</code>) + <code>data/learning-objectives.json</code> (CED, <code>node scripts/build-learning-objectives.mjs</code>).
     Topic numbering is the 9-unit CED the worksheets use. Skill tags are the 2019 CED practice codes.
   </p>
 </div>
@@ -146,6 +150,7 @@
 
   let schedule = null;
   let objectives = null;
+  let videoObjectives = null;
   let monday = null;
 
   // ---- date helpers (local dates; never let UTC shift a school day) ----
@@ -231,22 +236,30 @@
     return `${WORKSHEET_BASE}u${lesson.unit}_lesson${lesson.worksheetKey}_live.html`;
   }
 
+  // The main list is the video's own "What will you learn" bullets (harvested from
+  // each worksheet by scripts/build-video-objectives.mjs). The CED objective codes
+  // sit under a collapsed toggle for when the official wording is needed.
   function renderTopic(topicKey) {
     const topic = objectives.topics[topicKey];
+    const video = videoObjectives.topics[topicKey];
     const title = topic ? topic.title : '(title unknown)';
     const url = worksheetUrl(topicKey);
     const titleHtml = url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(title)}</a>` : esc(title);
-    let losHtml;
-    if (!topic || !topic.los.length) {
-      losHtml = '<p class="no-lo">No CED learning objectives listed for this topic (skills-focus day).</p>';
+    let learnHtml;
+    if (video && video.objectives.length) {
+      learnHtml = '<ul class="learn">' + video.objectives.map((o) => `<li>${esc(o)}</li>`).join('') + '</ul>';
     } else {
-      losHtml = '<ul class="los">' + topic.los.map((lo) => `
+      learnHtml = '<p class="no-lo">No worksheet objectives on file for this topic.</p>';
+    }
+    let cedHtml = '';
+    if (topic && topic.los.length) {
+      cedHtml = `<details class="ced"><summary>CED objectives (${topic.los.length})</summary><ul class="los">` + topic.los.map((lo) => `
         <li>
           <span class="lo-code">${esc(lo.code)}</span>${esc(lo.text)}<span class="lo-skill">Skill ${esc(lo.skill)}</span>
           ${lo.ek && lo.ek.length ? `<details class="ek"><summary>Essential knowledge (${lo.ek.length})</summary><ul>${lo.ek.map((e) => `<li><strong>${esc(e.code)}</strong> ${esc(e.text)}</li>`).join('')}</ul></details>` : ''}
-        </li>`).join('') + '</ul>';
+        </li>`).join('') + '</ul></details>';
     }
-    return `<div class="topic"><p class="topic-title"><span class="key">Topic ${esc(topicKey)}</span>${titleHtml}</p>${losHtml}</div>`;
+    return `<div class="topic"><p class="topic-title"><span class="key">Topic ${esc(topicKey)}</span>${titleHtml}</p>${learnHtml}${cedHtml}</div>`;
   }
 
   function renderDay(period, date, items, todayISO) {
@@ -357,9 +370,10 @@
   async function boot() {
     const status = document.getElementById('status');
     try {
-      [schedule, objectives] = await Promise.all([
+      [schedule, objectives, videoObjectives] = await Promise.all([
         loadJSON('data/lesson-schedule.json'),
         loadJSON('data/learning-objectives.json'),
+        loadJSON('data/video-objectives.json'),
       ]);
     } catch (err) {
       status.hidden = false;

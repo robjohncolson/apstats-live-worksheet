@@ -18,8 +18,12 @@ describe('Desk — verification tools surfaced', () => {
     // (openTeacherTools); the scan-to-verify tool moved into that launcher.
     expect(DESK).toMatch(/Teacher Tools/);
     expect(DESK).toContain('openTeacherTools');
-    expect(DESK).toContain("label: 'Verify (scan)'");
-    expect(DESK).toMatch(/openVerifyQR\(\)/);            // still wired, now inside the launcher
+    // 2026-09-10: the launcher embeds the dashboard workspace; its "Verify receipt
+    // (scan)" button posts {action:'scan'} to the Desk, which opens the QR bridge.
+    expect(DESK).toMatch(/event\.data\.action === 'scan'[^\n]*openVerifyQR\(\)/);
+    const workspace = readFileSync(resolve(__dirname, '..', 'teacher-workspace.js'), 'utf8');
+    expect(workspace).toContain("'Verify receipt (scan)'");
+    expect(workspace).toMatch(/action:\s*'scan'/);
   });
 
   it('openVerifyQR shows a QR of the cr teacher-verify URL (phone bridge)', () => {

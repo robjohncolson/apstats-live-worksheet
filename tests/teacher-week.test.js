@@ -11,6 +11,7 @@ import { join } from 'path';
 const root = join(__dirname, '..');
 const schedule = JSON.parse(readFileSync(join(root, 'data/lesson-schedule.json'), 'utf8'));
 const objectives = JSON.parse(readFileSync(join(root, 'data/learning-objectives.json'), 'utf8'));
+const videoObjectives = JSON.parse(readFileSync(join(root, 'data/video-objectives.json'), 'utf8'));
 
 describe('data/learning-objectives.json', () => {
   it('covers every scheduled topic', () => {
@@ -47,7 +48,8 @@ describe('teacher-week.html', () => {
       url: 'https://example.test/teacher-week.html?date=2026-09-22',
       beforeParse(window) {
         window.fetch = async (path) => {
-          const file = path.includes('learning-objectives') ? objectives : schedule;
+          const file = path.includes('video-objectives') ? videoObjectives
+            : path.includes('learning-objectives') ? objectives : schedule;
           return { ok: true, json: async () => file };
         };
       },
@@ -69,6 +71,7 @@ describe('teacher-week.html', () => {
     const topicsFor = (p) => Object.values(schedule.lessons).filter((l) => week.includes(l.periods[p])).map((l) => l.topicKey);
     for (const key of topicsFor('B')) {
       expect(periodB.textContent).toContain(`Topic ${key}`);
+      for (const o of videoObjectives.topics[key].objectives) expect(periodB.textContent).toContain(o);
       for (const lo of objectives.topics[key].los) expect(periodB.textContent).toContain(lo.code);
     }
     for (const key of topicsFor('E')) expect(periodE.textContent).toContain(`Topic ${key}`);

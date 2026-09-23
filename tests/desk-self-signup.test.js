@@ -81,7 +81,11 @@ describe('teacher onboarding + class gradebook (static)', () => {
     const menu = document.getElementById('menu-teacher');
     expect(menu).not.toBeNull();
     expect(menu.innerHTML).toContain('openTeacherTools()');     // menu → launcher
-    expect(html).toContain("window.open('teacher-roster-console.html'");   // launcher tile wires it
+    // 2026-09-10: the launcher embeds the dashboard workspace; the Roster Console
+    // is a tool button inside it (teacher-workspace.js), not a Desk window.open.
+    expect(html).toMatch(/frame\.src\s*=\s*'teacher-dashboard\.html\?workspace=1/);
+    const workspace = readFileSync(resolve(__dirname, '..', 'teacher-workspace.js'), 'utf8');
+    expect(workspace).toMatch(/openTool\(\s*'teacher-roster-console\.html'/);
   });
 
   it('the My Gradebook modal has the teacher student-picker row', () => {

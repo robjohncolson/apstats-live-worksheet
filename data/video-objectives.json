@@ -1,0 +1,726 @@
+{
+  "generatedBy": "scripts/build-video-objectives.mjs",
+  "source": "The Learning Objectives box at the top of each u{unit}_lesson{key}_live.html (= the video's \"What will you learn\" slide)",
+  "topics": {
+    "1.1": {
+      "worksheet": "u1_lesson1_live.html",
+      "objectives": [
+        "Identify the question to be answered or problem to be solved in a given context.",
+        "Recognize how statistics can help answer important real-world questions based on data that vary.",
+        "Identify questions to be answered based on variation in one-variable data.",
+        "Explain why numbers become meaningful when they are placed in context.",
+        "Use a real data example to connect a question, a variable, and an interpretation."
+      ]
+    },
+    "1.2": {
+      "worksheet": "u1_lesson2_live.html",
+      "objectives": [
+        "Identify the individuals and variables in a data set.",
+        "Recognize that a variable is a characteristic that changes from one individual to another.",
+        "Classify variables as categorical or quantitative.",
+        "Explain why some number-valued fields, such as zip code or grade level, are still categorical.",
+        "Describe how grouped quantitative values can be turned into categories."
+      ]
+    },
+    "1.3": {
+      "worksheet": "u1_lesson3_live.html",
+      "objectives": [
+        "Represent categorical data using a frequency table.",
+        "Represent categorical data using a relative frequency table.",
+        "Convert category counts into proportions or percentages.",
+        "Describe categorical data using counts and relative frequencies.",
+        "Use table values to justify claims about categorical data in context."
+      ]
+    },
+    "1.4": {
+      "worksheet": "u1_lesson4_live.html",
+      "objectives": [
+        "Represent categorical data graphically with bar charts or pie charts.",
+        "Label and scale graphs so the display is clear and not misleading.",
+        "Describe categorical data using frequencies or relative frequencies shown on graphs.",
+        "Compare multiple sets of categorical data using relative frequency tables and graphs.",
+        "Use graphs and tables to justify claims about data in context."
+      ]
+    },
+    "1.5": {
+      "worksheet": "u1_lesson5_live.html",
+      "objectives": [
+        "Classify quantitative variables as discrete or continuous.",
+        "Distinguish between counted quantities and measured quantities.",
+        "Represent quantitative data with dotplots, stem-and-leaf plots, and histograms.",
+        "Describe the advantages and disadvantages of common graphs for quantitative data.",
+        "Explain how changing histogram interval widths can change the display."
+      ]
+    },
+    "1.6": {
+      "worksheet": "u1_lesson6_live.html",
+      "objectives": [
+        "Describe a quantitative distribution using shape, center, variability, and unusual features.",
+        "Use shape vocabulary such as symmetric, skewed left, skewed right, unimodal, bimodal, and uniform.",
+        "Identify outliers, gaps, and clusters in a quantitative distribution.",
+        "Describe a distribution in context rather than using disconnected graph vocabulary."
+      ]
+    },
+    "1.7": {
+      "worksheet": "u1_lesson7_live.html",
+      "objectives": [
+        "Calculate and interpret mean and median as measures of center for quantitative data.",
+        "Find and interpret Q1, Q3, range, IQR, and standard deviation for a quantitative distribution.",
+        "Use the 1.5 IQR rule and the 2 standard deviation rule to identify possible outliers.",
+        "Choose appropriate summary statistics based on skewness, symmetry, and resistance to outliers."
+      ]
+    },
+    "1.8": {
+      "worksheet": "u1_lesson8_live.html",
+      "objectives": [
+        "Use the five-number summary to represent quantitative data graphically.",
+        "Identify and interpret the parts of a box plot, including the box, median line, whiskers, and outlier symbols.",
+        "Describe what a box plot shows about quartiles, the middle 50% of the data, and possible outliers.",
+        "Explain how the shape of a distribution affects the relationship between the mean and the median."
+      ]
+    },
+    "1.9": {
+      "worksheet": "u1_lesson9_live.html",
+      "objectives": [
+        "Compare graphical representations for multiple sets of quantitative data.",
+        "Compare distributions using shape, center, variability, and unusual features.",
+        "Write complete comparison responses that use comparative words and context.",
+        "Use summary statistics such as median, range, and IQR to compare independent samples."
+      ]
+    },
+    "1.10": {
+      "worksheet": "u1_lesson10_live.html",
+      "objectives": [
+        "Use percentiles to describe the relative position of a value in a quantitative data set.",
+        "Calculate and interpret standardized scores, especially z-scores.",
+        "Describe a normal distribution and apply the empirical rule.",
+        "Use z-scores and Table A to estimate proportions and cutoff values for a normal distribution."
+      ]
+    },
+    "2.1": {
+      "worksheet": "u2_lesson1_live.html",
+      "objectives": [
+        "Identify questions to be answered about possible relationships in data.",
+        "Distinguish between categorical variables and quantitative variables in two-variable settings.",
+        "Choose appropriate graphical displays for two categorical variables and for two quantitative variables.",
+        "Recognize the numerical summaries introduced for comparing two categorical variables and two quantitative variables.",
+        "Describe how apparent patterns and associations may or may not indicate a real relationship.",
+        "Use context to explain what kind of relationship a graph or table might suggest."
+      ]
+    },
+    "2.2": {
+      "worksheet": "u2_lesson2_live.html",
+      "objectives": [
+        "Use a two-way table to summarize two categorical variables.",
+        "Calculate relative frequencies within groups so distributions can be compared fairly.",
+        "Construct side-by-side bar graphs, segmented bar graphs, and mosaic plots from two-way table data.",
+        "Use graphical displays to compare distributions of one categorical variable across categories of another categorical variable.",
+        "Decide whether two categorical variables are associated by comparing distributions across groups.",
+        "Recognize that a mosaic plot adds information about group size that a segmented bar graph does not show."
+      ]
+    },
+    "2.3": {
+      "worksheet": "u2_lesson3_live.html",
+      "objectives": [
+        "Calculate joint, marginal, and conditional relative frequencies from a two-way table.",
+        "Use row totals, column totals, and the table total to choose the correct denominator for a percent.",
+        "Compare distributions of a categorical variable across groups using conditional relative frequencies.",
+        "Use summary statistics for two categorical variables to decide whether the variables are associated.",
+        "Connect the conditional relative frequencies in a table to the segmented bar graph from the previous lesson."
+      ]
+    },
+    "2.4": {
+      "worksheet": "u2_lesson4_live.html",
+      "objectives": [
+        "Identify explanatory and response variables in bivariate quantitative data.",
+        "Represent two quantitative variables with a scatterplot.",
+        "Decide when a scatterplot is the appropriate display for bivariate data.",
+        "Describe a scatterplot using direction, form, strength, and unusual features.",
+        "Write a contextual description of the relationship shown in a scatterplot."
+      ]
+    },
+    "2.5": {
+      "worksheet": "u2_lesson5_live.html",
+      "objectives": [
+        "Determine the correlation, r, for a linear relationship between two quantitative variables.",
+        "Interpret the sign and magnitude of correlation in context.",
+        "Explain that correlation is unit-free and always between -1 and 1, inclusive.",
+        "Recognize that technology is commonly used to calculate correlation.",
+        "Explain the limits of correlation, including that correlation does not imply causation."
+      ]
+    },
+    "2.6": {
+      "worksheet": "u2_lesson6_live.html",
+      "objectives": [
+        "Construct and read a simple linear regression model written in the form ŷ = a + bx.",
+        "Calculate a predicted response value using a linear regression model.",
+        "Interpret the roles of the slope, y-intercept, explanatory variable, and predicted response in context.",
+        "Explain that regression output gives predicted values, not exact observed values.",
+        "Determine when a prediction is extrapolation and judge whether that prediction is reliable."
+      ]
+    },
+    "2.7": {
+      "worksheet": "u2_lesson7_live.html",
+      "objectives": [
+        "Calculate a residual using the difference between an actual response and a predicted response.",
+        "Interpret residuals in context and use their signs to describe underprediction and overprediction.",
+        "Construct and read residual plots.",
+        "Describe what residual plots reveal about whether a linear model is appropriate.",
+        "Use apparent randomness or visible patterns in residual plots to judge model fit."
+      ]
+    },
+    "2.8": {
+      "worksheet": "u2_lesson8_live.html",
+      "objectives": [
+        "Describe how the least squares regression line is chosen by minimizing the sum of squared residuals.",
+        "Use key LSRL properties, including the mean point and the slope formula.",
+        "Interpret the slope and y-intercept of a regression line in context.",
+        "Decide whether a y-intercept is meaningful in a real-world setting.",
+        "Interpret r squared and identify regression information from computer output."
+      ]
+    },
+    "2.9": {
+      "worksheet": "u2_lesson9_live.html",
+      "objectives": [
+        "Identify outliers, high leverage points, and influential points in regression.",
+        "Describe how removing different influential points can change the slope, y-intercept, correlation, and r squared of a model.",
+        "Recognize when bivariate data show a nonlinear form that is not well modeled by a straight line.",
+        "Explain how transformations, especially log transformations, can make data more linear.",
+        "Use residual plots and r squared to judge whether a transformed linear model is more appropriate."
+      ]
+    },
+    "3.1": {
+      "worksheet": "u3_lesson1_live.html",
+      "objectives": [
+        "Identify questions to ask about how data were collected.",
+        "Explain how the way a sample is collected affects how we analyze the data.",
+        "Recognize when a sample may not be representative of the whole population.",
+        "Use the Wald airplane example to explain why missing cases can change a conclusion.",
+        "Describe why data collection methods that do not rely on chance can lead to untrustworthy conclusions."
+      ]
+    },
+    "3.2": {
+      "worksheet": "u3_lesson2_live.html",
+      "objectives": [
+        "Distinguish between a population and a sample.",
+        "Identify whether a study is observational or experimental.",
+        "Describe when it is appropriate to generalize from a sample to a population.",
+        "Explain why observational studies cannot establish cause-and-effect relationships.",
+        "Recognize the roles of retrospective studies, prospective studies, and imposed treatments."
+      ]
+    },
+    "3.3": {
+      "worksheet": "u3_lesson3_live.html",
+      "objectives": [
+        "Identify a census and several common random sampling methods.",
+        "Describe how to select a simple random sample.",
+        "Distinguish between simple random, cluster, stratified, and systematic sampling.",
+        "Explain why a sampling method is or is not appropriate for a given situation.",
+        "Compare practical advantages and disadvantages of common random sampling methods."
+      ]
+    },
+    "3.4": {
+      "worksheet": "u3_lesson4_live.html",
+      "objectives": [
+        "Identify potential sources of bias in sampling methods.",
+        "Recognize undercoverage, nonresponse, and volunteer response bias.",
+        "Describe how bias can lead to an overestimate or underestimate.",
+        "Recognize question wording bias and self-reported response bias in surveys.",
+        "Write a complete AP-style explanation of bias using the population, sample, and direction of the bias."
+      ]
+    },
+    "3.5": {
+      "worksheet": "u3_lesson5_live.html",
+      "objectives": [
+        "Identify the components of an experiment, including experimental units, treatments, factors, and response variables.",
+        "Explain why observational studies cannot establish causation when confounding variables may be present.",
+        "Describe the four elements of a well-designed experiment: comparison, random assignment, replication, and control.",
+        "Compare completely randomized designs, randomized block designs, and matched pairs designs.",
+        "Explain the roles of control groups, placebos, and blinding in experiments."
+      ]
+    },
+    "3.6": {
+      "worksheet": "u3_lesson6-7_live.html",
+      "objectives": [
+        "Explain why a particular experimental design is appropriate.",
+        "Interpret the results of a well-designed experiment."
+      ]
+    },
+    "3.7": {
+      "worksheet": "u3_lesson6-7_live.html",
+      "objectives": [
+        "Explain why a particular experimental design is appropriate.",
+        "Interpret the results of a well-designed experiment."
+      ]
+    },
+    "4.1": {
+      "worksheet": "u4_lesson1-2_live.html",
+      "objectives": [
+        "Identify questions suggested by patterns in data.",
+        "Estimate probabilities using simulation."
+      ]
+    },
+    "4.2": {
+      "worksheet": "u4_lesson1-2_live.html",
+      "objectives": [
+        "Identify questions suggested by patterns in data.",
+        "Estimate probabilities using simulation."
+      ]
+    },
+    "4.3": {
+      "worksheet": "u4_lesson3-4-5_live.html",
+      "objectives": [
+        "Calculate probabilities for events and their complements.",
+        "Interpret probabilities for events.",
+        "Explain why two events are (or are not) mutually exclusive.",
+        "Calculate conditional probabilities."
+      ]
+    },
+    "4.4": {
+      "worksheet": "u4_lesson3-4-5_live.html",
+      "objectives": [
+        "Calculate probabilities for events and their complements.",
+        "Interpret probabilities for events.",
+        "Explain why two events are (or are not) mutually exclusive.",
+        "Calculate conditional probabilities."
+      ]
+    },
+    "4.5": {
+      "worksheet": "u4_lesson3-4-5_live.html",
+      "objectives": [
+        "Calculate probabilities for events and their complements.",
+        "Interpret probabilities for events.",
+        "Explain why two events are (or are not) mutually exclusive.",
+        "Calculate conditional probabilities."
+      ]
+    },
+    "4.6": {
+      "worksheet": "u4_lesson6_live.html",
+      "objectives": [
+        "Calculate probabilities for independent events and for the union of two events."
+      ]
+    },
+    "4.7": {
+      "worksheet": "u4_lesson7-8_live.html",
+      "objectives": [
+        "Represent the probability distribution for a discrete random variable.",
+        "Interpret a probability distribution.",
+        "Calculate parameters for a discrete random variable.",
+        "Interpret parameters for a discrete random variable."
+      ]
+    },
+    "4.8": {
+      "worksheet": "u4_lesson7-8_live.html",
+      "objectives": [
+        "Represent the probability distribution for a discrete random variable.",
+        "Interpret a probability distribution.",
+        "Calculate parameters for a discrete random variable.",
+        "Interpret parameters for a discrete random variable."
+      ]
+    },
+    "4.9": {
+      "worksheet": "u4_lesson9_live.html",
+      "objectives": [
+        "Calculate parameters for linear combinations of random variables.",
+        "Describe the effects of linear transformations on parameters of random variables."
+      ]
+    },
+    "4.10": {
+      "worksheet": "u4_lesson10-12_live.html",
+      "objectives": [
+        "Estimate probabilities of binomial random variables using simulation.",
+        "Calculate probabilities for a binomial distribution.",
+        "Calculate parameters for a binomial distribution.",
+        "Interpret probabilities and parameters for a binomial distribution.",
+        "Calculate probabilities for geometric random variables.",
+        "Calculate parameters of a geometric distribution.",
+        "Interpret probabilities and parameters for a geometric distribution."
+      ]
+    },
+    "4.11": {
+      "worksheet": "u4_lesson10-12_live.html",
+      "objectives": [
+        "Estimate probabilities of binomial random variables using simulation.",
+        "Calculate probabilities for a binomial distribution.",
+        "Calculate parameters for a binomial distribution.",
+        "Interpret probabilities and parameters for a binomial distribution.",
+        "Calculate probabilities for geometric random variables.",
+        "Calculate parameters of a geometric distribution.",
+        "Interpret probabilities and parameters for a geometric distribution."
+      ]
+    },
+    "4.12": {
+      "worksheet": "u4_lesson10-12_live.html",
+      "objectives": [
+        "Estimate probabilities of binomial random variables using simulation.",
+        "Calculate probabilities for a binomial distribution.",
+        "Calculate parameters for a binomial distribution.",
+        "Interpret probabilities and parameters for a binomial distribution.",
+        "Calculate probabilities for geometric random variables.",
+        "Calculate parameters of a geometric distribution.",
+        "Interpret probabilities and parameters for a geometric distribution."
+      ]
+    },
+    "5.1": {
+      "worksheet": "u5_lesson1-2_live.html",
+      "objectives": [
+        "Identify questions suggested by variation in statistics for samples collected from the same population.",
+        "Calculate the probability that a particular value lies in a given interval of a normal distribution.",
+        "Determine the interval associated with a given area in a normal distribution.",
+        "Determine the appropriateness of using the normal distribution to approximate probabilities."
+      ]
+    },
+    "5.2": {
+      "worksheet": "u5_lesson1-2_live.html",
+      "objectives": [
+        "Identify questions suggested by variation in statistics for samples collected from the same population.",
+        "Calculate the probability that a particular value lies in a given interval of a normal distribution.",
+        "Determine the interval associated with a given area in a normal distribution.",
+        "Determine the appropriateness of using the normal distribution to approximate probabilities."
+      ]
+    },
+    "5.3": {
+      "worksheet": "u5_lesson3_live.html",
+      "objectives": [
+        "Estimate sampling distributions using simulation."
+      ]
+    },
+    "5.4": {
+      "worksheet": "u5_lesson4_live.html",
+      "objectives": [
+        "Explain why an estimator is or is not unbiased.",
+        "Calculate estimates for a population parameter."
+      ]
+    },
+    "5.5": {
+      "worksheet": "u5_lesson5_live.html",
+      "objectives": [
+        "Determine parameters of a sampling distribution for sample proportions.",
+        "Determine whether a sampling distribution for a sample proportion is approximately normal.",
+        "Interpret probabilities and parameters for a sampling distribution for a sample proportion."
+      ]
+    },
+    "5.6": {
+      "worksheet": "u5_lesson6_live.html",
+      "objectives": [
+        "Determine parameters of a sampling distribution for a difference in sample proportions.",
+        "Determine whether a sampling distribution for a difference of sample proportions can be described as approximately normal.",
+        "Interpret probabilities and parameters for a sampling distribution for a difference in proportions."
+      ]
+    },
+    "5.7": {
+      "worksheet": "u5_lesson7_live.html",
+      "objectives": [
+        "Determine parameters for a sampling distribution for sample means.",
+        "Determine whether a sampling distribution of a sample mean can be described as approximately normal.",
+        "Interpret probabilities and parameters for a sampling distribution for a sample mean."
+      ]
+    },
+    "5.8": {
+      "worksheet": "u5_lesson8_live.html",
+      "objectives": [
+        "Determine parameters of a sampling distribution for a difference in sample means.",
+        "Determine whether a sampling distribution of a difference in sample means can be described as approximately normal.",
+        "Interpret probabilities and parameters for a sampling distribution for a difference in sample means."
+      ]
+    },
+    "6.1": {
+      "worksheet": "u6_lesson1-2_live.html",
+      "objectives": [
+        "Identify questions suggested by variation in the shapes of distributions of samples taken from the same population.",
+        "Identify an appropriate confidence interval procedure for a population proportion.",
+        "Verify the conditions for calculating confidence intervals for a population proportion.",
+        "Determine the margin of error and the minimum sample size for a given margin of error.",
+        "Calculate an appropriate confidence interval for a population proportion.",
+        "Calculate an interval estimate based on a confidence interval for a population proportion."
+      ]
+    },
+    "6.2": {
+      "worksheet": "u6_lesson1-2_live.html",
+      "objectives": [
+        "Identify questions suggested by variation in the shapes of distributions of samples taken from the same population.",
+        "Identify an appropriate confidence interval procedure for a population proportion.",
+        "Verify the conditions for calculating confidence intervals for a population proportion.",
+        "Determine the margin of error and the minimum sample size for a given margin of error.",
+        "Calculate an appropriate confidence interval for a population proportion.",
+        "Calculate an interval estimate based on a confidence interval for a population proportion."
+      ]
+    },
+    "6.3": {
+      "worksheet": "u6_lesson3_live.html",
+      "objectives": [
+        "Interpret a confidence interval for a population proportion.",
+        "Justify a claim based on a confidence interval for a population proportion.",
+        "Identify the relationships between sample size, width of a confidence interval, confidence level, and margin of error."
+      ]
+    },
+    "6.4": {
+      "worksheet": "u6_lesson4_live.html",
+      "objectives": [
+        "Identify the null and alternative hypotheses for a population proportion.",
+        "Identify an appropriate testing method for a population proportion.",
+        "Verify the conditions for making statistical inferences when testing a population proportion."
+      ]
+    },
+    "6.5": {
+      "worksheet": "u6_lesson5_live.html",
+      "objectives": [
+        "Calculate a test statistic for a test about a population proportion.",
+        "Calculate a p-value for a test about a population proportion.",
+        "Interpret the p-value of a significance test for a population proportion."
+      ]
+    },
+    "6.6": {
+      "worksheet": "u6_lesson6_live.html",
+      "objectives": [
+        "Make an appropriate conclusion for a significance test for a population proportion."
+      ]
+    },
+    "6.7": {
+      "worksheet": "u6_lesson7_live.html",
+      "objectives": [
+        "Identify and interpret Type I and Type II errors in context.",
+        "Explain power and describe factors that affect the probabilities of errors in significance testing."
+      ]
+    },
+    "6.8": {
+      "worksheet": "u6_lesson8_live.html",
+      "objectives": [
+        "Identify the appropriate confidence interval procedure for comparing two population proportions.",
+        "Verify independence, the 10% condition when appropriate, and the large counts condition for a two-sample z-interval.",
+        "UNC-4.K / UNC-4.L: Calculate and interpret a confidence interval for the difference between two population proportions."
+      ]
+    },
+    "6.9": {
+      "worksheet": "u6_lesson9_live.html",
+      "objectives": [
+        "Interpret a confidence interval for a difference of population proportions.",
+        "Justify a claim based on a confidence interval for a difference of population proportions."
+      ]
+    },
+    "6.10": {
+      "worksheet": "u6_lesson10_live.html",
+      "objectives": [
+        "Identify null and alternative hypotheses for a difference of two population proportions.",
+        "Identify an appropriate significance test for a difference of two population proportions.",
+        "Verify conditions for making inferences when testing a difference of two population proportions."
+      ]
+    },
+    "6.11": {
+      "worksheet": "u6_lesson11_live.html",
+      "objectives": [
+        "Calculate an appropriate test statistic for the difference of two population proportions.",
+        "Interpret the p-value of a significance test for a difference of two population proportions.",
+        "Justify a claim about populations using a decision from a significance test."
+      ]
+    },
+    "7.1": {
+      "worksheet": "u7_lesson1_live.html",
+      "objectives": [
+        "Identify the evidence in a study comparing two group means.",
+        "Describe the two possible explanations for an observed difference in sample means.",
+        "Use a rerandomization simulation to estimate how likely an observed result is by chance alone.",
+        "Decide whether the data provide convincing evidence for a claim about a difference in means."
+      ]
+    },
+    "7.2": {
+      "worksheet": "u7_lesson2_live.html",
+      "objectives": [
+        "Identify the correct confidence interval procedure for estimating a population mean.",
+        "Verify the randomization, 10% condition, and shape condition for a one-sample t-interval.",
+        "Calculate margin of error using a t critical value and the standard error s/&radic;n.",
+        "Construct and interpret a confidence interval for μ in context."
+      ]
+    },
+    "7.3": {
+      "worksheet": "u7_lesson3_live.html",
+      "objectives": [
+        "Interpret a confidence interval for a population mean in context.",
+        "Use a confidence interval to justify whether a claim about a population mean is plausible.",
+        "Interpret the confidence level of a confidence interval using repeated random samples.",
+        "Describe how sample size and confidence level affect margin of error for a one-sample t-interval.",
+        "Carry out the full process for constructing and interpreting a confidence interval for μ."
+      ]
+    },
+    "7.4": {
+      "worksheet": "u7_lesson4_live.html",
+      "objectives": [
+        "State the null hypothesis for a significance test about a population mean.",
+        "State the alternative hypothesis that matches the question of interest.",
+        "Distinguish between one-sided and two-sided alternatives for tests about μ.",
+        "Identify a one-sample t-test as the correct procedure for testing a single population mean.",
+        "Check the randomization, 10%, and Nearly Normal conditions for a significance test for a population mean."
+      ]
+    },
+    "7.5": {
+      "worksheet": "u7_lesson5_live.html",
+      "objectives": [
+        "Calculate the standardized test statistic for a one-sample t-test about a population mean.",
+        "Use degrees of freedom and the t-distribution to find or approximate a p-value.",
+        "Match the direction of the alternative hypothesis to the correct tail area for the p-value.",
+        "Interpret a p-value in context by assuming the null hypothesis is true.",
+        "Compare a p-value to a significance level to reject or fail to reject H0 and state a conclusion in context.",
+        "Carry out a complete significance test for a mean difference in a matched-pairs setting by analyzing the differences."
+      ]
+    },
+    "7.6": {
+      "worksheet": "u7_lesson6_live.html",
+      "objectives": [
+        "Identify when a 2-sample t-interval is an appropriate confidence interval procedure for comparing two population means.",
+        "Verify the independence, 10% condition, and normality or large-sample conditions for a confidence interval for μ1 − μ2.",
+        "Use the general confidence interval structure statistic ± (critical value)(standard error of statistic).",
+        "Calculate the point estimate, margin of error, and confidence interval for a difference in population means.",
+        "Use technology to find the degrees of freedom and construct a 2-SampTInt with pooled set to no.",
+        "Interpret a confidence interval for a difference in means in context and connect the sign of the interval to which group tends to be larger."
+      ]
+    },
+    "7.7": {
+      "worksheet": "u7_lesson7_live.html",
+      "objectives": [
+        "Interpret a confidence interval for the difference of two population means using correct parameter language and context.",
+        "Include the direction of subtraction when describing a confidence interval for μ1 − μ2.",
+        "Distinguish valid confidence-interval interpretations from incorrect statements about samples or probability.",
+        "Justify a claim about whether two population means differ by deciding whether 0 is a plausible value.",
+        "Use the sign of a confidence interval to explain which group tends to have the larger mean.",
+        "Communicate a full AP-style solution by defining parameters, naming the 2-sample t-interval, checking conditions, and stating a contextual conclusion."
+      ]
+    },
+    "7.8": {
+      "worksheet": "u7_lesson8_live.html",
+      "objectives": [
+        "State a null hypothesis for a test about the difference of two population means.",
+        "State an alternative hypothesis for a test about the difference of two population means.",
+        "Explain the null hypothesis as a statement of no treatment effect, no difference, or no change.",
+        "Distinguish between one-sided and two-sided alternative hypotheses based on the context of the claim.",
+        "Keep the order of subtraction consistent and explain how reversing the order changes a one-sided inequality.",
+        "Write hypotheses using population parameters, not sample statistics, and define any subscripts used."
+      ]
+    },
+    "7.9": {
+      "worksheet": "u7_lesson9_live.html",
+      "objectives": [
+        "Check whether the conditions for a test about the difference of two population means are satisfied.",
+        "Compute the test statistic for a two-sample t test using sample statistics.",
+        "Interpret the sign and magnitude of a test statistic in context.",
+        "Find and interpret a P-value for a test about the difference of two means.",
+        "Use the P-value to decide whether to reject or fail to reject the null hypothesis.",
+        "Write a conclusion in context and explain why failing to reject H0 does not prove the means are equal."
+      ]
+    },
+    "8.1": {
+      "worksheet": "u8_lesson1_live.html",
+      "objectives": [
+        "Determine whether observed counts in categorical data are consistent with expected counts due to random variation.",
+        "Compute expected counts from a null model for a one-way table.",
+        "Explain why the chi-square statistic uses squared differences divided by expected counts.",
+        "Use simulation to judge whether an observed chi-square value is surprising.",
+        "Interpret a large P-value in context for a goodness-of-fit situation."
+      ]
+    },
+    "8.2": {
+      "worksheet": "u8_lesson2_live.html",
+      "objectives": [
+        "Explain what the chi-square statistic measures for a distribution of categorical counts.",
+        "Describe how degrees of freedom affect the shape of chi-square distributions.",
+        "State the null hypothesis for a chi-square goodness-of-fit test using specified proportions.",
+        "State the alternative hypothesis for a chi-square goodness-of-fit test in words.",
+        "Identify when a chi-square goodness-of-fit test is appropriate and verify its conditions."
+      ]
+    },
+    "8.3": {
+      "worksheet": "u8_lesson3_live.html",
+      "objectives": [
+        "Calculate the chi-square test statistic from observed and expected counts for a goodness-of-fit test.",
+        "Use technology or a chi-square table to find or estimate the p-value for a chi-square goodness-of-fit test.",
+        "Interpret the p-value in context for a chi-square goodness-of-fit test.",
+        "Compare the p-value to a significance level and state the correct decision and conclusion.",
+        "Carry out a complete chi-square goodness-of-fit test and use contributions to identify the largest discrepancy."
+      ]
+    },
+    "8.4": {
+      "worksheet": "u8_lesson4_live.html",
+      "objectives": [
+        "Calculate expected counts in a two-way table using row totals, column totals, and the table total.",
+        "Explain that expected counts in a two-way table are based on the assumption of no relationship between the variables.",
+        "Use the expected-count formula for specific cells in a two-way table.",
+        "Use row totals, column totals, and subtraction to find remaining expected counts efficiently.",
+        "Distinguish observed counts, expected counts, and total cells in a two-way table."
+      ]
+    },
+    "8.5": {
+      "worksheet": "u8_lesson5_live.html",
+      "objectives": [
+        "Identify whether a two-way table calls for a chi-square test for homogeneity or a chi-square test for independence.",
+        "Explain how the study goal and the data-collection method determine the correct chi-square procedure.",
+        "State null and alternative hypotheses for a chi-square test for homogeneity.",
+        "State null and alternative hypotheses for a chi-square test for independence.",
+        "Verify the three conditions for performing a chi-square test for homogeneity or independence.",
+        "Distinguish expected counts from observed counts when checking the chi-square conditions."
+      ]
+    },
+    "8.6": {
+      "worksheet": "u8_lesson6_live.html",
+      "objectives": [
+        "Calculate the chi-square test statistic for a chi-square test for homogeneity or independence.",
+        "Calculate degrees of freedom and determine a p-value for a chi-square test for homogeneity or independence.",
+        "Use Table C and chi-squared CDF technology to estimate or calculate p-values.",
+        "Interpret the p-value in context for a chi-square test for homogeneity or independence.",
+        "State an appropriate conclusion by comparing the p-value to the significance level.",
+        "Perform a complete chi-square significance test, including hypotheses, conditions, test statistic, p-value, and conclusion."
+      ]
+    },
+    "9.1": {
+      "worksheet": "u9_lesson1_live.html",
+      "objectives": [
+        "Describe the inferential question behind comparing a sample regression slope to a population regression model.",
+        "Explain why sample regression line slopes vary from sample to sample because of random variation.",
+        "Use repeated random samples to build a simulated sampling distribution of slope values.",
+        "Estimate how likely an observed sample slope would be if a population regression model were still valid.",
+        "Use an estimated probability to decide whether a population regression model is believable in context."
+      ]
+    },
+    "9.2": {
+      "worksheet": "u9_lesson2_live.html",
+      "objectives": [
+        "Identify the conditions the population regression model must satisfy for valid confidence intervals and significance tests for slope.",
+        "Describe the shape, center, and variability of the sampling distribution of the slope when those conditions are met.",
+        "Use sample graphs and data-collection details to check whether inference about slope is appropriate.",
+        "Explain why a t-interval is used for the slope and how sample statistics estimate unknown population quantities.",
+        "Calculate a confidence interval for the slope of a population regression line and describe what affects its width."
+      ]
+    },
+    "9.3": {
+      "worksheet": "u9_lesson3_live.html",
+      "objectives": [
+        "Interpret a confidence interval for the slope of a population regression line in context.",
+        "Interpret the meaning of a confidence level for slope using repeated random sampling.",
+        "Use a confidence interval to decide whether data provide convincing evidence for a claim about slope.",
+        "Determine how including or excluding a claimed slope value affects the conclusion of an inference.",
+        "Construct, calculate, and interpret a confidence interval for slope from regression output and use it to evaluate a real claim."
+      ]
+    },
+    "9.4": {
+      "worksheet": "u9_lesson4_live.html",
+      "objectives": [
+        "State the null hypothesis for a significance test about the slope of a population regression line.",
+        "State the alternative hypothesis for positive, negative, or general linear relationships.",
+        "Define the parameter beta in context and avoid using sample statistics in hypotheses.",
+        "Identify the correct significance test procedure for a claim about slope.",
+        "Verify the conditions required for a significance test about the slope of a regression model.",
+        "Use study design details, scatterplots, residual plots, and residual distributions to justify inference."
+      ]
+    },
+    "9.5": {
+      "worksheet": "u9_lesson5_live.html",
+      "objectives": [
+        "Calculate the standardized test statistic for a significance test about the slope of a population regression line.",
+        "Use the correct degrees of freedom and the correct tail or tails to find a p-value for a test about slope.",
+        "Recognize when computer output gives a two-sided p-value and adjust for a one-sided test when needed.",
+        "Interpret a p-value in context for a significance test about slope.",
+        "Compare the p-value to α to decide whether to reject H0 or fail to reject H0.",
+        "Write a full conclusion in context for a significance test about a slope.",
+        "Carry out a complete significance test about the slope of a regression model from start to finish."
+      ]
+    }
+  }
+}

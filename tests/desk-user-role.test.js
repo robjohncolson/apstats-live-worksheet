@@ -221,8 +221,13 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     // the tool actions live in the _TEACHER_TOOLS array. Roster Console is included
     // (it's teacher-secret-gated at runtime, so the role-gated menu adds no surface)
     // — the teacher needs it to enroll students.
-    expect(DESK).toMatch(/window\.open\s*\(\s*['"]teacher-roster-console\.html['"]/);
-    expect(DESK).toMatch(/window\.open\s*\(\s*['"]teacher-dashboard\.html['"]/);
-    expect(DESK).toMatch(/window\.open\s*\(\s*['"]teacher-code-generator\.html['"]/);
+    // 2026-09-10 (b023ff9e): the launcher embeds teacher-dashboard.html in
+    // workspace mode; the Roster Console is a tool button inside that workspace
+    // (teacher-workspace.js), and the code generator stays on the landing page.
+    expect(DESK).toMatch(/frame\.src\s*=\s*'teacher-dashboard\.html\?workspace=1/);
+    const workspace = readFileSync(resolve(__dirname, '..', 'teacher-workspace.js'), 'utf8');
+    expect(workspace).toMatch(/openTool\(\s*'teacher-roster-console\.html'/);
+    const landing = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
+    expect(landing).toContain('href="teacher-code-generator.html"');
   });
 });
