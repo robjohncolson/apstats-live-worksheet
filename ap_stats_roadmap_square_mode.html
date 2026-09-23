@@ -15283,6 +15283,7 @@ function closeMyReceipts() {
 // so the balance is monotonic (only ever rises) and can't be farmed by redoing
 // the same item. Rewards DOING work; correctness lives in the Grade number.
 function _walletComputePoints(receipts) {
+    receipts = (receipts || []).filter(function (r) { return r.src !== 'bonus' && r.src !== 'bonus_applied'; });
     return (window.WalletLogic && WalletLogic.computePoints)
         ? WalletLogic.computePoints(receipts)
         : { total: 0, today: 0 };
@@ -16982,6 +16983,70 @@ function _dogeWalletPreviewFallback(box, pts, notProvisioned) {
     });
 }
 
+function _walletBonusResponse(r) {
+    try { return typeof r.response === 'string' ? (JSON.parse(r.response) || {}) : (r.response || {}); }
+    catch (_) { return {}; }
+}
+
+function _walletBonusBlock(receipts) {
+    var quarter = typeof quarterOfDate === 'function' ? 'Q' + quarterOfDate(new Date()) : _walletCurrentQuarter().quarter;
+    var sheets = new Map();
+    var applied = null;
+    (receipts || []).forEach(function (r) {
+        var item = r.i || r.itemId || r.item || '';
+        if (r.src === 'bonus_applied' && item === 'BONUS-APPLIED-' + quarter) applied = r;
+        if (r.src !== 'bonus') return;
+        var data = _walletBonusResponse(r);
+        if (data.quarter && data.quarter !== quarter) return;
+        sheets.set(item, { row: r, data: data });
+    });
+    if (!sheets.size && !applied) return null;
+    var block = document.createElement('div');
+    block.className = 'wallet-bonus-block geneva';
+    block.style.cssText = 'border:1px solid var(--black);background:#fff;'
+        + 'box-shadow:inset 1px 1px 0 0 #fff,inset -1px -1px 0 0 #888,2px 2px 0 0 var(--black);'
+        + 'border-radius:3px;padding:12px 14px;margin-bottom:12px;font-size:11px';
+    var header = document.createElement('div');
+    header.className = 'chicago';
+    header.textContent = 'Bonus banked';
+    block.appendChild(header);
+    sheets.forEach(function (sheet, item) {
+        var points = Number(sheet.row.sc);
+        var line = document.createElement('div');
+        line.textContent = (sheet.data.title || item.replace(/^BONUS-/, '')) + ' — '
+            + (sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[points] || '—') + ' (+' + points + ')';
+        block.appendChild(line);
+    });
+    var footer = document.createElement('div');
+    footer.style.marginTop = '6px';
+    var audit = applied ? _walletBonusResponse(applied) : {};
+    footer.textContent = applied ? 'Bonus applied — quarter grade '
+        + (audit.adjustedGrade != null ? audit.adjustedGrade : applied.sc) : 'Applied at the end of the quarter.';
+    block.appendChild(footer);
+    return block;
+}
+
+// Bonus ledger entries need no signed receipt; fetchReceipts omits unsigned rows.
+async function _walletFetchBonusReceipts() {
+    try {
+        var client = window.rosterClient;
+        var base = window.ROSTER_SERVICE_URL;
+        if (!client || !base || !client.token() || !client.studentId()) return [];
+        // View-as: read the VIEWED student's bank with the teacher's own token (the
+        // route allows a verified teacher to read any student). Review finding 2026-09-23.
+        var viewAs = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+        var sid = (viewAs && typeof viewAs.studentId === 'string') ? viewAs.studentId : client.studentId();
+        var res = await fetch(base + '/ledger/student/' + encodeURIComponent(sid) + '?prefix=BONUS-', {
+            headers: { Authorization: 'Bearer ' + client.token() }
+        });
+        if (!res.ok) return [];
+        var data = await res.json();
+        if (!data.ok || !Array.isArray(data.rows)) return [];
+        return data.rows.filter(function (r) { return r.source === 'bonus' || r.source === 'bonus_applied'; })
+            .map(function (r) { return { src: r.source, i: r.item_id, sc: Number(r.score), response: r.response }; });
+    } catch (_) { return []; }
+}
+
 function _walletPaint(host, receipts, loading) {
     if (!host) return;
     if (typeof _clearStudentWalletCeremony === 'function') _clearStudentWalletCeremony();
@@ -17146,6 +17211,10 @@ function _walletPaint(host, receipts, loading) {
     // "Verify / QR this session" row.)
     card.appendChild(exportRow);
     host.appendChild(card);
+
+    var bonus = _walletBonusBlock(receipts);
+    if (bonus) host.appendChild(bonus);
+    receipts = receipts.filter(function (r) { return r.src !== 'bonus' && r.src !== 'bonus_applied'; });
 
     var legend = document.createElement('div');
     legend.className = 'geneva';
@@ -17380,7 +17449,8 @@ async function renderWallet() {
     _walletPaint(host, _readDeskReceipts(), true);
     _walletPrependZeroCard(host);
     try {
-        var merged = await _walletLoadReceipts();
+        var loaded = await Promise.all([_walletLoadReceipts(), _walletFetchBonusReceipts()]);
+        var merged = loaded[0].concat(loaded[1]);
         var ov = document.getElementById('app-wallet-overlay');
         if (ov && ov.style.display !== 'none') { _walletPaint(host, merged, false); _walletPrependZeroCard(host); }
         // ANDROID Phase 2: compute the signed-ledger verification summary once, then
@@ -25344,7 +25414,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-23-dvsm';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-23-kypc';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
