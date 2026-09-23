@@ -193,19 +193,25 @@
           "date": "2026-09-02"
         },
         {
-          "id": "review-2",
+          "id": "E-Break",
+          "kind": "break",
+          "title": "Break Day",
+          "date": "2026-10-21"
+        },
+        {
+          "id": "review-3",
           "kind": "review",
           "title": "Review: Units 1-2",
           "date": "2027-03-19"
         },
         {
-          "id": "review-3",
+          "id": "review-4",
           "kind": "review",
           "title": "Review: Units 3-4",
           "date": "2027-03-22"
         },
         {
-          "id": "review-4",
+          "id": "review-5",
           "kind": "review",
           "title": "Review: Unit 5 + FRQ Practice",
           "date": "2027-03-24"
@@ -231,7 +237,9 @@
       "B": [
         "2026-09-18"
       ],
-      "E": []
+      "E": [
+        "2026-10-21"
+      ]
     },
     "slackMeetingsBeforeExam": {
       "B": 23,
@@ -258,8 +266,12 @@
         "2.2"
       ],
       [
-        "4.1",
-        "4.2"
+        "2.3",
+        "4.1"
+      ],
+      [
+        "4.2",
+        "4.3"
       ],
       [
         "4.7",
@@ -406,7 +418,7 @@
       "worksheetKey": "3",
       "periods": {
         "B": "2026-10-20",
-        "E": "2026-10-21"
+        "E": "2026-10-23"
       }
     },
     "2.4": {
@@ -550,7 +562,7 @@
       "worksheetKey": "1-2",
       "periods": {
         "B": "2026-10-23",
-        "E": "2026-10-23"
+        "E": "2026-10-26"
       },
       "combinedWith": [
         "4.1"

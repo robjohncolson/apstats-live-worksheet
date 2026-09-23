@@ -39,9 +39,14 @@ describe('B Work Day generator',()=>{
   expect(work).toEqual({t:'B-Work',n:'Work Day',u:0,kind:'work',due:'',as:''});
  });
  it('counts no pacing item on work days, never displaces events, and respects the weekly limit',()=>{
+  // The lead is measured against the E column of a run WITHOUT E's own breaks:
+  // B's Work Days are generated from that reference (an E break never moves B),
+  // so E's catch-up pairs after its SAT-Day break can briefly narrow the real gap.
+  const periodsNoE={};for(const pid in actual.def.periods){periodsNoE[pid]={...actual.def.periods[pid]};if(pid==='E')delete periodsNoE[pid].breakDays;}
+  const refE=actual.generateSchedule({...actual.def,periods:periodsNoE});
   let b=0,e=0;const weeks=new Set();
   const placed=[];
-  for(const r of S){
+  for(const [i,r] of S.entries()){
    const cell=r[3];
    if(cell?.kind==='work'){
     expect(b-e).toBeGreaterThanOrEqual(2);
@@ -51,7 +56,7 @@ describe('B Work Day generator',()=>{
     expect(weeks.has(+monday)).toBe(false);weeks.add(+monday);
    }else if(cell?.kind==='break'){expect(cell).toEqual(breakDay);}
    else if(typeof cell==='object'){placed.push(cell.t);b++;}
-   const ec=r[4];if(typeof ec==='object')e+=(ec.group||[ec]).length;
+   const ec=refE[i][4];if(typeof ec==='object')e+=(ec.group||[ec]).length;
   }
   expect(placed).toEqual(actual.def.pacing.B.map(c=>c.t));
   expect(b).toBe(actual.def.pacing.B.length);
@@ -75,7 +80,7 @@ describe('B Work Day generator',()=>{
   for(const path of ['data/lesson-schedule.json','roster-server/data/lesson-schedule.json']){
    const json=JSON.parse(readFileSync(path,'utf8'));
    expect(json.schemaVersion).toBe(2);expect(json.calendar.workDays).toEqual({B:fixture.map(r=>r[0]),E:[]});
-   expect(json.calendar.breakDays).toEqual({B:['2026-09-18'],E:[]});expect(json.lessons['B-Break']).toBeUndefined();
+   expect(json.calendar.breakDays).toEqual({B:['2026-09-18'],E:['2026-10-21']});expect(json.lessons['B-Break']).toBeUndefined();
    expect(json.progressChecks[1].mcqPartA).toEqual({B:'2026-09-21',E:'2026-09-21'});
    expect(json.lessons['B-Work']).toBeUndefined();expect(json.dayGroups.B).toEqual([]);
    expect(json.dayGroups.E).toEqual(S.filter(r=>r[4]?.group).map(r=>r[4].group.map(m=>m.t)));
@@ -141,13 +146,19 @@ describe('B Break Day (section-only, 2026-09-18)',()=>{
   expect(S.find(r=>iso(r)==='2026-09-18')[4].t).toBe('1.6'); // E unaffected that day
  });
  it('leaves the OTHER section byte-identical to a run with no break at all',()=>{
-  const periods={};for(const pid in actual.def.periods){periods[pid]={...actual.def.periods[pid]};delete periods[pid].breakDays;}
-  const noBreak=actual.generateSchedule({...actual.def,periods});
-  expect(noBreak.some(r=>r[3]?.kind==='break')).toBe(false);
-  expect(S.map(r=>[iso(r),r[4]])).toEqual(noBreak.map(r=>[iso(r),r[4]]));      // E: every cell, every day
-  const bTopics=rows=>rows.filter(r=>typeof r[3]==='object'&&r[3].kind!=='work'&&r[3].kind!=='break').map(r=>r[3].t);
-  expect(bTopics(S)).toEqual(bTopics(noBreak));                                  // B: same pacing, later dates
+  const only=keep=>{const periods={};for(const pid in actual.def.periods){periods[pid]={...actual.def.periods[pid]};if(pid!==keep)delete periods[pid].breakDays;}return actual.generateSchedule({...actual.def,periods});};
+  const noBreak=only(null),onlyB=only('B'),onlyE=only('E');
+  expect(noBreak.some(r=>r[3]?.kind==='break'||r[4]?.kind==='break')).toBe(false);
+  expect(onlyB.map(r=>[iso(r),r[4]])).toEqual(noBreak.map(r=>[iso(r),r[4]]));   // B break: E every cell, every day
+  expect(onlyE.map(r=>[iso(r),r[3]])).toEqual(noBreak.map(r=>[iso(r),r[3]]));   // E break: B every cell, every day
+  // With BOTH breaks (the live definition), each column equals its own single-break run.
+  expect(S.map(r=>[iso(r),r[3]])).toEqual(onlyB.map(r=>[iso(r),r[3]]));
+  expect(S.map(r=>[iso(r),r[4]])).toEqual(onlyE.map(r=>[iso(r),r[4]]));
+  const topics=(rows,col)=>rows.filter(r=>typeof r[col]==='object'&&r[col].kind!=='work'&&r[col].kind!=='break').flatMap(r=>(r[col].group||[r[col]]).map(m=>m.t));
+  expect(topics(S,3)).toEqual(topics(noBreak,3));                                // B: same pacing, later dates
+  expect(topics(S,4)).toEqual(topics(noBreak,4));                                // E: same pacing, later dates
   expect(S.find(r=>iso(r)==='2026-09-21')[3].t).toBe(noBreak.find(r=>iso(r)==='2026-09-18')[3].t);
+  expect(S.find(r=>iso(r)==='2026-10-21')[4]).toMatchObject({t:'E-Break',kind:'break'});   // SAT Day
  });
  it('renders as a Break Day tile that is not a lesson and opens a plain panel',()=>{
   const {dom,s}=page();try{
