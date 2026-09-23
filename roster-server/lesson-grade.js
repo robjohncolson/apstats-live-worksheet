@@ -249,6 +249,9 @@ const BLANK_ITEM_PATTERN = /^WS-U(\d+)L([\d-]+)-Q\d+$/;
 // Note: this function intentionally does NOT filter by "due date" —
 // that is applied at the quarter level in computeQuarterFromLessons.
 export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
+  // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
+  rows = (Array.isArray(rows) ? rows : [])
+    .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied');
   const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
   const bonusTopics = (opts && opts.bonusTopics instanceof Set)
     ? opts.bonusTopics

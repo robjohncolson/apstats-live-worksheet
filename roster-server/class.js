@@ -14,7 +14,7 @@ import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore, stableLedgerSort
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
 import { buildGradebook } from './gradebook-grid.js';
-import { todayInTz } from './lesson-grade.js';
+import { todayInTz, combineV3 } from './lesson-grade.js';
 import { requireTeacher } from './teacher-auth.js';
 import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
 import { backfillStudentReceipts } from './backfill.js';
@@ -168,6 +168,51 @@ function friendlyLabel(realName) {
   return parts[0] + ' ' + last.charAt(0).toUpperCase() + '.';
 }
 
+// Bonus points go to Work only. PC is never changed by bonus application.
+const BONUS_POINTS = { E: 5, P: 3, I: 1 };
+
+function closedQuarterGrade(snapshotRow, appliedRow) {
+  if (appliedRow) return { grade: Number(appliedRow.adjustedGrade), source: 'applied' };
+  return { grade: snapshotRow?.frozen_grade == null ? null : Number(snapshotRow.frozen_grade), source: 'frozen' };
+}
+
+function bankedBonus(rows, quarter, snapshot) {
+  const bonus = { points: 0, sheets: [], applied: null };
+  for (const row of rows) {
+    if (row.source !== 'bonus' && row.source !== 'bonus_applied') continue;
+    let detail;
+    try { detail = JSON.parse(row.response); } catch { detail = {}; }
+    if (row.source === 'bonus_applied' && row.item_id === `BONUS-APPLIED-${quarter}`) {
+      bonus.applied = { adjustedGrade: Number(row.score), appliedAt: detail?.appliedAt || null };
+      if (snapshot && snapshot.frozen_at !== detail?.frozenAt) bonus.applied.stale = true;
+    }
+    if (row.source !== 'bonus' || detail?.quarter !== quarter) continue;
+    const points = Number(row.score);
+    if (![1, 3, 5].includes(points)) continue;
+    bonus.points += points;
+    bonus.sheets.push({ itemId: row.item_id, title: detail.title, grade: detail.grade, points });
+  }
+  return bonus;
+}
+
+function bonusAudit(roster, frozen, bonus, gates) {
+  const workBefore = Number(frozen.frozen_work_avg);
+  const pc = frozen.frozen_pc_avg == null ? null : Number(frozen.frozen_pc_avg) / 100;
+  const frozenGrade = Number(frozen.frozen_grade);
+  const workAfter = Math.min(100, workBefore + bonus.points);
+  const baseBefore = Math.round(combineV3(pc, workBefore / 100, gates) * 1000) / 10;
+  const residual = Math.max(0, frozenGrade - baseBefore);
+  const computed = Math.round((combineV3(pc, workAfter / 100, gates) * 100 + residual) * 10) / 10;
+  const floor = gates?.floor ?? PHASE3_CONFIG.v3Gates.floor;
+  return {
+    studentId: roster.student_id, username: roster.login_username, realName: roster.real_name,
+    frozenGrade, frozenAt: frozen.frozen_at, earlyBonus: residual,
+    points: bonus.points, workBefore, workAfter,
+    switched: workBefore < floor * 100 && workAfter >= floor * 100,
+    adjustedGrade: Math.min(100, computed), sheets: bonus.sheets.map(s => s.itemId),
+  };
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountClass(app, {
@@ -298,6 +343,17 @@ export function mountClass(app, {
 
     const fan = await fanLedger(ledgerDb, rows);
 
+    const snapshots = new Map();
+    if (typeof db.listQuarterSnapshot === 'function') {
+      for (const quarter of ['Q1', 'Q2', 'Q3', 'Q4']) {
+        const snap = await db.listQuarterSnapshot(quarter);
+        if (snap.error && !isSnapshotMissing(snap.error)) {
+          return res.status(500).json({ ok: false, error: 'Database error' });
+        }
+        for (const row of snap.data || []) snapshots.set(`${row.student_id}:${quarter}`, row);
+      }
+    }
+
     // P4b: surface the roster -> Schoology uid bridge so the grade-sync producer
     // can key its fixture by Schoology uid directly. Batched ONCE (not per
     // student) via the defensive getSchoologyUidMap. typeof-guarded so a fake
@@ -326,6 +382,12 @@ export function mountClass(app, {
         blooketLessons: _presence || undefined,
       });
       const trainerRows = ledgerRows.filter(row => row && row.source === 'trainer');
+      for (const [quarter, value] of Object.entries(computed.quarters || {})) {
+        const snapshot = snapshots.get(`${roster.student_id}:${quarter}`);
+        const bonus = bankedBonus(ledgerRows, quarter);
+        value.closedGrade = snapshot ? closedQuarterGrade(snapshot, bonus.applied).grade : null;
+        value.bonusApplied = bonus.applied;
+      }
       let trainer = null;
       if (trainerRows.length) {
         const procedures = new Set();
@@ -406,6 +468,7 @@ export function mountClass(app, {
     const fan = await fanLedger(ledgerDb, rows);
     const graded = fan.map(({ roster, ledgerRows }) => ({
       roster,
+      ledgerRows,
       computed: computeGrade(ledgerRows, answerKey, config, {
         lessonSchedule,
         eventSchedule,
@@ -436,6 +499,95 @@ export function mountClass(app, {
   function isSnapshotMissing(err) {
     return !!err && (err.code === '42P01' || String(err.message || '').includes('quarter_grade_snapshot'));
   }
+
+  // Banked bonus is Work-track only; these routes never add points to PC.
+  app.post('/class/bonus', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const { sheetId, title, section, entries } = req.body || {};
+    const quarter = String(req.body?.quarter || '').toUpperCase();
+    if (typeof sheetId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(sheetId) ||
+        typeof title !== 'string' || !title.trim() || !QUARTER_RE.test(quarter) || !Array.isArray(entries)) {
+      return res.status(400).json({ ok: false, error: 'sheetId, title, quarter (Q1..Q4), and entries required' });
+    }
+    const roster = await listRoster(db, section, false);
+    if (roster.error) return res.status(500).json({ ok: false, error: 'Database error' });
+    let written = 0;
+    const errors = [];
+    for (const [index, entry] of entries.entries()) {
+      const matches = roster.rows.filter(r => entry?.studentId
+        ? r.student_id === entry.studentId
+        : typeof entry?.username === 'string' && r.login_username === entry.username.trim());
+      if (matches.length !== 1 || !Object.hasOwn(BONUS_POINTS, entry?.grade)) {
+        errors.push({ index, error: matches.length !== 1 ? 'unknown or ambiguous student' : 'grade must be E, P, or I' });
+        continue;
+      }
+      try {
+        const { error } = await ledgerDb.insertLedgerRow({
+          studentId: matches[0].student_id, source: 'bonus', itemId: `BONUS-${sheetId}`,
+          score: BONUS_POINTS[entry.grade], attempt: 1, evidenceTier: 'practice',
+          response: JSON.stringify({ grade: entry.grade, quarter, title: title.trim() }),
+        });
+        if (error) throw error;
+        written += 1;
+      } catch (error) {
+        const missing = isBlooketSourceMissing(error);
+        return res.status(missing ? 503 : 500).json({ ok: false, sheetId, quarter, written, errors,
+          error: missing ? 'bonus sources not provisioned — run migration 0036' : 'Database error' });
+      }
+    }
+    return res.json({ ok: true, sheetId, quarter, written, errors });
+  });
+
+  app.post('/class/quarter/apply-bonus', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const body = req.body || {};
+    const quarter = String(body.quarter || '').toUpperCase();
+    const dryRun = body.dryRun !== false;
+    if (!QUARTER_RE.test(quarter)) return res.status(400).json({ ok: false, error: 'quarter (Q1..Q4) required' });
+    const rows = [], skipped = [];
+    let applied = 0;
+    try {
+      const snap = await db.listQuarterSnapshot(quarter);
+      if (snap.error) throw snap.error;
+      const roster = await listRoster(db, body.section, false);
+      if (roster.error) throw roster.error;
+      const frozenById = new Map((snap.data || []).map(r => [r.student_id, r]));
+      for (const student of roster.rows) {
+        const frozen = frozenById.get(student.student_id);
+        if (!frozen) continue;
+        const ledger = await ledgerDb.getLedgerByStudent(student.student_id);
+        if (ledger.error) throw ledger.error;
+        const bonus = bankedBonus(ledger.data || [], quarter, frozen);
+        if (bonus.applied) {
+          skipped.push({ studentId: student.student_id, username: student.login_username,
+            reason: 'already applied', applied: bonus.applied });
+          continue;
+        }
+        if (!bonus.points) continue;
+        const audit = bonusAudit(student, frozen, bonus, config.v3Gates);
+        rows.push(audit);
+        if (dryRun) continue;
+        const { studentId, username, realName, ...detail } = audit;
+        const { inserted, error } = await ledgerDb.insertLedgerRowIfAbsent({
+          studentId, source: 'bonus_applied', itemId: `BONUS-APPLIED-${quarter}`,
+          score: audit.adjustedGrade, attempt: 1, evidenceTier: 'practice',
+          response: JSON.stringify({ ...detail, appliedAt: new Date().toISOString() }),
+        });
+        if (error) throw error;
+        if (inserted) applied += 1;
+        else skipped.push({ studentId, username, reason: 'already applied' });
+      }
+    } catch (error) {
+      const snapshotMissing = isSnapshotMissing(error);
+      const sourceMissing = isBlooketSourceMissing(error);
+      return res.status(snapshotMissing || sourceMissing ? 503 : 500).json({
+        ok: false, quarter, dryRun, rows, applied, skipped,
+        error: snapshotMissing ? 'quarter_grade_snapshot not provisioned — run migration 0030'
+          : sourceMissing ? 'bonus sources not provisioned — run migration 0036' : 'Database error',
+      });
+    }
+    return res.json({ ok: true, quarter, dryRun, rows, applied, skipped });
+  });
 
   // POST /class/quarter/close { quarter, section? } — freeze the quarter grade for
   // every student. Idempotent: the FIRST close of a (student, quarter) wins.
@@ -494,25 +646,28 @@ export function mountClass(app, {
     const fg = await fanGrades(req.query.section);
     if (fg.error) return res.status(500).json({ ok: false, error: fg.error === 'answer-key' ? 'Answer key unavailable' : 'Database error' });
 
-    const deltas = fg.graded.map(({ roster, computed }) => {
+    const deltas = fg.graded.map(({ roster, computed, ledgerRows }) => {
       const fr = frozenById[roster.student_id];
       if (!fr) return null; // not frozen for this quarter
+      const bonus = bankedBonus(ledgerRows, quarter, fr);
       const q = computed && computed.quarters && computed.quarters[quarter];
       const current = q ? (q.quarterGrade ?? null) : null;
       // PostgREST serializes a `numeric` column as a STRING — coerce explicitly so
       // the math never rides on implicit string→number coercion.
       const frozen = fr.frozen_grade == null ? null : Number(fr.frozen_grade);
-      if (current == null || frozen == null || !Number.isFinite(frozen)) return null;
-      const delta = Math.round((current - frozen) * 10) / 10;
+      if (frozen == null || !Number.isFinite(frozen) || (current == null && !bonus.points)) return null;
+      const delta = current == null ? 0 : Math.round((current - frozen) * 10) / 10;
       return {
         studentId: roster.student_id,
         realName: roster.real_name || null,
         username: roster.login_username || null,
         frozen: Math.round(frozen * 10) / 10,
-        current: Math.round(current * 10) / 10,
+        closed: closedQuarterGrade(fr, bonus.applied).grade,
+        current: current == null ? null : Math.round(current * 10) / 10,
         delta,
+        bonus,
       };
-    }).filter((d) => d && d.delta > 0);
+    }).filter((d) => d && (d.delta > 0 || d.bonus.points > 0));
     deltas.sort((a, b) => b.delta - a.delta);
 
     // frozenCount scoped to the queried section (how many of THESE students are frozen).

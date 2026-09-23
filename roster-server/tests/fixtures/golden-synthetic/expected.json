@@ -803,7 +803,9 @@
               "posters": null,
               "quizzes": 40,
               "trainer": 90
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -850,7 +852,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -897,7 +901,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -944,7 +950,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-01-all-sources",
@@ -1708,7 +1716,9 @@
               "posters": null,
               "quizzes": 100,
               "trainer": 100
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -1755,7 +1765,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -1802,7 +1814,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -1849,7 +1863,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-02-floor-040",
@@ -2578,7 +2594,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -2625,7 +2643,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -2672,7 +2692,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -2719,7 +2741,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-03-ceiling-070",
@@ -3463,7 +3487,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 25
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -3510,7 +3536,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -3557,7 +3585,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -3604,7 +3634,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-04-weight-sensitive",
@@ -4317,7 +4349,9 @@
               "posters": null,
               "quizzes": 25,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -4364,7 +4398,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -4411,7 +4447,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -4458,7 +4496,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-05-ahead",
@@ -5139,7 +5179,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -5186,7 +5228,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -5233,7 +5277,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -5280,7 +5326,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-06-behind",
@@ -5965,7 +6013,9 @@
               "posters": null,
               "quizzes": 33.3,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -6012,7 +6062,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -6059,7 +6111,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -6106,7 +6160,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-07-quiz-right",
@@ -6802,7 +6858,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -6849,7 +6907,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -6896,7 +6956,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -6943,7 +7005,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-08-quiz-wrong",
@@ -7639,7 +7703,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -7686,7 +7752,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -7733,7 +7801,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -7780,7 +7850,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-09-pc-best-wins",
@@ -8479,7 +8551,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -8526,7 +8600,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -8573,7 +8649,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -8620,7 +8698,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-10-blooket-game",
@@ -9308,7 +9388,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -9355,7 +9437,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -9402,7 +9486,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -9449,7 +9535,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-11-desk-done",
@@ -10138,7 +10226,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -10185,7 +10275,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -10232,7 +10324,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -10279,7 +10373,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-12-blooket-makeup",
@@ -10991,7 +11087,9 @@
               "posters": null,
               "quizzes": 25,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -11038,7 +11136,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -11085,7 +11185,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -11132,7 +11234,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-13-period-b-due",
@@ -11841,7 +11945,9 @@
               "posters": null,
               "quizzes": 25,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -11888,7 +11994,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -11935,7 +12043,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -11982,7 +12092,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-14-period-e-not-due",
@@ -12677,7 +12789,9 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 80
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -12724,7 +12838,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -12771,7 +12887,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -12818,7 +12936,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-15-trainer",
@@ -13545,7 +13665,9 @@
               "posters": null,
               "quizzes": 25,
               "trainer": 0
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q2": {
             "aheadKeys": [],
@@ -13592,7 +13714,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q3": {
             "aheadKeys": [],
@@ -13639,7 +13763,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           },
           "Q4": {
             "aheadKeys": [],
@@ -13686,7 +13812,9 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            }
+            },
+            "closedGrade": null,
+            "bonusApplied": null
           }
         },
         "realName": "synthetic-16-units-1-3",

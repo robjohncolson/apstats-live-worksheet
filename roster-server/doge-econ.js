@@ -19,6 +19,7 @@ export const DAILY_GIFT_CAP = 20;         // max candy a kid can gift OUT per ro
 export const SELL_HOLD_HOURS = 24;        // DOGE → candy cash-out: coins must be held ≥ this many hours (SELL_DOGE_SPEC; anti-churn "overnight hold")
 
 export function effortPointsFor(source, itemId) {
+  if (source === 'bonus' || source === 'bonus_applied') return 0;
   if (source === 'quiz_verdict' || source === 'quiz_answer') return 0;
   if (itemId && /^BL-.*-DESK_DONE$/i.test(itemId)) return 4;
   return EFFORT_POINTS[source] != null ? EFFORT_POINTS[source] : 1;

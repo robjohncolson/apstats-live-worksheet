@@ -94,6 +94,8 @@ export function mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey }) {
 
     // Only the cr-quiz FEEDER (lesson quizzes). PC = Phase-3 `P`, excluded.
     const rows = (Array.isArray(ledgerRows) ? ledgerRows : [])
+      // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
+      .filter(r => r?.source !== 'bonus' && r?.source !== 'bonus_applied')
       .filter(r => r && r.source === 'curriculum_quiz');
 
     const units = {};

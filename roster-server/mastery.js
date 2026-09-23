@@ -59,6 +59,8 @@ export function masteryObservations(ledgerRows, answerKey, skillMap, config = PH
   const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
   const observations = [];
   for (const row of rows) {
+    // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
+    if (row?.source === 'bonus' || row?.source === 'bonus_applied') continue;
     const signal = correctnessSignal(row, answerKey, config.frqDiagnosticCorrectThreshold);
     if (signal == null) continue;
     const entry = skillMap[row.item_id];

@@ -95,7 +95,9 @@ def build_fixture(doc: dict, uid_map: dict | None = None,
                     out[f"{uid}/{key}"] = val
         if granularity in ("quarter", "both"):
             for qk, q in (s.get("quarters") or {}).items():
-                val = (q or {}).get("quarterGrade")
+                val = (q or {}).get("closedGrade")
+                if val is None:
+                    val = (q or {}).get("quarterGrade")
                 if val is not None:
                     out[f"{uid}/{qk}"] = val
     return out

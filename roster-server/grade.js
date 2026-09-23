@@ -160,7 +160,9 @@ function frqScoreToPct(score, frqBand) {
 // opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
 //   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
 export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts = {}) {
-  const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
+  // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
+  const rows = (Array.isArray(ledgerRows) ? ledgerRows : [])
+    .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied');
   const bySource = (s) => rows.filter((r) => r && r.source === s);
   // SY2627 event schedule (PC/Poster dates keyed by NEW unit) — read up front:
   // the per-unit P curve below needs it before the lesson schedule is resolved.

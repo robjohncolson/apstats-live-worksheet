@@ -326,6 +326,9 @@ export function mountLedger(app, {
     if (!source || !itemId || response === undefined) {
       return res.status(400).json({ ok: false, error: 'source, itemId, and response are required' });
     }
+    if (source === 'bonus' || source === 'bonus_applied') {
+      return res.status(403).json({ ok: false, error: 'bonus sources require the teacher bonus routes' });
+    }
 
     // Resolve studentId from token
     const studentId = verifyToken(token);
@@ -960,7 +963,7 @@ export function mountLedger(app, {
     // ── Auth resolution ────────────────────────────────────────────────────
     const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
     const providedTeacher = req.headers['x-teacher-secret'];
-    const teacherOk = teacherSecret && providedTeacher === teacherSecret;
+    let teacherOk = teacherSecret && providedTeacher === teacherSecret;
 
     // Extract token from Authorization: Bearer <t> OR ?token=<t>.
     let token = null;
@@ -980,7 +983,7 @@ export function mountLedger(app, {
       if (!tokenSid) {
         return res.status(401).json({ ok: false, error: 'forbidden' });
       }
-      if (tokenSid !== studentId) {
+      {
         // A verified teacher may read ANY student's ledger — this powers the
         // read-only "view as student" worksheet (a teacher's own token, the
         // target student's :studentId). Role lookup goes through the ROSTER db
@@ -996,7 +999,8 @@ export function mountLedger(app, {
         } catch (_) {
           role = 'student';
         }
-        if (role !== 'teacher') {
+        teacherOk = role === 'teacher';
+        if (!teacherOk && tokenSid !== studentId) {
           return res.status(403).json({ ok: false, error: 'cross-student' });
         }
       }
@@ -1019,7 +1023,15 @@ export function mountLedger(app, {
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
 
-    const rows = data || [];
+    const rows = (data || []).map(row => {
+      if (teacherOk || row.source !== 'bonus_applied') return row;
+      let detail;
+      try { detail = JSON.parse(row.response); } catch { detail = {}; }
+      return { ...row, response: JSON.stringify({
+        adjustedGrade: detail?.adjustedGrade ?? Number(row.score),
+        appliedAt: detail?.appliedAt ?? null,
+      }) };
+    });
     // Nightly Review augment (NIGHTLY_REVIEW_SPEC.md §4): attach each row's review state
     // (LEFT JOIN review_marks by ledger_id) so the student's "My Ledger" can render the
     // "👁 seen / 💬 comment" badges. Best-effort + degrades silently pre-migration-0025:

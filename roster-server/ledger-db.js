@@ -28,7 +28,7 @@ export function createServiceClient() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createLedgerDb(client) {
-  return { insertLedgerRow, updateLedgerReceipt, updateFrqFeedback, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds };
+  return { insertLedgerRow, insertLedgerRowIfAbsent, updateLedgerReceipt, updateFrqFeedback, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds };
 
   // Compare-and-set only the feedback JSON. Never include score, receipts, or
   // ticket state in this update, even when the grader suggests a higher score.
@@ -80,6 +80,24 @@ export function createLedgerDb(client) {
       )
       .select('ledger_id, evidence_tier')
       .single();
+  }
+
+  // First writer wins: an existing application must never be overwritten.
+  async function insertLedgerRowIfAbsent({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt }) {
+    const payload = {
+      student_id: studentId, source, item_id: itemId,
+      unit: unit || null, topic: topic || null, skill: skill || null,
+      response, score: score ?? null, evidence_tier: evidenceTier,
+      attempt: attempt ?? 1, recorded_at: recordedAt || new Date().toISOString(),
+    };
+    if (frqResult && typeof frqResult === 'object') {
+      payload.frq_result = frqResult;
+      payload.graded_at = gradedAt || new Date().toISOString();
+    }
+    const { data, error } = await client.from('item_ledger')
+      .upsert(payload, { onConflict: 'student_id,source,item_id,attempt', ignoreDuplicates: true })
+      .select('*');
+    return { data, error, inserted: !error && Array.isArray(data) && data.length > 0 };
   }
 
   // Persist a signed receipt after the grade row is safely recorded.

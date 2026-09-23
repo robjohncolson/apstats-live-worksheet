@@ -39,6 +39,17 @@ DOC = {
 
 
 class TestBuildFixture(unittest.TestCase):
+    def test_closed_quarter_wins_with_live_fallback(self):
+        doc = {"students": [{"studentId": "s1", "quarters": {
+            "Q1": {"quarterGrade": 63, "closedGrade": 90},
+            "Q2": {"quarterGrade": 72, "closedGrade": None},
+            "Q3": {"quarterGrade": 80, "closedGrade": 0},
+            "Q4": {"quarterGrade": 55},
+        }}]}
+        for granularity in ("quarter", "both"):
+            self.assertEqual(bsf.build_fixture(doc, granularity=granularity),
+                             {"s1/Q1": 90, "s1/Q2": 72, "s1/Q3": 0, "s1/Q4": 55})
+
     def test_lesson_granularity_skips_null(self):
         fx = bsf.build_fixture(DOC)
         self.assertEqual(fx, {"s1/1.2": 88, "s2/1.2": 70})
