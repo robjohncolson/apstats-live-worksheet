@@ -91,3 +91,41 @@ describe('teacher-week.html', () => {
     expect(document.getElementById('drift').textContent.length).toBeGreaterThan(0);
   });
 });
+
+describe('teacher-week.html as the Desk "This Week" app', () => {
+  const desk = readFileSync(join(root, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+
+  it('has a desktop icon, an iframe window and a registry entry, and hands teachers the CED codes', () => {
+    expect(desk).toMatch(/<div class="app-icon" data-app="week"[^>]*ondblclick="openApp\('week'\)"/);
+    expect(desk).toMatch(/id="app-week-overlay"/);
+    expect(desk).toMatch(/id="app-week-frame"/);
+    expect(desk).toMatch(/week:\s*\{\s*url:\s*'teacher-week\.html'/);
+    const launch = desk.slice(desk.indexOf('function appLaunchUrl'), desk.indexOf('function openApp('));
+    expect(launch).toContain("'?ced=1'");
+    expect(launch).toContain("'?ced=0'");
+    expect(launch).toContain('_deskIsTeacher()');
+  });
+
+  it('?ced=0 renders the plain video list without CED toggles, the code summary, or teacher wording', async () => {
+    const html = readFileSync(join(root, 'teacher-week.html'), 'utf8');
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      url: 'https://example.test/teacher-week.html?date=2026-09-22&ced=0',
+      beforeParse(window) {
+        window.fetch = async (path) => {
+          const file = path.includes('video-objectives') ? videoObjectives
+            : path.includes('learning-objectives') ? objectives : schedule;
+          return { ok: true, json: async () => file };
+        };
+      },
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    const doc = dom.window.document;
+    expect(doc.querySelectorAll('.learn li').length).toBeGreaterThan(0);
+    expect(doc.querySelectorAll('details.ced').length).toBe(0);
+    expect(doc.querySelectorAll('.lo-code').length).toBe(0);
+    expect(doc.getElementById('summary').hidden).toBe(true);
+    expect(doc.getElementById('subtitle').textContent).not.toContain('Teacher');
+    expect(doc.body.textContent).not.toMatch(/\b(VAR|UNC|DAT)-\d/);
+  });
+});

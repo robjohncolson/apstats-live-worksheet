@@ -18,6 +18,8 @@
 
   URL: teacher-week.html?date=YYYY-MM-DD  (defaults to today; weekends roll
   forward to next week, since that is the week being planned).
+       teacher-week.html?ced=0  hides the CED code toggles and the teacher wording
+       (the Desk's "This Week" app passes ced=0 for students, ced=1 for a teacher).
 -->
 <style>
   :root {
@@ -109,7 +111,7 @@
 
 <div class="page-header">
   <h1>This Week — Learning Objectives</h1>
-  <p class="subtitle">What Period B and Period E are covering, with each lesson video's "what will you learn" list. CED codes are one click away under each topic. Teacher planning view.</p>
+  <p class="subtitle" id="subtitle">What Period B and Period E are covering, with each lesson video's "what will you learn" list. CED codes are one click away under each topic. Teacher planning view.</p>
 </div>
 
 <div class="main">
@@ -152,6 +154,8 @@
   let objectives = null;
   let videoObjectives = null;
   let monday = null;
+  // ?ced=0 → student view: no CED code toggles, no teacher wording, no source footer.
+  const showCed = new URLSearchParams(location.search).get('ced') !== '0';
 
   // ---- date helpers (local dates; never let UTC shift a school day) ----
   function parseISO(iso) {
@@ -252,7 +256,7 @@
       learnHtml = '<p class="no-lo">No worksheet objectives on file for this topic.</p>';
     }
     let cedHtml = '';
-    if (topic && topic.los.length) {
+    if (showCed && topic && topic.los.length) {
       cedHtml = `<details class="ced"><summary>CED objectives (${topic.los.length})</summary><ul class="los">` + topic.los.map((lo) => `
         <li>
           <span class="lo-code">${esc(lo.code)}</span>${esc(lo.text)}<span class="lo-skill">Skill ${esc(lo.skill)}</span>
@@ -367,7 +371,16 @@
     return res.json();
   }
 
+  function applyStudentView() {
+    if (showCed) return;
+    document.getElementById('subtitle').textContent = 'What Period B and Period E are learning this week, in the words of each lesson video.';
+    document.querySelectorAll('.noprint.subtitle').forEach((el) => { el.hidden = true; });
+    const summary = document.getElementById('summary');
+    if (summary) summary.hidden = true;
+  }
+
   async function boot() {
+    applyStudentView();
     const status = document.getElementById('status');
     try {
       [schedule, objectives, videoObjectives] = await Promise.all([

@@ -2059,6 +2059,13 @@
     <div class="icon-img" data-emoji="&#128204;"></div>
     <div class="icon-label">Bulletin</div>
 </div>
+<!-- This Week (teacher-week.html in an app window): what each period covers this week, in the
+     videos' own "what will you learn" words. Students get the plain list; a verified teacher
+     also gets the CED codes (appLaunchUrl adds ?ced=1). Teacher 2026-09-22. -->
+<div class="app-icon" data-app="week" style="top:264px;right:20px;left:auto" ondblclick="openApp('week')" onclick="selectAppIcon(this)">
+    <div class="icon-img" data-emoji="&#127919;"></div>
+    <div class="icon-label">This Week</div>
+</div>
 <!-- My Progress icon — re-enable for SY26-27
 <div class="app-icon" data-app="progress" style="top:396px;right:20px;left:auto" ondblclick="openProgress()" onclick="selectAppIcon(this)">
     <div class="icon-img" data-emoji="&#128202;"><img src="icons/icon-progress.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
@@ -2544,6 +2551,21 @@
         </div>
         <div class="app-content">
             <iframe id="app-ti84-frame" class="app-iframe" allow="cross-origin-isolated"></iframe>
+        </div>
+    </div>
+</div>
+<!-- This Week: teacher-week.html (same repo) in an iframe window. -->
+<div class="app-overlay" id="app-week-overlay">
+    <div class="app-window">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="destroyApp('week')" title="Close"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">This Week</span>
+            <span onclick="popOutApp('week')" title="Open in a new window" style="position:absolute;right:22px;top:50%;transform:translateY(-50%);z-index:3;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:16px;height:13px;font-size:10px;line-height:1;color:#fff;background:#7c3aed;border:1px solid #4c1d95;border-radius:2px;box-shadow:inset 1px 1px 0 rgba(255,255,255,.4),inset -1px -1px 0 rgba(0,0,0,.3);user-select:none">&#8599;</span>
+            <div class="collapse-box" onclick="minimizeApp('week')" title="Minimize"></div>
+        </div>
+        <div class="app-content">
+            <iframe id="app-week-frame" class="app-iframe"></iframe>
         </div>
     </div>
 </div>
@@ -22591,7 +22613,10 @@ const APP_REGISTRY = {
     // 2026-09-12: DOK ladders index (this repo, GH Pages) — teacher-only entry point from the Teacher
     // menu, so the teacher never has to remember the dok/index.html URL. The index renders from
     // dok/manifest.json, so new sheets (incl. standalone remediation sheets) appear on their own.
-    dok:      { url: 'https://robjohncolson.github.io/apstats-live-worksheet/dok/index.html', sfx: 'wildEep' }
+    dok:      { url: 'https://robjohncolson.github.io/apstats-live-worksheet/dok/index.html', sfx: 'wildEep' },
+    // 2026-09-22: "This Week" — what B and E cover this week (teacher-week.html, same repo, so a
+    // relative URL follows whichever host serves the Desk). ?ced=1 (teacher only) adds CED codes.
+    week:     { url: 'teacher-week.html', sfx: 'wildEep' }
     // driller deprecated — removed 2026-05
 };
 
@@ -22688,6 +22713,10 @@ function _openTi84ForTopic(topic) {
 // today (weekend, schedule gap) => bare URL and the trainer shows all units;
 // the student can change the in-app unit filter either way.
 function appLaunchUrl(app, id) {
+    if (id === 'week') {
+        var teacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
+        return app.url + (teacher ? '?ced=1' : '?ced=0');
+    }
     if (id !== 'ti84') return app.url;
     var topic = _ti84TodayTopic();
     if (topic) return app.url + '#topic=' + topic + '&source=desk';
@@ -25231,7 +25260,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-23-y2s4';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-23-589y';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
