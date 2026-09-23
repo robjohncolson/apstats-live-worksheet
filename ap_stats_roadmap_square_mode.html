@@ -2056,14 +2056,14 @@
 <!-- School bulletin (data/bulletin.json) as its own app — the badge counts notices in
      the next few days; the window lists everything current. Teacher 2026-09-22. -->
 <div class="app-icon" data-app="bulletin" style="top:150px;right:20px;left:auto" ondblclick="openBulletin()" onclick="selectAppIcon(this)">
-    <div class="icon-img" data-emoji="&#128204;"></div>
+    <div class="icon-img" data-emoji="&#128204;"><img src="icons/icon-bulletin.svg" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
     <div class="icon-label">Bulletin</div>
 </div>
 <!-- This Week (teacher-week.html in an app window): what each period covers this week, in the
      videos' own "what will you learn" words. Students get the plain list; a verified teacher
      also gets the CED codes (appLaunchUrl adds ?ced=1). Teacher 2026-09-22. -->
 <div class="app-icon" data-app="week" style="top:264px;right:20px;left:auto" ondblclick="openApp('week')" onclick="selectAppIcon(this)">
-    <div class="icon-img" data-emoji="&#127919;"></div>
+    <div class="icon-img" data-emoji="&#127919;"><img src="icons/icon-week.svg" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
     <div class="icon-label">This Week</div>
 </div>
 <!-- My Progress icon — re-enable for SY26-27
@@ -8953,6 +8953,9 @@ async function renderDoNowGrades(baseUrl, token) {
     var _lateRecovery = (_priorState === 'unavailable' && _gradeLoadState === 'available');
     if ((_gradeCacheWasCold || _lateRecovery) && _gradeLessonsCache && typeof rCal === 'function') {
       try { rCal(); } catch (_) {}
+    // An open My Ledger window must follow the fresh cache (its zero-warning card
+    // is painted by renderWallet, which does not re-run on a poll).
+    try { if (typeof _walletRefreshZeroCard === 'function') _walletRefreshZeroCard(); } catch (_) {}
     } else if (typeof paintLocalDoneCells === 'function') {
       paintLocalDoneCells();
     }
@@ -14777,8 +14780,55 @@ async function _ftFinish() {
     var topic = _ftState.topic, btn = _ftState.btn;
     _ftLogToStore(topic, round.log);   // per-card log (SRS/BKT foundation)
     _ftRenderRecap(round, score);      // "review your misses"
-    if (typeof _mayScore === 'function' && !_mayScore()) return;
-    await _blooketCommit(btn, topic, score);   // best-wins + grade refresh
+    if (typeof _mayScore === 'function' && !_mayScore()) { _ftRenderOutcome(topic, score, null); return; }
+    var outcome = null;
+    try { outcome = await _blooketCommit(btn, topic, score); }   // best-wins + grade refresh
+    catch (_) { outcome = { saved: false, best: null, error: true }; }
+    _ftRenderOutcome(topic, score, outcome);
+}
+
+// The last screen must SAY what happened to the grade and offer one obvious way
+// out (teacher 2026-09-23: a lone "Cancel" after finishing a deck read as
+// "did I just lose my work?"). outcome: null = not recorded (read-only view),
+// { saved, best, error? } from _blooketCommit.
+function _ftRenderOutcome(topic, score, outcome) {
+    var result = document.getElementById('bf-result');
+    if (result) {
+        var old = result.querySelector('.bf-outcome');
+        if (old) old.remove();
+        var line = document.createElement('div');
+        line.className = 'bf-outcome';
+        line.style.cssText = 'margin-top:10px;padding-top:8px;border-top:1px solid #bbb;font-weight:bold';
+        var label = (typeof cedLabel === 'function') ? cedLabel(topic).text : ('Topic ' + topic);
+        if (!outcome) {
+            line.textContent = 'Not recorded \u2014 this is a read-only view.';
+            line.style.color = '#7a0010';
+        } else if (outcome.error) {
+            line.textContent = 'Could not save this run. Your best score is kept; try again when you are back online.';
+            line.style.color = '#7a0010';
+        } else if (outcome.saved) {
+            line.textContent = '\u2713 Saved to your grade \u2014 ' + label + ' flashcards: ' + score.toFixed(1) + '%. Your ledger is up to date.';
+            line.style.color = '#25663F';
+        } else {
+            var best = (typeof outcome.best === 'number') ? outcome.best.toFixed(1) + '%' : 'your earlier score';
+            line.textContent = 'Recorded. Your best for ' + label + ' stays at ' + best + ' (this run: ' + score.toFixed(1) + '%).';
+            line.style.color = '#25663F';
+        }
+        result.appendChild(line);
+        result.style.display = 'block';
+    }
+    var actions = document.getElementById('bf-actions');
+    if (!actions) return;
+    while (actions.firstChild) actions.removeChild(actions.firstChild);
+    var done = document.createElement('button');
+    done.id = 'bf-done';
+    done.className = 's7btn s7btn-default';
+    done.textContent = 'Done';
+    done.onclick = function () {
+        if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
+    };
+    actions.appendChild(done);
+    try { done.focus(); } catch (_) {}
 }
 
 function _ftRenderRecap(round, score) {
@@ -14877,9 +14927,16 @@ async function _blooketCommit(btn, topic, score) {
         var m = marks[topic + '|blooket'];
         if (m && typeof m.score === 'number') floor = Math.max(floor, m.score);
     } catch (_) {}
-    if (score > floor) {
+    var saved = score > floor;
+    if (saved) {
         await _studentMarkSave(btn, topic, 'blooket', score);   // records mark.score = score
     }
+    // Make the Desk agree with the ledger NOW: patch the /grade lessons cache with
+    // the score we just recorded so the My Ledger "about to become a 0" card and
+    // badge drop this deck immediately, instead of waiting for the next poll
+    // (teacher 2026-09-23: the warning outliving the finished deck read as lost work).
+    _blooketPatchGradeCache(topic, Math.max(score, floor));
+    _walletRefreshZeroCard();
     // Conversion fix: refresh /grade again + re-render the panel so the chip
     // reflects the just-saved score now, not on the next manual open.
     await _refreshGrade();
@@ -14887,6 +14944,33 @@ async function _blooketCommit(btn, topic, score) {
         if (_lastResourcePanel && typeof showResourcePanel === 'function') {
             showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
         }
+    } catch (_) {}
+    return { saved: saved, best: saved ? score : floor };
+}
+
+// Optimistic: set lesson.blooket on the cached /grade lessons[] for this topic.
+// The next /grade poll overwrites it with the server's value (best-wins, so the
+// server never reports less than what we just saved).
+function _blooketPatchGradeCache(topic, score) {
+    try {
+        if (!Array.isArray(_gradeLessonsCache)) return;
+        for (var i = 0; i < _gradeLessonsCache.length; i++) {
+            var L = _gradeLessonsCache[i];
+            if (!L || L.lessonKey !== topic) continue;
+            if (L.blooket == null || score > L.blooket) L.blooket = score;
+        }
+    } catch (_) {}
+}
+
+// Repaint the My Ledger zero-warning surfaces from the current grade cache: the
+// icon badge always, the in-window card only while the window is open.
+function _walletRefreshZeroCard() {
+    try { if (typeof _updateZeroWarningBadge === 'function') _updateZeroWarningBadge(); } catch (_) {}
+    try {
+        var ov = document.getElementById('app-wallet-overlay');
+        if (!ov || ov.style.display === 'none' || ov.style.display === '') return;
+        var host = document.getElementById('wallet-content');
+        if (host && typeof _walletPrependZeroCard === 'function') _walletPrependZeroCard(host);
     } catch (_) {}
 }
 
@@ -25260,7 +25344,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-23-589y';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-23-dvsm';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
