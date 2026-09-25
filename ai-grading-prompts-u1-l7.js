@@ -36,7 +36,7 @@ VIDEO 2 - Outliers, Resistant Measures, and Choosing Statistics (~8:30):
 - For the Flint data, the IQR is 5, so the high outlier cutoff by method 1 is 14.5.
 - There are eight high outliers for Flint by the 1.5 IQR rule.
 - Method 2 says an outlier is a value two or more standard deviations above or below the mean.
-- For the Flint data, the high outlier cutoff by method 2 is 36.04.
+- For the Flint data, the high outlier cutoff by method 2 is 36.004 (7.31 + 2 × 14.347).
 - There are three high outliers for Flint by the two-standard-deviation method.
 - Removing the largest outlier, 104, changes the mean from 7.31 to 5.9 and the standard deviation from 14.35 to 8.45.
 - After removing 104, the median stays 3 and the IQR changes only slightly from 5 to 4.
