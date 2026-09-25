@@ -2777,6 +2777,24 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -7057,6 +7075,9 @@ function updateUserRoleUI() {
   try { if (typeof _renderGradeCheckinUI === 'function') _renderGradeCheckinUI(); } catch (_) {}
   // Staff bulletin items appear/disappear with the role (sign-out, view-as, preview).
   try { if (typeof _renderBulletin === 'function') _renderBulletin(); } catch (_) {}
+  // Teacher Inbox desktop icon follows the role too (self-gated on _deskIsTeacher()).
+  try { if (typeof _teacherInboxRefreshVisibility === 'function') _teacherInboxRefreshVisibility(); } catch (_) {}
+  try { if (typeof _teacherInboxTick === 'function') _teacherInboxTick(); } catch (_) {}
 }
 
 function openSignInModal() {
@@ -17651,8 +17672,8 @@ function _paintTeacherTools(host, view) {
     host.style.cssText = 'padding:0;display:block;overflow:hidden;height:calc(100% - 24px)';
     var frame = document.createElement('iframe');
     frame.title = 'Teacher workspace';
-    var tab = ['class', 'attention', 'recent', 'recovery'].indexOf(view) >= 0 ? view : 'class';
-    frame.src = 'teacher-dashboard.html?workspace=1&view=' + tab;
+    // teacher-workspace.js selectView() owns the tab list and falls back to 'class' itself.
+    frame.src = 'teacher-dashboard.html?workspace=1&view=' + encodeURIComponent(String(view || 'class'));
     frame.style.cssText = 'display:block;border:0;width:100%;height:100%;background:#e5e3d2';
     host.appendChild(frame);
 }
@@ -18327,6 +18348,146 @@ async function _reviewFetchByItem() {
 async function _reviewBadgePoll() {
     // Retired: saved-work browsing has no nightly mark-seen requirement.
 }
+
+// ── TEACHER INBOX desktop icon (TEACHER_INBOX_ICON_SPEC.md, teacher 2026-09-25) ──
+// Teacher-only. Polls the workspace's own inbox endpoint and counts messages newer
+// than the workspace's unfiltered "Mark read" marker (localStorage
+// tsc-inbox-seen-at:all, same origin) — the view the icon opens, so the badge and
+// the workspace's "N new" agree. Read-only: the Desk never writes that marker and
+// never marks anything read. Every function below is safe before sign-in and
+// never throws.
+var TEACHER_INBOX_POLL_MS = 60000;
+var TEACHER_INBOX_SEEN_KEY = 'tsc-inbox-seen-at:all';
+var _teacherInboxState = { newMessages: 0, unavailable: false, halted: null };
+var _teacherInboxRequest = 0;
+
+function _teacherInboxSeenAt() {
+    try { return localStorage.getItem(TEACHER_INBOX_SEEN_KEY) || null; } catch (_) { return null; }
+}
+
+function _teacherInboxCountNew(messages, seenAt) {
+    if (!Array.isArray(messages)) return 0;
+    var n = 0;
+    for (var i = 0; i < messages.length; i++) {
+        var m = messages[i];
+        if (!m || !m.createdAt) continue;
+        if (!seenAt || String(m.createdAt) > seenAt) n++;
+    }
+    return n;
+}
+
+function _teacherInboxRefreshVisibility() {
+    try {
+        var icon = document.querySelector('.app-icon[data-app="teacherinbox"]');
+        if (!icon) return;
+        var show = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
+        var was = icon.style.display !== 'none';
+        icon.style.display = show ? '' : 'none';
+        if (was !== show && typeof window._arrangeDesktopIcons === 'function') window._arrangeDesktopIcons();
+        if (!show) {
+            // View-as / preview / signed out: no stale count in the Teacher menu either.
+            var badge = document.getElementById('menu-teacher-inbox-badge');
+            if (badge) badge.hidden = true;
+            return;
+        }
+        _teacherInboxState.halted = null;   // a sign-in or role refresh earns a fresh try
+        _teacherInboxPaint();
+    } catch (_) {}
+}
+
+function _teacherInboxTitle() {
+    var st = _teacherInboxState;
+    if (st.halted === 'signin') return 'Teacher Inbox — sign in as a teacher to see messages';
+    if (st.halted === '503') return 'Teacher Inbox — student messages are not turned on';
+    if (st.unavailable) return 'Teacher Inbox — inbox unavailable, open to retry';
+    if (!st.newMessages) return 'Teacher Inbox — no new student messages';
+    return st.newMessages + ' new student message' + (st.newMessages === 1 ? '' : 's') + ' — open Teacher Inbox';
+}
+
+function _teacherInboxPaint() {
+    try {
+        var count = _teacherInboxState.newMessages;
+        var title = _teacherInboxTitle();
+        var label = count > 99 ? '99+' : String(count);
+        var icon = document.querySelector('.app-icon[data-app="teacherinbox"]');
+        if (icon) {
+            icon.title = title;
+            var img = icon.querySelector('.icon-img');
+            var badge = img ? img.querySelector('.teacher-inbox-badge') : null;
+            if (!count) {
+                if (badge) badge.remove();
+            } else if (img) {
+                if (!badge) { badge = document.createElement('span'); badge.className = 'teacher-inbox-badge'; img.appendChild(badge); }
+                badge.textContent = label;
+                badge.setAttribute('role', 'status');
+                badge.setAttribute('aria-label', title);
+            }
+        }
+        var menuBadge = document.getElementById('menu-teacher-inbox-badge');
+        if (menuBadge) { menuBadge.textContent = label; menuBadge.hidden = !count; }
+    } catch (_) {}
+}
+
+async function _teacherInboxFetch() {
+    var cfg = (typeof _reviewCfg === 'function') ? _reviewCfg() : { token: null, base: null };
+    if (!cfg.token || !cfg.base) return { error: 'signin' };
+    // since= lets the server return only what is newer than the marker, so the count is
+    // exact (not capped by limit) and stale message bodies never travel.
+    var seenAt = _teacherInboxSeenAt();
+    var url = cfg.base + '/teacher/nudge-inbox?limit=200' + (seenAt ? '&since=' + encodeURIComponent(seenAt) : '');
+    try {
+        var res = await fetch(url, { headers: { Authorization: 'Bearer ' + cfg.token } });
+        if (res.status === 401) return { error: 'signin' };
+        if (res.status === 503) return { error: '503' };
+        if (res.status !== 200) return { error: 'http' + res.status };
+        return await res.json();
+    } catch (_) { return { error: 'network' }; }
+}
+
+async function _teacherInboxTick() {
+    try {
+        if (typeof _deskIsTeacher !== 'function' || !_deskIsTeacher()) return;
+        if (typeof document !== 'undefined' && document.hidden) return;
+        if (_teacherInboxState.halted) return;   // 401/503: wait for a sign-in or an explicit open
+        var request = ++_teacherInboxRequest;
+        var data = await _teacherInboxFetch();
+        if (request !== _teacherInboxRequest) return;   // a newer poll already landed
+        if (!data || data.error) {
+            // Keep the last known count; say why the inbox couldn't be read.
+            _teacherInboxState.unavailable = true;
+            if (data && (data.error === 'signin' || data.error === '503')) _teacherInboxState.halted = data.error;
+            _teacherInboxPaint();
+            return;
+        }
+        _teacherInboxState.unavailable = false;
+        _teacherInboxState.newMessages = _teacherInboxCountNew(data.messages, _teacherInboxSeenAt());
+        _teacherInboxPaint();
+    } catch (_) {}
+}
+
+// "Mark read" in the workspace (same origin, incl. the in-Desk iframe) fires a storage
+// event here: re-poll at once so the badge follows the new marker.
+function _teacherInboxOnStorage(event) {
+    try {
+        if (!event || event.key !== TEACHER_INBOX_SEEN_KEY) return;
+        _teacherInboxTick();
+    } catch (_) {}
+}
+
+function openTeacherInbox() {
+    try {
+        if (typeof _deskIsTeacher !== 'function' || !_deskIsTeacher()) return;
+        if (typeof openTeacherTools !== 'function') return;
+        openTeacherTools(_teacherInboxState.newMessages > 0 ? 'messages' : 'attention');
+        _teacherInboxState.halted = null;   // an explicit open is the retry after 401/503
+    } catch (_) {}
+}
+
+try {
+    window.addEventListener('storage', _teacherInboxOnStorage);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) _teacherInboxTick(); });
+    setInterval(_teacherInboxTick, TEACHER_INBOX_POLL_MS);
+} catch (_) {}
 function openNightlyReview() {
     openTeacherTools('recent');
 }
@@ -23181,7 +23342,9 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
         icons.sort(function(a, b) {
             return (counts[b.dataset.app] || 0) - (counts[a.dataset.app] || 0);
         });
-        icons.forEach(function(el, i) {
+        // Hidden icons (e.g. the teacher-only Teacher Inbox for a student) take no slot.
+        var visible = icons.filter(function(el) { return el.style.display !== 'none'; });
+        visible.forEach(function(el, i) {
             el.style.top = (ICON_TOP_START + i * ICON_GAP) + 'px';
             el.style.right = ICON_RIGHT + 'px';
             el.style.left = 'auto';
@@ -23230,6 +23393,8 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
     }, true);
 
     arrangeByUsage();
+    // Re-run when a role change shows/hides a teacher-only icon (Teacher Inbox).
+    window._arrangeDesktopIcons = arrangeByUsage;
 })();
 
 // Click backdrop to close app overlays
@@ -25499,7 +25664,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-25-t62o';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-25-28j1';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
