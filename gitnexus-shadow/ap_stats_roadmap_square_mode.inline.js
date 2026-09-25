@@ -2704,6 +2704,79 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -4999,7 +5072,7 @@ function _hydrateMarksFromDonow(data) {
 // teacher). It is distinct from the REGISTRY lesson-readiness that feeds the
 // status dot -- that is teacher-side "materials posted", not student work.
 function localLessonState(topic, marks) {
-  if (topic === 'B-Work' || topic === 'B-Break') return '';
+  if (topic === 'B-Work' || topic === 'B-Break' || topic === 'E-Break') return '';
   if (!topic || !marks || typeof marks !== 'object') return '';
   const members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
   if(members.length>1){
@@ -6262,7 +6335,7 @@ var _signinWallActive = false;
 // check already uses (_getCwsForTopic / _blooketScoreFor), so greying agrees with
 // the Done button.
 function _isLessonComplete(topic, marks) {
-  if (topic === 'B-Work' || topic === 'B-Break') return true;
+  if (topic === 'B-Work' || topic === 'B-Break' || topic === 'E-Break') return true;
   try {
     if (!topic) return true;
     var members = typeof groupTopics==='function' ? groupTopics(topic) : [topic];
@@ -6982,6 +7055,8 @@ function updateUserRoleUI() {
   // Render (teacher) or clear (student/view-as/preview) the Grade Check-in reminder.
   // Self-gated on _deskIsTeacher(), so calling it unconditionally is safe.
   try { if (typeof _renderGradeCheckinUI === 'function') _renderGradeCheckinUI(); } catch (_) {}
+  // Staff bulletin items appear/disappear with the role (sign-out, view-as, preview).
+  try { if (typeof _renderBulletin === 'function') _renderBulletin(); } catch (_) {}
 }
 
 function openSignInModal() {
@@ -7914,7 +7989,7 @@ function donowLessonCovers(L, T) {
 // DN3b — roll a cell topic up to one of "", "partial", "done"
 // (worst-wins across all matching /donow lessons; "" = none/no-data → grey).
 function donowCellState(topic) {
-  if (topic === 'B-Work' || topic === 'B-Break') return '';
+  if (topic === 'B-Work' || topic === 'B-Break' || topic === 'E-Break') return '';
   var members=typeof groupTopics==='function'?groupTopics(topic):[topic];
   if(members.length>1){
     var states=members.map(donowCellState);
@@ -8055,8 +8130,43 @@ function _prevTopicInSequence(topic) {
 // so the no-flicker contract holds. Self-converging: rCal and this repaint both
 // derive the lock from _isLessonUnlocked with identical inputs, so after one
 // rebuild the next paint finds no mismatch. Idempotent + never throws.
+// MISSING_WORK_VISIBILITY D3b — red corner mark on calendar cells whose lesson
+// is already a 0 (no worksheet work, zero date passed). Runs after every rCal
+// rebuild (from paintDonowCells) and on every grade refresh (from
+// paintLocalDoneCells). Only paints classes/titles — never touches lock state,
+// so it can't re-enter the rCal <-> paintLocalDoneCells rebuild loop.
+function _paintZeroCells() {
+  try {
+    var zeroTopics = {};
+    _zeroCurrentWarnings().filter(function (w) { return w.past; }).forEach(function (w) {
+      zeroTopics[w.lessonKey] = true;
+    });
+    var zeroTitle = ' — missing work (already a 0)';
+    var cells = document.querySelectorAll('#cg .dc[data-topic]');
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      c.classList.remove('dc-zero');
+      var oldMark = c.querySelector('.dc-zero-mark');
+      if (oldMark) oldMark.remove();
+      if (c.title.endsWith(zeroTitle)) {
+        c.title = c.title.slice(0, -zeroTitle.length);
+        if (!c.title) c.removeAttribute('title');
+      }
+      var topic = c.dataset.topic || '';
+      if (!topic.split('+').some(function (key) { return zeroTopics[key]; })) continue;
+      c.classList.add('dc-zero');
+      var mark = document.createElement('span');
+      mark.className = 'dc-zero-mark';
+      mark.setAttribute('aria-hidden', 'true');
+      c.appendChild(mark);
+      c.title += zeroTitle;
+    }
+  } catch (_) { /* repaint must never break the Desk */ }
+}
+
 function paintLocalDoneCells() {
   try {
+    _paintZeroCells();
     var marks = (typeof getStudentMarks === 'function') ? getStudentMarks() : {};
     var signedIn = (typeof getStudentEmail === 'function') ? !!getStudentEmail() : false;
     var today = (typeof tdy === 'function') ? tdy() : null;
@@ -8891,6 +9001,8 @@ async function renderDoNowGrades(baseUrl, token) {
     } else if (typeof paintLocalDoneCells === 'function') {
       paintLocalDoneCells();
     }
+    // An open ledger must also follow ordinary grade refreshes.
+    try { if (typeof _walletRefreshZeroCard === 'function') _walletRefreshZeroCard(); } catch (_) {}
     // #13: the Unit-Progress done-fill + pace label read the same synced scores —
     // recompute now that the /grade cache is warm (first rCal ran before this).
     if (typeof rProg === 'function') rProg();
@@ -8943,6 +9055,7 @@ async function renderDoNowGrades(baseUrl, token) {
     }
     pill.title = tip;
     host.appendChild(pill);
+    if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill();
 
     // The two v3 tracks (PC mastery vs Work engagement). The quarter grade is the
     // HIGHER of the two (40% floor + ceiling), so showing both tells the student
@@ -9517,6 +9630,12 @@ async function renderDoNow() {
       show('Break Day — nothing due today. Enjoy it.\nEverything else moves one class later.', 'done');
       return;
     }
+    if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'pc') {
+      var pcLink = (typeof PC_LINKS !== 'undefined') ? PC_LINKS[_todayLessonInf.t] : null;
+      show('Today: ' + _todayLessonInf.n + ' — in AP Classroom.\n'
+        + (pcLink ? 'Click today’s tile on the calendar to open it.' : 'Your teacher shares the link in class.'), 'todo');
+      return;
+    }
     if (typeof _todayLessonInf !== 'undefined' && _todayLessonInf && _todayLessonInf.kind === 'work') {
       var workNext = _workDayNextLesson();
       show('Work Day — nothing new today.\nFinish: ' + (workNext ? cedLabel(workNext.inf.t).text : 'All caught up.')
@@ -9842,6 +9961,14 @@ function cedTeacherBridgeAllowed() {
         return !!who && who.role === 'teacher';
     } catch (_) { return false; }
 }
+// Progress Check launch links, keyed by the calendar's PC pseudo-lesson id
+// (U{u}-PCA = mid-unit MCQ Part A, U{u}-PC1 / U{u}-PC2 = end-of-unit days).
+// PCs are taken in AP Classroom (College Board sign-in), never inside the Desk:
+// the tile / Do Now only open the assignment. A missing key renders a
+// "your teacher shares the link in class" panel, so unlinked PCs never break.
+var PC_LINKS = {
+    'U1-PCA': { url: 'https://apclassroom.collegeboard.org/33/assignments?quizId=21010399&type=', label: 'Unit 1 Progress Check — MCQ Part A' }
+};
 // Grading Model v3 (s121): inject Poster + PC Day 1 + PC Day 2 pseudo-lessons
 // at every unit transition (and at the array end). generateSchedule treats
 // them like lessons and places them on consecutive meeting days so each
@@ -10079,7 +10206,9 @@ const SCHEDULE_DEFS = {
       B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, workDayFrom:[2026,8,14], workDayGap:2, maxWorkDaysPerWeek:1, schoologyCourse:null,
            // Section-only breaks: nothing placed, pacing shifts one meeting later. 2026-09-18 = AP Classroom down (teacher).
            breakDays:[[2026,8,18]] },
-      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,16], maxPairsPerWeek:2, videoCapMin:30, videoCapEarlyReleaseMin:20, schoologyCourse:null }
+      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, doubleFrom:[2026,8,16], maxPairsPerWeek:2, videoCapMin:30, videoCapEarlyReleaseMin:20, schoologyCourse:null,
+           // SAT Day Wed 2026-10-21 (teacher 2026-09-22): E does not meet for a lesson; pacing shifts one meeting later.
+           breakDays:[[2026,9,21]] }
     },
     daysOff: [
       [[2026,8,4]],                    // School Closed (Fri Sep 4)
@@ -10167,6 +10296,16 @@ function generateSchedule(def){
   // section's cells come from a reference run with every breakDays list removed,
   // and its placements feed the lead exactly as they did without the break.
   const hasBreak=pid=>!!(def.periods[pid]&&def.periods[pid].breakDays&&def.periods[pid].breakDays.length);
+  // Both sections have breaks (first time: B 2026-09-18 + E SAT Day 2026-10-21):
+  // each section's column comes from a run where ONLY its own breaks exist, so
+  // neither section's break can move the other (B's Work-Day rule would otherwise
+  // react to E's shifted pacing). Each sub-run has one break list → the
+  // single-break path below, so the B column is byte-identical to before.
+  if(hasBreak('B')&&hasBreak('E')){
+    const without=drop=>{const periods={};for(const pid in def.periods){periods[pid]={...def.periods[pid]};if(pid===drop)delete periods[pid].breakDays}return {...def,periods}};
+    const runB=generateSchedule(without('E')),runE=generateSchedule(without('B'));
+    return runB.map((row,i)=>[row[0],row[1],row[2],row[3],runE[i][4]]);
+  }
   let ref=null;
   if(['B','E'].some(hasBreak)){
     const periods={};
@@ -10265,6 +10404,7 @@ function loadYear(yearKey){
   // The calendar (global S) is now generated — recompute the Grade Check-in
   // periods so a schedule change re-derives due dates (self-gated to teachers).
   try { if (typeof _renderGradeCheckinUI === 'function') _renderGradeCheckinUI(); } catch (_) {}
+  try { if (typeof _loadBulletin === 'function') _loadBulletin(); } catch (_) {}
   localStorage.setItem('ap-roadmap-year',yearKey);
   var pu=new URL(window.location);
   pu.searchParams.set('year',yearKey);
@@ -11365,8 +11505,42 @@ function _showBreakDayPanel(inf, dateStr) {
     document.getElementById('resource-overlay').style.display = 'block';
 }
 
+function _showProgressCheckPanel(inf, dateStr) {
+    _lastResourcePanel = { inf: inf, dateStr: dateStr };
+    var header = document.getElementById('resource-header');
+    header.textContent = inf.n;
+    header.style.color = '';
+    header.style.fontStyle = '';
+    var body = document.getElementById('resource-body');
+    body.innerHTML = '';
+    var link = (typeof PC_LINKS !== 'undefined') ? PC_LINKS[inf.t] : null;
+    var p = document.createElement('p');
+    p.textContent = link
+        ? 'Taken in AP Classroom. Sign in with your College Board account, then open the assignment:'
+        : 'Taken in AP Classroom. Your teacher shares the link in class.';
+    body.appendChild(p);
+    if (link) {
+        var a = document.createElement('a');
+        a.href = link.url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.className = 's7btn chicago';
+        a.style.cssText = 'display:inline-block;padding:6px 10px;text-decoration:none';
+        a.textContent = 'Open in AP Classroom →';
+        body.appendChild(a);
+    }
+    var tip = document.createElement('p');
+    tip.textContent = 'AP Classroom down? Ask for the paper copy — same questions, same score.';
+    body.appendChild(tip);
+    document.getElementById('resource-overlay').style.display = 'block';
+}
+
 function showResourcePanel(inf, dateStr) {
     if (!inf || !inf.t) return;
+    if (inf.kind === 'pc') {
+        _showProgressCheckPanel(inf, dateStr);
+        return;
+    }
     if (inf.kind === 'break') {
         _showBreakDayPanel(inf, dateStr);
         return;
@@ -14651,8 +14825,55 @@ async function _ftFinish() {
     var topic = _ftState.topic, btn = _ftState.btn;
     _ftLogToStore(topic, round.log);   // per-card log (SRS/BKT foundation)
     _ftRenderRecap(round, score);      // "review your misses"
-    if (typeof _mayScore === 'function' && !_mayScore()) return;
-    await _blooketCommit(btn, topic, score);   // best-wins + grade refresh
+    if (typeof _mayScore === 'function' && !_mayScore()) { _ftRenderOutcome(topic, score, null); return; }
+    var outcome = null;
+    try { outcome = await _blooketCommit(btn, topic, score); }   // best-wins + grade refresh
+    catch (_) { outcome = { saved: false, best: null, error: true }; }
+    _ftRenderOutcome(topic, score, outcome);
+}
+
+// The last screen must SAY what happened to the grade and offer one obvious way
+// out (teacher 2026-09-23: a lone "Cancel" after finishing a deck read as
+// "did I just lose my work?"). outcome: null = not recorded (read-only view),
+// { saved, best, error? } from _blooketCommit.
+function _ftRenderOutcome(topic, score, outcome) {
+    var result = document.getElementById('bf-result');
+    if (result) {
+        var old = result.querySelector('.bf-outcome');
+        if (old) old.remove();
+        var line = document.createElement('div');
+        line.className = 'bf-outcome';
+        line.style.cssText = 'margin-top:10px;padding-top:8px;border-top:1px solid #bbb;font-weight:bold';
+        var label = (typeof cedLabel === 'function') ? cedLabel(topic).text : ('Topic ' + topic);
+        if (!outcome) {
+            line.textContent = 'Not recorded \u2014 this is a read-only view.';
+            line.style.color = '#7a0010';
+        } else if (outcome.error) {
+            line.textContent = 'Could not save this run. Your best score is kept; try again when you are back online.';
+            line.style.color = '#7a0010';
+        } else if (outcome.saved) {
+            line.textContent = '\u2713 Saved to your grade \u2014 ' + label + ' flashcards: ' + score.toFixed(1) + '%. Your ledger is up to date.';
+            line.style.color = '#25663F';
+        } else {
+            var best = (typeof outcome.best === 'number') ? outcome.best.toFixed(1) + '%' : 'your earlier score';
+            line.textContent = 'Recorded. Your best for ' + label + ' stays at ' + best + ' (this run: ' + score.toFixed(1) + '%).';
+            line.style.color = '#25663F';
+        }
+        result.appendChild(line);
+        result.style.display = 'block';
+    }
+    var actions = document.getElementById('bf-actions');
+    if (!actions) return;
+    while (actions.firstChild) actions.removeChild(actions.firstChild);
+    var done = document.createElement('button');
+    done.id = 'bf-done';
+    done.className = 's7btn s7btn-default';
+    done.textContent = 'Done';
+    done.onclick = function () {
+        if (typeof closeBlooketFlashcards === 'function') closeBlooketFlashcards();
+    };
+    actions.appendChild(done);
+    try { done.focus(); } catch (_) {}
 }
 
 function _ftRenderRecap(round, score) {
@@ -14751,9 +14972,16 @@ async function _blooketCommit(btn, topic, score) {
         var m = marks[topic + '|blooket'];
         if (m && typeof m.score === 'number') floor = Math.max(floor, m.score);
     } catch (_) {}
-    if (score > floor) {
+    var saved = score > floor;
+    if (saved) {
         await _studentMarkSave(btn, topic, 'blooket', score);   // records mark.score = score
     }
+    // Make the Desk agree with the ledger NOW: patch the /grade lessons cache with
+    // the score we just recorded so the My Ledger "about to become a 0" card and
+    // badge drop this deck immediately, instead of waiting for the next poll
+    // (teacher 2026-09-23: the warning outliving the finished deck read as lost work).
+    _blooketPatchGradeCache(topic, Math.max(score, floor));
+    _walletRefreshZeroCard();
     // Conversion fix: refresh /grade again + re-render the panel so the chip
     // reflects the just-saved score now, not on the next manual open.
     await _refreshGrade();
@@ -14761,6 +14989,34 @@ async function _blooketCommit(btn, topic, score) {
         if (_lastResourcePanel && typeof showResourcePanel === 'function') {
             showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
         }
+    } catch (_) {}
+    return { saved: saved, best: saved ? score : floor };
+}
+
+// Optimistic: set lesson.blooket on the cached /grade lessons[] for this topic.
+// The next /grade poll overwrites it with the server's value (best-wins, so the
+// server never reports less than what we just saved).
+function _blooketPatchGradeCache(topic, score) {
+    try {
+        if (!Array.isArray(_gradeLessonsCache)) return;
+        for (var i = 0; i < _gradeLessonsCache.length; i++) {
+            var L = _gradeLessonsCache[i];
+            if (!L || L.lessonKey !== topic) continue;
+            if (L.blooket == null || score > L.blooket) L.blooket = score;
+        }
+    } catch (_) {}
+}
+
+// Repaint the My Ledger zero-warning surfaces from the current grade cache: the
+// icon badge always, the in-window card only while the window is open.
+function _walletRefreshZeroCard() {
+    try { if (typeof _updateZeroWarningBadge === 'function') _updateZeroWarningBadge(); } catch (_) {}
+    try { if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill(); } catch (_) {}
+    try {
+        var ov = document.getElementById('app-wallet-overlay');
+        if (!ov || ov.style.display === 'none' || ov.style.display === '') return;
+        var host = document.getElementById('wallet-content');
+        if (host && typeof _walletPrependZeroCard === 'function') _walletPrependZeroCard(host);
     } catch (_) {}
 }
 
@@ -15073,6 +15329,7 @@ function closeMyReceipts() {
 // so the balance is monotonic (only ever rises) and can't be farmed by redoing
 // the same item. Rewards DOING work; correctness lives in the Grade number.
 function _walletComputePoints(receipts) {
+    receipts = (receipts || []).filter(function (r) { return r.src !== 'bonus' && r.src !== 'bonus_applied'; });
     return (window.WalletLogic && WalletLogic.computePoints)
         ? WalletLogic.computePoints(receipts)
         : { total: 0, today: 0 };
@@ -15179,6 +15436,9 @@ function _walletApplyWindowReadiness(readiness) {
 // the zero date is within ZERO_WARN_DAYS, and keep warning after it passes —
 // the 0 is revisable, so "finish it" is still the right message. Pure over the
 // /grade lessons[] so it is testable; never throws.
+// 2026-09-22: an unplayed Blooket (hasBlooket, no score) warns on the same
+// date — the lesson gate is gone, so this is the nudge to finish old
+// flashcards. Each warning carries kind: 'worksheet' | 'blooket'.
 var ZERO_WARN_DAYS = 3;
 function _zeroWarnings(lessons, period, todayIso) {
     try {
@@ -15190,13 +15450,16 @@ function _zeroWarnings(lessons, period, todayIso) {
             if (!L || !L.lessonKey || !L.zeroDate) continue;
             var zd = L.zeroDate[period];
             if (!zd) continue;
-            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null || L.lessonGrade != null;
-            if (hasWork) continue;
             var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
             if (days > ZERO_WARN_DAYS) continue;
-            out.push({ lessonKey: L.lessonKey, zeroDate: zd, daysLeft: days, past: days < 0 });
+            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;
+            if (!hasWork) out.push({ lessonKey: L.lessonKey, kind: 'worksheet', zeroDate: zd, daysLeft: days, past: days < 0 });
+            if (L.hasBlooket && L.blooket == null) out.push({ lessonKey: L.lessonKey, kind: 'blooket', zeroDate: zd, daysLeft: days, past: days < 0 });
         }
-        out.sort(function (a, b) { return a.zeroDate < b.zeroDate ? -1 : a.zeroDate > b.zeroDate ? 1 : 0; });
+        out.sort(function (a, b) {
+            if (a.zeroDate !== b.zeroDate) return a.zeroDate < b.zeroDate ? -1 : 1;
+            return a.kind === b.kind ? 0 : (a.kind === 'worksheet' ? -1 : 1);
+        });
         return out;
     } catch (_) { return []; }
 }
@@ -15229,9 +15492,24 @@ function _updateZeroWarningBadge() {
         if (!badge) { badge = document.createElement('span'); badge.className = 'wallet-zero-badge'; img.appendChild(badge); }
         badge.textContent = String(warns.length);
         badge.setAttribute('role', 'status');
-        badge.setAttribute('aria-label', warns.length + ' worksheet' + (warns.length === 1 ? '' : 's') + ' about to become a 0');
+        badge.setAttribute('aria-label', _zeroCountText(warns) + ' missing \u2014 open My Ledger');
         icon.setAttribute('data-zero-warn', String(warns.length));
-        icon.title = warns.length + ' worksheet' + (warns.length === 1 ? '' : 's') + ' about to become a 0 \u2014 open My Ledger';
+        icon.title = _zeroCountText(warns) + ' missing \u2014 open My Ledger';
+    } catch (_) {}
+}
+// "3 worksheets" / "2 worksheets and 1 flashcard deck" for the badge + title.
+function _zeroCountText(warns) {
+    var ws = 0, bl = 0;
+    for (var i = 0; i < warns.length; i++) { if (warns[i].kind === 'blooket') bl++; else ws++; }
+    var parts = [];
+    if (ws) parts.push(ws + ' worksheet' + (ws === 1 ? '' : 's'));
+    if (bl) parts.push(bl + ' flashcard deck' + (bl === 1 ? '' : 's'));
+    return parts.join(' and ');
+}
+function _zeroOpenFlashcards(btn, lessonKey) {
+    try {
+        if (typeof openBlooketFlashcards === 'function') { openBlooketFlashcards(btn, lessonKey); return; }
+        _zeroOpenLesson(lessonKey);
     } catch (_) {}
 }
 function _zeroOpenLesson(lessonKey) {
@@ -15246,36 +15524,78 @@ function _zeroOpenLesson(lessonKey) {
         if (e && e.urls && e.urls.worksheet) window.open(e.urls.worksheet, '_blank', 'noopener');
     } catch (_) {}
 }
+function _updateDoNowMissingPill() {
+    var host = document.getElementById('donow-grades');
+    if (!host) return;
+    var pill = host.querySelector('.qpill-missing');
+    var warns = _zeroCurrentWarnings();
+    if (!warns.length) { if (pill) pill.remove(); return; }
+    var quarter = host.querySelector('.qpill:not(.qpill-missing)');
+    if (!quarter) return;
+    if (!pill) {
+        pill = document.createElement('span');
+        pill.className = 'qpill qpill-missing';
+        pill.setAttribute('role', 'button');
+        pill.tabIndex = 0;
+        pill.onclick = function (event) { event.stopPropagation(); openWallet(); };
+        pill.onkeydown = function (event) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            event.stopPropagation();
+            openWallet();
+        };
+        quarter.after(pill);
+    }
+    pill.textContent = '\u26A0 ' + warns.length + ' missing';
+    pill.title = _zeroCountText(warns) + ' — click to see what to finish';
+}
 function _walletPrependZeroCard(host) {
     try {
         if (!host) return;
         var old = host.querySelector('.wallet-zero-card');
-        if (old) old.remove();
         var warns = _zeroCurrentWarnings();
+        // Same list as last paint → keep the card (a grade poll must not steal
+        // focus from an Open button the student is tabbing through).
+        var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
+        if (old && old.dataset.sig === sig) return;
+        if (old) old.remove();
         if (!warns.length) return;
         var card = document.createElement('div');
         card.className = 'wallet-zero-card';
+        card.dataset.sig = sig;
         var h = document.createElement('h4');
-        h.textContent = '\u26A0 About to become a 0';
+        h.textContent = '\u26A0 Missing work';
         card.appendChild(h);
         var p = document.createElement('div');
-        p.textContent = 'No work on these yet. Each becomes a 0 in your grade and on Schoology after its date \u2014 always revisable, but finish them first.';
+        p.textContent = 'Each of these is a 0 in your grade and on Schoology once its date passes. All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.';
         p.style.marginBottom = '6px';
         card.appendChild(p);
-        warns.slice(0, 6).forEach(function (w) {
-            var row = document.createElement('div');
-            row.className = 'wz-row' + (w.past ? ' wz-past' : '');
-            var btn = document.createElement('button');
-            btn.type = 'button'; btn.className = 's7btn';
-            var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
-            btn.textContent = 'Open ' + label;
-            btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
-            row.appendChild(btn);
-            var when = document.createElement('span');
-            when.className = 'wz-when';
-            when.textContent = _zeroWhenText(w);
-            row.appendChild(when);
-            card.appendChild(row);
+        [true, false].forEach(function (past) {
+            var group = warns.filter(function (w) { return w.past === past; });
+            if (!group.length) return;
+            var heading = document.createElement('h5');
+            heading.textContent = past ? 'Already a 0' : 'Becomes a 0 soon';
+            card.appendChild(heading);
+            group.forEach(function (w) {
+                var row = document.createElement('div');
+                row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '');
+                var btn = document.createElement('button');
+                btn.type = 'button'; btn.className = 's7btn';
+                var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
+                if (w.kind === 'blooket') {
+                    btn.textContent = 'Flashcards ' + label;
+                    btn.onclick = function () { _zeroOpenFlashcards(btn, w.lessonKey); };
+                } else {
+                    btn.textContent = 'Open ' + label;
+                    btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
+                }
+                row.appendChild(btn);
+                var when = document.createElement('span');
+                when.className = 'wz-when';
+                when.textContent = _zeroWhenText(w);
+                row.appendChild(when);
+                card.appendChild(row);
+            });
         });
         host.insertBefore(card, host.firstChild);
     } catch (_) {}
@@ -15283,6 +15603,7 @@ function _walletPrependZeroCard(host) {
 
 function updateWalletReadinessIcon() {
     try { _updateZeroWarningBadge(); } catch (_) {}
+    try { _updateDoNowMissingPill(); } catch (_) {}
     try {
         var icon = document.querySelector('.app-icon[data-app="wallet"]');
         if (!icon) return;
@@ -16746,6 +17067,70 @@ function _dogeWalletPreviewFallback(box, pts, notProvisioned) {
     });
 }
 
+function _walletBonusResponse(r) {
+    try { return typeof r.response === 'string' ? (JSON.parse(r.response) || {}) : (r.response || {}); }
+    catch (_) { return {}; }
+}
+
+function _walletBonusBlock(receipts) {
+    var quarter = typeof quarterOfDate === 'function' ? 'Q' + quarterOfDate(new Date()) : _walletCurrentQuarter().quarter;
+    var sheets = new Map();
+    var applied = null;
+    (receipts || []).forEach(function (r) {
+        var item = r.i || r.itemId || r.item || '';
+        if (r.src === 'bonus_applied' && item === 'BONUS-APPLIED-' + quarter) applied = r;
+        if (r.src !== 'bonus') return;
+        var data = _walletBonusResponse(r);
+        if (data.quarter && data.quarter !== quarter) return;
+        sheets.set(item, { row: r, data: data });
+    });
+    if (!sheets.size && !applied) return null;
+    var block = document.createElement('div');
+    block.className = 'wallet-bonus-block geneva';
+    block.style.cssText = 'border:1px solid var(--black);background:#fff;'
+        + 'box-shadow:inset 1px 1px 0 0 #fff,inset -1px -1px 0 0 #888,2px 2px 0 0 var(--black);'
+        + 'border-radius:3px;padding:12px 14px;margin-bottom:12px;font-size:11px';
+    var header = document.createElement('div');
+    header.className = 'chicago';
+    header.textContent = 'Bonus banked';
+    block.appendChild(header);
+    sheets.forEach(function (sheet, item) {
+        var points = Number(sheet.row.sc);
+        var line = document.createElement('div');
+        line.textContent = (sheet.data.title || item.replace(/^BONUS-/, '')) + ' — '
+            + (sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[points] || '—') + ' (+' + points + ')';
+        block.appendChild(line);
+    });
+    var footer = document.createElement('div');
+    footer.style.marginTop = '6px';
+    var audit = applied ? _walletBonusResponse(applied) : {};
+    footer.textContent = applied ? 'Bonus applied — quarter grade '
+        + (audit.adjustedGrade != null ? audit.adjustedGrade : applied.sc) : 'Applied at the end of the quarter.';
+    block.appendChild(footer);
+    return block;
+}
+
+// Bonus ledger entries need no signed receipt; fetchReceipts omits unsigned rows.
+async function _walletFetchBonusReceipts() {
+    try {
+        var client = window.rosterClient;
+        var base = window.ROSTER_SERVICE_URL;
+        if (!client || !base || !client.token() || !client.studentId()) return [];
+        // View-as: read the VIEWED student's bank with the teacher's own token (the
+        // route allows a verified teacher to read any student). Review finding 2026-09-23.
+        var viewAs = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+        var sid = (viewAs && typeof viewAs.studentId === 'string') ? viewAs.studentId : client.studentId();
+        var res = await fetch(base + '/ledger/student/' + encodeURIComponent(sid) + '?prefix=BONUS-', {
+            headers: { Authorization: 'Bearer ' + client.token() }
+        });
+        if (!res.ok) return [];
+        var data = await res.json();
+        if (!data.ok || !Array.isArray(data.rows)) return [];
+        return data.rows.filter(function (r) { return r.source === 'bonus' || r.source === 'bonus_applied'; })
+            .map(function (r) { return { src: r.source, i: r.item_id, sc: Number(r.score), response: r.response }; });
+    } catch (_) { return []; }
+}
+
 function _walletPaint(host, receipts, loading) {
     if (!host) return;
     if (typeof _clearStudentWalletCeremony === 'function') _clearStudentWalletCeremony();
@@ -16910,6 +17295,10 @@ function _walletPaint(host, receipts, loading) {
     // "Verify / QR this session" row.)
     card.appendChild(exportRow);
     host.appendChild(card);
+
+    var bonus = _walletBonusBlock(receipts);
+    if (bonus) host.appendChild(bonus);
+    receipts = receipts.filter(function (r) { return r.src !== 'bonus' && r.src !== 'bonus_applied'; });
 
     var legend = document.createElement('div');
     legend.className = 'geneva';
@@ -17144,7 +17533,8 @@ async function renderWallet() {
     _walletPaint(host, _readDeskReceipts(), true);
     _walletPrependZeroCard(host);
     try {
-        var merged = await _walletLoadReceipts();
+        var loaded = await Promise.all([_walletLoadReceipts(), _walletFetchBonusReceipts()]);
+        var merged = loaded[0].concat(loaded[1]);
         var ov = document.getElementById('app-wallet-overlay');
         if (ov && ov.style.display !== 'none') { _walletPaint(host, merged, false); _walletPrependZeroCard(host); }
         // ANDROID Phase 2: compute the signed-ledger verification summary once, then
@@ -17275,6 +17665,147 @@ window.addEventListener('message', function (event) {
     if (event.data.action === 'scan') { destroyTeacherTools(); openVerifyQR(); }
     if (event.data.action === 'checkin') { destroyTeacherTools(); openGradeCheckin(); }
 });
+
+// ═══ School bulletin (data/bulletin.json) ═══════════════════════════════════════
+// Weekly school notices. Updating them is a data edit only — no Desk code change.
+// The JSON is a PUBLIC file; the teacher gate below is a display filter, not secrecy.
+var BULLETIN_LOOKAHEAD_DAYS = 21;
+var BULLETIN_SOON_DAYS = 3;
+var _bulletinItems = null;
+
+function _bulletinISO(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function _bulletinDaysBetween(fromISO, toISO) {
+  return Math.round((Date.parse(toISO + 'T00:00:00Z') - Date.parse(fromISO + 'T00:00:00Z')) / 86400000);
+}
+
+// Pure: which items show today, in display order. Dated items first (soonest first),
+// standing reminders last. Staff items only when isTeacher.
+function _bulletinVisible(items, todayISO, isTeacher) {
+  var visible = (items || []).filter(function (item) {
+    if (!item || !item.id || !item.title) return false;
+    if (item.audience === 'teacher' && !isTeacher) return false;
+    var lastDay = item.until || item.date;
+    if (!lastDay || todayISO > lastDay) return false;
+    if (item.showFrom) return todayISO >= item.showFrom;
+    if (!item.date) return true;
+    return _bulletinDaysBetween(todayISO, item.date) <= BULLETIN_LOOKAHEAD_DAYS;
+  });
+  return visible.sort(function (a, b) {
+    if (!a.date !== !b.date) return a.date ? -1 : 1;
+    return String(a.date || '').localeCompare(String(b.date || '')) || a.id.localeCompare(b.id);
+  });
+}
+
+function _bulletinWhenLabel(item, todayISO) {
+  if (!item.date) return 'Reminder';
+  var days = _bulletinDaysBetween(todayISO, item.date);
+  if (days <= 0 && todayISO <= (item.until || item.date)) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  var parts = item.date.split('-');
+  var day = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.getDay()] + ' ' + (+parts[1]) + '/' + (+parts[2]);
+}
+
+// Renders the window body (whenever it is open or not — cheap) and the icon badge.
+// The badge counts notices within BULLETIN_SOON_DAYS; the window lists everything
+// current. Nothing auto-opens: the bulletin is its own app now (teacher 2026-09-22).
+function _renderBulletin() {
+  var list = document.getElementById('school-bulletin-list');
+  var summary = document.getElementById('school-bulletin-summary');
+  if (!list || !summary) return;
+  var isTeacher = (typeof _deskIsTeacher === 'function') ? _deskIsTeacher() : false;
+  var todayISO = _bulletinISO(_gradeCheckinToday());
+  var items = _bulletinVisible(_bulletinItems, todayISO, isTeacher);
+  list.textContent = '';
+  var soonCount = 0;
+  items.forEach(function (item) {
+    var soon = !!item.date && _bulletinDaysBetween(todayISO, item.date) <= BULLETIN_SOON_DAYS;
+    if (soon) soonCount++;
+    var li = document.createElement('li');
+    if (soon) li.className = 'sb-soon';
+    var when = document.createElement('span');
+    when.className = 'sb-when';
+    when.textContent = _bulletinWhenLabel(item, todayISO);
+    li.appendChild(when);
+    if (item.audience === 'teacher') {
+      var tag = document.createElement('span');
+      tag.className = 'sb-staff';
+      tag.textContent = 'staff';
+      li.appendChild(tag);
+    }
+    li.appendChild(document.createTextNode(item.title));
+    if (item.detail) {
+      var detail = document.createElement('span');
+      detail.className = 'sb-detail';
+      detail.textContent = item.detail;
+      li.appendChild(detail);
+    }
+    list.appendChild(li);
+  });
+  if (!items.length) {
+    summary.textContent = _bulletinItems === null ? 'Loading school notices\u2026' : 'No school notices right now.';
+  } else {
+    summary.textContent = '\ud83d\udccc ' + items.length + (items.length === 1 ? ' notice' : ' notices') +
+      (soonCount ? ' \u2014 ' + soonCount + ' in the next ' + BULLETIN_SOON_DAYS + ' days' : '');
+  }
+  _updateBulletinBadge(soonCount);
+}
+
+function _updateBulletinBadge(soonCount) {
+  try {
+    var icon = document.querySelector('.app-icon[data-app="bulletin"]');
+    if (!icon) return;
+    var img = icon.querySelector('.icon-img');
+    var badge = img ? img.querySelector('.bulletin-soon-badge') : null;
+    if (!soonCount) {
+      if (badge) badge.remove();
+      icon.removeAttribute('title');
+      return;
+    }
+    if (!badge) { badge = document.createElement('span'); badge.className = 'bulletin-soon-badge'; img.appendChild(badge); }
+    badge.textContent = String(soonCount);
+    badge.setAttribute('role', 'status');
+    badge.setAttribute('aria-label', soonCount + (soonCount === 1 ? ' school notice' : ' school notices') + ' in the next ' + BULLETIN_SOON_DAYS + ' days');
+    icon.title = badge.getAttribute('aria-label') + ' \u2014 open the Bulletin';
+  } catch (_) {}
+}
+
+function openBulletin() {
+  try { if (typeof bumpUsage === 'function') bumpUsage('bulletin'); } catch (_) {}
+  try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
+  var overlay = document.getElementById('app-bulletin-overlay');
+  if (!overlay) return;
+  var win = overlay.querySelector('.app-window');
+  if (win) {
+    win.style.left = '50%'; win.style.top = '50%';
+    win.style.transform = 'translate(-50%, -50%)';
+    win.classList.remove('maximized');
+  }
+  overlay.style.display = 'block';
+  _renderBulletin();
+  if (_bulletinItems === null) _loadBulletin();
+}
+
+function destroyBulletin() {
+  try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+  var overlay = document.getElementById('app-bulletin-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function _loadBulletin() {
+  // A weekly edit must show up without a hard refresh: no-store here, and sw.js
+  // passes this path straight to the network instead of its cache-first asset rule.
+  fetch('data/bulletin.json', { cache: 'no-store' })
+    .then(function (response) { return response.ok ? response.json() : null; })
+    .then(function (data) {
+      _bulletinItems = (data && Array.isArray(data.items)) ? data.items : [];
+      _renderBulletin();
+    })
+    .catch(function () { _bulletinItems = []; _renderBulletin(); });
+}
 
 // ── Grade Check-in (DESK_GRADE_CHECKIN_SPEC.md) ──────────────────────────────
 // A teacher-only, browser-local monthly reminder to run the private grade-
@@ -22320,7 +22851,10 @@ const APP_REGISTRY = {
     // 2026-09-12: DOK ladders index (this repo, GH Pages) — teacher-only entry point from the Teacher
     // menu, so the teacher never has to remember the dok/index.html URL. The index renders from
     // dok/manifest.json, so new sheets (incl. standalone remediation sheets) appear on their own.
-    dok:      { url: 'https://robjohncolson.github.io/apstats-live-worksheet/dok/index.html', sfx: 'wildEep' }
+    dok:      { url: 'https://robjohncolson.github.io/apstats-live-worksheet/dok/index.html', sfx: 'wildEep' },
+    // 2026-09-22: "This Week" — what B and E cover this week (teacher-week.html, same repo, so a
+    // relative URL follows whichever host serves the Desk). ?ced=1 (teacher only) adds CED codes.
+    week:     { url: 'teacher-week.html', sfx: 'wildEep' }
     // driller deprecated — removed 2026-05
 };
 
@@ -22417,6 +22951,10 @@ function _openTi84ForTopic(topic) {
 // today (weekend, schedule gap) => bare URL and the trainer shows all units;
 // the student can change the in-app unit filter either way.
 function appLaunchUrl(app, id) {
+    if (id === 'week') {
+        var teacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
+        return app.url + (teacher ? '?ced=1' : '?ced=0');
+    }
     if (id !== 'ti84') return app.url;
     var topic = _ti84TodayTopic();
     if (topic) return app.url + '#topic=' + topic + '&source=desk';
@@ -24288,6 +24826,7 @@ function rCal(){
             + ' to ' + MN[_wl.getMonth()] + ' ' + _wl.getDate();
     }
     paintDonowCells(); // DN3b — overlay completion state onto the fresh grid
+    if (typeof _paintZeroCells === 'function') _paintZeroCells(); // missing-work corner marks survive the rebuild
 }
 function rCD(){
     const t=tdy(),ms=864e5,dte=Math.max(0,Math.ceil((EX_DT-t)/ms));
@@ -24420,6 +24959,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(inf.due)h+=`<div class="th">Due: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.due):inf.due)}</div>`;
         if(inf.as)h+=`<div class="th">Assign: ${_resourcePanelEsc(newLabels?cedDisplayText(inf.as):inf.as)}</div>`;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
+        if(inf.kind==='pc')h+='<div class="th" style="color:#2b6cb0">'+((typeof PC_LINKS!=='undefined'&&PC_LINKS[inf.t])?'Click to open in AP Classroom':'Taken in AP Classroom')+'</div>';
         const keys=inf.group?groupTopics(inf):[inf.t];
         const re=keys.map(getRegistryEntry).find(Boolean);
         if(re){
@@ -24959,7 +25499,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-18-0in2';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-25-t62o';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

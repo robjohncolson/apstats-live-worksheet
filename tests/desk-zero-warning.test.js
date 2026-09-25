@@ -54,6 +54,18 @@ function sandbox({ lessons = LESSONS, period = 'B', today = '2026-09-21' } = {})
 }
 
 describe('ZERO_WARNING — pure selection', () => {
+  it('warns for quiz-only work in Period E but accepts a Cws fallback', () => {
+    const { s, close } = sandbox();
+    try {
+      const lessons = [
+        { lessonKey: '1.5', zeroDate: { B: '2026-09-20', E: '2026-09-21' }, lessonGrade: 100, lessonGradeNoQuiz: null, Cws: null },
+        { lessonKey: '1.6', zeroDate: { E: '2026-09-21' }, lessonGradeNoQuiz: null, Cws: 0 },
+      ];
+      expect(s._zeroWarnings(lessons, 'E', '2026-09-25')).toEqual([
+        { lessonKey: '1.5', kind: 'worksheet', zeroDate: '2026-09-21', daysLeft: -4, past: true },
+      ]);
+    } finally { close(); }
+  });
   it('warns for no-work lessons whose zero date is within 3 days or already passed, in date order', () => {
     const { s, close } = sandbox();
     try {
@@ -88,7 +100,7 @@ describe('ZERO_WARNING — My Ledger icon badge', () => {
       s._updateZeroWarningBadge();
       const badge = dom.window.document.querySelector('.wallet-zero-badge');
       expect(badge.textContent).toBe('3');
-      expect(badge.getAttribute('aria-label')).toBe('3 worksheets about to become a 0');
+      expect(badge.getAttribute('aria-label')).toBe('3 worksheets missing — open My Ledger');
       expect(dom.window.document.querySelector('.app-icon').getAttribute('data-zero-warn')).toBe('3');
       expect(html).toMatch(/\.wallet-zero-badge\s*\{[^}]*animation:\s*zero-pulse/);
       expect(html).toMatch(/prefers-reduced-motion[^}]*\.wallet-zero-badge\s*\{\s*animation:\s*none/);
@@ -108,6 +120,31 @@ describe('ZERO_WARNING — My Ledger icon badge', () => {
 });
 
 describe('ZERO_WARNING — ledger card', () => {
+  it('groups two past rows before an upcoming row and explains how to replace zeros', () => {
+    const lessons = [
+      { lessonKey: '1.3', zeroDate: { B: '2026-09-23' } },
+      { lessonKey: '1.2', zeroDate: { B: '2026-09-19' }, lessonGradeNoQuiz: 90, hasBlooket: true },
+      { lessonKey: '1.1', zeroDate: { B: '2026-09-18' } },
+    ];
+    const { s, dom, close } = sandbox({ lessons });
+    try {
+      s._walletPrependZeroCard(dom.window.document.getElementById('wallet-content'));
+      const card = dom.window.document.querySelector('.wallet-zero-card');
+      expect(card.children[1].textContent).toBe('Each of these is a 0 in your grade and on Schoology once its date passes. All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.');
+      expect([...card.querySelectorAll('h5, .wz-row button')].map(el => el.textContent)).toEqual([
+        'Already a 0', 'Open Topic 1.1', 'Flashcards Topic 1.2', 'Becomes a 0 soon', 'Open Topic 1.3',
+      ]);
+    } finally { close(); }
+  });
+  it('renders all eight warnings and omits an empty upcoming group', () => {
+    const lessons = Array.from({ length: 8 }, (_, i) => ({ lessonKey: '1.' + i, zeroDate: { B: '2026-09-18' } }));
+    const { s, dom, close } = sandbox({ lessons });
+    try {
+      s._walletPrependZeroCard(dom.window.document.getElementById('wallet-content'));
+      expect(dom.window.document.querySelectorAll('.wz-row')).toHaveLength(8);
+      expect([...dom.window.document.querySelectorAll('.wallet-zero-card h5')].map(el => el.textContent)).toEqual(['Already a 0']);
+    } finally { close(); }
+  });
   it('prepends a card listing each lesson with its deadline and an Open button that opens the lesson', () => {
     const { s, dom, close } = sandbox();
     try {
@@ -115,7 +152,7 @@ describe('ZERO_WARNING — ledger card', () => {
       s._walletPrependZeroCard(host);
       const card = host.firstChild;
       expect(card.className).toBe('wallet-zero-card');
-      expect(card.querySelector('h4').textContent).toContain('About to become a 0');
+      expect(card.querySelector('h4').textContent).toBe('⚠ Missing work');
       const rows = [...card.querySelectorAll('.wz-row')];
       expect(rows.map(r => r.querySelector('button').textContent)).toEqual(['Open Topic 1.0', 'Open Topic 1.2', 'Open Topic 1.3']);
       expect(rows[0].querySelector('.wz-when').textContent).toContain('already a 0');
@@ -126,6 +163,24 @@ describe('ZERO_WARNING — ledger card', () => {
       s._walletPrependZeroCard(host);
       expect(host.querySelectorAll('.wallet-zero-card').length).toBe(1);
       expect(host.querySelector('.old')).not.toBeNull();
+    } finally { close(); }
+  });
+  it('keeps the same card node across a repaint with unchanged warnings (a grade poll must not steal focus), and rebuilds when they change', () => {
+    const { s, dom, close } = sandbox();
+    try {
+      const host = dom.window.document.getElementById('wallet-content');
+      s._walletPrependZeroCard(host);
+      const first = host.querySelector('.wallet-zero-card');
+      s._walletPrependZeroCard(host);
+      expect(host.querySelector('.wallet-zero-card')).toBe(first);
+      s._gradeLessonsCache = LESSONS.slice(1);   // 1.1 (done) dropped: same warnings → still the same node
+      s._walletPrependZeroCard(host);
+      expect(host.querySelector('.wallet-zero-card')).toBe(first);
+      s._gradeLessonsCache = LESSONS.slice(2);   // 1.2 no longer warned → rebuilt
+      s._walletPrependZeroCard(host);
+      const second = host.querySelector('.wallet-zero-card');
+      expect(second).not.toBe(first);
+      expect([...second.querySelectorAll('.wz-row button')].map(b => b.textContent)).not.toContain('Open Topic 1.2');
     } finally { close(); }
   });
   it('shows nothing when there is nothing to warn about, and renderWallet re-prepends after every paint', () => {
@@ -143,6 +198,66 @@ describe('ZERO_WARNING — ledger card', () => {
     try {
       const w = s._zeroWarnings(LESSONS, 'B', '2026-09-23').find(x => x.lessonKey === '1.2');
       expect(s._zeroWhenText(w)).toBe('0 after TONIGHT 11:59 PM');
+    } finally { close(); }
+  });
+});
+
+describe('missing work entry points', () => {
+  it('adds a pill beside the quarter, supports click and keyboard, and clears on refresh', () => {
+    const { s, dom, close } = sandbox({ lessons: null });
+    try {
+      const doc = dom.window.document;
+      doc.body.insertAdjacentHTML('beforeend', '<div id="donow-grades"><span class="qpill">Q1: 80</span></div>');
+      let opened = 0;
+      s.openWallet = () => { opened++; };
+      runInContext(fnSrc('_updateDoNowMissingPill'), s);
+      s._updateDoNowMissingPill();
+      expect(doc.querySelector('.qpill-missing')).toBeNull();
+      s._gradeLessonsCache = LESSONS;
+      s._updateDoNowMissingPill();
+      s._updateDoNowMissingPill();
+      const pill = doc.querySelector('.qpill-missing');
+      expect(doc.querySelectorAll('.qpill-missing')).toHaveLength(1);
+      expect(pill.previousElementSibling.textContent).toBe('Q1: 80');
+      expect(pill.textContent).toBe('⚠ 3 missing');
+      expect(pill.title).toBe('3 worksheets — click to see what to finish');
+      expect(pill.getAttribute('role')).toBe('button');
+      expect(pill.tabIndex).toBe(0);
+      pill.click();
+      for (const key of ['Enter', ' ', 'Escape']) pill.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      expect(opened).toBe(3);
+      s._gradeLessonsCache = [];
+      s._updateDoNowMissingPill();
+      expect(doc.querySelector('.qpill-missing')).toBeNull();
+      expect(fnSrc('renderDoNowGrades')).toContain('_updateDoNowMissingPill()');
+      expect(fnSrc('updateWalletReadinessIcon')).toContain('_updateDoNowMissingPill()');
+      expect(fnSrc('_walletRefreshZeroCard')).toContain('_updateDoNowMissingPill()');
+    } finally { close(); }
+  });
+  it('marks past and combined topics, preserves done classes, and removes stale tooltips', () => {
+    const { s, dom, close } = sandbox();
+    try {
+      const doc = dom.window.document;
+      doc.body.insertAdjacentHTML('beforeend', '<div id="cg"><div class="dc" data-topic="1.0" title="Topic 1.0"></div><div class="dc" data-topic="1.2"></div><div class="dc" data-topic="1.8+1.0"></div></div>');
+      s.localLessonState = () => 'done';
+      runInContext(fnSrc('_paintZeroCells'), s);
+      runInContext(fnSrc('paintLocalDoneCells'), s);
+      s.paintLocalDoneCells();
+      s.paintLocalDoneCells();
+      const cells = [...doc.querySelectorAll('#cg .dc')];
+      expect(cells.map(c => c.classList.contains('dc-zero'))).toEqual([true, false, true]);
+      expect(cells.every(c => c.classList.contains('dc-localdone'))).toBe(true);
+      expect(cells[0].title).toBe('Topic 1.0 — missing work (already a 0)');
+      expect(cells[2].title).toBe(' — missing work (already a 0)');
+      s._gradeLessonsCache = [];
+      s.paintLocalDoneCells();
+      expect(doc.querySelector('.dc-zero')).toBeNull();
+      expect(cells[0].title).toBe('Topic 1.0');
+      expect(cells[2].hasAttribute('title')).toBe(false);
+      // rCal repaints the corner marks after a rebuild via the lock-free helper —
+      // never via paintLocalDoneCells, which can call rCal back (rebuild loop).
+      expect(fnSrc('rCal')).toContain('_paintZeroCells()');
+      expect(fnSrc('rCal')).not.toContain('paintLocalDoneCells()');
     } finally { close(); }
   });
 });
@@ -170,7 +285,7 @@ describe('ZERO_WARNING — unplayed Blooket decks (2026-09-22, lesson gate gone)
       s._updateZeroWarningBadge();
       const badge = dom.window.document.querySelector('.wallet-zero-badge');
       expect(badge.textContent).toBe('5');
-      expect(badge.getAttribute('aria-label')).toBe('3 worksheets and 2 flashcard decks about to become a 0');
+      expect(badge.getAttribute('aria-label')).toBe('3 worksheets and 2 flashcard decks missing — open My Ledger');
       const host = dom.window.document.getElementById('wallet-content');
       s._walletPrependZeroCard(host);
       const rows = [...host.querySelectorAll('.wz-row')];

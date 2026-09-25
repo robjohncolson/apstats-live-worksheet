@@ -50,7 +50,7 @@
     return !search || [stub.realName, stub.username, stub.section].join(' ').toLowerCase().indexOf(search) >= 0;
   }
   function selectView(view) {
-    active = ['class', 'attention', 'recent', 'recovery'].indexOf(view) >= 0 ? view : 'class';
+    active = ['class', 'attention', 'messages', 'recent', 'recovery'].indexOf(view) >= 0 ? view : 'class';
     document.querySelectorAll('[data-workspace-view]').forEach(function (el) { el.hidden = el.dataset.workspaceView !== active; });
     document.querySelectorAll('[data-workspace-tab]').forEach(function (el) { el.setAttribute('aria-pressed', String(el.dataset.workspaceTab === active)); });
   }
@@ -96,7 +96,7 @@
     });
     if (!visible.length) [roster, attention, feed].forEach(function (el) { message(el, 'No students match this filter.'); });
     else {
-      if (!attentionCount) message(attention, 'No grading or account flags in the loaded class data. Check messages and browser reports below.');
+      if (!attentionCount) message(attention, 'No grading or account flags in the loaded class data. Check the Messages tab and browser reports below.');
       if (!events.length) message(feed, unavailable ? 'Recent work is unavailable for some students. Try loading again.' : 'No saved submissions yet.');
     }
     var attentionTab = document.querySelector('[data-workspace-tab=attention]');
@@ -333,12 +333,12 @@
       '<label>Period<select id="workspace-period"><option value="">All periods</option><option value="PeriodB">Period B</option><option value="PeriodE">Period E</option></select></label><span id="workspace-count" class="dim"></span>';
     main.prepend(toolbar);
     var nav = node('nav', null, 'workspace-nav'); nav.setAttribute('aria-label', 'Teacher workspace');
-    [['class', 'Class'], ['attention', 'Needs attention'], ['recent', 'Recent work'], ['recovery', 'More tools & recovery']].forEach(function (entry) {
+    [['class', 'Class'], ['attention', 'Needs attention'], ['messages', 'Messages'], ['recent', 'Recent work'], ['recovery', 'More tools & recovery']].forEach(function (entry) {
       var b = button(entry[1], function () { selectView(entry[0]); }); b.dataset.workspaceTab = entry[0]; nav.appendChild(b);
     });
     toolbar.after(nav);
     var panes = {};
-    ['class', 'attention', 'recent', 'recovery'].forEach(function (key) {
+    ['class', 'attention', 'messages', 'recent', 'recovery'].forEach(function (key) {
       var pane = node('div', null, 'workspace-pane'); pane.dataset.workspaceView = key; main.appendChild(pane); panes[key] = pane;
     });
     panes.class.innerHTML = '<section class="section"><h2>Class</h2><div id="workspace-roster"></div></section><details id="workspace-class-details"><summary>Grades, pacing, and class detail</summary></details>';
@@ -349,12 +349,24 @@
     var settings = node('details', null, 'workspace-settings'); settings.appendChild(node('summary', 'Connection settings'));
     connection.querySelectorAll('.row-2').forEach(function (el) { settings.appendChild(el); });
     connection.querySelector('h2').remove(); connection.prepend(settings); nav.after(connection);
-    panes.attention.appendChild($('inbox-strip'));
+    panes.messages.appendChild($('inbox-strip'));
     // Keep unread messages visible even while the teacher is on the Class tab.
-    var unreadNote = node('span', '', 'workspace-unread'); unreadNote.setAttribute('role', 'status'); nav.appendChild(unreadNote);
+    var unreadButton = button('', function () {
+      selectView('messages');
+      var first = document.querySelector('#inbox-list li');
+      if (!first) return;
+      first.tabIndex = -1;
+      first.focus();
+    });
+    unreadButton.classList.add('workspace-unread');
+    var unreadNote = node('span', ''); unreadNote.setAttribute('role', 'status');
+    unreadButton.appendChild(unreadNote); nav.appendChild(unreadButton);
     function unreadChanged() {
       var badge = $('inbox-unread');
-      unreadNote.textContent = badge.hidden ? '' : badge.textContent + ' student message(s)';
+      var count = badge.hidden ? 0 : parseInt(badge.textContent, 10) || 0;
+      unreadButton.hidden = !count;
+      unreadNote.textContent = count ? count + ' student message(s)' : '';
+      document.querySelector('[data-workspace-tab=messages]').textContent = count ? 'Messages (' + count + ')' : 'Messages';
     }
     new MutationObserver(unreadChanged).observe($('inbox-unread'), { childList: true, attributes: true, subtree: true });
     unreadChanged();

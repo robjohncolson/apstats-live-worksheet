@@ -1008,15 +1008,23 @@ export async function runAgent({
         logger.log(`DOGE payout agent: ${safeLogReason(result)}`);
       }
     } catch (error) {
-      const label = error && error.code ? error.code : 'operation failed';
       if (logger && typeof logger.error === 'function') {
-        logger.error(`DOGE payout agent: ${label}`);
+        logger.error(`DOGE payout agent: ${describePollError(error)}`);
       }
     }
 
     if (config.once || shouldStop()) break;
     await sleep(config.pollSeconds * 1000);
   } while (!shouldStop());
+}
+
+// Log label for a failed poll. HTTP errors carry the status code so a stall
+// is diagnosable from the log alone; the message text is fixed (no secrets).
+function describePollError(error) {
+  if (!error || !error.code) return 'operation failed';
+  if (error.code !== 'PAYOUT_HTTP_ERROR') return error.code;
+  if (!error.status) return 'PAYOUT_HTTP_ERROR (network: server unreachable)';
+  return `PAYOUT_HTTP_ERROR (HTTP ${error.status})`;
 }
 
 export async function main(argv = process.argv.slice(2)) {

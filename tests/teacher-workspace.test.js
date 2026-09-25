@@ -30,10 +30,35 @@ async function make() {
 }
 afterEach(() => { doms.splice(0).forEach(d => d.window.close()); });
 describe('integrated teacher workspace', () => {
+  it('opens the Messages pane from the unread button without marking messages read', async () => {
+    const { w, doc } = await make();
+    expect([...doc.querySelectorAll('[data-workspace-tab]')].map(el => el.dataset.workspaceTab)).toEqual(['class', 'attention', 'messages', 'recent', 'recovery']);
+    expect(doc.querySelector('[data-workspace-view=messages] #inbox-strip')).not.toBeNull();
+    expect(doc.querySelector('[data-workspace-view=attention] #inbox-strip')).toBeNull();
+    expect(doc.getElementById('workspace-attention-list').textContent).toContain('Check the Messages tab and browser reports below.');
+    w.renderStudentInbox([{ senderUsername: student.username, text: 'What am I missing?', createdAt: saved.recordedAt }]);
+    await tick();
+    const unread = doc.querySelector('button.workspace-unread');
+    const tab = doc.querySelector('[data-workspace-tab=messages]');
+    expect(unread.hidden).toBe(false);
+    expect(unread.querySelector('[role=status]').textContent).toBe('1 student message(s)');
+    expect(tab.textContent).toBe('Messages (1)');
+    unread.click();
+    expect(tab.getAttribute('aria-pressed')).toBe('true');
+    expect(doc.querySelector('[data-workspace-view=messages]').hidden).toBe(false);
+    expect(doc.activeElement).toBe(doc.querySelector('#inbox-list li'));
+    expect(doc.querySelector('#inbox-list li').classList.contains('unread')).toBe(true);
+    expect(w.localStorage.getItem('tsc-inbox-seen-at:all')).toBeNull();
+    doc.getElementById('inbox-mark-read').click();
+    await tick();
+    expect(unread.hidden).toBe(true);
+    expect(unread.textContent).toBe('');
+    expect(tab.textContent).toBe('Messages');
+  });
   it('organizes tools, filters duplicate names by identity and opens one student panel', async () => {
     const { w, doc, errors } = await make();
     expect(errors).toEqual([]);
-    expect(doc.querySelectorAll('[data-workspace-tab]')).toHaveLength(4);
+    expect(doc.querySelectorAll('[data-workspace-tab]')).toHaveLength(5);
     expect(doc.querySelector('#workspace-class-details #gb-tbody')).not.toBeNull();
     const buttons = doc.querySelectorAll('#workspace-roster .student-name');
     buttons[1].click(); await tick();

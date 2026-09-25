@@ -374,6 +374,7 @@
         @media (prefers-reduced-motion: reduce) { .app-icon[data-app="wallet"] .wallet-zero-badge { animation: none; } }
         .wallet-zero-card { border: 2px solid #cc0000; background: #fff3f3; padding: 8px 10px; margin-bottom: 10px; font-size: 11px; }
         .wallet-zero-card h4 { margin: 0 0 6px; font: bold 12px Chicago, Geneva, sans-serif; color: #b00020; }
+        .wallet-zero-card h5 { margin: 8px 0 2px; font: bold 11px Chicago, Geneva, sans-serif; color: #7a0010; }
         .wallet-zero-card .wz-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; border-top: 1px dotted #e0b0b0; }
         .wallet-zero-card .wz-row:first-of-type { border-top: 0; }
         .wallet-zero-card .wz-when { color: #7a0010; white-space: nowrap; margin-left: auto; }
@@ -824,6 +825,14 @@
         .dc-localpartial::after, .dc-partial::after { content: '\25D0'; }                  /* ◐ in progress */
         .dc-localdone::after, .dc-done::after, .dc-ahead::after { content: '\2713'; }       /* ✓ done */
         .cal-current::after { content: '\25B6'; }                                           /* ▶ next up */
+        /* Missing-work corner mark (MISSING_WORK_VISIBILITY D3b). A real child element:
+           ::after carries the ✓ ◐ ▶ glyphs and ::before is the marching-ants next-up
+           outline, so neither slot is free. Sits left of the glyph box, never under it. */
+        .dc-zero-mark {
+            position: absolute; top: 2px; right: 14px; z-index: 2;
+            width: 6px; height: 6px; border: 1px solid var(--black);
+            background: #cc0000; pointer-events: none;
+        }
         .cal-current {
             z-index: 3;
             outline: 2px solid var(--accent); outline-offset: -2px;
@@ -2146,6 +2155,7 @@
               #donow-grades .qpill .qgrade{}
               #donow-grades .qpill .qceil{color:var(--ok);font-size:9px}
               #donow-grades .qpill.empty{color:var(--plat-lo);background:#fff}
+              #donow-grades .qpill-missing{border-color:#cc0000;color:#cc0000;background:#fff;cursor:pointer}
               /* "Why so low?" grade coach (2026-06-01) — instant facts + optional AI follow-up */
               #donow-helper{margin-top:6px;font-size:11px}
               #donow-helper .wsl-btn,#donow-helper .wsl-ask{font-family:'Chicago','Courier New',monospace;
@@ -8120,8 +8130,43 @@ function _prevTopicInSequence(topic) {
 // so the no-flicker contract holds. Self-converging: rCal and this repaint both
 // derive the lock from _isLessonUnlocked with identical inputs, so after one
 // rebuild the next paint finds no mismatch. Idempotent + never throws.
+// MISSING_WORK_VISIBILITY D3b — red corner mark on calendar cells whose lesson
+// is already a 0 (no worksheet work, zero date passed). Runs after every rCal
+// rebuild (from paintDonowCells) and on every grade refresh (from
+// paintLocalDoneCells). Only paints classes/titles — never touches lock state,
+// so it can't re-enter the rCal <-> paintLocalDoneCells rebuild loop.
+function _paintZeroCells() {
+  try {
+    var zeroTopics = {};
+    _zeroCurrentWarnings().filter(function (w) { return w.past; }).forEach(function (w) {
+      zeroTopics[w.lessonKey] = true;
+    });
+    var zeroTitle = ' — missing work (already a 0)';
+    var cells = document.querySelectorAll('#cg .dc[data-topic]');
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      c.classList.remove('dc-zero');
+      var oldMark = c.querySelector('.dc-zero-mark');
+      if (oldMark) oldMark.remove();
+      if (c.title.endsWith(zeroTitle)) {
+        c.title = c.title.slice(0, -zeroTitle.length);
+        if (!c.title) c.removeAttribute('title');
+      }
+      var topic = c.dataset.topic || '';
+      if (!topic.split('+').some(function (key) { return zeroTopics[key]; })) continue;
+      c.classList.add('dc-zero');
+      var mark = document.createElement('span');
+      mark.className = 'dc-zero-mark';
+      mark.setAttribute('aria-hidden', 'true');
+      c.appendChild(mark);
+      c.title += zeroTitle;
+    }
+  } catch (_) { /* repaint must never break the Desk */ }
+}
+
 function paintLocalDoneCells() {
   try {
+    _paintZeroCells();
     var marks = (typeof getStudentMarks === 'function') ? getStudentMarks() : {};
     var signedIn = (typeof getStudentEmail === 'function') ? !!getStudentEmail() : false;
     var today = (typeof tdy === 'function') ? tdy() : null;
@@ -8953,12 +8998,11 @@ async function renderDoNowGrades(baseUrl, token) {
     var _lateRecovery = (_priorState === 'unavailable' && _gradeLoadState === 'available');
     if ((_gradeCacheWasCold || _lateRecovery) && _gradeLessonsCache && typeof rCal === 'function') {
       try { rCal(); } catch (_) {}
-    // An open My Ledger window must follow the fresh cache (its zero-warning card
-    // is painted by renderWallet, which does not re-run on a poll).
-    try { if (typeof _walletRefreshZeroCard === 'function') _walletRefreshZeroCard(); } catch (_) {}
     } else if (typeof paintLocalDoneCells === 'function') {
       paintLocalDoneCells();
     }
+    // An open ledger must also follow ordinary grade refreshes.
+    try { if (typeof _walletRefreshZeroCard === 'function') _walletRefreshZeroCard(); } catch (_) {}
     // #13: the Unit-Progress done-fill + pace label read the same synced scores —
     // recompute now that the /grade cache is warm (first rCal ran before this).
     if (typeof rProg === 'function') rProg();
@@ -9011,6 +9055,7 @@ async function renderDoNowGrades(baseUrl, token) {
     }
     pill.title = tip;
     host.appendChild(pill);
+    if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill();
 
     // The two v3 tracks (PC mastery vs Work engagement). The quarter grade is the
     // HIGHER of the two (40% floor + ceiling), so showing both tells the student
@@ -14966,6 +15011,7 @@ function _blooketPatchGradeCache(topic, score) {
 // icon badge always, the in-window card only while the window is open.
 function _walletRefreshZeroCard() {
     try { if (typeof _updateZeroWarningBadge === 'function') _updateZeroWarningBadge(); } catch (_) {}
+    try { if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill(); } catch (_) {}
     try {
         var ov = document.getElementById('app-wallet-overlay');
         if (!ov || ov.style.display === 'none' || ov.style.display === '') return;
@@ -15406,7 +15452,7 @@ function _zeroWarnings(lessons, period, todayIso) {
             if (!zd) continue;
             var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
             if (days > ZERO_WARN_DAYS) continue;
-            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null || L.lessonGrade != null;
+            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;
             if (!hasWork) out.push({ lessonKey: L.lessonKey, kind: 'worksheet', zeroDate: zd, daysLeft: days, past: days < 0 });
             if (L.hasBlooket && L.blooket == null) out.push({ lessonKey: L.lessonKey, kind: 'blooket', zeroDate: zd, daysLeft: days, past: days < 0 });
         }
@@ -15446,9 +15492,9 @@ function _updateZeroWarningBadge() {
         if (!badge) { badge = document.createElement('span'); badge.className = 'wallet-zero-badge'; img.appendChild(badge); }
         badge.textContent = String(warns.length);
         badge.setAttribute('role', 'status');
-        badge.setAttribute('aria-label', _zeroCountText(warns) + ' about to become a 0');
+        badge.setAttribute('aria-label', _zeroCountText(warns) + ' missing \u2014 open My Ledger');
         icon.setAttribute('data-zero-warn', String(warns.length));
-        icon.title = _zeroCountText(warns) + ' about to become a 0 \u2014 open My Ledger';
+        icon.title = _zeroCountText(warns) + ' missing \u2014 open My Ledger';
     } catch (_) {}
 }
 // "3 worksheets" / "2 worksheets and 1 flashcard deck" for the badge + title.
@@ -15478,41 +15524,78 @@ function _zeroOpenLesson(lessonKey) {
         if (e && e.urls && e.urls.worksheet) window.open(e.urls.worksheet, '_blank', 'noopener');
     } catch (_) {}
 }
+function _updateDoNowMissingPill() {
+    var host = document.getElementById('donow-grades');
+    if (!host) return;
+    var pill = host.querySelector('.qpill-missing');
+    var warns = _zeroCurrentWarnings();
+    if (!warns.length) { if (pill) pill.remove(); return; }
+    var quarter = host.querySelector('.qpill:not(.qpill-missing)');
+    if (!quarter) return;
+    if (!pill) {
+        pill = document.createElement('span');
+        pill.className = 'qpill qpill-missing';
+        pill.setAttribute('role', 'button');
+        pill.tabIndex = 0;
+        pill.onclick = function (event) { event.stopPropagation(); openWallet(); };
+        pill.onkeydown = function (event) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            event.stopPropagation();
+            openWallet();
+        };
+        quarter.after(pill);
+    }
+    pill.textContent = '\u26A0 ' + warns.length + ' missing';
+    pill.title = _zeroCountText(warns) + ' — click to see what to finish';
+}
 function _walletPrependZeroCard(host) {
     try {
         if (!host) return;
         var old = host.querySelector('.wallet-zero-card');
-        if (old) old.remove();
         var warns = _zeroCurrentWarnings();
+        // Same list as last paint → keep the card (a grade poll must not steal
+        // focus from an Open button the student is tabbing through).
+        var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
+        if (old && old.dataset.sig === sig) return;
+        if (old) old.remove();
         if (!warns.length) return;
         var card = document.createElement('div');
         card.className = 'wallet-zero-card';
+        card.dataset.sig = sig;
         var h = document.createElement('h4');
-        h.textContent = '\u26A0 About to become a 0';
+        h.textContent = '\u26A0 Missing work';
         card.appendChild(h);
         var p = document.createElement('div');
-        p.textContent = 'No work on these yet. Each becomes a 0 in your grade and on Schoology after its date \u2014 always revisable, but finish them first. Flashcard decks count as your Blooket grade.';
+        p.textContent = 'Each of these is a 0 in your grade and on Schoology once its date passes. All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.';
         p.style.marginBottom = '6px';
         card.appendChild(p);
-        warns.slice(0, 6).forEach(function (w) {
-            var row = document.createElement('div');
-            row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '');
-            var btn = document.createElement('button');
-            btn.type = 'button'; btn.className = 's7btn';
-            var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
-            if (w.kind === 'blooket') {
-                btn.textContent = 'Flashcards ' + label;
-                btn.onclick = function () { _zeroOpenFlashcards(btn, w.lessonKey); };
-            } else {
-                btn.textContent = 'Open ' + label;
-                btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
-            }
-            row.appendChild(btn);
-            var when = document.createElement('span');
-            when.className = 'wz-when';
-            when.textContent = _zeroWhenText(w);
-            row.appendChild(when);
-            card.appendChild(row);
+        [true, false].forEach(function (past) {
+            var group = warns.filter(function (w) { return w.past === past; });
+            if (!group.length) return;
+            var heading = document.createElement('h5');
+            heading.textContent = past ? 'Already a 0' : 'Becomes a 0 soon';
+            card.appendChild(heading);
+            group.forEach(function (w) {
+                var row = document.createElement('div');
+                row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '');
+                var btn = document.createElement('button');
+                btn.type = 'button'; btn.className = 's7btn';
+                var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
+                if (w.kind === 'blooket') {
+                    btn.textContent = 'Flashcards ' + label;
+                    btn.onclick = function () { _zeroOpenFlashcards(btn, w.lessonKey); };
+                } else {
+                    btn.textContent = 'Open ' + label;
+                    btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
+                }
+                row.appendChild(btn);
+                var when = document.createElement('span');
+                when.className = 'wz-when';
+                when.textContent = _zeroWhenText(w);
+                row.appendChild(when);
+                card.appendChild(row);
+            });
         });
         host.insertBefore(card, host.firstChild);
     } catch (_) {}
@@ -15520,6 +15603,7 @@ function _walletPrependZeroCard(host) {
 
 function updateWalletReadinessIcon() {
     try { _updateZeroWarningBadge(); } catch (_) {}
+    try { _updateDoNowMissingPill(); } catch (_) {}
     try {
         var icon = document.querySelector('.app-icon[data-app="wallet"]');
         if (!icon) return;
@@ -24742,6 +24826,7 @@ function rCal(){
             + ' to ' + MN[_wl.getMonth()] + ' ' + _wl.getDate();
     }
     paintDonowCells(); // DN3b — overlay completion state onto the fresh grid
+    if (typeof _paintZeroCells === 'function') _paintZeroCells(); // missing-work corner marks survive the rebuild
 }
 function rCD(){
     const t=tdy(),ms=864e5,dte=Math.max(0,Math.ceil((EX_DT-t)/ms));
@@ -25414,7 +25499,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-23-kypc';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-25-t62o';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

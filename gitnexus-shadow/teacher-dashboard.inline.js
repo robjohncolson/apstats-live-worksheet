@@ -1043,6 +1043,10 @@
 
 
 
+
+
+
+
     // ===== guardrails =====
     // The x-teacher-secret is NEVER auto-persisted client-side. It is read
     // fresh from the input on every fetch (see api()).
@@ -3738,6 +3742,88 @@
 
     // ── Quarter Close & Bonus (PC makeup [D] freeze/delta) ───────────────────
     function _qcQuarter() { return $('qc-quarter').value; }
+    var _qcFrozenScope = null;
+    var _qcBonusBusy = false;
+
+    function _qcScope() {
+      return { quarter: _qcQuarter(), section: $('section-filter').value.trim() || undefined };
+    }
+
+    function _qcSameScope(scope) {
+      return scope && scope.quarter === _qcQuarter() && scope.section === _qcScope().section;
+    }
+
+    function _qcSheetTitle(sheets) {
+      return (sheets || []).map(function (s) {
+        return s.title || s.itemId ? (s.title || s.itemId) + ' — ' + s.grade + ' (+' + s.points + ')' : String(s);
+      }).join('; ');
+    }
+
+    function renderQuarterBonus(payload, scope) {
+      var wrap = $('qc-bonus-wrap');
+      var rows = payload.rows || [];
+      var skipped = (payload.skipped || []).filter(function (r) { return r.reason === 'already applied'; }).length;
+      wrap.style.display = '';
+      wrap.innerHTML = '<p>' + rows.length + ' students · ' + rows.filter(function (r) { return r.switched; }).length
+        + ' flip the floor · ' + skipped + ' already applied</p>';
+      if (!rows.length) {
+        var empty = document.createElement('p');
+        empty.textContent = 'Nothing banked for ' + scope.quarter + ' in this section.';
+        wrap.appendChild(empty);
+        return;
+      }
+      wrap.innerHTML += '<div class="table-wrap"><table class="grades"><thead><tr><th>Student</th><th>Frozen</th>'
+        + '<th>Banked pts</th><th>Work before → after</th><th>Switch?</th><th>New grade</th><th>Sheets</th></tr></thead><tbody>'
+        + rows.map(function (r) {
+          return '<tr><td>' + studentNameHtml(r) + '</td><td>' + escHtml(r.frozenGrade) + '</td><td>' + escHtml(r.points)
+            + '</td><td>' + escHtml(r.workBefore) + ' → ' + escHtml(r.workAfter) + '</td><td>' + (r.switched ? '✓ Yes' : '—')
+            + '</td><td>' + escHtml(r.adjustedGrade) + '</td><td>' + escHtml((r.sheets || []).join(', ')) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+      var confirmBtn = document.createElement('button');
+      confirmBtn.className = 'btn';
+      confirmBtn.id = 'qc-bonus-confirm';
+      confirmBtn.textContent = 'Confirm apply';
+      confirmBtn.onclick = function () { return runQuarterBonus(false, scope, confirmBtn); };
+      wrap.appendChild(confirmBtn);
+    }
+
+    async function runQuarterBonus(dryRun, scope, confirmBtn) {
+      if (_qcBonusBusy || !_qcSameScope(scope) || !_qcSameScope(_qcFrozenScope)) return;
+      _qcBonusBusy = true;
+      $('qc-bonus-btn').disabled = true;
+      if (confirmBtn) confirmBtn.disabled = true;
+      try {
+        var res = await postJson('/class/quarter/apply-bonus', {
+          quarter: scope.quarter, section: scope.section, dryRun: dryRun
+        }, teacherSecret());
+        if (!_qcSameScope(scope)) return;
+        var data = res.data || {};
+        var errors = (data.errors || []).map(function (e) { return typeof e === 'string' ? e : JSON.stringify(e); });
+        $('qc-bonus-status').textContent = (dryRun ? '' : 'Applied: ' + (data.applied || 0) + '.')
+          + (errors.length ? ' Errors: ' + errors.join('; ') : '');
+        if (res.status === 503) {
+          showError('Migration pending: run roster-server/migrations/0036_item_ledger_bonus_source.sql. ' + (data.error || ''));
+          return;
+        }
+        if (res.status !== 200 || !data.ok) {
+          showError('Apply bonus failed: ' + (res.networkError || data.error || ('HTTP ' + res.status)));
+          return;
+        }
+        if (dryRun) renderQuarterBonus(data, scope);
+        else await loadQuarterDeltas();
+      } finally {
+        _qcBonusBusy = false;
+        $('qc-bonus-btn').disabled = false;
+        if (confirmBtn) confirmBtn.disabled = false;
+      }
+    }
+
+    async function previewQuarterBonus() {
+      if (!_pcAuthOk() || _qcBonusBusy) return;
+      if (!_qcSameScope(_qcFrozenScope)) await loadQuarterDeltas();
+      if (!_qcSameScope(_qcFrozenScope)) return;
+      await runQuarterBonus(true, _qcScope());
+    }
 
     async function freezeQuarter() {
       if (!_pcAuthOk()) return;
@@ -3755,29 +3841,44 @@
     }
 
     function renderQuarterDeltas(payload) {
+      _qcFrozenScope = payload.frozenCount > 0 ? _qcScope() : null;
+      $('qc-bonus-hint').textContent = payload.frozenCount === 0 ? 'Freeze the quarter first.' : '';
+      $('qc-bonus-btn').title = $('qc-bonus-hint').textContent;
       var tbody = $('qc-tbody');
       var rows = (payload && payload.deltas) || [];
       if (rows.length === 0) { $('qc-wrap').style.display = 'none'; $('qc-empty').style.display = ''; return; }
       $('qc-empty').style.display = 'none'; $('qc-wrap').style.display = '';
       tbody.innerHTML = rows.map(function (r) {
+        var bonus = r.bonus || {};
         return '<tr>' +
           '<td>' + studentNameHtml(r) + '</td>' +
           '<td class="mono">' + escHtml(r.frozen) + '</td>' +
           '<td class="mono">' + escHtml(r.current) + '</td>' +
-          '<td class="mono" style="color:#070;font-weight:bold">+' + escHtml(r.delta) + '</td>' +
+          '<td class="mono"' + (r.delta > 0 ? ' style="color:#070;font-weight:bold"' : '') + '>'
+            + (r.delta > 0 ? '+' : '') + escHtml(r.delta || 0) + '</td>' +
+          '<td class="mono" title="' + escHtml(_qcSheetTitle(bonus.sheets)) + '">' + escHtml(bonus.points || 0) + '</td>' +
+          '<td class="mono">' + escHtml(bonus.applied ? bonus.applied.adjustedGrade : '—')
+            + (bonus.applied && bonus.applied.stale ? ' <span title="The quarter was re-frozen after this bonus was applied; re-check before entering.">⚠ stale</span>' : '') + '</td>' +
+          '<td class="mono" style="font-weight:bold">' + escHtml(r.closed != null ? r.closed : r.frozen) + '</td>' +
           '</tr>';
       }).join('');
     }
 
     async function loadQuarterDeltas() {
+      _qcFrozenScope = null;
+      $('qc-bonus-wrap').style.display = 'none';
+      $('qc-bonus-wrap').innerHTML = '';
+      $('qc-bonus-hint').textContent = '';
       var secret = teacherSecret();
       var _hasTok = (typeof window !== 'undefined' && window.rosterClient) ? !!window.rosterClient.token() : false;
       if (!secret && !_hasTok) return;
       var q = _qcQuarter();
       var section = $('section-filter').value.trim();
+      var scope = { quarter: q, section: section || undefined };
       var qs = '?quarter=' + encodeURIComponent(q) + (section ? '&section=' + encodeURIComponent(section) : '');
       $('qc-loading').style.display = ''; $('qc-wrap').style.display = 'none'; $('qc-empty').style.display = 'none';
       var res = await fetchJson('/class/quarter/deltas' + qs, secret);
+      if (!_qcSameScope(scope)) return;
       $('qc-loading').style.display = 'none';
       if (res.networkError) { $('qc-meta').textContent = 'Network error: ' + res.networkError; return; }
       if (res.status === 503) { $('qc-empty').style.display = ''; $('qc-meta').textContent = 'Migration pending: run 0030_quarter_grade_snapshot.sql.'; return; }
@@ -3789,7 +3890,9 @@
 
     $('qc-freeze-btn').addEventListener('click', freezeQuarter);
     $('qc-deltas-btn').addEventListener('click', loadQuarterDeltas);
+    $('qc-bonus-btn').addEventListener('click', previewQuarterBonus);
     $('qc-quarter').addEventListener('change', loadQuarterDeltas);
+    $('section-filter').addEventListener('change', loadQuarterDeltas);
 
     // Hook remediation refresh onto the same Load triggers (parallel
     // listeners — the existing loadAll handler is left untouched).

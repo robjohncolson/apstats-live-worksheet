@@ -3,8 +3,8 @@
 # infra pattern as register_schoology_sync_task.ps1.
 #
 # The task runs `node tools/doge-payout-agent.mjs --config <json>` at every
-# logon of the current user, restarts it if it dies, and runs ONLY while that
-# user is logged on: Dogecoin Core (dogecoin-qt) is a GUI app living in the
+# logon of the current user, re-launches it every 5 min if it is not running,
+# and runs ONLY while that user is logged on: Dogecoin Core (dogecoin-qt) is a GUI app living in the
 # user session, and dogecoin-cli needs that session's RPC credentials.
 #
 # Working directory = the repo root, so the agent's .doge-send-journal.json is
@@ -24,6 +24,11 @@
 #
 # stdout/stderr go to tools/.payout-agent-logs/agent.log (Task Scheduler
 # discards console output otherwise).
+# NOTE: cmd.exe's `>>` holds agent.log EXCLUSIVELY while the agent runs, so a
+# second launch (a manual console run, or a stray instance from before a
+# re-registration) exits 1 at the shell without logging anything. If the task
+# shows Ready + LastTaskResult 1 while a node payout-agent process exists, kill
+# that stray process and Start-ScheduledTask again.
 
 param(
   [string]$ConfigPath = (Join-Path $HOME '.config\apstats\.payout-agent.json'),
@@ -83,7 +88,7 @@ $cmdArgs  = "/d /c `"$inner`""
 
 Write-Output "Registering Scheduled Task:"
 Write-Output "  Name:     $TaskName"
-Write-Output "  Trigger:  at logon of $env:USERNAME (interactive session only)"
+Write-Output "  Trigger:  at logon of $env:USERNAME (interactive session only) + keep-alive every 5 min"
 Write-Output "  Restart:  on failure, every 1 min, up to 999 times"
 Write-Output "  Workdir:  $repo"
 Write-Output "  Config:   $ConfigPath"
@@ -99,7 +104,16 @@ if ($DryRun) {
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force -Path $logDir | Out-Null }
 
 $action    = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument $cmdArgs -WorkingDirectory $repo
-$trigger   = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+# Two triggers: at logon, plus a keep-alive every 5 minutes. With
+# MultipleInstances=IgnoreNew the keep-alive is a no-op while the agent is
+# already running, and restarts it within 5 min if it died (Ctrl-C, crash,
+# clean exit) — Task Scheduler's own RestartCount does NOT cover those.
+$logonTrigger     = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+# (No -RepetitionDuration: on Windows PowerShell 5.1 that means "repeat indefinitely";
+# [TimeSpan]::MaxValue is rejected by the Task Scheduler XML validator.)
+$keepAliveTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date `
+  -RepetitionInterval (New-TimeSpan -Minutes 5)
+$trigger = @($logonTrigger, $keepAliveTrigger)
 $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
 $settings  = New-ScheduledTaskSettingsSet `
   -RestartCount 999 `
