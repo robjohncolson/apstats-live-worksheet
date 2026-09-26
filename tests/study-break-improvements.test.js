@@ -82,7 +82,7 @@ describe('feel — soft drop, DAS, firm drop, buffered input', () => {
     const ctx = { active: null, _buffered: null, tryRotate() { throw new Error('no'); }, holdSwap() { throw new Error('no'); } };
     rot.call(ctx, 1); hold.call(ctx);
     expect(ctx._buffered).toEqual({ rotate: 1, hold: true });
-    expect(sb).toMatch(/const buffered = this\._buffered; this\._buffered = null;\s*if \(buffered\) \{\s*if \(buffered\.rotate\) this\.tryRotate\(buffered\.rotate\);\s*if \(buffered\.hold\) this\.holdSwap\(\);/);
+    expect(sb).toMatch(/const buffered = this\._buffered; this\._buffered = null;\s*if \(buffered\) \{\s*if \(buffered\.hold\) this\.holdSwap\(\);\s*if \(buffered\.rotate && this\.active && this\.isValid\(this\.active\)\) this\.tryRotate\(buffered\.rotate\);/);
   });
 });
 
@@ -179,7 +179,7 @@ describe('1v1 — simultaneous top-out, late leave, rematch', () => {
     expect(d.mpState._wonThisGame).toBe(true);
     expect(d.state).toBe('gameover');
   });
-  it('B14: a self top-out waits 600ms for a crossing KO before it counts; fixtures without gameOverAt count at once', () => {
+  it('B14: a self top-out waits 1500ms for a crossing KO before it counts; fixtures without gameOverAt count at once', () => {
     const score = method('_studyBreakScoreGameOnce');
     const mk = (gameOverAt) => ({
       mode: '1v1', state: 'gameover', isOpen: () => true, startNewGame() {}, _studyBreakResolveStakes() {},
@@ -188,7 +188,7 @@ describe('1v1 — simultaneous top-out, late leave, rematch', () => {
     const fresh = mk(Date.now());
     score.call(fresh);
     expect(fresh.mpState.gameScored).toBe(false);   // deferred
-    const old = mk(Date.now() - 1000);
+    const old = mk(Date.now() - 1501);
     score.call(old);
     expect(old.mpState.gameScored).toBe(true);
     expect(old.mpState.oppWins).toBe(1);
@@ -343,7 +343,7 @@ describe('Desk-side guards + a11y + sound (source pins)', () => {
     delete globalThis.MacSFX;
   });
   it('review: a second challenger while a dialog is up is declined at once', () => {
-    expect(sb).toMatch(/if \(this\.pendingChallenger && this\.pendingChallenger !== fromUser\) \{ reply\('challenge_decline'\); return; \}/);
+    expect(sb).toMatch(/if \(this\.pendingChallenger && this\.pendingChallenger !== fromUser\) \{\s*reply\('challenge_decline'\);[\s\S]*?this\.pendingChallenger = null;[\s\S]*?return;\s*\}/);
   });
   it('B8: the doge challenge panel states the stake and escapes the challenger name', () => {
     expect(html).toMatch(/\$\{_deskEsc\(this\.incomingChallenge\.from\)\} wants to play/);

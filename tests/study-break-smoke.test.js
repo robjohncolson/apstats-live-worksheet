@@ -211,7 +211,7 @@ describe('1v1 series', () => {
     vi.advanceTimersByTime(3100);       // auto-advance
     expect(sb.state).toBe('running');
     expect(sb.mpState.gameNumber).toBe(2);
-    // game 2: I top out; the opponent's KO crosses within 600ms with a HIGHER score → I lose game 2
+    // game 2: I top out; the opponent's KO crosses within 1500ms with a HIGHER score → I lose game 2
     sb.score = 10;
     sb._endGame('Top out');
     sb.draw();
@@ -227,7 +227,7 @@ describe('1v1 series', () => {
     sb._endGame('Stack jammed');
     sb.draw();
     expect(sb.mpState.gameScored).toBe(false);
-    vi.advanceTimersByTime(700);
+    vi.advanceTimersByTime(1600);
     sb.draw();
     expect(sb.mpState.gameScored).toBe(true);
     expect(sb.mpState.seriesOver).toBe(true);
@@ -261,7 +261,7 @@ describe('1v1 series', () => {
     sb.startMatch({ roomId: 'room-3', opponent: 'Bob', side: 'left' });
     vi.advanceTimersByTime(3100);
     expect(sb.state).toBe('running');
-    sb._endGame('Top out');                 // uncounted for 600ms
+    sb._endGame('Top out');                 // uncounted for 1500ms
     sb.draw();
     expect(sb.mpState.gameScored).toBe(false);
     key('r');                               // "R to skip" — must count the loss first

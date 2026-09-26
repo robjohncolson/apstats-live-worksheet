@@ -432,10 +432,15 @@ describe('E. Study Break lobby — source pins (XSS + onDesk gating)', () => {
     const m = /updateLobby\s*\(\s*\)\s*\{[\s\S]*?\n    \},/.exec(html);
     expect(m).not.toBeNull();
     const body = m[0];
-    expect(body).toContain('_deskEsc(JSON.stringify(name))'); // XSS-safe onclick arg
-    expect(body).toContain('_deskEsc(name)');                 // escaped visible name
+    // 2026-09-25 (Tetris polish ux-10): rows are real <button> elements built with DOM APIs.
+    // Usernames come from the un-authenticated presence socket, so they must only ever reach
+    // the page through textContent (no innerHTML / onclick interpolation at all).
+    expect(body).toContain('label.textContent = name');        // untrusted name -> textContent only
+    expect(body).not.toMatch(/innerHTML[^;]*\$\{/);            // no interpolated HTML (a constant empty-state string is fine)
+    expect(body).not.toMatch(/onclick="/);                     // no attribute-string handler
+    expect(body).toContain('button.onclick = () => this.sendChallenge(name)'); // closure, not a string
     expect(body).toContain('onDesk');                          // location-gated challenge
-    expect(body).not.toMatch(/sendChallenge\('\$\{name\.replace/); // old vulnerable pattern gone
+    expect(body).toMatch(/button\.disabled = .*!onDesk/);      // off-Desk rows cannot be challenged
   });
 });
 

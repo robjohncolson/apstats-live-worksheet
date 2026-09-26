@@ -69,11 +69,11 @@ describe('SB-1(core) — lock-reset cap kills the infinite spin stall', () => {
     expect(ctx.lockResets).toBe(15);     // capped
     expect(ctx.lockTimer).toBe(999);     // last call did NOT reset (cap reached)
   });
-  it('an airborne move refreshes the budget', () => {
+  it('an airborne move preserves the budget', () => {
     const fn = makeReset();
     const ctx = { active: {}, isGrounded: () => false, LOCK_RESET_CAP: 15, lockResets: 9, lockTimer: 999 };
     fn.call(ctx);
-    expect(ctx.lockResets).toBe(0);
+    expect(ctx.lockResets).toBe(9);
     expect(ctx.lockTimer).toBe(0);
   });
 });
@@ -152,7 +152,7 @@ describe('MP-5 — opponent-freeze watchdog + heartbeat', () => {
 
 describe('hardening — source pins for the wiring fixes', () => {
   it('SB-1: the garbage topout sets a flash so it routes through the choke point', () => {
-    expect(html).toMatch(/state = 'gameover';[\s\S]*?this\.flash\('Buried!'\);[\s\S]*?type: 'game_over'/);
+    expect(html).toMatch(/this\._endGame\('Garbage top out'\);/);
   });
   it('SB-1: the 1v1 game-over draw branch keys on mpState, not flashText', () => {
     expect(html).toMatch(/state === 'gameover'\)\s*\{[\s\S]*?this\.mode === '1v1' && this\.mpState\)\s*\{[\s\S]*?drawGameOverCard/);

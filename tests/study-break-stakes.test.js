@@ -94,7 +94,7 @@ describe('resolve (_studyBreakResolveStakes) — reports the series winner', () 
     const ms = freshMs({ myWins: 2, oppWins: 1, staked: true });
     const t = { mpState: ms, mpUsername: 'Me_Self', draw: () => {} };
     resolveStakes.call(t);
-    expect(ms._resolved).toBe(true);
+    expect(ms._resolved).toBe(false);
     expect(posts[0].path).toBe('/wallet/bet/resolve');
     expect(posts[0].body).toEqual({ matchId: 'R1', winnerUsername: 'Me_Self' });
     delete globalThis._dogeWalletAction;
@@ -158,7 +158,7 @@ describe('source pins — the hooks are wired into the match lifecycle', () => {
   });
   it('opponentKO marks the game won; opponentLeft marks a forfeit', () => {
     expect(html).toMatch(/opponentKO\(finalScore, roomId\) \{[\s\S]*?_wonThisGame = true/);
-    expect(html).toMatch(/opponentLeft\(reason\) \{[\s\S]*?_wonThisGame = true[\s\S]*?_forfeit = true/);
+    expect(html).toMatch(/opponentLeft\(reason, roomId\) \{[\s\S]*?_wonThisGame = true[\s\S]*?_forfeit = true/);
   });
   it('drawGameOverCard counts the series (the single choke point)', () => {
     expect(html).toMatch(/drawGameOverCard\(flashText\) \{\s*\n\s*[^\n]*\n\s*this\._studyBreakScoreGameOnce\(\);/);

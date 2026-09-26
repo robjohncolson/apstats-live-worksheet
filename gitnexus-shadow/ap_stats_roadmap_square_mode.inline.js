@@ -2795,6 +2795,14 @@
 
 
 
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -19754,7 +19762,7 @@ const studyBreak = {
     splitConfig: { canvas: null, ctx: null, CELL: 10, BOARD_X: 58, BOARD_Y: 24, CANVAS_W: 215, CANVAS_H: 302 },
     opponentConfig: { canvas: null, ctx: null, CELL: 10, BOARD_X: 58, BOARD_Y: 24, CANVAS_W: 215, CANVAS_H: 302 },
     mode: 'solo',  // 'solo' or '1v1'
-    mpState: null,  // multiplayer state: { roomId, opponent, side, opponentBoard, opponentScore, opponentLines, opponentLevel, pendingGarbage, garbageTimer }
+    mpState: null,  // multiplayer state: { roomId, opponent, side, opponentBoard, opponentScore, opponentLines, opponentLevel, pendingGarbage }
     mpWs: null,
     mpUsername: null,
     mpOnlinePlayers: [],
@@ -19909,7 +19917,23 @@ const studyBreak = {
         });
 
         document.addEventListener('keydown', (e) => {
+            const target = e.target;
+            if (target && target.closest && !this.overlay.contains(target)
+                && (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])') || target.isContentEditable)) return;
             if (!this.isOpen()) return;
+            if (e.key === 'Escape') {
+                if (e.defaultPrevented) return;
+                const gameZ = parseInt(window.getComputedStyle(this.overlay).zIndex, 10) || 0;
+                const covered = Array.from(document.querySelectorAll('[id$="-overlay"], [id$="-modal"]')).some(el => {
+                    if (el === this.overlay || this.overlay.contains(el)) return false;
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && style.visibility !== 'hidden' && (parseInt(style.zIndex, 10) || 0) > gameZ;
+                });
+                if (covered) return;
+            }
+            const focused = document.activeElement;
+            if ((e.key === 'Enter' || e.key === ' ') && target === focused
+                && focused.matches('button, a[href]') && this.overlay.contains(focused)) return;
             // Browser shortcuts stay browser shortcuts (Ctrl+R reload, Ctrl+P print, Ctrl+C copy):
             // the game only ever eats an unmodified key.
             if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -20061,6 +20085,7 @@ const studyBreak = {
         if (this._escArmedUntil && now < this._escArmedUntil) { this._escArmedUntil = 0; return false; }
         this._escArmedUntil = now + 3000;
         this.flash('Esc again to forfeit the match');
+        this._announce('Press Escape again within 3 seconds to forfeit the match. The bet is refunded.');
         return true;
     },
 
@@ -20232,39 +20257,51 @@ const studyBreak = {
     // The strip under the canvas is hidden on keyboard devices. Holding ◀ ▶ auto-repeats through
     // the same DAS path as the keyboard; ▼ soft-drops while held; the rest are taps.
     _bindTouchControls() {
+        if (this._touchAbort) this._touchAbort.abort();
+        this._touchAbort = new AbortController();
+        const options = { signal: this._touchAbort.signal };
+        this.overlay.addEventListener('focusout', (e) => {
+            if (!this.overlay.contains(e.relatedTarget)) this.clearKeys();
+        }, options);
         const strip = document.getElementById('game-touch');
         if (!strip) return;
-        let coarse = false;
-        try { coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (_) {}
-        if (!coarse) return;
-        strip.classList.add('on');
-        const press = (act) => {
-            if (this.state !== 'running' || !this.active) return;
+        if (window.matchMedia && window.matchMedia('(any-pointer: coarse)').matches) strip.classList.add('on');
+        this.overlay.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'touch') strip.classList.add('on');
+        }, options);
+        this._touchPointers = { left: new Set(), right: new Set(), down: new Set() };
+        const press = (act, pointerId) => {
+            if (this.state !== 'running') return;
+            const pointers = this._touchPointers[act];
+            if (pointers) {
+                pointers.add(pointerId);
+                if (this.keys[act].down) return;
+            }
             const now = performance.now();
             if (act === 'left') { this.keys.left.down = true; this.keys.left.next = now + this.DAS_DELAY; this.keys.lastDir = 'left'; this.tryMove(-1, 0); }
             else if (act === 'right') { this.keys.right.down = true; this.keys.right.next = now + this.DAS_DELAY; this.keys.lastDir = 'right'; this.tryMove(1, 0); }
             else if (act === 'down') { this.keys.down.down = true; this.fallTimer = 0; this.tryMove(0, 1); }
-            else if (act === 'ccw') this.tryRotate(-1);
-            else if (act === 'cw') this.tryRotate(1);
-            else if (act === 'hold') this.holdSwap();
-            else if (act === 'drop') this.hardDrop();
+            else if (act === 'ccw') this._rotateOrBuffer(-1);
+            else if (act === 'cw') this._rotateOrBuffer(1);
+            else if (act === 'hold') this._holdOrBuffer();
+            else if (act === 'drop' && this.active) this.hardDrop();
         };
-        const release = (act) => {
-            if (act === 'left') this.keys.left.down = false;
-            else if (act === 'right') this.keys.right.down = false;
-            else if (act === 'down') this.keys.down.down = false;
+        const release = (act, pointerId) => {
+            const pointers = this._touchPointers[act];
+            if (!pointers || !pointers.delete(pointerId)) return;
+            if (pointers.size === 0) this.keys[act].down = false;
         };
         strip.querySelectorAll('.game-touch-btn').forEach((btn) => {
             const act = btn.dataset.act;
             btn.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
                 try { btn.setPointerCapture(e.pointerId); } catch (_) {}
-                press(act);
-            });
-            btn.addEventListener('pointerup', (e) => { e.preventDefault(); release(act); });
-            btn.addEventListener('pointercancel', () => release(act));
-            btn.addEventListener('lostpointercapture', () => release(act));
-            btn.addEventListener('contextmenu', (e) => e.preventDefault());
+                press(act, e.pointerId);
+            }, options);
+            btn.addEventListener('pointerup', (e) => { e.preventDefault(); release(act, e.pointerId); }, options);
+            btn.addEventListener('pointercancel', (e) => release(act, e.pointerId), options);
+            btn.addEventListener('lostpointercapture', (e) => release(act, e.pointerId), options);
+            btn.addEventListener('contextmenu', (e) => e.preventDefault(), options);
         });
     },
 
@@ -20288,6 +20325,13 @@ const studyBreak = {
 
     open() {
         this.init();
+        if (typeof _appTopZ !== 'undefined') this.overlay.style.zIndex = ++_appTopZ;
+        if (this.isOpen()) {
+            this.canvas.focus();
+            if (typeof _lastClassroomSummary !== 'undefined') this.onClassroomSignal(_lastClassroomSummary);
+            return;
+        }
+        this._bindTouchControls();
         SFX.init();
         this._renderMute();
         this._prevFocus = document.activeElement;   // restored on close (keyboard users land back where they were)
@@ -20295,13 +20339,14 @@ const studyBreak = {
         this._lessonDone = this._todayLessonDone();
         // A solo game interrupted by Esc comes back PAUSED with its board intact (close() keeps it);
         // anything else returns to the mode card.
-        const resumable = this.mode === 'solo' && this.state === 'paused' && this.board.some((row) => row.some(Boolean));
+        const resumable = this.mode === 'solo' && this.state === 'paused';
         if (!resumable) {
             this.mode = 'solo';
             this.state = 'idle';
             this.resetBoardState();
         }
         this.overlay.style.display = 'block';
+        if (typeof _lastClassroomSummary !== 'undefined') this.onClassroomSignal(_lastClassroomSummary);
         this.canvas.style.display = 'block';
         document.getElementById('game-split').style.display = 'none';
         document.getElementById('game-lobby').style.display = 'none';
@@ -20312,13 +20357,18 @@ const studyBreak = {
     },
 
     close() {
+        this._clearOutgoingChallenge(true);
         if (!this.initialized) return;
+        if (this._touchAbort) { this._touchAbort.abort(); this._touchAbort = null; }
+        const players = document.getElementById('lobby-players');
+        if (players) players.replaceChildren();
+        clearTimeout(this._levelUpTimer);
+        this._levelUpTimer = null;
         this._stopHeartbeat();   // MP-5: stop the keep-alive/watchdog on teardown
-        // Clear per-match timers BEFORE nulling mpState (else the cleanup below no-ops on null —
-        // a pre-existing garbageTimer leak; also stop a pending best-of-3 auto-advance).
+        // Clear per-match timers before nulling mpState, including best-of-3 auto-advance.
         if (this.mpState) {
             clearTimeout(this.mpState._advanceTimer);
-            if (this.mpState.garbageTimer) { clearTimeout(this.mpState.garbageTimer); this.mpState.garbageTimer = 0; }
+            clearTimeout(this.mpState._stakeTimer);
             // MP-4: send game_leave over the LIVE socket (a stale cached mpWs would silently
             // skip it and the opponent would wait out the server sweep). SB-5: ALWAYS clear
             // mpState on teardown (was only cleared when the socket happened to be open).
@@ -20342,7 +20392,6 @@ const studyBreak = {
         if (this.rtcTimeout) { clearTimeout(this.rtcTimeout); this.rtcTimeout = null; }
         this.exitSplitMode();
         this._declinePendingChallenge();   // an open incoming dialog: decline now, don't strand the challenger 30s
-        this._clearOutgoingChallenge();
         document.getElementById('game-split').style.display = 'none';
         document.getElementById('game-lobby').style.display = 'none';
         document.getElementById('challenge-dialog').style.display = 'none';
@@ -20367,6 +20416,7 @@ const studyBreak = {
     startLoop() {
         if (this.raf) cancelAnimationFrame(this.raf);
         this.lastTime = 0;
+        this._acc = 0;
         this.raf = requestAnimationFrame((ts) => this.loop(ts));
     },
 
@@ -20375,9 +20425,18 @@ const studyBreak = {
             this.raf = null;
             return;
         }
-        const delta = this.lastTime ? Math.min(40, ts - this.lastTime) : 16;
+        const delta = this.lastTime ? ts - this.lastTime : 16.67;
         this.lastTime = ts;
-        if (this.state === 'running') this.update(delta, ts);
+        if (this.state === 'running') {
+            const STEP = 16.67;
+            this._acc = (this._acc || 0) + delta;
+            let steps = 0;
+            while (this._acc >= STEP && this.state === 'running' && steps++ < 15) {
+                this.update(STEP, ts);
+                this._acc -= STEP;
+            }
+            this._acc = Math.min(this._acc, 250);
+        }
         if (this.clearFx) { this.clearFx.timer -= delta; if (this.clearFx.timer <= 0) this.clearFx = null; }
         // Light opponent updates at ~10Hz (active piece / hold / next, no board): the rival's screen
         // used to be a 2.5s slideshow between locks. Full-board sends still happen at lock + heartbeat.
@@ -20405,6 +20464,8 @@ const studyBreak = {
     },
 
     resetBoardState() {
+        clearTimeout(this._levelUpTimer);
+        this._levelUpTimer = null;
         this.board = Array.from({ length: this.TOTAL_ROWS }, () => Array(this.COLS).fill(null));
         this.queue = [];
         this.bag = [];
@@ -20437,6 +20498,7 @@ const studyBreak = {
     },
 
     clearKeys() {
+        if (this._touchPointers) Object.values(this._touchPointers).forEach(pointers => pointers.clear());
         this.keys.left.down = false;
         this.keys.right.down = false;
         this.keys.down.down = false;
@@ -20451,7 +20513,7 @@ const studyBreak = {
         if (this.mode === '1v1' && ms && ms.seriesOver) return;
         if (this.mode === '1v1' && ms && !ms.seriesOver) {
             // Skipping ahead (R / Enter / click) while this game is still uncounted — e.g. inside the
-            // 600ms cross-KO window — must count it FIRST, or my loss is never tallied and the two
+            // 1500ms cross-KO window — must count it FIRST, or my loss is never tallied and the two
             // clients disagree (bet refunded, honest winner unpaid).
             if (!ms.gameScored && this.state === 'gameover') {
                 ms.gameOverAt = 0;
@@ -20463,12 +20525,15 @@ const studyBreak = {
             ms.gameScored = false;
             ms._wonThisGame = false;
             ms.pendingGarbage = 0;   // garbage queued during the last game must not land in this one
+            ms.roundStartedAt = Date.now();
+            ms.oppSeenThisRound = false;
             this._seedRng(ms.roomId + ':' + ms.gameNumber);   // shared piece sequence for this game
         } else {
             this._rand = null;   // solo: plain Math.random
         }
         this.init();
         this.resetBoardState();
+        this._acc = 0;
         this.state = 'running';
         this.hold = this.nextFromBag();   // from the bag, not a side draw (honest 9-of-each counts)
         this.fillQueueTo(6);
@@ -20591,6 +20656,11 @@ const studyBreak = {
                 break;
 
             case 'match_start':
+                if (this._abandonedChallenges && this._abandonedChallenges[data.opponent] > Date.now()) {
+                    const ws = this._liveWs();
+                    if (ws) { try { ws.send(JSON.stringify({ type: 'game_leave', roomId: data.roomId })); } catch (_) {} }
+                    return;
+                }
                 // If game isn't open, launch from doge
                 if (!this.isOpen()) {
                     DogePresence.launchMatch(data);
@@ -20612,7 +20682,7 @@ const studyBreak = {
                 break;
 
             case 'opponent_left':
-                this.opponentLeft(data.reason);
+                this.opponentLeft(data.reason, data.roomId);
                 break;
 
             case 'rtc_offer':
@@ -20654,37 +20724,43 @@ const studyBreak = {
         // from the auto-connected DogePresence socket (single source of truth, always populated).
         const locs = (typeof DogePresence !== 'undefined' && DogePresence.locations) ? DogePresence.locations : {};
         const pending = this._outgoing ? this._outgoing.target : null;
-        el.innerHTML = this.mpOnlinePlayers.map((name) => {
+        el.replaceChildren();
+        this.mpOnlinePlayers.forEach((name) => {
             const onDesk = !!(locs[name] && locs[name].onDesk);
-            const nameEsc = _deskEsc(name);   // untrusted (presence WS) \u2014 escape before innerHTML
-            if (pending) {
-                // One challenge at a time: rows are inert until it resolves (accept / decline / 30s).
-                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);opacity:${name === pending ? '1' : '.5'}">
-                <span class="geneva" style="font-size:11px">${nameEsc}</span>
-                <span style="font-size:9px">${name === pending ? 'waiting\u2026' : ''}</span>
-            </div>`;
-            }
-            if (onDesk) {
-                // _deskEsc(JSON.stringify(name)) is XSS-safe inside the onclick="" attribute.
-                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);cursor:pointer" onmouseenter="this.style.background='var(--black)';this.style.color='var(--white)'" onmouseleave="this.style.background='';this.style.color=''" onclick="studyBreak.sendChallenge(${_deskEsc(JSON.stringify(name))})">
-                <span class="geneva" style="font-size:11px">${nameEsc}</span>
-                <span style="font-size:9px">Challenge \u2192</span>
-            </div>`;
-            }
-            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);opacity:.5" title="Not on the Desk \u2014 can't be challenged here">
-                <span class="geneva" style="font-size:11px">${nameEsc}</span>
-                <span style="font-size:9px">elsewhere</span>
-            </div>`;
-        }).join('');
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.disabled = !!pending || !onDesk || name === this.mpUsername;
+            button.style.cssText = 'display:flex;width:100%;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);font-size:11px';
+            const label = document.createElement('span');
+            label.textContent = name;
+            const status = document.createElement('span');
+            status.style.fontSize = '9px';
+            status.textContent = pending ? (name === pending ? 'waiting\u2026' : '') : name === this.mpUsername ? 'You' : onDesk ? 'Challenge \u2192' : 'elsewhere';
+            button.append(label, status);
+            button.onclick = () => this.sendChallenge(name);
+            el.appendChild(button);
+        });
     },
 
     sendChallenge(target) {
         // MP-1 pattern: resolve the live presence socket (a cached mpWs goes stale on reconnect).
         const ws = this._liveWs();
-        if (!ws) { this._setLobbyStatus('Not connected \u2014 try again in a moment'); return; }
+        if (!ws) {
+            const text = 'Not connected \u2014 try again in a moment';
+            this._setLobbyStatus(text);
+            return text;
+        }
         // One outgoing challenge at a time. Every extra click used to be a separate server challenge,
         // and a second accept could rebind the live room mid-match.
-        if (this._outgoing) { this._setLobbyStatus('Still waiting on ' + this._outgoing.target + '\u2026'); return; }
+        const pending = (this._outgoing && this._outgoing.target) || (typeof DogePresence !== 'undefined' && DogePresence.challengePending);
+        if (pending) {
+            const text = 'Still waiting on ' + pending + '\u2026';
+            this._setLobbyStatus(text);
+            return text;
+        }
+        // A fresh challenge supersedes an earlier abandoned one to the same classmate (else our own
+        // 30s abandonment marker would reject the match_start this challenge produces).
+        if (this._abandonedChallenges) delete this._abandonedChallenges[target];
         ws.send(JSON.stringify({ type: 'game_challenge', target }));
         this._outgoing = { target, sentAt: Date.now(), status: 'sent', text: '' };
         if (typeof DogePresence !== 'undefined') DogePresence.challengePending = target;   // shared single-pending guard
@@ -20711,20 +20787,25 @@ const studyBreak = {
     _onChallengeOutcome(kind, data) {
         const o = this._outgoing;
         if (!o) return;
-        if (kind === 'match') { this._clearOutgoingChallenge(); return; }
+        if (kind === 'match') { this._clearOutgoingChallenge(false); return; }
         const who = (data && data.by) || o.target;
         const err = data && data.error;
         const text = kind === 'declined' ? who + ' declined' + (data && data.reason === 'timeout' ? ' (no answer)' : '')
             : kind === 'timeout' ? 'No answer from ' + who
             : (err === 'User not found' ? who + ' is offline' : (err || 'Challenge failed'));
-        this._clearOutgoingChallenge();
+        this._clearOutgoingChallenge(false);
         this._setLobbyStatus(text + ' \u2014 pick a classmate');
         this._rematchNote = text;   // shown on the series-over card
         this.updateLobby();
     },
-    _clearOutgoingChallenge() {
+    _clearOutgoingChallenge(abandon = true) {
         clearInterval(this._outgoingTimer); this._outgoingTimer = null;
-        if (this._outgoing && typeof DogePresence !== 'undefined' && DogePresence.challengePending === this._outgoing.target) DogePresence.challengePending = null;
+        const target = (this._outgoing && this._outgoing.target) || (abandon && typeof DogePresence !== 'undefined' && DogePresence.challengePending);
+        if (abandon && target) {
+            if (!this._abandonedChallenges) this._abandonedChallenges = Object.create(null);
+            this._abandonedChallenges[target] = Date.now() + 30000;
+        }
+        if (target && typeof DogePresence !== 'undefined' && DogePresence.challengePending === target) DogePresence.challengePending = null;
         this._outgoing = null;
     },
     // Series decided → R/Enter/click asks the same classmate again (a fresh roomId + escrow via the
@@ -20732,12 +20813,17 @@ const studyBreak = {
     requestRematch() {
         const ms = this.mpState;
         if (!ms || !ms.seriesOver || !ms.opponent || this._outgoing) return;
-        this._rematchNote = '';
-        this.sendChallenge(ms.opponent);
+        ms._rematchNote = this._rematchNote = '';
+        const error = this.sendChallenge(ms.opponent);
+        if (typeof error === 'string') {
+            ms._rematchNote = this._rematchNote = error;
+            this._announce(error);
+        }
         this.draw();
     },
 
     leaveLobby() {
+        this._clearOutgoingChallenge(true);
         document.getElementById('game-lobby').style.display = 'none';
         this.canvas.style.display = 'block';
         document.getElementById('game-score').style.display = '';
@@ -20759,9 +20845,15 @@ const studyBreak = {
             reply('challenge_decline');
             return;
         }
-        // A dialog is already up for someone else: decline the newcomer now (the first challenger
-        // keeps their dialog) instead of silently overwriting it and stranding the first for 30s.
-        if (this.pendingChallenger && this.pendingChallenger !== fromUser) { reply('challenge_decline'); return; }
+        // The relay replaced the old invitation, so neither dialog can still be accepted.
+        if (this.pendingChallenger && this.pendingChallenger !== fromUser) {
+            reply('challenge_decline');
+            clearInterval(this.mpChallengeTimer); this.mpChallengeTimer = null;
+            this.pendingChallenger = null;
+            document.getElementById('challenge-dialog').style.display = 'none';
+            this._announce('The invitation was superseded.');
+            return;
+        }
         SFX.play('sosumi', 0.5);
         const dialog = document.getElementById('challenge-dialog');
         document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · 1 candy at stake, winner takes 2 🍬)';
@@ -20779,6 +20871,8 @@ const studyBreak = {
         const timerEl = document.getElementById('challenge-timer');
         timerEl.textContent = countdown + 's';
         const finish = (type) => {
+            if (this.pendingChallenger !== fromUser) return;
+            if (type === 'challenge_accept' && this._abandonedChallenges) delete this._abandonedChallenges[fromUser];
             clearInterval(this.mpChallengeTimer); this.mpChallengeTimer = null;
             this.pendingChallenger = null;
             dialog.style.display = 'none';
@@ -20811,10 +20905,16 @@ const studyBreak = {
         // Clear any leftover per-match timers from a prior match before building a fresh mpState.
         if (this.mpState) {
             clearTimeout(this.mpState._advanceTimer);
-            if (this.mpState.garbageTimer) { clearTimeout(this.mpState.garbageTimer); this.mpState.garbageTimer = 0; }
+            clearTimeout(this.mpState._stakeTimer);
         }
         if (this.countdownTimer) { clearInterval(this.countdownTimer); this.countdownTimer = null; }
-        this._clearOutgoingChallenge();
+        if (this.mpState && this.mpState.roomId && data && data.roomId !== this.mpState.roomId) {
+            // Leave the finished room explicitly: the relay routes by socket->room, so a lingering
+            // old room would deliver the old opponent's bare opponent_left/ko into this new match.
+            const oldWs = this._liveWs();
+            if (oldWs) { try { oldWs.send(JSON.stringify({ type: 'game_leave', roomId: this.mpState.roomId })); } catch (_) {} }
+        }
+        this._clearOutgoingChallenge(false);
         this._rematchNote = '';
         this._declinePendingChallenge();   // a dialog from a THIRD student is stale once this match starts
         this.clearFx = null;
@@ -20855,7 +20955,6 @@ const studyBreak = {
             opponentLevel: 1,
             opponentActive: null,
             pendingGarbage: 0,
-            garbageTimer: 0,
             // STAKES + best-of-3 series (STUDY_BREAK_STAKES_SPEC Phase 2). roomId is the
             // server-minted, shared, unguessable matchId — used directly for the candy escrow.
             myWins: 0, oppWins: 0, gameNumber: 1,
@@ -20870,11 +20969,21 @@ const studyBreak = {
         this.state = 'countdown';
         this.countdownValue = 3;
         this.updateHud();
+        this._announce('Match starting in 3');
+        try {
+            const focusTarget = (this.splitConfig && this.splitConfig.canvas) || this.canvas;
+            if (focusTarget) {
+                if (!focusTarget.hasAttribute('tabindex')) focusTarget.tabIndex = -1;
+                focusTarget.focus({ preventScroll: true });
+            }
+        } catch (_) {}
         this.draw();
 
+        const ms = this.mpState;
         this.countdownTimer = setInterval(() => {
-            if (!this.isOpen() || !this.mpState) { clearInterval(this.countdownTimer); this.countdownTimer = null; return; }
+            if (!this.isOpen() || this.mpState !== ms || ms.seriesOver || this.state !== 'countdown') { clearInterval(this.countdownTimer); this.countdownTimer = null; return; }
             this.countdownValue--;
+            this._announce(this.countdownValue > 0 ? String(this.countdownValue) : 'Go');
             this.draw();
             if (this.countdownValue <= 0) {
                 clearInterval(this.countdownTimer); this.countdownTimer = null;
@@ -20982,7 +21091,10 @@ const studyBreak = {
     _loadStats() {
         try {
             const raw = JSON.parse(localStorage.getItem(this._statsKey()) || 'null');
-            if (raw && typeof raw === 'object') return { best: raw.best || null, recent: Array.isArray(raw.recent) ? raw.recent : [] };
+            if (raw && typeof raw === 'object') return {
+                best: raw.best && Number.isFinite(raw.best.score) && raw.best.score >= 0 ? raw.best : null,
+                recent: Array.isArray(raw.recent) ? raw.recent.filter(score => Number.isFinite(score) && score >= 0).slice(-10) : []
+            };
         } catch (_) {}
         return { best: null, recent: [] };
     },
@@ -21003,7 +21115,7 @@ const studyBreak = {
         this.state = 'gameover';
         this.clearFx = null;
         if (this.mode === '1v1') {
-            if (this.mpState) this.mpState.gameOverAt = Date.now();   // 600ms cross-KO window (see opponentKO)
+            if (this.mpState) this.mpState.gameOverAt = Date.now();   // 1500ms cross-KO window (see opponentKO)
             this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
         }
         SFX.play('monkey', 0.6);
@@ -21088,6 +21200,7 @@ const studyBreak = {
             if (data.type === 'game_state') data.type = 'opponent_state';
             else if (data.type === 'game_garbage') { data.type = 'garbage_incoming'; }
             else if (data.type === 'game_over') { data.type = 'opponent_ko'; data.finalScore = data.score; }
+            else if (data.type === 'game_leave') data.type = 'opponent_left';
             this.handleMpMessage(data);
         };
     },
@@ -21095,6 +21208,7 @@ const studyBreak = {
     updateOpponentState(data) {
         if (!this.mpState) return;
         if (data && data.roomId && data.roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game state
+        this.mpState.oppSeenThisRound = true;
         this.mpState.lastOpponentMs = Date.now();   // MP-5: opponent is alive
         const colorPalette = this._palette();
         // Decompress board. Every field is peer-supplied: range-check before indexing.
@@ -21215,6 +21329,10 @@ const studyBreak = {
         if (!this.mpState || this.mpState.pendingGarbage <= 0) return;
         const count = this.mpState.pendingGarbage;
         this.mpState.pendingGarbage = 0;
+        if (this.board.slice(0, count).some(row => row.some(Boolean))) {
+            this._endGame('Garbage top out');
+            return;
+        }
         this._boardVersion++;
         this.clearFx = null;
 
@@ -21233,22 +21351,6 @@ const studyBreak = {
             this.board.push(garbageRow);
         }
 
-        // The stack rose under a live piece: lift it with the stack (up to `count` rows) before
-        // calling it buried. Only a piece with nowhere to go is a loss.
-        if (this.active && !this.isValid(this.active)) {
-            for (let up = 1; up <= count; up++) {
-                if (this.isValid(this.active, 0, -up)) { this.active.y -= up; break; }
-            }
-        }
-        if (this.active && !this.isValid(this.active)) {
-            this.state = 'gameover';
-            SFX.play('monkey', 0.6);
-            // SB-1: set a flash so the 1v1 game-over CARD renders — that card is the single
-            // choke point that scores the game (_studyBreakScoreGameOnce). Without it, a
-            // garbage-burial loss was never counted and the series desynced / escrow stranded.
-            this.flash('Buried!');
-            this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
-            }
         this._computeHints();
         this.draw();
     },
@@ -21259,6 +21361,9 @@ const studyBreak = {
         this.mpState.lastOpponentMs = Date.now();   // MP-5: opponent is alive
         const ms = this.mpState;
         if (ms.seriesOver) return;
+        // A KO from the PREVIOUS round can only arrive right after we advanced, before the peer's
+        // first state packet of the new round. Nobody tops out 700ms into a fresh board.
+        if (this.state === 'running' && (ms.gameNumber || 1) > 1 && !ms.oppSeenThisRound && (Date.now() - ms.roundStartedAt) < 700) return;
         const opponentName = ms.opponent || 'Opponent';
         const theirScore = Math.max(0, Number(finalScore) || 0);
         if (this.state === 'gameover' && !ms.gameScored && !ms._forfeit) {
@@ -21285,9 +21390,12 @@ const studyBreak = {
         this.draw();
     },
 
-    opponentLeft(reason) {
+    opponentLeft(reason, roomId) {
         if (!this.mpState) return;
+        if (roomId && roomId !== this.mpState.roomId) return;
         const ms = this.mpState;
+        clearInterval(this.countdownTimer); this.countdownTimer = null;
+        clearTimeout(ms._stakeTimer); ms._stakeTimer = null;
         // Series already decided: a late leave (the winner pressing Esc) must not replay the win
         // jingle or rewrite the loser's card into 'Bob disconnected'.
         if (ms.seriesOver) return;
@@ -21322,14 +21430,23 @@ const studyBreak = {
     // Escrow 1 candy for the match. Both clients POST /wallet/bet/open with the SAME
     // server-minted roomId → the server escrows once both join. Fully GRACEFUL: a guest /
     // stakes-off / pre-migration / insufficient response just leaves the match unstaked (free).
-    _studyBreakArmStakes() {
+    _studyBreakArmStakes(attempt = 0) {
         const ms = this.mpState;
         if (!ms || !ms.roomId || !ms.opponent || typeof _dogeWalletAction !== 'function') return;
-        _dogeWalletAction('/wallet/bet/open', { matchId: ms.roomId, opponentUsername: ms.opponent }).then((res) => {
-            if (this.mpState !== ms) return;   // match changed / ended
-            ms.staked = !!(res && res.ok && (res.status === 'opened' || res.status === 'waiting'));
+        if (ms._opening) return ms._opening;
+        ms._opening = _dogeWalletAction('/wallet/bet/open', { matchId: ms.roomId, opponentUsername: ms.opponent }).then((res) => {
+            if (this.mpState !== ms) return;
+            ms.staked = !!(res && res.ok && (res.status === 'opened' || res.status === 'open'));
+            ms.stakePending = !!(res && res.ok && res.status === 'waiting');
+            if (ms.stakePending && !ms.seriesOver && attempt < 5) {
+                ms._stakeTimer = setTimeout(() => {
+                    ms._stakeTimer = null;
+                    if (this.mpState === ms && !ms.seriesOver) this._studyBreakArmStakes(attempt + 1);
+                }, [2000, 5000, 10000, 20000, 40000][attempt]);
+            }
             this.draw();
-        }).catch(() => {});
+        }).catch(() => {}).finally(() => { ms._opening = null; });
+        return ms._opening;
     },
     // Count THIS game's outcome exactly once (guarded), then either end the series + resolve the
     // candy, or auto-advance to the next game. Called from drawGameOverCard (the single 1v1
@@ -21338,9 +21455,9 @@ const studyBreak = {
         const ms = this.mpState;
         if (this.mode !== '1v1' || !ms || ms.gameScored || ms.seriesOver) return;
         if (this.state !== 'gameover') return;
-        // A self top-out waits 600ms for a crossing opponent KO before it counts (opponentKO then
+        // A self top-out waits 1500ms for a crossing opponent KO before it counts (opponentKO then
         // decides a simultaneous top-out deterministically). Fixtures without gameOverAt count at once.
-        if (!ms._wonThisGame && !ms._forfeit && ms.gameOverAt && (Date.now() - ms.gameOverAt) < 600) return;
+        if (!ms._wonThisGame && !ms._forfeit && ms.gameOverAt && (Date.now() - ms.gameOverAt) < 1500) return;
         ms.gameScored = true;
         if (ms._wonThisGame) ms.myWins = (ms.myWins || 0) + 1; else ms.oppWins = (ms.oppWins || 0) + 1;
         if (ms.myWins >= 2 || ms.oppWins >= 2 || ms._forfeit) {
@@ -21361,20 +21478,46 @@ const studyBreak = {
     _studyBreakResolveStakes() {
         const ms = this.mpState;
         if (!ms || ms._resolved) return;
-        ms._resolved = true;
+        if (!this._pendingSettlements) this._pendingSettlements = Object.create(null);
+        if (this._pendingSettlements[ms.roomId]) return;
+        if (typeof _dogeWalletAction !== 'function') return;
+        const pending = { startedAt: Date.now(), attempt: 0, timer: null };
+        this._pendingSettlements[ms.roomId] = pending;
         clearTimeout(ms._advanceTimer);
         const iWon = (ms.myWins || 0) > (ms.oppWins || 0);
         const winnerUsername = iWon ? (this.mpUsername || '') : ms.opponent;
-        if (ms.staked) { ms.candyOutcome = 'pending'; this.draw(); }
-        if (typeof _dogeWalletAction !== 'function') return;
-        _dogeWalletAction('/wallet/bet/resolve', { matchId: ms.roomId, winnerUsername: winnerUsername }).then((res) => {
-            if (this.mpState !== ms) return;
-            if (res && res.ok && res.status === 'settled') ms.candyOutcome = iWon ? '+1' : '-1';
-            else if (res && res.ok && res.status === 'refunded') ms.candyOutcome = 'refunded';
-            else ms.candyOutcome = null;   // pending (opponent hasn't reported) / free / error
-            this.draw();
-            if (typeof _candyRefreshWalletUI === 'function') _candyRefreshWalletUI();   // refresh My Ledger
-        }).catch(() => {});
+        const body = { matchId: ms.roomId, winnerUsername };
+        ms.candyOutcome = 'pending';
+        this.draw();
+        // These room-scoped retries intentionally survive close() and rematches (a financial
+        // report outlives the window it was made in).
+        const settle = async () => {
+            pending.timer = null;
+            // A slow bet/open must not block the report forever: wait at most 10s for it.
+            if (ms._opening) await Promise.race([ms._opening.catch(() => {}), new Promise((r) => setTimeout(r, 10000))]);
+            let res;
+            try { res = await _dogeWalletAction('/wallet/bet/resolve', body); } catch (_) {}
+            // Terminal = the server settled/refunded, or told us definitively there is nothing to
+            // settle. Everything else (network, 'Database error', 5xx, pending) is retried — a wrong
+            // 'refunded' label on a transient failure would lie to the student.
+            const PERMANENT = ['no such match', 'unknown winner', 'winner must be a player', 'matchId + winnerUsername required', 'stakes disabled', 'not a player in this match'];
+            const permanent = !!(res && res.ok === false && PERMANENT.includes(String(res.error)));
+            const terminal = !!(res && ((res.ok && (res.status === 'settled' || res.status === 'refunded')) || permanent));
+            if (terminal) {
+                ms._resolved = true;
+                ms.candyOutcome = !res.ok ? 'none' : (res.status === 'settled' ? (iWon ? '+1' : '-1') : 'refunded');
+                clearTimeout(pending.timer); pending.timer = null;
+                delete this._pendingSettlements[ms.roomId];
+                if (this.mpState === ms) this.draw();
+                if (typeof _candyRefreshWalletUI === 'function') _candyRefreshWalletUI();
+                return;
+            }
+            // Keep trying while this tab lives (every 15s after the first minute): an honest winner
+            // must not lose the pot to a long outage. The server sweep is the last-resort refund.
+            const delay = [1000, 2000, 4000, 8000, 15000][Math.min(pending.attempt++, 4)];
+            pending.timer = setTimeout(settle, delay);
+        };
+        return settle();
     },
     // Casino Stats lab (D4): the student's Tetris-betting record + expected value per game — the
     // probability lesson. Fetched into the lobby line when the lobby opens. Graceful for guests.
@@ -21397,6 +21540,7 @@ const studyBreak = {
         // No pausing inside a 1v1 match: a paused player froze the opponent's match indefinitely
         // (the heartbeat kept stamping "alive", so the freeze watchdog never fired). Solo pauses.
         if (this._inLiveMatch()) return;
+        this._acc = 0;
         if (this.state === 'running') {
             this.state = 'paused';
             this.clearKeys();
@@ -21433,7 +21577,7 @@ const studyBreak = {
         if (this.isGrounded(this.active)) {
             this.lockTimer += delta;
             if (this.lockTimer >= this.LOCK_DELAY) this.lockPiece();
-        } else {
+        } else if (this.lockResets < this.LOCK_RESET_CAP) {
             this.lockTimer = 0;
         }
     },
@@ -21496,7 +21640,8 @@ const studyBreak = {
             for (const t of this.types) {
                 if (this._since[t] >= 14) {
                     const i = this.bag.lastIndexOf(t);   // pop() takes from the END
-                    if (i >= 0 && i !== this.bag.length - 1) { this.bag.splice(i, 1); this.bag.push(t); }
+                    if (i < 0) continue;
+                    if (i !== this.bag.length - 1) { this.bag.splice(i, 1); this.bag.push(t); }
                     break;
                 }
             }
@@ -21541,21 +21686,20 @@ const studyBreak = {
         this.pieceCounts[type] = (this.pieceCounts[type] || 0) + 1;   // solo game-over histogram
         const buffered = this._buffered; this._buffered = null;
         if (buffered) {
-            if (buffered.rotate) this.tryRotate(buffered.rotate);
             if (buffered.hold) this.holdSwap();
+            if (buffered.rotate && this.active && this.isValid(this.active)) this.tryRotate(buffered.rotate);
         }
         this._mpDirty = true;
         this.updateHud();
     },
 
     // SB-1(core): cap how many times a move/rotate can reset the lock delay WHILE GROUNDED,
-    // so spinning a grounded piece forever can't stall the game. A move that leaves the piece
-    // airborne refreshes the budget (it's falling again).
+    // so spinning a grounded piece forever can't stall the game. Airborne frames keep that budget.
     _resetLockTimer() {
         if (this.active && this.isGrounded(this.active)) {
             if (this.lockResets < this.LOCK_RESET_CAP) { this.lockTimer = 0; this.lockResets++; }
-        } else {
-            this.lockTimer = 0; this.lockResets = 0;
+        } else if (this.lockResets < this.LOCK_RESET_CAP) {
+            this.lockTimer = 0;
         }
     },
 
@@ -21629,6 +21773,7 @@ const studyBreak = {
             this.spawnNext();
         }
         this.holdLocked = true;
+        this.lockResets = 0;
         this.lockTimer = 0;
         this.fallTimer = 0;
         this._mpDirty = true;
@@ -21670,9 +21815,11 @@ const studyBreak = {
         const dir = (L.down && R.down) ? this.keys.lastDir : (L.down ? 'left' : (R.down ? 'right' : null));
         if (!dir) return;
         const k = dir === 'left' ? L : R;
-        if (now >= k.next) {
+        // Discard excessive backlog after suspension; ordinary frames retain the remainder.
+        if (now - k.next >= this.DAS_REPEAT * 3) k.next = now;
+        for (let repeats = 0; repeats < 3 && now >= k.next; repeats++) {
             this.tryMove(dir === 'left' ? -1 : 1, 0);
-            k.next = now + this.DAS_REPEAT;
+            k.next += this.DAS_REPEAT;
         }
     },
 
@@ -21712,7 +21859,14 @@ const studyBreak = {
             if (perfect) this.score += 10;
             const prevLevel = this.level;
             this.level = 1 + Math.floor(this.lines / this.LINES_PER_LEVEL);
-            if (this.level > prevLevel) { leveledUp = true; setTimeout(() => SFX.play('indigo', 0.7), 350); }
+            if (this.level > prevLevel) {
+                leveledUp = true;
+                clearTimeout(this._levelUpTimer);
+                this._levelUpTimer = setTimeout(() => {
+                    this._levelUpTimer = null;
+                    SFX.play('indigo', 0.7);
+                }, 350);
+            }
         }
 
         // Send garbage to opponent in 1v1 mode. Squares matter here too: a row through a gold square
@@ -21896,6 +22050,9 @@ const studyBreak = {
             }
         }
         if (seen.size !== 4) return null;
+        const supported = holes.some(h => h.y + 1 === this.TOTAL_ROWS ||
+            (!holeKeys.has(h.x + ',' + (h.y + 1)) && this.board[h.y + 1][h.x]));
+        if (!supported) return null;
         return { x, y, material: types.size === 1 ? 'gold' : 'silver' };
     },
     drawHints() {
@@ -22012,9 +22169,19 @@ const studyBreak = {
             : '←→ move • Z/X rotate • ↓ soft • ↑ firm • Space hard • C/Shift hold • P pause • M mute';
         this.helpEl.textContent = `${prefix} • ${legend}`;
         // Screen-reader line: state transitions only, never the per-move HUD churn.
-        if (this.state !== 'running' && prefix !== this._lastLive) { this._lastLive = prefix; this._announce(prefix); }
+        if (this.state === 'running' && this._lastLiveState === 'paused') this._announce('Resumed');
+        else if (this.state !== 'running' && (this.state !== this._lastLiveState || prefix !== this._lastLive)) this._announce(prefix);
+        this._lastLiveState = this.state;
+        this._lastLive = prefix;
     },
 
+    // drawGameOverCard runs every frame; only touch the DOM when the help text actually changes.
+    _setHelpText(text) {
+        if (this._classroomNote) text = this._classroomNote + ' • ' + text;
+        if (!this.helpEl || this._lastHelpText === text) return;
+        this._lastHelpText = text;
+        this.helpEl.textContent = text;
+    },
     _announce(text) {
         const el = document.getElementById('game-live');
         if (el) el.textContent = text;
@@ -22101,7 +22268,7 @@ const studyBreak = {
             this._drawSplitGutters(ctx, this, this.hold, this.queue, this.holdLocked);
             const wellBottom = this.BOARD_Y + this.VISIBLE_ROWS * this.CELL;
             ctx.textAlign = 'center';
-            ctx.fillText(`Game ${ms.gameNumber || 1} of 3 \u00b7 you ${ms.myWins || 0}\u2013${ms.oppWins || 0} ${String(ms.opponent || '').slice(0, 10)}${ms.staked ? ' \u00b7 pot 2 \ud83c\udf6c' : ' \u00b7 free'}`, this.CANVAS_W / 2, wellBottom + 16);
+            ctx.fillText(`Game ${ms.gameNumber || 1} of 3 \u00b7 you ${ms.myWins || 0}\u2013${ms.oppWins || 0} ${String(ms.opponent || '').slice(0, 10)}${ms.staked ? ' \u00b7 pot 2 \ud83c\udf6c' : ms.stakePending ? ' \u00b7 pot pending' : ' \u00b7 free'}`, this.CANVAS_W / 2, wellBottom + 16);
             ctx.fillStyle = '#666666';
             ctx.font = '8px Geneva, Arial, sans-serif';
             ctx.fillText('red = incoming garbage \u00b7 clear a line to cancel', this.CANVAS_W / 2, wellBottom + 28);
@@ -22118,12 +22285,13 @@ const studyBreak = {
                     ctx.fillRect(this.BOARD_X - 7, bottom - (i + 1) * this.CELL, 4, this.CELL - 1);
                 }
                 ctx.textAlign = 'right';
-                ctx.fillText(`\u26A0 +${pending}`, this.BOARD_X + this.COLS * this.CELL, 14);
+                ctx.fillText(`\u26A0 +${pending}`, this.BOARD_X - 10, this.BOARD_Y);
                 ctx.textAlign = 'left';
             }
         }
 
-        if (this.clearFx && this.clearFx.board) {
+        const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        if (!reducedMotion && this.clearFx && this.clearFx.board) {
             // Line-clear flash: paint the pre-clear board with the full rows lit white for ~120ms.
             const liveBoard = this.board;
             this.board = this.clearFx.board;
@@ -22488,6 +22656,8 @@ const studyBreak = {
                 else if (ms.candyOutcome === '-1') statusLine = '🍬 −1 candy (you lost the bet)';
                 else if (ms.candyOutcome === 'refunded') statusLine = 'bet refunded — no agreement';
                 else if (ms.candyOutcome === 'pending') statusLine = 'settling the bet…';
+                else if (ms.candyOutcome === 'none') statusLine = 'no bet to settle — no candy moved';
+                else if (ms.stakePending) statusLine = 'pot pending';
                 else if (!ms.staked) statusLine = 'free match — no candy moved';
                 else statusLine = 'R = rematch · Esc = exit';
             } else {
@@ -22504,7 +22674,12 @@ const studyBreak = {
         ctx.fillStyle = '#000000'; ctx.font = '10px Chicago, Arial, sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(title, x + w / 2, y + 11);
         ctx.font = '10px Geneva, Arial, sans-serif';
-        ctx.fillText(detail, x + w / 2, y + 30);
+        let detailLine = detail;
+        if (ctx.measureText(detailLine).width > w - 16) {
+            while (detailLine && ctx.measureText(detailLine + '\u2026').width > w - 16) detailLine = detailLine.slice(0, -1);
+        }
+        if (detailLine !== detail) detailLine += '\u2026';
+        ctx.fillText(detailLine, x + w / 2, y + 30);
         if (ms) {
             ctx.fillStyle = '#333333'; ctx.font = '9px Geneva, Arial, sans-serif';
             ctx.fillText(seriesLine, x + w / 2, y + 48);
@@ -22516,12 +22691,19 @@ const studyBreak = {
             const foot = ms.seriesOver
                 ? (o && o.text ? o.text : (this._rematchNote ? this._rematchNote + ' · Esc to exit' : `Score ${this.score} · R = rematch · Esc = exit`))
                 : `Score ${this.score} · Esc to exit`;
-            ctx.fillText(foot, x + w / 2, y + 88);
+            let footerLine = foot;
+            if (ctx.measureText(footerLine).width > w - 16) {
+                while (footerLine && ctx.measureText(footerLine + '\u2026').width > w - 16) footerLine = footerLine.slice(0, -1);
+            }
+            if (footerLine !== foot) footerLine += '\u2026';
+            ctx.fillText(footerLine, x + w / 2, y + 88);
+            this._setHelpText([detail, seriesLine, statusLine, foot].filter(Boolean).join(' \u2022 '));
         } else {
             ctx.fillStyle = '#666666'; ctx.font = '9px Geneva, Arial, sans-serif';
             ctx.fillText('R to rematch  •  Esc to exit', x + w / 2, y + 48);
             ctx.fillStyle = '#000000'; ctx.fillText(`Score ${this.score}  •  Lines ${this.lines}`, x + w / 2, y + 60);
         }
+        if (!ms) this._setHelpText(detail + ' \u2022 R to rematch \u2022 Esc to exit');
         ctx.textAlign = 'left';
     },
 
@@ -23458,12 +23640,12 @@ document.querySelectorAll('.app-overlay').forEach(function(overlay) {
 
 
 /* ═══ Desktop multitasking: click-to-focus + icon right-click menu ═══ */
+var _appTopZ = 260;
 (function() {
     // Click-to-focus: clicking anywhere in an app window raises it above the
     // other open windows (capture phase so it runs even when a child handler
     // stops propagation). Cross-origin iframes don't bubble mousedown to us, so
     // raising those is done via their title bar — which is enough.
-    var _appTopZ = 260;
     document.addEventListener('mousedown', function(e) {
         var win = (e.target && e.target.closest) ? e.target.closest('.app-window') : null;
         if (!win) return;
@@ -24188,7 +24370,11 @@ const DogePresence = {
                 break;
 
             case 'match_start':
-                this.challengePending = null;
+                if (studyBreak._abandonedChallenges && studyBreak._abandonedChallenges[data.opponent] > Date.now()) {
+                    if (this.ws && this.ws.readyState === 1) { try { this.ws.send(JSON.stringify({ type: 'game_leave', roomId: data.roomId })); } catch (_) {} }
+                    return;
+                }
+                if (this.challengePending === data.opponent) this.challengePending = null;
                 this.closeDropdown();
                 this.clearIncomingChallenge();
                 // Auto-launch tetris in 1v1 mode
@@ -24234,6 +24420,8 @@ const DogePresence = {
             return;
         }
         this.challengePending = target;
+        // A fresh challenge supersedes an earlier abandoned one to the same classmate (see studyBreak.sendChallenge).
+        if (typeof studyBreak !== 'undefined' && studyBreak._abandonedChallenges) delete studyBreak._abandonedChallenges[target];
         this.closeDropdown();
         this.flash('Challenging ' + target + '...');
         this.ws.send(JSON.stringify({ type: 'game_challenge', target: target }));
@@ -24332,6 +24520,9 @@ const DogePresence = {
         }
         studyBreak._renderMute();
         studyBreak.overlay.style.display = 'block';
+        if (typeof _appTopZ !== 'undefined') studyBreak.overlay.style.zIndex = ++_appTopZ;
+        studyBreak._bindTouchControls();
+        if (typeof _lastClassroomSummary !== 'undefined') studyBreak.onClassroomSignal(_lastClassroomSummary);
         studyBreak.startLoop();
 
         // Go directly to match
@@ -24419,7 +24610,16 @@ function _escCloseTopModal() {
                        'my-receipts-overlay', 'student-dm-modal', 'teacher-nudge-modal',
                        'game-overlay'];
     for (var s = 0; s < selfHandled.length; s++) {
-        if (_escVisible(selfHandled[s])) return false;
+        var surface = _escVisible(selfHandled[s]);
+        if (!surface) continue;
+        if (selfHandled[s] !== 'game-overlay') return false;
+        var gameZ = parseInt(window.getComputedStyle(surface).zIndex, 10) || 0;
+        var covered = Array.from(document.querySelectorAll('[id$="-overlay"], [id$="-modal"]')).some(function(el) {
+            if (el === surface || surface.contains(el)) return false;
+            var style = window.getComputedStyle(el);
+            return style.display !== 'none' && style.visibility !== 'hidden' && (parseInt(style.zIndex, 10) || 0) > gameZ;
+        });
+        if (!covered) return false;
     }
     // Gap modals (no own Escape handler). Named close fns run cleanup; the QR/guest
     // overlays have no cleanup (no listeners/timers) so a direct hide is correct.
@@ -24473,7 +24673,7 @@ document.addEventListener('keydown', (e) => {
             }
         });
         // Content modals that have no dedicated Escape handler (see above).
-        _escCloseTopModal();
+        if (_escCloseTopModal()) e.preventDefault();
     }
 });
 
@@ -25664,7 +25864,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-25-28j1';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-46zl';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
