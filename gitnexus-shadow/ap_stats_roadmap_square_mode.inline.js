@@ -2851,6 +2851,7 @@
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -15959,10 +15960,11 @@ function _snapAssignmentRow(a, own, label) {
     var w = document.createElement('span'); w.className = 'snap-arow-when'; w.textContent = _snapZeroDateText(a); head.appendChild(w);
     row.appendChild(head);
     var amode = _snapApp.amode || 'box';
-    var ownForPlot = own == null ? (label !== undefined ? 0 : null) : own;
-    var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = ClassSnapshot.miniHeight(amode, a.values, label === null ? null : ownForPlot); canvas.setAttribute('role', 'img');
+    // The viewer's (or picked student's) score for the plot: missing work counts as 0; nobody placed = null.
+    var ownForPlot = label === null ? null : (own == null ? 0 : own);
+    var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = ClassSnapshot.miniHeight(amode, a.values, ownForPlot); canvas.setAttribute('role', 'img');
     row.appendChild(canvas);
-    ClassSnapshot.drawMini(canvas, { values: a.values, own: label === null ? null : ownForPlot, mode: amode });
+    ClassSnapshot.drawMini(canvas, { values: a.values, own: ownForPlot, mode: amode });
     var cap = document.createElement('div'); cap.className = 'snap-caption geneva';
     var text = ClassSnapshot.assignmentCaption(a, label === null ? undefined : ownForPlot);
     if (label) text = text.replace('You: ', label + ': ');
@@ -15987,12 +15989,24 @@ function _snapAssignmentRow(a, own, label) {
         lead.textContent = 'All ' + values.length + ' scores for ' + a.title + ':';
         list.appendChild(lead);
         var seq = document.createElement('div'); seq.className = 'snap-alist-seq';
-        var marked = false;
-        values.forEach(function (v) {
+        // The viewer's own score is marked red in the list. When it is not in the pool (the
+        // teacher, whose scores are not class data) it is inserted in order, never borrowed
+        // from a classmate's identical score.
+        var ownV = ownForPlot == null ? null : Math.round(ownForPlot);
+        var marked = false, inserted = false;
+        var chip = function (v, mine, added) {
             var sp = document.createElement('span'); sp.textContent = String(v);
-            if (isZero && !marked && v === 0) { sp.className = 'snap-alist-you'; sp.title = 'you'; marked = true; }
-            seq.appendChild(sp);
+            if (mine) { sp.className = 'snap-alist-you' + (added ? ' snap-alist-added' : ''); sp.title = label ? label : 'you'; }
+            return sp;
+        };
+        var inPool = ownV != null && values.some(function (v) { return v === ownV; });
+        values.forEach(function (v) {
+            if (ownV != null && !inPool && !inserted && v > ownV) { seq.appendChild(chip(ownV, true, true)); inserted = true; }
+            var mine = inPool && !marked && v === ownV;
+            if (mine) marked = true;
+            seq.appendChild(chip(v, mine, false));
         });
+        if (ownV != null && !inPool && !inserted) seq.appendChild(chip(ownV, true, true));
         list.appendChild(seq);
         var have = values.filter(function (v) { return v > 0; }).length;
         var foot = document.createElement('div'); foot.className = 'snap-alist-foot';
@@ -26397,7 +26411,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-t0mh';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-1j15';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

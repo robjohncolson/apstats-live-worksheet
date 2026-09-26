@@ -257,3 +257,50 @@ describe('Assignments view — focus and advice', () => {
     } finally { close(); }
   });
 });
+
+describe('score list — the red mark is the viewer’s own score, never a borrowed classmate', () => {
+  it('a teacher whose 0 is not in the pool gets an inserted red chip, in order, instead of a classmate’s 0', async () => {
+    const { s, host, close } = sandbox({ teacher: true, roster: [], lessons: [{ lessonKey: '1.1', hasBlooket: true, blooket: null }] });
+    try {
+      s._renderAssignmentsView(host(), true);
+      await tick(); await tick();
+      const row = host().querySelector('.snap-arow[data-key="1.1:blooket"]');
+      const chips = [...row.querySelectorAll('.snap-alist-seq span')];
+      // B11 already holds a 0 → the teacher's 0 is marked in place, not inserted
+      expect(chips.map(x => x.textContent).join(' ')).toBe('0 80 85 90 90 95 97 98 100 100 100 100 100 100 100');
+      expect(row.querySelector('.snap-alist-added')).toBeNull();
+      expect(row.querySelectorAll('.snap-alist-you').length).toBe(1);
+    } finally { close(); }
+  });
+  it('a scored viewer absent from the pool (a picked student with a score nobody else has) is inserted in sorted order with "(you)"', async () => {
+    const roster = [{ username: 'x', realName: 'Pat Q', section: 'PeriodB', role: 'student', lessons: [{ lessonKey: '1.1', hasBlooket: true, blooket: 93 }] }];
+    const { s, host, close } = sandbox({ teacher: true, roster, pick: 'x' });
+    try {
+      s._snapApp.focusKey = '1.1:blooket';
+      s._renderAssignmentsView(host(), true);
+      await tick(); await tick();
+      const row = host().querySelector('.snap-arow[data-key="1.1:blooket"]');
+      row.querySelector('.snap-alist-toggle').onclick();
+      const chips = [...row.querySelectorAll('.snap-alist-seq span')];
+      expect(chips.map(x => x.textContent).join(' ')).toBe('0 80 85 90 90 93 95 97 98 100 100 100 100 100 100 100');
+      const mine = row.querySelector('.snap-alist-you');
+      expect(mine.textContent).toBe('93');
+      expect(mine.classList.contains('snap-alist-added')).toBe(true);
+      expect(mine.title).toBe('Pat Q');
+      expect(row.querySelector('.snap-alist-foot').textContent).toBe('14 of 15 classmates have a score here.');
+    } finally { close(); }
+  });
+  it('a viewer whose score IS in the pool is marked in place, not duplicated', async () => {
+    const { s, host, close } = sandbox({ lessons: [{ lessonKey: '1.1', hasBlooket: true, blooket: 97 }] });
+    try {
+      s._snapApp.focusKey = '1.1:blooket';
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      const row = host().querySelector('.snap-arow[data-key="1.1:blooket"]');
+      row.querySelector('.snap-alist-toggle').onclick();
+      expect([...row.querySelectorAll('.snap-alist-seq span')].length).toBe(15);
+      expect(row.querySelector('.snap-alist-you').textContent).toBe('97');
+      expect(row.querySelector('.snap-alist-added')).toBeNull();
+    } finally { close(); }
+  });
+});
