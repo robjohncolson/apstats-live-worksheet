@@ -76,7 +76,7 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
   createContext(s);
   runInContext(
     "var SNAPSHOT_TTL_MS = 300000;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocusIndex', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
@@ -216,13 +216,14 @@ describe('Assignments view — forms', () => {
 });
 
 describe('Assignments view — focus and advice', () => {
-  it('picks the viewer\'s 0 counting longest, else the first (most overdue) row', () => {
+  it('picks the viewer\'s 0 counting longest, else the score furthest below the median among those below Q1, else flags all clear on the newest', () => {
     const { s, close } = sandbox();
     try {
       const rows = [Q13, A12, B11];
       expect(s._snapFocusIndex(rows, [67, null, null], undefined)).toBe(2);        // 1.1 zeroDate is earliest
-      expect(s._snapFocusIndex(rows, [67, 100, 100], undefined)).toBe(0);         // no 0 → first row (rows arrive oldest first)
-      expect(s._snapFocusIndex(rows, [null, null, null], null)).toBe(0);          // nobody placed → first row
+      expect(s._snapFocus(rows, [50, 100, 100], undefined)).toEqual({ index: 0, clear: false });   // 50 on Q13 is below its Q1 (67)
+      expect(s._snapFocus(rows, [100, 100, 93], undefined)).toEqual({ index: 2, clear: true });    // 93 on B11 is inside the box → nothing to fix → newest (last row)
+      expect(s._snapFocus(rows, [null, null, null], null)).toEqual({ index: 0, clear: false });    // nobody placed → most overdue
     } finally { close(); }
   });
   it('advises by position: below Q1 gets a fix with a button, inside the box and above Q3 get left alone', () => {
@@ -242,9 +243,10 @@ describe('Assignments view — focus and advice', () => {
     try {
       s._renderAssignmentsView(host(), false);
       await tick(); await tick();
-      expect(host().querySelector('.snap-pager-pos').textContent).toBe('1 of 3');
-      expect(host().querySelector('.snap-pager button').disabled).toBe(true);     // Prev on the first
-      host().querySelectorAll('.snap-pager button')[1].onclick();                  // Next
+      // all clear → the newest (last) row is the focus
+      expect(host().querySelector('.snap-pager-pos').textContent).toBe('3 of 3');
+      expect(host().querySelectorAll('.snap-pager button')[1].disabled).toBe(true);   // Next on the last
+      host().querySelectorAll('.snap-pager button')[0].onclick();                     // Prev
       expect(s._snapApp.aidx.all).toBe(1);
       expect(s.rerenders).toBe(1);
       s._snapApp.focusKey = '1.1:blooket';
@@ -301,6 +303,37 @@ describe('score list — the red mark is the viewer’s own score, never a borro
       expect([...row.querySelectorAll('.snap-alist-seq span')].length).toBe(15);
       expect(row.querySelector('.snap-alist-you').textContent).toBe('97');
       expect(row.querySelector('.snap-alist-added')).toBeNull();
+    } finally { close(); }
+  });
+});
+
+describe('Assignments view — all clear (teacher 2026-09-26: "something I\u2019ve nothing to fix on.. 1.1 blooket.. why?")', () => {
+  it('when nothing is a 0 or below Q1, says so above the pager and shows the newest assignment', async () => {
+    const { s, host, close } = sandbox({ lessons: [
+      { lessonKey: '1.1', hasBlooket: true, blooket: 93.3 },
+      { lessonKey: '1.2', lessonGradeNoQuiz: 100 },
+      { lessonKey: '1.3', quizTotal: 3, Q: 100 },
+    ] });
+    try {
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      expect(host().querySelector('.snap-clear').textContent).toBe('You have no 0s and nothing below Q1 on any of the 3 assignments counting so far. Showing the newest; use Prev to look back.');
+      expect(host().querySelector('.snap-arow').dataset.key).toBe('1.3:quiz');
+      expect(host().querySelector('.snap-pager-pos').textContent).toBe('3 of 3');
+    } finally { close(); }
+  });
+  it('a score below Q1 is the focus and there is no all-clear line', async () => {
+    const { s, host, close } = sandbox({ lessons: [
+      { lessonKey: '1.1', hasBlooket: true, blooket: 100 },
+      { lessonKey: '1.2', lessonGradeNoQuiz: 100 },
+      { lessonKey: '1.3', quizTotal: 3, Q: 50 },
+    ] });
+    try {
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      expect(host().querySelector('.snap-clear')).toBeNull();
+      expect(host().querySelector('.snap-arow').dataset.key).toBe('1.3:quiz');
+      expect(host().querySelector('.snap-advice').textContent).toContain('below Q1');
     } finally { close(); }
   });
 });

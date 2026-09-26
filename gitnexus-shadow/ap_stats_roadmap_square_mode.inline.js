@@ -2852,6 +2852,7 @@
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -15928,18 +15929,31 @@ function _snapAdvice(a, own, label) {
     if (own > fn.q3) return { text: who + ' ' + own + ', above Q3. Nothing to do here.' };
     return { text: who + ' ' + own + ', inside the box \u2014 with the middle half of the class. Nothing to fix here.' };
 }
-// Which assignment deserves the screen: the viewer's 0 that has been counting longest, else the
-// most overdue assignment overall (rows are ordered oldest first).
-function _snapFocusIndex(rows, owns, label) {
-    if (label === null) return 0;
+// Which assignment deserves the screen (rows are ordered oldest first):
+//   1. the viewer's 0 that has been counting longest;
+//   2. else the viewer's score furthest below the class median among those below Q1;
+//   3. else nothing needs fixing: the newest assignment, flagged `clear`.
+// Nobody placed (label null): the most overdue assignment.
+function _snapFocus(rows, owns, label) {
+    if (label === null) return { index: 0, clear: false };
     var best = -1, bestDate = null;
     rows.forEach(function (a, i) {
         var own = owns[i];
         if (own != null && own !== 0) return;
         if (bestDate == null || a.zeroDate < bestDate) { best = i; bestDate = a.zeroDate; }
     });
-    return best >= 0 ? best : 0;
+    if (best >= 0) return { index: best, clear: false };
+    var worst = -1, gap = 0;
+    rows.forEach(function (a, i) {
+        var fn = ClassSnapshot.fiveNumber(a.values || []);
+        if (fn.q1 == null || owns[i] >= fn.q1) return;
+        var g = fn.median - owns[i];
+        if (g > gap) { gap = g; worst = i; }
+    });
+    if (worst >= 0) return { index: worst, clear: false };
+    return { index: rows.length - 1, clear: true };
 }
+function _snapFocusIndex(rows, owns, label) { return _snapFocus(rows, owns, label).index; }
 // The section whose Class-tab pick should be placed on the pooled picture (first with a pick).
 function _snapPickedSection() {
     var keys = Object.keys(_snapApp.pick || {});
@@ -16073,8 +16087,16 @@ function _renderAssignmentsView(host, teacher) {
                 var fk = rows.findIndex(function (a) { return a.key === _snapApp.focusKey; });
                 if (fk >= 0) idx = fk;
             }
-            if (typeof idx !== 'number' || idx < 0 || idx >= rows.length) idx = _snapFocusIndex(rows, owns, label);
+            var focus = _snapFocus(rows, owns, label);
+            if (typeof idx !== 'number' || idx < 0 || idx >= rows.length) idx = focus.index;
             _snapApp.aidx[section] = idx;
+            if (focus.clear) {
+                // Nothing to fix anywhere: say so once, above the pager, so a "Nothing to fix here"
+                // row never reads as if it were chosen because something is wrong with it.
+                var clear = document.createElement('div'); clear.className = 'snap-clear geneva';
+                clear.textContent = (label ? label + ' has' : 'You have') + ' no 0s and nothing below Q1 on any of the ' + rows.length + ' assignments counting so far. Showing the newest; use Prev to look back.';
+                body.appendChild(clear);
+            }
             var pager = document.createElement('div'); pager.className = 'snap-pager';
             var prev = document.createElement('button'); prev.type = 'button'; prev.className = 's7btn'; prev.style.cssText = 'font-size:10px;padding:1px 6px';
             prev.textContent = '\u2039 Prev'; prev.disabled = idx === 0;
@@ -26411,7 +26433,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-fm4c';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-mfzp';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
