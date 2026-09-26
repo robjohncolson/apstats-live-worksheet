@@ -521,6 +521,7 @@ describe('GET /class/snapshot?section=all (both periods pooled)', () => {
     const ctx = await startServer({ roster: both, ledger, lessonSchedule: {
       '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2026-09-12', E: '2026-09-10' } },
       '1.2': { unit: 1, worksheetKey: '2', periods: { B: '2026-09-12', E: '2026-09-13' } },
+      '1.3': { unit: 1, worksheetKey: '3', periods: { B: '2026-09-20', E: '2026-09-20' } },
     } }); srv = ctx.server;
     const r = await srv.get('/class/snapshot?section=all&by=assignment', teacher);
     expect(r.status).toBe(200);
@@ -532,8 +533,11 @@ describe('GET /class/snapshot?section=all (both periods pooled)', () => {
     expect(byKey['1.1:worksheet']).toMatchObject({ n: 12, zeroDate: '2026-09-23', zeros: 2 });
     expect(byKey['1.1:worksheet'].values).toEqual([0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]);
     expect(byKey['1.1:worksheet'].fiveNumber).toEqual({ min: 0, q1: 100, median: 100, q3: 100, max: 100 });
-    // 1.2 worksheet: due only in B today → only B's 6 values
+    // 1.2 worksheet: due only in B today → B's 6 (all missing → 0); E has nothing recorded for 1.2,
+    // so it lends no values and no zeros before its own date
     expect(byKey['1.2:worksheet']).toMatchObject({ n: 6, zeroDate: '2026-09-25', zeros: 6 });
+    expect(byKey['1.1:quiz'].pending).toBeUndefined();     // pooled items never carry `pending`
+    expect(byKey['1.3:quiz']).toBeUndefined();             // due nowhere yet → absent
     // quarter picture pooled too
     expect(r.body.n).toBe(12);
     // an E student may read the pooled picture (their own section check does not apply)
@@ -553,5 +557,28 @@ describe('GET /class/snapshot?section=all (both periods pooled)', () => {
     expect(m.assignments[0]).toMatchObject({ key: '1.1:quiz', zeroDate: '2026-09-24', n: 5, zeros: 1 });
     expect(m.assignments[1]).toMatchObject({ key: '1.2:quiz', n: 0, zeros: null, values: [] });
     expect(m.n).toBe(5);
+  });
+});
+
+describe('pooled snapshot — a section before its zero date lends recorded scores only', () => {
+  it('E students with a recorded score join the pool for a lesson due only in B; E students without one are not zeros', async () => {
+    const es = roster.map(st => ({ ...st, student_id: `e${st.student_id}`, login_username: `e_${st.login_username}`, section: 'PeriodE' }));
+    // B: 3 answered the quiz, 3 missing. E: 2 answered, 4 missing (E's date has not passed).
+    const quiz = (sid) => [makeRow(sid, 'U1-L1-Q01', 'B'), makeRow(sid, 'U1-L1-Q02', 'C')];
+    const ledger = {
+      s0: quiz('s0'), s1: quiz('s1'), s2: quiz('s2'), s3: [], s4: [], s5: [],
+      es0: quiz('es0'), es1: quiz('es1'), es2: [], es3: [], es4: [], es5: [],
+    };
+    const ctx = await startServer({ roster: [...roster, ...es], ledger, lessonSchedule: {
+      '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2026-09-12', E: '2026-09-20' } },
+    } }); srv = ctx.server;
+    const r = await srv.get('/class/snapshot?section=all&by=assignment', teacher);
+    const quizItem = r.body.assignments.find(item => item.key === '1.1:quiz');
+    expect(quizItem).toMatchObject({ n: 8, zeros: 3, zeroDate: '2026-09-25' });
+    expect(quizItem.values).toEqual([0, 0, 0, 100, 100, 100, 100, 100]);
+    expect(quizItem.pending).toBeUndefined();
+    // the single-section E view still hides it entirely (not due there)
+    const e = await srv.get('/class/snapshot?section=PeriodE&by=assignment', teacher);
+    expect(e.body.assignments.find(item => item.key === '1.1:quiz')).toBeUndefined();
   });
 });

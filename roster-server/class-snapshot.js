@@ -48,14 +48,17 @@ export function mergeSnapshots(snapshots, sections) {
       const have = byKey.get(item.key);
       if (!have) { byKey.set(item.key, { ...item, values: item.values.slice(), zeros: item.zeros }); continue; }
       have.values = have.values.concat(item.values);
-      if (item.zeroDate < have.zeroDate) have.zeroDate = item.zeroDate;
+      // The pooled zero date is the earliest date it is actually counting somewhere.
+      if (!item.pending && (have.pending || item.zeroDate < have.zeroDate)) have.zeroDate = item.zeroDate;
+      have.pending = Boolean(have.pending && item.pending);
       have.zeros = have.zeros == null || item.zeros == null ? null : have.zeros + item.zeros;
     }
   }
-  merged.assignments = [...byKey.values()].map(item => {
+  merged.assignments = [...byKey.values()].filter(item => !item.pending).map(item => {
     const pooled = item.values.slice().sort((a, b) => a - b);
     const summary = summarizeValues(pooled);
-    return { ...item, ...summary, zeros: summary.n < 5 ? null : pooled.filter(v => v === 0).length };
+    const { pending, ...rest } = item;
+    return { ...rest, ...summary, zeros: summary.n < 5 ? null : pooled.filter(v => v === 0).length };
   });
   return merged;
 }
@@ -67,11 +70,13 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
 
   async function computeSnapshot(section, by) {
     if (section !== 'all') return computeSectionSnapshot(section, by);
-    const parts = await Promise.all(COURSE_SECTIONS.map(s => computeSectionSnapshot(s, by)));
+    // Pooled: a section not yet past its zero date still lends the scores it already has
+    // (nobody there is counted as a 0 before their date), so the pool is as big as the data.
+    const parts = await Promise.all(COURSE_SECTIONS.map(s => computeSectionSnapshot(s, by, { pendingScores: true })));
     return mergeSnapshots(parts, COURSE_SECTIONS);
   }
 
-  async function computeSectionSnapshot(section, by) {
+  async function computeSectionSnapshot(section, by, { pendingScores = false } = {}) {
     const grades = await computeClassGrades({ section }, { requireComplete: true });
     if (!grades.ok) throw new Error('gradebook unavailable');
     const asOf = todayInTz('America/New_York');
@@ -91,7 +96,9 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
     const seenTracks = new Set();
     for (const lesson of lessons) {
       const zeroDate = lesson.zeroDate?.[period];
-      if (!zeroDate || zeroDate >= asOf) continue;
+      if (!zeroDate) continue;
+      const pending = zeroDate >= asOf;
+      if (pending && !pendingScores) continue;
 
       const tracks = [];
       if (lesson.worksheetKey) tracks.push(['worksheet', 'Follow-Along']);
@@ -109,12 +116,16 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
           const score = student.lessons?.find(item => item.lessonKey === lesson.lessonKey);
           const value = track === 'worksheet' ? score?.lessonGradeNoQuiz ?? score?.Cws
             : track === 'quiz' ? score?.Q : score?.blooket;
-          return Number.isFinite(value) ? Math.round(value) : 0;
-        }).sort((a, b) => a - b);
+          // Before the zero date, missing work is not a 0 yet: it is left out.
+          return Number.isFinite(value) ? Math.round(value) : (pending ? null : 0);
+        }).filter(value => value !== null).sort((a, b) => a - b);
         const summary = summarizeValues(values);
         snapshot.assignments.push({
           key: `${lesson.lessonKey}:${track}`, lessonKey: lesson.lessonKey, track,
           title: `${lesson.lessonKey} ${label}`, zeroDate, ...summary,
+          // Internal pooled call: keep the raw values so the n<5 floor applies to the POOL,
+          // not to each section's slice (mergeSnapshots re-summarizes and re-applies it).
+          ...(pendingScores ? { pending, values } : {}),
           // Counts also disclose scores in small sections.
           zeros: summary.n < 5 ? null : values.filter(value => value === 0).length,
         });

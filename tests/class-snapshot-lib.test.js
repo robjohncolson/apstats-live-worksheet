@@ -175,3 +175,11 @@ describe('the red "you" mark when the viewer is not in the pool (teacher 2026-09
     expect(record('dot', 97).filter(c => c[0] === 'arc').length).toBe(V.length);
   });
 });
+
+describe('a 0 that sits at Q1 (teacher 2026-09-26: "all datapoints are 100 or 0, so even my zero is within the IQR")', () => {
+  it('names why the 0 is inside the box instead of calling it fine', () => {
+    const a = { values: [0, 0, 0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100], zeros: 4 };
+    expect(C.assignmentCaption(a, 0)).toBe('Median 100 · IQR 100 · 4 zeros. You: 0 — inside the box only because at least a quarter of the class is also at 0, so Q1 itself is 0.');
+    expect(C.assignmentCaption(a, 100)).toBe('Median 100 · IQR 100 · 4 zeros. You: 100 — inside the box.');
+  });
+});
