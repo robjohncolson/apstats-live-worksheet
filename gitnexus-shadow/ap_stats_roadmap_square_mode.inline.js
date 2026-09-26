@@ -15751,7 +15751,7 @@ function _snapPaint(card) {
 // Students: the same card as My Ledger (own value in red). Teacher: one card per section with
 // every mode available and a "place a student" picker (names come from /class/grades, which the
 // teacher's own session already authorizes; the student endpoint never carries names).
-var _snapApp = { mode: null, sections: {}, roster: null, pick: {}, request: 0, view: 'class', assign: {}, focusKey: null };
+var _snapApp = { mode: null, sections: {}, roster: null, pick: {}, request: 0, view: 'class', assign: {}, focusKey: null, amode: null };
 
 function openSnapshot() {
     try { if (typeof bumpUsage === 'function') bumpUsage('snapshot'); } catch (_) {}
@@ -15825,7 +15825,7 @@ function _snapTeacherSectionCard(section) {
     var cap = document.createElement('div'); cap.className = 'snap-caption geneva'; cap.setAttribute('role', 'status'); cap.textContent = 'Loading…'; card.appendChild(cap);
     var paint = function () {
         var data = _snapApp.sections[section];
-        var modes = ['dot', 'stem', 'box'];
+        var modes = ['dot', 'stem', 'hist', 'box'];
         if (!_snapApp.mode) _snapApp.mode = _snapModes().default;
         tabs.textContent = '';
         modes.forEach(function (m) {
@@ -15904,10 +15904,11 @@ function _snapAssignmentRow(a, own, label) {
     var t = document.createElement('span'); t.className = 'snap-arow-title'; t.textContent = a.title; head.appendChild(t);
     var w = document.createElement('span'); w.className = 'snap-arow-when'; w.textContent = _snapZeroDateText(a); head.appendChild(w);
     row.appendChild(head);
-    var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 26; canvas.setAttribute('role', 'img');
+    var amode = _snapApp.amode || 'box';
+    var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = ClassSnapshot.miniHeight(amode, a.values); canvas.setAttribute('role', 'img');
     row.appendChild(canvas);
     var ownForPlot = own == null ? (label !== undefined ? 0 : null) : own;
-    ClassSnapshot.drawMini(canvas, { values: a.values, own: label === null ? null : ownForPlot });
+    ClassSnapshot.drawMini(canvas, { values: a.values, own: label === null ? null : ownForPlot, mode: amode });
     var cap = document.createElement('div'); cap.className = 'snap-caption geneva';
     var text = ClassSnapshot.assignmentCaption(a, label === null ? undefined : ownForPlot);
     if (label) text = text.replace('You: ', label + ': ');
@@ -15949,6 +15950,18 @@ function _renderAssignmentsView(host, teacher) {
         ? 'One box plot per assignment that is already counting, newest first. Pick a student on the Class tab to place their dot on every row. Every score list is anonymous.'
         : 'One box plot per assignment that is already counting, newest first. Red = you. Where you have a 0, the whole class’s scores are shown — no names, just the numbers.';
     host.appendChild(intro);
+    var modes = teacher ? { available: ['dot', 'stem', 'hist', 'box'], default: 'box', tabs: true } : _snapModes();
+    if (!_snapApp.amode || modes.available.indexOf(_snapApp.amode) < 0) _snapApp.amode = modes.default;
+    if (modes.tabs) {
+        var bar = document.createElement('div'); bar.className = 'snap-tabs snap-amodes';
+        modes.available.forEach(function (m) {
+            var b = document.createElement('button'); b.type = 'button'; b.className = 's7btn'; b.style.cssText = 'font-size:10px;padding:1px 6px';
+            b.textContent = ClassSnapshot.LABEL[m]; b.setAttribute('aria-pressed', String(m === _snapApp.amode));
+            b.onclick = function () { _snapApp.amode = m; _renderSnapshotApp(); };
+            bar.appendChild(b);
+        });
+        host.appendChild(bar);
+    }
     var sections = teacher ? ['PeriodB', 'PeriodE'] : [_snapSection()];
     sections.forEach(function (section) {
         var card = document.createElement('div'); card.className = 'wallet-snapshot-card'; card.dataset.section = section;
@@ -26293,7 +26306,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-8mkw';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-u1dp';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -63,15 +63,19 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
       { lessonKey: '1.1', hasBlooket: true, blooket: null, lessonGradeNoQuiz: 101.7, Cws: 100, quizTotal: 0, Q: null },
       { lessonKey: '1.2', hasBlooket: true, blooket: 97.6, lessonGradeNoQuiz: null, Cws: null, quizTotal: 3, Q: 100 },
       { lessonKey: '1.3', hasBlooket: true, blooket: 80, lessonGradeNoQuiz: 100, Cws: 100, quizTotal: 3, Q: 67 },
+      { lessonKey: '1.5', due: { B: '2026-09-14', E: '2026-09-15' } },
+      { lessonKey: '1.8', due: { B: '2026-09-30', E: '2026-10-01' } },
     ],
     _zeroTodayIso: () => '2026-09-26',
+    cP: 'B',
+    _renderSnapshotApp() { s.rerenders = (s.rerenders || 0) + 1; },
     fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'PeriodB', assignments: [A12, Q13, B11] }) }; },
     openSnapshot() { s.opened = (s.opened || 0) + 1; },
   };
   createContext(s);
   runInContext(
-    "var SNAPSHOT_TTL_MS = 300000;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    "var SNAPSHOT_TTL_MS = 300000;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
+    ['_snapSection', '_snapModes', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
@@ -160,5 +164,33 @@ describe('wiring', () => {
     expect(fnSrc('_renderSnapshotApp')).toContain("[['class', 'Class'], ['assignments', 'Assignments']]");
     // bonus decks never appear in the missing list (review 2026-09-26)
     expect(fnSrc('_zeroWarnings')).toContain('!L.blooketBonus');
+  });
+});
+
+describe('Assignments view — forms', () => {
+  it('offers the forms the section has learned (dot, stem, histogram before 1.8; stem default), sizes each row canvas for the form, and re-renders on a click', async () => {
+    const { s, host, close } = sandbox();
+    try {
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      const bar = host().querySelector('.snap-amodes');
+      expect([...bar.querySelectorAll('button')].map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Histogram']);
+      expect([...bar.querySelectorAll('button')].map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+      const canvas = host().querySelector('.snap-arow canvas');
+      expect(canvas.height).toBe(C.miniHeight('stem', A12.values));
+      bar.querySelectorAll('button')[2].onclick();
+      expect(s._snapApp.amode).toBe('hist');
+      expect(s.rerenders).toBe(1);
+    } finally { close(); }
+  });
+  it('the teacher gets all four forms with the box plot as default', async () => {
+    const { s, host, close } = sandbox({ teacher: true, roster: [] });
+    try {
+      s._renderAssignmentsView(host(), true);
+      await tick(); await tick();
+      expect([...host().querySelector('.snap-amodes').querySelectorAll('button')].map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Histogram', 'Box plot']);
+      expect(s._snapApp.amode).toBe('box');
+      expect(host().querySelector('.snap-arow canvas').height).toBe(26);
+    } finally { close(); }
   });
 });

@@ -91,7 +91,7 @@
     if (state !== 'ready') return;
     var sections = snapshotSections();
     if (!sections.length) { message(host, 'Load a class to see the picture.'); return; }
-    var modes = ['dot', 'stem', 'box'];
+    var modes = ['dot', 'stem', 'hist', 'box'];
     if (!snapshotMode) snapshotMode = 'dot';
     var tabs = node('div', null, 'workspace-nav');
     modes.forEach(function (m) {

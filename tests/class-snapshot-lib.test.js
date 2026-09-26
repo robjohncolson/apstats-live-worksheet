@@ -54,8 +54,8 @@ describe('mode follows the section\'s pacing', () => {
   it('before 1.5: dot plot only, no tabs', () => {
     expect(C.mode(LESSONS, 'B', '2026-09-10')).toEqual({ available: ['dot'], default: 'dot', tabs: false });
   });
-  it('after 1.5, before 1.8: dot + stem, stem is the default', () => {
-    expect(C.mode(LESSONS, 'B', '2026-09-26')).toEqual({ available: ['dot', 'stem'], default: 'stem', tabs: true });
+  it('after 1.5, before 1.8: dot + stem + histogram, stem is the default', () => {
+    expect(C.mode(LESSONS, 'B', '2026-09-26')).toEqual({ available: ['dot', 'stem', 'hist'], default: 'stem', tabs: true });
   });
   it('after 1.8: all three, box plot is the default; period E uses its own dates', () => {
     expect(C.mode(LESSONS, 'B', '2026-09-30').default).toBe('box');
@@ -101,7 +101,7 @@ describe('draw() on a recording context', () => {
     });
     return { canvas: { width: 300, height: 120, getContext: () => ctx }, calls };
   }
-  it.each(['dot', 'stem', 'box'])('%s mode draws without throwing and marks "you"', (mode) => {
+  it.each(['dot', 'stem', 'hist', 'box'])('%s mode draws without throwing and marks "you"', (mode) => {
     const { canvas, calls } = recordingCanvas();
     C.draw(canvas, { values: PERIOD_B, own: 31, mode });
     const texts = calls.filter(c => c[0] === 'fillText').map(c => c[1]);
@@ -118,5 +118,32 @@ describe('draw() on a recording context', () => {
   it('tolerates a canvas with no 2D context', () => {
     expect(() => C.draw({ width: 10, height: 10, getContext: () => null }, { values: PERIOD_B, mode: 'dot' })).not.toThrow();
     expect(() => C.draw(null, { values: PERIOD_B })).not.toThrow();
+  });
+});
+
+describe('per-assignment forms (teacher 2026-09-26: "stem and leaf, dotplot, and histogram models as well")', () => {
+  const V = [0, 0, 0, 85, 88, 91, 95, 97, 100, 100, 100, 100, 100, 100, 100];
+  it('histogram bins are left-closed tens with 100 (and bonus) in the top bin', () => {
+    expect(C.histBins([0, 5, 10, 99, 100, 105]).map(b => b.count)).toEqual([2, 1, 0, 0, 0, 0, 0, 0, 0, 3]);
+    expect(C.histBins(V)[9]).toEqual({ lo: 90, hi: 100, count: 10 });
+  });
+  it('miniHeight grows the stem-and-leaf canvas with the number of stems', () => {
+    expect(C.miniHeight('box', V)).toBe(26);
+    expect(C.miniHeight('hist', V)).toBe(60);
+    expect(C.miniHeight('stem', [31, 100])).toBe(8 * 11 + 14);     // stems 3..10
+  });
+  it.each(['box', 'dot', 'hist', 'stem'])('drawMini %s draws without throwing and marks "you"', (mode) => {
+    const calls = [];
+    const ctx = new Proxy({ font: '', fillStyle: '', strokeStyle: '', textAlign: '', textBaseline: '', lineWidth: 1 }, {
+      get(t, k) { if (k in t) return t[k]; if (k === 'measureText') return (s) => ({ width: String(s).length * 6 }); return (...a) => { calls.push([k, ...a]); }; },
+      set(t, k, v) { t[k] = v; return true; },
+    });
+    C.drawMini({ width: 300, height: C.miniHeight(mode, V), getContext: () => ctx }, { values: V, own: 0, mode });
+    const texts = calls.filter(c => c[0] === 'fillText').map(c => c[1]);
+    expect(mode === 'stem' ? texts.some(x => /red leaf = you/.test(x)) : mode === 'box' ? calls.some(c => c[0] === 'arc') : texts.includes('you')).toBe(true);
+  });
+  it('an IQR of 0 gets its sentence in the caption', () => {
+    expect(C.assignmentCaption({ values: [0, 100, 100, 100, 100, 100, 100, 100], zeros: 1 }, 0))
+      .toBe('Median 100 · IQR 0 · 1 zero. More than half the class has the same score, so every other score counts as an outlier. You: 0 — below Q1 — an outlier by the 1.5×IQR rule.');
   });
 });

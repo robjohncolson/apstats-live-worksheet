@@ -108,8 +108,8 @@ describe('Where you stand — modes and drawing', () => {
     try {
       s._walletPrependSnapshot(host()); await tick(); await tick();
       const tabs = [...card().querySelectorAll('.snap-tabs button')];
-      expect(tabs.map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf']);
-      expect(tabs.map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
+      expect(tabs.map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Histogram']);
+      expect(tabs.map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
       const last = s.drawn.at(-1);
       expect(last.mode).toBe('stem'); expect(last.own).toBe(31); expect(last.values).toEqual(PAYLOAD.values);
       tabs[0].onclick();
@@ -172,7 +172,7 @@ describe('Class Snapshot desktop app (teacher 2026-09-26: "an app accessible fro
       await tick(); await tick(); await tick();
       const cards = [...t.content().querySelectorAll('.wallet-snapshot-card')];
       expect(cards.map(c => c.dataset.section)).toEqual(['PeriodB', 'PeriodE']);
-      expect([...cards[0].querySelectorAll('.snap-tabs button')].map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Box plot']);
+      expect([...cards[0].querySelectorAll('.snap-tabs button')].map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Histogram', 'Box plot']);
       const select = cards[0].querySelector('select');
       expect([...select.options].map(o => o.textContent)).toEqual(['(no dot)', 'Allison R', 'Kiwi T']);
       expect(t.s.drawn.at(-1).own).toBeNull();
