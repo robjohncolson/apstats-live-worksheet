@@ -48,7 +48,7 @@ function sandbox({ lessons = LESSONS, period = 'B', today = '2026-09-21' } = {})
     getRegistryEntry: () => ({ urls: { worksheet: 'u1_lesson2_live.html' } }),
   };
   createContext(s);
-  runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText', '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_walletPrependZeroCard']
+  runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText', '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_zeroOpenQuiz', '_walletPrependZeroCard']
     .map(fnSrc).join('\n'), s);
   return { s, dom, close: () => dom.window.close() };
 }
@@ -130,7 +130,7 @@ describe('ZERO_WARNING — ledger card', () => {
     try {
       s._walletPrependZeroCard(dom.window.document.getElementById('wallet-content'));
       const card = dom.window.document.querySelector('.wallet-zero-card');
-      expect(card.children[1].textContent).toBe('Each of these is a 0 in your grade and on Schoology once its date passes. All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.');
+      expect(card.children[1].textContent).toBe('Each of these is a 0 in your grade once its date passes (worksheets and flashcards also on Schoology). All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.');
       expect([...card.querySelectorAll('h5, .wz-row button')].map(el => el.textContent)).toEqual([
         'Already a 0', 'Open Topic 1.1', 'Flashcards Topic 1.2', 'Becomes a 0 soon', 'Open Topic 1.3',
       ]);
@@ -295,6 +295,43 @@ describe('ZERO_WARNING — unplayed Blooket decks (2026-09-22, lesson gate gone)
       expect(s.decks).toEqual(['1.1']);
       expect(s.opened).toEqual([]);
       rows[1].querySelector('button').onclick();      // 1.2 worksheet row still opens the lesson
+      expect(s.opened).toEqual(['1.2']);
+    } finally { close(); }
+  });
+});
+
+const QUIZ_LESSONS = LESSONS.concat([
+  { lessonKey: '1.9', zeroDate: { B: '2026-09-19', E: '2026-09-20' }, lessonGradeNoQuiz: 100, Cws: 100, quizTotal: 3, Q: null },   // worksheet done, QUIZ never taken: already a 0
+  { lessonKey: '1.11', zeroDate: { B: '2026-09-19', E: '2026-09-20' }, lessonGradeNoQuiz: 100, Cws: 100, quizTotal: 0, Q: null },  // no quiz exists: quiet
+]);
+describe('ZERO_WARNING — untaken quizzes (teacher 2026-09-26: "add the quizzes, omg")', () => {
+  it('a lesson with a quiz (quizTotal > 0) and no quiz score warns as kind quiz; a lesson without a quiz never does', () => {
+    const { s, close } = sandbox({ lessons: QUIZ_LESSONS });
+    try {
+      const w = s._zeroWarnings(s._gradeLessonsCache, 'B', '2026-09-21');
+      const quiz = w.filter(x => x.kind === 'quiz');
+      expect(quiz.map(x => [x.lessonKey, x.past])).toEqual([['1.9', true]]);
+      expect(w.some(x => x.lessonKey === '1.11')).toBe(false);
+      expect(w.some(x => x.lessonKey === '1.9' && x.kind === 'worksheet')).toBe(false);   // its worksheet is done
+    } finally { close(); }
+  });
+  it('counts quizzes in the badge text and renders a Quiz button that opens the registry quiz URL', () => {
+    const { s, dom, close } = sandbox({ lessons: QUIZ_LESSONS });
+    try {
+      expect(s._zeroCountText([{ kind: 'worksheet' }, { kind: 'quiz' }, { kind: 'quiz' }, { kind: 'blooket' }])).toBe('1 worksheet, 2 quizzes and 1 flashcard deck');
+      expect(s._zeroCountText([{ kind: 'quiz' }])).toBe('1 quiz');
+      const opened = [];
+      s.window.open = (url) => { opened.push(url); };
+      s.getRegistryEntry = (k) => ({ urls: { worksheet: 'ws.html', quiz: k === '1.9' ? 'https://quiz.test/1.9' : null } });
+      const host = dom.window.document.getElementById('wallet-content');
+      s._walletPrependZeroCard(host);
+      const row = [...host.querySelectorAll('.wz-row')].find(r => r.querySelector('button').textContent === 'Quiz Topic 1.9');
+      expect(row).toBeTruthy();
+      expect(row.classList.contains('wz-quiz')).toBe(true);
+      row.querySelector('button').onclick();
+      expect(opened).toEqual(['https://quiz.test/1.9']);
+      // A quiz with no registry URL falls back to the lesson panel.
+      s._zeroOpenQuiz('1.2');
       expect(s.opened).toEqual(['1.2']);
     } finally { close(); }
   });

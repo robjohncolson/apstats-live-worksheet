@@ -15483,11 +15483,16 @@ function _zeroWarnings(lessons, period, todayIso) {
             if (days > ZERO_WARN_DAYS) continue;
             var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;
             if (!hasWork) out.push({ lessonKey: L.lessonKey, kind: 'worksheet', zeroDate: zd, daysLeft: days, past: days < 0 });
+            // 2026-09-26 (teacher): the quiz track zeroes on the same date in the Desk grade, and the
+            // card must list EVERYTHING that is dragging the number down. A lesson has a quiz when
+            // the engine reports quizTotal > 0; Q == null means it was never taken.
+            if ((L.quizTotal || 0) > 0 && L.Q == null) out.push({ lessonKey: L.lessonKey, kind: 'quiz', zeroDate: zd, daysLeft: days, past: days < 0 });
             if (L.hasBlooket && L.blooket == null) out.push({ lessonKey: L.lessonKey, kind: 'blooket', zeroDate: zd, daysLeft: days, past: days < 0 });
         }
+        var KIND_ORDER = { worksheet: 0, quiz: 1, blooket: 2 };
         out.sort(function (a, b) {
             if (a.zeroDate !== b.zeroDate) return a.zeroDate < b.zeroDate ? -1 : 1;
-            return a.kind === b.kind ? 0 : (a.kind === 'worksheet' ? -1 : 1);
+            return (KIND_ORDER[a.kind] || 0) - (KIND_ORDER[b.kind] || 0);
         });
         return out;
     } catch (_) { return []; }
@@ -15528,12 +15533,27 @@ function _updateZeroWarningBadge() {
 }
 // "3 worksheets" / "2 worksheets and 1 flashcard deck" for the badge + title.
 function _zeroCountText(warns) {
-    var ws = 0, bl = 0;
-    for (var i = 0; i < warns.length; i++) { if (warns[i].kind === 'blooket') bl++; else ws++; }
+    var ws = 0, qz = 0, bl = 0;
+    for (var i = 0; i < warns.length; i++) {
+        if (warns[i].kind === 'blooket') bl++;
+        else if (warns[i].kind === 'quiz') qz++;
+        else ws++;
+    }
     var parts = [];
     if (ws) parts.push(ws + ' worksheet' + (ws === 1 ? '' : 's'));
+    if (qz) parts.push(qz + ' quiz' + (qz === 1 ? '' : 'zes'));
     if (bl) parts.push(bl + ' flashcard deck' + (bl === 1 ? '' : 's'));
-    return parts.join(' and ');
+    if (parts.length <= 1) return parts.join('');
+    return parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1];
+}
+// Open the lesson's quiz (the registry's quiz URL); fall back to the lesson panel, which
+// also lists the quiz link.
+function _zeroOpenQuiz(lessonKey) {
+    try {
+        var e = (typeof getRegistryEntry === 'function') ? getRegistryEntry(lessonKey) : null;
+        if (e && e.urls && e.urls.quiz) { window.open(e.urls.quiz, '_blank', 'noopener'); return; }
+        _zeroOpenLesson(lessonKey);
+    } catch (_) {}
 }
 function _zeroOpenFlashcards(btn, lessonKey) {
     try {
@@ -15596,7 +15616,7 @@ function _walletPrependZeroCard(host) {
         h.textContent = '\u26A0 Missing work';
         card.appendChild(h);
         var p = document.createElement('div');
-        p.textContent = 'Each of these is a 0 in your grade and on Schoology once its date passes. All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.';
+        p.textContent = 'Each of these is a 0 in your grade once its date passes (worksheets and flashcards also on Schoology). All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.';
         p.style.marginBottom = '6px';
         card.appendChild(p);
         [true, false].forEach(function (past) {
@@ -15607,13 +15627,16 @@ function _walletPrependZeroCard(host) {
             card.appendChild(heading);
             group.forEach(function (w) {
                 var row = document.createElement('div');
-                row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '');
+                row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '') + (w.kind === 'quiz' ? ' wz-quiz' : '');
                 var btn = document.createElement('button');
                 btn.type = 'button'; btn.className = 's7btn';
                 var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
                 if (w.kind === 'blooket') {
                     btn.textContent = 'Flashcards ' + label;
                     btn.onclick = function () { _zeroOpenFlashcards(btn, w.lessonKey); };
+                } else if (w.kind === 'quiz') {
+                    btn.textContent = 'Quiz ' + label;
+                    btn.onclick = function () { _zeroOpenQuiz(w.lessonKey); };
                 } else {
                     btn.textContent = 'Open ' + label;
                     btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
@@ -25864,7 +25887,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-46zl';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-2qkr';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
