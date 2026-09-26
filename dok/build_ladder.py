@@ -640,6 +640,33 @@ def shared_problem(lesson: dict, item: dict, scale: float) -> str:
     return "".join(out)
 
 
+# Sentence-frame blanks carry a slot TYPE the author wrote in shorthand (\blankt[0.6in]{display}).
+# Printed raw under the blank, "display" / "term" mean nothing to a student (teacher 2026-09-26).
+# Map the shorthands to a hint a student can act on; anything unmapped prints as written.
+SLOT_HINTS = {
+    "display": "A, B, C or D",
+    "term": "a word from the bank",
+    "statistic": "which statistic",
+    "variable type": "categorical or quantitative",
+    "unit": "the unit",
+    "reason": "your reason",
+    "action": "what you would do",
+    "stage meaning": "what it means",
+    "place meaning": "what it means",
+    "number": "a number",
+    "value": "a value",
+}
+_BLANKT = re.compile(r"(\\blankt(?:\[[^\]]*\])?\{)([^}]*)(\})")
+
+
+def readable_slots(frame: str) -> str:
+    """Rewrite each typed blank's under-label into student-readable words."""
+    def swap(m):
+        label = m.group(2).strip()
+        return m.group(1) + SLOT_HINTS.get(label.lower(), label) + m.group(3)
+    return _BLANKT.sub(swap, frame or "")
+
+
 def word_bank_block(item: dict, teacher: bool = False, box_options: str = "") -> str:
     if not item.get("word_bank"):
         return ""
@@ -704,7 +731,7 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
     box_options = "top=3pt,bottom=3pt,before skip=4pt,after skip=4pt" if standalone else ""
     options = f"[{box_options}]" if box_options else ""
     scaffolds = "".join(
-        f"\\begin{{sentenceframebox}}{options}\\raggedright\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n"
+        f"\\begin{{sentenceframebox}}{options}\\raggedright\\textbf{{Frame:}} {readable_slots(frame)}\\end{{sentenceframebox}}\n\n"
         for frame in item.get("sentence_frames", [])
     ) + word_bank_block(item, box_options=box_options)
     for index, p in enumerate(item["parts"]):

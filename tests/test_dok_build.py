@@ -473,7 +473,7 @@ def test_word_bank_editions_shuffle_and_no_needed_metadata_leak():
     assert board == bl.emit_board(lesson, registry, SCHEDULE)
     item['word_bank'].reverse()
     assert student == bl.emit_student(lesson, registry, SCHEDULE)
-    assert r'\blankt[0.8in]{statistic}' in student
+    assert r'\blankt[0.8in]{which statistic}' in student
 
 
 def test_student_sheet_prints_exactly_what_earns_an_e():
@@ -577,3 +577,15 @@ def test_student_pdf_compiles_to_two_pages(path: Path, tmp_path: Path):
         assert result.returncode == 0, result.stdout + result.stderr
     pdf = (tmp_path / "student.pdf").read_bytes()
     assert len(re.findall(rb"/Type\s*/Page\b", pdf)) == 2
+
+
+def test_frame_slot_labels_read_as_student_hints():
+    """Teacher 2026-09-26: 'display' / 'term' under a blank mean nothing to a student."""
+    from build_ladder import readable_slots
+    frame = r"I would keep \blankt[0.6in]{display}; its axis uses \blankt[0.9in]{term}; the \blankt{Variable Type} is \blankt{sales}."
+    out = readable_slots(frame)
+    assert r"\blankt[0.6in]{A, B, C or D}" in out
+    assert r"\blankt[0.9in]{a word from the bank}" in out
+    assert r"\blankt{categorical or quantitative}" in out      # case-insensitive lookup
+    assert r"\blankt{sales}" in out                            # unknown labels print as written
+    assert readable_slots("") == "" and readable_slots(None) == ""

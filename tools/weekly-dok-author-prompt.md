@@ -64,3 +64,7 @@ Windows without relying on shell wildcard expansion.
 
 Re-save all newly authored text files with LF endings. Report the sheet title,
 the context choice, the resource audit, and check results. Never commit or push.
+Blank labels (the word inside `\blankt{...}`) are printed under the blank for the STUDENT: use one of
+`display`, `term`, `statistic`, `variable type`, `unit`, `reason`, `action`, `number`, `value` (the builder
+prints these as plain hints such as "A, B, C or D" / "a word from the bank"), or write the hint in plain
+words yourself (e.g. `{which graph}`); never a code word.
