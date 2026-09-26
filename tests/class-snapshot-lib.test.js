@@ -147,3 +147,31 @@ describe('per-assignment forms (teacher 2026-09-26: "stem and leaf, dotplot, and
       .toBe('Median 100 · IQR 0 · 1 zero. More than half the class has the same score, so every other score counts as an outlier. You: 0 — below Q1 — an outlier by the 1.5×IQR rule.');
   });
 });
+
+describe('the red "you" mark when the viewer is not in the pool (teacher 2026-09-26)', () => {
+  const V = [50, 60, 70, 80, 90, 95, 97, 100];
+  function record(mode, own) {
+    const calls = [];
+    const ctx = new Proxy({ font: '', fillStyle: '', strokeStyle: '', textAlign: '', textBaseline: '', lineWidth: 1 }, {
+      get(t, k) { if (k in t) return t[k]; if (k === 'measureText') return (s) => ({ width: String(s).length * 6 }); return (...a) => { calls.push([k, t.fillStyle, ...a]); }; },
+      set(t, k, v) { t[k] = v; return true; },
+    });
+    C.drawMini({ width: 300, height: C.miniHeight(mode, V, own), getContext: () => ctx }, { values: V, own, mode });
+    return calls;
+  }
+  it('dot plot: a red dot labelled "you" appears even for a score nobody in the pool has', () => {
+    const calls = record('dot', 0);
+    expect(calls.filter(c => c[0] === 'arc').length).toBe(V.length + 1);
+    expect(calls.some(c => c[0] === 'fillText' && c[2] === 'you' && c[1] === '#cc0000')).toBe(true);
+  });
+  it('stem-and-leaf: a red leaf is added on its own stem, and the canvas grows to hold that stem', () => {
+    expect(C.miniHeight('stem', V, 0)).toBe(11 * 11 + 14);      // stems 0..10 once "you" = 0 is included
+    expect(C.miniHeight('stem', V, 97)).toBe(6 * 11 + 14);      // 97 is already in the pool: stems 5..10
+    const calls = record('stem', 0);
+    const redLeaves = calls.filter(c => c[0] === 'fillText' && c[1] === '#cc0000' && c[2] === '0');
+    expect(redLeaves.length).toBe(1);
+  });
+  it('a score already in the pool is marked, never duplicated', () => {
+    expect(record('dot', 97).filter(c => c[0] === 'arc').length).toBe(V.length);
+  });
+});

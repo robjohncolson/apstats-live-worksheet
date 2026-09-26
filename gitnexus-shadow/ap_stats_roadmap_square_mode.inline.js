@@ -15959,9 +15959,9 @@ function _snapAssignmentRow(a, own, label) {
     var w = document.createElement('span'); w.className = 'snap-arow-when'; w.textContent = _snapZeroDateText(a); head.appendChild(w);
     row.appendChild(head);
     var amode = _snapApp.amode || 'box';
-    var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = ClassSnapshot.miniHeight(amode, a.values); canvas.setAttribute('role', 'img');
-    row.appendChild(canvas);
     var ownForPlot = own == null ? (label !== undefined ? 0 : null) : own;
+    var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = ClassSnapshot.miniHeight(amode, a.values, label === null ? null : ownForPlot); canvas.setAttribute('role', 'img');
+    row.appendChild(canvas);
     ClassSnapshot.drawMini(canvas, { values: a.values, own: label === null ? null : ownForPlot, mode: amode });
     var cap = document.createElement('div'); cap.className = 'snap-caption geneva';
     var text = ClassSnapshot.assignmentCaption(a, label === null ? undefined : ownForPlot);
@@ -26397,7 +26397,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-e1cw';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-t0mh';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
