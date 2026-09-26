@@ -2847,6 +2847,10 @@
 
 
 
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -15751,7 +15755,7 @@ function _snapPaint(card) {
 // Students: the same card as My Ledger (own value in red). Teacher: one card per section with
 // every mode available and a "place a student" picker (names come from /class/grades, which the
 // teacher's own session already authorizes; the student endpoint never carries names).
-var _snapApp = { mode: null, sections: {}, roster: null, pick: {}, request: 0, view: 'class', assign: {}, focusKey: null, amode: null };
+var _snapApp = { mode: null, sections: {}, roster: null, pick: {}, request: 0, view: 'class', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };
 
 function openSnapshot() {
     try { if (typeof bumpUsage === 'function') bumpUsage('snapshot'); } catch (_) {}
@@ -15896,7 +15900,59 @@ function _snapZeroDateText(a) {
         return a.zeroDate < today ? 'counted since ' + when : 'counts from ' + when;
     } catch (_) { return ''; }
 }
-// One row: title, mini box plot, caption, and the full sorted data set (open when the viewer's
+// What to do about this assignment, in one or two sentences, plus an optional action.
+// label: undefined = the viewer's own score; a name = a picked student; null = nobody placed.
+function _snapAdvice(a, own, label) {
+    var values = Array.isArray(a.values) ? a.values : [];
+    var fn = ClassSnapshot.fiveNumber(values);
+    var n = values.length, zeros = typeof a.zeros === 'number' ? a.zeros : values.filter(function (v) { return v === 0; }).length;
+    if (label === null) {
+        if (!zeros) return { text: 'Nobody is at 0 here. Pick a student on the Class tab to place their dot.' };
+        return { text: zeros + ' of ' + n + ' count as a 0 here. Pick a student on the Class tab to place their dot.' };
+    }
+    var who = label ? label + ' has' : 'You have';
+    var track = a.track === 'quiz' ? 'quiz' : a.track === 'blooket' ? 'flashcards' : 'worksheet';
+    var action = a.track === 'quiz' ? 'Take the quiz' : a.track === 'blooket' ? 'Run the flashcards' : 'Open the worksheet';
+    if (own == null || own === 0) {
+        if (label) return { text: label + ' has a 0 here \u2014 the ' + track + ' was never turned in. Any score replaces it.' };
+        return { text: 'Do this next. Right now this counts as a 0, the biggest thing pulling your grade down. Any score replaces the 0.', action: action, kind: a.track };
+    }
+    if (!n || fn.q1 == null) return { text: who + ' ' + own + ' here.' };
+    if (own < fn.q1) {
+        var how = a.track === 'quiz' ? 'Retake the quiz for a better score.'
+            : a.track === 'blooket' ? 'Play the deck again \u2014 your best score is the one that counts.'
+            : 'Revise the worksheet \u2014 Check keeps your latest answer and AI grading only raises.';
+        return { text: who + ' ' + own + ', below Q1 \u2014 three quarters of the class scored higher. ' + how, action: label ? null : action, kind: a.track };
+    }
+    if (own > fn.q3) return { text: who + ' ' + own + ', above Q3. Nothing to do here.' };
+    return { text: who + ' ' + own + ', inside the box \u2014 with the middle half of the class. Nothing to fix here.' };
+}
+// Which assignment deserves the screen: a 0 that has been counting longest, else the score
+// furthest below the class median, else the newest.
+function _snapFocusIndex(rows, owns, label) {
+    if (label === null) return 0;
+    var best = -1, bestDate = null;
+    rows.forEach(function (a, i) {
+        var own = owns[i];
+        if (own != null && own !== 0) return;
+        if (bestDate == null || a.zeroDate < bestDate) { best = i; bestDate = a.zeroDate; }
+    });
+    if (best >= 0) return best;
+    var worst = -1, gap = 0;
+    rows.forEach(function (a, i) {
+        var fn = ClassSnapshot.fiveNumber(a.values || []);
+        if (fn.median == null) return;
+        var g = fn.median - owns[i];
+        if (g > gap) { gap = g; worst = i; }
+    });
+    return worst >= 0 ? worst : 0;
+}
+function _snapOpenWork(kind, lessonKey, btn) {
+    if (kind === 'quiz') return _zeroOpenQuiz(lessonKey);
+    if (kind === 'blooket') return _zeroOpenFlashcards(btn, lessonKey);
+    return _zeroOpenLesson(lessonKey);
+}
+// One row: title, mini plot, caption, advice, and the full sorted data set (open when the viewer's
 // own score is a 0 or missing; a tap opens it for any row). Never a name.
 function _snapAssignmentRow(a, own, label) {
     var row = document.createElement('div'); row.className = 'snap-arow'; row.dataset.key = a.key;
@@ -15914,6 +15970,16 @@ function _snapAssignmentRow(a, own, label) {
     if (label) text = text.replace('You: ', label + ': ');
     cap.textContent = text; canvas.setAttribute('aria-label', a.title + '. ' + text);
     row.appendChild(cap);
+    var advice = _snapAdvice(a, own, label);
+    var adv = document.createElement('div'); adv.className = 'snap-advice geneva' + (advice.action ? ' snap-advice-act' : '');
+    var advText = document.createElement('span'); advText.textContent = advice.text; adv.appendChild(advText);
+    if (advice.action) {
+        var go = document.createElement('button'); go.type = 'button'; go.className = 's7btn snap-advice-btn'; go.style.cssText = 'font-size:10px;padding:1px 6px;margin-left:8px';
+        go.textContent = advice.action;
+        go.onclick = function () { _snapOpenWork(advice.kind, a.lessonKey, go); };
+        adv.appendChild(go);
+    }
+    row.appendChild(adv);
     var values = Array.isArray(a.values) ? a.values : [];
     var list = document.createElement('div'); list.className = 'snap-alist geneva';
     var isZero = label !== null && (own == null || own === 0);
@@ -15947,8 +16013,8 @@ function _snapAssignmentRow(a, own, label) {
 function _renderAssignmentsView(host, teacher) {
     var intro = document.createElement('p'); intro.className = 'snap-intro';
     intro.textContent = teacher
-        ? 'One box plot per assignment that is already counting, newest first. Pick a student on the Class tab to place their dot on every row. Every score list is anonymous.'
-        : 'One box plot per assignment that is already counting, newest first. Red = you. Where you have a 0, the whole class’s scores are shown — no names, just the numbers.';
+        ? 'One assignment at a time, the one that needs attention first. Red = you (or the student picked on the Class tab). Every score list is anonymous.'
+        : 'One assignment at a time, the one that needs your attention first. Red = you. Where you have a 0, the whole class’s scores are shown — no names, just the numbers.';
     host.appendChild(intro);
     var modes = teacher ? { available: ['dot', 'stem', 'hist', 'box'], default: 'box', tabs: true } : _snapModes();
     if (!_snapApp.amode || modes.available.indexOf(_snapApp.amode) < 0) _snapApp.amode = modes.default;
@@ -15974,19 +16040,45 @@ function _renderAssignmentsView(host, teacher) {
             if (!data || !Array.isArray(data.assignments)) { body.textContent = 'Assignment picture unavailable right now.'; return; }
             var rows = data.assignments.slice().sort(function (x, y) { return x.zeroDate === y.zeroDate ? 0 : (x.zeroDate < y.zeroDate ? 1 : -1); });
             if (!rows.length) { body.textContent = 'Nothing is counting yet.'; return; }
-            var lessons = teacher ? _snapTeacherPickedLessons(section) : ((typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null);
+            var ownCache = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
             var pickedName = teacher ? _snapTeacherPickedName(section) : undefined;
-            rows.forEach(function (a) {
-                var own = lessons ? _snapOwnAssignmentScore(a, lessons) : null;
-                // teacher with no pick: no dot, no "You" line (label === null); student: label undefined.
-                var label = teacher ? (pickedName || null) : undefined;
-                body.appendChild(_snapAssignmentRow(a, own, label));
-            });
-            if (_snapApp.focusKey) {
-                var target = body.querySelector('.snap-arow[data-key="' + String(_snapApp.focusKey).replace(/"/g, '') + '"]');
-                if (target) { target.scrollIntoView({ block: 'start' }); target.classList.add('snap-arow-focus'); }
-                _snapApp.focusKey = null;
+            // Teacher with a pick: that student. Teacher without one: their own scores in their own
+            // section (label undefined), nobody in the other section (label null). Student: own.
+            var lessons = teacher ? (pickedName ? _snapTeacherPickedLessons(section) : (section === _snapSection() ? ownCache : null)) : ownCache;
+            var label = teacher ? (pickedName || (section === _snapSection() ? undefined : null)) : undefined;
+            var owns = rows.map(function (a) { return lessons ? _snapOwnAssignmentScore(a, lessons) : null; });
+            if (_snapApp.aall) {
+                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label)); });
+                var all = document.createElement('button'); all.type = 'button'; all.className = 's7btn snap-pager-all'; all.style.cssText = 'font-size:10px;padding:1px 6px;margin-top:6px';
+                all.textContent = 'Focus on one';
+                all.onclick = function () { _snapApp.aall = false; _renderSnapshotApp(); };
+                body.appendChild(all);
+                return;
             }
+            var idx = _snapApp.aidx[section];
+            if (_snapApp.focusKey) {
+                var fk = rows.findIndex(function (a) { return a.key === _snapApp.focusKey; });
+                if (fk >= 0) idx = fk;
+            }
+            if (typeof idx !== 'number' || idx < 0 || idx >= rows.length) idx = _snapFocusIndex(rows, owns, label);
+            _snapApp.aidx[section] = idx;
+            var pager = document.createElement('div'); pager.className = 'snap-pager';
+            var prev = document.createElement('button'); prev.type = 'button'; prev.className = 's7btn'; prev.style.cssText = 'font-size:10px;padding:1px 6px';
+            prev.textContent = '\u2039 Prev'; prev.disabled = idx === 0;
+            prev.onclick = function () { _snapApp.aidx[section] = idx - 1; _renderSnapshotApp(); };
+            var pos = document.createElement('span'); pos.className = 'snap-pager-pos'; pos.textContent = (idx + 1) + ' of ' + rows.length;
+            var next = document.createElement('button'); next.type = 'button'; next.className = 's7btn'; next.style.cssText = 'font-size:10px;padding:1px 6px';
+            next.textContent = 'Next \u203a'; next.disabled = idx === rows.length - 1;
+            next.onclick = function () { _snapApp.aidx[section] = idx + 1; _renderSnapshotApp(); };
+            var showAll = document.createElement('button'); showAll.type = 'button'; showAll.className = 's7btn snap-pager-all'; showAll.style.cssText = 'font-size:10px;padding:1px 6px;margin-left:auto';
+            showAll.textContent = 'Show all ' + rows.length;
+            showAll.onclick = function () { _snapApp.aall = true; _renderSnapshotApp(); };
+            pager.appendChild(prev); pager.appendChild(pos); pager.appendChild(next); pager.appendChild(showAll);
+            body.appendChild(pager);
+            var focused = _snapAssignmentRow(rows[idx], owns[idx], label);
+            if (_snapApp.focusKey === rows[idx].key) focused.classList.add('snap-arow-focus');
+            body.appendChild(focused);
+            _snapApp.focusKey = null;
         });
     });
 }
@@ -26306,7 +26398,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-u1dp';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-6q2e';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
