@@ -407,6 +407,12 @@
         .snap-alist-you { color: #cc0000; font-weight: bold; text-decoration: underline; }
         .snap-alist-added::after { content: ' (you)'; font-weight: normal; text-decoration: none; font-size: 10px; }
         .snap-alist-foot { color: #333; font-size: 10px; }
+        .snap-alist-tentative { color: #8a6d00; background: #fff3b0; padding: 0 3px; }
+        .snap-legend { font-size: 10px; color: #333; margin: 2px 0; }
+        .snap-swatch { display: inline-block; width: 8px; height: 8px; vertical-align: middle; border: 1px solid #000; background: #fff; }
+        .snap-swatch-real { background: #000; }
+        .snap-swatch-tentative { background: #f5d76e; border-color: #8a6d00; }
+        .snap-swatch-you { background: #cc0000; border-color: #cc0000; border-radius: 50%; }
         .snap-arow-focus { background: #fff3f3; }
         .snap-pager { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; }
         .snap-clear { margin: 0 0 6px; padding: 5px 8px; border-left: 3px solid #2a8a2a; background: #f1faf1; font-size: 11px; }
@@ -15975,9 +15981,50 @@ function _snapOpenWork(kind, lessonKey, btn) {
     if (kind === 'blooket') return _zeroOpenFlashcards(btn, lessonKey);
     return _zeroOpenLesson(lessonKey);
 }
+// Tentative zeros (TENTATIVE_ZEROS_SPEC.md §3): classmates taught a lesson but not yet past its
+// zero date, with nothing turned in, show as yellow 0s — Monday's picture if nothing changes.
+// "Mon 9/28" for an ISO date.
+function _snapDayText(iso) {
+    return _snapZeroDateText({ zeroDate: iso }).replace(/^(counts from|counted since) /, '');
+}
+// Is the viewer's own section still before its zero date here? Then their missing work is a
+// tentative 0. A mixed item whose own section is already counting → false (their 0 is real).
+function _snapOwnSectionNotCounting(a, viewerSection) {
+    var zd = a.zeroDates && viewerSection ? a.zeroDates[viewerSection] : null;
+    if (zd) return _snapDaysUntil(zd) >= 0;
+    return Boolean(a.pending);
+}
+// When the tentative zeros become real. Pending item: its soonest zero date. Mixed item: the
+// viewer's own section date if still ahead, else the soonest date still ahead.
+function _snapTentativeDay(a, viewerSection) {
+    if (a.pending) return _snapZeroDateText(a).replace('counts from ', '');
+    var zds = a.zeroDates || {};
+    var mine = viewerSection ? zds[viewerSection] : null;
+    if (mine && _snapDaysUntil(mine) >= 0) return _snapDayText(mine);
+    var ahead = Object.keys(zds).map(function (k) { return zds[k]; })
+        .filter(function (d) { return d && _snapDaysUntil(d) >= 0; }).sort();
+    return ahead.length ? _snapDayText(ahead[0]) : _snapDayText(a.zeroDate);
+}
+// The legend under a row with tentative zeros: small colour swatches, not emoji.
+function _snapTentativeLegend(day) {
+    var legend = document.createElement('div'); legend.className = 'snap-legend geneva';
+    var parts = [
+        ['snap-swatch snap-swatch-real', 'black = 0 already counting'],
+        ['snap-swatch snap-swatch-tentative', 'yellow = tentative 0 (real after ' + day + ')'],
+        ['snap-swatch snap-swatch-you', 'red = you'],
+    ];
+    parts.forEach(function (p, i) {
+        if (i) legend.appendChild(document.createTextNode(' · '));
+        var sw = document.createElement('span'); sw.className = p[0]; sw.setAttribute('aria-hidden', 'true');
+        legend.appendChild(sw);
+        legend.appendChild(document.createTextNode(' ' + p[1]));
+    });
+    return legend;
+}
 // One row: title, mini plot, caption, advice, and the full sorted data set (open when the viewer's
 // own score is a 0 or missing; a tap opens it for any row). Never a name.
-function _snapAssignmentRow(a, own, label) {
+// viewerSection (optional): 'PeriodB' / 'PeriodE' — decides whether a missing score is a tentative 0.
+function _snapAssignmentRow(a, own, label, viewerSection) {
     var row = document.createElement('div'); row.className = 'snap-arow'; row.dataset.key = a.key;
     var head = document.createElement('div'); head.className = 'snap-arow-head';
     var t = document.createElement('span'); t.className = 'snap-arow-title'; t.textContent = a.title; head.appendChild(t);
@@ -15986,16 +16033,22 @@ function _snapAssignmentRow(a, own, label) {
     var amode = _snapApp.amode || 'box';
     // The viewer's (or picked student's) score for the plot: missing work counts as 0; nobody placed = null.
     var ownForPlot = label === null ? null : (own == null ? 0 : own);
-    var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = ClassSnapshot.miniHeight(amode, a.values, ownForPlot); canvas.setAttribute('role', 'img');
+    var tentative = Number(a.tentativeZeros) || 0;
+    // Nothing turned in and the viewer's section is not yet past its zero date: a tentative 0.
+    var ownTentative = own == null && label !== null && _snapOwnSectionNotCounting(a, viewerSection);
+    var tentDay = tentative ? _snapTentativeDay(a, viewerSection) : '';
+    var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = ClassSnapshot.miniHeight(amode, a.values, ownForPlot, tentative); canvas.setAttribute('role', 'img');
     row.appendChild(canvas);
-    ClassSnapshot.drawMini(canvas, { values: a.values, own: ownForPlot, mode: amode });
+    ClassSnapshot.drawMini(canvas, { values: a.values, own: ownForPlot, mode: amode, tentativeZeros: tentative, ownTentative: ownTentative });
     var cap = document.createElement('div'); cap.className = 'snap-caption geneva';
-    var text = ClassSnapshot.assignmentCaption(a, label === null ? undefined : ownForPlot);
-    // Not yet counting and nothing turned in: it is not a 0 yet, so the caption must not call it one.
-    if (a.pending && own == null && label !== null) text = ClassSnapshot.assignmentCaption(a) + ' You: nothing yet (' + _snapZeroDateText(a) + ').';
+    var text = ClassSnapshot.assignmentCaption(a, label === null ? undefined : ownForPlot, {
+        tentativeLabel: tentative ? 'real after ' + tentDay : undefined,
+        ownTentative: ownTentative,
+    });
     if (label) text = text.replace('You: ', label + ': ');
     cap.textContent = text; canvas.setAttribute('aria-label', a.title + '. ' + text);
     row.appendChild(cap);
+    if (tentative) row.appendChild(_snapTentativeLegend(tentDay));
     var advice = _snapAdvice(a, own, label);
     var adv = document.createElement('div'); adv.className = 'snap-advice geneva' + (advice.action ? ' snap-advice-act' : '');
     var advText = document.createElement('span'); advText.textContent = advice.text; adv.appendChild(advText);
@@ -16010,9 +16063,12 @@ function _snapAssignmentRow(a, own, label) {
     var list = document.createElement('div'); list.className = 'snap-alist geneva';
     var isZero = label !== null && (own == null || own === 0);
     list.hidden = !isZero;
-    if (values.length) {
+    // D = the tentative zeros, then the real values (TENTATIVE_ZEROS_SPEC §2.1).
+    var total = values.length + tentative;
+    var showList = values.length > 0 || total >= 5;
+    if (showList) {
         var lead = document.createElement('div'); lead.className = 'snap-alist-lead';
-        lead.textContent = 'All ' + values.length + ' scores for ' + a.title + ':';
+        lead.textContent = 'All ' + total + ' scores for ' + a.title + (tentative ? ' (' + tentative + ' tentative)' : '') + ':';
         list.appendChild(lead);
         var seq = document.createElement('div'); seq.className = 'snap-alist-seq';
         // The viewer's own score is marked red in the list. When it is not in the pool (the
@@ -16025,6 +16081,14 @@ function _snapAssignmentRow(a, own, label) {
             if (mine) { sp.className = 'snap-alist-you' + (added ? ' snap-alist-added' : ''); sp.title = label ? label : 'you'; }
             return sp;
         };
+        // Tentative zeros lead the list. When the viewer's own 0 is tentative, one of them is the
+        // red "you" chip (red wins: it is not also tentative-styled), never an extra chip.
+        var ownIsTentativeChip = ownTentative && tentative > 0;
+        for (var ti = 0; ti < tentative; ti++) {
+            if (ownIsTentativeChip && ti === tentative - 1) { seq.appendChild(chip(0, true, false)); continue; }
+            var tsp = chip(0, false, false); tsp.className = 'snap-alist-tentative'; seq.appendChild(tsp);
+        }
+        if (ownIsTentativeChip) ownV = null;
         var inPool = ownV != null && values.some(function (v) { return v === ownV; });
         values.forEach(function (v) {
             if (ownV != null && !inPool && !inserted && v > ownV) { seq.appendChild(chip(ownV, true, true)); inserted = true; }
@@ -16036,11 +16100,12 @@ function _snapAssignmentRow(a, own, label) {
         list.appendChild(seq);
         var have = values.filter(function (v) { return v > 0; }).length;
         var foot = document.createElement('div'); foot.className = 'snap-alist-foot';
-        foot.textContent = have + ' of ' + values.length + ' classmates have a score here.' + (isZero ? ' Every 0 on this list can still be replaced.' : '');
+        var tentText = tentative ? ' ' + tentative + ' haven\'t yet — a tentative 0 until ' + tentDay + '.' : '';
+        foot.textContent = have + ' of ' + total + ' classmates have a score here.' + tentText + (isZero ? ' Every 0 on this list can still be replaced.' : '');
         list.appendChild(foot);
     }
     row.appendChild(list);
-    if (values.length && !isZero) {
+    if (showList && !isZero) {
         var tog = document.createElement('button'); tog.type = 'button'; tog.className = 's7btn snap-alist-toggle'; tog.style.cssText = 'font-size:10px;padding:1px 6px';
         tog.textContent = 'show all scores';
         tog.onclick = function () { list.hidden = !list.hidden; tog.textContent = list.hidden ? 'show all scores' : 'hide scores'; };
@@ -16098,7 +16163,7 @@ function _renderAssignmentsView(host, teacher) {
             var label = pickedName || undefined;
             var owns = rows.map(function (a) { return lessons ? _snapOwnAssignmentScore(a, lessons) : null; });
             if (_snapApp.aall) {
-                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label)); });
+                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label, viewerSection)); });
                 var all = document.createElement('button'); all.type = 'button'; all.className = 's7btn snap-pager-all'; all.style.cssText = 'font-size:10px;padding:1px 6px;margin-top:6px';
                 all.textContent = 'Focus on one';
                 all.onclick = function () { _snapApp.aall = false; _renderSnapshotApp(); };
@@ -16133,7 +16198,7 @@ function _renderAssignmentsView(host, teacher) {
             showAll.onclick = function () { _snapApp.aall = true; _renderSnapshotApp(); };
             pager.appendChild(prev); pager.appendChild(pos); pager.appendChild(next); pager.appendChild(showAll);
             body.appendChild(pager);
-            var focused = _snapAssignmentRow(rows[idx], owns[idx], label);
+            var focused = _snapAssignmentRow(rows[idx], owns[idx], label, viewerSection);
             if (_snapApp.focusKey === rows[idx].key) focused.classList.add('snap-arow-focus');
             body.appendChild(focused);
             _snapApp.focusKey = null;
@@ -26456,7 +26521,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-q64t';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-98wz';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

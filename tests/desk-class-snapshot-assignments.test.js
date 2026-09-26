@@ -30,7 +30,7 @@ const B11 = { key: '1.1:blooket', lessonKey: '1.1', track: 'blooket', title: '1.
   values: [0, 80, 85, 90, 90, 95, 97, 98, 100, 100, 100, 100, 100, 100, 100], zeros: 1 };
 // Taught, not counting anywhere yet: recorded scores only, becomes a 0 after 9/27.
 const W14 = { key: '1.4:worksheet', lessonKey: '1.4', track: 'worksheet', title: '1.4 Follow-Along', zeroDate: '2026-09-28', pending: true, n: 7,
-  values: [88, 92, 95, 100, 100, 100, 102], zeros: 0, zeroDates: { PeriodB: '2026-09-28', PeriodE: '2026-09-29' } };
+  values: [88, 92, 95, 100, 100, 100, 102], zeros: 0, tentativeZeros: 11, zeroDates: { PeriodB: '2026-09-28', PeriodE: '2026-09-29' } };
 // Taught only in Period E so far: a Period B viewer must not see it as "soon".
 const W16 = { key: '1.6:worksheet', lessonKey: '1.6', track: 'worksheet', title: '1.6 Follow-Along', zeroDate: '2026-09-29', pending: true, n: 6,
   values: [90, 95, 100, 100, 100, 100], zeros: 0, zeroDates: { PeriodE: '2026-09-29' } };
@@ -85,7 +85,7 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
   createContext(s);
   runInContext(
     "var SNAPSHOT_TTL_MS = 300000;\nvar ZERO_WARN_DAYS = 3;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
@@ -362,7 +362,8 @@ describe('Assignments view — "becomes a 0 soon" items (teacher 2026-09-26: the
       expect(row.dataset.key).toBe('1.4:worksheet');
       expect(host().querySelector('.snap-pager-pos').textContent).toBe('4 of 4');
       expect(row.querySelector('.snap-arow-when').textContent).toBe('counts from Mon 9/28');
-      expect(row.querySelector('.snap-caption').textContent).toBe('Median 100 · IQR 8 · 0 zeros. You: nothing yet (counts from Mon 9/28).');
+      // TENTATIVE_ZEROS_SPEC §3: "You: nothing yet" is replaced by the tentative-0 form; D = 11 tentative zeros + 7 scores
+      expect(row.querySelector('.snap-caption').textContent).toBe('Median 0 · IQR 95 · 0 zeros + 11 tentative (real after Mon 9/28). You: 0 (tentative) — inside the box only because at least a quarter of the class is also at 0, so Q1 itself is 0.');
       expect(row.querySelector('.snap-advice').textContent).toContain('Do this next. It becomes a 0 after Mon 9/28 — turn in anything before then and there is no 0 at all.');
       expect(row.querySelector('.snap-advice-btn').textContent).toBe('Open the worksheet');
       // "see the class" from the card lands on it
@@ -392,7 +393,7 @@ describe('Assignments view — "becomes a 0 soon" items (teacher 2026-09-26: the
       expect(row.dataset.key).toBe('1.4:worksheet');
       expect(row.querySelector('.snap-advice').textContent).toBe('Pat Q has nothing here yet — it becomes a 0 after Mon 9/28.');
       expect(row.querySelector('.snap-advice-btn')).toBeNull();
-      expect(row.querySelector('.snap-caption').textContent).toContain('Pat Q: nothing yet');
+      expect(row.querySelector('.snap-caption').textContent).toContain('Pat Q: 0 (tentative)');   // TENTATIVE_ZEROS_SPEC §3
     } finally { close(); }
   });
 });
@@ -440,6 +441,95 @@ describe('Assignments view — the viewer\u2019s section is the Desk period (tea
       s._renderAssignmentsView(host(), true);
       await tick(); await tick();
       expect([...host().querySelectorAll('.snap-arow')].map(r => r.dataset.key)).toEqual(['1.1:blooket', '1.2:worksheet', '1.3:quiz', '1.4:worksheet', '1.6:worksheet']);
+    } finally { close(); }
+  });
+});
+
+describe('Assignments view — tentative zeros (TENTATIVE_ZEROS_SPEC §3)', () => {
+  // B is counting (3 real zeros); E taught it but its date (Tue 9/29) is still ahead: 4 tentative.
+  const MIXED = { key: '1.1:quiz', lessonKey: '1.1', track: 'quiz', title: '1.1 Quiz', zeroDate: '2026-09-25', pending: false, n: 8,
+    values: [0, 0, 0, 100, 100, 100, 100, 100], zeros: 3, tentativeZeros: 4, zeroDates: { PeriodB: '2026-09-25', PeriodE: '2026-09-29' } };
+  const chips = (row) => [...row.querySelectorAll('.snap-alist-seq span')];
+
+  it('a Period B student missing 1.4: tentative caption, 11 leading zero chips (one red, not yellow), foot and legend', () => {
+    const { s, close } = sandbox();
+    try {
+      const row = s._snapAssignmentRow(W14, null, undefined, 'PeriodB');
+      expect(row.querySelector('.snap-caption').textContent).toMatch(/^Median .* · IQR .* · 0 zeros \+ 11 tentative \(real after Mon 9\/28\)\. You: 0 \(tentative\) — /);
+      const lead = chips(row).slice(0, 11);
+      expect(lead.every(c => c.textContent === '0')).toBe(true);
+      expect(row.querySelectorAll('.snap-alist-tentative').length).toBe(10);
+      const you = row.querySelectorAll('.snap-alist-you');
+      expect(you.length).toBe(1);
+      expect(lead.includes(you[0])).toBe(true);
+      expect(you[0].classList.contains('snap-alist-tentative')).toBe(false);     // red wins
+      expect(chips(row).length).toBe(18);                                        // nobody drawn twice
+      expect(row.querySelector('.snap-alist-lead').textContent).toBe('All 18 scores for 1.4 Follow-Along (11 tentative):');
+      expect(row.querySelector('.snap-alist-foot').textContent).toBe("7 of 18 classmates have a score here. 11 haven't yet — a tentative 0 until Mon 9/28. Every 0 on this list can still be replaced.");
+      expect(row.querySelector('.snap-alist').hidden).toBe(false);
+      const legend = row.querySelector('.snap-legend');
+      expect(legend.textContent).toContain('black = 0 already counting · ');
+      expect(legend.textContent).toContain('yellow = tentative 0 (real after Mon 9/28)');
+      expect(legend.textContent).toContain('red = you');
+      expect(legend.querySelectorAll('.snap-swatch').length).toBe(3);
+    } finally { close(); }
+  });
+  it('a student WITH a 1.4 score: 11 yellow chips and the red chip on their own score', () => {
+    const { s, close } = sandbox();
+    try {
+      const row = s._snapAssignmentRow(W14, 95, undefined, 'PeriodB');
+      expect(row.querySelectorAll('.snap-alist-tentative').length).toBe(11);
+      const you = row.querySelectorAll('.snap-alist-you');
+      expect(you.length).toBe(1);
+      expect(you[0].textContent).toBe('95');
+      expect(row.querySelector('.snap-caption').textContent).not.toContain('(tentative) —');
+      expect(row.querySelector('.snap-caption').textContent).toContain('You: 95');
+    } finally { close(); }
+  });
+  it('a mixed item for a B viewer whose section is counting: their 0 is real; the label is E’s date', () => {
+    const { s, close } = sandbox();
+    try {
+      const row = s._snapAssignmentRow(MIXED, null, undefined, 'PeriodB');
+      const text = row.querySelector('.snap-caption').textContent;
+      expect(text).toMatch(/· 3 zeros \+ 4 tentative \(real after Tue 9\/29\)\. You: 0 — /);
+      expect(text).not.toContain('(tentative) —');
+      expect(row.querySelectorAll('.snap-alist-tentative').length).toBe(4);
+      const you = row.querySelector('.snap-alist-you');
+      expect(you.classList.contains('snap-alist-tentative')).toBe(false);
+      expect(chips(row).length).toBe(12);                                         // 4 tentative + 8 real, the red one among the real zeros
+      expect(chips(row).indexOf(you)).toBe(4);
+    } finally { close(); }
+  });
+  it('the same mixed item for an E viewer with nothing turned in: their 0 is one of the tentative ones', () => {
+    const { s, close } = sandbox({ period: 'E' });
+    try {
+      const row = s._snapAssignmentRow(MIXED, null, undefined, 'PeriodE');
+      expect(row.querySelector('.snap-caption').textContent).toContain('3 zeros + 4 tentative (real after Tue 9/29). You: 0 (tentative) — ');
+      expect(row.querySelectorAll('.snap-alist-tentative').length).toBe(3);
+      expect(chips(row).length).toBe(12);
+    } finally { close(); }
+  });
+  it('rows without tentativeZeros keep today’s look (no legend, no yellow chips) and old 3-argument calls still work', () => {
+    const { s, close } = sandbox();
+    try {
+      const row = s._snapAssignmentRow(A12, null, undefined);
+      expect(row.querySelector('.snap-legend')).toBeNull();
+      expect(row.querySelectorAll('.snap-alist-tentative').length).toBe(0);
+      expect(row.querySelector('.snap-alist-lead').textContent).toBe('All 15 scores for 1.2 Follow-Along:');
+    } finally { close(); }
+  });
+  it('the full view passes the viewer section through: a B student missing 1.4 sees it as tentative', async () => {
+    const { s, host, close } = sandbox({ lessons: [
+      { lessonKey: '1.1', hasBlooket: true, blooket: 100 }, { lessonKey: '1.2', lessonGradeNoQuiz: 100 }, { lessonKey: '1.3', quizTotal: 3, Q: 100 },
+    ] });
+    s.withPending = true;
+    try {
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      const row = host().querySelector('.snap-arow');
+      expect(row.dataset.key).toBe('1.4:worksheet');
+      expect(row.querySelector('.snap-caption').textContent).toContain('You: 0 (tentative)');
+      expect(row.querySelector('.snap-legend')).not.toBeNull();
     } finally { close(); }
   });
 });

@@ -19,11 +19,15 @@ export function fiveNumberSummary(values) {
   };
 }
 
-function summarizeValues(values) {
+// `tentativeZeros` (pooled assignments only) join the privacy floor count: a pool of
+// 2 scores + 3 tentative zeros shows 5 people, so the 2 scores can be published.
+function summarizeValues(values, tentativeZeros = 0) {
   const n = values.length;
-  if (n < 5) {
+  if (n + tentativeZeros < 5) {
     return { n, values: [], fiveNumber: null, iqr: null, fences: null, outliers: [] };
   }
+  // Published, but every person is a tentative 0: no real scores to summarize.
+  if (n === 0) return { n, values: [], fiveNumber: null, iqr: null, fences: null, outliers: [] };
   const fiveNumber = fiveNumberSummary(values);
   const iqr = fiveNumber.q3 - fiveNumber.q1;
   const fences = { low: fiveNumber.q1 - 1.5 * iqr, high: fiveNumber.q3 + 1.5 * iqr };
@@ -49,9 +53,10 @@ export function mergeSnapshots(snapshots, sections) {
     for (const item of snapshot.assignments || []) {
       const have = byKey.get(item.key);
       // Per-section zero dates let a viewer keep only what their own section has been taught.
-      if (!have) { byKey.set(item.key, { ...item, values: item.values.slice(), zeros: item.zeros, zeroDates: { [snapshot.section]: item.zeroDate } }); continue; }
+      if (!have) { byKey.set(item.key, { ...item, values: item.values.slice(), zeros: item.zeros, tentativeZeros: item.tentativeZeros || 0, zeroDates: { [snapshot.section]: item.zeroDate } }); continue; }
       have.zeroDates[snapshot.section] = item.zeroDate;
       have.values = have.values.concat(item.values);
+      have.tentativeZeros += item.tentativeZeros || 0;
       // The pooled zero date is the earliest date it is actually counting somewhere.
       if ((!item.pending && have.pending) || (Boolean(item.pending) === Boolean(have.pending) && item.zeroDate < have.zeroDate)) have.zeroDate = item.zeroDate;
       have.pending = Boolean(have.pending && item.pending);
@@ -60,8 +65,11 @@ export function mergeSnapshots(snapshots, sections) {
   }
   merged.assignments = [...byKey.values()].map(item => {
     const pooled = item.values.slice().sort((a, b) => a - b);
-    const summary = summarizeValues(pooled);
-    return { ...item, pending: Boolean(item.pending), ...summary, zeros: summary.n < 5 ? null : pooled.filter(v => v === 0).length };
+    const summary = summarizeValues(pooled, item.tentativeZeros);
+    // `values` stay REAL scores only; tentative zeros are a count (a count identifies nobody).
+    const published = pooled.length + item.tentativeZeros >= 5;
+    const zeros = published ? pooled.filter(v => v === 0).length : null;
+    return { ...item, pending: Boolean(item.pending), ...summary, zeros, tentativeZeros: item.tentativeZeros };
   });
   return merged;
 }
@@ -118,20 +126,26 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
         seenTracks.add(groupKey);
         // Assignment n counts every non-staff roster row, including missing scores;
         // top-level n counts only finite quarter grades. Due lessons span quarters.
-        const values = grades.students.map(student => {
+        const scores = grades.students.map(student => {
           const score = student.lessons?.find(item => item.lessonKey === lesson.lessonKey);
           const value = track === 'worksheet' ? score?.lessonGradeNoQuiz ?? score?.Cws
             : track === 'quiz' ? score?.Q : score?.blooket;
-          // Before the zero date, missing work is not a 0 yet: it is left out.
-          return Number.isFinite(value) ? Math.round(value) : (pending ? null : 0);
-        }).filter(value => value !== null).sort((a, b) => a - b);
+          return Number.isFinite(value) ? Math.round(value) : null;
+        });
+        const missing = scores.filter(value => value === null).length;
+        // Before the zero date, missing work is not a 0 yet: it is left out (a tentative 0).
+        const values = scores
+          .map(value => (value === null && !pending ? 0 : value))
+          .filter(value => value !== null)
+          .sort((a, b) => a - b);
         const summary = summarizeValues(values);
         snapshot.assignments.push({
           key: `${lesson.lessonKey}:${track}`, lessonKey: lesson.lessonKey, track,
           title: `${lesson.lessonKey} ${label}`, zeroDate, ...summary,
           // Internal pooled call: keep the raw values so the n<5 floor applies to the POOL,
           // not to each section's slice (mergeSnapshots re-summarizes and re-applies it).
-          ...(pendingScores ? { pending, values } : {}),
+          // Tentative zeros: taught here, not yet past the zero date, no score yet.
+          ...(pendingScores ? { pending, values, tentativeZeros: pending ? missing : 0 } : {}),
           // Counts also disclose scores in small sections.
           zeros: summary.n < 5 ? null : values.filter(value => value === 0).length,
         });

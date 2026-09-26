@@ -541,7 +541,10 @@ describe('GET /class/snapshot?section=all (both periods pooled)', () => {
     expect(byKey['1.2:worksheet'].zeroDates).toEqual({ PeriodB: '2026-09-25', PeriodE: '2026-09-26' });   // E taught it, not yet counting
     // 1.3: taught in both (class day 9/20) but counting nowhere yet → present as pending with the
     // soonest zero date, holding only recorded scores (none in this ledger)
-    expect(byKey['1.3:worksheet']).toMatchObject({ pending: true, zeroDate: '2026-10-03', n: 0, values: [], zeros: null });
+    // (TENTATIVE_ZEROS_SPEC §1.2: all 12 are tentative zeros, so the count clears the floor → zeros: 0)
+    expect(byKey['1.3:worksheet']).toMatchObject({ pending: true, zeroDate: '2026-10-03', n: 0, values: [], zeros: 0, tentativeZeros: 12 });
+    expect(byKey['1.1:worksheet'].tentativeZeros).toBe(0);
+    expect(byKey['1.2:worksheet'].tentativeZeros).toBe(6);   // E taught it, nobody there has a score
     // quarter picture pooled too
     expect(r.body.n).toBe(12);
     // an E student may read the pooled picture (their own section check does not apply)
@@ -599,9 +602,67 @@ describe('pooled snapshot — a lesson taught but counting nowhere yet is a pend
     const keys = r.body.assignments.map(item => item.key);
     expect(keys).toEqual(['1.1:worksheet', '1.1:quiz', '1.1:blooket']);
     const quizItem = r.body.assignments.find(item => item.key === '1.1:quiz');
-    expect(quizItem).toMatchObject({ pending: true, zeroDate: '2026-10-03', n: 2, values: [], zeros: null });   // n<5 floor still applies
+    // 2 recorded + 4 tentative = 6 people ≥ 5, so the 2 real scores are published (TENTATIVE_ZEROS_SPEC §1.2)
+    expect(quizItem).toMatchObject({ pending: true, zeroDate: '2026-10-03', n: 2, values: [100, 100], zeros: 0, tentativeZeros: 4 });
     // the single-section view keeps ignoring pending lessons
     const b = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
     expect(b.body.assignments).toEqual([]);
+  });
+});
+
+describe('tentative zeros (TENTATIVE_ZEROS_SPEC §1)', () => {
+  const es = roster.map(st => ({ ...st, student_id: `e${st.student_id}`, login_username: `e_${st.login_username}`, section: 'PeriodE' }));
+  const quiz = (sid) => [makeRow(sid, 'U1-L1-Q01', 'B'), makeRow(sid, 'U1-L1-Q02', 'C')];
+
+  it('a mixed item carries B real zeros in values and E missing scores as a tentative count', async () => {
+    const ledger = {
+      s0: quiz('s0'), s1: quiz('s1'), s2: quiz('s2'), s3: [], s4: [], s5: [],
+      es0: quiz('es0'), es1: quiz('es1'), es2: [], es3: [], es4: [], es5: [],
+    };
+    const ctx = await startServer({ roster: [...roster, ...es], ledger, lessonSchedule: {
+      '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2026-09-12', E: '2026-09-20' } },
+    } }); srv = ctx.server;
+    const r = await srv.get('/class/snapshot?section=all&by=assignment', teacher);
+    const item = r.body.assignments.find(a => a.key === '1.1:quiz');
+    expect(item).toMatchObject({ values: [0, 0, 0, 100, 100, 100, 100, 100], zeros: 3, tentativeZeros: 4, pending: false });
+    scanKeys(r.body);
+  });
+
+  it('a lesson pending everywhere counts every missing score as tentative; values stay recorded only', async () => {
+    const ledger = {
+      s0: quiz('s0'), s1: [], s2: [], s3: [], s4: [], s5: [],
+      es0: quiz('es0'), es1: quiz('es1'), es2: [], es3: [], es4: [], es5: [],
+    };
+    const ctx = await startServer({ roster: [...roster, ...es], ledger, lessonSchedule: {
+      '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2026-09-20', E: '2026-09-22' } },
+    } }); srv = ctx.server;
+    const r = await srv.get('/class/snapshot?section=all&by=assignment', teacher);
+    const item = r.body.assignments.find(a => a.key === '1.1:quiz');
+    expect(item).toMatchObject({ pending: true, values: [100, 100, 100], n: 3, zeros: 0, tentativeZeros: 9 });
+  });
+
+  it('the n<5 floor counts tentative zeros but never publishes them as values', () => {
+    const part = (values, tentativeZeros) => ({ quarter: 'Q1', asOf: '2026-09-26', values: [], assignments: [
+      { key: '1.1:quiz', title: '1.1 Quiz', zeroDate: '2026-10-03', pending: true, values, zeros: null, tentativeZeros }] });
+    const open = mergeSnapshots([part([80], 2), part([90], 1)], ['PeriodB', 'PeriodE']).assignments[0];
+    expect(open).toMatchObject({ n: 2, values: [80, 90], zeros: 0, tentativeZeros: 3 });
+    const shut = mergeSnapshots([part([80], 1), part([90], 1)], ['PeriodB', 'PeriodE']).assignments[0];
+    expect(shut).toMatchObject({ n: 2, values: [], zeros: null, tentativeZeros: 2, fiveNumber: null });
+  });
+
+  it('an item without tentativeZeros merges as 0', () => {
+    const a = { quarter: 'Q1', asOf: '2026-09-26', values: [], assignments: [
+      { key: '1.1:quiz', zeroDate: '2026-09-25', values: [0, 100, 100, 100, 100], zeros: 1 }] };
+    expect(mergeSnapshots([a], ['PeriodB']).assignments[0].tentativeZeros).toBe(0);
+  });
+
+  it('the single-section payload has no tentativeZeros key', async () => {
+    const ledger = { s0: quiz('s0'), s1: [], s2: [], s3: [], s4: [], s5: [] };
+    const ctx = await startServer({ roster, ledger, lessonSchedule: {
+      '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2026-09-12' } },
+    } }); srv = ctx.server;
+    const r = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
+    expect(r.body.assignments.length).toBeGreaterThan(0);
+    for (const item of r.body.assignments) expect(item.tentativeZeros).toBeUndefined();
   });
 });

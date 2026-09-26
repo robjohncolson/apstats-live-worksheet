@@ -183,3 +183,125 @@ describe('a 0 that sits at Q1 (teacher 2026-09-26: "all datapoints are 100 or 0,
     expect(C.assignmentCaption(a, 100)).toBe('Median 100 · IQR 100 · 4 zeros. You: 100 — inside the box.');
   });
 });
+
+describe('tentative zeros (TENTATIVE_ZEROS_SPEC §2)', () => {
+  const YELLOW = '#f5d76e', TINK = '#8a6d00', RED = '#cc0000';
+  // 20 real scores in the 80s–100s, so 3 zeros are outliers even inside the display distribution.
+  const HIGH = [80, 82, 84, 85, 86, 88, 90, 90, 92, 94, 95, 95, 96, 97, 98, 99, 100, 100, 100, 100];
+  function record(mode, opts) {
+    const calls = [];
+    const ctx = new Proxy({ font: '', fillStyle: '', strokeStyle: '', textAlign: '', textBaseline: '', lineWidth: 1 }, {
+      get(t, k) { if (k in t) return t[k]; if (k === 'measureText') return (s) => ({ width: String(s).length * 6 }); return (...a) => { calls.push([k, t.fillStyle, ...a]); }; },
+      set(t, k, v) { t[k] = v; return true; },
+    });
+    const h = C.miniHeight(mode, opts.values, opts.own, opts.tentativeZeros);
+    C.drawMini({ width: 300, height: h, getContext: () => ctx }, { mode, ...opts });
+    return calls;
+  }
+  const count = (calls, op, color) => calls.filter(c => c[0] === op && c[1] === color).length;
+  const OPTS = { values: HIGH, tentativeZeros: 3, own: 0, ownTentative: true };
+
+  it('dot plot: 2 yellow dots + 1 red (the viewer is one of the 3 tentative zeros)', () => {
+    const calls = record('dot', OPTS);
+    expect(count(calls, 'fill', YELLOW)).toBe(2);
+    expect(count(calls, 'fill', RED)).toBe(1);
+    expect(calls.filter(c => c[0] === 'fill').length).toBe(HIGH.length + 3);   // nobody drawn twice
+  });
+  it('stem-and-leaf: stem 0 holds 2 yellow leaves + 1 red leaf; the key names yellow', () => {
+    const calls = record('stem', OPTS);
+    expect(count(calls, 'fillText', TINK)).toBe(2);
+    expect(calls.filter(c => c[0] === 'fillText' && c[1] === RED && c[2] === '0').length).toBe(1);
+    expect(calls.some(c => c[0] === 'fillText' && /yellow = tentative 0/.test(c[2]))).toBe(true);
+  });
+  it('histogram: bin 0 = one yellow segment on top of nothing real; the count label is the bin total; the red dot as today', () => {
+    const calls = record('hist', OPTS);
+    expect(count(calls, 'fillRect', YELLOW)).toBe(1);
+    expect(count(calls, 'fill', RED)).toBe(1);
+    expect(calls.some(c => c[0] === 'fillText' && c[2] === '3')).toBe(true);
+  });
+  it('histogram: a mixed bin 0 splits into a real segment and a yellow one stacked on top', () => {
+    const calls = record('hist', { values: [0, 0, ...HIGH], tentativeZeros: 3 });
+    const rects = calls.filter(c => c[0] === 'fillRect');
+    const yellow = rects.find(c => c[1] === YELLOW), white = rects.find(c => c[1] === '#ffffff' && c[2] === rects[0][2]);
+    expect(yellow[3]).toBeLessThan(white[3]);                                  // yellow sits above (smaller y)
+    expect(calls.some(c => c[0] === 'fillText' && c[2] === '5')).toBe(true);   // 2 real + 3 tentative
+  });
+  it('box plot: one yellow tentative dot below the line, the red dot, and a real-zero dot when mixed', () => {
+    const calls = record('box', OPTS);
+    expect(count(calls, 'fill', YELLOW)).toBe(1);
+    expect(count(calls, 'fill', RED)).toBe(1);
+    const mixed = record('box', { values: [0, ...HIGH], tentativeZeros: 2 });
+    expect(count(mixed, 'fill', YELLOW)).toBe(1);
+    expect(count(mixed, 'fill', '#fff')).toBe(1);
+  });
+  it('a lone tentative 0 that is the viewer draws red only, never yellow too', () => {
+    for (const mode of ['dot', 'stem', 'box', 'hist']) {
+      const calls = record(mode, { values: HIGH, tentativeZeros: 1, own: 0, ownTentative: true });
+      expect(count(calls, 'fill', YELLOW) + count(calls, 'fillText', TINK) + count(calls, 'fillRect', YELLOW)).toBe(0);
+    }
+  });
+  it('histogram: the viewer\'s tentative 0 is a red slice at the top of the yellow segment, same bin height', () => {
+    const calls = record('hist', OPTS);                       // 3 tentative, one of them the viewer
+    expect(count(calls, 'fillRect', RED)).toBe(1);
+    expect(count(calls, 'fillRect', YELLOW)).toBe(1);
+    const red = calls.find(c => c[0] === 'fillRect' && c[1] === RED);
+    const yellow = calls.find(c => c[0] === 'fillRect' && c[1] === YELLOW);
+    expect(red[3]).toBeLessThan(yellow[3]);                    // red on top
+    expect(red[3] + red[5]).toBe(yellow[3]);                   // flush: no gap, no overlap
+    expect(calls.some(c => c[0] === 'fillText' && c[2] === '3')).toBe(true);   // bin total unchanged
+    const lone = record('hist', { values: HIGH, tentativeZeros: 1, own: 0, ownTentative: true });
+    expect(count(lone, 'fillRect', RED)).toBe(1);
+    expect(count(lone, 'fillRect', YELLOW)).toBe(0);
+  });
+  it('dot plot: a tall pile of zeros (W14: 7 scores + 11 tentative, own 0 tentative) stays inside the canvas', () => {
+    const W14 = [88, 92, 95, 100, 100, 100, 102];
+    const opts = { values: W14, tentativeZeros: 11, own: 0, ownTentative: true };
+    const height = C.miniHeight('dot', W14, 0, 11);
+    expect(height).toBeGreaterThan(44);
+    expect(height).toBeLessThanOrEqual(120);
+    const calls = record('dot', opts);
+    const arcs = calls.filter(c => c[0] === 'arc');
+    expect(arcs.length).toBe(18);
+    for (const a of arcs) { expect(a[3]).toBeGreaterThanOrEqual(0); expect(a[3]).toBeLessThanOrEqual(height); }
+    // arc is recorded before dot() sets its fill; the red dot's fill call follows its arc
+    expect(count(calls, 'fill', RED)).toBe(1);
+    const you = calls.find(c => c[0] === 'fillText' && c[2] === 'you');
+    expect(you[4]).toBeGreaterThanOrEqual(0); expect(you[4]).toBeLessThanOrEqual(height);
+  });
+  it('dot plot: even on a too-short canvas every stacked dot stays inside [0, H]', () => {
+    const calls = [];
+    const ctx = new Proxy({ font: '', fillStyle: '', strokeStyle: '', textAlign: '', textBaseline: '', lineWidth: 1 }, {
+      get(t, k) { if (k in t) return t[k]; if (k === 'measureText') return (s) => ({ width: String(s).length * 6 }); return (...a) => { calls.push([k, t.fillStyle, ...a]); }; },
+      set(t, k, v) { t[k] = v; return true; },
+    });
+    C.drawMini({ width: 300, height: 44, getContext: () => ctx }, { values: [88, 92, 95, 100, 100, 100, 102], tentativeZeros: 11, own: 0, ownTentative: true, mode: 'dot' });
+    const arcs = calls.filter(c => c[0] === 'arc');
+    expect(arcs.length).toBe(18);
+    for (const a of arcs) { expect(a[3]).toBeGreaterThanOrEqual(0); expect(a[3]).toBeLessThanOrEqual(44); }
+  });
+  it('small-n uses the display distribution: 2 real + 3 tentative draws; 2 + 2 says n < 5', () => {
+    expect(record('box', { values: [90, 100], tentativeZeros: 3 }).some(c => c[2] === 'n < 5')).toBe(false);
+    expect(record('box', { values: [90, 100], tentativeZeros: 2 }).some(c => c[2] === 'n < 5')).toBe(true);
+  });
+  it('miniHeight counts stem 0 when tentative zeros exist', () => {
+    expect(C.miniHeight('stem', [50, 60, 70, 80, 90, 100], 0, 2)).toBe(11 * 11 + 14);       // stems 0..10
+    expect(C.miniHeight('stem', [50, 60, 70, 80, 90, 100], null, 2)).toBe(11 * 11 + 14);
+    expect(C.miniHeight('stem', [50, 60, 70, 80, 90, 100])).toBe(6 * 11 + 14);             // unchanged without
+  });
+  it('caption: statistics from D and the "zeros + tentative (label)" phrase', () => {
+    const a = { values: [0, 0, 0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100], zeros: 4, tentativeZeros: 11 };
+    expect(C.assignmentCaption(a, undefined, { tentativeLabel: 'real after Sun 9/27' }))
+      .toBe('Median 100 · IQR 100 · 4 zeros + 11 tentative (real after Sun 9/27).');
+    expect(C.assignmentCaption({ values: [90, 95, 100, 100], zeros: 1, tentativeZeros: 1 }, undefined))
+      .toBe('Median 95 · IQR 55 · 1 zero + 1 tentative.');
+    expect(C.assignmentCaption({ values: [90, 95, 100, 100, 100], zeros: 0, tentativeZeros: 0 }, undefined))
+      .toBe('Median 100 · IQR 7.5 · 0 zeros.');
+  });
+  it('caption: the viewer\'s tentative 0 is named as tentative; the 0-at-Q1 sentence still applies', () => {
+    const a = { values: [100, 100, 100, 100, 100, 100], zeros: 0, tentativeZeros: 3 };
+    expect(C.assignmentCaption(a, null, { tentativeLabel: 'real after Mon 9/28', ownTentative: true }))
+      .toBe('Median 100 · IQR 100 · 0 zeros + 3 tentative (real after Mon 9/28). You: 0 (tentative) — inside the box only because at least a quarter of the class is also at 0, so Q1 itself is 0.');
+    const b = { values: HIGH, zeros: 0, tentativeZeros: 2 };
+    expect(C.assignmentCaption(b, null, { ownTentative: true })).toMatch(/^Median .* · 0 zeros \+ 2 tentative\. You: 0 \(tentative\) — below Q1 — an outlier by the 1\.5×IQR rule\.$/);
+  });
+});
