@@ -27,7 +27,13 @@ is one imperative sentence of at most 18 words naming what to mention -- never t
 value, verdict, or conclusion itself. "Explain why the mean moved a lot while the
 median barely moved" is right; "Say the two unusual values pulled the mean" gives the
 answer away. Do NOT also put a "Checklist:" or "(1)...(4)" list in part (d)'s prompt;
-the printed E checklist replaces it. The student sheet must still compile to 2 pages.
+the printed E checklist replaces it. Do NOT write a `space:` block; the builder
+sizes the answer room and ignores authored `space` on standalone sheets.
+Keep page 2 to about 400 words total: the (a)-(d) prompts together should stay
+under about 230 words (the sheets that fit today run 134-228), with at most one frame of at most two lines. Do not put tables
+inside parts unless the part requires one. These are authoring guidelines;
+the compile must end on page 2. If it fails with "must end on page 2", shorten
+prompts or the frame, never the E checklist.
 Scaffolds must be checklists or frames with blanks, never hints giving answers. EVERY sentence frame ships with a `word_bank` (needed terms + at least two plausible distractors) and a `word_bank_needed` subset; use `\blankt[width]{role}` so each blank names what kind of thing goes in it (statistic, reason, number, action, ...).
 Print a notes callout with its own title, stating rules without applying them.
 Audit each part: all requested tables, graphs, normal-table areas, values and

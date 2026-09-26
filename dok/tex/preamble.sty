@@ -113,7 +113,7 @@
   title={#1}
 }
 
-\newtcolorbox{sentenceframebox}{
+\newtcolorbox{sentenceframebox}[1][]{
   enhanced,
   breakable,
   colback=lightgray,
@@ -124,14 +124,16 @@
   left=8pt,
   right=8pt,
   top=5pt,
-  bottom=5pt
+  bottom=5pt,
+  #1
 }
 
-\newtcolorbox{wordbankbox}{
+\newtcolorbox{wordbankbox}[1][]{
   enhanced, breakable,
   colback=lightgray, colframe=framegray!45,
   boxrule=0.4pt, arc=2pt,
-  left=8pt, right=8pt, top=5pt, bottom=5pt
+  left=8pt, right=8pt, top=5pt, bottom=5pt,
+  #1
 }
 
 \newcommand{\blankt}[2][1.6in]{%
@@ -251,6 +253,10 @@
 
 % \workspace{length} — invisible writing room (no ruled lines, per the spine rules).
 \newcommand{\workspace}[1]{\par\vspace*{#1}}
+
+% Minimum writing room plus a weighted share of the remaining page height.
+\newcommand{\answerroom}[2]{\par\vspace*{#1 plus #2fill}}
+\newcommand{\twopageguard}{\par\penalty0\relax\ifnum\value{page}=2 \else\errmessage{DOK student sheet must end on page 2 (ended on \thepage)}\fi}
 
 % \answer{text} — teacher key only; the student/board editions never emit it.
 \newcommand{\answer}[1]{{\color{warmred}\bfseries Key: }#1\par}

@@ -14,6 +14,9 @@ import importlib.util
 import json
 import copy
 import random
+import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -494,3 +497,83 @@ def test_misconception_sheet_requires_student_scoring_lines():
     assert "needs a student-facing `student` line" in bl.validate_student_scoring(row, lesson)[0]
     row["scoring"]["expectedElements"][0]["student"] = "word " * (bl.STUDENT_ELEMENT_MAX_WORDS + 1)
     assert "exceeds" in bl.validate_student_scoring(row, lesson)[0]
+
+
+@pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
+def test_student_page2_uses_fill_room(path: Path):
+    lesson = _lesson(path)
+    item = REGISTRY[lesson["focus"]]
+    tex = bl.emit_student(lesson, REGISTRY, SCHEDULE)
+    front, back = tex.split(r"\newpage")
+    assert r"\geometry{letterpaper,margin=0.6in}" in front
+    assert r"\workspace{0.35in}" in front
+    assert back.startswith("\n\\setlength{\\parskip}{4pt}\n")
+    assert r"\workspace{" not in back
+    rooms = re.findall(r"\\answerroom\{([\d.]+)in\}\{(\d+)\}", back)
+    assert len(rooms) == len(item["parts"])
+    assert rooms == [("0.35", "1"), *[("0.5", "2")] * (len(rooms) - 2), ("1.25", "6")]
+    assert float(rooms[-1][0]) >= 1.25
+    assert int(rooms[-1][1]) >= max(int(weight) for _, weight in rooms)
+
+
+@pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
+def test_frame_and_bank_precede_top_answer_room(path: Path):
+    lesson = _lesson(path)
+    item = REGISTRY[lesson["focus"]]
+    tex = bl.emit_student(lesson, REGISTRY, SCHEDULE)
+    checklist = tex.index("To earn an E, your answer must do ALL of these")
+    top_room = tex.rindex(r"\answerroom{")
+    frames = [match.start() for match in re.finditer(re.escape(r"\begin{sentenceframebox}"), tex)]
+    assert len(frames) == len(item["sentence_frames"])
+    assert all(checklist < frame < top_room for frame in frames)
+    assert checklist < tex.index(r"\begin{wordbankbox}") < top_room
+    assert tex.index(r"\end{wordbankbox}") < top_room
+    assert tex.count(r"\begin{wordbankbox}") == 1
+    assert "Some words are not needed." in tex
+
+
+@pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
+def test_student_has_two_page_guard(path: Path):
+    tex = bl.emit_student(_lesson(path), REGISTRY, SCHEDULE)
+    assert tex.endswith("\\twopageguard\n\\end{document}\n")
+    assert tex.count(r"\twopageguard") == 1
+
+
+@pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
+def test_authored_space_does_not_shrink_v2(path: Path):
+    lesson = _lesson(path)
+    expected = bl.emit_student(lesson, REGISTRY, SCHEDULE)
+    lesson["space"] = {"a": "0.01in", "d": "0.01in"}
+    assert bl.emit_student(lesson, REGISTRY, SCHEDULE) == expected
+    lesson["space"] = dict.fromkeys(("first_take", "a", "b", "c", "d"), "0.01in")
+    assert bl.emit_student(lesson, REGISTRY, SCHEDULE) == expected
+    lesson.pop("space")
+    assert bl.emit_student(lesson, REGISTRY, SCHEDULE) == expected
+
+
+@pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
+def test_teacher_and_board_unchanged_by_student_layout(path: Path):
+    lesson = _lesson(path)
+    legacy = {**lesson, "standalone": False}
+    for emitter in (bl.emit_teacher, bl.emit_board):
+        tex = emitter(lesson, REGISTRY, SCHEDULE)
+        assert tex.encode("utf-8") == emitter(legacy, REGISTRY, SCHEDULE).encode("utf-8")
+        assert r"\answerroom" not in tex
+        assert r"\twopageguard" not in tex
+        assert r"\geometry{letterpaper,margin=0.6in}" not in tex
+
+
+@pytest.mark.skipif(shutil.which("pdflatex") is None, reason="pdflatex is not installed")
+@pytest.mark.parametrize("path", LESSONS, ids=[p.stem for p in LESSONS])
+def test_student_pdf_compiles_to_two_pages(path: Path, tmp_path: Path):
+    tex = tmp_path / "student.tex"
+    tex.write_text(bl.emit_student(_lesson(path), REGISTRY, SCHEDULE), encoding="utf-8", newline="\n")
+    shutil.copyfile(ROOT / "dok/tex/preamble.sty", tmp_path / "preamble.sty")
+    for _ in range(2):
+        result = subprocess.run(
+            ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex.name],
+            cwd=tmp_path, capture_output=True, text=True, errors="replace", timeout=120,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+    pdf = (tmp_path / "student.pdf").read_bytes()
+    assert len(re.findall(rb"/Type\s*/Page\b", pdf)) == 2

@@ -17,6 +17,9 @@ export const HOUSE_RULES = [
   'No video, QR, timing, exit ticket or outside references.',
   'Part (d) is scored E/P/I by the teacher; nothing auto-scores.',
   'Every scoring element has a `student` line: one sentence naming what an E answer must mention, never the answer itself. It prints as a checkbox under part (d), so part (d) carries no other checklist.',
+  'Do NOT write a `space:` block; the builder sizes the answer room and ignores authored space on standalone sheets.',
+  'Keep page 2 to about 400 words total: under about 230 words across the (a)-(d) prompts, at most one frame of at most two lines, and no tables inside parts unless the part requires one.',
+  'The sheet must compile to 2 pages. If compilation fails with "must end on page 2", shorten prompts or the frame, never the E checklist.',
   'No student names or identifiers. Never modify existing or archived sheets.',
 ];
 

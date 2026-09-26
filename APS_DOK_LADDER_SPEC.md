@@ -231,12 +231,26 @@ Port of `build_lesson_from_yaml.py`, cut to the ladder:
 2. `load_frameworks()` — shells out to `node scripts/lib/framework-parse.mjs --json` (or reads a
    cached `data/frameworks.json` that a tiny `scripts/build-frameworks-json.mjs` emits) to
    validate `skill`/`lo` and print the LO/EK block on the teacher edition.
-3. `emit_student(lesson, registry)` → ONE side: heading (NEW CED label, Name/Date line) ·
-   the stem + visual · **FIRST TAKE** box (`calloutyellow`, the `first_take` prompt, ~1.2in of
-   space) · rules callout (`calloutgreen`) · parts (a)(b)(c) each with a `\dokbadge{n}` and
-   graduated space (0.9in / 1.4in / 2.4in, tunable per YAML `space:`) · the `exit_reflection`
-   line · "Turn this in." Back side: `OPTIONAL REINFORCEMENT` only if declared, else blank
-   for work. `\answer{}` renders to nothing.
+3. `emit_student(lesson, registry)` → for `standalone: true`, exactly two pages with
+   0.6in margins and 11pt text. Front: heading · stem + visual · **FIRST TAKE** box
+   (`calloutyellow`, fixed 0.35in of writing room) · rules callout (`calloutgreen`).
+   Back: "Work (a)--(d)." · parts with `\dokbadge{n}` · turn-in line, with 4pt
+   paragraph spacing. Writing room uses a floor plus weighted `fill` glue:
+   `\answerroom{floor}{weight}` emits `\par\vspace*{floor plus weight fill}`.
+   The first part gets 0.35in + 1 fill, middle parts each get 0.5in + 2 fill,
+   and the top (last) part gets 1.25in + 6 fill, by position rather than letter.
+   Four parts therefore have at least 2.60in of empty writing room; remaining
+   height is shared by weight, filling the page down to the turn-in line.
+   Under the top prompt, print the unchanged E checklist, then the compact frame(s)
+   and word bank, then the top answer room. Use whitespace, never ruled lines.
+   Standalone sheets ignore YAML `space:`; authors must not write it. Keep page 2
+   near 400 words total (prompts together at most 130 words; at most one two-line
+   frame; tables inside parts only when required). `\twopageguard` before
+   `\end{document}` fails compilation unless the sheet ends on page 2. If it fails,
+   shorten prompts or the frame, never the E checklist or writing-room floors.
+   Non-standalone/archive sheets retain rigid `\workspace` lengths from YAML
+   `space:` and the legacy defaults. `\answer{}` renders to nothing for students;
+   teacher and board output retain their existing layout.
 4. `emit_board(lesson, registry)` → one landscape page, 28pt+: stem + visual + the
    `first_take` prompt, the three part prompts in a column with their DOK badges, the
    follow-along link/QR from `worksheet:`, and a footer "Finish (a)–(c) after the video —

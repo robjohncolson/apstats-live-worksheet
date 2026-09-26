@@ -46,7 +46,10 @@ TUTOR_DIR = ROOT / "ai-tutor"
 SKILL_RE = re.compile(r"^[1-4]\.[A-F]$")
 ID_RE = re.compile(r"^aps-\d+\.\d+(?:_\d+\.\d+)*-d[123]-\d+$")
 BANNED_RATIONALE_WORDS = ("hard", "easy", "difficult")
-DEFAULT_SPACE = {"first_take": "1.2in", "a": "0.9in", "b": "1.4in", "c": "2.4in"}
+DEFAULT_SPACE = {"first_take": "1.2in", "a": "0.9in", "b": "1.4in", "c": "2.4in", "d": "1in"}
+STUDENT_MARGIN = "0.6in"
+FIRST_TAKE_ROOM = "0.35in"
+ANSWER_ROOM = {"first": ("0.35in", 1), "middle": ("0.5in", 2), "top": ("1.25in", 6)}
 
 
 # ---- Loading -------------------------------------------------------------
@@ -588,13 +591,19 @@ def header_line(lesson: dict, schedule: dict) -> str:
     return f"AP Statistics \\textperiodcentered\\ {ced_topic_label(lesson)}"
 
 
-def part_block(part: dict, space: dict, answers: dict | None, after_prompt: str = "") -> str:
+def part_block(part: dict, space: dict, answers: dict | None, after_prompt: str = "",
+               room: tuple[str, int] | None = None, before_room: str = "") -> str:
     label = part["label"]
     out = [f"\\dokbadge{{{part['dok']}}}~\\textbf{{({label})}} {part['prompt'].strip()}\\par"]
     if after_prompt:
         out.append(after_prompt)
     if answers is not None:
         out.append(f"\\answer{{{answers.get(label, '(no key)')}}}")
+    elif room is not None:
+        if before_room:
+            out.append(before_room)
+        floor, weight = room
+        out.append(f"\\answerroom{{{floor}}}{{{weight}}}")
     else:
         out.append(f"\\workspace{{{space.get(label, '1in')}}}")
     return "\n".join(out) + "\n\n"
@@ -631,7 +640,7 @@ def shared_problem(lesson: dict, item: dict, scale: float) -> str:
     return "".join(out)
 
 
-def word_bank_block(item: dict, teacher: bool = False) -> str:
+def word_bank_block(item: dict, teacher: bool = False, box_options: str = "") -> str:
     if not item.get("word_bank"):
         return ""
     # Canonicalize first: author order must not influence the printed order.
@@ -640,10 +649,13 @@ def word_bank_block(item: dict, teacher: bool = False) -> str:
     needed = set(item.get("word_bank_needed", [])) if teacher else set()
     entries = [r"\textbf{" + entry + "}" if entry in needed else entry for entry in entries]
     note = "bold = needed; the rest are distractors" if teacher else "Some words are not needed."
+    options = f"[{box_options}]" if box_options else ""
+    body_size = r"\small" if box_options else ""
+    note_break = "\\quad " if box_options else "\n\\par\\smallskip"
     return (
-        "\\begin{wordbankbox}\\raggedright\n\\textbf{Word bank:} "
+        "\\begin{wordbankbox}" + options + body_size + "\\raggedright\n\\textbf{Word bank:} "
         + r" \ensuremath{\;\cdot\;} ".join(entries)
-        + "\n\\par\\smallskip{\\footnotesize\\color{framegray} " + note + "}"
+        + note_break + "{\\footnotesize\\color{framegray} " + note + "}"
         + "\n\\end{wordbankbox}\n\n"
     )
 
@@ -651,7 +663,7 @@ def word_bank_block(item: dict, teacher: bool = False) -> str:
 def earn_an_e_block(item: dict) -> str:
     """Tell the student exactly what an E answer mentions. Empty when a sheet has no student lines.
 
-    Printed directly under the top part's prompt, compact: the back page has no spare room.
+    Printed directly under the top part's prompt, above its scaffolds and writing room.
     """
     lines = [el.get("student") for el in (item.get("scoring") or {}).get("expectedElements", [])]
     if not lines or not all(lines):
@@ -669,28 +681,44 @@ def earn_an_e_block(item: dict) -> str:
 def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
     item = registry[lesson["focus"]]
     space = {**DEFAULT_SPACE, **(lesson.get("space") or {})}
+    standalone = lesson.get("standalone") is True
+    geometry = f"\\geometry{{letterpaper,margin={STUDENT_MARGIN}}}\n" if standalone else ""
+    first_take_room = FIRST_TAKE_ROOM if standalone else space["first_take"]
     rules = lesson.get("rules_callout") or {}
     parts = [
-        "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n\\renewcommand{\\answer}[1]{}\n\n",
+        "\\documentclass[11pt]{article}\n\\usepackage{preamble}\n" + geometry + "\\renewcommand{\\answer}[1]{}\n\n",
         "\\begin{document}\n\n",
         f"\\ladderheading{{{header_line(lesson, schedule)}}}{{{lesson['title']}}}\n\n",
         "\\focusbanner{THE PROBLEM}\n\n",
         shared_problem(lesson, item, 1.0),
         "\\begin{firsttakebox}{FIRST TAKE --- one sentence before you work the parts}\n"
-        f"{item['first_take'].strip()}\n\\workspace{{{space['first_take']}}}\n\\end{{firsttakebox}}\n\n",
+        f"{item['first_take'].strip()}\n\\workspace{{{first_take_room}}}\n\\end{{firsttakebox}}\n\n",
     ]
     if rules:
         parts.append(callout_block(f"\\IconBook\\ {rules['title']}", "calloutgreen", rules["body"]))
     # Front = read + commit. Back = finish + turn in. A deliberate two-sided sheet.
     part_range = f"({item['parts'][0]['label']})--({item['parts'][-1]['label']})"
-    parts.append(f"\\newpage\n\\textbf{{Work {part_range}.}}\\par\\smallskip\n\n")
+    page2_spacing = "\\setlength{\\parskip}{4pt}\n" if standalone else ""
+    parts.append("\\newpage\n" + page2_spacing + f"\\textbf{{Work {part_range}.}}\\par\\smallskip\n\n")
     top_part = item["parts"][-1]
-    for p in item["parts"]:
+    box_options = "top=3pt,bottom=3pt,before skip=4pt,after skip=4pt" if standalone else ""
+    options = f"[{box_options}]" if box_options else ""
+    scaffolds = "".join(
+        f"\\begin{{sentenceframebox}}{options}\\raggedright\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n"
+        for frame in item.get("sentence_frames", [])
+    ) + word_bank_block(item, box_options=box_options)
+    for index, p in enumerate(item["parts"]):
         e_checklist = earn_an_e_block(item) if p is top_part else ""
-        parts.append(part_block(p, space, answers=None, after_prompt=e_checklist))
-    for frame in item.get("sentence_frames", []):
-        parts.append(f"\\begin{{sentenceframebox}}\\raggedright\\textbf{{Frame:}} {frame}\\end{{sentenceframebox}}\n\n")
-    parts.append(word_bank_block(item))
+        room = None
+        before_room = ""
+        if standalone:
+            position = "top" if p is top_part else "first" if index == 0 else "middle"
+            room = ANSWER_ROOM[position]
+            before_room = scaffolds if p is top_part else ""
+        parts.append(part_block(p, space, answers=None, after_prompt=e_checklist,
+                                room=room, before_room=before_room))
+    if not standalone:
+        parts.append(scaffolds)
     parts.append(
         "\\textbf{Turn this sheet in whenever you finish --- bonus credit. "
         f"Part ({item['parts'][-1]['label']}) is scored E / P / I.}}\\par\n\n"
@@ -700,6 +728,8 @@ def emit_student(lesson: dict, registry: dict, schedule: dict) -> str:
         parts.append(
             f"\\bankitem{{Optional \\#{k} --- not collected}}{{\\dokbadge{{{r['dok']}}}~{r['stem'].strip()}}}{{}}\n\n"
         )
+    if standalone:
+        parts.append("\\twopageguard\n")
     parts.append("\\end{document}\n")
     return "".join(parts)
 
