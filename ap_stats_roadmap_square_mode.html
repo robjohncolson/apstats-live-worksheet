@@ -15927,8 +15927,8 @@ function _snapAdvice(a, own, label) {
     if (own > fn.q3) return { text: who + ' ' + own + ', above Q3. Nothing to do here.' };
     return { text: who + ' ' + own + ', inside the box \u2014 with the middle half of the class. Nothing to fix here.' };
 }
-// Which assignment deserves the screen: a 0 that has been counting longest, else the score
-// furthest below the class median, else the newest.
+// Which assignment deserves the screen: the viewer's 0 that has been counting longest, else the
+// most overdue assignment overall (rows are ordered oldest first).
 function _snapFocusIndex(rows, owns, label) {
     if (label === null) return 0;
     var best = -1, bestDate = null;
@@ -15937,15 +15937,13 @@ function _snapFocusIndex(rows, owns, label) {
         if (own != null && own !== 0) return;
         if (bestDate == null || a.zeroDate < bestDate) { best = i; bestDate = a.zeroDate; }
     });
-    if (best >= 0) return best;
-    var worst = -1, gap = 0;
-    rows.forEach(function (a, i) {
-        var fn = ClassSnapshot.fiveNumber(a.values || []);
-        if (fn.median == null) return;
-        var g = fn.median - owns[i];
-        if (g > gap) { gap = g; worst = i; }
-    });
-    return worst >= 0 ? worst : 0;
+    return best >= 0 ? best : 0;
+}
+// The section whose Class-tab pick should be placed on the pooled picture (first with a pick).
+function _snapPickedSection() {
+    var keys = Object.keys(_snapApp.pick || {});
+    for (var i = 0; i < keys.length; i++) if (_snapApp.pick[keys[i]]) return keys[i];
+    return null;
 }
 function _snapOpenWork(kind, lessonKey, btn) {
     if (kind === 'quiz') return _zeroOpenQuiz(lessonKey);
@@ -16013,8 +16011,8 @@ function _snapAssignmentRow(a, own, label) {
 function _renderAssignmentsView(host, teacher) {
     var intro = document.createElement('p'); intro.className = 'snap-intro';
     intro.textContent = teacher
-        ? 'One assignment at a time, the one that needs attention first. Red = you (or the student picked on the Class tab). Every score list is anonymous.'
-        : 'One assignment at a time, the one that needs your attention first. Red = you. Where you have a 0, the whole class’s scores are shown — no names, just the numbers.';
+        ? 'One assignment at a time, both periods pooled, the most overdue first. Red = you (or the student picked on the Class tab). Every score list is anonymous.'
+        : 'One assignment at a time, both periods pooled, the most overdue first. Red = you. Where you have a 0, everyone’s scores are shown — no names, just the numbers.';
     host.appendChild(intro);
     var modes = teacher ? { available: ['dot', 'stem', 'hist', 'box'], default: 'box', tabs: true } : _snapModes();
     if (!_snapApp.amode || modes.available.indexOf(_snapApp.amode) < 0) _snapApp.amode = modes.default;
@@ -16028,24 +16026,25 @@ function _renderAssignmentsView(host, teacher) {
         });
         host.appendChild(bar);
     }
-    var sections = teacher ? ['PeriodB', 'PeriodE'] : [_snapSection()];
-    sections.forEach(function (section) {
+    // Both periods pooled into one picture (server `section=all`): more data points, one card.
+    var section = 'all';
+    [section].forEach(function (section) {
         var card = document.createElement('div'); card.className = 'wallet-snapshot-card'; card.dataset.section = section;
-        if (teacher) { var h = document.createElement('h4'); h.textContent = section.replace('Period', 'Period '); card.appendChild(h); }
         var body = document.createElement('div'); body.className = 'snap-arows'; body.textContent = 'Loading…'; card.appendChild(body);
         host.appendChild(card);
         _snapFetchAssignments(section, teacher).then(function (data) {
             if (!card.isConnected) return;
             body.textContent = '';
             if (!data || !Array.isArray(data.assignments)) { body.textContent = 'Assignment picture unavailable right now.'; return; }
-            var rows = data.assignments.slice().sort(function (x, y) { return x.zeroDate === y.zeroDate ? 0 : (x.zeroDate < y.zeroDate ? 1 : -1); });
+            // Oldest zero date first: the most overdue assignment is the first thing on screen.
+            var rows = data.assignments.slice().sort(function (x, y) { return x.zeroDate === y.zeroDate ? 0 : (x.zeroDate < y.zeroDate ? -1 : 1); });
             if (!rows.length) { body.textContent = 'Nothing is counting yet.'; return; }
             var ownCache = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
-            var pickedName = teacher ? _snapTeacherPickedName(section) : undefined;
-            // Teacher with a pick: that student. Teacher without one: their own scores in their own
-            // section (label undefined), nobody in the other section (label null). Student: own.
-            var lessons = teacher ? (pickedName ? _snapTeacherPickedLessons(section) : (section === _snapSection() ? ownCache : null)) : ownCache;
-            var label = teacher ? (pickedName || (section === _snapSection() ? undefined : null)) : undefined;
+            var pickSection = teacher ? _snapPickedSection() : null;
+            var pickedName = pickSection ? _snapTeacherPickedName(pickSection) : undefined;
+            // Teacher with a pick (either period): that student. Otherwise the viewer's own scores.
+            var lessons = pickedName ? _snapTeacherPickedLessons(pickSection) : ownCache;
+            var label = pickedName || undefined;
             var owns = rows.map(function (a) { return lessons ? _snapOwnAssignmentScore(a, lessons) : null; });
             if (_snapApp.aall) {
                 rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label)); });
@@ -26398,7 +26397,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-6q2e';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-e1cw';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -31,12 +31,47 @@ function summarizeValues(values) {
   return { n, values, fiveNumber, iqr, fences, outliers };
 }
 
+// `section=all` merges these sections into one picture (teacher 2026-09-26: "how it ranks
+// among ALL students, for more datapoints"). Any signed-in student may read it.
+export const COURSE_SECTIONS = ['PeriodB', 'PeriodE'];
+
+// Merge per-section snapshots: values pooled, the earliest zero date kept, zeros summed.
+// A lesson contributes only from the sections where it is already counting.
+export function mergeSnapshots(snapshots, sections) {
+  const values = snapshots.flatMap(s => s.values || []).sort((a, b) => a - b);
+  const first = snapshots[0] || {};
+  const merged = { ok: true, section: 'all', sections, quarter: first.quarter, asOf: first.asOf, ...summarizeValues(values) };
+  if (!snapshots.some(s => Array.isArray(s.assignments))) return merged;
+  const byKey = new Map();
+  for (const snapshot of snapshots) {
+    for (const item of snapshot.assignments || []) {
+      const have = byKey.get(item.key);
+      if (!have) { byKey.set(item.key, { ...item, values: item.values.slice(), zeros: item.zeros }); continue; }
+      have.values = have.values.concat(item.values);
+      if (item.zeroDate < have.zeroDate) have.zeroDate = item.zeroDate;
+      have.zeros = have.zeros == null || item.zeros == null ? null : have.zeros + item.zeros;
+    }
+  }
+  merged.assignments = [...byKey.values()].map(item => {
+    const pooled = item.values.slice().sort((a, b) => a - b);
+    const summary = summarizeValues(pooled);
+    return { ...item, ...summary, zeros: summary.n < 5 ? null : pooled.filter(v => v === 0).length };
+  });
+  return merged;
+}
+
 export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, config }) {
   // Memory belongs to this app instance; cache only anonymous payloads.
   const cache = new Map();
   const ttl = 5 * 60 * 1000;
 
   async function computeSnapshot(section, by) {
+    if (section !== 'all') return computeSectionSnapshot(section, by);
+    const parts = await Promise.all(COURSE_SECTIONS.map(s => computeSectionSnapshot(s, by)));
+    return mergeSnapshots(parts, COURSE_SECTIONS);
+  }
+
+  async function computeSectionSnapshot(section, by) {
     const grades = await computeClassGrades({ section }, { requireComplete: true });
     if (!grades.ok) throw new Error('gradebook unavailable');
     const asOf = todayInTz('America/New_York');
@@ -102,7 +137,7 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
         const studentId = token ? verifyToken(token) : null;
         if (!studentId) return res.status(401).json({ ok: false, error: 'forbidden' });
         const roster = await db.findByStudentId(studentId);
-        if (roster?.error || roster?.data?.section !== section) {
+        if (roster?.error || (section !== 'all' && roster?.data?.section !== section)) {
           return res.status(401).json({ ok: false, error: 'forbidden' });
         }
       } catch (_) {

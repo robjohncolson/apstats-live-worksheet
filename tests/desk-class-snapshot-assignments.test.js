@@ -69,29 +69,29 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
     _zeroTodayIso: () => '2026-09-26',
     cP: 'B',
     _renderSnapshotApp() { s.rerenders = (s.rerenders || 0) + 1; },
-    fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'PeriodB', assignments: [A12, Q13, B11] }) }; },
+    fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, Q13, B11] }) }; },
     openSnapshot() { s.opened = (s.opened || 0) + 1; },
     _zeroOpenLesson(k) { s.openedWork = ['worksheet', k]; }, _zeroOpenQuiz(k) { s.openedWork = ['quiz', k]; }, _zeroOpenFlashcards(_b, k) { s.openedWork = ['blooket', k]; },
   };
   createContext(s);
   runInContext(
     "var SNAPSHOT_TTL_MS = 300000;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocusIndex', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocusIndex', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
 const tick = () => new Promise(r => setTimeout(r, 0));
 
 describe('Assignments view — student', () => {
-  it('fetches by=assignment for the student\'s section, lists due items newest first, and opens the full data set only where the student has a 0 or nothing', async () => {
+  it('fetches the pooled by=assignment picture, focuses the most overdue 0, lists oldest first, and opens the full data set only where the student has a 0 or nothing', async () => {
     const { s, host, close } = sandbox();
     try {
       s._renderAssignmentsView(host(), false);
       await tick(); await tick();
-      expect(s.calls).toEqual(['https://roster.test/class/snapshot?section=PeriodB&by=assignment']);
+      expect(s.calls).toEqual(['https://roster.test/class/snapshot?section=all&by=assignment']);
       // focused: the 0 that has been counting longest (1.1 Blooket), with a pager and advice
       expect([...host().querySelectorAll('.snap-arow')].map(r => r.dataset.key)).toEqual(['1.1:blooket']);
-      expect(host().querySelector('.snap-pager-pos').textContent).toBe('3 of 3');
+      expect(host().querySelector('.snap-pager-pos').textContent).toBe('1 of 3');
       expect(host().querySelector('.snap-advice').textContent).toContain('Do this next.');
       host().querySelector('.snap-advice-btn').onclick();
       expect(s.openedWork).toEqual(['blooket', '1.1']);
@@ -101,9 +101,9 @@ describe('Assignments view — student', () => {
       s._renderAssignmentsView(host(), false);
       await tick(); await tick();
       const rows = [...host().querySelectorAll('.snap-arow')];
-      expect(rows.map(r => r.dataset.key)).toEqual(['1.3:quiz', '1.2:worksheet', '1.1:blooket']);   // newest zero date first
+      expect(rows.map(r => r.dataset.key)).toEqual(['1.1:blooket', '1.2:worksheet', '1.3:quiz']);   // oldest zero date first
       // 1.2 worksheet: student never opened it → list open, one red zero, caption says You: 0
-      const ws = rows[1];
+      const ws = rows[1];   // 1.2 worksheet
       expect(ws.querySelector('.snap-alist').hidden).toBe(false);
       expect(ws.querySelector('.snap-alist-lead').textContent).toBe('All 15 scores for 1.2 Follow-Along:');
       expect([...ws.querySelectorAll('.snap-alist-seq span')].map(x => x.textContent).join(' ')).toBe('0 0 0 85 88 91 95 97 100 100 100 100 100 100 100');
@@ -111,9 +111,9 @@ describe('Assignments view — student', () => {
       expect(ws.querySelector('.snap-alist-foot').textContent).toBe('12 of 15 classmates have a score here. Every 0 on this list can still be replaced.');
       expect(ws.querySelector('.snap-caption').textContent).toContain('You: 0 — below Q1 — an outlier by the 1.5×IQR rule.');
       // 1.1 Blooket: never played → also open
-      expect(rows[2].querySelector('.snap-alist').hidden).toBe(false);
+      expect(rows[0].querySelector('.snap-alist').hidden).toBe(false);
       // 1.3 quiz: scored 67 → collapsed, with a toggle; caption uses the real score
-      const qz = rows[0];
+      const qz = rows[2];
       expect(qz.querySelector('.snap-alist').hidden).toBe(true);
       expect(qz.querySelector('.snap-caption').textContent).toContain('You: 67');
       qz.querySelector('.snap-alist-toggle').onclick();
@@ -139,31 +139,29 @@ describe('Assignments view — teacher', () => {
       { lessonKey: '1.3', lessonGradeNoQuiz: 100, Cws: 100, quizTotal: 3, Q: null, hasBlooket: true, blooket: null },
     ] },
   ];
-  it('shows both sections with no dot and no "You" line until a student is picked; then the pick names the line and marks the zero', async () => {
+  it('shows ONE pooled card; the teacher\'s own dot until a student is picked (from either period); then the pick names the line and marks the zero', async () => {
     const none = sandbox({ teacher: true, roster: ROSTER });
     try {
       none.s._renderAssignmentsView(none.host(), true);
       await tick(); await tick();
+      expect(none.s.calls).toEqual(['https://roster.test/class/snapshot?section=all&by=assignment']);
       const cards = [...none.host().querySelectorAll('.wallet-snapshot-card')];
-      expect(cards.map(c => c.dataset.section)).toEqual(['PeriodB', 'PeriodE']);
-      // own section: the teacher's own 0 counting longest (1.1 flashcards) is the focus, marked in red like a student's
+      expect(cards.map(c => c.dataset.section)).toEqual(['all']);
+      expect(cards[0].querySelector('h4')).toBeNull();
+      // the teacher's own 0 counting longest (1.1 flashcards) is the focus, marked in red like a student's
       const own = cards[0].querySelector('.snap-arow');
       expect(own.dataset.key).toBe('1.1:blooket');
       expect(own.querySelector('.snap-caption').textContent).toContain('You: 0 — below Q1');
       expect(own.querySelector('.snap-alist').hidden).toBe(false);
-      // other section: nobody placed → newest first, no dot, advice asks for a pick
-      const other = cards[1].querySelector('.snap-arow');
-      expect(other.dataset.key).toBe('1.3:quiz');
-      expect(other.querySelector('.snap-caption').textContent).toBe('Median 100 · IQR 33 · 2 zeros.');
-      expect(other.querySelectorAll('.snap-alist-you').length).toBe(0);
-      expect(other.querySelector('.snap-advice').textContent).toBe('2 of 15 count as a 0 here. Pick a student on the Class tab to place their dot.');
+      expect(none.s._snapPickedSection()).toBeNull();
     } finally { none.close(); }
     const picked = sandbox({ teacher: true, roster: ROSTER, pick: 'cherry_seal' });
     try {
       picked.s._snapApp.focusKey = '1.2:worksheet';
       picked.s._renderAssignmentsView(picked.host(), true);
       await tick(); await tick();
-      const row = picked.host().querySelector('.wallet-snapshot-card[data-section="PeriodB"] .snap-arow[data-key="1.2:worksheet"]');
+      expect(picked.s._snapPickedSection()).toBe('PeriodB');
+      const row = picked.host().querySelector('.wallet-snapshot-card[data-section="all"] .snap-arow[data-key="1.2:worksheet"]');
       expect(row.querySelector('.snap-caption').textContent).toContain('Allison R: 0 — below Q1');
       expect(row.querySelector('.snap-alist').hidden).toBe(false);
       expect(row.querySelectorAll('.snap-alist-you').length).toBe(1);
@@ -199,7 +197,7 @@ describe('Assignments view — forms', () => {
       expect([...bar.querySelectorAll('button')].map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Histogram']);
       expect([...bar.querySelectorAll('button')].map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
       const canvas = host().querySelector('.snap-arow canvas');
-      expect(canvas.height).toBe(C.miniHeight('stem', B11.values));
+      expect(canvas.height).toBe(C.miniHeight('stem', B11.values));   // 1.1 Blooket is the focus
       bar.querySelectorAll('button')[2].onclick();
       expect(s._snapApp.amode).toBe('hist');
       expect(s.rerenders).toBe(1);
@@ -218,14 +216,13 @@ describe('Assignments view — forms', () => {
 });
 
 describe('Assignments view — focus and advice', () => {
-  it('picks the 0 counting longest, then the score furthest below the median, then the newest', () => {
+  it('picks the viewer\'s 0 counting longest, else the first (most overdue) row', () => {
     const { s, close } = sandbox();
     try {
       const rows = [Q13, A12, B11];
       expect(s._snapFocusIndex(rows, [67, null, null], undefined)).toBe(2);        // 1.1 zeroDate is earliest
-      expect(s._snapFocusIndex(rows, [67, 100, 100], undefined)).toBe(0);         // 67 vs median 100 = biggest gap
-      expect(s._snapFocusIndex(rows, [100, 100, 100], undefined)).toBe(0);        // nothing wrong → newest
-      expect(s._snapFocusIndex(rows, [null, null, null], null)).toBe(0);          // nobody placed → newest
+      expect(s._snapFocusIndex(rows, [67, 100, 100], undefined)).toBe(0);         // no 0 → first row (rows arrive oldest first)
+      expect(s._snapFocusIndex(rows, [null, null, null], null)).toBe(0);          // nobody placed → first row
     } finally { close(); }
   });
   it('advises by position: below Q1 gets a fix with a button, inside the box and above Q3 get left alone', () => {
@@ -248,7 +245,7 @@ describe('Assignments view — focus and advice', () => {
       expect(host().querySelector('.snap-pager-pos').textContent).toBe('1 of 3');
       expect(host().querySelector('.snap-pager button').disabled).toBe(true);     // Prev on the first
       host().querySelectorAll('.snap-pager button')[1].onclick();                  // Next
-      expect(s._snapApp.aidx.PeriodB).toBe(1);
+      expect(s._snapApp.aidx.all).toBe(1);
       expect(s.rerenders).toBe(1);
       s._snapApp.focusKey = '1.1:blooket';
       host().innerHTML = '';

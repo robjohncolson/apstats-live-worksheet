@@ -6,7 +6,7 @@ import { createApp } from '../server.js';
 import { initReceipts } from '../receipts.js';
 
 import { signToken } from '../token.js';
-import { fiveNumberSummary, mountClassSnapshot } from '../class-snapshot.js';
+import { fiveNumberSummary, mountClassSnapshot, mergeSnapshots } from '../class-snapshot.js';
 const TEACHER = 'teacher-secret-fixture';
 const TEST_PRIVATE_KEY = 'MC4CAQAwBQYDK2VwBCIEIIq2JsDpBMHpUzaFF6mPR0vUv1T2gzXGX7k/AQSYjyl0';
 
@@ -510,5 +510,48 @@ describe('GET /class/snapshot?by=assignment', () => {
     const url = '/class/snapshot?section=PeriodB&by=assignment';
     expect(await srv.get(url, teacher)).toEqual({ status: 503, body: { ok: false, error: 'gradebook unavailable' } });
     expect((await srv.get(url, teacher)).body.assignments).toHaveLength(7);
+  });
+});
+
+describe('GET /class/snapshot?section=all (both periods pooled)', () => {
+  it('pools values across sections, keeps the earliest zero date, counts a lesson only where it is due, and lets any student read it', async () => {
+    // 6 B students + 6 E students; 1.2 is due in B (9/12 → counts 9/25) and E (9/13 → not yet on 9/26).
+    const both = [...roster, ...roster.map(st => ({ ...st, student_id: `e${st.student_id}`, login_username: `e_${st.login_username}`, section: 'PeriodE' }))];
+    const ledger = Object.fromEntries(both.map(st => [st.student_id, assignmentLedger[st.student_id.replace(/^e/, '')] || []]));
+    const ctx = await startServer({ roster: both, ledger, lessonSchedule: {
+      '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2026-09-12', E: '2026-09-10' } },
+      '1.2': { unit: 1, worksheetKey: '2', periods: { B: '2026-09-12', E: '2026-09-13' } },
+    } }); srv = ctx.server;
+    const r = await srv.get('/class/snapshot?section=all&by=assignment', teacher);
+    expect(r.status).toBe(200);
+    scanKeys(r.body);
+    expect(r.body.section).toBe('all');
+    expect(r.body.sections).toEqual(['PeriodB', 'PeriodE']);
+    const byKey = Object.fromEntries(r.body.assignments.map(item => [item.key, item]));
+    // 1.1 worksheet: due in both → 12 values, E's earlier date wins
+    expect(byKey['1.1:worksheet']).toMatchObject({ n: 12, zeroDate: '2026-09-23', zeros: 2 });
+    expect(byKey['1.1:worksheet'].values).toEqual([0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]);
+    expect(byKey['1.1:worksheet'].fiveNumber).toEqual({ min: 0, q1: 100, median: 100, q3: 100, max: 100 });
+    // 1.2 worksheet: due only in B today → only B's 6 values
+    expect(byKey['1.2:worksheet']).toMatchObject({ n: 6, zeroDate: '2026-09-25', zeros: 6 });
+    // quarter picture pooled too
+    expect(r.body.n).toBe(12);
+    // an E student may read the pooled picture (their own section check does not apply)
+    const student = await srv.get('/class/snapshot?section=all&by=assignment', { authorization: `Bearer ${signToken('es0')}` });
+    expect(student.status).toBe(200);
+    expect(student.body).toEqual(r.body);
+    // but still not another single section
+    expect((await srv.get('/class/snapshot?section=PeriodB&by=assignment', { authorization: `Bearer ${signToken('es0')}` })).status).toBe(401);
+  });
+  it('mergeSnapshots nulls the zero count when either side withheld it and re-summarizes the pool', () => {
+    const a = { quarter: 'Q1', asOf: '2026-09-26', values: [50, 60, 70, 80, 90], assignments: [
+      { key: '1.1:quiz', title: '1.1 Quiz', zeroDate: '2026-09-25', values: [0, 100, 100, 100, 100], zeros: 1 }] };
+    const b = { quarter: 'Q1', asOf: '2026-09-26', values: [], assignments: [
+      { key: '1.1:quiz', title: '1.1 Quiz', zeroDate: '2026-09-24', values: [], zeros: null },
+      { key: '1.2:quiz', title: '1.2 Quiz', zeroDate: '2026-09-24', values: [], zeros: null }] };
+    const m = mergeSnapshots([a, b], ['PeriodB', 'PeriodE']);
+    expect(m.assignments[0]).toMatchObject({ key: '1.1:quiz', zeroDate: '2026-09-24', n: 5, zeros: 1 });
+    expect(m.assignments[1]).toMatchObject({ key: '1.2:quiz', n: 0, zeros: null, values: [] });
+    expect(m.n).toBe(5);
   });
 });
