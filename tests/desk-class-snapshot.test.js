@@ -132,6 +132,67 @@ describe('Where you stand — modes and drawing', () => {
   });
 });
 
+describe('Class Snapshot desktop app (teacher 2026-09-26: "an app accessible from the desktop, like the ledger")', () => {
+  function appSandbox({ teacher = false, section = 'PeriodB' } = {}) {
+    const base = sandbox({ teacher, section });
+    const doc = base.s.document;
+    doc.body.insertAdjacentHTML('beforeend', '<div class="app-overlay" id="app-snapshot-overlay" style="display:none"><div class="app-window"><div class="app-content" id="snapshot-content"></div></div></div>');
+    const teacherCalls = [];
+    base.s.fetch = async (url, opts) => {
+      teacherCalls.push(url);
+      if (url.includes('/class/grades')) return { status: 200, json: async () => ({ ok: true, students: [
+        { username: 'cherry_seal', realName: 'Allison R', section: 'PeriodB', role: 'student', quarters: { Q1: { quarterGrade: 30.8 } } },
+        { username: 'kiwi_toad', realName: 'Kiwi T', section: 'PeriodB', role: 'student', quarters: { Q1: { quarterGrade: 99 } } },
+        { username: 'teach', realName: 'Teacher', section: 'PeriodB', role: 'teacher', quarters: { Q1: { quarterGrade: 100 } } },
+        { username: 'melon_bear', realName: 'Jesselly', section: 'PeriodE', role: 'student', quarters: { Q1: { quarterGrade: 71.5 } } },
+      ] }) };
+      return { status: 200, json: async () => Object.assign({}, PAYLOAD, { section: new URL(url).searchParams.get('section') }) };
+    };
+    runInContext("var _snapApp = { mode: null, sections: {}, roster: null, pick: {}, request: 0 };\n" +
+      ['openSnapshot', '_snapTeacherFetch', '_renderSnapshotApp', '_snapTeacherSectionCard'].map(fnSrc).join('\n'), base.s);
+    return Object.assign(base, { teacherCalls, content: () => doc.getElementById('snapshot-content'), overlay: () => doc.getElementById('app-snapshot-overlay') });
+  }
+  it('opens the window and, for a student, shows the same "Where you stand" card as My Ledger with an intro above it', async () => {
+    const t = appSandbox();
+    try {
+      t.s.openSnapshot();
+      expect(t.overlay().style.display).toBe('block');
+      await tick(); await tick();
+      expect(t.content().firstChild.className).toBe('snap-intro');
+      const card = t.content().querySelector('.wallet-snapshot-card');
+      expect(card.querySelector('.snap-title').textContent).toBe('Where you stand — Period B, 15 students');
+      expect(t.s.drawn.at(-1).own).toBe(31);
+    } finally { t.close(); }
+  });
+  it('for the teacher, shows one card per section with all three modes and a "place a student" picker built from the class gradebook (teacher rows excluded, no dot until picked)', async () => {
+    const t = appSandbox({ teacher: true });
+    try {
+      t.s.openSnapshot();
+      await tick(); await tick(); await tick();
+      const cards = [...t.content().querySelectorAll('.wallet-snapshot-card')];
+      expect(cards.map(c => c.dataset.section)).toEqual(['PeriodB', 'PeriodE']);
+      expect([...cards[0].querySelectorAll('.snap-tabs button')].map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Box plot']);
+      const select = cards[0].querySelector('select');
+      expect([...select.options].map(o => o.textContent)).toEqual(['(no dot)', 'Allison R', 'Kiwi T']);
+      expect(t.s.drawn.at(-1).own).toBeNull();
+      select.value = 'cherry_seal'; select.onchange();
+      const last = t.s.drawn.at(-1);
+      expect(last.own).toBe(30.8);
+      expect(cards[0].querySelector('.snap-caption').textContent).toContain('Allison R: 30.8');
+      // the picker never comes from the anonymous endpoint: names came from /class/grades only
+      expect(t.teacherCalls.some(u => u.includes('/class/grades'))).toBe(true);
+    } finally { t.close(); }
+  });
+  it('markup pins: a desktop icon for everyone, an app window wired to the generic close/minimize, and the ledger card stays student-only', () => {
+    expect(html).toMatch(/data-app="snapshot"[^>]*ondblclick="openSnapshot\(\)"/);
+    expect(html).not.toMatch(/data-app="snapshot"[^>]*display:none/);
+    expect(html).toContain('id="app-snapshot-overlay"');
+    expect(html).toContain("onclick=\"destroyApp('snapshot')\"");
+    expect(html).toContain("onclick=\"minimizeApp('snapshot')\"");
+    expect(fnSrc('_walletPrependSnapshot')).toContain('_deskIsTeacher()) return;');
+  });
+});
+
 describe('wiring pins', () => {
   it('the Desk loads the shared renderer, precaches it, repaints the card after every ledger paint, and the Do Now pill opens the ledger', () => {
     expect(html).toContain('<script src="lib/class-snapshot.js" onerror=""></script>');

@@ -2812,6 +2812,28 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -15711,6 +15733,115 @@ function _snapPaint(card) {
     } catch (_) {}
 }
 
+// ── Class Snapshot APP WINDOW (desktop icon) ──────────────────────────────────
+// Students: the same card as My Ledger (own value in red). Teacher: one card per section with
+// every mode available and a "place a student" picker (names come from /class/grades, which the
+// teacher's own session already authorizes; the student endpoint never carries names).
+var _snapApp = { mode: null, sections: {}, roster: null, pick: {}, request: 0 };
+
+function openSnapshot() {
+    try { if (typeof bumpUsage === 'function') bumpUsage('snapshot'); } catch (_) {}
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
+    var overlay = document.getElementById('app-snapshot-overlay');
+    if (!overlay) return;
+    var win = overlay.querySelector('.app-window');
+    if (win) { win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.classList.remove('maximized'); }
+    if (typeof _appTopZ !== 'undefined') overlay.style.zIndex = ++_appTopZ;
+    overlay.style.display = 'block';
+    _renderSnapshotApp();
+}
+
+function _snapTeacherFetch(path) {
+    var cfg = (typeof _reviewCfg === 'function') ? _reviewCfg() : { token: null, base: null };
+    if (!cfg.token || !cfg.base) return Promise.resolve(null);
+    return fetch(cfg.base + path, { headers: { Authorization: 'Bearer ' + cfg.token } })
+        .then(function (res) { return res.status === 200 ? res.json() : null; })
+        .catch(function () { return null; });
+}
+
+function _renderSnapshotApp() {
+    var host = document.getElementById('snapshot-content');
+    if (!host) return;
+    host.textContent = '';
+    if (typeof ClassSnapshot === 'undefined') { host.textContent = 'The class picture is not available in this build.'; return; }
+    var teacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
+    if (!teacher) {
+        if (!_snapSection()) { host.textContent = 'Sign in to see where you stand in your class.'; return; }
+        // Same card as My Ledger: the ledger painter builds it (and prepends it), the intro goes above.
+        _walletPrependSnapshot(host);
+        var intro = document.createElement('p'); intro.className = 'snap-intro';
+        intro.textContent = 'Your class’s current grades, drawn as the graph we have learned so far. One mark per classmate, no names. Red = you.';
+        host.insertBefore(intro, host.firstChild);
+        return;
+    }
+    var intro2 = document.createElement('p'); intro2.className = 'snap-intro';
+    intro2.textContent = 'Each section’s current quarter grades, one mark per student, no names. Pick a student to place their dot (only you see this).';
+    host.appendChild(intro2);
+    ['PeriodB', 'PeriodE'].forEach(function (section) { host.appendChild(_snapTeacherSectionCard(section)); });
+    if (!_snapApp.roster) {
+        _snapTeacherFetch('/class/grades').then(function (data) {
+            if (!data || !Array.isArray(data.students)) return;
+            _snapApp.roster = data.students;
+            if (document.getElementById('app-snapshot-overlay').style.display !== 'none') _renderSnapshotApp();
+        });
+    }
+}
+
+function _snapTeacherSectionCard(section) {
+    var card = document.createElement('div'); card.className = 'wallet-snapshot-card'; card.dataset.section = section;
+    var h = document.createElement('h4'); h.textContent = section.replace('Period', 'Period '); card.appendChild(h);
+    var tabs = document.createElement('div'); tabs.className = 'snap-tabs'; card.appendChild(tabs);
+    var pick = document.createElement('div'); pick.className = 'snap-pick';
+    var label = document.createElement('label'); label.textContent = 'Place a student:'; pick.appendChild(label);
+    var select = document.createElement('select'); select.setAttribute('aria-label', 'Place a student on the ' + section + ' plot');
+    var none = document.createElement('option'); none.value = ''; none.textContent = '(no dot)'; select.appendChild(none);
+    pick.appendChild(select); card.appendChild(pick);
+    var canvas = document.createElement('canvas'); canvas.width = 420; canvas.height = 150; canvas.setAttribute('role', 'img'); card.appendChild(canvas);
+    var cap = document.createElement('div'); cap.className = 'snap-caption geneva'; cap.setAttribute('role', 'status'); cap.textContent = 'Loading…'; card.appendChild(cap);
+    var paint = function () {
+        var data = _snapApp.sections[section];
+        var modes = ['dot', 'stem', 'box'];
+        if (!_snapApp.mode) _snapApp.mode = _snapModes().default;
+        tabs.textContent = '';
+        modes.forEach(function (m) {
+            var b = document.createElement('button'); b.type = 'button'; b.className = 's7btn'; b.style.cssText = 'font-size:10px;padding:1px 6px';
+            b.textContent = ClassSnapshot.LABEL[m]; b.setAttribute('aria-pressed', String(m === _snapApp.mode));
+            b.onclick = function () { _snapApp.mode = m; _renderSnapshotApp(); };
+            tabs.appendChild(b);
+        });
+        // picker: students of this section with a current quarter grade
+        var quarter = data && data.quarter;
+        var picked = _snapApp.pick[section] || '';
+        Array.from(select.querySelectorAll('option:not([value=""])')).forEach(function (o) { o.remove(); });
+        (_snapApp.roster || []).filter(function (st) { return st.section === section && st.role !== 'teacher'; })
+            .sort(function (a, b) { return String(a.realName || a.username).localeCompare(String(b.realName || b.username)); })
+            .forEach(function (st) {
+                var g = st.quarters && quarter && st.quarters[quarter] ? st.quarters[quarter].quarterGrade : null;
+                if (typeof g !== 'number') return;
+                var o = document.createElement('option'); o.value = st.username; o.textContent = (st.realName || st.username);
+                o.dataset.grade = String(g); select.appendChild(o);
+            });
+        select.value = picked;
+        var chosen = select.selectedOptions && select.selectedOptions[0];
+        var own = chosen && chosen.dataset.grade ? Number(chosen.dataset.grade) : null;
+        if (!data) { cap.textContent = 'Class picture unavailable.'; return; }
+        ClassSnapshot.draw(canvas, { values: data.values, own: own, mode: _snapApp.mode });
+        var text = ClassSnapshot.caption({ values: data.values, own: own, mode: _snapApp.mode, hasGap: false }).replace(' Every score here can still move.', '');
+        if (own != null && chosen) text = text.replace('You: ', chosen.textContent + ': ');
+        cap.textContent = data.n + ' students — ' + text;
+        canvas.setAttribute('aria-label', cap.textContent);
+    };
+    select.onchange = function () { _snapApp.pick[section] = select.value; paint(); };
+    if (_snapApp.sections[section]) paint();
+    else {
+        _snapTeacherFetch('/class/snapshot?section=' + encodeURIComponent(section)).then(function (data) {
+            if (data && data.ok) _snapApp.sections[section] = data;
+            paint();
+        });
+    }
+    return card;
+}
+
 function _walletPrependZeroCard(host) {
     try {
         if (!host) return;
@@ -26001,7 +26132,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-zgrc';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-u8qq';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
