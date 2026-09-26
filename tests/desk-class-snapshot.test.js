@@ -148,21 +148,47 @@ describe('Class Snapshot desktop app (teacher 2026-09-26: "an app accessible fro
       ] }) };
       return { status: 200, json: async () => Object.assign({}, PAYLOAD, { section: new URL(url).searchParams.get('section') }) };
     };
+    // The assignments view has its own suite; here it is a stub that records the call and leaves a marker.
+    base.s.assignCalls = [];
+    base.s._renderAssignmentsView = (h, isTeacher) => {
+      base.s.assignCalls.push({ teacher: isTeacher, view: base.s._snapApp.view });
+      const m = doc.createElement('div'); m.className = 'assign-stub'; h.appendChild(m);
+    };
     runInContext("var _snapApp = { mode: null, sections: {}, roster: null, pick: {}, request: 0 };\n" +
-      ['openSnapshot', '_snapTeacherFetch', '_renderSnapshotApp', '_snapTeacherSectionCard'].map(fnSrc).join('\n'), base.s);
+      ['openSnapshot', '_snapTeacherFetch', '_renderSnapshotApp', '_renderSnapshotStudent', '_snapTeacherSectionCard'].map(fnSrc).join('\n'), base.s);
     return Object.assign(base, { teacherCalls, content: () => doc.getElementById('snapshot-content'), overlay: () => doc.getElementById('app-snapshot-overlay') });
   }
-  it('opens the window and, for a student, shows the same "Where you stand" card as My Ledger with an intro above it', async () => {
+  it('opens the window and, for a student, defaults to "My work" (LEDGER_CALM_SPEC §3.1): tabs My work | Graphs, the assignments in data mode, no quarter plot', async () => {
     const t = appSandbox();
     try {
       t.s.openSnapshot();
       expect(t.overlay().style.display).toBe('block');
       await tick(); await tick();
-      expect(t.content().firstChild.className).toBe('snap-tabs snap-views');   // Class | Assignments
-      expect(t.content().children[1].className).toBe('snap-intro');
+      const tabs = t.content().firstChild;
+      expect(tabs.className).toBe('snap-tabs snap-views');
+      expect([...tabs.querySelectorAll('button')].map(b => b.textContent)).toEqual(['My work', 'Graphs']);
+      expect([...tabs.querySelectorAll('button')].map(b => b.getAttribute('aria-pressed'))).toEqual(['true', 'false']);
+      expect(t.s._snapApp.view).toBe('work');
+      expect(t.s.assignCalls).toEqual([{ teacher: false, view: 'work' }]);
+      expect(t.content().querySelector('.wallet-snapshot-card')).toBeNull();
+      expect(t.content().querySelector('canvas')).toBeNull();
+      expect(t.s.drawn).toEqual([]);
+    } finally { t.close(); }
+  });
+  it('the student "Graphs" tab stacks the "Where you stand" card (intro above) over the assignments in graph mode', async () => {
+    const t = appSandbox();
+    try {
+      t.s.openSnapshot();
+      t.content().querySelectorAll('.snap-views button')[1].onclick();
+      await tick(); await tick();
+      expect(t.s._snapApp.view).toBe('graphs');
+      const kids = [...t.content().children].map(c => c.className);
+      expect(kids).toEqual(['snap-tabs snap-views', 'snap-intro', 'wallet-snapshot-card', 'assign-stub']);
       const card = t.content().querySelector('.wallet-snapshot-card');
       expect(card.querySelector('.snap-title').textContent).toBe('Where you stand — Period B, 15 students');
+      expect(card.querySelector('.snap-caption')).not.toBeNull();
       expect(t.s.drawn.at(-1).own).toBe(31);
+      expect(t.s.assignCalls.at(-1)).toEqual({ teacher: false, view: 'graphs' });
     } finally { t.close(); }
   });
   it('for the teacher, shows one card per section with all three modes and a "place a student" picker built from the class gradebook (teacher rows excluded, no dot until picked)', async () => {
@@ -170,6 +196,11 @@ describe('Class Snapshot desktop app (teacher 2026-09-26: "an app accessible fro
     try {
       t.s.openSnapshot();
       await tick(); await tick(); await tick();
+      // LEDGER_CALM_SPEC §3.1: the teacher view is unchanged — Class | Assignments, Class first.
+      const views = t.content().querySelector('.snap-views');
+      expect([...views.querySelectorAll('button')].map(b => b.textContent)).toEqual(['Class', 'Assignments']);
+      expect(t.s._snapApp.view).toBe('class');
+      expect(t.s.assignCalls).toEqual([]);
       const cards = [...t.content().querySelectorAll('.wallet-snapshot-card')];
       expect(cards.map(c => c.dataset.section)).toEqual(['PeriodB', 'PeriodE']);
       expect([...cards[0].querySelectorAll('.snap-tabs button')].map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Histogram', 'Box plot']);
@@ -195,11 +226,13 @@ describe('Class Snapshot desktop app (teacher 2026-09-26: "an app accessible fro
 });
 
 describe('wiring pins', () => {
-  it('the Desk loads the shared renderer, precaches it, repaints the card after every ledger paint, and the Do Now pill opens the ledger', () => {
+  it('the Desk loads the shared renderer, precaches it, keeps the class picture OUT of the ledger (LEDGER_CALM_SPEC §2.1), and the Do Now pill opens the ledger', () => {
     expect(html).toContain('<script src="lib/class-snapshot.js" onerror=""></script>');
     expect(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'sw.js'), 'utf8')).toContain("'lib/class-snapshot.js'");
-    expect((fnSrc('renderWallet').match(/_walletPrependSnapshot\(host\)/g) || []).length).toBe(3);
-    expect(fnSrc('_walletRefreshZeroCard')).toContain('_walletPrependSnapshot(host)');
+    expect(fnSrc('renderWallet')).not.toContain('_walletPrependSnapshot(');
+    expect(fnSrc('_walletRefreshZeroCard')).not.toContain('_walletPrependSnapshot(');
+    // the Snapshot app's student Graphs tab is now its only caller
+    expect(fnSrc('_renderSnapshotStudent')).toContain('_walletPrependSnapshot(host)');
     expect(fnSrc('renderDoNowGrades')).toContain("pill.onclick = function () { if (typeof openWallet === 'function') openWallet(); };");
   });
 });

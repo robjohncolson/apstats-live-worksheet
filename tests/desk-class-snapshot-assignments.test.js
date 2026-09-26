@@ -85,7 +85,7 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
   createContext(s);
   runInContext(
     "var SNAPSHOT_TTL_MS = 300000;\nvar ZERO_WARN_DAYS = 3;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentPlot', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
@@ -181,16 +181,23 @@ describe('Assignments view — teacher', () => {
 });
 
 describe('wiring', () => {
-  it('the Missing-work rows carry a "see the class" button that opens the app on that assignment, and the app has Class | Assignments tabs', () => {
+  it('the Missing-work rows carry a small "class" link that opens the app on that assignment — a student lands on My work, the teacher on Assignments', () => {
     const { s, close } = sandbox();
     try {
       s._snapOpenAssignment('1.2', 'quiz');
       expect(s.opened).toBe(1);
-      expect(s._snapApp.view).toBe('assignments');
+      expect(s._snapApp.view).toBe('work');
       expect(s._snapApp.focusKey).toBe('1.2:quiz');
     } finally { close(); }
-    expect(fnSrc('_walletPrependZeroCard')).toContain("see.textContent = 'see the class'");
+    const t = sandbox({ teacher: true });
+    try {
+      t.s._snapOpenAssignment('1.1', 'blooket');
+      expect(t.s._snapApp.view).toBe('assignments');
+      expect(t.s._snapApp.focusKey).toBe('1.1:blooket');
+    } finally { t.close(); }
+    expect(fnSrc('_zeroCardRow')).toContain("see.textContent = 'class'");
     expect(fnSrc('_renderSnapshotApp')).toContain("[['class', 'Class'], ['assignments', 'Assignments']]");
+    expect(fnSrc('_renderSnapshotStudent')).toContain("[['work', 'My work'], ['graphs', 'Graphs']]");
     // bonus decks never appear in the missing list (review 2026-09-26)
     expect(fnSrc('_zeroWarnings')).toContain('!L.blooketBonus');
   });
@@ -530,6 +537,92 @@ describe('Assignments view — tentative zeros (TENTATIVE_ZEROS_SPEC §3)', () =
       expect(row.dataset.key).toBe('1.4:worksheet');
       expect(row.querySelector('.snap-caption').textContent).toContain('You: 0 (tentative)');
       expect(row.querySelector('.snap-legend')).not.toBeNull();
+    } finally { close(); }
+  });
+});
+
+describe('student "My work" tab — data first, graphs behind a tab (LEDGER_CALM_SPEC §3)', () => {
+  const PENDING_ONLY = [
+    { lessonKey: '1.1', hasBlooket: true, blooket: 100 }, { lessonKey: '1.2', lessonGradeNoQuiz: 100 }, { lessonKey: '1.3', quizTotal: 3, Q: 67 },
+    { lessonKey: '1.5', due: { B: '2026-09-14', E: '2026-09-15' } },   // the section has learned forms → the form bar exists in graph mode
+  ];
+  const graphParts = (root) => ({
+    canvas: root.querySelectorAll('canvas').length,
+    caption: root.querySelectorAll('.snap-caption').length,
+    amodes: root.querySelectorAll('.snap-amodes').length,
+    legend: root.querySelectorAll('.snap-legend').length,
+  });
+
+  it('in "work" a row has the score list (open), the advice, and NO canvas, caption, form bar or legend', async () => {
+    const { s, host, close } = sandbox({ lessons: PENDING_ONLY });
+    s.withPending = true;
+    try {
+      s._snapApp.view = 'work';
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      const row = host().querySelector('.snap-arow');
+      expect(row.dataset.key).toBe('1.4:worksheet');
+      expect(row.querySelector('.snap-alist').hidden).toBe(false);
+      expect(row.querySelector('.snap-advice').textContent).toContain('Do this next.');
+      expect(graphParts(host())).toEqual({ canvas: 0, caption: 0, amodes: 0, legend: 0 });
+      expect(row.querySelector('.snap-alist-toggle')).toBeNull();
+      // no five-number summary anywhere in the student data view
+      expect(host().textContent).not.toMatch(/Median|IQR|Q1 \d|Five-number/);
+    } finally { close(); }
+  });
+  it('in "work" a scored row keeps its list open too (no "show all scores" toggle)', async () => {
+    const { s, host, close } = sandbox({ lessons: PENDING_ONLY });
+    try {
+      s._snapApp.view = 'work';
+      s._snapApp.focusKey = '1.3:quiz';
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      const row = host().querySelector('.snap-arow');
+      expect(row.dataset.key).toBe('1.3:quiz');
+      expect(row.querySelector('.snap-alist').hidden).toBe(false);
+      expect(row.querySelector('.snap-alist-toggle')).toBeNull();
+      expect(row.querySelector('.snap-alist-you').textContent).toBe('67');
+    } finally { close(); }
+  });
+  it('in "work" the tentative yellow chips and the red "you" chip are exactly as shipped (W14 fixture)', () => {
+    const { s, close } = sandbox();
+    try {
+      const row = s._snapAssignmentRow(W14, null, undefined, 'PeriodB', { dataOnly: true });
+      expect(graphParts(row)).toEqual({ canvas: 0, caption: 0, amodes: 0, legend: 0 });
+      expect(row.querySelectorAll('.snap-alist-tentative').length).toBe(10);
+      const you = row.querySelectorAll('.snap-alist-you');
+      expect(you.length).toBe(1);
+      expect(you[0].classList.contains('snap-alist-tentative')).toBe(false);
+      expect(row.querySelectorAll('.snap-alist-seq span').length).toBe(18);
+      expect(row.querySelector('.snap-alist-foot').textContent).toBe("7 of 18 classmates have a score here. 11 haven't yet — a tentative 0 until Mon 9/28. Every 0 on this list can still be replaced.");
+      expect(row.querySelector('.snap-advice')).not.toBeNull();
+      const scored = s._snapAssignmentRow(W14, 95, undefined, 'PeriodB', { dataOnly: true });
+      expect(scored.querySelectorAll('.snap-alist-tentative').length).toBe(11);
+      expect(scored.querySelector('.snap-alist-you').textContent).toBe('95');
+      expect(scored.querySelector('.snap-alist').hidden).toBe(false);
+    } finally { close(); }
+  });
+  it('in "graphs" the same row has canvas, caption, form bar and legend again (list collapsed for a scored row)', async () => {
+    const { s, host, close } = sandbox({ lessons: PENDING_ONLY });
+    s.withPending = true;
+    try {
+      s._snapApp.view = 'graphs';
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      expect(graphParts(host())).toEqual({ canvas: 1, caption: 1, amodes: 1, legend: 1 });
+      expect(host().querySelector('.snap-caption').textContent).toContain('Median');
+    } finally { close(); }
+  });
+  it('the teacher never gets data mode: rows keep canvas + caption even if the view flag says work', async () => {
+    const { s, host, close } = sandbox({ teacher: true, roster: [] });
+    try {
+      s._snapApp.view = 'work';
+      s._renderAssignmentsView(host(), true);
+      await tick(); await tick();
+      const g = graphParts(host());
+      expect(g.canvas).toBe(1);
+      expect(g.caption).toBe(1);
+      expect(g.amodes).toBe(1);
     } finally { close(); }
   });
 });

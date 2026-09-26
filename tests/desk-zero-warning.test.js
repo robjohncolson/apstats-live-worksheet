@@ -48,7 +48,8 @@ function sandbox({ lessons = LESSONS, period = 'B', today = '2026-09-21' } = {})
     getRegistryEntry: () => ({ urls: { worksheet: 'u1_lesson2_live.html' } }),
   };
   createContext(s);
-  runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText', '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_zeroOpenQuiz', '_walletPrependZeroCard']
+  runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText', '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_zeroOpenQuiz', '_walletPrependZeroCard',
+    '_zeroDayText', '_zeroLatestSoonDay', '_zeroPillText', '_zeroStatusText', '_zeroCardRow', '_donowApplyZeroState']
     .map(fnSrc).join('\n'), s);
   return { s, dom, close: () => dom.window.close() };
 }
@@ -120,7 +121,7 @@ describe('ZERO_WARNING — My Ledger icon badge', () => {
 });
 
 describe('ZERO_WARNING — ledger card', () => {
-  it('groups two past rows before an upcoming row and explains how to replace zeros', () => {
+  it('lists two past rows before an upcoming row under a one-line status (LEDGER_CALM_SPEC: no paragraph, no headings)', () => {
     const lessons = [
       { lessonKey: '1.3', zeroDate: { B: '2026-09-23' } },
       { lessonKey: '1.2', zeroDate: { B: '2026-09-19' }, lessonGradeNoQuiz: 90, hasBlooket: true },
@@ -130,19 +131,23 @@ describe('ZERO_WARNING — ledger card', () => {
     try {
       s._walletPrependZeroCard(dom.window.document.getElementById('wallet-content'));
       const card = dom.window.document.querySelector('.wallet-zero-card');
-      expect(card.children[1].textContent).toBe('Each of these is a 0 in your grade once its date passes (worksheets and flashcards also on Schoology). All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.');
-      expect([...card.querySelectorAll('h5, .wz-row button:not(.wz-see)')].map(el => el.textContent)).toEqual([
-        'Already a 0', 'Open Topic 1.1', 'Flashcards Topic 1.2', 'Becomes a 0 soon', 'Open Topic 1.3',
+      expect(card.children[0].className).toBe('wz-status geneva');
+      expect(card.children[0].textContent).toMatch(/^(2 items below are 0s now, 1 more becomes|1 item below is a 0 now, 2 more become) a 0 by \w{3} \d{1,2}\/\d{1,2} — finishing them is the fastest way up\.$/);
+      expect(card.querySelector('h5')).toBeNull();
+      expect([...card.querySelectorAll('.wz-row button:not(.wz-see)')].map(el => el.getAttribute('aria-label'))).toEqual([
+        'Open Topic 1.1', 'Flashcards Topic 1.2', 'Open Topic 1.3',
       ]);
+      expect([...card.querySelectorAll('.wz-row')].map(r => r.classList.contains('wz-past'))).toEqual([true, true, false]);
     } finally { close(); }
   });
-  it('renders all eight warnings and omits an empty upcoming group', () => {
+  it('renders all eight warnings, all red, with no group headings', () => {
     const lessons = Array.from({ length: 8 }, (_, i) => ({ lessonKey: '1.' + i, zeroDate: { B: '2026-09-18' } }));
     const { s, dom, close } = sandbox({ lessons });
     try {
       s._walletPrependZeroCard(dom.window.document.getElementById('wallet-content'));
       expect(dom.window.document.querySelectorAll('.wz-row')).toHaveLength(8);
-      expect([...dom.window.document.querySelectorAll('.wallet-zero-card h5')].map(el => el.textContent)).toEqual(['Already a 0']);
+      expect(dom.window.document.querySelectorAll('.wz-row.wz-past')).toHaveLength(8);
+      expect(dom.window.document.querySelectorAll('.wallet-zero-card h5')).toHaveLength(0);
     } finally { close(); }
   });
   it('prepends a card listing each lesson with its deadline and an Open button that opens the lesson', () => {
@@ -152,11 +157,13 @@ describe('ZERO_WARNING — ledger card', () => {
       s._walletPrependZeroCard(host);
       const card = host.firstChild;
       expect(card.className).toBe('wallet-zero-card');
-      expect(card.querySelector('h4').textContent).toBe('⚠ Missing work');
+      expect(card.querySelector('h4')).toBeNull();
+      expect(card.querySelector('.wz-status').textContent).toMatch(/^(2 items below are 0s now, 1 more becomes|1 item below is a 0 now, 2 more become) a 0 by \w{3} \d{1,2}\/\d{1,2} — finishing them is the fastest way up\.$/);
       const rows = [...card.querySelectorAll('.wz-row')];
-      expect(rows.map(r => r.querySelector('button').textContent)).toEqual(['Open Topic 1.0', 'Open Topic 1.2', 'Open Topic 1.3']);
-      expect(rows[0].querySelector('.wz-when').textContent).toContain('already a 0');
-      expect(rows[1].querySelector('.wz-when').textContent).toBe('0 after Wed 9/23 11:59 PM');
+      expect(rows.map(r => r.querySelector('button').textContent)).toEqual(['Open', 'Open', 'Open']);
+      expect(rows.map(r => r.querySelector('.wz-label').textContent)).toEqual(['Topic 1.0', 'Topic 1.2', 'Topic 1.3']);
+      expect(rows[0].querySelector('.wz-when').textContent).toBe('0 since Fri 9/18');
+      expect(rows[1].querySelector('.wz-when').textContent).toBe('0 after Wed 9/23');
       rows[1].querySelector('button').onclick();
       expect(s.opened).toEqual(['1.2']);
       // repaint replaces, never duplicates
@@ -180,7 +187,7 @@ describe('ZERO_WARNING — ledger card', () => {
       s._walletPrependZeroCard(host);
       const second = host.querySelector('.wallet-zero-card');
       expect(second).not.toBe(first);
-      expect([...second.querySelectorAll('.wz-row button')].map(b => b.textContent)).not.toContain('Open Topic 1.2');
+      expect([...second.querySelectorAll('.wz-row .wz-label')].map(b => b.textContent)).not.toContain('Topic 1.2');
     } finally { close(); }
   });
   it('shows nothing when there is nothing to warn about, and renderWallet re-prepends after every paint', () => {
@@ -193,11 +200,11 @@ describe('ZERO_WARNING — ledger card', () => {
       expect((rw.match(/_walletPrependZeroCard\(host\)/g) || []).length).toBe(3);
     } finally { close(); }
   });
-  it('the "tonight" wording is used on the zero date itself', () => {
+  it('on the zero date itself the row still reads "0 after <that day>" (LEDGER_CALM_SPEC §2.3)', () => {
     const { s, close } = sandbox({ today: '2026-09-23' });
     try {
       const w = s._zeroWarnings(LESSONS, 'B', '2026-09-23').find(x => x.lessonKey === '1.2');
-      expect(s._zeroWhenText(w)).toBe('0 after TONIGHT 11:59 PM');
+      expect(s._zeroWhenText(w)).toBe('0 after Wed 9/23');
     } finally { close(); }
   });
 });
@@ -219,8 +226,9 @@ describe('missing work entry points', () => {
       const pill = doc.querySelector('.qpill-missing');
       expect(doc.querySelectorAll('.qpill-missing')).toHaveLength(1);
       expect(pill.previousElementSibling.textContent).toBe('Q1: 80');
-      expect(pill.textContent).toBe('⚠ 3 missing');
-      expect(pill.title).toBe('3 worksheets — click to see what to finish');
+      expect(pill.textContent).toBe('1 is a 0 now · 2 more by Thu 9/24');
+      expect(pill.title).toBe('Tap to see what to finish');
+      expect(pill.classList.contains('qpill-now')).toBe(true);
       expect(pill.getAttribute('role')).toBe('button');
       expect(pill.tabIndex).toBe(0);
       pill.click();
@@ -291,7 +299,8 @@ describe('ZERO_WARNING — unplayed Blooket decks (2026-09-22, lesson gate gone)
       s._walletPrependZeroCard(host);
       const rows = [...host.querySelectorAll('.wz-row')];
       expect(rows[0].classList.contains('wz-blooket')).toBe(true);
-      expect(rows[0].querySelector('button').textContent).toBe('Flashcards Topic 1.1');
+      expect(rows[0].querySelector('button').textContent).toBe('Flashcards');
+      expect(rows[0].querySelector('.wz-label').textContent).toBe('Topic 1.1');
       rows[0].querySelector('button').onclick();
       expect(s.decks).toEqual(['1.1']);
       expect(s.opened).toEqual([]);
@@ -326,7 +335,7 @@ describe('ZERO_WARNING — untaken quizzes (teacher 2026-09-26: "add the quizzes
       s.getRegistryEntry = (k) => ({ urls: { worksheet: 'ws.html', quiz: k === '1.9' ? 'https://quiz.test/1.9' : null } });
       const host = dom.window.document.getElementById('wallet-content');
       s._walletPrependZeroCard(host);
-      const row = [...host.querySelectorAll('.wz-row')].find(r => r.querySelector('button').textContent === 'Quiz Topic 1.9');
+      const row = [...host.querySelectorAll('.wz-row')].find(r => r.querySelector('button').getAttribute('aria-label') === 'Quiz Topic 1.9');
       expect(row).toBeTruthy();
       expect(row.classList.contains('wz-quiz')).toBe(true);
       row.querySelector('button').onclick();

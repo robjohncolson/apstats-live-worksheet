@@ -47,6 +47,7 @@ function sandbox({ walletOpen = true } = {}) {
   createContext(s);
   runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText',
     '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_walletPrependZeroCard',
+    '_zeroDayText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardRow',
     '_ftRenderOutcome', '_blooketPatchGradeCache', '_walletRefreshZeroCard'].map(fnSrc).join('\n'), s);
   return { s, dom, close: () => dom.window.close() };
 }
@@ -104,13 +105,13 @@ describe('ledger follows the deck at once', () => {
       s._updateZeroWarningBadge();
       s._walletPrependZeroCard(doc.getElementById('wallet-content'));
       expect(doc.querySelector('.wallet-zero-badge').textContent).toBe('3');
-      expect([...doc.querySelectorAll('.wz-row button')].map(b => b.textContent)).toEqual(['Flashcards Topic 1.1', 'Open Topic 1.2', 'Flashcards Topic 1.2']);
+      expect([...doc.querySelectorAll('.wz-row button:not(.wz-see)')].map(b => b.getAttribute('aria-label'))).toEqual(['Flashcards Topic 1.1', 'Open Topic 1.2', 'Flashcards Topic 1.2']);
 
       s._blooketPatchGradeCache('1.1', 92.3);
       expect(s._gradeLessonsCache[0].blooket).toBe(92.3);
       s._walletRefreshZeroCard();
       expect(doc.querySelector('.wallet-zero-badge').textContent).toBe('2');
-      expect([...doc.querySelectorAll('.wz-row button')].map(b => b.textContent)).toEqual(['Open Topic 1.2', 'Flashcards Topic 1.2']);
+      expect([...doc.querySelectorAll('.wz-row button:not(.wz-see)')].map(b => b.getAttribute('aria-label'))).toEqual(['Open Topic 1.2', 'Flashcards Topic 1.2']);
       expect(doc.querySelectorAll('.wallet-zero-card').length).toBe(1);
       expect(doc.querySelector('.old')).not.toBeNull();
 
