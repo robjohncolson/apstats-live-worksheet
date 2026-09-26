@@ -160,6 +160,206 @@ def read_grade_from_cell(cdp: EdgeCDP, column_key: str, row_index: int) -> float
     return value if math.isfinite(value) else None
 
 
+def inspect_cell_comment_ui(cdp, column_key: str, row_index: int) -> dict:
+    """Read-only discovery: no clicks, focus, scrolling, typing, or DOM changes.
+
+    Reports the target cell and any already-mounted comment menu/popover.
+    Hidden markup is evidence only; this probe never opens it.
+    """
+    cell_id = f"grader-grid-cell-{column_key}-{int(row_index)}"
+    # UNVERIFIED — confirm with --inspect-comment-ui
+    icon_selector = '.grades-comment, .icon-comment, .icon-flag, [title*="comment" i], [aria-label*="comment" i]'
+    # UNVERIFIED — confirm with --inspect-comment-ui
+    menu_selector = '[role="menuitem"], .context-menu a, .context-menu li'
+    # UNVERIFIED — confirm with --inspect-comment-ui
+    popup_selector = '#grade-comment-field, [role="dialog"], .popover'
+    return cdp.eval_js(f"""(() => {{
+        const cell = document.getElementById({json.dumps(cell_id)});
+        if (!cell) return {{ok:false, reason:'cell missing'}};
+        const rect = el => {{
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            const style = getComputedStyle(el);
+            if (!r.width || !r.height || style.visibility === 'hidden' || style.display === 'none') return null;
+            const points = [[r.left+r.width/2, r.top+r.height/2]];
+            if (el === cell) points.push([r.left+2,r.top+2], [r.right-2,r.bottom-2]);
+            for (const [x,y] of points) {{
+                const hit = document.elementFromPoint(x, y);
+                if (hit && (hit === el || el.contains(hit)) && !hit.closest('input, textarea')) return {{x,y}};
+            }}
+            return null;
+        }};
+        const describe = el => ({{tag:el.tagName, id:el.id, className:el.className,
+            title:el.getAttribute('title'), ariaLabel:el.getAttribute('aria-label'),
+            html:el.outerHTML, rect:rect(el)}});
+        return {{ok:true, cell:describe(cell),
+            icons:Array.from(cell.querySelectorAll({json.dumps(icon_selector)})).map(describe),
+            menuItems:Array.from(document.querySelectorAll({json.dumps(menu_selector)}))
+                .filter(el => /^(add |edit |grade )?comment$/i.test(el.textContent.trim())).map(describe),
+            popovers:Array.from(document.querySelectorAll({json.dumps(popup_selector)}))
+                .filter(el => el.querySelector('textarea')).map(describe)}};
+    }})()""") or {"ok": False, "reason": "no DOM report"}
+
+
+# Every comment the sync writes starts with this sentence; the sync never clears anything else.
+SYNC_COMMENT_PREFIX = "Not a permanent 0."
+
+
+def write_cell_comment(cdp, column_key: str, row_index: int, text: str) -> dict:
+    """BEST-EFFORT DRAFT: UI selectors and commit behavior are not live verified.
+
+    Try the cell icon, then a context Comment item. Type only into a confirmed
+    comment textarea, never a grade input. Close/reopen and re-read to verify.
+    A DOM read-back is not proof of persistence across a page reload.
+    """
+    failure = {"ok": False, "verified": False}
+    if not isinstance(text, str) or any(c in text for c in "\r\n\t"):
+        return {**failure, "reason": "comment must be a single line"}
+
+    # UNVERIFIED — confirm with --inspect-comment-ui
+    # Generic popovers are accepted only when they contain textarea.grade-comment.
+    editor_js = """(() => {
+        const visible = el => el && el.getClientRects().length &&
+            getComputedStyle(el).visibility !== 'hidden';
+        const fields = Array.from(document.querySelectorAll(
+            '#grade-comment-field textarea.grade-comment, [role="dialog"] textarea.grade-comment, .popover textarea.grade-comment'
+        )).filter(visible);
+        if (fields.length !== 1) return null;
+        const field = fields[0];
+        const popup = field.closest('#grade-comment-field, [role="dialog"], .popover');
+        const point = el => {
+            if (!visible(el) || el.disabled) return null;
+            const r = el.getBoundingClientRect();
+            const x = r.left+r.width/2, y = r.top+r.height/2;
+            const hit = document.elementFromPoint(x,y);
+            return hit && (hit === el || el.contains(hit)) ? {x,y} : null;
+        };
+        const status = popup.querySelector('input#comment_status[type="checkbox"]');
+        const close = popup.querySelector('.grade-comment-close');
+        const saves = Array.from(popup.querySelectorAll('button, [role="button"], input[type="submit"]'))
+            .filter(el => visible(el) && /^(save|save comment)$/i.test((el.textContent || el.value || '').trim()));
+        return {text:field.value, focused:document.activeElement === field,
+            editable:!field.disabled && !field.readOnly, field:point(field),
+            checked:status ? status.checked : null, status:point(status),
+            close:point(close), save:saves.length === 1 ? point(saves[0]) : null};
+    })()"""
+    try:
+        report = inspect_cell_comment_ui(cdp, column_key, row_index)
+        if not report.get("ok"):
+            return {**failure, "reason": report.get("reason", "cell missing")}
+        if cdp.eval_js(editor_js):
+            return {**failure, "reason": "comment editor already open; owner uncertain"}
+        before = read_grade_from_cell(cdp, column_key, row_index)
+        if before is None:
+            return {**failure, "reason": "current grade unreadable; comment skipped"}
+        cdp.send("Page.bringToFront", {})
+        cdp.send("Emulation.setFocusEmulationEnabled", {"enabled": True})
+
+        # Two openings: first edit, then independently read back after closing.
+        for verify in (False, True):
+            report = inspect_cell_comment_ui(cdp, column_key, row_index)
+            icons = [i["rect"] for i in report.get("icons", []) if i.get("rect")]
+            cell_point = (report.get("cell") or {}).get("rect")
+            if not icons and cell_point:
+                cdp.click(cell_point["x"], cell_point["y"])
+                time.sleep(0.2)
+                report = inspect_cell_comment_ui(cdp, column_key, row_index)
+                icons = [i["rect"] for i in report.get("icons", []) if i.get("rect")]
+            editor = None
+            for affordance in ("icon", "context"):
+                if affordance == "icon":
+                    if len(icons) != 1:
+                        continue
+                    cdp.click(icons[0]["x"], icons[0]["y"])
+                else:
+                    if not cell_point:
+                        return {**failure, "reason": "no safe comment affordance"}
+                    for event in ("mousePressed", "mouseReleased"):
+                        cdp.send("Input.dispatchMouseEvent", {
+                            "type": event, "x": cell_point["x"], "y": cell_point["y"],
+                            "button": "right", "clickCount": 1,
+                        })
+                    time.sleep(0.2)
+                    report = inspect_cell_comment_ui(cdp, column_key, row_index)
+                    items = [i["rect"] for i in report.get("menuItems", []) if i.get("rect")]
+                    if len(items) != 1:
+                        return {**failure, "reason": "missing or ambiguous Comment affordance"}
+                    cdp.click(items[0]["x"], items[0]["y"])
+                for _ in range(5):
+                    time.sleep(0.2)
+                    editor = cdp.eval_js(editor_js)
+                    if editor:
+                        break
+                if editor:
+                    break
+            if not editor or not editor.get("close"):
+                return {**failure, "reason": "comment textarea or safe close missing"}
+            if text == "" and not verify:
+                current = editor.get("text") or ""
+                if current == "":
+                    cdp.click(editor["close"]["x"], editor["close"]["y"])
+                    return {"ok": True, "verified": True, "text": "", "skipped": "nothing to clear"}
+                if not current.startswith(SYNC_COMMENT_PREFIX):
+                    cdp.click(editor["close"]["x"], editor["close"]["y"])
+                    return {**failure, "reason": "existing comment is not the sync's; left untouched"}
+            if verify:
+                cdp.click(editor["close"]["x"], editor["close"]["y"])
+                time.sleep(0.3)
+                after = read_grade_from_cell(cdp, column_key, row_index)
+                if editor.get("text") != text or (text and editor.get("checked") is not True):
+                    return {**failure, "reason": "reopened comment text/publication mismatch"}
+                if before != after or cdp.eval_js(editor_js):
+                    return {**failure, "reason": "grade changed or comment editor did not close"}
+                return {"ok": True, "verified": True, "text": editor["text"]}
+
+            if not editor.get("editable") or not editor.get("field") or (text and editor.get("checked") is None):
+                cdp.click(editor["close"]["x"], editor["close"]["y"])
+                return {**failure, "reason": "textarea or student visibility control uncertain"}
+            if text and not editor["checked"]:
+                if not editor.get("status"):
+                    cdp.click(editor["close"]["x"], editor["close"]["y"])
+                    return {**failure, "reason": "cannot publish comment to student"}
+                cdp.click(editor["status"]["x"], editor["status"]["y"])
+                editor = cdp.eval_js(editor_js) or {}
+                if editor.get("checked") is not True or not editor.get("field"):
+                    return {**failure, "reason": "student visibility did not enable"}
+            cdp.click(editor["field"]["x"], editor["field"]["y"])
+            # Real select-all, Backspace, and character keys. NEVER send Enter.
+            keys = [{"key": "a", "code": "KeyA", "windowsVirtualKeyCode": 65, "modifiers": 2},
+                    {"key": "Backspace", "code": "Backspace", "windowsVirtualKeyCode": 8}]
+            keys += [{"key": ch, "text": ch, "unmodifiedText": ch} for ch in text]
+            for key in keys:
+                focused = cdp.eval_js(editor_js) or {}
+                if not focused.get("focused") or not focused.get("editable"):
+                    return {**failure, "reason": "comment textarea lost focus; stopped typing"}
+                cdp.send("Input.dispatchKeyEvent", {"type": "keyDown", **key})
+                cdp.send("Input.dispatchKeyEvent", {
+                    "type": "keyUp", **{k: v for k, v in key.items() if k not in ("text", "unmodifiedText")},
+                })
+            editor = cdp.eval_js(editor_js) or {}
+            if editor.get("text") != text:
+                return {**failure, "reason": "typed comment did not match"}
+            commit = editor.get("save") or editor.get("close")
+            if not commit:
+                return {**failure, "reason": "no safe comment commit control"}
+            cdp.click(commit["x"], commit["y"])
+            time.sleep(0.5)
+            editor = cdp.eval_js(editor_js)
+            if editor and editor.get("close"):
+                cdp.click(editor["close"]["x"], editor["close"]["y"])
+                time.sleep(0.3)
+            if cdp.eval_js(editor_js):
+                return {**failure, "reason": "comment editor did not close"}
+    except Exception as exc:
+        return {**failure, "reason": f"comment draft failed ({type(exc).__name__})"}
+    return {**failure, "reason": "comment not verified"}
+
+
+def clear_cell_comment(cdp, column_key: str, row_index: int) -> dict:
+    """BEST-EFFORT DRAFT: same guarded textarea path, with empty text."""
+    return write_cell_comment(cdp, column_key, row_index, "")
+
+
 def write_grade_to_cell(
     cdp: EdgeCDP,
     column_key: str,

@@ -40,6 +40,7 @@ ASCII only. LF line endings.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from typing import Optional
@@ -225,7 +226,18 @@ def p1_write(
 # --------------------------------------------------------------------------- #
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Schoology Grade Sync v1 -- P1 one-shot.")
+    # Share batch flags and their dry-run default with the section CLI.
+    if any(arg == "--sync-section" or arg.startswith("--sync-section=") for arg in sys.argv[1:]):
+        from schoology_sync_section import main as sync_main
+        sync_main(sys.argv[1:])
+        return 0
+    p = argparse.ArgumentParser(
+        description="Schoology Grade Sync v1 -- P1 one-shot.",
+        epilog="Batch sync: --sync-section PeriodB --grades-fixture PATH --comments "
+               "(dry-run by default; --apply writes; --no-comments disables comments).",
+    )
+    p.add_argument("--inspect-comment-ui", action="store_true",
+                   help="Read one cell's comment affordances; never click or type.")
     p.add_argument("--p1-discover", action="store_true",
                    help="Print roster + assignment columns from the live gradebook.")
     p.add_argument("--p1-write", action="store_true",
@@ -234,8 +246,8 @@ def main() -> int:
                    help="Schoology course id (e.g. 7945275782 for AP Stats Sec 1 = Period B).")
     p.add_argument("--section", default=None, choices=sorted(SECTION_TO_COURSE_ID.keys()),
                    help="Period name (PeriodB or PeriodE); resolved to a course id.")
-    p.add_argument("--student-id", default=None, help="Schoology user id (uid).")
-    p.add_argument("--column-key", default=None,
+    p.add_argument("--student-id", "--student", default=None, help="Schoology user id (uid).")
+    p.add_argument("--column-key", "--column", default=None,
                    help="data-x attribute value of the target assignment column.")
     p.add_argument("--value", type=float, default=None, help="Grade value to write.")
     p.add_argument("--dry-run", action="store_true",
@@ -245,7 +257,7 @@ def main() -> int:
                    help="Don't close Edge on exit (default: leave open for next run).")
     args = p.parse_args()
 
-    if not (args.p1_discover or args.p1_write):
+    if not (args.p1_discover or args.p1_write or args.inspect_comment_ui):
         p.print_help()
         return 1
 
@@ -256,12 +268,38 @@ def main() -> int:
         print("schoology-sync: --course-id or --section required.", file=sys.stderr)
         return 1
 
+    if args.inspect_comment_ui and (args.p1_discover or args.p1_write):
+        p.error("--inspect-comment-ui must be used alone")
+    if args.inspect_comment_ui and (not args.student_id or not args.column_key):
+        p.error("--inspect-comment-ui requires --student and --column")
+
     cdp = EdgeCDP(port=args.port)
     # Pass keep=True semantics by default -- the user wants the browser open
     # across multiple runs so the cookie stays warm and they can verify.
     try:
         cdp.launch(SCHOOLOGY_BASE, reuse=True)
-        if args.p1_discover:
+        if args.inspect_comment_ui:
+            cdp.attach_url(ops.gradebook_url(course_id), wait_ms=3500)
+            ops.inject_helpers(cdp)
+            assert_authenticated(cdp)
+            student = next((s for s in ops.list_students(cdp)
+                            if str(s.get("studentId")) == args.student_id), None)
+            if student is None:
+                print("schoology-sync: student not found", file=sys.stderr)
+                return 3
+            column = args.column_key
+            if ":" in column:
+                from schoology_components import fa_title, bl_title, quiz_title
+                kind, label = column.split(":", 1)
+                title_fn = {"FA": fa_title, "BL": bl_title, "QUIZ": quiz_title}.get(kind)
+                column = ops.find_assignment_id_by_title(cdp, title_fn(label)) if title_fn else None
+            if not column or not any(c.get("columnKey") == column for c in ops.list_assignments(cdp)):
+                print("schoology-sync: column not found", file=sys.stderr)
+                return 4
+            report = ops.inspect_cell_comment_ui(cdp, column, int(student["rowIndex"]))
+            print(json.dumps(report, indent=2, ensure_ascii=True))
+            return 0 if report.get("ok") else 5
+        elif args.p1_discover:
             p1_discover(cdp, course_id)
         elif args.p1_write:
             for name, val in (("student-id", args.student_id), ("column-key", args.column_key), ("value", args.value)):

@@ -367,6 +367,55 @@ def zero_due(lesson: dict, period, today: str | None) -> bool:
     return bool(zd) and zd < today
 
 
+def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
+                                      today: str | None = None) -> dict:
+    """Fixed messages for lagged zeros; empty strings for other emitted cells.
+
+    Use the grade producer's first-emitted group rule, including UID precedence.
+    No student identity fields are interpolated into comment text.
+    """
+    grades = component_grades_from_class_doc(doc, uid_map, today)
+    out = dict.fromkeys(grades, "")
+    uid_map = uid_map or {}
+    for student in doc.get("students", []) or []:
+        rid = str(student.get("studentId"))
+        surfaced = student.get("schoologyUid")
+        uid = str(surfaced) if surfaced not in (None, "") else uid_map.get(rid, rid)
+        emitted = set()
+        for lesson in student.get("lessons") or []:
+            unit, wk = lesson.get("unit"), lesson.get("worksheetKey")
+            if unit is None or wk is None:
+                continue
+            group = group_label(unit, wk)
+            label = str(lesson.get("lessonKey") or "")
+            # Only curriculum labels may enter a message, never arbitrary text.
+            valid_label = re.fullmatch(r"\d+\.\d+(?:-\d+)?", label)
+            due = zero_due(lesson, period_of(student), today)
+            worksheet = lesson.get("lessonGradeNoQuiz")
+            if worksheet is None:
+                worksheet = lesson.get("Cws")
+            for kind, score, present in (("FA", worksheet, True),
+                                         ("BL", lesson.get("blooket"), lesson.get("hasBlooket"))):
+                key = f"{uid}/{kind}:{group}"
+                if not present or key in emitted or (score is None and not due):
+                    continue
+                emitted.add(key)
+                if score is not None or not valid_label or grades.get(key) != 0:
+                    continue
+                if kind == "FA":
+                    text = (f"Not a permanent 0. Missing: {label} worksheet. "
+                            "Finish it on the Desk (My Ledger \u2192 Missing work) "
+                            "and this grade updates at the next sync.")
+                else:
+                    text = (f"Not a permanent 0. Missing: {label} flashcards "
+                            "(Desk \u2192 Study Break or the lesson's Blooket). "
+                            "Finish it and this grade updates at the next sync.")
+                if (lesson.get("quizTotal") or 0) > 0 and lesson.get("Q") is None:
+                    text += f" Your {label} quiz is also unfinished (it counts in the Desk grade)."
+                out[key] = text
+    return out
+
+
 def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                                     today: str | None = None) -> dict:
     """Map a /class/grades response to {"<uid>/<component_key>": value}.

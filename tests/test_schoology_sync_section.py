@@ -1072,3 +1072,114 @@ def test_work_days_never_create_schoology_columns():
                      "events": {"B": [{"id": "B-Work", "kind": "work", "date": "2026-10-13"}]}},
     }
     assert [item["key"] for item in build_scope(schedule, "PeriodB")] == ["1.1"]
+
+
+class TestGradeCellComments(unittest.TestCase):
+    def test_orchestrator_generates_comments_from_class_doc(self):
+        from unittest.mock import Mock, patch
+        fake_ops = FakeOps()
+        fake_ops.write_cell_comment = Mock(return_value={"ok": True, "verified": True})
+        with tempfile.TemporaryDirectory() as temp, patch.object(sync, "today_school_date", return_value="2026-09-21"):
+            summary = sync_section(
+                "PeriodB", "course", dry_run=False, comments=True,
+                state=FakeStateStore(), grades={("S1", "FA:6.1-2"): 0}, ops=fake_ops,
+                schedule_path=_write_schedule(temp), granularity="component",
+                quiz_topics=set(), blooket_topics=set(), class_doc={"students": [
+                    {"studentId": "S1", "section": "PeriodB", "lessons": [
+                        {"lessonKey": "6.1", "unit": 6, "worksheetKey": "1-2", "zeroDate": {"B": "2026-09-20"}}
+                    ]}
+                ]},
+            )
+        self.assertEqual(summary["grades_pushed"], 1)
+        self.assertIn("Missing: 6.1 worksheet.", fake_ops.write_cell_comment.call_args.args[3])
+
+    def setUp(self):
+        from unittest.mock import Mock
+        self.ops = Mock()
+        self.ops.find_assignment_id_by_title.return_value = "col1"
+        self.ops.read_grade_from_cell.return_value = None
+        self.ops.write_grade_to_cell.return_value = {"ok": True}
+        self.ops.write_cell_comment.return_value = {"ok": True, "verified": True}
+        self.ops.clear_cell_comment.return_value = {"ok": True, "verified": True}
+        self.state = FakeStateStore()
+        self.errors = []
+        self.doc = {"students": [{"studentId": "S1", "section": "PeriodB", "lessons": [
+            {"lessonKey": "1.2", "unit": 1, "worksheetKey": "2", "zeroDate": {"B": "2026-09-20"}}
+        ]}]}
+        self.texts = components.component_comments_from_class_doc(self.doc, today="2026-09-21")
+
+    def push(self, value=0, **kwargs):
+        return sync._push_grades(
+            {("S1", "FA:1.2"): value}, {"FA:1.2": {"title": "1.2 Follow-Along"}},
+            {"S1": {"rowIndex": 2}}, "PeriodB", self.state, self.ops, None,
+            kwargs.pop("dry_run", False), self.errors, comment_texts=self.texts, **kwargs,
+        )
+
+    def test_opt_in_only_after_successful_grade(self):
+        self.push()
+        self.ops.write_cell_comment.assert_not_called()
+        self.state = FakeStateStore()
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_called_once_with(None, "col1", 2, self.texts["S1/FA:1.2"])
+        methods = [call[0] for call in self.ops.mock_calls]
+        self.assertLess(methods.index("write_grade_to_cell"), methods.index("write_cell_comment"))
+
+    def test_dry_run_plans_text_and_clear_without_writes(self):
+        import contextlib
+        import io
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.push(comments=True, dry_run=True)
+            self.push(90, comments=True, dry_run=True)
+        self.assertIn(self.texts["S1/FA:1.2"], output.getvalue())
+        self.assertIn("target=0", output.getvalue())
+        self.assertIn("comment: would clear", output.getvalue())
+        self.ops.write_grade_to_cell.assert_not_called()
+        self.ops.write_cell_comment.assert_not_called()
+        self.ops.clear_cell_comment.assert_not_called()
+        self.assertEqual(self.state._last_synced, {})
+
+    def test_keep_failed_and_already_synced_never_comment(self):
+        self.ops.read_grade_from_cell.return_value = 90
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_not_called()
+        self.state = FakeStateStore()
+        self.ops.read_grade_from_cell.return_value = None
+        self.ops.write_grade_to_cell.return_value = {"ok": False}
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_not_called()
+        self.state.set_last_synced("S1", "FA:1.2", 0)
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_not_called()
+
+    def test_clear_nonzero_and_comment_failure_not_grade_failure(self):
+        self.ops.clear_cell_comment.side_effect = RuntimeError("UI unavailable")
+        pushed, _, _ = self.push(90, comments=True)
+        self.assertEqual(pushed, 1)
+        self.assertEqual(self.errors, [])
+        self.assertEqual(self.state.get_last_synced("S1", "FA:1.2"), 90)
+        self.ops.clear_cell_comment.assert_called_once_with(None, "col1", 2)
+
+    def test_unverified_is_logged_as_skipped(self):
+        import contextlib
+        import io
+        self.ops.write_cell_comment.return_value = {"ok": True, "verified": False, "reason": "uncertain"}
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.push(comments=True)
+        self.assertIn("comment: skipped(uncertain)", output.getvalue())
+        self.assertEqual(self.errors, [])
+
+    def test_no_text_zero_is_skipped(self):
+        self.texts = {}
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_not_called()
+        self.ops.clear_cell_comment.assert_not_called()
+
+    def test_cli_defaults_and_flags(self):
+        base = ["--sync-section", "PeriodB"]
+        self.assertFalse(sync._parse_args(base).comments)
+        self.assertTrue(sync._parse_args(base).dry_run)
+        self.assertTrue(sync._parse_args(base + ["--comments"]).comments)
+        self.assertFalse(sync._parse_args(base + ["--no-comments"]).comments)
+        self.assertFalse(sync._parse_args(base + ["--apply"]).dry_run)

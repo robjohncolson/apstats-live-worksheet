@@ -307,6 +307,64 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         self.assertIn("r1/FA:1.2", out)
 
 
+class TestComponentComments(unittest.TestCase):
+    def setUp(self):
+        self.lesson = {"unit": 1, "worksheetKey": "2", "lessonKey": "1.2",
+                       "zeroDate": {"B": "2026-09-20", "E": "2026-09-25"},
+                       "hasBlooket": True, "quizTotal": 0, "Q": None}
+        self.doc = {"students": [{"studentId": "r1", "schoologyUid": "u1",
+                                 "section": "PeriodB", "realName": "Private Student",
+                                 "username": "private_login", "lessons": [self.lesson]}]}
+
+    def test_exact_worksheet_and_blooket_messages(self):
+        out = sc.component_comments_from_class_doc(self.doc, today="2026-09-21")
+        self.assertEqual(out, {
+            "u1/FA:1.2": "Not a permanent 0. Missing: 1.2 worksheet. Finish it on the Desk (My Ledger \u2192 Missing work) and this grade updates at the next sync.",
+            "u1/BL:1.2": "Not a permanent 0. Missing: 1.2 flashcards (Desk \u2192 Study Break or the lesson's Blooket). Finish it and this grade updates at the next sync.",
+        })
+
+    def test_quiz_suffix_only_for_untaken_existing_quiz(self):
+        self.lesson["quizTotal"] = 3
+        out = sc.component_comments_from_class_doc(self.doc, today="2026-09-21")
+        for text in out.values():
+            self.assertTrue(text.endswith(" Your 1.2 quiz is also unfinished (it counts in the Desk grade)."))
+        self.lesson["Q"] = 0
+        out = sc.component_comments_from_class_doc(self.doc, today="2026-09-21")
+        self.assertEqual(out["u1/QUIZ:1.2"], "")
+        self.assertNotIn("quiz is also", out["u1/FA:1.2"])
+
+    def test_not_due_has_no_touched_cells(self):
+        self.assertEqual(sc.component_comments_from_class_doc(self.doc, today="2026-09-20"), {})
+        self.assertEqual(sc.component_comments_from_class_doc(self.doc), {})
+        self.doc["students"][0]["section"] = "PeriodE"
+        self.assertEqual(sc.component_comments_from_class_doc(self.doc, today="2026-09-21"), {})
+
+    def test_nonzero_and_earned_zero_clear_and_keys_match(self):
+        for value in (80, 0):
+            self.lesson.update(lessonGradeNoQuiz=value, blooket=value, Q=value, quizTotal=3)
+            grades = sc.component_grades_from_class_doc(self.doc, today="2026-09-21")
+            self.assertEqual(sc.component_comments_from_class_doc(self.doc, today="2026-09-21"),
+                             dict.fromkeys(grades, ""))
+
+    def test_no_names_or_other_student_data(self):
+        self.doc["students"].append({"studentId": "other", "realName": "Other Private Name",
+                                      "username": "other_login", "lessons": []})
+        text = " ".join(sc.component_comments_from_class_doc(self.doc, today="2026-09-21").values())
+        for student in self.doc["students"]:
+            for field in ("realName", "username"):
+                self.assertNotIn(student[field], text)
+        self.lesson["lessonKey"] = "Private Student"
+        self.assertTrue(all(t == "" for t in sc.component_comments_from_class_doc(
+            self.doc, today="2026-09-21").values()))
+
+    def test_uid_priority_and_first_emitted_group_match_grades(self):
+        student = self.doc["students"][0]
+        student["schoologyUid"] = None
+        student["lessons"].insert(0, {**self.lesson, "Cws": 75, "blooket": 80})
+        out = sc.component_comments_from_class_doc(self.doc, {"r1": "mapped"}, "2026-09-21")
+        self.assertEqual(out, {"mapped/FA:1.2": "", "mapped/BL:1.2": ""})
+
+
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromModule(sys.modules[__name__])

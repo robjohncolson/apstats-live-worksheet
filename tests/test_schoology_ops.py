@@ -272,5 +272,169 @@ class TestWriteOverride(unittest.TestCase):
         self.assertEqual(calls, [("overall_override", 4, 88)])
 
 
+class TestCommentDrafts(unittest.TestCase):
+    def test_unreadable_grade_stops_before_clicking_or_typing(self):
+        fake = FakeCDP()
+        fake.send = mock.Mock()
+        with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={"ok": True}), \
+                mock.patch.object(ops, "read_grade_from_cell", return_value=None), \
+                mock.patch.object(fake, "eval_js", return_value=None):
+            result = ops.write_cell_comment(fake, "col1", 2, "x")
+        self.assertFalse(result["verified"])
+        self.assertIn("unreadable", result["reason"])
+        self.assertEqual(fake.clicks, [])
+        fake.send.assert_not_called()
+
+    def test_close_reopen_verification_and_real_keys_without_enter(self):
+        for reopened_text, verified in (("x", True), ("old", False)):
+            fake = FakeCDP()
+            fake.send = mock.Mock()
+            editor = {"text": "old", "focused": True, "editable": True,
+                      "field": {"x": 20, "y": 20}, "close": {"x": 30, "y": 30},
+                      "checked": True}
+            reads = [None, editor, editor, editor, editor, {**editor, "text": "x"},
+                     None, None, {**editor, "text": reopened_text}, None]
+            # A mismatch returns before the final closed-editor read.
+            if not verified:
+                reads.pop()
+            with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={
+                "ok": True, "cell": {"rect": None}, "icons": [{"rect": {"x": 10, "y": 10}}]
+            }), mock.patch.object(ops, "read_grade_from_cell", return_value=0), \
+                    mock.patch.object(fake, "eval_js", side_effect=reads), mock.patch.object(ops.time, "sleep"):
+                result = ops.write_cell_comment(fake, "col1", 2, "x")
+            self.assertEqual(result["verified"], verified, result)
+            keys = [c.args[1] for c in fake.send.call_args_list if c.args[0] == "Input.dispatchKeyEvent"]
+            self.assertEqual([k["key"] for k in keys if k["type"] == "keyDown"], ["a", "Backspace", "x"])
+            self.assertFalse(any(k.get("key") == "Enter" or k.get("windowsVirtualKeyCode") == 13 for k in keys))
+            self.assertEqual(fake.clicks.count((10, 10)), 2)
+
+    def test_icon_failure_falls_back_to_context_without_typing(self):
+        fake = FakeCDP()
+        fake.send = mock.Mock()
+        with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={
+            "ok": True, "cell": {"rect": {"x": 5, "y": 5}},
+            "icons": [{"rect": {"x": 10, "y": 10}}], "menuItems": []
+        }), mock.patch.object(ops, "read_grade_from_cell", return_value=0), \
+                mock.patch.object(fake, "eval_js", return_value=None), mock.patch.object(ops.time, "sleep"):
+            result = ops.write_cell_comment(fake, "col1", 2, "x")
+        self.assertFalse(result["verified"])
+        self.assertIn((10, 10), fake.clicks)
+        self.assertTrue(any(c.args[0] == "Input.dispatchMouseEvent" for c in fake.send.call_args_list))
+        self.assertFalse(any(c.args[0] == "Input.dispatchKeyEvent" for c in fake.send.call_args_list))
+
+    def test_lost_textarea_focus_never_types_into_grade(self):
+        fake = FakeCDP()
+        fake.send = mock.Mock()
+        editor = {"text": "", "focused": False, "editable": True, "checked": True,
+                  "field": {"x": 20, "y": 20}, "close": {"x": 30, "y": 30}}
+        with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={
+            "ok": True, "cell": {"rect": None}, "icons": [{"rect": {"x": 10, "y": 10}}]
+        }), mock.patch.object(ops, "read_grade_from_cell", return_value=0), \
+                mock.patch.object(fake, "eval_js", side_effect=[None, editor, editor]), \
+                mock.patch.object(ops.time, "sleep"):
+            result = ops.write_cell_comment(fake, "col1", 2, "x")
+        self.assertFalse(result["verified"])
+        self.assertIn("lost focus", result["reason"])
+        self.assertFalse(any(c.args[0] == "Input.dispatchKeyEvent" for c in fake.send.call_args_list))
+
+    def test_clear_leaves_a_teacher_written_comment_alone(self):
+        fake = FakeCDP()
+        fake.send = mock.Mock()
+        editor = {"text": "Great improvement this week!", "focused": True, "editable": True, "checked": True,
+                  "field": {"x": 20, "y": 20}, "close": {"x": 30, "y": 30}}
+        with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={
+            "ok": True, "cell": {"rect": None}, "icons": [{"rect": {"x": 10, "y": 10}}]
+        }), mock.patch.object(ops, "read_grade_from_cell", return_value=95), \
+                mock.patch.object(fake, "eval_js", side_effect=[None, editor]), \
+                mock.patch.object(ops.time, "sleep"):
+            result = ops.clear_cell_comment(fake, "col1", 2)
+        self.assertFalse(result["ok"])
+        self.assertIn("not the sync's", result["reason"])
+        self.assertFalse(any(c.args[0] == "Input.dispatchKeyEvent" for c in fake.send.call_args_list))
+        self.assertEqual(fake.clicks[-1], (30, 30))   # closed without typing
+
+    def test_clear_with_nothing_there_is_a_verified_no_op(self):
+        fake = FakeCDP()
+        fake.send = mock.Mock()
+        editor = {"text": "", "focused": True, "editable": True, "checked": False,
+                  "field": {"x": 20, "y": 20}, "close": {"x": 30, "y": 30}}
+        with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={
+            "ok": True, "cell": {"rect": None}, "icons": [{"rect": {"x": 10, "y": 10}}]
+        }), mock.patch.object(ops, "read_grade_from_cell", return_value=95), \
+                mock.patch.object(fake, "eval_js", side_effect=[None, editor]), \
+                mock.patch.object(ops.time, "sleep"):
+            result = ops.clear_cell_comment(fake, "col1", 2)
+        self.assertTrue(result["ok"] and result["verified"])
+        self.assertEqual(result.get("skipped"), "nothing to clear")
+        self.assertFalse(any(c.args[0] == "Input.dispatchKeyEvent" for c in fake.send.call_args_list))
+
+    def test_probe_only_reads_dom(self):
+        fake = FakeCDP()
+        fake.send = mock.Mock()
+        ops.inspect_cell_comment_ui(fake, "col1", 2)
+        self.assertEqual(fake.clicks, [])
+        fake.send.assert_not_called()
+        source = " ".join(fake.evals)
+        for forbidden in (".click(", ".focus(", "dispatchEvent", "scrollIntoView", ".value ="):
+            self.assertNotIn(forbidden, source)
+        self.assertIn("grader-grid-cell-col1-2", source)
+
+    def test_missing_affordance_never_types(self):
+        for clear in (False, True):
+            fake = FakeCDP()
+            fake.send = mock.Mock()
+            with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={
+                "ok": True, "cell": {"rect": None}, "icons": [], "menuItems": []
+            }), mock.patch.object(ops, "read_grade_from_cell", return_value=0), \
+                    mock.patch.object(fake, "eval_js", return_value=None):
+                result = ops.clear_cell_comment(fake, "col1", 2) if clear else ops.write_cell_comment(fake, "col1", 2, "hello")
+            self.assertFalse(result["ok"])
+            self.assertFalse(result["verified"])
+            self.assertIn("affordance", result["reason"])
+            self.assertEqual(fake.clicks, [])
+            self.assertFalse(any(call.args[0] == "Input.dispatchKeyEvent" for call in fake.send.call_args_list))
+
+    def test_missing_context_item_never_types(self):
+        fake = FakeCDP()
+        fake.send = mock.Mock()
+        with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={
+            "ok": True, "cell": {"rect": {"x": 10, "y": 20}}, "icons": [], "menuItems": []
+        }), mock.patch.object(ops, "read_grade_from_cell", return_value=0), \
+                mock.patch.object(fake, "eval_js", return_value=None), mock.patch.object(ops.time, "sleep"):
+            result = ops.write_cell_comment(fake, "col1", 2, "hello")
+        self.assertFalse(result["verified"])
+        self.assertTrue(any(call.args[0] == "Input.dispatchMouseEvent" for call in fake.send.call_args_list))
+        self.assertFalse(any(call.args[0] == "Input.dispatchKeyEvent" for call in fake.send.call_args_list))
+
+    def test_rejects_newline_without_any_browser_actions(self):
+        fake = FakeCDP()
+        self.assertFalse(ops.write_cell_comment(fake, "col1", 2, "bad\ntext")["verified"])
+        self.assertEqual(fake.evals, [])
+        self.assertEqual(fake.clicks, [])
+
+    def test_discovery_cli_resolves_component_and_is_read_only(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("schoology_comment_cli", os.path.join(REPO_ROOT, "tools", "schoology-sync.py"))
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        fake = FakeCDP()
+        fake.launch = mock.Mock()
+        fake.ws = None
+        with mock.patch.object(cli, "EdgeCDP", return_value=fake), \
+                mock.patch.object(cli, "assert_authenticated"), \
+                mock.patch.object(ops, "inject_helpers"), \
+                mock.patch.object(ops, "list_students", return_value=[{"studentId": "u1", "rowIndex": 2}]), \
+                mock.patch.object(ops, "list_assignments", return_value=[{"columnKey": "c1"}]), \
+                mock.patch.object(ops, "find_assignment_id_by_title", return_value="c1") as lookup, \
+                mock.patch.object(ops, "inspect_cell_comment_ui", return_value={"ok": True}) as probe, \
+                mock.patch.object(ops, "write_grade_to_cell") as write, \
+                mock.patch.object(sys, "argv", ["schoology-sync.py", "--inspect-comment-ui", "--section", "PeriodB", "--student", "u1", "--column", "FA:1.2"]):
+            self.assertEqual(cli.main(), 0)
+        lookup.assert_called_once_with(fake, "1.2 Follow-Along")
+        probe.assert_called_once_with(fake, "c1", 2)
+        write.assert_not_called()
+        self.assertEqual(fake.clicks, [])
+
+
 if __name__ == "__main__":
     unittest.main()

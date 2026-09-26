@@ -633,6 +633,8 @@ def _push_grades(
     cdp,
     dry_run: bool,
     errors: list,
+    comments: bool = False,
+    comment_texts: dict | None = None,
 ) -> tuple[int, int, int]:
     """Apply best-wins grades. Returns (pushed_count, skipped_count, kept_count)."""
 
@@ -681,9 +683,18 @@ def _push_grades(
         keep = _grade_at_least(existing, target_value)
         if dry_run:
             decision = "KEEP" if keep else "PUSH"
+            comment_plan = ""
+            if comments and not keep:
+                text = (comment_texts or {}).get(f"{student_id}/{lesson_key}", "")
+                if target_value != 0:
+                    comment_plan = " comment: would clear"
+                elif text:
+                    comment_plan = f" comment: would write {text}"
+                else:
+                    comment_plan = " comment: skipped(no lagged-zero text)"
             print(
                 f"  [DRY-RUN] WOULD {decision} student={student_id} key={lesson_key} "
-                f"existing={existing} target={target_value} col={column_key}"
+                f"existing={existing} target={target_value} col={column_key}{comment_plan}"
             )
             continue
 
@@ -698,6 +709,24 @@ def _push_grades(
         if result and result.get("ok"):
             state.set_last_synced(str(student_id), lesson_key, target_value)
             pushed += 1
+            if comments:
+                text = (comment_texts or {}).get(f"{student_id}/{lesson_key}", "")
+                outcome = "skipped(no lagged-zero text)"
+                try:
+                    comment_result = None
+                    if target_value != 0:
+                        comment_result = ops.clear_cell_comment(cdp, column_key, row_index)
+                    elif text:
+                        comment_result = ops.write_cell_comment(cdp, column_key, row_index, text)
+                    if target_value != 0 or text:
+                        comment_result = comment_result or {}
+                        if comment_result.get("ok") and comment_result.get("verified"):
+                            outcome = "cleared" if target_value != 0 else "wrote"
+                        else:
+                            outcome = f"skipped({comment_result.get('reason') or 'unverified'})"
+                except Exception as exc:
+                    outcome = f"skipped(comment error: {type(exc).__name__})"
+                print(f"  student={student_id} key={lesson_key} comment: {outcome}")
         else:
             err_msg = (result or {}).get("error") or "write_grade_to_cell returned not-ok"
             msg = (
@@ -723,7 +752,7 @@ def sync_section(
     section: str,
     course_id: str,
     *,
-    dry_run: bool = False,
+    dry_run: bool = True,
     state: StateStore,
     grades: dict,
     ops=None,
@@ -734,6 +763,9 @@ def sync_section(
     quiz_topics=None,
     blooket_topics=None,
     through_date: str | None = None,
+    comments: bool = False,
+    class_doc: dict | None = None,
+    uid_map: dict | None = None,
 ) -> dict:
     """Orchestrate one full sync for a single section.
 
@@ -754,6 +786,15 @@ def sync_section(
     Returns summary dict.
     """
     errors = []
+    comment_texts = {}
+    if comments:
+        from schoology_components import component_comments_from_class_doc
+        try:
+            comment_texts = component_comments_from_class_doc(
+                class_doc or {}, uid_map, today_school_date(),
+            )
+        except Exception as exc:
+            print(f"[comments] Text generation skipped ({type(exc).__name__})")
 
     # -- load schedule + build scope ----------------------------------------
     schedule = load_schedule(schedule_path)
@@ -870,6 +911,8 @@ def sync_section(
             cdp,
             dry_run,
             errors,
+            comments=comments,
+            comment_texts=comment_texts,
         )
 
     # -- summarise ---------------------------------------------------------
@@ -918,11 +961,21 @@ def _parse_args(argv=None):
             "(PeriodB=7945275782, PeriodE=7945275798)."
         ),
     )
-    p.add_argument(
+    write_flags = p.add_mutually_exclusive_group()
+    write_flags.add_argument(
         "--dry-run",
         action="store_true",
+        default=True,
         help="Print what WOULD happen; perform no writes and no state mutations.",
     )
+    write_flags.add_argument("--apply", action="store_false", dest="dry_run",
+                   help="Perform writes (default: dry-run).")
+    comment_flags = p.add_mutually_exclusive_group()
+    comment_flags.add_argument("--comments", action="store_true", dest="comments",
+                               help="Opt in to BEST-EFFORT grade-cell comments.")
+    comment_flags.add_argument("--no-comments", action="store_false", dest="comments",
+                               help="Disable grade-cell comments (default).")
+    p.set_defaults(comments=False)
     p.add_argument(
         "--grades-fixture",
         default=None,
@@ -997,6 +1050,22 @@ def main(argv=None):
     section = args.sync_section
     course_id = args.course_id or SECTION_TO_COURSE_ID[section]
     dry_run = args.dry_run
+    class_doc = None
+    if args.comments:
+        from build_schoology_fixture import DEFAULT_BASE, fetch_class_grades
+        secret = os.environ.get("ROSTER_TEACHER_SECRET")
+        if secret:
+            try:
+                class_doc = fetch_class_grades(
+                    os.environ.get("ROSTER_BASE", DEFAULT_BASE), section, secret,
+                )
+                if not class_doc.get("ok"):
+                    class_doc = None
+            except Exception as exc:
+                class_doc = None
+                print(f"[comments] class-grades unavailable ({type(exc).__name__})")
+        if class_doc is None:
+            print("[comments] No class-grades data; lagged-zero comments will be skipped.")
 
     grades: dict = {}
     if args.grades_fixture:
@@ -1023,6 +1092,8 @@ def main(argv=None):
         force_mp_date=force_mp_date,
         granularity=args.granularity,
         through_date=None if args.no_through else (args.through or today_school_date()),
+        comments=args.comments,
+        class_doc=class_doc,
     )
 
 
