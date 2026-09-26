@@ -44,9 +44,11 @@ function sandbox({ lessons = LESSONS, period = 'B', today = '2026-09-21' } = {})
     cedLabel: k => ({ text: 'Topic ' + k }),
     S: [[2026, 8, 22, { t: '1.2', n: 'x' }, 'noclass']],
     opened: [], showResourcePanel(cell) { s.opened.push(cell.t); },
+    urls: [],
     decks: [], openBlooketFlashcards(btn, topic) { s.decks.push(topic); },
     getRegistryEntry: () => ({ urls: { worksheet: 'u1_lesson2_live.html' } }),
   };
+  s.window.open = (url) => { s.urls.push(url); };
   createContext(s);
   runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText', '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_zeroOpenQuiz', '_walletPrependZeroCard',
     '_zeroDayText', '_zeroLatestSoonDay', '_zeroPillText', '_zeroStatusText', '_zeroCardRow', '_donowApplyZeroState']
@@ -165,7 +167,8 @@ describe('ZERO_WARNING — ledger card', () => {
       expect(rows[0].querySelector('.wz-when').textContent).toBe('0 since Fri 9/18');
       expect(rows[1].querySelector('.wz-when').textContent).toBe('0 after Wed 9/23');
       rows[1].querySelector('button').onclick();
-      expect(s.opened).toEqual(['1.2']);
+      expect(s.urls).toEqual(['u1_lesson2_live.html']);   // straight to the worksheet, not the day menu
+      expect(s.opened).toEqual([]);
       // repaint replaces, never duplicates
       s._walletPrependZeroCard(host);
       expect(host.querySelectorAll('.wallet-zero-card').length).toBe(1);
@@ -305,7 +308,8 @@ describe('ZERO_WARNING — unplayed Blooket decks (2026-09-22, lesson gate gone)
       expect(s.decks).toEqual(['1.1']);
       expect(s.opened).toEqual([]);
       rows[1].querySelector('button').onclick();      // 1.2 worksheet row still opens the lesson
-      expect(s.opened).toEqual(['1.2']);
+      expect(s.urls).toEqual(['u1_lesson2_live.html']);   // straight to the worksheet, not the day menu
+      expect(s.opened).toEqual([]);
     } finally { close(); }
   });
 });
@@ -340,9 +344,17 @@ describe('ZERO_WARNING — untaken quizzes (teacher 2026-09-26: "add the quizzes
       expect(row.classList.contains('wz-quiz')).toBe(true);
       row.querySelector('button').onclick();
       expect(opened).toEqual(['https://quiz.test/1.9']);
-      // A quiz with no registry URL falls back to the lesson panel.
+      // A quiz with no registry URL falls back to the lesson: straight to its worksheet, not the day menu.
       s._zeroOpenQuiz('1.2');
-      expect(s.opened).toEqual(['1.2']);
+      expect(opened).toEqual(['https://quiz.test/1.9', 'ws.html']);
+      expect(s.opened).toEqual([]);
     } finally { close(); }
+  });
+});
+
+describe('Open goes straight to the worksheet (teacher 2026-09-26: "one step click")', () => {
+  it('prefers the registry worksheet URL and only falls back to the day menu without one', () => {
+    const src = fnSrc('_zeroOpenLesson');
+    expect(src.indexOf('e.urls.worksheet')).toBeLessThan(src.indexOf('showResourcePanel'));
   });
 });

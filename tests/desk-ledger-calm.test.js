@@ -41,9 +41,10 @@ function sandbox({ warns = [], grade = { pct: 78, q: 'Q1' }, teacher = false } =
     _zeroOpenQuiz(k) { s.work.push(['quiz', k]); },
     _zeroOpenFlashcards(_b, k) { s.work.push(['blooket', k]); },
     openSnapshot() { s.snapshots++; },
+    Promise,
   };
   createContext(s);
-  runInContext(['_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardRow', '_walletPrependZeroCard', '_walletSeeClassButton']
+  runInContext(['_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardRow', '_walletPrependZeroCard', '_walletSeeClassButton', '_zeroCardAttachScores', '_snapScoreList']
     .map(fnSrc).join('\n'), s);
   const host = () => dom.window.document.getElementById('wallet-content');
   const card = () => host().querySelector('.wallet-zero-card');
@@ -212,6 +213,46 @@ describe('Missing-work card — review fixes (Codex 2026-09-26)', () => {
       expect(t.card()).toBe(first);                                   // same node, no repaint
       expect(t.card().querySelector('button')).toBe(firstButton);
       expect(t.card().querySelector('.wz-status').textContent).toMatch(/^Q1 so far: 85%\./);
+    } finally { t.close(); }
+  });
+});
+
+describe('Missing-work rows show the class\u2019s scores inline (teacher 2026-09-26: "on that screen I should see the data points")', () => {
+  const tick = () => new Promise(r => setTimeout(r, 0));
+  const A11 = { key: '1.1:worksheet', title: '1.1 Follow-Along', values: [0, 0, 85, 90, 100, 100, 100], tentativeZeros: 0, zeros: 2 };
+  const W14 = { key: '1.4:worksheet', title: '1.4 Follow-Along', values: [88, 92, 95, 100, 100, 100, 102], tentativeZeros: 3, zeros: 0 };
+  it('each row is followed by its score list: a real 0 is the red chip on a counting row, a tentative one on a soon row', async () => {
+    const t = sandbox({ warns: [PAST_WS, SOON_WS] });
+    t.s._snapFetchAssignments = (section) => { t.s.fetched = section; return Promise.resolve({ ok: true, assignments: [A11, W14] }); };
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      await tick(); await tick();
+      expect(t.s.fetched).toBe('all');
+      const rows = [...t.card().querySelectorAll('.wz-row')];
+      expect(rows.map(r => r.dataset.key)).toEqual(['1.1:worksheet', '1.4:worksheet']);
+      const past = rows[0].nextSibling;
+      expect(past.className).toContain('snap-alist');
+      expect(past.querySelector('.snap-alist-lead').textContent).toBe('All 7 scores for 1.1 Follow-Along:');
+      expect([...past.querySelectorAll('.snap-alist-seq span')].map(x => x.textContent).join(' ')).toBe('0 0 85 90 100 100 100');
+      expect(past.querySelectorAll('.snap-alist-you').length).toBe(1);
+      expect(past.querySelectorAll('.snap-alist-tentative').length).toBe(0);
+      const soon = rows[1].nextSibling;
+      expect(soon.querySelector('.snap-alist-lead').textContent).toBe('All 10 scores for 1.4 Follow-Along (3 tentative):');
+      const chips = [...soon.querySelectorAll('.snap-alist-seq span')];
+      expect(chips.slice(0, 3).map(c => c.className)).toEqual(['snap-alist-tentative', 'snap-alist-tentative', 'snap-alist-you']);
+      expect(soon.querySelector('.snap-alist-foot').textContent).toBe('7 of 10 classmates have a score here. 3 haven\u2019t yet — a tentative 0 until Sun 9/27. Every 0 on this list can still be replaced.'.replace('\u2019', "'"));
+      // an unchanged repaint does not duplicate the lists
+      t.s._walletPrependZeroCard(t.host());
+      await tick(); await tick();
+      expect(t.card().querySelectorAll('.snap-alist').length).toBe(2);
+    } finally { t.close(); }
+  });
+  it('no loader (offline / not signed in) → rows only, no crash', () => {
+    const t = sandbox({ warns: [PAST_WS] });
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      expect(t.card().querySelectorAll('.wz-row').length).toBe(1);
+      expect(t.card().querySelector('.snap-alist')).toBeNull();
     } finally { t.close(); }
   });
 });

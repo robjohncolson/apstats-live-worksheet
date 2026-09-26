@@ -135,11 +135,24 @@ describe('wiring pins (§1.1)', () => {
     expect(fnSrc('_updateDoNowMissingPill')).toContain("if (typeof _donowApplyZeroState === 'function') _donowApplyZeroState();");
   });
   it('CSS: yellow / red card tints, and the zero state wins over the green "done" tint', () => {
-    expect(html).toContain('#donow-card.donow-zeros-soon{background:#fff3b0}');
-    expect(html).toContain('#donow-card.donow-zeros-now{background:#f7c9c9}');
-    expect(html).toContain('#donow-card.donow-done.donow-zeros-soon{background:#fff3b0}');
-    expect(html).toContain('#donow-card.donow-done.donow-zeros-now{background:#f7c9c9}');
+    // !important: the readiness painter writes an inline hsl() background; an incoming 0 must beat it
+    // (teacher 2026-09-26: "the entire do now for me is still green even though I have pending zeros").
+    expect(html).toContain('#donow-card.donow-zeros-soon{background:#fff3b0 !important');
+    expect(html).toContain('#donow-card.donow-zeros-now{background:#f7c9c9 !important');
     expect(html).toMatch(/#donow-grades \.qpill-missing\.qpill-soon\{/);
     expect(html).toMatch(/#donow-grades \.qpill-missing\.qpill-now\{/);
+  });
+});
+
+describe('the readiness hue never hides an incoming 0 (teacher 2026-09-26: "the entire do now is still green")', () => {
+  it('the zero-state rules carry !important so an inline hsl() background loses', () => {
+    const css = html.slice(html.indexOf('#donow-card.donow-zeros-soon'), html.indexOf('#donow-card.donow-zeros-soon') + 260);
+    expect(css).toMatch(/donow-zeros-soon\{background:#fff3b0 !important/);
+    expect(css).toMatch(/donow-zeros-now\{background:#f7c9c9 !important/);
+  });
+  it('the readiness painter re-applies the zero state after writing the inline hue', () => {
+    const i = html.indexOf("card.style.background = 'hsl(' + rd.hue");
+    expect(i).toBeGreaterThan(0);
+    expect(html.slice(i, i + 400)).toContain('_donowApplyZeroState()');
   });
 });

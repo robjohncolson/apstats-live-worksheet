@@ -430,6 +430,7 @@
         /* LEDGER_CALM_SPEC §2: a status line and colour-coded rows (red = a 0 now, yellow = soon) */
         .wallet-zero-card .wz-status { margin: 0 0 6px; font-size: 11px; font-weight: bold; color: #000; }
         .wallet-zero-card .wz-row { padding: 3px 6px; margin: 2px 0; border-top: 0; }
+        .wallet-zero-card .wz-scores { margin: 0 0 8px 6px; }
         .wallet-zero-card .wz-row.wz-past { border-left: 3px solid #cc0000; background: #fff3f3; }
         .wallet-zero-card .wz-row:not(.wz-past) { border-left: 3px solid #d9b400; background: #fff9db; }
         .wallet-zero-card .wz-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -2212,10 +2213,9 @@
               #donow-card.donow-done{background:var(--second)}
               #donow-card.donow-signin{background:var(--second)}
               /* LEDGER_CALM_SPEC §1: incoming zeros tint the card (after .donow-done so it wins) */
-              #donow-card.donow-zeros-soon{background:#fff3b0}
-              #donow-card.donow-zeros-now{background:#f7c9c9}
-              #donow-card.donow-done.donow-zeros-soon{background:#fff3b0}
-              #donow-card.donow-done.donow-zeros-now{background:#f7c9c9}
+              /* !important: the readiness hue is written as an inline style; an incoming 0 must win over it. */
+              #donow-card.donow-zeros-soon{background:#fff3b0 !important;border-color:#d9b400 !important}
+              #donow-card.donow-zeros-now{background:#f7c9c9 !important;border-color:#cc0000 !important}
               #donow-card.donow-flash{animation:donowFlash .8s ease-in-out 2}
               @keyframes donowFlash{0%,100%{box-shadow:2px 2px 0 var(--black)}
                 50%{box-shadow:0 0 0 3px #2b6cb0,2px 2px 0 var(--black)}}
@@ -8533,6 +8533,7 @@ function _paintDoNowReadiness() {
     if (rd && rd.state !== 'nodue' && typeof rd.hue === 'number') {
       card.style.background = 'hsl(' + rd.hue + ',60%,92%)';
       card.style.borderColor = 'hsl(' + rd.hue + ',65%,45%)';
+      if (typeof _donowApplyZeroState === 'function') _donowApplyZeroState();   // an incoming 0 outranks the readiness hue
     } else {
       // No active readiness (signed out / nothing due) → let the state class show.
       card.style.background = '';
@@ -15675,14 +15676,16 @@ function _zeroOpenFlashcards(btn, lessonKey) {
 }
 function _zeroOpenLesson(lessonKey) {
     try {
+        // One click, straight to the worksheet (teacher 2026-09-26: "it should be a one step click").
+        var e = (typeof getRegistryEntry === 'function') ? getRegistryEntry(lessonKey) : null;
+        if (e && e.urls && e.urls.worksheet) { window.open(e.urls.worksheet, '_blank', 'noopener'); return; }
+        // No worksheet URL known: fall back to the day's resource menu.
         if (typeof S !== 'undefined' && Array.isArray(S) && typeof showResourcePanel === 'function') {
             for (var i = 0; i < S.length; i++) {
                 var cell = (typeof cP === 'string' && cP === 'E') ? S[i][4] : S[i][3];
                 if (cell && typeof cell === 'object' && cell.t === lessonKey) { showResourcePanel(cell, ''); return; }
             }
         }
-        var e = (typeof getRegistryEntry === 'function') ? getRegistryEntry(lessonKey) : null;
-        if (e && e.urls && e.urls.worksheet) window.open(e.urls.worksheet, '_blank', 'noopener');
     } catch (_) {}
 }
 function _updateDoNowMissingPill() {
@@ -16134,10 +16137,27 @@ function _snapAssignmentRow(a, own, label, viewerSection, opts) {
         adv.appendChild(go);
     }
     row.appendChild(adv);
+    var isZero = label !== null && (own == null || own === 0);
+    var built = _snapScoreList(a, ownForPlot, label, { tentative: tentative, ownTentative: ownTentative, tentDay: tentDay, isZero: isZero });
+    var list = built.list, showList = built.shown;
+    list.hidden = !isZero && !dataOnly;
+    row.appendChild(list);
+    if (showList && !isZero && !dataOnly) {
+        var tog = document.createElement('button'); tog.type = 'button'; tog.className = 's7btn snap-alist-toggle'; tog.style.cssText = 'font-size:10px;padding:1px 6px';
+        tog.textContent = 'show all scores';
+        tog.onclick = function () { list.hidden = !list.hidden; tog.textContent = list.hidden ? 'show all scores' : 'hide scores'; };
+        row.appendChild(tog);
+    }
+    return row;
+}
+// The anonymous score list for one assignment: tentative zeros (yellow) first, then every real
+// score, with the viewer's own score red (in place, or inserted when it is not in the pool).
+// Used by the Snapshot app rows and by the ledger's Missing-work rows.
+function _snapScoreList(a, ownForPlot, label, o) {
+    o = o || {};
+    var tentative = Number(o.tentative) || 0, ownTentative = Boolean(o.ownTentative), tentDay = o.tentDay || '', isZero = Boolean(o.isZero);
     var values = Array.isArray(a.values) ? a.values : [];
     var list = document.createElement('div'); list.className = 'snap-alist geneva';
-    var isZero = label !== null && (own == null || own === 0);
-    list.hidden = !isZero && !dataOnly;
     // D = the tentative zeros, then the real values (TENTATIVE_ZEROS_SPEC §2.1).
     var total = values.length + tentative;
     var showList = values.length > 0 || total >= 5;
@@ -16179,14 +16199,7 @@ function _snapAssignmentRow(a, own, label, viewerSection, opts) {
         foot.textContent = have + ' of ' + total + ' classmates have a score here.' + tentText + (isZero ? ' Every 0 on this list can still be replaced.' : '');
         list.appendChild(foot);
     }
-    row.appendChild(list);
-    if (showList && !isZero && !dataOnly) {
-        var tog = document.createElement('button'); tog.type = 'button'; tog.className = 's7btn snap-alist-toggle'; tog.style.cssText = 'font-size:10px;padding:1px 6px';
-        tog.textContent = 'show all scores';
-        tog.onclick = function () { list.hidden = !list.hidden; tog.textContent = list.hidden ? 'show all scores' : 'hide scores'; };
-        row.appendChild(tog);
-    }
-    return row;
+    return { list: list, shown: showList };
 }
 function _renderAssignmentsView(host, teacher) {
     // Student "My work" tab: data only — no plots, captions, form bar or legend (LEDGER_CALM_SPEC §3.1).
@@ -16334,7 +16347,31 @@ function _walletPrependZeroCard(host) {
         var ordered = warns.filter(function (w) { return w.past; }).concat(warns.filter(function (w) { return !w.past; }));
         ordered.forEach(function (w) { card.appendChild(_zeroCardRow(w)); });
         host.insertBefore(card, host.firstChild);
+        _zeroCardAttachScores(card, ordered);
     } catch (_) {}
+}
+// Under each Missing-work row: everyone's scores for that assignment, right here (no names).
+// Yellow = a 0 not counting yet, red = you. Fetched once (cached by the Snapshot app's loader).
+function _zeroCardAttachScores(card, warns) {
+    if (typeof _snapFetchAssignments !== 'function' || typeof _snapScoreList !== 'function') return;
+    var p = _snapFetchAssignments('all', false);
+    if (!p || typeof p.then !== 'function') return;
+    p.then(function (data) {
+        if (!card.isConnected || !data || !Array.isArray(data.assignments)) return;
+        warns.forEach(function (w) {
+            var key = w.lessonKey + ':' + (w.kind === 'blooket' ? 'blooket' : w.kind === 'quiz' ? 'quiz' : 'worksheet');
+            var a = null;
+            for (var i = 0; i < data.assignments.length; i++) if (data.assignments[i].key === key) { a = data.assignments[i]; break; }
+            if (!a) return;
+            var row = card.querySelector('.wz-row[data-key="' + key + '"]');
+            if (!row || row.nextSibling && row.nextSibling.className && String(row.nextSibling.className).indexOf('snap-alist') === 0) return;
+            var tentative = Number(a.tentativeZeros) || 0;
+            var built = _snapScoreList(a, 0, undefined, { tentative: tentative, ownTentative: !w.past, tentDay: _zeroDayText(w.zeroDate), isZero: true });
+            if (!built.shown) return;
+            built.list.classList.add('wz-scores');
+            row.parentNode.insertBefore(built.list, row.nextSibling);
+        });
+    }).catch(function () {});
 }
 // The one-line status at the top of the Missing-work card (LEDGER_CALM_SPEC §2.2). No projected
 // "up to X" number: the quarter engine is server-side (spec §6).
@@ -16362,6 +16399,7 @@ function _zeroStatusText(warns) {
 function _zeroCardRow(w) {
     var row = document.createElement('div');
     row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '') + (w.kind === 'quiz' ? ' wz-quiz' : '');
+    row.dataset.key = w.lessonKey + ':' + (w.kind === 'blooket' ? 'blooket' : w.kind === 'quiz' ? 'quiz' : 'worksheet');
     var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 's7btn';
@@ -26643,7 +26681,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-9lwl';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-wy4s';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
