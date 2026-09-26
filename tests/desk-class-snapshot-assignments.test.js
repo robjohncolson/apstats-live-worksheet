@@ -59,7 +59,7 @@ describe('lib — assignment caption + mini box plot', () => {
   });
 });
 
-function sandbox({ teacher = false, lessons, pick = null, roster = null, status = 200 } = {}) {
+function sandbox({ teacher = false, lessons, pick = null, roster = null, status = 200, period = 'B' } = {}) {
   const dom = new JSDOM('<div id="snapshot-content"></div>', { url: 'https://robjohncolson.github.io/apstats-live-worksheet/' });
   dom.window.rosterClient = { current: () => ({ section: 'PeriodB' }), token: () => 'tok' };
   const calls = [];
@@ -76,7 +76,7 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
       { lessonKey: '1.8', due: { B: '2026-09-30', E: '2026-10-01' } },
     ],
     _zeroTodayIso: () => '2026-09-26',
-    cP: 'B',
+    cP: period,
     _renderSnapshotApp() { s.rerenders = (s.rerenders || 0) + 1; },
     fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, Q13, B11, ...(s.withPending ? [W14, W16, W17] : [])] }) }; },
     openSnapshot() { s.opened = (s.opened || 0) + 1; },
@@ -418,6 +418,22 @@ describe('Assignments view — pending rows follow the viewer\u2019s own section
     ] }];
     const { s, host, close } = sandbox({ teacher: true, roster, pick: 'x' });
     s._snapApp.pick = { PeriodE: 'x' };
+    s.withPending = true;
+    try {
+      s._snapApp.aall = true;
+      s._renderAssignmentsView(host(), true);
+      await tick(); await tick();
+      expect([...host().querySelectorAll('.snap-arow')].map(r => r.dataset.key)).toEqual(['1.1:blooket', '1.2:worksheet', '1.3:quiz', '1.4:worksheet', '1.6:worksheet']);
+    } finally { close(); }
+  });
+});
+
+describe('Assignments view — the viewer\u2019s section is the Desk period (teacher 2026-09-26: "still only goes up to 1.3")', () => {
+  it('a teacher on Period E (no roster section) sees E\u2019s soon rows', async () => {
+    const { s, host, close } = sandbox({ teacher: true, roster: [], period: 'E', lessons: [
+      { lessonKey: '1.1', hasBlooket: true, blooket: 100 }, { lessonKey: '1.2', lessonGradeNoQuiz: 100 }, { lessonKey: '1.3', quizTotal: 3, Q: 100 },
+    ] });
+    s.window.rosterClient = { current: () => ({ section: null, role: 'teacher' }), token: () => 'tok' };
     s.withPending = true;
     try {
       s._snapApp.aall = true;
