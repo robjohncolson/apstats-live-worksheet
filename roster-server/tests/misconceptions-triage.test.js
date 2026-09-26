@@ -54,8 +54,12 @@ describe('misconception triage', () => {
     compute([student('one', ['target'])]);
     expect(JSON.stringify(triage)).toBe(before);
     const bundled = loadMisconceptionTriage();
-    expect(Object.keys(bundled.entries)).toHaveLength(5);
-    expect(Object.values(bundled.entries).every(row => row.sheetTitle === 'Screen Time, Two Deletions')).toBe(true);
+    // The bundled triage grows every Friday (the weekly DOK job appends the new sheet's targets),
+    // so pin the invariants, not the count: at least the original five entries, and every entry
+    // names the sheet it was triaged into.
+    expect(Object.keys(bundled.entries).length).toBeGreaterThanOrEqual(5);
+    expect(Object.values(bundled.entries).every(row => typeof row.sheetTitle === 'string' && row.sheetTitle.length > 0)).toBe(true);
+    expect(Object.values(bundled.entries).some(row => row.sheetTitle === 'Screen Time, Two Deletions')).toBe(true);
   });
   it('loads triage through the authenticated endpoint boundary and caches it', async () => {
     vi.stubEnv('ROSTER_TEACHER_SECRET', 'synthetic-triage-test');

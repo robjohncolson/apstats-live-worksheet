@@ -26,6 +26,13 @@ ASCII only. LF line endings.
 """
 from __future__ import annotations
 
+import sys
+# The daily job pipes this through a cp1252 console (Tee-Object): never let a stray character crash a sync.
+try:
+    sys.stdout.reconfigure(errors="replace")
+except Exception:
+    pass
+
 import abc
 import argparse
 import json
@@ -735,6 +742,33 @@ def _push_grades(
             )
             print(f"  [ERROR] {msg}")
             errors.append(msg)
+
+    # Comments travel with the ZERO, not with the write: a cell that already held the lagged 0
+    # from an earlier sync (so nothing was pushed today) still needs its comment. The writer
+    # is idempotent (an identical published comment is a verified no-op), so this is cheap.
+    if comments:
+        unchanged_zero_keys = [key for key in list(covered) + list(actions["skip"])
+                               if targets.get(key) == 0 and (comment_texts or {}).get(f"{key[0]}/{key[1]}")]
+        for student_id, lesson_key in unchanged_zero_keys:
+            text = (comment_texts or {}).get(f"{student_id}/{lesson_key}", "")
+            if dry_run:
+                print(f"  [DRY-RUN] existing 0 student={student_id} key={lesson_key} comment: would ensure {text}")
+                continue
+            scope_item = scope_items_by_key.get(lesson_key)
+            student_row = students_by_id.get(str(student_id))
+            column_key = ops.find_assignment_id_by_title(cdp, scope_item.get("title")) if scope_item else None
+            if column_key is None or student_row is None:
+                print(f"  student={student_id} key={lesson_key} comment: skipped(no column or row)")
+                continue
+            try:
+                comment_result = ops.write_cell_comment(cdp, column_key, student_row.get("rowIndex"), text) or {}
+                if comment_result.get("ok") and comment_result.get("verified"):
+                    outcome = "already set" if comment_result.get("skipped") == "already set" else "wrote"
+                else:
+                    outcome = f"skipped({comment_result.get('reason') or 'unverified'})"
+            except Exception as exc:
+                outcome = f"skipped(comment error: {type(exc).__name__})"
+            print(f"  student={student_id} key={lesson_key} comment: {outcome}")
 
     return pushed, skipped, kept
 

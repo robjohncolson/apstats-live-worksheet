@@ -205,6 +205,21 @@ def inspect_cell_comment_ui(cdp, column_key: str, row_index: int) -> dict:
 SYNC_COMMENT_PREFIX = "Not a permanent 0."
 
 
+def _scroll_cell_into_view(cdp, column_key: str, row_index: int) -> None:
+    """Bring a grid cell into the scrolling body's visible band via the CDP DOM domain
+    (no page script, so the writer's eval sequence stays exactly as tested). Best-effort."""
+    try:
+        doc = cdp.send("DOM.getDocument", {"depth": 0})
+        root = doc["root"]["nodeId"]
+        node = cdp.send("DOM.querySelector", {"nodeId": root, "selector": f"#grader-grid-cell-{column_key}-{int(row_index)}"})
+        node_id = node.get("nodeId")
+        if node_id:
+            cdp.send("DOM.scrollIntoViewIfNeeded", {"nodeId": node_id})
+            time.sleep(0.3)
+    except Exception:
+        return
+
+
 def write_cell_comment(cdp, column_key: str, row_index: int, text: str) -> dict:
     """BEST-EFFORT DRAFT: UI selectors and commit behavior are not live verified.
 
@@ -235,7 +250,10 @@ def write_cell_comment(cdp, column_key: str, row_index: int, text: str) -> dict:
             return hit && (hit === el || el.contains(hit)) ? {x,y} : null;
         };
         const status = popup.querySelector('input#comment_status[type="checkbox"]');
-        const close = popup.querySelector('.grade-comment-close');
+        // LIVE 2026-09-26: the .grade-comment-close wrapper has zero height; the clickable part is
+        // its inner #closebutton span. Take the first close-ish element that actually has a box.
+        const close = Array.from(popup.querySelectorAll('.grade-comment-close #closebutton, .grade-comment-close span, .grade-comment-close'))
+            .find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; }) || null;
         const saves = Array.from(popup.querySelectorAll('button, [role="button"], input[type="submit"]'))
             .filter(el => visible(el) && /^(save|save comment)$/i.test((el.textContent || el.value || '').trim()));
         return {text:field.value, focused:document.activeElement === field,
@@ -254,6 +272,10 @@ def write_cell_comment(cdp, column_key: str, row_index: int, text: str) -> dict:
             return {**failure, "reason": "current grade unreadable; comment skipped"}
         cdp.send("Page.bringToFront", {})
         cdp.send("Emulation.setFocusEmulationEnabled", {"enabled": True})
+        # LIVE 2026-09-26: the grid body scrolls horizontally (clientWidth ~646px of ~2340px);
+        # a cell past its right edge is covered by the frozen panel, so the centre-point probe
+        # fails ("missing or ambiguous Comment affordance"). Bring the cell into the visible band.
+        _scroll_cell_into_view(cdp, column_key, row_index)
 
         # Two openings: first edit, then independently read back after closing.
         for verify in (False, True):
@@ -294,6 +316,9 @@ def write_cell_comment(cdp, column_key: str, row_index: int, text: str) -> dict:
                     break
             if not editor or not editor.get("close"):
                 return {**failure, "reason": "comment textarea or safe close missing"}
+            if text and not verify and (editor.get("text") or "") == text and editor.get("checked") is True:
+                cdp.click(editor["close"]["x"], editor["close"]["y"])
+                return {"ok": True, "verified": True, "text": text, "skipped": "already set"}
             if text == "" and not verify:
                 current = editor.get("text") or ""
                 if current == "":

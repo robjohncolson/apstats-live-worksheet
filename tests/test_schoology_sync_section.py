@@ -1139,7 +1139,7 @@ class TestGradeCellComments(unittest.TestCase):
         self.ops.clear_cell_comment.assert_not_called()
         self.assertEqual(self.state._last_synced, {})
 
-    def test_keep_failed_and_already_synced_never_comment(self):
+    def test_keep_and_failed_never_comment_but_an_existing_zero_is_ensured(self):
         self.ops.read_grade_from_cell.return_value = 90
         self.push(comments=True)
         self.ops.write_cell_comment.assert_not_called()
@@ -1148,9 +1148,13 @@ class TestGradeCellComments(unittest.TestCase):
         self.ops.write_grade_to_cell.return_value = {"ok": False}
         self.push(comments=True)
         self.ops.write_cell_comment.assert_not_called()
+        # An already-synced ZERO is different: the comment travels with the zero, so the sync
+        # ensures it (the writer is idempotent: an identical published comment is a no-op).
         self.state.set_last_synced("S1", "FA:1.2", 0)
+        self.ops.write_cell_comment.return_value = {"ok": True, "verified": True, "text": "x", "skipped": "already set"}
         self.push(comments=True)
-        self.ops.write_cell_comment.assert_not_called()
+        self.ops.write_cell_comment.assert_called_once()
+        self.assertEqual(self.ops.write_cell_comment.call_args.args[1:3], ("col1", 2))
 
     def test_clear_nonzero_and_comment_failure_not_grade_failure(self):
         self.ops.clear_cell_comment.side_effect = RuntimeError("UI unavailable")
