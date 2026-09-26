@@ -158,7 +158,8 @@ describe('Class Snapshot desktop app (teacher 2026-09-26: "an app accessible fro
       t.s.openSnapshot();
       expect(t.overlay().style.display).toBe('block');
       await tick(); await tick();
-      expect(t.content().firstChild.className).toBe('snap-intro');
+      expect(t.content().firstChild.className).toBe('snap-tabs snap-views');   // Class | Assignments
+      expect(t.content().children[1].className).toBe('snap-intro');
       const card = t.content().querySelector('.wallet-snapshot-card');
       expect(card.querySelector('.snap-title').textContent).toBe('Where you stand — Period B, 15 students');
       expect(t.s.drawn.at(-1).own).toBe(31);

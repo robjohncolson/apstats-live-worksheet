@@ -90,3 +90,43 @@ view is the only place a dot can be attached to a name, and it never comes from 
 
 roster endpoint + tests → Codex (small, backend). Desk panel + teacher view → in-session (frontend).
 No grade math changes anywhere.
+
+## Phase 2 — per-assignment analysis (teacher 2026-09-26, draft)
+
+"For each assignment there should be a grade analysis, a box plot for each assignment; but the student
+that has a zero should see the entire data set — no names, just the entire data set for that assignment,
+to make it more real."
+
+### Data
+`GET /class/snapshot?section=PeriodB&by=assignment` → same auth as Phase 1; adds
+`assignments: [{ key: "1.2:worksheet", lessonKey: "1.2", track: "worksheet"|"quiz"|"blooket",
+title: "1.2 Follow-Along", zeroDate: "2026-09-23", n, values: [0, 0, 0, 85, 91, 100, ...],
+fiveNumber, iqr, fences, outliers, zeros: 3 }]` for every lesson×track that is DUE for that section
+(zero date before today, i.e. once the zero has actually been counted), in schedule order. A student with no score on a due item is a 0 in
+`values` (that is the point: the zero is in the data). Items not yet due are omitted. Rounded whole
+numbers, sorted, no ids/names; n<5 → empty values. Cached with the section payload.
+
+### Where
+1. **Class Snapshot app → "Assignments" tab** (students and teacher). One row per due assignment:
+   title, a mini box plot (same renderer, 300×36, whiskers/box/median/outliers, red dot = you), and
+   a one-line caption ("median 100 · IQR 5 · 3 zeros"). Rows sorted by zero date, newest first.
+2. **The student's own zero → the whole data set.** When the student's value on that assignment is 0
+   (or missing), the row expands automatically to show the full sorted list as plain numbers —
+   `0 0 0 85 88 91 95 97 100 100 100 100 100 100 100` — with their own 0 in red, plus "13 of 15
+   classmates have a score here." No names, ever. Rows the student scored on stay collapsed (tap to
+   expand the list; the data set is public to the section either way).
+3. **Teacher view:** the same rows per section with all values visible, plus the "Place a student"
+   picker from Phase 1 applied to every row (one dot on every mini plot). Parallel box plots down
+   the page = the 1.8 lesson on the smartboard.
+4. **Missing-work card:** each row gains a small "see the class" link that opens the app scrolled to
+   that assignment's row.
+
+### Captions (AP vocabulary)
+Per row: `Median 100 · IQR 5 · 3 zeros. You: 0 — an outlier by the 1.5×IQR rule.` (a 0 against a box at
+95–100 always is; the rule names it). Expanded list header: `All 15 scores for 1.2 Follow-Along:`.
+
+### Defaults chosen (say if you want otherwise)
+- Zeros of OTHER students are shown as zeros in the list (honest; it also shows a struggling student
+  they are not alone when they aren't). Nothing distinguishes a "missing" zero from a scored zero.
+- Quizzes are included even though Schoology never zeroes them (the Desk grade does).
+- Bonus items (no zero date) are not listed.

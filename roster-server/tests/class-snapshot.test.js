@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import http from 'http';
+import express from 'express';
 import { randomBytes } from 'crypto';
 import { createApp } from '../server.js';
 import { initReceipts } from '../receipts.js';
 
 import { signToken } from '../token.js';
-import { fiveNumberSummary } from '../class-snapshot.js';
+import { fiveNumberSummary, mountClassSnapshot } from '../class-snapshot.js';
 const TEACHER = 'teacher-secret-fixture';
 const TEST_PRIVATE_KEY = 'MC4CAQAwBQYDK2VwBCIEIIq2JsDpBMHpUzaFF6mPR0vUv1T2gzXGX7k/AQSYjyl0';
 
@@ -140,6 +141,7 @@ async function startServer({
   roster = [], ledger = {},
   loadAnswerKey = okAnswerKey, loadSkillMap = okSkillMap, bkt,
   rosterOpts = {}, ledgerOpts = {},
+  lessonSchedule,
 } = {}) {
   process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
   process.env.ROSTER_TEACHER_SECRET = TEACHER;
@@ -148,7 +150,7 @@ async function startServer({
   process.env.NODE_ENV = 'test';
   const rosterDb = createFakeRosterDb(roster, rosterOpts);
   const ledgerDb = createFakeLedgerDb(ledger, ledgerOpts);
-  const app = createApp(rosterDb, ledgerDb, fakeLoadManifest, loadAnswerKey, loadSkillMap, bkt || null);
+  const app = createApp(rosterDb, ledgerDb, fakeLoadManifest, loadAnswerKey, loadSkillMap, bkt || null, null, lessonSchedule);
   const server = new TestServer(app);
   await server.start();
   return { server, rosterDb, ledgerDb };
@@ -312,5 +314,201 @@ describe('GET /class/snapshot', () => {
     vi.spyOn(ctx.ledgerDb, 'getLedgerByStudent').mockRejectedValueOnce(new Error('temporary'));
     expect((await srv.get('/class/snapshot?section=PeriodB', teacher)).status).toBe(503);
     expect((await srv.get('/class/snapshot?section=PeriodB', teacher)).status).toBe(200);
+  });
+});
+
+// Deliberately inserted out of order; class grades put lessons in schedule order.
+// The 13-day lag makes 9/12 count on asOf 9/26; 9/13 is still open that day.
+const assignmentSchedule = {
+  '1.2': { unit: 1, worksheetKey: '2', periods: { B: '2026-09-12', E: '2026-09-13' } },
+  '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2026-09-12', E: '2026-09-14' } },
+  '1.3': { unit: 1, worksheetKey: '3', periods: { B: '2026-09-14', E: '2026-09-14' } },
+  '1.4': { unit: 1, worksheetKey: '4', periods: {} },
+  '1.5': { unit: 1, worksheetKey: '5', periods: { E: '2026-09-12' } },
+  '1.6': { unit: 1, periods: { B: '2026-09-12' } },
+  '1.99': { unit: 1, worksheetKey: '99', periods: { B: '2026-09-12' } },
+};
+const assignmentLedger = Object.fromEntries(roster.slice(1).map((student, i) => [student.student_id, [
+  makeRow(student.student_id, 'WS-U1L1-r1', 'answer', { source: 'frq', unit: 'U1', score: 1 }),
+  makeRow(student.student_id, 'U1-L1-Q01', 'B'),
+  makeRow(student.student_id, 'U1-L1-Q02', 'C'),
+  makeRow(student.student_id, 'BLOOKET-U1L1', 'played', { source: 'blooket', score: (i + 2) / 7 }),
+]]));
+
+// Inject grade results directly so malformed numeric values reach serialization.
+async function startSnapshotFixture(lessons) {
+  process.env.ROSTER_TEACHER_SECRET = TEACHER;
+  const app = express();
+  mountClassSnapshot(app, {
+    db: createFakeRosterDb(roster), verifyToken: () => null,
+    config: { quarters: { Q1: { start: '2026-08-01', end: '2026-10-31' } } },
+    computeClassGrades: async () => ({
+      ok: true, students: roster.map(() => ({ quarters: { Q1: { quarterGrade: 80 } }, lessons })),
+    }),
+  });
+  srv = new TestServer(app);
+  await srv.start();
+}
+
+describe('GET /class/snapshot?by=assignment', () => {
+  it('omits bonus Blookets while retaining their worksheet', async () => {
+    const ctx = await startServer({ roster, lessonSchedule: {
+      '2.9': { unit: 2, worksheetKey: '9', periods: { B: '2026-09-12' } },
+    } }); srv = ctx.server;
+    const grades = await srv.get('/class/grades?section=PeriodB', teacher);
+    expect(grades.body.students[0].lessons[0]).toMatchObject({ hasBlooket: true, blooketBonus: true });
+    const r = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
+    expect(r.body.assignments.map(item => item.key)).toEqual(['2.9:worksheet']);
+  });
+
+  it('deduplicates combined worksheets and Blookets but keeps quizzes per lesson', async () => {
+    const lessons = ['4.3', '4.4', '4.5'].map(lessonKey => ({
+      lessonKey, unit: 4, worksheetKey: '3-5', zeroDate: { B: '2026-09-25' },
+      hasBlooket: true, blooketBonus: false, quizTotal: 1,
+      lessonGradeNoQuiz: 85, blooket: 70, Q: Number(lessonKey.slice(-1)) * 10,
+    }));
+    await startSnapshotFixture(lessons);
+    const r = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
+    expect(r.body.assignments.map(item => [item.key, item.title])).toEqual([
+      ['4.3:worksheet', '4.3 Follow-Along'], ['4.3:quiz', '4.3 Quiz'],
+      ['4.3:blooket', '4.3 Blooket'], ['4.4:quiz', '4.4 Quiz'], ['4.5:quiz', '4.5 Quiz'],
+    ]);
+    expect(r.body.assignments.filter(item => item.track === 'quiz').map(item => item.values))
+      .toEqual([Array(6).fill(30), Array(6).fill(40), Array(6).fill(50)]);
+  });
+
+  it('replaces non-finite scores with zero and preserves finite bonus scores', async () => {
+    await startSnapshotFixture([{
+      lessonKey: '1.1', unit: 1, worksheetKey: '1', zeroDate: { B: '2026-09-25' },
+      hasBlooket: true, quizTotal: 1, lessonGradeNoQuiz: NaN, Cws: 90, Q: Infinity, blooket: -Infinity,
+    }, {
+      lessonKey: '1.2', unit: 1, worksheetKey: '2', zeroDate: { B: '2026-09-25' },
+      lessonGradeNoQuiz: 104.6,
+    }]);
+    const r = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
+    expect(r.status).toBe(200);
+    expect(r.body.assignments).toHaveLength(4);
+    for (const item of r.body.assignments.slice(0, 3)) {
+      expect(item.values).toEqual([0, 0, 0, 0, 0, 0]);
+      expect(item.zeros).toBe(6);
+    }
+    expect(r.body.assignments[3].values).toEqual([105, 105, 105, 105, 105, 105]);
+  });
+
+  it('returns only due lesson tracks in schedule order and counts missing scores as zeros', async () => {
+    const ctx = await startServer({
+      roster: [...roster.slice().reverse(), { student_id: 't', role: 'teacher', section: 'PeriodB' }],
+      ledger: assignmentLedger, lessonSchedule: assignmentSchedule,
+    }); srv = ctx.server;
+    const before = JSON.stringify(ctx.ledgerDb._store);
+    const r = await srv.get('/class/snapshot?section=PeriodB&by=assignment&includeStaff=1', teacher);
+    expect(r.status).toBe(200);
+    expect(r.body.assignments.map(item => item.key)).toEqual([
+      '1.1:worksheet', '1.1:quiz', '1.1:blooket',
+      '1.2:worksheet', '1.2:blooket', '1.6:blooket', '1.99:worksheet',
+    ]);
+    expect(r.body.assignments[0]).toEqual({
+      key: '1.1:worksheet', lessonKey: '1.1', track: 'worksheet', title: '1.1 Follow-Along',
+      zeroDate: '2026-09-25', n: 6, values: [0, 100, 100, 100, 100, 100],
+      fiveNumber: { min: 0, q1: 100, median: 100, q3: 100, max: 100 },
+      iqr: 0, fences: { low: 100, high: 100 }, outliers: [0], zeros: 1,
+    });
+    expect(r.body.assignments[1]).toMatchObject({ title: '1.1 Quiz', values: [0, 100, 100, 100, 100, 100], zeros: 1 });
+    expect(r.body.assignments[2]).toMatchObject({ title: '1.1 Blooket', values: [0, 29, 43, 57, 71, 86], zeros: 1 });
+    expect(r.body.assignments[3]).toMatchObject({ values: [0, 0, 0, 0, 0, 0], zeros: 6, n: 6 });
+    scanKeys(r.body);
+    expect(JSON.stringify(ctx.ledgerDb._store)).toBe(before);
+    expect(ctx.rosterDb._snapStore).toEqual([]);
+    const student = await srv.get('/class/snapshot?section=PeriodB&by=assignment', { authorization: `Bearer ${signToken('s0')}` });
+    expect(student.body).toEqual(r.body);
+    scanKeys(student.body);
+  });
+
+  it('uses the requested period zero date and omits future and undated lessons', async () => {
+    const ctx = await startServer({
+      roster: roster.map(student => ({ ...student, section: 'PeriodE' })),
+      ledger: assignmentLedger, lessonSchedule: assignmentSchedule,
+    }); srv = ctx.server;
+    const r = await srv.get('/class/snapshot?section=PeriodE&by=assignment', teacher);
+    expect(r.body.assignments.map(item => item.key)).toEqual([
+      '1.5:worksheet', '1.5:blooket',
+    ]);
+    expect(r.body.assignments.every(item => item.zeroDate === '2026-09-25')).toBe(true);
+    vi.setSystemTime(new Date('2026-09-28T02:00:00Z'));
+    const nextDay = await srv.get('/class/snapshot?section=PeriodE&by=assignment', teacher);
+    expect(nextDay.body.asOf).toBe('2026-09-27');
+    expect(nextDay.body.assignments.map(item => item.key)).toEqual([
+      '1.2:worksheet', '1.2:blooket', '1.5:worksheet', '1.5:blooket',
+    ]);
+    expect(nextDay.body.assignments[0].zeroDate).toBe('2026-09-26');
+  });
+
+  it.each([1, 4, 5])('applies the privacy floor using the real roster count (n=%s)', async (n) => {
+    const ctx = await startServer({
+      roster: [...roster.slice(0, n), { student_id: 't', role: 'teacher', section: 'PeriodB' }],
+      lessonSchedule: assignmentSchedule,
+    }); srv = ctx.server;
+    const r = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
+    expect(r.body.assignments).toHaveLength(7);
+    for (const item of r.body.assignments) {
+      expect(Object.keys(item).sort()).toEqual([
+        'key', 'lessonKey', 'track', 'title', 'zeroDate', 'n', 'values',
+        'fiveNumber', 'iqr', 'fences', 'outliers', 'zeros',
+      ].sort());
+      expect(Array.isArray(item.values)).toBe(true);
+      expect(item.values.every(Number.isFinite)).toBe(true);
+      expect(item).toMatchObject(n < 5
+        ? { n, values: [], fiveNumber: null, iqr: null, fences: null, outliers: [], zeros: null }
+        : { n, values: [0, 0, 0, 0, 0], fiveNumber: { min: 0, q1: 0, median: 0, q3: 0, max: 0 },
+          iqr: 0, fences: { low: 0, high: 0 }, outliers: [], zeros: 5 });
+    }
+    scanKeys(r.body);
+  });
+
+  it('keeps the serialized Phase 1 payload unchanged without the flag', async () => {
+    const ctx = await startServer({ roster, ledger: assignmentLedger, lessonSchedule: assignmentSchedule }); srv = ctx.server;
+    const plain = await srv.get('/class/snapshot?section=PeriodB', teacher);
+    const expanded = await srv.get('/class/snapshot?section=PeriodB&by=assignment', teacher);
+    const { assignments, ...phase1 } = expanded.body;
+    expect(assignments).toHaveLength(7);
+    expect(JSON.stringify(phase1)).toBe(JSON.stringify(plain.body));
+    expect(Object.keys(plain.body)).toEqual([
+      'ok', 'section', 'quarter', 'asOf', 'n', 'values', 'fiveNumber', 'iqr', 'fences', 'outliers',
+    ]);
+  });
+
+  it.each(['default', 'assignment'])('separates caches with %s requested first, shares work, and checks auth', async (firstMode) => {
+    const ctx = await startServer({ roster, ledger: assignmentLedger, lessonSchedule: assignmentSchedule }); srv = ctx.server;
+    process.env.NODE_ENV = 'production';
+    const read = vi.spyOn(ctx.ledgerDb, 'getLedgerByStudent');
+    const plainUrl = '/class/snapshot?section=PeriodB';
+    const assignmentUrl = `${plainUrl}&by=assignment`;
+    const urls = firstMode === 'default' ? [plainUrl, assignmentUrl] : [assignmentUrl, plainUrl];
+    for (const url of urls) {
+      const results = await Promise.all([srv.get(url, teacher), srv.get(url, teacher)]);
+      expect(results[0]).toEqual(results[1]);
+      expect(results[0].status).toBe(200);
+      expect(Object.hasOwn(results[0].body, 'assignments')).toBe(url === assignmentUrl);
+    }
+    expect(read).toHaveBeenCalledTimes(12);
+    await srv.get(plainUrl, teacher);
+    await srv.get(assignmentUrl, teacher);
+    expect(read).toHaveBeenCalledTimes(12);
+    expect((await srv.get(assignmentUrl)).status).toBe(401);
+    expect((await srv.get('/class/snapshot?section=PeriodE&by=assignment', {
+      authorization: `Bearer ${signToken('s0')}`,
+    })).status).toBe(401);
+    vi.setSystemTime(Date.now() + 300000);
+    await srv.get(assignmentUrl, teacher);
+    expect(read).toHaveBeenCalledTimes(18);
+  });
+
+  it('returns 503 for incomplete grades and does not cache that failure', async () => {
+    const ctx = await startServer({ roster, ledger: assignmentLedger, lessonSchedule: assignmentSchedule }); srv = ctx.server;
+    process.env.NODE_ENV = 'production';
+    vi.spyOn(ctx.ledgerDb, 'getLedgerByStudent').mockRejectedValueOnce(new Error('temporary'));
+    const url = '/class/snapshot?section=PeriodB&by=assignment';
+    expect(await srv.get(url, teacher)).toEqual({ status: 503, body: { ok: false, error: 'gradebook unavailable' } });
+    expect((await srv.get(url, teacher)).body.assignments).toHaveLength(7);
   });
 });

@@ -19,12 +19,24 @@ export function fiveNumberSummary(values) {
   };
 }
 
+function summarizeValues(values) {
+  const n = values.length;
+  if (n < 5) {
+    return { n, values: [], fiveNumber: null, iqr: null, fences: null, outliers: [] };
+  }
+  const fiveNumber = fiveNumberSummary(values);
+  const iqr = fiveNumber.q3 - fiveNumber.q1;
+  const fences = { low: fiveNumber.q1 - 1.5 * iqr, high: fiveNumber.q3 + 1.5 * iqr };
+  const outliers = values.filter(value => value < fences.low || value > fences.high);
+  return { n, values, fiveNumber, iqr, fences, outliers };
+}
+
 export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, config }) {
   // Memory belongs to this app instance; cache only anonymous payloads.
   const cache = new Map();
   const ttl = 5 * 60 * 1000;
 
-  async function computeSnapshot(section) {
+  async function computeSnapshot(section, by) {
     const grades = await computeClassGrades({ section }, { requireComplete: true });
     if (!grades.ok) throw new Error('gradebook unavailable');
     const asOf = todayInTz('America/New_York');
@@ -34,16 +46,46 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
       .filter(Number.isFinite)
       .map(Math.round)
       .sort((a, b) => a - b);
-    const n = values.length;
-    if (n < 5) {
-      return { ok: true, section, quarter, asOf, n, values: [], fiveNumber: null,
-        iqr: null, fences: null, outliers: [] };
+    const snapshot = { ok: true, section, quarter, asOf, ...summarizeValues(values) };
+    if (by !== 'assignment') return snapshot;
+
+    const period = section.slice(-1);
+    snapshot.assignments = [];
+    // Each student's lessons include the full schedule, even untouched lessons.
+    const lessons = grades.students[0]?.lessons || [];
+    const seenTracks = new Set();
+    for (const lesson of lessons) {
+      const zeroDate = lesson.zeroDate?.[period];
+      if (!zeroDate || zeroDate >= asOf) continue;
+
+      const tracks = [];
+      if (lesson.worksheetKey) tracks.push(['worksheet', 'Follow-Along']);
+      if (lesson.quizTotal > 0) tracks.push(['quiz', 'Quiz']);
+      if (lesson.hasBlooket && !lesson.blooketBonus) tracks.push(['blooket', 'Blooket']);
+      for (const [track, label] of tracks) {
+        const groupKey = track !== 'quiz' && lesson.worksheetKey
+          ? `${lesson.unit}|${lesson.worksheetKey}:${track}`
+          : `${lesson.lessonKey}:${track}`;
+        if (seenTracks.has(groupKey)) continue;
+        seenTracks.add(groupKey);
+        // Assignment n counts every non-staff roster row, including missing scores;
+        // top-level n counts only finite quarter grades. Due lessons span quarters.
+        const values = grades.students.map(student => {
+          const score = student.lessons?.find(item => item.lessonKey === lesson.lessonKey);
+          const value = track === 'worksheet' ? score?.lessonGradeNoQuiz ?? score?.Cws
+            : track === 'quiz' ? score?.Q : score?.blooket;
+          return Number.isFinite(value) ? Math.round(value) : 0;
+        }).sort((a, b) => a - b);
+        const summary = summarizeValues(values);
+        snapshot.assignments.push({
+          key: `${lesson.lessonKey}:${track}`, lessonKey: lesson.lessonKey, track,
+          title: `${lesson.lessonKey} ${label}`, zeroDate, ...summary,
+          // Counts also disclose scores in small sections.
+          zeros: summary.n < 5 ? null : values.filter(value => value === 0).length,
+        });
+      }
     }
-    const fiveNumber = fiveNumberSummary(values);
-    const iqr = fiveNumber.q3 - fiveNumber.q1;
-    const fences = { low: fiveNumber.q1 - 1.5 * iqr, high: fiveNumber.q3 + 1.5 * iqr };
-    const outliers = values.filter(value => value < fences.low || value > fences.high);
-    return { ok: true, section, quarter, asOf, n, values, fiveNumber, iqr, fences, outliers };
+    return snapshot;
   }
 
   app.get('/class/snapshot', async (req, res) => {
@@ -68,19 +110,21 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
       }
     }
 
+    const by = req.query.by === 'assignment' ? 'assignment' : 'quarter';
+    const cacheKey = `${section}:${by}`;
     try {
-      if (process.env.NODE_ENV === 'test') return res.json(await computeSnapshot(section));
-      const cached = cache.get(section);
+      if (process.env.NODE_ENV === 'test') return res.json(await computeSnapshot(section, by));
+      const cached = cache.get(cacheKey);
       if (cached && Date.now() < cached.expires) return res.json(await cached.payload);
 
       // Share in-flight work too, so simultaneous refreshes compute once.
-      const entry = { expires: Infinity, payload: computeSnapshot(section) };
-      cache.set(section, entry);
+      const entry = { expires: Infinity, payload: computeSnapshot(section, by) };
+      cache.set(cacheKey, entry);
       const payload = await entry.payload;
       entry.expires = Date.now() + ttl;
       return res.json(payload);
     } catch (_) {
-      cache.delete(section);
+      cache.delete(cacheKey);
       return res.status(503).json({ ok: false, error: 'gradebook unavailable' });
     }
   });

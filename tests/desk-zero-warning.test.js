@@ -131,7 +131,7 @@ describe('ZERO_WARNING — ledger card', () => {
       s._walletPrependZeroCard(dom.window.document.getElementById('wallet-content'));
       const card = dom.window.document.querySelector('.wallet-zero-card');
       expect(card.children[1].textContent).toBe('Each of these is a 0 in your grade once its date passes (worksheets and flashcards also on Schoology). All of them are still open — finish one and the 0 is replaced. Flashcard decks count as your Blooket grade.');
-      expect([...card.querySelectorAll('h5, .wz-row button')].map(el => el.textContent)).toEqual([
+      expect([...card.querySelectorAll('h5, .wz-row button:not(.wz-see)')].map(el => el.textContent)).toEqual([
         'Already a 0', 'Open Topic 1.1', 'Flashcards Topic 1.2', 'Becomes a 0 soon', 'Open Topic 1.3',
       ]);
     } finally { close(); }
@@ -264,6 +264,7 @@ describe('missing work entry points', () => {
 
 describe('ZERO_WARNING — unplayed Blooket decks (2026-09-22, lesson gate gone)', () => {
   const MIXED = [
+    { lessonKey: '2.9', zeroDate: { B: '2026-09-20' }, lessonGradeNoQuiz: 95, hasBlooket: true, blooketBonus: true, blooket: null }, // BONUS deck: never a 0, never warned
     { lessonKey: '1.1', zeroDate: { B: '2026-09-21' }, lessonGradeNoQuiz: 95, hasBlooket: true, blooket: null },   // worksheet done, deck unplayed, already a 0
     { lessonKey: '1.2', zeroDate: { B: '2026-09-23' }, lessonGradeNoQuiz: null, hasBlooket: true, blooket: null }, // both missing
     { lessonKey: '1.3', zeroDate: { B: '2026-09-24' }, lessonGradeNoQuiz: null, hasBlooket: true, blooket: 80 },   // deck done
