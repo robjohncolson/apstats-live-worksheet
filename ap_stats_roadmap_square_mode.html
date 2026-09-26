@@ -382,6 +382,14 @@
             animation: zero-pulse 1.4s ease-in-out infinite; pointer-events: none;
         }
         @media (prefers-reduced-motion: reduce) { .app-icon[data-app="teacherinbox"] .teacher-inbox-badge { animation: none; } }
+        /* CLASS_SNAPSHOT_SPEC.md — "Where you stand": the class's grades as the graph the class has learned. */
+        .wallet-snapshot-card { border: 1px solid var(--black); background: #fff; padding: 8px 10px; margin-bottom: 10px; font-size: 11px; }
+        .wallet-snapshot-card h4 { margin: 0 0 4px; font: bold 12px Chicago, Geneva, sans-serif; }
+        .wallet-snapshot-card .snap-tabs { display: flex; gap: 4px; margin: 0 0 6px; }
+        .wallet-snapshot-card .snap-tabs .s7btn[aria-pressed="true"] { background: var(--black); color: #fff; }
+        .wallet-snapshot-card canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+        .wallet-snapshot-card .snap-caption { margin-top: 6px; color: #333; }
+        .wallet-snapshot-card .snap-note { color: #666; font-size: 10px; margin-top: 2px; }
         .wallet-zero-card { border: 2px solid #cc0000; background: #fff3f3; padding: 8px 10px; margin-bottom: 10px; font-size: 11px; }
         .wallet-zero-card h4 { margin: 0 0 6px; font: bold 12px Chicago, Geneva, sans-serif; color: #b00020; }
         .wallet-zero-card h5 { margin: 8px 0 2px; font: bold 11px Chicago, Geneva, sans-serif; color: #7a0010; }
@@ -2781,6 +2789,7 @@
 <script src="gradebook-client.js"></script>
 <script src="lib/bkt.js" onerror=""></script>
 <script src="lib/flashcard-srs.js" onerror=""></script>
+<script src="lib/class-snapshot.js" onerror=""></script>
 <script src="lib/flashcard-store.js" onerror=""></script>
 <script src="lib/flashcard-flags.js" onerror=""></script>
 <script src="lib/flashcard-sync.js" onerror=""></script>
@@ -9082,7 +9091,11 @@ async function renderDoNowGrades(baseUrl, token) {
       tip += ' — ' + lGraded + ' of ' + lTotal + ' lesson' + (lTotal === 1 ? '' : 's') + ' graded';
       if (lDue != null) tip += ' (' + lDue + ' due so far)';
     }
-    pill.title = tip;
+    pill.title = tip + ' — tap to see where you stand in the class';
+    pill.style.cursor = 'pointer';
+    pill.setAttribute('role', 'button'); pill.tabIndex = 0;
+    pill.onclick = function () { if (typeof openWallet === 'function') openWallet(); };
+    pill.onkeydown = function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (typeof openWallet === 'function') openWallet(); } };
     host.appendChild(pill);
     if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill();
 
@@ -15046,6 +15059,7 @@ function _walletRefreshZeroCard() {
         if (!ov || ov.style.display === 'none' || ov.style.display === '') return;
         var host = document.getElementById('wallet-content');
         if (host && typeof _walletPrependZeroCard === 'function') _walletPrependZeroCard(host);
+        if (host && typeof _walletPrependSnapshot === 'function') _walletPrependSnapshot(host);
     } catch (_) {}
 }
 
@@ -15598,6 +15612,105 @@ function _updateDoNowMissingPill() {
     pill.textContent = '\u26A0 ' + warns.length + ' missing';
     pill.title = _zeroCountText(warns) + ' — click to see what to finish';
 }
+// ── CLASS SNAPSHOT — "Where you stand" (CLASS_SNAPSHOT_SPEC.md, teacher 2026-09-26) ──
+// Every signed-in student sees the class's current quarter grades drawn as the graph the class
+// has learned so far (dot plot / stem-and-leaf / box plot), with their own value in red. Data =
+// GET /class/snapshot (anonymous, rounded values only). The renderer lives in lib/class-snapshot.js
+// (shared with the teacher workspace). Never throws; renders nothing when the lib or data is absent.
+var SNAPSHOT_TTL_MS = 5 * 60 * 1000;
+var _snapState = { section: null, data: null, fetchedAt: 0, inflight: null, mode: null, error: null };
+
+function _snapSection() {
+    try { var who = window.rosterClient && window.rosterClient.current && window.rosterClient.current(); return (who && who.section) || null; } catch (_) { return null; }
+}
+function _snapCurrentQuarterKey() {
+    try {
+        var n = (typeof quarterOfDate === 'function') ? quarterOfDate((typeof tdy === 'function') ? tdy() : new Date()) : 0;
+        return n ? 'Q' + n : 'Q1';
+    } catch (_) { return 'Q1'; }
+}
+function _snapOwnGrade() {
+    try {
+        var q = (typeof _gradeQuartersCache !== 'undefined') ? _gradeQuartersCache : null;
+        var cur = q && q[_snapCurrentQuarterKey()];
+        return cur && typeof cur.quarterGrade === 'number' ? cur.quarterGrade : null;
+    } catch (_) { return null; }
+}
+function _snapModes() {
+    var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+    var period = (typeof cP === 'string') ? cP : null;
+    return ClassSnapshot.mode(lessons, period, _zeroTodayIso());
+}
+function _snapFetch() {
+    var section = _snapSection();
+    if (!section) return Promise.resolve(null);
+    if (_snapState.data && _snapState.section === section && (Date.now() - _snapState.fetchedAt) < SNAPSHOT_TTL_MS) return Promise.resolve(_snapState.data);
+    if (_snapState.inflight) return _snapState.inflight;
+    var cfg = (typeof _reviewCfg === 'function') ? _reviewCfg() : { token: null, base: null };
+    if (!cfg.token || !cfg.base) return Promise.resolve(null);
+    _snapState.inflight = fetch(cfg.base + '/class/snapshot?section=' + encodeURIComponent(section), { headers: { Authorization: 'Bearer ' + cfg.token } })
+        .then(function (res) { return res.status === 200 ? res.json() : null; })
+        .then(function (data) {
+            if (data && data.ok) { _snapState.data = data; _snapState.section = section; _snapState.fetchedAt = Date.now(); _snapState.error = null; }
+            else _snapState.error = 'unavailable';
+            return _snapState.data;
+        })
+        .catch(function () { _snapState.error = 'unavailable'; return _snapState.data; })
+        .finally(function () { _snapState.inflight = null; });
+    return _snapState.inflight;
+}
+// Build (or refresh) the card and keep it at the very top of the ledger.
+function _walletPrependSnapshot(host) {
+    try {
+        if (!host || typeof ClassSnapshot === 'undefined') return;
+        if (typeof _deskIsTeacher === 'function' && _deskIsTeacher()) return;   // the teacher has the workspace view
+        if (!_snapSection()) return;
+        var card = host.querySelector('.wallet-snapshot-card');
+        if (!card) {
+            card = document.createElement('div');
+            card.className = 'wallet-snapshot-card';
+            var h = document.createElement('h4'); h.className = 'snap-title'; card.appendChild(h);
+            var tabs = document.createElement('div'); tabs.className = 'snap-tabs'; card.appendChild(tabs);
+            var canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 120; canvas.setAttribute('role', 'img'); card.appendChild(canvas);
+            var cap = document.createElement('div'); cap.className = 'snap-caption geneva'; cap.setAttribute('role', 'status'); card.appendChild(cap);
+            var note = document.createElement('div'); note.className = 'snap-note geneva'; card.appendChild(note);
+        }
+        if (host.firstChild !== card) host.insertBefore(card, host.firstChild);
+        _snapPaint(card);
+        _snapFetch().then(function () { if (card.isConnected) _snapPaint(card); });
+    } catch (_) {}
+}
+function _snapPaint(card) {
+    try {
+        var data = _snapState.data;
+        var section = _snapSection();
+        var modes = _snapModes();
+        if (!_snapState.mode || modes.available.indexOf(_snapState.mode) < 0) _snapState.mode = modes.default;
+        var title = card.querySelector('.snap-title');
+        title.textContent = 'Where you stand — ' + String(section || '').replace('Period', 'Period ') + (data && data.n ? ', ' + data.n + ' students' : '');
+        var tabs = card.querySelector('.snap-tabs');
+        tabs.textContent = '';
+        tabs.hidden = !modes.tabs;
+        modes.available.forEach(function (m) {
+            var b = document.createElement('button'); b.type = 'button'; b.className = 's7btn'; b.style.cssText = 'font-size:10px;padding:1px 6px';
+            b.textContent = ClassSnapshot.LABEL[m]; b.setAttribute('aria-pressed', String(m === _snapState.mode));
+            b.onclick = function () { _snapState.mode = m; _snapPaint(card); };
+            tabs.appendChild(b);
+        });
+        var own = _snapOwnGrade();
+        var values = data ? data.values : [];
+        var canvas = card.querySelector('canvas');
+        ClassSnapshot.draw(canvas, { values: values, own: own, mode: _snapState.mode });
+        var hasGap = (typeof _zeroCurrentWarnings === 'function') && _zeroCurrentWarnings().length > 0;
+        var cap = card.querySelector('.snap-caption');
+        cap.textContent = data ? ClassSnapshot.caption({ values: values, own: own, mode: _snapState.mode, hasGap: hasGap })
+            : (_snapState.error ? 'Class picture unavailable right now.' : 'Loading the class picture…');
+        canvas.setAttribute('aria-label', cap.textContent);
+        var note = card.querySelector('.snap-note');
+        note.textContent = data && data.n ? 'One mark per classmate, no names. Red = you. Grades count only work due so far.' : '';
+    } catch (_) {}
+}
+
 function _walletPrependZeroCard(host) {
     try {
         if (!host) return;
@@ -17584,18 +17697,19 @@ async function renderWallet() {
     // Instant paint from the local cache, then merge durable receipts and repaint.
     _walletPaint(host, _readDeskReceipts(), true);
     _walletPrependZeroCard(host);
+    _walletPrependSnapshot(host);
     try {
         var loaded = await Promise.all([_walletLoadReceipts(), _walletFetchBonusReceipts()]);
         var merged = loaded[0].concat(loaded[1]);
         var ov = document.getElementById('app-wallet-overlay');
-        if (ov && ov.style.display !== 'none') { _walletPaint(host, merged, false); _walletPrependZeroCard(host); }
+        if (ov && ov.style.display !== 'none') { _walletPaint(host, merged, false); _walletPrependZeroCard(host); _walletPrependSnapshot(host); }
         // ANDROID Phase 2: compute the signed-ledger verification summary once, then
         // repaint so the 🔐 chip appears (best-effort; no-op in view-as / offline).
         if (typeof _phase2RefreshVerifySummary === 'function') {
             try { if (typeof _phase2RegisterIssuer === 'function') _phase2RegisterIssuer(_phase2BaseUrl); } catch (_) {}
             _phase2RefreshVerifySummary(function () {
                 var ov2 = document.getElementById('app-wallet-overlay');
-                if (ov2 && ov2.style.display !== 'none') { _walletPaint(host, merged, false); _walletPrependZeroCard(host); }
+                if (ov2 && ov2.style.display !== 'none') { _walletPaint(host, merged, false); _walletPrependZeroCard(host); _walletPrependSnapshot(host); }
             });
         }
     } catch (_) {}
@@ -25887,7 +26001,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-2qkr';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-zgrc';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

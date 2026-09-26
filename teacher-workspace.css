@@ -60,3 +60,9 @@
 
 #workspace-evidence .workspace-empty { margin: .65rem 0; padding: 0; text-align: left; }
 #workspace-evidence .workspace-saved-item { margin-top: 1.5rem; }
+
+/* CLASS_SNAPSHOT_SPEC.md — "Where the class stands" */
+.workspace-snapshot-box { margin: 8px 0 12px; }
+.workspace-snapshot-box h3 { margin: 0 0 4px; font-size: 12px; }
+.workspace-snapshot-box canvas { display: block; max-width: 100%; height: auto; border: 1px solid #000; background: #fff; }
+.workspace-nav [aria-pressed="true"] { background: #000; color: #fff; }

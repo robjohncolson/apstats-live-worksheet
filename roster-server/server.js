@@ -27,6 +27,7 @@ import { mountTranscript } from './transcript.js';
 import { mountCommits } from './commits.js';
 import { mountMastery } from './mastery.js';
 import { mountClass } from './class.js';
+import { mountClassSnapshot } from './class-snapshot.js';
 import { mountReview } from './review.js';
 import { mountTeacherStudent } from './teacher.js';
 import { mountRemediation } from './remediation.js';
@@ -1164,13 +1165,14 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // /mastery). Auth = x-teacher-secret (mirrors /roster/list); reuses pure
   // computeGrade / computeMastery so the math has a single source.
   if (db && ledgerDb && loadAnswerKey) {
-    mountClass(app, {
+    const computeClassGrades = mountClass(app, {
       db, ledgerDb, loadAnswerKey: _gradingLoadAnswerKey, loadSkillMap, bkt,
       lessonSchedule: _sched, eventSchedule: _events, config: gradeConfig,
       worksheetBlankCounts: worksheetBlankCounts || null,
       verifyToken, resolveUsername: resolveReceiptUsername,
       ..._blooketBundle,
     });
+    mountClassSnapshot(app, { db, verifyToken, computeClassGrades, config: gradeConfig });
   }
 
   // ── Teacher Student Console (Phase 1+2A of TEACHER_STUDENT_CONSOLE_SPEC.md) ─

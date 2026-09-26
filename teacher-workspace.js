@@ -6,6 +6,9 @@
   var students = [], state = 'idle', active = 'class', studentTab = 'overview';
   var student = null, studentRequest = 0, returnFocus = null;
   var itemLabels = {}, worksheetPaths = {}, recentRows = [];
+  // CLASS_SNAPSHOT_SPEC.md — the smartboard view: one anonymous plot per section, no dot until a
+  // row's "plot" button places one. Data from GET /class/snapshot (values only).
+  var snapshotData = {}, snapshotMode = null, snapshotHighlight = null, snapshotRequest = 0;
 
   function node(tag, text, className) {
     var el = document.createElement(tag);
@@ -62,6 +65,64 @@
     if (detail) item.appendChild(node('span', detail, 'dim'));
     host.appendChild(item); return item;
   }
+  function quarterGradeOf(stub) {
+    var q = stub && stub.quarters;
+    if (!q) return null;
+    var keys = Object.keys(q).filter(function (k) { return q[k] && typeof q[k].quarterGrade === 'number'; }).sort();
+    return keys.length ? q[keys[keys.length - 1]].quarterGrade : null;
+  }
+  function snapshotSections() {
+    var chosen = $('workspace-period') && $('workspace-period').value;
+    if (chosen) return [chosen];
+    var seen = {};
+    students.forEach(function (s) { if (s.section) seen[s.section] = true; });
+    return Object.keys(seen).sort();
+  }
+  function fetchSnapshot(section) {
+    if (!window.svcUrl || !window.teacherAuthHeaders) return Promise.resolve(null);
+    return fetch(window.svcUrl() + '/class/snapshot?section=' + encodeURIComponent(section), { headers: window.teacherAuthHeaders() })
+      .then(function (res) { return res.status === 200 ? res.json() : null; })
+      .catch(function () { return null; });
+  }
+  function renderSnapshot() {
+    var host = $('workspace-snapshot');
+    if (!host || typeof window.ClassSnapshot === 'undefined') return;
+    host.textContent = '';
+    if (state !== 'ready') return;
+    var sections = snapshotSections();
+    if (!sections.length) { message(host, 'Load a class to see the picture.'); return; }
+    var modes = ['dot', 'stem', 'box'];
+    if (!snapshotMode) snapshotMode = 'dot';
+    var tabs = node('div', null, 'workspace-nav');
+    modes.forEach(function (m) {
+      var b = button(window.ClassSnapshot.LABEL[m], function () { snapshotMode = m; renderSnapshot(); });
+      b.setAttribute('aria-pressed', String(m === snapshotMode));
+      tabs.appendChild(b);
+    });
+    if (snapshotHighlight) tabs.appendChild(button('clear dot', function () { snapshotHighlight = null; renderSnapshot(); }));
+    host.appendChild(tabs);
+    var request = ++snapshotRequest;
+    sections.forEach(function (section) {
+      var box = node('div', null, 'workspace-snapshot-box');
+      box.appendChild(node('h3', section.replace('Period', 'Period ')));
+      var canvas = document.createElement('canvas'); canvas.width = 420; canvas.height = 150; canvas.setAttribute('role', 'img');
+      box.appendChild(canvas);
+      var cap = node('p', 'Loading…', 'dim'); box.appendChild(cap);
+      host.appendChild(box);
+      var paint = function (data) {
+        if (request !== snapshotRequest) return;
+        if (!data || !data.ok) { cap.textContent = 'Class picture unavailable.'; return; }
+        var own = snapshotHighlight && snapshotHighlight.section === section ? snapshotHighlight.value : null;
+        window.ClassSnapshot.draw(canvas, { values: data.values, own: own, mode: snapshotMode });
+        var text = window.ClassSnapshot.caption({ values: data.values, own: own, mode: snapshotMode, hasGap: false });
+        if (own != null && snapshotHighlight.name) text = text.replace('You: ', snapshotHighlight.name + ': ');
+        cap.textContent = data.n + ' students — ' + text.replace(' Every score here can still move.', '');
+        canvas.setAttribute('aria-label', cap.textContent);
+      };
+      if (snapshotData[section]) paint(snapshotData[section]);
+      else fetchSnapshot(section).then(function (data) { if (data) snapshotData[section] = data; paint(data); });
+    });
+  }
   function render() {
     var roster = $('workspace-roster'), attention = $('workspace-attention-list'), feed = $('workspace-feed');
     [roster, attention, feed].forEach(function (el) { el.textContent = ''; });
@@ -81,6 +142,12 @@
       var summary = !work || !work.available ? 'Saved-work summary unavailable' : last ? label(last) : 'No saved submissions yet';
       var item = row(roster, s, summary, last ? 'Last saved ' + when(last.recordedAt) : (s.section || 'No period'));
       if (gaps.length) item.appendChild(node('span', gaps.length + ' due items without a grade', 'workspace-tag'));
+      var grade = quarterGradeOf(s);
+      if (typeof grade === 'number') {
+        var plot = button('plot', function (event) { event.stopPropagation(); snapshotHighlight = { section: s.section, value: grade, name: s.realName || s.username }; renderSnapshot(); });
+        plot.setAttribute('aria-label', 'Place ' + (s.realName || s.username) + ' on the class plot');
+        item.appendChild(plot);
+      }
       function flag(text, detail) { row(attention, s, text, detail); attentionCount++; }
       if (!work || !work.available) { unavailable++; flag('Saved-work data unavailable', 'Retry before interpreting missing work.'); }
       else {
@@ -90,6 +157,7 @@
       if (gaps.length) flag(gaps.length + ' due items without a grade', gaps.slice(0, 3).map(function (c) { return c.title; }).join(' · '));
       if (!s.schoologyUid) flag('Schoology account needs linking', 'Open Account to check the connection.');
     });
+    renderSnapshot();
     events.sort(function (a, b) { return String(b.work.recordedAt || '').localeCompare(String(a.work.recordedAt || '')); });
     events.slice(0, 100).forEach(function (event) {
       row(feed, event.student, label(event.work) + ' · ' + status(event.work), when(event.work.recordedAt));
@@ -341,7 +409,7 @@
     ['class', 'attention', 'messages', 'recent', 'recovery'].forEach(function (key) {
       var pane = node('div', null, 'workspace-pane'); pane.dataset.workspaceView = key; main.appendChild(pane); panes[key] = pane;
     });
-    panes.class.innerHTML = '<section class="section"><h2>Class</h2><div id="workspace-roster"></div></section><details id="workspace-class-details"><summary>Grades, pacing, and class detail</summary></details>';
+    panes.class.innerHTML = '<section class="section" id="workspace-snapshot-section"><h2>Where the class stands</h2><p class="dim">Current quarter grades, one mark per student, no names. Press a student\'s "plot" button to place their dot.</p><div id="workspace-snapshot"></div></section><section class="section"><h2>Class</h2><div id="workspace-roster"></div></section><details id="workspace-class-details"><summary>Grades, pacing, and class detail</summary></details>';
     panes.attention.innerHTML = '<section class="section"><h2>Needs attention</h2><p class="dim">Flags are based on saved data. A due item without a grade may be unsubmitted or awaiting grading; it does not assign a zero.</p><div id="workspace-attention-list"></div></section>';
     panes.recent.innerHTML = '<section class="section"><h2>Recent work</h2><p class="dim">Last saved work, newest first · up to eight items per student. Offline work appears after it syncs. This is not live activity tracking.</p><div id="workspace-feed"></div></section>';
     panes.recovery.innerHTML = '<section class="section"><h2>Tools & recovery</h2><div id="workspace-tool-buttons" class="workspace-nav"></div><div id="workspace-tool"></div></section>';
@@ -438,6 +506,7 @@
     loading: function () { state = 'loading'; $('workspace-period').disabled = true; render(); },
     failed: function () { state = 'failed'; students = []; $('workspace-period').disabled = false; render(); },
     loaded: function (payload) {
+      snapshotData = {}; snapshotHighlight = null;
       $('workspace-period').disabled = false;
       state = payload && payload.ok ? 'ready' : 'failed'; students = payload && payload.students || [];
       students = students.slice().sort(function (a, b) { return String(a.realName || a.username).localeCompare(String(b.realName || b.username)); });

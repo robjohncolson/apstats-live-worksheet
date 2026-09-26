@@ -321,34 +321,43 @@ export function mountClass(app, {
   app.get('/class/grades', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
+    const payload = await computeClassGrades(req.query);
+    return res.status(payload.ok ? 200 : 500).json(payload);
+  });
+
+  // Shared read-only class gradebook computation; grading math stays in computeGrade.
+  async function computeClassGrades(query, { requireComplete = false } = {}) {
     let answerKeyDoc;
     try { answerKeyDoc = await loadAnswerKey(); }
     catch (err) {
       console.error('GET /class/grades answer-key error:', err);
-      return res.status(500).json({ ok: false, error: 'Could not load answer key' });
+      return { ok: false, error: 'Could not load answer key' };
     }
     const answerKey = answerKeyMapOrNull(answerKeyDoc);
     if (!answerKey) {
       console.error('GET /class/grades answer-key malformed');
-      return res.status(500).json({ ok: false, error: 'Answer key malformed' });
+      return { ok: false, error: 'Answer key malformed' };
     }
 
     // includeStaff=1 keeps teacher accounts in the fan-out (Pacing Overview opt-in).
-    const includeStaff = req.query.includeStaff === '1' || req.query.includeStaff === 'true';
-    const { rows, error } = await listRoster(db, req.query.section, includeStaff);
+    const includeStaff = query.includeStaff === '1' || query.includeStaff === 'true';
+    const { rows, error } = await listRoster(db, query.section, includeStaff);
     if (error) {
       console.error('GET /class/grades roster error:', error);
-      return res.status(500).json({ ok: false, error: 'Database error' });
+      return { ok: false, error: 'Database error' };
     }
 
     const fan = await fanLedger(ledgerDb, rows);
+    if (requireComplete && fan.some(student => student.error)) {
+      return { ok: false, error: 'Database error' };
+    }
 
     const snapshots = new Map();
     if (typeof db.listQuarterSnapshot === 'function') {
       for (const quarter of ['Q1', 'Q2', 'Q3', 'Q4']) {
         const snap = await db.listQuarterSnapshot(quarter);
         if (snap.error && !isSnapshotMissing(snap.error)) {
-          return res.status(500).json({ ok: false, error: 'Database error' });
+          return { ok: false, error: 'Database error' };
         }
         for (const row of snap.data || []) snapshots.set(`${row.student_id}:${quarter}`, row);
       }
@@ -428,16 +437,16 @@ export function mountClass(app, {
         ...computed,
         trainer,
         lastActivityAt,
-        ...(req.query.includeSavedWork === '1' ? { savedWork: summarizeSavedWork(ledgerRows, error) } : {}),
+        ...(query.includeSavedWork === '1' ? { savedWork: summarizeSavedWork(ledgerRows, error) } : {}),
         effort: computeEffort(ledgerRows),   // DOGE wallet: effort points → candy
         gradebook: buildGradebook(computed, { lessonSchedule, eventSchedule, section, todayStr }),
       };
     });
 
-    return res.json({
+    return {
       ok: true,
       asOf: new Date().toISOString(),
-      section: req.query.section || null,
+      section: query.section || null,
       students,
       config: {
         C: config.C,
@@ -445,8 +454,8 @@ export function mountClass(app, {
         frqBand: config.frqBand,
         quarters: config.quarters,
       },
-    });
-  });
+    };
+  }
 
   // ── Quarter close (freeze) + bonus deltas (PC makeup [D]) ─────────────────────
   // The freeze/delta pair. Close SNAPSHOTS each student's quarter grade (the
@@ -833,7 +842,7 @@ export function mountClass(app, {
   // ── GET /class/mastery?section= ─────────────────────────────────────────────
   // Teacher-gated. Fans out computeMastery + builds the class skill heatmap.
   // Only mounts when the diagnostic deps are present (loadSkillMap + bkt).
-  if (!loadSkillMap || !bkt) return;
+  if (!loadSkillMap || !bkt) return computeClassGrades;
 
   app.get('/class/mastery', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
@@ -904,4 +913,5 @@ export function mountClass(app, {
       heatmap: heatmapOut,
     });
   });
+  return computeClassGrades;
 }
