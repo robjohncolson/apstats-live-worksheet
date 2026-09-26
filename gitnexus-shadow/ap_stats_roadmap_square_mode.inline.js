@@ -16071,11 +16071,17 @@ function _renderAssignmentsView(host, teacher) {
             if (!card.isConnected) return;
             body.textContent = '';
             if (!data || !Array.isArray(data.assignments)) { body.textContent = 'Assignment picture unavailable right now.'; return; }
-            // Oldest zero date first: the most overdue assignment is the first thing on screen.
-            var rows = data.assignments.slice().sort(function (x, y) { return x.zeroDate === y.zeroDate ? 0 : (x.zeroDate < y.zeroDate ? -1 : 1); });
-            if (!rows.length) { body.textContent = 'Nothing is counting yet.'; return; }
             var ownCache = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
             var pickSection = teacher ? _snapPickedSection() : null;
+            // Everything counting somewhere, plus what is coming for the viewer's OWN section
+            // (a lesson the other period has had but this one has not is not "soon" here).
+            var viewerSection = pickSection || _snapSection();
+            var rows = data.assignments.filter(function (a) {
+                if (!a.pending) return true;
+                if (!a.zeroDates || !viewerSection) return true;
+                return Boolean(a.zeroDates[viewerSection]);
+            }).sort(function (x, y) { return x.zeroDate === y.zeroDate ? 0 : (x.zeroDate < y.zeroDate ? -1 : 1); });
+            if (!rows.length) { body.textContent = 'Nothing is counting yet.'; return; }
             var pickedName = pickSection ? _snapTeacherPickedName(pickSection) : undefined;
             // Teacher with a pick (either period): that student. Otherwise the viewer's own scores.
             var lessons = pickedName ? _snapTeacherPickedLessons(pickSection) : ownCache;
@@ -26440,7 +26446,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-w8dl';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-1opd';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

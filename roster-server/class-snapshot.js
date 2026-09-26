@@ -48,7 +48,9 @@ export function mergeSnapshots(snapshots, sections) {
   for (const snapshot of snapshots) {
     for (const item of snapshot.assignments || []) {
       const have = byKey.get(item.key);
-      if (!have) { byKey.set(item.key, { ...item, values: item.values.slice(), zeros: item.zeros }); continue; }
+      // Per-section zero dates let a viewer keep only what their own section has been taught.
+      if (!have) { byKey.set(item.key, { ...item, values: item.values.slice(), zeros: item.zeros, zeroDates: { [snapshot.section]: item.zeroDate } }); continue; }
+      have.zeroDates[snapshot.section] = item.zeroDate;
       have.values = have.values.concat(item.values);
       // The pooled zero date is the earliest date it is actually counting somewhere.
       if ((!item.pending && have.pending) || (Boolean(item.pending) === Boolean(have.pending) && item.zeroDate < have.zeroDate)) have.zeroDate = item.zeroDate;

@@ -537,6 +537,8 @@ describe('GET /class/snapshot?section=all (both periods pooled)', () => {
     // so it lends no values and no zeros before its own date
     expect(byKey['1.2:worksheet']).toMatchObject({ n: 6, zeroDate: '2026-09-25', zeros: 6 });
     expect(byKey['1.1:quiz'].pending).toBe(false);
+    expect(byKey['1.1:quiz'].zeroDates).toEqual({ PeriodB: '2026-09-25', PeriodE: '2026-09-23' });
+    expect(byKey['1.2:worksheet'].zeroDates).toEqual({ PeriodB: '2026-09-25', PeriodE: '2026-09-26' });   // E taught it, not yet counting
     // 1.3: taught in both (class day 9/20) but counting nowhere yet → present as pending with the
     // soonest zero date, holding only recorded scores (none in this ledger)
     expect(byKey['1.3:worksheet']).toMatchObject({ pending: true, zeroDate: '2026-10-03', n: 0, values: [], zeros: null });
