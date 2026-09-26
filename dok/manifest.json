@@ -72,5 +72,45 @@
     ],
     "slug": "1.1_1.2_1.4_1.7",
     "standalone": true
+  },
+  "1.4+1.5+1.6+1.8": {
+    "ced_unit": 1,
+    "ced_topic": null,
+    "title": "Candle Tests: Choosing the Evidence",
+    "skill": "4.B",
+    "frq_pattern": "evaluate-display-redundancy-and-exact-value-claims",
+    "worksheet": null,
+    "misconceptions": [
+      "label:explains that a histogram groups data into intervals or bins",
+      "label:uses the superpower context or a correct category example such as telepathy fly or freeze time",
+      "label:explains that a dotplot or stem and leaf plot shows each individual value",
+      "label:states that both graphs display the same superpower categories or same distribution",
+      "label:uses context by referring to flint lead levels or flint water samples"
+    ],
+    "generated": {
+      "by": "weekly-auto",
+      "on": "2026-09-25",
+      "window_days": 14
+    },
+    "topics": [
+      "1.4",
+      "1.5",
+      "1.6",
+      "1.8"
+    ],
+    "worksheets": [
+      "u1_lesson4_live.html",
+      "u1_lesson5_live.html",
+      "u1_lesson6_live.html",
+      "u1_lesson8_live.html"
+    ],
+    "ced_topics": [
+      "1.4",
+      "1.5",
+      "1.6",
+      "1.8"
+    ],
+    "slug": "1.4_1.5_1.6_1.8",
+    "standalone": true
   }
 }
