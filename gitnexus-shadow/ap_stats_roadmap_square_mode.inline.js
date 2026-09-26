@@ -2846,6 +2846,7 @@
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -26292,7 +26293,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-5ge4';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-8mkw';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -402,7 +402,8 @@
         .snap-arow-when { color: #666; font-size: 10px; }
         .snap-arow canvas { display: block; width: 100%; height: auto; margin: 2px 0; }
         .snap-alist { margin: 4px 0 2px; padding: 6px 8px; border: 1px solid var(--black); background: #fffdf3; font-size: 11px; }
-        .snap-alist-seq { font-family: Monaco, 'Courier New', monospace; font-size: 12px; letter-spacing: 1px; word-spacing: 6px; margin: 3px 0; }
+        .snap-alist-seq { font-family: Monaco, 'Courier New', monospace; font-size: 12px; margin: 3px 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+        .snap-alist-seq span { display: inline-block; }
         .snap-alist-you { color: #cc0000; font-weight: bold; text-decoration: underline; }
         .snap-alist-foot { color: #333; font-size: 10px; }
         .snap-arow-focus { background: #fff3f3; }
@@ -26292,7 +26293,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-5ge4';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-8mkw';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
