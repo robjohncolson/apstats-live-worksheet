@@ -28,6 +28,9 @@ const Q13 = { key: '1.3:quiz', lessonKey: '1.3', track: 'quiz', title: '1.3 Quiz
   values: [0, 0, 67, 67, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100], zeros: 2 };
 const B11 = { key: '1.1:blooket', lessonKey: '1.1', track: 'blooket', title: '1.1 Blooket', zeroDate: '2026-09-21', n: 15,
   values: [0, 80, 85, 90, 90, 95, 97, 98, 100, 100, 100, 100, 100, 100, 100], zeros: 1 };
+// Taught, not counting anywhere yet: recorded scores only, becomes a 0 after 9/27.
+const W14 = { key: '1.4:worksheet', lessonKey: '1.4', track: 'worksheet', title: '1.4 Follow-Along', zeroDate: '2026-09-28', pending: true, n: 7,
+  values: [88, 92, 95, 100, 100, 100, 102], zeros: 0 };
 
 describe('lib — assignment caption + mini box plot', () => {
   it('captions a zero as below Q1 and an outlier, and omits the "You" sentence for the teacher view', () => {
@@ -69,7 +72,7 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
     _zeroTodayIso: () => '2026-09-26',
     cP: 'B',
     _renderSnapshotApp() { s.rerenders = (s.rerenders || 0) + 1; },
-    fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, Q13, B11] }) }; },
+    fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, Q13, B11, ...(s.withPending ? [W14] : [])] }) }; },
     openSnapshot() { s.opened = (s.opened || 0) + 1; },
     _zeroOpenLesson(k) { s.openedWork = ['worksheet', k]; }, _zeroOpenQuiz(k) { s.openedWork = ['quiz', k]; }, _zeroOpenFlashcards(_b, k) { s.openedWork = ['blooket', k]; },
   };
@@ -317,7 +320,7 @@ describe('Assignments view — all clear (teacher 2026-09-26: "something I\u2019
     try {
       s._renderAssignmentsView(host(), false);
       await tick(); await tick();
-      expect(host().querySelector('.snap-clear').textContent).toBe('You have no 0s and nothing below Q1 on any of the 3 assignments counting so far. Showing the newest; use Prev to look back.');
+      expect(host().querySelector('.snap-clear').textContent).toBe('You have no 0s, nothing missing, and nothing below Q1 on any of the 3 assignments so far. Showing the newest; use Prev to look back.');
       expect(host().querySelector('.snap-arow').dataset.key).toBe('1.3:quiz');
       expect(host().querySelector('.snap-pager-pos').textContent).toBe('3 of 3');
     } finally { close(); }
@@ -334,6 +337,56 @@ describe('Assignments view — all clear (teacher 2026-09-26: "something I\u2019
       expect(host().querySelector('.snap-clear')).toBeNull();
       expect(host().querySelector('.snap-arow').dataset.key).toBe('1.3:quiz');
       expect(host().querySelector('.snap-advice').textContent).toContain('below Q1');
+    } finally { close(); }
+  });
+});
+
+describe('Assignments view — "becomes a 0 soon" items (teacher 2026-09-26: the card lists 1.3–1.5, the picture showed 1.1–1.3)', () => {
+  it('a pending assignment is in the picture after the counting ones; missing work there is "nothing yet", not a 0, with a dated Do-this-next', async () => {
+    const { s, host, close } = sandbox({ lessons: [
+      { lessonKey: '1.1', hasBlooket: true, blooket: 100 }, { lessonKey: '1.2', lessonGradeNoQuiz: 100 }, { lessonKey: '1.3', quizTotal: 3, Q: 100 },
+    ] });
+    s.withPending = true;
+    try {
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      // the only thing missing is the pending 1.4 → it is the focus, last in date order
+      expect(host().querySelector('.snap-clear')).toBeNull();
+      const row = host().querySelector('.snap-arow');
+      expect(row.dataset.key).toBe('1.4:worksheet');
+      expect(host().querySelector('.snap-pager-pos').textContent).toBe('4 of 4');
+      expect(row.querySelector('.snap-arow-when').textContent).toBe('counts from Mon 9/28');
+      expect(row.querySelector('.snap-caption').textContent).toBe('Median 100 · IQR 8 · 0 zeros. You: nothing yet (counts from Mon 9/28).');
+      expect(row.querySelector('.snap-advice').textContent).toContain('Do this next. It becomes a 0 after Mon 9/28 — turn in anything before then and there is no 0 at all.');
+      expect(row.querySelector('.snap-advice-btn').textContent).toBe('Open the worksheet');
+      // "see the class" from the card lands on it
+      s._snapApp.focusKey = '1.4:worksheet';
+      host().innerHTML = '';
+      s._renderAssignmentsView(host(), false);
+      await tick(); await tick();
+      expect(host().querySelector('.snap-arow').dataset.key).toBe('1.4:worksheet');
+    } finally { close(); }
+  });
+  it('a counting 0 still outranks a pending gap; a picked student with nothing there gets a dated line and no button', async () => {
+    const roster = [{ username: 'x', realName: 'Pat Q', section: 'PeriodE', role: 'student', lessons: [
+      { lessonKey: '1.1', hasBlooket: true, blooket: 100 }, { lessonKey: '1.2', lessonGradeNoQuiz: null }, { lessonKey: '1.3', quizTotal: 3, Q: 100 },
+    ] }];
+    const { s, host, close } = sandbox({ teacher: true, roster, pick: 'x' });
+    s.withPending = true;
+    try {
+      s._renderAssignmentsView(host(), true);
+      await tick(); await tick();
+      expect(host().querySelector('.snap-arow').dataset.key).toBe('1.2:worksheet');      // the real 0 first
+      host().querySelectorAll('.snap-pager button')[1].onclick();                          // Next → 1.3 quiz
+      s._snapApp.aidx.all = 3;
+      host().innerHTML = '';
+      s._renderAssignmentsView(host(), true);
+      await tick(); await tick();
+      const row = host().querySelector('.snap-arow');
+      expect(row.dataset.key).toBe('1.4:worksheet');
+      expect(row.querySelector('.snap-advice').textContent).toBe('Pat Q has nothing here yet — it becomes a 0 after Mon 9/28.');
+      expect(row.querySelector('.snap-advice-btn')).toBeNull();
+      expect(row.querySelector('.snap-caption').textContent).toContain('Pat Q: nothing yet');
     } finally { close(); }
   });
 });

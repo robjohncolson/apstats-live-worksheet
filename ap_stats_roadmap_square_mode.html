@@ -15915,6 +15915,11 @@ function _snapAdvice(a, own, label) {
     var who = label ? label + ' has' : 'You have';
     var track = a.track === 'quiz' ? 'quiz' : a.track === 'blooket' ? 'flashcards' : 'worksheet';
     var action = a.track === 'quiz' ? 'Take the quiz' : a.track === 'blooket' ? 'Run the flashcards' : 'Open the worksheet';
+    if (a.pending && own == null) {
+        var when = _snapZeroDateText(a).replace('counts from ', '');
+        if (label) return { text: label + ' has nothing here yet \u2014 it becomes a 0 after ' + when + '.' };
+        return { text: 'Do this next. It becomes a 0 after ' + when + ' \u2014 turn in anything before then and there is no 0 at all.', action: action, kind: a.track };
+    }
     if (own == null || own === 0) {
         if (label) return { text: label + ' has a 0 here \u2014 the ' + track + ' was never turned in. Any score replaces it.' };
         return { text: 'Do this next. Right now this counts as a 0, the biggest thing pulling your grade down. Any score replaces the 0.', action: action, kind: a.track };
@@ -15981,6 +15986,8 @@ function _snapAssignmentRow(a, own, label) {
     ClassSnapshot.drawMini(canvas, { values: a.values, own: ownForPlot, mode: amode });
     var cap = document.createElement('div'); cap.className = 'snap-caption geneva';
     var text = ClassSnapshot.assignmentCaption(a, label === null ? undefined : ownForPlot);
+    // Not yet counting and nothing turned in: it is not a 0 yet, so the caption must not call it one.
+    if (a.pending && own == null && label !== null) text = ClassSnapshot.assignmentCaption(a) + ' You: nothing yet (' + _snapZeroDateText(a) + ').';
     if (label) text = text.replace('You: ', label + ': ');
     cap.textContent = text; canvas.setAttribute('aria-label', a.title + '. ' + text);
     row.appendChild(cap);
@@ -16039,8 +16046,8 @@ function _snapAssignmentRow(a, own, label) {
 function _renderAssignmentsView(host, teacher) {
     var intro = document.createElement('p'); intro.className = 'snap-intro';
     intro.textContent = teacher
-        ? 'One assignment at a time, both periods pooled, the most overdue first. Red = you (or the student picked on the Class tab). Every score list is anonymous.'
-        : 'One assignment at a time, both periods pooled, the most overdue first. Red = you. Where you have a 0, everyone’s scores are shown — no names, just the numbers.';
+        ? 'One assignment at a time, both periods pooled: what is counting, then what becomes a 0 soon. Red = you (or the student picked on the Class tab). Every score list is anonymous.'
+        : 'One assignment at a time, both periods pooled: what is counting, then what becomes a 0 soon. Red = you. Where you have a 0, everyone’s scores are shown — no names, just the numbers.';
     host.appendChild(intro);
     var modes = teacher ? { available: ['dot', 'stem', 'hist', 'box'], default: 'box', tabs: true } : _snapModes();
     if (!_snapApp.amode || modes.available.indexOf(_snapApp.amode) < 0) _snapApp.amode = modes.default;
@@ -16094,7 +16101,7 @@ function _renderAssignmentsView(host, teacher) {
                 // Nothing to fix anywhere: say so once, above the pager, so a "Nothing to fix here"
                 // row never reads as if it were chosen because something is wrong with it.
                 var clear = document.createElement('div'); clear.className = 'snap-clear geneva';
-                clear.textContent = (label ? label + ' has' : 'You have') + ' no 0s and nothing below Q1 on any of the ' + rows.length + ' assignments counting so far. Showing the newest; use Prev to look back.';
+                clear.textContent = (label ? label + ' has' : 'You have') + ' no 0s, nothing missing, and nothing below Q1 on any of the ' + rows.length + ' assignments so far. Showing the newest; use Prev to look back.';
                 body.appendChild(clear);
             }
             var pager = document.createElement('div'); pager.className = 'snap-pager';
@@ -26433,7 +26440,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-mfzp';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-w8dl';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

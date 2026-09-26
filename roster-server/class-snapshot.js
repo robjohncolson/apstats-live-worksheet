@@ -36,7 +36,9 @@ function summarizeValues(values) {
 export const COURSE_SECTIONS = ['PeriodB', 'PeriodE'];
 
 // Merge per-section snapshots: values pooled, the earliest zero date kept, zeros summed.
-// A lesson contributes only from the sections where it is already counting.
+// A section past its zero date contributes everyone (missing = 0); a section that has taught
+// the lesson but is not yet past its date contributes recorded scores only. An item that is
+// pending everywhere stays in the pool as `pending: true` (its zero date is the soonest).
 export function mergeSnapshots(snapshots, sections) {
   const values = snapshots.flatMap(s => s.values || []).sort((a, b) => a - b);
   const first = snapshots[0] || {};
@@ -49,16 +51,15 @@ export function mergeSnapshots(snapshots, sections) {
       if (!have) { byKey.set(item.key, { ...item, values: item.values.slice(), zeros: item.zeros }); continue; }
       have.values = have.values.concat(item.values);
       // The pooled zero date is the earliest date it is actually counting somewhere.
-      if (!item.pending && (have.pending || item.zeroDate < have.zeroDate)) have.zeroDate = item.zeroDate;
+      if ((!item.pending && have.pending) || (Boolean(item.pending) === Boolean(have.pending) && item.zeroDate < have.zeroDate)) have.zeroDate = item.zeroDate;
       have.pending = Boolean(have.pending && item.pending);
       have.zeros = have.zeros == null || item.zeros == null ? null : have.zeros + item.zeros;
     }
   }
-  merged.assignments = [...byKey.values()].filter(item => !item.pending).map(item => {
+  merged.assignments = [...byKey.values()].map(item => {
     const pooled = item.values.slice().sort((a, b) => a - b);
     const summary = summarizeValues(pooled);
-    const { pending, ...rest } = item;
-    return { ...rest, ...summary, zeros: summary.n < 5 ? null : pooled.filter(v => v === 0).length };
+    return { ...item, pending: Boolean(item.pending), ...summary, zeros: summary.n < 5 ? null : pooled.filter(v => v === 0).length };
   });
   return merged;
 }
@@ -98,7 +99,10 @@ export function mountClassSnapshot(app, { db, verifyToken, computeClassGrades, c
       const zeroDate = lesson.zeroDate?.[period];
       if (!zeroDate) continue;
       const pending = zeroDate >= asOf;
-      if (pending && !pendingScores) continue;
+      // Pooled call: a lesson already TAUGHT in this section (class day passed) but not yet
+      // counting still appears — that is exactly the "becomes a 0 soon" list on the Desk.
+      const taught = lesson.due?.[period] != null && lesson.due[period] <= asOf;
+      if (pending && !(pendingScores && taught)) continue;
 
       const tracks = [];
       if (lesson.worksheetKey) tracks.push(['worksheet', 'Follow-Along']);
