@@ -15959,6 +15959,11 @@ function _snapFocus(rows, owns, label) {
     return { index: rows.length - 1, clear: true };
 }
 function _snapFocusIndex(rows, owns, label) { return _snapFocus(rows, owns, label).index; }
+// Whole days from today to an ISO date (negative = past), on the Desk's clock.
+function _snapDaysUntil(iso) {
+    try { return Math.round((new Date(iso + 'T00:00:00') - new Date(_zeroTodayIso() + 'T00:00:00')) / 86400000); }
+    catch (_) { return Infinity; }
+}
 // The section whose Class-tab pick should be placed on the pooled picture (first with a pick).
 function _snapPickedSection() {
     var keys = Object.keys(_snapApp.pick || {});
@@ -16073,13 +16078,15 @@ function _renderAssignmentsView(host, teacher) {
             if (!data || !Array.isArray(data.assignments)) { body.textContent = 'Assignment picture unavailable right now.'; return; }
             var ownCache = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
             var pickSection = teacher ? _snapPickedSection() : null;
-            // Everything counting somewhere, plus what is coming for the viewer's OWN section
-            // (a lesson the other period has had but this one has not is not "soon" here).
+            // Everything counting somewhere, plus what becomes a 0 soon for the viewer's OWN
+            // section — the same window the Missing-work card uses (ZERO_WARN_DAYS), so the two
+            // lists agree. A lesson the other period has had but this one has not is not "soon".
             var viewerSection = pickSection || _snapSection();
             var rows = data.assignments.filter(function (a) {
                 if (!a.pending) return true;
                 if (!a.zeroDates || !viewerSection) return true;
-                return Boolean(a.zeroDates[viewerSection]);
+                var zd = a.zeroDates[viewerSection];
+                return Boolean(zd) && _snapDaysUntil(zd) <= ZERO_WARN_DAYS;
             }).sort(function (x, y) { return x.zeroDate === y.zeroDate ? 0 : (x.zeroDate < y.zeroDate ? -1 : 1); });
             if (!rows.length) { body.textContent = 'Nothing is counting yet.'; return; }
             var pickedName = pickSection ? _snapTeacherPickedName(pickSection) : undefined;
@@ -26446,7 +26453,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-1opd';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-26-5c3p';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

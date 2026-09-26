@@ -30,10 +30,13 @@ const B11 = { key: '1.1:blooket', lessonKey: '1.1', track: 'blooket', title: '1.
   values: [0, 80, 85, 90, 90, 95, 97, 98, 100, 100, 100, 100, 100, 100, 100], zeros: 1 };
 // Taught, not counting anywhere yet: recorded scores only, becomes a 0 after 9/27.
 const W14 = { key: '1.4:worksheet', lessonKey: '1.4', track: 'worksheet', title: '1.4 Follow-Along', zeroDate: '2026-09-28', pending: true, n: 7,
-  values: [88, 92, 95, 100, 100, 100, 102], zeros: 0, zeroDates: { PeriodB: '2026-09-28', PeriodE: '2026-09-30' } };
+  values: [88, 92, 95, 100, 100, 100, 102], zeros: 0, zeroDates: { PeriodB: '2026-09-28', PeriodE: '2026-09-29' } };
 // Taught only in Period E so far: a Period B viewer must not see it as "soon".
-const W16 = { key: '1.6:worksheet', lessonKey: '1.6', track: 'worksheet', title: '1.6 Follow-Along', zeroDate: '2026-10-02', pending: true, n: 6,
-  values: [90, 95, 100, 100, 100, 100], zeros: 0, zeroDates: { PeriodE: '2026-10-02' } };
+const W16 = { key: '1.6:worksheet', lessonKey: '1.6', track: 'worksheet', title: '1.6 Follow-Along', zeroDate: '2026-09-29', pending: true, n: 6,
+  values: [90, 95, 100, 100, 100, 100], zeros: 0, zeroDates: { PeriodE: '2026-09-29' } };
+// Taught in both, but B's zero date is 5 days out: outside the card's 3-day window for B, inside for nobody.
+const W17 = { key: '1.7:worksheet', lessonKey: '1.7', track: 'worksheet', title: '1.7 Follow-Along', zeroDate: '2026-10-01', pending: true, n: 6,
+  values: [90, 95, 100, 100, 100, 100], zeros: 0, zeroDates: { PeriodB: '2026-10-01', PeriodE: '2026-10-02' } };
 
 describe('lib — assignment caption + mini box plot', () => {
   it('captions a zero as below Q1 and an outlier, and omits the "You" sentence for the teacher view', () => {
@@ -75,14 +78,14 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
     _zeroTodayIso: () => '2026-09-26',
     cP: 'B',
     _renderSnapshotApp() { s.rerenders = (s.rerenders || 0) + 1; },
-    fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, Q13, B11, ...(s.withPending ? [W14, W16] : [])] }) }; },
+    fetch: async (url) => { calls.push(url); return { status, json: async () => ({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, Q13, B11, ...(s.withPending ? [W14, W16, W17] : [])] }) }; },
     openSnapshot() { s.opened = (s.opened || 0) + 1; },
     _zeroOpenLesson(k) { s.openedWork = ['worksheet', k]; }, _zeroOpenQuiz(k) { s.openedWork = ['quiz', k]; }, _zeroOpenFlashcards(_b, k) { s.openedWork = ['blooket', k]; },
   };
   createContext(s);
   runInContext(
-    "var SNAPSHOT_TTL_MS = 300000;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    "var SNAPSHOT_TTL_MS = 300000;\nvar ZERO_WARN_DAYS = 3;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
+    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
@@ -395,7 +398,7 @@ describe('Assignments view — "becomes a 0 soon" items (teacher 2026-09-26: the
 });
 
 describe('Assignments view — pending rows follow the viewer\u2019s own section', () => {
-  it('a Period B student sees the pending lesson B has been taught, not the one only E has had', async () => {
+  it('a Period B student sees the pending lesson inside B\u2019s 3-day window, not the one only E has had nor one 5 days out', async () => {
     const { s, host, close } = sandbox({ lessons: [
       { lessonKey: '1.1', hasBlooket: true, blooket: 100 }, { lessonKey: '1.2', lessonGradeNoQuiz: 100 }, { lessonKey: '1.3', quizTotal: 3, Q: 100 }, { lessonKey: '1.4', lessonGradeNoQuiz: 100 },
     ] });
@@ -405,6 +408,8 @@ describe('Assignments view — pending rows follow the viewer\u2019s own section
       s._renderAssignmentsView(host(), false);
       await tick(); await tick();
       expect([...host().querySelectorAll('.snap-arow')].map(r => r.dataset.key)).toEqual(['1.1:blooket', '1.2:worksheet', '1.3:quiz', '1.4:worksheet']);
+      expect(s._snapDaysUntil('2026-09-29')).toBe(3);
+      expect(s._snapDaysUntil('2026-09-25')).toBe(-1);
     } finally { close(); }
   });
   it('a picked Period E student brings E\u2019s pending lessons instead', async () => {
