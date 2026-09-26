@@ -76,4 +76,38 @@ if ($Apply) {
     }
   } catch { Write-Output 'Weekly DOK issue alert skipped' }
 }
+# Slips are best-effort and must never change the DOK job's exit code.
+try {
+  $ErrorActionPreference = 'Stop'
+  $slipDate = Get-Date -Format 'yyyy-MM-dd'
+  $slipArgs = @((Join-Path $repo 'scripts/weekly-slips.mjs'), '--date', $slipDate)
+  if (-not $Apply) { $slipArgs += '--dry-run' }
+  $slipOutput = @(& node @slipArgs 2>&1 | ForEach-Object { "$_" })
+  if ($LASTEXITCODE -ne 0) { throw 'Slips build failed' }
+  $slipLine = $slipOutput | Where-Object { $_ -match '^Slips: ' } | Select-Object -Last 1
+  if (-not $slipLine) { throw 'Slips summary missing' }
+} catch {
+  $slipLine = 'Slips: unavailable; run node scripts/weekly-slips.mjs manually for details.'
+}
+Write-Output $slipLine
+if ($Apply) {
+  try {
+    $briefDir = Join-Path $repo 'state/weekly-dok'
+    New-Item -ItemType Directory -Force -Path $briefDir | Out-Null
+    $briefPath = Join-Path $briefDir ($slipDate + '-brief.md')
+    # The DOK job publishes its brief from a temporary worktree. Read that version
+    # when the main checkout has not yet received it, then append locally.
+    if (-not (Test-Path -LiteralPath $briefPath)) {
+      $ErrorActionPreference = 'Continue'
+      $publishedBrief = @(& git -C $repo show ("origin/master:state/weekly-dok/$slipDate-brief.md") 2>$null)
+      $ErrorActionPreference = 'Stop'
+      if ($LASTEXITCODE -eq 0) {
+        [IO.File]::WriteAllText($briefPath, ($publishedBrief -join "`n") + "`n", [Text.UTF8Encoding]::new($false))
+      } else {
+        [IO.File]::WriteAllText($briefPath, "# Weekly DOK brief: $slipDate`n", [Text.UTF8Encoding]::new($false))
+      }
+    }
+    [IO.File]::AppendAllText($briefPath, "$slipLine`n", [Text.UTF8Encoding]::new($false))
+  } catch { Write-Output 'Slips: brief append skipped.' }
+}
 exit $code
