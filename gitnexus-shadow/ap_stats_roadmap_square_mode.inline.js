@@ -2901,6 +2901,7 @@
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -9016,9 +9017,10 @@ function _gradePillRule(pcAvg, workAvg, pcDay, pcOnFile) {
   var k = function (text) { return { track: true, text: text }; };
   if (!hasPc && !hasWork) return [];
   if (!hasPc) {
-    if (pcDay) return [t('= '), k(work), t(' (PC counts from ' + pcDay + ')')];
-    if (pcOnFile) return [t('= '), k(work), t(' (PC not counting yet)')];
-    return [t('= '), k(work)];
+    // The PC track is always named (teacher 2026-09-27: "where's the PC track? should show —").
+    if (pcDay) return [t('= '), k(work), t(' · '), k('PC \u2014'), t(' (counts from ' + pcDay + ')')];
+    if (pcOnFile) return [t('= '), k(work), t(' · '), k('PC \u2014'), t(' (not counting yet)')];
+    return [t('= '), k(work), t(' · '), k('PC \u2014'), t(' (none yet)')];
   }
   if (!hasWork) return [t('= '), k(pc)];
   var pcLow = pcAvg < floor, workLow = workAvg < floor;
@@ -9026,6 +9028,77 @@ function _gradePillRule(pcAvg, workAvg, pcDay, pcOnFile) {
   if (pcLow && workLow) return [t('· '), k(work), t(' and '), k(pc), t(' are under ' + floor + '% → penalized until both reach ' + floor)];
   var low = workLow ? work : pc, other = workLow ? pc : work;
   return [t('· '), k(low), t(' is under ' + floor + '% → penalized until it reaches ' + floor + ' ('), k(other), t(')')];
+}
+
+// Mirrors of the server's weights (roster-server/lesson-grade.js V3_WORK_WEIGHTS and
+// roster-server/gradebook-grid.js SCHOOLOGY_CATEGORY_WEIGHTS) — pinned equal by a test.
+var DESK_V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
+var DESK_SCHOOLOGY_WEIGHTS = { Lesson: 15, Quizzes: 15, Blooket: 5, 'Progress Check': 50, Posters: 15 };
+// The grade, shown as the system it is (teacher 2026-09-27: "explain using a system of
+// inequalities … and why Schoology is different from either Work or PC"). Pure: returns lines.
+//   ctx: { grade, pcAvg, workAvg, pcDay, pcOnFile, workTracks, schoologyTotal, categoryAverages }
+function _gradeMathLines(ctx) {
+  var lines = [];
+  var n = function (v) { return (typeof v === 'number') ? String(Math.round(v * 10) / 10) : '\u2014'; };
+  var hasPc = typeof ctx.pcAvg === 'number', hasWork = typeof ctx.workAvg === 'number';
+  lines.push('Work = ' + n(ctx.workAvg) + '   PC = ' + n(ctx.pcAvg) + (hasPc ? '' : ctx.pcDay ? '  (counts from ' + ctx.pcDay + ')' : ctx.pcOnFile ? '  (not counting yet)' : '  (none yet)'));
+  // How the Work track is built.
+  var wt = ctx.workTracks || null;
+  if (wt && hasWork) {
+    var parts = [], num = 0, den = 0;
+    [['lessons', 'worksheets'], ['quizzes', 'quizzes'], ['blooket', 'flashcards'], ['posters', 'posters']].forEach(function (p) {
+      var v = wt[p[0]];
+      if (typeof v !== 'number') return;
+      var w = DESK_V3_WORK_WEIGHTS[p[0]];
+      parts.push(Math.round(w * 100) + '\u00b7' + n(v) + ' (' + p[1] + ')');
+      num += w * v; den += w;
+    });
+    if (den > 0) lines.push('Work = [' + parts.join(' + ') + '] / ' + Math.round(den * 100) + ' = ' + n(num / den) + (den < 0.999 ? '   (posters join later)' : ''));
+  }
+  // The rule.
+  lines.push('If Work \u2265 40 and PC \u2265 40:  Grade = max(Work, PC)');
+  lines.push('Otherwise:  Grade = max(0.7\u00b7Work, 0.7\u00b7PC, (Work + PC) / 2)');
+  // This student, plugged in.
+  if (hasPc && hasWork) {
+    var w = ctx.workAvg, p = ctx.pcAvg;
+    if (w >= 40 && p >= 40) lines.push('Here: ' + n(w) + ' \u2265 40 and ' + n(p) + ' \u2265 40  \u2192  Grade = max(' + n(w) + ', ' + n(p) + ') = ' + n(Math.max(w, p)));
+    else lines.push('Here: ' + (w < 40 ? 'Work ' + n(w) + ' < 40' : 'PC ' + n(p) + ' < 40') + '  \u2192  Grade = max(' + n(0.7 * w) + ', ' + n(0.7 * p) + ', ' + n((w + p) / 2) + ') = ' + n(Math.max(0.7 * w, 0.7 * p, (w + p) / 2)));
+  } else if (hasWork) {
+    lines.push('Here: PC is not counting yet, so Grade = Work = ' + n(ctx.workAvg));
+  } else if (hasPc) {
+    lines.push('Here: no Work yet, so Grade = PC = ' + n(ctx.pcAvg));
+  }
+  // Why Schoology differs.
+  if (typeof ctx.schoologyTotal === 'number') {
+    var ca = ctx.categoryAverages || {}, terms = [], den2 = 0;
+    Object.keys(DESK_SCHOOLOGY_WEIGHTS).forEach(function (cat) {
+      if (typeof ca[cat] !== 'number') return;
+      terms.push(n(ca[cat]) + '\u00d7' + DESK_SCHOOLOGY_WEIGHTS[cat] + ' (' + cat + ')');
+      den2 += DESK_SCHOOLOGY_WEIGHTS[cat];
+    });
+    var missing = Object.keys(DESK_SCHOOLOGY_WEIGHTS).filter(function (cat) { return typeof ca[cat] !== 'number'; });
+    lines.push('Schoology today = ' + n(ctx.schoologyTotal) + (terms.length ? ' = [' + terms.join(' + ') + '] / ' + den2 : ''));
+    lines.push('Schoology is different because it averages only the columns already in Schoology, by category weight'
+      + (missing.length ? ' (' + missing.join(', ') + ' join when their columns open)' : '')
+      + '; it leaves out work done ahead of the calendar and uses different weights from the Desk\u2019s Work track. The Desk number is the one that follows the rule above.');
+  }
+  return lines;
+}
+function _gradeMathToggle(host, ctx) {
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 's7btn qmath-toggle';
+  btn.style.cssText = 'font-size:10px;padding:1px 6px;margin-left:8px;align-self:center';
+  btn.textContent = 'show the math'; btn.setAttribute('aria-expanded', 'false');
+  var panel = document.createElement('pre');
+  panel.className = 'qmath geneva'; panel.hidden = true;
+  panel.textContent = _gradeMathLines(ctx).join('\n');
+  btn.onclick = function (event) {
+    event.stopPropagation();
+    panel.hidden = !panel.hidden;
+    btn.textContent = panel.hidden ? 'show the math' : 'hide the math';
+    btn.setAttribute('aria-expanded', String(!panel.hidden));
+  };
+  host.appendChild(btn); host.appendChild(panel);
 }
 
 async function renderDoNowGrades(baseUrl, token) {
@@ -9263,6 +9336,16 @@ async function renderDoNowGrades(baseUrl, token) {
     host.appendChild(_trackChip('Schoology today', schToday,
       'What the Schoology gradebook shows for ' + curQ + ' as of today: only work that is due AND completed. ' +
       'Blanks are not zeros and work done ahead of schedule is not counted until it comes due.'));
+    if (gradeRaw != null) {
+      var _mathPc = null;
+      try { _mathPc = (typeof _effortFacts === 'function') ? _effortFacts(curQ).pc : null; } catch (_) { _mathPc = null; }
+      _gradeMathToggle(host, {
+        grade: gradeRaw, pcAvg: pcAvg, workAvg: workAvg,
+        pcDay: (_mathPc && !_mathPc.counting && _mathPc.day) ? _mathPc.day : null, pcOnFile: Boolean(_mathPc),
+        workTracks: (q && q.workTracks) || null,
+        schoologyTotal: schToday, categoryAverages: (_gbq && _gbq.categoryAverages) || null,
+      });
+    }
 
     // Early-completion bonus: +1 point per lesson finished by 11:59 PM on its due
     // day (capped per quarter). Ahead-of-schedule lessons earn theirs once due.
@@ -27069,7 +27152,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-fra6';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-xfve';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

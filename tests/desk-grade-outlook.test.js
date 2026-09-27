@@ -245,8 +245,8 @@ describe('the pill rule, in words (EFFORT_VISIBILITY_V2_SPEC §3)', () => {
   const text = (pieces) => pieces.map(p => p.text).join('');
   const tracks = (pieces) => pieces.filter(p => p.track).map(p => p.text);
   it('PC not counting yet, a PC on file: Work only, with the day the PC counts', () => {
-    expect('Q1 86 ' + text(rule(null, 84.4, 'Tue 10/13', true))).toBe('Q1 86 = Work 84 (PC counts from Tue 10/13)');
-    expect(tracks(rule(null, 84.4, 'Tue 10/13', true))).toEqual(['Work 84']);
+    expect('Q1 86 ' + text(rule(null, 84.4, 'Tue 10/13', true))).toBe('Q1 86 = Work 84 \u00b7 PC \u2014 (counts from Tue 10/13)');
+    expect(tracks(rule(null, 84.4, 'Tue 10/13', true))).toEqual(['Work 84', 'PC —']);
   });
   it('both tracks at least 40: the higher of the two', () => {
     expect('Q1 94 ' + text(rule(94.2, 61.4, null, true))).toBe('Q1 94 = higher of Work 61 · PC 94');
@@ -259,9 +259,44 @@ describe('the pill rule, in words (EFFORT_VISIBILITY_V2_SPEC §3)', () => {
     expect(text(rule(30, 35))).toBe('· Work 35 and PC 30 are under 40% → penalized until both reach 40');
   });
   it('no PC on file at all: Work only; no tracks at all: nothing', () => {
-    expect('Q1 86 ' + text(rule(null, 86))).toBe('Q1 86 = Work 86');
-    expect(text(rule(null, 86, null, true))).toBe('= Work 86 (PC not counting yet)');
+    expect('Q1 86 ' + text(rule(null, 86))).toBe('Q1 86 = Work 86 \u00b7 PC \u2014 (none yet)');
+    expect(text(rule(null, 86, null, true))).toBe('= Work 86 \u00b7 PC \u2014 (not counting yet)');
     expect(rule(null, null)).toEqual([]);
     expect(text(rule(88, null))).toBe('= PC 88');
+  });
+});
+
+describe('"show the math" (teacher 2026-09-27: the rule as inequalities, and why Schoology differs)', () => {
+  const lines = new Function('DESK_V3_WORK_WEIGHTS', 'DESK_SCHOOLOGY_WEIGHTS', fnBody(DESK, '_gradeMathLines') + '\nreturn _gradeMathLines;')(
+    { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 }, { Lesson: 15, Quizzes: 15, Blooket: 5, 'Progress Check': 50, Posters: 15 });
+  it('PC not counting yet: names PC as — with its date, builds Work from its parts, states the two-case rule, plugs in, and explains Schoology', () => {
+    const out = lines({ grade: 86, pcAvg: null, workAvg: 84.4, pcDay: 'Tue 10/13', pcOnFile: true,
+      workTracks: { lessons: 84.0, quizzes: 77.8, blooket: 95.6, posters: null },
+      schoologyTotal: 83.7, categoryAverages: { Lesson: 84.0, Quizzes: 77.8, Blooket: 95.6 } });
+    expect(out[0]).toBe('Work = 84.4   PC = \u2014  (counts from Tue 10/13)');
+    expect(out[1]).toBe('Work = [30\u00b784 (worksheets) + 30\u00b777.8 (quizzes) + 10\u00b795.6 (flashcards)] / 70 = 83   (posters join later)');
+    expect(out[2]).toBe('If Work \u2265 40 and PC \u2265 40:  Grade = max(Work, PC)');
+    expect(out[3]).toBe('Otherwise:  Grade = max(0.7\u00b7Work, 0.7\u00b7PC, (Work + PC) / 2)');
+    expect(out[4]).toBe('Here: PC is not counting yet, so Grade = Work = 84.4');
+    expect(out[5]).toBe('Schoology today = 83.7 = [84\u00d715 (Lesson) + 77.8\u00d715 (Quizzes) + 95.6\u00d75 (Blooket)] / 35');
+    expect(out[6]).toContain('Progress Check, Posters join when their columns open');
+    expect(out[6]).toContain('leaves out work done ahead of the calendar');
+  });
+  it('both tracks counting: plugs the numbers into the right case', () => {
+    expect(lines({ pcAvg: 94.2, workAvg: 61.4 })[3]).toBe('Here: 61.4 \u2265 40 and 94.2 \u2265 40  \u2192  Grade = max(61.4, 94.2) = 94.2');
+    expect(lines({ pcAvg: 94, workAvg: 35 })[3]).toBe('Here: Work 35 < 40  \u2192  Grade = max(24.5, 65.8, 64.5) = 65.8');
+  });
+  it('the Desk mirrors of the two weight tables equal the server\u2019s', async () => {
+    const lg = await import('../roster-server/lesson-grade.js');
+    const gg = await import('../roster-server/gradebook-grid.js');
+    const v3 = new Function(DESK.match(/var DESK_V3_WORK_WEIGHTS = (\{[^}]+\});/)[1].replace(/^/, 'return ') )();
+    const sch = new Function(DESK.match(/var DESK_SCHOOLOGY_WEIGHTS = (\{[^}]+\});/)[1].replace(/^/, 'return '))();
+    expect(v3).toEqual(lg.V3_WORK_WEIGHTS);
+    expect(sch).toEqual(gg.SCHOOLOGY_CATEGORY_WEIGHTS);
+  });
+  it('renderDoNowGrades adds the toggle after the Schoology chip', () => {
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    expect(body).toContain('_gradeMathToggle(host, {');
+    expect(fnBody(DESK, '_gradeMathToggle')).toContain("btn.textContent = 'show the math'");
   });
 });
