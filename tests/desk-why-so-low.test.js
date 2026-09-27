@@ -312,3 +312,13 @@ describe('coach facts match the zero-date rule (teacher 2026-09-26: "does this A
     expect(body).toContain('Nothing is locked; every lesson stays open.');
   });
 });
+
+describe('coach reply is shown as plain text (teacher 2026-09-26: the live reply showed literal ** asterisks)', () => {
+  it('_coachPlainText strips bold, underscores, backticks and heading marks, keeps the words', () => {
+    const fn = new Function(fnBody(DESK, '_coachPlainText') + '\nreturn _coachPlainText;')();
+    expect(fn('fix your **1.1 worksheet at 70%** first')).toBe('fix your 1.1 worksheet at 70% first');
+    expect(fn('## Plan\n- __1.3 quiz__ becomes a 0 after `Sun 9/27`')).toBe('Plan\n- 1.3 quiz becomes a 0 after Sun 9/27');
+    expect(fn(null)).toBe('');
+    expect(fnBody(DESK, '_coachAsk')).toContain('cedReferenceText(_coachPlainText(answer))');
+  });
+});

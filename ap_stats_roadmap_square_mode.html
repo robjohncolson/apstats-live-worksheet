@@ -9619,6 +9619,15 @@ function _renderCoachPanel(panel, ctx) {
 // context; soft-fails to the still-visible instant facts (mirrors the
 // tutor-prompt soft-fail contract). The endpoint is CORS-open + unauthenticated
 // like the other /api/ai/* routes, so no token is needed.
+// The reply lands as textContent, so markdown would show as literal asterisks. Strip the
+// emphasis and heading marks a model may still emit despite the plain-text rule.
+function _coachPlainText(text) {
+    return String(text || '')
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/__(.+?)__/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/^#{1,6}\s+/gm, '');
+}
 async function _coachAsk(ctx, message, transcriptEl, history, askBtn) {
   var sEl = document.createElement('div');
   sEl.className = 'wsl-msg student';
@@ -9654,7 +9663,7 @@ async function _coachAsk(ctx, message, transcriptEl, history, askBtn) {
     var data = await resp.json();
     var answer = (data && data.response) ? String(data.response) : '';
     if (!answer) { setCoach(unavailable); return; }
-    setCoach(cedReferenceText(answer));
+    setCoach(cedReferenceText(_coachPlainText(answer)));
     history.push({ role: 'user', content: message });
     history.push({ role: 'assistant', content: answer });
     if (history.length > 12) history.splice(0, history.length - 12);
@@ -26794,7 +26803,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-o7zr';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-w558';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
