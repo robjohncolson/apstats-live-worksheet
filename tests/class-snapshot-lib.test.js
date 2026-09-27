@@ -305,3 +305,15 @@ describe('tentative zeros (TENTATIVE_ZEROS_SPEC §2)', () => {
     expect(C.assignmentCaption(b, null, { ownTentative: true })).toMatch(/^Median .* · 0 zeros \+ 2 tentative\. You: 0 \(tentative\) — below Q1 — an outlier by the 1\.5×IQR rule\.$/);
   });
 });
+
+describe('scoreListWords — the pooled periods by name (EFFORT_VISIBILITY_V2_SPEC §2)', () => {
+  it('two, one, three, none', () => {
+    expect(C.scoreListWords(['PeriodB', 'PeriodE'])).toEqual({ from: ' from Period B and Period E together', who: 'students across both periods',
+      one: 'one student in Period B or E', heading: 'Both periods on your first item' });
+    expect(C.scoreListWords(['PeriodE'])).toEqual({ from: ' from Period E', who: 'students in Period E', one: 'one student in Period E', heading: 'Period E on your first item' });
+    expect(C.scoreListWords(['PeriodA', 'PeriodB', 'PeriodE']).one).toBe('one student in Period A, B or E');
+    expect(C.scoreListWords(['PeriodA', 'PeriodB', 'PeriodE']).who).toBe('students across all 3 periods');
+    expect(C.scoreListWords(null)).toEqual({ from: '', who: 'classmates', one: 'one classmate', heading: 'The class on your first item' });
+    expect(C.scoreListWords(['all'])).toEqual(C.scoreListWords([]));
+  });
+});

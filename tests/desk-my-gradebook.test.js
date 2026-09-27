@@ -87,9 +87,10 @@ describe('Desk My Gradebook modal', () => {
     const body = doc.getElementById('my-gradebook-body');
     const text = body.textContent;
     // Both totals + the why.
-    expect(text).toContain('Your grade:');
+    // EFFORT_VISIBILITY_V2_SPEC §4: the two totals are labelled to match the colour key.
+    expect(text).toContain('Desk:');
     expect(text).toContain('91.2');                 // v3
-    expect(text).toContain('Schoology today:');
+    expect(text).toContain('Schoology now:');
     expect(text).toContain('82.7');                 // Schoology
     expect(text).toContain('higher');               // reconciliation reason
     // Category sections + a cell.
@@ -244,6 +245,51 @@ describe('Desk My Gradebook modal', () => {
     const text = doc.getElementById('my-gradebook-body').textContent;
     expect(text).not.toContain('1.1 · What Can We Learn from Data?');  // server due:false wins over the client calendar → hidden
     expect(text).toContain('1.2 · Variables');                       // server due:true → shown
+  });
+
+  it('colour key (EFFORT_VISIBILITY_V2_SPEC §4): a due scored cell is "in Schoology", a not-yet-due scored cell is "recorded ahead"; the key names both totals', () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    win.tdy = () => new Date(2026, 8, 27);
+    win._activeGradebook = gbWith(
+      [ { key: 'FA:1.1', category: 'Lesson', title: '1.1 Follow-Along', unit: 1, topicKeys: ['1.1'], due: true },
+        { key: 'FA:1.2', category: 'Lesson', title: '1.2 Follow-Along', unit: 1, topicKeys: ['1.2'], due: false },
+        { key: 'FA:1.3', category: 'Lesson', title: '1.3 Follow-Along', unit: 1, topicKeys: ['1.3'], due: true } ],
+      { 'FA:1.1': 84, 'FA:1.2': 100, 'FA:1.3': null },
+      { schoologyTotal: 84, v3Total: 86.4 }
+    );
+    win.renderMyGradebook('Q1');
+    const body = doc.getElementById('my-gradebook-body');
+    const inSchoology = body.querySelectorAll('.mgb-cell-schoology');
+    const ahead = body.querySelectorAll('.mgb-cell-ahead');
+    expect(inSchoology.length).toBe(1);
+    expect(inSchoology[0].textContent).toContain('1.1 · What Can We Learn from Data?');
+    expect(inSchoology[0].style.background).toBe('rgb(230, 238, 247)');     // #e6eef7
+    expect(inSchoology[0].style.border).toBe('1px solid rgb(43, 92, 138)');  // #2B5C8A
+    expect(ahead.length).toBe(1);
+    expect(ahead[0].textContent).toContain('1.2 · Variables');
+    expect(ahead[0].style.background).toBe('rgb(234, 246, 234)');           // #eaf6ea
+    expect(ahead[0].style.border).toBe('1px solid rgb(42, 138, 42)');       // #2a8a2a
+    // the empty due cell keeps the amber "not done yet" look, no key class
+    expect(body.textContent).toContain('not done yet');
+    expect(body.querySelectorAll('[class^="mgb-cell"]').length).toBe(2);
+    expect(body.querySelector('.mgb-key').textContent).toBe(
+      'In Schoology now — these average to the number you see there: 84%.'
+      + 'Recorded ahead of the calendar — counted on the Desk, reaches Schoology when the class gets there. Desk quarter grade: 86%.');
+    expect(body.textContent).toContain('Desk: 86.4');
+    expect(body.textContent).toContain('Schoology now: 84.0');
+  });
+
+  it('colour key: columns without a `due` field (an older cache) show no colours and no key', () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    win.tdy = () => new Date(2024, 0, 1);
+    win._activeGradebook = gbWith(
+      [ { key: 'FA:1.1', category: 'Lesson', title: '1.1 Follow-Along', unit: 1, topicKeys: ['1.1'] } ],
+      { 'FA:1.1': 84 }
+    );
+    win.renderMyGradebook('Q1');
+    const body = doc.getElementById('my-gradebook-body');
+    expect(body.querySelector('.mgb-cell-schoology, .mgb-cell-ahead')).toBeNull();
+    expect(body.querySelector('.mgb-key')).toBeNull();
   });
 
   it('flags a category sitting below the 40% floor', () => {

@@ -206,7 +206,7 @@ describe('Desk journey J8', () => {
           && request.headers.authorization === 'Bearer token:teacher_one'
       )), { message: 'view-as did not fetch the student grade with the teacher token' });
       await harness.waitFor(() => (
-        harness.document.querySelector('#donow-grades .qgrade')?.textContent === '83.0'
+        harness.document.querySelector('#donow-grades .qgrade')?.textContent === '83'
       ), { message: 'viewed student grade did not paint' });
       await harness.waitFor(() => harness.roster.state.inflight === 0, {
         message: 'view-as reads did not settle',

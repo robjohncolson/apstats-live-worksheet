@@ -159,17 +159,29 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     expect(scoreStrip(pooled, 0, true).filter(chip => chip.kind === 'you')).toHaveLength(1);
   });
 
-  it('prints the Desk lead, foot and key sentences', async () => {
+  it('prints the Desk lead, foot and key sentences, naming the pooled periods (EFFORT_VISIBILITY_V2_SPEC §2)', async () => {
     const { stripText } = await import('../scripts/weekly-slips.mjs');
     const values = Array.from({ length: 28 }, (_, index) => (index < 2 ? 0 : 70 + index));
+    expect(stripText({ title: '1.3 Follow-Along', values, tentativeZeros: 2 }, 'Sun 9/27', ['PeriodB', 'PeriodE'])).toEqual({
+      lead: 'All 30 scores from Period B and Period E together for 1.3 Follow-Along (2 tentative):',
+      foot: '26 of 30 students across both periods have a score here. 2 haven\'t yet — a tentative 0 until Sun 9/27. Every 0 on this list can still be replaced.',
+      key: 'red = you · yellow = a 0 that is not counting yet · every other number is one student in Period B or E',
+    });
+    // One section in the payload: name only that one.
+    expect(stripText({ title: '1.3 Quiz', values: [0, 50, 60, 70, 80] }, 'Sun 9/27', ['PeriodE'])).toEqual({
+      lead: 'All 5 scores from Period E for 1.3 Quiz:',
+      foot: '4 of 5 students in Period E have a score here. Every 0 on this list can still be replaced.',
+      key: 'red = you · every other number is one student in Period E',
+    });
+    // No sections (an older payload): the v1 "classmates" words.
     expect(stripText({ title: '1.3 Follow-Along', values, tentativeZeros: 2 }, 'Sun 9/27')).toEqual({
       lead: 'All 30 scores for 1.3 Follow-Along (2 tentative):',
-      foot: '26 of 30 classmates have a score here. 2 haven\'t yet — a tentative 0 until Sun 9/27.',
+      foot: '26 of 30 classmates have a score here. 2 haven\'t yet — a tentative 0 until Sun 9/27. Every 0 on this list can still be replaced.',
       key: 'red = you · yellow = a 0 that is not counting yet · every other number is one classmate',
     });
     expect(stripText({ title: '1.3 Quiz', values: [0, 50, 60, 70, 80] }, 'Sun 9/27')).toEqual({
       lead: 'All 5 scores for 1.3 Quiz:',
-      foot: '4 of 5 classmates have a score here.',
+      foot: '4 of 5 classmates have a score here. Every 0 on this list can still be replaced.',
       key: 'red = you · every other number is one classmate',
     });
   });
@@ -206,6 +218,7 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     const others = [80, 97, 97, 99, 100].map(grade => student(grade));
     const pool = [{ key: '1.2:worksheet', title: '1.2 Follow-Along', values: [0, 0, 70, 80, 90], tentativeZeros: 3,
       zeroDate: '2026-09-20', zeroDates: { PeriodB: '2026-09-20', PeriodE: '2026-09-28' } }];
+    pool.sections = ['PeriodB', 'PeriodE'];   // fetchPool carries the payload's sections on the array
     const tex = renderTex([kid, ...others], [kid], 'PeriodB', '2026-09-26', 'Q1', pool);
     expect(COLOR_DEFS).toHaveLength(7);   // + deskgreen (EFFORT_VISIBILITY_SPEC §2)
     for (const line of COLOR_DEFS) expect(tex).toContain(line);
@@ -220,12 +233,12 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     const tent = '\\colorbox{desktentative}{\\textcolor{desktentativeink}{0}}';
     expect(tex.split(tent).length - 1).toBe(3);
     expect(tex).toContain('\\colorbox{white}{\\textcolor{deskred}{\\textbf{\\underline{0}}}}');
-    expect(tex).toContain('All 8 scores for 1.2 Follow-Along (3 tentative):');
-    expect(tex).toContain('3 of 8 classmates have a score here. 3 haven\'t yet --- a tentative 0 until Mon 9/28.');
-    expect(tex).toContain('\\KeyTent{yellow} = a 0 that is not counting yet');
+    expect(tex).toContain('All 8 scores from Period B and Period E together for 1.2 Follow-Along (3 tentative):');
+    expect(tex).toContain('3 of 8 students across both periods have a score here. 3 haven\'t yet --- a tentative 0 until Mon 9/28. Every 0 on this list can still be replaced.');
+    expect(tex).toContain('\\KeyTent{yellow} = a 0 that is not counting yet $\\cdot$ every other number is one student in Period B or E');
     expect(tex).toContain('height=0.8in');
     expect(tex).toContain('You: 31 --- below Q1.');
-    const order = ['Missing work', 'The class on your first item', "Your section's quarter grades", 'What to do first', 'The Desk counts every lesson']
+    const order = ['Missing work', 'Both periods on your first item', "Your section's quarter grades", 'What to do first', 'The Desk counts every lesson']
       .map(text => tex.indexOf(text));
     expect(order.every((at, index) => at > 0 && (index === 0 || at > order[index - 1]))).toBe(true);
   });
@@ -267,12 +280,12 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
   it('a PC on file and one early-scored lesson render both lines, between the header and Missing work', async () => {
     const { renderTex, effortLines } = await import('../scripts/weekly-slips.mjs');
     expect(effortLines(kid, 'PeriodB', '2026-09-27', 'Q1')).toEqual({
-      pc: 'Progress Check so far: 67% (paper) — counts from Tue 10/13. If your Progress Check track ends the quarter at about 67% or better, your grade will be the HIGHER of your two tracks once both are at least 40% — so your Work track only needs to reach 40%. You are at 31%; 9 points of Work does it.',
+      pc: 'Progress Check so far: 67% (paper) — counts from Tue 10/13. To finish the quarter with your 67%, your Work average has to reach 40% — you are at 31%, so bring it up by at least 9 points. Once both tracks are at least 40%, your grade is the higher one, and yours would be the Progress Check.',
       ahead: 'Ahead of the calendar: 1 lesson already done (1.6). It already counts in your Desk grade; Schoology catches up when its column opens.',
     });
     const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-27', 'Q1');
     expect(tex).toContain('\\definecolor{deskgreen}{HTML}{2A8A2A}');
-    expect(tex).toContain('{\\small Progress Check so far: 67\\% (paper) --- counts from Tue 10/13. If your Progress Check track ends the quarter at about 67\\% or better,');
+    expect(tex).toContain('{\\small Progress Check so far: 67\\% (paper) --- counts from Tue 10/13. To finish the quarter with your 67\\%, your Work average has to reach 40\\%');
     expect(tex).toContain('{\\small\\textcolor{deskgreen}{\\rule{5pt}{5pt}}\\hspace{4pt}Ahead of the calendar: 1 lesson already done (1.6).');
     const at = ['Q1 so far: 45\\%.', 'Progress Check so far', 'Ahead of the calendar', 'Missing work'].map(text => tex.indexOf(text));
     expect(at.every((value, index) => value > 0 && (index === 0 || value > at[index - 1]))).toBe(true);
@@ -294,12 +307,12 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
     expect(effortLines(low, 'PeriodB', '2026-09-27', 'Q1').pc).toBe('Progress Check so far: 35% (paper) — counts from Tue 10/13.');
     // Counting: the engine's pcAvg is the track, not the unit score.
     const counting = { ...kid, quarters: { Q1: { ...kid.quarters.Q1, pcAvg: 66.7 } } };
-    expect(effortLines(counting, 'PeriodB', '2026-10-13', 'Q1').pc).toMatch(/^Progress Check so far: 67% \(paper\) — counting in your grade now\. Your Progress Check track is 67%\. /);
+    expect(effortLines(counting, 'PeriodB', '2026-10-13', 'Q1').pc).toMatch(/^Progress Check so far: 67% \(paper\) — counting in your grade now\. To keep your 67%, your Work average has to reach 40% /);
     expect(effortLines({ ...kid, quarters: { Q1: { ...kid.quarters.Q1, pcAvg: 30 } } }, 'PeriodB', '2026-10-13', 'Q1').pc)
       .toBe('Progress Check so far: 67% (paper) — counting in your grade now.');
     // the gate reads the unrounded Work average
     const edge = { ...kid, units: { U1: { pcRawPct: 100 } }, quarters: { Q1: { ...kid.quarters.Q1, workAvg: 39.96, pcAvg: 100 } } };
-    expect(effortLines(edge, 'PeriodB', '2026-10-13', 'Q1').pc).toMatch(/You are at 40%; 1 point of Work does it\.$/);
+    expect(effortLines(edge, 'PeriodB', '2026-10-13', 'Q1').pc).toContain('you are at 39.9%, so bring it up by at least 1 point.');
     expect(effortLines(kid, 'PeriodE', '2026-09-27', 'Q1').pc).toContain('counts from Fri 10/16');
   });
 

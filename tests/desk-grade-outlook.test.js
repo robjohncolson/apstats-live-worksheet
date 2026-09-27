@@ -92,10 +92,11 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     expect(body).toMatch(/\[\s*['"]Q1['"]\s*,\s*['"]Q2['"]\s*,\s*['"]Q3['"]\s*,\s*['"]Q4['"]\s*\]/);
   });
 
-  it('06: renderDoNowGrades reads quarterGrade, ceiling, pcAvg, workAvg (v3 tracks) from the response', () => {
+  it('06: renderDoNowGrades reads quarterGrade, pcAvg, workAvg (v3 tracks) from the response', () => {
     const body = fnBody(DESK, 'renderDoNowGrades');
     expect(body).toMatch(/\.quarterGrade\b/);
-    expect(body).toMatch(/\.ceiling\b/);
+    // EFFORT_VISIBILITY_V2_SPEC §3: the ↑ceiling left the pill (the coach still has it).
+    expect(body).not.toMatch(/q\.ceiling\b/);
     // 2026-06: now shows the current quarter + the two v3 tracks (PC vs Work),
     // not a per-quarter unit count.
     expect(body).toMatch(/\.pcAvg\b/);
@@ -161,12 +162,11 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     expect(DESK).toMatch(/\.qpill\.empty/);
   });
 
-  it('12: ceiling pill text uses the upward arrow indicator', () => {
+  it('12: the pill no longer carries the ↑ceiling (EFFORT_VISIBILITY_V2_SPEC §3: it confused the wording)', () => {
     const body = fnBody(DESK, 'renderDoNowGrades');
-    // Must include the upward-arrow Unicode character (or a HTML-safe
-    // equivalent textContent like '↑'). Pin the literal so future refactors
-    // don't accidentally drop the "if you ace remaining" hint.
-    expect(body).toMatch(/['"]↑['"]/);
+    expect(body).not.toMatch(/['"]↑['"]/);
+    expect(body).not.toContain('qceil');
+    expect(DESK).not.toMatch(/\.qpill \.qceil/);
   });
 
   it('13: grade strip uses the ROSTER_SERVICE_URL (not Supabase) — server-mediated rule (Phase 0 §6.5)', () => {
@@ -228,10 +228,40 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     expect(body, 'no per-quarter render loop').not.toMatch(/for\s*\(\s*var\s+i\s*=\s*0;[^)]*order\.length/);
   });
 
-  it('20: renders the two v3 tracks (PC mastery + Work engagement) for the current quarter', () => {
+  it('20: renders the two v3 tracks INSIDE the pill (qrule / qtrack spans), not as separate PC / Work chips', () => {
     const body = fnBody(DESK, 'renderDoNowGrades');
-    expect(body).toMatch(/_trackChip\s*\(/);
-    expect(body).toMatch(/['"]PC['"]/);
-    expect(body).toMatch(/['"]Work['"]/);
+    expect(body).toMatch(/_gradePillRule\s*\(\s*pcAvg\s*,\s*workAvg/);
+    expect(body).toContain("rule.className = 'qrule';");
+    expect(body).toContain("trackSpan.className = 'qtrack';");
+    expect(body).not.toMatch(/_trackChip\(\s*['"]PC['"]/);
+    expect(body).not.toMatch(/_trackChip\(\s*['"]Work['"]/);
+    expect(body).toContain('Once both tracks are at least 40%, your grade is the higher one.');
+  });
+});
+
+describe('the pill rule, in words (EFFORT_VISIBILITY_V2_SPEC §3)', () => {
+  // Pure function: run it straight out of the Desk source.
+  const rule = new Function(fnBody(DESK, '_gradePillRule') + '\nreturn _gradePillRule;')();
+  const text = (pieces) => pieces.map(p => p.text).join('');
+  const tracks = (pieces) => pieces.filter(p => p.track).map(p => p.text);
+  it('PC not counting yet, a PC on file: Work only, with the day the PC counts', () => {
+    expect('Q1 86 ' + text(rule(null, 84.4, 'Tue 10/13', true))).toBe('Q1 86 = Work 84 (PC counts from Tue 10/13)');
+    expect(tracks(rule(null, 84.4, 'Tue 10/13', true))).toEqual(['Work 84']);
+  });
+  it('both tracks at least 40: the higher of the two', () => {
+    expect('Q1 94 ' + text(rule(94.2, 61.4, null, true))).toBe('Q1 94 = higher of Work 61 · PC 94');
+    expect(tracks(rule(94.2, 61.4))).toEqual(['Work 61', 'PC 94']);
+  });
+  it('one track under 40 (unrounded: 39.96 is under): penalized until it reaches 40', () => {
+    expect('Q1 61 ' + text(rule(94, 35, null, true))).toBe('Q1 61 · Work 35 is under 40% → penalized until it reaches 40 (PC 94)');
+    expect(text(rule(94, 39.96))).toBe('· Work 39.9 is under 40% → penalized until it reaches 40 (PC 94)');
+    expect(text(rule(30, 61))).toBe('· PC 30 is under 40% → penalized until it reaches 40 (Work 61)');
+    expect(text(rule(30, 35))).toBe('· Work 35 and PC 30 are under 40% → penalized until both reach 40');
+  });
+  it('no PC on file at all: Work only; no tracks at all: nothing', () => {
+    expect('Q1 86 ' + text(rule(null, 86))).toBe('Q1 86 = Work 86');
+    expect(text(rule(null, 86, null, true))).toBe('= Work 86 (PC not counting yet)');
+    expect(rule(null, null)).toEqual([]);
+    expect(text(rule(88, null))).toBe('= PC 88');
   });
 });

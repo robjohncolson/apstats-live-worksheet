@@ -232,7 +232,7 @@ describe('CED receipt and grade displays preserve recorded evidence', () => {
       v3Total: 91.2, schoologyTotal: 82.7,
     } } };
     const snapshot = JSON.stringify(gradebook);
-    const win = boot(['_myGradebookCatOrder', '_gradeBand', 'renderMyGradebook'], {
+    const win = boot(['_myGradebookCatOrder', '_gradeBand', '_myGradebookColourKey', 'renderMyGradebook'], {
       _activeGradebook: gradebook, _lessonDateMap: () => ({}),
     });
     win.renderMyGradebook('Q1');

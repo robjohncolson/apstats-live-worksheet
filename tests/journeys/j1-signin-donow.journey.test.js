@@ -58,7 +58,7 @@ describe('Desk journey J1', () => {
     try {
       await settleSignIn(harness, 'alpha_otter');
       await harness.waitFor(() => (
-        harness.document.querySelector('#donow-grades .qgrade')?.textContent === '87.5'
+        harness.document.querySelector('#donow-grades .qgrade')?.textContent === '88'
       ), { message: 'Do Now grades did not render' });
 
       const doNow = harness.document.getElementById('donow-card');
@@ -68,11 +68,12 @@ describe('Desk journey J1', () => {
 
       const grades = harness.document.getElementById('donow-grades');
       expect(grades.style.display).toBe('flex');
-      expect(grades.querySelector('.qkey')?.textContent).toBe('Q1:');
-      expect(grades.querySelector('.qgrade')?.textContent).toBe('87.5');
-      expect(grades.querySelector('.qceil')?.textContent).toBe('↑94.0');
-      expect(grades.textContent).toContain('PC 82.0%');
-      expect(grades.textContent).toContain('Work 87.5%');
+      expect(grades.querySelector('.qkey')?.textContent).toBe('Q1');
+      expect(grades.querySelector('.qgrade')?.textContent).toBe('88');
+      // EFFORT_VISIBILITY_V2_SPEC §3: the tracks and the 40% rule ride in the pill; no ↑ceiling.
+      expect(grades.querySelector('.qceil')).toBeNull();
+      expect(grades.querySelector('.qpill .qrule')?.textContent).toBe('= higher of Work 88 · PC 82');
+      expect([...grades.querySelectorAll('.qpill .qtrack')].map((el) => el.textContent)).toEqual(['Work 88', 'PC 82']);
 
       const doNowRequest = await harness.waitFor(() => (
         harness.roster.state.requests.find((request) => (

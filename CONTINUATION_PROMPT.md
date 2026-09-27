@@ -99,6 +99,24 @@ written specs — both lanes worked (see memory `feedback_opus_review_lane`). Me
 - **Roster:** one Period B student dropped (deleted via `DELETE /roster/:id`; his Schoology row is the teacher's to remove). **PC:** one paper U1 Part A score entered (`scripts/import-pc-scores.mjs`, file in `%USERPROFILE%\grade-backups\pc`); it starts counting when B's U1 PC Day 2 passes (10/13) — pcAvg stays null until then by design.
 - The teacher merged a GitHub PR adding Claude GitHub Actions workflows (`72d1efe0`) — rebase with `--autostash` over the dirty tree before pushing.
 
+### Sun 9/27 additions
+- **Effort visibility v1+v2** (fa `1ca1f414` + the v2 commit after it; cr `da43ee3`, `a8e4132`, `e81cee7` + v2; specs
+  `EFFORT_VISIBILITY_SPEC.md`, `EFFORT_VISIBILITY_V2_SPEC.md`): `lib/effort-facts.js` = ONE calc for the PC-strategy
+  sentence ("To finish the quarter with your 94%, your Work average has to reach 40% — you are at 35%, so bring it up by
+  at least 5 points…"; projected until the unit's PC Day 2, then the engine's `pcAvg`), work-done-ahead credit, the
+  "How your grade is counted" note; score strips name BOTH periods from the payload's `sections`; the Do Now pill shows
+  `Q1 86 = Work 84 (PC counts from Tue 10/13)` / `= higher of Work · PC` / the penalized form (ceiling dropped, PC/Work
+  chips removed); My Gradebook tints Schoology-now cells blue-grey and recorded-ahead cells green with a key. Live 9/27:
+  EVERY student has a U1 PC on file (28–100); B 4 / E 7 students have work ahead.
+- **BONUS RULE CHANGE — SPEC ONLY, NOT BUILT:** `BONUS_HIGHER_TRACK_SPEC.md` (teacher 2026-09-27: banked bonus goes to
+  whichever track helps more at quarter close; PC scores never altered; students told the rule). ⚠ The student-facing
+  wording ALREADY says "added … to whichever track helps you more" while `roster-server/class.js bonusAudit` still
+  places on Work only → build (Opus implement + Codex hand-recomputes cases a–f) BEFORE Q1 close or fix the wording.
+- Schoology sync dry run now prints `[ahead] <section>: Ahead scores waiting for a column: …` — the teacher creates
+  those columns; the next sync fills them. Ahead work already counts in the Desk (`v3AheadOfScheduleLessons='count-all'`).
+- Roster: one B student dropped (`DELETE /roster/:id`); PC: one paper U1-A score entered; both in memory.
+- cr `tests/coach.test.js` had 5 pins of the OLD coach wording (broken by the 9/26 prompt rewrites) → repinned.
+
 ### Gotchas learned this session
 - The Bash-tool wrapper mangles backslashes / non-ASCII in heredocs and inline `node -e` / `python -c`: write patch scripts
   and prompts with the Write tool, run them with Bash. Two background `codex exec` jobs in ONE bash line lose the second silently.

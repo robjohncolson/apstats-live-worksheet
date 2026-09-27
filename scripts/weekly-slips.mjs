@@ -238,18 +238,21 @@ export function scoreStrip(assignment, ownValue, ownTentative) {
   return chips;
 }
 
-// Lead / foot / key sentences around the strip (the Desk's words).
-export function stripText(assignment, tentDay) {
+// Lead / foot / key sentences around the strip (the Desk's words). sections: the pooled
+// payload's `sections` (EFFORT_VISIBILITY_V2_SPEC §2 names the periods; none → "classmates").
+export function stripText(assignment, tentDay, sections) {
   const values = realValues(assignment);
   const tentative = tentativeOf(assignment);
   const total = values.length + tentative;
   const have = values.filter(value => value > 0).length;
-  const lead = `All ${total} scores for ${assignment.title || assignment.key}${tentative ? ` (${tentative} tentative)` : ''}:`;
+  const words = globalThis.ClassSnapshot.scoreListWords(sections);
+  const lead = `All ${total} scores${words.from} for ${assignment.title || assignment.key}${tentative ? ` (${tentative} tentative)` : ''}:`;
   const tentText = tentative ? ` ${tentative} haven't yet — a tentative 0 until ${tentDay}.` : '';
-  const foot = `${have} of ${total} classmates have a score here.${tentText}`;
+  // Same words as the Desk's list under a missing item (a slip strip is always for one).
+  const foot = `${have} of ${total} ${words.who} have a score here.${tentText} Every 0 on this list can still be replaced.`;
   const key = tentative
-    ? 'red = you · yellow = a 0 that is not counting yet · every other number is one classmate'
-    : 'red = you · every other number is one classmate';
+    ? `red = you · yellow = a 0 that is not counting yet · every other number is ${words.one}`
+    : `red = you · every other number is ${words.one}`;
   return { lead, foot, key };
 }
 
@@ -285,12 +288,14 @@ export function tentativeDay(assignment, section, date, fallbackIso) {
 export function classStripTex(missing, pool, section, date) {
   const first = firstItem(missing);
   if (!first) return '';
-  const heading = '\\par\\medskip\\textbf{The class on your first item}\\par\n';
+  // fetchPool hangs the payload's `sections` on the pool array.
+  const sections = pool && Array.isArray(pool.sections) ? pool.sections : null;
+  const heading = '\\par\\medskip\\textbf{' + latexText(globalThis.ClassSnapshot.scoreListWords(sections).heading) + '}\\par\n';
   const assignment = findPooled(pool, first);
   if (!assignment) return heading + latexText(STRIP_UNAVAILABLE) + '\\par\n';
   // The student's own score here is missing: a 0, tentative while it is not counting yet.
   const chips = scoreStrip(assignment, 0, !first.past);
-  const text = stripText(assignment, tentativeDay(assignment, section, date, first.zeroDate));
+  const text = stripText(assignment, tentativeDay(assignment, section, date, first.zeroDate), sections);
   return heading
     + latexText(text.lead) + '\\par\n'
     + '{\\setlength{\\fboxsep}{1.5pt}\\raggedright\\sloppy '
@@ -507,7 +512,11 @@ export async function fetchPool(config) {
     const response = await fetch(`${rosterBase}/class/snapshot?section=all&by=assignment`, { headers: { 'x-teacher-secret': config.teacherKey }, signal: AbortSignal.timeout(60000) });
     if (!response.ok) return null;
     const doc = await response.json();
-    return Array.isArray(doc.assignments) ? doc.assignments : null;
+    if (!Array.isArray(doc.assignments)) return null;
+    // The strip names the pooled periods (EFFORT_VISIBILITY_V2_SPEC §2): carry `sections` along.
+    const pool = doc.assignments;
+    pool.sections = Array.isArray(doc.sections) ? doc.sections : null;
+    return pool;
   } catch (_) {
     return null;
   }

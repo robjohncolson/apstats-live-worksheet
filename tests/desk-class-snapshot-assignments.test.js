@@ -114,10 +114,12 @@ describe('Assignments view — student', () => {
       // 1.2 worksheet: student never opened it → list open, one red zero, caption says You: 0
       const ws = rows[1];   // 1.2 worksheet
       expect(ws.querySelector('.snap-alist').hidden).toBe(false);
-      expect(ws.querySelector('.snap-alist-lead').textContent).toBe('All 15 scores for 1.2 Follow-Along:');
+      // EFFORT_VISIBILITY_V2_SPEC §2: the pooled payload's sections are named in lead, foot and key.
+      expect(ws.querySelector('.snap-alist-lead').textContent).toBe('All 15 scores from Period B and Period E together for 1.2 Follow-Along:');
       expect([...ws.querySelectorAll('.snap-alist-seq span')].map(x => x.textContent).join(' ')).toBe('0 0 0 85 88 91 95 97 100 100 100 100 100 100 100');
       expect(ws.querySelectorAll('.snap-alist-you').length).toBe(1);
-      expect(ws.querySelector('.snap-alist-foot').textContent).toBe('12 of 15 classmates have a score here. Every 0 on this list can still be replaced.');
+      expect(ws.querySelector('.snap-alist-foot').textContent).toBe('12 of 15 students across both periods have a score here. Every 0 on this list can still be replaced.');
+      expect(ws.querySelector('.snap-alist-key').textContent).toBe('0 = you · 97 = every other number is one student in Period B or E');
       expect(ws.querySelector('.snap-caption').textContent).toContain('You: 0 — below Q1 — an outlier by the 1.5×IQR rule.');
       // 1.1 Blooket: never played → also open
       expect(rows[0].querySelector('.snap-alist').hidden).toBe(false);
@@ -305,7 +307,7 @@ describe('score list — the red mark is the viewer’s own score, never a borro
       expect(mine.textContent).toBe('93');
       expect(mine.classList.contains('snap-alist-added')).toBe(true);
       expect(mine.title).toBe('Pat Q');
-      expect(row.querySelector('.snap-alist-foot').textContent).toBe('14 of 15 classmates have a score here.');
+      expect(row.querySelector('.snap-alist-foot').textContent).toBe('14 of 15 students across both periods have a score here.');
     } finally { close(); }
   });
   it('a viewer whose score IS in the pool is marked in place, not duplicated', async () => {

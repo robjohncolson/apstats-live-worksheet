@@ -378,7 +378,7 @@ describe('coach credits a PC on file and work done ahead (EFFORT_VISIBILITY_SPEC
       t.s._renderCoachPanel(panel, ctx);
       const lines = [...panel.querySelector('.wsl-facts').children].map(el => el.textContent);
       const tracksAt = lines.findIndex(text => text.startsWith('PC mastery:'));
-      expect(lines[tracksAt + 1]).toBe('Progress Check so far: 67% (paper) — counts from Tue 10/13. If your Progress Check track ends the quarter at about 67% or better, your grade will be the HIGHER of your two tracks once both are at least 40% — so your Work track only needs to reach 40%. You are at 31%; 9 points of Work does it.');
+      expect(lines[tracksAt + 1]).toBe('Progress Check so far: 67% (paper) — counts from Tue 10/13. To finish the quarter with your 67%, your Work average has to reach 40% — you are at 31%, so bring it up by at least 9 points. Once both tracks are at least 40%, your grade is the higher one, and yours would be the Progress Check.');
       expect(lines[tracksAt + 2]).toBe("Ahead of the calendar: 2 lessons already done (1.6, 1.7). They already count in your Desk grade; Schoology catches up when each lesson's column opens.");
       expect(lines[tracksAt + 3]).toMatch(/40% gate/);   // the bottleneck sentence follows
     } finally { t.close(); }

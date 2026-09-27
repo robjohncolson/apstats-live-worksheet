@@ -227,7 +227,7 @@ describe('Missing-work rows show the class\u2019s scores inline (teacher 2026-09
   const W14 = { key: '1.4:worksheet', title: '1.4 Follow-Along', values: [88, 92, 95, 100, 100, 100, 102], tentativeZeros: 3, zeros: 0 };
   it('each row is followed by its score list: a real 0 is the red chip on a counting row, a tentative one on a soon row', async () => {
     const t = sandbox({ warns: [PAST_WS, SOON_WS] });
-    t.s._snapFetchAssignments = (section) => { t.s.fetched = section; return Promise.resolve({ ok: true, assignments: [A11, W14] }); };
+    t.s._snapFetchAssignments = (section) => { t.s.fetched = section; return Promise.resolve({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A11, W14] }); };
     try {
       t.s._walletPrependZeroCard(t.host());
       await tick(); await tick();
@@ -236,15 +236,16 @@ describe('Missing-work rows show the class\u2019s scores inline (teacher 2026-09
       expect(rows.map(r => r.dataset.key)).toEqual(['1.1:worksheet', '1.4:worksheet']);
       const past = rows[0].nextSibling;
       expect(past.className).toContain('snap-alist');
-      expect(past.querySelector('.snap-alist-lead').textContent).toBe('All 7 scores for 1.1 Follow-Along:');
+      // EFFORT_VISIBILITY_V2_SPEC §2: the lead names both periods from the payload's `sections`.
+      expect(past.querySelector('.snap-alist-lead').textContent).toBe('All 7 scores from Period B and Period E together for 1.1 Follow-Along:');
       expect([...past.querySelectorAll('.snap-alist-seq span')].map(x => x.textContent).join(' ')).toBe('0 0 85 90 100 100 100');
       expect(past.querySelectorAll('.snap-alist-you').length).toBe(1);
       expect(past.querySelectorAll('.snap-alist-tentative').length).toBe(0);
       const soon = rows[1].nextSibling;
-      expect(soon.querySelector('.snap-alist-lead').textContent).toBe('All 10 scores for 1.4 Follow-Along (3 tentative):');
+      expect(soon.querySelector('.snap-alist-lead').textContent).toBe('All 10 scores from Period B and Period E together for 1.4 Follow-Along (3 tentative):');
       const chips = [...soon.querySelectorAll('.snap-alist-seq span')];
       expect(chips.slice(0, 3).map(c => c.className)).toEqual(['snap-alist-tentative', 'snap-alist-tentative', 'snap-alist-you']);
-      expect(soon.querySelector('.snap-alist-foot').textContent).toBe('7 of 10 classmates have a score here. 3 haven\u2019t yet — a tentative 0 until Sun 9/27. Every 0 on this list can still be replaced.'.replace('\u2019', "'"));
+      expect(soon.querySelector('.snap-alist-foot').textContent).toBe('7 of 10 students across both periods have a score here. 3 haven\u2019t yet — a tentative 0 until Sun 9/27. Every 0 on this list can still be replaced.'.replace('\u2019', "'"));
       // an unchanged repaint does not duplicate the lists
       t.s._walletPrependZeroCard(t.host());
       await tick(); await tick();
@@ -275,13 +276,13 @@ describe('score list key + per-assignment graph (teacher 2026-09-26: "does not e
   }
   it('the key names red, yellow and black in words; no yellow line when nothing is tentative', async () => {
     const t = sandbox({ warns: [PAST_QZ, SOON_WS] });
-    t.s._snapFetchAssignments = () => Promise.resolve({ ok: true, assignments: [A12, W14] });
+    t.s._snapFetchAssignments = () => Promise.resolve({ ok: true, section: 'all', sections: ['PeriodB', 'PeriodE'], assignments: [A12, W14] });
     try {
       t.s._walletPrependZeroCard(t.host());
       await tick(); await tick();
       const keys = [...t.card().querySelectorAll('.snap-alist-key')].map(k => k.textContent);
-      expect(keys[0]).toBe('0 = you · 97 = every other number is one classmate');
-      expect(keys[1]).toBe('0 = you · 0 = a 0 that is not counting yet · 97 = every other number is one classmate');
+      expect(keys[0]).toBe('0 = you · 97 = every other number is one student in Period B or E');
+      expect(keys[1]).toBe('0 = you · 0 = a 0 that is not counting yet · 97 = every other number is one student in Period B or E');
       expect(t.card().querySelectorAll('.snap-alist-key .snap-key-tent').length).toBe(1);
       expect(t.card().querySelectorAll('.snap-alist-key .snap-alist-you').length).toBe(0);   // the key never inflates the real chip counts
     } finally { t.close(); }
@@ -360,7 +361,7 @@ describe('Balance card effort lines (EFFORT_VISIBILITY_SPEC §3: "they don’t f
       expect(box.className).toBe('wallet-effort geneva');
       const pc = box.querySelector('.wallet-effort-pc');
       const ahead = box.querySelector('.wallet-effort-ahead');
-      expect(pc.textContent).toBe('Progress Check so far: 67% (paper) — counts from Tue 10/13. If your Progress Check track ends the quarter at about 67% or better, your grade will be the HIGHER of your two tracks once both are at least 40% — so your Work track only needs to reach 40%. You are at 31%; 9 points of Work does it.');
+      expect(pc.textContent).toBe('Progress Check so far: 67% (paper) — counts from Tue 10/13. To finish the quarter with your 67%, your Work average has to reach 40% — you are at 31%, so bring it up by at least 9 points. Once both tracks are at least 40%, your grade is the higher one, and yours would be the Progress Check.');
       expect(pc.style.borderLeft).toBe('3px solid rgb(136, 136, 136)');
       expect(ahead.textContent).toBe("Ahead of the calendar: 2 lessons already done (1.6, 1.10). They already count in your Desk grade; Schoology catches up when each lesson's column opens.");
       expect(ahead.style.borderLeft).toBe('3px solid rgb(42, 138, 42)');
@@ -413,7 +414,7 @@ describe('Balance card effort lines (EFFORT_VISIBILITY_SPEC §3: "they don’t f
     try {
       edge.s._gradeQuartersCache.Q1.pcAvg = 100;
       const text = edge.s._walletEffortBlock('Q1').querySelector('.wallet-effort-pc').textContent;
-      expect(text).toMatch(/You are at 40%; 1 point of Work does it\.$/);
+      expect(text).toContain('To keep your 100%, your Work average has to reach 40% — you are at 39.9%, so bring it up by at least 1 point.');
       expect(text).not.toContain('already past');
     } finally { edge.close(); }
   });

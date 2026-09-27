@@ -2261,7 +2261,8 @@
                 box-shadow:1px 1px 0 var(--black)}
               #donow-grades .qpill .qkey{font-weight:bold}
               #donow-grades .qpill .qgrade{}
-              #donow-grades .qpill .qceil{color:var(--ok);font-size:9px}
+              #donow-grades .qpill .qrule{font-family:'Geneva','Helvetica',sans-serif}
+              #donow-grades .qpill .qrule .qtrack{font-weight:bold}
               #donow-grades .qpill.empty{color:var(--plat-lo);background:#fff}
               #donow-grades .qpill-missing{border-color:#cc0000;color:#cc0000;background:#fff;cursor:pointer}
               #donow-grades .qpill-missing.qpill-soon{border-color:#8a6d00;color:#5c4800;background:#fff9db}
@@ -8997,6 +8998,36 @@ function _scheduleGradeRetry(baseUrl, token) {
   } catch (_) { /* retry scheduling is best-effort */ }
 }
 
+// The Do Now grade pill's rule, after "Q1 86" (EFFORT_VISIBILITY_V2_SPEC §3): which track the
+// grade is and why. Returns pieces [{ track: bool, text }]; track pieces render as .qtrack spans.
+// pcAvg null = the PC is not counting yet; pcDay = "Tue 10/13" when a PC is on file for later.
+// Numbers whole; the 40% tests use the unrounded averages.
+function _gradePillRule(pcAvg, workAvg, pcDay, pcOnFile) {
+  var floor = 40;
+  var hasPc = typeof pcAvg === 'number', hasWork = typeof workAvg === 'number';
+  // Same display rule as the strategy sentence (EffortFacts.trackText): whole numbers, except a
+  // value just under the gate that would round to 40 shows "39.9" — never "40 is under 40%".
+  var whole = function (v) {
+    if (typeof EffortFacts !== 'undefined' && EffortFacts && typeof EffortFacts.trackText === 'function') return EffortFacts.trackText(v, floor);
+    return (v < floor && Math.round(v) >= floor) ? String(Math.floor(v * 10) / 10) : String(Math.round(v));
+  };
+  var pc = hasPc ? 'PC ' + whole(pcAvg) : '', work = hasWork ? 'Work ' + whole(workAvg) : '';
+  var t = function (text) { return { track: false, text: text }; };
+  var k = function (text) { return { track: true, text: text }; };
+  if (!hasPc && !hasWork) return [];
+  if (!hasPc) {
+    if (pcDay) return [t('= '), k(work), t(' (PC counts from ' + pcDay + ')')];
+    if (pcOnFile) return [t('= '), k(work), t(' (PC not counting yet)')];
+    return [t('= '), k(work)];
+  }
+  if (!hasWork) return [t('= '), k(pc)];
+  var pcLow = pcAvg < floor, workLow = workAvg < floor;
+  if (!pcLow && !workLow) return [t('= higher of '), k(work), t(' · '), k(pc)];
+  if (pcLow && workLow) return [t('· '), k(work), t(' and '), k(pc), t(' are under ' + floor + '% → penalized until both reach ' + floor)];
+  var low = workLow ? work : pc, other = workLow ? pc : work;
+  return [t('· '), k(low), t(' is under ' + floor + '% → penalized until it reaches ' + floor + ' ('), k(other), t(')')];
+}
+
 async function renderDoNowGrades(baseUrl, token) {
   var host = document.getElementById('donow-grades');
   if (!host) return;
@@ -9159,36 +9190,51 @@ async function renderDoNowGrades(baseUrl, token) {
     }
     var q = quarters[curQ] || null;
     var gradeRaw = q && typeof q.quarterGrade === 'number' ? q.quarterGrade : null;
-    var ceilRaw  = q && typeof q.ceiling === 'number' ? q.ceiling : null;
     var pcAvg    = q && typeof q.pcAvg === 'number' ? q.pcAvg : null;
     var workAvg  = q && typeof q.workAvg === 'number' ? q.workAvg : null;
     var lDue     = q && typeof q.lessonsDue === 'number' ? q.lessonsDue : null;
     var lGraded  = q && typeof q.lessonsGraded === 'number' ? q.lessonsGraded : null;
     var lTotal   = q && typeof q.lessonsTotal === 'number' ? q.lessonsTotal : null;
 
-    // Current-quarter grade pill (with the ↑ceiling).
+    // Current-quarter grade pill: "Q1 94 = higher of Work 61 · PC 94" — the grade, the two
+    // tracks and the 40% rule in one line (EFFORT_VISIBILITY_V2_SPEC §3; the ↑ceiling is gone,
+    // the coach still has it). Shown to whoever is signed in (a student, or the student a teacher
+    // is viewing as); a teacher's own /grade has no graded quarter, so it stays "Q1 —".
     var pill = document.createElement('span');
     pill.className = 'qpill' + (gradeRaw == null ? ' empty' : '');
     var keySpan = document.createElement('span');
     keySpan.className = 'qkey';
-    keySpan.textContent = curQ + ':';
+    keySpan.textContent = curQ;
     pill.appendChild(keySpan);
     var gradeSpan = document.createElement('span');
     gradeSpan.className = 'qgrade';
-    gradeSpan.textContent = gradeRaw == null ? '—' : (Math.round(gradeRaw * 10) / 10).toFixed(1);
+    gradeSpan.textContent = gradeRaw == null ? '—' : String(Math.round(gradeRaw));
     pill.appendChild(gradeSpan);
-    if (ceilRaw != null && gradeRaw != null) {
-      var ceilSpan = document.createElement('span');
-      ceilSpan.className = 'qceil';
-      ceilSpan.textContent = '↑' + (Math.round(ceilRaw * 10) / 10).toFixed(1);
-      pill.appendChild(ceilSpan);
+    if (gradeRaw != null) {
+      var pcOnFile = null;
+      try { pcOnFile = (typeof _effortFacts === 'function') ? _effortFacts(curQ).pc : null; } catch (_) { pcOnFile = null; }
+      var pcDay = (pcOnFile && !pcOnFile.counting && pcOnFile.day) ? pcOnFile.day : null;
+      var pieces = _gradePillRule(pcAvg, workAvg, pcDay, Boolean(pcOnFile));
+      if (pieces.length) {
+        // One inline span, so the pill's flex gap never splits "(PC 94)".
+        var rule = document.createElement('span');
+        rule.className = 'qrule';
+        pieces.forEach(function (piece) {
+          if (!piece.track) { rule.appendChild(document.createTextNode(piece.text)); return; }
+          var trackSpan = document.createElement('span');
+          trackSpan.className = 'qtrack';
+          trackSpan.textContent = piece.text;
+          rule.appendChild(trackSpan);
+        });
+        pill.appendChild(rule);
+      }
     }
     var tip = curQ + ' covers ' + (QUARTER_BAND_LABEL[curQ] || '');
     if (lGraded != null && lTotal != null) {
       tip += ' — ' + lGraded + ' of ' + lTotal + ' lesson' + (lTotal === 1 ? '' : 's') + ' graded';
       if (lDue != null) tip += ' (' + lDue + ' due so far)';
     }
-    pill.title = tip + ' — tap to see where you stand in the class';
+    pill.title = tip + '. Once both tracks are at least 40%, your grade is the higher one. Tap to see where you stand in the class.';
     pill.style.cursor = 'pointer';
     pill.setAttribute('role', 'button'); pill.tabIndex = 0;
     pill.onclick = function () { if (typeof openWallet === 'function') openWallet(); };
@@ -9196,9 +9242,8 @@ async function renderDoNowGrades(baseUrl, token) {
     host.appendChild(pill);
     if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill();
 
-    // The two v3 tracks (PC mastery vs Work engagement). The quarter grade is the
-    // HIGHER of the two (40% floor + ceiling), so showing both tells the student
-    // which track is driving the grade + where the headroom is.
+    // A small labelled chip beside the pill. The two v3 tracks (PC, Work) now live INSIDE the
+    // pill with the 40% rule (EFFORT_VISIBILITY_V2_SPEC §3), so only "Schoology today" uses it.
     function _trackChip(label, val, title) {
       var chip = document.createElement('span');
       chip.className = 'qtrack';
@@ -9210,11 +9255,6 @@ async function renderDoNowGrades(baseUrl, token) {
       chip.title = title;
       return chip;
     }
-    if (pcAvg != null || workAvg != null) {
-      host.appendChild(_trackChip('PC', pcAvg, 'Progress-Check mastery track'));
-      host.appendChild(_trackChip('Work', workAvg, 'Work-engagement track (worksheets, quizzes, Blooket)'));
-    }
-
     // SY2627 (teacher 2026-09-03): "Schoology today" — the category-weighted
     // total over columns that are DUE and COMPLETED (blanks ignored, ahead work
     // not counted): exactly what the Schoology gradebook shows once the sync ran.
@@ -16286,7 +16326,7 @@ function _snapAssignmentRow(a, own, label, viewerSection, opts) {
     }
     row.appendChild(adv);
     var isZero = label !== null && (own == null || own === 0);
-    var built = _snapScoreList(a, ownForPlot, label, { tentative: tentative, ownTentative: ownTentative, tentDay: tentDay, isZero: isZero });
+    var built = _snapScoreList(a, ownForPlot, label, { tentative: tentative, ownTentative: ownTentative, tentDay: tentDay, isZero: isZero, sections: opts && opts.sections });
     var list = built.list, showList = built.shown;
     list.hidden = !isZero && !dataOnly;
     row.appendChild(list);
@@ -16301,9 +16341,14 @@ function _snapAssignmentRow(a, own, label, viewerSection, opts) {
 // The anonymous score list for one assignment: tentative zeros (yellow) first, then every real
 // score, with the viewer's own score red (in place, or inserted when it is not in the pool).
 // Used by the Snapshot app rows and by the ledger's Missing-work rows.
+// o.sections: the pooled payload's `sections` — the lead/foot/key name the periods
+// (EFFORT_VISIBILITY_V2_SPEC §2); none → the "classmates" words.
 function _snapScoreList(a, ownForPlot, label, o) {
     o = o || {};
     var tentative = Number(o.tentative) || 0, ownTentative = Boolean(o.ownTentative), tentDay = o.tentDay || '', isZero = Boolean(o.isZero);
+    var words = (typeof ClassSnapshot !== 'undefined' && ClassSnapshot.scoreListWords)
+        ? ClassSnapshot.scoreListWords(o.sections)
+        : { from: '', who: 'classmates', one: 'one classmate' };   // lib failed to load: the v1 words
     var values = Array.isArray(a.values) ? a.values : [];
     var list = document.createElement('div'); list.className = 'snap-alist geneva';
     // D = the tentative zeros, then the real values (TENTATIVE_ZEROS_SPEC §2.1).
@@ -16311,7 +16356,7 @@ function _snapScoreList(a, ownForPlot, label, o) {
     var showList = values.length > 0 || total >= 5;
     if (showList) {
         var lead = document.createElement('div'); lead.className = 'snap-alist-lead';
-        lead.textContent = 'All ' + total + ' scores for ' + a.title + (tentative ? ' (' + tentative + ' tentative)' : '') + ':';
+        lead.textContent = 'All ' + total + ' scores' + words.from + ' for ' + a.title + (tentative ? ' (' + tentative + ' tentative)' : '') + ':';
         list.appendChild(lead);
         var seq = document.createElement('div'); seq.className = 'snap-alist-seq';
         // The viewer's own score is marked red in the list. When it is not in the pool (the
@@ -16344,19 +16389,19 @@ function _snapScoreList(a, ownForPlot, label, o) {
         var have = values.filter(function (v) { return v > 0; }).length;
         var foot = document.createElement('div'); foot.className = 'snap-alist-foot';
         var tentText = tentative ? ' ' + tentative + ' haven\'t yet — a tentative 0 until ' + tentDay + '.' : '';
-        foot.textContent = have + ' of ' + total + ' classmates have a score here.' + tentText + (isZero ? ' Every 0 on this list can still be replaced.' : '');
+        foot.textContent = have + ' of ' + total + ' ' + words.who + ' have a score here.' + tentText + (isZero ? ' Every 0 on this list can still be replaced.' : '');
         list.appendChild(foot);
-        list.appendChild(_snapListKey(tentative > 0, label));
+        list.appendChild(_snapListKey(tentative > 0, label, words.one));
     }
     return { list: list, shown: showList };
 }
 // The colour key under a score list: red = you (or the placed student), yellow = a 0 not counting
-// yet, everything else = one classmate's score.
-function _snapListKey(hasTentative, label) {
+// yet, everything else = one student's score. one: who that is ("one student in Period B or E").
+function _snapListKey(hasTentative, label, one) {
     var key = document.createElement('div'); key.className = 'snap-alist-key geneva';
     var parts = [['snap-key-you', label ? label : 'you']];
     if (hasTentative) parts.push(['snap-key-tent', 'a 0 that is not counting yet']);
-    parts.push(['', 'every other number is one classmate']);
+    parts.push(['', 'every other number is ' + (one || 'one classmate')]);
     parts.forEach(function (p, i) {
         if (i) key.appendChild(document.createTextNode(' \u00b7 '));
         var sw = document.createElement('span'); sw.className = 'snap-key-swatch ' + p[0]; sw.textContent = p[0] ? '0' : '97'; key.appendChild(sw);
@@ -16418,7 +16463,7 @@ function _renderAssignmentsView(host, teacher) {
             var label = pickedName || undefined;
             var owns = rows.map(function (a) { return lessons ? _snapOwnAssignmentScore(a, lessons) : null; });
             if (_snapApp.aall) {
-                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label, viewerSection, { dataOnly: dataOnly })); });
+                rows.forEach(function (a, i) { body.appendChild(_snapAssignmentRow(a, owns[i], label, viewerSection, { dataOnly: dataOnly, sections: data.sections })); });
                 var all = document.createElement('button'); all.type = 'button'; all.className = 's7btn snap-pager-all'; all.style.cssText = 'font-size:10px;padding:1px 6px;margin-top:6px';
                 all.textContent = 'Focus on one';
                 all.onclick = function () { _snapApp.aall = false; _renderSnapshotApp(); };
@@ -16453,7 +16498,7 @@ function _renderAssignmentsView(host, teacher) {
             showAll.onclick = function () { _snapApp.aall = true; _renderSnapshotApp(); };
             pager.appendChild(prev); pager.appendChild(pos); pager.appendChild(next); pager.appendChild(showAll);
             body.appendChild(pager);
-            var focused = _snapAssignmentRow(rows[idx], owns[idx], label, viewerSection, { dataOnly: dataOnly });
+            var focused = _snapAssignmentRow(rows[idx], owns[idx], label, viewerSection, { dataOnly: dataOnly, sections: data.sections });
             if (_snapApp.focusKey === rows[idx].key) focused.classList.add('snap-arow-focus');
             body.appendChild(focused);
             _snapApp.focusKey = null;
@@ -16557,7 +16602,7 @@ function _zeroCardAttachScores(card, warns) {
             if (!row || row.nextSibling && row.nextSibling.className && String(row.nextSibling.className).indexOf('snap-alist') === 0) return;
             var tentative = Number(a.tentativeZeros) || 0;
             var tentDay = _zeroDayText(w.zeroDate);
-            var built = _snapScoreList(a, 0, undefined, { tentative: tentative, ownTentative: !w.past, tentDay: tentDay, isZero: true });
+            var built = _snapScoreList(a, 0, undefined, { tentative: tentative, ownTentative: !w.past, tentDay: tentDay, isZero: true, sections: data.sections });
             if (!built.shown) return;
             built.list.classList.add('wz-scores');
             row.parentNode.insertBefore(built.list, row.nextSibling);
@@ -20351,6 +20396,10 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     }
     var visibleCols = gq.columns.filter(_visible);
     var oweCount = visibleCols.filter(function (c) { return cells[c.key] == null; }).length;
+    // Schoology colour key (EFFORT_VISIBILITY_V2_SPEC §4): a scored cell whose column is DUE is
+    // in Schoology now (blue-grey); a scored cell not yet due is recorded ahead (green). Only
+    // when the server stamps `due` on the columns — an older cache shows no colours and no key.
+    var colourKey = gq.columns.some(function (c) { return c.due !== undefined; });
 
     // ── As-of caption (makes the date-scoping obvious — nothing "disappeared") ──
     var cap = document.createElement('div');
@@ -20374,7 +20423,8 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     totals.style.cssText = 'border:1px solid var(--black);background:#fafafa;padding:6px 8px;margin-bottom:8px';
     var line1 = document.createElement('div');
     line1.style.cssText = 'margin-bottom:2px';
-    var yourLbl = document.createElement('span'); yourLbl.textContent = 'Your grade: '; yourLbl.style.fontWeight = 'bold';
+    // Labels match the colour key under the grid (EFFORT_VISIBILITY_V2_SPEC §4): "Desk" and "Schoology now".
+    var yourLbl = document.createElement('span'); yourLbl.textContent = 'Desk: '; yourLbl.style.fontWeight = 'bold';
     var yourVal = document.createElement('span'); yourVal.textContent = _n(gq.v3Total);
     var ytBand = _gradeBand(gq.v3Total);
     yourVal.style.cssText = 'font-weight:bold;font-size:14px;' + (ytBand ? 'color:' + ytBand.fg : '');
@@ -20382,7 +20432,7 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
     var sch = document.createElement('span');
     var scBand = _gradeBand(gq.schoologyTotal);
     sch.style.cssText = 'margin-left:10px;font-weight:bold;color:' + (scBand ? scBand.fg : '#555');
-    sch.textContent = 'Schoology today: ' + _n(gq.schoologyTotal);
+    sch.textContent = 'Schoology now: ' + _n(gq.schoologyTotal);
     line1.appendChild(sch);
     if (rc.delta != null && Math.abs(rc.delta) >= 0.1) {
         var d = document.createElement('span');
@@ -20436,8 +20486,20 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
             var row = document.createElement('div');
             row.style.cssText = 'position:relative;display:flex;justify-content:space-between;align-items:center;padding:2px 5px;margin:1px 0;border-radius:2px;overflow:hidden;'
                 + (band ? 'background:#fff;' : 'background:#fdf6e3;');   // amber tint = due, not done
+            var keyed = colourKey && band;
+            if (keyed) {
+                // The tint replaces the score micro-bar, so blue-grey vs green is never
+                // confused with a green score band.
+                var ahead = c.due === false;
+                row.className = ahead ? 'mgb-cell-ahead' : 'mgb-cell-schoology';
+                row.style.background = ahead ? '#eaf6ea' : '#e6eef7';
+                row.style.border = '1px solid ' + (ahead ? '#2a8a2a' : '#2B5C8A');
+                row.title = ahead
+                    ? 'Recorded ahead — counts on the Desk, not in Schoology yet'
+                    : 'In Schoology; this is in your Schoology grade';
+            }
             // Progress micro-bar: a band-colored fill sized to the score, behind the text.
-            if (band) {
+            if (band && !keyed) {
                 var bar = document.createElement('div');
                 bar.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:' + Math.max(0, Math.min(100, v)) + '%;background:' + band.bg + ';pointer-events:none';
                 row.appendChild(bar);
@@ -20460,6 +20522,34 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
         });
         body.appendChild(sec);
     });
+
+    if (colourKey) body.appendChild(_myGradebookColourKey(gq.schoologyTotal, gq.v3Total));
+}
+
+// The key under the My Gradebook grid (EFFORT_VISIBILITY_V2_SPEC §4): what the two colours mean
+// and the two totals they add up to — Schoology now and the Desk quarter grade.
+function _myGradebookColourKey(schoologyNow, desk) {
+    function pct(x) { return (typeof x === 'number') ? ' ' + Math.round(x) + '%' : ' —'; }
+    function swatch(bg, border) {
+        var s = document.createElement('span');
+        s.setAttribute('aria-hidden', 'true');
+        s.style.cssText = 'display:inline-block;width:9px;height:9px;margin-right:4px;vertical-align:-1px;background:' + bg + ';border:1px solid ' + border;
+        return s;
+    }
+    var key = document.createElement('div');
+    key.className = 'mgb-key';
+    key.style.cssText = 'font-size:10px;color:#333;line-height:1.45;border-top:1px solid #ccc;padding-top:5px;margin-top:4px';
+    var now = document.createElement('div');
+    now.className = 'mgb-key-schoology';
+    now.appendChild(swatch('#e6eef7', '#2B5C8A'));
+    now.appendChild(document.createTextNode('In Schoology now — these average to the number you see there:' + pct(schoologyNow) + '.'));
+    var ahead = document.createElement('div');
+    ahead.className = 'mgb-key-ahead';
+    ahead.appendChild(swatch('#eaf6ea', '#2a8a2a'));
+    ahead.appendChild(document.createTextNode('Recorded ahead of the calendar — counted on the Desk, reaches Schoology when the class gets there. Desk quarter grade:' + pct(desk) + '.'));
+    key.appendChild(now);
+    key.appendChild(ahead);
+    return key;
 }
 
 // openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
@@ -26979,7 +27069,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-3x4q';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-fra6';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
