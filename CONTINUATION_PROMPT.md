@@ -108,10 +108,11 @@ written specs — both lanes worked (see memory `feedback_opus_review_lane`). Me
   `Q1 86 = Work 84 (PC counts from Tue 10/13)` / `= higher of Work · PC` / the penalized form (ceiling dropped, PC/Work
   chips removed); My Gradebook tints Schoology-now cells blue-grey and recorded-ahead cells green with a key. Live 9/27:
   EVERY student has a U1 PC on file (28–100); B 4 / E 7 students have work ahead.
-- **BONUS RULE CHANGE — SPEC ONLY, NOT BUILT:** `BONUS_HIGHER_TRACK_SPEC.md` (teacher 2026-09-27: banked bonus goes to
-  whichever track helps more at quarter close; PC scores never altered; students told the rule). ⚠ The student-facing
-  wording ALREADY says "added … to whichever track helps you more" while `roster-server/class.js bonusAudit` still
-  places on Work only → build (Opus implement + Codex hand-recomputes cases a–f) BEFORE Q1 close or fix the wording.
+- **BONUS RULE CHANGE — BUILT + DEPLOYED Sun 9/27 evening:** `BONUS_HIGHER_TRACK_SPEC.md` — `bonusAudit` tries both tracks,
+  keeps the higher adjusted grade (tie → higher frozen avg → Work; PC null → Work); PC data never written; `placement|pcBefore|pcAfter|altGrade`
+  in audit/`bonus_applied`/deltas; dashboard "Placed on" column; Desk after-apply wording. Codex hand-recomputed 7 cases = all agree.
+  Nothing moves until Apply at Q1 close. Quirk kept: null frozen Work counts as 0 in the audit. **Ahead projection** built too
+  (`AHEAD_WORK_PROJECTION_SPEC.md`): "Once they come due Schoology will read about 85% (today 83.7%)" on every surface.
 - Schoology sync dry run now prints `[ahead] <section>: Ahead scores waiting for a column: …` — the teacher creates
   those columns; the next sync fills them. Ahead work already counts in the Desk (`v3AheadOfScheduleLessons='count-all'`).
 - Roster: one B student dropped (`DELETE /roster/:id`); PC: one paper U1-A score entered; both in memory.
