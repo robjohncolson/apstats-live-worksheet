@@ -289,6 +289,26 @@ describe('Why-so-low coach: PC-not-open + flashcard gate', () => {
     const body = fnBody(DESK, '_renderCoachPanel');
     expect(body).toMatch(/ctx\.flashcardGate/);
     expect(body).toMatch(/Flashcards to finish/);
-    expect(body).toMatch(/You can open other lessons while catching up/);
+    expect(body).toMatch(/Nothing is locked; every lesson stays open\./);   // the lesson gate went on 2026-09-10
+  });
+});
+
+describe('coach facts match the zero-date rule (teacher 2026-09-26: "does this AI coach have accurate understanding of the dynamics?")', () => {
+  it('_buildCoachContext ships the Missing-work list with zero dates and counting/tentative flags', () => {
+    const body = fnBody(DESK, '_buildCoachContext');
+    expect(body).toMatch(/ctx\.missing = _coachMissingList\(\)/);
+    const helper = fnBody(DESK, '_coachMissingList');
+    expect(helper).toMatch(/_zeroCurrentWarnings\(\)/);
+    expect(helper).toMatch(/past: Boolean\(w\.past\)/);
+    expect(helper).toMatch(/slice\(0, 12\)/);
+  });
+  it('the panel never says un-done work "counts as 0 until you do it", never caps a deck at 80%, never says "unlock"', () => {
+    const body = fnBody(DESK, '_renderCoachPanel');
+    expect(body).not.toMatch(/count as 0 until you do them/);
+    expect(body).not.toMatch(/Make one up to 80%/);
+    expect(body).not.toMatch(/unlock/i);
+    expect(body).toContain('Work counts as 0 only once its zero date passes');
+    expect(body).toContain('A deck not played by its zero date counts as 0.');
+    expect(body).toContain('Nothing is locked; every lesson stays open.');
   });
 });

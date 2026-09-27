@@ -9385,6 +9385,12 @@ function _buildCoachContext(curQ, q) {
       ctx.nextTask = { unit: String(n.unit).replace(/^[Uu]/, ''), lesson: n.lesson || null, activity: n.activity || null };
     }
   } catch (_) { /* nextTask is optional */ }
+  // The Missing-work list exactly as My Ledger shows it: each item with its ZERO DATE and whether
+  // it is counting yet (red) or still tentative (yellow). The coach must never call a yellow
+  // item a 0 (teacher 2026-09-26: the coach was behind the zero-date rule).
+  try {
+    ctx.missing = _coachMissingList();
+  } catch (_) { ctx.missing = []; }
   try {
     if (Array.isArray(_gradeLessonsCache)) {
       var weak = _gradeLessonsCache.filter(function (l) {
@@ -9431,6 +9437,20 @@ function _buildCoachContext(curQ, q) {
   return ctx;
 }
 
+// Missing work for the coach: [{ lesson, kind, zeroDate, day, past }], oldest first, at most 12.
+function _coachMissingList() {
+    var warns = (typeof _zeroCurrentWarnings === 'function') ? _zeroCurrentWarnings() : [];
+    if (!Array.isArray(warns)) return [];
+    return warns.slice(0, 12).map(function (w) {
+        return {
+            lesson: w.lessonKey,
+            kind: w.kind,
+            zeroDate: w.zeroDate,
+            day: (typeof _zeroDayText === 'function') ? _zeroDayText(w.zeroDate) : w.zeroDate,
+            past: Boolean(w.past),
+        };
+    });
+}
 // One-line diagnosis of the bottleneck from the two-track / 40%-gate model.
 function _coachBottleneckText(ctx) {
   var pc = ctx.pcAvg, wk = ctx.workAvg;
@@ -9463,7 +9483,7 @@ function _renderCoachPanel(panel, ctx) {
   head.className = 'wsl-head';
   var gradeTxt = (ctx.grade != null) ? (Math.round(ctx.grade * 10) / 10) + '%' : '—';
   head.textContent = 'Your ' + (ctx.quarter || 'current') + ' grade is ' + gradeTxt +
-    (ctx.ceiling != null ? ' (could reach ' + (Math.round(ctx.ceiling * 10) / 10) + '%).' : '.');
+    (ctx.ceiling != null ? ' (the most it could still reach this quarter: ' + (Math.round(ctx.ceiling * 10) / 10) + '%).' : '.');
   facts.appendChild(head);
 
   var tracks = document.createElement('div');
@@ -9490,7 +9510,7 @@ function _renderCoachPanel(panel, ctx) {
   if (typeof ctx.lessonsGraded === 'number' && typeof ctx.lessonsTotal === 'number') {
     var prog = document.createElement('div');
     var dueTxt = (typeof ctx.lessonsDue === 'number') ? ctx.lessonsDue : ctx.lessonsTotal;
-    prog.textContent = ctx.lessonsGraded + ' of ' + dueTxt + ' due lessons graded — the rest count as 0 until you do them.';
+    prog.textContent = ctx.lessonsGraded + ' of ' + dueTxt + ' due lessons graded. Work counts as 0 only once its zero date passes — the red items in My Ledger are counting now, the yellow ones are not yet.';
     facts.appendChild(prog);
   }
 
@@ -9502,20 +9522,20 @@ function _renderCoachPanel(panel, ctx) {
     var bTrk = (ctx.blooket.track != null) ? (Math.round(ctx.blooket.track) + '%') : '—';
     var bMsg = 'Blooket: ' + bTrk + ' (' + ctx.blooket.done + ' of ' + ctx.blooket.due + ' done).';
     if (ctx.blooket.todo && ctx.blooket.todo.length) {
-      bMsg += ' Make one up to 80% with the Desk flashcards — e.g. ' + ctx.blooket.todo.slice(0, 3).map(function (key) { return cedLabel(key).text; }).join('; ') + '.';
+      bMsg += ' A deck not played by its zero date counts as 0. Play it from the Desk flashcards (your best score counts) — e.g. ' + ctx.blooket.todo.slice(0, 3).map(function (key) { return cedLabel(key).text; }).join('; ') + '.';
     }
     blk.textContent = bMsg;
     facts.appendChild(blk);
   }
 
   // Flashcard completion gate — lessons whose worksheet is done but flashcards
-  // (Blooket >=80) are still owed, which is what blocks completion + the next-lesson
-  // unlock. (Passing flashcards completes/unlocks the lesson; it does not change the
-  // grade — Blooket isn't a grade component yet.)
+  // (Blooket >=80) are still owed, which is what keeps the lesson from showing complete.
+  // Nothing is locked (the lesson gate went on 2026-09-10). The deck score is also the
+  // Blooket slice of the Work track, and a deck missing on its zero date is a 0.
   if (Array.isArray(ctx.flashcardGate) && ctx.flashcardGate.length) {
     var fg = document.createElement('div');
     var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return cedLabel(g.lesson).text; }).join('; ');
-    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to complete it. You can open other lessons while catching up.';
+    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to mark it complete. Nothing is locked; every lesson stays open.';
     facts.appendChild(fg);
   }
 
@@ -26774,7 +26794,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-wrok';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-o7zr';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
