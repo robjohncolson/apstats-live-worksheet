@@ -85,7 +85,7 @@ function sandbox({ teacher = false, lessons, pick = null, roster = null, status 
   createContext(s);
   runInContext(
     "var SNAPSHOT_TTL_MS = 300000;\nvar ZERO_WARN_DAYS = 3;\nvar _snapApp = { mode: null, sections: {}, roster: " + JSON.stringify(roster) + ", pick: " + JSON.stringify(pick ? { PeriodB: pick } : {}) + ", request: 0, view: 'assignments', assign: {}, focusKey: null, amode: null, aidx: {}, aall: false };\nvar SNAP_TRACK_LABEL = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcards' };\n" +
-    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentPlot', '_snapScoreList', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
+    ['_snapSection', '_snapModes', '_snapAdvice', '_snapFocus', '_snapFocusIndex', '_snapDaysUntil', '_snapPickedSection', '_snapOpenWork', '_snapOwnAssignmentScore', '_snapFetchAssignments', '_snapZeroDateText', '_snapDayText', '_snapOwnSectionNotCounting', '_snapTentativeDay', '_snapTentativeLegend', '_snapAssignmentPlot', '_snapScoreList', '_snapListKey', '_snapAssignmentRow', '_renderAssignmentsView', '_snapTeacherPickedName', '_snapTeacherPickedLessons', '_snapOpenAssignment']
       .map(fnSrc).join('\n'), s);
   return { s, host: () => dom.window.document.getElementById('snapshot-content'), close: () => dom.window.close() };
 }
@@ -195,7 +195,7 @@ describe('wiring', () => {
       expect(t.s._snapApp.view).toBe('assignments');
       expect(t.s._snapApp.focusKey).toBe('1.1:blooket');
     } finally { t.close(); }
-    expect(fnSrc('_zeroCardRow')).toContain("see.textContent = 'class'");
+    expect(fnSrc('_zeroCardRow')).toContain("see.textContent = 'graph'");
     expect(fnSrc('_renderSnapshotApp')).toContain("[['class', 'Class'], ['assignments', 'Assignments']]");
     expect(fnSrc('_renderSnapshotStudent')).toContain("[['work', 'My work'], ['graphs', 'Graphs']]");
     // bonus decks never appear in the missing list (review 2026-09-26)

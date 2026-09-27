@@ -8,6 +8,9 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { createContext, runInContext } from 'node:vm';
+import { beforeAll } from 'vitest';
+let C;
+beforeAll(async () => { await import('../lib/class-snapshot.js'); C = globalThis.ClassSnapshot; });
 
 const html = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'ap_stats_roadmap_square_mode.html'), 'utf8');
 function fnSrc(name) {
@@ -42,9 +45,12 @@ function sandbox({ warns = [], grade = { pct: 78, q: 'Q1' }, teacher = false } =
     _zeroOpenFlashcards(_b, k) { s.work.push(['blooket', k]); },
     openSnapshot() { s.snapshots++; },
     Promise,
+    get ClassSnapshot() { return C; },
+    _snapApp: { amode: null },
+    _snapModes() { return { available: ['dot', 'stem', 'hist'], default: 'stem', tabs: true }; },
   };
   createContext(s);
-  runInContext(['_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardRow', '_walletPrependZeroCard', '_walletSeeClassButton', '_zeroCardAttachScores', '_snapScoreList']
+  runInContext(['_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardRow', '_walletPrependZeroCard', '_walletSeeClassButton', '_zeroCardAttachScores', '_zeroCardToggleGraph', '_snapScoreList', '_snapListKey', '_snapAssignmentPlot', '_snapTentativeLegend']
     .map(fnSrc).join('\n'), s);
   const host = () => dom.window.document.getElementById('wallet-content');
   const card = () => host().querySelector('.wallet-zero-card');
@@ -116,16 +122,14 @@ describe('Missing-work rows (§2.3)', () => {
       expect([...t.card().querySelectorAll('.wz-label')].map(el => el.textContent)).toEqual(['Topic 1.2', 'Topic 1.4']);
     } finally { t.close(); }
   });
-  it('each row has a tiny "class" link that opens the Snapshot app on (lessonKey, kind)', () => {
+  it('each row has a tiny "graph" link, disabled until the class picture has loaded', () => {
     const t = sandbox({ warns: [PAST_QZ, SOON_BL] });
     try {
       t.s._walletPrependZeroCard(t.host());
       const sees = [...t.card().querySelectorAll('button.wz-see')];
-      expect(sees.map(b => b.textContent)).toEqual(['class', 'class']);
-      expect(sees[0].title).toBe('How the class did on this one (no names)');
-      sees[0].onclick();
-      sees[1].onclick();
-      expect(t.s.seen).toEqual([['1.2', 'quiz'], ['1.3', 'blooket']]);
+      expect(sees.map(b => b.textContent)).toEqual(['graph', 'graph']);
+      expect(sees.map(b => b.disabled)).toEqual([true, true]);
+      expect(sees[0].title).toBe('The graphs of the class on this one (no names)');
     } finally { t.close(); }
   });
   it('the data-sig guard still keeps the same card node when the list is unchanged, and rebuilds when it changes', () => {
@@ -253,6 +257,62 @@ describe('Missing-work rows show the class\u2019s scores inline (teacher 2026-09
       t.s._walletPrependZeroCard(t.host());
       expect(t.card().querySelectorAll('.wz-row').length).toBe(1);
       expect(t.card().querySelector('.snap-alist')).toBeNull();
+    } finally { t.close(); }
+  });
+});
+
+describe('score list key + per-assignment graph (teacher 2026-09-26: "does not explain what the yellow or the red means … a graph button ONLY for that assignment")', () => {
+  const tick = () => new Promise(r => setTimeout(r, 0));
+  const W14 = { key: '1.4:worksheet', title: '1.4 Follow-Along', values: [88, 92, 95, 100, 100, 100, 102], tentativeZeros: 3, zeros: 0 };
+  const A12 = { key: '1.2:quiz', title: '1.2 Quiz', values: [0, 0, 67, 100, 100, 100, 100], tentativeZeros: 0, zeros: 2 };
+  function paintable(t) {
+    // jsdom has no canvas: give every canvas a recording 2d context
+    t.s.window.HTMLCanvasElement.prototype.getContext = function () {
+      const ctx = { calls: [], font: '', fillStyle: '', strokeStyle: '', textAlign: '', textBaseline: '', lineWidth: 1, measureText: (s) => ({ width: String(s).length * 6 }) };
+      ['clearRect', 'fillRect', 'strokeRect', 'beginPath', 'moveTo', 'lineTo', 'stroke', 'fill', 'arc', 'fillText', 'closePath'].forEach(k => { ctx[k] = (...a) => ctx.calls.push([k, ...a]); });
+      return ctx;
+    };
+  }
+  it('the key names red, yellow and black in words; no yellow line when nothing is tentative', async () => {
+    const t = sandbox({ warns: [PAST_QZ, SOON_WS] });
+    t.s._snapFetchAssignments = () => Promise.resolve({ ok: true, assignments: [A12, W14] });
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      await tick(); await tick();
+      const keys = [...t.card().querySelectorAll('.snap-alist-key')].map(k => k.textContent);
+      expect(keys[0]).toBe('0 = you · 97 = every other number is one classmate');
+      expect(keys[1]).toBe('0 = you · 0 = a 0 that is not counting yet · 97 = every other number is one classmate');
+      expect(t.card().querySelectorAll('.snap-alist-key .snap-key-tent').length).toBe(1);
+      expect(t.card().querySelectorAll('.snap-alist-key .snap-alist-you').length).toBe(0);   // the key never inflates the real chip counts
+    } finally { t.close(); }
+  });
+  it('"graph" opens the graphs for that assignment only, in the learned forms, with the caption; click again hides', async () => {
+    const t = sandbox({ warns: [PAST_QZ, SOON_WS] });
+    paintable(t);
+    t.s._snapFetchAssignments = () => Promise.resolve({ ok: true, assignments: [A12, W14] });
+    try {
+      t.s._walletPrependZeroCard(t.host());
+      await tick(); await tick();
+      const sees = [...t.card().querySelectorAll('button.wz-see')];
+      expect(sees.map(b => b.disabled)).toEqual([false, false]);
+      sees[1].onclick();
+      const list = t.card().querySelectorAll('.wz-scores')[1];
+      const panel = list.querySelector('.wz-graph');
+      expect(panel).not.toBeNull();
+      expect([...panel.querySelectorAll('.snap-amodes button')].map(b => b.textContent)).toEqual(['Dot plot', 'Stem-and-leaf', 'Histogram']);
+      expect(panel.querySelector('canvas')).not.toBeNull();
+      // D = [0,0,0,88,92,95,100,100,100,102]: median 93.5, Q1 0 (three tentative zeros are a quarter+), Q3 100
+      expect(panel.querySelector('.snap-caption').textContent).toBe('Median 93.5 · IQR 100 · 0 zeros + 3 tentative (real after Sun 9/27). You: 0 (tentative) — inside the box only because at least a quarter of the class is also at 0, so Q1 itself is 0.');
+      expect(panel.querySelector('.snap-legend')).not.toBeNull();
+      expect(sees[1].textContent).toBe('hide graph');
+      // the other row's list is untouched — the graph is for THIS assignment only
+      expect(t.card().querySelectorAll('.wz-graph').length).toBe(1);
+      panel.querySelectorAll('.snap-amodes button')[2].onclick();          // Histogram
+      expect(list.querySelector('.snap-amodes button[aria-pressed="true"]').textContent).toBe('Histogram');
+      expect(t.s._snapApp.amode).toBe('hist');
+      sees[1].onclick();
+      expect(list.querySelector('.wz-graph')).toBeNull();
+      expect(sees[1].textContent).toBe('graph');
     } finally { t.close(); }
   });
 });

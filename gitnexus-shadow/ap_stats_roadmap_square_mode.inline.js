@@ -2874,6 +2874,13 @@
 
 
 
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -16198,8 +16205,23 @@ function _snapScoreList(a, ownForPlot, label, o) {
         var tentText = tentative ? ' ' + tentative + ' haven\'t yet — a tentative 0 until ' + tentDay + '.' : '';
         foot.textContent = have + ' of ' + total + ' classmates have a score here.' + tentText + (isZero ? ' Every 0 on this list can still be replaced.' : '');
         list.appendChild(foot);
+        list.appendChild(_snapListKey(tentative > 0, label));
     }
     return { list: list, shown: showList };
+}
+// The colour key under a score list: red = you (or the placed student), yellow = a 0 not counting
+// yet, everything else = one classmate's score.
+function _snapListKey(hasTentative, label) {
+    var key = document.createElement('div'); key.className = 'snap-alist-key geneva';
+    var parts = [['snap-key-you', label ? label : 'you']];
+    if (hasTentative) parts.push(['snap-key-tent', 'a 0 that is not counting yet']);
+    parts.push(['', 'every other number is one classmate']);
+    parts.forEach(function (p, i) {
+        if (i) key.appendChild(document.createTextNode(' \u00b7 '));
+        var sw = document.createElement('span'); sw.className = 'snap-key-swatch ' + p[0]; sw.textContent = p[0] ? '0' : '97'; key.appendChild(sw);
+        key.appendChild(document.createTextNode(' = ' + p[1]));
+    });
+    return key;
 }
 function _renderAssignmentsView(host, teacher) {
     // Student "My work" tab: data only — no plots, captions, form bar or legend (LEDGER_CALM_SPEC §3.1).
@@ -16350,6 +16372,33 @@ function _walletPrependZeroCard(host) {
         _zeroCardAttachScores(card, ordered);
     } catch (_) {}
 }
+// The "graph" link under a Missing-work row: the class's graphs for THIS assignment only, in the
+// forms the class has learned, drawn inline under the score list. Toggles open / closed.
+function _zeroCardToggleGraph(list, see, a, tentative, ownTentative, tentDay) {
+    var open = list.querySelector('.wz-graph');
+    if (open) { open.remove(); see.textContent = 'graph'; see.setAttribute('aria-expanded', 'false'); return; }
+    var panel = document.createElement('div'); panel.className = 'wz-graph';
+    var teacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
+    var modes = teacher ? { available: ['dot', 'stem', 'hist', 'box'], default: 'box' } : _snapModes();
+    var mode = (_snapApp && _snapApp.amode && modes.available.indexOf(_snapApp.amode) >= 0) ? _snapApp.amode : modes.default;
+    var paint = function () {
+        panel.innerHTML = '';
+        if (modes.available.length > 1) {
+            var bar = document.createElement('div'); bar.className = 'snap-tabs snap-amodes';
+            modes.available.forEach(function (m) {
+                var b = document.createElement('button'); b.type = 'button'; b.className = 's7btn'; b.style.cssText = 'font-size:10px;padding:1px 6px';
+                b.textContent = ClassSnapshot.LABEL[m]; b.setAttribute('aria-pressed', String(m === mode));
+                b.onclick = function () { mode = m; if (_snapApp) _snapApp.amode = m; paint(); };
+                bar.appendChild(b);
+            });
+            panel.appendChild(bar);
+        }
+        _snapAssignmentPlot(panel, a, 0, undefined, mode, tentative, ownTentative, tentDay);
+    };
+    paint();
+    list.appendChild(panel);
+    see.textContent = 'hide graph'; see.setAttribute('aria-expanded', 'true');
+}
 // Under each Missing-work row: everyone's scores for that assignment, right here (no names).
 // Yellow = a 0 not counting yet, red = you. Fetched once (cached by the Snapshot app's loader).
 function _zeroCardAttachScores(card, warns) {
@@ -16366,10 +16415,16 @@ function _zeroCardAttachScores(card, warns) {
             var row = card.querySelector('.wz-row[data-key="' + key + '"]');
             if (!row || row.nextSibling && row.nextSibling.className && String(row.nextSibling.className).indexOf('snap-alist') === 0) return;
             var tentative = Number(a.tentativeZeros) || 0;
-            var built = _snapScoreList(a, 0, undefined, { tentative: tentative, ownTentative: !w.past, tentDay: _zeroDayText(w.zeroDate), isZero: true });
+            var tentDay = _zeroDayText(w.zeroDate);
+            var built = _snapScoreList(a, 0, undefined, { tentative: tentative, ownTentative: !w.past, tentDay: tentDay, isZero: true });
             if (!built.shown) return;
             built.list.classList.add('wz-scores');
             row.parentNode.insertBefore(built.list, row.nextSibling);
+            var see = row.querySelector('.wz-see');
+            if (see) {
+                see.disabled = false;
+                see.onclick = function () { _zeroCardToggleGraph(built.list, see, a, tentative, !w.past, tentDay); };
+            }
         });
     }).catch(function () {});
 }
@@ -16425,8 +16480,9 @@ function _zeroCardRow(w) {
     row.appendChild(when);
     var see = document.createElement('button');
     see.type = 'button'; see.className = 'wz-see';
-    see.textContent = 'class';
-    see.title = 'How the class did on this one (no names)';
+    see.textContent = 'graph';
+    see.title = 'The graphs of the class on this one (no names)';
+    see.disabled = true;   // enabled once the class picture has loaded (_zeroCardAttachScores)
     see.onclick = function () { _snapOpenAssignment(w.lessonKey, w.kind); };
     row.appendChild(see);
     return row;
@@ -26681,7 +26737,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-26-wy4s';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-7t6e';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
