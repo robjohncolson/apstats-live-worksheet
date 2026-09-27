@@ -313,13 +313,22 @@ export function buildGradebookRow(gradeObj, columns, weights = SCHOOLOGY_CATEGOR
   // Ahead-work projection (AHEAD_WORK_PROJECTION_SPEC.md, display-only): the
   // projected total is the same blend over ALL completed cells, due or not —
   // what Schoology will read once the early lessons' columns open.
+  // Only LESSON work (Follow-Along / Quiz / Blooket) counts as "ahead": a Progress Check or
+  // Poster on file before its date is not work done ahead of the calendar, and the PC column's
+  // 50% weight would swing the projection wildly (live 2026-09-27: 89.6 → "63" from one PC cell).
+  const LESSON_CATEGORIES = new Set(['Lesson', 'Quizzes', 'Blooket']);
   for (const col of columns) {
     const v = cellValue(col, lessonsByKey, units);
     cells[col.key] = v;
     if (v == null) continue;
-    (projectedVals[col.category] || (projectedVals[col.category] = [])).push(v);
-    if (col.due === false) { aheadCells += 1; continue; }
+    if (col.due === false) {
+      if (!LESSON_CATEGORIES.has(col.category)) continue;   // not-yet-due PC / Poster: neither total
+      aheadCells += 1;
+      (projectedVals[col.category] || (projectedVals[col.category] = [])).push(v);
+      continue;
+    }
     (catVals[col.category] || (catVals[col.category] = [])).push(v);
+    (projectedVals[col.category] || (projectedVals[col.category] = [])).push(v);
   }
 
   const categoryAverages = averageByCategory(catVals);

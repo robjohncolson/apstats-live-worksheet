@@ -229,6 +229,23 @@ describe('buildGradebookRow — ahead-work projection (AHEAD_WORK_PROJECTION_SPE
     expect(q.aheadCells).toBe(2);
   });
 
+  it('a Progress Check on file before its date is NOT "ahead work": excluded from aheadCells and from the projection (live 2026-09-27: 89.6 → "63")', () => {
+    const schedule = {
+      '1.1': { unit: 1, periods: { B: '2026-09-09' } }, '1.2': { unit: 1, periods: { B: '2026-09-15' } },
+      '1.3': { unit: 1, periods: { B: '2026-09-16' } }, '1.4': { unit: 1, periods: { B: '2026-09-16' } },
+    };
+    // The event schedule dates the Unit 1 PC AFTER today (todayStr 2026-09-20) → its column is not due.
+    const events = { progressChecks: { 1: { periods: { B: '2026-10-09' } } }, posters: {} };
+    const gb = buildGradebook(gradeObj(), { lessonSchedule: schedule, eventSchedule: events, ...opts });
+    const q = gb.quarters.Q1;
+    const pcCol = q.columns.find(c => c.kind === 'pc');
+    expect(pcCol.due).toBe(false);
+    expect(q.cells[pcCol.key]).not.toBeNull();                 // the PC score IS on file
+    expect(q.aheadCells).toBe(0);                                // …but it is not ahead work
+    expect(q.categoryAveragesProjected['Progress Check']).toBeUndefined();
+    expect(q.schoologyProjectedTotal).toBe(q.schoologyTotal);   // nothing lesson-shaped is ahead → same number
+  });
+
   it('no ahead cells → projected equals today and aheadCells 0', () => {
     const q = buildGradebook(gradeObj()).quarters.Q1;
     expect(q.schoologyProjectedTotal).toBe(q.schoologyTotal);
