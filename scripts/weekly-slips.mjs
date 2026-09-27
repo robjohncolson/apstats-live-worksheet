@@ -246,7 +246,9 @@ export function stripText(assignment, tentDay, sections) {
   const total = values.length + tentative;
   const have = values.filter(value => value > 0).length;
   const words = globalThis.ClassSnapshot.scoreListWords(sections);
-  const lead = `All ${total} scores${words.from} for ${assignment.title || assignment.key}${tentative ? ` (${tentative} tentative)` : ''}:`;
+  // Teacher 2026-09-27: say these are OTHER students' scores (same words as the Desk's _snapScoreList).
+  const whose = total === 1 ? '1 student’s score' : `${total} students’ scores`;
+  const lead = `${whose}${words.from} for ${assignment.title || assignment.key}${tentative ? ` (${tentative} tentative)` : ''}:`;
   const tentText = tentative ? ` ${tentative} haven't yet — a tentative 0 until ${tentDay}.` : '';
   // Same words as the Desk's list under a missing item (a slip strip is always for one).
   const foot = `${have} of ${total} ${words.who} have a score here.${tentText} Every 0 on this list can still be replaced.`;
@@ -290,7 +292,8 @@ export function classStripTex(missing, pool, section, date) {
   if (!first) return '';
   // fetchPool hangs the payload's `sections` on the pool array.
   const sections = pool && Array.isArray(pool.sections) ? pool.sections : null;
-  const heading = '\\par\\medskip\\textbf{' + latexText(globalThis.ClassSnapshot.scoreListWords(sections).heading) + '}\\par\n';
+  // The heading runs into the lead on one line (saves a line on a full slip).
+  const heading = '\\par\\smallskip\\textbf{' + latexText(globalThis.ClassSnapshot.scoreListWords(sections).heading) + '}\\quad\n';
   const assignment = findPooled(pool, first);
   if (!assignment) return heading + latexText(STRIP_UNAVAILABLE) + '\\par\n';
   // The student's own score here is missing: a 0, tentative while it is not counting yet.
@@ -298,8 +301,9 @@ export function classStripTex(missing, pool, section, date) {
   const text = stripText(assignment, tentativeDay(assignment, section, date, first.zeroDate), sections);
   return heading
     + latexText(text.lead) + '\\par\n'
-    + '{\\setlength{\\fboxsep}{1.5pt}\\raggedright\\sloppy '
-    + chips.map(chipTex).join('\\hspace{2pt}') + '\\par}\n'
+    // 10pt chips (9pt at density step 1+) with tight padding: a 30-chip strip of mostly 100s fits one 7.5in line.
+    + '{\\ChipFont\\setlength{\\fboxsep}{1pt}\\raggedright\\sloppy '
+    + chips.map(chipTex).join('\\hspace{1.5pt}') + '\\par}\n'
     + '{\\small ' + latexText(text.foot) + '\\par\n'
     + keyTex(text.key) + '\\par}\n';
 }
@@ -313,6 +317,37 @@ export function missingRowsTex(missing) {
     return `\\MissRow{${bar}}{${background}}{${latexText(label)}}{${latexText(whenText(item))}}`;
   });
   return rows.join('\n') || 'No missing work within the warning window.\\par';
+}
+
+// The plain words of each Missing-work row (label + date), for the column-width estimate.
+export function missingRowTexts(missing) {
+  return orderMissing(missing).map(item => `${VERB[item.kind]} ${lessonLabel(item.lessonKey)}  ${whenText(item)}`);
+}
+
+// Rough Helvetica glyphs per inch at each point size, and each size's line pitch in points.
+const CHARS_PER_INCH = { 10: 14.5, 11: 13, 12: 11 };
+const LINE_PITCH_PT = { 10: 12, 11: 13.6, 12: 14.5 };
+const LINE_WIDTH_IN = 7.5;
+
+function estimatedLines(text, widthInches, size) {
+  if (!text) return 0;
+  return Math.max(1, Math.ceil(text.length / (widthInches * CHARS_PER_INCH[size])));
+}
+
+// The top block's left share: the one that makes the taller column (Missing-work rows on the
+// left, effort + plan on the right) shortest. Ties keep the default 0.62.
+export function leftColumnShare(rowTexts, rightParts) {
+  let best = { share: 0.62, height: Infinity };
+  for (const share of [0.62, 0.66, 0.56, 0.5, 0.44]) {
+    const leftInches = share * LINE_WIDTH_IN - 0.2;   // minus the coloured bar and padding
+    const rightInches = (0.98 - share) * LINE_WIDTH_IN;
+    const rowLines = rowTexts.reduce((sum, text) => sum + estimatedLines(text, leftInches, 10), 0);
+    const left = 11.5 * (1 + rowLines) + 2 * rowTexts.length;
+    const right = 20 + rightParts.reduce((sum, part) => sum + LINE_PITCH_PT[part.size] * estimatedLines(part.text, rightInches, part.size), 0);
+    const height = Math.max(left, right);
+    if (height < best.height - 1) best = { share, height };
+  }
+  return best.share;
 }
 
 function weekLabelFor(date) {
@@ -340,15 +375,16 @@ function positionText(own, summary) {
 function boxPlotTex(own, summary) {
   if (!summary) return 'Not enough classmates yet for a class box plot.\\par';
   const s = summary;
-  return String.raw`\begin{tikzpicture}
-\begin{axis}[width=\linewidth,height=0.8in,scale only axis=false,boxplot/draw direction=x,
+  // The "You: …" sentence runs on the heading line (renderSlip ends the heading with \quad).
+  return String.raw`${latexText(positionText(own, s))}\par
+\begin{tikzpicture}
+\begin{axis}[width=\linewidth,height=\PlotHeight,scale only axis=false,boxplot/draw direction=x,
   xmin=${Math.min(0, s.min)},xmax=${Math.max(100, s.max)},ymin=0,ymax=2,ytick=\empty,axis y line=none,axis x line=bottom]
 \addplot+[boxplot prepared={lower whisker=${s.lowerWhisker},lower quartile=${s.q1},median=${s.median},upper quartile=${s.q3},upper whisker=${s.upperWhisker}}] coordinates {};
 ${s.outliers.length ? String.raw`\addplot[only marks,mark=o,black] coordinates {${s.outliers.map(value => `(${value},1)`).join(' ')}};` : ''}
 ${own == null ? '' : String.raw`\addplot[only marks,mark=*,red] coordinates {(${own},0.4)};`}
 \end{axis}
-\end{tikzpicture}
-\par ${latexText(positionText(own, s))}\par`;
+\end{tikzpicture}\par`;
 }
 
 // PC dates (progressChecks[n].adminDay2), read once per run.
@@ -403,20 +439,34 @@ export function renderSlip(student, section, date, summary, quarterKey, pool = n
   const grade = quarterGrade(student, quarterKey);
   const own = grade == null ? null : Math.round(grade);
   const quarterLabel = currentQuarterKey(student.quarters, quarterKey);
-  const steps = planFor(lessons, missing, section.slice(-1), date)
-    .map((line, index) => `${index + 1}. ${latexText(line)}\\par`).join('\n');
-  return String.raw`\Slip{
-{\large\bfseries Where you stand --- ${latexText(student.realName || student.name || student.username || 'Student')}}\par
-Period ${section.slice(-1)} --- week of ${weekLabelFor(date)}\par
-\smallskip{\bfseries ${latexText(headerLine(own, quarterLabel, summary))}}\par
-${effortTex(student, section, date, quarterKey)}\medskip\textbf{Missing work}\par
-${missingRowsTex(missing)}
-${classStripTex(missing, pool, section, date)}\par\medskip\textbf{Your section's quarter grades}\par
-${boxPlotTex(own, summary)}
+  const plan = planFor(lessons, missing, section.slice(-1), date);
+  const steps = plan.map((line, index) => `${index + 1}. ${latexText(line)}\\par`).join('\n');
+  const name = student.realName || student.name || student.username || 'Student';
+  const header = headerLine(own, quarterLabel, summary);
+  const effort = effortLines(student, section, date, quarterKey);
+  const share = leftColumnShare(missingRowTexts(missing), [
+    { text: effort.pc, size: 10 },
+    { text: effort.ahead, size: 10 },
+    { text: 'What to do first', size: 11 },
+    ...plan.map((line, index) => ({ text: `${index + 1}. ${line}`, size: 11 })),
+    { text: 'Every item on this list can still be finished. Desk → My Ledger → Missing work.', size: 11 },
+  ]);
+  // \SlipBody[left share]{header}{effort}{missing rows}{score strip}{box plot}{what to do first}{footer}:
+  // the arguments stay in reading order; \SlipBody lays them out (the name first at full width,
+  // then rows left and effort + plan right).
+  return String.raw`\Slip{\SlipBody[${share}]{%
+{\fontsize{12}{14.5}\bfseries Where you stand --- ${latexText(name)}\par}
+{\small Period ${section.slice(-1)} --- week of ${weekLabelFor(date)} $\cdot$ {\bfseries ${latexText(header)}}\par}}{%
+${effortTex(student, section, date, quarterKey)}}{%
+\textbf{Missing work}\par
+${missingRowsTex(missing)}}{%
+${classStripTex(missing, pool, section, date)}}{%
+\textbf{Your section's quarter grades}\quad
+${boxPlotTex(own, summary)}}{%
 \medskip\textbf{What to do first}\par
 ${steps}
-\par\medskip Every item on this list can still be finished. Desk $\rightarrow$ My Ledger $\rightarrow$ Missing work.\par
-{\small Printed ${latexText(dayText(date))}. ${latexText(globalThis.EffortFacts.COUNTING_NOTE)}}
+\par\medskip Every item on this list can still be finished. Desk $\rightarrow$ My Ledger $\rightarrow$ Missing work.\par}{%
+{\footnotesize Printed ${latexText(dayText(date))}. ${latexText(globalThis.EffortFacts.COUNTING_NOTE)}}}
 }`;
 }
 
@@ -428,8 +478,8 @@ export function renderTex(students, candidates, section, date, quarterKey, pool 
     const bottom = candidates[index + 1] ? renderSlip(candidates[index + 1], section, date, summary, quarterKey, pool) : '\\Slip{}';
     pages.push(`\\SlipPage{${top}}{${bottom}}`);
   }
-  return String.raw`\documentclass[10pt,letterpaper]{article}
-\usepackage[margin=0.65in]{geometry}
+  return String.raw`\documentclass[11pt,letterpaper]{article}
+\usepackage[left=0.5in,right=0.5in,top=0.45in,bottom=0.45in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{xcolor}
@@ -441,13 +491,40 @@ export function renderTex(students, candidates, section, date, quarterKey, pool 
 \setlength{\parindent}{0pt}
 ${COLOR_DEFS.join('\n')}
 % A Missing-work row: coloured left bar (a running-height \vrule) on a tinted background.
-\newcommand{\MissRow}[4]{\par\noindent{\setlength{\fboxsep}{0pt}\colorbox{#2}{\textcolor{#1}{\vrule width 3pt}\hspace{5pt}\parbox[c]{\dimexpr\linewidth-11pt\relax}{\strut#3\hfill#4\strut}\hspace{3pt}}}\par\vspace{2pt}}
+\newcommand{\MissRow}[4]{\par\noindent{\setlength{\fboxsep}{0pt}\colorbox{#2}{\textcolor{#1}{\vrule width 3pt}\hspace{5pt}\parbox[c]{\dimexpr\linewidth-11pt\relax}{\raggedright\strut#3\hspace{0.6em plus 1fill}\null\nobreak\hfill\mbox{#4}\strut}\hspace{3pt}}}\par\vspace{1pt}}
 \newcommand{\KeyYou}[1]{\textcolor{deskred}{\textbf{\underline{#1}}}}
 \newcommand{\KeyTent}[1]{{\setlength{\fboxsep}{1pt}\colorbox{desktentative}{\textcolor{desktentativeink}{#1}}}}
-% Two fixed half-page cells. Scale long missing lists to fit, never omit rows.
-\newcommand{\Slip}[1]{\begin{minipage}[t][4.7in][t]{\linewidth}\vspace{0pt}\begin{adjustbox}{max totalsize={\linewidth}{4.6in}}\begin{minipage}{\linewidth}#1\end{minipage}\end{adjustbox}\end{minipage}}
-\newcommand{\SlipPage}[2]{\noindent#1\par\vspace{0.15in}\noindent#2\par}
+% Density steps: a slip that does not fit tightens its type instead of being scaled.
+% 0 = rows 10pt, chips 10pt, plot 0.7in; 1 = rows + chips 9pt; 2 = also the right column 9.5pt
+% and the plot 0.55in. \Slip tries them in order (measured, not guessed).
+\newcommand{\SlipStep}[1]{\def\SlipStepNo{#1}%
+\ifcase#1\relax
+\def\RowFont{\fontsize{10}{11.5}\selectfont}\def\ChipFont{\small}\def\RightFont{}\def\PlotHeight{0.7in}%
+\or
+\def\RowFont{\fontsize{9}{10.5}\selectfont}\def\ChipFont{\fontsize{9}{10.5}\selectfont}\def\RightFont{}\def\PlotHeight{0.7in}%
+\else
+\def\RowFont{\fontsize{9}{10.5}\selectfont}\def\ChipFont{\fontsize{9}{10.5}\selectfont}\def\RightFont{\def\small{\fontsize{9.5}{11.5}\selectfont}\small}\def\PlotHeight{0.55in}%
+\fi}
+% One slip across the full width: the name first, then Missing-work rows left and effort + plan
+% right; then the score strip, the box plot and the 9pt footer at full width.
+% [#1] = the left column's share of the line (leftColumnShare picks it per slip).
+% #2 = the full-width header (name first), #3 = effort lines, #4 = Missing-work rows.
+\newcommand{\SlipBody}[8][0.62]{#2\smallskip\begin{minipage}[t]{#1\linewidth}\vspace{0pt}{\RowFont #4\par}\end{minipage}\hfill\begin{minipage}[t]{\dimexpr0.98\linewidth-#1\linewidth\relax}\vspace{0pt}\RightFont #3#7\end{minipage}\par
+#5\par\smallskip #6\par\smallskip{\fontsize{9}{10.5}\selectfont #8\par}}
+% Two fixed half-page cells with a dotted cut line between them. The adjustbox is a last-resort
+% height cap only (after density step 2): a slip that fits is never scaled.
+\newlength{\SlipH}
+\newsavebox{\SlipBox}
+\newcommand{\SlipTry}[2]{\SlipStep{#1}\sbox{\SlipBox}{\begin{minipage}{\linewidth}#2\end{minipage}}}
+\newcommand{\SlipTooTall}{\ifdim\dimexpr\ht\SlipBox+\dp\SlipBox\relax>\SlipH}
+\newcommand{\Slip}[1]{\SlipTry{0}{#1}%
+\SlipTooTall\SlipTry{1}{#1}\fi
+\SlipTooTall\SlipTry{2}{#1}\fi
+\typeout{SLIPFIT step=\SlipStepNo\space height=\the\dimexpr\ht\SlipBox+\dp\SlipBox\relax\space limit=\the\SlipH}%
+\begin{minipage}[t][\SlipH][t]{\linewidth}\vspace{0pt}\begin{adjustbox}{max totalheight=\SlipH}\usebox{\SlipBox}\end{adjustbox}\end{minipage}}
+\newcommand{\SlipPage}[2]{\noindent\vbox to\textheight{\noindent#1\par\nointerlineskip\vbox to 0.25in{\vss\hbox to\linewidth{\color{gray}\dotfill}\vss}\nointerlineskip\noindent#2\par\vss}}
 \begin{document}
+\setlength{\SlipH}{\dimexpr(\textheight-0.25in)/2\relax}
 ${pages.join('\n\\newpage\n') || 'No printed candidates.'}
 \end{document}
 `;

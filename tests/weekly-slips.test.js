@@ -115,10 +115,19 @@ describe('weekly slips', () => {
   it('pins two half-page slips per Letter page, including a blank odd slot', () => {
     const students = [31, 80, 85, 90, 100].map(grade => student(grade));
     const tex = renderTex(students, students, 'PeriodB', '2026-09-26');
-    expect(tex).toContain('\\documentclass[10pt,letterpaper]{article}');
-    expect(tex).toContain('\\newcommand{\\SlipPage}[2]{\\noindent#1\\par\\vspace{0.15in}\\noindent#2\\par}');
-    expect(tex).toContain('\\begin{minipage}[t][4.7in][t]{\\linewidth}');
-    expect(tex).toContain('max totalsize={\\linewidth}{4.6in}');
+    // Full-width layout (teacher 2026-09-27): 11pt, 0.5in side margins, two slips of half the text
+    // height minus a 0.25in dotted cut gap; the adjustbox caps height only, never the width.
+    expect(tex).toContain('\\documentclass[11pt,letterpaper]{article}');
+    expect(tex).toContain('\\usepackage[left=0.5in,right=0.5in,top=0.45in,bottom=0.45in]{geometry}');
+    expect(tex).toContain('\\setlength{\\SlipH}{\\dimexpr(\\textheight-0.25in)/2\\relax}');
+    expect(tex).toContain('\\vbox to 0.25in{\\vss\\hbox to\\linewidth{\\color{gray}\\dotfill}\\vss}');
+    expect(tex).toContain('\\begin{minipage}[t][\\SlipH][t]{\\linewidth}');
+    expect(tex).toContain('max totalheight=\\SlipH');
+    expect(tex).not.toContain('max totalsize');
+    expect(tex).toMatch(/\\SlipBody\[0\.(44|5|56|62|66)\]\{/);
+    // The name is the first thing a slip says, at full width above the two columns.
+    expect(tex).toMatch(/\\Slip\{\\SlipBody\[[0-9.]+\]\{%\n\{\\fontsize\{12\}\{14\.5\}\\bfseries Where you stand --- /);
+    expect(tex).toContain('{\\small Period B --- week of Sep 28 $\\cdot$ {\\bfseries Q1 so far: 31\\%.');
     expect(tex.match(/\\SlipPage\{/g)).toHaveLength(3);
     expect(tex.match(/\\Slip\{/g)).toHaveLength(6);
     expect(tex.match(/\\newpage/g)).toHaveLength(2);
@@ -163,27 +172,29 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     const { stripText } = await import('../scripts/weekly-slips.mjs');
     const values = Array.from({ length: 28 }, (_, index) => (index < 2 ? 0 : 70 + index));
     expect(stripText({ title: '1.3 Follow-Along', values, tentativeZeros: 2 }, 'Sun 9/27', ['PeriodB', 'PeriodE'])).toEqual({
-      lead: 'All 30 scores from Period B and Period E together for 1.3 Follow-Along (2 tentative):',
+      lead: '30 students’ scores from Period B and Period E together for 1.3 Follow-Along (2 tentative):',
       foot: '26 of 30 students across both periods have a score here. 2 haven\'t yet — a tentative 0 until Sun 9/27. Every 0 on this list can still be replaced.',
       key: 'red = you · yellow = a 0 that is not counting yet · every other number is one student in Period B or E',
     });
     // One section in the payload: name only that one.
     expect(stripText({ title: '1.3 Quiz', values: [0, 50, 60, 70, 80] }, 'Sun 9/27', ['PeriodE'])).toEqual({
-      lead: 'All 5 scores from Period E for 1.3 Quiz:',
+      lead: '5 students’ scores from Period E for 1.3 Quiz:',
       foot: '4 of 5 students in Period E have a score here. Every 0 on this list can still be replaced.',
       key: 'red = you · every other number is one student in Period E',
     });
     // No sections (an older payload): the v1 "classmates" words.
     expect(stripText({ title: '1.3 Follow-Along', values, tentativeZeros: 2 }, 'Sun 9/27')).toEqual({
-      lead: 'All 30 scores for 1.3 Follow-Along (2 tentative):',
+      lead: '30 students’ scores for 1.3 Follow-Along (2 tentative):',
       foot: '26 of 30 classmates have a score here. 2 haven\'t yet — a tentative 0 until Sun 9/27. Every 0 on this list can still be replaced.',
       key: 'red = you · yellow = a 0 that is not counting yet · every other number is one classmate',
     });
     expect(stripText({ title: '1.3 Quiz', values: [0, 50, 60, 70, 80] }, 'Sun 9/27')).toEqual({
-      lead: 'All 5 scores for 1.3 Quiz:',
+      lead: '5 students’ scores for 1.3 Quiz:',
       foot: '4 of 5 classmates have a score here. Every 0 on this list can still be replaced.',
       key: 'red = you · every other number is one classmate',
     });
+    // One score: singular (teacher 2026-09-27).
+    expect(stripText({ title: '1.3 Quiz', values: [80] }, 'Sun 9/27', ['PeriodE']).lead).toBe('1 student’s score from Period E for 1.3 Quiz:');
   });
 
   it('firstItem picks the 0 counting longest, else the one that becomes a 0 soonest', async () => {
@@ -233,14 +244,31 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     const tent = '\\colorbox{desktentative}{\\textcolor{desktentativeink}{0}}';
     expect(tex.split(tent).length - 1).toBe(3);
     expect(tex).toContain('\\colorbox{white}{\\textcolor{deskred}{\\textbf{\\underline{0}}}}');
-    expect(tex).toContain('All 8 scores from Period B and Period E together for 1.2 Follow-Along (3 tentative):');
+    expect(tex).toContain('8 students\' scores from Period B and Period E together for 1.2 Follow-Along (3 tentative):');
     expect(tex).toContain('3 of 8 students across both periods have a score here. 3 haven\'t yet --- a tentative 0 until Mon 9/28. Every 0 on this list can still be replaced.');
     expect(tex).toContain('\\KeyTent{yellow} = a 0 that is not counting yet $\\cdot$ every other number is one student in Period B or E');
-    expect(tex).toContain('height=0.8in');
+    expect(tex).toContain('height=\\PlotHeight');
+    expect(tex).toContain('{\\ChipFont\\setlength{\\fboxsep}{1pt}\\raggedright\\sloppy ');   // chips follow the density step
     expect(tex).toContain('You: 31 --- below Q1.');
     const order = ['Missing work', 'Both periods on your first item', "Your section's quarter grades", 'What to do first', 'The Desk counts every lesson']
       .map(text => tex.indexOf(text));
     expect(order.every((at, index) => at > 0 && (index === 0 || at > order[index - 1]))).toBe(true);
+  });
+
+  it('a 14-row slip fits by density steps (smaller rows/chips, then right column + plot), not by scaling', async () => {
+    const { renderTex } = await import('../scripts/weekly-slips.mjs');
+    const lessons = Array.from({ length: 14 }, (_, index) => ({ lessonKey: `1.${index + 1}`, zeroDate: { B: '2026-09-20' }, Cws: null }));
+    const kid = { realName: 'X', quarters: { Q1: { quarterGrade: 31, lessonsDue: 14 } }, lessons };
+    const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-26', 'Q1');
+    expect(tex.match(/\\MissRow\{/g)).toHaveLength(14);
+    // The rows and chips read the step's fonts; the plot reads the step's height.
+    expect(tex).toContain('{\\RowFont #4\\par}');
+    expect(tex).toContain('\\def\\RowFont{\\fontsize{10}{11.5}\\selectfont}\\def\\ChipFont{\\small}\\def\\RightFont{}\\def\\PlotHeight{0.7in}');
+    expect(tex).toContain('\\def\\RowFont{\\fontsize{9}{10.5}\\selectfont}\\def\\ChipFont{\\fontsize{9}{10.5}\\selectfont}\\def\\RightFont{}\\def\\PlotHeight{0.7in}');
+    expect(tex).toContain('\\def\\RightFont{\\def\\small{\\fontsize{9.5}{11.5}\\selectfont}\\small}\\def\\PlotHeight{0.55in}');
+    // Measured in order: step 0, then 1, then 2; only then may the height cap scale.
+    expect(tex).toContain('\\newcommand{\\Slip}[1]{\\SlipTry{0}{#1}%\n\\SlipTooTall\\SlipTry{1}{#1}\\fi\n\\SlipTooTall\\SlipTry{2}{#1}\\fi\n');
+    expect(tex.indexOf('\\SlipTry{2}{#1}')).toBeLessThan(tex.indexOf('\\begin{adjustbox}{max totalheight=\\SlipH}'));
   });
 
   it('prints the fallback sentence when the first item is not in the pooled payload', async () => {
@@ -319,7 +347,7 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
   it('the footer says how the grade is counted (teacher 2026-09-27)', async () => {
     const { renderTex } = await import('../scripts/weekly-slips.mjs');
     const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-27', 'Q1');
-    expect(tex).toContain('{\\small Printed Sun 9/27. The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
+    expect(tex).toContain('{\\footnotesize Printed Sun 9/27. The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
     expect(tex).not.toContain('see the Desk for the graphs');
   });
 });
