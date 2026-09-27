@@ -11,6 +11,12 @@ h1 { font-size: 22px; }
 main { padding: 20px; max-width: 980px; }
 article { background: white; border: 1px solid #999; padding: 16px; margin-bottom: 16px; }
 nav a { display: inline-block; margin-right: 16px; }
+.slips-panel { background: #dddddd; border: 1px solid #000; padding: 10px 12px; margin-bottom: 16px; font-size: 13px; }
+.slips-panel h2 { font-size: 15px; margin: 0 0 6px; }
+.slips-panel p { margin: 4px 0; }
+.slips-panel button { font-family: inherit; font-size: 13px; background: #f4f4f4; border: 1px solid #000; border-radius: 4px; padding: 3px 10px; box-shadow: inset -1px -1px 0 #888, inset 1px 1px 0 #fff; }
+.slips-panel button[disabled] { color: #888; }
+.slips-panel code { font-size: 12px; }
 </style>
 </head>
 <body>
@@ -60,6 +66,98 @@ nav a { display: inline-block; margin-right: 16px; }
     reload.textContent = 'Reload';
     status.appendChild(reload);
   }
+})();
+</script>
+<script>
+// Teacher-only panel (SLIPS_V2_SPEC section 3): talks to the LOCAL print agent on this
+// laptop (tools/slips-agent.mjs). Slips carry names, so they are never built by this site.
+(function () {
+  if (!/(?:^|[?&])teacher=1(?:&|$)/.test(window.location.search)) return;
+  var AGENT = 'http://127.0.0.1:47831';
+  var START_HINT = 'The print agent is not running on this computer. Start it: powershell -NoProfile -File tools/register_slips_agent_task.ps1 (one time), or node tools/slips-agent.mjs.';
+  var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  function el(tag, text) {
+    var node = document.createElement(tag);
+    if (text) node.textContent = text;
+    return node;
+  }
+  function countsText(counts) {
+    if (!counts) return '';
+    return Object.keys(counts).sort().map(function (key) { return key + ' ' + counts[key]; }).join(' · ');
+  }
+  function whenText(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    var hh = String(d.getHours()).padStart(2, '0');
+    var mm = String(d.getMinutes()).padStart(2, '0');
+    return DAYS[d.getDay()] + ' ' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hh + ':' + mm;
+  }
+  // fetch with a hard timeout (the agent is either there at once or not at all).
+  function fetchWithin(url, options, ms) {
+    var controller = typeof AbortController === 'function' ? new AbortController() : null;
+    if (controller) options.signal = controller.signal;
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () {
+        if (controller) controller.abort();
+        reject(new Error('timeout'));
+      }, ms);
+      fetch(url, options).then(function (res) { clearTimeout(timer); resolve(res); },
+        function (err) { clearTimeout(timer); reject(err); });
+    });
+  }
+
+  var panel = el('section');
+  panel.className = 'slips-panel';
+  panel.id = 'slips-panel';
+  panel.appendChild(el('h2', 'Slips — students who are falling behind'));
+  panel.appendChild(el('p', 'Paper "where you stand" slips for anyone under 70% or with a 0 counting. Built on this laptop only (names inside); prints to the Grade Slips folder.'));
+  var button = el('button', 'Print slips now');
+  button.type = 'button';
+  button.id = 'slips-print';
+  button.disabled = true;
+  panel.appendChild(button);
+  var status = el('p');
+  status.id = 'slips-status';
+  status.setAttribute('role', 'status');
+  panel.appendChild(status);
+  var main = document.querySelector('main');
+  main.insertBefore(panel, main.firstChild);
+
+  function showLastRun(lastRun) {
+    if (!lastRun || !lastRun.at) { status.textContent = ''; return; }
+    var counts = countsText(lastRun.counts);
+    status.textContent = 'Last printed ' + whenText(lastRun.at) + (counts ? ': ' + counts : '');
+  }
+
+  fetchWithin(AGENT + '/health', { cache: 'no-store' }, 1500).then(function (res) {
+    if (!res.ok) throw new Error('health ' + res.status);
+    return res.json();
+  }).then(function (health) {
+    if (!health || health.ok !== true || health.agent !== 'slips') throw new Error('not the slips agent');
+    button.disabled = false;
+    showLastRun(health.lastRun);
+  }).catch(function () {
+    button.disabled = true;
+    status.textContent = START_HINT;
+  });
+
+  button.addEventListener('click', function () {
+    button.disabled = true;
+    status.textContent = 'Printing slips…';
+    fetch(AGENT + '/slips', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) { return { status: res.status, body: body || {} }; });
+    }).then(function (reply) {
+      if (reply.status === 409) { status.textContent = 'Already running…'; return; }
+      if (reply.status !== 200 || !reply.body.ok) {
+        status.textContent = reply.body.error || ('The print agent answered ' + reply.status + '.');
+        return;
+      }
+      status.textContent = 'Printed ' + countsText(reply.body.counts) + ' → ' + reply.body.out + ' (opened)';
+    }).catch(function (err) {
+      status.textContent = 'The print agent did not answer (' + (err && err.message ? err.message : 'unknown error') + ').';
+    }).then(function () { button.disabled = false; });
+  });
 })();
 </script>
 </body>

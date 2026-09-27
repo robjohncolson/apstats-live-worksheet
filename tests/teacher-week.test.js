@@ -106,6 +106,18 @@ describe('teacher-week.html as the Desk "This Week" app', () => {
     expect(launch).toContain('_deskIsTeacher()');
   });
 
+  it("hands teachers the DOK app's print-slips panel (?teacher=1); students get the plain URL", async () => {
+    const { runInNewContext } = await import('node:vm');
+    const source = desk.slice(desk.indexOf('function appLaunchUrl'), desk.indexOf('function openApp('));
+    const launchFor = teacher => runInNewContext(source + '; appLaunchUrl',
+      { _deskIsTeacher: () => teacher, _ti84TodayTopic: () => null, _todayLessonInf: null });
+    const dok = { url: 'https://robjohncolson.github.io/apstats-live-worksheet/dok/index.html' };
+    expect(launchFor(true)(dok, 'dok')).toBe(dok.url + '?teacher=1');
+    expect(launchFor(false)(dok, 'dok')).toBe(dok.url);
+    expect(launchFor(true)({ url: 'teacher-week.html' }, 'week')).toBe('teacher-week.html?ced=1');
+    expect(launchFor(false)({ url: 'teacher-week.html' }, 'week')).toBe('teacher-week.html?ced=0');
+  });
+
   it('?ced=0 renders the plain video list without CED toggles, the code summary, or teacher wording', async () => {
     const html = readFileSync(join(root, 'teacher-week.html'), 'utf8');
     const dom = new JSDOM(html, {

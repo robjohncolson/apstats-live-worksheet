@@ -24277,6 +24277,11 @@ function appLaunchUrl(app, id) {
         var teacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
         return app.url + (teacher ? '?ced=1' : '?ced=0');
     }
+    // SLIPS_V2_SPEC §3: the teacher gets the DOK app's "Print slips" panel; students the plain URL.
+    if (id === 'dok') {
+        var isTeacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
+        return isTeacher ? app.url + '?teacher=1' : app.url;
+    }
     if (id !== 'ti84') return app.url;
     var topic = _ti84TodayTopic();
     if (topic) return app.url + '#topic=' + topic + '&source=desk';
@@ -26843,7 +26848,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-hz8j';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-3x0x';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

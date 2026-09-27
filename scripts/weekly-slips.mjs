@@ -3,10 +3,48 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { runInNewContext } from 'node:vm';
 import '../lib/class-snapshot.js';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KIND = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcard deck' };
+// The Desk's Missing-work button words (ap_stats_roadmap_square_mode.html _zeroCardRow).
+const VERB = { worksheet: 'Open', quiz: 'Quiz', blooket: 'Flashcards' };
+// Desk colours (SLIPS_V2_SPEC §1): counting-now row, not-yet row, tentative chip.
+export const COLOR_DEFS = [
+  '\\definecolor{deskred}{HTML}{CC0000}',
+  '\\definecolor{deskredbg}{HTML}{FFF3F3}',
+  '\\definecolor{deskyellow}{HTML}{D9B400}',
+  '\\definecolor{deskyellowbg}{HTML}{FFF9DB}',
+  '\\definecolor{desktentative}{HTML}{FFF3B0}',
+  '\\definecolor{desktentativeink}{HTML}{8A6D00}',
+];
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// The Desk's CED 2026 labels ("1.3 · Tabular …"), loaded from the same two browser files.
+let cedLabelFn = null;
+function loadCedLabels() {
+  if (cedLabelFn) return cedLabelFn;
+  try {
+    const sandbox = {};
+    sandbox.window = sandbox;
+    for (const file of ['js/ced2026-crosswalk.js', 'js/ced2026-labels.js']) {
+      runInNewContext(fs.readFileSync(path.join(REPO, file), 'utf8'), sandbox);
+    }
+    cedLabelFn = sandbox.cedLabel;
+  } catch (_) {
+    cedLabelFn = () => ({ mapped: false });
+  }
+  return cedLabelFn;
+}
+
+export function lessonLabel(lessonKey) {
+  try {
+    const label = loadCedLabels()(lessonKey);
+    if (label && label.mapped && label.text) return label.text;
+  } catch (_) { /* fall through */ }
+  return String(lessonKey);
+}
 
 // The CURRENT quarter comes from the server (/class/snapshot reports it from today's date).
 // Other quarters carry placeholder numbers (a lone Unit-2 lesson lands in Q3 with a 50), so any
@@ -36,7 +74,8 @@ export function missingWork(lessons, period, date) {
     const row = { lessonKey: lesson.lessonKey, zeroDate, daysLeft, past: zeroDate < date };
     if (lesson.lessonGradeNoQuiz == null && lesson.Cws == null) result.push({ ...row, kind: 'worksheet' });
     if ((lesson.quizTotal || 0) > 0 && lesson.Q == null) result.push({ ...row, kind: 'quiz' });
-    if (lesson.hasBlooket && lesson.blooket == null) result.push({ ...row, kind: 'blooket' });
+    // Bonus decks never zero in the grade, so they are never missing (Desk _zeroWarnings).
+    if (lesson.hasBlooket && !lesson.blooketBonus && lesson.blooket == null) result.push({ ...row, kind: 'blooket' });
   }
   const order = { worksheet: 0, quiz: 1, blooket: 2 };
   return result.sort((a, b) => a.zeroDate.localeCompare(b.zeroDate) || order[a.kind] - order[b.kind]);
@@ -90,6 +129,7 @@ export function latexText(value) {
     '→': '$\\rightarrow$', 'μ': '$\\mu$', 'σ': '$\\sigma$', 'α': '$\\alpha$', 'β': '$\\beta$',
     'χ': '$\\chi$', 'Σ': '$\\sum$', '√': '$\\surd$', '·': '$\\cdot$', '∩': '$\\cap$', '∪': '$\\cup$',
     '…': '\\ldots{}', '—': '---', '–': '--', '’': "'", '“': '``', '”': "''",
+    '★': '$\\star$', '☆': '$\\star$',
   };
   const sequences = { 'x̄₁': '$\\bar{x}_1$', 'x̄₂': '$\\bar{x}_2$', 'μ₀': '$\\mu_0$',
     'μ₁': '$\\mu_1$', 'μ₂': '$\\mu_2$', 'μ_D': '$\\mu_D$', 'σ₁²': '$\\sigma_1^2$' };
@@ -112,72 +152,244 @@ export function boxSummary(students, quarterKey) {
     outliers: globalThis.ClassSnapshot.outliers(values, five) };
 }
 
-export function whenText(item) {
-  const day = new Date(item.zeroDate + 'T00:00:00Z');
-  const label = `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.getUTCDay()]} ${day.getUTCMonth() + 1}/${day.getUTCDate()}`;
-  return item.past ? `already a 0 (${label})` : `0 after ${label}`;
+// "Sun 9/27" for an ISO date (the Desk's _zeroDayText).
+export function dayText(iso) {
+  const day = new Date(iso + 'T00:00:00Z');
+  return `${DAYS[day.getUTCDay()]} ${day.getUTCMonth() + 1}/${day.getUTCDate()}`;
 }
 
-export function renderSlip(student, section, date, summary, quarterKey) {
-  const lessons = student.lessons || [];
-  const missing = missingWork(lessons, section.slice(-1), date);
-  const grade = quarterGrade(student, quarterKey);
-  const own = grade == null ? null : Math.round(grade);
+// The date cell of a Missing-work row (the Desk's _zeroWhenText).
+export function whenText(item) {
+  return item.past ? `0 since ${dayText(item.zeroDate)}` : `0 after ${dayText(item.zeroDate)}`;
+}
+
+// The Desk card order: counting now first, then by zero date (missingWork is date-ordered).
+export function orderMissing(missing) {
+  const list = Array.isArray(missing) ? missing : [];
+  return list.filter(item => item.past).concat(list.filter(item => !item.past));
+}
+
+// The slip's "First" item (the Desk's _snapFocus rule): the 0 counting longest, else the item
+// that becomes a 0 soonest.
+export function firstItem(missing) {
+  const list = (Array.isArray(missing) ? missing : []).slice()
+    .sort((a, b) => a.zeroDate.localeCompare(b.zeroDate));
+  return list.find(item => item.past) || list[0] || null;
+}
+
+// `/class/snapshot?by=assignment` key: "<lessonKey>:<track>" (tracks share the missing kinds).
+export function itemKey(item) {
+  return `${item.lessonKey}:${item.kind}`;
+}
+
+function realValues(assignment) {
+  const values = assignment && Array.isArray(assignment.values) ? assignment.values : [];
+  return values.map(Number).filter(Number.isFinite).map(Math.round).sort((a, b) => a - b);
+}
+
+function tentativeOf(assignment) {
+  const count = Math.round(Number(assignment && assignment.tentativeZeros));
+  return count > 0 ? count : 0;
+}
+
+// The pooled assignment for a missing item, or null when it is not in the payload (a combined
+// worksheet keyed by another lesson) or its numbers are withheld (n < 5).
+export function findPooled(pool, item) {
+  if (!Array.isArray(pool) || !item) return null;
+  const key = itemKey(item);
+  const found = pool.find(assignment => assignment && assignment.key === key);
+  if (!found) return null;
+  const count = realValues(found).length;
+  if (count > 0 || count + tentativeOf(found) >= 5) return found;
+  return null;
+}
+
+// The anonymous score strip (the Desk's _snapScoreList): tentative zeros first, then every real
+// score. Exactly one chip is "you": a tentative 0 when the student's own 0 is tentative, else the
+// matching real value in place, else the value inserted in order (the withOwn rule).
+export function scoreStrip(assignment, ownValue, ownTentative) {
+  const values = realValues(assignment);
+  const tentative = tentativeOf(assignment);
+  const ownIsTentative = Boolean(ownTentative) && ownValue != null && Math.round(ownValue) === 0 && tentative > 0;
+  const chips = [];
+  for (let index = 0; index < tentative; index++) {
+    const isYou = ownIsTentative && index === tentative - 1;
+    chips.push({ v: 0, kind: isYou ? 'you' : 'tent' });
+  }
+  const own = ownIsTentative || ownValue == null ? null : Math.round(ownValue);
+  const inPool = own != null && values.includes(own);
+  let placed = false;
+  for (const value of values) {
+    if (own != null && !placed && !inPool && value > own) {
+      chips.push({ v: own, kind: 'you' });
+      placed = true;
+    }
+    if (own != null && !placed && inPool && value === own) {
+      chips.push({ v: value, kind: 'you' });
+      placed = true;
+      continue;
+    }
+    chips.push({ v: value, kind: 'real' });
+  }
+  if (own != null && !placed) chips.push({ v: own, kind: 'you' });
+  return chips;
+}
+
+// Lead / foot / key sentences around the strip (the Desk's words).
+export function stripText(assignment, tentDay) {
+  const values = realValues(assignment);
+  const tentative = tentativeOf(assignment);
+  const total = values.length + tentative;
+  const have = values.filter(value => value > 0).length;
+  const lead = `All ${total} scores for ${assignment.title || assignment.key}${tentative ? ` (${tentative} tentative)` : ''}:`;
+  const tentText = tentative ? ` ${tentative} haven't yet — a tentative 0 until ${tentDay}.` : '';
+  const foot = `${have} of ${total} classmates have a score here.${tentText}`;
+  const key = tentative
+    ? 'red = you · yellow = a 0 that is not counting yet · every other number is one classmate'
+    : 'red = you · every other number is one classmate';
+  return { lead, foot, key };
+}
+
+export const STRIP_UNAVAILABLE = "Class scores for this one aren't available yet.";
+
+function chipTex(chip) {
+  const value = String(Math.round(chip.v));
+  if (chip.kind === 'tent') return `\\colorbox{desktentative}{\\textcolor{desktentativeink}{${value}}}`;
+  if (chip.kind === 'you') return `\\colorbox{white}{\\textcolor{deskred}{\\textbf{\\underline{${value}}}}}`;
+  return `\\colorbox{white}{${value}}`;
+}
+
+function keyTex(key) {
+  return key.split(' · ').map(part => {
+    if (part.startsWith('red = ')) return '\\KeyYou{red}' + latexText(part.slice(3));
+    if (part.startsWith('yellow = ')) return '\\KeyTent{yellow}' + latexText(part.slice(6));
+    return latexText(part);
+  }).join(' $\\cdot$ ');
+}
+
+// When the tentative zeros become real (the Desk's _snapTentativeDay): the student's own section
+// date while it is still ahead, else the soonest section date still ahead, else the item's date.
+export function tentativeDay(assignment, section, date, fallbackIso) {
+  const zeroDates = (assignment && assignment.zeroDates) || {};
+  const mine = section ? zeroDates[section] : null;
+  if (mine && mine >= date) return dayText(mine);
+  const ahead = Object.values(zeroDates).filter(iso => iso && iso >= date).sort();
+  if (ahead.length) return dayText(ahead[0]);
+  return dayText((assignment && assignment.zeroDate) || fallbackIso);
+}
+
+// §1.3: one anonymous score strip for the slip's first item. Never fails the slip.
+export function classStripTex(missing, pool, section, date) {
+  const first = firstItem(missing);
+  if (!first) return '';
+  const heading = '\\par\\medskip\\textbf{The class on your first item}\\par\n';
+  const assignment = findPooled(pool, first);
+  if (!assignment) return heading + latexText(STRIP_UNAVAILABLE) + '\\par\n';
+  // The student's own score here is missing: a 0, tentative while it is not counting yet.
+  const chips = scoreStrip(assignment, 0, !first.past);
+  const text = stripText(assignment, tentativeDay(assignment, section, date, first.zeroDate));
+  return heading
+    + latexText(text.lead) + '\\par\n'
+    + '{\\setlength{\\fboxsep}{1.5pt}\\raggedright\\sloppy '
+    + chips.map(chipTex).join('\\hspace{2pt}') + '\\par}\n'
+    + '{\\small ' + latexText(text.foot) + '\\par\n'
+    + keyTex(text.key) + '\\par}\n';
+}
+
+// §1.2: one coloured row per missing item, verb first, in the Desk's order.
+export function missingRowsTex(missing) {
+  const rows = orderMissing(missing).map(item => {
+    const bar = item.past ? 'deskred' : 'deskyellow';
+    const background = item.past ? 'deskredbg' : 'deskyellowbg';
+    const label = `${VERB[item.kind]} ${lessonLabel(item.lessonKey)}`;
+    return `\\MissRow{${bar}}{${background}}{${latexText(label)}}{${latexText(whenText(item))}}`;
+  });
+  return rows.join('\n') || 'No missing work within the warning window.\\par';
+}
+
+function weekLabelFor(date) {
   const week = new Date(date + 'T00:00:00Z');
   // Friday's printout is handed out Monday; weekdays label their current school week.
   const weekday = week.getUTCDay();
   week.setUTCDate(week.getUTCDate() + (weekday === 0 ? 1 : weekday >= 5 ? 8 - weekday : 1 - weekday));
-  const weekLabel = week.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-  let plot = 'Not enough classmates yet.';
-  if (summary) {
-    const s = summary;
-    const position = own == null ? 'no grade yet' : own < s.q1 ? 'below Q1' : own > s.q3 ? 'above Q3' : 'within Q1--Q3';
-    plot = String.raw`\begin{tikzpicture}
-\begin{axis}[width=\linewidth,height=1.05in,scale only axis=false,boxplot/draw direction=x,
+  return week.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+// §1.1: "Q1 so far: 31%. Class median 97."
+export function headerLine(own, quarterLabel, summary) {
+  const quarter = quarterLabel || 'This quarter';
+  const grade = own == null ? `${quarter}: no grade yet.` : `${quarter} so far: ${own}%.`;
+  return summary ? `${grade} Class median ${summary.median}.` : grade;
+}
+
+function positionText(own, summary) {
+  if (own == null) return 'You: no grade yet.';
+  const where = own < summary.q1 ? 'below Q1' : own > summary.q3 ? 'above Q3' : 'inside the box';
+  return `You: ${own} — ${where}.`;
+}
+
+// §1.4: the section box plot, smaller and last.
+function boxPlotTex(own, summary) {
+  if (!summary) return 'Not enough classmates yet for a class box plot.\\par';
+  const s = summary;
+  return String.raw`\begin{tikzpicture}
+\begin{axis}[width=\linewidth,height=0.8in,scale only axis=false,boxplot/draw direction=x,
   xmin=${Math.min(0, s.min)},xmax=${Math.max(100, s.max)},ymin=0,ymax=2,ytick=\empty,axis y line=none,axis x line=bottom]
 \addplot+[boxplot prepared={lower whisker=${s.lowerWhisker},lower quartile=${s.q1},median=${s.median},upper quartile=${s.q3},upper whisker=${s.upperWhisker}}] coordinates {};
 ${s.outliers.length ? String.raw`\addplot[only marks,mark=o,black] coordinates {${s.outliers.map(value => `(${value},1)`).join(' ')}};` : ''}
 ${own == null ? '' : String.raw`\addplot[only marks,mark=*,red] coordinates {(${own},0.4)};`}
 \end{axis}
 \end{tikzpicture}
-\par Class median ${s.median} $\cdot$ you ${own ?? 'not yet graded'} $\cdot$ ${position}`;
-  }
-  const rows = missing.map(item => `${latexText(item.lessonKey)} & ${KIND[item.kind]} & ${latexText(whenText(item))} \\\\`).join('\n');
+\par ${latexText(positionText(own, s))}\par`;
+}
+
+export function renderSlip(student, section, date, summary, quarterKey, pool = null) {
+  const lessons = student.lessons || [];
+  const missing = missingWork(lessons, section.slice(-1), date);
+  const grade = quarterGrade(student, quarterKey);
+  const own = grade == null ? null : Math.round(grade);
+  const quarterLabel = currentQuarterKey(student.quarters, quarterKey);
   const steps = planFor(lessons, missing, section.slice(-1), date)
     .map((line, index) => `${index + 1}. ${latexText(line)}\\par`).join('\n');
   return String.raw`\Slip{
 {\large\bfseries Where you stand --- ${latexText(student.realName || student.name || student.username || 'Student')}}\par
-Period ${section.slice(-1)} --- week of ${weekLabel}\par
-${plot}
-\par\medskip\textbf{Missing work}\par
-\begin{tabularx}{\linewidth}{@{}l l X@{}}
-\textbf{Item} & \textbf{Kind} & \textbf{Zero date} \\
-${rows || String.raw`\multicolumn{3}{l}{No missing work within the warning window.} \\`}
-\end{tabularx}
-\par\medskip\textbf{What to do first}\par
+Period ${section.slice(-1)} --- week of ${weekLabelFor(date)}\par
+\smallskip{\bfseries ${latexText(headerLine(own, quarterLabel, summary))}}\par
+\medskip\textbf{Missing work}\par
+${missingRowsTex(missing)}
+${classStripTex(missing, pool, section, date)}\par\medskip\textbf{Your section's quarter grades}\par
+${boxPlotTex(own, summary)}
+\medskip\textbf{What to do first}\par
 ${steps}
-\par\medskip Every item on this list can still be finished. Desk $\rightarrow$ My Ledger $\rightarrow$ Missing work.
+\par\medskip Every item on this list can still be finished. Desk $\rightarrow$ My Ledger $\rightarrow$ Missing work.\par
+{\small Printed ${latexText(dayText(date))}. Any score replaces a 0 --- see the Desk for the graphs.}
 }`;
 }
 
-export function renderTex(students, candidates, section, date, quarterKey) {
+export function renderTex(students, candidates, section, date, quarterKey, pool = null) {
   const summary = boxSummary(students, quarterKey);
   const pages = [];
   for (let index = 0; index < candidates.length; index += 2) {
-    const top = renderSlip(candidates[index], section, date, summary, quarterKey);
-    const bottom = candidates[index + 1] ? renderSlip(candidates[index + 1], section, date, summary, quarterKey) : '\\Slip{}';
+    const top = renderSlip(candidates[index], section, date, summary, quarterKey, pool);
+    const bottom = candidates[index + 1] ? renderSlip(candidates[index + 1], section, date, summary, quarterKey, pool) : '\\Slip{}';
     pages.push(`\\SlipPage{${top}}{${bottom}}`);
   }
   return String.raw`\documentclass[10pt,letterpaper]{article}
 \usepackage[margin=0.65in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{xcolor}
 \usepackage{helvet,tabularx,pgfplots,adjustbox}
 \usepgfplotslibrary{statistics}
 \pgfplotsset{compat=1.18}
 \renewcommand{\familydefault}{\sfdefault}
 \pagestyle{empty}
 \setlength{\parindent}{0pt}
+${COLOR_DEFS.join('\n')}
+% A Missing-work row: coloured left bar (a running-height \vrule) on a tinted background.
+\newcommand{\MissRow}[4]{\par\noindent{\setlength{\fboxsep}{0pt}\colorbox{#2}{\textcolor{#1}{\vrule width 3pt}\hspace{5pt}\parbox[c]{\dimexpr\linewidth-11pt\relax}{\strut#3\hfill#4\strut}\hspace{3pt}}}\par\vspace{2pt}}
+\newcommand{\KeyYou}[1]{\textcolor{deskred}{\textbf{\underline{#1}}}}
+\newcommand{\KeyTent}[1]{{\setlength{\fboxsep}{1pt}\colorbox{desktentative}{\textcolor{desktentativeink}{#1}}}}
 % Two fixed half-page cells. Scale long missing lists to fit, never omit rows.
 \newcommand{\Slip}[1]{\begin{minipage}[t][4.7in][t]{\linewidth}\vspace{0pt}\begin{adjustbox}{max totalsize={\linewidth}{4.6in}}\begin{minipage}{\linewidth}#1\end{minipage}\end{adjustbox}\end{minipage}}
 \newcommand{\SlipPage}[2]{\noindent#1\par\vspace{0.15in}\noindent#2\par}
@@ -231,10 +443,25 @@ export function assertSafeOut(directory, repo = REPO) {
   for (const candidate of [out, realOut]) {
     const relative = path.relative(fs.realpathSync(repo), candidate);
     if (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) continue;
-    const ignored = spawnSync('git', ['check-ignore', '-q', '--', candidate], { cwd: repo });
-    if (ignored.status !== 0) throw new Error('Refusing output inside the repository unless gitignored (student names are private)');
+    // No exception for gitignored folders: a slip carries names and a gitignore can change.
+    throw new Error('Refusing output inside the repository (student names are private)');
   }
   return out;
+}
+
+// The pooled per-assignment class picture (both periods), fetched ONCE per run with the same
+// headers as the per-section /class/snapshot call. null on any failure: slips then print the
+// "not available yet" sentence instead of a strip.
+export async function fetchPool(config) {
+  try {
+    const rosterBase = config.rosterUrl.endsWith('/') ? config.rosterUrl.slice(0, -1) : config.rosterUrl;
+    const response = await fetch(`${rosterBase}/class/snapshot?section=all&by=assignment`, { headers: { 'x-teacher-secret': config.teacherKey }, signal: AbortSignal.timeout(60000) });
+    if (!response.ok) return null;
+    const doc = await response.json();
+    return Array.isArray(doc.assignments) ? doc.assignments : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 export async function main(args = process.argv.slice(2)) {
@@ -243,6 +470,7 @@ export async function main(args = process.argv.slice(2)) {
   const config = JSON.parse(fs.readFileSync(path.join(os.homedir(), 'grade-backups', 'config.json'), 'utf8').replace(/^\uFEFF/, ''));
   if (!config.teacherKey || !config.rosterUrl) throw new Error('config.json requires teacherKey and rosterUrl');
   const counts = [];
+  const pool = await fetchPool(config);
   for (const section of options.sections) {
     const url = `${config.rosterUrl.replace(/\/+$/, '')}/class/grades?section=${section}`;
     const response = await fetch(url, { headers: { 'x-teacher-secret': config.teacherKey }, signal: AbortSignal.timeout(60000) });
@@ -268,7 +496,7 @@ export async function main(args = process.argv.slice(2)) {
     }
     fs.mkdirSync(out, { recursive: true });
     const stem = `${options.date}-${section}-slips`;
-    fs.writeFileSync(path.join(out, stem + '.tex'), renderTex(students, candidates, section, options.date, quarterKey));
+    fs.writeFileSync(path.join(out, stem + '.tex'), renderTex(students, candidates, section, options.date, quarterKey, pool));
     if (!options.noPdf) {
       for (let pass = 0; pass < 2; pass++) {
         const result = spawnSync('pdflatex', ['-interaction=nonstopmode', '-halt-on-error', stem + '.tex'], { cwd: out, encoding: 'utf8' });

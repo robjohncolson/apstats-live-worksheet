@@ -96,7 +96,9 @@ describe('weekly slips', () => {
     expect(() => assertSafeOut(repo)).toThrow('Refusing output');
     expect(() => assertSafeOut(path.join(repo, 'private-slips-not-ignored'))).toThrow('Refusing output');
     expect(assertSafeOut(path.join(os.tmpdir(), 'weekly-slips-test'))).toBe(path.resolve(os.tmpdir(), 'weekly-slips-test'));
-    expect(assertSafeOut(path.join(repo, 'node_modules', 'weekly-slips-test'))).toBe(path.join(repo, 'node_modules', 'weekly-slips-test'));
+    // gitignored is no longer an exception (Codex review 2026-09-26): nothing named lands under the repo
+    expect(() => assertSafeOut(path.join(repo, 'node_modules', 'weekly-slips-test'))).toThrow('Refusing output');
+    expect(() => assertSafeOut(path.join(repo, 'tools', '.slips-agent-logs', 'probe'))).toThrow('Refusing output');
   });
 
   it('rounds grades and uses non-outlier whiskers rather than min/max', () => {
@@ -137,6 +139,109 @@ describe('weekly slips', () => {
   });
 });
 
+describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
+  const item = (lessonKey, kind, zeroDate, past) => ({ lessonKey, kind, zeroDate, past, daysLeft: 0 });
+  const pooled = { key: '1.3:worksheet', title: '1.3 Follow-Along', values: [0, 0, 60, 80, 97, 100], tentativeZeros: 2 };
+
+  it('scoreStrip: tentative zeros lead, then real values; one red chip for the student', async () => {
+    const { scoreStrip } = await import('../scripts/weekly-slips.mjs');
+    const kinds = chips => chips.map(chip => `${chip.v}${chip.kind[0]}`).join(' ');
+    // Own 0 is tentative: the last tentative chip is "you", no extra chip.
+    expect(kinds(scoreStrip(pooled, 0, true))).toBe('0t 0y 0r 0r 60r 80r 97r 100r');
+    // Own 0 is counting: the first real 0 is "you".
+    expect(kinds(scoreStrip(pooled, 0, false))).toBe('0t 0t 0y 0r 60r 80r 97r 100r');
+    // Own value in D: marked in place. Not in D: inserted in order (withOwn).
+    expect(kinds(scoreStrip(pooled, 80, false))).toBe('0t 0t 0r 0r 60r 80y 97r 100r');
+    expect(kinds(scoreStrip(pooled, 31, false))).toBe('0t 0t 0r 0r 31y 60r 80r 97r 100r');
+    expect(kinds(scoreStrip(pooled, 101, false))).toBe('0t 0t 0r 0r 60r 80r 97r 100r 101y');
+    // Own 0 tentative but no tentative chips in the pool: it falls back to a real 0.
+    expect(kinds(scoreStrip({ values: [0, 50, 60, 70, 80] }, 0, true))).toBe('0y 50r 60r 70r 80r');
+    expect(scoreStrip(pooled, 0, true).filter(chip => chip.kind === 'you')).toHaveLength(1);
+  });
+
+  it('prints the Desk lead, foot and key sentences', async () => {
+    const { stripText } = await import('../scripts/weekly-slips.mjs');
+    const values = Array.from({ length: 28 }, (_, index) => (index < 2 ? 0 : 70 + index));
+    expect(stripText({ title: '1.3 Follow-Along', values, tentativeZeros: 2 }, 'Sun 9/27')).toEqual({
+      lead: 'All 30 scores for 1.3 Follow-Along (2 tentative):',
+      foot: '26 of 30 classmates have a score here. 2 haven\'t yet — a tentative 0 until Sun 9/27.',
+      key: 'red = you · yellow = a 0 that is not counting yet · every other number is one classmate',
+    });
+    expect(stripText({ title: '1.3 Quiz', values: [0, 50, 60, 70, 80] }, 'Sun 9/27')).toEqual({
+      lead: 'All 5 scores for 1.3 Quiz:',
+      foot: '4 of 5 classmates have a score here.',
+      key: 'red = you · every other number is one classmate',
+    });
+  });
+
+  it('firstItem picks the 0 counting longest, else the one that becomes a 0 soonest', async () => {
+    const { firstItem, orderMissing } = await import('../scripts/weekly-slips.mjs');
+    const soonA = item('1.4', 'worksheet', '2026-09-28', false);
+    const soonB = item('1.3', 'quiz', '2026-09-27', false);
+    const pastA = item('1.2', 'blooket', '2026-09-20', true);
+    const pastB = item('1.1', 'worksheet', '2026-09-18', true);
+    expect(firstItem([pastA, soonB, pastB, soonA])).toBe(pastB);
+    expect(firstItem([soonA, soonB])).toBe(soonB);
+    expect(firstItem([])).toBeNull();
+    expect(orderMissing([soonB, pastB, soonA, pastA])).toEqual([pastB, pastA, soonB, soonA]);
+  });
+
+  it('matches pooled items by <lessonKey>:<track> and withholds n < 5', async () => {
+    const { findPooled } = await import('../scripts/weekly-slips.mjs');
+    const pool = [pooled, { key: '1.3:quiz', values: [], tentativeZeros: 3 }, { key: '1.3:blooket', values: [], tentativeZeros: 6 }];
+    expect(findPooled(pool, item('1.3', 'worksheet', '2026-09-27', false))).toBe(pooled);
+    expect(findPooled(pool, item('1.3', 'quiz', '2026-09-27', false))).toBeNull();
+    expect(findPooled(pool, item('1.3', 'blooket', '2026-09-27', false))).toBe(pool[2]);
+    expect(findPooled(pool, item('1.4', 'worksheet', '2026-09-27', false))).toBeNull();
+    expect(findPooled(null, item('1.3', 'worksheet', '2026-09-27', false))).toBeNull();
+  });
+
+  it('renders Desk colours, coloured missing rows, one tentative colorbox per chip, and the box plot last', async () => {
+    const { renderTex, COLOR_DEFS } = await import('../scripts/weekly-slips.mjs');
+    const lessons = [
+      { lessonKey: '1.2', zeroDate: { B: '2026-09-20' }, Cws: null },
+      { lessonKey: '1.3', zeroDate: { B: '2026-09-27' }, Cws: null, quizTotal: 2, hasBlooket: true, blooketBonus: true },
+    ];
+    const kid = { realName: 'X', quarters: { Q1: { quarterGrade: 31, lessonsDue: 3 } }, lessons };
+    const others = [80, 97, 97, 99, 100].map(grade => student(grade));
+    const pool = [{ key: '1.2:worksheet', title: '1.2 Follow-Along', values: [0, 0, 70, 80, 90], tentativeZeros: 3,
+      zeroDate: '2026-09-20', zeroDates: { PeriodB: '2026-09-20', PeriodE: '2026-09-28' } }];
+    const tex = renderTex([kid, ...others], [kid], 'PeriodB', '2026-09-26', 'Q1', pool);
+    expect(COLOR_DEFS).toHaveLength(6);
+    for (const line of COLOR_DEFS) expect(tex).toContain(line);
+    expect(tex).toContain('\\definecolor{deskred}{HTML}{CC0000}');
+    expect(tex).toContain('\\definecolor{desktentative}{HTML}{FFF3B0}');
+    expect(tex).toContain('Q1 so far: 31\\%. Class median 97.');
+    expect(tex).toContain('\\MissRow{deskred}{deskredbg}{Open 1.2 $\\cdot$ Variables}{0 since Sun 9/20}');
+    expect(tex).toContain('\\MissRow{deskyellow}{deskyellowbg}{Quiz 1.3');
+    expect(tex).toContain('{0 after Sun 9/27}');
+    expect(tex).not.toContain('Flashcards 1.3');   // bonus decks never zero
+    // First item = 1.2 (counting): 3 tentative chips, then the red real 0 in place.
+    const tent = '\\colorbox{desktentative}{\\textcolor{desktentativeink}{0}}';
+    expect(tex.split(tent).length - 1).toBe(3);
+    expect(tex).toContain('\\colorbox{white}{\\textcolor{deskred}{\\textbf{\\underline{0}}}}');
+    expect(tex).toContain('All 8 scores for 1.2 Follow-Along (3 tentative):');
+    expect(tex).toContain('3 of 8 classmates have a score here. 3 haven\'t yet --- a tentative 0 until Mon 9/28.');
+    expect(tex).toContain('\\KeyTent{yellow} = a 0 that is not counting yet');
+    expect(tex).toContain('height=0.8in');
+    expect(tex).toContain('You: 31 --- below Q1.');
+    const order = ['Missing work', 'The class on your first item', "Your section's quarter grades", 'What to do first', 'Any score replaces a 0']
+      .map(text => tex.indexOf(text));
+    expect(order.every((at, index) => at > 0 && (index === 0 || at > order[index - 1]))).toBe(true);
+  });
+
+  it('prints the fallback sentence when the first item is not in the pooled payload', async () => {
+    const { renderTex, STRIP_UNAVAILABLE } = await import('../scripts/weekly-slips.mjs');
+    const kid = student(31);
+    const withoutPool = renderTex([kid], [kid], 'PeriodB', '2026-09-26', 'Q1');
+    expect(withoutPool).toContain("Class scores for this one aren't available yet.");
+    expect(STRIP_UNAVAILABLE).toBe("Class scores for this one aren't available yet.");
+    const withheld = renderTex([kid], [kid], 'PeriodB', '2026-09-26', 'Q1', [{ key: '1.0:worksheet', values: [], tentativeZeros: 2 }]);
+    expect(withheld).toContain("Class scores for this one aren't available yet.");
+    expect(withheld).not.toContain('desktentativeink}{0}');
+  });
+});
+
 describe('current quarter selection (2026-09-26 fix)', () => {
   it('reads the quarter that has lessons due, never a later placeholder quarter', async () => {
     const m = await import('../scripts/weekly-slips.mjs');
@@ -146,5 +251,11 @@ describe('current quarter selection (2026-09-26 fix)', () => {
     expect(m.quarterGrade({ quarters })).toBe(100);
     expect(m.quarterGrade({ quarters: { Q1: { quarterGrade: 88, lessonsDue: 4 }, Q2: { quarterGrade: 91, lessonsDue: 2 } } }, 'Q2')).toBe(91);
     expect(m.quarterGrade({ quarters: { Q1: { quarterGrade: null, lessonsDue: 0 } } })).toBeNull();
+  });
+});
+
+describe('bonus-topic labels compile (Codex review 2026-09-26: the crosswalk label carries a ★)', () => {
+  it('latexText maps the star to math and keeps the rest of the label', () => {
+    expect(latexText('★ Beyond the Exam · Data Ethics')).toBe('$\\star$ Beyond the Exam $\\cdot$ Data Ethics');
   });
 });
