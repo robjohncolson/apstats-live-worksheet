@@ -57,7 +57,7 @@ describe('Desk due-today deck — static contract', () => {
     expect(plans).toMatch(/status\s*===\s*'optional'/);
     expect(plans).toContain('cedLabel(topicId).text');
     expect(body).toMatch(/_rvState\.mixed\s*=\s*true/);
-    expect(body).toContain('Review due — practice, not graded');
+    expect(body).toContain('Spaced repetition practice only \\u2014 never for a grade');   // the source keeps the escape
   });
 
   it('shows a per-card lesson label and logs mixed ratings with that card own topic and csv', () => {
@@ -306,19 +306,43 @@ describe('Desk due-today deck — executed behavior', () => {
     expect(factory(undefined, () => null)()).toEqual({ due: 0 });
   });
 
-  it('does not append the chip when due is zero', () => {
-    const dom = new JSDOM('<!doctype html><body><div id="host"></div></body>');
+  // Teacher 2026-09-26: the count moved OUT of the Do Now onto a desktop icon ("kids have enough
+  // work to do without that, but the ambitious kids should have access").
+  function iconWorld() {
+    const dom = new JSDOM('<!doctype html><body><div id="host"><button id="fc-due-chip">stale</button></div>'
+      + '<div class="app-icon" data-app="review"><div class="icon-img"></div><div class="icon-label">Review</div></div></body>');
     const startMixed = vi.fn();
     const factory = new Function(
       'document', '_rvStartMixed',
-      fnBody(DESK, '_srsRenderDueChip') + '\nreturn _srsRenderDueChip;'
+      fnBody(DESK, '_srsPaintReviewIcon') + '\n' + fnBody(DESK, '_srsRenderDueChip') + '\nreturn _srsRenderDueChip;'
     );
-    const renderChip = factory(dom.window.document, startMixed);
+    return { dom, startMixed, renderChip: factory(dom.window.document, startMixed) };
+  }
+  it('never puts a chip in the Do Now; with cards due the Review icon gets a badge and bobs', () => {
+    const { dom, startMixed, renderChip } = iconWorld();
     const host = dom.window.document.getElementById('host');
-
-    renderChip(host, { due: 0 });
-
-    expect(host.children).toHaveLength(0);
+    renderChip(host, { due: 7 });
+    expect(host.children).toHaveLength(0);                         // the stale chip is cleared, nothing added
+    const icon = dom.window.document.querySelector('.app-icon[data-app="review"]');
+    expect(icon.querySelector('.review-due-badge').textContent).toBe('7');
+    expect(icon.classList.contains('review-has-due')).toBe(true);
+    expect(icon.title).toBe('Spaced repetition practice only \u2014 never for a grade. 7 cards due today.');
     expect(startMixed).not.toHaveBeenCalled();
+  });
+  it('with nothing due the badge and bob go away and the icon stays (ambitious kids keep access)', () => {
+    const { dom, renderChip } = iconWorld();
+    renderChip(dom.window.document.getElementById('host'), { due: 7 });
+    renderChip(dom.window.document.getElementById('host'), { due: 0 });
+    const icon = dom.window.document.querySelector('.app-icon[data-app="review"]');
+    expect(icon.querySelector('.review-due-badge')).toBeNull();
+    expect(icon.classList.contains('review-has-due')).toBe(false);
+    expect(icon.title).toBe('Spaced repetition practice only \u2014 never for a grade. Nothing due right now.');
+  });
+  it('the desktop icon exists, opens the mixed deck, and the session header says what it is', () => {
+    expect(DESK).toMatch(/<div class="app-icon" data-app="review"[^>]*ondblclick="openReview\(\)"/);
+    expect(DESK).toContain('<div class="icon-label">Review</div>');
+    expect(fnBody(DESK, 'openReview')).toContain('_rvStartMixed()');
+    expect(DESK).toContain("title.textContent = 'Spaced repetition practice only \\u2014 never for a grade'");
+    expect(DESK).toMatch(/\.app-icon\[data-app="review"\]\.review-has-due \.icon-img \{ animation: icon-bob/);
   });
 });

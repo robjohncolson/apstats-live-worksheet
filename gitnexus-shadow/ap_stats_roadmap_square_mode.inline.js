@@ -2881,6 +2881,24 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -12746,22 +12764,41 @@ function _srsDueSnapshot() {
     return summary;
 }
 
+// The due count used to be a "Review due (N)" chip in the Do Now grades row. It now lives on the
+// Review desktop icon (badge + bob) so the Do Now carries only the work that is due. Every caller
+// still passes the Do Now host; it is only used to clear any chip a stale build painted.
 function _srsRenderDueChip(host, summary) {
-    if (!host) return;
-    // Idempotent: the flags-loaded repaint re-calls this on the same host.
-    var prior = host.querySelector('#fc-due-chip');
-    if (prior && prior.parentNode) prior.parentNode.removeChild(prior);
-    if (!summary || !(summary.due > 0)) return;
-    var chip = document.createElement('button');
-    chip.type = 'button';
-    chip.id = 'fc-due-chip';
-    chip.className = 's7btn chicago';
-    chip.style.cssText = 'font-size:10px;margin-left:8px;align-self:center;padding:2px 7px';
-    chip.textContent = 'Review due (' + summary.due + ')';
-    chip.onclick = function () {
-        if (typeof _rvStartMixed === 'function') _rvStartMixed();
-    };
-    host.appendChild(chip);
+    if (host) {
+        var prior = host.querySelector('#fc-due-chip');
+        if (prior && prior.parentNode) prior.parentNode.removeChild(prior);
+    }
+    _srsPaintReviewIcon(summary);
+}
+function _srsPaintReviewIcon(summary) {
+    var icon = document.querySelector('.app-icon[data-app="review"]');
+    if (!icon) return;
+    var img = icon.querySelector('.icon-img');
+    var badge = img ? img.querySelector('.review-due-badge') : null;
+    var due = summary && summary.due > 0 ? summary.due : 0;
+    if (!due) {
+        if (badge) badge.remove();
+        icon.classList.remove('review-has-due');
+        icon.title = 'Spaced repetition practice only \u2014 never for a grade. Nothing due right now.';
+        return;
+    }
+    if (!badge && img) { badge = document.createElement('span'); badge.className = 'review-due-badge'; img.appendChild(badge); }
+    if (badge) {
+        badge.textContent = String(due);
+        badge.setAttribute('role', 'status');
+        badge.setAttribute('aria-label', due + (due === 1 ? ' flashcard' : ' flashcards') + ' due for review');
+    }
+    icon.classList.add('review-has-due');
+    icon.title = 'Spaced repetition practice only \u2014 never for a grade. ' + due + (due === 1 ? ' card' : ' cards') + ' due today.';
+}
+// Desktop icon entry: straight into the mixed due deck (it says "nothing due" when there is none).
+function openReview() {
+    try { if (typeof bumpUsage === 'function') bumpUsage('review'); } catch (_) {}
+    if (typeof _rvStartMixed === 'function') _rvStartMixed();
 }
 
 function _srsAppendLog(entries) {
@@ -13771,7 +13808,7 @@ async function _rvStartMixed() {
     if (header) {
         while (header.firstChild) header.removeChild(header.firstChild);
         var title = document.createElement('span');
-        title.textContent = 'Review due — practice, not graded';
+        title.textContent = 'Spaced repetition practice only \u2014 never for a grade';
         var close = document.createElement('button');
         close.className = 's7btn';
         close.style.cssText = 'float:right;padding:0 5px;min-width:24px';
@@ -26737,7 +26774,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-7t6e';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-wrok';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
