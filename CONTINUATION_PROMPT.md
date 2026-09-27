@@ -92,6 +92,13 @@ written specs — both lanes worked (see memory `feedback_opus_review_lane`). Me
   prompt budget ~230 prompt words; `tests/test_dok_build.py` 140. `roster-server/tests/misconceptions-triage.test.js` repinned
   to invariants (it was pinning the 9/25 sheet's count).
 
+### Late-session additions (Sat 9/26 evening)
+- **Slips v2** (`bde3337e`, spec `SLIPS_V2_SPEC.md`): data-first slips in Desk colours; **"APStats Weekly Slips" Scheduled Task Monday 05:00** (slips are OUT of the Friday DOK job); **"APStats Slips Agent"** at logon on `127.0.0.1:47831`; DOK app (`dok/index.html?teacher=1`) has a "Print slips now" panel for the teacher. Both tasks registered on Athena; agent health verified. ⚠ untested: Chrome's local-network permission prompt on the first click from the https Desk — if the button says the agent is not running while `curl http://127.0.0.1:47831/health` answers, that prompt is why.
+- **Review desktop icon** (`76524e8c`): the spaced-repetition deck left the Do Now; icon badge = cards due, bobs while due; "practice only, never for a grade".
+- **Grade coach refresh** (fa `0f96273e`…`eb6badbe`, cr `51405cc`…`aac1d83`): zero-date rule, Blooket zeros, nothing is locked, FIRST PRIORITY from the missing list, plain text, topic named once; clicks inside the coach never open the ledger.
+- **Roster:** one Period B student dropped (deleted via `DELETE /roster/:id`; his Schoology row is the teacher's to remove). **PC:** one paper U1 Part A score entered (`scripts/import-pc-scores.mjs`, file in `%USERPROFILE%\grade-backups\pc`); it starts counting when B's U1 PC Day 2 passes (10/13) — pcAvg stays null until then by design.
+- The teacher merged a GitHub PR adding Claude GitHub Actions workflows (`72d1efe0`) — rebase with `--autostash` over the dirty tree before pushing.
+
 ### Gotchas learned this session
 - The Bash-tool wrapper mangles backslashes / non-ASCII in heredocs and inline `node -e` / `python -c`: write patch scripts
   and prompts with the Write tool, run them with Bash. Two background `codex exec` jobs in ONE bash line lose the second silently.
