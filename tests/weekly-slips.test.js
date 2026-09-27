@@ -132,7 +132,7 @@ describe('weekly slips', () => {
     expect(tex.match(/\\Slip\{\\SlipBody/g)).toHaveLength(5);   // one page per candidate
     expect(tex.match(/\\newpage/g)).toHaveLength(4);
     expect(tex.match(/\\Slip\{/g)).toHaveLength(5);   // one Slip per candidate, no empty filler cell
-    expect(tex.match(/\\newpage/g)).toHaveLength(2);
+    expect(tex.match(/\\newpage/g)).toHaveLength(4);   // five candidates, five pages
     expect(tex).toContain('{\\Slip{}}');
     expect(tex).toContain('week of Sep 28');
     expect(tex).toContain('Every item on this list can still be finished.');
