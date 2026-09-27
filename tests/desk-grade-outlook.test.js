@@ -282,6 +282,22 @@ describe('"show the math" (teacher 2026-09-27: the rule as inequalities, and why
     expect(out[6]).toContain('Progress Check, Posters join when their columns open');
     expect(out[6]).toContain('leaves out work done ahead of the calendar');
   });
+  it('ahead cells: a projection line follows "Schoology today" (AHEAD_WORK_PROJECTION_SPEC §2)', () => {
+    const base = { grade: 86, pcAvg: null, workAvg: 84.4, schoologyTotal: 83.7, categoryAverages: { Lesson: 84.0 } };
+    const out = lines({ ...base, schoologyProjectedTotal: 85.04, aheadCells: 4, aheadLessons: 3 });
+    const at = out.findIndex(l => l.startsWith('Schoology today'));
+    expect(out[at + 1]).toBe('Once your 3 ahead lessons come due: Schoology ≈ 85 (the ahead cells join their categories).');
+    expect(lines({ ...base, schoologyProjectedTotal: 85, aheadCells: 1, aheadLessons: 1 })[at + 1])
+      .toBe('Once your 1 ahead lesson comes due: Schoology ≈ 85 (the ahead cells join their categories).');
+    // No ahead cells, or an older payload without the projection: no line.
+    for (const extra of [{ schoologyProjectedTotal: 83.7, aheadCells: 0 }, {}]) {
+      expect(lines({ ...base, ...extra }).some(l => l.startsWith('Once your'))).toBe(false);
+    }
+    // The Do Now wiring passes the projection fields from the gradebook quarter.
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    expect(body).toContain('schoologyProjectedTotal: (_gbq && typeof _gbq.schoologyProjectedTotal');
+    expect(body).toContain('_effortAheadProjectionSentence(curQ, _aheadCount)');
+  });
   it('both tracks counting: plugs the numbers into the right case', () => {
     expect(lines({ pcAvg: 94.2, workAvg: 61.4 })[3]).toBe('Here: 61.4 \u2265 40 and 94.2 \u2265 40  \u2192  Grade = max(61.4, 94.2) = 94.2');
     expect(lines({ pcAvg: 94, workAvg: 35 })[3]).toBe('Here: Work 35 < 40  \u2192  Grade = max(24.5, 65.8, 64.5) = 65.8');

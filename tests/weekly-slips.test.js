@@ -319,6 +319,38 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
     expect(at.every((value, index) => value > 0 && (index === 0 || value > at[index - 1]))).toBe(true);
   });
 
+  it('the ahead line appends the Schoology projection from the /class/grades gradebook (AHEAD_WORK_PROJECTION_SPEC §2)', async () => {
+    const { renderTex, effortLines } = await import('../scripts/weekly-slips.mjs');
+    const withGb = { ...kid, gradebook: { quarters: { Q1: { schoologyTotal: 83.66, schoologyProjectedTotal: 85.04, aheadCells: 2 } } } };
+    expect(effortLines(withGb, 'PeriodB', '2026-09-27', 'Q1').ahead).toBe(
+      'Ahead of the calendar: 1 lesson already done (1.6). It already counts in your Desk grade; Schoology catches up when its column opens. Once it comes due Schoology will read about 85% (today 83.7%).');
+    const tex = renderTex([withGb], [withGb], 'PeriodB', '2026-09-27', 'Q1');
+    expect(tex).toContain('Once it comes due Schoology will read about 85\\% (today 83.7\\%).');
+    // No gradebook (or aheadCells 0): the line is unchanged.
+    const zero = { ...kid, gradebook: { quarters: { Q1: { schoologyTotal: 80, schoologyProjectedTotal: 80, aheadCells: 0 } } } };
+    expect(effortLines(zero, 'PeriodB', '2026-09-27', 'Q1').ahead).not.toContain('Once');
+  });
+
+  it('parity: the slip projection is the server gradebook field (buildGradebook), not a re-derivation', async () => {
+    const { effortLines } = await import('../scripts/weekly-slips.mjs');
+    const { buildGradebook } = await import('../roster-server/gradebook-grid.js');
+    const gradeObj = {
+      units: { U1: { pcRawPct: null } },
+      quarters: { Q1: { units: [1], quarterGrade: 85 } },
+      lessons: [
+        { lessonKey: '1.2', unit: 1, worksheetKey: '2', lessonGradeNoQuiz: 70, Q: null, quizTotal: 0, blooket: null, hasBlooket: false },
+        { lessonKey: '1.6', unit: 1, worksheetKey: '6', lessonGradeNoQuiz: 100, Q: null, quizTotal: 0, blooket: null, hasBlooket: false },
+      ],
+    };
+    const schedule = { '1.2': { unit: 1, periods: { B: '2026-09-09' } }, '1.6': { unit: 1, periods: { B: '2026-10-05' } } };
+    const gradebook = buildGradebook(gradeObj, { lessonSchedule: schedule, section: 'PeriodB', todayStr: '2026-09-27' });
+    // Server: today Lesson 70 → 70; projected (70 + 100)/2 = 85; one ahead cell (FA:1.6).
+    expect(gradebook.quarters.Q1).toMatchObject({ schoologyTotal: 70, schoologyProjectedTotal: 85, aheadCells: 1 });
+    const q = gradebook.quarters.Q1;
+    expect(effortLines({ ...kid, gradebook }, 'PeriodB', '2026-09-27', 'Q1').ahead)
+      .toContain(`Once it comes due Schoology will read about ${q.schoologyProjectedTotal}% (today ${q.schoologyTotal}%).`);
+  });
+
   it('a student with neither renders neither', async () => {
     const { renderTex, effortTex } = await import('../scripts/weekly-slips.mjs');
     const plain = student(31);

@@ -3759,6 +3759,14 @@
       }).join('; ');
     }
 
+    // "Placed on" cell of the apply-bonus preview (Bonus Bank v2): Work / PC, with the
+    // other placement's grade in the tooltip.
+    function _qcPlacementCell(r) {
+      var label = r.placement === 'pc' ? 'PC' : 'Work';
+      var title = r.altGrade == null ? '' : ' title="other placement would give ' + escHtml(r.altGrade) + '"';
+      return '<td' + title + '>' + label + '</td>';
+    }
+
     function renderQuarterBonus(payload, scope) {
       var wrap = $('qc-bonus-wrap');
       var rows = payload.rows || [];
@@ -3773,12 +3781,19 @@
         return;
       }
       wrap.innerHTML += '<div class="table-wrap"><table class="grades"><thead><tr><th>Student</th><th>Frozen</th>'
-        + '<th>Banked pts</th><th>Work before → after</th><th>Switch?</th><th>New grade</th><th>Sheets</th></tr></thead><tbody>'
+        + '<th>Banked pts</th><th>Work before → after</th><th>Switch?</th>'
+        + '<th title="The track the banked points are added to: whichever gives the higher quarter grade">Placed on</th>'
+        + '<th>New grade</th><th>Sheets</th></tr></thead><tbody>'
         + rows.map(function (r) {
           return '<tr><td>' + studentNameHtml(r) + '</td><td>' + escHtml(r.frozenGrade) + '</td><td>' + escHtml(r.points)
             + '</td><td>' + escHtml(r.workBefore) + ' → ' + escHtml(r.workAfter) + '</td><td>' + (r.switched ? '✓ Yes' : '—')
-            + '</td><td>' + escHtml(r.adjustedGrade) + '</td><td>' + escHtml((r.sheets || []).join(', ')) + '</td></tr>';
+            + '</td>' + _qcPlacementCell(r)
+            + '<td>' + escHtml(r.adjustedGrade) + '</td><td>' + escHtml((r.sheets || []).join(', ')) + '</td></tr>';
         }).join('') + '</tbody></table></div>';
+      var confirmNote = document.createElement('p');
+      confirmNote.className = 'meta-row';
+      confirmNote.textContent = "Apply banked bonus to each student's better track.";
+      wrap.appendChild(confirmNote);
       var confirmBtn = document.createElement('button');
       confirmBtn.className = 'btn';
       confirmBtn.id = 'qc-bonus-confirm';
@@ -3858,6 +3873,7 @@
             + (r.delta > 0 ? '+' : '') + escHtml(r.delta || 0) + '</td>' +
           '<td class="mono" title="' + escHtml(_qcSheetTitle(bonus.sheets)) + '">' + escHtml(bonus.points || 0) + '</td>' +
           '<td class="mono">' + escHtml(bonus.applied ? bonus.applied.adjustedGrade : '—')
+            + (bonus.applied && bonus.applied.placement ? ' (' + (bonus.applied.placement === 'pc' ? 'PC' : 'Work') + ')' : '')
             + (bonus.applied && bonus.applied.stale ? ' <span title="The quarter was re-frozen after this bonus was applied; re-check before entering.">⚠ stale</span>' : '') + '</td>' +
           '<td class="mono" style="font-weight:bold">' + escHtml(r.closed != null ? r.closed : r.frozen) + '</td>' +
           '</tr>';

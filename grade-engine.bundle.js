@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 391c04fb5366
+ * engine-version: 53b46c2e1b17
  */
 ;(function (root) {
   'use strict';
@@ -765,6 +765,9 @@
     // Note: this function intentionally does NOT filter by "due date" —
     // that is applied at the quarter level in computeQuarterFromLessons.
     function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
+      // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
+      rows = (Array.isArray(rows) ? rows : [])
+        .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied');
       const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
       const bonusTopics = (opts && opts.bonusTopics instanceof Set)
         ? opts.bonusTopics
@@ -2542,29 +2545,46 @@
     
       const cells = {};
       const catVals = {};
+      const projectedVals = {};
+      let aheadCells = 0;
       // SY2627 (teacher 2026-09-03): schoologyTotal = what the Schoology gradebook
       // shows TODAY — only columns that are DUE (col.due !== false; a column with no
       // resolvable date is included) and COMPLETED (non-null). Ahead-of-schedule
       // work stays visible in `cells` but does not enter the total, because the
       // Schoology sync (tools/schoology_sync_section.py --through) only pushes due
       // columns. Blanks are never 0 here, matching Schoology.
+      // Ahead-work projection (AHEAD_WORK_PROJECTION_SPEC.md, display-only): the
+      // projected total is the same blend over ALL completed cells, due or not —
+      // what Schoology will read once the early lessons' columns open.
       for (const col of columns) {
         const v = cellValue(col, lessonsByKey, units);
         cells[col.key] = v;
-        if (v != null && col.due !== false) (catVals[col.category] || (catVals[col.category] = [])).push(v);
+        if (v == null) continue;
+        (projectedVals[col.category] || (projectedVals[col.category] = [])).push(v);
+        if (col.due === false) { aheadCells += 1; continue; }
+        (catVals[col.category] || (catVals[col.category] = [])).push(v);
       }
     
-      const categoryAverages = {};
-      for (const cat of Object.keys(catVals)) {
-        const arr = catVals[cat];
-        categoryAverages[cat] = round1(arr.reduce((a, b) => a + b, 0) / arr.length);
-      }
+      const categoryAverages = averageByCategory(catVals);
+      const categoryAveragesProjected = averageByCategory(projectedVals);
     
       return {
         cells,
         categoryAverages,
         schoologyTotal: schoologyWeightedTotal(categoryAverages, weights),
+        categoryAveragesProjected,
+        schoologyProjectedTotal: schoologyWeightedTotal(categoryAveragesProjected, weights),
+        aheadCells,
       };
+    }
+    
+    function averageByCategory(valsByCategory) {
+      const out = {};
+      for (const cat of Object.keys(valsByCategory)) {
+        const arr = valsByCategory[cat];
+        out[cat] = round1(arr.reduce((a, b) => a + b, 0) / arr.length);
+      }
+      return out;
     }
     
     // ── Schoology category-weighted blend (renormalized over PRESENT categories) ────
@@ -2595,6 +2615,10 @@
           cells: row.cells,
           categoryAverages: row.categoryAverages,
           schoologyTotal: row.schoologyTotal,
+          // Ahead-work projection (display-only): the total once every completed cell is due.
+          categoryAveragesProjected: row.categoryAveragesProjected,
+          schoologyProjectedTotal: row.schoologyProjectedTotal,
+          aheadCells: row.aheadCells,
           v3Total: v3Total,
           // Why the two totals differ (for the Phase 4 per-student breakdown).
           reconciliation: reconcileQuarter(gradeObj, qk, row.schoologyTotal, v3Total),
@@ -2718,7 +2742,9 @@
     // opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
     //   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
     function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts = {}) {
-      const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
+      // banked bonus — applied only at quarter close (BONUS_BANK_SPEC.md)
+      const rows = (Array.isArray(ledgerRows) ? ledgerRows : [])
+        .filter(row => row?.source !== 'bonus' && row?.source !== 'bonus_applied');
       const bySource = (s) => rows.filter((r) => r && r.source === s);
       // SY2627 event schedule (PC/Poster dates keyed by NEW unit) — read up front:
       // the per-unit P curve below needs it before the lesson schedule is resolved.
@@ -3111,7 +3137,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "391c04fb5366",
+    _engineVersion: "53b46c2e1b17",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

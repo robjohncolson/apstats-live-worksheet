@@ -411,7 +411,12 @@ export function effortLines(student, section, date, quarterKey, schedule = loadS
   const pcAvg = quarter && Number.isFinite(quarter.pcAvg) ? quarter.pcAvg : null;
   const pc = facts.pcOnFile(student.units, student.quarters, period, schedule, date, key);
   const pcText = pc ? [facts.pcLine(pc), facts.strategyLine(pc, workAvg, facts.GRADE_FLOOR, pcAvg)].filter(Boolean).join(' ') : '';
-  const aheadText = facts.aheadLine(facts.aheadLessons(student.lessons, period, date), topicNumber);
+  const ahead = facts.aheadLessons(student.lessons, period, date);
+  let aheadText = facts.aheadLine(ahead, topicNumber);
+  // AHEAD_WORK_PROJECTION_SPEC: /class/grades students carry the server gradebook, so the
+  // projection comes from the same field the Desk reads.
+  const gradebookQuarter = key ? student.gradebook?.quarters?.[key] : null;
+  if (aheadText) aheadText += facts.aheadProjectionSentence(gradebookQuarter, ahead.length);
   return { pc: pcText, ahead: aheadText };
 }
 

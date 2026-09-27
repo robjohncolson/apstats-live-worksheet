@@ -168,7 +168,8 @@ function friendlyLabel(realName) {
   return parts[0] + ' ' + last.charAt(0).toUpperCase() + '.';
 }
 
-// Bonus points go to Work only. PC is never changed by bonus application.
+// Bonus points are placed on whichever track gives the higher closed-quarter
+// grade (bonusAudit). PC scores themselves are never changed by bonus application.
 const BONUS_POINTS = { E: 5, P: 3, I: 1 };
 
 function closedQuarterGrade(snapshotRow, appliedRow) {
@@ -184,6 +185,7 @@ function bankedBonus(rows, quarter, snapshot) {
     try { detail = JSON.parse(row.response); } catch { detail = {}; }
     if (row.source === 'bonus_applied' && row.item_id === `BONUS-APPLIED-${quarter}`) {
       bonus.applied = { adjustedGrade: Number(row.score), appliedAt: detail?.appliedAt || null };
+      if (detail?.placement) bonus.applied.placement = detail.placement;
       if (snapshot && snapshot.frozen_at !== detail?.frozenAt) bonus.applied.stale = true;
     }
     if (row.source !== 'bonus' || detail?.quarter !== quarter) continue;
@@ -195,21 +197,47 @@ function bankedBonus(rows, quarter, snapshot) {
   return bonus;
 }
 
-function bonusAudit(roster, frozen, bonus, gates) {
+// Bonus Bank v2 (BONUS_HIGHER_TRACK_SPEC.md): the banked points are tried on BOTH
+// tracks and placed on the one that gives the higher adjusted grade. Tie → the
+// track whose frozen average is higher; tie again → Work. PC null → Work only.
+// The placement is a virtual add inside this computation: no PC score is written.
+function pickBonusPlacement(onWork, onPc, workBefore, pcBefore) {
+  if (onPc == null) return 'work';
+  if (onPc > onWork) return 'pc';
+  if (onPc < onWork) return 'work';
+  if (pcBefore > workBefore) return 'pc';
+  return 'work';
+}
+
+export function bonusAudit(roster, frozen, bonus, gates) {
   const workBefore = Number(frozen.frozen_work_avg);
-  const pc = frozen.frozen_pc_avg == null ? null : Number(frozen.frozen_pc_avg) / 100;
+  const pcBefore = frozen.frozen_pc_avg == null ? null : Number(frozen.frozen_pc_avg);
+  const pc = pcBefore == null ? null : pcBefore / 100;
   const frozenGrade = Number(frozen.frozen_grade);
   const workAfter = Math.min(100, workBefore + bonus.points);
+  const pcAfter = pcBefore == null ? null : Math.min(100, pcBefore + bonus.points);
   const baseBefore = Math.round(combineV3(pc, workBefore / 100, gates) * 1000) / 10;
   const residual = Math.max(0, frozenGrade - baseBefore);
-  const computed = Math.round((combineV3(pc, workAfter / 100, gates) * 100 + residual) * 10) / 10;
-  const floor = gates?.floor ?? PHASE3_CONFIG.v3Gates.floor;
+  // One candidate's adjusted grade: formula result + the early-bonus carry,
+  // capped at 100 and never below the frozen grade.
+  const adjusted = (grade01) => {
+    const computed = Math.round((grade01 * 100 + residual) * 10) / 10;
+    return Math.min(100, Math.max(frozenGrade, computed));
+  };
+  const onWork = adjusted(combineV3(pc, workAfter / 100, gates));
+  const onPc = pcAfter == null ? null : adjusted(combineV3(pcAfter / 100, workBefore / 100, gates));
+  const placement = pickBonusPlacement(onWork, onPc, workBefore, pcBefore);
+  const floor = (gates?.floor ?? PHASE3_CONFIG.v3Gates.floor) * 100;
+  const chosenBefore = placement === 'pc' ? pcBefore : workBefore;
+  const chosenAfter = placement === 'pc' ? pcAfter : workAfter;
   return {
     studentId: roster.student_id, username: roster.login_username, realName: roster.real_name,
     frozenGrade, frozenAt: frozen.frozen_at, earlyBonus: residual,
-    points: bonus.points, workBefore, workAfter,
-    switched: workBefore < floor * 100 && workAfter >= floor * 100,
-    adjustedGrade: Math.min(100, computed), sheets: bonus.sheets.map(s => s.itemId),
+    points: bonus.points, placement, workBefore, workAfter, pcBefore, pcAfter,
+    switched: chosenBefore < floor && chosenAfter >= floor,
+    adjustedGrade: placement === 'pc' ? onPc : onWork,
+    altGrade: placement === 'pc' ? onWork : onPc,
+    sheets: bonus.sheets.map(s => s.itemId),
   };
 }
 
@@ -666,7 +694,7 @@ export function mountClass(app, {
       const frozen = fr.frozen_grade == null ? null : Number(fr.frozen_grade);
       if (frozen == null || !Number.isFinite(frozen) || (current == null && !bonus.points)) return null;
       const delta = current == null ? 0 : Math.round((current - frozen) * 10) / 10;
-      return {
+      const row = {
         studentId: roster.student_id,
         realName: roster.real_name || null,
         username: roster.login_username || null,
@@ -676,6 +704,16 @@ export function mountClass(app, {
         delta,
         bonus,
       };
+      // Bonus Bank v2 preview: where the banked points WOULD land (read-only).
+      if (bonus.points > 0) {
+        const audit = bonusAudit(roster, fr, bonus, config.v3Gates);
+        row.placement = audit.placement;
+        row.pcBefore = audit.pcBefore;
+        row.pcAfter = audit.pcAfter;
+        row.altGrade = audit.altGrade;
+        row.bonusGrade = audit.adjustedGrade;
+      }
+      return row;
     }).filter((d) => d && (d.delta > 0 || d.bonus.points > 0));
     deltas.sort((a, b) => b.delta - a.delta);
 

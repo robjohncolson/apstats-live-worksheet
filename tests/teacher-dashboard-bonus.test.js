@@ -97,6 +97,30 @@ describe('Quarter bonus dashboard', () => {
     } finally { close(); }
   });
 
+  it('shows the placement per student with the other placement in a tooltip (Bonus Bank v2)', () => {
+    const { s, $, close } = sandbox();
+    try {
+      s.renderQuarterDeltas(deltas);
+      const rows = [
+        { ...audit.rows[0], placement: 'work', altGrade: 66.5 },
+        { ...audit.rows[0], realName: 'Other', switched: false, placement: 'pc', adjustedGrade: 95, altGrade: 90 },
+      ];
+      s.renderQuarterBonus({ ...audit, rows }, s._qcScope());
+      const wrap = $('qc-bonus-wrap');
+      expect(wrap.querySelector('thead').textContent).toContain('Placed on');
+      const body = wrap.querySelectorAll('tbody tr');
+      expect(body[0].children[5].textContent).toBe('Work');
+      expect(body[0].children[5].title).toBe('other placement would give 66.5');
+      expect(body[1].children[5].textContent).toBe('PC');
+      expect(body[1].children[5].title).toBe('other placement would give 90');
+      expect(body[1].children[6].textContent).toBe('95');
+      expect(wrap.textContent).toContain("Apply banked bonus to each student's better track.");
+      // Deltas table: an applied row names its placement.
+      s.renderQuarterDeltas({ ...deltas, deltas: [{ ...deltas.deltas[0], bonus: { points: 5, applied: { adjustedGrade: 95, placement: 'pc' } } }] });
+      expect($('qc-tbody').lastChild.children[5].textContent).toBe('95 (PC)');
+    } finally { close(); }
+  });
+
   it('cannot confirm a preview after changing the quarter or section', async () => {
     const { s, $, close } = sandbox();
     try {

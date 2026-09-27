@@ -332,21 +332,42 @@ describe('Balance card effort lines (EFFORT_VISIBILITY_SPEC §3: "they don’t f
     { lessonKey: '1.6', due: { B: '2026-10-05', E: '2026-10-07' }, lessonGradeNoQuiz: 100, Q: 67 },
     { lessonKey: '3.1', due: { B: '2026-10-16', E: '2026-10-13' }, blooket: 90 },
   ];
-  function effortSandbox({ units = { U1: { pcRawPct: 66.7 } }, lessons = LESSONS, workAvg = 31, today = [2026, 8, 27], lib = true } = {}) {
+  function effortSandbox({ units = { U1: { pcRawPct: 66.7 } }, lessons = LESSONS, workAvg = 31, today = [2026, 8, 27], lib = true, gradebook = null } = {}) {
     const dom = new JSDOM('<div></div>');
     const s = {
       document: dom.window.document, window: dom.window, console,
       S: CAL, cP: 'B',
       tdy: () => new Date(today[0], today[1], today[2]),
-      _gradeUnitsCache: units, _gradeLessonsCache: lessons,
+      _gradeUnitsCache: units, _gradeLessonsCache: lessons, _gradeGradebookCache: gradebook,
       _gradeQuartersCache: { Q1: { quarterGrade: 45, lessonsDue: 9, workAvg, pcUnits: [1, 2] } },
       cedLabel: k => (k === '3.1' ? { mapped: true, id: '1.10', text: '1.10 · Investigative Question' } : { mapped: true, id: k, text: k }),
     };
     if (lib) Object.defineProperty(s, 'EffortFacts', { get: () => EF });
     createContext(s);
-    runInContext(['_zeroTodayIso', '_effortPcSchedule', '_effortTopicNumber', '_effortFacts', '_walletEffortBlock'].map(fnSrc).join('\n'), s);
+    runInContext(['_zeroTodayIso', '_effortPcSchedule', '_effortTopicNumber', '_effortFacts', '_effortGradebookQuarter',
+      '_effortAheadProjection', '_effortAheadProjectionSentence', '_walletEffortBlock'].map(fnSrc).join('\n'), s);
     return { s, close: () => dom.window.close() };
   }
+
+  // AHEAD_WORK_PROJECTION_SPEC §2: the ahead line gains what Schoology will read once the ahead cells come due.
+  it('ahead line appends the Schoology projection when the gradebook carries it', () => {
+    const gradebook = { quarters: { Q1: { schoologyTotal: 83.66, schoologyProjectedTotal: 85.04, aheadCells: 3 } } };
+    const t = effortSandbox({ gradebook });
+    try {
+      expect(t.s._walletEffortBlock('Q1').querySelector('.wallet-effort-ahead').textContent).toBe(
+        "Ahead of the calendar: 2 lessons already done (1.6, 1.10). They already count in your Desk grade; Schoology catches up when each lesson's column opens. Once they come due Schoology will read about 85% (today 83.7%).");
+    } finally { t.close(); }
+  });
+  it('no projection sentence when nothing is ahead in the gradebook or the payload is older', () => {
+    const plain = "Ahead of the calendar: 2 lessons already done (1.6, 1.10). They already count in your Desk grade; Schoology catches up when each lesson's column opens.";
+    for (const gradebook of [null, { quarters: { Q1: { schoologyTotal: 83.7 } } },
+      { quarters: { Q1: { schoologyTotal: 83.7, schoologyProjectedTotal: 83.7, aheadCells: 0 } } }]) {
+      const t = effortSandbox({ gradebook });
+      try {
+        expect(t.s._walletEffortBlock('Q1').querySelector('.wallet-effort-ahead').textContent).toBe(plain);
+      } finally { t.close(); }
+    }
+  });
 
   it('reads PC Day 2 off the Desk calendar in the lesson-schedule shape', () => {
     const t = effortSandbox();
@@ -452,7 +473,9 @@ describe('"How your grade is counted" note + bonus footer wording (teacher 2026-
     expect(noteAt).toBeLessThan(paint.indexOf('card.appendChild(sep);'));
   });
   it('the Bonus banked footer names the higher-track rule', () => {
-    expect(fnSrc('_walletBonusBlock')).toContain("'Added at the end of the quarter to whichever track helps you more.'");
-    expect(fnSrc('_walletBonusBlock')).not.toContain('Applied at the end of the quarter.');
+    // The footer text moved into _walletBonusFooterText (Bonus Bank v2 adds the after-apply placement line).
+    expect(fnSrc('_walletBonusBlock')).toContain('_walletBonusFooterText(applied)');
+    expect(fnSrc('_walletBonusFooterText')).toContain("'Added at the end of the quarter to whichever track helps you more.'");
+    expect(fnSrc('_walletBonusFooterText')).not.toContain('Applied at the end of the quarter.');
   });
 });

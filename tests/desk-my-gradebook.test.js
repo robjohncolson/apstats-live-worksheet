@@ -279,6 +279,24 @@ describe('Desk My Gradebook modal', () => {
     expect(body.textContent).toContain('Schoology now: 84.0');
   });
 
+  it('colour key: the green line adds the Schoology projection when cells are ahead (AHEAD_WORK_PROJECTION_SPEC §2)', () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    win.tdy = () => new Date(2026, 8, 27);
+    const cols = [ { key: 'FA:1.1', category: 'Lesson', title: '1.1 Follow-Along', unit: 1, topicKeys: ['1.1'], due: true },
+      { key: 'FA:1.2', category: 'Lesson', title: '1.2 Follow-Along', unit: 1, topicKeys: ['1.2'], due: false } ];
+    const cells = { 'FA:1.1': 84, 'FA:1.2': 100 };
+    // Projected Lesson = (84 + 100) / 2 = 92.
+    win._activeGradebook = gbWith(cols, cells, { schoologyTotal: 84, v3Total: 86.4, schoologyProjectedTotal: 92, aheadCells: 1 });
+    win.renderMyGradebook('Q1');
+    expect(doc.getElementById('my-gradebook-body').querySelector('.mgb-key-ahead').textContent).toBe(
+      'Recorded ahead of the calendar — counted on the Desk, reaches Schoology when the class gets there. Desk quarter grade: 86%.'
+      + ' → Schoology will read about 92% once these come due.');
+    // aheadCells 0 (or an older payload): no projection words.
+    win._activeGradebook = gbWith(cols, cells, { schoologyTotal: 84, v3Total: 86.4, schoologyProjectedTotal: 92, aheadCells: 0 });
+    win.renderMyGradebook('Q1');
+    expect(doc.getElementById('my-gradebook-body').querySelector('.mgb-key-ahead').textContent).not.toContain('will read about');
+  });
+
   it('colour key: columns without a `due` field (an older cache) show no colours and no key', () => {
     if (!loaded) { expect(true).toBe(true); return; }
     win.tdy = () => new Date(2024, 0, 1);

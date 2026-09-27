@@ -24,7 +24,7 @@ function sandbox() {
   dom.window.WalletLogic = WalletLogic;
   const s = { window: dom.window, document: dom.window.document, WalletLogic, quarterOfDate: () => 1, fetch: vi.fn() };
   createContext(s);
-  runInContext(['_walletBonusResponse', '_walletBonusBlock', '_walletComputePoints', '_walletFetchBonusReceipts'].map(fnSrc).join('\n'), s);
+  runInContext(['_walletBonusResponse', '_walletBonusFooterText', '_walletBonusBlock', '_walletComputePoints', '_walletFetchBonusReceipts'].map(fnSrc).join('\n'), s);
   return { s, close: () => dom.window.close() };
 }
 
@@ -59,6 +59,19 @@ describe('Desk bonus bank', () => {
       expect(s._walletBonusBlock(rows).lastChild.textContent).toBe('Bonus applied — quarter grade 70');
       expect(s._walletBonusBlock([])).toBeNull();
       expect(s._walletBonusBlock([{ src: 'bonus', i: 'BONUS-old', sc: 5, response: '{"quarter":"Q2"}' }])).toBeNull();
+    } finally { close(); }
+  });
+
+  it('names the track the bonus was placed on after apply (Bonus Bank v2)', () => {
+    const { s, close } = sandbox();
+    try {
+      const sheet = { src: 'bonus', i: 'BONUS-sheet', sc: 5 };
+      const onPc = { src: 'bonus_applied', i: 'BONUS-APPLIED-Q1', sc: 95, response: '{"adjustedGrade":95,"placement":"pc"}' };
+      expect(s._walletBonusBlock([sheet, onPc]).lastChild.textContent)
+        .toBe('Applied to your Progress Check track — quarter grade 95.');
+      const onWork = { ...onPc, sc: 90, response: '{"adjustedGrade":90,"placement":"work"}' };
+      expect(s._walletBonusBlock([sheet, onWork]).lastChild.textContent)
+        .toBe('Applied to your Work track — quarter grade 90.');
     } finally { close(); }
   });
 

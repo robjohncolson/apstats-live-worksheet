@@ -1027,10 +1027,13 @@ export function mountLedger(app, {
       if (teacherOk || row.source !== 'bonus_applied') return row;
       let detail;
       try { detail = JSON.parse(row.response); } catch { detail = {}; }
-      return { ...row, response: JSON.stringify({
+      // Students see the grade, the date and (Bonus Bank v2) the placement word only.
+      const visible = {
         adjustedGrade: detail?.adjustedGrade ?? Number(row.score),
         appliedAt: detail?.appliedAt ?? null,
-      }) };
+      };
+      if (detail?.placement === 'pc' || detail?.placement === 'work') visible.placement = detail.placement;
+      return { ...row, response: JSON.stringify(visible) };
     });
     // Nightly Review augment (NIGHTLY_REVIEW_SPEC.md §4): attach each row's review state
     // (LEFT JOIN review_marks by ledger_id) so the student's "My Ledger" can render the

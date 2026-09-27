@@ -1,5 +1,9 @@
 # Bonus Bank — hand-graded bonus sheets, held to quarter close
 
+> **Superseded in part (2026-09-27):** decision 1 ("Work track only") and decision 3 ("placement is
+> not published") are replaced by `BONUS_HIGHER_TRACK_SPEC.md` — the banked points go to whichever
+> track gives the higher closed-quarter grade, and students may see the placement word.
+
 Status: DRAFT for teacher review (2026-09-23). Not built.
 
 ## What the teacher told students

@@ -9078,6 +9078,12 @@ function _gradeMathLines(ctx) {
     });
     var missing = Object.keys(DESK_SCHOOLOGY_WEIGHTS).filter(function (cat) { return typeof ca[cat] !== 'number'; });
     lines.push('Schoology today = ' + n(ctx.schoologyTotal) + (terms.length ? ' = [' + terms.join(' + ') + '] / ' + den2 : ''));
+    // AHEAD_WORK_PROJECTION_SPEC: what Schoology will read once the ahead cells come due.
+    if (ctx.aheadCells > 0 && typeof ctx.schoologyProjectedTotal === 'number') {
+      var aheadN = ctx.aheadLessons > 0 ? ctx.aheadLessons : 0;
+      var aheadWhat = aheadN === 1 ? 'your 1 ahead lesson comes' : aheadN > 1 ? 'your ' + aheadN + ' ahead lessons come' : 'your ahead work comes';
+      lines.push('Once ' + aheadWhat + ' due: Schoology ≈ ' + n(ctx.schoologyProjectedTotal) + ' (the ahead cells join their categories).');
+    }
     lines.push('Schoology is different because it averages only the columns already in Schoology, by category weight'
       + (missing.length ? ' (' + missing.join(', ') + ' join when their columns open)' : '')
       + '; it leaves out work done ahead of the calendar and uses different weights from the Desk\u2019s Work track. The Desk number is the one that follows the rule above.');
@@ -9333,17 +9339,24 @@ async function renderDoNowGrades(baseUrl, token) {
     // not counted): exactly what the Schoology gradebook shows once the sync ran.
     var _gbq = data.gradebook && data.gradebook.quarters && data.gradebook.quarters[curQ];
     var schToday = _gbq && typeof _gbq.schoologyTotal === 'number' ? _gbq.schoologyTotal : null;
+    var _chipFacts = null;
+    try { _chipFacts = (typeof _effortFacts === 'function') ? _effortFacts(curQ) : null; } catch (_) { _chipFacts = null; }
+    var _aheadCount = (_chipFacts && _chipFacts.ahead) ? _chipFacts.ahead.length : 0;
+    // AHEAD_WORK_PROJECTION_SPEC: the chip text stays "Schoology today"; the title adds the projection.
     host.appendChild(_trackChip('Schoology today', schToday,
       'What the Schoology gradebook shows for ' + curQ + ' as of today: only work that is due AND completed. ' +
-      'Blanks are not zeros and work done ahead of schedule is not counted until it comes due.'));
+      'Blanks are not zeros and work done ahead of schedule is not counted until it comes due.' +
+      ((typeof _effortAheadProjectionSentence === 'function') ? _effortAheadProjectionSentence(curQ, _aheadCount) : '')));
     if (gradeRaw != null) {
-      var _mathPc = null;
-      try { _mathPc = (typeof _effortFacts === 'function') ? _effortFacts(curQ).pc : null; } catch (_) { _mathPc = null; }
+      var _mathPc = _chipFacts ? _chipFacts.pc : null;
       _gradeMathToggle(host, {
         grade: gradeRaw, pcAvg: pcAvg, workAvg: workAvg,
         pcDay: (_mathPc && !_mathPc.counting && _mathPc.day) ? _mathPc.day : null, pcOnFile: Boolean(_mathPc),
         workTracks: (q && q.workTracks) || null,
         schoologyTotal: schToday, categoryAverages: (_gbq && _gbq.categoryAverages) || null,
+        schoologyProjectedTotal: (_gbq && typeof _gbq.schoologyProjectedTotal === 'number') ? _gbq.schoologyProjectedTotal : null,
+        aheadCells: (_gbq && typeof _gbq.aheadCells === 'number') ? _gbq.aheadCells : 0,
+        aheadLessons: _aheadCount,
       });
     }
 
@@ -9530,7 +9543,9 @@ function _buildCoachContext(curQ, q) {
     ctx.pcOnFile = _ef.pc;
     ctx.ahead = _ef.ahead.slice(0, 8);
     ctx.aheadCount = _ef.ahead.length;
-  } catch (_) { ctx.pcOnFile = null; ctx.ahead = []; ctx.aheadCount = 0; }
+    // AHEAD_WORK_PROJECTION_SPEC: { projected, today, aheadCells } or null.
+    ctx.aheadProjection = _ef.projection || null;
+  } catch (_) { ctx.pcOnFile = null; ctx.ahead = []; ctx.aheadCount = 0; ctx.aheadProjection = null; }
   try {
     if (Array.isArray(_gradeLessonsCache)) {
       var weak = _gradeLessonsCache.filter(function (l) {
@@ -18229,6 +18244,18 @@ function _walletBonusResponse(r) {
     catch (_) { return {}; }
 }
 
+// Footer of the "Bonus banked" block. Before apply: the higher-track rule.
+// After apply: the grade, plus the track it was placed on when the row names one
+// (Bonus Bank v2; older applied rows carry no placement).
+function _walletBonusFooterText(applied) {
+    if (!applied) return 'Added at the end of the quarter to whichever track helps you more.';
+    var audit = _walletBonusResponse(applied);
+    var grade = audit.adjustedGrade != null ? audit.adjustedGrade : applied.sc;
+    if (audit.placement === 'pc') return 'Applied to your Progress Check track — quarter grade ' + grade + '.';
+    if (audit.placement === 'work') return 'Applied to your Work track — quarter grade ' + grade + '.';
+    return 'Bonus applied — quarter grade ' + grade;
+}
+
 function _walletBonusBlock(receipts) {
     var quarter = typeof quarterOfDate === 'function' ? 'Q' + quarterOfDate(new Date()) : _walletCurrentQuarter().quarter;
     var sheets = new Map();
@@ -18260,9 +18287,7 @@ function _walletBonusBlock(receipts) {
     });
     var footer = document.createElement('div');
     footer.style.marginTop = '6px';
-    var audit = applied ? _walletBonusResponse(applied) : {};
-    footer.textContent = applied ? 'Bonus applied — quarter grade '
-        + (audit.adjustedGrade != null ? audit.adjustedGrade : applied.sc) : 'Added at the end of the quarter to whichever track helps you more.';
+    footer.textContent = _walletBonusFooterText(applied);
     block.appendChild(footer);
     return block;
 }
@@ -18337,7 +18362,7 @@ function _effortTopicNumber(key) {
 // The two effort facts for a quarter: the PC on file (+ the 40% strategy) and the lessons done
 // ahead of the calendar. Never throws; empty when the lib or the /grade caches are missing.
 function _effortFacts(curQ) {
-    var out = { pc: null, pcText: '', ahead: [], aheadText: '' };
+    var out = { pc: null, pcText: '', ahead: [], aheadText: '', projection: null };
     try {
         if (typeof EffortFacts === 'undefined' || !EffortFacts) return out;
         var period = (typeof cP === 'string') ? cP : null;
@@ -18354,8 +18379,23 @@ function _effortFacts(curQ) {
         }
         out.ahead = EffortFacts.aheadLessons(_gradeLessonsCache, period, today);
         out.aheadText = EffortFacts.aheadLine(out.ahead, _effortTopicNumber);
+        out.projection = _effortAheadProjection(curQ);
     } catch (_) {}
     return out;
+}
+// AHEAD_WORK_PROJECTION_SPEC: the server's "what Schoology will read once the ahead cells come
+// due" for this quarter, or null (nothing ahead, older payload, or the lib predates the helper).
+function _effortGradebookQuarter(curQ) {
+    var gb = _gradeGradebookCache;
+    return (gb && gb.quarters && curQ && gb.quarters[curQ]) ? gb.quarters[curQ] : null;
+}
+function _effortAheadProjection(curQ) {
+    if (typeof EffortFacts === 'undefined' || !EffortFacts || typeof EffortFacts.aheadProjection !== 'function') return null;
+    return EffortFacts.aheadProjection(_effortGradebookQuarter(curQ));
+}
+function _effortAheadProjectionSentence(curQ, lessonCount) {
+    if (typeof EffortFacts === 'undefined' || !EffortFacts || typeof EffortFacts.aheadProjectionSentence !== 'function') return '';
+    return EffortFacts.aheadProjectionSentence(_effortGradebookQuarter(curQ), lessonCount);
 }
 // The balance card's effort lines: the PC on file (grey bar) and the work done ahead (green bar).
 // Always in the balance card, never in the Missing-work card, so a student with nothing missing
@@ -18374,7 +18414,9 @@ function _walletEffortBlock(curQ) {
         box.appendChild(el);
     }
     if (facts.pcText) addLine(facts.pcText, 'wallet-effort-pc', '#888888');
-    if (facts.aheadText) addLine(facts.aheadText, 'wallet-effort-ahead', '#2a8a2a');
+    if (facts.aheadText) {
+        addLine(facts.aheadText + _effortAheadProjectionSentence(curQ, facts.ahead.length), 'wallet-effort-ahead', '#2a8a2a');
+    }
     return box;
 }
 // "How your grade is counted": three sentences, small grey text, always on the balance card.
@@ -20607,12 +20649,13 @@ function renderMyGradebook(qk, bodyEl, tabsEl) {
         body.appendChild(sec);
     });
 
-    if (colourKey) body.appendChild(_myGradebookColourKey(gq.schoologyTotal, gq.v3Total));
+    var projectedTotal = (gq.aheadCells > 0 && typeof gq.schoologyProjectedTotal === 'number') ? gq.schoologyProjectedTotal : null;
+    if (colourKey) body.appendChild(_myGradebookColourKey(gq.schoologyTotal, gq.v3Total, projectedTotal));
 }
 
 // The key under the My Gradebook grid (EFFORT_VISIBILITY_V2_SPEC §4): what the two colours mean
 // and the two totals they add up to — Schoology now and the Desk quarter grade.
-function _myGradebookColourKey(schoologyNow, desk) {
+function _myGradebookColourKey(schoologyNow, desk, projected) {
     function pct(x) { return (typeof x === 'number') ? ' ' + Math.round(x) + '%' : ' —'; }
     function swatch(bg, border) {
         var s = document.createElement('span');
@@ -20630,7 +20673,12 @@ function _myGradebookColourKey(schoologyNow, desk) {
     var ahead = document.createElement('div');
     ahead.className = 'mgb-key-ahead';
     ahead.appendChild(swatch('#eaf6ea', '#2a8a2a'));
-    ahead.appendChild(document.createTextNode('Recorded ahead of the calendar — counted on the Desk, reaches Schoology when the class gets there. Desk quarter grade:' + pct(desk) + '.'));
+    // AHEAD_WORK_PROJECTION_SPEC: projected = what Schoology reads once the ahead cells come due
+    // (null when nothing is ahead or the payload predates the field).
+    var projectedText = (typeof projected === 'number')
+        ? ' → Schoology will read about ' + (Math.round(projected * 10) / 10) + '% once these come due.'
+        : '';
+    ahead.appendChild(document.createTextNode('Recorded ahead of the calendar — counted on the Desk, reaches Schoology when the class gets there. Desk quarter grade:' + pct(desk) + '.' + projectedText));
     key.appendChild(now);
     key.appendChild(ahead);
     return key;
@@ -27153,7 +27201,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-2596';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-d6ox';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

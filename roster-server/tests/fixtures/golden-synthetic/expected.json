@@ -94,11 +94,18 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 4,
               "categoryAverages": {
                 "Blooket": 60,
                 "Lesson": 73.4,
                 "Progress Check": 45,
                 "Quizzes": 50
+              },
+              "categoryAveragesProjected": {
+                "Blooket": 70,
+                "Lesson": 82.2,
+                "Progress Check": 60,
+                "Quizzes": 66.7
               },
               "cells": {
                 "BL:1.1": 80,
@@ -359,11 +366,14 @@
                 "v3Total": 47.6,
                 "workAvg": 47.6
               },
+              "schoologyProjectedTotal": 65.7,
               "schoologyTotal": 51.8,
               "v3Total": 47.6
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -414,11 +424,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -469,11 +482,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -524,6 +540,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -758,7 +775,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 79.6,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -803,9 +822,7 @@
               "posters": null,
               "quizzes": 40,
               "trainer": 90
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -813,7 +830,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -852,9 +871,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -862,7 +879,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -901,9 +920,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -911,7 +928,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -950,9 +969,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-01-all-sources",
@@ -1015,7 +1032,14 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Blooket": 100,
+                "Lesson": 100,
+                "Progress Check": 40,
+                "Quizzes": 100
+              },
+              "categoryAveragesProjected": {
                 "Blooket": 100,
                 "Lesson": 100,
                 "Progress Check": 40,
@@ -1280,11 +1304,14 @@
                 "v3Total": 100,
                 "workAvg": 100
               },
+              "schoologyProjectedTotal": 64.7,
               "schoologyTotal": 64.7,
               "v3Total": 100
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -1335,11 +1362,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -1390,11 +1420,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -1445,6 +1478,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -1674,7 +1708,9 @@
             "blooketDone": 3,
             "blooketDue": 3,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -1716,9 +1752,7 @@
               "posters": null,
               "quizzes": 100,
               "trainer": 100
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -1726,7 +1760,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -1765,9 +1801,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -1775,7 +1809,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -1814,9 +1850,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -1824,7 +1858,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -1863,9 +1899,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-02-floor-040",
@@ -1908,7 +1942,14 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Blooket": 0,
+                "Lesson": 40,
+                "Progress Check": 70,
+                "Quizzes": 0
+              },
+              "categoryAveragesProjected": {
                 "Blooket": 0,
                 "Lesson": 40,
                 "Progress Check": 70,
@@ -2173,11 +2214,14 @@
                 "v3Total": 49,
                 "workAvg": 16
               },
+              "schoologyProjectedTotal": 48.2,
               "schoologyTotal": 48.2,
               "v3Total": 49
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -2228,11 +2272,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -2283,11 +2330,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -2338,6 +2388,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -2552,7 +2603,9 @@
             "blooketDone": 3,
             "blooketDue": 3,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": 90,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -2594,9 +2647,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -2604,7 +2655,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -2643,9 +2696,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -2653,7 +2704,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -2692,9 +2745,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -2702,7 +2753,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -2741,9 +2794,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-03-ceiling-070",
@@ -2786,7 +2837,14 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Blooket": 50,
+                "Lesson": 100,
+                "Progress Check": 80,
+                "Quizzes": 0
+              },
+              "categoryAveragesProjected": {
                 "Blooket": 50,
                 "Lesson": 100,
                 "Progress Check": 80,
@@ -3051,11 +3109,14 @@
                 "v3Total": 80,
                 "workAvg": 48.3
               },
+              "schoologyProjectedTotal": 67.6,
               "schoologyTotal": 67.6,
               "v3Total": 80
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -3106,11 +3167,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -3161,11 +3225,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -3216,6 +3283,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -3445,7 +3513,9 @@
             "blooketDone": 3,
             "blooketDue": 3,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": 93.3,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -3487,9 +3557,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 25
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -3497,7 +3565,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -3536,9 +3606,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -3546,7 +3614,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -3585,9 +3655,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -3595,7 +3663,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -3634,9 +3704,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-04-weight-sensitive",
@@ -3679,7 +3747,14 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 4,
               "categoryAverages": {},
+              "categoryAveragesProjected": {
+                "Blooket": 80,
+                "Lesson": 100,
+                "Progress Check": 55,
+                "Quizzes": 100
+              },
               "cells": {
                 "BL:1.1": null,
                 "BL:1.2": null,
@@ -3939,11 +4014,14 @@
                 "v3Total": 15.9,
                 "workAvg": 22.7
               },
+              "schoologyProjectedTotal": 72.4,
               "schoologyTotal": null,
               "v3Total": 15.9
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -3994,11 +4072,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -4049,11 +4130,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -4104,6 +4188,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -4301,7 +4386,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -4349,9 +4436,7 @@
               "posters": null,
               "quizzes": 25,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -4359,7 +4444,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -4398,9 +4485,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -4408,7 +4493,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -4447,9 +4534,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -4457,7 +4542,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -4496,9 +4583,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-05-ahead",
@@ -4530,7 +4615,9 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "BL:1.1": null,
                 "BL:1.2": null,
@@ -4790,11 +4877,14 @@
                 "v3Total": 0,
                 "workAvg": 0
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": 0
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -4845,11 +4935,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -4900,11 +4993,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -4955,6 +5051,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -5131,7 +5228,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -5179,9 +5278,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -5189,7 +5286,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -5228,9 +5327,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -5238,7 +5335,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -5277,9 +5376,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -5287,7 +5384,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -5326,9 +5425,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-06-behind",
@@ -5356,7 +5453,11 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Quizzes": 100
+              },
+              "categoryAveragesProjected": {
                 "Quizzes": 100
               },
               "cells": {
@@ -5618,11 +5719,14 @@
                 "v3Total": 9.3,
                 "workAvg": 13.3
               },
+              "schoologyProjectedTotal": 100,
               "schoologyTotal": 100,
               "v3Total": 9.3
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -5673,11 +5777,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -5728,11 +5835,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -5783,6 +5893,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -5966,7 +6077,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -6013,9 +6126,7 @@
               "posters": null,
               "quizzes": 33.3,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -6023,7 +6134,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -6062,9 +6175,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -6072,7 +6183,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -6111,9 +6224,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -6121,7 +6232,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -6160,9 +6273,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-07-quiz-right",
@@ -6201,7 +6312,11 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Quizzes": 0
+              },
+              "categoryAveragesProjected": {
                 "Quizzes": 0
               },
               "cells": {
@@ -6463,11 +6578,14 @@
                 "v3Total": 0,
                 "workAvg": 0
               },
+              "schoologyProjectedTotal": 0,
               "schoologyTotal": 0,
               "v3Total": 0
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -6518,11 +6636,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -6573,11 +6694,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -6628,6 +6752,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -6811,7 +6936,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -6858,9 +6985,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -6868,7 +6993,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -6907,9 +7034,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -6917,7 +7042,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -6956,9 +7083,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -6966,7 +7091,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -7005,9 +7132,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-08-quiz-wrong",
@@ -7052,7 +7177,11 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Progress Check": 85
+              },
+              "categoryAveragesProjected": {
                 "Progress Check": 85
               },
               "cells": {
@@ -7314,11 +7443,14 @@
                 "v3Total": 59.5,
                 "workAvg": 0
               },
+              "schoologyProjectedTotal": 85,
               "schoologyTotal": 85,
               "v3Total": 59.5
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -7369,11 +7501,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -7424,11 +7559,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -7479,6 +7617,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -7655,7 +7794,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 90,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -7703,9 +7844,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -7713,7 +7852,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -7752,9 +7893,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -7762,7 +7901,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -7801,9 +7942,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -7811,7 +7950,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -7850,9 +7991,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-09-pc-best-wins",
@@ -7901,7 +8040,11 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Blooket": 80
+              },
+              "categoryAveragesProjected": {
                 "Blooket": 80
               },
               "cells": {
@@ -8163,11 +8306,14 @@
                 "v3Total": 2.5,
                 "workAvg": 3.6
               },
+              "schoologyProjectedTotal": 80,
               "schoologyTotal": 80,
               "v3Total": 2.5
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -8218,11 +8364,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -8273,11 +8422,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -8328,6 +8480,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -8503,7 +8656,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -8551,9 +8706,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -8561,7 +8714,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -8600,9 +8755,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -8610,7 +8763,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -8649,9 +8804,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -8659,7 +8812,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -8698,9 +8853,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-10-blooket-game",
@@ -8739,7 +8892,9 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "BL:1.1": null,
                 "BL:1.2": null,
@@ -8999,11 +9154,14 @@
                 "v3Total": 0,
                 "workAvg": 0
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": 0
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -9054,11 +9212,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -9109,11 +9270,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -9164,6 +9328,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -9340,7 +9505,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -9388,9 +9555,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -9398,7 +9563,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -9437,9 +9604,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -9447,7 +9612,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -9486,9 +9653,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -9496,7 +9661,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -9535,9 +9702,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-11-desk-done",
@@ -9576,7 +9741,11 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Blooket": 80
+              },
+              "categoryAveragesProjected": {
                 "Blooket": 80
               },
               "cells": {
@@ -9838,11 +10007,14 @@
                 "v3Total": 2.5,
                 "workAvg": 3.6
               },
+              "schoologyProjectedTotal": 80,
               "schoologyTotal": 80,
               "v3Total": 2.5
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -9893,11 +10065,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -9948,11 +10123,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -10003,6 +10181,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -10178,7 +10357,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -10226,9 +10407,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -10236,7 +10415,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -10275,9 +10456,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -10285,7 +10464,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -10324,9 +10505,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -10334,7 +10513,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -10373,9 +10554,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-12-blooket-makeup",
@@ -10414,7 +10593,14 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Blooket": 70,
+                "Lesson": 100,
+                "Progress Check": 50,
+                "Quizzes": 100
+              },
+              "categoryAveragesProjected": {
                 "Blooket": 70,
                 "Lesson": 100,
                 "Progress Check": 50,
@@ -10679,11 +10865,14 @@
                 "v3Total": 23.7,
                 "workAvg": 22.3
               },
+              "schoologyProjectedTotal": 68.8,
               "schoologyTotal": 68.8,
               "v3Total": 23.7
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -10734,11 +10923,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -10789,11 +10981,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -10844,6 +11039,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -11039,7 +11235,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 83.3,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -11087,9 +11285,7 @@
               "posters": null,
               "quizzes": 25,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -11097,7 +11293,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -11136,9 +11334,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -11146,7 +11342,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -11185,9 +11383,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -11195,7 +11391,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -11234,9 +11432,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-13-period-b-due",
@@ -11275,7 +11471,14 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 4,
               "categoryAverages": {},
+              "categoryAveragesProjected": {
+                "Blooket": 70,
+                "Lesson": 100,
+                "Progress Check": 50,
+                "Quizzes": 100
+              },
               "cells": {
                 "BL:1.1": null,
                 "BL:1.2": null,
@@ -11535,11 +11738,14 @@
                 "v3Total": 15.6,
                 "workAvg": 22.3
               },
+              "schoologyProjectedTotal": 68.8,
               "schoologyTotal": null,
               "v3Total": 15.6
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -11590,11 +11796,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -11645,11 +11854,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -11700,6 +11912,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -11897,7 +12110,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -11945,9 +12160,7 @@
               "posters": null,
               "quizzes": 25,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -11955,7 +12168,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -11994,9 +12209,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -12004,7 +12217,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -12043,9 +12258,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -12053,7 +12266,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -12092,9 +12307,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-14-period-e-not-due",
@@ -12133,7 +12346,11 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 0,
               "categoryAverages": {
+                "Lesson": 73.3
+              },
+              "categoryAveragesProjected": {
                 "Lesson": 73.3
               },
               "cells": {
@@ -12395,11 +12612,14 @@
                 "v3Total": 10.6,
                 "workAvg": 15.1
               },
+              "schoologyProjectedTotal": 73.3,
               "schoologyTotal": 73.3,
               "v3Total": 10.6
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -12450,11 +12670,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -12505,11 +12728,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -12560,6 +12786,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -12743,7 +12970,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 100,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -12789,9 +13018,7 @@
               "posters": null,
               "quizzes": 0,
               "trainer": 80
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -12799,7 +13026,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -12838,9 +13067,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -12848,7 +13075,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -12887,9 +13116,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -12897,7 +13124,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -12936,9 +13165,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-15-trainer",
@@ -12993,9 +13220,15 @@
         "gradebook": {
           "quarters": {
             "Q1": {
+              "aheadCells": 2,
               "categoryAverages": {
                 "Lesson": 86.7,
                 "Progress Check": 30
+              },
+              "categoryAveragesProjected": {
+                "Lesson": 86.7,
+                "Progress Check": 53.3,
+                "Quizzes": 100
               },
               "cells": {
                 "BL:1.1": null,
@@ -13256,11 +13489,14 @@
                 "v3Total": 26.9,
                 "workAvg": 23.9
               },
+              "schoologyProjectedTotal": 68.3,
               "schoologyTotal": 43.1,
               "v3Total": 26.9
             },
             "Q2": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U4": null,
                 "PC:U5": null,
@@ -13311,11 +13547,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q3": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U6": null,
                 "PC:U7": null,
@@ -13366,11 +13605,14 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             },
             "Q4": {
+              "aheadCells": 0,
               "categoryAverages": {},
+              "categoryAveragesProjected": {},
               "cells": {
                 "PC:U8": null,
                 "PC:U9": null,
@@ -13421,6 +13663,7 @@
                 "v3Total": null,
                 "workAvg": null
               },
+              "schoologyProjectedTotal": null,
               "schoologyTotal": null,
               "v3Total": null
             }
@@ -13617,7 +13860,9 @@
               "1.2",
               "1.5"
             ],
+            "bonusApplied": null,
             "ceiling": 77.9,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -13665,9 +13910,7 @@
               "posters": null,
               "quizzes": 25,
               "trainer": 0
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q2": {
             "aheadKeys": [],
@@ -13675,7 +13918,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -13714,9 +13959,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q3": {
             "aheadKeys": [],
@@ -13724,7 +13967,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -13763,9 +14008,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           },
           "Q4": {
             "aheadKeys": [],
@@ -13773,7 +14016,9 @@
             "blooketDone": 0,
             "blooketDue": 0,
             "blooketTodo": [],
+            "bonusApplied": null,
             "ceiling": null,
+            "closedGrade": null,
             "earlyBonus": 0,
             "earlyKeys": [],
             "earlyLessons": 0,
@@ -13812,9 +14057,7 @@
               "posters": null,
               "quizzes": null,
               "trainer": null
-            },
-            "closedGrade": null,
-            "bonusApplied": null
+            }
           }
         },
         "realName": "synthetic-16-units-1-3",
@@ -13947,11 +14190,18 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 4,
             "categoryAverages": {
               "Blooket": 60,
               "Lesson": 73.4,
               "Progress Check": 45,
               "Quizzes": 50
+            },
+            "categoryAveragesProjected": {
+              "Blooket": 70,
+              "Lesson": 82.2,
+              "Progress Check": 60,
+              "Quizzes": 66.7
             },
             "cells": {
               "BL:1.1": 80,
@@ -14212,11 +14462,14 @@
               "v3Total": 47.6,
               "workAvg": 47.6
             },
+            "schoologyProjectedTotal": 65.7,
             "schoologyTotal": 51.8,
             "v3Total": 47.6
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -14267,11 +14520,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -14322,11 +14578,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -14377,6 +14636,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -14908,7 +15168,14 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Blooket": 100,
+              "Lesson": 100,
+              "Progress Check": 40,
+              "Quizzes": 100
+            },
+            "categoryAveragesProjected": {
               "Blooket": 100,
               "Lesson": 100,
               "Progress Check": 40,
@@ -15173,11 +15440,14 @@
               "v3Total": 100,
               "workAvg": 100
             },
+            "schoologyProjectedTotal": 64.7,
             "schoologyTotal": 64.7,
             "v3Total": 100
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -15228,11 +15498,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -15283,11 +15556,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -15338,6 +15614,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -15841,7 +16118,14 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Blooket": 0,
+              "Lesson": 40,
+              "Progress Check": 70,
+              "Quizzes": 0
+            },
+            "categoryAveragesProjected": {
               "Blooket": 0,
               "Lesson": 40,
               "Progress Check": 70,
@@ -16106,11 +16390,14 @@
               "v3Total": 49,
               "workAvg": 16
             },
+            "schoologyProjectedTotal": 48.2,
             "schoologyTotal": 48.2,
             "v3Total": 49
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -16161,11 +16448,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -16216,11 +16506,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -16271,6 +16564,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -16759,7 +17053,14 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Blooket": 50,
+              "Lesson": 100,
+              "Progress Check": 80,
+              "Quizzes": 0
+            },
+            "categoryAveragesProjected": {
               "Blooket": 50,
               "Lesson": 100,
               "Progress Check": 80,
@@ -17024,11 +17325,14 @@
               "v3Total": 80,
               "workAvg": 48.3
             },
+            "schoologyProjectedTotal": 67.6,
             "schoologyTotal": 67.6,
             "v3Total": 80
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -17079,11 +17383,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -17134,11 +17441,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -17189,6 +17499,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -17692,7 +18003,14 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 4,
             "categoryAverages": {},
+            "categoryAveragesProjected": {
+              "Blooket": 80,
+              "Lesson": 100,
+              "Progress Check": 55,
+              "Quizzes": 100
+            },
             "cells": {
               "BL:1.1": null,
               "BL:1.2": null,
@@ -17952,11 +18270,14 @@
               "v3Total": 15.9,
               "workAvg": 22.7
             },
+            "schoologyProjectedTotal": 72.4,
             "schoologyTotal": null,
             "v3Total": 15.9
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -18007,11 +18328,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -18062,11 +18386,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -18117,6 +18444,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -18587,7 +18915,9 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "BL:1.1": null,
               "BL:1.2": null,
@@ -18847,11 +19177,14 @@
               "v3Total": 0,
               "workAvg": 0
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": 0
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -18902,11 +19235,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -18957,11 +19293,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -19012,6 +19351,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -19457,7 +19797,11 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Quizzes": 100
+            },
+            "categoryAveragesProjected": {
               "Quizzes": 100
             },
             "cells": {
@@ -19719,11 +20063,14 @@
               "v3Total": 9.3,
               "workAvg": 13.3
             },
+            "schoologyProjectedTotal": 100,
             "schoologyTotal": 100,
             "v3Total": 9.3
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -19774,11 +20121,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -19829,11 +20179,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -19884,6 +20237,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -20346,7 +20700,11 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Quizzes": 0
+            },
+            "categoryAveragesProjected": {
               "Quizzes": 0
             },
             "cells": {
@@ -20608,11 +20966,14 @@
               "v3Total": 0,
               "workAvg": 0
             },
+            "schoologyProjectedTotal": 0,
             "schoologyTotal": 0,
             "v3Total": 0
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -20663,11 +21024,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -20718,11 +21082,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -20773,6 +21140,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -21241,7 +21609,11 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Progress Check": 85
+            },
+            "categoryAveragesProjected": {
               "Progress Check": 85
             },
             "cells": {
@@ -21503,11 +21875,14 @@
               "v3Total": 59.5,
               "workAvg": 0
             },
+            "schoologyProjectedTotal": 85,
             "schoologyTotal": 85,
             "v3Total": 59.5
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -21558,11 +21933,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -21613,11 +21991,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -21668,6 +22049,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -22134,7 +22516,11 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Blooket": 80
+            },
+            "categoryAveragesProjected": {
               "Blooket": 80
             },
             "cells": {
@@ -22396,11 +22782,14 @@
               "v3Total": 2.5,
               "workAvg": 3.6
             },
+            "schoologyProjectedTotal": 80,
             "schoologyTotal": 80,
             "v3Total": 2.5
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -22451,11 +22840,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -22506,11 +22898,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -22561,6 +22956,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -23016,7 +23412,9 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "BL:1.1": null,
               "BL:1.2": null,
@@ -23276,11 +23674,14 @@
               "v3Total": 0,
               "workAvg": 0
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": 0
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -23331,11 +23732,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -23386,11 +23790,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -23441,6 +23848,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -23897,7 +24305,11 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Blooket": 80
+            },
+            "categoryAveragesProjected": {
               "Blooket": 80
             },
             "cells": {
@@ -24159,11 +24571,14 @@
               "v3Total": 2.5,
               "workAvg": 3.6
             },
+            "schoologyProjectedTotal": 80,
             "schoologyTotal": 80,
             "v3Total": 2.5
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -24214,11 +24629,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -24269,11 +24687,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -24324,6 +24745,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -24779,7 +25201,14 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Blooket": 70,
+              "Lesson": 100,
+              "Progress Check": 50,
+              "Quizzes": 100
+            },
+            "categoryAveragesProjected": {
               "Blooket": 70,
               "Lesson": 100,
               "Progress Check": 50,
@@ -25044,11 +25473,14 @@
               "v3Total": 23.7,
               "workAvg": 22.3
             },
+            "schoologyProjectedTotal": 68.8,
             "schoologyTotal": 68.8,
             "v3Total": 23.7
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -25099,11 +25531,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -25154,11 +25589,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -25209,6 +25647,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -25684,7 +26123,14 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 4,
             "categoryAverages": {},
+            "categoryAveragesProjected": {
+              "Blooket": 70,
+              "Lesson": 100,
+              "Progress Check": 50,
+              "Quizzes": 100
+            },
             "cells": {
               "BL:1.1": null,
               "BL:1.2": null,
@@ -25944,11 +26390,14 @@
               "v3Total": 15.6,
               "workAvg": 22.3
             },
+            "schoologyProjectedTotal": 68.8,
             "schoologyTotal": null,
             "v3Total": 15.6
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -25999,11 +26448,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -26054,11 +26506,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -26109,6 +26564,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -26586,7 +27042,11 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 0,
             "categoryAverages": {
+              "Lesson": 73.3
+            },
+            "categoryAveragesProjected": {
               "Lesson": 73.3
             },
             "cells": {
@@ -26848,11 +27308,14 @@
               "v3Total": 10.6,
               "workAvg": 15.1
             },
+            "schoologyProjectedTotal": 73.3,
             "schoologyTotal": 73.3,
             "v3Total": 10.6
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -26903,11 +27366,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -26958,11 +27424,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -27013,6 +27482,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }
@@ -27486,9 +27956,15 @@
       "gradebook": {
         "quarters": {
           "Q1": {
+            "aheadCells": 2,
             "categoryAverages": {
               "Lesson": 86.7,
               "Progress Check": 30
+            },
+            "categoryAveragesProjected": {
+              "Lesson": 86.7,
+              "Progress Check": 53.3,
+              "Quizzes": 100
             },
             "cells": {
               "BL:1.1": null,
@@ -27749,11 +28225,14 @@
               "v3Total": 26.9,
               "workAvg": 23.9
             },
+            "schoologyProjectedTotal": 68.3,
             "schoologyTotal": 43.1,
             "v3Total": 26.9
           },
           "Q2": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U4": null,
               "PC:U5": null,
@@ -27804,11 +28283,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q3": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U6": null,
               "PC:U7": null,
@@ -27859,11 +28341,14 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           },
           "Q4": {
+            "aheadCells": 0,
             "categoryAverages": {},
+            "categoryAveragesProjected": {},
             "cells": {
               "PC:U8": null,
               "PC:U9": null,
@@ -27914,6 +28399,7 @@
               "v3Total": null,
               "workAvg": null
             },
+            "schoologyProjectedTotal": null,
             "schoologyTotal": null,
             "v3Total": null
           }

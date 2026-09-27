@@ -189,6 +189,54 @@ describe('buildGradebookRow', () => {
   });
 });
 
+describe('buildGradebookRow — ahead-work projection (AHEAD_WORK_PROJECTION_SPEC.md)', () => {
+  const opts = { section: 'PeriodB', todayStr: '2026-09-20' };
+
+  it('one due + one ahead cell: today uses the due cell, projected uses both, aheadCells 1', () => {
+    const g = {
+      units: { U1: { pcRawPct: null } },
+      quarters: { Q1: { units: [1], quarterGrade: 85 } },
+      lessons: [
+        { lessonKey: '1.1', unit: 1, worksheetKey: '1', lessonGradeNoQuiz: 80, Q: null, quizTotal: 0, blooket: null, hasBlooket: false },
+        { lessonKey: '1.2', unit: 1, worksheetKey: '2', lessonGradeNoQuiz: 90, Q: null, quizTotal: 0, blooket: null, hasBlooket: false },
+      ],
+    };
+    const schedule = { '1.1': { unit: 1, periods: { B: '2026-09-09' } }, '1.2': { unit: 1, periods: { B: '2026-10-01' } } };
+    const row = buildGradebookRow(g, buildGradebookColumns(g, 'Q1', { lessons: schedule, ...opts }));
+    // Today: Lesson = 80 (1.2 not due) → 80. Projected: Lesson = (80 + 90)/2 = 85 → 85. Blank quiz cells ignored.
+    expect(row.categoryAverages).toEqual({ Lesson: 80 });
+    expect(row.schoologyTotal).toBe(80);
+    expect(row.categoryAveragesProjected).toEqual({ Lesson: 85 });
+    expect(row.schoologyProjectedTotal).toBe(85);
+    expect(row.aheadCells).toBe(1);
+  });
+
+  it('multi-category: the ahead cells join their categories (and can lower the projection)', () => {
+    const schedule = {
+      '1.1': { unit: 1, periods: { B: '2026-09-09' } }, '1.2': { unit: 1, periods: { B: '2026-09-15' } },
+      '1.3': { unit: 1, periods: { B: '2026-10-01' } }, '1.4': { unit: 1, periods: { B: '2026-10-01' } },
+    };
+    const gb = buildGradebook(gradeObj(), { lessonSchedule: schedule, ...opts });
+    const q = gb.quarters.Q1;
+    // Ahead: FA:1.3-4 (66) and QUIZ:1.4 (65).
+    // Today: Lesson (84+86)/2 = 85, Quizzes 78, Blooket 97.5, PC 80
+    //   → (15×85 + 15×78 + 5×97.5 + 50×80) / 85 = 6932.5 / 85 = 81.56 → 81.6
+    // Projected = every completed cell = the unfiltered row pinned above → 79.3
+    expect(q.schoologyTotal).toBe(81.6);
+    expect(q.schoologyProjectedTotal).toBe(79.3);
+    expect(q.categoryAveragesProjected.Lesson).toBe(78.7);
+    expect(q.categoryAveragesProjected.Quizzes).toBe(71.5);
+    expect(q.aheadCells).toBe(2);
+  });
+
+  it('no ahead cells → projected equals today and aheadCells 0', () => {
+    const q = buildGradebook(gradeObj()).quarters.Q1;
+    expect(q.schoologyProjectedTotal).toBe(q.schoologyTotal);
+    expect(q.categoryAveragesProjected).toEqual(q.categoryAverages);
+    expect(q.aheadCells).toBe(0);
+  });
+});
+
 describe('schoologyWeightedTotal', () => {
   it('renormalizes over present categories', () => {
     expect(schoologyWeightedTotal({ Lesson: 90, Quizzes: 80 }, { Lesson: 15, Quizzes: 15, Blooket: 5 })).toBe(85);
