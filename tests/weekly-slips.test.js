@@ -115,21 +115,23 @@ describe('weekly slips', () => {
   it('pins two half-page slips per Letter page, including a blank odd slot', () => {
     const students = [31, 80, 85, 90, 100].map(grade => student(grade));
     const tex = renderTex(students, students, 'PeriodB', '2026-09-26');
-    // Full-width layout (teacher 2026-09-27): 11pt, 0.5in side margins, two slips of half the text
-    // height minus a 0.25in dotted cut gap; the adjustbox caps height only, never the width.
-    expect(tex).toContain('\\documentclass[11pt,letterpaper]{article}');
-    expect(tex).toContain('\\usepackage[left=0.5in,right=0.5in,top=0.45in,bottom=0.45in]{geometry}');
-    expect(tex).toContain('\\setlength{\\SlipH}{\\dimexpr(\\textheight-0.25in)/2\\relax}');
-    expect(tex).toContain('\\vbox to 0.25in{\\vss\\hbox to\\linewidth{\\color{gray}\\dotfill}\\vss}');
+    // One slip per page (teacher 2026-09-27: "as legible as possible"): 12pt, 0.6in side margins,
+    // the whole text height per slip, no cut line; the adjustbox caps height only, never the width.
+    expect(tex).toContain('\\documentclass[12pt,letterpaper]{article}');
+    expect(tex).toContain('\\usepackage[left=0.6in,right=0.6in,top=0.55in,bottom=0.55in]{geometry}');
+    expect(tex).toContain('\\setlength{\\SlipH}{\\dimexpr\\textheight-12pt\\relax}');
+    expect(tex).not.toContain('\\SlipPage');
+    expect(tex).not.toContain('dotfill');
     expect(tex).toContain('\\begin{minipage}[t][\\SlipH][t]{\\linewidth}');
     expect(tex).toContain('max totalheight=\\SlipH');
     expect(tex).not.toContain('max totalsize');
     expect(tex).toMatch(/\\SlipBody\[0\.(44|5|56|62|66)\]\{/);
     // The name is the first thing a slip says, at full width above the two columns.
-    expect(tex).toMatch(/\\Slip\{\\SlipBody\[[0-9.]+\]\{%\n\{\\fontsize\{12\}\{14\.5\}\\bfseries Where you stand --- /);
-    expect(tex).toContain('{\\small Period B --- week of Sep 28 $\\cdot$ {\\bfseries Q1 so far: 31\\%.');
-    expect(tex.match(/\\SlipPage\{/g)).toHaveLength(3);
-    expect(tex.match(/\\Slip\{/g)).toHaveLength(6);
+    expect(tex).toMatch(/\\Slip\{\\SlipBody\[[0-9.]+\]\{%\n\{\\fontsize\{17\}\{20\}\\bfseries Where you stand --- /);
+    expect(tex).toContain('{\\normalsize Period B --- week of Sep 28 $\\cdot$ {\\bfseries Q1 so far: 31\\%.');
+    expect(tex.match(/\\Slip\{\\SlipBody/g)).toHaveLength(5);   // one page per candidate
+    expect(tex.match(/\\newpage/g)).toHaveLength(4);
+    expect(tex.match(/\\Slip\{/g)).toHaveLength(5);   // one Slip per candidate, no empty filler cell
     expect(tex.match(/\\newpage/g)).toHaveLength(2);
     expect(tex).toContain('{\\Slip{}}');
     expect(tex).toContain('week of Sep 28');
@@ -263,9 +265,9 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     expect(tex.match(/\\MissRow\{/g)).toHaveLength(14);
     // The rows and chips read the step's fonts; the plot reads the step's height.
     expect(tex).toContain('{\\RowFont #4\\par}');
-    expect(tex).toContain('\\def\\RowFont{\\fontsize{10}{11.5}\\selectfont}\\def\\ChipFont{\\small}\\def\\RightFont{}\\def\\PlotHeight{0.7in}');
-    expect(tex).toContain('\\def\\RowFont{\\fontsize{9}{10.5}\\selectfont}\\def\\ChipFont{\\fontsize{9}{10.5}\\selectfont}\\def\\RightFont{}\\def\\PlotHeight{0.7in}');
-    expect(tex).toContain('\\def\\RightFont{\\def\\small{\\fontsize{9.5}{11.5}\\selectfont}\\small}\\def\\PlotHeight{0.55in}');
+    expect(tex).toContain('\\def\\RowFont{\\fontsize{12}{14.5}\\selectfont}\\def\\ChipFont{\\fontsize{11}{13}\\selectfont}\\def\\RightFont{}\\def\\PlotHeight{1.2in}');
+    expect(tex).toContain('\\def\\RowFont{\\fontsize{11}{13}\\selectfont}\\def\\ChipFont{\\fontsize{10.5}{12.5}\\selectfont}\\def\\RightFont{}\\def\\PlotHeight{1in}');
+    expect(tex).toContain('\\def\\RightFont{\\def\\small{\\fontsize{11}{13}\\selectfont}\\small}\\def\\PlotHeight{0.8in}');
     // Measured in order: step 0, then 1, then 2; only then may the height cap scale.
     expect(tex).toContain('\\newcommand{\\Slip}[1]{\\SlipTry{0}{#1}%\n\\SlipTooTall\\SlipTry{1}{#1}\\fi\n\\SlipTooTall\\SlipTry{2}{#1}\\fi\n');
     expect(tex.indexOf('\\SlipTry{2}{#1}')).toBeLessThan(tex.indexOf('\\begin{adjustbox}{max totalheight=\\SlipH}'));
@@ -379,7 +381,7 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
   it('the footer says how the grade is counted (teacher 2026-09-27)', async () => {
     const { renderTex } = await import('../scripts/weekly-slips.mjs');
     const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-27', 'Q1');
-    expect(tex).toContain('{\\footnotesize Printed Sun 9/27. The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
+    expect(tex).toContain('{\\small Printed Sun 9/27. The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
     expect(tex).not.toContain('see the Desk for the graphs');
   });
 });

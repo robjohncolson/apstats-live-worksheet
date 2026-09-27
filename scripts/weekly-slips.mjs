@@ -460,8 +460,8 @@ export function renderSlip(student, section, date, summary, quarterKey, pool = n
   // the arguments stay in reading order; \SlipBody lays them out (the name first at full width,
   // then rows left and effort + plan right).
   return String.raw`\Slip{\SlipBody[${share}]{%
-{\fontsize{12}{14.5}\bfseries Where you stand --- ${latexText(name)}\par}
-{\small Period ${section.slice(-1)} --- week of ${weekLabelFor(date)} $\cdot$ {\bfseries ${latexText(header)}}\par}}{%
+{\fontsize{17}{20}\bfseries Where you stand --- ${latexText(name)}\par}
+{\normalsize Period ${section.slice(-1)} --- week of ${weekLabelFor(date)} $\cdot$ {\bfseries ${latexText(header)}}\par}}{%
 ${effortTex(student, section, date, quarterKey)}}{%
 \textbf{Missing work}\par
 ${missingRowsTex(missing)}}{%
@@ -471,20 +471,17 @@ ${boxPlotTex(own, summary)}}{%
 \medskip\textbf{What to do first}\par
 ${steps}
 \par\medskip Every item on this list can still be finished. Desk $\rightarrow$ My Ledger $\rightarrow$ Missing work.\par}{%
-{\footnotesize Printed ${latexText(dayText(date))}. ${latexText(globalThis.EffortFacts.COUNTING_NOTE)}}}
+{\small Printed ${latexText(dayText(date))}. ${latexText(globalThis.EffortFacts.COUNTING_NOTE)}}}
 }`;
 }
 
 export function renderTex(students, candidates, section, date, quarterKey, pool = null) {
   const summary = boxSummary(students, quarterKey);
-  const pages = [];
-  for (let index = 0; index < candidates.length; index += 2) {
-    const top = renderSlip(candidates[index], section, date, summary, quarterKey, pool);
-    const bottom = candidates[index + 1] ? renderSlip(candidates[index + 1], section, date, summary, quarterKey, pool) : '\\Slip{}';
-    pages.push(`\\SlipPage{${top}}{${bottom}}`);
-  }
-  return String.raw`\documentclass[11pt,letterpaper]{article}
-\usepackage[left=0.5in,right=0.5in,top=0.45in,bottom=0.45in]{geometry}
+  // One slip per Letter page (teacher 2026-09-27: "as legible as possible", no cutting): 12pt
+  // body, the whole text height available, the density steps only for the very longest slips.
+  const pages = candidates.map(candidate => renderSlip(candidate, section, date, summary, quarterKey, pool));
+  return String.raw`\documentclass[12pt,letterpaper]{article}
+\usepackage[left=0.6in,right=0.6in,top=0.55in,bottom=0.55in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{xcolor}
@@ -500,24 +497,26 @@ ${COLOR_DEFS.join('\n')}
 \newcommand{\KeyYou}[1]{\textcolor{deskred}{\textbf{\underline{#1}}}}
 \newcommand{\KeyTent}[1]{{\setlength{\fboxsep}{1pt}\colorbox{desktentative}{\textcolor{desktentativeink}{#1}}}}
 % Density steps: a slip that does not fit tightens its type instead of being scaled.
-% 0 = rows 10pt, chips 10pt, plot 0.7in; 1 = rows + chips 9pt; 2 = also the right column 9.5pt
-% and the plot 0.55in. \Slip tries them in order (measured, not guessed).
+% One slip per page (12pt): 0 = rows 12pt, chips 11pt, plot 1.2in; 1 = rows 11pt, chips 10.5pt,
+% plot 1in; 2 = rows 10pt, chips 10pt, right column 11pt, plot 0.8in. \Slip tries them in order.
 \newcommand{\SlipStep}[1]{\def\SlipStepNo{#1}%
 \ifcase#1\relax
-\def\RowFont{\fontsize{10}{11.5}\selectfont}\def\ChipFont{\small}\def\RightFont{}\def\PlotHeight{0.7in}%
+\def\RowFont{\fontsize{12}{14.5}\selectfont}\def\ChipFont{\fontsize{11}{13}\selectfont}\def\RightFont{}\def\PlotHeight{1.2in}%
 \or
-\def\RowFont{\fontsize{9}{10.5}\selectfont}\def\ChipFont{\fontsize{9}{10.5}\selectfont}\def\RightFont{}\def\PlotHeight{0.7in}%
+\def\RowFont{\fontsize{11}{13}\selectfont}\def\ChipFont{\fontsize{10.5}{12.5}\selectfont}\def\RightFont{}\def\PlotHeight{1in}%
 \else
-\def\RowFont{\fontsize{9}{10.5}\selectfont}\def\ChipFont{\fontsize{9}{10.5}\selectfont}\def\RightFont{\def\small{\fontsize{9.5}{11.5}\selectfont}\small}\def\PlotHeight{0.55in}%
+\def\RowFont{\fontsize{10}{12}\selectfont}\def\ChipFont{\fontsize{10}{12}\selectfont}\def\RightFont{\def\small{\fontsize{11}{13}\selectfont}\small}\def\PlotHeight{0.8in}%
 \fi}
 % One slip across the full width: the name first, then Missing-work rows left and effort + plan
 % right; then the score strip, the box plot and the 9pt footer at full width.
 % [#1] = the left column's share of the line (leftColumnShare picks it per slip).
 % #2 = the full-width header (name first), #3 = effort lines, #4 = Missing-work rows.
-\newcommand{\SlipBody}[8][0.62]{#2\smallskip\begin{minipage}[t]{#1\linewidth}\vspace{0pt}{\RowFont #4\par}\end{minipage}\hfill\begin{minipage}[t]{\dimexpr0.98\linewidth-#1\linewidth\relax}\vspace{0pt}\RightFont #3#7\end{minipage}\par
-#5\par\smallskip #6\par\smallskip{\fontsize{9}{10.5}\selectfont #8\par}}
-% Two fixed half-page cells with a dotted cut line between them. The adjustbox is a last-resort
-% height cap only (after density step 2): a slip that fits is never scaled.
+% One slip per page: everything stacks at full width (rows first, so a long title keeps its date on
+% the same line); the [#1] share is kept for the callers/tests but no longer splits the page.
+\newcommand{\SlipBody}[8][0.62]{#2\smallskip{\RowFont #4\par}\medskip{\RightFont #3\par\smallskip #7\par}
+\medskip #5\par\medskip #6\par\medskip{#8\par}}
+% One fixed full-page cell. The adjustbox is a last-resort height cap only (after density
+% step 2): a slip that fits is never scaled.
 \newlength{\SlipH}
 \newsavebox{\SlipBox}
 \newcommand{\SlipTry}[2]{\SlipStep{#1}\sbox{\SlipBox}{\begin{minipage}{\linewidth}#2\end{minipage}}}
@@ -527,10 +526,10 @@ ${COLOR_DEFS.join('\n')}
 \SlipTooTall\SlipTry{2}{#1}\fi
 \typeout{SLIPFIT step=\SlipStepNo\space height=\the\dimexpr\ht\SlipBox+\dp\SlipBox\relax\space limit=\the\SlipH}%
 \begin{minipage}[t][\SlipH][t]{\linewidth}\vspace{0pt}\begin{adjustbox}{max totalheight=\SlipH}\usebox{\SlipBox}\end{adjustbox}\end{minipage}}
-\newcommand{\SlipPage}[2]{\noindent\vbox to\textheight{\noindent#1\par\nointerlineskip\vbox to 0.25in{\vss\hbox to\linewidth{\color{gray}\dotfill}\vss}\nointerlineskip\noindent#2\par\vss}}
 \begin{document}
-\setlength{\SlipH}{\dimexpr(\textheight-0.25in)/2\relax}
-${pages.join('\n\\newpage\n') || 'No printed candidates.'}
+\setlength{\SlipH}{\dimexpr\textheight-12pt\relax}
+\parindent0pt\parskip0pt
+${pages.map(page => '\\noindent' + page).join('\n\\newpage\n') || 'No printed candidates.'}
 \end{document}
 `;
 }
