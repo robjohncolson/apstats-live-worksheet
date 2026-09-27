@@ -15817,10 +15817,66 @@ function _walletApplyWindowReadiness(readiness) {
         if (!win || !win.style) return;
         if (!readiness || readiness.state === 'nodue' || typeof readiness.hue !== 'number') {
             win.style.backgroundColor = '';
-            return;
+        } else {
+            win.style.backgroundColor = 'hsl(' + readiness.hue + ',55%,92%)';
         }
-        win.style.backgroundColor = 'hsl(' + readiness.hue + ',55%,92%)';
+        // LEDGER_GRADE_AGREEMENT_SPEC §2: incoming zeros win over the readiness hue
+        // (same light tints as the Missing-work rows).
+        var warns = (typeof _zeroCurrentWarnings === 'function') ? _zeroCurrentWarnings() : [];
+        if (!Array.isArray(warns) || !warns.length) return;
+        win.style.backgroundColor = _zeroAnyPast(warns) ? '#fff3f3' : '#fff9db';
     } catch (_) {}
+}
+
+// LEDGER_GRADE_AGREEMENT_SPEC §2: the Do Now zero colours, shared with the ledger balance card.
+// Must equal the #donow-card.donow-zeros-soon / .donow-zeros-now CSS (a test pins them equal).
+var ZERO_TINT = { soon: { bg: '#fff3b0', border: '#d9b400' }, now: { bg: '#f7c9c9', border: '#cc0000' } };
+
+function _zeroAnyPast(warns) {
+    for (var i = 0; i < warns.length; i++) {
+        if (warns[i].past) return true;
+    }
+    return false;
+}
+
+// Balance card carries the same zero state as the Do Now card. Never throws.
+function _walletApplyZeroTint(card, warns) {
+    try {
+        if (!card) return;
+        card.classList.remove('wallet-zeros-soon');
+        card.classList.remove('wallet-zeros-now');
+        if (!warns || !warns.length) return;
+        var isNow = _zeroAnyPast(warns);
+        var tint = isNow ? ZERO_TINT.now : ZERO_TINT.soon;
+        card.classList.add(isNow ? 'wallet-zeros-now' : 'wallet-zeros-soon');
+        card.style.backgroundColor = tint.bg;
+        card.style.borderColor = tint.border;
+    } catch (_) {}
+}
+
+// The one sentence under the big grade: what the incoming / counting zeros do to the number.
+// "above" = the Missing-work card, which sits above the balance card.
+function _walletGradeDropText(warns) {
+    var nowCount = 0;
+    for (var i = 0; i < warns.length; i++) {
+        if (warns[i].past) nowCount++;
+    }
+    var soonCount = warns.length - nowCount;
+    var day = _zeroEarliestSoonDay(warns);
+    var tail = ' Finished work counts the same day.';
+    var zerosText = nowCount === 1 ? '1 zero' : nowCount + ' zeros';
+    if (nowCount && soonCount) {
+        var soonItems = soonCount === 1 ? 'the 1 more item above is' : 'the ' + soonCount + ' more items above are';
+        var verb = soonCount === 1 ? 'drops again' : 'starts dropping again';
+        return 'This number already includes ' + zerosText + ' and ' + verb + ' on ' + day
+            + ' unless ' + soonItems + ' finished.' + tail;
+    }
+    if (nowCount) {
+        var nowItems = nowCount === 1 ? 'the 1 item above' : 'the ' + nowCount + ' items above';
+        return 'This number already includes ' + zerosText + '. Finish ' + nowItems + ' and it goes back up the same day.';
+    }
+    if (soonCount === 1) return 'This number drops on ' + day + ' unless the 1 item above is finished.' + tail;
+    return 'This number starts dropping on ' + day + ' unless the ' + soonCount + ' items above are finished.' + tail;
 }
 
 // ── ZERO_WARNING (teacher 2026-09-18) ──────────────────────────────────────
@@ -15890,6 +15946,16 @@ function _zeroLatestSoonDay(warns) {
         if (warns[i].zeroDate > latest) latest = warns[i].zeroDate;
     }
     return latest ? _zeroDayText(latest) : '';
+}
+// "Drops on <day>": the EARLIEST zero date among the not-yet-counting warnings ('' when none).
+// The grade first drops on this date (LEDGER_GRADE_AGREEMENT_SPEC §1).
+function _zeroEarliestSoonDay(warns) {
+    var earliest = '';
+    for (var i = 0; i < warns.length; i++) {
+        if (warns[i].past) continue;
+        if (!earliest || warns[i].zeroDate < earliest) earliest = warns[i].zeroDate;
+    }
+    return earliest ? _zeroDayText(earliest) : '';
 }
 // The Do Now pill (LEDGER_CALM_SPEC \u00a71.2): "1 is a 0 now \u00b7 2 more by Sun 9/27".
 function _zeroPillText(warns) {
@@ -18451,6 +18517,10 @@ function _walletPaint(host, receipts, loading) {
         card.style.backgroundColor = 'hsl(' + readiness.hue + ',60%,88%)';
         card.style.borderColor = 'hsl(' + readiness.hue + ',65%,45%)';
     }
+    // LEDGER_GRADE_AGREEMENT_SPEC §2: the card carries the same zero state as the Do Now.
+    var warns = (typeof _zeroCurrentWarnings === 'function') ? _zeroCurrentWarnings() : [];
+    if (!Array.isArray(warns)) warns = [];   // Codex review: a non-array must never paint a false warning
+    _walletApplyZeroTint(card, warns);
 
     var who = document.createElement('div');
     who.className = 'geneva';
@@ -18479,6 +18549,18 @@ function _walletPaint(host, receipts, loading) {
     gradeRow.appendChild(gradeBig);
     gradeRow.appendChild(gradeLbl);
     card.appendChild(gradeRow);
+
+    // LEDGER_GRADE_AGREEMENT_SPEC §3: while zeros are coming or counting, the number is not settled.
+    if (warns.length) {
+        var zerosNow = _zeroAnyPast(warns);
+        gradeBig.style.color = zerosNow ? '#a30000' : '#7a5c00';
+        gradeLbl.textContent = 'Grade today';
+        var drop = document.createElement('div');
+        drop.className = 'wallet-grade-drop geneva';
+        drop.style.cssText = 'font-size:11px;line-height:1.35;margin-top:4px;color:#000;font-weight:bold';
+        drop.textContent = _walletGradeDropText(warns);
+        card.appendChild(drop);
+    }
 
     // EFFORT_VISIBILITY_SPEC §3: the PC on file + the work done ahead, under the grade row.
     var effort = _walletEffortBlock(grade.q);

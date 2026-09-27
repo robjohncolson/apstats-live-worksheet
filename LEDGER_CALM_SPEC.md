@@ -158,3 +158,6 @@ what-if from the quarter engine (`computeQuarterV3` with the missing items fille
 for DUE lessons only). Options: a `GET /grade?whatIf=fill-missing` server field (touches
 roster-server, needs the grade-engine bundle regen + root suite) or the local `GradeEngine` with
 synthetic rows. Decide separately; do not approximate it client-side.
+
+## 7. Follow-up SHIPPED separately
+The balance card now carries the same yellow/red zero state as the Do Now and says the number will drop: `LEDGER_GRADE_AGREEMENT_SPEC.md` (2026-09-27).
