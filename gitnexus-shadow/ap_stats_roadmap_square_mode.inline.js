@@ -8529,6 +8529,10 @@ try {
 // test missed because it never simulated a click).
 function _donowOpensLedger(target, card) {
   if (!target || typeof target.closest !== 'function') return true;
+  // The grade coach (button, facts, chat) lives in #donow-helper: reading or asking must not
+  // yank the student into My Ledger (teacher 2026-09-26).
+  var helper = target.closest('#donow-helper');
+  if (helper && helper !== card) return false;
   var hit = target.closest('a,button,[role="button"],input,select');
   return !hit || hit === card;
 }
@@ -9451,6 +9455,25 @@ function _coachMissingList() {
         };
     });
 }
+// "First:" — the missing work that matters most: everything counting as 0 now, else the group
+// that becomes a 0 soonest. Empty string when nothing is missing.
+function _coachFirstText(missing) {
+    if (!Array.isArray(missing) || !missing.length) return '';
+    var name = function (m) {
+        var kind = m.kind === 'blooket' ? 'flashcards' : m.kind === 'quiz' ? 'quiz' : 'worksheet';
+        return ((typeof cedLabel === 'function') ? cedLabel(m.lesson).text : m.lesson) + ' ' + kind;
+    };
+    var now = missing.filter(function (m) { return m.past; });
+    if (now.length) {
+        return '\u26A0 First: ' + now.slice(0, 3).map(name).join('; ') + (now.length > 3 ? ' and ' + (now.length - 3) + ' more' : '')
+            + (now.length === 1 ? ' counts' : ' count') + ' as 0 right now — any score replaces a 0.';
+    }
+    var soonestDate = missing.map(function (m) { return m.zeroDate; }).sort()[0];
+    var soon = missing.filter(function (m) { return m.zeroDate === soonestDate; });
+    var day = soon[0].day || soonestDate;
+    return '\u26A0 First: ' + soon.slice(0, 3).map(name).join('; ') + (soon.length > 3 ? ' and ' + (soon.length - 3) + ' more' : '')
+        + (soon.length === 1 ? ' becomes' : ' become') + ' a 0 after ' + day + ' — turn in anything before then and there is no 0.';
+}
 // One-line diagnosis of the bottleneck from the two-track / 40%-gate model.
 function _coachBottleneckText(ctx) {
   var pc = ctx.pcAvg, wk = ctx.workAvg;
@@ -9496,14 +9519,20 @@ function _renderCoachPanel(panel, ctx) {
   diag.textContent = _coachBottleneckText(ctx);
   facts.appendChild(diag);
 
-  // The single biggest grade opportunity — the lowest-scoring component. Leads
-  // the "what to fix" so the coach points at the real bottleneck (e.g. a 1%
-  // worksheet) instead of the earliest-incomplete lesson.
+  // Missing work outranks a low recorded score: a 0 costs far more than 30 points on a 70.
+  var firstLine = _coachFirstText(ctx.missing);
+  if (firstLine) {
+    var first = document.createElement('div');
+    first.style.cssText = 'font-weight:bold;margin-top:3px';
+    first.textContent = firstLine;
+    facts.appendChild(first);
+  }
+  // The lowest-scoring RECORDED component — the biggest win once nothing is missing.
   if (ctx.biggestWin) {
     var bw = document.createElement('div');
-    bw.style.cssText = 'font-weight:bold;margin-top:3px';
-    bw.textContent = '🎯 Biggest win: your ' + cedLabel(ctx.biggestWin.lesson).text + ' ' + ctx.biggestWin.label +
-      ' is at ' + Math.round(ctx.biggestWin.score) + '% — fixing that lifts your grade the most.';
+    bw.style.cssText = (firstLine ? '' : 'font-weight:bold;') + 'margin-top:3px';
+    bw.textContent = (firstLine ? 'Then: your ' : '🎯 Biggest win: your ') + cedLabel(ctx.biggestWin.lesson).text + ' ' + ctx.biggestWin.label +
+      ' is at ' + Math.round(ctx.biggestWin.score) + '% — ' + (firstLine ? 'fixing that is the next lift.' : 'fixing that lifts your grade the most.');
     facts.appendChild(bw);
   }
 
@@ -26803,7 +26832,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-w558';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-6ehh';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

@@ -302,6 +302,20 @@ describe('coach facts match the zero-date rule (teacher 2026-09-26: "does this A
     expect(helper).toMatch(/past: Boolean\(w\.past\)/);
     expect(helper).toMatch(/slice\(0, 12\)/);
   });
+  it('"First:" is the missing work (counting now, else soonest date); the low recorded score follows as "Then:"', () => {
+    const fn = new Function('cedLabel', fnBody(DESK, '_coachFirstText') + '\nreturn _coachFirstText;')((k) => ({ text: 'Topic ' + k }));
+    expect(fn([])).toBe('');
+    expect(fn([{ lesson: '1.1', kind: 'worksheet', zeroDate: '2026-09-20', day: 'Sun 9/20', past: true },
+               { lesson: '1.3', kind: 'quiz', zeroDate: '2026-09-27', day: 'Sun 9/27', past: false }]))
+      .toBe('\u26A0 First: Topic 1.1 worksheet counts as 0 right now — any score replaces a 0.');
+    expect(fn([{ lesson: '1.3', kind: 'worksheet', zeroDate: '2026-09-27', day: 'Sun 9/27', past: false },
+               { lesson: '1.3', kind: 'quiz', zeroDate: '2026-09-27', day: 'Sun 9/27', past: false },
+               { lesson: '1.3', kind: 'blooket', zeroDate: '2026-09-27', day: 'Sun 9/27', past: false },
+               { lesson: '1.4', kind: 'worksheet', zeroDate: '2026-09-29', day: 'Tue 9/29', past: false }]))
+      .toBe('\u26A0 First: Topic 1.3 worksheet; Topic 1.3 quiz; Topic 1.3 flashcards become a 0 after Sun 9/27 — turn in anything before then and there is no 0.');
+    const panel = fnBody(DESK, '_renderCoachPanel');
+    expect(panel).toContain("firstLine ? 'Then: your ' : '\ud83c\udfaf Biggest win: your '".replace('\\ud83c\\udfaf', '🎯'));
+  });
   it('the panel never says un-done work "counts as 0 until you do it", never caps a deck at 80%, never says "unlock"', () => {
     const body = fnBody(DESK, '_renderCoachPanel');
     expect(body).not.toMatch(/count as 0 until you do them/);

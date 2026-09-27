@@ -92,3 +92,18 @@ describe('Do Now card — a click opens My Ledger (not swallowed by its own role
     expect(_donowOpensLedger({}, card)).toBe(true);
   });
 });
+
+describe('the grade coach never opens the ledger (teacher 2026-09-26: "when I click on the AI advice, it immediately pops up the Ledger")', () => {
+  it('_donowOpensLedger is false for anything inside #donow-helper (button, facts text, chat input)', async () => {
+    const { JSDOM } = await import('jsdom');
+    const dom = new JSDOM('<div id="donow-card" role="button"><div id="donow-msg">x</div><div id="donow-helper"><button id="b">Why</button><div class="wsl-panel"><div class="wsl-facts">facts</div><input id="q"></div></div></div>');
+    const src = readFileSync(new URL('../ap_stats_roadmap_square_mode.html', import.meta.url), 'utf8');
+    const m = /function _donowOpensLedger\([^)]*\)\s*\{[\s\S]*?\n\}/.exec(src);
+    const fn = new Function(m[0] + '\nreturn _donowOpensLedger;')();
+    const d = dom.window.document, card = d.getElementById('donow-card');
+    expect(fn(d.getElementById('b'), card)).toBe(false);
+    expect(fn(d.querySelector('.wsl-facts'), card)).toBe(false);
+    expect(fn(d.getElementById('q'), card)).toBe(false);
+    expect(fn(d.getElementById('donow-msg'), card)).toBe(true);     // the card itself still opens the ledger
+  });
+});
