@@ -316,3 +316,142 @@ describe('score list key + per-assignment graph (teacher 2026-09-26: "does not e
     } finally { t.close(); }
   });
 });
+
+describe('Balance card effort lines (EFFORT_VISIBILITY_SPEC §3: "they don’t feel that I’m misplacing their effort")', () => {
+  let EF;
+  beforeAll(async () => { await import('../lib/effort-facts.js'); EF = globalThis.EffortFacts; });
+  // The Desk calendar row shape: [y, month0, d, cellB, cellE]. Unit 1 PC Day 2: B Tue 10/13, E Fri 10/16.
+  const CAL = [
+    [2026, 9, 12, { t: 'U1-PC1', kind: 'pc', admin: 1, u: 1 }, { t: '1.9', u: 1 }],
+    [2026, 9, 13, { t: 'U1-PC2', kind: 'pc', admin: 2, u: 1 }, { t: '3.1', u: 1 }],
+    [2026, 9, 16, { t: '3.1', u: 1 }, { t: 'U1-PC2', kind: 'pc', admin: 2, u: 1 }],
+  ];
+  const LESSONS = [
+    { lessonKey: '1.2', due: { B: '2026-09-09', E: '2026-09-10' }, lessonGradeNoQuiz: 70 },
+    { lessonKey: '1.6', due: { B: '2026-10-05', E: '2026-10-07' }, lessonGradeNoQuiz: 100, Q: 67 },
+    { lessonKey: '3.1', due: { B: '2026-10-16', E: '2026-10-13' }, blooket: 90 },
+  ];
+  function effortSandbox({ units = { U1: { pcRawPct: 66.7 } }, lessons = LESSONS, workAvg = 31, today = [2026, 8, 27], lib = true } = {}) {
+    const dom = new JSDOM('<div></div>');
+    const s = {
+      document: dom.window.document, window: dom.window, console,
+      S: CAL, cP: 'B',
+      tdy: () => new Date(today[0], today[1], today[2]),
+      _gradeUnitsCache: units, _gradeLessonsCache: lessons,
+      _gradeQuartersCache: { Q1: { quarterGrade: 45, lessonsDue: 9, workAvg, pcUnits: [1, 2] } },
+      cedLabel: k => (k === '3.1' ? { mapped: true, id: '1.10', text: '1.10 · Investigative Question' } : { mapped: true, id: k, text: k }),
+    };
+    if (lib) Object.defineProperty(s, 'EffortFacts', { get: () => EF });
+    createContext(s);
+    runInContext(['_zeroTodayIso', '_effortPcSchedule', '_effortTopicNumber', '_effortFacts', '_walletEffortBlock'].map(fnSrc).join('\n'), s);
+    return { s, close: () => dom.window.close() };
+  }
+
+  it('reads PC Day 2 off the Desk calendar in the lesson-schedule shape', () => {
+    const t = effortSandbox();
+    try {
+      expect(JSON.parse(JSON.stringify(t.s._effortPcSchedule()))).toEqual({ progressChecks: { 1: { adminDay2: { B: '2026-10-13', E: '2026-10-16' } } } });
+    } finally { t.close(); }
+  });
+  it('a PC on file and work ahead: a grey PC line (+ strategy) and a green ahead line, under the grade row', () => {
+    const t = effortSandbox();
+    try {
+      const box = t.s._walletEffortBlock('Q1');
+      expect(box.className).toBe('wallet-effort geneva');
+      const pc = box.querySelector('.wallet-effort-pc');
+      const ahead = box.querySelector('.wallet-effort-ahead');
+      expect(pc.textContent).toBe('Progress Check so far: 67% (paper) — counts from Tue 10/13. If your Progress Check track ends the quarter at about 67% or better, your grade will be the HIGHER of your two tracks once both are at least 40% — so your Work track only needs to reach 40%. You are at 31%; 9 points of Work does it.');
+      expect(pc.style.borderLeft).toBe('3px solid rgb(136, 136, 136)');
+      expect(ahead.textContent).toBe("Ahead of the calendar: 2 lessons already done (1.6, 1.10). They already count in your Desk grade; Schoology catches up when each lesson's column opens.");
+      expect(ahead.style.borderLeft).toBe('3px solid rgb(42, 138, 42)');
+      expect([...box.children].map(c => c.className)).toEqual(['wallet-effort-pc', 'wallet-effort-ahead']);
+    } finally { t.close(); }
+  });
+  it('nothing on file and nothing ahead: no block at all', () => {
+    const t = effortSandbox({ units: { U1: { pcRawPct: null } }, lessons: LESSONS.slice(0, 1) });
+    try {
+      expect(t.s._walletEffortBlock('Q1')).toBeNull();
+    } finally { t.close(); }
+  });
+  it('ahead only (nothing missing, no PC yet) still shows the praise; the lib missing never breaks the ledger', () => {
+    const t = effortSandbox({ units: null });
+    try {
+      const box = t.s._walletEffortBlock('Q1');
+      expect(box.querySelector('.wallet-effort-pc')).toBeNull();
+      expect(box.querySelector('.wallet-effort-ahead')).not.toBeNull();
+    } finally { t.close(); }
+    const bare = effortSandbox({ lib: false });
+    try {
+      expect(bare.s._walletEffortBlock('Q1')).toBeNull();
+    } finally { bare.close(); }
+  });
+  it('_walletPaint puts the block in the balance card right after the grade row; the zero card never carries it', () => {
+    const paint = fnSrc('_walletPaint');
+    const rowAt = paint.indexOf('card.appendChild(gradeRow);');
+    const effortAt = paint.indexOf('var effort = _walletEffortBlock(grade.q);');
+    expect(rowAt).toBeGreaterThan(-1);
+    expect(effortAt).toBeGreaterThan(rowAt);
+    expect(paint).toContain('if (effort) card.appendChild(effort);');
+    expect(fnSrc('_walletPrependZeroCard')).not.toMatch(/effort/i);
+  });
+  it('the lib loads beside lib/class-snapshot.js, and the units cache is set and cleared with the others', () => {
+    expect(html).toContain('<script src="lib/class-snapshot.js" onerror=""></script>\n<script src="lib/effort-facts.js" onerror=""></script>');
+    expect(html).toMatch(/var _gradeUnitsCache = null;/);
+    expect(fnSrc('_resetGradeStateForIdentitySwitch')).toContain('_gradeUnitsCache = null;');
+    const grades = fnSrc('renderDoNowGrades');
+    expect(grades).toContain('_gradeUnitsCache = null;');
+    expect(grades).toMatch(/_gradeUnitsCache = \(data\.units && typeof data\.units === 'object'\) \? data\.units : null;/);
+  });
+  it('counting: the engine pcAvg is the track and the gate reads the UNROUNDED Work average (Codex review 2026-09-27)', () => {
+    const low = effortSandbox({ today: [2026, 9, 14] });
+    try {
+      low.s._gradeQuartersCache.Q1.pcAvg = 30;                       // one unit at 67, the track at 30
+      expect(low.s._walletEffortBlock('Q1').querySelector('.wallet-effort-pc').textContent)
+        .toBe('Progress Check so far: 67% (paper) — counting in your grade now.');
+    } finally { low.close(); }
+    const edge = effortSandbox({ units: { U1: { pcRawPct: 100 } }, workAvg: 39.96, today: [2026, 9, 14] });
+    try {
+      edge.s._gradeQuartersCache.Q1.pcAvg = 100;
+      const text = edge.s._walletEffortBlock('Q1').querySelector('.wallet-effort-pc').textContent;
+      expect(text).toMatch(/You are at 40%; 1 point of Work does it\.$/);
+      expect(text).not.toContain('already past');
+    } finally { edge.close(); }
+  });
+});
+
+describe('"How your grade is counted" note + bonus footer wording (teacher 2026-09-27)', () => {
+  const NOTE = 'The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
+  function noteSandbox(lib) {
+    const dom = new JSDOM('<div></div>');
+    const s = { document: dom.window.document, window: dom.window };
+    if (lib) s.EffortFacts = lib;
+    createContext(s);
+    runInContext(fnSrc('_walletCountingNote'), s);
+    return { s, close: () => dom.window.close() };
+  }
+  it('the balance card always carries the note: small grey text, three sentences, even without the lib', async () => {
+    await import('../lib/effort-facts.js');
+    for (const lib of [globalThis.EffortFacts, null]) {
+      const t = noteSandbox(lib);
+      try {
+        const note = t.s._walletCountingNote();
+        expect(note.className).toBe('wallet-counting-note geneva');
+        expect(note.style.fontSize).toBe('10px');
+        expect(note.style.color).toBe('rgb(102, 102, 102)');
+        expect(note.textContent).toBe(NOTE);
+      } finally { t.close(); }
+    }
+  });
+  it('_walletPaint adds the note unconditionally, right after the effort block', () => {
+    const paint = fnSrc('_walletPaint');
+    const effortAt = paint.indexOf('if (effort) card.appendChild(effort);');
+    const noteAt = paint.indexOf('card.appendChild(_walletCountingNote());');
+    expect(effortAt).toBeGreaterThan(-1);
+    expect(noteAt).toBeGreaterThan(effortAt);
+    expect(noteAt).toBeLessThan(paint.indexOf('card.appendChild(sep);'));
+  });
+  it('the Bonus banked footer names the higher-track rule', () => {
+    expect(fnSrc('_walletBonusBlock')).toContain("'Added at the end of the quarter to whichever track helps you more.'");
+    expect(fnSrc('_walletBonusBlock')).not.toContain('Applied at the end of the quarter.');
+  });
+});

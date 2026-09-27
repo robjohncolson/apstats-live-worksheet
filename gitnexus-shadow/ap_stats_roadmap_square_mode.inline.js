@@ -2899,6 +2899,7 @@
 
 
 
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -8434,6 +8435,7 @@ function quarterOfDate(dt) {
 var _gradeLessonsCache = null;
 var _gradeQuartersCache = null; // latest /grade quarters{} — read by the "Why so low?" coach
 var _gradeGradebookCache = null; // latest /grade gradebook{} — read by the "My Gradebook" modal (Phase 3)
+var _gradeUnitsCache = null; // latest /grade units{} — a PC on file (units[U<n>].pcRawPct), EFFORT_VISIBILITY_SPEC §3
 
 // PROGRESS_RESET_FIX_SPEC D1 — tri-state /grade load state. 'unknown' before
 // the first load ever runs; 'loading' while a fetch is in flight;
@@ -8473,6 +8475,7 @@ function _resetGradeStateForIdentitySwitch() {
     _gradeLessonsCache = null;
     _gradeGradebookCache = null;
     _gradeQuartersCache = null;
+    _gradeUnitsCache = null;
     _gradeLoadState = 'unknown';
     _gradeLoadError = null;
     _gradeLastRenderedState = 'unknown';
@@ -9007,6 +9010,7 @@ async function renderDoNowGrades(baseUrl, token) {
   var _wslHost = document.getElementById('donow-helper');
   if (_wslHost && !_coachPanelOpen()) _wslHost.innerHTML = '';
   _gradeQuartersCache = null;
+  _gradeUnitsCache = null;
   if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
   // PROGRESS_RESET_FIX_SPEC D1 — tri-state entry. _priorState feeds D7's
   // unavailable->available reconcile check below.
@@ -9140,6 +9144,7 @@ async function renderDoNowGrades(baseUrl, token) {
     var quarters = data.quarters || {};
     _gradeQuartersCache = quarters; // cache for the "Why so low?" coach
     _gradeGradebookCache = data.gradebook || null; // cache for the "My Gradebook" modal
+    _gradeUnitsCache = (data.units && typeof data.units === 'object') ? data.units : null; // a PC on file (EFFORT_VISIBILITY_SPEC §3)
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
     // Show ONLY the current quarter (the relevant one). Current = the quarter
     // containing today (quarterOfDate); if today is outside all bands (e.g. summer
@@ -9395,6 +9400,14 @@ function _buildCoachContext(curQ, q) {
   try {
     ctx.missing = _coachMissingList();
   } catch (_) { ctx.missing = []; }
+  // EFFORT_VISIBILITY_SPEC §3: a PC on file (it may not count yet) and the lessons done ahead of
+  // the calendar, so the coach credits the effort before anything else.
+  try {
+    var _ef = _effortFacts(curQ);
+    ctx.pcOnFile = _ef.pc;
+    ctx.ahead = _ef.ahead.slice(0, 8);
+    ctx.aheadCount = _ef.ahead.length;
+  } catch (_) { ctx.pcOnFile = null; ctx.ahead = []; ctx.aheadCount = 0; }
   try {
     if (Array.isArray(_gradeLessonsCache)) {
       var weak = _gradeLessonsCache.filter(function (l) {
@@ -9514,6 +9527,28 @@ function _renderCoachPanel(panel, ctx) {
   var wkTxt = (ctx.workAvg != null) ? (Math.round(ctx.workAvg * 10) / 10) + '%' : 'not started';
   tracks.textContent = 'PC mastery: ' + pcTxt + ' · Work: ' + wkTxt + '.';
   facts.appendChild(tracks);
+
+  // EFFORT_VISIBILITY_SPEC §3: the PC on file (+ the 40% strategy) and the work done ahead, right
+  // under the tracks and before the bottleneck sentence.
+  try {
+    if (typeof EffortFacts !== 'undefined' && EffortFacts) {
+      if (ctx.pcOnFile) {
+        var strat = EffortFacts.strategyLine(ctx.pcOnFile, ctx.workAvg, EffortFacts.GRADE_FLOOR, ctx.pcAvg);
+        var pcEl = document.createElement('div');
+        pcEl.className = 'wsl-effort-pc';
+        pcEl.style.cssText = 'margin-top:3px;border-left:3px solid #888888;padding-left:6px';
+        pcEl.textContent = EffortFacts.pcLine(ctx.pcOnFile) + (strat ? ' ' + strat : '');
+        facts.appendChild(pcEl);
+      }
+      if (Array.isArray(ctx.ahead) && ctx.ahead.length) {
+        var aheadEl = document.createElement('div');
+        aheadEl.className = 'wsl-effort-ahead';
+        aheadEl.style.cssText = 'margin-top:3px;border-left:3px solid #2a8a2a;padding-left:6px';
+        aheadEl.textContent = EffortFacts.aheadLine(ctx.ahead, (typeof _effortTopicNumber === 'function') ? _effortTopicNumber : null, ctx.aheadCount);
+        facts.appendChild(aheadEl);
+      }
+    }
+  } catch (_) { /* effort lines are best-effort */ }
 
   var diag = document.createElement('div');
   diag.textContent = _coachBottleneckText(ctx);
@@ -18098,7 +18133,7 @@ function _walletBonusBlock(receipts) {
     footer.style.marginTop = '6px';
     var audit = applied ? _walletBonusResponse(applied) : {};
     footer.textContent = applied ? 'Bonus applied — quarter grade '
-        + (audit.adjustedGrade != null ? audit.adjustedGrade : applied.sc) : 'Applied at the end of the quarter.';
+        + (audit.adjustedGrade != null ? audit.adjustedGrade : applied.sc) : 'Added at the end of the quarter to whichever track helps you more.';
     block.appendChild(footer);
     return block;
 }
@@ -18136,6 +18171,96 @@ function _walletSeeClassButton() {
     btn.title = 'How your class is doing (no names)';
     btn.onclick = function () { if (typeof openSnapshot === 'function') openSnapshot(); };
     return btn;
+}
+// ── Effort visibility (EFFORT_VISIBILITY_SPEC.md §3) ──
+// PC Day 2 per unit and period, read off the Desk's own calendar (its U<n>-PC2 cells) in the
+// data/lesson-schedule.json shape that EffortFacts.pcOnFile reads. Empty before the calendar exists.
+function _effortPcSchedule() {
+    var out = { progressChecks: {} };
+    try {
+        var rows = (typeof S !== 'undefined' && Array.isArray(S)) ? S : [];
+        var periods = ['B', 'E'];
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            if (!row || row.length < 5) continue;
+            for (var p = 0; p < 2; p++) {
+                var cell = row[3 + p];
+                var m = (cell && typeof cell === 'object') ? /^U(\d+)-PC2$/.exec(String(cell.t || '')) : null;
+                if (!m) continue;
+                var mm = row[1] + 1, dd = row[2];
+                var iso = row[0] + '-' + (mm < 10 ? '0' : '') + mm + '-' + (dd < 10 ? '0' : '') + dd;
+                if (!out.progressChecks[m[1]]) out.progressChecks[m[1]] = { adminDay2: {} };
+                out.progressChecks[m[1]].adminDay2[periods[p]] = iso;
+            }
+        }
+    } catch (_) {}
+    return out;
+}
+// The topic number the student sees for a lesson key ('3.1' -> '1.10'); the key when unmapped.
+function _effortTopicNumber(key) {
+    try {
+        var l = (typeof cedLabel === 'function') ? cedLabel(key) : null;
+        if (l && l.mapped && l.bonus) return '★ ' + l.label;
+        if (l && l.mapped && l.id) return l.id;
+    } catch (_) {}
+    return String(key);
+}
+// The two effort facts for a quarter: the PC on file (+ the 40% strategy) and the lessons done
+// ahead of the calendar. Never throws; empty when the lib or the /grade caches are missing.
+function _effortFacts(curQ) {
+    var out = { pc: null, pcText: '', ahead: [], aheadText: '' };
+    try {
+        if (typeof EffortFacts === 'undefined' || !EffortFacts) return out;
+        var period = (typeof cP === 'string') ? cP : null;
+        var today = _zeroTodayIso();
+        var quarters = _gradeQuartersCache || null;
+        var q = (quarters && curQ) ? quarters[curQ] : null;
+        // UNROUNDED averages: the 40% gate test must see the engine's own numbers.
+        var workAvg = (q && typeof q.workAvg === 'number') ? q.workAvg : null;
+        var pcAvg = (q && typeof q.pcAvg === 'number') ? q.pcAvg : null;
+        out.pc = EffortFacts.pcOnFile(_gradeUnitsCache, quarters, period, _effortPcSchedule(), today, curQ);
+        if (out.pc) {
+            var strategy = EffortFacts.strategyLine(out.pc, workAvg, EffortFacts.GRADE_FLOOR, pcAvg);
+            out.pcText = EffortFacts.pcLine(out.pc) + (strategy ? ' ' + strategy : '');
+        }
+        out.ahead = EffortFacts.aheadLessons(_gradeLessonsCache, period, today);
+        out.aheadText = EffortFacts.aheadLine(out.ahead, _effortTopicNumber);
+    } catch (_) {}
+    return out;
+}
+// The balance card's effort lines: the PC on file (grey bar) and the work done ahead (green bar).
+// Always in the balance card, never in the Missing-work card, so a student with nothing missing
+// still sees the praise.
+function _walletEffortBlock(curQ) {
+    var facts = _effortFacts(curQ);
+    if (!facts.pcText && !facts.aheadText) return null;
+    var box = document.createElement('div');
+    box.className = 'wallet-effort geneva';
+    box.style.cssText = 'font-size:11px;line-height:1.35;margin-top:8px;color:#222';
+    function addLine(text, cls, bar) {
+        var el = document.createElement('div');
+        el.className = cls;
+        el.style.cssText = 'border-left:3px solid ' + bar + ';padding:1px 0 1px 6px;margin-top:3px';
+        el.textContent = text;
+        box.appendChild(el);
+    }
+    if (facts.pcText) addLine(facts.pcText, 'wallet-effort-pc', '#888888');
+    if (facts.aheadText) addLine(facts.aheadText, 'wallet-effort-ahead', '#2a8a2a');
+    return box;
+}
+// "How your grade is counted": three sentences, small grey text, always on the balance card.
+// The words live in lib/effort-facts.js (shared with the slip footer); the copy here is the
+// fallback when the lib failed to load.
+function _walletCountingNote() {
+    var note = document.createElement('div');
+    note.className = 'wallet-counting-note geneva';
+    note.style.cssText = 'font-size:10px;line-height:1.35;margin-top:6px;color:#666';
+    note.textContent = (typeof EffortFacts !== 'undefined' && EffortFacts && EffortFacts.COUNTING_NOTE)
+        ? EffortFacts.COUNTING_NOTE
+        : 'The Desk counts every lesson you have done, ahead of the calendar or not. '
+            + 'Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. '
+            + 'Bonus sheets are banked and added at the end of the quarter to whichever track helps you more — they can only raise your grade.';
+    return note;
 }
 function _walletPaint(host, receipts, loading) {
     if (!host) return;
@@ -18183,6 +18308,12 @@ function _walletPaint(host, receipts, loading) {
     gradeRow.appendChild(gradeBig);
     gradeRow.appendChild(gradeLbl);
     card.appendChild(gradeRow);
+
+    // EFFORT_VISIBILITY_SPEC §3: the PC on file + the work done ahead, under the grade row.
+    var effort = _walletEffortBlock(grade.q);
+    if (effort) card.appendChild(effort);
+    // Teacher 2026-09-27: how the grade is counted, always shown, under the effort block.
+    card.appendChild(_walletCountingNote());
 
     // ANDROID Phase 2: signed-ledger verification chip. The student's recorded work
     // is cryptographically signed; this shows how many local records verify against
@@ -26848,7 +26979,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-3x0x';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-3x4q';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

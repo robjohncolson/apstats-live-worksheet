@@ -37,8 +37,9 @@ describe('Desk bonus bank', () => {
       expect(block.textContent).toContain('<b>Screen Time</b> — E (+5)');
       expect(block.textContent).toContain('deletions — P (+3)');
       expect(block.textContent).toContain('third — I (+1)');
-      expect(block.lastChild.textContent).toBe('Applied at the end of the quarter.');
-      expect(block.textContent).not.toMatch(/track|floor|helps/i);
+      // Teacher 2026-09-27: the footer now names the higher-track rule (wording only; BONUS_HIGHER_TRACK_SPEC).
+      expect(block.lastChild.textContent).toBe('Added at the end of the quarter to whichever track helps you more.');
+      expect(block.textContent).not.toMatch(/floor/i);
       expect(block.querySelector('b')).toBeNull();
       expect(block.children).toHaveLength(5);
     } finally { close(); }
@@ -48,7 +49,7 @@ describe('Desk bonus bank', () => {
     const { s, close } = sandbox();
     try {
       const rows = [{ src: 'bonus', i: 'BONUS-sheet', sc: 5 }, { src: 'bonus_applied', i: 'BONUS-APPLIED-Q2', sc: 90 }];
-      expect(s._walletBonusBlock(rows).lastChild.textContent).toBe('Applied at the end of the quarter.');
+      expect(s._walletBonusBlock(rows).lastChild.textContent).toBe('Added at the end of the quarter to whichever track helps you more.');
       rows.push({ src: 'bonus_applied', i: 'BONUS-APPLIED-Q1', sc: 70, response: '{"adjustedGrade":85}' });
       const block = s._walletBonusBlock(rows);
       expect(block.textContent).toContain('sheet — E (+5)');

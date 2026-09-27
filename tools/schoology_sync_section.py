@@ -773,6 +773,56 @@ def _push_grades(
     return pushed, skipped, kept
 
 
+def _title_for_key(key: str) -> str:
+    """The Schoology column title for a grade-target key the scope does not list."""
+    prefix, _, rest = str(key).partition(":")
+    if prefix == "FA" and rest:
+        return components.fa_title(rest)
+    if prefix == "QUIZ" and rest:
+        return components.quiz_title(rest)
+    if prefix == "BL" and rest:
+        return components.bl_title(rest)
+    if prefix == "PC" and rest:
+        return components.pc_title(rest.lstrip("Uu"))
+    return str(key)
+
+
+def ahead_waiting_columns(deferred: dict, items_by_key: dict, column_exists) -> list[dict]:
+    """EFFORT_VISIBILITY_SPEC §5: scores recorded AHEAD of their column.
+
+    deferred:      {(student_id, key): value} grade targets held back because their
+                   column is not due yet (component_grades_from_class_doc keys).
+    items_by_key:  the section's full (unfiltered) scope, for titles and dates.
+    column_exists: title -> bool, a read of the live gradebook.
+
+    Returns [{key, title, due_date, count}] for each column that does NOT exist yet,
+    in date order, so the teacher knows which columns to create. Read-only.
+    """
+    counts: dict = {}
+    for (_student_id, key), value in deferred.items():
+        if value is None:
+            continue
+        counts[key] = counts.get(key, 0) + 1
+    out = []
+    for key, count in counts.items():
+        item = items_by_key.get(key) or {}
+        title = item.get("title") or _title_for_key(key)
+        if column_exists(title):
+            continue
+        out.append({"key": key, "title": title, "due_date": item.get("due_date"), "count": count})
+    out.sort(key=lambda e: (e["due_date"] or "9999-12-31", e["title"]))
+    return out
+
+
+def ahead_waiting_line(entries: list) -> str:
+    """'Ahead scores waiting for a column: 1.6 Follow-Along (4), 1.7 Quiz (3)' ('' when none)."""
+    if not entries:
+        return ""
+    return "Ahead scores waiting for a column: " + ", ".join(
+        f"{e['title']} ({e['count']})" for e in entries
+    )
+
+
 def _lookup_assignment_id(section: str, lesson_key: str, state: StateStore) -> str | None:
     stored = state.get_assignment(section, lesson_key)
     return (stored or {}).get("schoology_assignment_id")
@@ -844,6 +894,8 @@ def sync_section(
         )
     else:
         scope_items = build_scope(schedule, section)
+    # The full (not date-filtered) scope: titles/dates for the ahead-scores summary (§5).
+    all_items_by_key = {item["key"]: item for item in scope_items}
     if through_date is not None and not force_mp_date:
         before = len(scope_items)
         scope_items = filter_scope_through(scope_items, through_date)
@@ -921,8 +973,10 @@ def sync_section(
     # SY2627 --through gate, grade side: targets for columns that are not yet
     # due are DEFERRED (not errors) -- they get pushed on their day.
     grades_deferred = 0
+    deferred_targets: dict = {}
     if grades and through_date is not None and not force_mp_date:
         in_scope = {k: v for k, v in grades.items() if k[1] in scope_items_by_key}
+        deferred_targets = {k: v for k, v in grades.items() if k[1] not in scope_items_by_key}
         grades_deferred = len(grades) - len(in_scope)
         if grades_deferred:
             print(f"[sync_section] --through {through_date}: {grades_deferred} grade targets deferred (not yet due)")
@@ -949,6 +1003,20 @@ def sync_section(
             comment_texts=comment_texts,
         )
 
+    # -- ahead scores (EFFORT_VISIBILITY_SPEC §5, dry-run only, read-only) ----
+    # Work scored before its column is due reaches Schoology only once the column
+    # exists; name the missing columns so the teacher knows which to create.
+    ahead_waiting: list = []
+    if dry_run and deferred_targets:
+        _load_gradebook_page(ops, cdp, course_id)
+        ahead_waiting = ahead_waiting_columns(
+            deferred_targets, all_items_by_key,
+            lambda title: ops.find_assignment_id_by_title(cdp, title) is not None,
+        )
+        line = ahead_waiting_line(ahead_waiting)
+        if line:
+            print(f"[ahead] {section}: {line}")
+
     # -- summarise ---------------------------------------------------------
     summary = {
         "section": section,
@@ -960,6 +1028,7 @@ def sync_section(
         "grades_skipped": grades_skipped,
         "grades_kept": grades_kept,
         "grades_deferred": grades_deferred,
+        "ahead_waiting": ahead_waiting,
         "errors": errors,
     }
 

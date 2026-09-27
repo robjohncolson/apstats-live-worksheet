@@ -327,6 +327,74 @@ describe('coach facts match the zero-date rule (teacher 2026-09-26: "does this A
   });
 });
 
+describe('coach credits a PC on file and work done ahead (EFFORT_VISIBILITY_SPEC §3)', () => {
+  const CAL = [[2026, 9, 13, { t: 'U1-PC2', kind: 'pc', admin: 2, u: 1 }, { t: '3.1', u: 1 }]];
+  const LESSONS = [
+    { lessonKey: '1.2', due: { B: '2026-09-09' }, lessonGradeNoQuiz: 70, lessonGrade: 70 },
+    { lessonKey: '1.6', due: { B: '2026-10-05' }, lessonGradeNoQuiz: 100, Q: 67, lessonGrade: 90 },
+    { lessonKey: '1.7', due: { B: '2026-10-06' }, Cws: 80, lessonGrade: 80 },
+  ];
+  async function coachSandbox() {
+    const { createContext, runInContext } = await import('node:vm');
+    const { JSDOM } = await import('jsdom');
+    await import('../lib/effort-facts.js');
+    const dom = new JSDOM('<div></div>');
+    const s = {
+      document: dom.window.document, window: dom.window, console,
+      EffortFacts: globalThis.EffortFacts,
+      S: CAL, cP: 'B', tdy: () => new Date(2026, 8, 27),
+      _donowData: null,
+      _gradeUnitsCache: { U1: { pcRawPct: 66.7 } }, _gradeLessonsCache: LESSONS,
+      _gradeQuartersCache: { Q1: { quarterGrade: 45, lessonsDue: 9, workAvg: 31, pcUnits: [1, 2] } },
+      _zeroCurrentWarnings: () => [],
+      _coachAsk: () => {},
+      cedLabel: k => ({ mapped: true, id: k, text: 'Topic ' + k }),
+      cedReferenceText: t => t,
+    };
+    createContext(s);
+    runInContext(['_zeroTodayIso', '_zeroDayText', '_effortPcSchedule', '_effortTopicNumber', '_effortFacts',
+      '_coachMissingList', '_coachFirstText', '_coachBottleneckText', '_buildCoachContext', '_renderCoachPanel']
+      .map(name => fnBody(DESK, name)).join('\n'), s);
+    return { s, close: () => dom.window.close() };
+  }
+
+  it('_buildCoachContext carries pcOnFile (the object) and ahead (the list, at most 8)', async () => {
+    const t = await coachSandbox();
+    try {
+      const ctx = t.s._buildCoachContext('Q1', t.s._gradeQuartersCache.Q1);
+      expect(JSON.parse(JSON.stringify(ctx.pcOnFile))).toEqual({ unit: 1, pct: 66.7, counting: false, countsFrom: '2026-10-13', day: 'Tue 10/13',
+        all: [{ unit: 1, pct: 66.7, counting: false, countsFrom: '2026-10-13', day: 'Tue 10/13' }] });
+      expect(ctx.ahead.map(a => a.lessonKey)).toEqual(['1.6', '1.7']);
+      expect(ctx.aheadCount).toBe(2);
+      expect(fnBody(DESK, '_buildCoachContext')).toContain('ctx.ahead = _ef.ahead.slice(0, 8);');
+    } finally { t.close(); }
+  });
+
+  it('the instant panel prints the PC line + strategy and the ahead line right under the tracks, before the bottleneck', async () => {
+    const t = await coachSandbox();
+    try {
+      const ctx = t.s._buildCoachContext('Q1', t.s._gradeQuartersCache.Q1);
+      const panel = t.s.document.createElement('div');
+      t.s._renderCoachPanel(panel, ctx);
+      const lines = [...panel.querySelector('.wsl-facts').children].map(el => el.textContent);
+      const tracksAt = lines.findIndex(text => text.startsWith('PC mastery:'));
+      expect(lines[tracksAt + 1]).toBe('Progress Check so far: 67% (paper) — counts from Tue 10/13. If your Progress Check track ends the quarter at about 67% or better, your grade will be the HIGHER of your two tracks once both are at least 40% — so your Work track only needs to reach 40%. You are at 31%; 9 points of Work does it.');
+      expect(lines[tracksAt + 2]).toBe("Ahead of the calendar: 2 lessons already done (1.6, 1.7). They already count in your Desk grade; Schoology catches up when each lesson's column opens.");
+      expect(lines[tracksAt + 3]).toMatch(/40% gate/);   // the bottleneck sentence follows
+    } finally { t.close(); }
+  });
+
+  it('no PC on file and nothing ahead: the panel adds nothing', async () => {
+    const t = await coachSandbox();
+    try {
+      const panel = t.s.document.createElement('div');
+      t.s._renderCoachPanel(panel, { quarter: 'Q1', grade: 45, pcAvg: null, workAvg: 31, pcOnFile: null, ahead: [] });
+      expect(panel.querySelector('.wsl-effort-pc')).toBeNull();
+      expect(panel.querySelector('.wsl-effort-ahead')).toBeNull();
+    } finally { t.close(); }
+  });
+});
+
 describe('coach reply is shown as plain text (teacher 2026-09-26: the live reply showed literal ** asterisks)', () => {
   it('_coachPlainText strips bold, underscores, backticks and heading marks, keeps the words', () => {
     const fn = new Function(fnBody(DESK, '_coachPlainText') + '\nreturn _coachPlainText;')();

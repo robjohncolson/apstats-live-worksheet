@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { runInNewContext } from 'node:vm';
 import '../lib/class-snapshot.js';
+import '../lib/effort-facts.js';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KIND = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcard deck' };
@@ -18,6 +19,8 @@ export const COLOR_DEFS = [
   '\\definecolor{deskyellowbg}{HTML}{FFF9DB}',
   '\\definecolor{desktentative}{HTML}{FFF3B0}',
   '\\definecolor{desktentativeink}{HTML}{8A6D00}',
+  // The Desk's all-clear green: the "ahead of the calendar" praise line (EFFORT_VISIBILITY_SPEC §2).
+  '\\definecolor{deskgreen}{HTML}{2A8A2A}',
 ];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -343,6 +346,52 @@ ${own == null ? '' : String.raw`\addplot[only marks,mark=*,red] coordinates {(${
 \par ${latexText(positionText(own, s))}\par`;
 }
 
+// PC dates (progressChecks[n].adminDay2), read once per run.
+let scheduleCache = null;
+export function loadSchedule() {
+  if (scheduleCache) return scheduleCache;
+  try {
+    scheduleCache = JSON.parse(fs.readFileSync(path.join(REPO, 'data', 'lesson-schedule.json'), 'utf8'));
+  } catch (_) {
+    scheduleCache = {};
+  }
+  return scheduleCache;
+}
+
+// EFFORT_VISIBILITY_SPEC §2: under the header, up to two short lines — the Progress Check on
+// file (+ the 40% strategy) in black, and the "ahead of the calendar" praise behind a green square.
+export function effortLines(student, section, date, quarterKey, schedule = loadSchedule()) {
+  const facts = globalThis.EffortFacts;
+  const period = section.slice(-1);
+  const key = currentQuarterKey(student.quarters, quarterKey);
+  const quarter = key ? student.quarters[key] : null;
+  // UNROUNDED averages: the 40% gate test must see the engine's own numbers.
+  const workAvg = quarter && Number.isFinite(quarter.workAvg) ? quarter.workAvg : null;
+  const pcAvg = quarter && Number.isFinite(quarter.pcAvg) ? quarter.pcAvg : null;
+  const pc = facts.pcOnFile(student.units, student.quarters, period, schedule, date, key);
+  const pcText = pc ? [facts.pcLine(pc), facts.strategyLine(pc, workAvg, facts.GRADE_FLOOR, pcAvg)].filter(Boolean).join(' ') : '';
+  const aheadText = facts.aheadLine(facts.aheadLessons(student.lessons, period, date), topicNumber);
+  return { pc: pcText, ahead: aheadText };
+}
+
+// The topic number the student sees for a lesson key ('3.1' → '1.10'); the key when unmapped.
+export function topicNumber(lessonKey) {
+  try {
+    const label = loadCedLabels()(lessonKey);
+    if (label && label.mapped && label.bonus) return `★ ${label.label}`;
+    if (label && label.mapped && label.id) return label.id;
+  } catch (_) { /* fall through */ }
+  return String(lessonKey);
+}
+
+export function effortTex(student, section, date, quarterKey, schedule = loadSchedule()) {
+  const lines = effortLines(student, section, date, quarterKey, schedule);
+  const out = [];
+  if (lines.pc) out.push(`{\\small ${latexText(lines.pc)}\\par}`);
+  if (lines.ahead) out.push(`{\\small\\textcolor{deskgreen}{\\rule{5pt}{5pt}}\\hspace{4pt}${latexText(lines.ahead)}\\par}`);
+  return out.length ? '\\smallskip\n' + out.join('\n') + '\n' : '';
+}
+
 export function renderSlip(student, section, date, summary, quarterKey, pool = null) {
   const lessons = student.lessons || [];
   const missing = missingWork(lessons, section.slice(-1), date);
@@ -355,14 +404,14 @@ export function renderSlip(student, section, date, summary, quarterKey, pool = n
 {\large\bfseries Where you stand --- ${latexText(student.realName || student.name || student.username || 'Student')}}\par
 Period ${section.slice(-1)} --- week of ${weekLabelFor(date)}\par
 \smallskip{\bfseries ${latexText(headerLine(own, quarterLabel, summary))}}\par
-\medskip\textbf{Missing work}\par
+${effortTex(student, section, date, quarterKey)}\medskip\textbf{Missing work}\par
 ${missingRowsTex(missing)}
 ${classStripTex(missing, pool, section, date)}\par\medskip\textbf{Your section's quarter grades}\par
 ${boxPlotTex(own, summary)}
 \medskip\textbf{What to do first}\par
 ${steps}
 \par\medskip Every item on this list can still be finished. Desk $\rightarrow$ My Ledger $\rightarrow$ Missing work.\par
-{\small Printed ${latexText(dayText(date))}. Any score replaces a 0 --- see the Desk for the graphs.}
+{\small Printed ${latexText(dayText(date))}. ${latexText(globalThis.EffortFacts.COUNTING_NOTE)}}
 }`;
 }
 

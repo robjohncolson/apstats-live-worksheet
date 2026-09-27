@@ -62,7 +62,7 @@ describe('CED labels preserve Do Now and coach identities', () => {
     const context = { biggestWin: { lesson: '8.4', score: 3.5 } };
     const history = [];
     const fetch = vi.fn(async () => ({ ok: true, json: async () => ({ response: answer }) }));
-    const win = boot(['_coachAsk'], { fetch });
+    const win = boot(['_coachPlainText', '_coachOnceTopics', '_coachAsk'], { fetch });
     const transcript = win.document.createElement('div');
     const button = win.document.createElement('button');
     win.document.body.append(transcript, button);
@@ -136,7 +136,7 @@ describe('CED labels preserve Do Now and coach identities', () => {
 
   it('translates coach facts while handing its original context to follow-up requests', () => {
     const ask = vi.fn();
-    const win = boot(['_coachBottleneckText', '_renderCoachPanel'], { _coachAsk: ask });
+    const win = boot(['_coachBottleneckText', '_coachFirstText', '_renderCoachPanel'], { _coachAsk: ask });
     const panel = win.document.createElement('div');
     const context = {
       quarter: 'Q1', grade: 72, ceiling: 93, pcAvg: 80, workAvg: 72,

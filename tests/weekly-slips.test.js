@@ -207,7 +207,7 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     const pool = [{ key: '1.2:worksheet', title: '1.2 Follow-Along', values: [0, 0, 70, 80, 90], tentativeZeros: 3,
       zeroDate: '2026-09-20', zeroDates: { PeriodB: '2026-09-20', PeriodE: '2026-09-28' } }];
     const tex = renderTex([kid, ...others], [kid], 'PeriodB', '2026-09-26', 'Q1', pool);
-    expect(COLOR_DEFS).toHaveLength(6);
+    expect(COLOR_DEFS).toHaveLength(7);   // + deskgreen (EFFORT_VISIBILITY_SPEC §2)
     for (const line of COLOR_DEFS) expect(tex).toContain(line);
     expect(tex).toContain('\\definecolor{deskred}{HTML}{CC0000}');
     expect(tex).toContain('\\definecolor{desktentative}{HTML}{FFF3B0}');
@@ -225,7 +225,7 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     expect(tex).toContain('\\KeyTent{yellow} = a 0 that is not counting yet');
     expect(tex).toContain('height=0.8in');
     expect(tex).toContain('You: 31 --- below Q1.');
-    const order = ['Missing work', 'The class on your first item', "Your section's quarter grades", 'What to do first', 'Any score replaces a 0']
+    const order = ['Missing work', 'The class on your first item', "Your section's quarter grades", 'What to do first', 'The Desk counts every lesson']
       .map(text => tex.indexOf(text));
     expect(order.every((at, index) => at > 0 && (index === 0 || at > order[index - 1]))).toBe(true);
   });
@@ -251,6 +251,63 @@ describe('current quarter selection (2026-09-26 fix)', () => {
     expect(m.quarterGrade({ quarters })).toBe(100);
     expect(m.quarterGrade({ quarters: { Q1: { quarterGrade: 88, lessonsDue: 4 }, Q2: { quarterGrade: 91, lessonsDue: 2 } } }, 'Q2')).toBe(91);
     expect(m.quarterGrade({ quarters: { Q1: { quarterGrade: null, lessonsDue: 0 } } })).toBeNull();
+  });
+});
+
+describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
+  // Today Sun 9/27: the Unit 1 PC (paper) is on file but counts from Period B's Day 2, Tue 10/13
+  // (data/lesson-schedule.json), and 1.6 is scored ahead of its Mon 10/5 class day.
+  const lessons = [
+    { lessonKey: '1.2', due: { B: '2026-09-09' }, zeroDate: { B: '2026-09-22' }, lessonGradeNoQuiz: 70 },
+    { lessonKey: '1.6', due: { B: '2026-10-05' }, zeroDate: { B: '2026-10-18' }, lessonGradeNoQuiz: 100, Q: 67 },
+  ];
+  const kid = { realName: 'X', units: { U1: { pcRawPct: 66.7 } },
+    quarters: { Q1: { quarterGrade: 45, lessonsDue: 9, workAvg: 31, pcUnits: [1, 2] } }, lessons };
+
+  it('a PC on file and one early-scored lesson render both lines, between the header and Missing work', async () => {
+    const { renderTex, effortLines } = await import('../scripts/weekly-slips.mjs');
+    expect(effortLines(kid, 'PeriodB', '2026-09-27', 'Q1')).toEqual({
+      pc: 'Progress Check so far: 67% (paper) — counts from Tue 10/13. If your Progress Check track ends the quarter at about 67% or better, your grade will be the HIGHER of your two tracks once both are at least 40% — so your Work track only needs to reach 40%. You are at 31%; 9 points of Work does it.',
+      ahead: 'Ahead of the calendar: 1 lesson already done (1.6). It already counts in your Desk grade; Schoology catches up when its column opens.',
+    });
+    const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-27', 'Q1');
+    expect(tex).toContain('\\definecolor{deskgreen}{HTML}{2A8A2A}');
+    expect(tex).toContain('{\\small Progress Check so far: 67\\% (paper) --- counts from Tue 10/13. If your Progress Check track ends the quarter at about 67\\% or better,');
+    expect(tex).toContain('{\\small\\textcolor{deskgreen}{\\rule{5pt}{5pt}}\\hspace{4pt}Ahead of the calendar: 1 lesson already done (1.6).');
+    const at = ['Q1 so far: 45\\%.', 'Progress Check so far', 'Ahead of the calendar', 'Missing work'].map(text => tex.indexOf(text));
+    expect(at.every((value, index) => value > 0 && (index === 0 || value > at[index - 1]))).toBe(true);
+  });
+
+  it('a student with neither renders neither', async () => {
+    const { renderTex, effortTex } = await import('../scripts/weekly-slips.mjs');
+    const plain = student(31);
+    expect(effortTex(plain, 'PeriodB', '2026-09-27', 'Q1')).toBe('');
+    const tex = renderTex([plain], [plain], 'PeriodB', '2026-09-27', 'Q1');
+    expect(tex).not.toContain('Progress Check so far');
+    expect(tex).not.toContain('Ahead of the calendar');
+    expect(tex).not.toContain('\\rule{5pt}{5pt}');
+  });
+
+  it('the PC line carries no strategy below 40%, and says "counting" once Day 2 has come', async () => {
+    const { effortLines } = await import('../scripts/weekly-slips.mjs');
+    const low = { ...kid, units: { U1: { pcRawPct: 35 } } };
+    expect(effortLines(low, 'PeriodB', '2026-09-27', 'Q1').pc).toBe('Progress Check so far: 35% (paper) — counts from Tue 10/13.');
+    // Counting: the engine's pcAvg is the track, not the unit score.
+    const counting = { ...kid, quarters: { Q1: { ...kid.quarters.Q1, pcAvg: 66.7 } } };
+    expect(effortLines(counting, 'PeriodB', '2026-10-13', 'Q1').pc).toMatch(/^Progress Check so far: 67% \(paper\) — counting in your grade now\. Your Progress Check track is 67%\. /);
+    expect(effortLines({ ...kid, quarters: { Q1: { ...kid.quarters.Q1, pcAvg: 30 } } }, 'PeriodB', '2026-10-13', 'Q1').pc)
+      .toBe('Progress Check so far: 67% (paper) — counting in your grade now.');
+    // the gate reads the unrounded Work average
+    const edge = { ...kid, units: { U1: { pcRawPct: 100 } }, quarters: { Q1: { ...kid.quarters.Q1, workAvg: 39.96, pcAvg: 100 } } };
+    expect(effortLines(edge, 'PeriodB', '2026-10-13', 'Q1').pc).toMatch(/You are at 40%; 1 point of Work does it\.$/);
+    expect(effortLines(kid, 'PeriodE', '2026-09-27', 'Q1').pc).toContain('counts from Fri 10/16');
+  });
+
+  it('the footer says how the grade is counted (teacher 2026-09-27)', async () => {
+    const { renderTex } = await import('../scripts/weekly-slips.mjs');
+    const tex = renderTex([kid], [kid], 'PeriodB', '2026-09-27', 'Q1');
+    expect(tex).toContain('{\\small Printed Sun 9/27. The Desk counts every lesson you have done, ahead of the calendar or not. Schoology is a rolling snapshot of what the class has covered so far, so early work shows up there when its column opens. Bonus sheets are banked and added at the end of the quarter to whichever track helps you more --- they can only raise your grade.}');
+    expect(tex).not.toContain('see the Desk for the graphs');
   });
 });
 

@@ -1187,3 +1187,82 @@ class TestGradeCellComments(unittest.TestCase):
         self.assertTrue(sync._parse_args(base + ["--comments"]).comments)
         self.assertFalse(sync._parse_args(base + ["--no-comments"]).comments)
         self.assertFalse(sync._parse_args(base + ["--apply"]).dry_run)
+
+
+# ---------------------------------------------------------------------------
+# EFFORT_VISIBILITY_SPEC §5 -- ahead scores waiting for a column (dry-run only)
+# ---------------------------------------------------------------------------
+
+AHEAD_SCHEDULE = json.loads(json.dumps(MINI_SCHEDULE))
+AHEAD_SCHEDULE["lessons"]["6.3"] = {
+    "unit": 6, "topicKey": "6.3", "worksheetKey": "3",
+    "periods": {"B": "2026-03-09", "E": "2026-03-10"},
+}
+
+# A /class/grades-shaped doc (fake ids): both students scored 6.3 before its day;
+# one also took its quiz; both have a Unit 6 PC on file.
+AHEAD_DOC = {"ok": True, "students": [
+    {"studentId": "S1", "section": "PeriodB", "units": {"U6": {"pcRawPct": 70}},
+     "lessons": [{"unit": 6, "worksheetKey": "3", "lessonKey": "6.3", "lessonGradeNoQuiz": 100,
+                  "Q": 67, "quizTotal": 2}]},
+    {"studentId": "S2", "section": "PeriodB", "units": {"U6": {"pcRawPct": 80}},
+     "lessons": [{"unit": 6, "worksheetKey": "3", "lessonKey": "6.3", "lessonGradeNoQuiz": 90,
+                  "Q": None, "quizTotal": 2}]},
+]}
+
+
+def _ahead_targets():
+    produced = components.component_grades_from_class_doc(AHEAD_DOC, None, "2026-03-02")
+    return {tuple(key.split("/", 1)): value for key, value in produced.items()}
+
+
+class TestAheadScoresWaitingForAColumn(unittest.TestCase):
+
+    def test_pure_summary_counts_scores_per_absent_column_in_date_order(self):
+        items = {item["key"]: item for item in build_component_scope(
+            AHEAD_SCHEDULE, "PeriodB", quiz_topics={"6.3"}, blooket_topics=set())}
+        targets = _ahead_targets()
+        deferred = {k: v for k, v in targets.items() if items[k[1]]["due_date"] > "2026-03-02"}
+        entries = sync.ahead_waiting_columns(deferred, items, lambda title: False)
+        self.assertEqual([(e["title"], e["count"]) for e in entries],
+                         [("6.3 Follow-Along", 2), ("6.3 Quiz", 1), ("Unit 6 Progress Check", 2)])
+        self.assertEqual(sync.ahead_waiting_line(entries),
+                         "Ahead scores waiting for a column: 6.3 Follow-Along (2), 6.3 Quiz (1), Unit 6 Progress Check (2)")
+        # a column that already exists is not "waiting"; nothing ahead prints nothing
+        existing = sync.ahead_waiting_columns(deferred, items, lambda title: title == "Unit 6 Progress Check")
+        self.assertEqual([e["title"] for e in existing], ["6.3 Follow-Along", "6.3 Quiz"])
+        self.assertEqual(sync.ahead_waiting_line([]), "")
+        # a key the scope does not list still gets its Schoology title
+        self.assertEqual(sync.ahead_waiting_columns({("S1", "QUIZ:9.9"): 50}, {}, lambda t: False)[0]["title"], "9.9 Quiz")
+
+    def test_dry_run_prints_the_line_and_writes_nothing(self):
+        import contextlib
+        import io
+        tmpdir = tempfile.mkdtemp()
+        schedule_path = _write_schedule(tmpdir, AHEAD_SCHEDULE)
+        state = FakeStateStore()
+        ops = FakeOps(existing_titles={"Unit 6 Progress Check"})
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            summary = sync_section(
+                "PeriodB", "7945275782", dry_run=True, state=state, grades=_ahead_targets(),
+                ops=ops, schedule_path=schedule_path, granularity="component",
+                quiz_topics={"6.3"}, blooket_topics=set(), through_date="2026-03-02",
+            )
+        self.assertIn("[ahead] PeriodB: Ahead scores waiting for a column: 6.3 Follow-Along (2), 6.3 Quiz (1)",
+                      output.getvalue())
+        self.assertEqual([(e["key"], e["count"]) for e in summary["ahead_waiting"]], [("FA:6.3", 2), ("QUIZ:6.3", 1)])
+        self.assertEqual(summary["grades_deferred"], 5)
+        self.assertEqual(ops.created_assignments, [])
+        self.assertEqual(ops.written_grades, [])
+        self.assertEqual(state.runs, [])
+
+    def test_apply_mode_never_computes_it(self):
+        tmpdir = tempfile.mkdtemp()
+        schedule_path = _write_schedule(tmpdir, AHEAD_SCHEDULE)
+        summary = sync_section(
+            "PeriodB", "7945275782", dry_run=False, state=FakeStateStore(), grades=_ahead_targets(),
+            ops=FakeOps(), schedule_path=schedule_path, granularity="component",
+            quiz_topics={"6.3"}, blooket_topics=set(), through_date="2026-03-02",
+        )
+        self.assertEqual(summary["ahead_waiting"], [])
