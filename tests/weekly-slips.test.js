@@ -112,7 +112,7 @@ describe('weekly slips', () => {
     expect(boxSummary(students.slice(0, 4))).toBeNull();
   });
 
-  it('pins two half-page slips per Letter page, including a blank odd slot', () => {
+  it('pins one full-page slip per candidate (no half pages, no blank filler slot)', () => {
     const students = [31, 80, 85, 90, 100].map(grade => student(grade));
     const tex = renderTex(students, students, 'PeriodB', '2026-09-26');
     // One slip per page (teacher 2026-09-27: "as legible as possible"): 12pt, 0.6in side margins,
@@ -133,7 +133,7 @@ describe('weekly slips', () => {
     expect(tex.match(/\\newpage/g)).toHaveLength(4);
     expect(tex.match(/\\Slip\{/g)).toHaveLength(5);   // one Slip per candidate, no empty filler cell
     expect(tex.match(/\\newpage/g)).toHaveLength(4);   // five candidates, five pages
-    expect(tex).toContain('{\\Slip{}}');
+    expect(tex).not.toContain('\\Slip{}');   // no empty filler: one full page per student
     expect(tex).toContain('week of Sep 28');
     expect(tex).toContain('Every item on this list can still be finished.');
     expect(tex).not.toContain('\r');
