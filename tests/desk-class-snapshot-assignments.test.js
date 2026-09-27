@@ -115,7 +115,7 @@ describe('Assignments view — student', () => {
       const ws = rows[1];   // 1.2 worksheet
       expect(ws.querySelector('.snap-alist').hidden).toBe(false);
       // EFFORT_VISIBILITY_V2_SPEC §2: the pooled payload's sections are named in lead, foot and key.
-      expect(ws.querySelector('.snap-alist-lead').textContent).toBe('All 15 scores from Period B and Period E together for 1.2 Follow-Along:');
+      expect(ws.querySelector('.snap-alist-lead').textContent).toBe('15 students’ scores from Period B and Period E together for 1.2 Follow-Along:');
       expect([...ws.querySelectorAll('.snap-alist-seq span')].map(x => x.textContent).join(' ')).toBe('0 0 0 85 88 91 95 97 100 100 100 100 100 100 100');
       expect(ws.querySelectorAll('.snap-alist-you').length).toBe(1);
       expect(ws.querySelector('.snap-alist-foot').textContent).toBe('12 of 15 students across both periods have a score here. Every 0 on this list can still be replaced.');
@@ -473,7 +473,7 @@ describe('Assignments view — tentative zeros (TENTATIVE_ZEROS_SPEC §3)', () =
       expect(lead.includes(you[0])).toBe(true);
       expect(you[0].classList.contains('snap-alist-tentative')).toBe(false);     // red wins
       expect(chips(row).length).toBe(18);                                        // nobody drawn twice
-      expect(row.querySelector('.snap-alist-lead').textContent).toBe('All 18 scores for 1.4 Follow-Along (11 tentative):');
+      expect(row.querySelector('.snap-alist-lead').textContent).toBe('18 students’ scores for 1.4 Follow-Along (11 tentative):');
       expect(row.querySelector('.snap-alist-foot').textContent).toBe("7 of 18 classmates have a score here. 11 haven't yet — a tentative 0 until Mon 9/28. Every 0 on this list can still be replaced.");
       expect(row.querySelector('.snap-alist').hidden).toBe(false);
       const legend = row.querySelector('.snap-legend');
@@ -524,7 +524,7 @@ describe('Assignments view — tentative zeros (TENTATIVE_ZEROS_SPEC §3)', () =
       const row = s._snapAssignmentRow(A12, null, undefined);
       expect(row.querySelector('.snap-legend')).toBeNull();
       expect(row.querySelectorAll('.snap-alist-tentative').length).toBe(0);
-      expect(row.querySelector('.snap-alist-lead').textContent).toBe('All 15 scores for 1.2 Follow-Along:');
+      expect(row.querySelector('.snap-alist-lead').textContent).toBe('15 students’ scores for 1.2 Follow-Along:');
     } finally { close(); }
   });
   it('the full view passes the viewer section through: a B student missing 1.4 sees it as tentative', async () => {

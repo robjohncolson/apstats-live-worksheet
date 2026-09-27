@@ -46,13 +46,13 @@ const STORAGE_KEY = 'ti84trainer_v2_state';
 let mockScreen;
 
 function stubCemuBridge() {
-  mockScreen = { lines: null, footer: null };
+  mockScreen = { lines: null, footer: null, presses: [] };
   return {
     async init() { return false; },
     getStatus() { return { code: 'offline', detail: 'test stub' }; },
     isRealEmulator() { return false; },
     setMockLines(lines, footer) { mockScreen.lines = lines; mockScreen.footer = footer; },
-    async sendButton() {},
+    async sendButton(buttonId) { mockScreen.presses.push(buttonId); },
     async prepareHome() {},
     async typeValue() {},
     mountCanvas() {},
@@ -439,7 +439,7 @@ describe('handheld mastery check', () => {
     await physicalAdvanceAll();
     await verifyAnswers('t-test-stats');
 
-    expect(appHtml()).toContain('Do it on my TI-84');
+    expect(appHtml()).toContain('Start the mastery check');
     expect(persisted().records['t-test-stats'].track2.awaitingHandheld).toBe(true);
     expect(persisted().records['t-test-stats'].track2.handheldPassed).toBe(false);
   });
@@ -447,16 +447,81 @@ describe('handheld mastery check', () => {
   it('the scheduler presents the handheld check directly when one is pending', async () => {
     await bootTrainer({ records: { 't-test-stats': handheldReady() } });
     await click('[data-action="start-session"]');
-    await waitFor(() => appHtml().includes('Handheld Check'), 'the handheld check panel');
-    expect(appHtml()).toContain('Prove it on your real TI-84');
+    await waitFor(() => appHtml().includes('Mastery Check'), 'the handheld check panel');
+    expect(appHtml()).toContain('Prove it on a calculator');
     expect(document.getElementById('app').querySelector('[data-action="check-handheld"]')).toBeTruthy();
   });
 
-  it('passing the handheld check masters the procedure and records verified physical credit', async () => {
+  it('renderHandheldCheck never requires a real TI-84', () => {
+    const fn = sources.app.match(/  function renderHandheldCheck\(\)[\s\S]*?\n  \}/)[0];
+    expect(fn).not.toContain('real TI-84');
+    expect(fn).not.toContain('own TI-84');
+    expect(fn).toContain('Prove it on a calculator');
+    expect(fn).toContain('I did it on the calculator');
+  });
+
+  it('keeps the on-screen emulator (live keypad) during the check in emulator mode', async () => {
+    await bootTrainer({ records: { 't-test-stats': handheldReady() } });
+    await click('[data-action="start-session"]');
+    await waitFor(() => appHtml().includes('Mastery Check'), 'the handheld check panel');
+
+    const appEl = document.getElementById('app');
+    expect(appEl.querySelector('.calc-panel:not(.physical-panel) .keypad-shell')).toBeTruthy();
+    expect(appEl.querySelector('.physical-panel')).toBeNull();
+    expect(appEl.querySelector('[data-key="STAT"]').hasAttribute('disabled')).toBe(false);
+    expect(appEl.querySelector('.handheld-panel').innerHTML).not.toContain('real TI-84');
+  });
+
+  it('on-screen keys go straight to the calculator during the check', async () => {
+    await bootTrainer({ records: { 't-test-stats': handheldReady() } });
+    await click('[data-action="start-session"]');
+    await waitFor(() => appHtml().includes('Mastery Check'), 'the handheld check panel');
+
+    await click('[data-key="STAT"]');
+    expect(mockScreen.presses).toContain('STAT');
+    // Free play never leaves the check or grades anything.
+    expect(appHtml()).toContain('Mastery Check');
+    expect(persisted().records['t-test-stats'].track2.handheldPassed).toBe(false);
+  });
+
+  it('shows the physical card during the check only in Real TI-84 mode', async () => {
+    await bootTrainer({ records: { 't-test-stats': handheldReady() }, physicalMode: true });
+    await click('[data-action="start-session"]');
+    await waitFor(() => appHtml().includes('Mastery Check'), 'the handheld check panel');
+
+    const appEl = document.getElementById('app');
+    expect(appEl.querySelector('.physical-panel')).toBeTruthy();
+    expect(appEl.querySelector('.keypad-shell')).toBeNull();
+  });
+
+  it('an unverifiable procedure completes in emulator mode via the same 60% self-attest', async () => {
+    const record = vi.fn(() => Promise.resolve({ ok: true }));
+    const ready = dueRecord('recall');
+    ready.track2.awaitingHandheld = true;
+    ready.track2.handheldPassed = false;
+    await bootTrainer({ records: { 'matrix-entry': ready }, recordFn: record });
+    await click('[data-action="start-session"]');
+    await waitFor(() => appHtml().includes('Mastery Check'), 'the handheld check panel');
+    expect(appHtml()).toContain('I did it on the calculator');
+    expect(document.getElementById('app').querySelector('.keypad-shell')).toBeTruthy();
+
+    await click('[data-action="handheld-confirm"]');
+    await waitFor(() => appHtml().includes('mastered'), 'the mastered result');
+
+    expect(persisted().records['matrix-entry'].track2.handheldPassed).toBe(true);
+    expect(record).toHaveBeenCalledTimes(1);
+    expect(record.mock.calls[0][0]).toMatchObject({
+      itemId: 'TI84-matrix-entry',
+      response: { event: 'handheld-mastery', selfAttest: true, verified: false },
+      score: 0.6,
+    });
+  });
+
+  it('passing the mastery check on the on-screen emulator masters the procedure and records verified emulator credit', async () => {
     const record = vi.fn(() => Promise.resolve({ ok: true }));
     await bootTrainer({ records: { 't-test-stats': handheldReady() }, recordFn: record });
     await click('[data-action="start-session"]');
-    await waitFor(() => appHtml().includes('Handheld Check'), 'the handheld check panel');
+    await waitFor(() => appHtml().includes('Mastery Check'), 'the handheld check panel');
     await answerHandheldCorrectly('t-test-stats');
     await click('[data-action="check-handheld"]');
     await waitFor(() => appHtml().includes('mastered'), 'the mastered result');
@@ -466,7 +531,7 @@ describe('handheld mastery check', () => {
     expect(record).toHaveBeenCalledTimes(1);
     const payload = record.mock.calls[0][0];
     expect(payload.response.event).toBe('handheld-mastery');
-    expect(payload.response.inputMode).toBe('physical');
+    expect(payload.response.inputMode).toBe('emulator');   // done on-screen; the row says so (teacher 2026-09-27)
     expect(payload.response.verified).toBe(true);
     expect(payload.score).toBe(1);
   });
@@ -475,7 +540,7 @@ describe('handheld mastery check', () => {
     const record = vi.fn(() => Promise.resolve({ ok: true }));
     await bootTrainer({ records: { 't-test-stats': handheldReady() }, recordFn: record });
     await click('[data-action="start-session"]');
-    await waitFor(() => appHtml().includes('Handheld Check'), 'the handheld check panel');
+    await waitFor(() => appHtml().includes('Mastery Check'), 'the handheld check panel');
 
     document.getElementById('app').querySelectorAll('[data-answer-key]').forEach((input) => {
       input.value = '999';
@@ -485,7 +550,7 @@ describe('handheld mastery check', () => {
     await flush(20);
 
     expect(appHtml()).not.toContain('mastered');
-    expect(appHtml()).toContain('Handheld Check');
+    expect(appHtml()).toContain('Mastery Check');
     expect(persisted().records['t-test-stats'].track2.handheldPassed).toBe(false);
     expect(record).not.toHaveBeenCalled();
   });
@@ -493,7 +558,7 @@ describe('handheld mastery check', () => {
   it('skipping the handheld check keeps it pending for next time', async () => {
     await bootTrainer({ records: { 't-test-stats': handheldReady() } });
     await click('[data-action="start-session"]');
-    await waitFor(() => appHtml().includes('Handheld Check'), 'the handheld check panel');
+    await waitFor(() => appHtml().includes('Mastery Check'), 'the handheld check panel');
     await click('[data-action="handheld-skip"]');
     await flush(20);
 

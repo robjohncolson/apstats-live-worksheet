@@ -16439,7 +16439,8 @@ function _snapScoreList(a, ownForPlot, label, o) {
     var showList = values.length > 0 || total >= 5;
     if (showList) {
         var lead = document.createElement('div'); lead.className = 'snap-alist-lead';
-        lead.textContent = 'All ' + total + ' scores' + words.from + ' for ' + a.title + (tentative ? ' (' + tentative + ' tentative)' : '') + ':';
+        // "students’ scores", not "scores": these are peers' records (teacher 2026-09-27).
+        lead.textContent = (total === 1 ? '1 student’s score' : total + ' students’ scores') + words.from + ' for ' + a.title + (tentative ? ' (' + tentative + ' tentative)' : '') + ':';
         list.appendChild(lead);
         var seq = document.createElement('div'); seq.className = 'snap-alist-seq';
         // The viewer's own score is marked red in the list. When it is not in the pool (the
@@ -27152,7 +27153,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-xfve';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-2596';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

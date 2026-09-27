@@ -237,12 +237,12 @@ describe('Missing-work rows show the class\u2019s scores inline (teacher 2026-09
       const past = rows[0].nextSibling;
       expect(past.className).toContain('snap-alist');
       // EFFORT_VISIBILITY_V2_SPEC §2: the lead names both periods from the payload's `sections`.
-      expect(past.querySelector('.snap-alist-lead').textContent).toBe('All 7 scores from Period B and Period E together for 1.1 Follow-Along:');
+      expect(past.querySelector('.snap-alist-lead').textContent).toBe('7 students’ scores from Period B and Period E together for 1.1 Follow-Along:');
       expect([...past.querySelectorAll('.snap-alist-seq span')].map(x => x.textContent).join(' ')).toBe('0 0 85 90 100 100 100');
       expect(past.querySelectorAll('.snap-alist-you').length).toBe(1);
       expect(past.querySelectorAll('.snap-alist-tentative').length).toBe(0);
       const soon = rows[1].nextSibling;
-      expect(soon.querySelector('.snap-alist-lead').textContent).toBe('All 10 scores from Period B and Period E together for 1.4 Follow-Along (3 tentative):');
+      expect(soon.querySelector('.snap-alist-lead').textContent).toBe('10 students’ scores from Period B and Period E together for 1.4 Follow-Along (3 tentative):');
       const chips = [...soon.querySelectorAll('.snap-alist-seq span')];
       expect(chips.slice(0, 3).map(c => c.className)).toEqual(['snap-alist-tentative', 'snap-alist-tentative', 'snap-alist-you']);
       expect(soon.querySelector('.snap-alist-foot').textContent).toBe('7 of 10 students across both periods have a score here. 3 haven\u2019t yet — a tentative 0 until Sun 9/27. Every 0 on this list can still be replaced.'.replace('\u2019', "'"));

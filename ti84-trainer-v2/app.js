@@ -1579,8 +1579,8 @@
           lastHints: 0,
           bestScore: 0,
           // Mastery gate: a procedure is only "mastered" once the student has
-          // run a fresh problem on their own physical TI-84 and verified the
-          // result (handheldPassed). awaitingHandheld means a clean emulator
+          // passed the mastery check — a fresh problem, on-screen or on a real
+          // TI-84 — and verified the result (handheldPassed). awaitingHandheld means a clean emulator
           // recall pass happened and the handheld check is the next step.
           handheldPassed: false,
           awaitingHandheld: false,
@@ -1669,8 +1669,9 @@
 
   function combinedMastery(record) {
     const raw = (track1Mastery(record) + track2Mastery(record)) / 2;
-    // A procedure isn't fully mastered until it's been proven on a real TI-84,
-    // so cap mastery until the handheld check passes. The remaining headroom is
+    // A procedure isn't fully mastered until the mastery check (a fresh
+    // problem, on-screen or on a real TI-84) passes, so cap mastery until the
+    // handheld check passes. The remaining headroom is
     // what the handheld pass unlocks.
     const capped = record?.track2?.handheldPassed ? raw : Math.min(raw, 0.7);
     return Math.round(capped * 100);
@@ -1867,8 +1868,9 @@
       return;
     }
 
-    // A procedure that passed emulator recall but hasn't been proven on a real
-    // TI-84 goes straight to its handheld mastery check.
+    // A procedure that passed emulator recall isn't fully mastered until the
+    // mastery check (a fresh problem, on-screen or on a real TI-84) passes, so
+    // it goes straight to that check.
     const track2 = ensureProcedureRecord(procedureId).track2;
     if (track2.awaitingHandheld && !track2.handheldPassed) {
       startHandheldCheck(procedureId);
@@ -3217,13 +3219,14 @@
     track2.mode = 'recall';
 
     // A clean emulator recall pass earns the handheld mastery check: the
-    // student now proves the procedure on their own physical TI-84. Until they
-    // pass it, the procedure is not "mastered".
+    // student proves the procedure on a fresh problem, on the on-screen
+    // emulator or a real TI-84. Until they pass it, the procedure is not
+    // "mastered".
     if (!track2.handheldPassed) {
       track2.awaitingHandheld = true;
       return {
         headline: `${PROCEDURE_BY_ID[walkthrough.procedureId].name} — recall passed`,
-        detail: 'Nicely done on the on-screen calculator. One more step to master it: run a fresh problem on your real TI-84.',
+        detail: 'Nicely done — one more step to master it: a fresh problem, on-screen or on your own TI-84.',
         offerHandheld: true,
       };
     }
@@ -3414,8 +3417,8 @@
       app.branchIntro = null;
       app.sessionResult = {
         headline: 'Walkthrough complete',
-        detail: 'Now prove it on your real TI-84 — the handheld check is next.',
-        actionLabel: 'Handheld check',
+        detail: 'Now the mastery check — a fresh problem, on-screen or on your own TI-84.',
+        actionLabel: 'Mastery check',
         action: 'next-item',
       };
       app.banner = 'Practice walkthrough done.';
@@ -3464,13 +3467,13 @@
       app.sessionResult = {
         headline: track2Summary.headline,
         detail: track2Summary.detail,
-        actionLabel: 'Do it on my TI-84 →',
+        actionLabel: 'Start the mastery check →',
         action: 'start-handheld',
         handheldProcedureId: procedureId,
         secondaryLabel: 'Later',
         secondaryAction: 'next-item',
       };
-      app.banner = 'Grab your real TI-84 — the next step is a quick handheld check.';
+      app.banner = 'Next: a quick mastery check — a fresh problem on the calculator.';
       savePersisted();
       render();
       return;
@@ -3488,8 +3491,11 @@
   }
 
   // ── Handheld mastery check ──────────────────────────────────────────────
-  // After a clean emulator recall pass, the student proves the procedure on
-  // their own physical TI-84 with a fresh problem. Verifiable procedures check
+  // After a clean emulator recall pass, the student proves the procedure on a
+  // fresh problem — on the on-screen emulator or their own TI-84, either is
+  // valid. The words are UI-only: identifiers and the ledger event keep the
+  // "handheld" name (grade integration spec + server pin them).
+  // Verifiable procedures check
   // the typed result against the canonical answer (recompute matches the real
   // TI to <0.001%); graph/utility procedures are a self-attested confirmation.
 
@@ -3544,7 +3550,7 @@
       failCounts: {},
       verified: false,
     };
-    app.banner = 'Handheld check: run this on your own TI-84, then enter the result.';
+    app.banner = 'Mastery check: run this fresh problem on the calculator — on-screen or your own TI-84 — then enter the result.';
     render();
   }
 
@@ -3588,7 +3594,9 @@
       response: {
         procedureId,
         event: 'handheld-mastery',
-        inputMode: 'physical',
+        // The mode the check was actually done in (teacher 2026-09-27: the on-screen
+        // emulator is a valid way to master a procedure), so ledger rows can tell them apart.
+        inputMode: app.persisted.physicalMode ? 'physical' : 'emulator',
         verified: !selfAttest,
         ...(selfAttest ? { selfAttest: true } : {}),
       },
@@ -3634,11 +3642,11 @@
     app.handheldCheck = null;
     app.sessionResult = {
       headline: `${PROCEDURE_BY_ID[procedureId].name} mastered!`,
-      detail: 'You ran it on your own TI-84 and nailed the result. This procedure is now mastered.',
+      detail: 'You ran a fresh problem and nailed the result. This procedure is now mastered.',
       actionLabel: 'Next item',
       action: 'next-item',
     };
-    app.banner = 'Mastered — proven on a real calculator.';
+    app.banner = 'Mastered — proven on a fresh problem.';
     savePersisted();
     render();
 
@@ -3730,7 +3738,7 @@
       return;
     }
 
-    app.banner = 'Not a match yet. Re-run it on your TI-84 and check sign and decimals.';
+    app.banner = 'Not a match yet. Re-run it on the calculator and check sign and decimals.';
     render();
   }
 
@@ -3742,7 +3750,8 @@
     }
 
     // Graph/utility procedures have no numeric result to verify. Teacher
-    // decision (2026-08-19): self-attested physical completion earns 60%.
+    // decision (2026-08-19): self-attested completion earns 60%. The same
+    // confirm path serves both modes — on-screen emulator or real TI-84.
     finishHandheldMastery(check.procedureId, { recordCredit: true, selfAttest: true });
   }
 
@@ -3755,17 +3764,19 @@
   function renderHandheldCheck() {
     const check = app.handheldCheck;
     const procedure = PROCEDURE_BY_ID[check.procedureId];
-    const stem = check.problem?.stem ?? 'Run this procedure on your own TI-84.';
+    const stem = check.problem?.stem ?? 'Run this procedure on the calculator.';
 
+    // Unverifiable (graph/utility) procedures: the same self-attest confirm
+    // in both modes — on-screen emulator or a physical calculator.
     if (!check.fields?.length) {
       return `
         <section class="panel problem-panel handheld-panel">
-          <p class="panel-kicker">Handheld Check — ${procedure.name}</p>
-          <h2>Prove it on your real TI-84</h2>
+          <p class="panel-kicker">Mastery Check — ${procedure.name}</p>
+          <h2>Prove it on a calculator</h2>
           <p class="problem-stem">${stem}</p>
-          <p class="panel-note">Do this on your own calculator. When the screen looks right, confirm below.</p>
+          <p class="panel-note">Use the on-screen TI-84 or your own. When the screen looks right, confirm below.</p>
           <div class="button-row">
-            <button type="button" class="mac-button primary" data-action="handheld-confirm">I did it on my TI-84</button>
+            <button type="button" class="mac-button primary" data-action="handheld-confirm">I did it on the calculator</button>
             <button type="button" class="mac-button" data-action="handheld-skip">Later</button>
           </div>
         </section>
@@ -3775,10 +3786,10 @@
     const fieldRows = renderAnswerFieldRows(check.fields, check.values, check.checkResults ?? {});
     return `
       <section class="panel problem-panel handheld-panel answer-card${check.verified ? ' verified' : ''}">
-        <p class="panel-kicker">Handheld Check — ${procedure.name}</p>
-        <h2>Prove it on your real TI-84</h2>
+        <p class="panel-kicker">Mastery Check — ${procedure.name}</p>
+        <h2>Prove it on a calculator</h2>
         <p class="problem-stem">${stem}</p>
-        <p class="panel-note">Run this on your own calculator, then type the result it shows.</p>
+        <p class="panel-note">Use the on-screen TI-84 or your own. When it shows the result, type it below.</p>
         ${fieldRows}
         <div class="button-row">
           <button type="button" class="mac-button primary" data-action="check-handheld">Check</button>
@@ -3788,23 +3799,34 @@
     `;
   }
 
+  // Only reached in Real TI-84 mode (renderCalculatorColumn); in emulator mode
+  // the mastery check keeps the on-screen calculator.
   function renderHandheldCalcColumn() {
     return `
       <section class="panel calc-panel physical-panel">
         <div class="calc-top">
           <div>
-            <p class="panel-kicker">Your Real Calculator</p>
+            <p class="panel-kicker">Real Calculator Mode</p>
             <h2>Use your TI-84</h2>
           </div>
         </div>
         <div class="physical-card">
           <div class="physical-card-header">
-            <p class="physical-procedure-name">Grab your TI-84 Plus CE</p>
+            <p class="physical-procedure-name">Mastery check on your TI-84 Plus CE</p>
           </div>
-          <p class="physical-narration">Work the problem on your own calculator, then enter the result it displays on the left.</p>
+          <p class="physical-narration">Work the problem on your calculator, then enter the result it displays on the left.</p>
+        </div>
+        <div class="physical-mode-switch">
+          <button type="button" class="mac-button" data-action="toggle-physical-mode">Use the on-screen calculator</button>
         </div>
       </section>
     `;
+  }
+
+  // During the mastery check (no walkthrough) the on-screen keypad is free
+  // play: keys go straight to the calculator, with no guidance or grading.
+  function handheldFreePlayActive() {
+    return Boolean(app.handheldCheck) && !app.walkthrough && !app.persisted.physicalMode;
   }
 
   function syncAnswerInputsFromDom() {
@@ -3953,7 +3975,30 @@
     render();
   }
 
+  async function pressFreePlayButton(buttonId) {
+    if (app.busy) {
+      return;
+    }
+
+    app.busy = true;
+
+    try {
+      await app.bridge.sendButton(buttonId);
+    } catch (error) {
+      app.banner = error.message;
+    } finally {
+      app.busy = false;
+      updateMockCanvas();
+      render();
+    }
+  }
+
   async function pressButton(buttonId) {
+    if (handheldFreePlayActive()) {
+      await pressFreePlayButton(buttonId);
+      return;
+    }
+
     if (!app.walkthrough || app.walkthrough.preparing || app.walkthrough.completion || app.busy || app.clutch.autoFilling) {
       return;
     }
@@ -4885,7 +4930,10 @@
     const suggested = showAssist && suggestions.has(buttonId);
     const dimmed = showAssist && suggestions.size && !suggested ? ' dimmed' : '';
     const flash = app.flashKeyId === buttonId ? ` flash-${app.flashKind}` : '';
-    const disabled = !app.walkthrough || app.walkthrough.preparing || app.busy || app.clutch.autoFilling ? ' disabled' : '';
+    const keypadLocked = handheldFreePlayActive()
+      ? app.busy
+      : !app.walkthrough || app.walkthrough.preparing || app.busy || app.clutch.autoFilling;
+    const disabled = keypadLocked ? ' disabled' : '';
     const className = [
       'key',
       `key-${meta.color}`,
@@ -5192,15 +5240,14 @@
   }
 
   function renderCalculatorColumn() {
-    if (app.handheldCheck) {
-      return renderHandheldCalcColumn();
-    }
-
+    // The mastery check follows the same mode choice as recall: the physical
+    // card only in Real TI-84 mode, otherwise the on-screen emulator.
     if (app.persisted.physicalMode) {
-      return renderPhysicalColumn();
+      return app.handheldCheck ? renderHandheldCalcColumn() : renderPhysicalColumn();
     }
 
     const walkthrough = app.walkthrough;
+    const freePlay = handheldFreePlayActive();
     const mobile = isMobileViewport();
     const step = currentStep();
     const totalSteps = walkthrough ? currentProcedure().steps.length : 0;
@@ -5222,6 +5269,16 @@
       walkthroughDetail = 'Keys go straight to the calculator while you inspect the result.';
     } else if (walkthrough?.mode === 'recall' && step) {
       walkthroughHeadline = recallNeutralPrompt(walkthrough, totalSteps);
+    }
+
+    let barHeadline = walkthrough ? walkthroughHeadline : idleHeadline;
+    let barDetail = walkthrough ? walkthroughDetail : app.bridgeStatus.detail;
+
+    if (freePlay) {
+      barHeadline = 'Mastery check: keys go straight to the calculator.';
+      barDetail = app.bridge?.isRealEmulator?.()
+        ? 'Work the fresh problem here, then type the result on the left.'
+        : 'Simplified mode cannot compute a fresh problem. Load the calculator firmware, or use your own TI-84.';
     }
 
     const firmwareLabel = mobile ? '⚙' : 'Firmware';
@@ -5268,7 +5325,7 @@
               </div>
             </div>
           </div>
-          ${walkthrough
+          ${walkthrough || freePlay
             ? `
               <div class="keypad-shell">
                 ${renderKeypad()}
@@ -5283,8 +5340,8 @@
              (and the only narration surface on phones). -->
         <div class="calc-action-bar">
           <div class="calc-action-copy">
-            <strong>${walkthrough ? walkthroughHeadline : idleHeadline}</strong>
-            <span>${walkthrough ? walkthroughDetail : app.bridgeStatus.detail}</span>
+            <strong>${barHeadline}</strong>
+            <span>${barDetail}</span>
           </div>
           <div class="button-row compact">
             <button type="button" class="mac-button" data-action="open-rom-dialog" ${firmwareAttrs}>${firmwareLabel}</button>
@@ -5600,7 +5657,7 @@
   // Rendered on every screen so the controls are always reachable; the CSS
   // media query hides them on narrow viewports where scaling is disabled.
   function renderScaleControls() {
-    const emulatorVisible = !app.handheldCheck && !app.persisted.physicalMode;
+    const emulatorVisible = !app.persisted.physicalMode;
     const fitActive = uiPrefs.calcMode === 'fit';
     const calcControls = emulatorVisible
       ? `
