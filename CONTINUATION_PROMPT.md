@@ -117,6 +117,8 @@ written specs — both lanes worked (see memory `feedback_opus_review_lane`). Me
 - Roster: one B student dropped (`DELETE /roster/:id`); PC: one paper U1-A score entered; both in memory.
 - cr `tests/coach.test.js` had 5 pins of the OLD coach wording (broken by the 9/26 prompt rewrites) → repinned.
 
+- Later Sun 9/27: Do Now pill always names PC (`Q1 86 = Work 84 · PC — (counts from Tue 10/13)`) + "show the math" panel (`388475b1`); score lists say "N students' scores from Period B and Period E together" (`b78eb102`); **TI-84 trainer mastery check now runs on the on-screen emulator** (`b78eb102`, bundle rebuilt; ledger `inputMode` now truthful; GitNexus HIGH on `pressButton` — full trainer set 689 green, one recall-mode test flaky under the parallel run); **slips layout v3** full width at 11pt with density steps instead of shrinking (`ea1d3c53`, all 8 slips scale 1.000). Monday 05:00 task prints the v3 layout.
+
 ### Gotchas learned this session
 - The Bash-tool wrapper mangles backslashes / non-ASCII in heredocs and inline `node -e` / `python -c`: write patch scripts
   and prompts with the Write tool, run them with Bash. Two background `codex exec` jobs in ONE bash line lose the second silently.
