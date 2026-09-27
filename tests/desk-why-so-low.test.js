@@ -333,6 +333,16 @@ describe('coach reply is shown as plain text (teacher 2026-09-26: the live reply
     expect(fn('fix your **1.1 worksheet at 70%** first')).toBe('fix your 1.1 worksheet at 70% first');
     expect(fn('## Plan\n- __1.3 quiz__ becomes a 0 after `Sun 9/27`')).toBe('Plan\n- 1.3 quiz becomes a 0 after Sun 9/27');
     expect(fn(null)).toBe('');
-    expect(fnBody(DESK, '_coachAsk')).toContain('cedReferenceText(_coachPlainText(answer))');
+    expect(fnBody(DESK, '_coachAsk')).toContain('_coachPlainText(answer)');
+  });
+});
+
+describe('a topic\u2019s full title appears once (teacher 2026-09-26: the live reply repeated it four times)', () => {
+  it('_coachOnceTopics keeps the first "Topic 1.3" and shortens the rest to "1.3"; other topics keep their own first mention', () => {
+    const fn = new Function(fnBody(DESK, '_coachOnceTopics') + '\nreturn _coachOnceTopics;')();
+    expect(fn('Do the Topic 1.3 worksheet, the Topic 1.3 quiz and the Topic 1.3 flashcards. Then Topic 1.4 and Topic 1.3 again.'))
+      .toBe('Do the Topic 1.3 worksheet, the 1.3 quiz and the 1.3 flashcards. Then Topic 1.4 and 1.3 again.');
+    expect(fn('Lesson 2.1 then lesson 2.1')).toBe('Lesson 2.1 then 2.1');
+    expect(fnBody(DESK, '_coachAsk')).toContain('cedReferenceText(_coachOnceTopics(_coachPlainText(answer)))');
   });
 });

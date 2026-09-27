@@ -9657,6 +9657,17 @@ function _coachPlainText(text) {
         .replace(/`([^`]+)`/g, '$1')
         .replace(/^#{1,6}\s+/gm, '');
 }
+// cedReferenceText expands every "Topic 1.3" into the lesson's full title. Models repeat the
+// "Topic" form on every line, so the full title showed four times. Keep the FIRST mention of
+// each topic (it gets expanded) and shorten later ones to the bare number.
+function _coachOnceTopics(text) {
+    var seen = {};
+    return String(text || '').replace(/\b(?:Topic|Lesson)\s+([1-9]\.\d+(?:[\u2013-](?:\d+\.)?\d+)?)\b/gi, function (m, key) {
+        if (seen[key]) return key;
+        seen[key] = true;
+        return m;
+    });
+}
 async function _coachAsk(ctx, message, transcriptEl, history, askBtn) {
   var sEl = document.createElement('div');
   sEl.className = 'wsl-msg student';
@@ -9692,7 +9703,7 @@ async function _coachAsk(ctx, message, transcriptEl, history, askBtn) {
     var data = await resp.json();
     var answer = (data && data.response) ? String(data.response) : '';
     if (!answer) { setCoach(unavailable); return; }
-    setCoach(cedReferenceText(_coachPlainText(answer)));
+    setCoach(cedReferenceText(_coachOnceTopics(_coachPlainText(answer))));
     history.push({ role: 'user', content: message });
     history.push({ role: 'assistant', content: answer });
     if (history.length > 12) history.splice(0, history.length - 12);
@@ -26832,7 +26843,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-6ehh';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-27-hz8j';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
