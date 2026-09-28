@@ -2295,6 +2295,7 @@
                     <div class="donow-ttl chicago">Do Now</div>
                     <div id="donow-msg" class="geneva">…</div>
                     <div id="donow-grades" class="geneva" aria-label="Quarter grade outlook"></div>
+                    <div id="donow-bonus" class="geneva" aria-label="Bonus banked" style="display:none;font-size:11px;margin-top:4px"></div>
                     <div id="donow-grade-status" class="geneva" role="status" style="display:none"></div>
                     <div id="donow-helper" class="geneva"></div>
                 </div>
@@ -9119,6 +9120,7 @@ async function renderDoNowGrades(baseUrl, token) {
   // progress). renderWhySoLow below likewise bails when a panel is open.
   var _wslHost = document.getElementById('donow-helper');
   if (_wslHost && !_coachPanelOpen()) _wslHost.innerHTML = '';
+  if (typeof _clearDoNowBonus === 'function') _clearDoNowBonus();
   _gradeQuartersCache = null;
   _gradeUnitsCache = null;
   if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
@@ -9320,6 +9322,8 @@ async function renderDoNowGrades(baseUrl, token) {
     pill.onkeydown = function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (typeof openWallet === 'function') openWallet(); } };
     host.appendChild(pill);
     if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill();
+    // BONUS_DONOW_SPEC: the banked-bonus sentence under the pill (fire-and-forget; own fetch).
+    if (typeof renderDoNowBonus === 'function') renderDoNowBonus();
 
     // A small labelled chip beside the pill. The two v3 tracks (PC, Work) now live INSIDE the
     // pill with the 40% rule (EFFORT_VISIBILITY_V2_SPEC §3), so only "Schoology today" uses it.
@@ -18322,9 +18326,12 @@ function _walletBonusFooterText(applied) {
     return 'Bonus applied — quarter grade ' + grade;
 }
 
-function _walletBonusBlock(receipts) {
+// The one grouping of BONUS-* ledger rows for the current quarter (BONUS_DONOW_SPEC §2). Both the
+// My Ledger block and the Do Now line render from this, so the two surfaces cannot disagree.
+// Returns null when nothing is banked and nothing was applied this quarter.
+function _bonusSummary(receipts) {
     var quarter = typeof quarterOfDate === 'function' ? 'Q' + quarterOfDate(new Date()) : _walletCurrentQuarter().quarter;
-    var sheets = new Map();
+    var byItem = new Map();
     var applied = null;
     (receipts || []).forEach(function (r) {
         var item = r.i || r.itemId || r.item || '';
@@ -18332,9 +18339,28 @@ function _walletBonusBlock(receipts) {
         if (r.src !== 'bonus') return;
         var data = _walletBonusResponse(r);
         if (data.quarter && data.quarter !== quarter) return;
-        sheets.set(item, { row: r, data: data });
+        byItem.set(item, { row: r, data: data });
     });
-    if (!sheets.size && !applied) return null;
+    if (!byItem.size && !applied) return null;
+    var sheets = [];
+    var total = 0;
+    byItem.forEach(function (sheet, item) {
+        var points = Number(sheet.row.sc);
+        if (!isFinite(points)) points = 0;
+        total += points;
+        sheets.push({
+            title: sheet.data.title || item.replace(/^BONUS-/, ''),
+            grade: sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[points] || '—',
+            points: points
+        });
+    });
+    return { quarter: quarter, sheets: sheets, total: total, applied: applied };
+}
+
+function _walletBonusBlock(receipts) {
+    var summary = _bonusSummary(receipts);
+    if (!summary) return null;
+    var applied = summary.applied;
     var block = document.createElement('div');
     block.className = 'wallet-bonus-block geneva';
     block.style.cssText = 'border:1px solid var(--black);background:#fff;'
@@ -18344,11 +18370,9 @@ function _walletBonusBlock(receipts) {
     header.className = 'chicago';
     header.textContent = 'Bonus banked';
     block.appendChild(header);
-    sheets.forEach(function (sheet, item) {
-        var points = Number(sheet.row.sc);
+    summary.sheets.forEach(function (sheet) {
         var line = document.createElement('div');
-        line.textContent = (sheet.data.title || item.replace(/^BONUS-/, '')) + ' — '
-            + (sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[points] || '—') + ' (+' + points + ')';
+        line.textContent = sheet.title + ' — ' + sheet.grade + ' (+' + sheet.points + ')';
         block.appendChild(line);
     });
     var footer = document.createElement('div');
@@ -18356,6 +18380,39 @@ function _walletBonusBlock(receipts) {
     footer.textContent = _walletBonusFooterText(applied);
     block.appendChild(footer);
     return block;
+}
+
+// One sentence under the Do Now grade pill (BONUS_DONOW_SPEC §1): what is banked this quarter.
+// Before apply: "Bonus banked: Screen Time P (+3) · Candle Tests E (+5) = +8 at quarter end".
+// After apply: the ledger's applied sentence. Nothing banked → the host stays hidden (no empty strip).
+function _doNowBonusText(summary) {
+    if (!summary) return '';
+    if (summary.applied) return _walletBonusFooterText(summary.applied);
+    if (!summary.sheets.length) return '';
+    var parts = summary.sheets.map(function (sheet) {
+        return sheet.title + ' ' + sheet.grade + ' (+' + sheet.points + ')';
+    });
+    return 'Bonus banked: ' + parts.join(' · ') + ' = +' + summary.total + ' at quarter end';
+}
+
+function _clearDoNowBonus() {
+    var host = document.getElementById('donow-bonus');
+    if (!host) return;
+    host.style.display = 'none';
+    host.textContent = '';
+    host.title = '';
+}
+
+async function renderDoNowBonus() {
+    var host = document.getElementById('donow-bonus');
+    if (!host) return;
+    var receipts = await _walletFetchBonusReceipts();
+    var summary = _bonusSummary(receipts);
+    var text = _doNowBonusText(summary);
+    if (!text) { _clearDoNowBonus(); return; }
+    host.textContent = text;
+    host.title = summary.applied ? '' : _walletBonusFooterText(null);
+    host.style.display = 'block';
 }
 
 // Bonus ledger entries need no signed receipt; fetchReceipts omits unsigned rows.

@@ -24,7 +24,7 @@ function sandbox() {
   dom.window.WalletLogic = WalletLogic;
   const s = { window: dom.window, document: dom.window.document, WalletLogic, quarterOfDate: () => 1, fetch: vi.fn() };
   createContext(s);
-  runInContext(['_walletBonusResponse', '_walletBonusFooterText', '_walletBonusBlock', '_walletComputePoints', '_walletFetchBonusReceipts'].map(fnSrc).join('\n'), s);
+  runInContext(['_walletBonusResponse', '_walletBonusFooterText', '_bonusSummary', '_walletBonusBlock', '_walletComputePoints', '_walletFetchBonusReceipts'].map(fnSrc).join('\n'), s);
   return { s, close: () => dom.window.close() };
 }
 
