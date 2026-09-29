@@ -220,12 +220,17 @@ def _scroll_cell_into_view(cdp, column_key: str, row_index: int) -> None:
         return
 
 
-def write_cell_comment(cdp, column_key: str, row_index: int, text: str) -> dict:
+def write_cell_comment(cdp, column_key: str, row_index: int, text: str,
+                       expect_current: str | None = None) -> dict:
     """BEST-EFFORT DRAFT: UI selectors and commit behavior are not live verified.
 
     Try the cell icon, then a context Comment item. Type only into a confirmed
     comment textarea, never a grade input. Close/reopen and re-read to verify.
     A DOM read-back is not proof of persistence across a page reload.
+
+    Clearing (text == "") only ever removes a comment that starts with the sync's prefix;
+    with `expect_current` it removes it only when the cell still holds EXACTLY that text
+    (the note the sync last wrote), so an edited or teacher-typed comment is left alone.
     """
     failure = {"ok": False, "verified": False}
     if not isinstance(text, str) or any(c in text for c in "\r\n\t"):
@@ -327,6 +332,9 @@ def write_cell_comment(cdp, column_key: str, row_index: int, text: str) -> dict:
                 if not current.startswith(SYNC_COMMENT_PREFIX):
                     cdp.click(editor["close"]["x"], editor["close"]["y"])
                     return {**failure, "reason": "existing comment is not the sync's; left untouched"}
+                if expect_current is not None and current != expect_current:
+                    cdp.click(editor["close"]["x"], editor["close"]["y"])
+                    return {**failure, "reason": "comment differs from the sync's last note; left untouched"}
             if verify:
                 cdp.click(editor["close"]["x"], editor["close"]["y"])
                 time.sleep(0.3)
@@ -380,9 +388,9 @@ def write_cell_comment(cdp, column_key: str, row_index: int, text: str) -> dict:
     return {**failure, "reason": "comment not verified"}
 
 
-def clear_cell_comment(cdp, column_key: str, row_index: int) -> dict:
+def clear_cell_comment(cdp, column_key: str, row_index: int, expect_current: str | None = None) -> dict:
     """BEST-EFFORT DRAFT: same guarded textarea path, with empty text."""
-    return write_cell_comment(cdp, column_key, row_index, "")
+    return write_cell_comment(cdp, column_key, row_index, "", expect_current=expect_current)
 
 
 def write_grade_to_cell(

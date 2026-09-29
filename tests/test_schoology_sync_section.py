@@ -1156,21 +1156,46 @@ class TestGradeCellComments(unittest.TestCase):
         self.ops.write_cell_comment.assert_called_once()
         self.assertEqual(self.ops.write_cell_comment.call_args.args[1:3], ("col1", 2))
 
-    def test_an_earned_zero_clears_a_stale_sync_note(self):
-        # The student did the work and scored 0: the text is "", the grade is unchanged (0 -> 0),
-        # and our old "Not a permanent 0" note must go. The writer's clear path only ever removes
-        # a comment that starts with the sync prefix, so teacher comments stay (Codex 2026-09-29).
+    def test_an_earned_zero_clears_only_the_exact_note_the_sync_wrote(self):
+        # The student did the work and scored 0: the builder emits "" for the cell, the grade is
+        # unchanged (0 -> 0), and the note the sync wrote earlier must go — only that exact text,
+        # so an edited or teacher-typed comment is never erased (Codex 2026-09-29).
+        note = "Not a permanent 0. Missing: 1.2 worksheet. Finish it."
         self.state.set_last_synced("S1", "FA:1.2", 0)
+        self.state.set_last_synced("S1", "FA:1.2#note", note)
         self.texts = {"S1/FA:1.2": ""}
         self.ops.write_cell_comment.return_value = {"ok": True, "verified": True, "text": ""}
-        self.push(comments=True)
-        self.ops.write_cell_comment.assert_called_once_with(None, "col1", 2, "")
         import contextlib
         import io
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             self.push(comments=True, dry_run=True)
-        self.assertIn("would clear a stale sync note", output.getvalue())
+        self.assertIn("would clear the sync's earlier note", output.getvalue())
+        self.ops.write_cell_comment.assert_not_called()
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_called_once_with(None, "col1", 2, "", expect_current=note)
+        self.assertEqual(self.state.get_last_synced("S1", "FA:1.2#note"), "")
+        # the note is gone: later nights do no comment UI work for this earned zero
+        self.ops.write_cell_comment.reset_mock()
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_not_called()
+
+    def test_an_earned_zero_with_no_recorded_note_does_no_ui_work(self):
+        self.state.set_last_synced("S1", "FA:1.2", 0)
+        self.texts = {"S1/FA:1.2": ""}
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_not_called()
+
+    def test_missing_comment_data_never_triggers_a_clear(self):
+        self.state.set_last_synced("S1", "FA:1.2", 0)
+        self.state.set_last_synced("S1", "FA:1.2#note", "Not a permanent 0. Missing: 1.2 worksheet.")
+        self.texts = {}   # the builder produced nothing for this cell (e.g. partial class data)
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_not_called()
+
+    def test_writing_or_ensuring_a_note_records_its_exact_text(self):
+        self.push(comments=True)
+        self.assertEqual(self.state.get_last_synced("S1", "FA:1.2#note"), self.texts["S1/FA:1.2"])
 
     def test_clear_nonzero_and_comment_failure_not_grade_failure(self):
         self.ops.clear_cell_comment.side_effect = RuntimeError("UI unavailable")
@@ -1178,7 +1203,7 @@ class TestGradeCellComments(unittest.TestCase):
         self.assertEqual(pushed, 1)
         self.assertEqual(self.errors, [])
         self.assertEqual(self.state.get_last_synced("S1", "FA:1.2"), 90)
-        self.ops.clear_cell_comment.assert_called_once_with(None, "col1", 2)
+        self.ops.clear_cell_comment.assert_called_once_with(None, "col1", 2, expect_current=None)
 
     def test_unverified_is_logged_as_skipped(self):
         import contextlib

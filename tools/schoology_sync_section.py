@@ -300,6 +300,11 @@ def load_schedule(path: str = SCHEDULE_PATH) -> dict:
         return json.load(f)
 
 
+def _note_key(lesson_key: str) -> str:
+    """Sync-state key holding the exact grade-cell note the sync last wrote for a cell."""
+    return f"{lesson_key}#note"
+
+
 def _list_students_stable(ops, cdp, *, attempts: int = 8, pause_s: float = 0.75) -> list:
     """Read the gradebook roster once the rendered row count has settled.
 
@@ -738,17 +743,24 @@ def _push_grades(
             pushed += 1
             if comments:
                 text = (comment_texts or {}).get(f"{student_id}/{lesson_key}", "")
+                note_key = _note_key(lesson_key)
+                prior_note = state.get_last_synced(str(student_id), note_key) or None
                 outcome = "skipped(no lagged-zero text)"
                 try:
                     comment_result = None
                     if target_value != 0:
-                        comment_result = ops.clear_cell_comment(cdp, column_key, row_index)
+                        # A real score replaced the zero: remove the sync's note. With a recorded
+                        # note, only that exact text is removed; older notes (before the marker
+                        # existed) fall back to the prefix guard.
+                        comment_result = ops.clear_cell_comment(cdp, column_key, row_index,
+                                                                expect_current=prior_note)
                     elif text:
                         comment_result = ops.write_cell_comment(cdp, column_key, row_index, text)
                     if target_value != 0 or text:
                         comment_result = comment_result or {}
                         if comment_result.get("ok") and comment_result.get("verified"):
                             outcome = "cleared" if target_value != 0 else "wrote"
+                            state.set_last_synced(str(student_id), note_key, "" if target_value != 0 else text)
                         else:
                             outcome = f"skipped({comment_result.get('reason') or 'unverified'})"
                 except Exception as exc:
@@ -771,12 +783,23 @@ def _push_grades(
         # work and scored 0, so the text is "") gets our stale "Not a permanent 0" note removed.
         # The writer only ever clears a comment that starts with the sync's prefix, so a
         # teacher's own comment is never touched (Codex review 2026-09-29).
-        unchanged_zero_keys = [key for key in list(covered) + list(actions["skip"])
-                               if targets.get(key) == 0 and comment_texts is not None]
+        # An EARNED zero is cleared only when (a) the comment builder explicitly emitted this
+        # cell with no note (missing data never triggers a clear), and (b) the sync recorded
+        # the note it wrote there — then only that exact text is removed. So there is no
+        # nightly UI work on earned zeros and a teacher's own comment is never erased.
+        def _wants_comment_work(key):
+            if targets.get(key) != 0 or comment_texts is None:
+                return False
+            ckey = f"{key[0]}/{key[1]}"
+            if comment_texts.get(ckey):
+                return True
+            return ckey in comment_texts and bool(state.get_last_synced(str(key[0]), _note_key(key[1])))
+        unchanged_zero_keys = [key for key in list(covered) + list(actions["skip"]) if _wants_comment_work(key)]
         for student_id, lesson_key in unchanged_zero_keys:
             text = (comment_texts or {}).get(f"{student_id}/{lesson_key}", "")
+            prior_note = state.get_last_synced(str(student_id), _note_key(lesson_key)) or None
             if dry_run:
-                plan = f"would ensure {text}" if text else "would clear a stale sync note (if any)"
+                plan = f"would ensure {text}" if text else "would clear the sync's earlier note"
                 print(f"  [DRY-RUN] existing 0 student={student_id} key={lesson_key} comment: {plan}")
                 continue
             scope_item = scope_items_by_key.get(lesson_key)
@@ -786,9 +809,14 @@ def _push_grades(
                 print(f"  student={student_id} key={lesson_key} comment: skipped(no column or row)")
                 continue
             try:
-                comment_result = ops.write_cell_comment(cdp, column_key, student_row.get("rowIndex"), text) or {}
+                if text:
+                    comment_result = ops.write_cell_comment(cdp, column_key, student_row.get("rowIndex"), text) or {}
+                else:
+                    comment_result = ops.write_cell_comment(cdp, column_key, student_row.get("rowIndex"), "",
+                                                            expect_current=prior_note) or {}
                 if comment_result.get("ok") and comment_result.get("verified"):
                     outcome = comment_result.get("skipped") or ("wrote" if text else "cleared")
+                    state.set_last_synced(str(student_id), _note_key(lesson_key), text)
                 else:
                     outcome = f"skipped({comment_result.get('reason') or 'unverified'})"
             except Exception as exc:

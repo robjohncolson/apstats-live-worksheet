@@ -353,6 +353,26 @@ class TestCommentDrafts(unittest.TestCase):
         self.assertFalse(any(c.args[0] == "Input.dispatchKeyEvent" for c in fake.send.call_args_list))
         self.assertEqual(fake.clicks[-1], (30, 30))   # closed without typing
 
+    def test_clear_with_expect_current_leaves_an_edited_sync_note_alone(self):
+        # A comment that starts with the sync prefix but is NOT the exact note the sync wrote
+        # (a teacher appended to it, or typed the phrase themselves) is never erased.
+        fake = FakeCDP()
+        fake.send = mock.Mock()
+        edited = ops.SYNC_COMMENT_PREFIX + " Missing: 1.2 quiz. See me Friday."
+        editor = {"text": edited, "focused": True, "editable": True, "checked": True,
+                  "field": {"x": 20, "y": 20}, "close": {"x": 30, "y": 30}}
+        with mock.patch.object(ops, "inspect_cell_comment_ui", return_value={
+            "ok": True, "cell": {"rect": None}, "icons": [{"rect": {"x": 10, "y": 10}}]
+        }), mock.patch.object(ops, "read_grade_from_cell", return_value=0), \
+                mock.patch.object(fake, "eval_js", side_effect=[None, editor]), \
+                mock.patch.object(ops.time, "sleep"):
+            result = ops.clear_cell_comment(fake, "col1", 2,
+                                            expect_current=ops.SYNC_COMMENT_PREFIX + " Missing: 1.2 quiz.")
+        self.assertFalse(result["ok"])
+        self.assertIn("differs from the sync's last note", result["reason"])
+        self.assertFalse(any(c.args[0] == "Input.dispatchKeyEvent" for c in fake.send.call_args_list))
+        self.assertEqual(fake.clicks[-1], (30, 30))   # closed without typing
+
     def test_clear_with_nothing_there_is_a_verified_no_op(self):
         fake = FakeCDP()
         fake.send = mock.Mock()
