@@ -11,10 +11,13 @@ import { mountDogeWallet } from '../doge-wallet.js';
 const SEC = 'PeriodB';
 const UID = '00000000-0000-4000-8000-000000000001';
 const OPP = '00000000-0000-4000-8000-000000000002';
+const TEACH = '00000000-0000-4000-8000-000000000004';
 const roster = [
   { student_id: UID, section: SEC, username: 'apple_fox', role: 'student', status: 'active' },
   { student_id: OPP, section: SEC, username: 'bo_cat', role: 'student', status: 'active' },
   { student_id: '00000000-0000-4000-8000-000000000003', section: 'PeriodC', username: 'far_owl', role: 'student', status: 'active' },
+  { student_id: TEACH, section: 'PeriodX', username: 'date_tiger', role: 'teacher', status: 'active' },
+  { student_id: '00000000-0000-4000-8000-000000000005', section: SEC, username: 'gone_elk', role: 'student', status: 'archived' },
 ];
 
 // `betOpen`/`betResolve` = the canned status the (fake) RPC returns; `settled` = the
@@ -81,9 +84,22 @@ describe('POST /wallet/bet/open', () => {
     const r = await req(start(), 'POST', '/wallet/bet/open', { token: 'tok:' + UID, body: { matchId: 'm', opponentUsername: 'apple_fox' } });
     expect(r.status).toBe(400);
   });
-  it('404 for an opponent in another section', async () => {
+  it('opens a bet against a player in ANOTHER section (2026-09-29: cross-section play allowed)', async () => {
     const r = await req(start(), 'POST', '/wallet/bet/open', { token: 'tok:' + UID, body: { matchId: 'm', opponentUsername: 'far_owl' } });
-    expect(r.status).toBe(404);
+    expect(r.status).toBe(200);
+    expect(r.body.status).toBe('opened');
+  });
+  it('a student can open a bet against the TEACHER, and the teacher can open one back (rules apply to the teacher too)', async () => {
+    const asStudent = await req(start(), 'POST', '/wallet/bet/open', { token: 'tok:' + UID, body: { matchId: 'm', opponentUsername: 'date_tiger' } });
+    expect(asStudent.status).toBe(200);
+    const asTeacher = await req(start(), 'POST', '/wallet/bet/open', { token: 'tok:' + TEACH, body: { matchId: 'm', opponentUsername: 'apple_fox' } });
+    expect(asTeacher.status).toBe(200);
+    expect(asTeacher.body.status).toBe('opened');
+  });
+  it('still refuses an archived player', async () => {
+    const r = await req(start(), 'POST', '/wallet/bet/open', { token: 'tok:' + UID, body: { matchId: 'm', opponentUsername: 'gone_elk' } });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/active player/);
   });
   it('400 + "need 1 candy" when the escrow guard fails (insufficient)', async () => {
     const r = await req(start({ betOpen: 'insufficient' }), 'POST', '/wallet/bet/open', { token: 'tok:' + UID, body: openBody });

@@ -115,6 +115,8 @@ const num = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
 const BET_STAKE = 1;            // 1 candy per player (D1; fixed)
 const BET_TIMEOUT_MIN = 30;     // an un-resolved bet older than this is swept → refund. Comfortably
                                 // exceeds a real best-of-3 (D3) so the sweep can't refund a live match.
+// Candy the teacher is treated as holding for Tetris bets (they earn no effort candy). 2026-09-29.
+const TEACHER_STAKE_ALLOWANCE = Number(process.env.TEACHER_STAKE_ALLOWANCE || 100);
 const stakesOff = () => ['false', '0', 'no', 'off'].includes(String(process.env.STAKES_ENABLED || 'true').trim().toLowerCase());
 // Per-student win/loss/net from the settled-bet rows (Casino Stats; EV/variance computed client-side).
 function tallyCasino(bets, sid) {
@@ -516,16 +518,22 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     if (!themRes || !themRes.data) return res.status(404).json({ ok: false, error: 'unknown classmate' });
     const oppId = themRes.data.student_id;
     if (oppId === sid) return res.status(400).json({ ok: false, error: "can't bet yourself" });
-    if (themRes.data.role === 'teacher' || (themRes.data.status && themRes.data.status !== 'active')) {
-      return res.status(400).json({ ok: false, error: 'can only play a classmate' });
+    // 2026-09-29 (teacher): anyone active on the roster can be played — other sections AND the
+    // teacher. The old "classmate only / same section" guards are gone for BETS (gifts keep theirs).
+    if (themRes.data.status && themRes.data.status !== 'active') {
+      return res.status(400).json({ ok: false, error: 'can only play an active player' });
     }
     const meRes = await db.findByStudentId(sid);
     if (!meRes || meRes.error || !meRes.data) return res.status(500).json({ ok: false, error: 'Database error' });
-    if (meRes.data.section !== themRes.data.section) return res.status(404).json({ ok: false, error: 'not in your class' });
     await sweepStaleBets();
+    // Both players need a wallet row for the escrow to land (the SQL UPDATEs no-op on a missing
+    // row and the balance check reads NULL). Idempotent DO-NOTHING inserts.
+    if (typeof db.ensureDogeAccount === 'function') { await db.ensureDogeAccount(sid); await db.ensureDogeAccount(oppId); }
     // Pass ONLY the caller's own earned (server-computed from THEIR token); the opponent's is
     // captured when THEY join, so neither client can forge the other's balance (anti-cheat).
-    const ea = await earnedCandyOf(sid);
+    // The teacher earns no effort candy, so a fixed allowance stands in as their stake budget —
+    // "the rules apply to the teacher too": they can win candy from students and lose it to them.
+    const ea = meRes.data.role === 'teacher' ? { candy: TEACHER_STAKE_ALLOWANCE } : await earnedCandyOf(sid);
     const r = await db.tetrisBetOpen({ p_match: matchId, p_caller: sid, p_opp: oppId, p_stake: BET_STAKE, p_earned_caller: ea.candy });
     if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/bet/open:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
     const status = r.data;   // 'waiting' | 'opened' | 'insufficient' | 'bad' | 'not-a-player' | resolved status

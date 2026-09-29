@@ -31,7 +31,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, setRosterStatus, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, ensureDogeAccount, updateDogeField, setDogeAddressProposal, listDogeAddressProposals, approveDogeAddressProposal, rejectDogeAddressProposal, storeWalletCustody, getWalletCustody, auditWalletKeyReveal, deleteWalletCustody, listWalletCustody, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeGiveBack, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, snapshotQuarter, listQuarterSnapshot, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer, findStudentKey, insertStudentKey, listStudentKeys, listStudentKeysByStudent, revokeStudentKey, insertSubmissionArchive, listSubmissionArchive };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -395,6 +395,11 @@ export function createDb(client) {
   // migration 0019's atomic functions exist to prevent — found by the conservation
   // audit, WALLET_CONSERVATION_FINDINGS F1). A DO-NOTHING insert ensures the row
   // exists first (an UPDATE alone no-ops when the student has no account yet).
+  // Idempotent: make sure a doge_account row exists (DO-NOTHING insert). Used before a Tetris
+  // bet so BOTH players' escrow UPDATEs hit a row (2026-09-29, teacher/cross-section bets).
+  async function ensureDogeAccount(studentId) {
+    return client.from('doge_account').upsert([{ student_id: studentId }], { onConflict: 'student_id', ignoreDuplicates: true });
+  }
   async function updateDogeField(studentId, field, value) {
     const ALLOWED = new Set(['candy_given', 'doge_sent', 'doge_address']);
     if (!ALLOWED.has(field)) return { data: null, error: { code: 'BAD_FIELD', message: 'unsupported field' } };
