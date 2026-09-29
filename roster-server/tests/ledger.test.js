@@ -233,6 +233,35 @@ describe('POST /ledger/record', () => {
     expect(frqRow().score).toBe(1);
   });
 
+  // ── Quiz first-answer rule (teacher 2026-09-29) ─────────────────────────
+  // The quiz app reveals classmates' answers after the first commit and allows
+  // revisions for learning; the engine scores the latest row per item. The FIRST
+  // committed response is therefore frozen server-side.
+  function quizRow() {
+    return ledgerDb.store.get(`${validStudentId}|curriculum_quiz|U1-L7-Q03|1`);
+  }
+
+  it('quiz first-answer: a later answer never replaces the first (response + score kept, client told)', async () => {
+    let r = await record({ source: 'curriculum_quiz', itemId: 'U1-L7-Q03', response: 'B', score: 0 });
+    expect(r.status).toBe(200);
+    expect(r.body.firstAnswerKept).toBeUndefined();
+    r = await record({ source: 'curriculum_quiz', itemId: 'U1-L7-Q03', response: 'C', score: 1 });
+    expect(r.status).toBe(200);
+    expect(r.body.firstAnswerKept).toBe(true);
+    expect(quizRow().response).toBe('B');
+    expect(quizRow().score).toBe(0);
+  });
+
+  it('quiz first-answer: a fresh item records normally; other sources are untouched', async () => {
+    const r = await record({ source: 'curriculum_quiz', itemId: 'U1-L7-Q03', response: 'D' });
+    expect(r.status).toBe(200);
+    expect(r.body.firstAnswerKept).toBeUndefined();
+    expect(quizRow().response).toBe('D');
+    await record({ source: 'worksheet', itemId: 'WS-U4L1-Q1', response: { answer: 'first' } });
+    await record({ source: 'worksheet', itemId: 'WS-U4L1-Q1', response: { answer: 'second' } });
+    expect(ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4L1-Q1|1`).response).toEqual({ answer: 'second' });
+  });
+
   it('FRQ floor: a first-ever null then a first grade records normally', async () => {
     await record({ source: 'frq', itemId: 'WS-U4L1-reflect1', response: 'draft', score: undefined });
     expect(frqRow().score).toBeNull();

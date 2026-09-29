@@ -308,7 +308,7 @@ export function mountLedger(app, {
       token,
       source,
       itemId,
-      response,
+      response: incomingResponse,
       unit,
       topic,
       skill,
@@ -317,6 +317,8 @@ export function mountLedger(app, {
       grant,
       requestGrade,
     } = req.body || {};
+    // Mutable: the quiz first-answer rule below may replace it with the stored first answer.
+    let response = incomingResponse;
 
     // Validate required fields
     if (!token) {
@@ -453,6 +455,30 @@ export function mountLedger(app, {
       } catch (_) { /* best-effort: a read failure must never block the write */ }
     }
 
+    // Quiz first-answer rule (teacher 2026-09-29): a curriculum quiz item is graded on the FIRST
+    // answer a student commits. The quiz app shows classmates' responses after that first
+    // answer and lets students revise for learning, and the grade engine scores the latest
+    // row per item — so without this rule "answer anything, read the crowd, switch" was the
+    // winning strategy. Once a row with a real response exists, later writes keep the stored
+    // response (and score); the client is told so it can say "your first answer counts".
+    let firstAnswerKept = false;
+    if (source === 'curriculum_quiz' && typeof db.getLedgerByStudent === 'function') {
+      try {
+        const attemptNo = attempt ?? 1;
+        const { data: rows } = await db.getLedgerByStudent(studentId, { prefix: itemId });
+        const existing = Array.isArray(rows)
+          ? rows.find((r) => r && r.item_id === itemId && r.source === 'curriculum_quiz' && Number(r.attempt ?? 1) === Number(attemptNo))
+          : null;
+        const storedResponse = existing ? existing.response : null;
+        const hasStored = storedResponse !== null && storedResponse !== undefined && String(storedResponse).trim() !== '';
+        if (hasStored) {
+          response = storedResponse;
+          effectiveScore = (existing.score === null || existing.score === undefined) ? effectiveScore : existing.score;
+          firstAnswerKept = true;
+        }
+      } catch (_) { /* best-effort: a read failure must never block the write */ }
+    }
+
     // Derive evidence_tier server-side (decision L-C).
     // Any client-supplied evidenceTier in the body is IGNORED.
     const proctorSecret = process.env.ROSTER_PROCTOR_SECRET;
@@ -485,7 +511,8 @@ export function mountLedger(app, {
     const body = {
       ok: true,
       ledgerId:     data.ledger_id,
-      evidenceTier: data.evidence_tier
+      evidenceTier: data.evidence_tier,
+      ...(firstAnswerKept ? { firstAnswerKept: true } : {})
     };
     const username = await resolveReceiptUsername(resolveUsername, studentId);
     const receipt = issueLedgerReceipt({
