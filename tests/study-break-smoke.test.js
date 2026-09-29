@@ -202,37 +202,17 @@ describe('1v1 series', () => {
     expect(sb.board[23].filter(Boolean).length).toBe(9);   // one hole
     frames(sb, 20);
     sb.draw();
-    // game 1: opponent tops out first → I win
+    // ONE game decides it (teacher 2026-09-28): opponent tops out first → I win, match over, no game 2
     sb.opponentKO(120, 'room-1');
     expect(sb.state).toBe('gameover');
     sb.draw();                          // card → scores the game
     expect(sb.mpState.myWins).toBe(1);
     expect(sb.mpState.gameNumber).toBe(1);
-    vi.advanceTimersByTime(3100);       // auto-advance
-    expect(sb.state).toBe('running');
-    expect(sb.mpState.gameNumber).toBe(2);
-    // game 2: I top out; the opponent's KO crosses within 1500ms with a HIGHER score → I lose game 2
-    sb.score = 10;
-    sb._endGame('Top out');
-    sb.draw();
-    expect(sb.mpState.gameScored).toBe(false);   // deferred
-    sb.opponentKO(999, 'room-1');
-    sb.draw();
-    expect(sb.mpState.gameScored).toBe(true);
-    expect(sb.mpState.oppWins).toBe(1);
-    expect(sb.mpState.myWins).toBe(1);
-    vi.advanceTimersByTime(3100);
-    expect(sb.mpState.gameNumber).toBe(3);
-    // game 3: a plain self top-out with no crossing KO counts after the window
-    sb._endGame('Stack jammed');
-    sb.draw();
-    expect(sb.mpState.gameScored).toBe(false);
-    vi.advanceTimersByTime(1600);
-    sb.draw();
-    expect(sb.mpState.gameScored).toBe(true);
     expect(sb.mpState.seriesOver).toBe(true);
-    expect(sb.mpState.oppWins).toBe(2);
-    sb.draw();                          // series card
+    vi.advanceTimersByTime(3100);       // no auto-advance any more
+    expect(sb.state).toBe('gameover');
+    expect(sb.mpState.gameNumber).toBe(1);
+    sb.draw();                          // verdict card
     expect(document.getElementById('game-help').textContent).toMatch(/R = rematch/);
     sb.opponentLeft('quit');            // late leave: ignored
     expect(sb.mpState._forfeit).toBe(false);
@@ -255,7 +235,7 @@ describe('1v1 series', () => {
     expect(sb.isOpen()).toBe(false);
     expect(globalThis.__errors).toEqual([]);
   });
-  it('review: R inside the cross-KO window counts the loss before advancing; Esc in the 3s gap needs a second press', () => {
+  it('review: R inside the cross-KO window counts the loss first; with one game that loss IS the verdict', () => {
     const sb = window.studyBreak;
     sb.open(); sb.mode = '1v1';
     sb.startMatch({ roomId: 'room-3', opponent: 'Bob', side: 'left' });
@@ -266,12 +246,10 @@ describe('1v1 series', () => {
     expect(sb.mpState.gameScored).toBe(false);
     key('r');                               // "R to skip" — must count the loss first
     expect(sb.mpState.oppWins).toBe(1);
-    expect(sb.mpState.gameNumber).toBe(2);
-    expect(sb.state).toBe('running');
-    sb._endGame('Top out');
-    key('Escape');                          // undecided series, game-over gap: first Esc only arms
-    expect(sb.isOpen()).toBe(true);
-    key('Escape');
+    expect(sb.mpState.seriesOver).toBe(true);
+    expect(sb.mpState.gameNumber).toBe(1);  // decided → no second game
+    expect(sb.state).toBe('gameover');
+    key('Escape');                          // decided match: Esc closes at once
     expect(sb.isOpen()).toBe(false);
     expect(globalThis.__errors).toEqual([]);
   });

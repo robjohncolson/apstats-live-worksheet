@@ -2659,7 +2659,7 @@
             </div>
             <div class="game-lobby" id="game-lobby" style="display:none;padding:12px;min-height:240px">
                 <div class="chicago" style="font-size:12px;text-align:center;margin-bottom:4px">Challenge a Classmate</div>
-                <div id="lobby-casino" style="text-align:center;font-size:9px;color:var(--plat-lo);margin-bottom:8px">Best of 3 · winner takes 2 🍬, loser pays 1</div>
+                <div id="lobby-casino" style="text-align:center;font-size:9px;color:var(--plat-lo);margin-bottom:8px">One game · winner takes 2 🍬, loser pays 1</div>
                 <div id="lobby-players" style="max-height:180px;overflow-y:auto"></div>
                 <div id="lobby-status" style="text-align:center;font-size:10px;margin-top:8px;color:var(--plat-lo)">Connecting...</div>
                 <div style="text-align:center;margin-top:8px">
@@ -22358,7 +22358,7 @@ const studyBreak = {
         SFX.play('sosumi', 0.5);
         document.body.classList.add('challenge-waiting');   // STUDY_BREAK_CHALLENGE_ALERT_SPEC §3
         const dialog = document.getElementById('challenge-dialog');
-        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · 1 candy at stake, winner takes 2 🍬)';
+        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (one game · 1 candy at stake, winner takes 2 🍬)';
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-modal', 'true');
         dialog.style.display = 'block';
@@ -22553,6 +22553,9 @@ const studyBreak = {
     // opponent keeps stamping us "alive". If THEIR traffic stops for OPPONENT_TIMEOUT_MS while a
     // game is running, treat it as opponentLeft('timeout') — you win by forfeit, the bet refunds
     // via the server (they never confirm), mirroring the accepted rage-quit semantics.
+    // Games a player must win to take the match. 1 = a single game, then the verdict.
+    WINS_TO_TAKE: 1,
+
     _startHeartbeat() {
         this._stopHeartbeat();
         if (!this.mpState) return;
@@ -22964,7 +22967,10 @@ const studyBreak = {
         if (!ms._wonThisGame && !ms._forfeit && ms.gameOverAt && (Date.now() - ms.gameOverAt) < 1500) return;
         ms.gameScored = true;
         if (ms._wonThisGame) ms.myWins = (ms.myWins || 0) + 1; else ms.oppWins = (ms.oppWins || 0) + 1;
-        if (ms.myWins >= 2 || ms.oppWins >= 2 || ms._forfeit) {
+        // ONE game decides the match (teacher 2026-09-28: best-of-3 was beyond most people's patience).
+        // The series machinery (wins, gameNumber, escrow-per-roomId) is kept; only the finish line moved.
+        const winsToTake = this.WINS_TO_TAKE || 1;
+        if (ms.myWins >= winsToTake || ms.oppWins >= winsToTake || ms._forfeit) {
             ms.seriesOver = true;
             this._studyBreakResolveStakes();
             if (typeof this.updateHud === 'function') this.updateHud();   // help line: 'R = rematch · Esc = exit'
@@ -24149,13 +24155,13 @@ const studyBreak = {
         else if (flashText.includes('fled!')) { title = 'YOU WIN!'; detail = flashText.replace(/Opponent fled! You win! ?/, ''); }
         else if (flashText.includes('disconnected')) { title = 'DISCONNECTED'; detail = flashText; }
         else { detail = flashText; }
-        // Best-of-3 series line + the candy/next-game status (STUDY_BREAK_STAKES_SPEC Phase 2).
+        // One game decides it: the verdict line + the candy status (STUDY_BREAK_STAKES_SPEC Phase 2, amended 2026-09-28).
         let seriesLine = '', statusLine = '';
         if (ms) {
-            seriesLine = `Best of 3 — you ${ms.myWins || 0} : ${ms.oppWins || 0} ${String(ms.opponent || 'opp').slice(0, 10)}`;
+            seriesLine = `One game \u00b7 you vs ${String(ms.opponent || 'opp').slice(0, 10)}`;
             if (ms.seriesOver) {
                 const won = (ms.myWins || 0) > (ms.oppWins || 0);
-                title = won ? 'SERIES WON!' : 'SERIES LOST';
+                title = won ? 'YOU WIN!' : 'YOU LOSE';
                 if (ms.candyOutcome === '+1') statusLine = '🍬 +1 candy to your wallet!';
                 else if (ms.candyOutcome === '-1') statusLine = '🍬 −1 candy (you lost the bet)';
                 else if (ms.candyOutcome === 'refunded') statusLine = 'bet refunded — no agreement';
@@ -25988,7 +25994,7 @@ const DogePresence = {
             `<div class="challenge-title">Challenge!</div>` +
             `<img class="challenge-doge" src="Doge-Asset.png" alt="">` +
             `<div class="challenge-who">${_deskEsc(this.incomingChallenge.from)} wants to play<br>Study Break!</div>` +
-            `<div class="challenge-stake">best of 3 \u00b7 1 candy at stake, winner takes 2 \ud83c\udf6c</div>` +
+            `<div class="challenge-stake">one game \u00b7 1 candy at stake, winner takes 2 \ud83c\udf6c</div>` +
             `<div class="challenge-timer" id="challenge-countdown">${this.incomingChallenge.countdown}s</div>` +
             `<div class="challenge-btns">` +
             `<button type="button" class="btn-decline" onclick="DogePresence.declineChallenge()">NO</button>` +
@@ -27410,7 +27416,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-29-xqet';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-29-j11c';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

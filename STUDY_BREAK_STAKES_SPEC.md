@@ -174,3 +174,11 @@ real extracted methods + source-pins the hooks; root suite green except the 6 pr
 
 **Live now** (migration `0024` is run): a staked best-of-3 fires whenever two signed-in classmates with ≥1 candy
 play 1v1; everyone else plays free. `STAKES_ENABLED=false` on Railway is the kill-switch.
+
+## Amendment 2026-09-28 — ONE game decides the match
+
+Teacher: "best of three is beyond the patience of most people — one game, then the verdict." `studyBreak.WINS_TO_TAKE = 1`
+is the finish line in `_studyBreakScoreGameOnce`; the series machinery (myWins/oppWins, gameNumber, one escrow per
+roomId, forfeit rules, rematch = fresh challenge) is unchanged, so a longer series is one constant away. The auto-advance
+branch is unreachable at 1. Wording on the lobby, both challenge dialogs and the game-over card ("YOU WIN!" / "YOU LOSE",
+"One game · you vs <opp>") says one game. Stakes unchanged: 1 candy, winner takes 2.

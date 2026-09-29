@@ -47,23 +47,37 @@ const freshMs = (p = {}) => ({ myWins: 0, oppWins: 0, gameNumber: 1, gameScored:
 beforeEach(() => { vi.useFakeTimers(); });
 
 describe('best-of-3 counting (_studyBreakScoreGameOnce)', () => {
-  it('a won game increments myWins; a lost game increments oppWins', () => {
+  it('a won game increments myWins; a lost game increments oppWins (and either one decides the match)', () => {
     const won = freshMs({ _wonThisGame: true }); scoreGame.call(mkThis(won));
-    expect(won.myWins).toBe(1); expect(won.seriesOver).toBe(false); expect(won.gameScored).toBe(true);
+    expect(won.myWins).toBe(1); expect(won.seriesOver).toBe(true); expect(won.gameScored).toBe(true);
     const lost = freshMs({ _wonThisGame: false }); scoreGame.call(mkThis(lost));
-    expect(lost.oppWins).toBe(1); expect(lost.seriesOver).toBe(false);
+    expect(lost.oppWins).toBe(1); expect(lost.seriesOver).toBe(true);
   });
   it('counts a game only ONCE (gameScored guard) even if drawn repeatedly', () => {
     const ms = freshMs({ _wonThisGame: true }); const t = mkThis(ms);
     scoreGame.call(t); scoreGame.call(t); scoreGame.call(t);
     expect(ms.myWins).toBe(1);
   });
-  it('the series ENDS + resolves at 2 wins', () => {
+  it('ONE game decides it: the first win ends the match + resolves (teacher 2026-09-28)', () => {
     const log = [];
-    const ms = freshMs({ myWins: 1, _wonThisGame: true });
+    const ms = freshMs({ _wonThisGame: true });
     scoreGame.call(mkThis(ms, log));
-    expect(ms.myWins).toBe(2); expect(ms.seriesOver).toBe(true);
+    expect(ms.myWins).toBe(1); expect(ms.seriesOver).toBe(true);
     expect(log).toContain('resolved');
+  });
+  it('a lost first game ends it too — no auto-advance to a second game', () => {
+    const log = [];
+    const ms = freshMs({ _wonThisGame: false });
+    const t = mkThis(ms, log); const spy = vi.fn(); t.startNewGame = spy;
+    scoreGame.call(t);
+    expect(ms.oppWins).toBe(1); expect(ms.seriesOver).toBe(true);
+    expect(log).toContain('resolved');
+    vi.advanceTimersByTime(5000);
+    expect(spy).not.toHaveBeenCalled();
+  });
+  it('the finish line is the WINS_TO_TAKE constant, and it is 1', () => {
+    expect(html).toMatch(/WINS_TO_TAKE: 1,/);
+    expect(html).toMatch(/const winsToTake = this\.WINS_TO_TAKE \|\| 1;/);
   });
   it('a forfeit ends the series immediately (even at 0-0)', () => {
     const log = [];
@@ -77,9 +91,9 @@ describe('best-of-3 counting (_studyBreakScoreGameOnce)', () => {
     scoreGame.call(t);
     expect(ms.myWins).toBe(0); expect(ms.gameScored).toBe(false);
   });
-  it('an unfinished series schedules an auto-advance to the next game', () => {
+  it('the auto-advance path only fires while the match is undecided (unreachable at WINS_TO_TAKE 1, kept for a longer series)', () => {
     const ms = freshMs({ _wonThisGame: true });
-    const t = mkThis(ms); const spy = vi.fn(); t.startNewGame = spy;
+    const t = mkThis(ms); const spy = vi.fn(); t.startNewGame = spy; t.WINS_TO_TAKE = 2;
     scoreGame.call(t);
     expect(ms.seriesOver).toBe(false);
     vi.advanceTimersByTime(3001);
