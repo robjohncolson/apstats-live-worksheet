@@ -1568,48 +1568,78 @@
             z-index: 101;
             pointer-events: none;
         }
+        /* STUDY_BREAK_CHALLENGE_ALERT_SPEC: an incoming challenge is impossible to miss.
+           The whole desk breathes doge-gold while one is waiting, and the panel is a big
+           centered System 7 dialog with two large buttons (not a corner popover). */
+        @keyframes challenge-breathe {
+            0%, 100% { background-color: var(--desk-bg); }
+            50% { background-color: #C9A227; }
+        }
+        body.challenge-waiting { animation: challenge-breathe 1.4s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+            body.challenge-waiting { animation: none; background-color: #A8862A; }
+        }
         .doge-challenge-panel {
             display: none;
-            position: absolute;
-            top: 20px;
-            right: 0;
-            background: var(--white);
-            border: 1px solid var(--black);
-            box-shadow: 2px 2px 0 var(--black);
-            min-width: 200px;
-            z-index: 101;
-            padding: 8px 12px;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(360px, calc(100vw - 32px));
+            background: var(--platinum);
+            border: 2px solid var(--black);
+            box-shadow: 4px 4px 0 var(--black);
+            z-index: 700;
+            padding: 0 0 14px;
             font-family: Geneva, Arial, sans-serif;
-            font-size: 11px;
+            font-size: 13px;
+            text-align: center;
+            cursor: default;
         }
         .doge-challenge-panel .challenge-title {
             font-family: Chicago, Arial, sans-serif;
-            font-size: 11px;
+            font-size: 14px;
             font-weight: bold;
-            margin-bottom: 4px;
+            background: var(--white);
+            border-bottom: 2px solid var(--black);
+            padding: 6px 10px;
+            margin-bottom: 12px;
         }
+        .doge-challenge-panel .challenge-doge {
+            width: 64px;
+            height: 64px;
+            image-rendering: pixelated;
+            display: block;
+            margin: 0 auto 8px;
+            animation: doge-wiggle 0.6s infinite;
+        }
+        @media (prefers-reduced-motion: reduce) { .doge-challenge-panel .challenge-doge { animation: none; } }
+        .doge-challenge-panel .challenge-who { font-family: Chicago, Arial, sans-serif; font-size: 15px; padding: 0 12px; }
+        .doge-challenge-panel .challenge-stake { font-size: 11px; color: #333; margin-top: 4px; }
         .doge-challenge-panel .challenge-timer {
-            float: right;
-            color: var(--plat-lo);
-            font-size: 10px;
+            font-family: Chicago, Arial, sans-serif;
+            font-size: 26px;
+            margin: 10px 0 4px;
         }
         .doge-challenge-panel .challenge-btns {
+            display: flex;
+            gap: 10px;
+            padding: 0 14px;
             margin-top: 8px;
-            text-align: right;
         }
         .doge-challenge-panel .challenge-btns button {
+            flex: 1;
+            min-height: 44px;
             font-family: Chicago, Arial, sans-serif;
-            font-size: 10px;
-            margin-left: 6px;
-            padding: 2px 10px;
+            font-size: 15px;
             cursor: pointer;
             background: var(--platinum);
-            border: 1px solid var(--black);
-            box-shadow: 1px 1px 0 var(--black);
+            border: 2px solid var(--black);
+            box-shadow: 2px 2px 0 var(--black);
         }
         .doge-challenge-panel .challenge-btns button:active {
             box-shadow: none;
-            transform: translate(1px, 1px);
+            transform: translate(2px, 2px);
         }
         .doge-challenge-panel .challenge-btns .btn-accept {
             background: var(--black);
@@ -22326,6 +22356,7 @@ const studyBreak = {
             return;
         }
         SFX.play('sosumi', 0.5);
+        document.body.classList.add('challenge-waiting');   // STUDY_BREAK_CHALLENGE_ALERT_SPEC §3
         const dialog = document.getElementById('challenge-dialog');
         document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · 1 candy at stake, winner takes 2 🍬)';
         dialog.setAttribute('role', 'dialog');
@@ -22347,6 +22378,7 @@ const studyBreak = {
             clearInterval(this.mpChallengeTimer); this.mpChallengeTimer = null;
             this.pendingChallenger = null;
             dialog.style.display = 'none';
+            document.body.classList.remove('challenge-waiting');
             reply(type);
         };
         document.getElementById('challenge-accept-btn').onclick = () => finish('challenge_accept');
@@ -22364,6 +22396,7 @@ const studyBreak = {
         if (!from) return;
         this.pendingChallenger = null;
         if (this.mpChallengeTimer) { clearInterval(this.mpChallengeTimer); this.mpChallengeTimer = null; }
+        document.body.classList.remove('challenge-waiting');
         const ws = this._liveWs();
         if (ws) { try { ws.send(JSON.stringify({ type: 'challenge_decline', from })); } catch (_) {} }
     },
@@ -25911,18 +25944,26 @@ const DogePresence = {
         }, 30000);
     },
 
+    // STUDY_BREAK_CHALLENGE_ALERT_SPEC §1-2: the alert used to be a sound + an icon wiggle that
+    // the student had to CLICK to see Accept, and it expired silently — every classroom attempt
+    // "timed out". Now the dialog opens by itself, the desk breathes gold, the tab title flips,
+    // and expiry sends a real decline (25s beats the relay's 30s sweep).
+    CHALLENGE_SECONDS: 25,
+    _challengeTitleBefore: null,
+
     onChallengeReceived(from) {
         MacSFX.play('sosumi', 0.5);
         const el = document.getElementById('doge-presence');
         el.classList.add('doge-wiggle');
         el.classList.remove('doge-dim');
 
+        if (this.incomingChallenge && this.incomingChallenge.timer) clearInterval(this.incomingChallenge.timer);
         this.incomingChallenge = {
             from: from,
-            countdown: 30,
+            countdown: this.CHALLENGE_SECONDS,
             timer: setInterval(() => {
+                if (!this.incomingChallenge) return;
                 this.incomingChallenge.countdown--;
-                // Update panel if visible
                 const timerEl = document.getElementById('challenge-countdown');
                 if (timerEl) timerEl.textContent = this.incomingChallenge.countdown + 's';
                 if (this.incomingChallenge.countdown <= 0) {
@@ -25930,6 +25971,10 @@ const DogePresence = {
                 }
             }, 1000)
         };
+        document.body.classList.add('challenge-waiting');
+        if (this._challengeTitleBefore == null) this._challengeTitleBefore = document.title;
+        document.title = '\ud83d\udc15 Challenge! \u2014 ' + this._challengeTitleBefore;
+        this.showChallengePanel();
         // ICON_MOTION -- light up the desktop game icon's challenge throb
         // (clearIncomingChallenge() already calls updateIcon() to remove it).
         this.updateIcon();
@@ -25940,31 +25985,39 @@ const DogePresence = {
         if (!this.incomingChallenge) return;
         const panel = document.getElementById('doge-challenge-panel');
         panel.innerHTML =
-            `<div class="challenge-title">&#128021; Challenge!</div>` +
-            `<div>${_deskEsc(this.incomingChallenge.from)} wants to play<br>Study Break!</div>` +
-            `<div style="font-size:9px;margin-top:2px">best of 3 \u00b7 1 candy at stake, winner takes 2 \ud83c\udf6c</div>` +
+            `<div class="challenge-title">Challenge!</div>` +
+            `<img class="challenge-doge" src="Doge-Asset.png" alt="">` +
+            `<div class="challenge-who">${_deskEsc(this.incomingChallenge.from)} wants to play<br>Study Break!</div>` +
+            `<div class="challenge-stake">best of 3 \u00b7 1 candy at stake, winner takes 2 \ud83c\udf6c</div>` +
             `<div class="challenge-timer" id="challenge-countdown">${this.incomingChallenge.countdown}s</div>` +
             `<div class="challenge-btns">` +
-            `<button onclick="DogePresence.declineChallenge()">Decline</button>` +
-            `<button class="btn-accept" onclick="DogePresence.acceptChallenge()">Accept &#9656;</button>` +
-            `</div>`;
+            `<button type="button" class="btn-decline" onclick="DogePresence.declineChallenge()">NO</button>` +
+            `<button type="button" class="btn-accept" onclick="DogePresence.acceptChallenge()">YES, PLAY &#9656;</button>` +
+            `</div>` +
+            `<div class="challenge-stake">Enter = yes \u00b7 Esc = no</div>`;
+        // The panel lives inside #doge-presence (onclick=toggle): stop clicks from re-toggling the menu.
+        panel.onclick = (e) => { e.stopPropagation(); };
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.setAttribute('aria-label', this.incomingChallenge.from + ' wants to play Study Break');
         panel.style.display = 'block';
+        try { const yes = panel.querySelector('.btn-accept'); if (yes) yes.focus(); } catch (_) {}
     },
 
     acceptChallenge() {
         if (!this.incomingChallenge || !this.ws) return;
         this.ws.send(JSON.stringify({ type: 'challenge_accept', from: this.incomingChallenge.from }));
         this.clearIncomingChallenge();
-        document.getElementById('doge-challenge-panel').style.display = 'none';
     },
 
+    // Always tells the challenger. `timeout` is kept for callers; expiry now declines out loud
+    // so the other side sees "declined (timed out)" instead of a dead half-minute.
     declineChallenge(timeout) {
-        if (!this.incomingChallenge || !this.ws) return;
-        if (!timeout) {
-            this.ws.send(JSON.stringify({ type: 'challenge_decline', from: this.incomingChallenge.from }));
+        if (!this.incomingChallenge) return;
+        if (this.ws && this.ws.readyState === 1) {
+            try { this.ws.send(JSON.stringify({ type: 'challenge_decline', from: this.incomingChallenge.from })); } catch (_) {}
         }
         this.clearIncomingChallenge();
-        document.getElementById('doge-challenge-panel').style.display = 'none';
     },
 
     clearIncomingChallenge() {
@@ -25973,7 +26026,11 @@ const DogePresence = {
         }
         this.incomingChallenge = null;
         const el = document.getElementById('doge-presence');
-        el.classList.remove('doge-wiggle');
+        if (el) el.classList.remove('doge-wiggle');
+        const panel = document.getElementById('doge-challenge-panel');
+        if (panel) panel.style.display = 'none';
+        document.body.classList.remove('challenge-waiting');
+        if (this._challengeTitleBefore != null) { document.title = this._challengeTitleBefore; this._challengeTitleBefore = null; }
         this.updateIcon();
     },
 
@@ -26124,6 +26181,16 @@ function _escCloseTopModal() {
 }
 try { window._escCloseTopModal = _escCloseTopModal; } catch (_) {}
 
+// STUDY_BREAK_CHALLENGE_ALERT_SPEC §1: Enter = YES while a challenge dialog is up (and no field has focus).
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || !DogePresence.incomingChallenge) return;
+    var t = e.target;
+    var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    if (typing) return;
+    e.preventDefault();
+    DogePresence.acceptChallenge();
+});
+
 // Close doge dropdown & app overlays on Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -26136,7 +26203,10 @@ document.addEventListener('keydown', (e) => {
         }
         if (DogePresence.dropdownOpen) DogePresence.closeDropdown();
         if (DogePresence.incomingChallenge) {
-            document.getElementById('doge-challenge-panel').style.display = 'none';
+            // STUDY_BREAK_CHALLENGE_ALERT_SPEC §1: Escape = NO (a real decline, not just hiding the dialog).
+            DogePresence.declineChallenge();
+            e.preventDefault();
+            return;
         }
         // Study Break owns Escape while it is open (it closes itself); don't also tear down an app
         // window (TI-84 / quiz / wallet) sitting under the game.
