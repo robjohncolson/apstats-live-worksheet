@@ -491,12 +491,15 @@ export function mountLedger(app, {
     //     (the response text still updates — drafts keep flowing);
     //   - a lower incoming score never replaces a higher stored one.
     // Grade math is untouched (this only decides what the row holds).
-    if (source === 'frq' && typeof db.getLedgerByStudent === 'function') {
+    // Same floor for 'quiz_review' (QUIZ_AI_HALF_CREDIT_SPEC, 2026-09-29): the appeal and the
+    // "Talk it through" conversation both write `<item>#rev`, so a later 1/2 grant must never
+    // replace an earlier 2/3 or 1 (the signed grant decides the incoming score above).
+    if ((source === 'frq' || source === 'quiz_review') && typeof db.getLedgerByStudent === 'function') {
       try {
         const attemptNo = attempt ?? 1;
         const { data: rows } = await db.getLedgerByStudent(studentId, { prefix: itemId });
         const existing = Array.isArray(rows)
-          ? rows.find((r) => r && r.item_id === itemId && r.source === 'frq' && Number(r.attempt ?? 1) === Number(attemptNo))
+          ? rows.find((r) => r && r.item_id === itemId && r.source === source && Number(r.attempt ?? 1) === Number(attemptNo))
           : null;
         const stored = existing && existing.score !== null && existing.score !== undefined ? Number(existing.score) : null;
         if (stored !== null && Number.isFinite(stored)) {

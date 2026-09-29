@@ -570,6 +570,23 @@ describe('POST /ledger/record', () => {
     expect(rows[0].score).toBe(1 / 3);
   });
 
+  // quiz_review durable floor (QUIZ_AI_HALF_CREDIT_SPEC): the appeal and "Talk it through" share
+  // the '#rev' item — a lower grant never replaces a higher stored credit; the text still updates.
+  it('quiz_review floor: a later lower grant never lowers the stored credit; a higher one raises', async () => {
+    const rev = () => [...ledgerDb.store.values()].find(r => r.source === 'quiz_review' && r.item_id === 'U4-L3-Q01#rev');
+    let r = await record({ source: 'quiz_review', itemId: 'U4-L3-Q01#rev', response: 'appeal', grant: makeReviewGrant({ credit: 2 / 3 }) });
+    expect(r.status).toBe(200);
+    r = await record({ source: 'quiz_review', itemId: 'U4-L3-Q01#rev', response: 'talk', grant: makeReviewGrant({ credit: 0.5 }) });
+    expect(r.status).toBe(200);
+    expect(rev().score).toBe(2 / 3);
+    expect(rev().response).toBe('talk');
+    r = await record({ source: 'quiz_review', itemId: 'U4-L3-Q01#rev', response: 'flawed', grant: makeReviewGrant({ credit: 1 }) });
+    expect(rev().score).toBe(1);
+    r = await record({ source: 'quiz_review', itemId: 'U4-L3-Q01#rev', response: 'zero', grant: makeReviewGrant({ credit: 0 }) });
+    expect(r.status).toBe(200);
+    expect(rev().score).toBe(1);
+  });
+
   it('quiz_review ignores a client-supplied score when a valid grant is present', async () => {
     const grant = makeReviewGrant({ credit: 2 / 3 });
     const { status } = await record({
