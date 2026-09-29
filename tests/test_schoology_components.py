@@ -254,6 +254,51 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         doc["students"][0]["section"] = "PeriodE"
         self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-09-22"), {})
 
+    def test_quiz_zero_starts_on_quiz_zeros_from_and_follows_the_lag(self):
+        # teacher 2026-09-29: quiz columns get the same lagged zero, from the run on
+        # QUIZ_ZEROS_FROM (2026-10-02) on; before that date quiz cells are untouched.
+        self.assertEqual(sc.QUIZ_ZEROS_FROM, "2026-10-02")
+        doc = {"students": [{
+            "studentId": "s9", "schoologyUid": "u9", "section": "PeriodB",
+            "lessons": [
+                {"lessonKey": "1.2", "unit": 1, "worksheetKey": "2", "lessonGradeNoQuiz": 80, "Cws": 80,
+                 "Q": None, "quizTotal": 3, "blooket": 90, "hasBlooket": True,
+                 "zeroDate": {"B": "2026-09-23", "E": "2026-09-24"}},
+                {"lessonKey": "1.3", "unit": 1, "worksheetKey": "3", "lessonGradeNoQuiz": 70, "Cws": 70,
+                 "Q": 66.7, "quizTotal": 3, "blooket": 80, "hasBlooket": True,
+                 "zeroDate": {"B": "2026-09-24", "E": "2026-09-27"}},
+                {"lessonKey": "1.9", "unit": 1, "worksheetKey": "9", "lessonGradeNoQuiz": None, "Cws": None,
+                 "Q": None, "quizTotal": 3, "blooket": None, "hasBlooket": True,
+                 "zeroDate": {"B": "2026-10-08", "E": "2026-10-08"}},
+                {"lessonKey": "1.1", "unit": 1, "worksheetKey": "1", "lessonGradeNoQuiz": 100, "Cws": 100,
+                 "Q": None, "quizTotal": 0, "blooket": 100, "hasBlooket": True,
+                 "zeroDate": {"B": "2026-09-21", "E": "2026-09-22"}},
+            ], "units": {}}]}
+        q12 = f"u9/{sc.quiz_key('1.2')}"
+        # the day before the start date: the untaken 1.2 quiz stays blank
+        self.assertNotIn(q12, sc.component_grades_from_class_doc(doc, today="2026-10-01"))
+        out = sc.component_grades_from_class_doc(doc, today="2026-10-02")
+        self.assertEqual(out[q12], 0)                                  # untaken, past its zero date -> 0
+        self.assertEqual(out[f"u9/{sc.quiz_key('1.3')}"], 66.7)        # a taken quiz keeps its score
+        self.assertNotIn(f"u9/{sc.quiz_key('1.9')}", out)              # not past its zero date yet
+        self.assertNotIn(f"u9/{sc.quiz_key('1.1')}", out)              # quizTotal 0 -> no quiz column
+        # the lag is per period: E's 1.2 zero date is 09-24, still passed on 10-02
+        doc["students"][0]["section"] = "PeriodE"
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-10-02")[q12], 0)
+        # 1.9 turns into a 0 after ITS zero date
+        self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-10-09")[f"u9/{sc.quiz_key('1.9')}"], 0)
+
+    def test_quiz_zeros_from_can_be_moved_for_a_preview(self):
+        doc = {"students": [{"studentId": "s9", "schoologyUid": "u9", "section": "PeriodB", "lessons": [
+            {"lessonKey": "1.2", "unit": 1, "worksheetKey": "2", "lessonGradeNoQuiz": 80,
+             "Q": None, "quizTotal": 3, "hasBlooket": False, "zeroDate": {"B": "2026-09-23"}}], "units": {}}]}
+        saved = sc.QUIZ_ZEROS_FROM
+        try:
+            sc.QUIZ_ZEROS_FROM = "2026-09-30"
+            self.assertEqual(sc.component_grades_from_class_doc(doc, today="2026-09-30")[f"u9/{sc.quiz_key('1.2')}"], 0)
+        finally:
+            sc.QUIZ_ZEROS_FROM = saved
+
     def test_emits_pc_from_units_and_skips_poster(self):
         # PC <- units[U#].pcRawPct (the unit mastery track). Poster has no data
         # source yet, so it is never emitted (parity with gradebook-grid.js).
@@ -319,7 +364,7 @@ class TestComponentComments(unittest.TestCase):
     def test_exact_worksheet_and_blooket_messages(self):
         out = sc.component_comments_from_class_doc(self.doc, today="2026-09-21")
         self.assertEqual(out, {
-            "u1/FA:1.2": "Not a permanent 0. Missing: 1.2 worksheet. Finish it on the Desk (My Ledger \u2192 Missing work) and this grade updates at the next sync.",
+            "u1/FA:1.2": "Not a permanent 0. Missing: 1.2 worksheet. Finish it on the Desk (it is listed first in My Ledger) and this grade updates at the next sync.",
             "u1/BL:1.2": "Not a permanent 0. Missing: 1.2 flashcards (Desk \u2192 Study Break or the lesson's Blooket). Finish it and this grade updates at the next sync.",
         })
 
@@ -332,6 +377,31 @@ class TestComponentComments(unittest.TestCase):
         out = sc.component_comments_from_class_doc(self.doc, today="2026-09-21")
         self.assertEqual(out["u1/QUIZ:1.2"], "")
         self.assertNotIn("quiz is also", out["u1/FA:1.2"])
+
+    def test_quiz_zero_has_its_own_message_once_quiz_zeros_start(self):
+        self.lesson["quizTotal"] = 3
+        out = sc.component_comments_from_class_doc(self.doc, today="2026-10-02")
+        self.assertEqual(out["u1/QUIZ:1.2"],
+                         "Not a permanent 0. Missing: 1.2 quiz. Take it on the Desk (it is listed first in My Ledger) and this grade updates at the next sync.")
+        # the worksheet/flashcard messages no longer carry the "quiz is also unfinished" suffix
+        self.assertNotIn("quiz is also", out["u1/FA:1.2"])
+        self.assertNotIn("quiz is also", out["u1/BL:1.2"])
+        # a taken quiz (even a 0 score) is never labelled missing
+        self.lesson["Q"] = 0
+        out = sc.component_comments_from_class_doc(self.doc, today="2026-10-02")
+        self.assertEqual(out["u1/QUIZ:1.2"], "")
+
+    def test_range_labels_get_comments(self):
+        self.lesson.update({"lessonKey": "1.3-1.4", "worksheetKey": "3-4", "quizTotal": 3})
+        out = sc.component_comments_from_class_doc(self.doc, today="2026-10-02")
+        self.assertTrue(out["u1/QUIZ:1.3-1.4"].startswith("Not a permanent 0. Missing: 1.3-1.4 quiz."))
+        self.assertTrue(out["u1/FA:1.3-4"].startswith("Not a permanent 0. Missing: 1.3-1.4 worksheet."))
+
+    def test_quiz_zeros_from_override_is_validated(self):
+        self.assertEqual(sc._valid_iso_date("2026-10-02"), "2026-10-02")
+        self.assertEqual(sc._valid_iso_date(" 2026-10-02 "), "2026-10-02")
+        for bad in ("", " ", "2026-13-01", "2026-10-2", "tomorrow", None):
+            self.assertIsNone(sc._valid_iso_date(bad))
 
     def test_not_due_has_no_touched_cells(self):
         self.assertEqual(sc.component_comments_from_class_doc(self.doc, today="2026-09-20"), {})

@@ -1156,6 +1156,22 @@ class TestGradeCellComments(unittest.TestCase):
         self.ops.write_cell_comment.assert_called_once()
         self.assertEqual(self.ops.write_cell_comment.call_args.args[1:3], ("col1", 2))
 
+    def test_an_earned_zero_clears_a_stale_sync_note(self):
+        # The student did the work and scored 0: the text is "", the grade is unchanged (0 -> 0),
+        # and our old "Not a permanent 0" note must go. The writer's clear path only ever removes
+        # a comment that starts with the sync prefix, so teacher comments stay (Codex 2026-09-29).
+        self.state.set_last_synced("S1", "FA:1.2", 0)
+        self.texts = {"S1/FA:1.2": ""}
+        self.ops.write_cell_comment.return_value = {"ok": True, "verified": True, "text": ""}
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_called_once_with(None, "col1", 2, "")
+        import contextlib
+        import io
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.push(comments=True, dry_run=True)
+        self.assertIn("would clear a stale sync note", output.getvalue())
+
     def test_clear_nonzero_and_comment_failure_not_grade_failure(self):
         self.ops.clear_cell_comment.side_effect = RuntimeError("UI unavailable")
         pushed, _, _ = self.push(90, comments=True)
@@ -1266,3 +1282,26 @@ class TestAheadScoresWaitingForAColumn(unittest.TestCase):
             quiz_topics={"6.3"}, blooket_topics=set(), through_date="2026-03-02",
         )
         self.assertEqual(summary["ahead_waiting"], [])
+
+
+class TestStableRosterRead(unittest.TestCase):
+    """_list_students_stable: re-read until two consecutive non-empty reads agree (2026-09-29)."""
+
+    def _ops(self, reads):
+        from unittest.mock import Mock
+        ops = Mock()
+        ops.list_students.side_effect = reads
+        return ops
+
+    def test_waits_for_the_late_rows(self):
+        partial = [{"studentId": "1"}, {"studentId": "2"}]
+        full = partial + [{"studentId": "3"}]
+        ops = self._ops([partial, full, full])
+        out = sync._list_students_stable(ops, None, pause_s=0)
+        self.assertEqual(sorted(s["studentId"] for s in out), ["1", "2", "3"])
+
+    def test_stops_after_the_attempt_budget(self):
+        ops = self._ops([[{"studentId": str(i)}] for i in range(10)])
+        out = sync._list_students_stable(ops, None, attempts=3, pause_s=0)
+        self.assertEqual(ops.list_students.call_count, 3)
+        self.assertEqual(len(out), 1)

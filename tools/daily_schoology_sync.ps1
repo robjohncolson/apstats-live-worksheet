@@ -71,6 +71,10 @@ $syncArgs = @(
 # schoology_sync_section.py defaults to DRY-RUN since 5c283fc5 (2026-09-26): omitting --dry-run is no longer
 # enough -- a live run must pass --apply. (9/26-9/28 daily runs silently pushed nothing.)
 if ($Live) { $syncArgs += '--apply' } else { $syncArgs += '--dry-run' }
+# Grade-cell comments on lagged zeros ("Not a permanent 0. Missing: ...") -- teacher said
+# yes 2026-09-29, alongside quiz zeros (QUIZ_ZEROS_FROM in schoology_components.py).
+# Passed on dry runs too so a preview shows the "comment: would write ..." plan.
+$syncArgs += '--comments'
 
 # Step 1 -- producer.
 Write-Log "STEP 1: build_schoology_fixture.py --section $Section --out $fixture"
@@ -82,7 +86,7 @@ if ($buildCode -ne 0) {
 }
 
 # Step 2 -- connector (dry-run unless -Live).
-Write-Log "STEP 2: schoology_sync_section.py --sync-section $Section --grades-fixture <fixture>$(if ($Live) { ' --apply' } else { ' --dry-run' })"
+Write-Log "STEP 2: schoology_sync_section.py --sync-section $Section --grades-fixture <fixture>$(if ($Live) { ' --apply' } else { ' --dry-run' }) --comments"
 & python @syncArgs 2>&1 | Tee-Object -FilePath $log -Append
 $syncCode = $LASTEXITCODE
 if ($syncCode -ne 0) {

@@ -36,6 +36,7 @@ Pure logic. stdlib only. No I/O except the small JSON loaders. ASCII only. LF.
 from __future__ import annotations
 
 import json
+import os
 import re
 
 # ---------------------------------------------------------------------------
@@ -367,6 +368,40 @@ def zero_due(lesson: dict, period, today: str | None) -> bool:
     return bool(zd) and zd < today
 
 
+# Quiz columns get the same lagged zero as Follow-Along and Blooket, starting with the
+# sync run on this date (teacher 2026-09-29: "the quizzes were just an oversight";
+# announced in class first). The in-app grade already counts an untaken due quiz as 0
+# (lesson-grade.js quizTodo) and the Desk + the Friday slips already list it as missing;
+# only Schoology left the cell blank. Override with QUIZ_ZEROS_FROM=YYYY-MM-DD for a
+# dry-run preview. Before this date nothing about quiz cells changes.
+_QUIZ_ZEROS_DEFAULT = "2026-10-02"
+
+
+def _valid_iso_date(value) -> str | None:
+    """A canonical YYYY-MM-DD string, or None (so a stray space or typo can never move the start)."""
+    text = str(value or "").strip()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
+        return None
+    try:
+        import datetime as _dt
+        return _dt.date.fromisoformat(text).isoformat()
+    except ValueError:
+        return None
+
+
+QUIZ_ZEROS_FROM = _valid_iso_date(os.environ.get("QUIZ_ZEROS_FROM")) or _QUIZ_ZEROS_DEFAULT
+
+
+def quiz_zero_due(lesson: dict, period, today: str | None) -> bool:
+    """True when an existing quiz (quizTotal > 0) was never taken (Q is None), its
+    lesson's zero date has passed, and quiz zeros have started (today >= QUIZ_ZEROS_FROM)."""
+    if not today or today < QUIZ_ZEROS_FROM:
+        return False
+    if not (lesson.get("quizTotal") or 0) > 0 or lesson.get("Q") is not None:
+        return False
+    return zero_due(lesson, period, today)
+
+
 def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
                                       today: str | None = None) -> dict:
     """Fixed messages for lagged zeros; empty strings for other emitted cells.
@@ -389,7 +424,8 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
             group = group_label(unit, wk)
             label = str(lesson.get("lessonKey") or "")
             # Only curriculum labels may enter a message, never arbitrary text.
-            valid_label = re.fullmatch(r"\d+\.\d+(?:-\d+)?", label)
+            # Accepts 1.2, 1.3-4 and full combined ranges like 1.3-1.4 (Codex review 2026-09-29).
+            valid_label = re.fullmatch(r"\d+\.\d+(?:-(?:\d+\.)?\d+)?", label)
             due = zero_due(lesson, period_of(student), today)
             worksheet = lesson.get("lessonGradeNoQuiz")
             if worksheet is None:
@@ -404,15 +440,25 @@ def component_comments_from_class_doc(doc: dict, uid_map: dict | None = None,
                     continue
                 if kind == "FA":
                     text = (f"Not a permanent 0. Missing: {label} worksheet. "
-                            "Finish it on the Desk (My Ledger \u2192 Missing work) "
+                            "Finish it on the Desk (it is listed first in My Ledger) "
                             "and this grade updates at the next sync.")
                 else:
                     text = (f"Not a permanent 0. Missing: {label} flashcards "
                             "(Desk \u2192 Study Break or the lesson's Blooket). "
                             "Finish it and this grade updates at the next sync.")
-                if (lesson.get("quizTotal") or 0) > 0 and lesson.get("Q") is None:
+                # Before quiz zeros start, the quiz cell stays blank, so mention it here.
+                if (lesson.get("quizTotal") or 0) > 0 and lesson.get("Q") is None \
+                        and not quiz_zero_due(lesson, period_of(student), today):
                     text += f" Your {label} quiz is also unfinished (it counts in the Desk grade)."
                 out[key] = text
+            # The quiz column's own lagged zero (from QUIZ_ZEROS_FROM on).
+            qkey = f"{uid}/{quiz_key(label)}" if label else None
+            if (qkey and valid_label and qkey not in emitted and grades.get(qkey) == 0
+                    and quiz_zero_due(lesson, period_of(student), today)):
+                emitted.add(qkey)
+                out[qkey] = (f"Not a permanent 0. Missing: {label} quiz. "
+                             "Take it on the Desk (it is listed first in My Ledger) "
+                             "and this grade updates at the next sync.")
     return out
 
 
@@ -461,7 +507,8 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
             # an explicit 0 in the Follow-Along column (the focusing signal).
             # 2026-09-22: the Blooket column gets the SAME lagged zero (the Desk
             # lesson gate is gone, so the zero is the only nudge left; mirrors
-            # the engine's blooketTodo). Quiz is never zeroed here. Best-wins on
+            # the engine's blooketTodo). Quiz: same rule from QUIZ_ZEROS_FROM on
+            # (quiz_zero_due). Best-wins on
             # the sync side means later work replaces the 0 and a higher hand
             # entry is kept.
             due_zero = zero_due(lesson, period, today)
@@ -472,6 +519,8 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None,
                 emitted_fa.add(label)
 
             q = lesson.get("Q")
+            if q is None and quiz_zero_due(lesson, period, today):
+                q = 0
             if q is not None and (lesson.get("quizTotal") or 0) > 0 and topic_key:
                 out[f"{uid}/{quiz_key(topic_key)}"] = q
 

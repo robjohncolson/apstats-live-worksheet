@@ -300,6 +300,26 @@ def load_schedule(path: str = SCHEDULE_PATH) -> dict:
         return json.load(f)
 
 
+def _list_students_stable(ops, cdp, *, attempts: int = 8, pause_s: float = 0.75) -> list:
+    """Read the gradebook roster once the rendered row count has settled.
+
+    The grid can still be rendering rows right after a reload; a single read then misses the
+    lower students for the WHOLE run ("Student ... not found in gradebook roster", seen
+    2026-09-26 and 2026-09-29). Re-read until two consecutive non-empty reads agree.
+    """
+    import time as _time
+    last = None
+    students = []
+    for _ in range(max(1, attempts)):
+        students = ops.list_students(cdp) or []
+        ids = sorted(str(s.get("studentId")) for s in students)
+        if ids and ids == last:
+            return students
+        last = ids
+        _time.sleep(pause_s)
+    return students
+
+
 def _load_gradebook_page(ops, cdp, course_id: str) -> None:
     """Return CDP to the gradebook after setup/create pages have navigated away."""
     ops.navigate(cdp, ops.gradebook_url(course_id))
@@ -747,12 +767,17 @@ def _push_grades(
     # from an earlier sync (so nothing was pushed today) still needs its comment. The writer
     # is idempotent (an identical published comment is a verified no-op), so this is cheap.
     if comments:
+        # Every unchanged 0: a lagged zero keeps its note; an EARNED zero (the student did the
+        # work and scored 0, so the text is "") gets our stale "Not a permanent 0" note removed.
+        # The writer only ever clears a comment that starts with the sync's prefix, so a
+        # teacher's own comment is never touched (Codex review 2026-09-29).
         unchanged_zero_keys = [key for key in list(covered) + list(actions["skip"])
-                               if targets.get(key) == 0 and (comment_texts or {}).get(f"{key[0]}/{key[1]}")]
+                               if targets.get(key) == 0 and comment_texts is not None]
         for student_id, lesson_key in unchanged_zero_keys:
             text = (comment_texts or {}).get(f"{student_id}/{lesson_key}", "")
             if dry_run:
-                print(f"  [DRY-RUN] existing 0 student={student_id} key={lesson_key} comment: would ensure {text}")
+                plan = f"would ensure {text}" if text else "would clear a stale sync note (if any)"
+                print(f"  [DRY-RUN] existing 0 student={student_id} key={lesson_key} comment: {plan}")
                 continue
             scope_item = scope_items_by_key.get(lesson_key)
             student_row = students_by_id.get(str(student_id))
@@ -763,7 +788,7 @@ def _push_grades(
             try:
                 comment_result = ops.write_cell_comment(cdp, column_key, student_row.get("rowIndex"), text) or {}
                 if comment_result.get("ok") and comment_result.get("verified"):
-                    outcome = "already set" if comment_result.get("skipped") == "already set" else "wrote"
+                    outcome = comment_result.get("skipped") or ("wrote" if text else "cleared")
                 else:
                     outcome = f"skipped({comment_result.get('reason') or 'unverified'})"
             except Exception as exc:
@@ -930,7 +955,7 @@ def sync_section(
     cats = ops.list_categories(cdp, course_id)
     mps = ops.list_marking_periods(cdp, course_id)
     _load_gradebook_page(ops, cdp, course_id)
-    students = ops.list_students(cdp)
+    students = _list_students_stable(ops, cdp)
     students_by_id = {str(s["studentId"]): s for s in students}
 
     # -- build existing-assignments map from state -------------------------
