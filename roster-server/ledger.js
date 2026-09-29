@@ -12,8 +12,20 @@ import { issueLedgerReceipt, recordReceiptPersistFailure, verifyReviewGrant } fr
 import { requireTeacher } from './teacher-auth.js';
 import { createHash } from 'node:crypto';
 import { parseServerReflectionItemId } from './frq-prompt.js';
+import { answerKeyMapOrNull, isCorrect as isKeyCorrect } from './scoring.js';
 
 let receiptPersistenceNotProvisionedLogged = false;
+
+function hasRealResponse(value) {
+  return value !== null && value !== undefined && String(value).trim() !== '';
+}
+
+// Words = whitespace-separated tokens holding at least one letter or digit (any script), so
+// '. . .' is zero words and 'porque cambié de idea' is four.
+function countWords(text) {
+  if (typeof text !== 'string') return 0;
+  return text.trim().split(/\s+/).filter((token) => /[\p{L}\p{N}]/u.test(token)).length;
+}
 let frqMigrationDegradedLogged = false;
 const FRQ_RESPONSE_MAX_BYTES = 8 * 1024;
 const APPEAL_MAX_BYTES = 2 * 1024;
@@ -251,6 +263,7 @@ export function mountLedger(app, {
   frqDb,
   frqBundle,
   frqMode,
+  loadAnswerKey,
 }) {
   const allowFrqRecord = createStudentSlidingWindow(
     () => positiveInteger(process.env.FRQ_RECORD_MAX_PER_MINUTE, 30),
@@ -291,10 +304,45 @@ export function mountLedger(app, {
     return receipt;
   }
 
+  // ── Quiz retry helpers (QUIZ_FIRST_ANSWER_SPEC v2 §2) ──────────────────────
+  function refuseQuizRetry(res, reason) {
+    return res.status(409).json({ ok: false, error: 'retry not allowed', reason });
+  }
+
+  // Spec v2 §1.7: the retry rule applies only to items that HAVE an answer-key entry (multiple
+  // choice). Free-response quiz items share source 'curriculum_quiz' but have no key; they keep
+  // unlimited revisions (latest row wins) exactly as before. A key that cannot be loaded counts as
+  // "no key" — never freeze a student's work because a file failed to read.
+  // Returns the key entry ({ answerKey, ... }) or null.
+  async function quizKeyEntryFor(itemId) {
+    if (typeof loadAnswerKey !== 'function') return null;
+    try {
+      const answerKey = answerKeyMapOrNull(await loadAnswerKey());
+      const keyEntry = answerKey && answerKey[itemId];
+      if (!keyEntry || keyEntry.answerKey == null) return null;
+      return keyEntry;
+    } catch (_) {
+      return null;
+    }
+  }
+
   // ── POST /ledger/record ─────────────────────────────────────────────────────
   // FROZEN CONTRACT 2:
   //   Body: { token (req), source (req), itemId (req), response (req), unit?, topic?,
-  //           skill?, score?, attempt?=1 }
+  //           skill?, score?, attempt?=1, reasoning? }
+  //   curriculum_quiz retry rule (spec v2) — KEYED items only (an answer-key entry exists; free-
+  //   response quiz items have none and keep unlimited attempt-1 revisions):
+  //     attempt must be 1 or 2 (numeric strings accepted); the validated integer is persisted.
+  //     attempt 1: a stored first answer is kept → 200 { ..., firstAnswerKept:true }
+  //     attempt 2: first-write-wins insert (never updates an existing retry)
+  //     → 409 { ok:false, error:'retry not allowed', reason } with reason one of
+  //       'invalid-attempt'       attempt is not an integer ≥ 1 (0, -1, 2.5, 'x', …)
+  //       'no-more-attempts'      attempt is an integer ≥ 3
+  //       'no-first-answer'       attempt 2 with no stored attempt-1 response
+  //       'already-retried'       an attempt-2 row already exists (incl. a concurrent race)
+  //       'correct-first'         the attempt-1 response matches the key
+  //       'explanation-required'  reasoning has fewer than 3 words (letters/digits)
+  //     → 500 when the ledger cannot be read for an attempt-2 check
   //   Header (optional): x-proctor-secret
   //   Behavior: verifyToken(token) → studentId; 401 if absent/expired.
   //     evidence_tier DERIVED server-side from x-proctor-secret header — body field ignored.
@@ -316,9 +364,14 @@ export function mountLedger(app, {
       attempt,
       grant,
       requestGrade,
+      reasoning: incomingReasoning,
     } = req.body || {};
     // Mutable: the quiz first-answer rule below may replace it with the stored first answer.
     let response = incomingResponse;
+    // Optional student explanation (quiz retry). Stored only when non-empty.
+    const reasoning = typeof incomingReasoning === 'string' && incomingReasoning.trim()
+      ? incomingReasoning.trim().slice(0, 2000)
+      : undefined;
 
     // Validate required fields
     if (!token) {
@@ -455,28 +508,62 @@ export function mountLedger(app, {
       } catch (_) { /* best-effort: a read failure must never block the write */ }
     }
 
-    // Quiz first-answer rule (teacher 2026-09-29): a curriculum quiz item is graded on the FIRST
-    // answer a student commits. The quiz app shows classmates' responses after that first
-    // answer and lets students revise for learning, and the grade engine scores the latest
-    // row per item — so without this rule "answer anything, read the crowd, switch" was the
-    // winning strategy. Once a row with a real response exists, later writes keep the stored
-    // response (and score); the client is told so it can say "your first answer counts".
+    // Quiz retry rule v2 (teacher 2026-09-29, QUIZ_FIRST_ANSWER_SPEC v2 §2): per KEYED curriculum
+    // quiz item a student gets ONE answer, plus exactly ONE retry when that first answer was wrong
+    // and they explain the change of mind. The grade engine scores the latest row per item, so the
+    // retry (attempt 2) becomes THE grade. Enforced here so a modified client can't bypass it (see
+    // the FROZEN CONTRACT above for the refusal reasons). Unkeyed items (FRQ) skip all of this.
     let firstAnswerKept = false;
-    if (source === 'curriculum_quiz' && typeof db.getLedgerByStudent === 'function') {
+    let persistedAttempt = attempt ?? 1;
+    let retryInsertOnly = false;
+    const quizKeyEntry = source === 'curriculum_quiz' ? await quizKeyEntryFor(itemId) : null;
+    if (quizKeyEntry && typeof db.getLedgerByStudent === 'function') {
+      // Only a real number or a digit string counts — Number(true) === 1 and Number([2]) === 2
+      // would otherwise slip through (Codex closure review 2026-09-29).
+      const rawAttempt = attempt ?? 1;
+      const attemptLooksNumeric = typeof rawAttempt === 'number'
+        || (typeof rawAttempt === 'string' && /^\s*\d+\s*$/.test(rawAttempt));
+      const attemptNo = attemptLooksNumeric ? Number(rawAttempt) : NaN;
+      if (!Number.isInteger(attemptNo) || attemptNo < 1) {
+        return refuseQuizRetry(res, 'invalid-attempt');
+      }
+      if (attemptNo >= 3) {
+        return refuseQuizRetry(res, 'no-more-attempts');
+      }
+      persistedAttempt = attemptNo;
+
+      let quizRows = null;
       try {
-        const attemptNo = attempt ?? 1;
-        const { data: rows } = await db.getLedgerByStudent(studentId, { prefix: itemId });
-        const existing = Array.isArray(rows)
-          ? rows.find((r) => r && r.item_id === itemId && r.source === 'curriculum_quiz' && Number(r.attempt ?? 1) === Number(attemptNo))
-          : null;
-        const storedResponse = existing ? existing.response : null;
-        const hasStored = storedResponse !== null && storedResponse !== undefined && String(storedResponse).trim() !== '';
-        if (hasStored) {
-          response = storedResponse;
-          effectiveScore = (existing.score === null || existing.score === undefined) ? effectiveScore : existing.score;
-          firstAnswerKept = true;
+        const result = await db.getLedgerByStudent(studentId, { prefix: itemId });
+        if (result && !result.error) quizRows = Array.isArray(result.data) ? result.data : [];
+      } catch (_) { /* handled below: attempt 2 refuses, attempt 1 proceeds */ }
+
+      const findAttempt = (n) => (quizRows || []).find((r) => r
+        && r.item_id === itemId
+        && r.source === 'curriculum_quiz'
+        && Number(r.attempt ?? 1) === n);
+      const first = findAttempt(1);
+      const firstHasResponse = Boolean(first) && hasRealResponse(first.response);
+
+      if (attemptNo === 2) {
+        if (quizRows === null) {
+          // Can't verify the rule without the rows — refuse rather than grade a retry blind.
+          return res.status(500).json({ ok: false, error: 'Database error' });
         }
-      } catch (_) { /* best-effort: a read failure must never block the write */ }
+        if (!firstHasResponse) return refuseQuizRetry(res, 'no-first-answer');
+        if (findAttempt(2)) return refuseQuizRetry(res, 'already-retried');
+        if (isKeyCorrect(first.response, quizKeyEntry.answerKey)) {
+          return refuseQuizRetry(res, 'correct-first');
+        }
+        if (countWords(reasoning) < 3) return refuseQuizRetry(res, 'explanation-required');
+        // First write wins: two concurrent retries can both pass the checks above; only the
+        // insert decides, and an existing retry is never updated.
+        retryInsertOnly = true;
+      } else if (firstHasResponse) {
+        response = first.response;
+        effectiveScore = (first.score === null || first.score === undefined) ? effectiveScore : first.score;
+        firstAnswerKept = true;
+      }
     }
 
     // Derive evidence_tier server-side (decision L-C).
@@ -487,7 +574,7 @@ export function mountLedger(app, {
       ? 'proctored'
       : 'practice';
 
-    const { data, error } = await db.insertLedgerRow({
+    const rowToWrite = {
       studentId,
       source,
       itemId,
@@ -497,8 +584,25 @@ export function mountLedger(app, {
       response,
       score: effectiveScore,
       evidenceTier,
-      attempt: attempt ?? 1
-    });
+      attempt: persistedAttempt,
+      ...(reasoning ? { reasoning } : {})
+    };
+
+    let data;
+    let error;
+    if (retryInsertOnly) {
+      if (typeof db.insertLedgerRowIfAbsent !== 'function') {
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      const result = await db.insertLedgerRowIfAbsent(rowToWrite);
+      error = result && result.error;
+      if (!error && !(result && result.inserted)) {
+        return refuseQuizRetry(res, 'already-retried');
+      }
+      data = !error && Array.isArray(result.data) ? result.data[0] : (result && result.data);
+    } else {
+      ({ data, error } = await db.insertLedgerRow(rowToWrite));
+    }
 
     if (error) {
       if (isSourceNotProvisioned(error)) {
@@ -521,7 +625,7 @@ export function mountLedger(app, {
       source,
       itemId,
       score: effectiveScore,
-      attempt: attempt ?? 1,
+      attempt: persistedAttempt,
       evidenceTier: data.evidence_tier,
       response,
       gradingProvenance

@@ -27,6 +27,43 @@ export function createServiceClient() {
 
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
+let reasoningColumnMissingLogged = false;
+
+// True only when [error] says exactly [column] is missing. Known signatures:
+//   PostgREST PGRST204: "Could not find the 'reasoning' column of 'item_ledger' in the schema cache"
+//   Postgres  42703:    'column "reasoning" of relation "item_ledger" does not exist'
+//                       'column item_ledger.reasoning does not exist'
+// The column name is compared EXACTLY (so 'reasoning_extra' never matches 'reasoning').
+export function isMissingColumnError(error, column) {
+  if (!error) return false;
+  const code = String(error.code || '');
+  const message = String(error.message || '');
+
+  const cacheMiss = /could not find the '([^']+)' column/i.exec(message);
+  if (cacheMiss && (code === 'PGRST204' || code === '')) return cacheMiss[1] === column;
+
+  const undefinedColumn = /column "?(?:[A-Za-z0-9_]+\.)?([A-Za-z0-9_]+)"?(?: of relation "?[A-Za-z0-9_.]+"?)? does not exist/i.exec(message);
+  if (undefinedColumn && (code === '42703' || code === '')) return undefinedColumn[1] === column;
+
+  return false;
+}
+
+// Write [row] with an optional `reasoning` field. Until migration 0037 adds the column the
+// write is retried WITHOUT it, so a missing column can never lose the answer itself.
+// [write] receives the row to send and returns the Supabase result.
+async function writeWithReasoningFallback(row, reasoning, write) {
+  const hasReasoning = typeof reasoning === 'string' && reasoning.trim() !== '';
+  if (!hasReasoning) return write(row);
+
+  const result = await write({ ...row, reasoning });
+  if (!result || !isMissingColumnError(result.error, 'reasoning')) return result;
+  if (!reasoningColumnMissingLogged) {
+    reasoningColumnMissingLogged = true;
+    console.warn('[ledger] item_ledger.reasoning column missing (run migration 0037); storing rows without reasoning');
+  }
+  return write(row);
+}
+
 export function createLedgerDb(client) {
   return { insertLedgerRow, insertLedgerRowIfAbsent, updateLedgerReceipt, updateFrqFeedback, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds };
 
@@ -53,37 +90,41 @@ export function createLedgerDb(client) {
   // [frqResult]/[gradedAt] are OPTIONAL (2026-09-09): the legacy /ledger/frq-regrade
   // path stores the grader's verdict + feedback alongside the score so the worksheet can
   // explain the grade. Omitted by every other caller → columns untouched.
-  async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt }) {
+  // [reasoning] is OPTIONAL (quiz retry, QUIZ_FIRST_ANSWER_SPEC v2): included only when a
+  // non-empty string is given. Until migration 0037 adds the column, the upsert is retried
+  // WITHOUT it so a missing column can never lose the answer itself.
+  async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt, reasoning }) {
     const extra = {};
     if (frqResult && typeof frqResult === 'object') {
       extra.frq_result = frqResult;
       extra.graded_at  = gradedAt || new Date().toISOString();
     }
-    return client
+    const baseRow = {
+      student_id:    studentId,
+      source:        source,
+      item_id:       itemId,
+      unit:          unit        || null,
+      topic:         topic       || null,
+      skill:         skill       || null,
+      response:      response,
+      score:         score       ?? null,
+      evidence_tier: evidenceTier,
+      attempt:       attempt     ?? 1,
+      recorded_at:   recordedAt  || new Date().toISOString(),
+      ...extra
+    };
+    const upsertRow = (row) => client
       .from('item_ledger')
-      .upsert(
-        [{
-          student_id:    studentId,
-          source:        source,
-          item_id:       itemId,
-          unit:          unit        || null,
-          topic:         topic       || null,
-          skill:         skill       || null,
-          response:      response,
-          score:         score       ?? null,
-          evidence_tier: evidenceTier,
-          attempt:       attempt     ?? 1,
-          recorded_at:   recordedAt  || new Date().toISOString(),
-          ...extra
-        }],
-        { onConflict: 'student_id,source,item_id,attempt' }
-      )
+      .upsert([row], { onConflict: 'student_id,source,item_id,attempt' })
       .select('ledger_id, evidence_tier')
       .single();
+    return writeWithReasoningFallback(baseRow, reasoning, upsertRow);
   }
 
   // First writer wins: an existing application must never be overwritten.
-  async function insertLedgerRowIfAbsent({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt }) {
+  // Returns { data: rows[], error, inserted }. [reasoning] as in insertLedgerRow (optional,
+  // missing-column fallback) — the quiz retry (attempt 2) is written through here.
+  async function insertLedgerRowIfAbsent({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt, frqResult, gradedAt, reasoning }) {
     const payload = {
       student_id: studentId, source, item_id: itemId,
       unit: unit || null, topic: topic || null, skill: skill || null,
@@ -94,9 +135,10 @@ export function createLedgerDb(client) {
       payload.frq_result = frqResult;
       payload.graded_at = gradedAt || new Date().toISOString();
     }
-    const { data, error } = await client.from('item_ledger')
-      .upsert(payload, { onConflict: 'student_id,source,item_id,attempt', ignoreDuplicates: true })
+    const insertRow = (row) => client.from('item_ledger')
+      .upsert(row, { onConflict: 'student_id,source,item_id,attempt', ignoreDuplicates: true })
       .select('*');
+    const { data, error } = await writeWithReasoningFallback(payload, reasoning, insertRow);
     return { data, error, inserted: !error && Array.isArray(data) && data.length > 0 };
   }
 

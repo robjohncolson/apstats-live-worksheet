@@ -7,8 +7,9 @@ import http from 'http';
 import { generateKeyPairSync, randomBytes, sign } from 'crypto';
 import { createApp } from '../server.js';
 import { signToken } from '../token.js';
-import { createLedgerDb } from '../ledger-db.js';
+import { createLedgerDb, isMissingColumnError } from '../ledger-db.js';
 import { verifyReviewGrant } from '../receipts.js';
+import { latestPerItem, isCorrect } from '../scoring.js';
 
 // ── Fake in-memory roster db (minimal — only needed for createApp) ────────────
 
@@ -31,10 +32,43 @@ function createFakeLedgerDb() {
   // store keyed by "studentId|source|itemId|attempt"
   const store = new Map();
 
-  return {
-    store,
+  function buildRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, reasoning }) {
+    return {
+      ledger_id:     `ledger-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      student_id:    studentId,
+      source,
+      item_id:       itemId,
+      unit:          unit   || null,
+      topic:         topic  || null,
+      skill:         skill  || null,
+      response,
+      score:         score  ?? null,
+      evidence_tier: evidenceTier,
+      attempt,
+      recorded_at:   new Date().toISOString(),
+      graded_at:     null,
+      ...(reasoning ? { reasoning } : {})
+    };
+  }
 
-    async insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt }) {
+  const fake = {
+    store,
+    // Test hooks: `readResult` overrides getLedgerByStudent's result (e.g. { data:null, error });
+    // `beforeInsertIfAbsent` runs just before the first-write-wins insert (race simulation).
+    readResult: null,
+    beforeInsertIfAbsent: null,
+
+    // First writer wins (mirrors the ignoreDuplicates upsert): never updates an existing row.
+    async insertLedgerRowIfAbsent(opts) {
+      if (typeof fake.beforeInsertIfAbsent === 'function') await fake.beforeInsertIfAbsent(opts);
+      const key = `${opts.studentId}|${opts.source}|${opts.itemId}|${opts.attempt}`;
+      if (store.has(key)) return { data: [], error: null, inserted: false };
+      const row = buildRow(opts);
+      store.set(key, row);
+      return { data: [row], error: null, inserted: true };
+    },
+
+    async insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, reasoning }) {
       const key = `${studentId}|${source}|${itemId}|${attempt}`;
 
       const row = {
@@ -50,7 +84,8 @@ function createFakeLedgerDb() {
         evidence_tier: evidenceTier,
         attempt,
         recorded_at:   new Date().toISOString(),
-        graded_at:     null
+        graded_at:     null,
+        ...(reasoning ? { reasoning } : {})
       };
 
       store.set(key, row);
@@ -58,6 +93,7 @@ function createFakeLedgerDb() {
     },
 
     async getLedgerByStudent(studentId, opts) {
+      if (fake.readResult) return fake.readResult;
       const prefix = opts && opts.prefix;
       let rows = [...store.values()].filter(r => r.student_id === studentId);
       if (prefix) {
@@ -68,6 +104,7 @@ function createFakeLedgerDb() {
       return { data: rows, error: null };
     }
   };
+  return fake;
 }
 
 // ── Lightweight test server ───────────────────────────────────────────────────
@@ -233,30 +270,218 @@ describe('POST /ledger/record', () => {
     expect(frqRow().score).toBe(1);
   });
 
-  // ── Quiz first-answer rule (teacher 2026-09-29) ─────────────────────────
-  // The quiz app reveals classmates' answers after the first commit and allows
-  // revisions for learning; the engine scores the latest row per item. The FIRST
-  // committed response is therefore frozen server-side.
-  function quizRow() {
-    return ledgerDb.store.get(`${validStudentId}|curriculum_quiz|U1-L7-Q03|1`);
+  // ── Quiz retry rule v2 (QUIZ_FIRST_ANSWER_SPEC v2 §2) ────────────────────
+  // KEYED items: one answer; one explained retry only after a WRONG first answer; the retry
+  // (attempt 2) is the graded row. UNKEYED items (free-response) keep unlimited revisions.
+  const QUIZ_ITEM = 'U1-L7-Q03';           // key: B
+  const QUIZ_NO_KEY_ITEM = 'U1-L7-Q99';    // absent from the key (an FRQ)
+  const REASON = 'I misread the graph axis';
+
+  function quizRow(attempt = 1, itemId = QUIZ_ITEM) {
+    return ledgerDb.store.get(`${validStudentId}|curriculum_quiz|${itemId}|${attempt}`);
   }
 
-  it('quiz first-answer: a later answer never replaces the first (response + score kept, client told)', async () => {
-    let r = await record({ source: 'curriculum_quiz', itemId: 'U1-L7-Q03', response: 'B', score: 0 });
-    expect(r.status).toBe(200);
-    expect(r.body.firstAnswerKept).toBeUndefined();
-    r = await record({ source: 'curriculum_quiz', itemId: 'U1-L7-Q03', response: 'C', score: 1 });
-    expect(r.status).toBe(200);
-    expect(r.body.firstAnswerKept).toBe(true);
-    expect(quizRow().response).toBe('B');
-    expect(quizRow().score).toBe(0);
+  async function withKeyedServer(fn, loadAnswerKey = async () => ({ answerKey: { [QUIZ_ITEM]: { answerKey: 'B' } } })) {
+    const keyed = new TestServer(createApp(rosterDb, ledgerDb, undefined, loadAnswerKey));
+    await keyed.start();
+    try {
+      const quiz = (body) => keyed.request('POST', '/ledger/record', {
+        body: { token: validToken, source: 'curriculum_quiz', itemId: QUIZ_ITEM, ...body }
+      });
+      await fn(quiz);
+    } finally {
+      await keyed.stop();
+    }
+  }
+
+  it('quiz attempt 1: a later attempt-1 write never replaces the first (response + score kept, client told)', async () => {
+    await withKeyedServer(async (quiz) => {
+      let r = await quiz({ response: 'C', score: 0 });
+      expect(r.status).toBe(200);
+      expect(r.body.firstAnswerKept).toBeUndefined();
+      r = await quiz({ response: 'B', score: 1 });
+      expect(r.status).toBe(200);
+      expect(r.body.firstAnswerKept).toBe(true);
+      expect(quizRow().response).toBe('C');
+      expect(quizRow().score).toBe(0);
+    });
   });
 
-  it('quiz first-answer: a fresh item records normally; other sources are untouched', async () => {
-    const r = await record({ source: 'curriculum_quiz', itemId: 'U1-L7-Q03', response: 'D' });
-    expect(r.status).toBe(200);
-    expect(r.body.firstAnswerKept).toBeUndefined();
-    expect(quizRow().response).toBe('D');
+  it('quiz attempt 2: accepted after a wrong first answer with a 3+ word explanation (stored as a new row)', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+      expect(r.status).toBe(200);
+      expect(r.body.ok).toBe(true);
+      expect(r.body.ledgerId).toBe(quizRow(2).ledger_id);
+      expect(r.body.evidenceTier).toBe('practice');
+      expect(quizRow(1).response).toBe('C');
+      expect(quizRow(2).response).toBe('B');
+      expect(quizRow(2).reasoning).toBe(REASON);
+    });
+  });
+
+  it('quiz attempt 2: refused when the first answer was correct', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'b', attempt: 1 });
+      const r = await quiz({ response: 'C', attempt: 2, reasoning: REASON });
+      expect(r.status).toBe(409);
+      expect(r.body).toMatchObject({ ok: false, error: 'retry not allowed', reason: 'correct-first' });
+      expect(quizRow(2)).toBeUndefined();
+    });
+  });
+
+  it('quiz attempt 2: refused without an explanation (missing, under 3 words, or punctuation only)', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      for (const reasoning of [undefined, '  oops   sorry ', '. . .', '- ? !']) {
+        const r = await quiz({ response: 'B', attempt: 2, reasoning });
+        expect(r.status).toBe(409);
+        expect(r.body.reason).toBe('explanation-required');
+      }
+      expect(quizRow(2)).toBeUndefined();
+    });
+  });
+
+  it('quiz attempt 2: words are tokens with a letter or digit, in any script', async () => {
+    for (const reasoning of ['porque cambié de idea', 'a, b. c!']) {
+      ledgerDb.store.clear();
+      await withKeyedServer(async (quiz) => {
+        await quiz({ response: 'C', attempt: 1 });
+        const r = await quiz({ response: 'B', attempt: 2, reasoning });
+        expect(r.status).toBe(200);
+        expect(quizRow(2).reasoning).toBe(reasoning);
+      });
+    }
+  });
+
+  it('quiz: a second retry and any third attempt are refused', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      expect((await quiz({ response: 'A', attempt: 2, reasoning: REASON })).status).toBe(200);
+      let r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+      expect(r.status).toBe(409);
+      expect(r.body.reason).toBe('already-retried');
+      expect(quizRow(2).response).toBe('A');
+      r = await quiz({ response: 'B', attempt: 3, reasoning: REASON });
+      expect(r.status).toBe(409);
+      expect(r.body.reason).toBe('no-more-attempts');
+      expect(quizRow(3)).toBeUndefined();
+    });
+  });
+
+  it('quiz attempt 2: refused with no first answer', async () => {
+    await withKeyedServer(async (quiz) => {
+      const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+      expect(r.status).toBe(409);
+      expect(r.body.reason).toBe('no-first-answer');
+      expect(quizRow(2)).toBeUndefined();
+    });
+  });
+
+  it('quiz: attempt must be 1 or 2 — 0, -1, "x", 2.5 refused; "2" behaves as 2 and is stored as the integer', async () => {
+    await withKeyedServer(async (quiz) => {
+      for (const attempt of [0, -1, 'x', 2.5, '', true, [1], [2], {}]) {
+        const r = await quiz({ response: 'C', attempt });
+        expect(r.status).toBe(409);
+        expect(r.body).toMatchObject({ ok: false, error: 'retry not allowed', reason: 'invalid-attempt' });
+      }
+      expect(ledgerDb.store.size).toBe(0);
+      await quiz({ response: 'C', attempt: '1' });
+      expect(quizRow(1).attempt).toBe(1);
+      const r = await quiz({ response: 'B', attempt: '2', reasoning: REASON });
+      expect(r.status).toBe(200);
+      expect(quizRow(2).attempt).toBe(2);
+      expect([...ledgerDb.store.keys()].some((k) => k.endsWith('|"2"') || k.endsWith('|2.5'))).toBe(false);
+    });
+  });
+
+  it('quiz attempt 2: a pre-existing retry is never updated (409 already-retried)', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      await ledgerDb.insertLedgerRowIfAbsent({
+        studentId: validStudentId, source: 'curriculum_quiz', itemId: QUIZ_ITEM,
+        response: 'A', evidenceTier: 'practice', attempt: 2, reasoning: 'the stored retry wins'
+      });
+      const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+      expect(r.status).toBe(409);
+      expect(r.body.reason).toBe('already-retried');
+      expect(quizRow(2).response).toBe('A');
+      expect(quizRow(2).reasoning).toBe('the stored retry wins');
+    });
+  });
+
+  it('quiz attempt 2 race: two requests pass the checks before either write lands — first insert wins', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      // Hold both inserts until both requests have passed the "no earlier retry" read.
+      let arrived = 0;
+      let release;
+      const bothArrived = new Promise((resolve) => { release = resolve; });
+      ledgerDb.beforeInsertIfAbsent = async () => {
+        arrived += 1;
+        if (arrived === 2) release();
+        await bothArrived;
+      };
+      const [a, b] = await Promise.all([
+        quiz({ response: 'A', attempt: 2, reasoning: REASON }),
+        quiz({ response: 'D', attempt: 2, reasoning: REASON }),
+      ]);
+      ledgerDb.beforeInsertIfAbsent = null;
+      const statuses = [a.status, b.status].sort();
+      expect(statuses).toEqual([200, 409]);
+      const loser = a.status === 409 ? a : b;
+      const winner = a.status === 200 ? 'A' : 'D';
+      expect(loser.body.reason).toBe('already-retried');
+      expect(quizRow(2).response).toBe(winner);
+    });
+  });
+
+  it('quiz attempt 2: a ledger read that returns { data:null, error } is a 500, not no-first-answer', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      ledgerDb.readResult = { data: null, error: { message: 'boom' } };
+      const r = await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+      ledgerDb.readResult = null;
+      expect(r.status).toBe(500);
+      expect(quizRow(2)).toBeUndefined();
+    });
+  });
+
+  it('quiz FRQ (no answer-key entry): repeated attempt-1 edits save (latest wins) and attempt 3 is accepted', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ itemId: QUIZ_NO_KEY_ITEM, response: 'draft one', attempt: 1 });
+      const r = await quiz({ itemId: QUIZ_NO_KEY_ITEM, response: 'draft two', attempt: 1 });
+      expect(r.status).toBe(200);
+      expect(r.body.firstAnswerKept).toBeUndefined();
+      expect(quizRow(1, QUIZ_NO_KEY_ITEM).response).toBe('draft two');
+      const third = await quiz({ itemId: QUIZ_NO_KEY_ITEM, response: 'draft three', attempt: 3 });
+      expect(third.status).toBe(200);
+      expect(quizRow(3, QUIZ_NO_KEY_ITEM).response).toBe('draft three');
+    });
+  });
+
+  it('quiz: an answer key that fails to load freezes nothing (treated as unkeyed)', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      const r = await quiz({ response: 'B', attempt: 1 });
+      expect(r.status).toBe(200);
+      expect(quizRow(1).response).toBe('B');
+    }, async () => { throw new Error('answer key unreadable'); });
+  });
+
+  it('quiz: the engine scores the retry (attempt 2 is the latest row per item)', async () => {
+    await withKeyedServer(async (quiz) => {
+      await quiz({ response: 'C', attempt: 1 });
+      await quiz({ response: 'B', attempt: 2, reasoning: REASON });
+      const rows = [...ledgerDb.store.values()].filter((r) => r.item_id === QUIZ_ITEM);
+      const [graded] = latestPerItem(rows);
+      expect(graded.attempt).toBe(2);
+      expect(isCorrect(graded.response, 'B')).toBe(true);
+    });
+  });
+
+  it('quiz: other sources are untouched by the retry rule', async () => {
     await record({ source: 'worksheet', itemId: 'WS-U4L1-Q1', response: { answer: 'first' } });
     await record({ source: 'worksheet', itemId: 'WS-U4L1-Q1', response: { answer: 'second' } });
     expect(ledgerDb.store.get(`${validStudentId}|worksheet|WS-U4L1-Q1|1`).response).toEqual({ answer: 'second' });
@@ -899,5 +1124,115 @@ describe('GET /ledger/student/:studentId — token auth + prefix filter', () => 
     const times = body.rows.map(r => r.recorded_at);
     const sortedDesc = [...times].sort().reverse();
     expect(times).toEqual(sortedDesc);
+  });
+});
+
+
+// ── ledger-db.js: reasoning column fallback (migration 0037 not yet run) ─────
+
+describe('createLedgerDb insertLedgerRow reasoning', () => {
+  function fakeSupabase({ missingColumn }) {
+    const upserts = [];
+    return {
+      upserts,
+      from() {
+        let payload;
+        const chain = {
+          upsert(rows) { payload = rows[0]; upserts.push(payload); return chain; },
+          select() { return chain; },
+          single() {
+            if (missingColumn && 'reasoning' in payload) {
+              return Promise.resolve({ data: null, error: { code: 'PGRST204', message: "Could not find the 'reasoning' column of 'item_ledger' in the schema cache" } });
+            }
+            return Promise.resolve({ data: { ledger_id: 'L1', evidence_tier: 'practice' }, error: null });
+          },
+        };
+        return chain;
+      },
+    };
+  }
+
+  const baseRow = { studentId: 's1', source: 'curriculum_quiz', itemId: 'U1-L7-Q03', response: 'B', evidenceTier: 'practice', attempt: 2 };
+
+  // ignoreDuplicates upsert(...).select('*') chain; `existing` = keys already present.
+  function fakeIfAbsentSupabase({ missingColumn, existing = new Set() }) {
+    const upserts = [];
+    return {
+      upserts,
+      from() {
+        return {
+          upsert(row, options) {
+            upserts.push({ row, options });
+            return {
+              select() {
+                if (missingColumn && 'reasoning' in row) {
+                  return Promise.resolve({ data: null, error: { code: 'PGRST204', message: "Could not find the 'reasoning' column of 'item_ledger' in the schema cache" } });
+                }
+                const key = `${row.student_id}|${row.item_id}|${row.attempt}`;
+                if (existing.has(key)) return Promise.resolve({ data: [], error: null });
+                existing.add(key);
+                return Promise.resolve({ data: [{ ...row, ledger_id: 'L2' }], error: null });
+              },
+            };
+          },
+        };
+      },
+    };
+  }
+
+  it('insertLedgerRowIfAbsent stores reasoning, first write wins, and never updates', async () => {
+    const client = fakeIfAbsentSupabase({ missingColumn: false });
+    const db = createLedgerDb(client);
+    const first = await db.insertLedgerRowIfAbsent({ ...baseRow, reasoning: 'changed my mind here' });
+    expect(first.inserted).toBe(true);
+    expect(first.data[0].ledger_id).toBe('L2');
+    expect(client.upserts[0].row.reasoning).toBe('changed my mind here');
+    expect(client.upserts[0].options).toMatchObject({ ignoreDuplicates: true });
+    const second = await db.insertLedgerRowIfAbsent({ ...baseRow, response: 'C', reasoning: 'another reason here' });
+    expect(second.inserted).toBe(false);
+  });
+
+  it('insertLedgerRowIfAbsent retries WITHOUT reasoning when the column does not exist yet', async () => {
+    const client = fakeIfAbsentSupabase({ missingColumn: true });
+    const result = await createLedgerDb(client).insertLedgerRowIfAbsent({ ...baseRow, reasoning: 'changed my mind here' });
+    expect(result.inserted).toBe(true);
+    expect(client.upserts).toHaveLength(2);
+    expect('reasoning' in client.upserts[1].row).toBe(false);
+  });
+
+  it('isMissingColumnError matches the exact column only', () => {
+    expect(isMissingColumnError({ code: 'PGRST204', message: "Could not find the 'reasoning' column of 'item_ledger' in the schema cache" }, 'reasoning')).toBe(true);
+    expect(isMissingColumnError({ code: '42703', message: 'column "reasoning" of relation "item_ledger" does not exist' }, 'reasoning')).toBe(true);
+    expect(isMissingColumnError({ code: '42703', message: 'column item_ledger.reasoning does not exist' }, 'reasoning')).toBe(true);
+    expect(isMissingColumnError({ code: 'PGRST204', message: "Could not find the 'reasoning_extra' column of 'item_ledger' in the schema cache" }, 'reasoning')).toBe(false);
+    expect(isMissingColumnError({ code: '42703', message: 'column item_ledger.reasoning_extra does not exist' }, 'reasoning')).toBe(false);
+    expect(isMissingColumnError({ code: '23505', message: 'duplicate key value; reasoning' }, 'reasoning')).toBe(false);
+    expect(isMissingColumnError(null, 'reasoning')).toBe(false);
+  });
+
+  it('stores reasoning when the column exists', async () => {
+    const client = fakeSupabase({ missingColumn: false });
+    const result = await createLedgerDb(client).insertLedgerRow({ ...baseRow, reasoning: 'changed my mind here' });
+    expect(result.error).toBeNull();
+    expect(client.upserts).toHaveLength(1);
+    expect(client.upserts[0].reasoning).toBe('changed my mind here');
+  });
+
+  it('omits reasoning when none is given', async () => {
+    const client = fakeSupabase({ missingColumn: false });
+    await createLedgerDb(client).insertLedgerRow(baseRow);
+    expect(client.upserts).toHaveLength(1);
+    expect('reasoning' in client.upserts[0]).toBe(false);
+  });
+
+  it('retries WITHOUT reasoning when the column does not exist yet', async () => {
+    const client = fakeSupabase({ missingColumn: true });
+    const result = await createLedgerDb(client).insertLedgerRow({ ...baseRow, reasoning: 'changed my mind here' });
+    expect(result.error).toBeNull();
+    expect(result.data.ledger_id).toBe('L1');
+    expect(client.upserts).toHaveLength(2);
+    expect(client.upserts[0].reasoning).toBe('changed my mind here');
+    expect('reasoning' in client.upserts[1]).toBe(false);
+    expect(client.upserts[1].response).toBe('B');
   });
 });
