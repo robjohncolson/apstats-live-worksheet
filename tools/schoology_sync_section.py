@@ -305,6 +305,12 @@ def _note_key(lesson_key: str) -> str:
     return f"{lesson_key}#note"
 
 
+def _comment_ownership_lost(result) -> bool:
+    """The cell's comment is no longer the sync's (edited or replaced by a teacher)."""
+    reason = str((result or {}).get("reason") or "")
+    return "not the sync's" in reason or "differs from the sync's last note" in reason
+
+
 def _list_students_stable(ops, cdp, *, attempts: int = 8, pause_s: float = 0.75) -> list:
     """Read the gradebook roster once the rendered row count has settled.
 
@@ -761,6 +767,9 @@ def _push_grades(
                         if comment_result.get("ok") and comment_result.get("verified"):
                             outcome = "cleared" if target_value != 0 else "wrote"
                             state.set_last_synced(str(student_id), note_key, "" if target_value != 0 else text)
+                        elif _comment_ownership_lost(comment_result):
+                            state.set_last_synced(str(student_id), note_key, "")
+                            outcome = f"skipped({comment_result.get('reason')})"
                         else:
                             outcome = f"skipped({comment_result.get('reason') or 'unverified'})"
                 except Exception as exc:
@@ -787,13 +796,18 @@ def _push_grades(
         # cell with no note (missing data never triggers a clear), and (b) the sync recorded
         # the note it wrote there — then only that exact text is removed. So there is no
         # nightly UI work on earned zeros and a teacher's own comment is never erased.
+        # A cell whose recorded note is still set is reconciled every night until the note is
+        # gone: an earned zero, or a real score whose earlier clear failed transiently.
         def _wants_comment_work(key):
-            if targets.get(key) != 0 or comment_texts is None:
+            if comment_texts is None or targets.get(key) is None:
                 return False
             ckey = f"{key[0]}/{key[1]}"
+            recorded = bool(state.get_last_synced(str(key[0]), _note_key(key[1])))
+            if targets.get(key) != 0:
+                return recorded
             if comment_texts.get(ckey):
                 return True
-            return ckey in comment_texts and bool(state.get_last_synced(str(key[0]), _note_key(key[1])))
+            return ckey in comment_texts and recorded
         unchanged_zero_keys = [key for key in list(covered) + list(actions["skip"]) if _wants_comment_work(key)]
         for student_id, lesson_key in unchanged_zero_keys:
             text = (comment_texts or {}).get(f"{student_id}/{lesson_key}", "")
@@ -817,6 +831,10 @@ def _push_grades(
                 if comment_result.get("ok") and comment_result.get("verified"):
                     outcome = comment_result.get("skipped") or ("wrote" if text else "cleared")
                     state.set_last_synced(str(student_id), _note_key(lesson_key), text)
+                elif _comment_ownership_lost(comment_result):
+                    # A teacher changed or replaced the note: it is theirs now; stop tracking it.
+                    state.set_last_synced(str(student_id), _note_key(lesson_key), "")
+                    outcome = f"released({comment_result.get('reason')})"
                 else:
                     outcome = f"skipped({comment_result.get('reason') or 'unverified'})"
             except Exception as exc:

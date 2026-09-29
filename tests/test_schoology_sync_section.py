@@ -1180,6 +1180,31 @@ class TestGradeCellComments(unittest.TestCase):
         self.push(comments=True)
         self.ops.write_cell_comment.assert_not_called()
 
+    def test_a_teacher_edited_note_is_released_and_never_retried(self):
+        self.state.set_last_synced("S1", "FA:1.2", 0)
+        self.state.set_last_synced("S1", "FA:1.2#note", "Not a permanent 0. Missing: 1.2 worksheet.")
+        self.texts = {"S1/FA:1.2": ""}
+        self.ops.write_cell_comment.return_value = {"ok": False, "verified": False,
+                                                    "reason": "comment differs from the sync's last note; left untouched"}
+        self.push(comments=True)
+        self.assertEqual(self.state.get_last_synced("S1", "FA:1.2#note"), "")
+        self.ops.write_cell_comment.reset_mock()
+        self.push(comments=True)
+        self.ops.write_cell_comment.assert_not_called()
+
+    def test_a_failed_clear_after_a_real_score_is_retried_next_night(self):
+        note = "Not a permanent 0. Missing: 1.2 worksheet."
+        self.state.set_last_synced("S1", "FA:1.2#note", note)
+        self.texts = {"S1/FA:1.2": ""}
+        self.ops.clear_cell_comment.return_value = {"ok": False, "verified": False, "reason": "editor did not open"}
+        self.push(90, comments=True)                      # grade pushed; the clear fails transiently
+        self.assertEqual(self.state.get_last_synced("S1", "FA:1.2"), 90)
+        self.assertEqual(self.state.get_last_synced("S1", "FA:1.2#note"), note)   # kept for a retry
+        self.ops.write_cell_comment.return_value = {"ok": True, "verified": True, "text": ""}
+        self.push(90, comments=True)                      # next night: grade covered, note reconciled
+        self.ops.write_cell_comment.assert_called_once_with(None, "col1", 2, "", expect_current=note)
+        self.assertEqual(self.state.get_last_synced("S1", "FA:1.2#note"), "")
+
     def test_an_earned_zero_with_no_recorded_note_does_no_ui_work(self):
         self.state.set_last_synced("S1", "FA:1.2", 0)
         self.texts = {"S1/FA:1.2": ""}
