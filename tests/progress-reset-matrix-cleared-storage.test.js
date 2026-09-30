@@ -98,7 +98,7 @@ describe('matrix row: cleared storage — rProg honest-unknown', () => {
 });
 
 describe('matrix row: cleared storage recovers — CONTROL (a subsequent live success)', () => {
-  it('(7) flips to available, writes the latch, and the strict gate resumes', async () => {
+  it('(7) flips to available, writes the latch, and completion stays evidence-based', async () => {
     let calls = 0;
     const h = composeRenderHarness({
       username: 'student-a', studentId: 'sid-a', origin: 'https://roster.test',
@@ -123,19 +123,18 @@ describe('matrix row: cleared storage recovers — CONTROL (a subsequent live su
     expect(latch).not.toBeNull();
     expect(latch.topics['1.2']).toEqual({ ws: true, bl: true });
 
-    // Strict gate resumes: reading the REAL localStorage the render harness
-    // just wrote (shared, not re-seeded) through the real gate functions —
-    // with genuine evidence now present but a DIFFERENT, never-confirmed
-    // predecessor lesson, the gate goes back to LOCKED. This proves recovery
-    // doesn't leave the fail-open behavior stuck on: fail-open was specific
-    // to the "no evidence exists anywhere" cleared-storage state, not a
-    // permanent relaxation once any evidence shows up.
+    // Recovery reads the REAL localStorage the render harness just wrote
+    // (shared, not re-seeded) through the real gate functions. Sequential
+    // locking was retired in 1e2d6178 (2026-09-10), so access stays open;
+    // what must hold is that the new evidence credits ONLY 1.2 and never a
+    // different, never-confirmed lesson (no fail-open leak into credit).
     const gate = composeLatchHarness({
       username: 'student-a', studentId: 'sid-a', origin: 'https://roster.test',
       sharedStorage: h.win.localStorage,
     });
     expect(gate.serverEvidencePresent()).toBe(true); // real evidence now exists
     expect(gate.isLessonComplete('1.3', {})).toBe(false); // 1.3 was never confirmed
-    expect(gate.isLessonUnlocked('1.4', PAST, '1.3', TODAY, {}, true)).toBe(false); // strict again
+    expect(gate.isLessonComplete('1.2', {})).toBe(true); // the confirmed lesson is credited
+    expect(gate.isLessonUnlocked('1.4', PAST, '1.3', TODAY, {}, true)).toBe(true); // access open by design
   });
 });

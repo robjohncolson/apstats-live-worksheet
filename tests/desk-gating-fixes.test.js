@@ -73,8 +73,17 @@ describe('app desktop icons: PNG xor emoji (no duplicate)', () => {
     // active, progress remains as a re-enable template. New app icons should keep
     // this same PNG-or-emoji fallback contract.
     expect(dataEmoji.length).toBeGreaterThanOrEqual(2);
-    const onload = html.match(/onload="this\.parentElement\.classList\.add\('has-png'\)"/g) || [];
-    expect(onload.length).toBeGreaterThanOrEqual(dataEmoji.length);
+    // Emoji-only icons (an EMPTY icon-img div, e.g. Review 76524e8c, Teacher
+    // Inbox b1e8ca31, Class Snapshot 48512c21) are a valid variant: the
+    // ::after emoji is the whole icon. Every icon that DOES carry an <img>
+    // must toggle .has-png on load so the emoji never shows twice.
+    const withImg = html.match(/class="icon-img" data-emoji="&#\d+;"><img [^>]*>/g) || [];
+    const emojiOnly = html.match(/class="icon-img" data-emoji="&#\d+;"><\/div>/g) || [];
+    expect(withImg.length + emojiOnly.length).toBe(dataEmoji.length);
+    expect(withImg.length).toBeGreaterThanOrEqual(2);
+    for (const img of withImg) {
+      expect(img).toContain(`onload="this.parentElement.classList.add('has-png')"`);
+    }
     // the old inline "emoji-after-img" pattern is gone from the app icons
     expect(html).not.toMatch(/icon-XXX/); // sanity: no template leftover
     expect(html).not.toMatch(/dataset\.fallback='1'">&#\d+;<\/div>/);

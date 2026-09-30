@@ -372,7 +372,8 @@ describe('DOGE payout agent config and RPC wrapper', () => {
       feeHeadroom: 2,
       pollSeconds: 12,
       batchCap: 500,
-      journalPath: '/work/.doge-send-journal.json',
+      // path.resolve, not a literal: on Windows '/work' resolves to 'C:\work'.
+      journalPath: resolve('/work', '.doge-send-journal.json'),
     });
   });
 

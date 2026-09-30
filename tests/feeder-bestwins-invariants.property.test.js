@@ -149,6 +149,11 @@ function loadDesk({ withRefresh }) {
       : '',
     fnBody(DESK, '_blooketScoreFor'),
     fnBody(DESK, '_blooketCommit'),
+    // d4554599 (2026-09-23): _blooketCommit now patches the /grade cache with the
+    // recorded score (the REAL patch — raise-only) and repaints the zero card
+    // (DOM-only, stubbed here).
+    fnBody(DESK, '_blooketPatchGradeCache'),
+    'function _walletRefreshZeroCard() {}',
     '({ commit: function (t, s) { return _blooketCommit(null, t, s); },',
     '   setLessons: function (x) { _gradeLessonsCache = x; },',
     '   setMark: function (t, s) { __marks[t + "|blooket"] = { score: s }; },',

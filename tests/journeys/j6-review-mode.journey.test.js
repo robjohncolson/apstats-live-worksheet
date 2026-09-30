@@ -140,6 +140,14 @@ async function j6SettleSignIn(harness) {
   }
 }
 
+function reviewIcon(doc) {
+  return doc.querySelector('.app-icon[data-app="review"]');
+}
+
+function reviewDueBadge(doc) {
+  return reviewIcon(doc)?.querySelector('.review-due-badge') || null;
+}
+
 async function j6OpenDeck(harness) {
   const tile = harness.document.querySelector(`#cg .dc[data-topic="${TOPIC}"]`);
   expect(tile, `calendar has no ${TOPIC} tile`).toBeTruthy();
@@ -176,7 +184,9 @@ async function j6SettleRoster(harness) {
   });
 }
 
-describe('Desk journey J6', () => {
+// Boots the full Desk in JSDOM; under full-suite load that alone can exceed the
+// 5 s default (passes alone). Same 30 s budget J7/J8 already use.
+describe('Desk journey J6', { timeout: 30_000 }, () => {
   it('J6 all-ON flags show the due chip and Review; Good updates the folded store, advances, and Again stays practice-only (supersedes desk-due-today “renders the chip only behind dueTodayDeck in renderDoNowGrades” and desk-review-mode “adds the Review button only inside the reviewMode flag gate” / “logs one good review entry, applies it, saves, and advances”)', async () => {
     const seeds = j6DueSeeds();
     const srs = globalThis.FlashcardSrs;
@@ -196,16 +206,16 @@ describe('Desk journey J6', () => {
 
     try {
       await j6SettleSignIn(harness);
-      const chip = await harness.waitFor(() => {
-        const candidate = harness.document.getElementById('fc-due-chip');
-        return candidate?.textContent === 'Review due (2)' ? candidate : false;
-      }, { message: 'Do Now did not render the two-card due chip' });
-      expect(chip.parentElement.id).toBe('donow-grades');
+      // 76524e8c (2026-09-26): the "Review due (N)" Do Now chip became the
+      // Review desktop icon's badge; the Do Now carries only work that is due.
+      await harness.waitFor(() => reviewDueBadge(harness.document)?.textContent === '2',
+        { message: 'Review icon did not show the two-card due badge' });
+      expect(harness.document.getElementById('fc-due-chip')).toBeNull();
       expect(harness.requests.some(({ method, url }) => (
         method === 'GET' && new URL(url).pathname.endsWith('/data/flashcard-flags.json')
       )), 'data/flashcard-flags.json was not served through the disk router').toBe(true);
 
-      // The lesson launcher no longer offers Review; the Do Now chip is Review's only entry.
+      // The lesson launcher no longer offers Review; the Review desktop icon is its only entry.
       const overlay = await j6OpenDeck(harness);
       const reviewMode = [...overlay.querySelectorAll('button')]
         .find((button) => button.textContent.includes('Review due cards'));
@@ -223,12 +233,12 @@ describe('Desk journey J6', () => {
       expect(closeResource, 'resource panel has no OK button').toBeTruthy();
       closeResource.click();
 
-      harness.document.getElementById('fc-due-chip').click();
+      reviewIcon(harness.document).dispatchEvent(new harness.window.MouseEvent('dblclick', { bubbles: true }));
       await harness.waitFor(() => (
         harness.document.getElementById('bf-overlay').style.display === 'block'
           && harness.document.getElementById('bf-header').textContent
-            .includes('Review due — practice, not graded')
-      ), { message: 'Do Now due chip did not start mixed Review mode' });
+            .includes('Spaced repetition practice only — never for a grade')
+      ), { message: 'Review icon did not start mixed Review mode' });
       expect(harness.document.getElementById('bf-progress').textContent).toContain('Review 1 of up to 20');
 
       const firstQuestion = harness.document.querySelector('#bf-question > div:last-child')
@@ -337,6 +347,7 @@ describe('Desk journey J6', () => {
       )), { message: 'both-OFF flashcard flags were not loaded from the disk router' });
 
       expect(harness.document.getElementById('fc-due-chip')).toBeNull();
+      expect(reviewDueBadge(harness.document)).toBeNull();
       const overlay = await j6OpenDeck(harness);
       const reviewMode = [...overlay.querySelectorAll('button')]
         .find((button) => button.textContent.includes('Review due cards'));

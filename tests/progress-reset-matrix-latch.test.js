@@ -132,15 +132,21 @@ describe('matrix row: refresh idempotency / monotonic latch', () => {
   });
 });
 
-describe('matrix row: strict-gate-still-strict — evidence present + genuinely incomplete predecessor stays LOCKED', () => {
-  it('D4 fail-open never leaks into the affirmative-server case', () => {
+// Sequential lesson locking was retired on purpose in 1e2d6178 (2026-09-10,
+// "Allow students to open lessons without completing prerequisites"):
+// _isLessonUnlocked now always returns true. The protective intent that
+// survives is that evidence for ONE lesson never false-credits ANOTHER —
+// completion stays honest even though access is open.
+describe('matrix row: evidence present + genuinely incomplete predecessor stays INCOMPLETE (access open since 1e2d6178)', () => {
+  it('D4 fail-open never leaks into completion credit in the affirmative-server case', () => {
     const o = composeLatchHarness({ username: 'student-a', studentId: 'sid-a' });
     // Evidence IS present (the server has spoken for 1.1), but the immediate
     // predecessor of the target lesson (1.3) has NO evidence at all.
     o.latchServerComplete([{ lessonKey: '1.1', Cws: 90, blooket: 95 }]);
     expect(o.serverEvidencePresent()).toBe(true);
     expect(o.isLessonComplete('1.3', {})).toBe(false); // genuinely incomplete
-    expect(o.isLessonUnlocked('1.4', PAST, '1.3', TODAY, {}, true)).toBe(false); // strict gate holds
+    expect(o.isLessonComplete('1.1', {})).toBe(true); // the latched lesson IS complete
+    expect(o.isLessonUnlocked('1.4', PAST, '1.3', TODAY, {}, true)).toBe(true); // access open by design
   });
 });
 

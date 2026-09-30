@@ -248,10 +248,12 @@ describe('Desk journey J5', () => {
       );
       expect(lowerMarks[`${TOPIC}|blooket`]).toBeUndefined();
 
-      const cancel = [...harness.document.querySelectorAll('#bf-actions button')]
-        .find((button) => button.textContent.trim() === 'Cancel');
-      expect(cancel, 'timed deck has no Cancel button').toBeTruthy();
-      cancel.click();
+      // The finish screen's only action is "Done" since d4554599 (2026-09-23:
+      // the finish screen states the outcome, then Done closes the deck).
+      const done = [...harness.document.querySelectorAll('#bf-actions button')]
+        .find((button) => button.textContent.trim() === 'Done');
+      expect(done, 'timed deck finish screen has no Done button').toBeTruthy();
+      done.click();
       await harness.waitFor(() => (
         harness.document.getElementById('bf-overlay').style.display === 'none'
       ), { message: 'lower timed recap did not close' });

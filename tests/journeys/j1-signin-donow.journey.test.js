@@ -48,7 +48,9 @@ function clickSignOut(document) {
   signOut.click();
 }
 
-describe('Desk journey J1', () => {
+// Boots the full Desk in JSDOM; under full-suite load that alone can exceed the
+// 5 s default (passes alone). Same 30 s budget J7/J8 already use.
+describe('Desk journey J1', { timeout: 30_000 }, () => {
   it('J1 sign-in renders fake /grade values and sign-out clears the identity chip (supersedes desk-donow-card “renderDoNow fetches /donow with a Bearer token” and post-sign-in refresh pins)', async () => {
     let harness = await bootDesk({
       now: NOW,

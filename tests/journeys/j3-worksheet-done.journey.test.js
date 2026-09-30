@@ -80,7 +80,9 @@ async function settleRoster(harness) {
   });
 }
 
-describe('Desk journey J3', () => {
+// Boots the full Desk in JSDOM; under full-suite load that alone can exceed the
+// 5 s default (passes alone). Same 30 s budget J7/J8 already use.
+describe('Desk journey J3', { timeout: 30_000 }, () => {
   it('J3 keeps worksheet Done disabled at the 59% lower boundary', async () => {
     const harness = await bootDesk({
       now: NOW,

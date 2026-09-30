@@ -29,7 +29,9 @@ async function make() {
   return { w, doc: w.document, errors };
 }
 afterEach(() => { doms.splice(0).forEach(d => d.window.close()); });
-describe('integrated teacher workspace', () => {
+// These tests boot the dashboard in JSDOM; under full-suite load they can exceed
+// the 5 s default though the file passes alone.
+describe('integrated teacher workspace', { timeout: 20_000 }, () => {
   it('opens the Messages pane from the unread button without marking messages read', async () => {
     const { w, doc } = await make();
     expect([...doc.querySelectorAll('[data-workspace-tab]')].map(el => el.dataset.workspaceTab)).toEqual(['class', 'attention', 'messages', 'recent', 'recovery']);

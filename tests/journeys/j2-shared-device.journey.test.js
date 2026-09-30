@@ -131,7 +131,15 @@ async function waitForLedgerCount(harness, count) {
   }, { message: `Expected ${count} fake-roster ledger request(s)` });
 }
 
-describe('Desk journey J2', () => {
+// The "Review due (N)" Do Now chip moved to the Review desktop icon's badge in
+// 76524e8c (2026-09-26). The badge is the per-student SRS due count to pin.
+function reviewDueBadge(doc) {
+  return doc.querySelector('.app-icon[data-app="review"] .review-due-badge');
+}
+
+// Boots the full Desk in JSDOM; under full-suite load that alone can exceed the
+// 5 s default (passes alone). J2 reboots the Desk four times, so it gets J5's 60 s.
+describe('Desk journey J2', { timeout: 60_000 }, () => {
   it('J2 reloads a shared device across A → B → A without leaking marks, due chip, or SRS state, then hydrates a fresh marks bucket from /donow (supersedes desk-calendar-sync per-student visibility and selfDone hydration behavior)', async () => {
     let harness = await bootDesk({
       now: NOW,
@@ -147,7 +155,7 @@ describe('Desk journey J2', () => {
     try {
       await settleSignIn(harness, 'alpha_otter');
       expect(harness.document.getElementById('menu-identity').textContent).toContain('Alpha Otter');
-      expect(harness.document.getElementById('fc-due-chip')?.textContent).toBe('Review due (1)');
+      expect(reviewDueBadge(harness.document)?.textContent).toBe('1');
 
       await openTopic(harness);
       const alphaDone = worksheetButton(harness.document);
@@ -171,7 +179,7 @@ describe('Desk journey J2', () => {
       await settleSignIn(harness, 'beta_fox');
 
       expect(harness.document.getElementById('menu-identity').textContent).toContain('Beta Fox');
-      expect(harness.document.getElementById('fc-due-chip')).toBeNull();
+      expect(reviewDueBadge(harness.document)).toBeNull();
       expect(harness.window.localStorage.getItem(BETA_MARKS_KEY)).toBeNull();
       expect(harness.window.localStorage.getItem(BETA_SRS_KEY)).toBeNull();
       expect(harness.window.localStorage.getItem(ALPHA_MARKS_KEY)).toBe(alphaMarks);
@@ -192,7 +200,7 @@ describe('Desk journey J2', () => {
       await settleSignIn(harness, 'alpha_otter');
 
       expect(harness.document.getElementById('menu-identity').textContent).toContain('Alpha Otter');
-      expect(harness.document.getElementById('fc-due-chip')?.textContent).toBe('Review due (1)');
+      expect(reviewDueBadge(harness.document)?.textContent).toBe('1');
       expect(harness.window.localStorage.getItem(ALPHA_MARKS_KEY)).toBe(alphaMarks);
       expect(topicTiles(harness.document).some((tile) => tile.classList.contains('dc-localpartial'))).toBe(true);
 

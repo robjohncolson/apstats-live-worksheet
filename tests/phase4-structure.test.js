@@ -48,7 +48,9 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
   });
 
   it('declares it is a teacher dashboard (title)', () => {
-    expect(DASH).toMatch(/<title>[^<]*teacher[^<]*dashboard/i);
+    // Retitled "Teacher workspace" in b023ff9e (2026-09-10) when the dashboard
+    // became the Desk's embedded teacher workspace.
+    expect(DASH).toMatch(/<title>[^<]*teacher (workspace|dashboard)/i);
   });
 
   it('loads roster_config.js as a sibling (single-source URL config)', () => {
@@ -84,9 +86,9 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
     // keys: URL_KEY (this page's URL choice), SECRET_KEY (opt-in secret),
     // and GLOBAL_OVERRIDE_KEY (the same key roster_config.js consults so
     // Desk + worksheets + start-here pick up the same backend in one click).
-    const setItemCalls = [...DASH.matchAll(/localStorage\.setItem\s*\(\s*([A-Z_][A-Z0-9_]*|['"][^'"]+['"])/g)];
+    const setItemCalls = [...DASH.matchAll(/localStorage\.setItem\s*\(\s*([A-Za-z_$][\w$]*(?:\(\))?|['"][^'"]+['"])/g)];
     expect(setItemCalls.length, 'localStorage.setItem must appear at least once (for URL persistence)').toBeGreaterThan(0);
-    const ALLOWED_KEYS = new Set(['URL_KEY', 'SECRET_KEY', 'GLOBAL_OVERRIDE_KEY']);
+    const ALLOWED_KEYS = new Set(['URL_KEY', 'SECRET_KEY', 'GLOBAL_OVERRIDE_KEY', '_inboxSeenKey()']);
     for (const m of setItemCalls) {
       const target = m[1];
       expect(
@@ -94,6 +96,11 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
         `localStorage.setItem(${target}, ...) targets an unknown key — only URL_KEY, SECRET_KEY, and GLOBAL_OVERRIDE_KEY are allowed`
       ).toBe(true);
     }
+
+    // 445a2431 (2026-09-09) added the teacher-inbox "seen at" key: a
+    // non-secret timestamp ('tsc-inbox-seen-at:<section>'), never the secret.
+    expect(DASH).toMatch(/INBOX_SEEN_KEY\s*=\s*['"]tsc-inbox-seen-at['"]/);
+    expect(DASH).toMatch(/localStorage\.setItem\(_inboxSeenKey\(\),\s*newest\)/);
 
     // The literal key strings must be exactly these — pins the
     // dashboard/console to share the same storage namespace and the

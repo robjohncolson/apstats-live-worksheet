@@ -12,7 +12,8 @@ const NEXT_TOPIC = '1.4';
 // gradebook → the "Schoology today" chip shows —
 const EXPECTED_GRADE_STRIP = 'Q187= higher of Work 87 · PC 82Schoology today —';
 const EXPECTED_PROGRESS = '3 ahead — 3 of 66 lessons done'; // 66 core topics: old 3.7 is bonus (crosswalk retag 2026-08-07), off the calendar
-const EXPECTED_DONOW = 'Do Now: Topic 1.4 — keep going.';
+// CED 2026 topic labels since 7d02e2f5 (2026-09-05).
+const EXPECTED_DONOW = 'Do Now: 1.4 · Graphical Representations (1 categorical) — keep going.';
 
 const FAILURE_CASES = [
   { label: 'network', value: 'network', status: 'Grades are temporarily unavailable' },
@@ -107,6 +108,12 @@ function gradeRequestCount(harness) {
   )).length;
 }
 
+// The pill is followed by the collapsed "show the math" disclosure (388475b1,
+// 2026-09-27); pin the pill itself, not the explainer text after it.
+function gradeStrip(harness) {
+  return harness.document.getElementById('donow-grades').textContent.split('show the math')[0];
+}
+
 function marks(harness) {
   return JSON.parse(harness.window.localStorage.getItem(MARKS_KEY) || '{}');
 }
@@ -146,8 +153,7 @@ async function expectIncidentCalendar(harness) {
 }
 
 async function expectIncidentInvariants(harness, marksBefore) {
-  expect(harness.document.getElementById('donow-grades').textContent)
-    .toBe(EXPECTED_GRADE_STRIP);
+  expect(gradeStrip(harness)).toBe(EXPECTED_GRADE_STRIP);
   expect(harness.document.getElementById('pl').textContent).toBe(EXPECTED_PROGRESS);
   expect(harness.document.getElementById('donow-msg').textContent).toBe(EXPECTED_DONOW);
   expect(harness.window.localStorage.getItem(MARKS_KEY)).toBe(marksBefore);
@@ -172,7 +178,7 @@ describe('Desk journey J7', () => {
       try {
         await settleSignIn(harness);
         await harness.waitFor(() => (
-          harness.document.getElementById('donow-grades').textContent === EXPECTED_GRADE_STRIP
+          gradeStrip(harness) === EXPECTED_GRADE_STRIP
         ), { message: 'live /grade did not seed the durable cache and grade strip' });
         await harness.waitFor(() => (
           harness.document.getElementById('pl').textContent === EXPECTED_PROGRESS

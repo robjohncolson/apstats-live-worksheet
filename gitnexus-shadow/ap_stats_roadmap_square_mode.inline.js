@@ -2902,6 +2902,43 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
   "generatedAt": "2026-06-01T20:06:27.691Z",
@@ -9119,6 +9156,7 @@ async function renderDoNowGrades(baseUrl, token) {
   // progress). renderWhySoLow below likewise bails when a panel is open.
   var _wslHost = document.getElementById('donow-helper');
   if (_wslHost && !_coachPanelOpen()) _wslHost.innerHTML = '';
+  if (typeof _clearDoNowBonus === 'function') _clearDoNowBonus();
   _gradeQuartersCache = null;
   _gradeUnitsCache = null;
   if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
@@ -9320,6 +9358,8 @@ async function renderDoNowGrades(baseUrl, token) {
     pill.onkeydown = function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (typeof openWallet === 'function') openWallet(); } };
     host.appendChild(pill);
     if (typeof _updateDoNowMissingPill === 'function') _updateDoNowMissingPill();
+    // BONUS_DONOW_SPEC: the banked-bonus sentence under the pill (fire-and-forget; own fetch).
+    if (typeof renderDoNowBonus === 'function') renderDoNowBonus();
 
     // A small labelled chip beside the pill. The two v3 tracks (PC, Work) now live INSIDE the
     // pill with the 40% rule (EFFORT_VISIBILITY_V2_SPEC §3), so only "Schoology today" uses it.
@@ -15817,10 +15857,66 @@ function _walletApplyWindowReadiness(readiness) {
         if (!win || !win.style) return;
         if (!readiness || readiness.state === 'nodue' || typeof readiness.hue !== 'number') {
             win.style.backgroundColor = '';
-            return;
+        } else {
+            win.style.backgroundColor = 'hsl(' + readiness.hue + ',55%,92%)';
         }
-        win.style.backgroundColor = 'hsl(' + readiness.hue + ',55%,92%)';
+        // LEDGER_GRADE_AGREEMENT_SPEC §2: incoming zeros win over the readiness hue
+        // (same light tints as the Missing-work rows).
+        var warns = (typeof _zeroCurrentWarnings === 'function') ? _zeroCurrentWarnings() : [];
+        if (!Array.isArray(warns) || !warns.length) return;
+        win.style.backgroundColor = _zeroAnyPast(warns) ? '#fff3f3' : '#fff9db';
     } catch (_) {}
+}
+
+// LEDGER_GRADE_AGREEMENT_SPEC §2: the Do Now zero colours, shared with the ledger balance card.
+// Must equal the #donow-card.donow-zeros-soon / .donow-zeros-now CSS (a test pins them equal).
+var ZERO_TINT = { soon: { bg: '#fff3b0', border: '#d9b400' }, now: { bg: '#f7c9c9', border: '#cc0000' } };
+
+function _zeroAnyPast(warns) {
+    for (var i = 0; i < warns.length; i++) {
+        if (warns[i].past) return true;
+    }
+    return false;
+}
+
+// Balance card carries the same zero state as the Do Now card. Never throws.
+function _walletApplyZeroTint(card, warns) {
+    try {
+        if (!card) return;
+        card.classList.remove('wallet-zeros-soon');
+        card.classList.remove('wallet-zeros-now');
+        if (!warns || !warns.length) return;
+        var isNow = _zeroAnyPast(warns);
+        var tint = isNow ? ZERO_TINT.now : ZERO_TINT.soon;
+        card.classList.add(isNow ? 'wallet-zeros-now' : 'wallet-zeros-soon');
+        card.style.backgroundColor = tint.bg;
+        card.style.borderColor = tint.border;
+    } catch (_) {}
+}
+
+// The one sentence under the big grade: what the incoming / counting zeros do to the number.
+// "above" = the Missing-work card, which sits above the balance card.
+function _walletGradeDropText(warns) {
+    var nowCount = 0;
+    for (var i = 0; i < warns.length; i++) {
+        if (warns[i].past) nowCount++;
+    }
+    var soonCount = warns.length - nowCount;
+    var day = _zeroEarliestSoonDay(warns);
+    var tail = ' Finished work counts the same day.';
+    var zerosText = nowCount === 1 ? '1 zero' : nowCount + ' zeros';
+    if (nowCount && soonCount) {
+        var soonItems = soonCount === 1 ? 'the 1 more item above is' : 'the ' + soonCount + ' more items above are';
+        var verb = soonCount === 1 ? 'drops again' : 'starts dropping again';
+        return 'This number already includes ' + zerosText + ' and ' + verb + ' on ' + day
+            + ' unless ' + soonItems + ' finished.' + tail;
+    }
+    if (nowCount) {
+        var nowItems = nowCount === 1 ? 'the 1 item above' : 'the ' + nowCount + ' items above';
+        return 'This number already includes ' + zerosText + '. Finish ' + nowItems + ' and it goes back up the same day.';
+    }
+    if (soonCount === 1) return 'This number drops on ' + day + ' unless the 1 item above is finished.' + tail;
+    return 'This number starts dropping on ' + day + ' unless the ' + soonCount + ' items above are finished.' + tail;
 }
 
 // ── ZERO_WARNING (teacher 2026-09-18) ──────────────────────────────────────
@@ -15871,6 +15967,75 @@ function _zeroCurrentWarnings() {
     var period = (typeof cP === 'string') ? cP : null;
     return _zeroWarnings(lessons, period, _zeroTodayIso());
 }
+// ── PAST_DUE_WORK (teacher 2026-09-30) ─────────────────────────────────────
+// Schoology marks an item "missing" the day after its due date, but the Desk
+// only warns ZERO_WARN_DAYS before the zero date (due + 13). This lists exactly
+// the items _zeroWarnings leaves out: due before today, zero date still MORE
+// than ZERO_WARN_DAYS away. Shown ONLY as quiet grey rows in the My Ledger
+// Missing-work card — no tint, pill, badge or coach line reads it.
+// The three "missing" rules MUST match _zeroWarnings (a test pins them).
+// Rows: { lessonKey, kind, dueDate, zeroDate }. Pure; never throws.
+function _pastDueWork(lessons, period, todayIso) {
+    try {
+        if (!Array.isArray(lessons) || !period || !todayIso) return [];
+        var today = new Date(todayIso + 'T00:00:00');
+        var out = [];
+        for (var i = 0; i < lessons.length; i++) {
+            var L = lessons[i];
+            if (!L || !L.lessonKey || !L.zeroDate || !L.due) continue;
+            var zd = L.zeroDate[period];
+            var dd = L.due[period];
+            if (!zd || !dd) continue;
+            if (!(dd < todayIso)) continue;
+            var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
+            if (days <= ZERO_WARN_DAYS) continue;   // _zeroWarnings owns it
+            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;
+            if (!hasWork) out.push({ lessonKey: L.lessonKey, kind: 'worksheet', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
+            if ((L.quizTotal || 0) > 0 && L.Q == null) out.push({ lessonKey: L.lessonKey, kind: 'quiz', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
+            if (L.hasBlooket && !L.blooketBonus && L.blooket == null) out.push({ lessonKey: L.lessonKey, kind: 'blooket', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
+        }
+        var KIND_ORDER = { worksheet: 0, quiz: 1, blooket: 2 };
+        out.sort(function (a, b) {
+            if (a.zeroDate !== b.zeroDate) return a.zeroDate < b.zeroDate ? -1 : 1;
+            return (KIND_ORDER[a.kind] || 0) - (KIND_ORDER[b.kind] || 0);
+        });
+        return out;
+    } catch (_) { return []; }
+}
+function _pastDueCurrentWork() {
+    var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+    var period = (typeof cP === 'string') ? cP : null;
+    return _pastDueWork(lessons, period, _zeroTodayIso());
+}
+// The Schoology column title for a row (tools/schoology_components.py): Schoology keeps
+// the OLD keys, while the Desk shows the CED label.
+//   quiz               → '<lessonKey> Quiz'             ('3.6 Quiz')
+//   worksheet / deck   → '<unit>.<worksheetKey> <Word>' ('3.6-7 Follow-Along', the worksheet GROUP)
+// unit / worksheetKey come from the row, else from the /grade lesson. Missing → null (no tag, never guess).
+function _zeroSchoologyTitle(w) {
+    if (w.kind === 'quiz') return w.lessonKey + ' Quiz';
+    var WORD = { worksheet: 'Follow-Along', blooket: 'Blooket' };
+    if (!WORD[w.kind]) return null;
+    var unit = w.unit;
+    var wsKey = w.worksheetKey;
+    if (unit == null || !wsKey) {
+        var L = _zeroLessonByKey(w.lessonKey);
+        if (!L) return null;
+        unit = L.unit;
+        wsKey = L.worksheetKey;
+    }
+    if (unit == null || unit === '' || !wsKey) return null;
+    return unit + '.' + wsKey + ' ' + WORD[w.kind];
+}
+// The /grade lesson for a lesson key (null when the cache or the lesson is missing).
+function _zeroLessonByKey(lessonKey) {
+    var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+    if (!Array.isArray(lessons)) return null;
+    for (var i = 0; i < lessons.length; i++) {
+        if (lessons[i] && lessons[i].lessonKey === lessonKey) return lessons[i];
+    }
+    return null;
+}
 // "Sun 9/27" for an ISO date.
 function _zeroDayText(iso) {
     var d = new Date(iso + 'T00:00:00');
@@ -15890,6 +16055,16 @@ function _zeroLatestSoonDay(warns) {
         if (warns[i].zeroDate > latest) latest = warns[i].zeroDate;
     }
     return latest ? _zeroDayText(latest) : '';
+}
+// "Drops on <day>": the EARLIEST zero date among the not-yet-counting warnings ('' when none).
+// The grade first drops on this date (LEDGER_GRADE_AGREEMENT_SPEC §1).
+function _zeroEarliestSoonDay(warns) {
+    var earliest = '';
+    for (var i = 0; i < warns.length; i++) {
+        if (warns[i].past) continue;
+        if (!earliest || warns[i].zeroDate < earliest) earliest = warns[i].zeroDate;
+    }
+    return earliest ? _zeroDayText(earliest) : '';
 }
 // The Do Now pill (LEDGER_CALM_SPEC \u00a71.2): "1 is a 0 now \u00b7 2 more by Sun 9/27".
 function _zeroPillText(warns) {
@@ -16631,31 +16806,54 @@ function _walletPrependZeroCard(host) {
         if (!host) return;
         var old = host.querySelector('.wallet-zero-card');
         var warns = _zeroCurrentWarnings();
+        // Past due in Schoology, but the 0 is still far off: quiet grey rows below (PAST_DUE_WORK).
+        var later = (typeof _pastDueCurrentWork === 'function') ? _pastDueCurrentWork() : [];
         // Same list as last paint → keep the card (a grade poll must not steal
         // focus from an Open button the student is tabbing through).
         var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
+        if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
         if (old && old.dataset.sig === sig) {
             // Same rows, but the grade in the status line may have moved: refresh the text only.
             var oldStatus = old.querySelector('.wz-status');
-            if (oldStatus) oldStatus.textContent = _zeroStatusText(warns);
+            if (oldStatus) oldStatus.textContent = _zeroCardStatus(warns, later);
             return;
         }
         if (old) old.remove();
-        if (!warns.length) return;
+        if (!warns.length && !later.length) return;
         var card = document.createElement('div');
-        // Red frame once something is a 0; yellow while everything is still only "soon".
-        card.className = 'wallet-zero-card' + (warns.some(function (w) { return w.past; }) ? '' : ' wz-soon');
+        // Red frame once something is a 0; yellow while everything is still only "soon";
+        // grey when nothing is close to a 0 (only past-due rows).
+        var frame = ' wz-soon';
+        if (warns.some(function (w) { return w.past; })) frame = '';
+        if (!warns.length) frame = ' wz-calm';
+        card.className = 'wallet-zero-card' + frame;
         card.dataset.sig = sig;
         var status = document.createElement('div');
         status.className = 'wz-status geneva';
-        status.textContent = _zeroStatusText(warns);
+        status.textContent = _zeroCardStatus(warns, later);
         card.appendChild(status);
         // Past first, then by date (warns are already date-ordered). Colour carries the meaning.
         var ordered = warns.filter(function (w) { return w.past; }).concat(warns.filter(function (w) { return !w.past; }));
         ordered.forEach(function (w) { card.appendChild(_zeroCardRow(w)); });
+        if (later.length) {
+            var head = document.createElement('div');
+            head.className = 'wz-later-head geneva';
+            head.textContent = 'Past due — not counting yet';
+            card.appendChild(head);
+            later.forEach(function (w) { card.appendChild(_pastDueCardRow(w)); });
+        }
         host.insertBefore(card, host.firstChild);
         _zeroCardAttachScores(card, ordered);
     } catch (_) {}
+}
+// The status line: the zero wording when anything is close to a 0; calm wording
+// when the card holds only past-due rows (nothing is becoming a 0 soon).
+function _zeroCardStatus(warns, later) {
+    if (warns.length) return _zeroStatusText(warns);
+    var grade = (typeof _walletCurrentGrade === 'function') ? _walletCurrentGrade() : null;
+    var lead = (grade && grade.pct != null && grade.q) ? grade.q + ' so far: ' + grade.pct + '%. ' : '';
+    if (later.length === 1) return lead + '1 item below is past due. It is not counting yet — finishing it now keeps it that way.';
+    return lead + later.length + ' items below are past due. They are not counting yet — finishing them now keeps it that way.';
 }
 // The "graph" link under a Missing-work row: the class's graphs for THIS assignment only, in the
 // forms the class has learned, drawn inline under the score list. Toggles open / closed.
@@ -16741,6 +16939,28 @@ function _zeroCardRow(w) {
     row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '') + (w.kind === 'quiz' ? ' wz-quiz' : '');
     row.dataset.key = w.lessonKey + ':' + (w.kind === 'blooket' ? 'blooket' : w.kind === 'quiz' ? 'quiz' : 'worksheet');
     var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
+    row.appendChild(_zeroCardActionButton(w, label));
+    var name = document.createElement('span');
+    name.className = 'wz-label';
+    name.textContent = label;
+    row.appendChild(name);
+    var sgy = (typeof _zeroSchoologyTag === 'function') ? _zeroSchoologyTag(w) : null;
+    if (sgy) row.appendChild(sgy);
+    var when = document.createElement('span');
+    when.className = 'wz-when';
+    when.textContent = _zeroWhenText(w);
+    row.appendChild(when);
+    var see = document.createElement('button');
+    see.type = 'button'; see.className = 'wz-see';
+    see.textContent = 'graph';
+    see.title = 'The graphs of the class on this one (no names)';
+    see.disabled = true;   // enabled once the class picture has loaded (_zeroCardAttachScores)
+    see.onclick = function () { _snapOpenAssignment(w.lessonKey, w.kind); };
+    row.appendChild(see);
+    return row;
+}
+// The verb button of a Missing-work row: Open / Quiz / Flashcards.
+function _zeroCardActionButton(w, label) {
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 's7btn';
     if (w.kind === 'blooket') {
@@ -16754,22 +16974,40 @@ function _zeroCardRow(w) {
         btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
     }
     btn.setAttribute('aria-label', btn.textContent + ' ' + label);
-    row.appendChild(btn);
+    return btn;
+}
+// The small muted "Schoology: 3.1 Follow-Along" tag, so the student can match the row
+// to the Schoology column (Schoology keeps the old lesson key).
+// Returns null when the title is unknown (the caller then adds nothing).
+function _zeroSchoologyTag(w) {
+    var title = _zeroSchoologyTitle(w);
+    if (!title) return null;
+    var tag = document.createElement('span');
+    tag.className = 'wz-sgy';
+    tag.textContent = 'Schoology: ' + title;
+    return tag;
+}
+// "due Fri 9/25 · not a 0 until after Thu 10/8" (a 0 starts the day AFTER zeroDate, like _zeroWhenText).
+function _pastDueWhenText(w) {
+    return 'due ' + _zeroDayText(w.dueDate) + ' · not a 0 until after ' + _zeroDayText(w.zeroDate);
+}
+// One quiet grey past-due row: [verb button] [lesson label] [Schoology tag] ... [dates].
+function _pastDueCardRow(w) {
+    var row = document.createElement('div');
+    row.className = 'wz-row wz-later';
+    row.dataset.key = w.lessonKey + ':' + w.kind + ':later';
+    var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
+    row.appendChild(_zeroCardActionButton(w, label));
     var name = document.createElement('span');
     name.className = 'wz-label';
     name.textContent = label;
     row.appendChild(name);
+    var sgy = _zeroSchoologyTag(w);
+    if (sgy) row.appendChild(sgy);
     var when = document.createElement('span');
     when.className = 'wz-when';
-    when.textContent = _zeroWhenText(w);
+    when.textContent = _pastDueWhenText(w);
     row.appendChild(when);
-    var see = document.createElement('button');
-    see.type = 'button'; see.className = 'wz-see';
-    see.textContent = 'graph';
-    see.title = 'The graphs of the class on this one (no names)';
-    see.disabled = true;   // enabled once the class picture has loaded (_zeroCardAttachScores)
-    see.onclick = function () { _snapOpenAssignment(w.lessonKey, w.kind); };
-    row.appendChild(see);
     return row;
 }
 
@@ -18256,9 +18494,12 @@ function _walletBonusFooterText(applied) {
     return 'Bonus applied — quarter grade ' + grade;
 }
 
-function _walletBonusBlock(receipts) {
+// The one grouping of BONUS-* ledger rows for the current quarter (BONUS_DONOW_SPEC §2). Both the
+// My Ledger block and the Do Now line render from this, so the two surfaces cannot disagree.
+// Returns null when nothing is banked and nothing was applied this quarter.
+function _bonusSummary(receipts) {
     var quarter = typeof quarterOfDate === 'function' ? 'Q' + quarterOfDate(new Date()) : _walletCurrentQuarter().quarter;
-    var sheets = new Map();
+    var byItem = new Map();
     var applied = null;
     (receipts || []).forEach(function (r) {
         var item = r.i || r.itemId || r.item || '';
@@ -18266,9 +18507,28 @@ function _walletBonusBlock(receipts) {
         if (r.src !== 'bonus') return;
         var data = _walletBonusResponse(r);
         if (data.quarter && data.quarter !== quarter) return;
-        sheets.set(item, { row: r, data: data });
+        byItem.set(item, { row: r, data: data });
     });
-    if (!sheets.size && !applied) return null;
+    if (!byItem.size && !applied) return null;
+    var sheets = [];
+    var total = 0;
+    byItem.forEach(function (sheet, item) {
+        var points = Number(sheet.row.sc);
+        if (!isFinite(points)) points = 0;
+        total += points;
+        sheets.push({
+            title: sheet.data.title || item.replace(/^BONUS-/, ''),
+            grade: sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[points] || '—',
+            points: points
+        });
+    });
+    return { quarter: quarter, sheets: sheets, total: total, applied: applied };
+}
+
+function _walletBonusBlock(receipts) {
+    var summary = _bonusSummary(receipts);
+    if (!summary) return null;
+    var applied = summary.applied;
     var block = document.createElement('div');
     block.className = 'wallet-bonus-block geneva';
     block.style.cssText = 'border:1px solid var(--black);background:#fff;'
@@ -18278,11 +18538,9 @@ function _walletBonusBlock(receipts) {
     header.className = 'chicago';
     header.textContent = 'Bonus banked';
     block.appendChild(header);
-    sheets.forEach(function (sheet, item) {
-        var points = Number(sheet.row.sc);
+    summary.sheets.forEach(function (sheet) {
         var line = document.createElement('div');
-        line.textContent = (sheet.data.title || item.replace(/^BONUS-/, '')) + ' — '
-            + (sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[points] || '—') + ' (+' + points + ')';
+        line.textContent = sheet.title + ' — ' + sheet.grade + ' (+' + sheet.points + ')';
         block.appendChild(line);
     });
     var footer = document.createElement('div');
@@ -18290,6 +18548,39 @@ function _walletBonusBlock(receipts) {
     footer.textContent = _walletBonusFooterText(applied);
     block.appendChild(footer);
     return block;
+}
+
+// One sentence under the Do Now grade pill (BONUS_DONOW_SPEC §1): what is banked this quarter.
+// Before apply: "Bonus banked: Screen Time P (+3) · Candle Tests E (+5) = +8 at quarter end".
+// After apply: the ledger's applied sentence. Nothing banked → the host stays hidden (no empty strip).
+function _doNowBonusText(summary) {
+    if (!summary) return '';
+    if (summary.applied) return _walletBonusFooterText(summary.applied);
+    if (!summary.sheets.length) return '';
+    var parts = summary.sheets.map(function (sheet) {
+        return sheet.title + ' ' + sheet.grade + ' (+' + sheet.points + ')';
+    });
+    return 'Bonus banked: ' + parts.join(' · ') + ' = +' + summary.total + ' at quarter end';
+}
+
+function _clearDoNowBonus() {
+    var host = document.getElementById('donow-bonus');
+    if (!host) return;
+    host.style.display = 'none';
+    host.textContent = '';
+    host.title = '';
+}
+
+async function renderDoNowBonus() {
+    var host = document.getElementById('donow-bonus');
+    if (!host) return;
+    var receipts = await _walletFetchBonusReceipts();
+    var summary = _bonusSummary(receipts);
+    var text = _doNowBonusText(summary);
+    if (!text) { _clearDoNowBonus(); return; }
+    host.textContent = text;
+    host.title = summary.applied ? '' : _walletBonusFooterText(null);
+    host.style.display = 'block';
 }
 
 // Bonus ledger entries need no signed receipt; fetchReceipts omits unsigned rows.
@@ -18451,6 +18742,10 @@ function _walletPaint(host, receipts, loading) {
         card.style.backgroundColor = 'hsl(' + readiness.hue + ',60%,88%)';
         card.style.borderColor = 'hsl(' + readiness.hue + ',65%,45%)';
     }
+    // LEDGER_GRADE_AGREEMENT_SPEC §2: the card carries the same zero state as the Do Now.
+    var warns = (typeof _zeroCurrentWarnings === 'function') ? _zeroCurrentWarnings() : [];
+    if (!Array.isArray(warns)) warns = [];   // Codex review: a non-array must never paint a false warning
+    _walletApplyZeroTint(card, warns);
 
     var who = document.createElement('div');
     who.className = 'geneva';
@@ -18479,6 +18774,18 @@ function _walletPaint(host, receipts, loading) {
     gradeRow.appendChild(gradeBig);
     gradeRow.appendChild(gradeLbl);
     card.appendChild(gradeRow);
+
+    // LEDGER_GRADE_AGREEMENT_SPEC §3: while zeros are coming or counting, the number is not settled.
+    if (warns.length) {
+        var zerosNow = _zeroAnyPast(warns);
+        gradeBig.style.color = zerosNow ? '#a30000' : '#7a5c00';
+        gradeLbl.textContent = 'Grade today';
+        var drop = document.createElement('div');
+        drop.className = 'wallet-grade-drop geneva';
+        drop.style.cssText = 'font-size:11px;line-height:1.35;margin-top:4px;color:#000;font-weight:bold';
+        drop.textContent = _walletGradeDropText(warns);
+        card.appendChild(drop);
+    }
 
     // EFFORT_VISIBILITY_SPEC §3: the PC on file + the work done ahead, under the grade row.
     var effort = _walletEffortBlock(grade.q);
@@ -22187,8 +22494,9 @@ const studyBreak = {
             return;
         }
         SFX.play('sosumi', 0.5);
+        document.body.classList.add('challenge-waiting');   // STUDY_BREAK_CHALLENGE_ALERT_SPEC §3
         const dialog = document.getElementById('challenge-dialog');
-        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · 1 candy at stake, winner takes 2 🍬)';
+        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (one game · 1 candy at stake, winner takes 2 🍬)';
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-modal', 'true');
         dialog.style.display = 'block';
@@ -22208,6 +22516,7 @@ const studyBreak = {
             clearInterval(this.mpChallengeTimer); this.mpChallengeTimer = null;
             this.pendingChallenger = null;
             dialog.style.display = 'none';
+            document.body.classList.remove('challenge-waiting');
             reply(type);
         };
         document.getElementById('challenge-accept-btn').onclick = () => finish('challenge_accept');
@@ -22225,6 +22534,7 @@ const studyBreak = {
         if (!from) return;
         this.pendingChallenger = null;
         if (this.mpChallengeTimer) { clearInterval(this.mpChallengeTimer); this.mpChallengeTimer = null; }
+        document.body.classList.remove('challenge-waiting');
         const ws = this._liveWs();
         if (ws) { try { ws.send(JSON.stringify({ type: 'challenge_decline', from })); } catch (_) {} }
     },
@@ -22381,6 +22691,9 @@ const studyBreak = {
     // opponent keeps stamping us "alive". If THEIR traffic stops for OPPONENT_TIMEOUT_MS while a
     // game is running, treat it as opponentLeft('timeout') — you win by forfeit, the bet refunds
     // via the server (they never confirm), mirroring the accepted rage-quit semantics.
+    // Games a player must win to take the match. 1 = a single game, then the verdict.
+    WINS_TO_TAKE: 1,
+
     _startHeartbeat() {
         this._stopHeartbeat();
         if (!this.mpState) return;
@@ -22792,7 +23105,10 @@ const studyBreak = {
         if (!ms._wonThisGame && !ms._forfeit && ms.gameOverAt && (Date.now() - ms.gameOverAt) < 1500) return;
         ms.gameScored = true;
         if (ms._wonThisGame) ms.myWins = (ms.myWins || 0) + 1; else ms.oppWins = (ms.oppWins || 0) + 1;
-        if (ms.myWins >= 2 || ms.oppWins >= 2 || ms._forfeit) {
+        // ONE game decides the match (teacher 2026-09-28: best-of-3 was beyond most people's patience).
+        // The series machinery (wins, gameNumber, escrow-per-roomId) is kept; only the finish line moved.
+        const winsToTake = this.WINS_TO_TAKE || 1;
+        if (ms.myWins >= winsToTake || ms.oppWins >= winsToTake || ms._forfeit) {
             ms.seriesOver = true;
             this._studyBreakResolveStakes();
             if (typeof this.updateHud === 'function') this.updateHud();   // help line: 'R = rematch · Esc = exit'
@@ -23977,13 +24293,13 @@ const studyBreak = {
         else if (flashText.includes('fled!')) { title = 'YOU WIN!'; detail = flashText.replace(/Opponent fled! You win! ?/, ''); }
         else if (flashText.includes('disconnected')) { title = 'DISCONNECTED'; detail = flashText; }
         else { detail = flashText; }
-        // Best-of-3 series line + the candy/next-game status (STUDY_BREAK_STAKES_SPEC Phase 2).
+        // One game decides it: the verdict line + the candy status (STUDY_BREAK_STAKES_SPEC Phase 2, amended 2026-09-28).
         let seriesLine = '', statusLine = '';
         if (ms) {
-            seriesLine = `Best of 3 — you ${ms.myWins || 0} : ${ms.oppWins || 0} ${String(ms.opponent || 'opp').slice(0, 10)}`;
+            seriesLine = `One game \u00b7 you vs ${String(ms.opponent || 'opp').slice(0, 10)}`;
             if (ms.seriesOver) {
                 const won = (ms.myWins || 0) > (ms.oppWins || 0);
-                title = won ? 'SERIES WON!' : 'SERIES LOST';
+                title = won ? 'YOU WIN!' : 'YOU LOSE';
                 if (ms.candyOutcome === '+1') statusLine = '🍬 +1 candy to your wallet!';
                 else if (ms.candyOutcome === '-1') statusLine = '🍬 −1 candy (you lost the bet)';
                 else if (ms.candyOutcome === 'refunded') statusLine = 'bet refunded — no agreement';
@@ -25772,18 +26088,26 @@ const DogePresence = {
         }, 30000);
     },
 
+    // STUDY_BREAK_CHALLENGE_ALERT_SPEC §1-2: the alert used to be a sound + an icon wiggle that
+    // the student had to CLICK to see Accept, and it expired silently — every classroom attempt
+    // "timed out". Now the dialog opens by itself, the desk breathes gold, the tab title flips,
+    // and expiry sends a real decline (25s beats the relay's 30s sweep).
+    CHALLENGE_SECONDS: 25,
+    _challengeTitleBefore: null,
+
     onChallengeReceived(from) {
         MacSFX.play('sosumi', 0.5);
         const el = document.getElementById('doge-presence');
         el.classList.add('doge-wiggle');
         el.classList.remove('doge-dim');
 
+        if (this.incomingChallenge && this.incomingChallenge.timer) clearInterval(this.incomingChallenge.timer);
         this.incomingChallenge = {
             from: from,
-            countdown: 30,
+            countdown: this.CHALLENGE_SECONDS,
             timer: setInterval(() => {
+                if (!this.incomingChallenge) return;
                 this.incomingChallenge.countdown--;
-                // Update panel if visible
                 const timerEl = document.getElementById('challenge-countdown');
                 if (timerEl) timerEl.textContent = this.incomingChallenge.countdown + 's';
                 if (this.incomingChallenge.countdown <= 0) {
@@ -25791,6 +26115,10 @@ const DogePresence = {
                 }
             }, 1000)
         };
+        document.body.classList.add('challenge-waiting');
+        if (this._challengeTitleBefore == null) this._challengeTitleBefore = document.title;
+        document.title = '\ud83d\udc15 Challenge! \u2014 ' + this._challengeTitleBefore;
+        this.showChallengePanel();
         // ICON_MOTION -- light up the desktop game icon's challenge throb
         // (clearIncomingChallenge() already calls updateIcon() to remove it).
         this.updateIcon();
@@ -25801,31 +26129,39 @@ const DogePresence = {
         if (!this.incomingChallenge) return;
         const panel = document.getElementById('doge-challenge-panel');
         panel.innerHTML =
-            `<div class="challenge-title">&#128021; Challenge!</div>` +
-            `<div>${_deskEsc(this.incomingChallenge.from)} wants to play<br>Study Break!</div>` +
-            `<div style="font-size:9px;margin-top:2px">best of 3 \u00b7 1 candy at stake, winner takes 2 \ud83c\udf6c</div>` +
+            `<div class="challenge-title">Challenge!</div>` +
+            `<img class="challenge-doge" src="Doge-Asset.png" alt="">` +
+            `<div class="challenge-who">${_deskEsc(this.incomingChallenge.from)} wants to play<br>Study Break!</div>` +
+            `<div class="challenge-stake">one game \u00b7 1 candy at stake, winner takes 2 \ud83c\udf6c</div>` +
             `<div class="challenge-timer" id="challenge-countdown">${this.incomingChallenge.countdown}s</div>` +
             `<div class="challenge-btns">` +
-            `<button onclick="DogePresence.declineChallenge()">Decline</button>` +
-            `<button class="btn-accept" onclick="DogePresence.acceptChallenge()">Accept &#9656;</button>` +
-            `</div>`;
+            `<button type="button" class="btn-decline" onclick="DogePresence.declineChallenge()">NO</button>` +
+            `<button type="button" class="btn-accept" onclick="DogePresence.acceptChallenge()">YES, PLAY &#9656;</button>` +
+            `</div>` +
+            `<div class="challenge-stake">Enter = yes \u00b7 Esc = no</div>`;
+        // The panel lives inside #doge-presence (onclick=toggle): stop clicks from re-toggling the menu.
+        panel.onclick = (e) => { e.stopPropagation(); };
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.setAttribute('aria-label', this.incomingChallenge.from + ' wants to play Study Break');
         panel.style.display = 'block';
+        try { const yes = panel.querySelector('.btn-accept'); if (yes) yes.focus(); } catch (_) {}
     },
 
     acceptChallenge() {
         if (!this.incomingChallenge || !this.ws) return;
         this.ws.send(JSON.stringify({ type: 'challenge_accept', from: this.incomingChallenge.from }));
         this.clearIncomingChallenge();
-        document.getElementById('doge-challenge-panel').style.display = 'none';
     },
 
+    // Always tells the challenger. `timeout` is kept for callers; expiry now declines out loud
+    // so the other side sees "declined (timed out)" instead of a dead half-minute.
     declineChallenge(timeout) {
-        if (!this.incomingChallenge || !this.ws) return;
-        if (!timeout) {
-            this.ws.send(JSON.stringify({ type: 'challenge_decline', from: this.incomingChallenge.from }));
+        if (!this.incomingChallenge) return;
+        if (this.ws && this.ws.readyState === 1) {
+            try { this.ws.send(JSON.stringify({ type: 'challenge_decline', from: this.incomingChallenge.from })); } catch (_) {}
         }
         this.clearIncomingChallenge();
-        document.getElementById('doge-challenge-panel').style.display = 'none';
     },
 
     clearIncomingChallenge() {
@@ -25834,7 +26170,11 @@ const DogePresence = {
         }
         this.incomingChallenge = null;
         const el = document.getElementById('doge-presence');
-        el.classList.remove('doge-wiggle');
+        if (el) el.classList.remove('doge-wiggle');
+        const panel = document.getElementById('doge-challenge-panel');
+        if (panel) panel.style.display = 'none';
+        document.body.classList.remove('challenge-waiting');
+        if (this._challengeTitleBefore != null) { document.title = this._challengeTitleBefore; this._challengeTitleBefore = null; }
         this.updateIcon();
     },
 
@@ -25985,6 +26325,16 @@ function _escCloseTopModal() {
 }
 try { window._escCloseTopModal = _escCloseTopModal; } catch (_) {}
 
+// STUDY_BREAK_CHALLENGE_ALERT_SPEC §1: Enter = YES while a challenge dialog is up (and no field has focus).
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || !DogePresence.incomingChallenge) return;
+    var t = e.target;
+    var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    if (typing) return;
+    e.preventDefault();
+    DogePresence.acceptChallenge();
+});
+
 // Close doge dropdown & app overlays on Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -25997,7 +26347,10 @@ document.addEventListener('keydown', (e) => {
         }
         if (DogePresence.dropdownOpen) DogePresence.closeDropdown();
         if (DogePresence.incomingChallenge) {
-            document.getElementById('doge-challenge-panel').style.display = 'none';
+            // STUDY_BREAK_CHALLENGE_ALERT_SPEC §1: Escape = NO (a real decline, not just hiding the dialog).
+            DogePresence.declineChallenge();
+            e.preventDefault();
+            return;
         }
         // Study Break owns Escape while it is open (it closes itself); don't also tear down an app
         // window (TI-84 / quiz / wallet) sitting under the game.
@@ -27201,7 +27554,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-27-d6ox';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-30-tjkm';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

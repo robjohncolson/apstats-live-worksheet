@@ -225,6 +225,12 @@ export function composeRenderHarness(opts) {
     "var _gradeRetryTimer = null;",
     "var _gradeLastRenderedState = " + (opts.priorState ? JSON.stringify(opts.priorState) : 'null') + ";",
     "var DESK_WORKSHEET_DONE_THRESHOLD = 60;",
+    // Top-level Desk bindings read by renderDoNowGrades' auth branch:
+    // EXPIRED_SIGNIN_NOTICE since 1c3e867a, _expiredSignInShown since 33759c1f
+    // (one expired-sign-in prompt per page). Without them the auth
+    // path throws a ReferenceError before the status banner renders.
+    "var EXPIRED_SIGNIN_NOTICE = 'Your sign-in expired.';",
+    "var _expiredSignInShown = false;",
     extractFn(DESK, '_gradeCacheKey'),
     extractFn(DESK, '_persistGradeCache'),
     extractFn(DESK, '_loadGradeCache'),

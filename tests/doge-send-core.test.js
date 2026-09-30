@@ -486,7 +486,9 @@ describe('doge-send durable file journal', () => {
     journal.write(intent, { exclusive: true });
     expect(journal.exists()).toBe(true);
     expect(journal.read()).toEqual(intent);
-    expect(statSync(path).mode & 0o777).toBe(0o600);
+    // Windows has no POSIX permission bits: Node reports 0o666 (438) for any
+    // writable file, so the 0600 mode can only be checked on POSIX hosts.
+    if (process.platform !== 'win32') expect(statSync(path).mode & 0o777).toBe(0o600);
 
     expect(() => journal.write({ overwritten: true }, { exclusive: true }))
       .toThrow(expect.objectContaining({ code: 'EEXIST' }));

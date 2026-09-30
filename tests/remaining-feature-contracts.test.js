@@ -28,9 +28,13 @@ const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'u
 const SG = readFileSync(resolve(repo, 'study_guide_diagnostic.html'), 'utf8');
 
 function extractStartHereProgressScript() {
-  const match = START.match(/<script src="roster-client\.js"><\/script>\s*<script>([\s\S]*?)<\/script>\s*<\/body>/);
+  // 7d02e2f5 (2026-09-05) added the CED 2026 label scripts between
+  // roster-client.js and the inline progress script (which calls their
+  // cedLegacyUnitLabel global). Load them first, exactly as the page does.
+  const match = START.match(/<script src="roster-client\.js"><\/script>((?:\s*<script src="[^"]+"><\/script>)*)\s*<script>([\s\S]*?)<\/script>\s*<\/body>/);
   if (!match) throw new Error('could not find Start Here progress script');
-  return match[1];
+  const siblings = [...match[1].matchAll(/src="([^"]+)"/g)].map(m => readFileSync(resolve(repo, m[1]), 'utf8'));
+  return [...siblings, match[2]].join('\n;\n');
 }
 
 function extractFunction(name) {
@@ -170,7 +174,9 @@ describe.skipIf(!WSX_AVAILABLE)('F034 AI tutor prompt copy', () => {
 describe('F061 public worksheet table of contents', () => {
   it('index links TOC.html and TOC lists all 69 live worksheet files that exist on disk', () => {
     expect(INDEX).toMatch(/href="TOC\.html"/);
-    expect(INDEX).toContain('69 video follow-alongs');
+    // Card copy reworded to CED 2026 units in 7d02e2f5 (2026-09-05); the
+    // 69-file count is still pinned against TOC.html below.
+    expect(INDEX).toMatch(/<a class="card" href="TOC\.html">[\s\S]*?Video follow-alongs/);
 
     const hrefs = [...TOC.matchAll(/href="([^"]*_live\.html)"/g)].map(match => match[1]);
     expect(hrefs).toHaveLength(69);

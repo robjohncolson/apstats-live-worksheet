@@ -327,7 +327,9 @@ describe('coach facts match the zero-date rule (teacher 2026-09-26: "does this A
   });
 });
 
-describe('coach credits a PC on file and work done ahead (EFFORT_VISIBILITY_SPEC §3)', () => {
+// Each test boots a Desk sandbox (coachSandbox); under full-suite load that can
+// exceed the 5 s default though the file passes alone.
+describe('coach credits a PC on file and work done ahead (EFFORT_VISIBILITY_SPEC §3)', { timeout: 20_000 }, () => {
   const CAL = [[2026, 9, 13, { t: 'U1-PC2', kind: 'pc', admin: 2, u: 1 }, { t: '3.1', u: 1 }]];
   const LESSONS = [
     { lessonKey: '1.2', due: { B: '2026-09-09' }, lessonGradeNoQuiz: 70, lessonGrade: 70 },

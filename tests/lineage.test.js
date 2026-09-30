@@ -13,6 +13,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = JSON.parse(readFileSync(resolve(ROOT, 'data/lineage.json'), 'utf8'));
 const SPECIAL_PINS = new Set(['golden-master', 'manual']);
 const KINDS = new Set(['source', 'derived', 'external']);
+// Regeneration scripts that live in another repo (see assertCommandExists).
+const KNOWN_EXTERNAL_SCRIPTS = new Set(['../Agent/scripts/build-roadmap-data.mjs']);
 
 function wildcardRegex(pattern) {
   let source = '^';
@@ -43,6 +45,11 @@ function assertCommandExists(command) {
 
   for (const match of command.matchAll(/\bnode\s+([^\s]+)/g)) {
     checked = true;
+    // The Agent repo's builder is external: it can only be checked where Agent is
+    // checked out next to this repo (not on CI, not on the Windows laptop, where
+    // Agent lives two levels up). Only these KNOWN paths may be absent — any other
+    // missing path, including a typo'd sibling, still fails.
+    if (KNOWN_EXTERNAL_SCRIPTS.has(match[1]) && !existsSync(resolve(cwd, match[1]))) continue;
     expect(existsSync(resolve(cwd, match[1])), `${command}: missing ${match[1]}`).toBe(true);
   }
 

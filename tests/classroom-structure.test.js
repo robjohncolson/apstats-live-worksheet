@@ -47,8 +47,13 @@ describe('Live Classroom v1a - Desk integration', () => {
     expect(DESK).toMatch(/id=["']classroom-board-mount["']/);
   });
 
-  it('D3: the Teacher menu has a Live Classroom item opening teacher-classroom.html', () => {
-    expect(DESK).toMatch(/window\.open\(\s*['"]teacher-classroom\.html['"]/);
+  // b023ff9e (2026-09-10, teacher workspace) removed the Live Classroom launcher
+  // item from the Desk on purpose (state/TEACHER_WORKSPACE_RELEASE_REVIEW.md);
+  // the cockpit is opened directly. Pin the new shape: the page still exists,
+  // and the Desk no longer pops it open in a new window.
+  it('D3: the Live Classroom cockpit exists; the Desk no longer launches it', () => {
+    expect(COCKPIT, 'teacher-classroom.html must exist').toBeTypeOf('string');
+    expect(DESK).not.toMatch(/window\.open\(\s*['"]teacher-classroom\.html['"]/);
   });
 
   it('D4: defines _mountClassroomBoard and calls it typeof-guarded', () => {
@@ -650,7 +655,8 @@ describe('KEYBOARD_AVATAR Phase 1 -- player controller wiring', () => {
     expect(DESK).toMatch(/id=["']classroom-board-controls["']/);
     expect(DESK).toMatch(/Arrows walk/);
     expect(DESK).toMatch(/Space jump/);
-    expect(DESK).toMatch(/Up to check in/);
+    // Reworded in a9ebb0fc (2026-09-09) when Up also opens calendar doors.
+    expect(DESK).toMatch(/Up for doors \/ check-in/);
   });
 });
 

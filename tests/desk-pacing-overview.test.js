@@ -72,6 +72,9 @@ describe('Teacher pacing overview — server data', () => {
 
   it('listRoster filters teachers by default but honors includeStaff', () => {
     expect(CLASS).toMatch(/includeStaff\s*\?\s*all\s*:\s*all\.filter/);
-    expect(CLASS).toMatch(/req\.query\.includeStaff/);
+    // c03c3a36 (2026-09-26) moved the read into computeClassGrades(query),
+    // which /class/grades calls with req.query.
+    expect(CLASS).toMatch(/\bquery\.includeStaff === '1'/);
+    expect(CLASS).toMatch(/computeClassGrades\(req\.query\)/);
   });
 });
