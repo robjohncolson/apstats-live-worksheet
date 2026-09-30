@@ -175,6 +175,10 @@
  * @property {string} [topic]
  * @property {string} [skill]
  * @property {string} [kind] - offline-queue record kind (defaults to 'record')
+ * @property {boolean} [requestGrade] - FRQ ticket: ask the server to AI-grade (requestFrqGrade sets it)
+ * @property {boolean} [keepalive] - unload flush: opt the POST into fetch keepalive (small bodies only)
+ * @property {number} [transportSequence] - INTERNAL: stamped by record() for latest-wins ordering
+ * @property {string} [studentId] - INTERNAL: owner id carried by offline-queued rows (drain ownership gate)
  */
 
 /**
@@ -187,6 +191,16 @@
  * @property {boolean} [queued] - the write was captured into window.OfflineQueue
  * @property {string | null} [ledgerId]
  * @property {*} [receipt] - the server's signed receipt, when one was issued
+ * @property {number | string} [status] - on success, an FRQ grade ticket state ('queued', 'graded', …)
+ *   copied from the server; on failure, INTERNAL HTTP-status drain metadata that record() deletes before returning
+ * @property {boolean} [retryable] - INTERNAL: server said an FRQ grade request may be retried (429/503)
+ */
+
+/**
+ * fetchPrior()'s result: Map<itemId, {response, score, source, result?, gradedAt?}>.
+ * The expando flags are set ONLY on an unavailable read (loadFailed:true) — an
+ * unavailable history is not an empty ledger.
+ * @typedef {Map<string, any> & {loadFailed?: boolean, loadOutcome?: string, httpStatus?: number | null}} PriorAnswers
  */
 
 // ── Trust registries (receipt-verify.js) ───────────────────────────────────────

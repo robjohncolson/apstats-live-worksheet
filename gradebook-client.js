@@ -46,11 +46,11 @@
       box.appendChild(retry);
       document.body.insertBefore(box, document.body.firstChild);
     }
-    box.firstChild.textContent = message;
+    /** @type {Node} */ (box.firstChild).textContent = message;
   }
 
   function _unavailablePrior(outcome, status) {
-    var result = new Map();
+    var result = /** @type {PriorAnswers} */ (new Map());
     result.loadFailed = true;
     result.loadOutcome = outcome || 'network';
     result.httpStatus = status || null;
@@ -78,7 +78,7 @@
 
   // A deliberately cleared answer is an edit too, not a target for restoration.
   if (typeof document !== 'undefined') document.addEventListener('input', function (event) {
-    var target = event.target;
+    var target = /** @type {HTMLElement | null} */ (event.target);
     if (target && target.matches && target.matches('.blank, textarea')) target.dataset.gbEdited = '1';
   }, true);
   if (typeof window.addEventListener === 'function') {
@@ -101,7 +101,7 @@
   function _showParkedNudge(rows) {
     try {
       if (!rows.length || _parkedNudgeShown) return;
-      console.warn('gradebook-client: parked answers', rows.map(function (row) { return window.OfflineQueue.keyOf(row); }));
+      console.warn('gradebook-client: parked answers', rows.map(function (row) { return /** @type {OfflineQueueApi} */ (window.OfflineQueue).keyOf(row); }));
       if (typeof document === 'undefined' || !document.body) return;
       _parkedNudgeShown = true;
       if (document.getElementById('gb-parked-nudge')) return;
@@ -237,7 +237,7 @@
     return String(opts && opts.source) + '|' + String(opts && opts.itemId) + '|' + String(attempt);
   }
   function _stampRecord(opts) {
-    var stamped = {};
+    var stamped = /** @type {RecordOpts & {transportSequence: number}} */ ({});
     for (var key in opts) {
       if (Object.prototype.hasOwnProperty.call(opts, key)) stamped[key] = opts[key];
     }
@@ -391,10 +391,10 @@
         // not only on the page where the 12th failure landed — these early returns skip
         // syncOfflineQueue (where the banner normally fires), so raise it here too.
         var isParked = function (row) { return row.serverFailures >= 12; };
-        var rows = await window.OfflineQueue.all();
+        var rows = await /** @type {OfflineQueueApi} */ (window.OfflineQueue).all();
         if (!rows || !rows.some(function (row) { return !isParked(row); })) { _showParkedNudge((rows || []).filter(isParked)); _offlineDrainBackoffMs = 30000; return; }
-        await window.gradebookClient.syncOfflineQueue();
-        rows = await window.OfflineQueue.all();
+        await /** @type {GradebookClientApi} */ (window.gradebookClient).syncOfflineQueue();
+        rows = await /** @type {OfflineQueueApi} */ (window.OfflineQueue).all();
         if (!rows || !rows.some(function (row) { return !isParked(row); })) { _showParkedNudge((rows || []).filter(isParked)); _offlineDrainBackoffMs = 30000; return; }
         _offlineDrainBackoffMs = Math.min(3600000, Math.max(30000, _offlineDrainBackoffMs * 2));
         retryDelay = _offlineDrainBackoffMs;
@@ -475,7 +475,7 @@
         var r = await _sendRecord(opts);
         if (r.ok) {
           var key = _recordKey(opts);
-          _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, opts.transportSequence);
+          _successfulSequence[key] = Math.max(_successfulSequence[key] || 0, /** @type {number} */ (opts.transportSequence));
           await _supersedeOffline(opts);
           _scheduleOfflineDrain(0);
           return r;
@@ -514,7 +514,7 @@
     // so identity checks, OfflineQueue capture/replay, and latest-wins dedup all
     // remain on the single established transport path.
     requestFrqGrade: async function (opts) {
-      return window.gradebookClient.record({
+      return /** @type {GradebookClientApi} */ (window.gradebookClient).record({
         source: 'frq',
         itemId: opts && opts.itemId,
         response: opts && opts.response,
@@ -554,7 +554,7 @@
             if (result && result.ok) {
               try {
                 window.dispatchEvent(new CustomEvent('gb-row-saved', {
-                  detail: { key: window.OfflineQueue.keyOf(rec), itemId: rec.itemId, source: rec.source, studentId: rec.studentId, transportSequence: rec.transportSequence }
+                  detail: { key: /** @type {OfflineQueueApi} */ (window.OfflineQueue).keyOf(rec), itemId: rec.itemId, source: rec.source, studentId: rec.studentId, transportSequence: rec.transportSequence }
                 }));
               } catch (_) { /* Notification must never interrupt the drain. */ }
             }
@@ -637,8 +637,8 @@
           ]);
         } finally { clearTimeout(timeout); }
         // An old session's response must never populate a new student's page.
-        var currentSid = window.__VIEW_AS_STUDENT_ID__ || window.rosterClient.studentId();
-        if (sid !== currentSid || token !== window.rosterClient.token()) {
+        var currentSid = window.__VIEW_AS_STUDENT_ID__ || /** @type {RosterClientApi} */ (window.rosterClient).studentId();
+        if (sid !== currentSid || token !== /** @type {RosterClientApi} */ (window.rosterClient).token()) {
           _priorReadFailed(false);
           return _unavailablePrior('stale-session');
         }
