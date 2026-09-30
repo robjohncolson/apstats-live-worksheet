@@ -1,4 +1,4 @@
-# CONTINUATION PROMPT — **s43 (2026-09-28→29) IS CURRENT: read the SESSION 43 block below — its USER-ACTION CHECKLIST is the live to-do (rotate the Supabase service key, prove one appeal, "refresh your Desk" once, then the s42 carry-overs).** Older blocks are history.
+# CONTINUATION PROMPT — **s44 (2026-09-29) IS CURRENT: read the SESSION 44 block below — its USER-ACTION CHECKLIST is the live to-do (tell classes the quiz rules, announce quiz zeros before Fri 10/2, watch Wed's first --comments run, then the carry-overs).** Older blocks are history.
 
 > ⚠ **STALE (s33-era, 2026-07-02). The authoritative block is `## ⏭ SESSION 35` further down.** This
 > blockquote is kept for history only — its Windows `C:/Users/rober/...` paths are dead (the host moved
@@ -23,7 +23,77 @@
 
 ---
 
-## ⏭ SESSION 43 (2026-09-28 → 09-29, Athena laptop, Windows) — **CURRENT. Supersedes s42 below. Screen Time bonus GRADED + ENTERED; Do Now bonus line; cr appeals + peer-data FIXED; Study Break challenge alert + ONE-GAME matches; build-stamp rule.**
+## ⏭ SESSION 44 (2026-09-29, Athena laptop, Windows) — **CURRENT. Supersedes s43 below. QUIZ REBUILT (peers load, one explained retry, Talk-it-through ½ credit, feedback appeals); SCHOOLOGY SYNC was a silent no-op 9/26-9/28 → fixed; QUIZ ZEROS from Fri 10/2 + cell comments; Tetris bets open to all.**
+
+**HEADs (all pushed):** follow-alongs `d6fadde7`+ (this block's commit on top); curriculum_render `571714f`. roster-server
+auto-deployed through `989e8c1f`; cr Railway relay through `65643a0`+`571714f`. Lanes today: Fable (then Opus 5.5 after the
+teacher's `/model` switch) orchestrated + built; Opus 5.5 subagents implemented the quiz v2 and half-credit specs; Codex
+gpt-6-astra (`Agent/runner/cross-agent.py --read-only`) reviewed every grade-affecting change, 1-4 rounds each. Ops channel
+(`fable-listener/send.py … --ref follow-alongs`) got a status/verdict at every step. Memory notes: `project_quiz_first_answer`
+(long — v1, v2, Talk it through), `project_cr_peer_data_cap_and_appeals`, `project_tetris_bets_open_to_all`,
+`project_study_break_challenge_alert`, `feedback_desk_push_bump_build`. Wiki claim saved (obsidian-wiki `b947a5c`):
+"A grade that leaves the classroom is read as a verdict, so the due-lag is the real grading policy".
+
+### ⚠ s44 USER-ACTION CHECKLIST (live to-do)
+1. **Tell classes the quiz rules** (both periods, Wed 9/30): "Answer once. Right = your grade, and you see what classmates
+   wrote. Wrong = one retry, but you must explain what changed your mind; that second answer counts. Still wrong? Talk it
+   through with the AI: show you understand and you earn half credit. Only classmates who explained show up."
+2. **Announce quiz zeros before Friday**: from the Fri 10/2 16:30 run an untaken quiz past its 13-day zero date becomes a
+   0 in Schoology (the in-app grade already counted it). First night ≈ B 9 / E 4 cells. Not permanent: take it, next sync
+   replaces it. Monday's slips (Fri 21:00) already list missing quizzes.
+3. **Watch Wed 9/30 16:30/16:45**: first run with `--comments` ("Not a permanent 0. Missing: …" on every lagged zero).
+   Read `tools/.schoology-sync-logs/sync-Period*-20260930-*.log` — expect `comment: wrote` / `already set` lines, 0 errors.
+4. Carried (unchanged): the "up to X" line (`LEDGER_CALM_SPEC.md §6`); social-proof post (earliest 10/6); Blooket
+   max(PC,Work) masking; `PAYOUT_AGENT_KEY` paste; the Desk "Schoology today" chip ignores lagged zeros (reads higher than
+   real Schoology for students with zeros — flagged 9/29, not fixed). Teacher DECLINED rotating the cr Supabase service key.
+
+### Shipped 9/29 (all pushed)
+- **Schoology daily sync had pushed NOTHING since 9/26** (`96661458`): `5c283fc5` made `schoology_sync_section.py`
+  default to dry-run (`--apply` required) and `tools/daily_schoology_sync.ps1` only omitted `--dry-run`. Logs said "(LIVE)",
+  summaries said `dry_run: true, grades_pushed: 0`. Fixed; first real runs 9/29: B 53 pushed / E 42, 0 errors. **Lesson:
+  verify a sync by its summary, never by its header.** Angie's study-hall case was handled first by a one-cell write
+  (1.3 FA 91.8, 1.3 Quiz 100) via `schoology_ops.write_grade_to_cell` + `last_synced` recorded.
+- **Quiz zeros + comments** (`8ce5fc57`, `ac1fe004`, `d6fadde7`, `tools/schoology_components.py`): `QUIZ_ZEROS_FROM =
+  2026-10-02` (validated; env override for previews) → `quiz_zero_due` (quizTotal>0, Q None, zero date passed); quiz zeros
+  get their own note; wording now "it is listed first in My Ledger"; range labels (1.3-1.4) get comments; the nightly task
+  always passes `--comments`. Note ownership: the sync records the exact note per cell (`<key>#note` in
+  `.schoology-sync-state.json`), clears an earned zero only when the builder emitted it with "" AND a note is recorded,
+  and `write_cell_comment(expect_current=…)` removes only that exact text; a teacher-edited note is released; a failed
+  clear retries next night. **Roster read now waits for rows to settle** (`_list_students_stable`) — an intermittent
+  "Student … not found in gradebook roster" (9/26 + a 9/29 preview) had silently skipped whole students. Suites 220/220.
+- **Quiz (curriculum_render) peers finally load** (`633aded`, `753159d`, `e8c3597`): the page's own
+  `pullPeerDataFromSupabase` (declared after `railway_client.js`, so it wins) returned null on line 1 because supabase-js
+  loses its async load race (`window.supabase` undefined) — no peer pull had EVER run; plus the 1000-row PostgREST cap +
+  WS- worksheet rows. Now delegates to the Railway pull, excludes WS-, pages, and pulls at startup. Seen live in Chrome:
+  1,597 answers, 29 classmates on 1.7. **Lesson: open the page and read the console before patching a data path twice.**
+- **Quiz v2 rule** (`QUIZ_FIRST_ANSWER_SPEC.md` v2; roster `3189431f`, cr `23042e6`): right first answer = grade; wrong =
+  ONE retry requiring ≥3 real-word explanation, second answer = grade; server-enforced (409 reasons, first-writer-wins,
+  keyed items only — FRQ unlimited); peers/letters/chart/key hidden until settled (server-ACCEPTED retry); explanation
+  filter ("N classmates explained"); key timers removed. **Reasoning sync**: `reasoning` column on `item_ledger` (0037) and
+  cr `answers` (0003) — both RUN by the teacher. Every classmate string escaped.
+- **Talk it through** (`QUIZ_AI_HALF_CREDIT_SPEC.md`; roster floor `989e8c1f`, cr `65643a0`): settled-and-wrong MCQ →
+  2-exchange AI conversation, understands = ½ credit, flawed question = 1; server owns eligibility (canonical bank + the
+  student's own ledger) and a signed two-row lifecycle; review credit never goes down on the ledger. A stalled Opus
+  self-check had left `state.delivered` out (drain→render loop; jsdom test HUNG) — fixed + circuit breaker.
+- **Feedback appeals restored for CORRECT MCQs** (`571714f`): the half-credit lockdown had refused every MCQ appeal
+  (page AND server). Now allowed when the student's counting ledger answer matches the key (feedback-only; grade already
+  full); page note "Your answer is correct: full credit…"; the Verify explanation is shared to peers; rubric (page +
+  server appeal prompt): a correct explanation of the method earns E without the arithmetic.
+- **Also**: personality badges retired (`08e0c8b`); Install-app button removed; Tetris bets open to any active player
+  incl. the teacher (`2a138c33`, `TEACHER_STAKE_ALLOWANCE=100`) — `/class/casino` still showed 0 settled bets ever, so a
+  real student-vs-student staked match is still unproven.
+
+### Gotchas learned 9/29
+- cr: a `window.x = …` override from a head script is silently undone by a later top-level `function x` in index.html.
+- cr pre-push hook blocks without `node scripts/bump-build.mjs`; stage ONLY the three stamp files (the repo has ~12
+  unrelated dirty files — never `git add` a status listing).
+- Railway deploys queued 25-45 min twice today; poll `railway deployment list --json`, don't assume.
+- A jsdom test that hangs past `--testTimeout` = a microtask-only infinite loop, not slowness.
+- Bash heredocs still mangle backslashes (a `→` replace silently matched 0) — use the Edit/Write tools.
+
+---
+
+## ⏭ SESSION 43 (2026-09-28 → 09-29, Athena laptop, Windows) — superseded by s44 above. Screen Time bonus GRADED + ENTERED; Do Now bonus line; cr appeals + peer-data FIXED; Study Break challenge alert + ONE-GAME matches; build-stamp rule.**
 
 **HEAD = `d00be23e`** (origin/master, pushed). curriculum_render HEAD = `64fc0a9` (main, pushed; Railway auto-deployed).
 Ops channel live from this session: every verdict/status goes out via `python C:\Users\rober\fable-listener\send.py … --ref follow-alongs`
