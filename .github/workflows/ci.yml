@@ -16,19 +16,31 @@ jobs:
     name: tests (root + roster-server)
     runs-on: ubuntu-latest
     steps:
+      # Full history: frq-rubric-transparency reads an older worksheet with `git show <sha>:...`.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # The quiz repo (public): misconception-maps reads its data/curriculum.js via CURRICULUM_JS.
+      - uses: actions/checkout@v4
+        with:
+          repository: robjohncolson/curriculum_render
+          path: curriculum_render
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Install root deps
         run: npm ci
-      # --retry=2 absorbs the known signup-claim brute-force-lockout timeout, which is a
-      # parallel-load timing flake (passes in isolation), not a logic failure.
-      - name: Root tests
-        run: npm test -- --retry=2
+      # Before the root tests: tests/doge-payout-agent imports roster-server/payout.js,
+      # which needs roster-server's own @supabase/supabase-js.
       - name: Install roster-server deps
         working-directory: roster-server
         run: npm ci
+      # --retry=2 absorbs the known signup-claim brute-force-lockout timeout, which is a
+      # parallel-load timing flake (passes in isolation), not a logic failure.
+      - name: Root tests
+        env:
+          CURRICULUM_JS: ${{ github.workspace }}/curriculum_render/data/curriculum.js
+        run: npm test -- --retry=2
       - name: roster-server tests
         working-directory: roster-server
         run: npm test -- --retry=2
