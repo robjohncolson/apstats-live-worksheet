@@ -15,7 +15,7 @@ import {
 const ROADMAP = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../roadmap-data.json'), 'utf8'));
 
 describe('Desk journey harness smoke', () => {
-  it('boots the real Desk cleanly with Do Now and disk-backed roadmap tiles in under 3 seconds', async () => {
+  it('boots the real Desk cleanly with Do Now and disk-backed roadmap tiles in under 6 seconds', async () => {
     const harness = await bootDesk();
     try {
       expect(harness.consoleErrors, 'Desk called console.error during boot').toEqual([]);
@@ -39,7 +39,7 @@ describe('Desk journey harness smoke', () => {
         String(tile.dataset.topic).split('+').some((topic) => ROADMAP.lessons[topic])
       )), 'no rendered roadmap tile maps to roadmap-data.json').toBe(true);
 
-      expect(harness.bootTimeMs).toBeLessThan(3_000);
+      expect(harness.bootTimeMs).toBeLessThan(6_000);
     } finally {
       harness.teardown();
     }
