@@ -378,6 +378,13 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
      * @property {number|null} [trainerDue]
      * @property {number|null} [trainerDone]
      * @property {string[]} [trainerTodo]
+     * @property {number[]|null} [pcUnits]      v3: NEW units whose PC lands in this quarter
+     * @property {number|null} [quarterGradeBase] v3: quarter grade before the early bonus
+     * @property {number} [earlyBonus]          v3: early-completion bonus points
+     * @property {number} [earlyLessons]        v3: count of early-completed lessons
+     * @property {string[]} [earlyKeys]         v3: topic keys completed early
+     * @property {number} [aheadLessons]        v3: count of lessons done before due
+     * @property {string[]} [aheadKeys]         v3: topic keys done before due
      */
     /** @type {QuarterResult} */
     let qResult;

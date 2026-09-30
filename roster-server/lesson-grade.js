@@ -537,7 +537,7 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     if (exitItem != null) {
       const withoutExit = blendLessonFeeders(Cws, reflectionMean(acc.frqItems, frqFloor), Q, weights);
       acc.exitCounted = B != null && (withoutExit == null || B > withoutExit);
-      const base = withoutExit == null ? B : Math.max(B, withoutExit);
+      const base = withoutExit == null ? B : Math.max(/** @type {number} */ (B), withoutExit);
       acc.lessonGrade = base == null ? null : Math.round(Math.min(105, base + acc.exitBonus) * 10) / 10;
       const noQuiz = lessonGradeNoQuiz(acc, weights);
       acc.lessonGradeNoQuiz = noQuiz == null ? null : Math.round(noQuiz * 10) / 10;
@@ -652,7 +652,7 @@ export function endOfDayEpochInTz(dateStr, tz) {
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
     }).formatToParts(new Date(guess));
-    const g = (k) => Number(parts.find((p) => p.type === k).value);
+    const g = (k) => Number(/** @type {Intl.DateTimeFormatPart} */ (parts.find((p) => p.type === k)).value);
     const asIfUtc = Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute'), g('second'));
     return guess - (asIfUtc - guess);
   } catch (_) {
@@ -1122,7 +1122,7 @@ function lessonGradeNoQuiz(result, weights, fixCwsReveal = false) {
   // Match the existing rounded W sibling used by this no-quiz track.
   const W = reflections == null ? null : Math.round(reflections * 10) / 10;
   let withoutExit = blendLessonFeeders(result.Cws, W, null, weights);
-  if (fixCwsReveal && W != null) withoutExit = Math.max(withoutExit, W);
+  if (fixCwsReveal && W != null) withoutExit = Math.max(/** @type {number} */ (withoutExit), W);
   const base = withoutExit == null ? withExit : Math.max(withExit, withoutExit);
   return Math.min(105, base + result.exitBonus);
 }
@@ -1632,6 +1632,9 @@ export function computeQuizTotals(answerKey, schedule) {
 // trainerLessons: optional [topicKey] with mapped TI-84 skills → sets hasTrainer per lesson
 // blooketBonusTopics: optional [topicKey] enrichment (G4/M2d) → sets blooketBonus per lesson
 //   so teacher dashboards can label bonus vs core; never part of the required Due set.
+/**
+ * @param {Record<string, any>|null} [config] grade config (null → defaults)
+ */
 export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = [], trainerLessons = [], blooketBonusTopics = [], config = null) {
   const result = [];
   const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);

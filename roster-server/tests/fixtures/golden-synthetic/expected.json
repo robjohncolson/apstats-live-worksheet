@@ -94,7 +94,7 @@
         "gradebook": {
           "quarters": {
             "Q1": {
-              "aheadCells": 4,
+              "aheadCells": 3,
               "categoryAverages": {
                 "Blooket": 60,
                 "Lesson": 73.4,
@@ -104,7 +104,7 @@
               "categoryAveragesProjected": {
                 "Blooket": 70,
                 "Lesson": 82.2,
-                "Progress Check": 60,
+                "Progress Check": 45,
                 "Quizzes": 66.7
               },
               "cells": {
@@ -366,7 +366,7 @@
                 "v3Total": 47.6,
                 "workAvg": 47.6
               },
-              "schoologyProjectedTotal": 65.7,
+              "schoologyProjectedTotal": 56.9,
               "schoologyTotal": 51.8,
               "v3Total": 47.6
             },
@@ -3747,12 +3747,11 @@
         "gradebook": {
           "quarters": {
             "Q1": {
-              "aheadCells": 4,
+              "aheadCells": 3,
               "categoryAverages": {},
               "categoryAveragesProjected": {
                 "Blooket": 80,
                 "Lesson": 100,
-                "Progress Check": 55,
                 "Quizzes": 100
               },
               "cells": {
@@ -4014,7 +4013,7 @@
                 "v3Total": 15.9,
                 "workAvg": 22.7
               },
-              "schoologyProjectedTotal": 72.4,
+              "schoologyProjectedTotal": 97.1,
               "schoologyTotal": null,
               "v3Total": 15.9
             },
@@ -11471,12 +11470,11 @@
         "gradebook": {
           "quarters": {
             "Q1": {
-              "aheadCells": 4,
+              "aheadCells": 3,
               "categoryAverages": {},
               "categoryAveragesProjected": {
                 "Blooket": 70,
                 "Lesson": 100,
-                "Progress Check": 50,
                 "Quizzes": 100
               },
               "cells": {
@@ -11738,7 +11736,7 @@
                 "v3Total": 15.6,
                 "workAvg": 22.3
               },
-              "schoologyProjectedTotal": 68.8,
+              "schoologyProjectedTotal": 95.7,
               "schoologyTotal": null,
               "v3Total": 15.6
             },
@@ -13220,14 +13218,14 @@
         "gradebook": {
           "quarters": {
             "Q1": {
-              "aheadCells": 2,
+              "aheadCells": 1,
               "categoryAverages": {
                 "Lesson": 86.7,
                 "Progress Check": 30
               },
               "categoryAveragesProjected": {
                 "Lesson": 86.7,
-                "Progress Check": 53.3,
+                "Progress Check": 30,
                 "Quizzes": 100
               },
               "cells": {
@@ -13489,7 +13487,7 @@
                 "v3Total": 26.9,
                 "workAvg": 23.9
               },
-              "schoologyProjectedTotal": 68.3,
+              "schoologyProjectedTotal": 53.8,
               "schoologyTotal": 43.1,
               "v3Total": 26.9
             },
@@ -14190,7 +14188,7 @@
       "gradebook": {
         "quarters": {
           "Q1": {
-            "aheadCells": 4,
+            "aheadCells": 3,
             "categoryAverages": {
               "Blooket": 60,
               "Lesson": 73.4,
@@ -14200,7 +14198,7 @@
             "categoryAveragesProjected": {
               "Blooket": 70,
               "Lesson": 82.2,
-              "Progress Check": 60,
+              "Progress Check": 45,
               "Quizzes": 66.7
             },
             "cells": {
@@ -14462,7 +14460,7 @@
               "v3Total": 47.6,
               "workAvg": 47.6
             },
-            "schoologyProjectedTotal": 65.7,
+            "schoologyProjectedTotal": 56.9,
             "schoologyTotal": 51.8,
             "v3Total": 47.6
           },
@@ -18003,12 +18001,11 @@
       "gradebook": {
         "quarters": {
           "Q1": {
-            "aheadCells": 4,
+            "aheadCells": 3,
             "categoryAverages": {},
             "categoryAveragesProjected": {
               "Blooket": 80,
               "Lesson": 100,
-              "Progress Check": 55,
               "Quizzes": 100
             },
             "cells": {
@@ -18270,7 +18267,7 @@
               "v3Total": 15.9,
               "workAvg": 22.7
             },
-            "schoologyProjectedTotal": 72.4,
+            "schoologyProjectedTotal": 97.1,
             "schoologyTotal": null,
             "v3Total": 15.9
           },
@@ -26123,12 +26120,11 @@
       "gradebook": {
         "quarters": {
           "Q1": {
-            "aheadCells": 4,
+            "aheadCells": 3,
             "categoryAverages": {},
             "categoryAveragesProjected": {
               "Blooket": 70,
               "Lesson": 100,
-              "Progress Check": 50,
               "Quizzes": 100
             },
             "cells": {
@@ -26390,7 +26386,7 @@
               "v3Total": 15.6,
               "workAvg": 22.3
             },
-            "schoologyProjectedTotal": 68.8,
+            "schoologyProjectedTotal": 95.7,
             "schoologyTotal": null,
             "v3Total": 15.6
           },
@@ -27956,14 +27952,14 @@
       "gradebook": {
         "quarters": {
           "Q1": {
-            "aheadCells": 2,
+            "aheadCells": 1,
             "categoryAverages": {
               "Lesson": 86.7,
               "Progress Check": 30
             },
             "categoryAveragesProjected": {
               "Lesson": 86.7,
-              "Progress Check": 53.3,
+              "Progress Check": 30,
               "Quizzes": 100
             },
             "cells": {
@@ -28225,7 +28221,7 @@
               "v3Total": 26.9,
               "workAvg": 23.9
             },
-            "schoologyProjectedTotal": 68.3,
+            "schoologyProjectedTotal": 53.8,
             "schoologyTotal": 43.1,
             "v3Total": 26.9
           },

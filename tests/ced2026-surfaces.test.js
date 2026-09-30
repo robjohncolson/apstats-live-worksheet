@@ -88,6 +88,9 @@ describe('CED labels on the mobile lesson page', () => {
     win.document.querySelector('.btn.fc').click();
     expect(win.document.getElementById('fc-title').textContent)
       .toBe('🃏 1.10 · Investigative Question & Data Collection · Day 1');
+    // The click starts an async deck load; let it settle before afterEach closes the
+    // window, or it lands on a torn-down document (an unhandled rejection that fails CI).
+    await flush();
   });
 
   it('uses the authoritative fallback when the offline lesson list lacks CED metadata', async () => {
