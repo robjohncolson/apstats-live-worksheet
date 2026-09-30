@@ -50,7 +50,7 @@ function sandbox({ warns = [], grade = { pct: 78, q: 'Q1' }, teacher = false } =
     _snapModes() { return { available: ['dot', 'stem', 'hist'], default: 'stem', tabs: true }; },
   };
   createContext(s);
-  runInContext(['_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardRow', '_walletPrependZeroCard', '_walletSeeClassButton', '_zeroCardAttachScores', '_zeroCardToggleGraph', '_snapScoreList', '_snapListKey', '_snapAssignmentPlot', '_snapTentativeLegend']
+  runInContext(['_zeroDayText', '_zeroWhenText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardStatus', '_zeroCardActionButton', '_zeroCardRow', '_walletPrependZeroCard', '_walletSeeClassButton', '_zeroCardAttachScores', '_zeroCardToggleGraph', '_snapScoreList', '_snapListKey', '_snapAssignmentPlot', '_snapTentativeLegend']
     .map(fnSrc).join('\n'), s);
   const host = () => dom.window.document.getElementById('wallet-content');
   const card = () => host().querySelector('.wallet-zero-card');

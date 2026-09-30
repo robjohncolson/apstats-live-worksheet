@@ -47,7 +47,7 @@ function sandbox({ walletOpen = true } = {}) {
   createContext(s);
   runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText',
     '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_walletPrependZeroCard',
-    '_zeroDayText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardRow',
+    '_zeroDayText', '_zeroLatestSoonDay', '_zeroStatusText', '_zeroCardStatus', '_zeroCardActionButton', '_zeroCardRow',
     '_ftRenderOutcome', '_blooketPatchGradeCache', '_walletRefreshZeroCard'].map(fnSrc).join('\n'), s);
   return { s, dom, close: () => dom.window.close() };
 }

@@ -452,6 +452,12 @@
         .wallet-zero-card .wz-row:not(.wz-past) { border-left: 3px solid #d9b400; background: #fff9db; }
         .wallet-zero-card .wz-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .wallet-zero-card .wz-see { font-size: 9px; padding: 0 2px; border: 0; background: none; color: #1a4fa0; text-decoration: underline; cursor: pointer; }
+        /* PAST_DUE_WORK (2026-09-30): past due in Schoology, the 0 is still far off — quiet grey */
+        .wallet-zero-card.wz-calm { border-color: #999; background: #f4f4f4; }
+        .wallet-zero-card .wz-later-head { margin: 8px 0 2px; font-size: 11px; font-weight: bold; color: #555; }
+        .wallet-zero-card .wz-row.wz-later { border-left: 3px solid #aaa; background: #eee; color: #555; }
+        .wallet-zero-card .wz-row.wz-later .wz-when { color: #555; }
+        .wallet-zero-card .wz-sgy { font-size: 9px; color: #777; white-space: nowrap; }
         .app-icon[data-app="wallet"] .wallet-readiness-dot {
             position: absolute;
             right: -1px;
@@ -15961,6 +15967,75 @@ function _zeroCurrentWarnings() {
     var period = (typeof cP === 'string') ? cP : null;
     return _zeroWarnings(lessons, period, _zeroTodayIso());
 }
+// ── PAST_DUE_WORK (teacher 2026-09-30) ─────────────────────────────────────
+// Schoology marks an item "missing" the day after its due date, but the Desk
+// only warns ZERO_WARN_DAYS before the zero date (due + 13). This lists exactly
+// the items _zeroWarnings leaves out: due before today, zero date still MORE
+// than ZERO_WARN_DAYS away. Shown ONLY as quiet grey rows in the My Ledger
+// Missing-work card — no tint, pill, badge or coach line reads it.
+// The three "missing" rules MUST match _zeroWarnings (a test pins them).
+// Rows: { lessonKey, kind, dueDate, zeroDate }. Pure; never throws.
+function _pastDueWork(lessons, period, todayIso) {
+    try {
+        if (!Array.isArray(lessons) || !period || !todayIso) return [];
+        var today = new Date(todayIso + 'T00:00:00');
+        var out = [];
+        for (var i = 0; i < lessons.length; i++) {
+            var L = lessons[i];
+            if (!L || !L.lessonKey || !L.zeroDate || !L.due) continue;
+            var zd = L.zeroDate[period];
+            var dd = L.due[period];
+            if (!zd || !dd) continue;
+            if (!(dd < todayIso)) continue;
+            var days = Math.round((new Date(zd + 'T00:00:00') - today) / 86400000);
+            if (days <= ZERO_WARN_DAYS) continue;   // _zeroWarnings owns it
+            var hasWork = L.lessonGradeNoQuiz != null || L.Cws != null;
+            if (!hasWork) out.push({ lessonKey: L.lessonKey, kind: 'worksheet', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
+            if ((L.quizTotal || 0) > 0 && L.Q == null) out.push({ lessonKey: L.lessonKey, kind: 'quiz', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
+            if (L.hasBlooket && !L.blooketBonus && L.blooket == null) out.push({ lessonKey: L.lessonKey, kind: 'blooket', dueDate: dd, zeroDate: zd, unit: L.unit, worksheetKey: L.worksheetKey });
+        }
+        var KIND_ORDER = { worksheet: 0, quiz: 1, blooket: 2 };
+        out.sort(function (a, b) {
+            if (a.zeroDate !== b.zeroDate) return a.zeroDate < b.zeroDate ? -1 : 1;
+            return (KIND_ORDER[a.kind] || 0) - (KIND_ORDER[b.kind] || 0);
+        });
+        return out;
+    } catch (_) { return []; }
+}
+function _pastDueCurrentWork() {
+    var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+    var period = (typeof cP === 'string') ? cP : null;
+    return _pastDueWork(lessons, period, _zeroTodayIso());
+}
+// The Schoology column title for a row (tools/schoology_components.py): Schoology keeps
+// the OLD keys, while the Desk shows the CED label.
+//   quiz               → '<lessonKey> Quiz'             ('3.6 Quiz')
+//   worksheet / deck   → '<unit>.<worksheetKey> <Word>' ('3.6-7 Follow-Along', the worksheet GROUP)
+// unit / worksheetKey come from the row, else from the /grade lesson. Missing → null (no tag, never guess).
+function _zeroSchoologyTitle(w) {
+    if (w.kind === 'quiz') return w.lessonKey + ' Quiz';
+    var WORD = { worksheet: 'Follow-Along', blooket: 'Blooket' };
+    if (!WORD[w.kind]) return null;
+    var unit = w.unit;
+    var wsKey = w.worksheetKey;
+    if (unit == null || !wsKey) {
+        var L = _zeroLessonByKey(w.lessonKey);
+        if (!L) return null;
+        unit = L.unit;
+        wsKey = L.worksheetKey;
+    }
+    if (unit == null || unit === '' || !wsKey) return null;
+    return unit + '.' + wsKey + ' ' + WORD[w.kind];
+}
+// The /grade lesson for a lesson key (null when the cache or the lesson is missing).
+function _zeroLessonByKey(lessonKey) {
+    var lessons = (typeof _gradeLessonsCache !== 'undefined') ? _gradeLessonsCache : null;
+    if (!Array.isArray(lessons)) return null;
+    for (var i = 0; i < lessons.length; i++) {
+        if (lessons[i] && lessons[i].lessonKey === lessonKey) return lessons[i];
+    }
+    return null;
+}
 // "Sun 9/27" for an ISO date.
 function _zeroDayText(iso) {
     var d = new Date(iso + 'T00:00:00');
@@ -16731,31 +16806,54 @@ function _walletPrependZeroCard(host) {
         if (!host) return;
         var old = host.querySelector('.wallet-zero-card');
         var warns = _zeroCurrentWarnings();
+        // Past due in Schoology, but the 0 is still far off: quiet grey rows below (PAST_DUE_WORK).
+        var later = (typeof _pastDueCurrentWork === 'function') ? _pastDueCurrentWork() : [];
         // Same list as last paint → keep the card (a grade poll must not steal
         // focus from an Open button the student is tabbing through).
         var sig = warns.map(function (w) { return w.lessonKey + ':' + w.kind + ':' + (w.past ? 1 : 0); }).join('|');
+        if (later.length) sig += '#later:' + later.map(function (w) { return w.lessonKey + ':' + w.kind; }).join('|');
         if (old && old.dataset.sig === sig) {
             // Same rows, but the grade in the status line may have moved: refresh the text only.
             var oldStatus = old.querySelector('.wz-status');
-            if (oldStatus) oldStatus.textContent = _zeroStatusText(warns);
+            if (oldStatus) oldStatus.textContent = _zeroCardStatus(warns, later);
             return;
         }
         if (old) old.remove();
-        if (!warns.length) return;
+        if (!warns.length && !later.length) return;
         var card = document.createElement('div');
-        // Red frame once something is a 0; yellow while everything is still only "soon".
-        card.className = 'wallet-zero-card' + (warns.some(function (w) { return w.past; }) ? '' : ' wz-soon');
+        // Red frame once something is a 0; yellow while everything is still only "soon";
+        // grey when nothing is close to a 0 (only past-due rows).
+        var frame = ' wz-soon';
+        if (warns.some(function (w) { return w.past; })) frame = '';
+        if (!warns.length) frame = ' wz-calm';
+        card.className = 'wallet-zero-card' + frame;
         card.dataset.sig = sig;
         var status = document.createElement('div');
         status.className = 'wz-status geneva';
-        status.textContent = _zeroStatusText(warns);
+        status.textContent = _zeroCardStatus(warns, later);
         card.appendChild(status);
         // Past first, then by date (warns are already date-ordered). Colour carries the meaning.
         var ordered = warns.filter(function (w) { return w.past; }).concat(warns.filter(function (w) { return !w.past; }));
         ordered.forEach(function (w) { card.appendChild(_zeroCardRow(w)); });
+        if (later.length) {
+            var head = document.createElement('div');
+            head.className = 'wz-later-head geneva';
+            head.textContent = 'Past due — not counting yet';
+            card.appendChild(head);
+            later.forEach(function (w) { card.appendChild(_pastDueCardRow(w)); });
+        }
         host.insertBefore(card, host.firstChild);
         _zeroCardAttachScores(card, ordered);
     } catch (_) {}
+}
+// The status line: the zero wording when anything is close to a 0; calm wording
+// when the card holds only past-due rows (nothing is becoming a 0 soon).
+function _zeroCardStatus(warns, later) {
+    if (warns.length) return _zeroStatusText(warns);
+    var grade = (typeof _walletCurrentGrade === 'function') ? _walletCurrentGrade() : null;
+    var lead = (grade && grade.pct != null && grade.q) ? grade.q + ' so far: ' + grade.pct + '%. ' : '';
+    if (later.length === 1) return lead + '1 item below is past due. It is not counting yet — finishing it now keeps it that way.';
+    return lead + later.length + ' items below are past due. They are not counting yet — finishing them now keeps it that way.';
 }
 // The "graph" link under a Missing-work row: the class's graphs for THIS assignment only, in the
 // forms the class has learned, drawn inline under the score list. Toggles open / closed.
@@ -16841,6 +16939,28 @@ function _zeroCardRow(w) {
     row.className = 'wz-row' + (w.past ? ' wz-past' : '') + (w.kind === 'blooket' ? ' wz-blooket' : '') + (w.kind === 'quiz' ? ' wz-quiz' : '');
     row.dataset.key = w.lessonKey + ':' + (w.kind === 'blooket' ? 'blooket' : w.kind === 'quiz' ? 'quiz' : 'worksheet');
     var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
+    row.appendChild(_zeroCardActionButton(w, label));
+    var name = document.createElement('span');
+    name.className = 'wz-label';
+    name.textContent = label;
+    row.appendChild(name);
+    var sgy = (typeof _zeroSchoologyTag === 'function') ? _zeroSchoologyTag(w) : null;
+    if (sgy) row.appendChild(sgy);
+    var when = document.createElement('span');
+    when.className = 'wz-when';
+    when.textContent = _zeroWhenText(w);
+    row.appendChild(when);
+    var see = document.createElement('button');
+    see.type = 'button'; see.className = 'wz-see';
+    see.textContent = 'graph';
+    see.title = 'The graphs of the class on this one (no names)';
+    see.disabled = true;   // enabled once the class picture has loaded (_zeroCardAttachScores)
+    see.onclick = function () { _snapOpenAssignment(w.lessonKey, w.kind); };
+    row.appendChild(see);
+    return row;
+}
+// The verb button of a Missing-work row: Open / Quiz / Flashcards.
+function _zeroCardActionButton(w, label) {
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 's7btn';
     if (w.kind === 'blooket') {
@@ -16854,22 +16974,40 @@ function _zeroCardRow(w) {
         btn.onclick = function () { _zeroOpenLesson(w.lessonKey); };
     }
     btn.setAttribute('aria-label', btn.textContent + ' ' + label);
-    row.appendChild(btn);
+    return btn;
+}
+// The small muted "Schoology: 3.1 Follow-Along" tag, so the student can match the row
+// to the Schoology column (Schoology keeps the old lesson key).
+// Returns null when the title is unknown (the caller then adds nothing).
+function _zeroSchoologyTag(w) {
+    var title = _zeroSchoologyTitle(w);
+    if (!title) return null;
+    var tag = document.createElement('span');
+    tag.className = 'wz-sgy';
+    tag.textContent = 'Schoology: ' + title;
+    return tag;
+}
+// "due Fri 9/25 · not a 0 until after Thu 10/8" (a 0 starts the day AFTER zeroDate, like _zeroWhenText).
+function _pastDueWhenText(w) {
+    return 'due ' + _zeroDayText(w.dueDate) + ' · not a 0 until after ' + _zeroDayText(w.zeroDate);
+}
+// One quiet grey past-due row: [verb button] [lesson label] [Schoology tag] ... [dates].
+function _pastDueCardRow(w) {
+    var row = document.createElement('div');
+    row.className = 'wz-row wz-later';
+    row.dataset.key = w.lessonKey + ':' + w.kind + ':later';
+    var label = (typeof cedLabel === 'function') ? cedLabel(w.lessonKey).text : w.lessonKey;
+    row.appendChild(_zeroCardActionButton(w, label));
     var name = document.createElement('span');
     name.className = 'wz-label';
     name.textContent = label;
     row.appendChild(name);
+    var sgy = _zeroSchoologyTag(w);
+    if (sgy) row.appendChild(sgy);
     var when = document.createElement('span');
     when.className = 'wz-when';
-    when.textContent = _zeroWhenText(w);
+    when.textContent = _pastDueWhenText(w);
     row.appendChild(when);
-    var see = document.createElement('button');
-    see.type = 'button'; see.className = 'wz-see';
-    see.textContent = 'graph';
-    see.title = 'The graphs of the class on this one (no names)';
-    see.disabled = true;   // enabled once the class picture has loaded (_zeroCardAttachScores)
-    see.onclick = function () { _snapOpenAssignment(w.lessonKey, w.kind); };
-    row.appendChild(see);
     return row;
 }
 
@@ -27416,7 +27554,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-29-j11c';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-09-30-tjkm';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

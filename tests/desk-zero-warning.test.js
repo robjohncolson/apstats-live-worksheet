@@ -51,7 +51,7 @@ function sandbox({ lessons = LESSONS, period = 'B', today = '2026-09-21' } = {})
   s.window.open = (url) => { s.urls.push(url); };
   createContext(s);
   runInContext('var ZERO_WARN_DAYS = 3;\n' + ['_zeroWarnings', '_zeroTodayIso', '_zeroCurrentWarnings', '_zeroWhenText', '_zeroCountText', '_updateZeroWarningBadge', '_zeroOpenFlashcards', '_zeroOpenLesson', '_zeroOpenQuiz', '_walletPrependZeroCard',
-    '_zeroDayText', '_zeroLatestSoonDay', '_zeroPillText', '_zeroStatusText', '_zeroCardRow', '_donowApplyZeroState']
+    '_zeroDayText', '_zeroLatestSoonDay', '_zeroPillText', '_zeroStatusText', '_zeroCardStatus', '_zeroCardActionButton', '_zeroCardRow', '_donowApplyZeroState']
     .map(fnSrc).join('\n'), s);
   return { s, dom, close: () => dom.window.close() };
 }
