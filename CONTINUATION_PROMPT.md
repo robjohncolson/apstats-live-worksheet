@@ -25,7 +25,8 @@
 
 ## ⏭ SESSION 44 (2026-09-29, Athena laptop, Windows) — **CURRENT. Supersedes s43 below. QUIZ REBUILT (peers load, one explained retry, Talk-it-through ½ credit, feedback appeals); SCHOOLOGY SYNC was a silent no-op 9/26-9/28 → fixed; QUIZ ZEROS from Fri 10/2 + cell comments; Tetris bets open to all.**
 
-**HEADs (all pushed):** follow-alongs `d6fadde7`+ (this block's commit on top); curriculum_render `571714f`. roster-server
+**HEADs (all pushed):** follow-alongs `d6fadde7`+ (this block's commits on top); curriculum_render `0378ad8` (late 9/29:
+`e217b8b` peer-panel reload fix, `ede6592` one-box MCQ reveal, `0378ad8` build stamp). roster-server
 auto-deployed through `989e8c1f`; cr Railway relay through `65643a0`+`571714f`. Lanes today: Fable (then Opus 5.5 after the
 teacher's `/model` switch) orchestrated + built; Opus 5.5 subagents implemented the quiz v2 and half-credit specs; Codex
 gpt-6-astra (`Agent/runner/cross-agent.py --read-only`) reviewed every grade-affecting change, 1-4 rounds each. Ops channel
@@ -46,6 +47,8 @@ gpt-6-astra (`Agent/runner/cross-agent.py --read-only`) reviewed every grade-aff
 4. Carried (unchanged): the "up to X" line (`LEDGER_CALM_SPEC.md §6`); social-proof post (earliest 10/6); Blooket
    max(PC,Work) masking; `PAYOUT_AGENT_KEY` paste; the Desk "Schoology today" chip ignores lagged zeros (reads higher than
    real Schoology for students with zeros — flagged 9/29, not fixed). Teacher DECLINED rotating the cr Supabase service key.
+5. **Quiz: "Submit an answer to interact with AI" never hides after a reload** on an answered MCQ (only `gradeMCQAnswer`
+   hides it, at submit time). Teacher to choose: rebuild the AI-review area on reload, or just reword the hint. Not built.
 
 ### Shipped 9/29 (all pushed)
 - **Schoology daily sync had pushed NOTHING since 9/26** (`96661458`): `5c283fc5` made `schoology_sync_section.py`
@@ -82,6 +85,15 @@ gpt-6-astra (`Agent/runner/cross-agent.py --read-only`) reviewed every grade-aff
 - **Also**: personality badges retired (`08e0c8b`); Install-app button removed; Tetris bets open to any active player
   incl. the teacher (`2a138c33`, `TEACHER_STAKE_ALLOWANCE=100`) — `/class/casino` still showed 0 settled bets ever, so a
   real student-vs-student staked match is still unproven.
+- **Quiz peer panel after a reload** (cr `e217b8b`): questions render before the student's own answers load, so the peer
+  panel showed "Answer the question to see peer responses" while the chart appeared. The peer-data refreshes
+  (`refreshQuestionIfVisible`, `refreshAllVisualizations`) only redrew the MCQ chart, and only for the current question.
+  Both now run `_refreshAfterReveal` (form, key, chart, peers) for every rendered question. Teacher confirmed live.
+- **One answer box for settled MCQs** (`QUIZ_MCQ_REVEAL_SPEC.md`; cr `ede6592`; Codex astra GREEN, no findings): the Answer
+  Key box + College Board box repeated the letter and printed "Official explanation not available… You got it right!"
+  even on wrong answers. Now: correct → a collapsed "Why this is right" `<details>` only if the item has an explanation
+  (326/354 MCQs do, via `reasoning`); wrong → "Correct answer: X" + explanation. College Board box never shown for MCQs;
+  FRQ path untouched. The box rewrites only when its content changes, so an opened explanation survives peer repaints.
 
 ### Gotchas learned 9/29
 - cr: a `window.x = …` override from a head script is silently undone by a later top-level `function x` in index.html.
@@ -90,6 +102,11 @@ gpt-6-astra (`Agent/runner/cross-agent.py --read-only`) reviewed every grade-aff
 - Railway deploys queued 25-45 min twice today; poll `railway deployment list --json`, don't assume.
 - A jsdom test that hangs past `--testTimeout` = a microtask-only infinite loop, not slowness.
 - Bash heredocs still mangle backslashes (a `→` replace silently matched 0) — use the Edit/Write tools.
+- cr: every MCQ repaint path must go through `_refreshAfterReveal`; a chart-only repaint leaves the peer panel stale.
+- cr: `displayAnswerKey(questionId, isCorrect, …)` — declaring `const isCorrect` inside it is a SyntaxError that kills the
+  whole page script (every jsdom test then fails with "renderQuestion is not defined").
+- Quiz debugging without browser access: have the teacher paste a one-liner into DevTools that calls the render function
+  WITHOUT its try/catch — it separates "throws" from "never called" in one step.
 
 ---
 
