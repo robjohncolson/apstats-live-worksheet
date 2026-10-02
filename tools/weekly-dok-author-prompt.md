@@ -68,3 +68,15 @@ Blank labels (the word inside `\blankt{...}`) are printed under the blank for th
 `display`, `term`, `statistic`, `variable type`, `unit`, `reason`, `action`, `number`, `value` (the builder
 prints these as plain hints such as "A, B, C or D" / "a word from the bank"), or write the hint in plain
 words yourself (e.g. `{which graph}`); never a code word.
+
+## Teacher observations for the NEXT sheet (added 2026-10-02 -- use once, then the teacher removes this section)
+
+From the Unit 1 Progress Check MCQ Part A paper redos (Period B, 2026-10-02), every student who redid
+it missed the same five ideas. Where the brief's misconceptions allow it, shape at least one rung around
+one of these skills; keep `misconceptions:` set to the brief's exact keys (do not add new keys):
+- Telling a variable from something that is not a variable (a fixed value, an individual, a question).
+- Deciding which claim CANNOT be justified from a table -- reading "not" / "cannot" in the stem.
+- Matching a stem-and-leaf plot to its key (for example 7|2 = 72).
+- Counting from a graph "at least" a value -- including the value itself.
+- Describing a histogram's shape (skew direction, peaks) from the picture.
+These are skills students practised; never copy wording from any Progress Check item.
