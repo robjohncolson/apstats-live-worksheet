@@ -12168,7 +12168,7 @@ function showResourcePanel(inf, dateStr) {
                         // copy is the main "Video" link (with a Drive icon) and AP Classroom is the
                         // small secondary link.
                         lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Google Drive copy of the AP Classroom video">' + _DRIVE_ICON + ' Video ' + (i + 1) + ' (Google Drive)</a>';
-                        lessonHtml += ' <span style="font-size:9px;color:#555">&middot; use this one</span>';
+                        lessonHtml += ' <span style="font-size:9px;color:#555">&larr; use this one</span>';
                         lessonHtml += ' <span style="font-size:9px;color:#555;margin-left:6px">&mdash; <a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Same video on AP Classroom">AP Classroom</a> (may not load)</span>';
                     } else if (_apAvail) {
                         // No Drive copy: AP Classroom is the only link.
@@ -27579,7 +27579,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-02-s02c';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-02-lm2g';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
