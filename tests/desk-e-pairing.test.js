@@ -257,15 +257,17 @@ describe('group resources and override',()=>{
  });
  it('one Follow-Along link per lesson + Drive video first (teacher 2026-10-02)',()=>{
    const dom=page(),lessons={},resources={};
+   // Real shape: RESOURCES is keyed dash-form ("1-4") and lookupTopic returns those ids;
+   // the registry is keyed dot-form ("1.4").
    for(const m of first.group){
      lessons[m.t]={urls:{worksheet:'u1_lesson'+m.t.split('.')[1]+'_live.html'},periods:{}};
-     resources[m.t]={videos:[{url:'https://ap.example/'+m.t,altUrl:'https://drive.example/'+m.t}],
+     resources[m.t.replace('.','-')]={videos:[{url:'https://ap.example/'+m.t,altUrl:'https://drive.example/'+m.t}],
        pdfs:[{url:'pdf/kick.pdf',label:'Kickoff Packet (Student)'},{url:'pdf/old1.pdf',label:'Follow-Along Worksheet 1'},
          {url:'pdf/old2.pdf',label:'Follow-Along Worksheet 2'},{url:'worksheets/old.html',label:'Video Write-Along (HTML, interactive)'}]};
    }
    const s=load(['showResourcePanel','_lessonCoachHtml','_resourcePanelEsc','_renderTodayTopics','_focusTodayLessonVideo'],{
      S,window:dom.window,document:dom.window.document,location:dom.window.location,cP:'E',_lastResourcePanel:null,_todayLessonInf:first,_todayLessonDS:'Sep 16',_gradeLessonsCache:[],
-     REGISTRY:{lessons},RESOURCES:resources,AI_TUTOR_LESSON_KEYS:new Set(),lookupTopic:t=>t,getRegistryEntry:t=>lessons[t],getAllRegistryEntries:t=>[lessons[t]],
+     REGISTRY:{lessons},RESOURCES:resources,AI_TUTOR_LESSON_KEYS:new Set(),lookupTopic:t=>String(t).replace('.','-'),getRegistryEntry:t=>lessons[t],getAllRegistryEntries:t=>[lessons[t]],
      getStudentEmail:()=> 'fixture',getStudentMarks:()=>({}),_deskIsTeacher:()=>false,cedTeacherBridgeAllowed:()=>false,_isApClassroomAvailable:()=>true,_wsCompletionFor:()=>null,_getCwsForTopic:()=>null,DESK_WORKSHEET_DONE_THRESHOLD:60
    });
    try{
@@ -278,7 +280,7 @@ describe('group resources and override',()=>{
      expect(video.getAttribute('href')).toBe('https://drive.example/1.4');
      expect(video.querySelector('svg')).not.toBeNull();
      expect(links.filter(a=>a.textContent==='AP Classroom').map(a=>a.getAttribute('href'))).toEqual(['https://ap.example/1.4','https://ap.example/1.5']);
-     expect(d.body.textContent).toContain('Google Drive · most reliable');
+     expect(d.body.textContent).toContain('use this one');expect(d.body.textContent).toContain('AP Classroom (may not load)');
      expect(d.body.textContent).not.toContain('(alt)');
    }finally{dom.window.close();}
  });

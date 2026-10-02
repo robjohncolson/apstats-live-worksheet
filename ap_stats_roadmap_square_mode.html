@@ -12167,9 +12167,9 @@ function showResourcePanel(inf, dateStr) {
                         // Teacher 2026-10-02: the AP Classroom links are unreliable, so the Drive
                         // copy is the main "Video" link (with a Drive icon) and AP Classroom is the
                         // small secondary link.
-                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Google Drive copy of the AP Classroom video">' + _DRIVE_ICON + ' Video ' + (i + 1) + '</a>';
-                        lessonHtml += ' <span style="font-size:9px;color:#555">Google Drive &middot; most reliable</span>';
-                        lessonHtml += ' <a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline;font-size:9px" title="Same video on AP Classroom">AP Classroom</a>';
+                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Google Drive copy of the AP Classroom video">' + _DRIVE_ICON + ' Video ' + (i + 1) + ' (Google Drive)</a>';
+                        lessonHtml += ' <span style="font-size:9px;color:#555">&middot; use this one</span>';
+                        lessonHtml += ' <span style="font-size:9px;color:#555;margin-left:6px">&mdash; <a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Same video on AP Classroom">AP Classroom</a> (may not load)</span>';
                     } else if (_apAvail) {
                         // No Drive copy: AP Classroom is the only link.
                         lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline">Video ' + (i + 1) + '</a>';
@@ -12190,7 +12190,8 @@ function showResourcePanel(inf, dateStr) {
                 // Teacher 2026-10-02: old PDF / HTML worksheet copies listed beside the real
                 // interactive worksheet made students think they had 2-3 worksheets (and that
                 // most were done). When the lesson has its live worksheet, show only that one.
-                const _liveReg = getRegistryEntry(id);
+                // RESOURCES ids are dash-form ("3-3"); the registry is keyed dot-form ("3.3").
+                const _liveReg = getRegistryEntry(String(id).replace('-', '.'));
                 const _hasLiveWs = !!(_liveReg && _liveReg.urls && _liveReg.urls.worksheet);
                 r.pdfs.filter(p => !(_hasLiveWs && _OLD_WORKSHEET_LABEL.test(p.label))).forEach(p => {
                     lessonHtml += '<div style="margin:3px 0"><a href="' + p.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">' + p.label + '</a></div>';
@@ -27578,7 +27579,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-02-l55u';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-02-s02c';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

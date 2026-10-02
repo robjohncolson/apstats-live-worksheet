@@ -89,8 +89,9 @@ describe('Desk: date-aware AP Classroom video links', () => {
     const body = fnBody(DESK, 'showResourcePanel');
     expect(body).toMatch(/_apAvail\s*&&\s*v\.altUrl/);
     expect(body).toMatch(/v\.altUrl[\s\S]{0,300}_DRIVE_ICON \+ ' Video '/);
-    expect(body).toMatch(/Google Drive &middot; most reliable/);
-    expect(body).toMatch(/v\.url[\s\S]{0,300}>AP Classroom</);
+    expect(body).toMatch(/\(Google Drive\)<\/a>/);
+    expect(body).toMatch(/use this one/);
+    expect(body).toMatch(/v\.url[\s\S]{0,300}>AP Classroom<\/a> \(may not load\)/);
     expect(body).not.toMatch(/\(alt\)/);
   });
 });
