@@ -26485,13 +26485,18 @@ function cellAria(i, ds){
 // never scroll past either edge of the school year. Reloads reset to 0.
 let _calPageOffset = 0;
 let _calStepWeeks = 2;   // last rendered window size; rCal publishes it so paging steps by the visible width
+// Set by the Today button. A student who is behind normally opens on the overdue next-up
+// week; once they press Today, the window anchors on the current week instead (teacher
+// 2026-10-02: "Today should always just go to the current date"). Reloads reset it.
+let _calOnToday = false;
 function calStep(dir) {
   _calPageOffset += dir * _calStepWeeks;
   rCal();
 }
-// "Today" button: jump the view back to today's window.
+// "Today" button: jump the view to the week holding today's date.
 function calToday() {
   _calPageOffset = 0;
+  _calOnToday = true;
   rCal();
 }
 // ── ☀️ Summer-prep weeks (woven into the calendar grid) ─────────────────────
@@ -26662,6 +26667,7 @@ function rCal(){
     const CAL_MIN_WEEKS = 1, CAL_MAX_WEEKS = _calShort ? 2 : 4;
     const _origLen = W.length;
     let _displayStart = 0;
+    let _calShowsToday = true;   // false while the window is anchored on an overdue next-up week
     if (_origLen > CAL_FOCUS_WEEKS) {
         // Find the week containing today. -1 = today is on a non-school day
         // (weekend / holiday) or outside the school year entirely; both are
@@ -26696,11 +26702,12 @@ function rCal(){
         if (_nextUpWk >= 0) {
             if (_nextUpWk >= _anchorWk) {
                 CAL_FOCUS_WEEKS = Math.min(CAL_MAX_WEEKS, Math.max(CAL_MIN_WEEKS, _nextUpWk - _anchorWk + 1));
-            } else {
+            } else if (!_calOnToday) {
                 _winAnchor = _nextUpWk;
                 CAL_FOCUS_WEEKS = Math.min(CAL_MAX_WEEKS, Math.max(CAL_MIN_WEEKS, _anchorWk - _nextUpWk + 1));
             }
         }
+        _calShowsToday = _winAnchor < 0;
         CAL_FOCUS_WEEKS = Math.min(CAL_FOCUS_WEEKS, _origLen);   // never exceed the array
         // In-school: anchor at today's week (or, when behind, the overdue next-up week).
         // Pre/post: clamp to either end. _calPageOffset (the nav arrows) shifts the window;
@@ -26870,9 +26877,9 @@ function rCal(){
     const _nn = document.getElementById('cal-next');
     if (_np) _np.classList.toggle('cal-nav-hidden', _displayStart <= 0);
     if (_nn) _nn.classList.toggle('cal-nav-hidden', _displayStart + CAL_FOCUS_WEEKS >= _origLen);
-    // Today button: dim + disable when already on today's window (offset 0).
+    // Today button: dim + disable only when the window really starts on today's week.
     const _nt = document.getElementById('cal-today');
-    if (_nt) _nt.classList.toggle('cal-today-off', _calPageOffset === 0);
+    if (_nt) _nt.classList.toggle('cal-today-off', _calPageOffset === 0 && _calShowsToday);
     // a11y: announce the visible window to screen readers (also fires on calStep paging).
     const _sr = document.getElementById('cal-sr');
     if (_sr && W.length) {
@@ -27554,7 +27561,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-30-tjkm';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-02-hknw';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

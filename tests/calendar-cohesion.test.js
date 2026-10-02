@@ -481,3 +481,14 @@ describe('Sticky core (layout P4, 2026-08-19)', () => {
     expect(html.indexOf('id="donow-card"')).toBeLessThan(html.indexOf('class="cal-outer geneva"'));
   });
 });
+
+describe('Today button always goes to the current date (teacher 2026-10-02)', () => {
+  it('calToday asks rCal to anchor on today', () => {
+    expect(fnBody(html, 'calToday')).toMatch(/_calOnToday\s*=\s*true/);
+  });
+  it('rCal only re-anchors on an overdue next-up week before Today is pressed', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/else\s+if\s*\(\s*!_calOnToday\s*\)\s*\{\s*_winAnchor\s*=\s*_nextUpWk/);
+    expect(b).toMatch(/cal-today-off['"]\s*,\s*_calPageOffset\s*===\s*0\s*&&\s*_calShowsToday/);
+  });
+});

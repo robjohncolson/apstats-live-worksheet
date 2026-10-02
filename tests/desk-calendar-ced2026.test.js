@@ -76,6 +76,7 @@ function createDesk({ period = 'B', role = 'student', preview = false, viewAs = 
     mTip: () => {},
     _pollArchive: {},
     _calPageOffset: 0,
+    _calOnToday: false,
     _calStepWeeks: 2,
     _calNextUp: null,
     _todayLessonInf: null,
@@ -398,6 +399,45 @@ describe('student calendar access without prerequisite completion', () => {
       expect(cell).toBeTruthy();
       cell.click();
       expect(win.maybeBumpThenOpen).toHaveBeenCalled();
+    } finally { win.close(); }
+  });
+});
+
+describe('Today button always shows the current week (teacher 2026-10-02)', () => {
+  // A student who is behind: today is Fri 10/2, the next-up lesson is 1.2 (mid-September).
+  function behindDesk() {
+    const win = createDesk({ period: 'B' }).window;
+    win.tdy = () => new win.Date(2026, 9, 2);
+    win.calNextUpTopic = () => '1.2';
+    const button = win.document.createElement('button');
+    button.id = 'cal-today';
+    win.document.body.appendChild(button);
+    return win;
+  }
+  function firstVisibleDay(win) {
+    const stamps = [...win.document.querySelectorAll('#cg .dc[data-dts]')].map(cell => Number(cell.dataset.dts));
+    return new win.Date(Math.min(...stamps));
+  }
+
+  it('opens on the overdue lesson, with the Today button enabled', () => {
+    const win = behindDesk();
+    try {
+      win.rCal();
+      expect(firstVisibleDay(win) < new win.Date(2026, 8, 28)).toBe(true);
+      expect(win.document.getElementById('cal-today').classList.contains('cal-today-off')).toBe(false);
+    } finally { win.close(); }
+  });
+
+  it('Today moves the window to the week holding today and dims the button', () => {
+    const win = behindDesk();
+    try {
+      win.rCal();
+      win._calOnToday = true;
+      win._calPageOffset = 0;
+      win.rCal();
+      const first = firstVisibleDay(win);
+      expect(first >= new win.Date(2026, 8, 28) && first <= new win.Date(2026, 9, 2)).toBe(true);
+      expect(win.document.getElementById('cal-today').classList.contains('cal-today-off')).toBe(true);
     } finally { win.close(); }
   });
 });
