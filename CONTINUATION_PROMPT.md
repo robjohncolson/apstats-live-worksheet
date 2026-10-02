@@ -1,4 +1,4 @@
-# CONTINUATION PROMPT — **s44 (2026-09-29) IS CURRENT: read the SESSION 44 block below — its USER-ACTION CHECKLIST is the live to-do (tell classes the quiz rules, announce quiz zeros before Fri 10/2, watch Wed's first --comments run, then the carry-overs).** Older blocks are history.
+# CONTINUATION PROMPT — **s45 (2026-10-01) IS CURRENT: read the SESSION 45 block below — its OPEN list is the live to-do (3.3 Period B columns never created, the four hand-written Schoology overrides go stale, slip + reader changes uncommitted, Period E PowerSchool save unconfirmed).** s44's checklist still carries. Older blocks are history.
 
 > ⚠ **STALE (s33-era, 2026-07-02). The authoritative block is `## ⏭ SESSION 35` further down.** This
 > blockquote is kept for history only — its Windows `C:/Users/rober/...` paths are dead (the host moved
@@ -23,7 +23,77 @@
 
 ---
 
-## ⏭ SESSION 44 (2026-09-29, Athena laptop, Windows) — **CURRENT. Supersedes s43 below. QUIZ REBUILT (peers load, one explained retry, Talk-it-through ½ credit, feedback appeals); SCHOOLOGY SYNC was a silent no-op 9/26-9/28 → fixed; QUIZ ZEROS from Fri 10/2 + cell comments; Tetris bets open to all.**
+## ⏭ SESSION 45 (2026-10-01, Athena laptop, Windows) — **CURRENT. Supersedes s44 below (s44's checklist items 1-5 still carry). PROGRESS REPORTS: best-of grade written into Schoology as MP overrides; slips match Schoology; comments for all 29 students entered in PowerSchool.**
+
+**HEADs:** follow-alongs `3f67003a` (unchanged — NOTHING committed this session; see OPEN 3). No roster-server or cr change.
+Lanes: Opus 5.5 → Fable 5.1 → Opus 5.5 (teacher `/model` switches); no subagents, no Codex. Memory note written:
+`project_schoology_quarter_override` (the rule + the cell mechanic). Private files (names inside, never in the repo):
+`%USERPROFILE%\grade-backups\progress-report-comments-2026-10-01.txt`, `...\slips\2026-10-01-Period{B,E}-slips.pdf`,
+`...\slips\schoology-grades.json`.
+
+### The teacher's grading rule, as applied to the progress report (stated 2026-10-01 — the authority for overrides)
+- "Work grade" = **Schoology's own calculated MP grade**, NOT the engine's `workAvg` (the engine counts unattempted quizzes
+  as 0; Schoology leaves them blank, so e.g. Dereck reads 67.5 in Schoology vs 38 in the engine).
+- If work + banked bonus ≥ 40 → grade = max(work, PC%). Else keep Schoology's number. A low PC never lowers anyone.
+- Unit 1 **MCQ Part A alone** counts as the PC for now. Bonus is used only to test the 40% line (nobody needed it today).
+- Written as `gp_override` for: Saly Ung 94.4, Angie Gamez Oseguera 94.4, Olivia Sico 100 (B); Darla Gonzalez Chavez 66.7
+  (E). Andrew Barrios (30.9, no bonus) not eligible. Everyone else's work grade already ≥ their PC.
+
+### Done this session (live, verified)
+- **PC scores posted** (`scripts/import-pc-scores.mjs`): Elmer 11→12/18, Olivia 12→18/18 (U1 Part A, PeriodB).
+- **Period B Schoology push** for Angie (live run 10:59): 18 grades pushed; her row read back and matched.
+- **Schoology Grade Setup: "Grade period override columns" turned ON for both SY26-27 courses** (was off — the override cell
+  didn't exist). Needs REAL coordinate clicks on `#edit-custom-gp-grade` and Save; a JS `.click()` does not save.
+- **4 overrides written + read back after reload** (see rule above). Mechanic: the override cell's input is `display:none`
+  until the CELL is coordinate-clicked; `schoology_ops.write_override` alone returns `focused: False`. Click first, then call.
+- **Slips** (`scripts/weekly-slips.mjs`, uncommitted): step 1 = "Retake the Unit 1 Progress Check, MCQ Part A, on paper in
+  class (you have N%)" when U1 Part A < 90%; zeros follow. `--schoology <file>` makes the header, class median, box plot and
+  the PC/strategy sentence use Schoology's grade (override else calc); the PC line says "counting in your grade now" when
+  Schoology calc ≥ 40. Missing-work rows say "Follow-Along Worksheet", not "Open". New read-only
+  `tools/schoology_read_grades.py` writes `{schoologyUid: {calc, override}}`. 8 slips printed (B 4, E 4). Slip tests 38/38.
+- **Progress-report comments** drafted for all 29 (1-2 sentences, positive / one critical point / positive, no pronouns) and
+  entered into **PowerTeacher Pro → Grading → Grades: Traditional – M1** comment boxes via Claude in Chrome. Period B
+  (section 67887) saved by the teacher + letters fixed by the teacher. Period E (section 67888) — see OPEN 4.
+
+### OPEN (live to-do, top first)
+1. **Period B 3.3 columns (Follow-Along / Quiz / Blooket, due 10/1) were NEVER created.** 10:59 run: "No category_id" (the
+   category read came back empty though all 5 categories exist). 16:30 run: "create not confirmed" ×3, and a read-only
+   check at ~19:00 found no 3.3 columns. The override-column setting was turned on between those runs — rule that out
+   first (does the Add Assignment form still render the category/period selects?). Tomorrow's 16:30 run retries.
+2. **The 4 overrides are STATIC.** They mask Schoology's calculation for those students and never move with new work. Before
+   the next report, and once the full U1 PC counts (Day 2 = Tue 10/13 B / Fri 10/16 E, when the PC column also enters
+   Schoology's calc at 50%), recompute: from then on the work grade = the 4 work categories only. Not in the daily sync.
+3. **Uncommitted:** `scripts/weekly-slips.mjs`, `tests/weekly-slips.test.js`, `tools/schoology_read_grades.py`. The Monday
+   05:00 slips task and the DOK-app Print button do NOT pass `--schoology`, so they still print the Desk grade — teacher
+   asked for Schoology-congruent slips; making the reader + flag the default is the natural next step (the reader needs
+   the rig Edge signed in). Commit after `detect_changes`.
+4. **Period E PowerSchool comments: 15 entered, save unconfirmed.** The page switched to Period B before anyone checked.
+   Look for the comment icon beside each Period E M1 grade; re-enter from the private comments file if missing. Teacher
+   was fixing Period E letters by hand (Jesselly A, Wedgina A, Angie T A-, Dereck D+; Darla D+ already set).
+5. **PowerSchool letter ≠ percent after a percent override**: PowerTeacher keeps the calculated letter, so every percent
+   override needs its letter set by hand. Scale used: A 93+, A- 90-92, B+ 87-89, B 83-86, B- 80-82, C+ 77-79, D+ 67-69.
+   Category map given to the teacher: Lesson+Blooket→Classwork, Quiz→Quiz, Posters→Project, Progress Check→Test — unverified
+   whether PowerSchool re-weights and ignores the Schoology override; check one overridden student after a sync.
+6. **Desk "Schoology today" chip is wrong for students with zeros** (Angie 82 vs Schoology calc 68.9; Andrew 63 vs 30.9) —
+   `gradebook.quarters.Q1.schoologyTotal` ignores lagged zeros. Same bug as s44 item 4; still not fixed.
+7. Retakes of U1 MCQ Part A are on PAPER in class (teacher, 10/1) — enter with `import-pc-scores.mjs` (`PAPER:` rows);
+   the server keeps the higher score.
+
+### Gotchas learned 10/1
+- `tools/schoology_verify_readback.py` reads 0 rows because it doesn't wait for the grid; poll `list_students` first.
+- Claude in Chrome: when the Chrome window is not in front (`document.visibilityState` hidden) or shrinks, clicks land on
+  the wrong controls. On PowerTeacher the narrow layout moved the keypad under the comment-box coordinates and comment
+  text was typed into a GRADE field ("Number cannot be greater than 200"). Guard each type with a JS check: right
+  student, box empty, `activeElement` is `#keypad-notes-text-textarea`, `innerWidth` unchanged.
+- PowerTeacher Pro comment box = `#keypad-notes-text-textarea`; selecting a row's grade cell switches the side panel to
+  that student; typed comments persist across row changes until Save.
+- The auto-mode safety check blocked Claude from changing PowerSchool letter grades (comments were allowed). Leave grade
+  edits in PowerSchool to the teacher.
+- The roster `/roster/list` payload includes each student's current password — filter fields before printing.
+
+---
+
+## ⏭ SESSION 44 (2026-09-29, Athena laptop, Windows) — superseded by s45 above. QUIZ REBUILT (peers load, one explained retry, Talk-it-through ½ credit, feedback appeals); SCHOOLOGY SYNC was a silent no-op 9/26-9/28 → fixed; QUIZ ZEROS from Fri 10/2 + cell comments; Tetris bets open to all.**
 
 **HEADs (all pushed):** follow-alongs `d6fadde7`+ (this block's commits on top); curriculum_render `0378ad8` (late 9/29:
 `e217b8b` peer-panel reload fix, `ede6592` one-box MCQ reveal, `0378ad8` build stamp). roster-server

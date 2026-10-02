@@ -8,9 +8,9 @@ import '../lib/class-snapshot.js';
 import '../lib/effort-facts.js';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const KIND = { worksheet: 'worksheet', quiz: 'quiz', blooket: 'flashcard deck' };
+const KIND = { worksheet: 'follow-along worksheet', quiz: 'quiz', blooket: 'flashcard deck' };
 // The Desk's Missing-work button words (ap_stats_roadmap_square_mode.html _zeroCardRow).
-const VERB = { worksheet: 'Open', quiz: 'Quiz', blooket: 'Flashcards' };
+const VERB = { worksheet: 'Follow-Along Worksheet', quiz: 'Quiz', blooket: 'Flashcards' };
 // Desk colours (SLIPS_V2_SPEC §1): counting-now row, not-yet row, tentative chip.
 export const COLOR_DEFS = [
   '\\definecolor{deskred}{HTML}{CC0000}',
@@ -60,7 +60,18 @@ export function currentQuarterKey(quarters, serverKey) {
   return keys.find(key => (quarters[key]?.lessonsDue || 0) > 0) || keys[0] || null;
 }
 
+// What Schoology shows for the marking period: the teacher's override, else its own calculation.
+// null when the run was not given Schoology grades (--schoology).
+export function schoologyGrade(student) {
+  const grades = student && student.schoology;
+  if (!grades) return null;
+  if (Number.isFinite(grades.override)) return grades.override;
+  return Number.isFinite(grades.calc) ? grades.calc : null;
+}
+
 export function quarterGrade(student, serverKey) {
+  const shown = schoologyGrade(student);
+  if (shown != null) return shown;
   const key = currentQuarterKey(student.quarters, serverKey);
   const grade = key ? student.quarters[key]?.quarterGrade : null;
   return Number.isFinite(grade) ? grade : null;
@@ -109,6 +120,16 @@ export function planFor(lessons, missing, period, date) {
   const lowest = lowestDueScores(lessons, period, date);
   if (lowest.length) return lowest.map(item => `Raise your ${item.lessonKey} ${item.kind} (now ${Math.round(item.score)}) - it is revisable.`);
   return ['Nothing is missing. Ask Mr. Colson which scores to revisit.'];
+}
+
+// Teacher 2026-10-01: a Progress Check retake is the first step on the slip, before the zeros.
+// Only Unit 1 MCQ Part A has been given so far; a score of 90% or more needs no retake.
+export const PC_RETAKE_BELOW = 90;
+export function retakeStep(student) {
+  const pct = student && student.units && student.units.U1 ? student.units.U1.pcRawPct : null;
+  if (!Number.isFinite(pct)) return null;
+  if (pct >= PC_RETAKE_BELOW) return null;
+  return `Retake the Unit 1 Progress Check, MCQ Part A, on paper in class (you have ${Math.round(pct)}%). Your best score counts.`;
 }
 
 export function doFirst(lessons, missing) {
@@ -407,10 +428,17 @@ export function effortLines(student, section, date, quarterKey, schedule = loadS
   const key = currentQuarterKey(student.quarters, quarterKey);
   const quarter = key ? student.quarters[key] : null;
   // UNROUNDED averages: the 40% gate test must see the engine's own numbers.
-  const workAvg = quarter && Number.isFinite(quarter.workAvg) ? quarter.workAvg : null;
+  const engineWork = quarter && Number.isFinite(quarter.workAvg) ? quarter.workAvg : null;
+  // Teacher 2026-10-01: with Schoology grades on hand, Schoology's calculated grade IS the work grade.
+  const workAvg = Number.isFinite(student.schoology?.calc) ? student.schoology.calc : engineWork;
   const pcAvg = quarter && Number.isFinite(quarter.pcAvg) ? quarter.pcAvg : null;
   const pc = facts.pcOnFile(student.units, student.quarters, period, schedule, date, key);
-  const pcText = pc ? [facts.pcLine(pc), facts.strategyLine(pc, workAvg, facts.GRADE_FLOOR, pcAvg)].filter(Boolean).join(' ') : '';
+  // In Schoology the Progress Check already counts for anyone whose work grade is at least 40%
+  // (the teacher writes the higher of the two as the override), so say "now", not a future date.
+  const countsNow = pc && Number.isFinite(student.schoology?.calc) && student.schoology.calc >= facts.GRADE_FLOOR;
+  const pcShown = countsNow ? { ...pc, counting: true } : pc;
+  const pcAvgShown = countsNow ? pc.pct : pcAvg;
+  const pcText = pc ? [facts.pcLine(pcShown), facts.strategyLine(pcShown, workAvg, facts.GRADE_FLOOR, pcAvgShown)].filter(Boolean).join(' ') : '';
   const ahead = facts.aheadLessons(student.lessons, period, date);
   let aheadText = facts.aheadLine(ahead, topicNumber);
   // AHEAD_WORK_PROJECTION_SPEC: /class/grades students carry the server gradebook, so the
@@ -443,8 +471,9 @@ export function renderSlip(student, section, date, summary, quarterKey, pool = n
   const missing = missingWork(lessons, section.slice(-1), date);
   const grade = quarterGrade(student, quarterKey);
   const own = grade == null ? null : Math.round(grade);
-  const quarterLabel = currentQuarterKey(student.quarters, quarterKey);
-  const plan = planFor(lessons, missing, section.slice(-1), date);
+  const quarterName = currentQuarterKey(student.quarters, quarterKey);
+  const quarterLabel = schoologyGrade(student) == null ? quarterName : `${quarterName} in Schoology`;
+  const plan = [retakeStep(student), ...planFor(lessons, missing, section.slice(-1), date)].filter(Boolean);
   const steps = plan.map((line, index) => `${index + 1}. ${latexText(line)}\\par`).join('\n');
   const name = student.realName || student.name || student.username || 'Student';
   const header = headerLine(own, quarterLabel, summary);
@@ -543,7 +572,7 @@ export function parseArgs(args) {
       options[{ '--all': 'all', '--dry-run': 'dryRun', '--no-pdf': 'noPdf' }[flag]] = true;
       continue;
     }
-    if (!['--section', '--min', '--out', '--date'].includes(flag)) throw new Error(`Unknown option: ${flag}`);
+    if (!['--section', '--min', '--out', '--date', '--schoology'].includes(flag)) throw new Error(`Unknown option: ${flag}`);
     const value = args[++index];
     if (!value || value.startsWith('--')) throw new Error(`Missing value for ${flag}`);
     if (flag === '--section') {
@@ -556,6 +585,7 @@ export function parseArgs(args) {
     }
     if (flag === '--out') options.out = path.resolve(value);
     if (flag === '--date') options.date = value;
+    if (flag === '--schoology') options.schoology = path.resolve(value);
   }
   const date = new Date(options.date + 'T00:00:00Z');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(options.date) || !Number.isFinite(date.getTime())
@@ -609,6 +639,8 @@ export async function main(args = process.argv.slice(2)) {
   const config = JSON.parse(fs.readFileSync(path.join(os.homedir(), 'grade-backups', 'config.json'), 'utf8').replace(/^\uFEFF/, ''));
   if (!config.teacherKey || !config.rosterUrl) throw new Error('config.json requires teacherKey and rosterUrl');
   const counts = [];
+  // --schoology <file>: {schoologyUid: {calc, override}} from tools/schoology_read_grades.py.
+  const schoology = options.schoology ? JSON.parse(fs.readFileSync(options.schoology, 'utf8')) : null;
   const pool = await fetchPool(config);
   for (const section of options.sections) {
     const url = `${config.rosterUrl.replace(/\/+$/, '')}/class/grades?section=${section}`;
@@ -624,6 +656,7 @@ export async function main(args = process.argv.slice(2)) {
       if (snapRes.ok) quarterKey = (await snapRes.json()).quarter || null;
     } catch (_) { quarterKey = null; }
     const students = realStudents(doc.students);
+    if (schoology) for (const student of students) student.schoology = schoology[student.schoologyUid] || null;
     const candidates = students.filter(student => isCandidate(quarterGrade(student, quarterKey),
       missingWork(student.lessons, section.slice(-1), options.date), options));
     counts.push({ section, count: candidates.length });

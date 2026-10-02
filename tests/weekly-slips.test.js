@@ -6,7 +6,7 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { missingWork, quarterGrade, isCandidate, doFirst, latexText, boxSummary,
-  renderTex, parseArgs, assertSafeOut } from '../scripts/weekly-slips.mjs';
+  renderTex, parseArgs, assertSafeOut, retakeStep, schoologyGrade } from '../scripts/weekly-slips.mjs';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Copied from tests/desk-zero-warning.test.js.
@@ -238,7 +238,7 @@ describe('slips v2 (SLIPS_V2_SPEC §1)', () => {
     expect(tex).toContain('\\definecolor{deskred}{HTML}{CC0000}');
     expect(tex).toContain('\\definecolor{desktentative}{HTML}{FFF3B0}');
     expect(tex).toContain('Q1 so far: 31\\%. Class median 97.');
-    expect(tex).toContain('\\MissRow{deskred}{deskredbg}{Open 1.2 $\\cdot$ Variables}{0 since Sun 9/20}');
+    expect(tex).toContain('\\MissRow{deskred}{deskredbg}{Follow-Along Worksheet 1.2 $\\cdot$ Variables}{0 since Sun 9/20}');
     expect(tex).toContain('\\MissRow{deskyellow}{deskyellowbg}{Quiz 1.3');
     expect(tex).toContain('{0 after Sun 9/27}');
     expect(tex).not.toContain('Flashcards 1.3');   // bonus decks never zero
@@ -389,5 +389,30 @@ describe('effort lines under the header (EFFORT_VISIBILITY_SPEC §2)', () => {
 describe('bonus-topic labels compile (Codex review 2026-09-26: the crosswalk label carries a ★)', () => {
   it('latexText maps the star to math and keeps the rest of the label', () => {
     expect(latexText('★ Beyond the Exam · Data Ethics')).toBe('$\\star$ Beyond the Exam $\\cdot$ Data Ethics');
+  });
+});
+
+describe('retakeStep', () => {
+  it('asks for a Unit 1 MCQ Part A retake when the score is below 90%', () => {
+    expect(retakeStep({ units: { U1: { pcRawPct: 61.1 } } }))
+      .toBe('Retake the Unit 1 Progress Check, MCQ Part A, on paper in class (you have 61%). Your best score counts.');
+  });
+  it('says nothing at 90% or more, or with no score on file', () => {
+    expect(retakeStep({ units: { U1: { pcRawPct: 94.4 } } })).toBe(null);
+    expect(retakeStep({ units: { U1: { pcRawPct: null } } })).toBe(null);
+    expect(retakeStep({})).toBe(null);
+  });
+});
+
+describe('schoologyGrade', () => {
+  const quarters = { Q1: { quarterGrade: 40, lessonsDue: 3 } };
+  it('is the override when there is one, else the calculated grade', () => {
+    expect(schoologyGrade({ schoology: { calc: 68.9, override: 94.4 } })).toBe(94.4);
+    expect(schoologyGrade({ schoology: { calc: 67.5, override: null } })).toBe(67.5);
+  });
+  it('replaces the Desk grade on the slip only when the run has Schoology grades', () => {
+    expect(quarterGrade({ quarters, schoology: { calc: 67.5, override: null } }, 'Q1')).toBe(67.5);
+    expect(quarterGrade({ quarters }, 'Q1')).toBe(40);
+    expect(quarterGrade({ quarters, schoology: null }, 'Q1')).toBe(40);
   });
 });
