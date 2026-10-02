@@ -456,5 +456,58 @@ class TestCommentDrafts(unittest.TestCase):
         self.assertEqual(fake.clicks, [])
 
 
+class GridLoadFake:
+    """Gradebook whose columns load in batches when the grid is scrolled."""
+
+    def __init__(self, loaded, total, per_scroll, title_after_load=None):
+        self.loaded, self.total, self.per_scroll = loaded, total, per_scroll
+        self.title_after_load = title_after_load
+        self.scrolls = 0
+
+    def eval_js(self, expr):
+        if "col_header_num_loaded" in expr:
+            return {"loaded": self.loaded, "total": self.total}
+        if "s-js-grid-scrolling-body" in expr:
+            self.scrolls += 1
+            self.loaded = min(self.total, self.loaded + self.per_scroll)
+            return True
+        if "gridcell" in expr:   # the title scan
+            return self.title_after_load if self.loaded >= self.total else None
+        return None
+
+
+class TestLoadAllColumns(unittest.TestCase):
+    """2026-10-02: Schoology loads 30 columns at a time; the rest need a scroll."""
+
+    def setUp(self):
+        self.sleep = mock.patch.object(ops.time, "sleep", lambda s: None)
+        self.sleep.start()
+
+    def tearDown(self):
+        self.sleep.stop()
+
+    def test_scrolls_until_every_column_is_loaded(self):
+        fake = GridLoadFake(loaded=30, total=34, per_scroll=4)
+        self.assertTrue(ops.load_all_columns(fake))
+        self.assertEqual((fake.loaded, fake.scrolls), (34, 1))
+
+    def test_no_scroll_when_already_loaded(self):
+        fake = GridLoadFake(loaded=34, total=34, per_scroll=4)
+        self.assertTrue(ops.load_all_columns(fake))
+        self.assertEqual(fake.scrolls, 0)
+
+    def test_not_a_gradebook_page_is_a_quiet_no(self):
+        fake = FakeCDP(title_lookup="c1")
+        self.assertFalse(ops.load_all_columns(fake))
+
+    def test_stalled_loading_gives_up(self):
+        fake = GridLoadFake(loaded=30, total=34, per_scroll=0)
+        self.assertFalse(ops.load_all_columns(fake, timeout_s=0))
+
+    def test_title_lookup_finds_a_column_past_the_first_batch(self):
+        fake = GridLoadFake(loaded=30, total=34, per_scroll=4, title_after_load="33")
+        self.assertEqual(ops.find_assignment_id_by_title(fake, "3.3 Blooket"), "33")
+
+
 if __name__ == "__main__":
     unittest.main()

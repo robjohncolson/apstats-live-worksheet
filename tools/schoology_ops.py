@@ -572,6 +572,67 @@ def write_override(cdp: EdgeCDP, row_index: int, value: float, *, gp: bool = Tru
 # Assignment lookup                                                            #
 # --------------------------------------------------------------------------- #
 
+_COLUMN_LOAD_STATE_JS = (
+    "(function(){"
+    "if (typeof angular === 'undefined') return null;"
+    "var cell = document.querySelector('[role=\"gridcell\"][data-x]');"
+    "if (!cell) return null;"
+    "var s = angular.element(cell).scope();"
+    "while (s && s.col_header_num_loaded === undefined) s = s.$parent;"
+    "if (!s) return null;"
+    "return {loaded: Number(s.col_header_num_loaded), total: Number(s.col_header_ids_total)};"
+    "})()"
+)
+
+# Step back a little, then to the end: setting scrollLeft to the value it already has is
+# not a real scroll, so a grid left at the far right would never load the next batch.
+_SCROLL_GRID_TO_END_JS = (
+    "(function(){"
+    "var body = document.querySelector('.s-js-grid-scrolling-body');"
+    "if (!body) return false;"
+    "body.scrollLeft = Math.max(0, body.scrollWidth - body.clientWidth - 200);"
+    "body.dispatchEvent(new Event('scroll'));"
+    "body.scrollLeft = body.scrollWidth;"
+    "body.dispatchEvent(new Event('scroll'));"
+    "return true;"
+    "})()"
+)
+
+
+def load_all_columns(cdp: EdgeCDP, timeout_s: float = 15.0) -> bool:
+    """Make the gradebook load every assignment column.
+
+    Schoology loads gradebook columns in batches of 30 and fetches the rest only
+    when the grid is scrolled right. Before this, the sync could not see the
+    newest columns once a section passed 30 assignments (found 2026-10-02: the
+    3.2 Blooket and 3.3 columns were "missing", so their grades never pushed).
+
+    Returns True once every column is loaded; False when the page is not a
+    gradebook grid or loading stalls. Cheap when everything is already loaded.
+    """
+    deadline = time.time() + timeout_s
+    brought_to_front = False
+    while True:
+        state = cdp.eval_js(_COLUMN_LOAD_STATE_JS)
+        if not isinstance(state, dict):
+            return False
+        if state.get("loaded", 0) >= state.get("total", 0):
+            return True
+        if time.time() > deadline:
+            return False
+        # The next batch does not load while the rig's Edge window sits behind other
+        # windows (document hidden) -- the same trap as the grade write (2026-09-09).
+        if not brought_to_front:
+            try:
+                cdp.send("Page.bringToFront", {})
+                cdp.send("Emulation.setFocusEmulationEnabled", {"enabled": True})
+            except Exception:  # noqa: BLE001 -- best effort; the load-state poll is the real check
+                pass
+            brought_to_front = True
+        cdp.eval_js(_SCROLL_GRID_TO_END_JS)
+        time.sleep(0.8)
+
+
 def find_assignment_id_by_title(cdp: EdgeCDP, title: str) -> Optional[str]:
     """Scan gradebook column headers for an assignment whose title matches.
 
@@ -582,6 +643,7 @@ def find_assignment_id_by_title(cdp: EdgeCDP, title: str) -> Optional[str]:
     creating duplicate assignments (P1b gotcha: 3 duplicate Sync Test 1
     columns appeared when the Add Assignment form was resubmitted).
     """
+    load_all_columns(cdp)
     # Robust mapping (P2b RE, 2026-05-29): the row-0 grade cells carry
     #   aria-label="<student>, <assignment title>[, <grade> out of <pts> points]"
     # so we scan [role=gridcell][data-y="0"] and match the ", <title>" segment.
