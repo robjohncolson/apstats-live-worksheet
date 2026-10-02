@@ -12136,6 +12136,12 @@ function showResourcePanel(inf, dateStr) {
             return 'recordLinkVisit(\'' + _stuTopicId + '\',\'' + artifact + '\')';
         }
         const regEntry = getRegistryEntry(inf.t);
+        // Small three-colour Drive mark for the main video link.
+        const _DRIVE_ICON = '<svg width="14" height="12" viewBox="0 0 24 21" aria-hidden="true" style="vertical-align:-1px">'
+            + '<path d="M8 0h8l8 14h-8z" fill="#ffba00"/><path d="M8 0l4 7-8 14-4-7z" fill="#0f9d58"/>'
+            + '<path d="M8 14h16l-4 7H4z" fill="#4285f4"/></svg>';
+        // Labels of old resource-list worksheet copies (PDF / older HTML) that duplicate the live worksheet.
+        const _OLD_WORKSHEET_LABEL = /worksheet|follow-along|write-along/i;
         let lessonHtml = _lessonCoachHtml(inf, ids, regEntry);
         for (const id of ids) {
             const r = RESOURCES[id];
@@ -12157,10 +12163,16 @@ function showResourcePanel(inf, dateStr) {
                         ? (OfflineVideo.localFor(v.url) || OfflineVideo.localFor(v.altUrl)) : null;
                     if (_ovFile) {
                         lessonHtml += '<a href="#" onclick="OfflineVideo.open(' + _deskEsc(JSON.stringify(_ovFile)) + ',' + _deskEsc(JSON.stringify('Video ' + (i + 1))) + ');return false;" style="color:var(--accent-ink);text-decoration:underline">▶ Video ' + (i + 1) + ' (offline)</a>';
+                    } else if (_apAvail && v.altUrl) {
+                        // Teacher 2026-10-02: the AP Classroom links are unreliable, so the Drive
+                        // copy is the main "Video" link (with a Drive icon) and AP Classroom is the
+                        // small secondary link.
+                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Google Drive copy of the AP Classroom video">' + _DRIVE_ICON + ' Video ' + (i + 1) + '</a>';
+                        lessonHtml += ' <span style="font-size:9px;color:#555">Google Drive &middot; most reliable</span>';
+                        lessonHtml += ' <a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline;font-size:9px" title="Same video on AP Classroom">AP Classroom</a>';
                     } else if (_apAvail) {
-                        // Standard render: AP Classroom primary + Drive alt secondary.
+                        // No Drive copy: AP Classroom is the only link.
                         lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline">Video ' + (i + 1) + '</a>';
-                        if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline;font-size:9px">(alt)</a>';
                     } else if (v.altUrl) {
                         // Pre-cohort: Drive alt copy is the primary (and only) link.
                         // Renders as plain "Video N" so the student doesn't need to
@@ -12175,7 +12187,12 @@ function showResourcePanel(inf, dateStr) {
                 });
             }
             if (r.pdfs && r.pdfs.length) {
-                r.pdfs.forEach(p => {
+                // Teacher 2026-10-02: old PDF / HTML worksheet copies listed beside the real
+                // interactive worksheet made students think they had 2-3 worksheets (and that
+                // most were done). When the lesson has its live worksheet, show only that one.
+                const _liveReg = getRegistryEntry(id);
+                const _hasLiveWs = !!(_liveReg && _liveReg.urls && _liveReg.urls.worksheet);
+                r.pdfs.filter(p => !(_hasLiveWs && _OLD_WORKSHEET_LABEL.test(p.label))).forEach(p => {
                     lessonHtml += '<div style="margin:3px 0"><a href="' + p.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">' + p.label + '</a></div>';
                 });
             }
@@ -27561,7 +27578,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-02-hknw';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-02-l55u';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

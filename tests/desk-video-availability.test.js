@@ -85,11 +85,12 @@ describe('Desk: date-aware AP Classroom video links', () => {
     expect(body).toMatch(/locked until[\s\S]{0,80}SCHOOL_YEAR_START/);
   });
 
-  it('09: post-cohort branch preserves the existing dual-link render (AP + alt)', () => {
+  it('09: post-cohort with a Drive copy: Drive is the main "Video" link, AP Classroom secondary (teacher 2026-10-02)', () => {
     const body = fnBody(DESK, 'showResourcePanel');
-    // The if-branch should still emit "Video N" with v.url and "(alt)" with v.altUrl.
-    expect(body).toMatch(/_apAvail/);
-    // The (alt) suffix appears specifically in the available branch.
-    expect(body).toMatch(/\(alt\)/);
+    expect(body).toMatch(/_apAvail\s*&&\s*v\.altUrl/);
+    expect(body).toMatch(/v\.altUrl[\s\S]{0,300}_DRIVE_ICON \+ ' Video '/);
+    expect(body).toMatch(/Google Drive &middot; most reliable/);
+    expect(body).toMatch(/v\.url[\s\S]{0,300}>AP Classroom</);
+    expect(body).not.toMatch(/\(alt\)/);
   });
 });

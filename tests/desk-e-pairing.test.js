@@ -255,6 +255,33 @@ describe('group resources and override',()=>{
      expect(d.querySelectorAll('a[href="dok/pdf/aps_1.4_student.pdf"]')).toHaveLength(0);
    }finally{dom.window.close();}
  });
+ it('one Follow-Along link per lesson + Drive video first (teacher 2026-10-02)',()=>{
+   const dom=page(),lessons={},resources={};
+   for(const m of first.group){
+     lessons[m.t]={urls:{worksheet:'u1_lesson'+m.t.split('.')[1]+'_live.html'},periods:{}};
+     resources[m.t]={videos:[{url:'https://ap.example/'+m.t,altUrl:'https://drive.example/'+m.t}],
+       pdfs:[{url:'pdf/kick.pdf',label:'Kickoff Packet (Student)'},{url:'pdf/old1.pdf',label:'Follow-Along Worksheet 1'},
+         {url:'pdf/old2.pdf',label:'Follow-Along Worksheet 2'},{url:'worksheets/old.html',label:'Video Write-Along (HTML, interactive)'}]};
+   }
+   const s=load(['showResourcePanel','_lessonCoachHtml','_resourcePanelEsc','_renderTodayTopics','_focusTodayLessonVideo'],{
+     S,window:dom.window,document:dom.window.document,location:dom.window.location,cP:'E',_lastResourcePanel:null,_todayLessonInf:first,_todayLessonDS:'Sep 16',_gradeLessonsCache:[],
+     REGISTRY:{lessons},RESOURCES:resources,AI_TUTOR_LESSON_KEYS:new Set(),lookupTopic:t=>t,getRegistryEntry:t=>lessons[t],getAllRegistryEntries:t=>[lessons[t]],
+     getStudentEmail:()=> 'fixture',getStudentMarks:()=>({}),_deskIsTeacher:()=>false,cedTeacherBridgeAllowed:()=>false,_isApClassroomAvailable:()=>true,_wsCompletionFor:()=>null,_getCwsForTopic:()=>null,DESK_WORKSHEET_DONE_THRESHOLD:60
+   });
+   try{
+     s.showResourcePanel(first,'Sep 16');const d=dom.window.document;
+     const links=[...d.querySelectorAll('a')];
+     const worksheetLinks=links.filter(a=>/worksheet|follow-along|write-along/i.test(a.textContent));
+     expect(worksheetLinks.map(a=>a.getAttribute('href'))).toEqual(['u1_lesson4_live.html','u1_lesson5_live.html']);
+     expect(links.filter(a=>a.textContent==='Kickoff Packet (Student)')).toHaveLength(2);
+     const video=links.find(a=>/Video 1/.test(a.textContent));
+     expect(video.getAttribute('href')).toBe('https://drive.example/1.4');
+     expect(video.querySelector('svg')).not.toBeNull();
+     expect(links.filter(a=>a.textContent==='AP Classroom').map(a=>a.getAttribute('href'))).toEqual(['https://ap.example/1.4','https://ap.example/1.5']);
+     expect(d.body.textContent).toContain('Google Drive · most reliable');
+     expect(d.body.textContent).not.toContain('(alt)');
+   }finally{dom.window.close();}
+ });
  it('requires both override keys',()=>{
    const keys=['1.4'];const s=load(['_isTopicLessonUnlocked'],{S,_readLessonUnlocks:()=>keys});
    expect(s._isTopicLessonUnlocked(first.t)).toBe(false);keys.push('1.5');expect(s._isTopicLessonUnlocked(first.t)).toBe(true);
