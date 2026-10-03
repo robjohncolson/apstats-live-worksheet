@@ -73,9 +73,10 @@ async function open(name, section = 'B', width = 800, levelIndex = 0) {
 }
 async function choose(page, index = 0) {
   // The three doors live on the calendar board (levels 0/3/4 = doors 1/2/3); no lobby.
+  // Levels without a door are opened through the test-only board hook.
   const doorIndex = [0, 3, 4].indexOf(index);
-  if (doorIndex < 0) throw new Error('level ' + index + ' has no door on the calendar board');
-  await page.getByRole('button', { name: 'Enter APStat Park door ' + (doorIndex + 1) + ':' }).click();
+  if (doorIndex >= 0) await page.getByRole('button', { name: 'Enter APStat Park door ' + (doorIndex + 1) + ':' }).click();
+  else await page.evaluate(index => board.openParkLevel(index), index);
   await page.waitForFunction(index => board.getParkScene()?.getGame()?.getWorld().level?.index === index, index);
 }
 async function calendarExit(page) {
@@ -229,7 +230,7 @@ try {
         {doorways:{id:'recall',options:[{id:'one',label:'One'}]}},
         {activity:{id:'recall',type:'test',finished:false,state:{}}}
       ]){
-        await a.getByRole('button',{name:'Enter APStat Park',exact:true}).click();await choose(a,0);
+        await choose(a,0);
         for(const [ws,who] of sockets)if(who.username==='alice0')send(ws,call.greenlight?{type:'classroom_greenlight'}:{...registry.stateFor('coop0','student','alice0'),...call});
         await a.waitForFunction(()=>!board.getParkScene());await a.evaluate(()=>board.openNativeGameplay());
         assert.equal(await a.evaluate(()=>board.getParkScene()),null);
@@ -258,7 +259,6 @@ try {
   await calendar.evaluate(()=>{window.board=_classroomBoardHandle;window.originalCanvas=board.getCanvas();});
   const before=await calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
   await calendar.screenshot({path:path.join(output,'actual-calendar-before.png')});
-  await calendar.getByRole('button',{name:'Enter APStat Park',exact:true}).click();
   await choose(calendar);
   const after=await calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
   assert.deepEqual(after,before);

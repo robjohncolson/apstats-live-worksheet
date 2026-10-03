@@ -6615,6 +6615,9 @@
     var handle = {
 
       openNativeGameplay: function (doorIndex) { enterPark((PARK_DOORS[doorIndex | 0] || PARK_DOORS[0]).level); },
+      // Test-only: open a park level by index, including levels with no door
+      // on the calendar (the local browser smoke uses it).
+      openParkLevel: function (levelIndex) { enterPark(levelIndex | 0); },
       getParkScene: function () { return nativePanel; },
 
       destroy: function () {
