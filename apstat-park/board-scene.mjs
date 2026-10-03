@@ -1,4 +1,6 @@
 import { profileFor, createFixedStep } from './physics.mjs';
+import { createPicoScene } from './pico-scene.mjs';
+import { toPose } from './pico-rules.mjs';
 
 // The calendar strip's height; a level taller than this grows the board while it is open.
 export const BASE_BOARD_H = 220;
@@ -29,7 +31,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   const entities = new Map(), peers = {};
   const oldCamera = {...api._camera}, holdSent = new Map(), moving = new Map();
   let level=null, terrain=[], lift=null, disposed=false, lastLevel=null, returnWalk=0, lastRest=null, retrying=false, wasArrived=false;
-  let pushAt=0, pushing=null;
+  let pushAt=0, pushing=null, pico=null;
   // Fall wrap state: where the cat last stood on solid ground, and whether it is
   // mid-drop from the top (steering locked until it lands).
   let lastGround=null, wrapDrop=null;
@@ -38,7 +40,9 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   // Before the relay sends a level, the calendar door and floor come from the board itself.
   const floorY = ()=>level ? level.exit.y+CAT_H : engine.groundY;
   const exitSpot = ()=>level?.exit || {x:CALENDAR_DOOR_X,y:floorY()-CAT_H};
-  const near = item=>item && Math.hypot(player.x-item.x,player.y-item.y)<22;
+  // Level 6 (physics 'pico') compares relay poses: toPose() is the one sprite<->pose conversion.
+  const here = ()=>pico&&level?.physics==='pico'?toPose(player):player;
+  const near = item=>{if(!item)return false;const at=here();return Math.hypot(at.x-item.x,at.y-item.y)<22;};
   const onPad = item=>Math.abs(player.x-item.x)<20 && Math.abs(player.y-item.y)<3 && player.vy>=0;
   const player = board.createPlayer({x:90,y:floorY()-CAT_H,input,terrain:()=>terrain,peers:()=>peers,canvasW:()=>level?.width || 960,onUpPressed:act,physics:profileFor(null)});
   player.engine=engine;
@@ -46,6 +50,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   function act() {
     if(disposed)return;
     if(near(exitSpot())){onExit();return;}
+    if(pico&&level?.physics==='pico'){pico.act();return;}
     if(!level || !near(level.goal) || !replica.state.running)return;
     const p=replica.state.progress;
     if(p.arrived.includes(member)){onExit();return;}
@@ -84,17 +89,35 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     return gate.holds.some(id=>(p.holds[id]||[]).some(name=>name!==member)
       || level.switches.some(pad=>pad.id===id && onPad(pad) && replica.state.running));
   }
+  function ensurePeer(name,anchor) {
+    if(!peers[name]){const peer=board.createPeer(name,anchor);peer.engine=engine;peers[name]=peer;
+      entities.set('peer:'+name,{zIndex:10,render:ctx=>pico&&level?.physics==='pico'?pico.drawCat(ctx,peer,name):peer.render(ctx),getLabelSpec:()=>peer.getLabelSpec()});}
+    return peers[name];
+  }
+  function dropPeer(name) { entities.delete('peer:'+name);delete peers[name]; }
   function prepare() {
     if(disposed)return;
     const identity=replica.state && replica.state.epoch+'/'+replica.state.level.id;
     if(identity && identity!==lastLevel){
       level=replica.state.level;lastLevel=identity;player.physics=profileFor(level);
       board.setBoardHeight?.(Math.max(BASE_BOARD_H,level.height||0));lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
-      for(const name of Object.keys(peers)){entities.delete('peer:'+name);delete peers[name];}
-      const saved=replica.state.poses[member];
-      Object.assign(player,saved && saved.y<level.height?saved:level.spawn,{vx:0,vy:0,state:'idle',standingOn:null,_hidden:false});
-      if(replica.state.progress.arrived.includes(member))Object.assign(player,level.goal);
-      if(!saved)player.x+=28*(replica.state.members.indexOf(member)%5);
+      for(const name of Object.keys(peers))dropPeer(name);
+      if(level.physics==='pico'){
+        // Level 6: PICO PARK 1-1. pico-scene.mjs places the cat (spawn slot / safe re-entry).
+        if(!pico){pico=createPicoScene({board,replica,member,player,peers,status,connected,ensurePeer,dropPeer});entities.set('pico-overlay',{zIndex:20,render:ctx=>pico.overlay(ctx)});}
+        pico.enter(level);
+      } else {
+        const saved=replica.state.poses[member];
+        Object.assign(player,saved && saved.y<level.height?saved:level.spawn,{vx:0,vy:0,state:'idle',standingOn:null,_hidden:false});
+        if(replica.state.progress.arrived.includes(member))Object.assign(player,level.goal);
+        if(!saved)player.x+=28*(replica.state.members.indexOf(member)%5);
+      }
+    }
+    if(pico&&level?.physics==='pico'){
+      const arrived=replica.state.progress.arrived.includes(member);
+      if(wasArrived&&!arrived)pico.enter(level);
+      wasArrived=arrived;
+      pico.prepare();terrain=pico.terrain;lift=null;return;
     }
     if(!level){terrain=[{x:0,y:floorY(),w:960,h:50}];return;}
     terrain=[...level.platforms];
@@ -106,12 +129,11 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     if(wasArrived&&!arrived)Object.assign(player,level.spawn,{vx:0,vy:0,_hidden:false,state:'idle'});
     wasArrived=arrived;
     const present=replica.state.online||[];
-    for(const name of Object.keys(peers))if(!present.includes(name)){entities.delete('peer:'+name);delete peers[name];}
+    for(const name of Object.keys(peers))if(!present.includes(name))dropPeer(name);
     for(const name of present){
       if(name===member)continue;
       const anchor=replica.remoteMotion.sample(name);if(!anchor)continue;
-      if(!peers[name]){const peer=board.createPeer(name,anchor);peer.engine=engine;peers[name]=peer;entities.set('peer:'+name,{zIndex:10,render:ctx=>peer.render(ctx),getLabelSpec:()=>peer.getLabelSpec()});}
-      const peer=peers[name];Object.assign(peer,{x:anchor.x,y:anchor.y,vx:anchor.vx,facingRight:anchor.vx>=0});
+      const peer=ensurePeer(name,anchor);Object.assign(peer,{x:anchor.x,y:anchor.y,vx:anchor.vx,facingRight:anchor.vx>=0});
       peer.state=p.arrived.includes(name)?'in-doorway':'idle';peer._hidden=p.arrived.includes(name);
       peer.frameIndex=Math.abs(anchor.vx)>1?2+Math.floor(replica.now()/130)%4:0;
     }
@@ -145,6 +167,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     if(returnWalk>=0.25){onExit();return;}
     if(!level)return;
     const p=replica.state.progress;
+    if(pico&&level.physics==='pico'){if(p.arrived.includes(member))remember(level.index);pico.interact();return;}
     if(p.arrived.includes(member)){
       player._hidden=true;remember(level.index);
       if(connected())status.textContent=p.complete?'Together! Up returns to the calendar.':'Waiting for your friends. Up returns to the calendar.';
@@ -212,6 +235,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     if(!open){ctx.fillStyle='#e2b640';ctx.fillRect(center+8,floor-25,3,3);}
   }
   function scenery(ctx) {
+    if(pico&&level?.physics==='pico'){pico.scenery(ctx);return;}
     api._translateForCamera(ctx);ctx.fillStyle='#57756c';
     for(const tile of terrain)ctx.fillRect(tile.x,tile.y,tile.w,tile.h);
     const exit=exitSpot();
@@ -244,6 +268,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
       // Real block/lift carrying has already run in prepare().
       const planted=!input.left&&!input.right&&!input.jump&&player.vy===0&&!player.standingOn;
       const x=player.x;player.update(dt);if(planted)player.x=x;
+      if(pico&&level?.physics==='pico')pico.afterUpdate();
     }
   }
   // Fixed 60 Hz simulation: prepare -> player -> interact -> camera, up to
@@ -259,7 +284,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     });
   }
   entities.set('step',{update:tick});entities.set('scenery',{zIndex:1,render:scenery});
-  entities.set('player',{zIndex:10,render:ctx=>player.render(ctx)});
+  entities.set('player',{zIndex:10,render:ctx=>pico&&level?.physics==='pico'?pico.drawCat(ctx,player,member):player.render(ctx)});
   engine.sceneEntities=entities;
-  return {getWorld:()=>({player,level,terrain,lift,peers,moving}),dispose(){if(disposed)return;disposed=true;board.setBoardHeight?.();if(engine.sceneEntities===entities)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
+  return {getWorld:()=>({player,level,terrain,lift:pico&&level?.physics==='pico'?pico.lift:lift,peers,moving,pico}),dispose(){if(disposed)return;disposed=true;pico?.dispose();board.setBoardHeight?.();if(engine.sceneEntities===entities)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
 }

@@ -1,6 +1,13 @@
 import { ParkReplica } from './replica.mjs';
 import { mountBoardScene } from './board-scene.mjs';
 
+// Protocol 5 adds level 6 (PICO PARK 1-1); the relay still serves protocol-4 levels 0-5 to it.
+export const PARK_CLIENT_PROTOCOL = 5;
+export const PARK_LEVEL_PROTOCOLS = [4, 5];
+const PARK_LEGACY_LEVELS = [0, 1, 2, 3, 4, 5];
+const PARK_LEVELS = [...PARK_LEGACY_LEVELS, 6];
+const UPDATING = 'The park is updating. Return to the calendar and try again shortly.';
+
 // Transport and lifecycle only. The board owns the canvas, controls and sprites,
 // and the puzzle doors: the panel opens straight into `levelIndex`.
 export function mountParkPanel({ container, getSocket, board, levelIndex = 0, onClose = () => {} }) {
@@ -16,7 +23,7 @@ export function mountParkPanel({ container, getSocket, board, levelIndex = 0, on
   let selectedLevel = null, selectionVersion = 0;
   const completionKey = 'apstat-park-completed-v4:' + board.username;
   let completed = [];
-  try { const saved = JSON.parse(doc.defaultView.localStorage.getItem(completionKey)); if (Array.isArray(saved)) completed = saved.filter(index => [0, 1, 2, 3, 4, 5].includes(index)); } catch {}
+  try { const saved = JSON.parse(doc.defaultView.localStorage.getItem(completionKey)); if (Array.isArray(saved)) completed = saved.filter(index => PARK_LEVELS.includes(index)); } catch {}
   function remember(index) {
     if (completed.includes(index)) return;
     completed.push(index);
@@ -56,6 +63,12 @@ export function mountParkPanel({ container, getSocket, board, levelIndex = 0, on
       if (!message.requestId || message.code === 'PARK_STREAM_CHANGED') replica.needsResume = true;
       status.textContent = message.message;
       if (message.code === 'PARK_UPDATE_REQUIRED') incompatible = true;
+      // A relay released before level 6 does not know it: the park is mid-update.
+      if (message.message === 'Unknown park level' && selectedLevel >= PARK_LEGACY_LEVELS.length) {
+        incompatible = true;
+        status.textContent = UPDATING;
+        message = { ...message, message: UPDATING };
+      }
     }
     const job = pending.get(message.requestId);
     if (!job) return;
@@ -76,12 +89,12 @@ export function mountParkPanel({ container, getSocket, board, levelIndex = 0, on
     if (joining || disposed || selectedLevel === null || socket?.readyState !== 1) return;
     joining = true; const current = socket, version = selectionVersion;
     try {
-      const response = await request(replica.state ? 'park_resume' : 'park_join', { protocol: 4, levelIndex: selectedLevel, clientId, epoch: replica.state?.epoch,
+      const response = await request(replica.state ? 'park_resume' : 'park_join', { protocol: PARK_CLIENT_PROTOCOL, levelIndex: selectedLevel, clientId, epoch: replica.state?.epoch,
         since: replica.state ? replica.revision : null });
       if (disposed || current !== socket || version !== selectionVersion) return;
-      if (response.mode === 'summary' && response.level?.protocol !== 4) {
+      if (response.mode === 'summary' && !PARK_LEVEL_PROTOCOLS.includes(response.level?.protocol)) {
         incompatible = true;
-        throw new Error('The park is updating. Return to the calendar and try again shortly.');
+        throw new Error(UPDATING);
       }
       replica.resume(response); joinedSocket = socket;
       if (response.clientId && response.clientId !== clientId) { clientId = response.clientId; saveClient(); }
@@ -130,7 +143,7 @@ export function mountParkPanel({ container, getSocket, board, levelIndex = 0, on
       connected: () => !incompatible && socket?.readyState === 1 && joinedSocket === socket });
     status.textContent = 'Entering your classroom puzzle...';
   }
-  showScene([0, 1, 2, 3, 4, 5].includes(levelIndex) ? levelIndex : 0);
+  showScene(PARK_LEVELS.includes(levelIndex) ? levelIndex : 0);
   bindSocket();
   const timer = setInterval(() => { pump().catch(error => { if (!disposed) status.textContent = error.message; }); }, 100);
   return { dispose, get replica() { return replica; }, getGame: () => game };

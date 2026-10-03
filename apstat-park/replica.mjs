@@ -88,7 +88,13 @@ export class ParkReplica {
       this.state.poses[event.member] = copy(event.pose);
       this.remoteMotion.push(event.member, event.pose);
     } else if (event.kind === 'holds') { progress.holds = copy(event.holds); progress.switches = Object.keys(event.holds); }
-    else if (event.kind === 'mechanisms') Object.assign(progress, { gates: copy(event.gates), lifts: copy(event.lifts), bridgeOpen: event.bridgeOpen });
+    else if (event.kind === 'mechanisms') {
+      Object.assign(progress, { gates: copy(event.gates), lifts: copy(event.lifts), bridgeOpen: event.bridgeOpen });
+      // Protocol 5: latch switches carry the relay scene clock at which each latched.
+      if (event.latches) progress.latches = copy(event.latches);
+    }
+    // Protocol 5: members with no accepted action for level.idleMs (they do not block the others).
+    else if (event.kind === 'idle') progress.idle = Array.isArray(event.idle) ? [...event.idle] : [];
     else if (event.kind === 'box') progress.boxes[event.id] = copy(event.state);
     else if (event.kind === 'reentered') {
       progress.arrived = progress.arrived.filter(name => name !== event.member);

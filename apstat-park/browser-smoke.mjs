@@ -114,9 +114,144 @@ async function arrive(page) {
   await page.waitForFunction(()=>board.getParkScene().replica.state.progress.arrived.includes(new URL(location.href).searchParams.get('user')));
 }
 async function gate(page,id) {await page.waitForFunction(id=>board.getParkScene().replica.state.progress.gates.includes(id),id);}
+
+// ---- Level 6 (PICO PARK 1-1, physics 'pico'): positions are board sprites (pose = sprite + (2,1)). ----
+const shots=process.env.PARK_SHOTS||output;mkdirSync(shots,{recursive:true});
+async function grounded(page){await page.waitForFunction(()=>board.getParkScene().getGame().getWorld().player._airFrames===0,null,{timeout:8000});}
+async function onLift(page){await page.waitForFunction(()=>{const w=board.getParkScene().getGame().getWorld(),p=w.player;return p._airFrames===0&&Math.abs(p.y+24-w.lift.y)<0.6;},null,{timeout:8000});}
+async function liftAt(page,surface){await page.waitForFunction(s=>Math.abs(board.getParkScene().getGame().getWorld().lift.y-s)<0.05,surface,{timeout:12000});}
+async function upTheStairs(p){
+  await move(p,410);await move(p,480,true);await grounded(p);await waitY(p,192);   // over pit 1
+  await move(p,600);await move(p,652,true);await waitY(p,168);                     // step A (blocked by B's side)
+  await move(p,700,true);await waitY(p,144);                                       // step B
+}
+// From the raised lift's left end: a short hop left through the published key box.
+async function hopKey(p){
+  await p.keyboard.down('ArrowLeft');await p.keyboard.down('Space');await p.waitForTimeout(40);await p.keyboard.up('Space');
+  await p.waitForFunction(()=>{const w=board.getParkScene().getGame().getWorld();return w.player.x<=1168||w.player._airFrames===0&&w.player.x<1200;},null,{timeout:5000,polling:'raf'});
+  await p.keyboard.up('ArrowLeft');await grounded(p);
+  await p.waitForFunction(()=>board.getParkScene().replica.state.progress.keyHolder,null,{timeout:5000});
+}
+async function enterDoor(p){
+  await progress(p,'doorOpen');await p.waitForTimeout(100);await p.keyboard.press('ArrowUp',{delay:80});
+  await p.waitForFunction(()=>board.getParkScene().replica.state.progress.arrived.includes(new URL(location.href).searchParams.get('user')));
+  await p.waitForFunction(()=>board.getParkScene().getGame().getWorld().player._hidden===true);   // inside the door: not drawn
+}
+async function soloLevel6(a){
+  await upTheStairs(a);
+  await move(a,800);await waitY(a,192);                       // off step B onto the party-of-one bridge
+  await move(a,950);await a.waitForFunction(()=>board.getParkScene().replica.state.progress.latches?.bridge!=null);
+  await move(a,1180);await move(a,1240,true);await onLift(a);await waitY(a,107.5-24);
+  await move(a,1206);await hopKey(a);
+  if(Math.abs((await position(a)).y-192)<1){await liftAt(a,201.5);await move(a,1180);await move(a,1240,true);await onLift(a);await waitY(a,107.5-24);}
+  await move(a,1296);await move(a,1330,true);await waitY(a,72);   // held jump: lift top is 11.5 below the ledge
+  await move(a,1425);await enterDoor(a);await progress(a,'complete');
+}
+async function duoLevel6(a,b){
+  // b (carrier) waits at the right end of step B; a jumps onto its head and steps to its right side.
+  await upTheStairs(b);await move(b,762);await b.waitForTimeout(1200);
+  await upTheStairs(a);await a.waitForTimeout(800);
+  await move(a,735);await move(a,758,true);await waitY(a,120);await move(a,776);
+  assert.equal(await a.evaluate(()=>!!board.getParkScene().getGame().getWorld().player.standingOn),true,'stacked on the carrier');
+  await a.waitForTimeout(600);await a.screenshot({path:path.join(shots,'level6-stack.png')});
+  // The carrier walks off the stair; the rider launches from its head as it goes.
+  await b.keyboard.down('ArrowRight');
+  await a.waitForFunction(()=>Object.values(board.getParkScene().getGame().getWorld().peers)[0].x>762.5,null,{timeout:5000,polling:'raf'});
+  await a.keyboard.down('Space');await a.keyboard.down('ArrowRight');
+  await b.waitForFunction(()=>board.getParkScene().getGame().getWorld().player.y>160,null,{timeout:5000,polling:'raf'});await b.keyboard.up('ArrowRight');
+  await a.waitForFunction(()=>{const p=board.getParkScene().getGame().getWorld().player;return p._airFrames===0&&p.y>150;},null,{timeout:8000,polling:'raf'});
+  await a.keyboard.up('ArrowRight');await a.keyboard.up('Space');
+  const landed=await position(a);
+  assert.ok(Math.abs(landed.y-192)<1&&landed.x+18>856,'rider on the resting bridge '+JSON.stringify(landed));
+  // (3b) Pit 2: the carrier is caught and drops back onto step B (a party of two keeps both stairs).
+  await b.waitForFunction(()=>{const p=board.getParkScene().getGame().getWorld().player;return p._airFrames===0&&Math.abs(p.y-144)<0.5&&p.x<768;},null,{timeout:8000});
+  assert.equal((await position(b)).x,688-2,'caught over pit 2 and respawned at its near-side spot');
+  await move(a,950);await gate(a,'bridge');
+  await b.waitForFunction(()=>board.getParkScene().getGame().getWorld().pico.bridgeLeft===746,null,{timeout:8000});
+  await a.screenshot({path:path.join(shots,'level6-bridge.png')});
+  await move(b,800);await waitY(b,192);                       // across the extended bridge
+  await move(a,1180);await move(a,1240,true);await onLift(a);
+  await a.waitForTimeout(400);
+  assert.equal(await a.evaluate(()=>board.getParkScene().getGame().getWorld().lift.y),201.5,'one rider of two: the lift waits');
+  await a.screenshot({path:path.join(shots,'level6-lift-1.png')});
+  await move(b,1180);await move(b,1222,true);await onLift(b);
+  await waitY(a,105.5-24);await waitY(b,105.5-24);
+  await b.screenshot({path:path.join(shots,'level6-lift-up.png')});
+  await move(b,1206);await hopKey(b);                         // the cat at the left end takes the key
+  if(Math.abs((await position(b)).y-192)<1){
+    await liftAt(b,201.5);await move(b,1180);await move(b,1222,true);await onLift(b);await waitY(b,105.5-24);
+  }
+  await move(a,1296);await a.waitForTimeout(700);await move(b,1272);await b.waitForTimeout(700);
+  await Promise.all([move(a,1440,true),(async()=>{await b.waitForTimeout(60);await move(b,1330,true);})()]);
+  await waitY(a,72);await waitY(b,72);
+  await b.waitForTimeout(600);await move(b,1422);
+  await progress(a,'doorOpen');await progress(b,'doorOpen');
+  await b.waitForTimeout(300);await b.screenshot({path:path.join(shots,'level6-door.png')});
+  await enterDoor(a);
+  assert.equal(await a.evaluate(()=>board.getParkScene().replica.state.progress.complete),false);
+  await enterDoor(b);
+  await progress(a,'complete');await progress(b,'complete');
+  for(const page of [a,b])await page.waitForFunction(()=>/Together!/.test(document.querySelector('[data-park-status]').textContent));
+}
+async function level6(){
+  // (1) Solo completion by keyboard.
+  const solo=await open('sol6','L6a',800,6);
+  assert.equal(await solo.evaluate(()=>board.getParkScene().replica.state.running),true,'one student is enough');
+  assert.equal(await solo.evaluate(()=>board.getCanvas().getBoundingClientRect().height),240);
+  await solo.waitForTimeout(300);
+  const statusBottom=await solo.evaluate(()=>{const s=document.querySelector('[data-park-status]').getBoundingClientRect(),c=board.getCanvas().getBoundingClientRect();return s.bottom-c.top;});
+  assert.ok(statusBottom<=216,'the status line stays above the floor row ('+statusBottom+')');
+  assert.doesNotMatch(await solo.evaluate(()=>document.querySelector('[data-park-status]').textContent),/friend/i);
+  const start=await position(solo);assert.deepEqual([start.x+2,start.y+1],[48,193],'spawn slot 0');
+  await solo.screenshot({path:path.join(shots,'level6-start.png')});
+  // (3a) Pit 1: walk off the lip, caught, back above the near side.
+  await solo.keyboard.down('ArrowRight');
+  await solo.waitForFunction(()=>board.getParkScene().getGame().getWorld().player.y>200,null,{timeout:8000,polling:'raf'});
+  await solo.keyboard.up('ArrowRight');
+  await solo.waitForFunction(()=>{const p=board.getParkScene().getGame().getWorld().player;return p._airFrames===0&&p.y===192;},null,{timeout:8000});
+  assert.equal((await position(solo)).x,352-2,'pit 1 respawn before the pit');
+  await soloLevel6(solo);
+  console.log('LEVEL 6 SOLO PASS');
+  await solo.keyboard.press('ArrowUp',{delay:80});await solo.waitForFunction(()=>!board.getParkScene());
+  assert.equal(await solo.evaluate(()=>board.getCanvas().getBoundingClientRect().height),220);
+  await solo.close();
+  // (2) Two students, the real way (includes 3b, pit 2).
+  const a=await open('ann6','L6b',800,6),b=await open('ben6','L6b',800,6);
+  await duoLevel6(a,b);
+  console.log('LEVEL 6 DUO PASS');
+  await a.close();await b.close();
+  // (4) Leave and re-enter: a safe spot is kept; an unsafe one falls back to the nearest checkpoint to its left.
+  const r=await open('ret6','L6c',800,6);
+  await move(r,410);await move(r,480,true);await grounded(r);await move(r,520);await r.waitForTimeout(700);
+  const safe=await position(r);
+  await r.keyboard.press('Escape');await r.waitForFunction(()=>!board.getParkScene());
+  await r.waitForTimeout(1300);await choose(r,6);
+  assert.deepEqual(await position(r).then(p=>[p.x,p.y]),[safe.x,safe.y],'safe floor spot resumed');
+  await move(r,600);await move(r,652,true);await waitY(r,168);await move(r,700,true);await waitY(r,144);await r.waitForTimeout(700);
+  await r.keyboard.press('Escape');await r.waitForFunction(()=>!board.getParkScene());
+  await r.waitForTimeout(1300);await choose(r,6);
+  await r.waitForFunction(()=>{const p=board.getParkScene().getGame().getWorld().player;return p._airFrames===0&&p.y===144;},null,{timeout:8000});
+  assert.equal((await position(r)).x,688-2,'stair spot is not safe: the pit-2 checkpoint drops onto step B');
+  console.log('LEVEL 6 RE-ENTRY PASS');
+  await r.close();
+  // (5) An old cached client (protocol 4) asking for level 6 is told to reload.
+  const old=await browser.newPage({viewport:{width:800,height:700}});
+  old.on('pageerror',error=>{errors.push(error.message);});
+  await old.addInitScript(()=>{const send=WebSocket.prototype.send;WebSocket.prototype.send=function(data){try{const m=JSON.parse(data);if(m.type==='park_join'||m.type==='park_resume'){m.protocol=4;data=JSON.stringify(m);}}catch{}return send.call(this,data);};});
+  await old.goto(`${origin}/?user=old6&section=L6d`);
+  await old.waitForFunction(()=>window.board?.getSpritePosition?.('old6'));
+  await old.evaluate(()=>board.openParkLevel(6));
+  await old.waitForFunction(()=>/Reload the calendar|park is updating/.test(document.querySelector('[data-park-status]')?.textContent||''),null,{timeout:8000});
+  assert.equal(await old.evaluate(()=>board.getParkScene().replica.state),null,'no level for an old client');
+  await old.waitForTimeout(2500);
+  assert.equal(packets.filter(p=>p.name==='old6'&&p.type==='park_join').length,1,'no retry loop after PARK_UPDATE_REQUIRED');
+  console.log('LEVEL 6 PROTOCOL-4 PASS');
+  await old.close();
+}
 try {
   const filter=process.env.PARK_LEVEL_FILTER;
   const waitingOnly=process.env.PARK_WAITING_ONLY==='1';
+  if(filter==null||filter.split(',').includes('6'))await level6();
   for(const index of [0,1,2,3,4,5].filter(i=>filter==null||filter.split(',').includes(String(i)))) {
     const a=await open('alice'+index,'coop'+index,800,index);
     assert.equal(await a.evaluate(()=>board.getParkScene().replica.state.running),false);

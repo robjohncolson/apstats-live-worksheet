@@ -40,7 +40,8 @@ test('the scene is always one level: no lobby, every exit returns to the calenda
   const panel = readFileSync(new URL('./panel.mjs', import.meta.url), 'utf8');
   assert.match(panel, /levelIndex = 0/);
   assert.doesNotMatch(panel, /park_lobby|lobbySummary/);
-  assert.match(panel, /showScene\(\[0, 1, 2, 3, 4, 5\]\.includes\(levelIndex\) \? levelIndex : 0\)/);
+  assert.match(panel, /showScene\(PARK_LEVELS\.includes\(levelIndex\) \? levelIndex : 0\)/);
+  assert.match(panel, /const PARK_LEVELS = \[\.\.\.PARK_LEGACY_LEVELS, 6\]/);
 });
 
 test('the calendar board owns three doors (Hello together, Moving walls, Upstairs / downstairs) and the occupancy poll', () => {
