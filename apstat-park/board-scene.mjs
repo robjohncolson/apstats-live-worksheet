@@ -1,5 +1,9 @@
 import { profileFor, createFixedStep } from './physics.mjs';
 
+// The calendar strip's height; a level taller than this grows the board while it is open.
+export const BASE_BOARD_H = 220;
+const CAT_H = 24, CALENDAR_DOOR_X = 43;
+
 // All six puzzles share the calendar canvas, sprites, input and physics.
 export const LEVEL_TITLES = ['Hello together','Switchback','Lift relay','Moving walls','Upstairs / downstairs','Weight together'];
 
@@ -31,14 +35,17 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   let lastGround=null, wrapDrop=null;
   const keyImage = new Image();keyImage.src='key.png';
   const pose = ()=>({x:player.x,y:player.y,vx:player.vx,vy:player.vy});
+  // Before the relay sends a level, the calendar door and floor come from the board itself.
+  const floorY = ()=>level ? level.exit.y+CAT_H : engine.groundY;
+  const exitSpot = ()=>level?.exit || {x:CALENDAR_DOOR_X,y:floorY()-CAT_H};
   const near = item=>item && Math.hypot(player.x-item.x,player.y-item.y)<22;
   const onPad = item=>Math.abs(player.x-item.x)<20 && Math.abs(player.y-item.y)<3 && player.vy>=0;
-  const player = board.createPlayer({x:90,y:146,input,terrain:()=>terrain,peers:()=>peers,canvasW:()=>level?.width || 960,onUpPressed:act,physics:profileFor(null)});
+  const player = board.createPlayer({x:90,y:floorY()-CAT_H,input,terrain:()=>terrain,peers:()=>peers,canvasW:()=>level?.width || 960,onUpPressed:act,physics:profileFor(null)});
   player.engine=engine;
   Object.assign(api._camera,{x:0,enabled:true,followFn:()=>player,levelWFn:()=>Math.max(level?.width || 960,board.viewportW()),vwFn:board.viewportW,cameraStateFn:()=>null});
   function act() {
     if(disposed)return;
-    if(near(level?.exit || {x:43,y:146})){onExit();return;}
+    if(near(exitSpot())){onExit();return;}
     if(!level || !near(level.goal) || !replica.state.running)return;
     const p=replica.state.progress;
     if(p.arrived.includes(member)){onExit();return;}
@@ -81,14 +88,15 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     if(disposed)return;
     const identity=replica.state && replica.state.epoch+'/'+replica.state.level.id;
     if(identity && identity!==lastLevel){
-      level=replica.state.level;lastLevel=identity;player.physics=profileFor(level);lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
+      level=replica.state.level;lastLevel=identity;player.physics=profileFor(level);
+      board.setBoardHeight?.(Math.max(BASE_BOARD_H,level.height||0));lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
       for(const name of Object.keys(peers)){entities.delete('peer:'+name);delete peers[name];}
       const saved=replica.state.poses[member];
       Object.assign(player,saved && saved.y<level.height?saved:level.spawn,{vx:0,vy:0,state:'idle',standingOn:null,_hidden:false});
       if(replica.state.progress.arrived.includes(member))Object.assign(player,level.goal);
       if(!saved)player.x+=28*(replica.state.members.indexOf(member)%5);
     }
-    if(!level){terrain=[{x:0,y:170,w:960,h:50}];return;}
+    if(!level){terrain=[{x:0,y:floorY(),w:960,h:50}];return;}
     terrain=[...level.platforms];
     for(const gate of level.gates)if(gate.wall?!gateOpen(gate):gateOpen(gate))terrain.push(...gate.terrain);
     lift=level.lift?addMoving('auto',{...level.lift,y:liftY()}):null;
@@ -133,7 +141,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   }
   function interact(dt) {
     if(disposed)return;
-    returnWalk=near(level?.exit||{x:43,y:146})&&input.left?returnWalk+dt:0;
+    returnWalk=near(exitSpot())&&input.left?returnWalk+dt:0;
     if(returnWalk>=0.25){onExit();return;}
     if(!level)return;
     const p=replica.state.progress;
@@ -206,7 +214,8 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   function scenery(ctx) {
     api._translateForCamera(ctx);ctx.fillStyle='#57756c';
     for(const tile of terrain)ctx.fillRect(tile.x,tile.y,tile.w,tile.h);
-    door(ctx,43,170,true);ctx.fillStyle='#57756c';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('Calendar',43,106);
+    const exit=exitSpot();
+    door(ctx,exit.x,exit.y+CAT_H,true);ctx.fillStyle='#57756c';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('Calendar',exit.x,exit.y+CAT_H-64);
     if(level){
       const p=replica.state.progress;
       door(ctx,level.goal.x+10,level.goal.y+24,p.doorOpen);
@@ -252,5 +261,5 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   entities.set('step',{update:tick});entities.set('scenery',{zIndex:1,render:scenery});
   entities.set('player',{zIndex:10,render:ctx=>player.render(ctx)});
   engine.sceneEntities=entities;
-  return {getWorld:()=>({player,level,terrain,lift,peers,moving}),dispose(){if(disposed)return;disposed=true;if(engine.sceneEntities===entities)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
+  return {getWorld:()=>({player,level,terrain,lift,peers,moving}),dispose(){if(disposed)return;disposed=true;board.setBoardHeight?.();if(engine.sceneEntities===entities)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
 }

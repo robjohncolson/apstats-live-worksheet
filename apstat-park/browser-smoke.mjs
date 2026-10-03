@@ -260,13 +260,24 @@ try {
   const before=await calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
   await calendar.screenshot({path:path.join(output,'actual-calendar-before.png')});
   await choose(calendar);
-  const after=await calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
-  assert.deepEqual(after,before);
+  const rect=()=>calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
+  // The board grows to a taller level only while it is open: 220 -> level height -> 220.
+  const levelHeight=await calendar.evaluate(()=>board.getParkScene().getGame().getWorld().level.height);
+  const after=await rect();
+  assert.deepEqual(after,{...before,height:Math.max(before.height,levelHeight)});
   assert.equal(await calendar.evaluate(()=>board.getCanvas()===originalCanvas),true);
   await move(calendar,150);
   await calendar.screenshot({path:path.join(output,'actual-calendar-park.png')});
   await calendar.keyboard.press('Escape');
   await calendar.waitForFunction(()=>!board.getParkScene());
+  assert.deepEqual(await rect(),before);
+  // Current levels are all 220 tall, so drive the grow path directly on the real engine.
+  await calendar.evaluate(()=>board.setBoardHeight(240));
+  assert.deepEqual(await rect(),{...before,height:240});
+  await calendar.setViewportSize({width:1000,height:650});
+  assert.equal((await rect()).height,240);
+  await calendar.evaluate(()=>board.setBoardHeight());
+  assert.equal((await rect()).height,before.height);
   await companion.close();
   assert.ok(!calendarErrors.some(e=>/park|world|replica|scene|PlayerSprite/i.test(e)),JSON.stringify(calendarErrors));
   await calendar.close();

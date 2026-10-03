@@ -4362,6 +4362,7 @@
           board: {
             engine: engine, input: playerInput, username: username, api: root.ClassroomBoard,
             viewportW: _viewportW,
+            setBoardHeight: setBoardHeight,
             createPlayer: function (options) {
               var local = spriteEntities[username];
               return new PlayerSprite(spriteSheet, Object.assign({ scale: SPRITE_SCALE,
@@ -4375,6 +4376,7 @@
           },
           onClose: function () {
             nativePanel = null; nativeActive = false;
+            setBoardHeight();
             setParkButtons(function (b) { b.disabled = false; b.style.visibility = ''; });
             parkReturnAt = Date.now();
             parkExitKeyHeld = true;
@@ -4581,12 +4583,14 @@
     // The lifted CanvasEngine.resize() sizes the canvas to the FULL viewport
     // (it was built for cr's full-screen sprite overlay). The classroom board
     // is an embedded panel, so sizing is re-pointed at the host container:
-    // width tracks container.clientWidth, height is the fixed BOARD_H.
+    // width tracks container.clientWidth, height is boardH (BOARD_H except
+    // while an APStat Park level taller than the strip is open).
+    var boardH = BOARD_H;
     function resizeBoardToContainer() {
       if (!engine || !engine.ctx) { return; }
       var dpr  = root.devicePixelRatio || 1;
       var cssW = container.clientWidth || DEFAULT_BOARD_W;
-      var cssH = BOARD_H;
+      var cssH = boardH;
       canvas.style.width  = cssW + 'px';
       canvas.style.height = cssH + 'px';
       canvas.width  = Math.floor(cssW * dpr);
@@ -4596,6 +4600,15 @@
         engine.entities.forEach(function (e) { if (e.onResize) { e.onResize(); } });
       }
       repositionSprites();
+    }
+    // Park-only: grow the board to a level's height; no argument (or a bad
+    // value) restores BOARD_H. engine.groundY, the door buttons and the
+    // door painting all follow the canvas height.
+    function setBoardHeight(h) {
+      var next = (typeof h === 'number' && isFinite(h) && h > 0) ? Math.round(h) : BOARD_H;
+      if (next === boardH) { return; }
+      boardH = next;
+      resizeBoardToContainer();
     }
 
     try {
@@ -6820,6 +6833,9 @@
       // Test-only: open a park level by index, including levels with no door
       // on the calendar (the local browser smoke uses it).
       openParkLevel: function (levelIndex) { enterPark(levelIndex | 0); },
+      // Park-only board height (see setBoardHeight in mount); () restores 220.
+      setBoardHeight: setBoardHeight,
+      getBoardHeight: function () { return boardH; },
       getParkScene: function () { return nativePanel; },
 
       destroy: function () {
