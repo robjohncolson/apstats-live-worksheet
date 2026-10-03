@@ -1,3 +1,5 @@
+import { profileFor, createFixedStep } from './physics.mjs';
+
 // All six puzzles share the calendar canvas, sprites, input and physics.
 export const LEVEL_TITLES = ['Hello together','Switchback','Lift relay','Moving walls','Upstairs / downstairs','Weight together'];
 
@@ -31,7 +33,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   const pose = ()=>({x:player.x,y:player.y,vx:player.vx,vy:player.vy});
   const near = item=>item && Math.hypot(player.x-item.x,player.y-item.y)<22;
   const onPad = item=>Math.abs(player.x-item.x)<20 && Math.abs(player.y-item.y)<3 && player.vy>=0;
-  const player = board.createPlayer({x:90,y:146,input,terrain:()=>terrain,peers:()=>peers,canvasW:()=>level?.width || 960,onUpPressed:act});
+  const player = board.createPlayer({x:90,y:146,input,terrain:()=>terrain,peers:()=>peers,canvasW:()=>level?.width || 960,onUpPressed:act,physics:profileFor(null)});
   player.engine=engine;
   Object.assign(api._camera,{x:0,enabled:true,followFn:()=>player,levelWFn:()=>Math.max(level?.width || 960,board.viewportW()),vwFn:board.viewportW,cameraStateFn:()=>null});
   function act() {
@@ -79,14 +81,14 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     if(disposed)return;
     const identity=replica.state && replica.state.epoch+'/'+replica.state.level.id;
     if(identity && identity!==lastLevel){
-      level=replica.state.level;lastLevel=identity;lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
+      level=replica.state.level;lastLevel=identity;player.physics=profileFor(level);lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
       for(const name of Object.keys(peers)){entities.delete('peer:'+name);delete peers[name];}
       const saved=replica.state.poses[member];
       Object.assign(player,saved && saved.y<level.height?saved:level.spawn,{vx:0,vy:0,state:'idle',standingOn:null,_hidden:false});
       if(replica.state.progress.arrived.includes(member))Object.assign(player,level.goal);
       if(!saved)player.x+=28*(replica.state.members.indexOf(member)%5);
     }
-    if(!level){terrain=[{x:0,y:170,w:960,h:50}];api._updateCamera();return;}
+    if(!level){terrain=[{x:0,y:170,w:960,h:50}];return;}
     terrain=[...level.platforms];
     for(const gate of level.gates)if(gate.wall?!gateOpen(gate):gateOpen(gate))terrain.push(...gate.terrain);
     lift=level.lift?addMoving('auto',{...level.lift,y:liftY()}):null;
@@ -105,7 +107,6 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
       peer.state=p.arrived.includes(name)?'in-doorway':'idle';peer._hidden=p.arrived.includes(name);
       peer.frameIndex=Math.abs(anchor.vx)>1?2+Math.floor(replica.now()/130)%4:0;
     }
-    api._updateCamera();
   }
   function pressure(id,active) {
     const held=(replica.state.progress.holds[id]||[]).includes(member),at=replica.now();
@@ -224,8 +225,8 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     }
     api._restoreFromCamera(ctx);
   }
-  entities.set('prepare',{update:prepare});entities.set('scenery',{zIndex:1,render:scenery});
-  entities.set('player',{zIndex:10,update(dt){
+  function playerStep(dt) {
+    if(disposed)return;
     if(replica.state?.progress.arrived.includes(member)){if(input.up&&!player._upHandled)onExit();player._upHandled=!!input.up;}
     else if(retrying){player.vx=0;player.vy=0;if(input.up&&!player._upHandled)onExit();player._upHandled=!!input.up;}
     else {
@@ -235,7 +236,21 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
       const planted=!input.left&&!input.right&&!input.jump&&player.vy===0&&!player.standingOn;
       const x=player.x;player.update(dt);if(planted)player.x=x;
     }
-  },render:ctx=>player.render(ctx)});
-  entities.set('interact',{update:interact});engine.sceneEntities=entities;
+  }
+  // Fixed 60 Hz simulation: prepare -> player -> interact -> camera, up to
+  // MAX_STEPS per rendered frame, so jump height and the camera lerp no
+  // longer depend on the display's refresh rate.
+  const clock=createFixedStep();
+  function tick(dt) {
+    clock.advance(dt,()=>{
+      if(disposed)return false;
+      prepare();playerStep(clock.step);interact(clock.step);
+      if(disposed)return false;
+      api._updateCamera();
+    });
+  }
+  entities.set('step',{update:tick});entities.set('scenery',{zIndex:1,render:scenery});
+  entities.set('player',{zIndex:10,render:ctx=>player.render(ctx)});
+  engine.sceneEntities=entities;
   return {getWorld:()=>({player,level,terrain,lift,peers,moving}),dispose(){if(disposed)return;disposed=true;if(engine.sceneEntities===entities)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
 }

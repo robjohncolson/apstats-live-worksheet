@@ -1109,6 +1109,11 @@
     // Optional local scene terrain, in the board's CSS pixel coordinates.
     // Omitting it preserves the calendar's flat floor and peer physics.
     this.terrain = typeof opts.terrain === 'function' ? opts.terrain : null;
+    // Optional physics profile (APStat Park only; apstat-park/physics.mjs).
+    // null or a dt-scaled profile keeps the calendar physics below; a
+    // profile with perFrame:true runs _updatePerFrame instead. Read on
+    // every update, so the park can switch it when a level mounts.
+    this.physics = (opts.physics && typeof opts.physics === 'object') ? opts.physics : null;
     this.vx           = 0;
     this.vy           = 0;
     this._jumpHandled = false;
@@ -1240,10 +1245,20 @@
       this._upHandled = false;
     }
 
+    var phys = this.physics;
+    if (phys && phys.perFrame) {
+      this._updatePerFrame(dt, phys);
+      this._afterMotion(dt);
+      return;
+    }
+    var walkSpeed = (phys && typeof phys.walkSpeed === 'number') ? phys.walkSpeed : WALK_SPEED;
+    var jumpV0    = (phys && typeof phys.jumpV0 === 'number')    ? phys.jumpV0    : JUMP_V0;
+    var gravity   = (phys && typeof phys.gravity === 'number')   ? phys.gravity   : GRAVITY;
+
     // Horizontal velocity from L/R; flip facing for direction-aware frames.
     var vxNext = 0;
-    if (this.input.left)  { vxNext -= WALK_SPEED; this.facingRight = false; }
-    if (this.input.right) { vxNext += WALK_SPEED; this.facingRight = true;  }
+    if (this.input.left)  { vxNext -= walkSpeed; this.facingRight = false; }
+    if (this.input.right) { vxNext += walkSpeed; this.facingRight = true;  }
     this.vx = vxNext;
 
     // Jump edge-trigger: only when on a floor (ground OR a peer's head)
@@ -1262,7 +1277,7 @@
           // sees their press registered even though we can't take off.
           this._blockedTwitchMs = 150;
         } else {
-          this.vy    = JUMP_V0;
+          this.vy    = jumpV0;
           this.state = 'jumping';
           // Capture the carrier's vx (from the carry delta) before we cut
           // the standingOn link. dt > 0 guard avoids /0 in degenerate ticks.
@@ -1328,9 +1343,12 @@
 
     var terrain = this.terrain ? this.terrain() : null;
     if (terrain) {
+      // A tile whose top is under 0.5 px above our falling feet is a floor
+      // to land on (see landSlack below), not a wall.
+      var stepUp = this.vy >= 0 ? 0.5 : 0;
       for (var ti = 0; ti < terrain.length; ti++) {
         var wall = terrain[ti];
-        if (this.y + this._spriteHeight <= wall.y || this.y >= wall.y + wall.h) continue;
+        if (this.y + this._spriteHeight <= wall.y + stepUp || this.y >= wall.y + wall.h) continue;
         if (prevX + this._spriteSize <= wall.x && this.x + this._spriteSize > wall.x) {
           this.x = wall.x - this._spriteSize;
         } else if (prevX >= wall.x + wall.w && this.x < wall.x + wall.w) {
@@ -1342,7 +1360,7 @@
     // Gravity + vertical integrate, always. The floor snap below puts us
     // back on whichever surface we crossed (re-lands each tick when at rest
     // -- cheap and self-correcting if a peer moves under us in Phase 2).
-    this.vy += GRAVITY * dt;
+    this.vy += gravity * dt;
     var prevY = this.y;
     this.y   += this.vy * dt;
 
@@ -1361,7 +1379,12 @@
         var tile = terrain[fi];
         if (this.x + this._spriteSize <= tile.x || this.x >= tile.x + tile.w) continue;
         var floorY = tile.y - this._spriteHeight;
-        if (prevY <= floorY + 0.01 && this.y >= floorY && (bestFloor === null || floorY < bestFloor)) {
+        // Falling, allow re-landing from up to 0.5 px below a surface: one
+        // tick of gravity after stepping off an edge is ~0.22 px, and a
+        // fixed step can put the cat exactly in a sprite-wide seam between
+        // two tiles at the same height (Lift relay: x 400..420).
+        var landSlack = this.vy >= 0 ? 0.5 : 0.01;
+        if (prevY <= floorY + landSlack && this.y >= floorY && (bestFloor === null || floorY < bestFloor)) {
           bestFloor = floorY;
         }
         if (this.vy < 0 && prevY >= tile.y + tile.h && this.y < tile.y + tile.h) {
@@ -1428,6 +1451,12 @@
       }
     }
 
+    this._afterMotion(dt);
+  };
+
+  // Shared tail of update() for every physics profile: viewport clamp,
+  // carrier-x cache, animation frame and the position broadcast.
+  PlayerSprite.prototype._afterMotion = function (dt) {
     // V7.16 viewport-bounded clamp (Pico Park forced-teamwork). LOCAL
     // player x is clamped to [camera.x, camera.x + viewportW - spriteW]
     // instead of [0, levelW]. Combined with the V7.15 shared camera
@@ -1512,6 +1541,179 @@
         this._restEmitted = true;
       }
     }
+  };
+
+  // APStat Park per-frame physics (profile `pico` in apstat-park/physics.mjs,
+  // half scale of PICO PARK's measured numbers). One call is one fixed
+  // 1/60 s frame; dt only drives cosmetic timers. vx/vy stay in px/s for
+  // the pose; _vyF is the exact per-frame vertical speed.
+  //   Launch frame: vy = launchVy and nothing moves (no x, no y, no g).
+  //   Other frames: x += walk; y += vy; held boost (k = 1..13); vy += g.
+  //   Coyote: jump allowed after 0..coyoteFrames airborne frames. No buffer:
+  //   a press while airborne is consumed, so holding through a landing
+  //   needs a release. Stacking: riders are carried vertically (snap to the
+  //   carrier's head) but never horizontally; players block each other at
+  //   bodyW centre-to-centre without pushing; a head-bump stops the rising
+  //   player only.
+  PlayerSprite.prototype._updatePerFrame = function (dt, P) {
+    var F = 60;
+    var bw = P.bodyW, off = P.bodyOffsetX, bh = P.bodyH, reach = P.supportHalfWidth;
+    if (this._vyOut !== this.vy) { this._vyF = (this.vy || 0) / F; }   // written from outside
+    if (typeof this._airFrames !== 'number') { this._airFrames = 99; this._boostK = -1; }
+    if (this._blockedTwitchMs > 0) { this._blockedTwitchMs = Math.max(0, this._blockedTwitchMs - dt * 1000); }
+    if (this._emoteMs > 0) { this._emoteMs = Math.max(0, this._emoteMs - dt * 1000); }
+    this._carriedThisTick = false;
+    this._jumpInheritedVx = 0;
+
+    var vxF = 0;
+    if (this.input.left)  { vxF -= P.walk; this.facingRight = false; }
+    if (this.input.right) { vxF += P.walk; this.facingRight = true;  }
+    this.vx = vxF * F;
+
+    var peersMap = this.peers();
+    var terrain = this.terrain ? this.terrain() : null;
+    var u, p;
+
+    if (this.input.jump && !this._jumpHandled) {
+      this._jumpHandled = true;
+      if (this._airFrames <= P.coyoteFrames) {
+        if (this._someoneOnTopPerFrame(P, peersMap)) {
+          this._blockedTwitchMs = 150;
+        } else {
+          this._vyF = P.launchVy;
+          this.state = 'jumping';
+          this.standingOn = null;
+          this._boostK = 0;
+          this._airFrames = 99;   // no coyote or double jump until a landing
+          this.vx = 0;            // launch frame: no horizontal movement
+          this._moved = true;
+          this.vy = this._vyOut = this._vyF * F;
+          return;
+        }
+      }
+    } else if (!this.input.jump) {
+      this._jumpHandled = false;
+      this._boostK = -1;          // releasing ends the held boost for good
+    }
+    if (this.vx !== 0 || this.state === 'jumping') { this._moved = true; }
+
+    // Horizontal: walls, then teammates (block, never push).
+    var prevX = this.x;
+    this.x += vxF;
+    if (terrain) {
+      for (var ti = 0; ti < terrain.length; ti++) {
+        var wall = terrain[ti];
+        if (this.y + bh <= wall.y || this.y >= wall.y + wall.h) continue;
+        if (prevX + off + bw <= wall.x && this.x + off + bw > wall.x) {
+          this.x = wall.x - off - bw;
+        } else if (prevX + off >= wall.x + wall.w && this.x + off < wall.x + wall.w) {
+          this.x = wall.x + wall.w - off;
+        }
+      }
+    }
+    for (u in peersMap) {
+      p = peersMap[u];
+      if (!p || p === this || p.state === 'in-doorway') { continue; }
+      if (this.y + bh <= p.y + 0.01 || this.y >= p.y + bh - 0.01) { continue; }
+      var d0 = prevX - p.x, d1 = this.x - p.x;
+      if (Math.abs(d1) >= bw || Math.abs(d1) >= Math.abs(d0)) { continue; }
+      this.x = Math.abs(d0) >= bw ? p.x + (d0 > 0 ? bw : -bw) : prevX;
+    }
+
+    // Vertical: position before velocity.
+    var prevY = this.y;
+    var carrier = this.standingOn;
+    if (carrier) {
+      var present = false;
+      for (u in peersMap) { if (peersMap[u] === carrier) { present = true; break; } }
+      if (!present) { carrier = null; }   // they left the level
+    }
+    this.y += this._vyF;
+    if (this._boostK >= 0) {
+      this._boostK++;
+      if (this._boostK <= P.boostFrames) { this._vyF -= P.boost * (1 - this._boostK / P.boostDiv); }
+      else { this._boostK = -1; }
+    }
+    this._vyF += P.gravity;
+    if (this._vyF > P.terminal) { this._vyF = P.terminal; }
+
+    var bestFloor = null, landingPeer = null, bumped = false;
+    if (terrain) {
+      for (var fi = 0; fi < terrain.length; fi++) {
+        var tile = terrain[fi];
+        if (this.x + off + bw <= tile.x || this.x + off >= tile.x + tile.w) continue;
+        var floorY = tile.y - bh;
+        if (prevY <= floorY + 0.01 && this.y >= floorY && (bestFloor === null || floorY < bestFloor)) {
+          bestFloor = floorY;
+        }
+        if (this.y < prevY && prevY >= tile.y + tile.h - 0.01 && this.y < tile.y + tile.h) {
+          this.y = tile.y + tile.h;
+          bumped = true;
+        }
+      }
+    }
+    // Standing on a teammate: follow their head up or down while centres
+    // stay within reach. Their own jump/fall carries us; their walk does not.
+    if (carrier && carrier !== this && carrier.state !== 'in-doorway'
+        && Math.abs(this.x - carrier.x) < reach) {
+      var ride = carrier.y - bh;
+      if (Math.abs(ride - prevY) <= P.snapMax && (bestFloor === null || ride < bestFloor)) {
+        bestFloor = ride;
+        landingPeer = carrier;
+      }
+    }
+    for (u in peersMap) {
+      p = peersMap[u];
+      if (!p || p === this || p === carrier || p.state === 'in-doorway') { continue; }
+      var dx = Math.abs(this.x - p.x);
+      if (dx < reach) {
+        var landingY = p.y - bh;
+        if (prevY <= landingY + 0.01 && this.y >= landingY && (bestFloor === null || landingY < bestFloor)) {
+          bestFloor = landingY;
+          landingPeer = p;
+        }
+      }
+      // Rising into a teammate's feet: we stop; they are not launched.
+      if (dx < bw && this.y < prevY && prevY >= p.y + bh - 0.01 && this.y < p.y + bh) {
+        this.y = p.y + bh;
+        bumped = true;
+      }
+    }
+    if (bumped) {
+      if (this._vyF < 0) { this._vyF = 0; }
+      this._boostK = -1;
+    }
+    if (bestFloor !== null && !(bumped && bestFloor < this.y - 0.01 && this.y < prevY)) {
+      if (landingPeer && landingPeer === carrier && bestFloor !== this.y) { this._carriedThisTick = true; }
+      this.y = bestFloor;
+      this._vyF = 0;
+      this._boostK = -1;
+      if (this.state === 'jumping') {
+        this.state            = 'idle';
+        this.idleTimer        = 0;
+        this.currentIdleFrame = 0;
+      }
+      this.standingOn = landingPeer;
+      this._airFrames = 0;
+    } else {
+      this.standingOn = null;
+      if (this.state !== 'jumping') { this.state = 'jumping'; }
+      this._airFrames = Math.min(99, this._airFrames + 1);
+    }
+    this.vy = this._vyOut = this._vyF * F;
+  };
+
+  // Per-frame twin of _someoneOnTop: a teammate standing on our head
+  // (within the support reach) stops us from jumping.
+  PlayerSprite.prototype._someoneOnTopPerFrame = function (P, peersMap) {
+    var headY = this.y - P.bodyH;
+    for (var u in peersMap) {
+      var p = peersMap[u];
+      if (!p || p === this || p.state === 'in-doorway') { continue; }
+      if (Math.abs(this.x - p.x) >= P.supportHalfWidth) { continue; }
+      if (Math.abs(p.y - headY) < 3) { return true; }
+    }
+    return false;
   };
 
   // Re-anchor groundY when the engine resizes (the platform under the
