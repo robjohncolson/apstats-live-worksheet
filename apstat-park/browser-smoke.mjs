@@ -71,11 +71,10 @@ async function open(name, section = 'B', width = 800, levelIndex = 0) {
   });
   return page;
 }
-async function choose(page, index = 0) {
-  // The three doors live on the calendar board (levels 0/3/4 = doors 1/2/3); no lobby.
-  // Levels without a door are opened through the test-only board hook.
-  const doorIndex = [0, 3, 4].indexOf(index);
-  if (doorIndex >= 0) await page.getByRole('button', { name: 'Enter APStat Park door ' + (doorIndex + 1) + ':' }).click();
+async function choose(page, index = 6) {
+  // The calendar's one door opens level 6; no lobby. Levels 0-5 have no door and are opened
+  // through the test-only board hook.
+  if (index === 6) await page.getByRole('button', { name: 'Enter APStat Park: Jump together' }).click();
   else await page.evaluate(index => board.openParkLevel(index), index);
   await page.waitForFunction(index => board.getParkScene()?.getGame()?.getWorld().level?.index === index, index);
 }
@@ -133,8 +132,10 @@ async function hopKey(p){
   await p.waitForFunction(()=>board.getParkScene().replica.state.progress.keyHolder,null,{timeout:5000});
 }
 async function enterDoor(p){
-  await progress(p,'doorOpen');await p.waitForTimeout(100);await p.keyboard.press('ArrowUp',{delay:80});
+  await progress(p,'doorOpen');await p.waitForTimeout(100);
+  await p.keyboard.down('ArrowUp');   // a fresh press, held until the relay confirms the arrival
   await p.waitForFunction(()=>board.getParkScene().replica.state.progress.arrived.includes(new URL(location.href).searchParams.get('user')));
+  await p.keyboard.up('ArrowUp');
   await p.waitForFunction(()=>board.getParkScene().getGame().getWorld().player._hidden===true);   // inside the door: not drawn
 }
 async function soloLevel6(a){
@@ -212,7 +213,10 @@ async function level6(){
   assert.equal((await position(solo)).x,352-2,'pit 1 respawn before the pit');
   await soloLevel6(solo);
   console.log('LEVEL 6 SOLO PASS');
-  await solo.keyboard.press('ArrowUp',{delay:80});await solo.waitForFunction(()=>!board.getParkScene());
+  // The board samples keys once per frame: leave a few frames between releasing Up (door entry)
+  // and pressing it again, and hold it until the scene closes.
+  await solo.waitForTimeout(150);
+  await solo.keyboard.down('ArrowUp');await solo.waitForFunction(()=>!board.getParkScene());await solo.keyboard.up('ArrowUp');
   assert.equal(await solo.evaluate(()=>board.getCanvas().getBoundingClientRect().height),220);
   await solo.close();
   // (2) Two students, the real way (includes 3b, pit 2).
@@ -394,19 +398,23 @@ try {
   await calendar.evaluate(()=>{window.board=_classroomBoardHandle;window.originalCanvas=board.getCanvas();});
   const before=await calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
   await calendar.screenshot({path:path.join(output,'actual-calendar-before.png')});
-  await choose(calendar);
+  // (6) Exactly one door on the real calendar.
+  assert.equal(await calendar.locator('[data-classroom-native]').count(),1);
+  assert.equal(await calendar.getByRole('button',{name:/^Enter APStat Park/}).count(),1);
+  await choose(calendar,6);
   const rect=()=>calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
-  // The board grows to a taller level only while it is open: 220 -> level height -> 220.
+  // The board grows to the level's height only while it is open: 220 -> 240 -> 220.
   const levelHeight=await calendar.evaluate(()=>board.getParkScene().getGame().getWorld().level.height);
+  assert.equal(before.height,220);assert.equal(levelHeight,240);
   const after=await rect();
-  assert.deepEqual(after,{...before,height:Math.max(before.height,levelHeight)});
+  assert.deepEqual(after,{...before,height:240});
   assert.equal(await calendar.evaluate(()=>board.getCanvas()===originalCanvas),true);
   await move(calendar,150);
   await calendar.screenshot({path:path.join(output,'actual-calendar-park.png')});
   await calendar.keyboard.press('Escape');
   await calendar.waitForFunction(()=>!board.getParkScene());
   assert.deepEqual(await rect(),before);
-  // Current levels are all 220 tall, so drive the grow path directly on the real engine.
+  // And the grow path directly on the real engine.
   await calendar.evaluate(()=>board.setBoardHeight(240));
   assert.deepEqual(await rect(),{...before,height:240});
   await calendar.setViewportSize({width:1000,height:650});

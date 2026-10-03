@@ -4304,13 +4304,14 @@
     var nativeActive = false;
     var parkReturnAt = 0;
     var parkExitKeyHeld = false;
-    // APStat Park: three puzzle doors on the calendar board itself (no lobby). Door i opens
-    // PARK_DOORS[i].level straight away. Screen-space x of door i is PARK_DOOR_X0 + i*PARK_DOOR_STEP.
+    // APStat Park: one door on the calendar board itself (no lobby). It opens level 6, a faithful
+    // half-scale PICO PARK 1-1 ("Jump together"), straight away. Screen-space x of door i is
+    // PARK_DOOR_X0 + i*PARK_DOOR_STEP (the list could hold more doors again).
     var PARK_DOORS = [
-      { level: 0, title: 'Hello together' },
-      { level: 3, title: 'Moving walls' },
-      { level: 4, title: 'Upstairs / downstairs' }
+      { level: 6, title: 'Jump together' }
     ];
+    // Retired doors (protocol-4 levels 0-5 stay in the relay; only the test-only openParkLevel(n) opens them):
+    // var PARK_DOORS_V4 = [{ level: 0, title: 'Hello together' }, { level: 3, title: 'Moving walls' }, { level: 4, title: 'Upstairs / downstairs' }];
     var PARK_DOOR_X0 = 24, PARK_DOOR_W = 38, PARK_DOOR_STEP = 54, PARK_DOOR_H = 50;
     function parkDoorCenter(i) { return PARK_DOOR_X0 + i * PARK_DOOR_STEP + PARK_DOOR_W / 2; }
     // Who is inside each level (relay park_lobby, polled every 3 s while on the board):
@@ -4334,8 +4335,8 @@
       var button = doc.createElement('button');
       button.type = 'button';
       button.setAttribute('data-classroom-native', String(i + 1));
-      button.setAttribute('aria-label', 'Enter APStat Park door ' + (i + 1) + ': ' + door.title);
-      button.title = 'APStat Park door ' + (i + 1) + ' (' + door.title + '): stand on it and press Up, or click';
+      button.setAttribute('aria-label', 'Enter APStat Park: ' + door.title);
+      button.title = 'APStat Park (' + door.title + '): stand on it and press Up, or click';
       // Invisible click/touch + accessible target over the door. The doors are painted on the
       // board canvas by the park_doorway entity below, in the scenery z-band BEHIND the avatars,
       // so a student walks across them instead of vanishing behind a DOM box. No label: it's a door.
@@ -4738,9 +4739,8 @@
           try { ws.send(JSON.stringify({ type: 'park_lobby', requestId: 'board_lobby_' + (++parkLobbyN) })); } catch (_) {}
         }
         var x = player.x + (player._spriteSize || 20) / 2 - (_camera.x || 0);
-        // Deliberate walk-in applies to door 1 only (the one at the left edge, where walking LEFT
-        // naturally stops): hold LEFT inside its span for ~a quarter second. Doors 2 and 3 sit in
-        // the walking area, so they open only on Up or click; passing through them does nothing.
+        // Deliberate walk-in applies to the first door (at the left edge, where walking LEFT
+        // naturally stops): hold LEFT inside its span for ~a quarter second.
         var inDoor = x >= 27 && x <= 60 && Math.abs(player.y - getSpriteY()) < 16;
         parkWalkTicks = (inDoor && playerInput.left && !playerInput.right) ? parkWalkTicks + 1 : 0;
         if (parkWalkTicks >= 15) { parkWalkTicks = 0; enterPark(PARK_DOORS[0].level); }
@@ -4768,19 +4768,17 @@
           arch(x - 3, y - 3, w + 6, h + 3, r + 3); ctx.fill();
           ctx.fillStyle = '#030606';            // the black doorway
           arch(x, y, w, h, r); ctx.fill();
-          ctx.fillStyle = '#8fb3a6';            // door number, inside the arch
-          ctx.font = 'bold 11px system-ui';
-          ctx.fillText(String(i + 1), cx, y + 15);
+          ctx.fillStyle = '#8fb3a6';            // occupancy cats, inside the arch
           var inside = parkOccupants(PARK_DOORS[i].level);
           if (inside.length) {
             // One cat per classmate inside (max three), so a glance shows where friends are.
             ctx.font = '11px system-ui';
             ctx.fillText('\u{1F431}'.repeat(Math.min(inside.length, 3)), cx, y + 34);
-            summary.push((i + 1) + ': ' + parkOccupantLabel(inside, 2));
+            summary.push(parkOccupantLabel(inside, 2));
           }
         }
         if (summary.length) {
-          // Names for the occupied doors, one line above the door group.
+          // Names of the classmates inside, one line above the door.
           ctx.fillStyle = '#b8862b';
           ctx.font = '10px system-ui';
           ctx.textAlign = 'left';

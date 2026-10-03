@@ -6,8 +6,8 @@ import { toPose } from './pico-rules.mjs';
 export const BASE_BOARD_H = 220;
 const CAT_H = 24, CALENDAR_DOOR_X = 43;
 
-// All six puzzles share the calendar canvas, sprites, input and physics.
-export const LEVEL_TITLES = ['Hello together','Switchback','Lift relay','Moving walls','Upstairs / downstairs','Weight together'];
+// All seven relay levels share the calendar canvas, sprites and input; the calendar's one door opens 6.
+export const LEVEL_TITLES = ['Hello together','Switchback','Lift relay','Moving walls','Upstairs / downstairs','Weight together','Jump together'];
 
 // Usernames inside a level, for a door label. At most `max` names, then "+N".
 export function occupantLabel(names, max = 2) {
