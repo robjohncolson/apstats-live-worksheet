@@ -29,6 +29,7 @@ tmpclaude-*
 
 # Schoology sync local state (use SupabaseStateStore in prod)
 tools/.schoology-sync-state.json
+tools/.official-grade-pending.json
 TI-84_Plus_CE/ROM.transpiled.js
 
 # Large binaries / local-only artifacts
