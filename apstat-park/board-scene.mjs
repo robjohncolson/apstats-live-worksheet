@@ -1,6 +1,9 @@
-import { profileFor, createFixedStep } from './physics.mjs';
-import { createPicoScene } from './pico-scene.mjs';
-import { toPose } from './pico-rules.mjs';
+// Same build as whoever imported this module: the board imports panel.mjs?v=<APP_BUILD> and every
+// park module passes its own query on, so a deploy never mixes old and new modules (HTTP/CDN cache).
+const V = new URL(import.meta.url).search;
+const { profileFor, createFixedStep } = await import('./physics.mjs' + V);
+const { createPicoScene } = await import('./pico-scene.mjs' + V);
+const { toPose } = await import('./pico-rules.mjs' + V);
 
 // The calendar strip's height; a level taller than this grows the board while it is open.
 export const BASE_BOARD_H = 220;
@@ -104,7 +107,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
       for(const name of Object.keys(peers))dropPeer(name);
       if(level.physics==='pico'){
         // Level 6: PICO PARK 1-1. pico-scene.mjs places the cat (spawn slot / safe re-entry).
-        if(!pico){pico=createPicoScene({board,replica,member,player,peers,status,connected,ensurePeer,dropPeer});entities.set('pico-overlay',{zIndex:20,render:ctx=>pico.overlay(ctx)});}
+        if(!pico){pico=createPicoScene({board,replica,member,player,peers,status,connected,ensurePeer,dropPeer,onExit:()=>onExit()});entities.set('pico-overlay',{zIndex:20,render:ctx=>pico.overlay(ctx)});}
         pico.enter(level);
       } else {
         const saved=replica.state.poses[member];
@@ -275,10 +278,29 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   // MAX_STEPS per rendered frame, so jump height and the camera lerp no
   // longer depend on the display's refresh rate.
   const clock=createFixedStep();
+  // Key presses counted by the board (board.presses, park only) are consumed by the first fixed
+  // step that runs after them: a tap that went down and up between two steps is held for that one
+  // step (a true tap), and a release + re-press inside one frame is a fresh edge even though the
+  // held flag never dropped.
+  const presses=board.presses||null,consumed=presses?{...presses}:null;
+  function takePresses() {
+    const forced=[];
+    if(!presses)return forced;
+    for(const key of Object.keys(presses)){
+      if(presses[key]===consumed[key])continue;
+      consumed[key]=presses[key];
+      if(key==='jump')player._jumpHandled=false;
+      if(key==='up')player._upHandled=false;
+      if(!input[key]){input[key]=true;forced.push(key);}
+    }
+    return forced;
+  }
   function tick(dt) {
     clock.advance(dt,()=>{
       if(disposed)return false;
+      const forced=takePresses();
       prepare();playerStep(clock.step);interact(clock.step);
+      for(const key of forced)input[key]=false;
       if(disposed)return false;
       api._updateCamera();
     });

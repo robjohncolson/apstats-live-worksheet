@@ -26,11 +26,13 @@ export const PICO = Object.freeze({
   boostDiv: 14,
   terminal: 9.75,        // max fall speed, px/frame
   coyoteFrames: 4,       // a jump is allowed after 0..4 airborne frames, not 5
-  // Hitbox: 16 px wide (half of the native 32), centred on the 20 px sprite.
-  // Height stays 24 (the visible cat and the relay's y+24 feet checks), not 23.
+  // Hitbox: 16 x 23 (half of the native 32 x 46), the relay's level-6 body. It sits inside the
+  // 20 x 24 sprite at (2, 1): feet stay at sprite y + 24, and stacked cats are 23 apart, exactly
+  // as the relay counts them (pose = sprite + (2, 1), pico-rules.mjs).
   bodyW: 16,
   bodyOffsetX: 2,
-  bodyH: 24,
+  bodyH: 23,
+  bodyOffsetY: 1,
   supportHalfWidth: 17,  // a rider stays supported while centres are within this
   snapMax: 16            // a carrier that jumps further than this in one frame drops its rider
 });

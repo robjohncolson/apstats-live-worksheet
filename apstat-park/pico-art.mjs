@@ -1,8 +1,11 @@
 // Level 6 art: PICO PARK's own sprites from assets/pico-1-1.png (see assets/pico-atlas.mjs).
 // Loaded lazily when the level mounts; until the image is ready (or in a test DOM without
 // canvas) every draw call falls back to flat shapes, so gameplay never waits on art.
-import { ATLAS, ATLAS_URL, TILE_WINDOWS, PLAYER_COLOURS, FLAT_COLOUR } from './assets/pico-atlas.mjs';
-import { tileCodeAt } from './pico-rules.mjs';
+// Same build as whoever imported this module: the board imports panel.mjs?v=<APP_BUILD> and every
+// park module passes its own query on, so a deploy never mixes old and new modules (HTTP/CDN cache).
+const V = new URL(import.meta.url).search;
+const { ATLAS, ATLAS_URL, TILE_WINDOWS, PLAYER_COLOURS, FLAT_COLOUR } = await import('./assets/pico-atlas.mjs' + V);
+const { tileCodeAt } = await import('./pico-rules.mjs' + V);
 
 const hex = colour => [1, 3, 5].map(i => parseInt(colour.slice(i, i + 2), 16));
 

@@ -17,7 +17,15 @@ const output = path.resolve(process.env.PARK_SMOKE_OUTPUT || 'test-results/apsta
 mkdirSync(output, { recursive: true });
 const registry = createClassroomRegistry(), sockets = new Map(), errors = [], packets = [];
 let hour = 0, timeOffset = 0;
-const send = (ws, message) => { if (ws.readyState === 1) ws.send(JSON.stringify(message)); };
+const net = { latency: +(process.env.PARK_LATENCY_MS || 0), jitter: +(process.env.PARK_JITTER_MS || 0) };
+const outAt = new WeakMap(), inAt = new WeakMap();
+// One-way delay of latency + uniform(0, jitter) ms per message and direction, in order (review probe).
+function delayed(map, ws, fn) {
+  if (!net.latency && !net.jitter) return fn();
+  const at = Math.max(map.get(ws) || 0, performance.now() + net.latency + Math.random() * net.jitter);
+  map.set(ws, at); setTimeout(fn, at - performance.now());
+}
+const send = (ws, message) => delayed(outAt, ws, () => { if (ws.readyState === 1) ws.send(JSON.stringify(message)); });
 const service = createParkService({ registry, wallNow: () => hour * 3600000,
   now: () => performance.now() + timeOffset, send });
 const server = createServer((request, response) => {
@@ -41,7 +49,7 @@ wsUrl:location.origin.replace('http','ws'),section:params.get('section')||'B',us
 });
 const wss = new WebSocketServer({ server });
 wss.on('connection', ws => {
-  ws.on('message', bytes => {
+  ws.on('message', bytes => delayed(inAt, ws, () => {
     const message = JSON.parse(bytes);
     if (message.type === 'classroom_join') {
       registry.join(ws, message.section, message.username, message.role, Date.now(), message.hue);
@@ -51,7 +59,7 @@ wss.on('connection', ws => {
       packets.push({ name: sockets.get(ws)?.username, ...message });
       const result = service.handle(ws, message); if (result) send(ws, result);
     }
-  });
+  }));
   ws.on('close', () => { sockets.delete(ws); service.detached(ws); registry.detach(ws, Date.now()); });
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -133,9 +141,8 @@ async function hopKey(p){
 }
 async function enterDoor(p){
   await progress(p,'doorOpen');await p.waitForTimeout(100);
-  await p.keyboard.down('ArrowUp');   // a fresh press, held until the relay confirms the arrival
+  await p.keyboard.press('ArrowUp');   // a real tap (down + up with no delay): counted by the press counter
   await p.waitForFunction(()=>board.getParkScene().replica.state.progress.arrived.includes(new URL(location.href).searchParams.get('user')));
-  await p.keyboard.up('ArrowUp');
   await p.waitForFunction(()=>board.getParkScene().getGame().getWorld().player._hidden===true);   // inside the door: not drawn
 }
 async function soloLevel6(a){
@@ -152,7 +159,7 @@ async function duoLevel6(a,b){
   // b (carrier) waits at the right end of step B; a jumps onto its head and steps to its right side.
   await upTheStairs(b);await move(b,762);await b.waitForTimeout(1200);
   await upTheStairs(a);await a.waitForTimeout(800);
-  await move(a,735);await move(a,758,true);await waitY(a,120);await move(a,776);
+  await move(a,735);await move(a,758,true);await waitY(a,144-23);await move(a,776);
   assert.equal(await a.evaluate(()=>!!board.getParkScene().getGame().getWorld().player.standingOn),true,'stacked on the carrier');
   await a.waitForTimeout(600);await a.screenshot({path:path.join(shots,'level6-stack.png')});
   // The carrier walks off the stair; the rider launches from its head as it goes.
@@ -213,10 +220,8 @@ async function level6(){
   assert.equal((await position(solo)).x,352-2,'pit 1 respawn before the pit');
   await soloLevel6(solo);
   console.log('LEVEL 6 SOLO PASS');
-  // The board samples keys once per frame: leave a few frames between releasing Up (door entry)
-  // and pressing it again, and hold it until the scene closes.
-  await solo.waitForTimeout(150);
-  await solo.keyboard.down('ArrowUp');await solo.waitForFunction(()=>!board.getParkScene());await solo.keyboard.up('ArrowUp');
+  // A second plain tap of Up returns to the calendar.
+  await solo.keyboard.press('ArrowUp');await solo.waitForFunction(()=>!board.getParkScene());
   assert.equal(await solo.evaluate(()=>board.getCanvas().getBoundingClientRect().height),220);
   await solo.close();
   // (2) Two students, the real way (includes 3b, pit 2).
@@ -251,6 +256,68 @@ async function level6(){
   assert.equal(packets.filter(p=>p.name==='old6'&&p.type==='park_join').length,1,'no retry loop after PARK_UPDATE_REQUIRED');
   console.log('LEVEL 6 PROTOCOL-4 PASS');
   await old.close();
+  // (5b) The other side of the mismatch: a relay released before level 6 (simulated in the page: it
+  // refuses protocol 5 and its lobby lists six levels) gets "updating", not "reload".
+  const stale=await browser.newPage({viewport:{width:800,height:700}});
+  stale.on('pageerror',error=>{errors.push(error.message);});
+  await stale.addInitScript(()=>{
+    const add=WebSocket.prototype.addEventListener;
+    WebSocket.prototype.addEventListener=function(type,fn,...rest){
+      if(type!=='message')return add.call(this,type,fn,...rest);
+      return add.call(this,type,event=>{let data=event.data;try{const m=JSON.parse(data);
+        if(m.type==='park_result'&&m.level?.index===6)data=JSON.stringify({type:'park_error',requestId:m.requestId,code:'PARK_UPDATE_REQUIRED',message:'Reload the calendar to enter the updated park.'});
+        else if(m.type==='park_result'&&Array.isArray(m.levels))data=JSON.stringify({...m,levels:m.levels.slice(0,6)});}catch{}
+        fn.call(this,{data});},...rest);
+    };
+  });
+  await stale.goto(`${origin}/?user=stale6&section=L6e`);
+  await stale.waitForFunction(()=>window.board?.getSpritePosition?.('stale6'));
+  await stale.evaluate(()=>board.openParkLevel(6));
+  await stale.waitForFunction(()=>/park is updating/.test(document.querySelector('[data-park-status]')?.textContent||''),null,{timeout:8000});
+  assert.doesNotMatch(await stale.evaluate(()=>document.querySelector('[data-park-status]').textContent),/Reload/);
+  console.log('LEVEL 6 OLD-RELAY PASS');
+  await stale.close();
+  await latencyLift();
+}
+// (8) Three students at 150 ms + up to 150 ms jitter each way: two ride the lift, the third stands
+// on one of them; the stack rides to the top with nobody falling and the lift never dipping.
+async function latencyLift(){
+  const saved={...net};net.latency=150;net.jitter=150;
+  try{
+    const pages=[await open('lat1','L6f',800,6),await open('lat2','L6f',800,6),await open('lat3','L6f',800,6)];
+    const [a,b,c]=pages;
+    // Placed by the test on the floor before the lift (the walk there is covered by (2)).
+    for(const [i,p] of pages.entries())await p.evaluate(x=>{const w=board.getParkScene().getGame().getWorld();Object.assign(w.player,{x,y:192,_vyF:0,vy:0,_vyOut:0});},1150+i*22);
+    await a.waitForTimeout(1500);
+    await move(a,1240,true);await onLift(a);
+    await move(b,1215,true);await onLift(b);
+    await c.waitForTimeout(1500);
+    const bx=(await position(b)).x;
+    await c.keyboard.down('Space');await c.keyboard.down('ArrowRight');
+    await c.waitForFunction(bx=>board.getParkScene().getGame().getWorld().player.x>=bx-2,bx,{polling:'raf',timeout:5000});
+    await c.keyboard.up('ArrowRight');await c.waitForTimeout(400);await c.keyboard.up('Space');
+    await c.waitForFunction(()=>{const p=board.getParkScene().getGame().getWorld().player;return p._airFrames===0&&!!p.standingOn;},null,{timeout:8000});
+    // Watch c's view frame by frame from the moment all three hold until the lift is at the top.
+    const track=await c.evaluate(()=>new Promise((resolve,reject)=>{
+      const out={fell:0,dips:0,maxDip:0,frames:0,top:null,stuck:false};let prev=null,started=false,t0=performance.now();
+      const f=()=>{const g=board.getParkScene(),w=g.getGame().getWorld(),p=w.player,holds=(g.replica.state.progress.holds.lift||[]).length;
+        if(holds>=3)started=true;
+        if(started){out.frames++;
+          if(!p.standingOn||p._airFrames>0)out.fell++;
+          if(prev!=null&&w.lift.y>prev+1e-6){out.dips++;out.maxDip=Math.max(out.maxDip,w.lift.y-prev);}
+          prev=w.lift.y;
+          if(w.lift.y<=103.5+1e-6&&g.replica.clock()>0){out.top=w.lift.y;out.cy=p.y;resolve(out);return;}}
+        if(performance.now()-t0>20000){out.stuck=true;out.lift=w.lift.y;out.holds=holds;resolve(out);return;}
+        requestAnimationFrame(f);};f();}));
+    console.log('LATENCY LIFT',JSON.stringify(track));
+    assert.equal(track.stuck,false,'the lift reached the top');
+    assert.equal(track.fell,0,'the stacked rider never fell');
+    assert.equal(track.dips,0,'the lift never dipped');
+    assert.equal(track.cy,103.5-24-23,'stacked one up on the lift top');
+    await c.screenshot({path:path.join(shots,'level6-latency-stack.png')});
+    console.log('LEVEL 6 LATENCY STACK PASS');
+    for(const p of pages)await p.close();
+  } finally { Object.assign(net,saved); }
 }
 try {
   const filter=process.env.PARK_LEVEL_FILTER;

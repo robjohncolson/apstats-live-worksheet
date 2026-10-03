@@ -11,11 +11,11 @@ globalThis.Image ??= class { };
 
 const standing = (cx, feet) => fromPose({ x: cx - 8, y: feet - 23 });
 
-function scene({ members = ['me'], online = members, poses = {}, progress = {}, clock = 0 } = {}) {
-  const level = createParkLevel(6), queued = [], motions = [];
-  const engine = { groundY: 170, sceneEntities: null };
+function scene({ members = ['me'], online = members, poses = {}, progress = {}, clock = 0, doc = null, presses = null } = {}) {
+  const level = createParkLevel(6), queued = [], motions = [], exits = [];
+  const engine = { groundY: 170, sceneEntities: null, ...(doc ? { canvas: { ownerDocument: doc } } : {}) };
   const player = { x: 0, y: 0, vx: 0, vy: 0, _airFrames: 0, standingOn: null, facingRight: true, update() {}, render() {} };
-  const board = { engine, input: {}, setBoardHeight() {}, viewportW: () => 800,
+  const board = { engine, input: {}, ...(presses ? { presses } : {}), setBoardHeight() {}, viewportW: () => 800,
     api: { _camera: {}, _updateCamera() {}, _translateForCamera() {}, _restoreFromCamera() {} },
     createPlayer: options => Object.assign(player, { onUpPressed: options.onUpPressed }), createPeer: (name, pose) => ({ name, ...pose, render() {}, getLabelSpec: () => null }) };
   const anchors = {};
@@ -27,10 +27,10 @@ function scene({ members = ['me'], online = members, poses = {}, progress = {}, 
     motion: pose => motions.push(pose), queue(kind, target, pose, details = {}) { queued.push({ kind, target, pose, ...details }); return { status: 'queued' }; },
     clock: () => clock, now: () => clock, outbox: [] };
   const status = { textContent: '', style: {} };
-  const game = mountBoardScene({ board, replica, member: 'me', onExit() {}, status, connected: () => true });
+  const game = mountBoardScene({ board, replica, member: 'me', onExit() { exits.push(clock); }, status, connected: () => true });
   const step = () => engine.sceneEntities.get('step').update(1 / 60);
   step();
-  return { level, game, player, replica, queued, motions, step, anchors, status, setClock: t => { clock = t; } };
+  return { level, game, player, replica, queued, motions, step, anchors, status, board, exits, setClock: t => { clock = t; } };
 }
 
 test('solo: spawn slot, fully extended bridge, both stairs, lift solid at rest', () => {
@@ -100,6 +100,123 @@ test('a rider holds the lift; a cat under the descending lift leases lift-under 
   s.setClock(2900);   // relay surface 192.5: past the head (192)
   s.step(); s.step();
   const lift = s.game.getWorld().lift;
-  assert.ok(lift.y + lift.h <= s.player.y + 1e-9, 'never inside the cat');
+  assert.ok(Math.abs(lift.y + lift.h - (s.player.y + 1)) < 1e-9, 'stops on the head (hitbox top, sprite y + 1), never inside the cat');
   assert.ok(s.queued.some(q => q.kind === 'hold' && q.target === 'lift-under' && q.active === true));
+});
+
+// ---- Review fixes ----
+const holds = (q, target) => q.filter(x => x.kind === 'hold' && x.target === target);
+
+test('no input for 120 s: lift leases are released once and not renewed until the next input', async () => {
+  const { LEASE_IDLE_MS } = await import('./pico-scene.mjs');
+  const s = scene({ members: ['a', 'me'] });
+  Object.assign(s.player, standing(1260, 201.5), { _airFrames: 0 });
+  s.board.input.right = true; s.step(); s.board.input.right = false;
+  s.replica.state.progress.holds = { lift: ['me'] };
+  for (let t = 0; t < LEASE_IDLE_MS - 1000; t += 1000) { s.setClock(t); s.step(); }
+  const renewals = holds(s.queued, 'lift').filter(q => q.active).length;
+  assert.ok(renewals >= 50, 'renewed every 2 s while recently active (' + renewals + ')');
+  s.queued.length = 0;
+  for (let t = LEASE_IDLE_MS; t < LEASE_IDLE_MS + 60000; t += 1000) {
+    s.setClock(t); s.step();
+    if (holds(s.queued, 'lift').some(q => q.active === false)) s.replica.state.progress.holds = {};
+  }
+  assert.deepEqual(holds(s.queued, 'lift').map(q => q.active), [false], 'one release, then silence');
+  s.queued.length = 0;
+  s.board.input.jump = true; s.setClock(LEASE_IDLE_MS + 61000); s.step(); s.board.input.jump = false;
+  assert.ok(holds(s.queued, 'lift').some(q => q.active === true), 'renewed on the next input');
+});
+
+test('the same for a cat under the lift (lift-under)', async () => {
+  const { LEASE_IDLE_MS } = await import('./pico-scene.mjs');
+  const s = scene({ members: ['a', 'me'] });
+  s.replica.state.progress.lifts.lift = { from: 105.5, to: 201.5, at: 0, duration: 1e9, rate: 30, blocked: true };
+  Object.assign(s.player, standing(1260, 216), { _airFrames: 0 });
+  s.step();
+  assert.ok(holds(s.queued, 'lift-under').some(q => q.active));
+  s.replica.state.progress.holds = { 'lift-under': ['me'] };
+  s.queued.length = 0;
+  for (let t = 1000; t <= LEASE_IDLE_MS + 30000; t += 1000) {
+    s.setClock(t); s.step();
+    if (holds(s.queued, 'lift-under').some(q => q.active === false)) s.replica.state.progress.holds = {};
+  }
+  const sent = holds(s.queued, 'lift-under').map(q => q.active);
+  assert.equal(sent.at(-1), false);
+  assert.equal(sent.filter(a => a === false).length, 1);
+});
+
+test('a registered lift rider keeps its latched stack level while its 2 Hz pose lags', () => {
+  const s = scene({ members: ['a', 'b', 'me'] });
+  // b stands one up on a; both hold the lift; then the lift rises.
+  s.anchors.a = { x: 1240, y: 201.5 - 23, vx: 0, vy: 0 };
+  s.anchors.b = { x: 1242, y: 201.5 - 46, vx: 0, vy: 0 };
+  s.replica.state.progress.holds = { lift: ['a', 'b'] };
+  s.step();
+  const peers = s.game.getWorld().peers;
+  assert.equal(peers.b.y, 201.5 - 24 - 23);
+  s.replica.state.progress.lifts.lift = { from: 201.5, to: 105.5, at: 0, duration: 3200, rate: 30 };
+  s.setClock(2000);   // lift at 141.5; the samples are still from the bottom (60 px below)
+  s.step();
+  assert.equal(peers.a.y, 141.5 - 24, 'rider drawn on the lift, not inside it');
+  assert.equal(peers.b.y, 141.5 - 24 - 23, 'second rider keeps level 1');
+  // We stand on b: we follow the lift with it.
+  Object.assign(s.player, { x: peers.b.x, y: peers.b.y - 23, standingOn: peers.b, _airFrames: 0 });
+  s.setClock(2500); s.step();
+  assert.equal(s.player.y, 126.5 - 24 - 46);
+  // Off the lift (holds released): the latch clears and the samples are used again.
+  s.replica.state.progress.holds = {};
+  s.step();
+  assert.equal(peers.b.y, s.anchors.b.y - 1);
+});
+
+test('a tab hidden for 15 s leaves the park (Escape path); coming back sooner does not', () => {
+  const listeners = {}, timers = [];
+  const win = { setTimeout(fn, ms) { timers.push({ fn, ms }); return timers.length; }, clearTimeout(id) { timers[id - 1].fn = null; } };
+  const doc = { hidden: false, defaultView: win, addEventListener(t, fn) { listeners[t] = fn; }, removeEventListener() {} };
+  const s = scene({ doc });
+  doc.hidden = true; listeners.visibilitychange();
+  assert.equal(timers.at(-1).ms, 15000);
+  doc.hidden = false; listeners.visibilitychange();
+  assert.equal(timers[0].fn, null, 'returning cancels it');
+  doc.hidden = true; listeners.visibilitychange();
+  timers.at(-1).fn();
+  assert.equal(s.exits.length, 1, 'left the park');
+});
+
+test('the top stair with a teammate beside it teaches the crossing', () => {
+  const s = scene({ members: ['a', 'me'] });
+  Object.assign(s.player, standing(752, 168), { _airFrames: 0 });
+  s.anchors.a = { x: 700, y: 400, vx: 0, vy: 0 };
+  s.step();
+  assert.doesNotMatch(s.status.textContent, /edge/);
+  s.anchors.a = { ...toPose(standing(735, 168)) };
+  s.step();
+  assert.equal(s.status.textContent, 'Stand at the edge. A friend jumps from your head.');
+  s.replica.state.progress.latches = { bridge: -99999 };
+  s.step();
+  assert.doesNotMatch(s.status.textContent, /edge/, 'not once the bridge is out');
+});
+
+test('a key tap that starts and ends between two fixed steps still jumps, and a re-press while held is fresh', () => {
+  const presses = { left: 0, right: 0, jump: 0, up: 0 };
+  const s = scene({ presses });
+  const seen = [];
+  s.player.update = function () { seen.push({ jump: s.board.input.jump, handled: this._jumpHandled }); this._jumpHandled = !!s.board.input.jump; };
+  presses.jump++;                       // keydown + keyup inside one task: the flag is already false
+  s.step(); s.step();
+  assert.deepEqual(seen.map(x => x.jump), [true, false], 'held for exactly one step');
+  assert.equal(s.board.input.jump, false);
+  seen.length = 0;
+  s.board.input.jump = true; presses.jump++; s.step(); s.step();      // a real press, held
+  presses.jump++; s.step();                                           // release + re-press in one frame
+  assert.deepEqual(seen.map(x => x.handled), [false, true, false], 'the re-press is a fresh edge');
+});
+
+test('an Up tap inside one task at the calendar door leaves the park', () => {
+  const presses = { left: 0, right: 0, jump: 0, up: 0 };
+  const s = scene({ presses });
+  s.player.update = function () { if (s.board.input.up && !this._upHandled) this.onUpPressed(this); this._upHandled = !!s.board.input.up; };
+  Object.assign(s.player, { x: 22, y: 192 });
+  presses.up++; s.step();
+  assert.equal(s.exits.length, 1);
 });

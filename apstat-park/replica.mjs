@@ -1,5 +1,8 @@
 // Shared progress is event driven. Local physics and rendering do not wait here.
-import { RemoteMotion } from './remote-motion.mjs';
+// Same build as whoever imported this module: the board imports panel.mjs?v=<APP_BUILD> and every
+// park module passes its own query on, so a deploy never mixes old and new modules (HTTP/CDN cache).
+const V = new URL(import.meta.url).search;
+const { RemoteMotion } = await import('./remote-motion.mjs' + V);
 const copy = value => structuredClone(value);
 const OUTBOX_LIMIT = 16;
 const RETRY_MS = 1500;

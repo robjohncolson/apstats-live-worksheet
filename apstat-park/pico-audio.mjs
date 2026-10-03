@@ -4,10 +4,14 @@
 // lazily, only after the page has had a user gesture, and every failure is swallowed: gameplay
 // never waits on audio. No stage music: the site has no music preference to keep it off by
 // default, and thirty Chromebooks looping it in one classroom is the wrong default.
-import { SOUNDS } from './assets/pico-atlas.mjs';
+// Same build as whoever imported this module: the board imports panel.mjs?v=<APP_BUILD> and every
+// park module passes its own query on, so a deploy never mixes old and new modules (HTTP/CDN cache).
+const V = new URL(import.meta.url).search;
+const { SOUNDS } = await import('./assets/pico-atlas.mjs' + V);
 
 export const SOUND_MUTE_KEY = 'macsound-muted';
 const BASE = new URL('./assets/', import.meta.url).href;
+export const soundUrl = name => BASE + SOUNDS[name] + V;
 
 export function createPicoAudio(win, { volume = 0.4 } = {}) {
   const cache = new Map();
@@ -24,7 +28,7 @@ export function createPicoAudio(win, { volume = 0.4 } = {}) {
   function element(name) {
     if (cache.has(name)) return cache.get(name);
     let audio = null;
-    try { if (typeof win.Audio === 'function' && SOUNDS[name]) { audio = new win.Audio(BASE + SOUNDS[name]); audio.preload = 'auto'; } } catch { audio = null; }
+    try { if (typeof win.Audio === 'function' && SOUNDS[name]) { audio = new win.Audio(soundUrl(name)); audio.preload = 'auto'; } } catch { audio = null; }
     cache.set(name, audio);
     return audio;
   }

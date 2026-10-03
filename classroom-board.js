@@ -1558,6 +1558,9 @@
   PlayerSprite.prototype._updatePerFrame = function (dt, P) {
     var F = 60;
     var bw = P.bodyW, off = P.bodyOffsetX, bh = P.bodyH, reach = P.supportHalfWidth;
+    // Hitbox rows y+top .. y+foot. Feet stay at the sprite's bottom (foot = top + bh); teammates
+    // stack bh apart (head-to-feet), so the y - bh / y + bh peer relations below need no offset.
+    var top = P.bodyOffsetY || 0, foot = top + bh;
     if (this._vyOut !== this.vy) { this._vyF = (this.vy || 0) / F; }   // written from outside
     if (typeof this._airFrames !== 'number') { this._airFrames = 99; this._boostK = -1; }
     if (this._blockedTwitchMs > 0) { this._blockedTwitchMs = Math.max(0, this._blockedTwitchMs - dt * 1000); }
@@ -1603,7 +1606,7 @@
     if (terrain) {
       for (var ti = 0; ti < terrain.length; ti++) {
         var wall = terrain[ti];
-        if (this.y + bh <= wall.y || this.y >= wall.y + wall.h) continue;
+        if (this.y + foot <= wall.y || this.y + top >= wall.y + wall.h) continue;
         if (prevX + off + bw <= wall.x && this.x + off + bw > wall.x) {
           this.x = wall.x - off - bw;
         } else if (prevX + off >= wall.x + wall.w && this.x + off < wall.x + wall.w) {
@@ -1642,12 +1645,12 @@
       for (var fi = 0; fi < terrain.length; fi++) {
         var tile = terrain[fi];
         if (this.x + off + bw <= tile.x || this.x + off >= tile.x + tile.w) continue;
-        var floorY = tile.y - bh;
+        var floorY = tile.y - foot;
         if (prevY <= floorY + 0.01 && this.y >= floorY && (bestFloor === null || floorY < bestFloor)) {
           bestFloor = floorY;
         }
-        if (this.y < prevY && prevY >= tile.y + tile.h - 0.01 && this.y < tile.y + tile.h) {
-          this.y = tile.y + tile.h;
+        if (this.y < prevY && prevY + top >= tile.y + tile.h - 0.01 && this.y + top < tile.y + tile.h) {
+          this.y = tile.y + tile.h - top;
           bumped = true;
         }
       }
@@ -4348,10 +4351,16 @@
     });
     var nativeButton = nativeButtons[0];   // door 1: the walk-in door at the left edge (legacy name)
     function setParkButtons(fn) { for (var i = 0; i < nativeButtons.length; i++) fn(nativeButtons[i]); }
+    function parkBuildQuery() {
+      var build = (typeof root.APP_BUILD === 'string' && root.APP_BUILD) ? root.APP_BUILD : '';
+      return build ? '?v=' + encodeURIComponent(build) : '';
+    }
     function enterPark(levelIndex) {
       if (destroyed || nativeButton.disabled || role !== 'student' || classroomBusy()) { return; }
       setParkButtons(function (b) { b.disabled = true; });
-      import('./apstat-park/panel.mjs').then(function (module) {
+      // ?v=<APP_BUILD>: the park modules (and their art and sounds, which inherit the query) come
+      // from the same deploy as this board, never from a stale HTTP/CDN cache entry.
+      import('./apstat-park/panel.mjs' + parkBuildQuery()).then(function (module) {
         if (destroyed || classroomBusy() || !engineReady) { setParkButtons(function (b) { b.disabled = false; }); return; }
         nativeActive = true;
         setParkButtons(function (b) { b.style.visibility = 'hidden'; });
@@ -4361,7 +4370,7 @@
           getSocket: function () { return ws; },
           levelIndex: levelIndex,
           board: {
-            engine: engine, input: playerInput, username: username, api: root.ClassroomBoard,
+            engine: engine, input: playerInput, presses: parkPresses, username: username, api: root.ClassroomBoard,
             viewportW: _viewportW,
             setBoardHeight: setBoardHeight,
             createPlayer: function (options) {
@@ -4716,6 +4725,12 @@
     // Shared input state object -- the keyboard listener writes into it
     // and the local PlayerSprite reads from it on every update tick.
     var playerInput = { left: false, right: false, jump: false, up: false };
+    // Park only: one counter per key, bumped by every non-repeat keydown. The park's fixed step
+    // compares it with what it has consumed, so a tap that starts and ends between two steps
+    // (or a release + re-press inside one frame) is still one press. The calendar strip keeps
+    // reading playerInput's held flags only.
+    var parkPresses = { left: 0, right: 0, jump: 0, up: 0 };
+    function clearPlayerInput() { for (var key in playerInput) { playerInput[key] = false; } }
 
     // The doorway is part of the existing scene. Walking into it enters locally;
     // the park uses the same classroom socket, while this scene's physics sleeps.
@@ -4912,15 +4927,22 @@
           state.members[username] && state.members[username].status !== 'voted') {
         return;
       }
+      if (pressed && !e.repeat) { parkPresses[prop]++; }
       playerInput[prop] = pressed;
       if (e.preventDefault) { e.preventDefault(); }
     }
     var _kdHandler = function (e) { _keyHandler(e, true);  };
     var _kuHandler = function (e) { _keyHandler(e, false); };
+    // Keys released while the page had no focus never send keyup: clear everything on blur
+    // and when the tab is hidden (a stuck Right walked the cat on forever after alt-tab).
+    var _blurHandler = function () { clearPlayerInput(); };
+    var _visibilityHandler = function () { if (doc.hidden) { clearPlayerInput(); } };
     if (doc.addEventListener) {
       doc.addEventListener('keydown', _kdHandler);
       doc.addEventListener('keyup',   _kuHandler);
+      doc.addEventListener('visibilitychange', _visibilityHandler);
     }
+    if (root.addEventListener) { root.addEventListener('blur', _blurHandler); }
 
     // --- layout helpers ------------------------------------------------
 
@@ -6835,6 +6857,9 @@
       setBoardHeight: setBoardHeight,
       getBoardHeight: function () { return boardH; },
       getParkScene: function () { return nativePanel; },
+      // Test-only: the shared held-key flags and the park press counters.
+      _getPlayerInput: function () { return playerInput; },
+      _getParkPresses: function () { return parkPresses; },
 
       destroy: function () {
         destroyed = true;
@@ -6876,7 +6901,9 @@
         if (doc.removeEventListener) {
           doc.removeEventListener('keydown', _kdHandler);
           doc.removeEventListener('keyup',   _kuHandler);
+          doc.removeEventListener('visibilitychange', _visibilityHandler);
         }
+        if (root.removeEventListener) { root.removeEventListener('blur', _blurHandler); }
         if (canvas.parentNode) {
           canvas.parentNode.removeChild(canvas);
         }

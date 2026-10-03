@@ -2,23 +2,40 @@
 // shared lifecycle (fixed step, camera, exits, peers' entities); this module owns the level's
 // terrain, mechanisms, relay intents, art and sound. All relay traffic uses toPose(); the
 // relay's published trigger boxes, never the legacy x+20 checks.
-import * as R from './pico-rules.mjs';
-import { createPicoArt } from './pico-art.mjs';
-import { createPicoAudio } from './pico-audio.mjs';
-import { WALK_CELLS, WALK_TICKS, IDLE_CELL, JUMP_CELL, PLAYER_COLOURS } from './assets/pico-atlas.mjs';
+// Same build as whoever imported this module: the board imports panel.mjs?v=<APP_BUILD> and every
+// park module passes its own query on, so a deploy never mixes old and new modules (HTTP/CDN cache).
+const V = new URL(import.meta.url).search;
+const R = await import('./pico-rules.mjs' + V);
+const { createPicoArt } = await import('./pico-art.mjs' + V);
+const { createPicoAudio } = await import('./pico-audio.mjs' + V);
+const { WALK_CELLS, WALK_TICKS, IDLE_CELL, JUMP_CELL, PLAYER_COLOURS } = await import('./assets/pico-atlas.mjs' + V);
 
-const CAT_H = 24;
+const CAT_H = 24, BODY_H = 23, HEAD = 1;   // board sprite 24 tall; pico hitbox 23 tall from y + 1
 const HOLD_RENEW_MS = 2000, RETRY_MS = 1500, REMOTE_DELAY_MS = 500;   // remote-motion.mjs DELAY_MS
+// No local input for this long: stop renewing lift leases, so an absent student neither holds the
+// lift down nor keeps the relay's idle rule from removing them (it renews on the next input).
+export const LEASE_IDLE_MS = 120000;
+// A hidden tab this long leaves the park (same path as Escape), so its student leaves the party.
+export const HIDDEN_LEAVE_MS = 15000;
 
-export function createPicoScene({ board, replica, member, player, peers, status, connected, ensurePeer, dropPeer }) {
+export function createPicoScene({ board, replica, member, player, peers, status, connected, ensurePeer, dropPeer, onExit = () => {} }) {
   const doc = board.engine?.canvas?.ownerDocument || globalThis.document;
   const win = doc?.defaultView || globalThis.window;
   const art = createPicoArt(doc); art.load();
   const audio = createPicoAudio(win);
+  // A tab hidden for HIDDEN_LEAVE_MS leaves the park (rAF, and so the fixed step, stops while hidden).
+  let hiddenTimer = null;
+  const timers = win && typeof win.setTimeout === 'function' ? win : globalThis;
+  function onVisibility() {
+    if (hiddenTimer != null) { timers.clearTimeout(hiddenTimer); hiddenTimer = null; }
+    if (doc?.hidden) hiddenTimer = timers.setTimeout(() => { hiddenTimer = null; if (doc.hidden) onExit(); }, HIDDEN_LEAVE_MS);
+  }
+  try { doc?.addEventListener?.('visibilitychange', onVisibility); } catch {}
   let level = null, lift = null, terrain = [], active = [], relayLift = null, liftLocal = null, liftPrev = null;
   let bridgeL = null, prevBlocks = null, prevBridgeL = null, key = null, walkTick = 0, lastRest = null;
   let seen = null, switchPressedLocally = false, statusStyled = false;
-  const sentAt = new Map(), holdSent = new Map();
+  const sentAt = new Map(), holdSent = new Map(), riderLevels = new Map();
+  let lastInputAt = null, hiddenSince = null;
   const now = () => replica.now();
   const state = () => replica.state;
   const progress = () => replica.state.progress;
@@ -58,7 +75,8 @@ export function createPicoScene({ board, replica, member, player, peers, status,
     Object.assign(player, R.fromPose(target), { vx: 0, vy: 0, _vyF: 0, _vyOut: 0, _airFrames: 99, _boostK: -1,
       state: 'idle', standingOn: null, _hidden: false, facingRight: true });
     key = R.keyHome(level); liftPrev = null; prevBlocks = null; prevBridgeL = null; lastRest = null;
-    holdSent.clear(); sentAt.clear(); switchPressedLocally = false; walkTick = 0;
+    holdSent.clear(); sentAt.clear(); riderLevels.clear(); switchPressedLocally = false; walkTick = 0;
+    lastInputAt = now(); hiddenSince = null;
     seen = snapshot();
     if (!statusStyled && status?.style) {
       // Keep the status off the floor row: a short line at the top of the 240 px board.
@@ -82,12 +100,18 @@ export function createPicoScene({ board, replica, member, player, peers, status,
       const arrived = p.arrived.includes(name);
       peer.state = arrived ? 'in-doorway' : 'idle'; peer._hidden = arrived;
       // Presentation only: a relay-registered lift rider is drawn (and stood on) on the lift, not
-      // 500 ms behind it inside the platform.
+      // 500 ms behind it inside the platform. Its stack level is latched once, from where it stood
+      // (its interpolated pose against the lift as it was then, or its last relay pose), and kept
+      // for the whole ride; a lagging 2 Hz sample can no longer drop it off the stack.
       if (lift && riders.includes(name) && relayLift != null) {
-        // Stack level from where the lift was when that (500 ms delayed) anchor was current.
-        const k = R.liftRiderLevel(level, lift, anchor, R.liftSurface(level, p, replica.clock() - REMOTE_DELAY_MS));
-        if (k >= 0) peer.y = relayLift - CAT_H * (k + 1);
-      }
+        if (!riderLevels.has(name)) {
+          let k = R.liftRiderLevel(level, lift, anchor, R.liftSurface(level, p, replica.clock() - REMOTE_DELAY_MS));
+          const last = s.poses?.[name];
+          if (k < 0 && last) k = R.liftRiderLevel(level, lift, last, relayLift);
+          if (k >= 0) riderLevels.set(name, k);
+        }
+        if (riderLevels.has(name)) peer.y = R.riderSpriteY(relayLift, riderLevels.get(name));
+      } else riderLevels.delete(name);
     }
   }
 
@@ -107,15 +131,18 @@ export function createPicoScene({ board, replica, member, player, peers, status,
       const ref = liftPrev ?? relayLift, heads = [];
       const ridingBefore = liftPrev != null && grounded() && !player.standingOn && Math.abs(player.y + CAT_H - liftPrev) < 0.1
         && player.x + 18 > lift.x && player.x + 2 < lift.x + lift.w;
-      if (!ridingBefore && !player._hidden && R.spriteUnderLift(lift, player, ref)) heads.push(player.y);
+      if (!ridingBefore && !player._hidden && R.spriteUnderLift(lift, player, ref)) heads.push(player.y + HEAD);
       for (const name of Object.keys(peers)) {
         const peer = peers[name];
         if (peer._hidden || (p.holds[lift.id] || []).includes(name)) continue;
-        if (R.spriteUnderLift(lift, peer, ref)) heads.push(peer.y);
+        if (R.spriteUnderLift(lift, peer, ref)) heads.push(peer.y + HEAD);
       }
       liftLocal = R.liftStopAbove(lift, relayLift, heads);
       if (ridingBefore && liftLocal !== liftPrev) { player.y += liftLocal - liftPrev; player._carriedThisTick = true; }
       liftPrev = liftLocal;
+      // Standing on a registered rider: follow the lift with them, directly.
+      const carrier = player.standingOn, name = carrier && Object.keys(peers).find(n => peers[n] === carrier);
+      if (name && riderLevels.has(name) && grounded()) player.y = carrier.y - BODY_H;
     }
     const solids = R.solidsFor(level, active.length);
     bridgeL = R.bridgeLeft(level, p, clock, active.length);
@@ -160,7 +187,8 @@ export function createPicoScene({ board, replica, member, player, peers, status,
 
   // One fixed step after the player moved. Returns nothing; board-scene sends no legacy intents.
   function interact() {
-    const s = state(), p = s.progress;
+    const s = state(), p = s.progress, input = board.input || {};
+    if (input.left || input.right || input.jump || input.up) lastInputAt = now();
     sounds();
     stepKey();
     if (p.arrived.includes(member)) {
@@ -194,8 +222,11 @@ export function createPicoScene({ board, replica, member, player, peers, status,
       const st = p.lifts[lift.id];
       const descending = st && (st.to > st.from + 0.01 && replica.clock() < st.at + st.duration || st.blocked);
       under = !riding && !!descending && R.underLift(level, lift, here, surface) && R.spriteUnderLift(lift, player, liftLocal);
-      pressure(lift.id, riding);
-      pressure(lift.blockId, under);
+      // Leases need someone at the keyboard: after LEASE_IDLE_MS without input release them once
+      // and send nothing more until the next real input.
+      const away = now() - (lastInputAt ?? now()) >= LEASE_IDLE_MS;
+      pressure(lift.id, riding && !away);
+      pressure(lift.blockId, under && !away);
     }
     // Resting anchor (relay `settle`), only when still and not on the moving lift.
     if (!riding && grounded() && player.vx === 0 && player.vy === 0) {
@@ -214,10 +245,27 @@ export function createPicoScene({ board, replica, member, player, peers, status,
     }
     const body = R.bodyOf(level, here), onLedge = body.cx >= level.goal.enter.cxMin - 40 && Math.abs(body.feet - (level.goal.y + 23)) < 1;
     setStatus(replica.outbox.length > 2 ? 'Saving your progress...'
+      : stairTeam(here) ? 'Stand at the edge. A friend jumps from your head.'
       : onLedge && p.doorOpen ? 'Press Up to go in.'
       : onLedge && !p.doorOpen ? (p.keyHolder ? 'Bring the key to the door.' : 'The door needs the key.')
       : here.x < 260 && p.latches?.bridge == null ? 'Jump together! Space jumps, Up at a door.'
       : '');
+  }
+
+  // The wide pit's crossing: a still carrier at the far edge of the top stair, a rider who jumps
+  // from its head. Taught while a cat stands on the top stair with a teammate near and the bridge
+  // is not yet out.
+  function stairTeam(here) {
+    if (!grounded() || bridgeL == null || bridgeL < level.gates.find(g => g.extend)?.extend.from) return false;
+    const stairs = terrain.filter(t => t.kind === 'block');
+    if (!stairs.length) return false;
+    const topStair = stairs.reduce((a, b) => (b.y < a.y ? b : a));
+    const body = R.bodyOf(level, here);
+    const onTop = Math.abs(body.feet - topStair.y) < 0.5 || player.standingOn;
+    const overStair = body.cx > topStair.x && body.cx < topStair.x + topStair.w;
+    if (!onTop || !overStair) return false;
+    return R.partyOf(state()).some(name => name !== member && peers[name] && !peers[name]._hidden
+      && Math.abs(peers[name].x - player.x) < 40 && Math.abs(peers[name].y - player.y) < 30);
   }
 
   // Up (fresh press, from PlayerSprite's edge trigger): enter the open goal door.
@@ -272,11 +320,21 @@ export function createPicoScene({ board, replica, member, player, peers, status,
     const local = sprite === player;
     world(ctx, () => art.cat(ctx, R.colourIndex(state(), name), cellFor(sprite, local), sprite.facingRight !== false, snap(sprite.x), snap(sprite.y)));
   }
-  // Above the cats: the carried key, and markers for teammates outside the view.
+  // Above the cats: the carried key, a marker over your own cat, and markers for teammates
+  // outside the view.
   function overlay(ctx) {
     if (!level) return;
     const p = progress();
     if (!p.doorOpen && p.keyHolder) world(ctx, () => art.key(ctx, key.x, key.y));
+    if (!player._hidden) {
+      const m = R.ownMarker(player, p.keyHolder === member && !p.doorOpen ? key : null);
+      world(ctx, () => {
+        ctx.save();
+        ctx.fillStyle = PLAYER_COLOURS[R.colourIndex(state(), member)]; ctx.strokeStyle = '#3a2418'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(snap(m.x) - 4, snap(m.y) - 5); ctx.lineTo(snap(m.x) + 4, snap(m.y) - 5); ctx.lineTo(snap(m.x), snap(m.y)); ctx.closePath();
+        ctx.fill(); ctx.stroke(); ctx.restore();
+      });
+    }
     const off = offset(), vw = board.api._camera?.vw || board.viewportW();
     for (const name of R.partyOf(state())) {
       const peer = peers[name];
@@ -300,6 +358,10 @@ export function createPicoScene({ board, replica, member, player, peers, status,
     get bridgeLeft() { return bridgeL; },
     get activeParty() { return active; },
     art, audio,
-    dispose() { audio.dispose(); },
+    dispose() {
+      audio.dispose();
+      if (hiddenTimer != null) timers.clearTimeout(hiddenTimer);
+      try { doc?.removeEventListener?.('visibilitychange', onVisibility); } catch {}
+    },
   };
 }

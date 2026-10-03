@@ -1,12 +1,22 @@
-import { ParkReplica } from './replica.mjs';
-import { mountBoardScene } from './board-scene.mjs';
+// Same build as whoever imported this module: the board imports panel.mjs?v=<APP_BUILD> and every
+// park module passes its own query on, so a deploy never mixes old and new modules (HTTP/CDN cache).
+const V = new URL(import.meta.url).search;
+const { ParkReplica } = await import('./replica.mjs' + V);
+const { mountBoardScene } = await import('./board-scene.mjs' + V);
 
 // Protocol 5 adds level 6 (PICO PARK 1-1); the relay still serves protocol-4 levels 0-5 to it.
 export const PARK_CLIENT_PROTOCOL = 5;
 export const PARK_LEVEL_PROTOCOLS = [4, 5];
-const PARK_LEGACY_LEVELS = [0, 1, 2, 3, 4, 5];
+const PARK_LEGACY_LEVELS = [0, 1, 2, 3, 4, 5];   // protocol-4 levels, no calendar door
 const PARK_LEVELS = [...PARK_LEGACY_LEVELS, 6];
-const UPDATING = 'The park is updating. Return to the calendar and try again shortly.';
+// Which side is out of date decides what helps: an old relay needs time, an old page a reload.
+export const PARK_RELAY_OLD = 'The park is updating. Try again in a few minutes.';
+export const PARK_CLIENT_OLD = 'A newer park is ready. Reload the calendar to enter it.';
+// After PARK_UPDATE_REQUIRED: a relay whose lobby reply lists fewer levels than the one asked for
+// (or does not answer it) predates this page; otherwise this page is the old side.
+export function updateMessage(lobbyLevels, levelIndex) {
+  return Array.isArray(lobbyLevels) && lobbyLevels.length > levelIndex ? PARK_CLIENT_OLD : PARK_RELAY_OLD;
+}
 
 // Transport and lifecycle only. The board owns the canvas, controls and sprites,
 // and the puzzle doors: the panel opens straight into `levelIndex`.
@@ -61,14 +71,17 @@ export function mountParkPanel({ container, getSocket, board, levelIndex = 0, on
     if (message.status) { replica.acknowledge(message); return; }
     if (message.type === 'park_error') {
       if (!message.requestId || message.code === 'PARK_STREAM_CHANGED') replica.needsResume = true;
-      status.textContent = message.message;
-      if (message.code === 'PARK_UPDATE_REQUIRED') incompatible = true;
-      // A relay released before level 6 does not know it: the park is mid-update.
-      if (message.message === 'Unknown park level' && selectedLevel >= PARK_LEGACY_LEVELS.length) {
+      if (message.code === 'PARK_UPDATE_REQUIRED') {
+        // Both an old relay (it only knows protocol 4) and a newer one (this page is too old) send
+        // this code; ask its lobby which one it is before telling the student what to do.
         incompatible = true;
-        status.textContent = UPDATING;
-        message = { ...message, message: UPDATING };
+        message = { ...message, message: 'Checking the park version...' };
+        const asked = selectedLevel;
+        request('park_lobby').then(reply => reply.levels, () => null).then(levels => {
+          if (!disposed && asked === selectedLevel) status.textContent = updateMessage(levels, asked);
+        });
       }
+      status.textContent = message.message;
     }
     const job = pending.get(message.requestId);
     if (!job) return;
@@ -93,13 +106,13 @@ export function mountParkPanel({ container, getSocket, board, levelIndex = 0, on
         since: replica.state ? replica.revision : null });
       if (disposed || current !== socket || version !== selectionVersion) return;
       if (response.mode === 'summary' && !PARK_LEVEL_PROTOCOLS.includes(response.level?.protocol)) {
-        incompatible = true;
-        throw new Error(UPDATING);
+        incompatible = true;          // the relay serves a level protocol this page does not know
+        throw new Error(PARK_CLIENT_OLD);
       }
       replica.resume(response); joinedSocket = socket;
       if (response.clientId && response.clientId !== clientId) { clientId = response.clientId; saveClient(); }
       status.textContent = '';
-    } catch (error) { if (!disposed) status.textContent = error.message; }
+    } catch (error) { if (!disposed && !(incompatible && error.message === 'Checking the park version...')) status.textContent = error.message; }
     finally { joining = false; retryAt = performance.now() + 2000; }
   }
 

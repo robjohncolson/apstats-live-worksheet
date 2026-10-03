@@ -38,7 +38,10 @@ test('the scene is always one level: no lobby, every exit returns to the calenda
   assert.match(scene, /Up returns to the calendar/);
   const panel = readFileSync(new URL('./panel.mjs', import.meta.url), 'utf8');
   assert.match(panel, /levelIndex = 0/);
-  assert.doesNotMatch(panel, /park_lobby|lobbySummary/);
+  assert.doesNotMatch(panel, /lobbySummary/);
+  // The panel's only park_lobby use is the version check after PARK_UPDATE_REQUIRED (no lobby UI).
+  assert.equal(panel.match(/park_lobby/g).length, 1);
+  assert.match(panel, /request\('park_lobby'\)\.then\(reply => reply\.levels/);
   assert.match(panel, /showScene\(PARK_LEVELS\.includes\(levelIndex\) \? levelIndex : 0\)/);
   assert.match(panel, /const PARK_LEVELS = \[\.\.\.PARK_LEGACY_LEVELS, 6\]/);
 });

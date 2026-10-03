@@ -123,21 +123,21 @@ test('lift holds and leases match what the relay accepts', () => {
   const onTop = R.toPose(standing(1260, 201.5));
   assert.equal(R.liftRiderLevel(level, lift, onTop, 201.5), 0);
   assert.equal(holdAs('a', onTop), 'accepted');
-  // One up on a teammate (24 board px above): stack level 1, allowed once one other holds.
-  const stacked = R.toPose(standing(1262, 201.5 - 24));
+  // One up on a teammate (23 px above): stack level 1, allowed once one other holds.
+  const stacked = R.toPose(standing(1262, 201.5 - 23));
   assert.equal(R.liftRiderLevel(level, lift, stacked, 201.5), 1);
   assert.equal(R.liftHoldAllowed(level, lift, stacked, 201.5, ['a'], 'b'), true);
   assert.equal(R.liftHoldAllowed(level, lift, stacked, 201.5, [], 'b'), false);
   assert.equal(holdAs('b', stacked), 'accepted');
   // Stacked but centred past the lift (over the ledge side): never claimed by the client.
-  assert.equal(R.liftRiderLevel(level, lift, R.toPose(standing(1320, 201.5 - 24)), 201.5), -1);
+  assert.equal(R.liftRiderLevel(level, lift, R.toPose(standing(1320, 201.5 - 23)), 201.5), -1);
   // Under-lift lease: a body on the floor within the span, with the lift above its head.
   const floor = R.toPose(standing(1250, 216));
   assert.equal(R.underLift(level, lift, floor, 150), true);
   assert.equal(R.underLift(level, lift, floor, 201.5), false, 'nobody fits under the resting lift');
   assert.equal(R.underLift(level, lift, R.toPose(standing(1200, 216)), 150), false);
   assert.equal(R.underLift(level, lift, R.toPose(standing(1250, 200)), 150), false, 'feet neither on the floor nor on a stack');
-  assert.equal(R.underLift(level, lift, R.toPose(standing(1250, 192)), 120), true, 'one up on a teammate (24 px) is within 3 px of floor - 23');
+  assert.equal(R.underLift(level, lift, R.toPose(standing(1250, 193)), 120), true, 'one up on a teammate: feet at floor - 23');
 });
 
 test('catch zones: respawn above the near side, stacked over teammates still dropping in', () => {
@@ -267,4 +267,63 @@ test('sound: gated by the site mute and a user gesture, never throws', () => {
   assert.equal(audio.play('key'), false);
   assert.equal(createPicoAudio(undefined).play('jump'), false);
   audio.dispose();
+});
+
+// ---- Review fixes ----
+test('a k-high stack under the lift (board cats 23 apart) is a lease the relay accepts, k = 0..7', () => {
+  const lift = R.partyLift(level);
+  for (let k = 0; k <= 7; k++) {
+    const s = new ParkSession({ epoch: 'u', levelIndex: 6, members: ['a', 'b'], now: () => 0 });
+    s.setOnline(['a', 'b']);
+    s.progress.lifts.lift = { from: 0, to: 201.5, at: 0, duration: 1e9, rate: 30 };   // descending, still high
+    const key = s.open('a', 'browser_a');
+    const sprite = { x: 1248, y: 192 - 23 * k };                                       // feet on the cat below
+    const pose = { ...R.toPose(sprite), vx: 0, vy: 0 };
+    const surface = s.valueAt(s.progress.lifts.lift);
+    assert.equal(R.underLift(level, lift, pose, surface), true, 'client rule, k=' + k);
+    const r = s.command(key, { epoch: s.epoch, level: s.level.id, sequence: 1, kind: 'hold', target: 'lift-under', active: true, pose });
+    assert.equal(r.status, 'accepted', 'relay, k=' + k + ' ' + (r.reason || ''));
+    // And a stack level on the lift agrees with the relay's rider rule.
+    const rider = R.toPose({ x: 1248, y: R.riderSpriteY(150, k) });
+    assert.equal(R.liftRiderLevel(level, lift, rider, 150), Math.min(k, lift.stack.max));
+  }
+  // The old 24 px spacing was refused from k = 4 (3.000...03 px off): the regression.
+  const s = new ParkSession({ epoch: 'v', levelIndex: 6, members: ['a'], now: () => 0 });
+  s.setOnline(['a']);
+  s.progress.lifts.lift = { from: 0, to: 201.5, at: 0, duration: 1e9, rate: 30 };
+  const r = s.command(s.open('a', 'browser_a'), { epoch: s.epoch, level: s.level.id, sequence: 1, kind: 'hold', target: 'lift-under', active: true,
+    pose: { ...R.toPose({ x: 1248, y: 192 - 24 * 4 }), vx: 0, vy: 0 } });
+  assert.equal(r.status, 'rejected');
+});
+
+test('the "you" marker sits over your head, or over the key you carry', () => {
+  assert.deepEqual(R.ownMarker({ x: 100, y: 192 }), { x: 110, y: 189 });
+  const key = { x: 102, y: 185 };   // trailing key centre (12 px above its bottom)
+  assert.deepEqual(R.ownMarker({ x: 100, y: 192 }, key), { x: 110, y: 168 });
+  assert.ok(R.ownMarker({ x: 100, y: 192 }, key).y <= key.y - 14 - 3, 'tip clear of the key art');
+});
+
+test('PARK_UPDATE_REQUIRED: an old relay says "updating", an old page says "reload"', async () => {
+  const { updateMessage, PARK_RELAY_OLD, PARK_CLIENT_OLD } = await import('./panel.mjs');
+  const seven = Array.from({ length: 7 }, (_, levelIndex) => ({ levelIndex, online: [] }));
+  assert.equal(updateMessage(seven.slice(0, 6), 6), PARK_RELAY_OLD, 'a relay with six levels predates level 6');
+  assert.equal(updateMessage(null, 6), PARK_RELAY_OLD, 'no lobby answer: assume the relay');
+  assert.equal(updateMessage(seven, 6), PARK_CLIENT_OLD, 'the relay knows level 6: this page is old');
+  assert.match(PARK_RELAY_OLD, /few minutes/); assert.match(PARK_CLIENT_OLD, /Reload/);
+});
+
+test('park modules, art and sounds carry the board build stamp', async () => {
+  const atlas = await import('./assets/pico-atlas.mjs?v=2026-10-03-test');
+  assert.match(atlas.ATLAS_URL, /pico-1-1\.png\?v=2026-10-03-test$/);
+  const audio = await import('./pico-audio.mjs?v=2026-10-03-test');
+  assert.match(audio.soundUrl('jump'), /assets\/pico-jump\.ogg\?v=2026-10-03-test$/);
+  const { readFileSync } = await import('node:fs');
+  for (const file of ['panel.mjs', 'replica.mjs', 'board-scene.mjs', 'pico-scene.mjs', 'pico-art.mjs', 'pico-audio.mjs']) {
+    const src = readFileSync(new URL('./' + file, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /^import .* from '\.\//m, file + ': no unversioned static import');
+    assert.match(src, /const V = new URL\(import\.meta\.url\)\.search;/, file);
+  }
+  const board = readFileSync(new URL('../classroom-board.js', import.meta.url), 'utf8');
+  assert.match(board, /import\('\.\/apstat-park\/panel\.mjs' \+ parkBuildQuery\(\)\)/);
+  assert.match(board, /root\.APP_BUILD/);
 });

@@ -1,7 +1,8 @@
 // Rectangles of pico-1-1.png (built by build-atlas.mjs from PICO PARK's 1024x1024 sheet
 // tga_0002; `src` is the sheet position). The site owner has the developer's permission to
 // use PICO PARK's assets here. Everything is drawn 1:1 at the level's half scale unless noted.
-export const ATLAS_URL = new URL('./pico-1-1.png', import.meta.url).href;
+// Carries this module's ?v=<build> so the image comes from the same deploy as the code.
+export const ATLAS_URL = new URL('./pico-1-1.png' + new URL(import.meta.url).search, import.meta.url).href;
 export const ATLAS_SIZE = { w: 242, h: 112 };
 
 export const ATLAS = {

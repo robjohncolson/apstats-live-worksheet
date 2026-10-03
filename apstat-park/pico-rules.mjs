@@ -132,12 +132,21 @@ export function liftStopAbove(lift, surface, heads) {
   for (const head of heads) if (head - lift.h < stop) stop = head - lift.h;
   return stop;
 }
-// Is a board sprite (20x24, hitbox x+2..x+18) under the lift: in its span with its head no more
-// than 4 px above the lift's underside? `surface` is the lift as last drawn, so a stop holds even
-// while the relay has not heard about it yet, and riders (head 24 above the surface) never count.
+// Is a board sprite (20x24; hitbox x+2..x+18, head y+1) under the lift: in its span with its head
+// no more than 4 px above the lift's underside? `surface` is the lift as last drawn, so a stop holds
+// even while the relay has not heard about it yet, and riders (head 23 above the surface) never count.
 export function spriteUnderLift(lift, sprite, surface) {
-  return sprite.x + POSE_DX + 16 > lift.x && sprite.x + POSE_DX < lift.x + lift.w && sprite.y >= surface + lift.h - 4;
+  return sprite.x + POSE_DX + 16 > lift.x && sprite.x + POSE_DX < lift.x + lift.w && sprite.y + POSE_DY >= surface + lift.h - 4;
 }
+// The "you" marker: a small downward triangle whose tip sits 3 px above your cat's head, or above
+// the key while you carry it (the key trails over your head). Returns the tip.
+export function ownMarker(sprite, carriedKey = null) {
+  const x = sprite.x + 10, overHead = sprite.y - 3;
+  if (!carriedKey) return { x, y: overHead };
+  return { x, y: Math.min(overHead, carriedKey.y - 14 - 3) };
+}
+// Board sprite y of a cat standing k bodies up on the lift: feet at surface - 23k.
+export const riderSpriteY = (surface, k) => surface - 24 - 23 * k;
 
 // ---- Trigger boxes (published by the relay; body centre x and feet) ----
 export function inTrigger(level, box, pose) {

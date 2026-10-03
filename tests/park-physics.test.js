@@ -167,7 +167,7 @@ describe('pico profile: coyote time, no buffer, no double jump', () => {
 
 describe('pico profile: stacking on teammates', () => {
   it('a carrier with a rider on its head cannot jump', () => {
-    const peers = { rider: { x: 45, y: STAND - 24, state: 'idle' } };
+    const peers = { rider: { x: 45, y: STAND - 23, state: 'idle' } };
     const p = sprite({ peers }); frame(p);
     p.input.jump = true; frame(p, 3);
     expect(p.y).toBe(STAND);
@@ -176,12 +176,12 @@ describe('pico profile: stacking on teammates', () => {
 
   it('a rider is not carried horizontally and inherits no speed when jumping off', () => {
     const carrier = { x: 40, y: STAND, state: 'idle' };
-    const p = sprite({ peers: { carrier }, y: STAND - 24 });
+    const p = sprite({ peers: { carrier }, y: STAND - 23 });
     frame(p);
     expect(p.standingOn).toBe(carrier);
     for (let i = 0; i < 6; i++) { carrier.x += 1.5; frame(p); }
     expect(p.x).toBe(40);
-    expect(p.y).toBe(STAND - 24);
+    expect(p.y).toBe(STAND - 23);
     p.input.jump = true;
     for (let i = 0; i < 20; i++) { carrier.x += 1.5; frame(p); }
     expect(p.x).toBe(40);
@@ -189,39 +189,39 @@ describe('pico profile: stacking on teammates', () => {
 
   it('support holds while centres are within 17 px', () => {
     const carrier = { x: 40, y: STAND, state: 'idle' };
-    const p = sprite({ peers: { carrier }, y: STAND - 24 });
+    const p = sprite({ peers: { carrier }, y: STAND - 23 });
     frame(p);
     carrier.x = 40 + 16.9; frame(p);
     expect(p.standingOn).toBe(carrier);
-    expect(p.y).toBe(STAND - 24);
+    expect(p.y).toBe(STAND - 23);
     carrier.x = 40 + 17; frame(p, 2);
     expect(p.standingOn).toBe(null);
-    expect(p.y).toBeGreaterThan(STAND - 24);
+    expect(p.y).toBeGreaterThan(STAND - 23);
     expect(p.x).toBe(40);
   });
 
   it('a rider stays on a rising carrier (no fall-through)', () => {
     const carrier = { x: 40, y: STAND, state: 'idle' };
-    const p = sprite({ peers: { carrier }, y: STAND - 24 });
+    const p = sprite({ peers: { carrier }, y: STAND - 23 });
     frame(p);
     let vy = PICO.launchVy;
     for (let k = 1; k <= 8; k++) {
       carrier.y += vy; vy += PICO.gravity;
       frame(p);
-      expect(p.y).toBeCloseTo(carrier.y - 24, 9);
+      expect(p.y).toBeCloseTo(carrier.y - 23, 9);
       expect(p.standingOn).toBe(carrier);
     }
   });
 
   it('a rider stays on a falling carrier, and that counts as ground for jumping', () => {
     const carrier = { x: 40, y: STAND, state: 'idle' };
-    const p = sprite({ terrain: [{ x: 0, y: 900, w: 2000, h: 30 }], peers: { carrier }, y: STAND - 24 });
+    const p = sprite({ terrain: [{ x: 0, y: 900, w: 2000, h: 30 }], peers: { carrier }, y: STAND - 23 });
     frame(p);
     let vy = 0;
     for (let k = 0; k < 20; k++) {
       carrier.y += vy; vy = Math.min(vy + PICO.gravity, PICO.terminal);
       frame(p);
-      expect(p.y).toBeCloseTo(carrier.y - 24, 9);
+      expect(p.y).toBeCloseTo(carrier.y - 23, 9);
     }
     p.input.jump = true; frame(p);
     expect(p.vy).toBeCloseTo(PICO.launchVy * 60, 9);
@@ -247,7 +247,7 @@ describe('pico profile: stacking on teammates', () => {
     p.input.jump = true;
     let top = p.y;
     for (let i = 0; i < 60; i++) { frame(p); top = Math.min(top, p.y); }
-    expect(top).toBeCloseTo(above.y + 24, 9);
+    expect(top).toBeCloseTo(above.y + 23, 9);   // head (y + 1) at their feet (y + 24)
     expect(above.y).toBe(STAND - 44);
     expect(p.y).toBe(STAND);
   });
