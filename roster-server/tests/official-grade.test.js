@@ -37,12 +37,12 @@ function fakeLedgerDb() {
   };
 }
 
-function fakeOfficialDb({ missingTable = false } = {}) {
+function fakeOfficialDb({ missingTable = false, missingCode = '42P01' } = {}) {
   const rows = new Map();
   return {
     rows,
     async upsertGrades(list) {
-      if (missingTable) return { data: null, error: { code: '42P01' } };
+      if (missingTable) return { data: null, error: { code: missingCode } };
       for (const r of list) {
         rows.set(r.studentId + '|' + r.quarter, {
           student_id: r.studentId, quarter: r.quarter, grade: r.grade, parts: r.parts, as_of: r.asOf,
@@ -51,7 +51,7 @@ function fakeOfficialDb({ missingTable = false } = {}) {
       return { data: list.map(r => ({ student_id: r.studentId })), error: null };
     },
     async getForStudent(id, quarter) {
-      if (missingTable) return { data: null, error: { code: '42P01' } };
+      if (missingTable) return { data: null, error: { code: missingCode } };
       return { data: rows.get(id + '|' + quarter) || null, error: null };
     },
   };
@@ -119,6 +119,12 @@ describe('POST /class/official-grades', () => {
     const s = await start(fakeOfficialDb());
     const r = await s.call('POST', '/class/official-grades', NIGHT, { Authorization: 'Bearer ' + signToken('stu_a') });
     expect(r.status).toBe(401);
+  });
+
+  it('503 when PostgREST reports the table missing from its schema cache (PGRST205)', async () => {
+    const s = await start(fakeOfficialDb({ missingTable: true, missingCode: 'PGRST205' }));
+    const r = await s.call('GET', '/official-grade?quarter=Q1&token=' + signToken('stu_a'));
+    expect(r.status).toBe(503);
   });
 
   it('503 until migration 0038 is run', async () => {

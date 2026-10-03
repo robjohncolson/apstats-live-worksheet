@@ -6,7 +6,7 @@
 //
 // The official grade is the number written into Schoology's marking-period override.
 // It is a published value: the grade engine never reads it, and nothing here changes
-// any computed grade. 42P01 (table missing) -> 503 until migration 0038 is run.
+// any computed grade. A missing table -> 503 until migration 0038 is run.
 
 import { requireTeacher } from './teacher-auth.js';
 import { verifyToken } from './token.js';
@@ -18,6 +18,10 @@ const MAX_GRADES_PER_POST = 200;
 // Only these parts are stored; they explain the number on the Desk.
 const PART_KEYS = ['work', 'pc', 'base', 'line', 'earlyBonus', 'bankedBonus', 'rule'];
 const NOT_PROVISIONED = 'official_grade not provisioned -- run migration 0038';
+// Postgres 42P01 undefined_table, or PostgREST PGRST205 (table not in the schema cache).
+function tableMissing(error) {
+  return !!error && ['42P01', 'PGRST205'].includes(String(error.code || ''));
+}
 
 function bearerOrQueryToken(req) {
   const authHeader = req.headers['authorization'] || req.headers['Authorization'];
@@ -74,7 +78,7 @@ export function mountOfficialGrade(app, { db, officialGradeDb }) {
     try {
       const { data, error } = await officialGradeDb.upsertGrades(checked.rows);
       if (error) {
-        if (error.code === '42P01') return res.status(503).json({ ok: false, error: NOT_PROVISIONED });
+        if (tableMissing(error)) return res.status(503).json({ ok: false, error: NOT_PROVISIONED });
         console.error('POST /class/official-grades error:', error);
         return res.status(500).json({ ok: false, error: 'Database error' });
       }
@@ -104,7 +108,7 @@ export function mountOfficialGrade(app, { db, officialGradeDb }) {
     try {
       const { data, error } = await officialGradeDb.getForStudent(studentId, quarter);
       if (error) {
-        if (error.code === '42P01') return res.status(503).json({ ok: false, error: NOT_PROVISIONED });
+        if (tableMissing(error)) return res.status(503).json({ ok: false, error: NOT_PROVISIONED });
         console.error('GET /official-grade error:', error);
         return res.status(500).json({ ok: false, error: 'Database error' });
       }
