@@ -94,5 +94,18 @@ if ($syncCode -ne 0) {
   exit $syncCode
 }
 
+# Step 3 -- official quarter grade (OFFICIAL_GRADE_SYNC_SPEC.md): recompute from tonight's
+# Schoology grades, write each student's marking-period override, publish to the Desk.
+# Runs after step 2 so it reads the grades just pushed. Dry-run unless -Live.
+$officialArgs = @((Join-Path $toolsDir 'schoology_official.py'), '--section', $Section)
+if ($Live) { $officialArgs += '--apply' }
+Write-Log "STEP 3: schoology_official.py --section $Section$(if ($Live) { ' --apply' } else { '' })"
+& python @officialArgs 2>&1 | Tee-Object -FilePath $log -Append
+$officialCode = $LASTEXITCODE
+if ($officialCode -ne 0) {
+  Write-Log "STEP 3 FAILED (exit $officialCode) -- grades were pushed; official overrides need a rerun."
+  exit $officialCode
+}
+
 Write-Log "=== daily_schoology_sync done ($mode) -- log: $log ==="
 exit 0

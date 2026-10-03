@@ -37,6 +37,8 @@ import { mountWorksheetDiagnostics, createLiveDiagnosticsStore } from './workshe
 import { createLiveNudgesDb } from './nudge-db.js';
 import { mountLessonUnlock } from './lesson-unlock.js';
 import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
+import { mountOfficialGrade } from './official-grade.js';
+import { createLiveOfficialGradeDb } from './official-grade-db.js';
 import { mountPc } from './pc.js';
 import { createLivePcDb } from './pc-db.js';
 import { createLiveFiguresSigner } from './pc-figures.js';
@@ -120,12 +122,13 @@ function bcryptCost() {
  * @param {*} trainerDbOverride
  * @param {*} worksheetKey
  * @param {*} payoutDbOverride
+ * @param {*} officialGradeDbOverride
  * @param {object} [productionGradeInputs] Optional pre-resolved bundle from
  *   resolveProductionGradeInputs(). When provided (production boot), createApp
  *   does NOT re-resolve — all seven mounts share this single object. When
  *   omitted (tests), createApp resolves once for ACTIVE_SCHOOL_YEAR.
  */
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs, pcDbOverride, figuresSignerOverride, payoutDbOverride) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey, productionGradeInputs, pcDbOverride, figuresSignerOverride, payoutDbOverride, officialGradeDbOverride) {
   // Atomic grade-year bundle: resolve ONCE, thread to every grade mount.
   const _gradeCtx = productionGradeInputs || resolveProductionGradeInputs(ACTIVE_SCHOOL_YEAR);
   // Only an explicitly supplied production bundle activates the yearly key.
@@ -1254,6 +1257,14 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const lessonUnlockDb = (typeof lessonUnlockDbOverride !== 'undefined') ? lessonUnlockDbOverride : createLiveLessonUnlockDb();
   if (lessonUnlockDb && db) {
     mountLessonUnlock(app, { db, lessonUnlockDb });
+  }
+
+  // ── Official quarter grade (OFFICIAL_GRADE_SYNC_SPEC.md §4.3) ──────────────
+  // Written nightly by tools/schoology_official.py; read by the Desk. 503 until
+  // migrations/0038 is run -- service stays up.
+  const officialGradeDb = (typeof officialGradeDbOverride !== 'undefined') ? officialGradeDbOverride : createLiveOfficialGradeDb();
+  if (officialGradeDb && db) {
+    mountOfficialGrade(app, { db, officialGradeDb });
   }
 
   // ── Progress-Check makeup delivery (PC_MAKEUP_DELIVERY_SPEC.md Phase 1) ──

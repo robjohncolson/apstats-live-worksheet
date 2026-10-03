@@ -24,6 +24,7 @@ import os
 import re
 import sys
 import time
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -140,6 +141,34 @@ def roster_get(path: str, secret: str):
         return json.loads(resp.read().decode("utf-8"))
 
 
+def post_official_grades(quarter: str, items: list[dict], secret: str) -> str:
+    """Publish the official grades to roster-server for the Desk (OFFICIAL_GRADE_SYNC_SPEC.md §4.3).
+    Returns a one-line status; a missing table (503, migration 0038) never fails the night."""
+    grades = []
+    for it in items:
+        res = it.get("result")
+        if not res or not it.get("studentId"):
+            continue
+        grades.append({"studentId": it["studentId"], "official": res["official"], "work": it.get("work"),
+                       "pc": it.get("pc"), "base": res["base"], "line": res["line"],
+                       "earlyBonus": it.get("early"), "bankedBonus": it.get("banked"), "rule": res["rule"]})
+    if not grades:
+        return "nothing to publish"
+    body = json.dumps({"quarter": quarter, "asOf": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "grades": grades})
+    req = Request(ROSTER_BASE + "/class/official-grades", data=body.encode("utf-8"), method="POST",
+                  headers={"x-teacher-secret": secret, "Content-Type": "application/json"})
+    try:
+        with urlopen(req, timeout=60) as resp:
+            doc = json.loads(resp.read().decode("utf-8"))
+        return "published %s official grades to the Desk" % doc.get("saved")
+    except HTTPError as err:
+        if err.code == 503:
+            return "Desk publish skipped: run roster-server migration 0038 first"
+        if err.code == 404:
+            return "Desk publish skipped: roster-server not deployed with /class/official-grades yet"
+        return "Desk publish FAILED: HTTP %s" % err.code
+
+
 def banked_bonus_points(student_id: str, quarter: str, secret: str) -> float:
     """Banked bonus-sheet points (E 5 / P 3 / I 1) for the quarter, not yet applied."""
     doc = roster_get("/ledger/student/%s?prefix=BONUS-" % student_id, secret)
@@ -230,6 +259,7 @@ def build_rows(section: str, gradebook: dict, secret: str) -> tuple[list[dict], 
         uid = str(st.get("schoologyUid") or "")
         sch = gradebook.get(uid)
         item = {"name": st.get("realName"), "username": st.get("username"), "uid": uid,
+                "studentId": st.get("studentId"),
                 "quarter": quarter, "pc": pc, "banked": banked, "early": early}
         if not sch:
             # No Schoology row: keep the Desk's own work grade so the grade is not lost.
@@ -302,8 +332,13 @@ def main(argv=None) -> int:
             written += 1
         else:
             failed += 1
+            r["writeFailed"] = True
             print("  FAILED %s: %s" % (r["name"], outcome))
     print("\nwrote %d override(s), %d failed" % (written, failed))
+    # The Desk shows only numbers Schoology also has (a failed write is retried next night).
+    quarter = (rows or pending or [{}])[0].get("quarter", "Q1")
+    publish = [r for r in rows if not r.get("writeFailed")] + pending
+    print(post_official_grades(quarter, publish, secret))
     return 1 if failed else 0
 
 

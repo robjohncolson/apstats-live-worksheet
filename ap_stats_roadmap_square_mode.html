@@ -9144,6 +9144,54 @@ function _gradeMathToggle(host, ctx) {
   host.appendChild(btn); host.appendChild(panel);
 }
 
+// OFFICIAL_GRADE_SYNC_SPEC §4.4: the official quarter grade -- the number written into
+// Schoology each night (teacher 2026-10-02: the Desk and Schoology must agree). Returns
+// { quarter, grade, asOf, parts } or null (not published yet, offline, or server too old).
+async function _fetchOfficialGrade(baseUrl, token, quarter) {
+  try {
+    var ctx = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+    var path = '/official-grade?quarter=' + encodeURIComponent(quarter);
+    var headers = {};
+    if (ctx) {
+      // Teacher view-as: the teacher's token in the header, the student named in the query.
+      path += '&studentId=' + encodeURIComponent(ctx.studentId);
+      var teacherToken = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+      if (teacherToken) headers['Authorization'] = 'Bearer ' + teacherToken;
+    } else if (token) {
+      // The student's own token rides in the header, never the URL.
+      headers['Authorization'] = 'Bearer ' + token;
+    } else {
+      return null;
+    }
+    var res = (typeof _roadmapFetch === 'function')
+      ? await _roadmapFetch(baseUrl + path, { headers: headers }, ROADMAP_FETCH_TIMEOUT_MS)
+      : await fetch(baseUrl + path, { headers: headers });
+    if (!res || !res.ok) return null;
+    var json = await res.json();
+    if (!json || !json.ok || !json.official || typeof json.official.grade !== 'number') return null;
+    return json.official;
+  } catch (_) {
+    return null;
+  }
+}
+
+// One line explaining where the official number comes from (pill tooltip).
+function _officialGradeTitle(official) {
+  var p = official.parts || {};
+  var n = function (v) { return (typeof v === 'number') ? String(Math.round(v * 10) / 10) : '—'; };
+  var day = '';
+  try { day = new Date(official.asOf).toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric' }); } catch (_) { day = ''; }
+  var text = 'Official ' + official.quarter + ' grade' + (day ? ' as of ' + day : '') + ' — the same number Schoology shows. '
+    + 'Work ' + n(p.work) + ' (from Schoology)';
+  if (typeof p.pc === 'number') {
+    text += (p.rule === 'PC')
+      ? '; your Progress Check ' + n(p.pc) + ' is higher, and it counts because Work + bonuses reached 40'
+      : (p.rule === 'work (under 40)' ? '; your Progress Check ' + n(p.pc) + ' counts once Work + bonuses reach 40' : '; Progress Check ' + n(p.pc));
+  }
+  if (p.earlyBonus) text += '; + ' + n(p.earlyBonus) + ' early-finish bonus';
+  return text + '. Updated every night after the Schoology sync.';
+}
+
 async function renderDoNowGrades(baseUrl, token) {
   var host = document.getElementById('donow-grades');
   if (!host) return;
@@ -9317,17 +9365,26 @@ async function renderDoNowGrades(baseUrl, token) {
     // tracks and the 40% rule in one line (EFFORT_VISIBILITY_V2_SPEC §3; the ↑ceiling is gone,
     // the coach still has it). Shown to whoever is signed in (a student, or the student a teacher
     // is viewing as); a teacher's own /grade has no graded quarter, so it stays "Q1 —".
+    // The official grade (OFFICIAL_GRADE_SYNC_SPEC §4.4), when one has been published, is the
+    // headline number; the engine's live grade becomes "Today's estimate" beside it.
+    var official = (typeof _fetchOfficialGrade === 'function') ? await _fetchOfficialGrade(baseUrl, token, curQ) : null;
     var pill = document.createElement('span');
-    pill.className = 'qpill' + (gradeRaw == null ? ' empty' : '');
+    pill.className = 'qpill' + (gradeRaw == null && !official ? ' empty' : '');
     var keySpan = document.createElement('span');
     keySpan.className = 'qkey';
     keySpan.textContent = curQ;
     pill.appendChild(keySpan);
     var gradeSpan = document.createElement('span');
     gradeSpan.className = 'qgrade';
-    gradeSpan.textContent = gradeRaw == null ? '—' : String(Math.round(gradeRaw));
+    if (official) gradeSpan.textContent = String(Math.round(official.grade * 10) / 10);
+    else gradeSpan.textContent = gradeRaw == null ? '—' : String(Math.round(gradeRaw));
     pill.appendChild(gradeSpan);
-    if (gradeRaw != null) {
+    if (official) {
+      var officialRule = document.createElement('span');
+      officialRule.className = 'qrule';
+      officialRule.textContent = 'official (same as Schoology)';
+      pill.appendChild(officialRule);
+    } else if (gradeRaw != null) {
       var pcOnFile = null;
       try { pcOnFile = (typeof _effortFacts === 'function') ? _effortFacts(curQ).pc : null; } catch (_) { pcOnFile = null; }
       var pcDay = (pcOnFile && !pcOnFile.counting && pcOnFile.day) ? pcOnFile.day : null;
@@ -9351,7 +9408,9 @@ async function renderDoNowGrades(baseUrl, token) {
       tip += ' — ' + lGraded + ' of ' + lTotal + ' lesson' + (lTotal === 1 ? '' : 's') + ' graded';
       if (lDue != null) tip += ' (' + lDue + ' due so far)';
     }
-    pill.title = tip + '. Once both tracks are at least 40%, your grade is the higher one. Tap to see where you stand in the class.';
+    pill.title = official
+      ? _officialGradeTitle(official) + ' Tap to see where you stand in the class.'
+      : tip + '. Once both tracks are at least 40%, your grade is the higher one. Tap to see where you stand in the class.';
     pill.style.cursor = 'pointer';
     pill.setAttribute('role', 'button'); pill.tabIndex = 0;
     pill.onclick = function () { if (typeof openWallet === 'function') openWallet(); };
@@ -9382,8 +9441,12 @@ async function renderDoNowGrades(baseUrl, token) {
     var _chipFacts = null;
     try { _chipFacts = (typeof _effortFacts === 'function') ? _effortFacts(curQ) : null; } catch (_) { _chipFacts = null; }
     var _aheadCount = (_chipFacts && _chipFacts.ahead) ? _chipFacts.ahead.length : 0;
+    // With an official grade published, the chip is the live estimate (teacher 2026-10-02: "a
+    // today's estimate that moves as students work"); the Schoology number is the pill itself.
+    if (official) host.appendChild(_trackChip("Today's estimate", gradeRaw,
+      'Moves as you work today. Tonight, after the Schoology sync, your official grade is recalculated from Schoology.'));
     // AHEAD_WORK_PROJECTION_SPEC: the chip text stays "Schoology today"; the title adds the projection.
-    host.appendChild(_trackChip('Schoology today', schToday,
+    else host.appendChild(_trackChip('Schoology today', schToday,
       'What the Schoology gradebook shows for ' + curQ + ' as of today: only work that is due AND completed. ' +
       'Blanks are not zeros and work done ahead of schedule is not counted until it comes due.' +
       ((typeof _effortAheadProjectionSentence === 'function') ? _effortAheadProjectionSentence(curQ, _aheadCount) : '')));
@@ -27510,7 +27573,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-02-2yck';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-03-hoa3';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

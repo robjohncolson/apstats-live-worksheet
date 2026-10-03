@@ -1,7 +1,9 @@
 """Tests for the official-grade rule (OFFICIAL_GRADE_SYNC_SPEC.md §2 + §6)."""
+import json
 import os
 import sys
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tools"))
 import schoology_official as so  # noqa: E402
@@ -76,6 +78,47 @@ class TestPcForQuarter(unittest.TestCase):
 
     def test_none_when_nothing_on_file(self):
         self.assertIsNone(so.pc_for_quarter({"quarters": {"Q1": {"pcUnits": [1]}}, "units": {}}, "Q1"))
+
+
+class TestPublish(unittest.TestCase):
+    """post_official_grades sends the Desk the same numbers written to Schoology."""
+
+    item = {"studentId": "stu_b", "work": 39.75, "pc": 100.0, "early": 2, "banked": 0,
+            "result": so.official_grade(39.75, 100.0, 0, 2)}
+
+    def test_sends_one_grade_per_student_with_its_parts(self):
+        sent = {}
+
+        class Resp:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return b'{"ok": true, "saved": 1}'
+
+        def fake_urlopen(req, timeout=0):
+            sent["url"] = req.full_url
+            sent["body"] = json.loads(req.data.decode("utf-8"))
+            return Resp()
+
+        with mock.patch.object(so, "urlopen", fake_urlopen):
+            status = so.post_official_grades("Q1", [self.item, {"studentId": "x", "result": None}], "s")
+        self.assertEqual(status, "published 1 official grades to the Desk")
+        self.assertTrue(sent["url"].endswith("/class/official-grades"))
+        self.assertEqual(sent["body"]["quarter"], "Q1")
+        self.assertEqual(sent["body"]["grades"], [{
+            "studentId": "stu_b", "official": 100.0, "work": 39.75, "pc": 100.0, "base": 100.0,
+            "line": 41.75, "earlyBonus": 2, "bankedBonus": 0, "rule": "PC"}])
+
+    def test_missing_table_is_reported_not_raised(self):
+        def fake_urlopen(req, timeout=0):
+            raise so.HTTPError(req.full_url, 503, "x", {}, None)
+
+        with mock.patch.object(so, "urlopen", fake_urlopen):
+            self.assertIn("migration 0038", so.post_official_grades("Q1", [self.item], "s"))
 
 
 if __name__ == "__main__":
