@@ -1,4 +1,4 @@
-# CONTINUATION PROMPT — **s45 (2026-10-01) IS CURRENT: read the SESSION 45 block below — its OPEN list is the live to-do (3.3 Period B columns never created, the four hand-written Schoology overrides go stale, slip + reader changes uncommitted, Period E PowerSchool save unconfirmed).** s44's checklist still carries. Older blocks are history.
+# CONTINUATION PROMPT — **s46 (2026-10-02 → 10-03) IS CURRENT: read the SESSION 46 block below — the OFFICIAL QUARTER GRADE is live (Schoology override = Desk pill = My Ledger = slips, written nightly); its OPEN list is the live to-do (verify the first unattended nightly run, the full U1 PC on 10/13 B / 10/16 E, the PowerSchool check).** s45/s44 items not repeated there are done or superseded. Older blocks are history.
 
 > ⚠ **STALE (s33-era, 2026-07-02). The authoritative block is `## ⏭ SESSION 35` further down.** This
 > blockquote is kept for history only — its Windows `C:/Users/rober/...` paths are dead (the host moved
@@ -23,7 +23,84 @@
 
 ---
 
-## ⏭ SESSION 45 (2026-10-01, Athena laptop, Windows) — **CURRENT. Supersedes s44 below (s44's checklist items 1-5 still carry). PROGRESS REPORTS: best-of grade written into Schoology as MP overrides; slips match Schoology; comments for all 29 students entered in PowerSchool.**
+## ⏭ SESSION 46 (2026-10-02 → 10-03, Athena laptop, Windows) — **CURRENT. Supersedes s45 below. ONE OFFICIAL QUARTER GRADE (teacher's rule) written into Schoology nightly and shown on the Desk; Schoology column-batch bug fixed; Desk lesson panel cleaned up; slips on the official grade.**
+
+**HEADs (all pushed):** follow-alongs `740f7213` (+ this block). roster-server auto-deployed through `1d4ef272`
+(new `/class/official-grades` + `/official-grade`). **Migration `0038_official_grade` RUN by the teacher 10/3.** No cr
+change. Lanes: Opus 5.5 / Fable 5.1 (teacher `/model` switches), no subagents, no Codex. Memory notes updated:
+`project_schoology_quarter_override` (now the official-grade note), `project_schoology_sync` (column batches),
+`project_weekly_dok` (one-shot prompt section). Spec: `OFFICIAL_GRADE_SYNC_SPEC.md` (decisions in §7).
+
+### The official quarter grade (teacher option B, decisions 10/2) — THE grading rule now
+Per student, current marking period: **work** = Schoology's own calculated grade (work categories only once a
+Progress Check column exists — `work_from_cells`); **line** = work + banked bonus-sheet points + early-finish bonus;
+if line ≥ 40 and a PC % is on file, **base** = max(work, PC), else work; **official** = min(100, base + early bonus).
+Banked bonus only counts toward the line (it is still applied at quarter close by the Bonus Bank step). Quarter
+override only — never the year column. A student with no Schoology row is computed anyway and kept in the
+git-ignored `tools/.official-grade-pending.json`.
+- **Where it lives:** Schoology `gp_override` (all 29 written + read back 10/3, 0 mismatches) · roster table
+  `official_grade` · Desk Do Now pill "official (same as Schoology)" + chip "Today's estimate" (engine
+  quarterGrade) · My Ledger balance card ("Official grade" + "Today's estimate" line) · slips ("Q1 official so far",
+  PC sentence from `parts`).
+- **Nightly:** `tools/daily_schoology_sync.ps1` STEP 3 runs `tools/schoology_official.py --section X --apply`
+  after the grade push: recompute, write changed overrides (click the cell first — its input is hidden until a real
+  click), POST `/class/official-grades`; a failed write is left out of the publish and retried next night.
+- **Manual:** `python tools/schoology_official.py --section PeriodB` (dry-run table) / `--apply`.
+- The Desk engine's own number differs from the official one by design (Lesson rule "not until due" vs Schoology
+  counting partial worksheets; Schoology never lowers a grade) — that is why the Desk shows it as the estimate.
+
+### Done 10/2–10/3
+- **Schoology column batches** (`84516558`): the gradebook loads 30 assignment columns, the rest only on a real
+  horizontal scroll of `.s-js-grid-scrolling-body`, and not while the rig window is hidden. Since ~9/30 the sync
+  could not see new columns (E: 3.2 Blooket + 3.3 grades never pushed; B: 3.3 creates "not confirmed").
+  `schoology_ops.load_all_columns` (bring to front, scroll back 200px then to the end) runs inside
+  `find_assignment_id_by_title`. 10/2 runs: B created 3.3+3.4 (38 grades), E created 3.4 (40 grades, incl. the backlog).
+- **Desk lesson panel:** one Follow-Along link per lesson — all 27 old `RESOURCES.pdfs` links removed (21 were 404s,
+  incl. the Unit 3 Kickoff Packet; `tests/desk-resource-links.test.js` keeps relative links out); video line =
+  "▶ Video N (Google Drive) ◀ use this one — AP Classroom (may not load)". Trap: RESOURCES ids are dash-form ("3-3"),
+  the registry is dot-form ("3.3").
+- **Desk calendar Today button** (`32980ec2`): always shows the current week, even for a student who is behind
+  (the first view still opens on the overdue next-up).
+- **Slips:** step 1 = paper retake of U1 MCQ Part A when under 90%; "Follow-Along Worksheet" (not "Open"); the
+  official grade (see above). `tools/schoology_read_grades.py` + `--schoology` remain as a fallback.
+- **U1 Part A paper redos (Period B):** Ellen 8→11/18, Allison 5→10/18 posted; Elijah 8/18 tie and Darla 8/18 (below
+  her 12/18 on file) NOT posted. All Period B redos missed Q4, 8, 14, 15, 16 → written as a one-shot section at
+  the end of `tools/weekly-dok-author-prompt.md` for the next weekly bonus sheet (the 10/2 run was below floor).
+- **Quiz zeros started 10/2** as scheduled; every Schoology cell checked against the engine 10/2 (755 cells, none
+  lower). PowerSchool M1 comments entered for all 29 (B saved by the teacher; letters fixed by hand).
+
+### OPEN (live to-do, top first)
+1. **Read the first unattended nightly run** (`tools/.schoology-sync-logs/sync-Period*-<date>-16*.log`): STEP 3
+   should end "wrote N override(s), 0 failed" + "published N official grades to the Desk".
+2. **Full U1 Progress Check** (Day 2 = Tue 10/13 B, Fri 10/16 E): import the remaining parts so `pcRawPct` is the
+   whole PC (paper rows best-win; a lower paper score REPLACES a higher one — compare first); once Schoology's
+   Progress Check column exists the work grade switches to `work_from_cells` (tested, never run live).
+3. **PowerSchool:** after a sync, confirm an overridden student (Olivia: official 100 vs Schoology calc 39.75)
+   shows the official number; PowerSchool keeps the calculated LETTER after a percent override (set by hand). Map
+   given: Lesson+Blooket→Classwork, Quiz→Quiz, Posters→Project, Progress Check→Test.
+4. **Darla's U1 Part A:** 12/18 came from the 9/21 AP Classroom import but she says she never took it; her paper
+   retake was 8/18. If AP Classroom's Results-by-Student shows the 12/18 isn't hers, replace it (paper row).
+5. Period E PowerSchool comments: confirm the save (comment icon beside each M1 grade).
+6. Dead link in the Supabase `lesson_urls` table: `6.review` → `edgar_u6_conceptual_driller_live.html` (404).
+7. After the next weekly bonus sheet publishes, delete the one-shot "Teacher observations" section from
+   `tools/weekly-dok-author-prompt.md`.
+8. Carried: Blooket max(PC,Work) masking decision; social-proof post; `PAYOUT_AGENT_KEY`; wiki recall (83 due).
+
+### Gotchas learned 10/2–10/3
+- Schoology gradebook = 30 columns per batch; any DOM read of a cell must call `load_all_columns` first.
+- PostgREST reports a missing table as `PGRST205` (not `42P01`) — a 500 until handled.
+- The Windows user env `ROSTER_TEACHER_SECRET` is the OLD value; `/ledger/student` rejects it (401). Tools read
+  `roster-server/.env` first.
+- PowerShell variables are case-insensitive (`$S` and `$s` are the same) — use distinct names.
+- Claude in Chrome on PowerTeacher Pro: a hidden or resized window moves the keypad under the comment box; guard
+  each type with a JS check (right student, box empty, comment box focused). The auto-mode classifier blocks
+  Claude from changing PowerSchool grades — the teacher does those.
+- `/roster/list` includes current passwords — filter fields before printing.
+- The Desk test `desk-verify-tools` bans the literal `'&token='` — send tokens in the Authorization header.
+
+---
+
+## ⏭ SESSION 45 (2026-10-01, Athena laptop, Windows) — superseded by s46 above. PROGRESS REPORTS: best-of grade written into Schoology as MP overrides; slips match Schoology; comments for all 29 students entered in PowerSchool.**
 
 **HEADs:** follow-alongs `3f67003a` (unchanged — NOTHING committed this session; see OPEN 3). No roster-server or cr change.
 Lanes: Opus 5.5 → Fable 5.1 → Opus 5.5 (teacher `/model` switches); no subagents, no Codex. Memory note written:
