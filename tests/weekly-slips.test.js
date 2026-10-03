@@ -6,7 +6,7 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { missingWork, quarterGrade, isCandidate, doFirst, latexText, boxSummary,
-  renderTex, parseArgs, assertSafeOut, retakeStep, schoologyGrade } from '../scripts/weekly-slips.mjs';
+  renderTex, parseArgs, assertSafeOut, retakeStep, schoologyGrade, officialGrade, officialPcSentence } from '../scripts/weekly-slips.mjs';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Copied from tests/desk-zero-warning.test.js.
@@ -414,5 +414,37 @@ describe('schoologyGrade', () => {
     expect(quarterGrade({ quarters, schoology: { calc: 67.5, override: null } }, 'Q1')).toBe(67.5);
     expect(quarterGrade({ quarters }, 'Q1')).toBe(40);
     expect(quarterGrade({ quarters, schoology: null }, 'Q1')).toBe(40);
+  });
+});
+
+describe('officialGrade (OFFICIAL_GRADE_SYNC_SPEC)', () => {
+  const quarters = { Q1: { quarterGrade: 37.9, lessonsDue: 3 } };
+  const official = { quarter: 'Q1', grade: 68.7, parts: { work: 36.14, line: 41.14, rule: 'PC' } };
+  it('the published official grade is the slip grade, ahead of Schoology and the Desk', () => {
+    expect(officialGrade({ official })).toBe(68.7);
+    expect(quarterGrade({ quarters, official, schoology: { calc: 36.14, override: null } }, 'Q1')).toBe(68.7);
+  });
+  it('falls back when nothing is published', () => {
+    expect(officialGrade({ official: null })).toBeNull();
+    expect(quarterGrade({ quarters, official: null }, 'Q1')).toBe(37.9);
+  });
+});
+
+describe('officialPcSentence (teacher rule: work + bonuses >= 40 lets the PC count)', () => {
+  it('PC counting: names the bonus that carried them over', () => {
+    expect(officialPcSentence({ work: 36.14, pc: 66.7, line: 41.14, rule: 'PC' }))
+      .toBe("Your Progress Check (67%) is your grade's base because your work (36.1%) plus 5 bonus points reached 40%. Keep it at 40% or more; under it, your grade falls back to your work.");
+  });
+  it('under the line: how many points until the PC counts', () => {
+    expect(officialPcSentence({ work: 33.62, pc: 61.1, line: 35.62, rule: 'work (under 40)' }))
+      .toBe('Your Progress Check (61%) starts counting as soon as your work (33.6%) plus 2 bonus points reaches 40% - about 4.4 more points. Then your grade becomes the higher of the two.');
+  });
+  it('work already higher: says the grade follows the work', () => {
+    expect(officialPcSentence({ work: 85.9, pc: 55.6, line: 90.9, rule: 'work' }))
+      .toBe('Your work (85.9%) is higher than your Progress Check (56%), so your grade follows your work; a higher Progress Check score would take over.');
+  });
+  it('one bonus point is singular; no breakdown gives no sentence', () => {
+    expect(officialPcSentence({ work: 73.58, pc: 94.4, line: 74.58, rule: 'PC' })).toContain('plus 1 bonus point reached');
+    expect(officialPcSentence({})).toBe('');
   });
 });

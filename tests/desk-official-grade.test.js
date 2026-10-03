@@ -87,6 +87,39 @@ describe('_officialGradeTitle', () => {
   });
 });
 
+describe('My Ledger balance card (_walletCurrentGrade)', () => {
+  function walletGrade({ official, quarterGrade = 37.9, quarter = 'Q1' }) {
+    const sandbox = {
+      _officialGradeCache: official,
+      _walletCurrentQuarter: () => ({ quarter, data: { quarterGrade } }),
+    };
+    runInNewContext(fnSource('_walletPct') + '\n' + fnSource('_walletCurrentGrade') + '\nthis._g=_walletCurrentGrade;', sandbox);
+    return sandbox._g();
+  }
+
+  it('leads with the official grade and keeps the live grade as the estimate', () => {
+    const g = walletGrade({ official: OFFICIAL });
+    expect(g.pct).toBe(68.7);
+    expect(g.q).toBe('Q1');
+    expect(g.estimate).toBe(38);
+    expect(g.official).toBe(OFFICIAL);
+  });
+
+  it('falls back to the Desk grade when nothing is published', () => {
+    expect(walletGrade({ official: null })).toEqual({ pct: 38, q: 'Q1' });
+  });
+
+  it('ignores an official grade from another quarter', () => {
+    expect(walletGrade({ official: { ...OFFICIAL, quarter: 'Q2' } })).toEqual({ pct: 38, q: 'Q1' });
+  });
+
+  it('the card labels it and shows the estimate line', () => {
+    const paint = fnSource('_walletPaint');
+    expect(paint).toMatch(/grade\.official \? 'Official grade \(same as Schoology\)' : 'Grade'/);
+    expect(paint).toMatch(/"Today's estimate: "/);
+  });
+});
+
 describe('renderDoNowGrades wiring', () => {
   const body = fnSource('renderDoNowGrades');
   it('fetches the official grade and makes it the headline number', () => {

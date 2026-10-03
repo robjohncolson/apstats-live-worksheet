@@ -69,7 +69,16 @@ export function schoologyGrade(student) {
   return Number.isFinite(grades.calc) ? grades.calc : null;
 }
 
+// The official quarter grade (OFFICIAL_GRADE_SYNC_SPEC.md): the number written into Schoology
+// each night and shown on the Desk. null when none is published for the student.
+export function officialGrade(student) {
+  const grade = student && student.official ? student.official.grade : null;
+  return Number.isFinite(grade) ? grade : null;
+}
+
 export function quarterGrade(student, serverKey) {
+  const official = officialGrade(student);
+  if (official != null) return official;
   const shown = schoologyGrade(student);
   if (shown != null) return shown;
   const key = currentQuarterKey(student.quarters, serverKey);
@@ -422,6 +431,28 @@ export function loadSchedule() {
 
 // EFFORT_VISIBILITY_SPEC §2: under the header, up to two short lines — the Progress Check on
 // file (+ the 40% strategy) in black, and the "ahead of the calendar" praise behind a green square.
+// The Progress Check sentence from the official grade's own breakdown (teacher's rule,
+// OFFICIAL_GRADE_SYNC_SPEC.md: work + bonuses >= 40 lets the PC count). '' when there is no
+// official breakdown (the engine-based sentence is used instead).
+export function officialPcSentence(parts, floor = 40) {
+  if (!parts || !Number.isFinite(parts.pc) || !Number.isFinite(parts.work) || !Number.isFinite(parts.line)) return '';
+  const pc = Math.round(parts.pc);
+  const work = Math.round(parts.work * 10) / 10;
+  const bonuses = Math.round((parts.line - parts.work) * 10) / 10;
+  const withBonus = bonuses > 0 ? ` plus ${bonuses} bonus point${bonuses === 1 ? '' : 's'}` : '';
+  if (parts.rule === 'PC') {
+    return `Your Progress Check (${pc}%) is your grade's base because your work (${work}%)${withBonus} reached ${floor}%. `
+      + `Keep it at ${floor}% or more; under it, your grade falls back to your work.`;
+  }
+  if (parts.line < floor) {
+    const need = Math.ceil((floor - parts.line) * 10) / 10;
+    return `Your Progress Check (${pc}%) starts counting as soon as your work (${work}%)${withBonus} reaches ${floor}% `
+      + `- about ${need} more points. Then your grade becomes the higher of the two.`;
+  }
+  return `Your work (${work}%) is higher than your Progress Check (${pc}%), so your grade follows your work; `
+    + 'a higher Progress Check score would take over.';
+}
+
 export function effortLines(student, section, date, quarterKey, schedule = loadSchedule()) {
   const facts = globalThis.EffortFacts;
   const period = section.slice(-1);
@@ -429,16 +460,25 @@ export function effortLines(student, section, date, quarterKey, schedule = loadS
   const quarter = key ? student.quarters[key] : null;
   // UNROUNDED averages: the 40% gate test must see the engine's own numbers.
   const engineWork = quarter && Number.isFinite(quarter.workAvg) ? quarter.workAvg : null;
-  // Teacher 2026-10-01: with Schoology grades on hand, Schoology's calculated grade IS the work grade.
-  const workAvg = Number.isFinite(student.schoology?.calc) ? student.schoology.calc : engineWork;
+  // Teacher 2026-10-01: Schoology's calculated grade IS the work grade (the official grade carries it).
+  const parts = (student.official && student.official.parts) || {};
+  const workAvg = Number.isFinite(parts.work) ? parts.work
+    : Number.isFinite(student.schoology?.calc) ? student.schoology.calc : engineWork;
   const pcAvg = quarter && Number.isFinite(quarter.pcAvg) ? quarter.pcAvg : null;
   const pc = facts.pcOnFile(student.units, student.quarters, period, schedule, date, key);
-  // In Schoology the Progress Check already counts for anyone whose work grade is at least 40%
-  // (the teacher writes the higher of the two as the override), so say "now", not a future date.
-  const countsNow = pc && Number.isFinite(student.schoology?.calc) && student.schoology.calc >= facts.GRADE_FLOOR;
-  const pcShown = countsNow ? { ...pc, counting: true } : pc;
+  // In Schoology the Progress Check already counts once work + bonuses reach 40% (the official
+  // grade takes the higher of the two), so say "now", not a future date.
+  const countsNow = pc && (Number.isFinite(parts.line)
+    ? parts.line >= facts.GRADE_FLOOR
+    : Number.isFinite(student.schoology?.calc) && student.schoology.calc >= facts.GRADE_FLOOR);
+  // With an official breakdown the sentence below explains when the PC counts, so drop the
+  // calendar date ("counts from Fri 10/16"), which the teacher's 40% rule no longer uses.
+  const pcShown = countsNow ? { ...pc, counting: true }
+    : (pc && Number.isFinite(parts.line)) ? { ...pc, counting: false, day: null } : pc;
   const pcAvgShown = countsNow ? pc.pct : pcAvg;
-  const pcText = pc ? [facts.pcLine(pcShown), facts.strategyLine(pcShown, workAvg, facts.GRADE_FLOOR, pcAvgShown)].filter(Boolean).join(' ') : '';
+  const officialText = officialPcSentence(parts, facts.GRADE_FLOOR);
+  const strategy = officialText || facts.strategyLine(pcShown, workAvg, facts.GRADE_FLOOR, pcAvgShown);
+  const pcText = pc ? [facts.pcLine(pcShown), strategy].filter(Boolean).join(' ') : '';
   const ahead = facts.aheadLessons(student.lessons, period, date);
   let aheadText = facts.aheadLine(ahead, topicNumber);
   // AHEAD_WORK_PROJECTION_SPEC: /class/grades students carry the server gradebook, so the
@@ -472,7 +512,8 @@ export function renderSlip(student, section, date, summary, quarterKey, pool = n
   const grade = quarterGrade(student, quarterKey);
   const own = grade == null ? null : Math.round(grade);
   const quarterName = currentQuarterKey(student.quarters, quarterKey);
-  const quarterLabel = schoologyGrade(student) == null ? quarterName : `${quarterName} in Schoology`;
+  const quarterLabel = officialGrade(student) != null ? `${quarterName} official`
+    : schoologyGrade(student) != null ? `${quarterName} in Schoology` : quarterName;
   const plan = [retakeStep(student), ...planFor(lessons, missing, section.slice(-1), date)].filter(Boolean);
   const steps = plan.map((line, index) => `${index + 1}. ${latexText(line)}\\par`).join('\n');
   const name = student.realName || student.name || student.username || 'Student';
@@ -633,6 +674,21 @@ export async function fetchPool(config) {
   }
 }
 
+// GET /official-grade for one student (teacher key). null when not published or unreachable.
+export async function fetchOfficial(config, studentId, quarter) {
+  try {
+    const base = config.rosterUrl.replace(/\/+$/, '');
+    const q = quarter ? `quarter=${encodeURIComponent(quarter)}&` : '';
+    const res = await fetch(`${base}/official-grade?${q}studentId=${encodeURIComponent(studentId)}`,
+      { headers: { 'x-teacher-secret': config.teacherKey }, signal: AbortSignal.timeout(30000) });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json && json.ok && json.official ? json.official : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 export async function main(args = process.argv.slice(2)) {
   const options = parseArgs(args);
   const out = assertSafeOut(options.out);
@@ -657,6 +713,8 @@ export async function main(args = process.argv.slice(2)) {
     } catch (_) { quarterKey = null; }
     const students = realStudents(doc.students);
     if (schoology) for (const student of students) student.schoology = schoology[student.schoologyUid] || null;
+    // The official grade each student sees on the Desk and in Schoology (published nightly).
+    await Promise.all(students.map(async student => { student.official = await fetchOfficial(config, student.studentId, quarterKey); }));
     const candidates = students.filter(student => isCandidate(quarterGrade(student, quarterKey),
       missingWork(student.lessons, section.slice(-1), options.date), options));
     counts.push({ section, count: candidates.length });

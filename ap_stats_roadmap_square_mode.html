@@ -9144,6 +9144,8 @@ function _gradeMathToggle(host, ctx) {
   host.appendChild(btn); host.appendChild(panel);
 }
 
+// Last official grade fetched by the Do Now (My Ledger's balance card reads it too).
+var _officialGradeCache = null;
 // OFFICIAL_GRADE_SYNC_SPEC §4.4: the official quarter grade -- the number written into
 // Schoology each night (teacher 2026-10-02: the Desk and Schoology must agree). Returns
 // { quarter, grade, asOf, parts } or null (not published yet, offline, or server too old).
@@ -9368,6 +9370,7 @@ async function renderDoNowGrades(baseUrl, token) {
     // The official grade (OFFICIAL_GRADE_SYNC_SPEC §4.4), when one has been published, is the
     // headline number; the engine's live grade becomes "Today's estimate" beside it.
     var official = (typeof _fetchOfficialGrade === 'function') ? await _fetchOfficialGrade(baseUrl, token, curQ) : null;
+    if (typeof _officialGradeCache !== 'undefined') _officialGradeCache = official;
     var pill = document.createElement('span');
     pill.className = 'qpill' + (gradeRaw == null && !official ? ' empty' : '');
     var keySpan = document.createElement('span');
@@ -15805,6 +15808,17 @@ function _walletCurrentQuarter() {
 function _walletCurrentGrade() {
     var current = _walletCurrentQuarter();
     var q = current.data;
+    // OFFICIAL_GRADE_SYNC_SPEC §4.4: the official grade (the number in Schoology) leads when it has
+    // been published for this quarter; the Desk's live grade becomes "Today's estimate".
+    var official = (typeof _officialGradeCache !== 'undefined') ? _officialGradeCache : null;
+    if (official && typeof official.grade === 'number' && (!current.quarter || official.quarter === current.quarter)) {
+        return {
+            pct: Math.round(official.grade * 10) / 10,
+            q: official.quarter,
+            official: official,
+            estimate: (q && typeof q.quarterGrade === 'number') ? _walletPct(q.quarterGrade) : null,
+        };
+    }
     if (q && typeof q.quarterGrade === 'number') {
         return { pct: _walletPct(q.quarterGrade), q: current.quarter };
     }
@@ -18782,16 +18796,25 @@ function _walletPaint(host, receipts, loading) {
     var gradeLbl = document.createElement('span');
     gradeLbl.className = 'geneva';
     gradeLbl.style.cssText = 'font-size:11px;color:#555';
-    gradeLbl.textContent = 'Grade';
+    gradeLbl.textContent = grade.official ? 'Official grade (same as Schoology)' : 'Grade';
+    if (grade.official && typeof _officialGradeTitle === 'function') gradeRow.title = _officialGradeTitle(grade.official);
     gradeRow.appendChild(gradeBig);
     gradeRow.appendChild(gradeLbl);
     card.appendChild(gradeRow);
+    if (grade.official) {
+        var estimate = document.createElement('div');
+        estimate.className = 'wallet-grade-estimate geneva';
+        estimate.style.cssText = 'font-size:11px;color:#555;margin-top:2px';
+        estimate.textContent = "Today's estimate: " + (grade.estimate != null ? grade.estimate + '%' : '—')
+            + ' — moves as you work; the official grade updates every night.';
+        card.appendChild(estimate);
+    }
 
     // LEDGER_GRADE_AGREEMENT_SPEC §3: while zeros are coming or counting, the number is not settled.
     if (warns.length) {
         var zerosNow = _zeroAnyPast(warns);
         gradeBig.style.color = zerosNow ? '#a30000' : '#7a5c00';
-        gradeLbl.textContent = 'Grade today';
+        if (!grade.official) gradeLbl.textContent = 'Grade today';
         var drop = document.createElement('div');
         drop.className = 'wallet-grade-drop geneva';
         drop.style.cssText = 'font-size:11px;line-height:1.35;margin-top:4px;color:#000;font-weight:bold';
@@ -27573,7 +27596,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-03-hoa3';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-03-576c';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
