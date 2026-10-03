@@ -78,8 +78,8 @@ git-ignored `tools/.official-grade-pending.json`.
 3. **PowerSchool:** after a sync, confirm an overridden student (Olivia: official 100 vs Schoology calc 39.75)
    shows the official number; PowerSchool keeps the calculated LETTER after a percent override (set by hand). Map
    given: Lesson+Blooket→Classwork, Quiz→Quiz, Posters→Project, Progress Check→Test.
-4. **Darla's U1 Part A:** 12/18 came from the 9/21 AP Classroom import but she says she never took it; her paper
-   retake was 8/18. If AP Classroom's Results-by-Student shows the 12/18 isn't hers, replace it (paper row).
+4. (Closed 10/3) Darla's U1 Part A 12/18 stays — AP Classroom shows the attempt is hers; her 8/18 paper retake
+   was not posted.
 5. Period E PowerSchool comments: confirm the save (comment icon beside each M1 grade).
 6. Dead link in the Supabase `lesson_urls` table: `6.review` → `edgar_u6_conceptual_driller_live.html` (404).
 7. After the next weekly bonus sheet publishes, delete the one-shot "Teacher observations" section from
