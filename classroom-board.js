@@ -4412,6 +4412,7 @@
 
     var nativePanel = null;
     var nativeActive = false;
+    var nativeLoading = false, nativeSwitching = false;
     var parkReturnAt = 0;
     var parkExitKeyHeld = false;
     // APStat Park: one door on the calendar board itself (no lobby). It opens level 6, a faithful
@@ -4493,9 +4494,30 @@
       var build = (typeof root.APP_BUILD === 'string' && root.APP_BUILD) ? root.APP_BUILD : '';
       return build ? '?v=' + encodeURIComponent(build) : '';
     }
+    function freezeParkFrame() {
+      if (!engine || !engine.canvas.width) return null;
+      var frame = doc.createElement('canvas'), ctx = frame.getContext('2d');
+      if (!ctx) return null;
+      frame.width = engine.canvas.width; frame.height = engine.canvas.height;
+      var element = container, colour = 'transparent';
+      while (element) {
+        colour = root.getComputedStyle(element).backgroundColor;
+        if (colour && colour !== 'transparent' && colour !== 'rgba(0, 0, 0, 0)') break;
+        element = element.parentElement;
+      }
+      ctx.fillStyle = element ? colour : '#ffffff';
+      ctx.fillRect(0, 0, frame.width, frame.height);
+      ctx.drawImage(engine.canvas, 0, 0);
+      return frame;
+    }
     function enterPark(levelIndex) {
-      if (levelIndex >= 0 && nativePanel && nativePanel.kind === 'calculator') nativePanel.dispose();
-      if (destroyed || nativeButton.disabled || role !== 'student' || classroomBusy()) { return; }
+      if (destroyed || !engineReady || nativeLoading || role !== 'student' || classroomBusy()) { return; }
+      nativeLoading = true;
+      var previousPanel = nativePanel, previousScene = engine.sceneEntities;
+      var transitionFrame = nativeActive ? freezeParkFrame() : null;
+      if (transitionFrame) engine.sceneEntities = new Map([['handoff', { render: function (ctx) {
+        ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(transitionFrame, 0, 0); ctx.restore();
+      } }]]);
       setParkButtons(function (b) { b.disabled = true; });
       // ?v=<APP_BUILD>: the park modules (and their art and sounds, which inherit the query) come
       // from the same deploy as this board, never from a stale HTTP/CDN cache entry.
@@ -4503,7 +4525,15 @@
         ? import('./apstat-park/calculator-room.mjs' + parkBuildQuery())
         : import('./apstat-park/panel.mjs' + parkBuildQuery());
       roomPromise.then(function (module) {
-        if (destroyed || classroomBusy() || !engineReady) { setParkButtons(function (b) { b.disabled = false; }); return; }
+        nativeLoading = false;
+        if (destroyed || classroomBusy() || !engineReady) {
+          if (nativePanel) nativePanel.dispose();
+          engine.sceneEntities = null; nativeActive = false;
+          if (!destroyed) setBoardHeight();
+          setParkButtons(function (b) { b.disabled = false; }); return;
+        }
+        nativeSwitching = true;
+        try { if (previousPanel) previousPanel.dispose(); } finally { nativeSwitching = false; }
         nativeActive = true;
         setParkButtons(function (b) { b.style.visibility = 'hidden'; });
         for (var key in playerInput) { playerInput[key] = false; }
@@ -4515,7 +4545,10 @@
           board: {
             engine: engine, input: playerInput, presses: parkPresses, username: username, api: root.ClassroomBoard,
             viewportW: _viewportW,
-            setBoardHeight: setBoardHeight,
+            roomPresentation: { width: 720, height: 750, floor: 700, doorX: 30, doorSize: 40 },
+            transitionFrame: transitionFrame,
+            // Scene disposal must not shrink the canvas between two student rooms.
+            setBoardHeight: function (h) { if (h !== undefined) setBoardHeight(h); },
             // The calendar's decoded atlas (null until decoded): the park draws from it directly.
             atlas: function () { return parkDoorSpriteReady() ? parkDoorImage : null; },
             createPlayer: function (options) {
@@ -4530,18 +4563,25 @@
             }
           },
           onClose: function () {
+            if (nativeSwitching) return;
             nativePanel = null; nativeActive = false;
+            if (levelIndex >= 0 && !destroyed && !classroomBusy()) {
+              nativeActive = true;
+              enterPark(-1);
+              return;
+            }
             setBoardHeight();
             setParkButtons(function (b) { b.disabled = false; b.style.visibility = ''; });
             parkReturnAt = Date.now();
             parkExitKeyHeld = true;
             for (var key in playerInput) playerInput[key] = false;
             if (!destroyed && engineReady) _refreshCameraDims();
-            if (levelIndex >= 0 && !destroyed && !classroomBusy()) enterPark(-1);
           }
         });
       }).catch(function (error) {
-        nativeActive = false;
+        nativeLoading = false;
+        nativeActive = !!nativePanel;
+        if (nativePanel === previousPanel) engine.sceneEntities = previousScene;
         setParkButtons(function (b) { b.disabled = false; b.style.visibility = ''; b.title = 'APStat Park did not load (' + error.message + ') \u2014 click the door to retry'; });
         if (!destroyed && engineReady) engine.start();
       });

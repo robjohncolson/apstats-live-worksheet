@@ -6,6 +6,11 @@ The student room is one continuous scrolling world with an orange floor. Walk
 right toward **Make a five-number summary**; the entrance instructions scroll
 away as the calculator platforms come into view, without loading another scene.
 The left doorway opens Jump together with Up. Escape returns to the entrance.
+Crossing the doorway preserves the outgoing frame while the next scene loads,
+then dissolves it over 320 ms. Both rooms share the responsive 750-unit canvas,
+700-unit floor height, and 40-unit doorway at x=30. Pico's rendering is translated
+and scaled into that space; its physics and relay coordinates remain unchanged.
+Returning to the calculator uses the same handoff without flashing the old board.
 The calculator mission uses the existing trainer's native JavaScript calculator
 and `one-var-stats` procedure. A scenery renderer paints its live menus and results
 in pixel lettering directly on the world background, with no green LCD panel.

@@ -8,6 +8,7 @@ const { createPicoArt } = await import('./pico-art.mjs' + V);
 const { createPicoAudio } = await import('./pico-audio.mjs' + V);
 const { PICO } = await import('./physics.mjs' + V);
 const { approachSteps, createCalculatorMotion } = await import('./calculator-motion.mjs' + V);
+const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
@@ -375,6 +376,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     Object.assign(api._camera, savedCamera); onClose();
   }
   entities.set('calculator-room', { update, render: draw });
+  entities.set('dissolve', createSceneDissolve(board.transitionFrame));
   engine.sceneEntities = entities;
   engine.canvas.addEventListener('click', pointer, true); doc.addEventListener('keydown', key);
   doc.addEventListener('visibilitychange', visibility);

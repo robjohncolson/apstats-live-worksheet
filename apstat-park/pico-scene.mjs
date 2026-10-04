@@ -302,16 +302,28 @@ export function createPicoScene({ board, replica, member, player, peers, status,
     const p = progress(), vw = board.api._camera?.vw || board.viewportW();
     ctx.save(); ctx.fillStyle = pageColour(); ctx.fillRect(0, 0, Math.max(vw, level.width), level.height); ctx.restore();
     world(ctx, () => {
+      const room = board.roomPresentation;
+      if (room) {
+        const bottom = room.height - room.floor + level.exit.y + 23;
+        for (const tile of level.platforms) if (tile.y + tile.h >= level.height) {
+          art.block(ctx, { ...tile, h: bottom - tile.y });
+        }
+      }
       art.tiles(ctx, level);
       for (const item of terrain) if (item.party) art.block(ctx, item);
       const resting = level.platforms.find(item => item.kind === 'bridge');
       if (resting) art.bridge(ctx, Math.min(bridgeL ?? resting.x, resting.x), resting.x + resting.w, resting.y);
       const pad = level.switches[0];
       if (pad) art.switchPad(ctx, pad.trigger.cx, pad.trigger.feetMax, p.latches?.bridge != null || switchPressedLocally);
-      const exitFeet = level.exit.y + 23, exitCx = Math.max(level.exit.x + 8, 40);
-      art.door(ctx, exitCx, exitFeet, true);
+      const exitFeet = level.exit.y + 23, exitCx = room ? room.doorX + room.doorSize / 2 : Math.max(level.exit.x + 8, 40);
+      ctx.save();
+      ctx.translate(exitCx, exitFeet);
+      const doorScale = room ? room.doorSize / 32 : 1;
+      ctx.scale(doorScale, doorScale);
+      art.door(ctx, 0, 0, true);
+      ctx.restore();
       ctx.fillStyle = '#c2643a'; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('Calendar', exitCx, exitFeet - 36);
+      ctx.fillText('Calculator', exitCx, exitFeet - (room?.doorSize || 32) - 8);
       art.door(ctx, level.goal.x + 8, level.goal.y + 23, p.doorOpen);
       if (lift) art.lift(ctx, lift, liftLocal ?? lift.rest, R.liftCountdown(lift, active.length, (p.holds[lift.id] || []).length));
       if (!p.doorOpen && !p.keyHolder) art.key(ctx, key.x, key.y);

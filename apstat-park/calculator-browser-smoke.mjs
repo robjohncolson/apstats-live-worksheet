@@ -186,10 +186,37 @@ try {
   await alice.screenshot({ path: path.join(output, 'calculator-complete.png'), fullPage: true });
   await alice.keyboard.press('Escape');
   await alice.waitForFunction(() => !board.getParkScene().getView().participating);
+  await alice.waitForFunction(() => board.getParkScene().getView().cameraX < 0.1);
+  const roomHeight = await alice.evaluate(() => board.getBoardHeight());
+  // Delay the first module load: the outgoing room must remain visible throughout.
+  await alice.route('**/apstat-park/panel.mjs*', async route => {
+    await new Promise(resolve => setTimeout(resolve, 400));
+    await route.continue();
+  });
+  await alice.evaluate(() => {
+    window.transitionHeights = [];
+    window.watchTransition = true;
+    function sample() {
+      if (!window.watchTransition) return;
+      window.transitionHeights.push(board.getBoardHeight());
+      requestAnimationFrame(sample);
+    }
+    sample();
+  });
   await alice.evaluate(() => board.openNativeGameplay(0));
   await alice.waitForSelector('[data-park-active]');
-  await alice.keyboard.press('Escape');
+  await alice.waitForFunction(() => board.getParkScene()?.getGame?.().getWorld().shown);
+  await alice.waitForTimeout(400);
+  assert.equal(await alice.evaluate(() => board.getBoardHeight()), roomHeight);
+  assert.ok(await alice.evaluate(height => transitionHeights.every(value => value === height), roomHeight),
+    'loading and entering Pico never flashes the old short board');
+  await alice.screenshot({ path: path.join(output, 'calculator-pico-aligned.png'), fullPage: true });
+  await alice.keyboard.press('ArrowUp');
   await alice.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
+  await alice.waitForTimeout(400);
+  assert.ok(await alice.evaluate(height => transitionHeights.every(value => value === height), roomHeight),
+    'returning to the calculator keeps the same canvas height');
+  await alice.evaluate(() => { window.watchTransition = false; });
   await alice.evaluate(() => board.openCalculatorMission());
   await alice.waitForFunction(() => board.getParkScene()?.getState()?.complete);
   assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
@@ -216,6 +243,17 @@ try {
   await alice.keyboard.up('Space');
   await alice.setViewportSize({ width: 390, height: 1000 });
   await alice.screenshot({ path: path.join(output, 'calculator-mobile.png'), fullPage: true });
+  await alice.keyboard.press('Escape');
+  await alice.waitForFunction(() => board.getParkScene().getView().cameraX < 0.1);
+  const mobileHeight = await alice.evaluate(() => board.getBoardHeight());
+  await alice.evaluate(() => board.openNativeGameplay(0));
+  await alice.waitForFunction(() => board.getParkScene()?.getGame?.().getWorld().shown);
+  await alice.waitForTimeout(400);
+  assert.equal(await alice.evaluate(() => board.getBoardHeight()), mobileHeight,
+    'mobile Pico keeps the calculator scale and floor position');
+  await alice.screenshot({ path: path.join(output, 'calculator-pico-mobile.png'), fullPage: true });
+  await alice.keyboard.press('ArrowUp');
+  await alice.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
   for (const [ws, who] of sockets) {
     if (who.username === 'alice') send(ws, { ...registry.stateFor('B', 'student', 'alice'),
       poll: { id: 'recall', question: 'Return to class', options: ['Ready'], votes: {} } });

@@ -4,6 +4,7 @@ const V = new URL(import.meta.url).search;
 const { profileFor, createFixedStep } = await import('./physics.mjs' + V);
 const { createPicoScene } = await import('./pico-scene.mjs' + V);
 const { toPose } = await import('./pico-rules.mjs' + V);
+const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 
 // The calendar strip's height; a level taller than this grows the board while it is open.
 export const BASE_BOARD_H = 220;
@@ -45,6 +46,15 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   const oldCamera = {...api._camera}, holdSent = new Map(), moving = new Map();
   let level=null, terrain=[], lift=null, disposed=false, lastLevel=null, returnWalk=0, lastRest=null, retrying=false, wasArrived=false;
   let pushAt=0, pushing=null, pico=null;
+  const room = board.roomPresentation;
+  const roomScale = () => room && level?.physics === 'pico' ? Math.min(1, board.viewportW() / room.width) : 1;
+  const viewportWidth = () => board.viewportW() / roomScale();
+  function resizeScene() {
+    const height = room && level?.physics === 'pico' ? Math.round(room.height * roomScale()) : Math.max(BASE_BOARD_H, level?.height || 0);
+    if (height === sceneHeight) return;
+    sceneHeight = height; board.setBoardHeight?.(height);
+  }
+  let sceneHeight = null;
   // Fall wrap state: where the cat last stood on solid ground, and whether it is
   // mid-drop from the top (steering locked until it lands).
   let lastGround=null, wrapDrop=null;
@@ -52,14 +62,16 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   const pose = ()=>({x:player.x,y:player.y,vx:player.vx,vy:player.vy});
   // Before the relay sends a level, the calendar door and floor come from the board itself.
   const floorY = ()=>level ? level.exit.y+CAT_H : engine.groundY;
-  const exitSpot = ()=>level?.exit || {x:CALENDAR_DOOR_X,y:floorY()-CAT_H};
+  const exitSpot = () => room && level?.physics === 'pico'
+    ? { x: room.doorX + room.doorSize / 2 - 8, y: level.exit.y }
+    : level?.exit || { x: CALENDAR_DOOR_X, y: floorY() - CAT_H };
   // Level 6 (physics 'pico') compares relay poses: toPose() is the one sprite<->pose conversion.
   const here = ()=>pico&&level?.physics==='pico'?toPose(player):player;
   const near = item=>{if(!item)return false;const at=here();return Math.hypot(at.x-item.x,at.y-item.y)<22;};
   const onPad = item=>Math.abs(player.x-item.x)<20 && Math.abs(player.y-item.y)<3 && player.vy>=0;
   const player = board.createPlayer({x:90,y:floorY()-CAT_H,input,terrain:()=>terrain,peers:()=>peers,canvasW:()=>level?.width || 960,onUpPressed:act,physics:profileFor(null)});
   player.engine=engine;
-  Object.assign(api._camera,{x:0,enabled:true,followFn:()=>player,levelWFn:()=>Math.max(level?.width || 960,board.viewportW()),vwFn:board.viewportW,cameraStateFn:()=>null});
+  Object.assign(api._camera,{x:0,enabled:true,followFn:()=>player,levelWFn:()=>Math.max(level?.width || 960,viewportWidth()),vwFn:viewportWidth,cameraStateFn:()=>null});
   function act() {
     if(disposed)return;
     if(near(exitSpot())){onExit();return;}
@@ -113,7 +125,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     const identity=replica.state && replica.state.epoch+'/'+replica.state.level.id;
     if(identity && identity!==lastLevel){
       level=replica.state.level;lastLevel=identity;player.physics=profileFor(level);
-      if(shown)board.setBoardHeight?.(Math.max(BASE_BOARD_H,level.height||0));lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
+      if(shown)resizeScene();lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
       for(const name of Object.keys(peers))dropPeer(name);
       if(level.physics==='pico'){
         // Level 6: PICO PARK 1-1. pico-scene.mjs places the cat (spawn slot / safe re-entry).
@@ -318,10 +330,12 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   }
   function show() {
     shown=true;
-    board.setBoardHeight?.(Math.max(BASE_BOARD_H,level.height||0));
+    resizeScene();
+    entities.set('dissolve', createSceneDissolve(board.transitionFrame));
     engine.sceneEntities=entities;
   }
   function tick(dt) {
+    if (shown) resizeScene();
     clock.advance(dt,()=>{
       if(disposed)return false;
       const forced=takePresses();
@@ -336,10 +350,18 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
       api._updateCamera();
     });
   }
+  entities.set('room-transform', { zIndex: -10, render(ctx) {
+    ctx.save();
+    if (room && level?.physics === 'pico') {
+      ctx.scale(roomScale(), roomScale());
+      ctx.translate(0, room.floor - (level.exit.y + 23));
+    }
+  } });
+  entities.set('room-transform-end', { zIndex: 100, render: ctx => ctx.restore() });
   entities.set('step',{update:tick});entities.set('scenery',{zIndex:1,render:scenery});
   entities.set('player',{zIndex:10,render:ctx=>pico&&level?.physics==='pico'?pico.drawCat(ctx,player,member):player.render(ctx)});
   // The frozen calendar frame shown while waiting (null where canvas is unavailable, e.g. tests).
-  const frozen=freezeFrame(engine.canvas);
+  const frozen=board.transitionFrame || freezeFrame(engine.canvas);
   const waiting=new Map([['step',{update:tick}],['frozen',{render:ctx=>{
     if(!frozen)return;
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(frozen,0,0);ctx.restore();
