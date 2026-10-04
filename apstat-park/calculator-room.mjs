@@ -4,6 +4,7 @@ const { DATA, ROUTE, HINTS, SUMMARY, LABELS, HOLD_MS, ROUND_MS, WORLD, tilesFor,
 const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
+const { createPicoArt } = await import('./pico-art.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
@@ -13,6 +14,8 @@ for (const file of nativeScriptFilenames) await import('../ti84-trainer-v2/nativ
 export function mountParkPanel({ container, getSocket, board, onClose, onPark = () => {} }) {
   const doc = container.ownerDocument, win = doc.defaultView;
   const { engine, input, api } = board;
+  const art = createPicoArt(doc);
+  art.load(board.atlas?.());
   const savedCamera = { ...api._camera };
   const entities = new Map(), peers = new Map();
   const display = createWorldDisplay();
@@ -220,13 +223,21 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function text(ctx, value, x, y, size = 14, color = '#30263b', align = 'left') {
     pixelText(ctx, value, x, y, size, color, align);
   }
+  function keyPlatform(ctx, tile, colour) {
+    const { x, y, w, h } = tile, cut = 4;
+    ctx.fillStyle = colour;
+    ctx.beginPath();
+    ctx.moveTo(x + cut, y); ctx.lineTo(x + w - cut, y);
+    ctx.lineTo(x + w, y + cut); ctx.lineTo(x + w, y + h - cut);
+    ctx.lineTo(x + w - cut, y + h); ctx.lineTo(x + cut, y + h);
+    ctx.lineTo(x, y + h - cut); ctx.lineTo(x, y + cut);
+    ctx.closePath(); ctx.fill();
+  }
   function draw(ctx) {
     ctx.save(); ctx.scale(scale(), scale()); ctx.translate(-Math.round(cameraX), 0);
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#fff7e7'; ctx.fillRect(0, 0, LEVEL_WIDTH, WORLD.height);
-    ctx.fillStyle = '#eb9447'; ctx.fillRect(0, WORLD.floor, LEVEL_WIDTH, 50);
-    ctx.fillStyle = '#b95e30';
-    for (let x = 0; x < LEVEL_WIDTH; x += 24) ctx.fillRect(x, WORLD.floor + 20, 18, 3);
+    art.block(ctx, { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 });
     text(ctx, 'CALCULATOR TOGETHER', 85, 365, 21);
     text(ctx, 'WALK RIGHT TO START >', 85, 410, 21);
     text(ctx, 'ARROWS MOVE . SPACE JUMPS', 85, 451, 14);
@@ -263,8 +274,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const step = state?.step || 0;
     for (const tile of tilesFor(step)) {
       const hint = state?.hintKeys?.includes(tile.key);
-      ctx.fillStyle = selected === tile.key ? '#f9c45f' : hint ? '#9bdfae' : '#494458';
-      ctx.fillRect(tile.x, tile.y, tile.w, tile.h);
+      keyPlatform(ctx, tile, selected === tile.key ? '#f9c45f' : hint ? '#9bdfae' : '#494458');
       text(ctx, tile.key, tile.x + tile.w / 2, tile.y + 18, 12, selected === tile.key || hint ? '#30263b' : '#fff', 'center');
     }
     if (step >= ROUTE.length) drawBoxplot(ctx, step - ROUTE.length);

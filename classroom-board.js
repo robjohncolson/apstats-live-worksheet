@@ -4891,9 +4891,7 @@
         if (classroomBusy()) return;
         var w = _viewportW(), floor = engine.groundY;
         ctx.save(); ctx.fillStyle = '#fff7e7'; ctx.fillRect(0, 0, w, floor);
-        ctx.fillStyle = '#eb9447'; ctx.fillRect(0, floor, w, 50);
-        ctx.fillStyle = '#b95e30';
-        for (var x = 0; x < w; x += 24) ctx.fillRect(x, floor + 20, 18, 3);
+        ctx.fillStyle = '#FF864D'; ctx.fillRect(0, floor, w, 50);
         ctx.restore();
       }
     });
