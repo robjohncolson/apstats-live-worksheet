@@ -2,10 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { DATA, ROUTE, SUMMARY, HOLD_MS, tilesFor, expectedAt, createMission, advanceMission } from './calculator-mission.mjs';
+import { DATA, ROUTE, SUMMARY, HOLD_MS, ROUND_MS, tilesFor, expectedAt, createMission, advanceMission as advance } from './calculator-mission.mjs';
+import { createCalculatorRuntime } from '../../curriculum_render/railway-server/apstat-park/calculator-runtime.mjs';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
 import { createClassroomRegistry } from '../../curriculum_render/railway-server/classroom.js';
 import { createCalculatorService } from '../../curriculum_render/railway-server/apstat-park/calculator-service.mjs';
+const engine = createCalculatorRuntime();
+const advanceMission = (state, members, now) => advance(state, members, now, engine.transitions(state));
 
 function pose(key, step = 0) {
   const tile = tilesFor(step).find(tile => tile.key === key);
@@ -23,8 +26,14 @@ test('mission follows the trainer route and computes the real five-number summar
   assert.deepEqual([result.minX, result.Q1, result.Med, result.Q3, result.maxX], SUMMARY);
 });
 test('shared relay and client mission definitions are identical', () => {
-  assert.equal(fs.readFileSync(new URL('./calculator-mission.mjs', import.meta.url), 'utf8'),
-    fs.readFileSync(new URL('../../curriculum_render/railway-server/apstat-park/calculator-mission.mjs', import.meta.url), 'utf8'));
+  for (const file of ['calculator-mission.mjs', 'calculator-engine.mjs']) {
+    assert.equal(fs.readFileSync(new URL('./' + file, import.meta.url), 'utf8'),
+      fs.readFileSync(new URL('../../curriculum_render/railway-server/apstat-park/' + file, import.meta.url), 'utf8'));
+  }
+  for (const file of [...nativeScriptFilenames, 'manifest.mjs']) {
+    assert.equal(fs.readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'),
+      fs.readFileSync(new URL('../../curriculum_render/railway-server/apstat-park/calculator-native/' + file, import.meta.url), 'utf8'));
+  }
 });
 test('all players must hold the correct tile; stale and old-revision poses cannot advance', () => {
   const state = createMission(0);
@@ -37,9 +46,18 @@ test('all players must hold the correct tile; stale and old-revision poses canno
   a.revision = b.revision = 1;
   advanceMission(state, [a, b], 4000); assert.equal(state.holdAt, null);
 });
-test('timer expiry gives up only the bonus, and all twelve decisions finish', () => {
+test('30-second expiry resets the current step, hints, and requires fresh selections', () => {
   const state = createMission(0);
-  let now = 20000;
+  const member = { pose: pose('STAT'), revision: 0, at: ROUND_MS - 1 };
+  advanceMission(state, [member], ROUND_MS - 1);
+  assert.equal(state.timeoutCount, 0);
+  advanceMission(state, [member], ROUND_MS);
+  assert.equal(state.step, 0); assert.equal(state.revision, 1);
+  assert.equal(state.timeoutCount, 1); assert.equal(state.startedAt, ROUND_MS);
+  assert.deepEqual(state.hintKeys, ['STAT']); assert.equal(state.holdAt, null);
+  advanceMission(state, [member], ROUND_MS + 1);
+  assert.equal(state.holdAt, null, 'pre-timeout choices cannot advance');
+  let now = ROUND_MS + 100;
   for (let step = 0; step < 12; step++) {
     const member = { pose: pose(expectedAt(step), step), revision: state.revision, at: now };
     advanceMission(state, [member], now);
@@ -49,7 +67,7 @@ test('timer expiry gives up only the bonus, and all twelve decisions finish', ()
   assert.equal(state.complete, true); assert.equal(state.bonus, 11);
 });
 test('standing on a repeated key is not a fresh choice until released', () => {
-  const state = { ...createMission(0), step: 4, revision: 4 };
+  const state = { ...createMission(0), step: 4, revision: 4, keys: ROUTE.slice(0, 4) };
   const member = { pose: pose('DOWN'), at: 0, revision: 4, ready: false };
   advanceMission(state, [member], 0); advanceMission(state, [member], HOLD_MS);
   assert.equal(state.step, 4); assert.equal(state.holdAt, null);

@@ -94,15 +94,37 @@ try {
   await bob.locator('[data-calculator-key="ENTER"]').click();
   await alice.waitForTimeout(1300);
   assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 0, 'one student cannot advance alone');
-  timeOffset += 11000;
+  timeOffset += 31000;
+  // Move the mission clock without simulating a disconnected browser.
+  for (const [ws, who] of sockets) {
+    const pose = packets.findLast(packet => packet.name === who.username && packet.type === 'calculator_pose');
+    if (pose) service.handle(ws, pose);
+  }
   await alice.waitForFunction(() => document.querySelector('[data-calculator-controls]').textContent.includes('Hint: choose STAT'));
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().timeoutCount), 1);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getView().playerX), 785);
   for (const [step, key] of ['STAT','RIGHT','ENTER','DOWN','DOWN','ENTER','DOWN','4','7','11','14','20'].entries()) {
-    for (const page of [alice, bob]) await page.locator('[data-calculator-key="' + key + '"]').click();
+    for (const page of [alice, bob]) {
+      const actualKey = page === alice && step === 2 ? '1' : page === alice && step === 3 ? 'ENTER' : key;
+      await page.locator('[data-calculator-key="' + actualKey + '"]').click();
+    }
     for (const page of [alice, bob]) await page.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
     if (step === 0) await alice.screenshot({ path: path.join(output, 'calculator-team.png'), fullPage: true });
     if (step === 3) {
       await alice.waitForTimeout(1100);
       assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 4, 'held DOWN does not repeat into another step');
+      assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'RIGHT', '1', 'ENTER']);
+      timeOffset += 31000;
+      for (const [ws, who] of sockets) {
+        const pose = packets.findLast(packet => packet.name === who.username && packet.type === 'calculator_pose');
+        if (pose) service.handle(ws, pose);
+      }
+      for (const page of [alice, bob]) {
+        await page.waitForFunction(() => board.getParkScene().getState().timeoutCount === 2);
+        assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 4);
+        assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 785);
+        assert.ok(await page.evaluate(() => board.getParkScene().getView().lines.some(line => line.selected && line.text.includes('FreqList'))));
+      }
       await bob.reload();
       await bob.waitForFunction(() => board.getSpritePosition('bob'));
       await bob.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
