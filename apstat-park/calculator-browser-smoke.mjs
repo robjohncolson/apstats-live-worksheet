@@ -67,6 +67,24 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch({ headless: true, ...(process.env.PARK_BROWSER ? { executablePath: process.env.PARK_BROWSER } : {}) });
 
+async function clickKey(page, key) {
+  await page.waitForFunction(() => {
+    const width = document.querySelector('canvas').getBoundingClientRect().width;
+    const target = Math.max(0, Math.min(720, 1440 - width / Math.min(1, width / 720)));
+    return Math.abs(board.getParkScene().getView().cameraX - target) < 0.5;
+  });
+  const point = await page.evaluate(async key => {
+    const { tilesFor } = await import('/apstat-park/calculator-mission.mjs');
+    const scene = board.getParkScene();
+    const tile = tilesFor(scene.getState().step).find(tile => tile.key === key);
+    const rect = document.querySelector('canvas').getBoundingClientRect();
+    const scale = Math.min(1, rect.width / 720);
+    return { x: rect.left + (720 + tile.x + tile.w / 2 - Math.round(scene.getView().cameraX)) * scale,
+      y: rect.top + (tile.y + tile.h / 2) * scale };
+  }, key);
+  await page.mouse.click(point.x, point.y);
+}
+
 try {
   const alice = await browser.newPage({ viewport: { width: 900, height: 1000 } });
   const bob = await browser.newPage({ viewport: { width: 900, height: 1000 } });
@@ -86,15 +104,14 @@ try {
     await page.waitForSelector('[data-calculator-participating]', { timeout: 15000 });
     await page.keyboard.up('ArrowRight');
     await page.waitForFunction(() => board.getParkScene()?.getState());
-    await page.getByText('Choose a tile without jumping (keyboard or touch)', { exact: true }).click();
   }
   await alice.waitForFunction(() => board.getParkScene().getState().members.length === 2);
   assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
-  await alice.locator('[data-calculator-key="STAT"]').click();
-  await bob.locator('[data-calculator-key="ENTER"]').click();
+  await clickKey(alice, 'STAT');
+  await clickKey(bob, 'ENTER');
   await alice.waitForTimeout(1300);
   assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 0, 'one student cannot advance alone');
-  for (const page of [alice, bob]) await page.locator('[data-calculator-key="MATH"]').click();
+  for (const page of [alice, bob]) await clickKey(page, 'MATH');
   await alice.waitForFunction(() => board.getParkScene().getState().holdAt != null);
   await alice.screenshot({ path: path.join(output, 'calculator-wrong-key-hold.png'), fullPage: true });
   for (const page of [alice, bob]) {
@@ -119,25 +136,25 @@ try {
   for (const [step, key] of ['STAT','RIGHT','ENTER','DOWN','DOWN','ENTER','DOWN','4','7','11','14','20'].entries()) {
     for (const page of [alice, bob]) {
       const actualKey = page === alice && step === 2 ? '1' : page === alice && step === 3 ? 'ENTER' : key;
-      await page.locator('[data-calculator-key="' + actualKey + '"]').click();
+      await clickKey(page, actualKey);
     }
     for (const page of [alice, bob]) await page.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
     if (step === 0) {
       await alice.screenshot({ path: path.join(output, 'calculator-team.png'), fullPage: true });
-      for (const page of [alice, bob]) await page.locator('[data-calculator-key="ENTER"]').click();
+      for (const page of [alice, bob]) await clickKey(page, 'ENTER');
       for (const page of [alice, bob]) {
         await page.waitForFunction(() => board.getParkScene().getCalculatorScreen().id === 'stat-edit-lists');
         assert.ok(await page.evaluate(() => board.getParkScene().getView().lines[0].text.includes('[L1]')));
       }
       await alice.screenshot({ path: path.join(output, 'calculator-list-editor.png'), fullPage: true });
-      for (const page of [alice, bob]) await page.locator('[data-calculator-key="STAT"]').click();
+      for (const page of [alice, bob]) await clickKey(page, 'STAT');
       for (const page of [alice, bob]) await page.waitForFunction(() => board.getParkScene().getCalculatorScreen().id === 'stat-menu');
     }
     if (step === 3) {
       await alice.waitForTimeout(1100);
       assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 4, 'held DOWN does not repeat into another step');
       assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'ENTER', 'STAT', 'RIGHT', '1', 'ENTER']);
-      for (const page of [alice, bob]) await page.locator('[data-calculator-key="CLEAR"]').click();
+      for (const page of [alice, bob]) await clickKey(page, 'CLEAR');
       for (const page of [alice, bob]) {
         await page.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'CLEAR');
         assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().type), 'home');
@@ -164,13 +181,29 @@ try {
       await bob.evaluate(() => board.openCalculatorMission());
       await bob.waitForFunction(() => board.getParkScene()?.getState()?.step === 4);
       assert.equal(await bob.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-wizard');
-      await bob.getByText('Choose a tile without jumping (keyboard or touch)', { exact: true }).click();
     }
   }
   assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
   assert.equal(await bob.evaluate(() => board.getParkScene().getState().complete), true);
+  for (const page of [alice, bob]) {
+    await page.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);
+    assert.equal(await page.getByRole('button', { name: 'Back to start', exact: true }).count(), 0);
+    assert.equal(await page.getByRole('button', { name: 'Enter reset door', exact: true }).count(), 0);
+  }
+  const completedEpoch = await alice.evaluate(() => board.getParkScene().getState().epoch);
+  const doorPoint = await alice.evaluate(() => {
+    const scene = board.getParkScene(), view = scene.getView(), door = view.resetDoor;
+    const rect = document.querySelector('canvas').getBoundingClientRect();
+    const scale = Math.min(1, rect.width / 720);
+    return { x: rect.left + (720 + door.x + door.w / 2 - Math.round(view.cameraX)) * scale,
+      y: rect.top + (door.y + door.h / 2) * scale };
+  });
+  await alice.mouse.click(doorPoint.x, doorPoint.y);
+  await alice.waitForTimeout(300);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().epoch), completedEpoch,
+    'clicking the reset door must not restart');
   await alice.screenshot({ path: path.join(output, 'calculator-complete.png'), fullPage: true });
-  await alice.getByText('Back to start', { exact: true }).click();
+  await alice.keyboard.press('Escape');
   await alice.waitForFunction(() => !board.getParkScene().getView().participating);
   await alice.evaluate(() => board.openNativeGameplay(0));
   await alice.waitForSelector('[data-park-active]');

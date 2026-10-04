@@ -5,16 +5,16 @@
 The student room is one continuous scrolling world with an orange floor. Walk
 right toward **Make a five-number summary**; the entrance instructions scroll
 away as the calculator platforms come into view, without loading another scene.
-The left doorway still opens Jump together. Back to start returns to the entrance.
+The left doorway opens Jump together with Up. Escape returns to the entrance.
 The calculator mission uses the existing trainer's native JavaScript calculator
 and `one-var-stats` procedure. A scenery renderer paints its live menus and results
 in pixel lettering directly on the world background, with no green LCD panel.
 It is a guided learning activity, not
 the unrestricted ROM emulator. L1 starts with `4,6,7,8,10,12,13,14,18,20`.
 
-Move with Left/Right and jump with Space onto one-way key platforms. Clicking a
-tile, or using the expandable keyboard/touch controls, places the same character
-on that tile. All current participants in the period's calculator room must hold
+Click or tap a key in the playspace to place your character on that tile. The camera
+holds the entire keypad in view while participating. Left/Right and Space remain
+optional movement controls. All current participants in the calculator room must hold
 the same key (or engine-verified equivalent goal keys) for 900 ms. The relay runs
 the trainer engine to verify each candidate against the next learning checkpoints.
 It accepts equivalent keys and forward shortcuts, records the actual selected
@@ -42,17 +42,20 @@ and `performance-review-2026-10-03/player-trace/run-1` experiments in the siblin
 key platforms and nonblocking teammates for calculator consensus; it is not a
 copy of every Pico stage rule.
 Repeated DOWN/ENTER requires stepping or jumping off and returning, or explicitly
-choosing the accessible tile again. Characters stay where the team left them.
+clicking the tile again. Characters stay where the team left them.
 
 After the seven calculator inputs, five group decisions assign the displayed
 minimum, Q1, median, Q3 and maximum to a proportional boxplot. The result is
-`4,7,11,14,20`. Completion reveals a reset door at the far right. Press Up beside
-it, click it, or use Enter reset door to clear the shared attempt and return all
+`4,7,11,14,20`. On completion, number and approach ledges become translucent and
+stop supporting characters, so everyone falls to the floor. A reset door appears
+at the far right. Walk beside it and press Up to clear the shared attempt and return all
 current participants to the entrance. No grades
 or currency change. Solo play works. Refresh/reconnect replays the committed
 inputs; duplicate tabs count as one student. Stale choices stop counting after
 1.5 seconds, inactive connections leave after five seconds, and hiding the tab
 leaves immediately. Teacher classroom calls recall students as with the Park.
+Doors do not respond to mouse clicks. There are no visible instructions or buttons
+below the playspace; status and summary announcements remain available to screen readers.
 
 The full room loads at entrance. Crossing into the platforms joins the shared
 mission; walking back leaves it. World positions become mission-local coordinates

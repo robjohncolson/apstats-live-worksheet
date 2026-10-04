@@ -34,49 +34,24 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   let ink = '#30263b', inkAt = -Infinity;
   const controls = doc.createElement('div');
   controls.dataset.calculatorControls = '';
-  controls.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:8px;color:inherit;position:relative;z-index:2';
+  const screenReaderOnly = 'position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none';
+  controls.style.cssText = screenReaderOnly;
   const status = doc.createElement('span');
   status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   status.style.cssText = 'flex:1 1 240px;font:14px system-ui';
   status.textContent = 'Connecting the calculator team…';
-  const exit = doc.createElement('button'); exit.textContent = 'Back to start'; exit.onclick = returnToStart;
-  const restart = doc.createElement('button'); restart.textContent = 'Enter reset door'; restart.hidden = true;
-  restart.onclick = enterResetDoor;
-  controls.append(status, restart, exit); container.append(controls);
+  controls.append(status); container.append(controls);
   const readings = doc.createElement('output');
   readings.setAttribute('aria-label', 'Calculator five-number summary');
-  readings.style.cssText = 'display:none;padding:8px;color:inherit;font:14px monospace';
+  readings.style.cssText = screenReaderOnly;
   container.append(readings);
   container.setAttribute('data-calculator-active', '');
 
-  // Native buttons provide keyboard/screen-reader/touch access to the same spatial choices.
-  const choices = doc.createElement('div');
-  choices.setAttribute('aria-label', 'Calculator key tiles');
-  choices.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;padding:0 8px 8px';
-  const accessible = doc.createElement('details');
-  const caption = doc.createElement('summary');
-  caption.textContent = 'Choose a tile without jumping (keyboard or touch)';
-  accessible.style.cssText = 'color:inherit;padding:8px;font:13px system-ui';
-  accessible.append(caption, choices); container.append(accessible);
-  let choicePhase = null;
-  function rebuildChoices() {
-    const phase = state?.step >= ROUTE.length ? 'summary' : 'keys';
-    if (choicePhase === phase) return;
-    choicePhase = phase; choices.replaceChildren();
-    for (const tile of tilesFor(state?.step || 0)) {
-      const button = doc.createElement('button');
-      button.textContent = tile.key; button.dataset.calculatorKey = tile.key;
-      button.setAttribute('aria-label', 'Stand on ' + tile.key);
-      button.style.cssText = 'min-width:40px;min-height:32px;border:1px solid #b9a18a;border-radius:4px;background:#fff;color:#282339';
-      button.onclick = () => choose(tile);
-      choices.append(button);
-    }
-  }
   const terrain = () => [
     { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 },
     // Key platforms are one-way: jump through from below, land from above.
     // A dense physical keypad must not trap cats underneath a row of keys.
-    ...[...approachSteps(state?.step >= ROUTE.length), ...tilesFor(state?.step || 0)]
+    ...(state?.complete ? [] : [...approachSteps(state?.step >= ROUTE.length), ...tilesFor(state?.step || 0)])
       .filter(tile => player.vy >= 0 && player.y + 24 <= tile.y + 1)
       .map(tile => ({ ...tile, x: tile.x + ENTRY_WIDTH, h: 8 })),
   ];
@@ -100,9 +75,6 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (active === participating) return;
     if (!active) send('calculator_leave');
     participating = active; joinedAt = 0; receivedAt = 0; needsRelease = true;
-    controls.style.display = active ? 'flex' : 'none';
-    accessible.hidden = !active;
-    readings.style.display = active && state?.step >= ROUTE.length ? 'block' : 'none';
     container.toggleAttribute('data-calculator-participating', active);
   }
   function returnToStart() {
@@ -170,9 +142,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       // the accessible tile again. Keep the character where the team left it.
     }
     lastRevision = packet.revision; state = packet;
-    readings.style.display = state.step >= ROUTE.length ? 'block' : 'none';
     readings.textContent = computedSummary ? LABELS.map((label, i) => label + ': ' + computedSummary[i]).join(' · ') : '';
-    rebuildChoices(); restart.hidden = !state.complete;
     for (const member of state.members) {
       if (member.name === board.username) continue;
       if (!peers.has(member.name)) peers.set(member.name, board.createPeer(member.name, member.pose));
@@ -228,7 +198,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (!tileAt(localPose(), state?.step || 0)) needsRelease = false;
     selected = needsRelease ? null : tileAt(localPose(), state?.step || 0);
     const viewport = board.viewportW() / scale();
-    const target = Math.max(0, Math.min(LEVEL_WIDTH - viewport, player.x - viewport * 0.4));
+    // Mouse-first solving: keep every key visible instead of chasing the selected cat.
+    const target = Math.max(0, Math.min(LEVEL_WIDTH - viewport,
+      participating ? ENTRY_WIDTH : player.x - viewport * 0.4));
     cameraX += (target - cameraX) * Math.min(1, dt * 8);
   }
   function text(ctx, value, x, y, size = 14, color = ink, align = 'left') {
@@ -255,10 +227,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     art.block(ctx, { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 });
     text(ctx, 'CALCULATOR TOGETHER', 85, 365, 21);
     text(ctx, 'WALK RIGHT TO START >', 85, 410, 21);
-    text(ctx, 'ARROWS MOVE . SPACE JUMPS', 85, 451, 14);
+    text(ctx, 'CLICK A KEY TO CHOOSE IT', 85, 451, 14);
     text(ctx, 'FIND THE FIVE-NUMBER SUMMARY', 85, 485, 14);
     text(ctx, 'THE TEAM CHOOSES EACH KEY', 85, 513, 14);
-    text(ctx, 'TAP SPACE: LOW . HOLD: HIGH', 85, 545, 14);
+    text(ctx, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
     const atlas = board.atlas?.();
     if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
     else { ctx.fillStyle = '#493d48'; ctx.fillRect(30, WORLD.floor - 40, 40, 40); }
@@ -277,23 +249,29 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((ROUND_MS - elapsed) / 1000));
     text(ctx, state ? (state.complete ? 'You built a boxplot.' : remain + 's · hint + reset') : 'READY TO PLAY', 350, 143, 14);
-    text(ctx, 'Arrows move · Space jumps', 350, 175, 12);
-    text(ctx, 'Tap jump low . Hold jump high.', 350, 197, 12);
-    text(ctx, state?.hintKeys?.length ? 'HINT: ' + state.hintKeys.join(' / ') : 'Equivalent keys count.', 350, 219, 12);
+    text(ctx, state?.complete ? 'Walk to the door. Press UP.' : 'Click a key to choose it.', 350, 175, 12);
+    text(ctx, state?.complete ? 'Your team is ready to reset.' : 'Click once. Team agrees to press.', 350, 197, 12);
+    text(ctx, state?.complete ? 'All five values matched.'
+      : state?.hintKeys?.length ? 'HINT: ' + state.hintKeys.join(' / ') : 'Equivalent keys count.', 350, 219, 12);
     const hold = state?.holdAt == null ? 0 : Math.min(1, (clock() - state.holdAt) / HOLD_MS);
-    ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
-    ctx.fillStyle = '#479b67'; ctx.fillRect(350, 234, 315 * hold, 12);
+    if (!state?.complete) {
+      ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
+      ctx.fillStyle = '#479b67'; ctx.fillRect(350, 234, 315 * hold, 12);
+    }
     if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS', 350, 269, 10);
     else if (state?.lastPress && !state.lastPress.advanced) {
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
     }
     const step = state?.step || 0;
+    ctx.save();
+    if (state?.complete) ctx.globalAlpha *= 0.22;
     for (const ledge of approachSteps(step >= ROUTE.length)) keyPlatform(ctx, ledge, '#494458');
     for (const tile of tilesFor(step)) {
       const hint = state?.hintKeys?.includes(tile.key);
       keyPlatform(ctx, tile, selected === tile.key ? '#f9c45f' : hint ? '#9bdfae' : '#494458');
       text(ctx, tile.key, tile.x + tile.w / 2, tile.y + 18, 12, selected === tile.key || hint ? '#30263b' : '#fff', 'center');
     }
+    ctx.restore();
     if (step >= ROUTE.length) drawBoxplot(ctx, step - ROUTE.length);
     if (state?.complete) {
       const { x, y, w, h } = RESET_DOOR;
@@ -326,14 +304,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
   }
   function pointer(event) {
+    if (state?.complete) { event.preventDefault(); event.stopImmediatePropagation(); return; }
     const rect = engine.canvas.getBoundingClientRect();
     const worldX = (event.clientX - rect.left) / scale() + Math.round(cameraX);
     const x = worldX - ENTRY_WIDTH, y = (event.clientY - rect.top) / scale();
-    if (state?.complete && x >= RESET_DOOR.x && x <= RESET_DOOR.x + RESET_DOOR.w
-      && y >= RESET_DOOR.y && y <= RESET_DOOR.y + RESET_DOOR.h) {
-      event.preventDefault(); event.stopImmediatePropagation(); enterResetDoor(); return;
-    }
-    if (worldX >= 20 && worldX <= 85 && y >= WORLD.floor - 55 && y <= WORLD.floor) { onPark(); return; }
     const tile = tilesFor(state?.step || 0).find(tile => x >= tile.x && x <= tile.x + tile.w && y >= tile.y - 12 && y <= tile.y + tile.h);
     if (tile) { event.preventDefault(); event.stopImmediatePropagation(); choose(tile); }
   }
@@ -356,7 +330,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     clearInterval(timer); socket?.removeEventListener('message', onMessage);
     engine.canvas.removeEventListener('click', pointer, true);
     doc.removeEventListener('keydown', key); doc.removeEventListener('visibilitychange', visibility);
-    controls.remove(); readings.remove(); accessible.remove(); container.removeAttribute('data-calculator-active');
+    controls.remove(); readings.remove(); container.removeAttribute('data-calculator-active');
     container.removeAttribute('data-calculator-participating');
     if (engine.sceneEntities === entities) engine.sceneEntities = null;
     Object.assign(api._camera, savedCamera); onClose();
@@ -365,10 +339,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   engine.sceneEntities = entities;
   engine.canvas.addEventListener('click', pointer, true); doc.addEventListener('keydown', key);
   doc.addEventListener('visibilitychange', visibility);
-  controls.style.display = 'none'; accessible.hidden = true;
-  rebuildChoices(); const timer = setInterval(pump, 100); pump();
+  const timer = setInterval(pump, 100); pump();
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
-    getView: () => ({ cameraX, playerX: player.x, participating, entranceX: ENTRY_WIDTH,
+    getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, entranceX: ENTRY_WIDTH,
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
     getCalculatorScreen: () => calculator.getScreen() };
 }
