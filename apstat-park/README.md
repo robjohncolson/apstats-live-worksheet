@@ -15,6 +15,15 @@ door. Hiding the tab for 15 seconds leaves the team. A disconnected teammate pau
 the simulation for up to 15 seconds before the stage restarts with those remaining.
 
 `campaign-engine.mjs` adapts the recovered browser engine to the desk canvas.
+For 1-1, `campaign-jump01.mjs` retains the previously verified desk atlas, solid
+floor depth, stair surfaces, lift dimensions/resting height, and calendar cat
+colors. The generic preview used different Rect anchors and a small blue fallback
+lift. Those preview defaults must not replace the measured 1-1 geometry. Its
+presentation camera follows the local cat without changing the simulation camera.
+`campaign-presentation-browser-smoke.mjs` compares this adapter against the previous
+working level, checks key pixels, and tests landing on the restored step.
+Campaign protocol 2 keeps clients with the older collision geometry out of the
+same synchronized session.
 `recovered/runtime.mjs` bundles its actor implementations and original campaign
 stage data, including larger-party variants. It does not execute a ROM. The
 source map includes the source, and `recovered/provenance.json` records source

@@ -5,6 +5,7 @@ const { createStageClear } = await import('./stage-clear.mjs' + V);
 const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const { createPicoAudio } = await import('./pico-audio.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
+const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
 
 export function mountCampaign({ container, getSocket, board, onClose }) {
   const doc = container.ownerDocument, win = doc.defaultView;
@@ -39,6 +40,8 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
       if (state) dissolve = createSceneDissolve(capture());
       replay.reset(Math.max(2, packet.roster.length));
       game.load(packet.stageIndex, Math.max(2, packet.roster.length), packet.seed);
+      game.setPresentation({ focusSlot: Math.max(0, packet.roster.indexOf(board.username)),
+        colours: packet.roster.map(name => rgbHex(catBodyForHue(board.createPeer(name, { x: 0, y: 0 }).hue))) });
       clearActive = false; soundClear = false; accumulator = 0; sentBits = -1; sentBuddy = -1;
       for (const key of Object.keys(board.input)) board.input[key] = false;
       held.clear(); bits = 0; buddy = 0;
@@ -65,7 +68,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   function pump() {
     if (disposed) return;
     bind(); const now = performance.now();
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 1 }); }
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 2 }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     if (now - lastInput >= 50 && (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500)) {
@@ -87,7 +90,8 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     event.preventDefault();
     const fresh = down && !held.has(key);
     const local = game?.getView().screenPlayers[Math.max(0, state?.roster.indexOf(board.username) ?? 0)];
-    if (key === 'arrowup' && fresh && local && Math.abs(local.x - 50) < 24 && Math.abs(local.feet - 700) < 8) {
+    const doorX = 50 + (game?.getView().projection.x || 0);
+    if (key === 'arrowup' && fresh && local && Math.abs(local.x - doorX) < 24 && Math.abs(local.feet - 700) < 8) {
       dispose(); return;
     }
     if (down) held.add(key); else held.delete(key);
@@ -123,13 +127,16 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     const entry = CAMPAIGN[state?.stageIndex || 0];
     frame = clear.sample(clearActive, state?.epoch, performance.now(), 720, 750);
     if (frame) ctx.filter = frame.filter;
-    if (game && state) { game.render(); ctx.drawImage(game.canvas, 0, 0); }
+    if (game && state) game.render();
     // Same orange floor edge and exit doorway as the calculator room.
     if (!game || !state) { ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, 720, 50); }
     const atlas = board.atlas?.();
-    if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, 30, 660, 40, 40);
-    else { ctx.fillStyle = '#493d48'; ctx.fillRect(30, 660, 40, 40); }
-    pixelText(ctx, 'ESC TO LEAVE', 24, 649, 7);
+    const doorX = 30 + (game?.getView().projection.x || 0);
+    if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, doorX, 660, 40, 40);
+    else { ctx.fillStyle = '#493d48'; ctx.fillRect(doorX, 660, 40, 40); }
+    pixelText(ctx, 'ESC TO LEAVE', doorX - 6, 649, 7);
+    // Door scenery sits behind cats, as it does in the calculator and old 1-1.
+    if (game && state) ctx.drawImage(game.canvas, 0, 0);
     pixelText(ctx, 'PICO PARK ' + entry.world + '-' + entry.stage + '  /  48', 28, 30, 14);
     pixelText(ctx, entry.title, 28, 52, 14);
     let message = error || (!game ? 'LOADING PICO PARK...' : !joined ? 'RECONNECTING TO YOUR TEAM...'
