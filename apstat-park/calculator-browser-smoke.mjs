@@ -131,6 +131,20 @@ try {
   await alice.screenshot({ path: path.join(output, 'calculator-boxplot-transition.png'), fullPage: true });
   assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys),
     ['STAT', 'ENTER', 'STAT', 'RIGHT', '1', 'ENTER', 'DOWN', 'ENTER', 'DOWN']);
+  const boxplotStartedAt = await alice.evaluate(() => board.getParkScene().getState().startedAt);
+  for (const [i, key] of ['20', '14', '11', '7'].entries()) {
+    await clickKey(alice, key);
+    await alice.waitForFunction(i => board.getParkScene().getState().step === 8 + i, i);
+    assert.equal(await alice.evaluate(() => board.getParkScene().getState().boxAttempts), 0);
+    assert.equal(await alice.evaluate(() => board.getParkScene().getState().startedAt), boxplotStartedAt);
+  }
+  await alice.screenshot({ path: path.join(output, 'calculator-unjudged-boxplot.png'), fullPage: true });
+  await clickKey(alice, '4');
+  await alice.waitForFunction(() => board.getParkScene().getState().boxAttempts === 1);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 7);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().startedAt), boxplotStartedAt);
+  assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().boxValues), []);
+  await alice.screenshot({ path: path.join(output, 'calculator-boxplot-retry.png'), fullPage: true });
   for (const [i, key] of ['4','7','11','14','20'].entries()) {
     await clickKey(alice, key);
     await alice.waitForFunction(i => board.getParkScene().getState().step === 8 + i, i);

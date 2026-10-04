@@ -26,9 +26,14 @@ Rapid clicks queue in order; retries use personal revisions to prevent duplicate
 presses. Wrong keys change the real calculator state without awarding progress,
 and students can recover through further input.
 
-Each personal checkpoint has 30 seconds. Only an engine-verified forward advance
+Each calculator checkpoint has 15 seconds. Only an engine-verified forward advance
 starts a fresh countdown. Wrong keys, no-op presses, repeated menu keys, and
-reconnecting do not renew it. If any active student's countdown expires, the relay
+reconnecting do not renew it. Reaching the boxplot starts one 30-second timer for
+the entire plot. All five value selections are accepted without individual
+judgment, and the drawing follows those actual values. Only the fifth selection
+checks the completed plot. An incorrect plot clears the five selections while
+preserving calculator work and the original boxplot deadline; students can retry
+until the clock runs out. If any active student's countdown expires, the relay
 freezes everyone's input for a one-second death animation, then clears every
 attempt and places the team at the initial calculator state. Even finished
 students restart. Old queued inputs cannot carry into the new attempt.
@@ -82,7 +87,7 @@ The relay has a byte-identical copy of `calculator-mission.mjs`; the mission tes
 pins that copy and the trainer route. No browser or backend import crosses repos
 at runtime. Deploy the relay change before the frontend. An older relay leaves
 the calculator waiting with an update message; Escape still returns to the entrance.
-Calculator protocol 3 requires clients that understand timeout deaths and team resets.
+Calculator protocol 4 requires clients that understand whole-plot validation and phase-specific timers.
 
 Validation: `node --test apstat-park/calculator-mission.test.mjs`, the existing
 Park suites in both repos, and `calculator-browser-smoke.mjs` (same Playwright

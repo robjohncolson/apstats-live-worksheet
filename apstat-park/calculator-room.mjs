@@ -1,6 +1,6 @@
 const V = new URL(import.meta.url).search;
 const mission = await import('./calculator-mission.mjs' + V);
-const { DATA, ROUTE, HINTS, SUMMARY, LABELS, HOLD_MS, ROUND_MS, WORLD, tilesFor, tileAt } = mission;
+const { DATA, ROUTE, HINTS, SUMMARY, LABELS, HOLD_MS, timeLimitFor, WORLD, tilesFor, tileAt } = mission;
 const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
@@ -137,7 +137,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       status.textContent = packet.message; joinedAt = 0; return;
     }
     if (packet.type !== 'calculator_state') return;
-    if (packet.protocol !== 3) { status.textContent = 'Waiting for the team-restart server update.'; return; }
+    if (packet.protocol !== 4) { status.textContent = 'Waiting for the team-restart server update.'; return; }
     if (state?.epoch === packet.epoch && packet.revision < state.revision) return;
     if (packet.complete && !state?.complete) audio.clear();
     else if (state?.epoch === packet.epoch && packet.revision > state.revision) {
@@ -171,6 +171,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       needsRelease = true; selected = null;
       // Standing on a repeated key needs a fresh choice; clicks are queued.
     }
+    if (state && packet.boxAttempts !== state.boxAttempts) { keyQueue.length = 0; pendingPress = null; }
     lastRevision = packet.revision; state = packet;
     if (pendingPress && packet.revision > pendingPress.revision) pendingPress = null;
     if (state.solved) { keyQueue.length = 0; pendingPress = null; }
@@ -213,7 +214,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         status.textContent = 'Reconnecting—your team progress is saved.';
       }
       if (performance.now() - joinedAt > 1500 || !joinedAt) {
-        send('calculator_join', { protocol: 3 }); joinedAt = performance.now();
+        send('calculator_join', { protocol: 4 }); joinedAt = performance.now();
       }
     }
     if (!state || !connected() || doc.hidden) return;
@@ -287,20 +288,24 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     const elapsed = state ? clock() - state.startedAt : 0;
-    const remain = Math.max(0, Math.ceil((ROUND_MS - elapsed) / 1000));
+    const remain = Math.max(0, Math.ceil((timeLimitFor(state || { step: 0 }) - elapsed) / 1000));
     text(ctx, state?.failure ? 'TIME UP! TEAM RESTART.'
-      : state ? (state.solved ? 'Your boxplot is ready.' : remain + 's · reach the next step') : 'READY TO PLAY', 350, 143, 14);
+      : state ? (state.solved ? 'Your boxplot is ready.'
+        : remain + (showingBoxplot ? 's · finish the whole plot' : 's · reach the next step')) : 'READY TO PLAY', 350, 143, 14);
     text(ctx, state?.failure ? 'Everyone restarts from step 1.' : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
       : showingBoxplot ? 'Click a value for the boxplot.' : 'Click to press your own keys.', 350, 175, 12);
     text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching boxplots ready' : 'Everyone solves independently.', 350, 197, 12);
     text(ctx, state?.solved ? 'All five values matched.'
-      : state?.hintKeys?.length ? 'HINT: ' + state.hintKeys.join(' / ') : 'Equivalent keys count.', 350, 219, 12);
+      : showingBoxplot ? 'Checked after all five values.' : 'Equivalent keys count.', 350, 219, 12);
     const hold = state?.holdAt == null ? 0 : Math.min(1, (clock() - state.holdAt) / HOLD_MS);
     if (!state?.solved && state?.holdAt != null) {
       ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
       ctx.fillStyle = '#479b67'; ctx.fillRect(350, 234, 315 * hold, 12);
     }
     if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS', 350, 269, 10);
+    else if (!state?.failure && showingBoxplot && state?.lastPlot?.correct === false && !state.boxValues.length) {
+      text(ctx, 'PLOT DID NOT MATCH. TRY AGAIN.', 350, 269, 10);
+    }
     else if (!state?.failure && state?.lastPress && !state.lastPress.advanced) {
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
     }
@@ -346,20 +351,33 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     ctx.restore();
   }
   function drawBoxplot(ctx, filled) {
+    const rejected = state.lastPlot?.correct === false && !state.boxValues.length
+      && clock() - state.lastPlot.at < 650;
+    const values = rejected ? state.lastPlot.values : state.boxValues;
     text(ctx, state.solved ? 'Five numbers. One picture.' : 'BUILD THE BOXPLOT: ' + LABELS[filled], 360, 317, 18, ink, 'center');
     const x = value => 105 + (value - 4) * 30;
     ctx.strokeStyle = '#aaa18f'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x(4), 448); ctx.lineTo(x(20), 448); ctx.stroke();
-    for (let i = 0; i < filled; i++) {
-      text(ctx, LABELS[i], x(SUMMARY[i]), 394, 11, ink, 'center');
-      text(ctx, String(SUMMARY[i]), x(SUMMARY[i]), 417, 16, ink, 'center');
+    for (let i = 0; i < values.length; i++) {
+      text(ctx, LABELS[i], 105 + i * 120, 394, 11, ink, 'center');
+      text(ctx, String(values[i]), 105 + i * 120, 417, 16, ink, 'center');
     }
-    if (filled === 5) {
-      ctx.fillStyle = '#aad9ac'; ctx.fillRect(x(7), 428, x(14) - x(7), 40);
-      ctx.strokeStyle = ink; ctx.strokeRect(x(7), 428, x(14) - x(7), 40);
-      for (const value of [4, 11, 20]) { ctx.beginPath(); ctx.moveTo(x(value), 428); ctx.lineTo(x(value), 468); ctx.stroke(); }
-      text(ctx, 'Half the observations lie between Q1 and Q3.', 360, 510, 12, ink, 'center');
+    ctx.strokeStyle = ink;
+    if (values.length >= 4) {
+      ctx.fillStyle = rejected ? '#e4af9c' : '#aad9ac';
+      ctx.fillRect(x(values[1]), 428, x(values[3]) - x(values[1]), 40);
+      ctx.strokeRect(x(values[1]), 428, x(values[3]) - x(values[1]), 40);
     }
+    for (const i of [0, 2, 4]) {
+      if (i >= values.length) continue;
+      ctx.beginPath(); ctx.moveTo(x(values[i]), 428); ctx.lineTo(x(values[i]), 468); ctx.stroke();
+    }
+    for (const [a, b] of [[0, 1], [3, 4]]) {
+      if (b >= values.length) continue;
+      ctx.beginPath(); ctx.moveTo(x(values[a]), 448); ctx.lineTo(x(values[b]), 448); ctx.stroke();
+    }
+    if (state.solved) text(ctx, 'Half the observations lie between Q1 and Q3.', 360, 510, 12, ink, 'center');
+    else if (rejected) text(ctx, 'Try five new values. The clock keeps running.', 360, 510, 12, ink, 'center');
   }
   function pointer(event) {
     if (state?.solved) { event.preventDefault(); event.stopImmediatePropagation(); return; }

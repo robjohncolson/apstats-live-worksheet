@@ -46,25 +46,14 @@ test('all players must hold the correct tile; stale and old-revision poses canno
   a.revision = b.revision = 1;
   advanceMission(state, [a, b], 4000); assert.equal(state.holdAt, null);
 });
-test('30-second expiry resets the current step, hints, and requires fresh selections', () => {
+test('expired calculator input cannot renew the deadline or advance', () => {
   const state = createMission(0);
   const member = { pose: pose('STAT'), revision: 0, at: ROUND_MS - 1 };
   advanceMission(state, [member], ROUND_MS - 1);
-  assert.equal(state.timeoutCount, 0);
   advanceMission(state, [member], ROUND_MS);
-  assert.equal(state.step, 0); assert.equal(state.revision, 1);
-  assert.equal(state.timeoutCount, 1); assert.equal(state.startedAt, ROUND_MS);
-  assert.deepEqual(state.hintKeys, ['STAT']); assert.equal(state.holdAt, null);
-  advanceMission(state, [member], ROUND_MS + 1);
-  assert.equal(state.holdAt, null, 'pre-timeout choices cannot advance');
-  let now = ROUND_MS + 100;
-  for (let step = 0; step < 12; step++) {
-    const member = { pose: pose(expectedAt(step), step), revision: state.revision, at: now };
-    advanceMission(state, [member], now);
-    advanceMission(state, [member], now + HOLD_MS);
-    now += 1200;
-  }
-  assert.equal(state.complete, true); assert.equal(state.bonus, 11);
+  assert.equal(state.step, 0);
+  assert.equal(state.startedAt, 0);
+  assert.equal(state.revision, 0);
 });
 test('standing on a repeated key is not a fresh choice until released', () => {
   const state = { ...createMission(0), step: 4, revision: 4, keys: ROUTE.slice(0, 4) };
@@ -81,7 +70,7 @@ test('a silent connection expires and cannot keep the team blocked', () => {
   const a = {}, b = {};
   try {
     for (const [ws, name] of [[a,'a'],[b,'b']]) {
-      registry.join(ws, 'B', name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 3 });
+      registry.join(ws, 'B', name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 4 });
     }
     now = 5100;
     service.handle(a, { type: 'calculator_pose', epoch: received.get(a).epoch, revision: 0, pose: pose('STAT') });
@@ -96,7 +85,7 @@ test('relay isolates periods, resumes progress, deduplicates tabs, and drops dis
   const a = {}, b = {}, other = {}, tab = {};
   try {
     for (const [ws, section, name] of [[a,'B','a'],[b,'B','b'],[other,'E','a'],[tab,'B','a']]) {
-      registry.join(ws, section, name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 3 });
+      registry.join(ws, section, name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 4 });
     }
     assert.equal(received.get(a).members.length, 2);
     assert.notEqual(received.get(a).epoch, received.get(other).epoch);
@@ -105,7 +94,7 @@ test('relay isolates periods, resumes progress, deduplicates tabs, and drops dis
     sendPose(a); sendPose(b); service.tick(); now = 950; sendPose(a); sendPose(b); service.tick();
     assert.equal(received.get(a).step, 1); assert.equal(received.get(other).step, 0);
     service.detached(b); service.detached(tab); assert.equal(received.get(a).members.length, 1);
-    service.handle(b, { type: 'calculator_join', protocol: 3 }); assert.equal(received.get(b).step, 1);
+    service.handle(b, { type: 'calculator_join', protocol: 4 }); assert.equal(received.get(b).step, 1);
     service.handle(a, { type: 'calculator_pose', epoch: received.get(a).epoch, revision: 0, pose: pose('STAT') });
     assert.equal(received.get(a).step, 1);
   } finally { service.close(); }
