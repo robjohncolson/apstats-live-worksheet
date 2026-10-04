@@ -300,7 +300,7 @@ export function createPicoScene({ board, replica, member, player, peers, status,
   function scenery(ctx) {
     if (!level) return;
     const p = progress(), vw = board.api._camera?.vw || board.viewportW();
-    ctx.save(); ctx.fillStyle = pageColour(); ctx.fillRect(0, 0, Math.max(vw, level.width), level.height); ctx.restore();
+    ctx.save(); ctx.filter = 'none'; ctx.fillStyle = pageColour(); ctx.fillRect(0, 0, Math.max(vw, level.width), level.height); ctx.restore();
     world(ctx, () => {
       const room = board.roomPresentation;
       if (room) {

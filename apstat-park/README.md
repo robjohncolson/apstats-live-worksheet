@@ -218,6 +218,16 @@ Rooms are keyed by the joined classroom section and chosen level, retaining the 
 
 ## Verification and release
 
+Pico goal completion fades the scene objects toward white while preserving the
+calendar background. After an 800 ms lead-in, `CLEAR!` slides from the left to the
+viewport center over one second and stays until the player exits. The timing and
+slide curve follow recovered `FUN_7ff72bb2bbf0` (phases 21/22) and
+`FUN_7ff72bb2c2c0` (`t * (640 + t)`, capped at one second). The 72% whitening and
+responsive lettering adapt that presentation to this desk. It starts only on
+team completion and clears on retry/reentry. `stage-clear-browser-smoke.mjs`
+checks the real relay goal arrivals, pixel whitening, desktop/mobile centering,
+and a fresh round; its fixture skips the platform route.
+
 - Frontend: `npm run test:park` (node --test `apstat-park/*.test.mjs`: sparse motion, replica, lobby/door pins, and `pico-rules`/`pico-scene` tests for pose conversion, party terrain, bridge, lift, catch zones, re-entry, trigger boxes, sound gating). These import the sibling relay worktree's `levels.mjs`/`session.mjs`. Plus Vitest `tests/park-physics.test.js` and `tests/park-board-height.test.js`.
 - Relay railway-server: `npm run test:park`. These tests import the sibling frontend replica.
 - Real browser: `node apstat-park/browser-smoke.mjs` (in-process relay, never production). Needs the sibling relay, Playwright and Chromium/Edge: `PARK_PLAYWRIGHT_MODULE` and `PARK_BROWSER` can point to installed copies; `PARK_SMOKE_OUTPUT` selects the artifact directory, `PARK_SHOTS` the level-6 screenshots, and `PARK_LEVEL_FILTER=6` (or `0,3`) runs a subset, and `PARK_LATENCY_MS` / `PARK_JITTER_MS` delay every relay message each way (latency + uniform jitter, in order). Level 6: solo by keyboard, two students the real way (stack on the top stair, carrier walks off, rider jumps to the bridge, switch, lift, key, door), both pits, leave and re-enter, a protocol-4 client, a simulated pre-level-6 relay, and three students riding the lift with one stacked on a teammate at 150 ms + up to 150 ms jitter each way; then levels 0-5 through `openParkLevel`, and the real calendar's single door with the board growing 220 -> 240 -> 220.

@@ -5,6 +5,7 @@ const { profileFor, createFixedStep } = await import('./physics.mjs' + V);
 const { createPicoScene } = await import('./pico-scene.mjs' + V);
 const { toPose } = await import('./pico-rules.mjs' + V);
 const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
+const { createStageClear } = await import('./stage-clear.mjs' + V);
 
 // The calendar strip's height; a level taller than this grows the board while it is open.
 export const BASE_BOARD_H = 220;
@@ -43,6 +44,8 @@ export function occupantsOf(levels, levelIndex, member) {
 export function mountBoardScene({ board, replica, member, onExit, completed = [], remember = () => {}, status, connected }) {
   const { engine, input, api } = board;
   const entities = new Map(), peers = {};
+  const clear = createStageClear();
+  let clearFrame = null;
   const oldCamera = {...api._camera}, holdSent = new Map(), moving = new Map();
   let level=null, terrain=[], lift=null, disposed=false, lastLevel=null, returnWalk=0, lastRest=null, retrying=false, wasArrived=false;
   let pushAt=0, pushing=null, pico=null;
@@ -352,12 +355,15 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   }
   entities.set('room-transform', { zIndex: -10, render(ctx) {
     ctx.save();
+    clearFrame = clear.sample(!!replica.state?.progress?.complete, lastLevel, replica.now(), board.viewportW(), sceneHeight || BASE_BOARD_H);
+    if (clearFrame) ctx.filter = clearFrame.filter;
     if (room && level?.physics === 'pico') {
       ctx.scale(roomScale(), roomScale());
       ctx.translate(0, room.floor - (level.exit.y + 23));
     }
   } });
   entities.set('room-transform-end', { zIndex: 100, render: ctx => ctx.restore() });
+  entities.set('stage-clear', { zIndex: 200, render: ctx => clear.render(ctx, clearFrame) });
   entities.set('step',{update:tick});entities.set('scenery',{zIndex:1,render:scenery});
   entities.set('player',{zIndex:10,render:ctx=>pico&&level?.physics==='pico'?pico.drawCat(ctx,player,member):player.render(ctx)});
   // The frozen calendar frame shown while waiting (null where canvas is unavailable, e.g. tests).
@@ -367,5 +373,5 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(frozen,0,0);ctx.restore();
   }}]]);
   engine.sceneEntities=waiting;
-  return {getWorld:()=>({shown,player,level,terrain,lift:pico&&level?.physics==='pico'?pico.lift:lift,peers,moving,pico}),dispose(){if(disposed)return;disposed=true;pico?.dispose();board.setBoardHeight?.();if(engine.sceneEntities===entities||engine.sceneEntities===waiting)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
+  return {getWorld:()=>({shown,player,level,terrain,lift:pico&&level?.physics==='pico'?pico.lift:lift,peers,moving,pico,clear:clearFrame}),dispose(){if(disposed)return;disposed=true;pico?.dispose();board.setBoardHeight?.();if(engine.sceneEntities===entities||engine.sceneEntities===waiting)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
 }
