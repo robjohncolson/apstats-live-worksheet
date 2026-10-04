@@ -22,8 +22,18 @@ lift. Those preview defaults must not replace the measured 1-1 geometry. Its
 presentation camera follows the local cat without changing the simulation camera.
 `campaign-presentation-browser-smoke.mjs` compares this adapter against the previous
 working level, checks key pixels, and tests landing on the restored step.
-Campaign protocol 2 keeps clients with the older collision geometry out of the
+Campaign protocol 3 keeps clients with the older collision geometry out of the
 same synchronized session.
+The 1-1 pit sensors use the local `[0,0,width,height]` rectangle constructed by
+`FUN_7ff72bb62ec0`, translated from a left/bottom stage anchor. The centered
+preview bounds missed the right sides of the pits and sent players into the
+offscreen death path. The corrected bounds are `(768,480,240,96)` and
+`(1536,480,432,96)` in native units. `stage_jump01.lua` supplies the returns
+`(720,-48)` and `(1392,-48)`; `FUN_7ff72bb63060` applies the rotating `(0,-50)`
+player spacing and command 7. The existing warp dispatcher handles teleporting
+and releasing a carried ordinary key. This is a pit return, not a checkpoint or
+full-stage reset. `campaign-fall-browser-smoke.mjs` exercises both pit edges,
+multiplayer spacing, and landing without death or returning to the entrance.
 `recovered/runtime.mjs` bundles its actor implementations and original campaign
 stage data, including larger-party variants. It does not execute a ROM. The
 source map includes the source, and `recovered/provenance.json` records source

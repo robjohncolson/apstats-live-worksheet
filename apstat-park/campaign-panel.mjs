@@ -68,7 +68,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   function pump() {
     if (disposed) return;
     bind(); const now = performance.now();
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 2 }); }
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 3 }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     if (now - lastInput >= 50 && (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500)) {

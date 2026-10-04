@@ -8,6 +8,14 @@ const TILE_CODES = { MC_NON: 'N', MC_FLC: 'C', MC_FLL: 'L', MC_FLR: 'R', MC_WAL:
 const restoredLifts = new WeakSet();
 
 export function restoreJump01Steps(runtime) {
+  for (const warp of runtime.warps) {
+    // FUN_7ff72bb62ec0 registers local [0,0,width,height], not a centered
+    // sensor. In the stage's downward-Y coordinates the anchor is left/bottom.
+    // jump01.lua: (768,576,240,96) and (1536,576,432,96).
+    // Retain FUN_7ff72bb63060's destinations and rotating player offsets.
+    Object.assign(warp.rect, { x: warp.spawn.x, y: warp.spawn.y - warp.triggerSize.height,
+      width: warp.triggerSize.width, height: warp.triggerSize.height });
+  }
   for (const block of runtime.staticRects) {
     const { spawn, rect } = block;
     // stage_jump01's Rect rows use a left/bottom anchor and a 25-unit skirt.
