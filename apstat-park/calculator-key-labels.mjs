@@ -29,3 +29,11 @@ export function keyLabel(key, layer) {
   if (key === '2ND' || key === 'ALPHA') return key;
   return (layer === 'alpha' ? alpha[key] : layer === 'second' ? second[key] : null) || key;
 }
+
+export function keyInstruction(key, hint, layer, nextKey) {
+  // Exploratory input can activate a modifier before its checkpoint is credited.
+  // In that case guide the student to the function, not a second modifier press.
+  if (nextKey && ((key === '2ND' && layer === 'second') || (key === 'ALPHA' && layer === 'alpha'))) key = nextKey;
+  const label = keyLabel(key, layer);
+  return label === key ? hint : 'Press ' + label + ' (' + key + ').';
+}

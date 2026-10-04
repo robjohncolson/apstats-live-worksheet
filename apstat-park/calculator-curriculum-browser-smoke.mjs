@@ -7,7 +7,7 @@ import { createReadStream, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createClassroomRegistry } from '../../curriculum_render/railway-server/classroom.js';
-import { CALCULATOR_LEVELS, challengeFor } from './calculator-curriculum.mjs';
+import { CALCULATOR_PROBLEMS, levelById, challengeFor } from './calculator-curriculum.mjs';
 import { createCalculatorService } from '../../curriculum_render/railway-server/apstat-park/calculator-service.mjs';
 import { CALCULATOR_PROTOCOL } from './calculator-lobby.mjs';
 import { WebSocketServer } from '../../curriculum_render/railway-server/node_modules/ws/wrapper.mjs';
@@ -30,7 +30,7 @@ function delayed(map, ws, fn) {
 const send = (ws, message) => delayed(outAt, ws, () => { if (ws.readyState === 1) ws.send(JSON.stringify(message)); });
 const realCurriculum = process.env.PARK_REAL_CURRICULUM === '1';
 const filter = realCurriculum ? ['dotplot'] : process.env.PARK_SKILL_FILTER?.split(',');
-const levels = CALCULATOR_LEVELS.filter(level => !filter || filter.includes(level.id));
+const levels = CALCULATOR_PROBLEMS.filter(level => !filter || filter.includes(level.id));
 let selectedLevel = levels[0];
 const latest = new Map();
 const service = createCalculatorService({ registry,
@@ -100,7 +100,8 @@ try {
   await page.waitForFunction(() => board.getParkScene().getView().lobby);
   const ws = [...sockets.keys()][0];
   const results = [];
-  for (const level of levels) {
+  for (const configured of levels) {
+    const level = realCurriculum ? levelById(await page.evaluate(() => board.getParkScene().getView().missionId)) : configured;
     selectedLevel = level;
     assert.equal(await page.evaluate(() => board.getParkScene().getView().missionId), level.id, 'lobby shows the selected skill before arrival');
     assert.equal(await page.evaluate(() => board.getParkScene().getState()), null);
@@ -142,6 +143,12 @@ try {
     }
     assert.equal(await page.evaluate(() => board.getParkScene().getState().step), level.route.length, level.id);
     await page.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);
+    await page.screenshot({ path: path.join(output, level.id + '-result-reference.png'), fullPage: true });
+    if (level.procedureId === 'one-var-stats') {
+      const lines = await page.evaluate(() => board.getParkScene().getView().lines.map(line => line.text));
+      assert(lines.some(line => line.includes('minX')), 'five-number summary stays available at the challenge');
+      assert(lines.some(line => line.includes('maxX')));
+    }
     const challenge = challengeFor(level);
     for (const value of challenge.answers) {
       const revision = await page.evaluate(() => board.getParkScene().getState().revision);

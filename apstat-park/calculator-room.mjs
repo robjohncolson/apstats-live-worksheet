@@ -5,7 +5,7 @@ const { DEFAULT_LEVEL, levelById, challengeFor, initializeCalculator } = await i
 const { drawChallenge } = await import('./calculator-challenge-view.mjs' + V);
 const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
-const { keyboardLayer, keyLabel } = await import('./calculator-key-labels.mjs' + V);
+const { keyboardLayer, keyLabel, keyInstruction } = await import('./calculator-key-labels.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
 const { createPicoArt } = await import('./pico-art.mjs' + V);
 const { createPicoAudio } = await import('./pico-audio.mjs' + V);
@@ -223,7 +223,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     for (const name of peers.keys()) if (!state.members.some(member => member.name === name)) peers.delete(name);
     const hint = state.solved ? 'Your result is ready. Help your teammates finish.'
-      : state.step < level.route.length ? level.hints[state.step]
+      : state.step < level.route.length ? keyInstruction(level.route[state.step], level.hints[state.step], keyboardLayer(calculator.save()), level.route[state.step + 1])
       : 'Choose ' + challenge.labels[state.step - level.route.length] + '. Click its value.';
     const text = state.failure ? (state.step >= level.route.length
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
@@ -363,9 +363,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, caption.slice(0, 106), 28, 76, 10);
     if (caption.length > 106) text(ctx, caption.slice(106), 28, 89, 10);
     // No bezel or LCD background: live menu text is part of the scenery.
-    for (const [i, line] of (showingBoxplot ? [] : display.getLines().slice(0, 8)).entries()) {
-      text(ctx, (line.selected ? '> ' : '  ') + line.text, 28, 106 + i * 21, 14,
-        ink);
+    if (showingBoxplot) text(ctx, 'CALCULATOR RESULT', 28, 103, 10);
+    for (const [i, line] of display.getLines().slice(0, 8).entries()) {
+      const label = (line.selected ? '> ' : '  ') + line.text;
+      text(ctx, label, 28, (showingBoxplot ? 123 : 106) + i * 18, label.length > 25 ? 7 : 14, ink);
     }
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     const elapsed = state ? clock() - state.startedAt : 0;
@@ -408,20 +409,16 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ctx.save();
       if (state?.solved) ctx.globalAlpha *= 0.22;
       const label = showingBoxplot ? tile.key : keyLabel(tile.key, layer);
-      const changed = label !== tile.key;
       const color = showingBoxplot ? ink : selected === tile.key || hint ? '#30263b'
         : layer === 'second' || tile.key === '2ND' ? '#a9daff'
         : layer === 'alpha' || tile.key === 'ALPHA' ? '#b7edab' : '#fff';
-      // Fit long legends such as STAT PLOT inside the existing clickable tile.
-      const width = Math.max(1, label.length * 6 - 1) * 2;
-      ctx.translate(tile.x + tile.w / 2, tile.y + (changed ? 14 : 18));
-      ctx.scale(Math.min(1, (tile.w - 8) / width), 1);
-      pixelText(ctx, label, 0, 0, 12, color, 'center');
+      // Use whole pixel sizes: no horizontally squeezed letters or crowded sublabels.
+      const size = label.length * 12 - 2 <= tile.w - 8 ? 14 : 7;
+      pixelText(ctx, label, tile.x + tile.w / 2, tile.y + (size === 7 ? 16 : 20), size, color, 'center');
       ctx.restore();
-      if (changed) text(ctx, tile.key, tile.x + tile.w / 2, tile.y + 24, 7, '#fff', 'center');
     }
     if (step >= level.route.length) drawBoxplot(ctx, step - level.route.length);
-    else if (state) text(ctx, (level.hints[step] || '').slice(0, 46), 350, 252, 10);
+    else if (state) text(ctx, keyInstruction(level.route[step], level.hints[step] || '', layer, level.route[step + 1]).slice(0, 52), 350, 252, 10);
     if (showingBoxplot) {
       const flag = ATLAS.checkpoint;
       if (atlas) ctx.drawImage(atlas, flag.x, flag.y, flag.w, flag.h, 40, WORLD.floor - flag.h, flag.w, flag.h);

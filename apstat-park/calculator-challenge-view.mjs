@@ -17,7 +17,7 @@ export function drawChallenge(ctx, { level, challenge, values, rejected, solved,
     }
     for (const i of [0, 2, 4]) if (i < values.length) line(x(values[i]), 425, x(values[i]), 465);
     for (const [a, b] of [[0, 1], [3, 4]]) if (b < values.length) line(x(values[a]), 445, x(values[b]), 445);
-    if (level.id === 'modified-boxplot' && values.length === 5) {
+    if (level.procedureId === 'modified-boxplot' && values.length === 5) {
       for (const value of level.values.data.filter(value => value < values[0] || value > values[4])) ctx.fillRect(x(value) - 3, 442, 6, 6);
     }
   } else if (kind === 'dotplot') {

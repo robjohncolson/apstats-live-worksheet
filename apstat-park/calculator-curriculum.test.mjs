@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
 import { curriculumCoverage, firstCoveredDates } from '../scripts/park-curriculum-coverage.mjs';
-import { CALCULATOR_LEVELS, DEFAULT_LEVEL, eligibleLevels, schoolDate, createLevelRotation, challengeFor, initializeCalculator } from './calculator-curriculum.mjs';
+import { CALCULATOR_LEVELS, CALCULATOR_PROBLEMS, DEFAULT_LEVEL, eligibleLevels, schoolDate, createLevelRotation, challengeFor, initializeCalculator } from './calculator-curriculum.mjs';
 import { createMissionEngine } from './calculator-engine.mjs';
 import { createMission, pressMissionKey, KEYS, tilesFor, timeLimitFor, BOXPLOT_MS } from './calculator-mission.mjs';
 
@@ -64,13 +64,24 @@ test('rotation covers the eligible pool, avoids consecutive repeats, and adds ne
   assert.equal(new Set(pool.map(() => rotation.next(pool).id)).size, 4);
   const last = rotation.next(pool).id;
   assert.notEqual(rotation.next(pool).id, last);
-  assert.equal(rotation.next([pool[0]]).id, pool[0].id);
+  assert.equal(rotation.next([pool[0]]).skillId, pool[0].id);
   assert.equal(rotation.next([]), null);
   const added = CALCULATOR_LEVELS[5];
   assert.equal(rotation.next([pool[0], added]).id, added.id);
 });
 
-for (const level of CALCULATOR_LEVELS) test(level.id + ': engine route, complete answer, retry deadline and checkpoint', () => {
+test('each skill has different problems and never repeats its previous dataset', () => {
+  for (const level of CALCULATOR_LEVELS) {
+    const rotation = createLevelRotation(() => .5);
+    const first = rotation.next([level]), second = rotation.next([level]);
+    assert.equal(first.skillId, level.id);
+    assert.equal(second.skillId, level.id);
+    assert.notEqual(first.id, second.id);
+    assert.notDeepEqual(first.values, second.values, level.id);
+  }
+});
+
+for (const level of CALCULATOR_PROBLEMS) test(level.id + ': engine route, complete answer, retry deadline and checkpoint', () => {
   const engine = createMissionEngine(create, level.setup, level.route, KEYS.map(tile => tile.key));
   const state = createMission(0, level);
   let time = 0;
