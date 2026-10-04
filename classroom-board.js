@@ -4354,6 +4354,10 @@
     canvas.id = canvasId;
     canvas.style.display = 'block';
     canvas.style.width   = '100%';
+    // Reserve the student room before the socket, sprites, or module imports load.
+    var initialBoardH = role === 'student'
+      ? Math.round(750 * Math.min(1, (container.clientWidth || DEFAULT_BOARD_W) / 720)) : BOARD_H;
+    canvas.style.height = initialBoardH + 'px';
     container.appendChild(canvas);
 
     // P4+P9: canvas click -> avatar hit-test. Always fires onAvatarClick when
@@ -4781,7 +4785,7 @@
     // is an embedded panel, so sizing is re-pointed at the host container:
     // width tracks container.clientWidth, height is boardH (BOARD_H except
     // while an APStat Park level taller than the strip is open).
-    var boardH = BOARD_H;
+    var boardH = initialBoardH;
     function resizeBoardToContainer() {
       if (!engine || !engine.ctx) { return; }
       var dpr  = root.devicePixelRatio || 1;

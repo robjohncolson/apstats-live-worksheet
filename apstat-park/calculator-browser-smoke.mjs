@@ -90,9 +90,24 @@ try {
   const bob = await browser.newPage({ viewport: { width: 900, height: 1000 } });
   for (const [page, name] of [[alice, 'alice'], [bob, 'bob']]) {
     page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => {
+      window.bootHeights = [];
+      function sampleBoot() {
+        const canvas = document.querySelector('canvas');
+        if (canvas) window.bootHeights.push(canvas.getBoundingClientRect().height);
+        if (window.board?.getParkScene?.()?.kind !== 'calculator') requestAnimationFrame(sampleBoot);
+      }
+      requestAnimationFrame(sampleBoot);
+    });
+    await page.route('**/apstat-park/calculator-room.mjs*', async route => {
+      await new Promise(resolve => setTimeout(resolve, 400));
+      await route.continue();
+    });
     await page.goto(origin + '/?user=' + name);
     await page.waitForFunction(() => board.getSpritePosition(new URL(location).searchParams.get('user')));
     await page.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
+    assert.ok(await page.evaluate(() => bootHeights.length > 0 && bootHeights.every(height => height === board.getBoardHeight())),
+      'every startup frame reserves the full calculator height, including delayed module loading');
     await page.evaluate(() => { window.originalRoom = board.getParkScene(); window.originalHeight = board.getBoardHeight(); });
     if (name === 'alice') await page.screenshot({ path: path.join(output, 'calculator-entrance.png'), fullPage: true });
     // Enter from the main room using movement, not a new door.

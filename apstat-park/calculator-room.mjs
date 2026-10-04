@@ -9,6 +9,7 @@ const { createPicoAudio } = await import('./pico-audio.mjs' + V);
 const { PICO } = await import('./physics.mjs' + V);
 const { approachSteps, createCalculatorMotion } = await import('./calculator-motion.mjs' + V);
 const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
+const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
@@ -343,12 +344,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function drawCharacter(ctx, character, name) {
     if (state?.failure?.name !== name) { character.render(ctx); return; }
     const elapsed = Math.max(0, clock() - state.failure.at) / 1000;
-    ctx.save();
-    ctx.translate(character.x + 10, character.y + 12 + 110 * elapsed * elapsed);
-    ctx.rotate(Math.PI);
-    ctx.translate(-character.x - 10, -character.y - 12);
-    character.render(ctx);
-    ctx.restore();
+    // Atlas cell 1 is Pico's dead cat (its crop starts two pixels lower).
+    art.cat(ctx, rgbHex(catBodyForHue(character.hue)), 1, character.facingRight !== false,
+      character.x, character.y + 110 * elapsed * elapsed);
   }
   function drawBoxplot(ctx, filled) {
     const rejected = state.lastPlot?.correct === false && !state.boxValues.length

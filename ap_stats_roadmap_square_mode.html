@@ -9,6 +9,8 @@
     <link rel="icon" href="icon.svg">
     <meta name="theme-color" content="#161616">
     <style>
+        /* Reserve the responsive play area before the board scripts mount. */
+        #classroom-board-mount:empty { aspect-ratio: 720 / 750; }
         :root {
             /* ── Tango theme (2026-08-19): Platinum / Charcoal / Tangerine / Powder Blue ──
                The Desk's System-7 chrome is now the warm Platinum with Charcoal ink;
@@ -27600,7 +27602,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-04-xcml';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-04-fb5x';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.
