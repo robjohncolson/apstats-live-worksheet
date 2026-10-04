@@ -29,7 +29,7 @@ function delayed(map, ws, fn) {
 }
 const send = (ws, message) => delayed(outAt, ws, () => { if (ws.readyState === 1) ws.send(JSON.stringify(message)); });
 const realCurriculum = process.env.PARK_REAL_CURRICULUM === '1';
-const filter = realCurriculum ? ['randint-sampling'] : process.env.PARK_SKILL_FILTER?.split(',');
+const filter = realCurriculum ? ['dotplot'] : process.env.PARK_SKILL_FILTER?.split(',');
 const levels = CALCULATOR_LEVELS.filter(level => !filter || filter.includes(level.id));
 let selectedLevel = levels[0];
 const latest = new Map();

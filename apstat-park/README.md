@@ -220,11 +220,17 @@ Rooms are keyed by the joined classroom section and chosen level, retaining the 
 
 ### Calculator curriculum rounds
 
-The calculator game covers all 31 procedures in `ti84-procedures-data.json`.
+The calculator game covers all 31 procedures in `ti84-procedures-data.json`,
+plus a lesson-1.5 dot-plot activity using the histogram trainer route.
 The relay previews one shared mission in the lobby; its timer starts only when
 the block-selected team is ready. It maps authenticated `PeriodB`/`PeriodE`
-sections to the calendar's B/E dates in `data/lesson-schedule.json`, mapped
-through `data/ti84-lesson-map.json`, and today's date in America/New_York.
+sections to the calendar's B/E dates; parked/teacher `PeriodX` follows E, as
+in the Desk grade engine. The catalog joins `data/lesson-schedule.json`,
+`data/ti84-lesson-map.json`, and the worksheet/quiz `data/work-manifest.json`.
+Each level records its covered lessons, worksheet paths, work sources, and
+section dates. Any past mapped lesson unlocks the activity permanently for
+that school year, using today's date in America/New_York. Lesson 1.8 also
+maps to the five-number-summary and modified-boxplot procedures.
 A shuffled bag covers the currently taught skills before repeating; newly
 dated skills join immediately. Undated bonus procedures are implemented but
 excluded until the calendar assigns them a date. An empty pool waits without
@@ -245,7 +251,7 @@ real engine keys through field entry, not by setting a final result. The
 native engine remains a reimplementation, not a claim of full ROM parity:
 random draws use its seeded generator and histogram bins use its data fit.
 The original ROM is not executed. Browser and relay vendor identical engine,
-catalog, and rule modules. Calculator protocol is 6; Pico protocol remains 5.
+catalog, and rule modules. Calculator protocol is 7; Pico protocol remains 5.
 
 After changing trainer problems, routes, or the calendar, regenerate and sync:
 
@@ -260,7 +266,8 @@ real local relay and captures desktop/mobile results. Its authenticated fixture
 skips block travel and pins skills, including future/bonus skills, only in that
 test process. Set `PARK_REAL_CURRICULUM=1` to exercise actual date gating and
 keyboard block travel with production section names; `PARK_SECTION` selects
-`PeriodB` (default) or `PeriodE`. `calculator-browser-smoke.mjs` separately exercises real team
+`PeriodB` (default), `PeriodE`, or `PeriodX`. This mode completes the dot-plot
+activity without bypassing eligibility. `calculator-browser-smoke.mjs` separately exercises real team
 block travel, timer failures, checkpoints, and door navigation. Relay
 `calculator-rotation.test.mjs` checks date gating and shared round lifecycle.
 Run native tests from `ti84-trainer-v2/native` with

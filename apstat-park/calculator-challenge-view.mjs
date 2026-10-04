@@ -20,6 +20,16 @@ export function drawChallenge(ctx, { level, challenge, values, rejected, solved,
     if (level.id === 'modified-boxplot' && values.length === 5) {
       for (const value of level.values.data.filter(value => value < values[0] || value > values[4])) ctx.fillRect(x(value) - 3, 442, 6, 6);
     }
+  } else if (kind === 'dotplot') {
+    const positions = [...new Set(level.values.data)].sort((a, b) => a - b);
+    const x = scale(Math.min(...positions), Math.max(...positions), 130, 590);
+    line(105, 480, 610, 480);
+    positions.forEach((position, i) => {
+      for (let dot = 0; dot < Math.max(0, Math.floor(values[i] || 0)); dot++) {
+        ctx.beginPath(); ctx.arc(x(position), 468 - dot * 15, 5, 0, Math.PI * 2); ctx.fill();
+      }
+      text(ctx, String(position), x(position), 500, 12, ink, 'center');
+    });
   } else if (kind === 'histogram') {
     const height = scale(0, Math.max(1, ...challenge.answers, ...values), 0, 120);
     line(100, 480, 620, 480);

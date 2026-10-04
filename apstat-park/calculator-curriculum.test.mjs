@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { curriculumCoverage, firstCoveredDates } from '../scripts/park-curriculum-coverage.mjs';
 import { CALCULATOR_LEVELS, DEFAULT_LEVEL, eligibleLevels, schoolDate, createLevelRotation, challengeFor, initializeCalculator } from './calculator-curriculum.mjs';
 import { createMissionEngine } from './calculator-engine.mjs';
 import { createMission, pressMissionKey, KEYS, tilesFor, timeLimitFor, BOXPLOT_MS } from './calculator-mission.mjs';
@@ -16,9 +17,12 @@ test('every trainer skill has a level and the current section calendar dates', (
   const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
   const procedures = read('ti84-procedures-data.json').procedures;
   const schedule = read('data/lesson-schedule.json');
-  assert.deepEqual(CALCULATOR_LEVELS.map(level => level.id).sort(), procedures.map(p => p.id).sort());
+  const lessonMap = read('data/ti84-lesson-map.json'), work = read('data/work-manifest.json');
+  assert.deepEqual([...new Set(CALCULATOR_LEVELS.map(level => level.procedureId))].sort(), procedures.map(p => p.id).sort());
   for (const level of CALCULATOR_LEVELS) {
-    assert.deepEqual(level.dates, schedule.lessons[level.topic]?.periods || {});
+    const expected = curriculumCoverage(level.procedureId, lessonMap, schedule, work, level.id === 'dotplot' ? ['1.5'] : null);
+    assert.deepEqual(level.coverage, expected);
+    assert.deepEqual(level.dates, firstCoveredDates(expected));
     assert(level.route.every(key => KEYS.some(tile => tile.key === key)), level.id);
   }
 });
@@ -30,12 +34,29 @@ test('date gating uses New York midnight, section dates, and no undated/future f
   assert.deepEqual(eligibleLevels('unknown', '2030-01-01'), []);
   for (const period of ['B', 'E']) {
     assert.deepEqual(eligibleLevels('Period' + period, '2026-10-04'), eligibleLevels(period, '2026-10-04'));
-    assert.equal(eligibleLevels('Period' + period, '2026-10-04').length, 4);
+    assert.deepEqual(eligibleLevels('Period' + period, '2026-10-04').map(level => level.id).sort(),
+      ['dotplot', 'histogram', 'modified-boxplot', 'one-var-stats', 'randint-sampling']);
   }
-  assert.deepEqual(eligibleLevels('PeriodX', '2030-01-01'), []);
+  assert.deepEqual(eligibleLevels('PeriodX', '2026-10-04'), eligibleLevels('PeriodE', '2026-10-04'));
+  assert.deepEqual(eligibleLevels(' periodx ', '2026-09-15'), []);
   assert(eligibleLevels('B', '2026-09-22').some(level => level.id === DEFAULT_LEVEL.id));
   assert(!eligibleLevels('E', '2026-09-22').some(level => level.id === DEFAULT_LEVEL.id));
   assert(!eligibleLevels('B', '2030-01-01').some(level => level.id === 'geometcdf'));
+});
+
+test('past worksheet and quiz coverage remains available; any mapped lesson can unlock a skill', () => {
+  const level = CALCULATOR_LEVELS.find(level => level.id === 'one-var-stats');
+  assert.deepEqual(level.coverage.map(lesson => lesson.topic), ['1.7', '1.8']);
+  assert(level.coverage.every(lesson => lesson.sources.includes('worksheet') && lesson.sources.includes('quiz')));
+  const repeated = { ...level, coverage: [
+    { dates: { E: '2026-11-01' } }, { dates: { E: '2026-09-23' } },
+  ] };
+  assert.deepEqual(eligibleLevels('PeriodX', '2026-10-04', [repeated]), [repeated]);
+  assert.deepEqual(eligibleLevels('PeriodE', '2026-09-22', [repeated]), []);
+  const dots = CALCULATOR_LEVELS.find(level => level.id === 'dotplot');
+  assert.equal(dots.procedureId, 'histogram');
+  assert.deepEqual(challengeFor(dots).answers, [2, 3, 1, 2, 2]);
+  assert(eligibleLevels('PeriodX', '2027-04-01').some(level => level.id === 'dotplot'));
 });
 
 test('rotation covers the eligible pool, avoids consecutive repeats, and adds new lessons', () => {

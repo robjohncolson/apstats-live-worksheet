@@ -3,12 +3,19 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
+import { curriculumCoverage, firstCoveredDates } from './park-curriculum-coverage.mjs';
 
 const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
 const procedures = read('ti84-procedures-data.json').procedures;
 const problems = read('ti84-pattern-recognition-data.json').canonicalProblems;
 const lessonMap = read('data/ti84-lesson-map.json');
 const schedule = read('data/lesson-schedule.json');
+const workManifest = read('data/work-manifest.json');
+// Dot plots are taught with histograms, but are not a native TI-84 plot type.
+// Reuse the real histogram procedure, then construct individual dots in Park.
+procedures.push({ ...procedures.find(procedure => procedure.id === 'histogram'),
+  activityId: 'dotplot', name: 'Histogram to dot plot', topics: ['1.5'],
+  data: [1, 1, 2, 2, 2, 3, 4, 4, 5, 5], challenge: 'dotplot' });
 const sandbox = { window: {}, console };
 vm.createContext(sandbox);
 for (const file of nativeScriptFilenames) vm.runInContext(readFileSync(new URL('../ti84-trainer-v2/native/' + file, import.meta.url), 'utf8'), sandbox);
@@ -18,6 +25,7 @@ const levels = [];
 
 for (const procedure of procedures) {
   const id = procedure.id, problem = problems[id][0], v = structuredClone(problem.values);
+  if (procedure.data) v.data = procedure.data;
   if (id === 'one-var-stats') v.data = [4, 6, 7, 8, 10, 12, 13, 14, 18, 20];
   if (id === 'matrix-entry') { v.matrix = v.data; delete v.data; }
   const lists = {}, matrices = {};
@@ -115,8 +123,9 @@ for (const procedure of procedures) {
   }
   const computed = calculator.getComputedValues();
   console.log(id + ': ' + route.length + ' engine checkpoints');
-  const topic = Object.entries({ ...lessonMap.lessons, ...lessonMap.bonus }).find(([, ids]) => ids.includes(id))?.[0];
-  levels.push({ id, title: procedure.name, topic, dates: schedule.lessons[topic]?.periods || {},
+  const coverage = curriculumCoverage(id, lessonMap, schedule, workManifest, procedure.topics);
+  levels.push({ id: procedure.activityId || id, procedureId: id, challenge: procedure.challenge,
+    title: procedure.name, topic: coverage[0]?.topic, coverage, dates: firstCoveredDates(coverage),
     stem: id === 'one-var-stats' ? 'Find the five-number summary for L1.' : problem.stem,
     values: v, setup: { lists, matrices }, route, hints,
     computed: JSON.parse(JSON.stringify(computed)), finalView: JSON.parse(JSON.stringify(rendered)) });
