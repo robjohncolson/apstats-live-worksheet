@@ -169,6 +169,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       : 'Read ' + LABELS[state.step - ROUTE.length] + ' from the summary. Stand on its value.';
     const text = state.complete ? 'Together! Your five-number summary builds the boxplot. ' + state.bonus + '/12 quick decisions.'
       : 'Step ' + (state.step + 1) + '/12 · ' + state.members.length + ' on the team. ' + hint
+        + (state.lastPress && !state.lastPress.advanced ? ' Pressed ' + state.lastPress.key + '. Goal not reached yet; keep trying or wait for the hint reset.' : '')
         + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '');
     if (status.textContent !== text) status.textContent = text;
     if (restarted) returnToStart();
@@ -255,6 +256,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const hold = state?.holdAt == null ? 0 : Math.min(1, (clock() - state.holdAt) / HOLD_MS);
     ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
     ctx.fillStyle = '#479b67'; ctx.fillRect(350, 234, 315 * hold, 12);
+    if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS', 350, 269, 10);
+    else if (state?.lastPress && !state.lastPress.advanced) {
+      text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
+    }
     const step = state?.step || 0;
     for (const tile of tilesFor(step)) {
       const hint = state?.hintKeys?.includes(tile.key);

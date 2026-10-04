@@ -94,6 +94,15 @@ try {
   await bob.locator('[data-calculator-key="ENTER"]').click();
   await alice.waitForTimeout(1300);
   assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 0, 'one student cannot advance alone');
+  for (const page of [alice, bob]) await page.locator('[data-calculator-key="MATH"]').click();
+  await alice.waitForFunction(() => board.getParkScene().getState().holdAt != null);
+  await alice.screenshot({ path: path.join(output, 'calculator-wrong-key-hold.png'), fullPage: true });
+  for (const page of [alice, bob]) {
+    await page.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'MATH');
+    assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 0);
+    assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().type), 'menu');
+    assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), ['MATH']);
+  }
   timeOffset += 31000;
   // Move the mission clock without simulating a disconnected browser.
   for (const [ws, who] of sockets) {
@@ -114,6 +123,11 @@ try {
       await alice.waitForTimeout(1100);
       assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 4, 'held DOWN does not repeat into another step');
       assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'RIGHT', '1', 'ENTER']);
+      for (const page of [alice, bob]) await page.locator('[data-calculator-key="CLEAR"]').click();
+      for (const page of [alice, bob]) {
+        await page.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'CLEAR');
+        assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().type), 'home');
+      }
       timeOffset += 31000;
       for (const [ws, who] of sockets) {
         const pose = packets.findLast(packet => packet.name === who.username && packet.type === 'calculator_pose');
@@ -122,6 +136,7 @@ try {
       for (const page of [alice, bob]) {
         await page.waitForFunction(() => board.getParkScene().getState().timeoutCount === 2);
         assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 4);
+        assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'RIGHT', '1', 'ENTER']);
         assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 785);
         assert.ok(await page.evaluate(() => board.getParkScene().getView().lines.some(line => line.selected && line.text.includes('FreqList'))));
       }

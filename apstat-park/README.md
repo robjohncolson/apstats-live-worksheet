@@ -15,13 +15,17 @@ the unrestricted ROM emulator. L1 starts with `4,6,7,8,10,12,13,14,18,20`.
 Move with Left/Right and jump with Space onto one-way key platforms. Clicking a
 tile, or using the expandable keyboard/touch controls, places the same character
 on that tile. All current participants in the period's calculator room must hold
-keys that produce the same correct calculator state for 900 ms. The relay runs
+the same key (or engine-verified equivalent goal keys) for 900 ms. The relay runs
 the trainer engine to verify each candidate against the next learning checkpoints.
 It accepts equivalent keys and forward shortcuts, records the actual selected
-key, and clients replay that history. Wrong choices stay on the current step.
+key, and clients replay that history. Every key gets the same hold timer when the
+team agrees. Wrong keys are actually pressed into the calculator, changing its
+screen and fields without awarding progress. Students can recover with further
+keypresses; incorrect summary choices give feedback without completing a goal.
 Each step has 30 seconds. Expiration reveals engine-verified valid keys, restores
-the current calculator checkpoint, clears selections, places players beside the
-keyboard, and starts another 30 seconds. Earlier steps remain complete; a hinted
+the last completed calculator checkpoint (discarding subsequent wrong inputs),
+clears selections, places players beside the keyboard, and starts another
+30 seconds. Earlier steps remain complete; a hinted
 step does not earn the quick-decision bonus.
 Repeated DOWN/ENTER requires stepping or jumping off and returning, or explicitly
 choosing the accessible tile again. Characters stay where the team left them.
