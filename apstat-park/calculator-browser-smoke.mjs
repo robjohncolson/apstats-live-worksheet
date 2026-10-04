@@ -291,7 +291,7 @@ try {
   });
   await alice.evaluate(() => board.openNativeGameplay(0));
   await alice.waitForSelector('[data-park-active]');
-  await alice.waitForFunction(() => board.getParkScene()?.getGame?.().getWorld().shown);
+  await alice.waitForFunction(() => board.getParkScene()?.kind === 'campaign' && board.getParkScene().getView().frame > 30);
   await alice.waitForTimeout(400);
   assert.equal(await alice.evaluate(() => board.getBoardHeight()), roomHeight);
   assert.ok(await alice.evaluate(height => transitionHeights.every(value => value === height), roomHeight),
@@ -336,7 +336,7 @@ try {
   await alice.waitForFunction(() => board.getParkScene().getView().cameraX < 0.1);
   const mobileHeight = await alice.evaluate(() => board.getBoardHeight());
   await alice.evaluate(() => board.openNativeGameplay(0));
-  await alice.waitForFunction(() => board.getParkScene()?.getGame?.().getWorld().shown);
+  await alice.waitForFunction(() => board.getParkScene()?.kind === 'campaign' && board.getParkScene().getView().frame > 30);
   await alice.waitForTimeout(400);
   assert.equal(await alice.evaluate(() => board.getBoardHeight()), mobileHeight,
     'mobile Pico keeps the calculator scale and floor position');

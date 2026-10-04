@@ -4420,10 +4420,10 @@
     var parkReturnAt = 0;
     var parkExitKeyHeld = false;
     // APStat Park: one door on the calendar board itself (no lobby). It opens level 6, a faithful
-    // half-scale PICO PARK 1-1 ("Jump together"), straight away. Screen-space x of door i is
+    // original 48-stage PICO PARK campaign, straight away. Screen-space x of door i is
     // PARK_DOOR_X0 + i*PARK_DOOR_STEP (the list could hold more doors again).
     var PARK_DOORS = [
-      { level: 6, title: 'Jump together' }
+      { level: 7, title: 'PICO PARK campaign' }
     ];
     // Retired doors (protocol-4 levels 0-5 stay in the relay; only the test-only openParkLevel(n) opens them):
     // var PARK_DOORS_V4 = [{ level: 0, title: 'Hello together' }, { level: 3, title: 'Moving walls' }, { level: 4, title: 'Upstairs / downstairs' }];
@@ -4545,7 +4545,7 @@
           container: container,
           getSocket: function () { return ws; },
           levelIndex: levelIndex,
-          onPark: function () { enterPark(6); },
+          onPark: function () { enterPark(7); },
           board: {
             engine: engine, input: playerInput, presses: parkPresses, username: username, api: root.ClassroomBoard,
             viewportW: _viewportW,
@@ -7011,7 +7011,7 @@
         if (msg && msg.type === 'park_result' && typeof msg.requestId === 'string'
             && msg.requestId.indexOf('board_lobby_') === 0) {
           // park_lobby reply (the doors' occupancy). park_* traffic otherwise belongs to the panel.
-          if (Array.isArray(msg.levels)) parkOccupancy = msg.levels;
+          if (Array.isArray(msg.levels)) parkOccupancy = msg.levels.concat(msg.campaign ? [msg.campaign] : []);
           return;
         }
         if (msg && msg.type && msg.type.indexOf('classroom_') === 0) {

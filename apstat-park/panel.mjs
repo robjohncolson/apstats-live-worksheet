@@ -3,6 +3,7 @@
 const V = new URL(import.meta.url).search;
 const { ParkReplica } = await import('./replica.mjs' + V);
 const { mountBoardScene } = await import('./board-scene.mjs' + V);
+const { mountCampaign } = await import('./campaign-panel.mjs' + V);
 
 // Protocol 5 adds level 6 (PICO PARK 1-1); the relay still serves protocol-4 levels 0-5 to it.
 export const PARK_CLIENT_PROTOCOL = 5;
@@ -21,6 +22,7 @@ export function updateMessage(lobbyLevels, levelIndex) {
 // Transport and lifecycle only. The board owns the canvas, controls and sprites,
 // and the puzzle doors: the panel opens straight into `levelIndex`.
 export function mountParkPanel({ container, getSocket, board, levelIndex = 0, onClose = () => {} }) {
+  if (levelIndex === 7) return mountCampaign({ container, getSocket, board, onClose });
   const doc = container.ownerDocument;
   const status = doc.createElement('span');
   status.setAttribute('role', 'status');

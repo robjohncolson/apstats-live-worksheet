@@ -1,5 +1,41 @@
 # APStat Park: one continuous board
 
+## Original 48-stage campaign
+
+The main room's park doorway opens all 12 original worlds, four stages each, in
+the order recovered from `seq_setting.lua`. Each team's CLEAR celebration slides
+in over a whitened scene; after 3.2 seconds the next stage dissolves in. Stage
+12-4 loops to 1-1. Retry (R) restarts the current stage, not the campaign.
+
+Classmates form teams of up to eight. Late arrivals watch until the next stage or
+retry, so adding a player cannot change a puzzle halfway through. A lone student
+controls two cats: arrows/Space and WASD/F. In multiplayer, each student uses
+arrows/Space. Escape returns to the calculator room, as does Up beside the return
+door. Hiding the tab for 15 seconds leaves the team. A disconnected teammate pauses
+the simulation for up to 15 seconds before the stage restarts with those remaining.
+
+`campaign-engine.mjs` adapts the recovered browser engine to the desk canvas.
+`recovered/runtime.mjs` bundles its actor implementations and original campaign
+stage data, including larger-party variants. It does not execute a ROM. The
+source map includes the source, and `recovered/provenance.json` records source
+hashes. Regenerate with `node scripts/build-pico-campaign.mjs <browser_port>`;
+the sibling `lua_archive_sources` directory and the port's dependencies are needed.
+The importer uses shipped `stage_common.lua` constants and column-major map data.
+
+The relay assigns a seed and an ordered 60 Hz input stream. Clients replay that
+stream; rendering does not advance physics. Reconnects replay the journal in
+bounded batches. CLEAR requires matching completion reports from every active
+student; the relay does not independently simulate or verify the puzzle solution.
+There are no grade/currency effects. Team progress is held in relay memory for up
+to two idle hours and is lost on a server restart.
+
+Validation: `campaign-browser-smoke.mjs` loads and simulates all 48 stages with 2
+and 8 players, checks actor coverage and deterministic replay, then checks a real
+two-client CLEAR/next-stage transition using a goal fixture. The relay tests cover
+all 48 transitions and wraparound, retry, reconnect, and membership. These are
+integration checks, not proof that every puzzle has been manually completed or
+that the recovered engine has exact native-game parity.
+
 ## Calculator Together (main room)
 
 The student room is one continuous scrolling world with an orange floor. Walk
@@ -16,7 +52,7 @@ The original PushBox border comes from sheet rectangle 464,32,48,48, recovered
 from `FUN_7ff72bb340f0`'s nine-slice UV table; `FUN_7ff72bb346a0` renders its numeric
 counter. This activity adapts that counter to team selection, with relay-controlled
 movement at 60 pixels/second. Stale pushing input stops moving the block after 350 ms.
-The left doorway opens Jump together with Up. Escape returns to the entrance.
+The left doorway opens the original campaign with Up. Escape returns to the entrance.
 Crossing the doorway preserves the outgoing frame while the next scene loads,
 then dissolves it over 320 ms. Both rooms share the responsive 750-unit canvas,
 700-unit floor height, and 40-unit doorway at x=30. Pico's rendering is translated

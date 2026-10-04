@@ -46,9 +46,9 @@ test('the scene is always one level: no lobby, every exit returns to the calenda
   assert.match(panel, /const PARK_LEVELS = \[\.\.\.PARK_LEGACY_LEVELS, 6\]/);
 });
 
-test('the calendar board owns one door (Jump together, level 6) and the occupancy poll', () => {
+test('the calendar board owns one campaign door and the occupancy poll', () => {
   const board = readFileSync(new URL('../classroom-board.js', import.meta.url), 'utf8');
-  assert.match(board, /var PARK_DOORS = \[\s*\{ level: 6, title: 'Jump together' \}\s*\];/);
+  assert.match(board, /var PARK_DOORS = \[\s*\{ level: 7, title: 'PICO PARK campaign' \}\s*\];/);
   // The three retired doors stay on record, commented out; levels 0-5 open only through openParkLevel.
   assert.match(board, /\/\/ var PARK_DOORS_V4 = \[\{ level: 0, title: 'Hello together' \}, \{ level: 3, title: 'Moving walls' \}, \{ level: 4, title: 'Upstairs \/ downstairs' \}\];/);
   assert.match(board, /openParkLevel: function \(levelIndex\) \{ enterPark\(levelIndex \| 0\); \}/);

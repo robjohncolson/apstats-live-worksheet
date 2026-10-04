@@ -76,7 +76,7 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(origin + '/?user=' + name);
     await page.waitForFunction(() => window.board?.getParkScene?.()?.kind === 'calculator');
-    await page.evaluate(() => board.openNativeGameplay(0));
+    await page.evaluate(() => board.openParkLevel(6));
     await page.waitForFunction(() => board.getParkScene()?.getGame?.().getWorld().shown);
     pages.push(page);
   }
@@ -140,7 +140,7 @@ try {
   await alice.screenshot({ path: path.join(output, 'clear-mobile.png'), fullPage: true });
   for (const page of pages) await page.keyboard.press('Escape');
   await alice.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
-  await alice.evaluate(() => board.openNativeGameplay(0));
+  await alice.evaluate(() => board.openParkLevel(6));
   await alice.waitForFunction(() => board.getParkScene()?.getGame?.().getWorld().shown);
   assert.equal(await alice.evaluate(() => board.getParkScene().getGame().getWorld().clear), null);
   assert.deepEqual(errors, []);
