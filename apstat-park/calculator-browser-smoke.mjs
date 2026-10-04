@@ -74,9 +74,16 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(origin + '/?user=' + name);
     await page.waitForFunction(() => board.getSpritePosition(new URL(location).searchParams.get('user')));
+    await page.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
+    await page.evaluate(() => { window.originalRoom = board.getParkScene(); window.originalHeight = board.getBoardHeight(); });
+    if (name === 'alice') await page.screenshot({ path: path.join(output, 'calculator-entrance.png'), fullPage: true });
     // Enter from the main room using movement, not a new door.
     await page.keyboard.down('ArrowRight');
-    await page.waitForSelector('[data-calculator-active]', { timeout: 15000 });
+    await page.waitForFunction(() => board.getParkScene().getView().cameraX > 120);
+    assert.equal(await page.evaluate(() => board.getParkScene() === window.originalRoom), true);
+    assert.equal(await page.evaluate(() => board.getBoardHeight() === window.originalHeight), true);
+    if (name === 'alice') await page.screenshot({ path: path.join(output, 'calculator-scrolling.png'), fullPage: true });
+    await page.waitForSelector('[data-calculator-participating]', { timeout: 15000 });
     await page.keyboard.up('ArrowRight');
     await page.waitForFunction(() => board.getParkScene()?.getState());
     await page.getByText('Choose a tile without jumping (keyboard or touch)', { exact: true }).click();
@@ -97,6 +104,7 @@ try {
       assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 4, 'held DOWN does not repeat into another step');
       await bob.reload();
       await bob.waitForFunction(() => board.getSpritePosition('bob'));
+      await bob.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
       await bob.evaluate(() => board.openCalculatorMission());
       await bob.waitForFunction(() => board.getParkScene()?.getState()?.step === 4);
       assert.equal(await bob.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-wizard');
@@ -106,16 +114,16 @@ try {
   assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
   assert.equal(await bob.evaluate(() => board.getParkScene().getState().complete), true);
   await alice.screenshot({ path: path.join(output, 'calculator-complete.png'), fullPage: true });
-  await alice.getByText('Back to room', { exact: true }).click();
-  await alice.waitForFunction(() => !board.getParkScene());
+  await alice.getByText('Back to start', { exact: true }).click();
+  await alice.waitForFunction(() => !board.getParkScene().getView().participating);
   await alice.evaluate(() => board.openNativeGameplay(0));
   await alice.waitForSelector('[data-park-active]');
   await alice.keyboard.press('Escape');
-  await alice.waitForFunction(() => !board.getParkScene());
+  await alice.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
   await alice.evaluate(() => board.openCalculatorMission());
   await alice.waitForFunction(() => board.getParkScene()?.getState()?.complete);
   assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
-  await bob.getByText('Back to room', { exact: true }).click();
+  await bob.getByText('Back to start', { exact: true }).click();
   await alice.getByText('Play again', { exact: true }).click();
   await alice.waitForFunction(() => board.getParkScene().getState().step === 0);
   await alice.keyboard.down('ArrowRight');

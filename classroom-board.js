@@ -4494,6 +4494,7 @@
       return build ? '?v=' + encodeURIComponent(build) : '';
     }
     function enterPark(levelIndex) {
+      if (levelIndex >= 0 && nativePanel && nativePanel.kind === 'calculator') nativePanel.dispose();
       if (destroyed || nativeButton.disabled || role !== 'student' || classroomBusy()) { return; }
       setParkButtons(function (b) { b.disabled = true; });
       // ?v=<APP_BUILD>: the park modules (and their art and sounds, which inherit the query) come
@@ -4510,6 +4511,7 @@
           container: container,
           getSocket: function () { return ws; },
           levelIndex: levelIndex,
+          onPark: function () { enterPark(6); },
           board: {
             engine: engine, input: playerInput, presses: parkPresses, username: username, api: root.ClassroomBoard,
             viewportW: _viewportW,
@@ -4535,6 +4537,7 @@
             parkExitKeyHeld = true;
             for (var key in playerInput) playerInput[key] = false;
             if (!destroyed && engineReady) _refreshCameraDims();
+            if (levelIndex >= 0 && !destroyed && !classroomBusy()) enterPark(-1);
           }
         });
       }).catch(function (error) {
@@ -4880,7 +4883,9 @@
       update: function () {
         if (nativeActive || classroomBusy() || Date.now() - parkReturnAt < 1200) return;
         var local = spriteEntities[username];
-        if (local && playerInput.right && local.x > _viewportW() - 80) enterPark(-1);
+        // Mount the whole scrolling room before walking begins. Crossing the
+        // mission marker only joins its team; it never loads another scene.
+        if (local) enterPark(-1);
       },
       render: function (ctx) {
         if (classroomBusy()) return;
@@ -4889,9 +4894,6 @@
         ctx.fillStyle = '#eb9447'; ctx.fillRect(0, floor, w, 50);
         ctx.fillStyle = '#b95e30';
         for (var x = 0; x < w; x += 24) ctx.fillRect(x, floor + 20, 18, 3);
-        ctx.fillStyle = '#3a3045'; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'right';
-        ctx.fillText('CALCULATOR TOGETHER →', w - 18, floor - 70);
-        ctx.font = '12px monospace'; ctx.fillText('Walk right · Make a five-number summary', w - 18, floor - 48);
         ctx.restore();
       }
     });
@@ -5090,7 +5092,11 @@
         if (!pressed || !e.repeat) parkExitKeyHeld = false;
         else return;
       }
-      if (nativeActive && e.key === 'Escape' && pressed) { nativePanel.dispose(); return; }
+      if (nativeActive && e.key === 'Escape' && pressed) {
+        if (nativePanel.kind === 'calculator') nativePanel.returnToStart();
+        else nativePanel.dispose();
+        return;
+      }
       if (_isInputFocused() || _isModalOpen()) { return; }
       var prop = _keyToInputProp(e);
       if (!prop) { return; }
@@ -7021,7 +7027,10 @@
     var handle = {
 
       openNativeGameplay: function (doorIndex) { enterPark((PARK_DOORS[doorIndex | 0] || PARK_DOORS[0]).level); },
-      openCalculatorMission: function () { enterPark(-1); },
+      openCalculatorMission: function () {
+        if (nativePanel && nativePanel.kind === 'calculator') nativePanel.startMission();
+        else enterPark(-1);
+      },
       // Test-only: open a park level by index, including levels with no door
       // on the calendar (the local browser smoke uses it).
       openParkLevel: function (levelIndex) { enterPark(levelIndex | 0); },

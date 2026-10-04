@@ -2,10 +2,14 @@
 
 ## Calculator Together (main room)
 
-The student room now has an orange floor. Walk right to open **Make a five-number
-summary** in the same canvas. The left doorway still opens Jump together.
-The calculator mission uses the existing trainer's native JavaScript calculator,
-LCD renderer, and `one-var-stats` procedure. It is a guided learning activity, not
+The student room is one continuous scrolling world with an orange floor. Walk
+right toward **Make a five-number summary**; the entrance instructions scroll
+away as the calculator platforms come into view, without loading another scene.
+The left doorway still opens Jump together. Back to start returns to the entrance.
+The calculator mission uses the existing trainer's native JavaScript calculator
+and `one-var-stats` procedure. A scenery renderer paints its live menus and results
+in pixel lettering directly on the world background, with no green LCD panel.
+It is a guided learning activity, not
 the unrestricted ROM emulator. L1 starts with `4,6,7,8,10,12,13,14,18,20`.
 
 Move with Left/Right and jump with Space onto one-way key platforms. Clicking a
@@ -25,7 +29,12 @@ inputs; duplicate tabs count as one student. Stale choices stop counting after
 1.5 seconds, inactive connections leave after five seconds, and hiding the tab
 leaves immediately. Teacher classroom calls recall students as with the Park.
 
-Files: `calculator-room.mjs` (scene and trainer bridge), `calculator-mission.mjs`
+The full room loads at entrance. Crossing into the platforms joins the shared
+mission; walking back leaves it. World positions become mission-local coordinates
+before reaching the relay, so scrolling requires no relay protocol change.
+
+Files: `calculator-room.mjs` (scene and trainer bridge), `calculator-display.mjs`
+and `pixel-text.mjs` (scenery lettering), `calculator-mission.mjs`
 (geometry and deterministic consensus rules), and the sibling relay's
 `railway-server/apstat-park/calculator-service.mjs` (period-scoped authority).
 The relay has a byte-identical copy of `calculator-mission.mjs`; the mission test

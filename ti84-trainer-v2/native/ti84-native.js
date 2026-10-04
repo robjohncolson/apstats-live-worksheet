@@ -344,7 +344,9 @@
     // ── Internal state ──────────────────────────────────────────────────
 
     var bus = EventBus.create();
-    var renderer = null;
+    // A scene may paint the same menu/form/result payloads into its world.
+    // Standalone trainers still mount the normal LCD renderer below.
+    var renderer = options.renderer || null;
 
     // Screen state
     var screen = {

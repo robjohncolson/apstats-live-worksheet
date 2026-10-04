@@ -2,16 +2,20 @@ const V = new URL(import.meta.url).search;
 const mission = await import('./calculator-mission.mjs' + V);
 const { DATA, ROUTE, HINTS, SUMMARY, LABELS, HOLD_MS, ROUND_MS, WORLD, tilesFor, expectedAt, tileAt } = mission;
 const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
-// The trainer's existing calculator and LCD renderer, not screenshots or a second evaluator.
+const { pixelText } = await import('./pixel-text.mjs' + V);
+const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
+const ENTRY_WIDTH = 720;
+const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
+// Same calculator, with its menu payloads painted directly into the level.
 for (const file of nativeScriptFilenames) await import('../ti84-trainer-v2/native/' + file + V);
 
-export function mountParkPanel({ container, getSocket, board, onClose }) {
+export function mountParkPanel({ container, getSocket, board, onClose, onPark = () => {} }) {
   const doc = container.ownerDocument, win = doc.defaultView;
   const { engine, input, api } = board;
   const savedCamera = { ...api._camera };
   const entities = new Map(), peers = new Map();
-  const lcd = doc.createElement('canvas');
-  const calculator = win.TI84Native.create(lcd);
+  const display = createWorldDisplay();
+  const calculator = win.TI84Native.create(null, { renderer: display });
   calculator.setList('L1', DATA);
   let computedSummary = null;
   calculator.on('compute', event => {
@@ -22,6 +26,7 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
   let joinedAt = 0, poseAt = 0, receivedAt = 0, clockOffset = 0, needsRelease = false;
   const openedAt = performance.now();
   let selected = null, lastRevision = -1;
+  let participating = false, cameraX = 0;
   const controls = doc.createElement('div');
   controls.dataset.calculatorControls = '';
   controls.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:8px;background:#fff5df;color:#342c39;position:relative;z-index:2';
@@ -29,13 +34,13 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
   status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   status.style.cssText = 'flex:1 1 240px;font:14px system-ui';
   status.textContent = 'Connecting the calculator team…';
-  const exit = doc.createElement('button'); exit.textContent = 'Back to room'; exit.onclick = dispose;
+  const exit = doc.createElement('button'); exit.textContent = 'Back to start'; exit.onclick = returnToStart;
   const restart = doc.createElement('button'); restart.textContent = 'Play again'; restart.hidden = true;
   restart.onclick = () => send('calculator_restart');
   controls.append(status, restart, exit); container.append(controls);
   const readings = doc.createElement('output');
   readings.setAttribute('aria-label', 'Calculator five-number summary');
-  readings.style.cssText = 'display:none;padding:8px;background:#e2ebcc;color:#252b20;font:14px monospace';
+  readings.style.cssText = 'display:none;padding:8px;background:#fff7e7;color:#3a3045;font:14px monospace';
   container.append(readings);
   container.setAttribute('data-calculator-active', '');
 
@@ -63,22 +68,43 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
     }
   }
   const terrain = () => [
-    { x: 0, y: WORLD.floor, w: WORLD.width, h: 50 },
+    { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 },
     // Key platforms are one-way: jump through from below, land from above.
     // A dense physical keypad must not trap cats underneath a row of keys.
     ...tilesFor(state?.step || 0).filter(tile => player.vy >= 0 && player.y + 24 <= tile.y + 1)
-      .map(tile => ({ ...tile, h: 8 })),
+      .map(tile => ({ ...tile, x: tile.x + ENTRY_WIDTH, h: 8 })),
   ];
   const player = board.createPlayer({ x: 65, y: WORLD.floor - 24, input,
-    terrain, peers: () => ({}), canvasW: () => WORLD.width,
+    terrain, peers: () => ({}), canvasW: () => LEVEL_WIDTH,
+    onUpPressed: () => { if (player.x < 95) onPark(); },
     physics: { name: 'legacy', walkSpeed: 210, jumpV0: -360, gravity: 800 } });
   player.engine = engine;
   board.setBoardHeight(Math.round(WORLD.height * scale()));
   let layoutWidth = board.viewportW();
-  // Use a fixed world, scaled to the available desk width, for identical tile positions.
+  // One world and one player. Only the camera moves at the mission boundary.
   Object.assign(api._camera, { enabled: false, x: 0 });
   function scale() { return Math.min(1, board.viewportW() / WORLD.width); }
   function clock() { return performance.now() + clockOffset; }
+  function localPose() { return { x: player.x - ENTRY_WIDTH, y: player.y }; }
+  function setParticipating(active) {
+    if (active === participating) return;
+    if (!active) send('calculator_leave');
+    participating = active; joinedAt = 0; receivedAt = 0; needsRelease = true;
+    controls.style.display = active ? 'flex' : 'none';
+    accessible.hidden = !active;
+    readings.style.display = active && state?.step >= ROUTE.length ? 'block' : 'none';
+    container.toggleAttribute('data-calculator-participating', active);
+  }
+  function returnToStart() {
+    setParticipating(false);
+    Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0, state: 'idle' });
+    for (const key in input) input[key] = false;
+  }
+  function startMission() {
+    player.x = ENTRY_WIDTH + 65;
+    setParticipating(true);
+    pump();
+  }
   function connected() { return socket?.readyState === 1 && performance.now() - receivedAt < 3000; }
   function send(type, extra = {}) {
     if (socket?.readyState !== 1 || socket.bufferedAmount > 4096) return;
@@ -87,10 +113,11 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
   function choose(tile) {
     if (!state || state.complete || !connected()) return;
     for (const key in input) input[key] = false;
-    Object.assign(player, { x: tile.x + tile.w / 2 - 10, y: tile.y - 24, vx: 0, vy: 0, standingOn: null });
+    Object.assign(player, { x: ENTRY_WIDTH + tile.x + tile.w / 2 - 10, y: tile.y - 24, vx: 0, vy: 0, standingOn: null });
     needsRelease = false; selected = tile.key; poseAt = 0;
   }
   function onMessage(event) {
+    if (!participating) return;
     let packet;
     try { packet = JSON.parse(event.data); } catch { return; }
     if (packet.type === 'calculator_error') {
@@ -102,7 +129,6 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
     if (epoch !== packet.epoch) {
       calculator.reset(); calculator.setList('L1', DATA); applied = 0; epoch = packet.epoch;
       computedSummary = null;
-      Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0, state: 'idle' });
     }
     // Replay committed input once, including when joining halfway through or reconnecting.
     while (applied < Math.min(packet.step, ROUTE.length)) calculator.pressKey(ROUTE[applied++]);
@@ -139,6 +165,7 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
   function pump() {
     if (disposed || doc.hidden) return;
     bind();
+    if (!participating) return;
     if (socket?.readyState !== 1) { status.textContent = 'Reconnecting—your team progress is saved.'; return; }
     if (!joinedAt || performance.now() - receivedAt > 3000) {
       if (!state && performance.now() - openedAt > 8000) {
@@ -153,38 +180,57 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
     if (!state || !connected() || doc.hidden) return;
     if (performance.now() - poseAt >= 100) {
       poseAt = performance.now();
-      send('calculator_pose', { pose: { x: player.x, y: player.y }, ready: !needsRelease });
+      send('calculator_pose', { pose: localPose(), ready: !needsRelease });
     }
   }
   function update(dt) {
     if (board.viewportW() !== layoutWidth) {
       layoutWidth = board.viewportW(); board.setBoardHeight(Math.round(WORLD.height * scale()));
     }
-    if (disposed || doc.hidden || !connected()) return;
+    if (disposed || doc.hidden) return;
     player.update(dt);
     if (player.y > WORLD.floor) Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0 });
-    if (!tileAt(player, state?.step || 0)) needsRelease = false;
-    selected = needsRelease ? null : tileAt(player, state?.step || 0);
+    if (player.x >= ENTRY_WIDTH + 20) setParticipating(true);
+    if (player.x < ENTRY_WIDTH) setParticipating(false);
+    if (!tileAt(localPose(), state?.step || 0)) needsRelease = false;
+    selected = needsRelease ? null : tileAt(localPose(), state?.step || 0);
+    const viewport = board.viewportW() / scale();
+    const target = Math.max(0, Math.min(LEVEL_WIDTH - viewport, player.x - viewport * 0.4));
+    cameraX += (target - cameraX) * Math.min(1, dt * 8);
   }
   function text(ctx, value, x, y, size = 14, color = '#30263b', align = 'left') {
-    ctx.fillStyle = color; ctx.font = 'bold ' + size + 'px monospace'; ctx.textAlign = align;
-    ctx.fillText(value, x, y);
+    pixelText(ctx, value, x, y, size, color, align);
   }
   function draw(ctx) {
-    ctx.save(); ctx.scale(scale(), scale());
-    ctx.fillStyle = '#fff7e7'; ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-    ctx.fillStyle = '#eb9447'; ctx.fillRect(0, WORLD.floor, WORLD.width, 50);
+    ctx.save(); ctx.scale(scale(), scale()); ctx.translate(-Math.round(cameraX), 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#fff7e7'; ctx.fillRect(0, 0, LEVEL_WIDTH, WORLD.height);
+    ctx.fillStyle = '#eb9447'; ctx.fillRect(0, WORLD.floor, LEVEL_WIDTH, 50);
     ctx.fillStyle = '#b95e30';
-    for (let x = 0; x < WORLD.width; x += 24) ctx.fillRect(x, WORLD.floor + 20, 18, 3);
+    for (let x = 0; x < LEVEL_WIDTH; x += 24) ctx.fillRect(x, WORLD.floor + 20, 18, 3);
+    text(ctx, 'CALCULATOR TOGETHER', 85, 365, 21);
+    text(ctx, 'WALK RIGHT TO START >', 85, 410, 21);
+    text(ctx, 'ARROWS MOVE . SPACE JUMPS', 85, 451, 14);
+    text(ctx, 'FIND THE FIVE-NUMBER SUMMARY', 85, 485, 14);
+    text(ctx, 'THE TEAM CHOOSES EACH KEY', 85, 513, 14);
+    const atlas = board.atlas?.();
+    if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
+    else { ctx.fillStyle = '#493d48'; ctx.fillRect(30, WORLD.floor - 40, 40, 40); }
+    text(ctx, 'PICO PARK', 24, WORLD.floor - 70, 14);
+    text(ctx, 'UP TO ENTER', 24, WORLD.floor - 49, 10);
+    ctx.save(); ctx.translate(ENTRY_WIDTH, 0);
     text(ctx, 'CALCULATOR TOGETHER', 28, 30, 20);
     text(ctx, 'MISSION: MAKE A FIVE-NUMBER SUMMARY', 28, 53, 14);
     text(ctx, 'L1 = {' + DATA.join(', ') + '}', 28, 76, 12);
-    ctx.fillStyle = '#373443'; ctx.fillRect(28, 92, 300, 174);
-    ctx.drawImage(lcd, 75, 102, 205, 154);
+    // No bezel or LCD background: live menu text is part of the scenery.
+    for (const [i, line] of display.getLines().slice(0, 8).entries()) {
+      text(ctx, (line.selected ? '> ' : '  ') + line.text, 28, 106 + i * 21, 14,
+        line.selected ? '#a34d25' : '#30263b');
+    }
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : 'ONE TEAM · ONE KEY', 350, 112, 17);
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((ROUND_MS - elapsed) / 1000));
-    text(ctx, state ? (state.complete ? 'You built a boxplot.' : remain + 's · then a hint') : 'Connecting…', 350, 143, 16);
+    text(ctx, state ? (state.complete ? 'You built a boxplot.' : remain + 's · then a hint') : 'READY TO PLAY', 350, 143, 14);
     text(ctx, 'Arrows move · Space jumps', 350, 175, 12);
     text(ctx, 'Or tap a tile to stand there.', 350, 197, 12);
     text(ctx, 'Everyone holds the right tile.', 350, 219, 12);
@@ -200,9 +246,10 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
     }
     if (step >= ROUTE.length) drawBoxplot(ctx, step - ROUTE.length);
     for (const [name, peer] of peers) { peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, '#3d3345', 'center'); }
+    if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, '#30263b', 'center');
+    ctx.restore();
     player.render(ctx);
     text(ctx, 'YOU', player.x + 10, player.y - 8, 10, '#3d3345', 'center');
-    if (!connected()) { ctx.fillStyle = '#fff7e7d9'; ctx.fillRect(0, 270, WORLD.width, 400); text(ctx, 'Waiting for the classroom connection…', 360, 420, 16, '#30263b', 'center'); }
     ctx.restore();
   }
   function drawBoxplot(ctx, filled) {
@@ -223,16 +270,18 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
   }
   function pointer(event) {
     const rect = engine.canvas.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / scale(), y = (event.clientY - rect.top) / scale();
+    const worldX = (event.clientX - rect.left) / scale() + Math.round(cameraX);
+    const x = worldX - ENTRY_WIDTH, y = (event.clientY - rect.top) / scale();
+    if (worldX >= 20 && worldX <= 85 && y >= WORLD.floor - 55 && y <= WORLD.floor) { onPark(); return; }
     const tile = tilesFor(state?.step || 0).find(tile => x >= tile.x && x <= tile.x + tile.w && y >= tile.y - 12 && y <= tile.y + tile.h);
     if (tile) { event.preventDefault(); event.stopImmediatePropagation(); choose(tile); }
   }
   function key(event) {
-    if (event.key === 'Escape') { event.preventDefault(); dispose(); }
+    if (event.key === 'Escape') { event.preventDefault(); returnToStart(); }
   }
   function visibility() {
     if (!doc.hidden) { joinedAt = 0; return; }
-    send('calculator_leave'); for (const key in input) input[key] = false;
+    setParticipating(false); for (const key in input) input[key] = false;
   }
   function dispose() {
     if (disposed) return;
@@ -241,6 +290,7 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
     engine.canvas.removeEventListener('click', pointer, true);
     doc.removeEventListener('keydown', key); doc.removeEventListener('visibilitychange', visibility);
     controls.remove(); readings.remove(); accessible.remove(); container.removeAttribute('data-calculator-active');
+    container.removeAttribute('data-calculator-participating');
     if (engine.sceneEntities === entities) engine.sceneEntities = null;
     Object.assign(api._camera, savedCamera); onClose();
   }
@@ -248,6 +298,9 @@ export function mountParkPanel({ container, getSocket, board, onClose }) {
   engine.sceneEntities = entities;
   engine.canvas.addEventListener('click', pointer, true); doc.addEventListener('keydown', key);
   doc.addEventListener('visibilitychange', visibility);
+  controls.style.display = 'none'; accessible.hidden = true;
   rebuildChoices(); const timer = setInterval(pump, 100); pump();
-  return { dispose, getState: () => state, getCalculatorScreen: () => calculator.getScreen() };
+  return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
+    getView: () => ({ cameraX, playerX: player.x, participating, entranceX: ENTRY_WIDTH, lines: display.getLines() }),
+    getCalculatorScreen: () => calculator.getScreen() };
 }
