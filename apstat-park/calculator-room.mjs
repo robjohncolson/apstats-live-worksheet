@@ -1,6 +1,8 @@
 const V = new URL(import.meta.url).search;
 const mission = await import('./calculator-mission.mjs' + V);
-const { DATA, ROUTE, HINTS, SUMMARY, LABELS, HOLD_MS, timeLimitFor, WORLD, tilesFor, tileAt } = mission;
+const { HOLD_MS, timeLimitFor, WORLD, tilesFor, tileAt } = mission;
+const { DEFAULT_LEVEL, levelById, challengeFor, initializeCalculator } = await import('./calculator-curriculum.mjs' + V);
+const { drawChallenge } = await import('./calculator-challenge-view.mjs' + V);
 const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
@@ -28,8 +30,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const entities = new Map(), peers = new Map(), lobbyPeers = new Map();
   let lobby = null, lobbyAt = -Infinity;
   const display = createWorldDisplay();
+  let level = DEFAULT_LEVEL, challenge = challengeFor(level);
   let calculator = win.TI84Native.create(null, { renderer: display });
-  calculator.setList('L1', DATA);
+  initializeCalculator(calculator, level);
   let computedSummary = null;
   let state = null, socket = null, disposed = false, epoch = null, applied = 0;
   let joinedAt = 0, poseAt = 0, receivedAt = 0, clockOffset = 0, needsRelease = false;
@@ -49,7 +52,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   status.textContent = 'Connecting the calculator team…';
   controls.append(status); container.append(controls);
   const readings = doc.createElement('output');
-  readings.setAttribute('aria-label', 'Calculator five-number summary');
+  readings.setAttribute('aria-label', 'Calculator result');
   readings.style.cssText = screenReaderOnly;
   container.append(readings);
   container.setAttribute('data-calculator-active', '');
@@ -61,7 +64,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     // Key platforms are one-way: jump through from below, land from above.
     // A dense physical keypad must not trap cats underneath a row of keys.
     // Once the boxplot appears, every ledge becomes scenery; only the floor is solid.
-    ...(state?.step >= ROUTE.length ? [] : [...approachSteps(false), ...tilesFor(state?.step || 0)])
+    ...(state?.step >= level.route.length ? [] : [...approachSteps(false), ...tilesFor(state?.step || 0, level)])
       .filter(tile => player.vy >= 0 && player.y + 24 <= tile.y + 1)
       .map(tile => ({ ...tile, x: tile.x + ENTRY_WIDTH, h: 8 })),
   ];
@@ -114,11 +117,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function choose(tile) {
     if (!participating || !state || state.solved || state.failure || !connected()) return;
     for (const key in input) input[key] = false;
-    if (state.step < ROUTE.length) {
+    if (state.step < level.route.length) {
       Object.assign(player, { x: ENTRY_WIDTH + tile.x + tile.w / 2 - 10, y: tile.y - 24, vx: 0, vy: 0, standingOn: null });
     }
     needsRelease = true; selected = tile.key; poseAt = 0;
-    keyQueue.push({ key: tile.key, summary: state.step >= ROUTE.length });
+    keyQueue.push({ key: tile.key, summary: state.step >= level.route.length });
     flushPress();
   }
   function flushPress() {
@@ -127,7 +130,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     // carry the original revision, so a delayed reply cannot double-press.
     if (!pendingPress && keyQueue.length) {
       const next = keyQueue.shift();
-      if (next.summary !== (state.step >= ROUTE.length)) { keyQueue.length = 0; return; }
+      if (next.summary !== (state.step >= level.route.length)) { keyQueue.length = 0; return; }
       pendingPress = { key: next.key, epoch: state.epoch, revision: state.revision };
       pressAt = -Infinity;
     }
@@ -150,7 +153,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       for (const name of lobbyPeers.keys()) if (!packet.members.some(member => member.name === name)) lobbyPeers.delete(name);
       if (reset) {
         state = null; peers.clear(); epoch = null; applied = 0; lastRevision = -1; computedSummary = null;
-        calculator = win.TI84Native.create(null, { renderer: display }); calculator.setList('L1', DATA);
+        calculator = win.TI84Native.create(null, { renderer: display }); initializeCalculator(calculator, level);
         readings.textContent = '';
         returnToStart();
       }
@@ -166,6 +169,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (packet.type !== 'calculator_state') return;
     if (packet.protocol !== CALCULATOR_PROTOCOL) { status.textContent = 'Waiting for the team-block server update.'; return; }
     if (state?.epoch === packet.epoch && packet.revision < state.revision) return;
+    const incomingLevel = levelById(packet.missionId);
+    if (!incomingLevel) { status.textContent = 'Reload to load this calculator skill.'; return; }
+    level = incomingLevel; challenge = challengeFor(level);
     if (packet.complete && !state?.complete) audio.clear();
     else if (state?.epoch === packet.epoch && packet.revision > state.revision) {
       if (packet.solved && !state.solved) audio.play('switch');
@@ -182,14 +188,13 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (epoch !== packet.epoch || timedOut) {
       keyQueue.length = 0; pendingPress = null;
       calculator = win.TI84Native.create(null, { renderer: display });
-      calculator.setList('L1', DATA); applied = 0; epoch = packet.epoch;
+      initializeCalculator(calculator, level); applied = 0; epoch = packet.epoch;
       computedSummary = null;
     }
     // Replay committed input once, including when joining halfway through or reconnecting.
-    const keys = packet.keys || ROUTE.slice(0, Math.min(packet.step, ROUTE.length));
+    const keys = packet.keys || level.route.slice(0, Math.min(packet.step, level.route.length));
     while (applied < keys.length) calculator.pressKey(keys[applied++]);
-    const result = calculator.getComputedValues();
-    if (result) computedSummary = [result.minX, result.Q1, result.Med, result.Q3, result.maxX];
+    if (packet.step >= level.route.length) computedSummary = challenge.answers;
     if (timedOut || teamReset) {
       Object.assign(player, { x: ENTRY_WIDTH + 65, y: WORLD.floor - 24, vx: 0, vy: 0, standingOn: null });
       for (const key in input) input[key] = false;
@@ -203,22 +208,22 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (pendingPress && packet.revision > pendingPress.revision) pendingPress = null;
     if (state.solved) { keyQueue.length = 0; pendingPress = null; }
     flushPress();
-    readings.textContent = computedSummary ? LABELS.map((label, i) => label + ': ' + computedSummary[i]).join(' · ') : '';
+    readings.textContent = computedSummary ? challenge.labels.map((label, i) => label + ': ' + computedSummary[i]).join(' · ') : '';
     for (const member of state.members) {
       if (member.name === board.username) continue;
       if (!peers.has(member.name)) peers.set(member.name, board.createPeer(member.name, member.pose));
       Object.assign(peers.get(member.name), member.pose);
     }
     for (const name of peers.keys()) if (!state.members.some(member => member.name === name)) peers.delete(name);
-    const hint = state.solved ? 'Your boxplot is ready. Help your teammates finish.'
-      : state.step < ROUTE.length ? HINTS[state.step]
-      : 'Choose ' + LABELS[state.step - ROUTE.length] + ' for the boxplot. Click its value.';
-    const text = state.failure ? (state.step >= ROUTE.length
-      ? 'Time is up. Returning to your boxplot checkpoint with a fresh timer.'
+    const hint = state.solved ? 'Your result is ready. Help your teammates finish.'
+      : state.step < level.route.length ? level.hints[state.step]
+      : 'Choose ' + challenge.labels[state.step - level.route.length] + '. Click its value.';
+    const text = state.failure ? (state.step >= level.route.length
+      ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
-      : state.complete ? 'Together! Your five-number summary builds the boxplot. ' + state.bonus + '/12 quick decisions.'
+      : state.complete ? 'Together! ' + level.title + ' complete.'
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.members.length + ' ready.'
-      : 'Step ' + (state.step + 1) + '/12 · ' + state.members.length + ' on the team. ' + hint
+      : 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length) + ' · ' + state.members.length + ' on the team. ' + hint
         + (state.lastPress && !state.lastPress.advanced ? ' Pressed ' + state.lastPress.key + '. The countdown keeps running. Reach the next checkpoint before time runs out.' : '')
         + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '');
     if (status.textContent !== text) status.textContent = text;
@@ -275,8 +280,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     if (player.y > WORLD.floor) Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0 });
     if (player.x < ENTRY_WIDTH) setParticipating(false);
-    if (!tileAt(localPose(), state?.step || 0)) needsRelease = false;
-    selected = needsRelease ? null : tileAt(localPose(), state?.step || 0);
+    if (!tileAt(localPose(), state?.step || 0, level)) needsRelease = false;
+    selected = needsRelease ? null : tileAt(localPose(), state?.step || 0, level);
     const viewport = board.viewportW() / scale();
     // Mouse-first solving: keep every key visible instead of chasing the selected cat.
     const assembling = lobby?.phase === 'assembling' && lobby.roster.includes(board.username);
@@ -287,7 +292,14 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     cameraX += Math.max(-maxStep, Math.min(maxStep, cameraStep));
   }
   function text(ctx, value, x, y, size = 14, color = ink, align = 'left') {
-    pixelText(ctx, value, x, y, size, color, align);
+    value = String(value).replace(/x\u0304/g, 'xbar').replace(/μ/g, 'mu').replace(/σ/g, 'sigma')
+      .replace(/β/g, 'beta').replace(/ρ/g, 'rho').replace(/≠/g, '!=');
+    const width = Math.max(1, String(value).length * 6 - 1) * Math.max(1, Math.round(size / 7));
+    const available = align === 'center' ? 680 : Math.max(100, WORLD.width - x - 20);
+    const fit = Math.min(1, available / width);
+    ctx.save(); ctx.translate(x, y); ctx.scale(fit, 1);
+    pixelText(ctx, value, 0, 0, size, color, align);
+    ctx.restore();
   }
   function keyPlatform(ctx, tile, colour) {
     const { x, y, w, h } = tile, cut = 4;
@@ -301,7 +313,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   }
   function draw(ctx) {
     const step = state?.step || 0;
-    const showingBoxplot = step >= ROUTE.length;
+    const showingBoxplot = step >= level.route.length;
     if (performance.now() - inkAt > 1000) {
       ink = win.getComputedStyle(container).color || '#30263b';
       inkAt = performance.now();
@@ -313,8 +325,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, 'CALCULATOR TOGETHER', 85, 365, 21);
     text(ctx, 'PUSH THE TEAM BLOCK RIGHT >', 85, 410, 19);
     text(ctx, 'CLICK A KEY TO CHOOSE IT', 85, 451, 14);
-    text(ctx, 'FIND THE FIVE-NUMBER SUMMARY', 85, 485, 14);
-    text(ctx, 'SOLVE YOUR WAY. MATCH THE BOXPLOT.', 85, 513, 14);
+    text(ctx, 'PRACTICE THE SKILLS YOU HAVE LEARNED', 85, 485, 14);
+    text(ctx, 'RANDOM SKILLS. ONE TEAM GOAL.', 85, 513, 14);
     text(ctx, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
     text(ctx, 'HOLD SHIFT TO RUN', 85, 573, 14);
     text(ctx, 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);
@@ -336,8 +348,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     ctx.save(); ctx.translate(ENTRY_WIDTH, 0);
     text(ctx, 'CALCULATOR TOGETHER', 28, 30, 20);
-    text(ctx, 'MISSION: MAKE A FIVE-NUMBER SUMMARY', 28, 53, 14);
-    text(ctx, 'L1 = {' + DATA.join(', ') + '}', 28, 76, 12);
+    text(ctx, level.title.toUpperCase(), 28, 53, 14);
+    const caption = inputCaption();
+    text(ctx, caption.slice(0, 106), 28, 76, 10);
+    if (caption.length > 106) text(ctx, caption.slice(106), 28, 89, 10);
     // No bezel or LCD background: live menu text is part of the scenery.
     for (const [i, line] of (showingBoxplot ? [] : display.getLines().slice(0, 8)).entries()) {
       text(ctx, (line.selected ? '> ' : '  ') + line.text, 28, 106 + i * 21, 14,
@@ -347,15 +361,16 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((timeLimitFor(state || { step: 0 }) - elapsed) / 1000));
     text(ctx, state?.failure ? 'TIME UP! TEAM RESTART.'
-      : state ? (state.solved ? 'Your boxplot is ready.'
-        : remain + (showingBoxplot ? 's · finish the whole plot' : 's · reach the next step'))
+      : state ? (state.solved ? 'Your result is ready.'
+        : remain + (showingBoxplot ? 's · finish the whole answer' : 's · reach the next step'))
+        : lobby?.eligibleCount === 0 ? 'NO SKILLS TAUGHT YET'
         : lobby?.phase === 'assembling' ? 'TEAM FORMING · NO TIMER'
         : lobby?.phase === 'active' ? 'TEAM ROUND IN PROGRESS' : 'PUSH THE BLOCK HERE TO START', 350, 143, 12);
     text(ctx, state?.failure ? (showingBoxplot ? 'Return to the checkpoint.' : 'Restart the calculator.') : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
-      : showingBoxplot ? 'Click a value for the boxplot.' : 'Click to press your own keys.', 350, 175, 12);
-    text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching boxplots ready' : 'Everyone solves independently.', 350, 197, 12);
-    text(ctx, state?.solved ? 'All five values matched.'
-      : showingBoxplot ? 'Checked after all five values.' : 'Equivalent keys count.', 350, 219, 12);
+      : showingBoxplot ? 'Click a value for the result.' : 'Click to press your own keys.', 350, 175, 12);
+    text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching results ready' : 'Everyone solves independently.', 350, 197, 12);
+    text(ctx, state?.solved ? 'All values matched.'
+      : showingBoxplot ? 'Checked after the whole answer.' : 'Equivalent keys count.', 350, 219, 12);
     const hold = state?.holdAt == null ? 0 : Math.min(1, (clock() - state.holdAt) / HOLD_MS);
     if (!state?.solved && state?.holdAt != null) {
       ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
@@ -363,7 +378,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS', 350, 269, 10);
     else if (!state?.failure && showingBoxplot && state?.lastPlot?.correct === false && !state.boxValues.length) {
-      text(ctx, 'PLOT DID NOT MATCH. TRY AGAIN.', 350, 269, 10);
+      text(ctx, 'RESULT DID NOT MATCH. TRY AGAIN.', 350, 269, 10);
     }
     else if (!state?.failure && state?.lastPress && !state.lastPress.advanced) {
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
@@ -372,7 +387,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (showingBoxplot) ctx.globalAlpha *= 0.22;
     for (const ledge of approachSteps(showingBoxplot)) keyPlatform(ctx, ledge, '#494458');
     ctx.restore();
-    for (const tile of tilesFor(step)) {
+    for (const tile of tilesFor(step, level)) {
       const hint = state?.hintKeys?.includes(tile.key);
       ctx.save();
       if (showingBoxplot) ctx.globalAlpha *= 0.22;
@@ -384,7 +399,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         showingBoxplot ? ink : selected === tile.key || hint ? '#30263b' : '#fff', 'center');
       ctx.restore();
     }
-    if (step >= ROUTE.length) drawBoxplot(ctx, step - ROUTE.length);
+    if (step >= level.route.length) drawBoxplot(ctx, step - level.route.length);
+    else if (state) text(ctx, (level.hints[step] || '').slice(0, 46), 350, 252, 10);
     if (showingBoxplot) {
       const flag = ATLAS.checkpoint;
       if (atlas) ctx.drawImage(atlas, flag.x, flag.y, flag.w, flag.h, 40, WORLD.floor - flag.h, flag.w, flag.h);
@@ -394,10 +410,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       const { x, y, w, h } = RESET_DOOR;
       if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, x, y, w, h);
       else { ctx.fillStyle = '#493d48'; ctx.fillRect(x, y, w, h); }
-      text(ctx, 'RESET', x + w / 2, y - 24, 14, ink, 'center');
+      text(ctx, 'NEXT SKILL', x + w / 2, y - 24, 10, ink, 'center');
       text(ctx, 'UP TO ENTER', x + w / 2, y - 9, 7, ink, 'center');
     }
-    if (participating) for (const [name, peer] of peers) { drawCharacter(ctx, peer, name); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center'); }
+    if (participating) for (const [name, peer] of peers) { drawCharacter(ctx, peer, name); text(ctx, name.slice(0, 12) + ' ' + (state.members.find(member => member.name === name)?.step || 0) + '/' + (level.route.length + challenge.answers.length), peer.x + 10, peer.y - 8, 10, ink, 'center'); }
     if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, ink, 'center');
     ctx.restore();
     drawCharacter(ctx, player, board.username);
@@ -414,38 +430,19 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function drawBoxplot(ctx, filled) {
     const rejected = state.lastPlot?.correct === false && !state.boxValues.length
       && clock() - state.lastPlot.at < 650;
-    const values = rejected ? state.lastPlot.values : state.boxValues;
-    text(ctx, state.solved ? 'Five numbers. One picture.' : 'BUILD THE BOXPLOT: ' + LABELS[filled], 360, 317, 18, ink, 'center');
-    const x = value => 105 + (value - 4) * 30;
-    ctx.strokeStyle = '#aaa18f'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x(4), 448); ctx.lineTo(x(20), 448); ctx.stroke();
-    for (let i = 0; i < values.length; i++) {
-      text(ctx, LABELS[i], 105 + i * 120, 394, 11, ink, 'center');
-      text(ctx, String(values[i]), 105 + i * 120, 417, 16, ink, 'center');
-    }
-    ctx.strokeStyle = ink;
-    if (values.length >= 4) {
-      ctx.fillStyle = rejected ? '#e4af9c' : '#aad9ac';
-      ctx.fillRect(x(values[1]), 428, x(values[3]) - x(values[1]), 40);
-      ctx.strokeRect(x(values[1]), 428, x(values[3]) - x(values[1]), 40);
-    }
-    for (const i of [0, 2, 4]) {
-      if (i >= values.length) continue;
-      ctx.beginPath(); ctx.moveTo(x(values[i]), 428); ctx.lineTo(x(values[i]), 468); ctx.stroke();
-    }
-    for (const [a, b] of [[0, 1], [3, 4]]) {
-      if (b >= values.length) continue;
-      ctx.beginPath(); ctx.moveTo(x(values[a]), 448); ctx.lineTo(x(values[b]), 448); ctx.stroke();
-    }
-    if (state.solved) text(ctx, 'Half the observations lie between Q1 and Q3.', 360, 510, 12, ink, 'center');
-    else if (rejected) text(ctx, 'Try five new values. The clock keeps running.', 360, 510, 12, ink, 'center');
+    drawChallenge(ctx, { level, challenge, rejected, solved: state.solved, text, ink,
+      values: rejected ? state.lastPlot.values : state.boxValues });
+  }
+  function inputCaption() {
+    if (level.setup.lists.L1) return 'L1={' + level.setup.lists.L1.join(',') + '}' + (level.setup.lists.L2 ? '  L2 ready' : '');
+    return Object.entries(level.values).map(([key, value]) => key + '=' + JSON.stringify(value)).join('  ');
   }
   function pointer(event) {
     if (state?.solved) { event.preventDefault(); event.stopImmediatePropagation(); return; }
     const rect = engine.canvas.getBoundingClientRect();
     const worldX = (event.clientX - rect.left) / scale() + Math.round(cameraX);
     const x = worldX - ENTRY_WIDTH, y = (event.clientY - rect.top) / scale();
-    const tile = tilesFor(state?.step || 0).find(tile => x >= tile.x && x <= tile.x + tile.w && y >= tile.y - 12 && y <= tile.y + tile.h);
+    const tile = tilesFor(state?.step || 0, level).find(tile => x >= tile.x && x <= tile.x + tile.w && y >= tile.y - 12 && y <= tile.y + tile.h);
     if (tile) { event.preventDefault(); event.stopImmediatePropagation(); choose(tile); }
   }
   function key(event) {
@@ -488,7 +485,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   doc.addEventListener('visibilitychange', visibility);
   const timer = setInterval(pump, 100); pump();
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
-    getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, entranceX: ENTRY_WIDTH, lobby,
+    getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
     getCalculatorScreen: () => calculator.getScreen() };
 }

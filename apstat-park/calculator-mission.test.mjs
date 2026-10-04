@@ -27,7 +27,7 @@ test('mission follows the trainer route and computes the real five-number summar
   assert.deepEqual([result.minX, result.Q1, result.Med, result.Q3, result.maxX], SUMMARY);
 });
 test('shared relay and client mission definitions are identical', () => {
-  for (const file of ['calculator-mission.mjs', 'calculator-engine.mjs']) {
+  for (const file of ['calculator-mission.mjs', 'calculator-engine.mjs', 'calculator-curriculum.mjs', 'calculator-catalog.mjs']) {
     assert.equal(fs.readFileSync(new URL('./' + file, import.meta.url), 'utf8'),
       fs.readFileSync(new URL('../../curriculum_render/railway-server/apstat-park/' + file, import.meta.url), 'utf8'));
   }

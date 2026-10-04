@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { PNG } from 'pngjs';
 import { createClassroomRegistry } from '../../curriculum_render/railway-server/classroom.js';
 import { createParkService } from '../../curriculum_render/railway-server/apstat-park/service.mjs';
+import { DEFAULT_LEVEL } from './calculator-curriculum.mjs';
 import { WebSocketServer } from '../../curriculum_render/railway-server/node_modules/ws/wrapper.mjs';
 
 const { chromium } = await import(process.env.PARK_PLAYWRIGHT_MODULE
@@ -28,6 +29,7 @@ function delayed(map, ws, fn) {
 }
 const send = (ws, message) => delayed(outAt, ws, () => { if (ws.readyState === 1) ws.send(JSON.stringify(message)); });
 const service = createParkService({ registry, wallNow: () => hour * 3600000,
+  calculatorOptions: { available: () => [DEFAULT_LEVEL] },
   now: () => performance.now() + timeOffset, send });
 const server = createServer((request, response) => {
   const url = new URL(request.url, 'http://localhost');
