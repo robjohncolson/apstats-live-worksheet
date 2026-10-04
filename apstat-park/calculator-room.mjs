@@ -106,7 +106,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     socket.send(JSON.stringify({ type, epoch: state?.epoch, revision: state?.revision, ...extra }));
   }
   function choose(tile) {
-    if (!participating || !state || state.solved || !connected()) return;
+    if (!participating || !state || state.solved || state.failure || !connected()) return;
     for (const key in input) input[key] = false;
     if (state.step < ROUTE.length) {
       Object.assign(player, { x: ENTRY_WIDTH + tile.x + tile.w / 2 - 10, y: tile.y - 24, vx: 0, vy: 0, standingOn: null });
@@ -116,7 +116,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     flushPress();
   }
   function flushPress() {
-    if (!participating || !state || state.solved || !connected()) return;
+    if (!participating || !state || state.solved || state.failure || !connected()) return;
     // Serialize rapid clicks against acknowledged personal revisions. Retries
     // carry the original revision, so a delayed reply cannot double-press.
     if (!pendingPress && keyQueue.length) {
@@ -137,7 +137,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       status.textContent = packet.message; joinedAt = 0; return;
     }
     if (packet.type !== 'calculator_state') return;
-    if (packet.protocol !== 2) { status.textContent = 'Waiting for the individual-calculator server update.'; return; }
+    if (packet.protocol !== 3) { status.textContent = 'Waiting for the team-restart server update.'; return; }
     if (state?.epoch === packet.epoch && packet.revision < state.revision) return;
     if (packet.complete && !state?.complete) audio.clear();
     else if (state?.epoch === packet.epoch && packet.revision > state.revision) {
@@ -145,6 +145,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       else if ((packet.keys?.length || 0) > (state.keys?.length || 0)) audio.play('switch');
     }
     const restarted = state?.complete && epoch !== packet.epoch;
+    const teamReset = state && epoch !== packet.epoch && packet.resetReason?.type === 'timeout';
+    if (packet.failure && !state?.failure) {
+      keyQueue.length = 0; pendingPress = null;
+      for (const key in input) input[key] = false;
+    }
     const timedOut = state && packet.timeoutCount !== state.timeoutCount && epoch === packet.epoch;
     receivedAt = performance.now(); clockOffset = packet.clock - receivedAt;
     if (epoch !== packet.epoch || timedOut) {
@@ -158,7 +163,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     while (applied < keys.length) calculator.pressKey(keys[applied++]);
     const result = calculator.getComputedValues();
     if (result) computedSummary = [result.minX, result.Q1, result.Med, result.Q3, result.maxX];
-    if (timedOut) {
+    if (timedOut || teamReset) {
       Object.assign(player, { x: ENTRY_WIDTH + 65, y: WORLD.floor - 24, vx: 0, vy: 0, standingOn: null });
       for (const key in input) input[key] = false;
     }
@@ -180,10 +185,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const hint = state.solved ? 'Your boxplot is ready. Help your teammates finish.'
       : state.step < ROUTE.length ? HINTS[state.step]
       : 'Choose ' + LABELS[state.step - ROUTE.length] + ' for the boxplot. Click its value.';
-    const text = state.complete ? 'Together! Your five-number summary builds the boxplot. ' + state.bonus + '/12 quick decisions.'
+    const text = state.failure ? 'Time is up. Restarting the whole team from the beginning.'
+      : state.complete ? 'Together! Your five-number summary builds the boxplot. ' + state.bonus + '/12 quick decisions.'
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.members.length + ' ready.'
       : 'Step ' + (state.step + 1) + '/12 · ' + state.members.length + ' on the team. ' + hint
-        + (state.lastPress && !state.lastPress.advanced ? ' Pressed ' + state.lastPress.key + '. Goal not reached yet; keep trying or wait for the hint reset.' : '')
+        + (state.lastPress && !state.lastPress.advanced ? ' Pressed ' + state.lastPress.key + '. The countdown keeps running. Reach the next checkpoint before time runs out.' : '')
         + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '');
     if (status.textContent !== text) status.textContent = text;
     if (restarted) returnToStart();
@@ -207,7 +213,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         status.textContent = 'Reconnecting—your team progress is saved.';
       }
       if (performance.now() - joinedAt > 1500 || !joinedAt) {
-        send('calculator_join', { protocol: 2 }); joinedAt = performance.now();
+        send('calculator_join', { protocol: 3 }); joinedAt = performance.now();
       }
     }
     if (!state || !connected() || doc.hidden) return;
@@ -222,6 +228,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       layoutWidth = board.viewportW(); board.setBoardHeight(Math.round(WORLD.height * scale()));
     }
     if (disposed || doc.hidden) return;
+    if (state?.failure && participating) return;
     movement.advance(dt);
     if (player.y > WORLD.floor) Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0 });
     if (player.x >= ENTRY_WIDTH + 20) setParticipating(true);
@@ -281,8 +288,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((ROUND_MS - elapsed) / 1000));
-    text(ctx, state ? (state.solved ? 'Your boxplot is ready.' : remain + 's · hint + reset') : 'READY TO PLAY', 350, 143, 14);
-    text(ctx, state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
+    text(ctx, state?.failure ? 'TIME UP! TEAM RESTART.'
+      : state ? (state.solved ? 'Your boxplot is ready.' : remain + 's · reach the next step') : 'READY TO PLAY', 350, 143, 14);
+    text(ctx, state?.failure ? 'Everyone restarts from step 1.' : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
       : showingBoxplot ? 'Click a value for the boxplot.' : 'Click to press your own keys.', 350, 175, 12);
     text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching boxplots ready' : 'Everyone solves independently.', 350, 197, 12);
     text(ctx, state?.solved ? 'All five values matched.'
@@ -293,7 +301,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ctx.fillStyle = '#479b67'; ctx.fillRect(350, 234, 315 * hold, 12);
     }
     if (state?.holdAt != null) text(ctx, 'HOLD TO PRESS', 350, 269, 10);
-    else if (state?.lastPress && !state.lastPress.advanced) {
+    else if (!state?.failure && state?.lastPress && !state.lastPress.advanced) {
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
     }
     ctx.save();
@@ -320,11 +328,21 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       text(ctx, 'RESET', x + w / 2, y - 24, 14, ink, 'center');
       text(ctx, 'UP TO ENTER', x + w / 2, y - 9, 7, ink, 'center');
     }
-    for (const [name, peer] of peers) { peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center'); }
+    for (const [name, peer] of peers) { drawCharacter(ctx, peer, name); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center'); }
     if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, ink, 'center');
     ctx.restore();
-    player.render(ctx);
+    drawCharacter(ctx, player, board.username);
     text(ctx, 'YOU', player.x + 10, player.y - 8, 10, ink, 'center');
+    ctx.restore();
+  }
+  function drawCharacter(ctx, character, name) {
+    if (state?.failure?.name !== name) { character.render(ctx); return; }
+    const elapsed = Math.max(0, clock() - state.failure.at) / 1000;
+    ctx.save();
+    ctx.translate(character.x + 10, character.y + 12 + 110 * elapsed * elapsed);
+    ctx.rotate(Math.PI);
+    ctx.translate(-character.x - 10, -character.y - 12);
+    character.render(ctx);
     ctx.restore();
   }
   function drawBoxplot(ctx, filled) {

@@ -110,9 +110,11 @@ try {
   await clickKey(alice, 'STAT');
   await alice.waitForFunction(() => board.getParkScene().getState().step === 1);
   assert.equal(await bob.evaluate(() => board.getParkScene().getState().step), 0, 'Alice advances without changing Bob');
+  const bobDeadline = await bob.evaluate(() => board.getParkScene().getState().startedAt);
   await clickKey(bob, 'MATH');
   await bob.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'MATH');
   assert.deepEqual(await bob.evaluate(() => board.getParkScene().getState().keys), ['MATH']);
+  assert.equal(await bob.evaluate(() => board.getParkScene().getState().startedAt), bobDeadline, 'wrong press does not reset the timer');
   assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT']);
   // Alice takes a list-editor detour and then uses numeric selection/ENTER.
   for (const [key, screen] of [['ENTER','stat-edit-lists'], ['STAT','stat-menu']]) {
@@ -141,16 +143,27 @@ try {
   assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
   await alice.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);
   await alice.screenshot({ path: path.join(output, 'calculator-waiting-for-team.png'), fullPage: true });
-  // Bob's personal hint reset must leave Alice's finished result untouched.
+  // Bob's expired calculator now kills his character and resets everyone, including Alice.
+  const failedEpoch = await bob.evaluate(() => board.getParkScene().getState().epoch);
   timeOffset += 31000;
   for (const [ws, who] of sockets) {
     const pose = packets.findLast(packet => packet.name === who.username && packet.type === 'calculator_pose');
     if (pose) service.handle(ws, pose);
   }
-  await bob.waitForFunction(() => board.getParkScene().getState().timeoutCount === 1);
-  assert.deepEqual(await bob.evaluate(() => board.getParkScene().getState().keys), []);
-  assert.equal(await alice.evaluate(() => board.getParkScene().getState().timeoutCount), 0);
-  assert.equal(await alice.evaluate(() => board.getParkScene().getState().solved), true);
+  await bob.waitForFunction(() => board.getParkScene().getState().failure?.name === 'bob');
+  await bob.screenshot({ path: path.join(output, 'calculator-timeout-death.png'), fullPage: true });
+  for (const page of [alice, bob]) {
+    await page.waitForFunction(epoch => board.getParkScene().getState().epoch !== epoch, failedEpoch);
+    assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 0);
+    assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), []);
+    assert.equal(await page.evaluate(() => board.getParkScene().getState().solved), false);
+    assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 785);
+  }
+  // Finish Alice again to check the independent route and waiting-for-team behavior after reset.
+  for (const [step, key] of ['STAT','RIGHT','1','ENTER','DOWN','ENTER','DOWN','4','7','11','14','20'].entries()) {
+    await clickKey(alice, key);
+    await alice.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
+  }
   for (const [step, key] of ['STAT','RIGHT','ENTER','DOWN','DOWN','ENTER','DOWN','4','7','11','14','20'].entries()) {
     await clickKey(bob, key);
     await bob.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);

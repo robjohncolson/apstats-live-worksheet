@@ -81,7 +81,7 @@ test('a silent connection expires and cannot keep the team blocked', () => {
   const a = {}, b = {};
   try {
     for (const [ws, name] of [[a,'a'],[b,'b']]) {
-      registry.join(ws, 'B', name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 2 });
+      registry.join(ws, 'B', name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 3 });
     }
     now = 5100;
     service.handle(a, { type: 'calculator_pose', epoch: received.get(a).epoch, revision: 0, pose: pose('STAT') });
@@ -96,7 +96,7 @@ test('relay isolates periods, resumes progress, deduplicates tabs, and drops dis
   const a = {}, b = {}, other = {}, tab = {};
   try {
     for (const [ws, section, name] of [[a,'B','a'],[b,'B','b'],[other,'E','a'],[tab,'B','a']]) {
-      registry.join(ws, section, name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 2 });
+      registry.join(ws, section, name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 3 });
     }
     assert.equal(received.get(a).members.length, 2);
     assert.notEqual(received.get(a).epoch, received.get(other).epoch);
@@ -105,7 +105,7 @@ test('relay isolates periods, resumes progress, deduplicates tabs, and drops dis
     sendPose(a); sendPose(b); service.tick(); now = 950; sendPose(a); sendPose(b); service.tick();
     assert.equal(received.get(a).step, 1); assert.equal(received.get(other).step, 0);
     service.detached(b); service.detached(tab); assert.equal(received.get(a).members.length, 1);
-    service.handle(b, { type: 'calculator_join', protocol: 2 }); assert.equal(received.get(b).step, 1);
+    service.handle(b, { type: 'calculator_join', protocol: 3 }); assert.equal(received.get(b).step, 1);
     service.handle(a, { type: 'calculator_pose', epoch: received.get(a).epoch, revision: 0, pose: pose('STAT') });
     assert.equal(received.get(a).step, 1);
   } finally { service.close(); }

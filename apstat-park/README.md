@@ -26,10 +26,12 @@ Rapid clicks queue in order; retries use personal revisions to prevent duplicate
 presses. Wrong keys change the real calculator state without awarding progress,
 and students can recover through further input.
 
-Each personal checkpoint has 30 seconds. Expiration reveals valid keys, restores
-that student's last completed checkpoint, discards subsequent wrong input, moves
-that character beside the keyboard, and starts another 30 seconds. Teammates'
-work is unaffected. A hinted step does not earn the quick-decision bonus.
+Each personal checkpoint has 30 seconds. Only an engine-verified forward advance
+starts a fresh countdown. Wrong keys, no-op presses, repeated menu keys, and
+reconnecting do not renew it. If any active student's countdown expires, the relay
+freezes everyone's input for a one-second death animation, then clears every
+attempt and places the team at the initial calculator state. Even finished
+students restart. Old queued inputs cannot carry into the new attempt.
 
 The canvas and controls have transparent backgrounds, so the surrounding calendar
 DOM supplies their exact background, including live theme changes. Scenery text
@@ -80,12 +82,12 @@ The relay has a byte-identical copy of `calculator-mission.mjs`; the mission tes
 pins that copy and the trainer route. No browser or backend import crosses repos
 at runtime. Deploy the relay change before the frontend. An older relay leaves
 the calculator waiting with an update message; Escape still returns to the entrance.
-Calculator protocol 2 prevents mixing shared-keystroke and individual clients.
+Calculator protocol 3 requires clients that understand timeout deaths and team resets.
 
 Validation: `node --test apstat-park/calculator-mission.test.mjs`, the existing
 Park suites in both repos, and `calculator-browser-smoke.mjs` (same Playwright
 environment options as `browser-smoke.mjs`). The latter runs a local relay and two
-real browser clients through different routes, rapid clicks, personal timeout hints,
+real browser clients through different routes, rapid clicks, timeout deaths and whole-team resets,
 independent completion, refresh, team completion, re-entry, restart, keyboard motion,
 mobile sizing, the original Park doorway, and teacher recall. Screenshots and the
 result JSON go to `test-results/calculator-room` when `PARK_SMOKE_OUTPUT` is set
