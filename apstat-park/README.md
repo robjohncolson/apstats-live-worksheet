@@ -12,21 +12,19 @@ in pixel lettering directly on the world background, with no green LCD panel.
 It is a guided learning activity, not
 the unrestricted ROM emulator. L1 starts with `4,6,7,8,10,12,13,14,18,20`.
 
-Click or tap a key in the playspace to place your character on that tile. The camera
-holds the entire keypad in view while participating. Left/Right and Space remain
-optional movement controls. All current participants in the calculator room must hold
-the same key (or engine-verified equivalent goal keys) for 900 ms. The relay runs
-the trainer engine to verify each candidate against the next learning checkpoints.
-It accepts equivalent keys and forward shortcuts, records the actual selected
-key, and clients replay that history. Every key gets the same hold timer when the
-team agrees. Wrong keys are actually pressed into the calculator, changing its
-screen and fields without awarding progress. Students can recover with further
-keypresses; incorrect summary choices give feedback without completing a goal.
-Each step has 30 seconds. Expiration reveals engine-verified valid keys, restores
-the last completed calculator checkpoint (discarding subsequent wrong inputs),
-clears selections, places players beside the keyboard, and starts another
-30 seconds. Earlier steps remain complete; a hinted
-step does not earn the quick-decision bonus.
+Click or tap a key to press it immediately on your own calculator and place your
+character on that tile. The camera holds the entire keypad in view. Left/Right
+and Space remain optional movement controls; standing on a key for 900 ms presses
+it on your calculator only. Each student has an independent engine-validated
+history. Equivalent keys and forward shortcuts work without waiting for teammates.
+Rapid clicks queue in order; retries use personal revisions to prevent duplicate
+presses. Wrong keys change the real calculator state without awarding progress,
+and students can recover through further input.
+
+Each personal checkpoint has 30 seconds. Expiration reveals valid keys, restores
+that student's last completed checkpoint, discards subsequent wrong input, moves
+that character beside the keyboard, and starts another 30 seconds. Teammates'
+work is unaffected. A hinted step does not earn the quick-decision bonus.
 
 The canvas and controls have transparent backgrounds, so the surrounding calendar
 DOM supplies their exact background, including live theme changes. Scenery text
@@ -39,21 +37,27 @@ Pico jump, key-press switch, and completion sounds respect the existing mute tog
 The comparison used the recovered `player_action_held.c`, `player_action_edges.c`
 and `performance-review-2026-10-03/player-trace/run-1` experiments in the sibling
 `not-school/hermes/old-app/recovered/reconstruction` tree. This room keeps one-way
-key platforms and nonblocking teammates for calculator consensus; it is not a
+key platforms and nonblocking teammates for independent solving; it is not a
 copy of every Pico stage rule.
 Repeated DOWN/ENTER requires stepping or jumping off and returning, or explicitly
-clicking the tile again. Characters stay where the team left them.
+clicking the tile again. A click never needs a standing hold.
 
-After the seven calculator inputs, five group decisions assign the displayed
-minimum, Q1, median, Q3 and maximum to a proportional boxplot. The result is
-`4,7,11,14,20`. On completion, number and approach ledges become translucent and
-stop supporting characters, so everyone falls to the floor. A reset door appears
-at the far right. Walk beside it and press Up to clear the shared attempt and return all
-current participants to the entrance. No grades
-or currency change. Solo play works. Refresh/reconnect replays the committed
-inputs; duplicate tabs count as one student. Stale choices stop counting after
-1.5 seconds, inactive connections leave after five seconds, and hiding the tab
-leaves immediately. Teacher classroom calls recall students as with the Park.
+After reaching the five-number summary, each student assigns the displayed
+minimum, Q1, median, Q3 and maximum to their own proportional boxplot. The server
+validates the result against the common dataset: `4,7,11,14,20`. When a student
+finishes, their number and approach ledges become translucent and stop supporting
+their character. Their timer stops and a ready count shows the team's progress.
+The reset door appears only when all current participants have matching correct
+boxplots, regardless of their key histories. Walk beside it and press Up to clear
+all attempts and return current participants to the entrance. No grades or currency
+change. Solo play works.
+
+Refresh/reconnect restores each student's own inputs; duplicate tabs count as one
+student. Leaving removes that student from the current completion requirement but
+retains their work. An unfinished student joining removes the door until everyone
+is ready again. Stale standing choices stop counting after 1.5 seconds, inactive
+connections leave after five seconds, and hiding the tab leaves immediately.
+Teacher classroom calls recall students as with the Park.
 Doors do not respond to mouse clicks. There are no visible instructions or buttons
 below the playspace; status and summary announcements remain available to screen readers.
 
@@ -63,18 +67,19 @@ before reaching the relay, so scrolling requires no relay protocol change.
 
 Files: `calculator-room.mjs` (scene and trainer bridge), `calculator-display.mjs`
 and `pixel-text.mjs` (scenery lettering), `calculator-mission.mjs`
-(geometry and deterministic consensus rules), and the sibling relay's
+(geometry and deterministic personal input rules), and the sibling relay's
 `railway-server/apstat-park/calculator-service.mjs` (period-scoped authority).
 The relay has a byte-identical copy of `calculator-mission.mjs`; the mission test
 pins that copy and the trainer route. No browser or backend import crosses repos
 at runtime. Deploy the relay change before the frontend. An older relay leaves
-the calculator waiting with an update message and an available Back button.
+the calculator waiting with an update message; Escape still returns to the entrance.
+Calculator protocol 2 prevents mixing shared-keystroke and individual clients.
 
 Validation: `node --test apstat-park/calculator-mission.test.mjs`, the existing
 Park suites in both repos, and `calculator-browser-smoke.mjs` (same Playwright
 environment options as `browser-smoke.mjs`). The latter runs a local relay and two
-real browser clients through disagreement, timeout hint, all twelve decisions,
-repeated-key protection, refresh, completion, re-entry, restart, keyboard motion,
+real browser clients through different routes, rapid clicks, personal timeout hints,
+independent completion, refresh, team completion, re-entry, restart, keyboard motion,
 mobile sizing, the original Park doorway, and teacher recall. Screenshots and the
 result JSON go to `test-results/calculator-room` when `PARK_SMOKE_OUTPUT` is set
 to that path. Both repositories' pre-push hooks still require orchestrator review
@@ -82,7 +87,7 @@ approval; implementation tests do not replace that release gate.
 
 The relay vendors the native trainer under `calculator-native/` and uses
 `calculator-runtime.mjs` to run it without a DOM. `calculator-engine.mjs` compares
-screen content, cursor, field values, computed results, lists, and modifier state;
+screen content, cursor, field values, computed results, and modifier state;
 it does not maintain a whitelist of equivalent key names. Parity tests pin every
 vendored file to the trainer source. Deploy the relay before this frontend update.
 

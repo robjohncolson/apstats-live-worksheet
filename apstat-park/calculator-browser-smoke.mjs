@@ -108,81 +108,56 @@ try {
   await alice.waitForFunction(() => board.getParkScene().getState().members.length === 2);
   assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
   await clickKey(alice, 'STAT');
-  await clickKey(bob, 'ENTER');
-  await alice.waitForTimeout(1300);
-  assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 0, 'one student cannot advance alone');
-  for (const page of [alice, bob]) await clickKey(page, 'MATH');
-  await alice.waitForFunction(() => board.getParkScene().getState().holdAt != null);
-  await alice.screenshot({ path: path.join(output, 'calculator-wrong-key-hold.png'), fullPage: true });
-  for (const page of [alice, bob]) {
-    await page.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'MATH');
-    assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 0);
-    assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().type), 'menu');
-    assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), ['MATH']);
+  await alice.waitForFunction(() => board.getParkScene().getState().step === 1);
+  assert.equal(await bob.evaluate(() => board.getParkScene().getState().step), 0, 'Alice advances without changing Bob');
+  await clickKey(bob, 'MATH');
+  await bob.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'MATH');
+  assert.deepEqual(await bob.evaluate(() => board.getParkScene().getState().keys), ['MATH']);
+  assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT']);
+  // Alice takes a list-editor detour and then uses numeric selection/ENTER.
+  for (const [key, screen] of [['ENTER','stat-edit-lists'], ['STAT','stat-menu']]) {
+    await clickKey(alice, key);
+    await alice.waitForFunction(screen => board.getParkScene().getCalculatorScreen().id === screen, screen);
   }
-  await alice.waitForFunction(() => {
-    const state = board.getParkScene().getState();
-    return state.members.every(member => member.revision === state.revision);
-  });
+  await alice.screenshot({ path: path.join(output, 'calculator-independent.png'), fullPage: true });
+  // Submit the whole calculator route without waiting for replies between clicks.
+  for (const key of ['RIGHT', '1', 'ENTER', 'DOWN', 'ENTER', 'DOWN']) await clickKey(alice, key);
+  await alice.waitForFunction(() => board.getParkScene().getState().step === 7);
+  assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys),
+    ['STAT', 'ENTER', 'STAT', 'RIGHT', '1', 'ENTER', 'DOWN', 'ENTER', 'DOWN']);
+  for (const [i, key] of ['4','7','11','14','20'].entries()) {
+    await clickKey(alice, key);
+    await alice.waitForFunction(i => board.getParkScene().getState().step === 8 + i, i);
+  }
+  await alice.waitForFunction(() => board.getParkScene().getState().solved);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().complete), false);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().readyCount), 1);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
+  await alice.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);
+  await alice.screenshot({ path: path.join(output, 'calculator-waiting-for-team.png'), fullPage: true });
+  // Bob's personal hint reset must leave Alice's finished result untouched.
   timeOffset += 31000;
-  // Move the mission clock without simulating a disconnected browser.
   for (const [ws, who] of sockets) {
     const pose = packets.findLast(packet => packet.name === who.username && packet.type === 'calculator_pose');
     if (pose) service.handle(ws, pose);
   }
-  await alice.waitForFunction(() => document.querySelector('[data-calculator-controls]').textContent.includes('Hint: choose STAT'));
-  assert.equal(await alice.evaluate(() => board.getParkScene().getState().timeoutCount), 1);
-  assert.equal(await alice.evaluate(() => board.getParkScene().getView().playerX), 785);
+  await bob.waitForFunction(() => board.getParkScene().getState().timeoutCount === 1);
+  assert.deepEqual(await bob.evaluate(() => board.getParkScene().getState().keys), []);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().timeoutCount), 0);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().solved), true);
   for (const [step, key] of ['STAT','RIGHT','ENTER','DOWN','DOWN','ENTER','DOWN','4','7','11','14','20'].entries()) {
-    for (const page of [alice, bob]) {
-      const actualKey = page === alice && step === 2 ? '1' : page === alice && step === 3 ? 'ENTER' : key;
-      await clickKey(page, actualKey);
-    }
-    for (const page of [alice, bob]) await page.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
-    if (step === 0) {
-      await alice.screenshot({ path: path.join(output, 'calculator-team.png'), fullPage: true });
-      for (const page of [alice, bob]) await clickKey(page, 'ENTER');
-      for (const page of [alice, bob]) {
-        await page.waitForFunction(() => board.getParkScene().getCalculatorScreen().id === 'stat-edit-lists');
-        assert.ok(await page.evaluate(() => board.getParkScene().getView().lines[0].text.includes('[L1]')));
-      }
-      await alice.screenshot({ path: path.join(output, 'calculator-list-editor.png'), fullPage: true });
-      for (const page of [alice, bob]) await clickKey(page, 'STAT');
-      for (const page of [alice, bob]) await page.waitForFunction(() => board.getParkScene().getCalculatorScreen().id === 'stat-menu');
-    }
+    await clickKey(bob, key);
+    await bob.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
     if (step === 3) {
-      await alice.waitForTimeout(1100);
-      assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 4, 'held DOWN does not repeat into another step');
-      assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'ENTER', 'STAT', 'RIGHT', '1', 'ENTER']);
-      for (const page of [alice, bob]) await clickKey(page, 'CLEAR');
-      for (const page of [alice, bob]) {
-        await page.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'CLEAR');
-        assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().type), 'home');
-      }
-      await alice.waitForFunction(() => {
-        const state = board.getParkScene().getState();
-        return state.members.every(member => member.revision === state.revision);
-      });
-      timeOffset += 31000;
-      for (const [ws, who] of sockets) {
-        const pose = packets.findLast(packet => packet.name === who.username && packet.type === 'calculator_pose');
-        if (pose) service.handle(ws, pose);
-      }
-      for (const page of [alice, bob]) {
-        await page.waitForFunction(() => board.getParkScene().getState().timeoutCount === 2);
-        assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 4);
-        assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'ENTER', 'STAT', 'RIGHT', '1', 'ENTER']);
-        assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 785);
-        assert.ok(await page.evaluate(() => board.getParkScene().getView().lines.some(line => line.selected && line.text.includes('FreqList'))));
-      }
       await bob.reload();
-      await bob.waitForFunction(() => board.getSpritePosition('bob'));
       await bob.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
       await bob.evaluate(() => board.openCalculatorMission());
       await bob.waitForFunction(() => board.getParkScene()?.getState()?.step === 4);
       assert.equal(await bob.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-wizard');
+      assert.equal(await alice.evaluate(() => board.getParkScene().getState().solved), true);
     }
   }
+  await alice.waitForFunction(() => board.getParkScene().getState().complete);
   assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
   assert.equal(await bob.evaluate(() => board.getParkScene().getState().complete), true);
   for (const page of [alice, bob]) {
