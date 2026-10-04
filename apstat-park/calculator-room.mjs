@@ -10,6 +10,7 @@ const { PICO } = await import('./physics.mjs' + V);
 const { approachSteps, createCalculatorMotion } = await import('./calculator-motion.mjs' + V);
 const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
+const { ATLAS } = await import('./assets/pico-atlas.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
@@ -187,7 +188,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const hint = state.solved ? 'Your boxplot is ready. Help your teammates finish.'
       : state.step < ROUTE.length ? HINTS[state.step]
       : 'Choose ' + LABELS[state.step - ROUTE.length] + ' for the boxplot. Click its value.';
-    const text = state.failure ? 'Time is up. Restarting the whole team from the beginning.'
+    const text = state.failure ? (state.step >= ROUTE.length
+      ? 'Time is up. Returning to your boxplot checkpoint with a fresh timer.'
+      : 'Time is up. Restarting the calculator portion.')
       : state.complete ? 'Together! Your five-number summary builds the boxplot. ' + state.bonus + '/12 quick decisions.'
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.members.length + ' ready.'
       : 'Step ' + (state.step + 1) + '/12 · ' + state.members.length + ' on the team. ' + hint
@@ -293,7 +296,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, state?.failure ? 'TIME UP! TEAM RESTART.'
       : state ? (state.solved ? 'Your boxplot is ready.'
         : remain + (showingBoxplot ? 's · finish the whole plot' : 's · reach the next step')) : 'READY TO PLAY', 350, 143, 14);
-    text(ctx, state?.failure ? 'Everyone restarts from step 1.' : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
+    text(ctx, state?.failure ? (showingBoxplot ? 'Return to the checkpoint.' : 'Restart the calculator.') : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
       : showingBoxplot ? 'Click a value for the boxplot.' : 'Click to press your own keys.', 350, 175, 12);
     text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching boxplots ready' : 'Everyone solves independently.', 350, 197, 12);
     text(ctx, state?.solved ? 'All five values matched.'
@@ -327,6 +330,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ctx.restore();
     }
     if (step >= ROUTE.length) drawBoxplot(ctx, step - ROUTE.length);
+    if (showingBoxplot) {
+      const flag = ATLAS.checkpoint;
+      if (atlas) ctx.drawImage(atlas, flag.x, flag.y, flag.w, flag.h, 40, WORLD.floor - flag.h, flag.w, flag.h);
+      text(ctx, 'CHECKPOINT', 32, WORLD.floor - 42, 10);
+    }
     if (state?.complete) {
       const { x, y, w, h } = RESET_DOOR;
       if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, x, y, w, h);

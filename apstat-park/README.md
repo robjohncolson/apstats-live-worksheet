@@ -34,9 +34,12 @@ judgment, and the drawing follows those actual values. Only the fifth selection
 checks the completed plot. An incorrect plot clears the five selections while
 preserving calculator work and the original boxplot deadline; students can retry
 until the clock runs out. If any active student's countdown expires, the relay
-freezes everyone's input for a one-second death animation, then clears every
-attempt and places the team at the initial calculator state. Even finished
-students restart. Old queued inputs cannot carry into the new attempt.
+freezes everyone's input for a one-second death animation, then respawns each
+student at their earned checkpoint. Reaching the boxplot raises the original
+orange flag (sheet rectangle 32,320,16,32) and preserves the calculator history.
+After a death those students restart only the plot with a fresh 30 seconds;
+students still on the calculator restart it. The reset door clears all checkpoints.
+Old queued inputs cannot carry into the new attempt.
 
 The canvas and controls have transparent backgrounds, so the surrounding calendar
 DOM supplies their exact background, including live theme changes. Scenery text

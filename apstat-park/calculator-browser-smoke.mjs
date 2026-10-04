@@ -172,7 +172,7 @@ try {
   assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
   await alice.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);
   await alice.screenshot({ path: path.join(output, 'calculator-waiting-for-team.png'), fullPage: true });
-  // Bob's expired calculator now kills his character and resets everyone, including Alice.
+  // Bob restarts his calculator; Alice respawns at her earned boxplot checkpoint.
   const failedEpoch = await bob.evaluate(() => board.getParkScene().getState().epoch);
   timeOffset += 31000;
   for (const [ws, who] of sockets) {
@@ -183,19 +183,39 @@ try {
   await bob.screenshot({ path: path.join(output, 'calculator-timeout-death.png'), fullPage: true });
   for (const page of [alice, bob]) {
     await page.waitForFunction(epoch => board.getParkScene().getState().epoch !== epoch, failedEpoch);
-    assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 0);
-    assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), []);
+    assert.equal(await page.evaluate(() => board.getParkScene().getState().step), page === alice ? 7 : 0);
+    if (page === bob) assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), []);
     assert.equal(await page.evaluate(() => board.getParkScene().getState().solved), false);
     assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 785);
   }
-  // Finish Alice again to check the independent route and waiting-for-team behavior after reset.
-  for (const [step, key] of ['STAT','RIGHT','1','ENTER','DOWN','ENTER','DOWN','4','7','11','14','20'].entries()) {
+  // Alice retries only the plot; the calculator result survives the checkpoint respawn.
+  assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
+  for (const [step, key] of ['4','7','11','14','20'].entries()) {
     await clickKey(alice, key);
-    await alice.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
+    await alice.waitForFunction(step => board.getParkScene().getState().step === step + 8, step);
   }
   for (const [step, key] of ['STAT','RIGHT','ENTER','DOWN','DOWN','ENTER','DOWN','4','7','11','14','20'].entries()) {
     await clickKey(bob, key);
     await bob.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
+    if (step === 6) {
+      const checkpointEpoch = await bob.evaluate(() => board.getParkScene().getState().epoch);
+      timeOffset += 31000;
+      for (const [ws, who] of sockets) {
+        const pose = packets.findLast(packet => packet.name === who.username && packet.type === 'calculator_pose');
+        if (pose) service.handle(ws, pose);
+      }
+      for (const page of [alice, bob]) {
+        await page.waitForFunction(epoch => board.getParkScene().getState().epoch !== epoch, checkpointEpoch);
+        assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 7);
+        assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
+        assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().boxValues), []);
+      }
+      await bob.screenshot({ path: path.join(output, 'calculator-checkpoint-respawn.png'), fullPage: true });
+      for (const [i, value] of ['4','7','11','14','20'].entries()) {
+        await clickKey(alice, value);
+        await alice.waitForFunction(i => board.getParkScene().getState().step === i + 8, i);
+      }
+    }
     if (step === 3) {
       await bob.reload();
       await bob.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
