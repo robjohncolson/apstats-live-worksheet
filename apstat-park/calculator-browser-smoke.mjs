@@ -116,9 +116,34 @@ try {
     assert.equal(await page.evaluate(() => board.getParkScene() === window.originalRoom), true);
     assert.equal(await page.evaluate(() => board.getBoardHeight() === window.originalHeight), true);
     if (name === 'alice') await page.screenshot({ path: path.join(output, 'calculator-scrolling.png'), fullPage: true });
+    // Stop inside the old trigger boundary. Time spent approaching is untimed,
+    // and the camera must keep following instead of snapping to the keypad.
+    await page.waitForFunction(() => board.getParkScene().getView().playerX >= 750);
+    await page.keyboard.up('ArrowRight');
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => board.getParkScene().getView().participating), false);
+    assert.equal(await page.evaluate(() => board.getParkScene().getState()), null);
+    assert.ok(await page.evaluate(() => board.getParkScene().getView().cameraX < 550));
+    if (name === 'alice') timeOffset += 20000;
+    await page.waitForTimeout(200);
+    assert.equal(packets.some(packet => packet.name === name && packet.type === 'calculator_join'), false,
+      'no server timer starts while the student is still approaching the keypad');
+    await page.keyboard.down('Shift');
+    await page.keyboard.down('ArrowRight');
+    const runStart = await page.evaluate(() => board.getParkScene().getView().playerX);
+    await page.waitForTimeout(500);
+    const runDistance = await page.evaluate(() => board.getParkScene().getView().playerX) - runStart;
+    assert.ok(runDistance > 65 && runDistance < 120, 'holding Shift runs at twice walking speed');
     await page.waitForSelector('[data-calculator-participating]', { timeout: 15000 });
     await page.keyboard.up('ArrowRight');
+    await page.keyboard.up('Shift');
+    assert.ok(await page.evaluate(() => board.getParkScene().getView().cameraX >= 719.5),
+      'the full keypad is visible before joining starts the deadline');
     await page.waitForFunction(() => board.getParkScene()?.getState());
+    assert.ok(await page.evaluate(() => {
+      const state = board.getParkScene().getState();
+      return !state.failure && state.clock - state.startedAt < 1000;
+    }), 'arrival receives the full first-key countdown');
   }
   await alice.waitForFunction(() => board.getParkScene().getState().members.length === 2);
   assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);

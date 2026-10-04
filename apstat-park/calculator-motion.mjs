@@ -11,6 +11,8 @@ export function approachSteps(summary) {
 export function createCalculatorMotion(player, input, presses = {}, onJump = () => {}) {
   const clock = createFixedStep();
   const consumed = { ...presses };
+  const walking = player.physics;
+  const running = { ...walking, walk: walking.walk * 2 };
   return {
     advance(dt) {
       clock.advance(dt, () => {
@@ -23,9 +25,11 @@ export function createCalculatorMotion(player, input, presses = {}, onJump = () 
           if (!input[key]) { input[key] = true; forced.push(key); }
         }
         try {
+          player.physics = input.run ? running : walking;
           player.update(clock.step);
           if (player._boostK === 0 && player.vy < 0) onJump();
         } finally {
+          player.physics = walking;
           for (const key of forced) input[key] = false;
         }
       });

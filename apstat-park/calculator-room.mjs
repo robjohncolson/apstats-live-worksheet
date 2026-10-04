@@ -91,6 +91,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   }
   function startMission() {
     player.x = ENTRY_WIDTH + 65;
+    cameraX = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
     setParticipating(true);
     pump();
   }
@@ -236,7 +237,6 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (state?.failure && participating) return;
     movement.advance(dt);
     if (player.y > WORLD.floor) Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0 });
-    if (player.x >= ENTRY_WIDTH + 20) setParticipating(true);
     if (player.x < ENTRY_WIDTH) setParticipating(false);
     if (!tileAt(localPose(), state?.step || 0)) needsRelease = false;
     selected = needsRelease ? null : tileAt(localPose(), state?.step || 0);
@@ -245,6 +245,12 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const target = Math.max(0, Math.min(LEVEL_WIDTH - viewport,
       participating ? ENTRY_WIDTH : player.x - viewport * 0.4));
     cameraX += (target - cameraX) * Math.min(1, dt * 8);
+    // Arriving must not change the camera target or consume solving time.
+    // Join only after the entire keypad has scrolled into view.
+    const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - viewport));
+    if (!participating && player.x >= ENTRY_WIDTH + 20 && cameraX >= missionCamera - 0.5) {
+      setParticipating(true);
+    }
   }
   function text(ctx, value, x, y, size = 14, color = ink, align = 'left') {
     pixelText(ctx, value, x, y, size, color, align);
@@ -276,6 +282,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, 'FIND THE FIVE-NUMBER SUMMARY', 85, 485, 14);
     text(ctx, 'SOLVE YOUR WAY. MATCH THE BOXPLOT.', 85, 513, 14);
     text(ctx, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
+    text(ctx, 'HOLD SHIFT TO RUN', 85, 573, 14);
     const atlas = board.atlas?.();
     if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
     else { ctx.fillStyle = '#493d48'; ctx.fillRect(30, WORLD.floor - 40, 40, 40); }
@@ -394,6 +401,12 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (tile) { event.preventDefault(); event.stopImmediatePropagation(); choose(tile); }
   }
   function key(event) {
+    if (event.key === 'Shift') {
+      if (event.type === 'keyup') input.run = false;
+      else if (!event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) input.run = true;
+      return;
+    }
+    if (event.type === 'keyup') return;
     if (event.key === 'Escape') { event.preventDefault(); returnToStart(); }
     // Handle brief taps even when keydown and keyup fall between physics steps.
     if (event.key === 'ArrowUp' && !event.repeat && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')
@@ -411,7 +424,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     audio.dispose();
     clearInterval(timer); socket?.removeEventListener('message', onMessage);
     engine.canvas.removeEventListener('click', pointer, true);
-    doc.removeEventListener('keydown', key); doc.removeEventListener('visibilitychange', visibility);
+    doc.removeEventListener('keydown', key); doc.removeEventListener('keyup', key);
+    input.run = false;
+    doc.removeEventListener('visibilitychange', visibility);
     controls.remove(); readings.remove(); container.removeAttribute('data-calculator-active');
     container.removeAttribute('data-calculator-participating');
     if (engine.sceneEntities === entities) engine.sceneEntities = null;
@@ -421,6 +436,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   entities.set('dissolve', createSceneDissolve(board.transitionFrame));
   engine.sceneEntities = entities;
   engine.canvas.addEventListener('click', pointer, true); doc.addEventListener('keydown', key);
+  doc.addEventListener('keyup', key);
   doc.addEventListener('visibilitychange', visibility);
   const timer = setInterval(pump, 100); pump();
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,

@@ -5,6 +5,9 @@
 The student room is one continuous scrolling world with an orange floor. Walk
 right toward **Make a five-number summary**; the entrance instructions scroll
 away as the calculator platforms come into view, without loading another scene.
+The camera follows continuously and the first 15-second countdown starts only
+once the full keypad is visible. Hold Shift to run at twice walking speed in
+the calculator room; jump height and timing stay the same.
 The left doorway opens Jump together with Up. Escape returns to the entrance.
 Crossing the doorway preserves the outgoing frame while the next scene loads,
 then dissolves it over 320 ms. Both rooms share the responsive 750-unit canvas,

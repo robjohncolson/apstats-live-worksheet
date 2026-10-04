@@ -49,6 +49,29 @@ test('a tap between render frames jumps; holding gives the Pico variable jump he
   assert.ok(Math.abs(height(true) - 39.285) < 0.001);
 });
 
+test('running doubles horizontal speed without changing jump physics, then releases to walking', () => {
+  for (const rate of [30, 60, 144]) {
+    const walking = setup(), running = setup();
+    for (const actor of [walking, running]) {
+      actor.input.right = true;
+      actor.input.jump = true;
+    }
+    running.input.run = true;
+    for (let i = 0; i < rate; i++) {
+      walking.motion.advance(1 / rate);
+      running.motion.advance(1 / rate);
+    }
+    assert.ok(Math.abs((running.player.x - 20) - 2 * (walking.player.x - 20)) < 0.001);
+    assert.equal(running.player.y, walking.player.y);
+    assert.equal(running.player.vy, walking.player.vy);
+    running.input.run = false;
+    const before = running.player.x;
+    for (let i = 0; i < rate; i++) running.motion.advance(1 / rate);
+    assert.ok(Math.abs(running.player.x - before - 90) < 0.001);
+    assert.equal(running.player.physics, PICO);
+  }
+});
+
 test('both phases have a physically jumpable route from the ground to every tile', () => {
   for (const summary of [false, true]) {
     const keys = summary ? ANSWERS : KEYS;
