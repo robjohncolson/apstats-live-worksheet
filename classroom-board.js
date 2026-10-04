@@ -4319,22 +4319,34 @@
     function parkDoorCenter(i) { return PARK_DOOR_X0 + i * PARK_DOOR_STEP + PARK_DOOR_W / 2; }
     // The door looks like the park's own doors: PICO PARK's open door from the level-6 atlas
     // (apstat-park/assets/pico-1-1.png, rect `doorOpen` in pico-atlas.mjs; this classic script
-    // cannot import it), drawn 32x32 with smoothing like the level's goal door, centred where the
-    // old 38x50 arch was. Until the image has loaded (or if it 404s) the painted arch stays.
+    // cannot import it), drawn 32x32 with smoothing like the level's goal door, centred at x 43.
+    // The atlas is preloaded and decoded when the board mounts (students only) and handed to the
+    // park, so the level never loads or decodes a second copy. Until it is decoded nothing is
+    // drawn (the hit area stays); only if it can never load (error, or not decoded within
+    // PARK_ATLAS_TIMEOUT_MS) is a plain rectangle in the page's text colour drawn instead.
     var PARK_DOOR_SPRITE = { sx: 96, sy: 0, sw: 48, sh: 48, size: 32 };
-    var parkDoorImage = null;
-    function parkDoorSpriteReady() {
-      return !!(parkDoorImage && parkDoorImage.complete && parkDoorImage.naturalWidth > 0 && !parkDoorImage._failed);
+    var PARK_ATLAS_TIMEOUT_MS = 4000;
+    var parkDoorImage = null, parkAtlasState = 'none';   // none | loading | ready | failed
+    function parkDoorSpriteReady() { return parkAtlasState === 'ready' && !!parkDoorImage; }
+    function preloadParkAtlas() {
+      if (parkDoorImage || typeof root.Image !== 'function') { return; }
+      try {
+        var image = new root.Image();
+        parkDoorImage = image; parkAtlasState = 'loading';
+        var decoded = function () { if (image.naturalWidth > 0) { parkAtlasState = 'ready'; } else if (parkAtlasState === 'loading') { parkAtlasState = 'failed'; } };
+        image.onload = function () {
+          if (typeof image.decode === 'function') { image.decode().then(decoded, decoded); } else { decoded(); }
+        };
+        image.onerror = function () { if (parkAtlasState !== 'ready') { parkAtlasState = 'failed'; } };
+        image.src = 'apstat-park/assets/pico-1-1.png' + parkBuildQuery();
+        if (image.complete && image.naturalWidth > 0) { image.onload(); }
+        root.setTimeout(function () { if (parkAtlasState === 'loading') { parkAtlasState = 'failed'; } }, PARK_ATLAS_TIMEOUT_MS);
+      } catch (_) { parkDoorImage = null; parkAtlasState = 'failed'; }
     }
-    // Screen-space box of door i as drawn: the sprite's 32x32 once ready, else the arch with its
-    // 3 px frame. The click/touch button follows it (the Up and walk-in spans are inside both).
+    // Screen-space box of door i: the sprite's 32x32. The click/touch button covers it.
     function parkDoorBox(i) {
-      var cx = parkDoorCenter(i), ground = engine ? engine.groundY : 170;
-      if (parkDoorSpriteReady()) {
-        var n = PARK_DOOR_SPRITE.size;
-        return { left: cx - n / 2, top: ground - n, width: n, height: n, radius: '14px 14px 0 0', sprite: true };
-      }
-      return { left: cx - PARK_DOOR_W / 2 - 3, top: ground - PARK_DOOR_H - 3, width: PARK_DOOR_W + 6, height: PARK_DOOR_H + 3, radius: '21px 21px 0 0', sprite: false };
+      var cx = parkDoorCenter(i), ground = engine ? engine.groundY : 170, n = PARK_DOOR_SPRITE.size;
+      return { left: cx - n / 2, top: ground - n, width: n, height: n, radius: '14px 14px 0 0' };
     }
     // Who is inside each level (relay park_lobby, polled every 3 s while on the board):
     // [{ levelIndex, online: [usernames] }]. Drawn on the doors so friends can meet without planning.
@@ -4392,6 +4404,8 @@
             engine: engine, input: playerInput, presses: parkPresses, username: username, api: root.ClassroomBoard,
             viewportW: _viewportW,
             setBoardHeight: setBoardHeight,
+            // The calendar's decoded atlas (null until decoded): the park draws from it directly.
+            atlas: function () { return parkDoorSpriteReady() ? parkDoorImage : null; },
             createPlayer: function (options) {
               var local = spriteEntities[username];
               return new PlayerSprite(spriteSheet, Object.assign({ scale: SPRITE_SCALE,
@@ -4761,16 +4775,8 @@
         || (state.activity && !state.activity.finished));
     }
     var parkWalkTicks = 0;
-    if (engineReady && role === 'student') {
-      // Small (1.4 KB), same build as the park modules; never waited on.
-      try {
-        if (typeof root.Image === 'function') {
-          parkDoorImage = new root.Image();
-          parkDoorImage.onerror = function () { parkDoorImage._failed = true; };
-          parkDoorImage.src = 'apstat-park/assets/pico-1-1.png' + parkBuildQuery();
-        }
-      } catch (_) { parkDoorImage = null; }
-    }
+    // Small (1.4 KB), same build as the park modules; never waited on.
+    if (engineReady && role === 'student') { preloadParkAtlas(); }
     if (engineReady && role === 'student') engine.addEntity('park_doorway', {
       update: function () {
         setParkButtons(function (b) {
@@ -4798,35 +4804,24 @@
       zIndex: 1,   // scenery band (vote doorways are 1, avatars >= 10): sprites paint OVER the door
       render: function (ctx) {
         // Screen space, like GateDoor (no camera translate): the doors are fixed at the left edge.
-        var w = PARK_DOOR_W, h = PARK_DOOR_H, y = engine.groundY - h, r = 18;
-        var arch = function (px, py, pw, ph, pr) {
-          ctx.beginPath();
-          ctx.moveTo(px, py + ph);
-          ctx.lineTo(px, py + pr);
-          ctx.arcTo(px, py, px + pr, py, pr);
-          ctx.lineTo(px + pw - pr, py);
-          ctx.arcTo(px + pw, py, px + pw, py + pr, pr);
-          ctx.lineTo(px + pw, py + ph);
-          ctx.closePath();
-        };
+        var n = PARK_DOOR_SPRITE.size, top = engine.groundY - n;
         ctx.save();
         ctx.textAlign = 'center';
-        var summary = [], sprite = parkDoorSpriteReady(), top = y;
+        var summary = [];
         for (var i = 0; i < PARK_DOORS.length; i++) {
-          var x = PARK_DOOR_X0 + i * PARK_DOOR_STEP, cx = x + w / 2, catsY = y + 34;
-          if (sprite) {
-            var n = PARK_DOOR_SPRITE.size;
-            top = engine.groundY - n; catsY = top + 24;
+          var cx = parkDoorCenter(i), catsY = top + 24;
+          if (parkDoorSpriteReady()) {
             ctx.save();
             ctx.imageSmoothingEnabled = true;   // 48 px art at 32 px, as the level's doors
             ctx.drawImage(parkDoorImage, PARK_DOOR_SPRITE.sx, PARK_DOOR_SPRITE.sy, PARK_DOOR_SPRITE.sw, PARK_DOOR_SPRITE.sh, cx - n / 2, top, n, n);
             ctx.restore();
-          } else {
-            ctx.fillStyle = '#57756c';            // frame
-            arch(x - 3, y - 3, w + 6, h + 3, r + 3); ctx.fill();
-            ctx.fillStyle = '#030606';            // the black doorway
-            arch(x, y, w, h, r); ctx.fill();
-          }
+          } else if (parkAtlasState === 'failed') {
+            // The atlas can never load: a plain block in the page's text colour (not the old arch).
+            var ink = '#222';
+            try { ink = root.getComputedStyle(container).color || ink; } catch (_) {}
+            ctx.fillStyle = ink;
+            ctx.fillRect(cx - n / 2, top, n, n);
+          }                                     // still decoding: nothing (the hit area stays)
           ctx.fillStyle = '#8fb3a6';            // occupancy cats, inside the doorway
           var inside = parkOccupants(PARK_DOORS[i].level);
           if (inside.length) {
@@ -6904,6 +6899,7 @@
       // Test-only: the shared held-key flags and the park press counters.
       _getPlayerInput: function () { return playerInput; },
       _getParkPresses: function () { return parkPresses; },
+      _getParkAtlasState: function () { return parkAtlasState; },
 
       destroy: function () {
         destroyed = true;

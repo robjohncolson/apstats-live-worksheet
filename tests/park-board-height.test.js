@@ -80,16 +80,16 @@ describe('park-only board height', () => {
     expect(canvas.height).toBe(220);
   });
 
-  it('the door buttons follow groundY (top = groundY - 53)', () => {
+  it('the door buttons follow groundY (top = groundY - 32, the 32 px door)', () => {
     const { handle, host, engine } = mountBoard(1);
     // The calendar's park_doorway entity re-places the buttons each tick.
     const tick = () => engine.entities.get('park_doorway').update(1 / 60);
     tick();
-    for (const b of doorButtons(host)) expect(b.style.top).toBe('117px');
+    for (const b of doorButtons(host)) expect(b.style.top).toBe('138px');
     handle.setBoardHeight(240); tick();
-    for (const b of doorButtons(host)) expect(b.style.top).toBe('137px');
+    for (const b of doorButtons(host)) expect(b.style.top).toBe('158px');
     handle.setBoardHeight(); tick();
-    for (const b of doorButtons(host)) expect(b.style.top).toBe('117px');
+    for (const b of doorButtons(host)) expect(b.style.top).toBe('138px');
   });
 });
 

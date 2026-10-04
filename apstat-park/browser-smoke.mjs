@@ -333,9 +333,117 @@ async function latencyLift(){
     for(const p of pages)await p.close();
   } finally { Object.assign(net,saved); }
 }
+
+// ---- Door transitions, frame by frame (enter, leave, re-enter, resume) ----
+// Wraps CanvasEngine.prototype.render so every rendered frame is sampled right after it is drawn:
+//  - the door region: the old painted arch's frame colour (#57756c) must never appear;
+//  - the floor row: the legacy levels' ground colour (#57756c) must never appear;
+//  - a sky pixel: the page colour (a transparent canvas shows the page, which counts);
+//  - which scene is on screen: calendar, waiting (frozen calendar frame), pico (with or without art).
+async function frameRecorder(page){
+  await page.evaluate(()=>{
+    window.__frames=[];
+    const proto=window.CanvasEngine.prototype,render=proto.render;
+    if(proto.__sampled)return;proto.__sampled=true;
+    const legacy=(r,g,b,a)=>a>200&&Math.abs(r-87)<4&&Math.abs(g-117)<4&&Math.abs(b-108)<4;
+    proto.render=function(){
+      render.call(this);
+      if(!window.__recording)return;
+      const c=this.canvas,dpr=window.devicePixelRatio||1,ctx=c.getContext('2d'),h=c.height/dpr;
+      const ground=h===240?216:this.groundY;
+      const count=(x,y,w,hh)=>{const d=ctx.getImageData(Math.round(x*dpr),Math.round(y*dpr),Math.round(w*dpr),Math.round(hh*dpr)).data;let n=0;for(let i=0;i<d.length;i+=4)if(legacy(d[i],d[i+1],d[i+2],d[i+3]))n++;return n;};
+      const arch=count(18,ground-56,50,54), floor=count(60,Math.min(ground+4,h-2),500,2);
+      const sky=[...ctx.getImageData(Math.round(300*dpr),Math.round(30*dpr),1,1).data];
+      const scene=window.board?.getParkScene?.(),w=scene?.getGame?.()?.getWorld?.();
+      const mode=!scene?'calendar':!w?.shown?'waiting':w.level?.physics==='pico'?(w.pico?.art?.ready?'pico':'pico-noart'):'legacy';
+      window.__frames.push({t:Math.round(performance.now()),h,arch,floor,sky,mode});
+    };
+  });
+}
+async function recordTransition(page,run){
+  await page.evaluate(()=>{window.__frames=[];window.__recording=true;});
+  await run();
+  await page.waitForTimeout(600);
+  return page.evaluate(()=>{window.__recording=false;return window.__frames;});
+}
+function badFrames(frames,pageRgb,{allowNoArt=false}={}){
+  const skyOk=f=>f.sky[3]===0||f.sky.slice(0,3).join()===pageRgb.join();
+  return frames.filter(f=>f.arch>20||f.floor>20||!skyOk(f)||f.mode==='legacy'||(!allowNoArt&&f.mode==='pico-noart')
+    ||f.mode==='calendar'&&f.h!==220||f.mode==='waiting'&&f.h!==220);
+}
+const frameSummary=fs=>{const out=[];let f0=fs[0]?.t;for(const f of fs){const k=f.mode+'/h'+f.h+(f.arch>20?'/ARCH':'')+(f.floor>20?'/GREEN':'');if(out.at(-1)?.k!==k)out.push({k,from:f.t-f0,n:0});out.at(-1).n++;}return out.map(o=>o.k+' x'+o.n+' @'+o.from+'ms').join(' | ');};
+async function slowPage(name,section,{blockAtlas=false}={}){
+  const page=await browser.newPage({viewport:{width:800,height:700}});
+  page.on('pageerror',error=>{errors.push(error.message);});
+  // Park modules and art arrive a few hundred ms late; or the atlas never does.
+  await page.route('**/apstat-park/**',async route=>{
+    if(blockAtlas&&route.request().url().includes('pico-1-1.png'))return route.fulfill({status:404,body:''});
+    await new Promise(r=>setTimeout(r,400));return route.continue();
+  });
+  await page.goto(`${origin}/?user=${name}&section=${section}`);
+  await page.waitForFunction(n=>window.board?.getSpritePosition?.(n),name);
+  return page;
+}
+async function transitions(){
+  const saved={...net};net.latency=250;net.jitter=100;   // slow relay replies too
+  try{
+    const page=await slowPage('frames','TRa');
+    await page.waitForFunction(()=>board._getParkAtlasState()==='ready',null,{timeout:8000});
+    await frameRecorder(page);
+    const cdp=await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+    const pageRgb=rgbOf(await pageBg(page));
+    const shownLevel=()=>page.waitForFunction(()=>board.getParkScene()?.getGame()?.getWorld()?.shown,null,{timeout:15000});
+    const enter=()=>recordTransition(page,async()=>{await page.getByRole('button',{name:'Enter APStat Park: Jump together'}).click();await shownLevel();});
+    const leave=()=>recordTransition(page,async()=>{await page.keyboard.press('Escape');await page.waitForFunction(()=>!board.getParkScene());await page.waitForTimeout(1300);});
+    const runs={};
+    runs.enter=await enter();
+    assert.equal(await page.evaluate(()=>board.getParkScene().getGame().getWorld().level.index),6);
+    runs.leave=await leave();
+    runs.reenter=await enter();
+    // Resume after a dropped socket: the board reconnects and the panel resumes in place.
+    runs.resume=await recordTransition(page,async()=>{
+      for(const [ws,who] of sockets)if(who.username==='frames')ws.terminate();
+      await page.waitForFunction(()=>board.getParkScene().replica.needsResume,null,{timeout:8000}).catch(()=>{});
+      await page.waitForFunction(()=>!board.getParkScene().replica.needsResume,null,{timeout:20000});
+    });
+    runs.leave2=await leave();
+    await cdp.send('Emulation.setCPUThrottlingRate',{rate:1});
+    for(const [name,frames] of Object.entries(runs)){
+      console.log('FRAMES',name,frames.length,frameSummary(frames));
+      assert.ok(frames.length>5,name+': frames were sampled');
+      assert.deepEqual(badFrames(frames,pageRgb).slice(0,3),[],name+': every frame is the calendar (sprite door), the frozen calendar frame, or the fully drawn level');
+    }
+    assert.ok(runs.enter.some(f=>f.mode==='waiting'),'the delayed join was bridged by the frozen calendar frame');
+    assert.ok(runs.enter.some(f=>f.mode==='pico'&&f.h===240));
+    await page.close();
+    console.log('DOOR TRANSITION PASS');
+    // Atlas 404: entry still works within the art timeout, drawing neutral fallback shapes.
+    const broken=await slowPage('noatlas','TRb',{blockAtlas:true});
+    await broken.waitForFunction(()=>board._getParkAtlasState()==='failed',null,{timeout:8000});
+    await frameRecorder(broken);
+    const t0=Date.now();
+    const frames=await recordTransition(broken,async()=>{
+      await broken.getByRole('button',{name:'Enter APStat Park: Jump together'}).click();
+      await broken.waitForFunction(()=>board.getParkScene()?.getGame()?.getWorld()?.shown,null,{timeout:8000});
+    });
+    const took=Date.now()-t0;
+    console.log('FRAMES atlas-404',frames.length,frameSummary(frames));
+    assert.deepEqual(badFrames(frames,rgbOf(await pageBg(broken)),{allowNoArt:true}).slice(0,3),[],'fallback is neutral: no arch, no green ground');
+    assert.equal(await broken.evaluate(()=>board.getParkScene().getGame().getWorld().pico.art.ready),false);
+    // From the scene mounting (level known) to the level drawn: the art timeout, not longer.
+    const waitStart=frames.find(f=>f.mode==='waiting')?.t, drawnAt=frames.find(f=>f.mode==='pico-noart')?.t;
+    assert.ok(waitStart!=null&&drawnAt!=null&&drawnAt-waitStart<1500+800,'shown after the 1.5 s art timeout, not blocked ('+(drawnAt-waitStart)+' ms; '+took+' ms from the click with every park module delayed 400 ms)');
+    await broken.keyboard.down('ArrowRight');await broken.waitForTimeout(500);await broken.keyboard.up('ArrowRight');
+    assert.ok(await broken.evaluate(()=>board.getParkScene().getGame().getWorld().player.x>60),'playable without art');
+    console.log('ATLAS 404 PASS',took);
+    await broken.close();
+  } finally { Object.assign(net,saved); }
+}
 try {
   const filter=process.env.PARK_LEVEL_FILTER;
   const waitingOnly=process.env.PARK_WAITING_ONLY==='1';
+  if(filter==null||filter.split(',').includes('transition'))await transitions();
   if(filter==null||filter.split(',').includes('6'))await level6();
   for(const index of [0,1,2,3,4,5].filter(i=>filter==null||filter.split(',').includes(String(i)))) {
     const a=await open('alice'+index,'coop'+index,800,index);

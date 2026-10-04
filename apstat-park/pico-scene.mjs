@@ -21,7 +21,7 @@ export const HIDDEN_LEAVE_MS = 15000;
 export function createPicoScene({ board, replica, member, player, peers, status, connected, ensurePeer, dropPeer, onExit = () => {} }) {
   const doc = board.engine?.canvas?.ownerDocument || globalThis.document;
   const win = doc?.defaultView || globalThis.window;
-  const art = createPicoArt(doc); art.load();
+  const art = createPicoArt(doc); art.load(typeof board.atlas === 'function' ? board.atlas() : null);
   const audio = createPicoAudio(win);
   // A tab hidden for HIDDEN_LEAVE_MS leaves the park (rAF, and so the fixed step, stops while hidden).
   let hiddenTimer = null;

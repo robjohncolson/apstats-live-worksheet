@@ -7,6 +7,16 @@ const { toPose } = await import('./pico-rules.mjs' + V);
 
 // The calendar strip's height; a level taller than this grows the board while it is open.
 export const BASE_BOARD_H = 220;
+// Level 6 waits this long for its atlas before drawing with neutral fallback shapes.
+export const ART_TIMEOUT_MS = 1500;
+function freezeFrame(canvas) {
+  try {
+    const doc=canvas?.ownerDocument, copy=doc?.createElement('canvas'), ctx=copy?.getContext?.('2d');
+    if(!ctx||!canvas.width||!canvas.height)return null;
+    copy.width=canvas.width;copy.height=canvas.height;ctx.drawImage(canvas,0,0);
+    return copy;
+  } catch { return null; }
+}
 const CAT_H = 24, CALENDAR_DOOR_X = 43;
 
 // All seven relay levels share the calendar canvas, sprites and input; the calendar's one door opens 6.
@@ -103,7 +113,7 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     const identity=replica.state && replica.state.epoch+'/'+replica.state.level.id;
     if(identity && identity!==lastLevel){
       level=replica.state.level;lastLevel=identity;player.physics=profileFor(level);
-      board.setBoardHeight?.(Math.max(BASE_BOARD_H,level.height||0));lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
+      if(shown)board.setBoardHeight?.(Math.max(BASE_BOARD_H,level.height||0));lastRest=null;retrying=false;wasArrived=false;moving.clear();holdSent.clear();pushing=null;pushAt=0;
       for(const name of Object.keys(peers))dropPeer(name);
       if(level.physics==='pico'){
         // Level 6: PICO PARK 1-1. pico-scene.mjs places the cat (spawn slot / safe re-entry).
@@ -295,11 +305,32 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
     }
     return forced;
   }
+  // Entering is seamless: until the level is known (and, for level 6, its art is decoded, or
+  // ART_TIMEOUT_MS has passed so a missing atlas can never block entry) the board keeps showing
+  // the last calendar frame, frozen; nothing of the scene, legacy or not, is drawn before then.
+  // The board grows to the level's height in the same step the level first draws.
+  const mountedAt=replica.now();
+  let shown=false;
+  function readyToShow() {
+    if(!level||!replica.state)return false;
+    if(level.physics!=='pico')return true;
+    return !!pico&&(pico.art.ready||replica.now()-mountedAt>=ART_TIMEOUT_MS);
+  }
+  function show() {
+    shown=true;
+    board.setBoardHeight?.(Math.max(BASE_BOARD_H,level.height||0));
+    engine.sceneEntities=entities;
+  }
   function tick(dt) {
     clock.advance(dt,()=>{
       if(disposed)return false;
       const forced=takePresses();
-      prepare();playerStep(clock.step);interact(clock.step);
+      prepare();
+      if(!shown){
+        if(!readyToShow()){for(const key of forced)input[key]=false;return;}
+        show();
+      }
+      playerStep(clock.step);interact(clock.step);
       for(const key of forced)input[key]=false;
       if(disposed)return false;
       api._updateCamera();
@@ -307,6 +338,12 @@ export function mountBoardScene({ board, replica, member, onExit, completed = []
   }
   entities.set('step',{update:tick});entities.set('scenery',{zIndex:1,render:scenery});
   entities.set('player',{zIndex:10,render:ctx=>pico&&level?.physics==='pico'?pico.drawCat(ctx,player,member):player.render(ctx)});
-  engine.sceneEntities=entities;
-  return {getWorld:()=>({player,level,terrain,lift:pico&&level?.physics==='pico'?pico.lift:lift,peers,moving,pico}),dispose(){if(disposed)return;disposed=true;pico?.dispose();board.setBoardHeight?.();if(engine.sceneEntities===entities)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
+  // The frozen calendar frame shown while waiting (null where canvas is unavailable, e.g. tests).
+  const frozen=freezeFrame(engine.canvas);
+  const waiting=new Map([['step',{update:tick}],['frozen',{render:ctx=>{
+    if(!frozen)return;
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(frozen,0,0);ctx.restore();
+  }}]]);
+  engine.sceneEntities=waiting;
+  return {getWorld:()=>({shown,player,level,terrain,lift:pico&&level?.physics==='pico'?pico.lift:lift,peers,moving,pico}),dispose(){if(disposed)return;disposed=true;pico?.dispose();board.setBoardHeight?.();if(engine.sceneEntities===entities||engine.sceneEntities===waiting)engine.sceneEntities=null;Object.assign(api._camera,oldCamera);for(const key of Object.keys(input))input[key]=false;}};
 }

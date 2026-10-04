@@ -22,11 +22,20 @@ export function createPicoArt(doc) {
     const ctx = c.getContext && c.getContext('2d');
     return ctx ? { c, ctx } : null;
   }
-  function load() {
-    if (image || !win || typeof win.Image !== 'function') return;
-    image = new win.Image();
-    image.onload = () => { ready = !!image.naturalWidth; try { bake(); } catch { cats = null; } };
-    image.src = ATLAS_URL;
+  // `shared`: the calendar board's already-decoded copy of the same atlas (board.atlas()). With it
+  // the level is drawable on its first frame; otherwise load (and decode) our own.
+  function load(shared = null) {
+    if (image) return;
+    const adopt = img => { image = img; ready = !!img.naturalWidth; try { bake(); } catch { cats = null; } };
+    if (shared && shared.complete && shared.naturalWidth > 0) { adopt(shared); return; }
+    if (!win || typeof win.Image !== 'function') return;
+    const own = new win.Image();
+    own.onload = () => {
+      const done = () => { image = null; adopt(own); };
+      if (typeof own.decode === 'function') own.decode().then(done, done); else done();
+    };
+    image = own;
+    own.src = ATLAS_URL;
   }
   // Tinted cat frames, baked once: cats[colour][cell] = { right, left } 20x24 canvases.
   function bake() {

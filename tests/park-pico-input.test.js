@@ -122,43 +122,52 @@ describe('board input', () => {
   });
 });
 
-describe('calendar door: the park open-door sprite, painted arch until it loads', () => {
+describe('calendar door: the park open-door sprite; nothing until decoded; plain block on failure', () => {
   function drawn(engine) {
     const calls = [];
-    const ctx = new Proxy({}, { get: (t, k) => k in t ? t[k] : (...args) => { calls.push([k, ...args]); }, set: (t, k, v) => { t[k] = v; return true; } });
+    const ctx = new Proxy({}, { get: (t, k) => k in t ? t[k] : (...args) => { calls.push([k, ...args, t.fillStyle]); }, set: (t, k, v) => { t[k] = v; return true; } });
     engine.entities.get('park_doorway').render(ctx);
     return calls;
   }
   const button = win => win.document.querySelector('[data-classroom-native]');
+  const box = win => { const b = button(win); return [b.style.left, b.style.top, b.style.width, b.style.height]; };
 
-  it('sprite not loaded (or 404): the old arch and its 44x53 hit box, centred at x 43', () => {
-    const { win, engine } = mountBoard();
+  it('still decoding: nothing is drawn (never the old arch); the 32x32 hit area is in place', () => {
+    class Pending { constructor() { this.complete = false; this.naturalWidth = 0; } }
+    const { win, engine, handle } = mountBoard({ image: Pending });
     engine.entities.get('park_doorway').update(1 / 60);
     const calls = drawn(engine);
-    expect(calls.some(c => c[0] === 'arcTo')).toBe(true);
-    expect(calls.some(c => c[0] === 'drawImage')).toBe(false);
-    const b = button(win);
-    expect([b.style.left, b.style.top, b.style.width, b.style.height]).toEqual(['21px', '117px', '44px', '53px']);
+    expect(calls.filter(c => ['drawImage', 'fillRect', 'arcTo', 'fill'].includes(c[0]))).toEqual([]);
+    expect(box(win)).toEqual(['27px', '138px', '32px', '32px']);
+    expect(handle._getParkAtlasState()).toBe('loading');
   });
 
-  it('sprite loaded: the open door 32x32 on the floor at the same centre, and the button matches it', () => {
+  it('decoded at mount: the open door 32x32 on the floor at x 43, button over it, shared with the park', () => {
     const made = [];
     class LoadedImage { constructor() { this.complete = true; this.naturalWidth = 242; made.push(this); } }
-    const { win, engine } = mountBoard({ image: LoadedImage, appBuild: '2026-10-03-test' });
+    const { win, engine, handle } = mountBoard({ image: LoadedImage, appBuild: '2026-10-03-test' });
     expect(made[0].src).toBe('apstat-park/assets/pico-1-1.png?v=2026-10-03-test');
+    expect(handle._getParkAtlasState()).toBe('ready');           // preloaded at mount, before any paint
     engine.entities.get('park_doorway').update(1 / 60);
     const calls = drawn(engine);
-    const draw = calls.find(c => c[0] === 'drawImage');
-    expect(draw.slice(2)).toEqual([96, 0, 48, 48, 27, 138, 32, 32]);   // atlas doorOpen -> (43 - 16, 170 - 32)
-    expect(calls.some(c => c[0] === 'arcTo')).toBe(false);
-    const b = button(win);
-    expect([b.style.left, b.style.top, b.style.width, b.style.height]).toEqual(['27px', '138px', '32px', '32px']);
+    expect(calls.find(c => c[0] === 'drawImage').slice(2, 10)).toEqual([96, 0, 48, 48, 27, 138, 32, 32]);
+    expect(calls.some(c => c[0] === 'arcTo' || c[0] === 'fillRect')).toBe(false);
+    expect(box(win)).toEqual(['27px', '138px', '32px', '32px']);
+    expect(source).toMatch(/atlas: function \(\) \{ return parkDoorSpriteReady\(\) \? parkDoorImage : null; \}/);
   });
 
-  it('an image that fails to load keeps the arch', () => {
-    class BrokenImage { constructor() { this.complete = true; this.naturalWidth = 0; } }
-    const { engine } = mountBoard({ image: BrokenImage });
-    expect(drawn(engine).some(c => c[0] === 'drawImage')).toBe(false);
+  it('the atlas can never load: a plain block in the page text colour, not the arch', () => {
+    const made = [];
+    class BrokenImage { constructor() { this.complete = false; this.naturalWidth = 0; made.push(this); } }
+    const { win, engine, handle } = mountBoard({ image: BrokenImage });
+    win.document.getElementById('host').style.color = 'rgb(17, 34, 51)';
+    made[0].onerror();
+    expect(handle._getParkAtlasState()).toBe('failed');
+    const calls = drawn(engine);
+    const rect = calls.find(c => c[0] === 'fillRect');
+    expect(rect.slice(1, 5)).toEqual([27, 138, 32, 32]);
+    expect(rect[5]).toBe('rgb(17, 34, 51)');
+    expect(calls.some(c => c[0] === 'arcTo' || c[0] === 'drawImage')).toBe(false);
   });
 
   it('the atlas rectangle matches pico-atlas.mjs', async () => {

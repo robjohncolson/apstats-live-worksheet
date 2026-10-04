@@ -11,11 +11,13 @@ globalThis.Image ??= class { };
 
 const standing = (cx, feet) => fromPose({ x: cx - 8, y: feet - 23 });
 
-function scene({ members = ['me'], online = members, poses = {}, progress = {}, clock = 0, doc = null, presses = null } = {}) {
+function scene({ members = ['me'], online = members, poses = {}, progress = {}, clock = 0, doc = null, presses = null, atlas = { complete: true, naturalWidth: 242 } } = {}) {
   const level = createParkLevel(6), queued = [], motions = [], exits = [];
   const engine = { groundY: 170, sceneEntities: null, ...(doc ? { canvas: { ownerDocument: doc } } : {}) };
   const player = { x: 0, y: 0, vx: 0, vy: 0, _airFrames: 0, standingOn: null, facingRight: true, update() {}, render() {} };
-  const board = { engine, input: {}, ...(presses ? { presses } : {}), setBoardHeight() {}, viewportW: () => 800,
+  const heights = [];
+  // The calendar board's decoded atlas (a stand-in object: drawing is not exercised here).
+  const board = { engine, input: {}, atlas: () => atlas, ...(presses ? { presses } : {}), setBoardHeight(h) { heights.push(h); }, viewportW: () => 800,
     api: { _camera: {}, _updateCamera() {}, _translateForCamera() {}, _restoreFromCamera() {} },
     createPlayer: options => Object.assign(player, { onUpPressed: options.onUpPressed }), createPeer: (name, pose) => ({ name, ...pose, render() {}, getLabelSpec: () => null }) };
   const anchors = {};
@@ -30,7 +32,7 @@ function scene({ members = ['me'], online = members, poses = {}, progress = {}, 
   const game = mountBoardScene({ board, replica, member: 'me', onExit() { exits.push(clock); }, status, connected: () => true });
   const step = () => engine.sceneEntities.get('step').update(1 / 60);
   step();
-  return { level, game, player, replica, queued, motions, step, anchors, status, board, exits, setClock: t => { clock = t; } };
+  return { level, game, player, replica, queued, motions, step, anchors, status, board, exits, heights, engine, setClock: t => { clock = t; } };
 }
 
 test('solo: spawn slot, fully extended bridge, both stairs, lift solid at rest', () => {
@@ -219,4 +221,23 @@ test('an Up tap inside one task at the calendar door leaves the park', () => {
   Object.assign(s.player, { x: 22, y: 192 });
   presses.up++; s.step();
   assert.equal(s.exits.length, 1);
+});
+
+test('entering: nothing of the scene shows until level 6 and its art are ready (or the art timeout)', async () => {
+  const { ART_TIMEOUT_MS } = await import('./board-scene.mjs');
+  const s = scene({ atlas: null });
+  assert.equal(s.game.getWorld().shown, false, 'no atlas yet: still the frozen calendar frame');
+  assert.equal(s.engine.sceneEntities.has('scenery'), false, 'no scene drawing entities while waiting');
+  assert.deepEqual(s.heights, [], 'the board does not grow yet');
+  assert.equal(s.motions.length, 0, 'nothing sent to the relay yet');
+  s.setClock(ART_TIMEOUT_MS - 1); s.step();
+  assert.equal(s.game.getWorld().shown, false);
+  s.setClock(ART_TIMEOUT_MS); s.step();
+  assert.equal(s.game.getWorld().shown, true, 'a missing atlas never blocks entry');
+  assert.deepEqual(s.heights, [240]);
+  assert.equal(s.engine.sceneEntities.has('scenery'), true);
+  // With the calendar's decoded atlas the level shows on its first step.
+  const t = scene();
+  assert.equal(t.game.getWorld().shown, true);
+  assert.equal(t.game.getWorld().pico.art.ready, true, 'adopted the shared, decoded atlas');
 });
