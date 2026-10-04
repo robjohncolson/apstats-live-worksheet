@@ -5,9 +5,17 @@
 The student room is one continuous scrolling world with an orange floor. Walk
 right toward **Make a five-number summary**; the entrance instructions scroll
 away as the calculator platforms come into view, without loading another scene.
-The camera follows continuously and the first 15-second countdown starts only
-once the full keypad is visible. Hold Shift to run at twice walking speed in
+Push the numbered team block into the calculator zone to start. Its live counter
+counts distinct students pushing against it, including a chain of pushers; merely
+walking into the zone does not enroll anyone or start a timer. Docking locks those
+names into the team. The camera follows continuously and the first 15-second
+countdown starts together only once every selected student can see the full keypad.
+Hold Shift to run at twice walking speed in
 the calculator room; jump height and timing stay the same.
+The original PushBox border comes from sheet rectangle 464,32,48,48, recovered
+from `FUN_7ff72bb340f0`'s nine-slice UV table; `FUN_7ff72bb346a0` renders its numeric
+counter. This activity adapts that counter to team selection, with relay-controlled
+movement at 60 pixels/second. Stale pushing input stops moving the block after 350 ms.
 The left doorway opens Jump together with Up. Escape returns to the entrance.
 Crossing the doorway preserves the outgoing frame while the next scene loads,
 then dissolves it over 320 ms. Both rooms share the responsive 750-unit canvas,
@@ -36,7 +44,7 @@ the entire plot. All five value selections are accepted without individual
 judgment, and the drawing follows those actual values. Only the fifth selection
 checks the completed plot. An incorrect plot clears the five selections while
 preserving calculator work and the original boxplot deadline; students can retry
-until the clock runs out. If any active student's countdown expires, the relay
+until the clock runs out. If any selected student's countdown expires, the relay
 freezes everyone's input for a one-second death animation, then respawns each
 student at their earned checkpoint. Reaching the boxplot raises the original
 orange flag (sheet rectangle 32,320,16,32) and preserves the calculator history.
@@ -67,29 +75,33 @@ boxplot appears, the calculator screen text disappears and the number and approa
 ledges become translucent and stop supporting the character. Gravity carries the
 character to the floor; clicking boxplot values leaves them there. When a student
 finishes, their timer stops and a ready count shows the team's progress.
-The reset door appears only when all current participants have matching correct
+The reset door appears only when all students selected by the block have matching correct
 boxplots, regardless of their key histories. Walk beside it and press Up to clear
-all attempts and return current participants to the entrance. No grades or currency
+all attempts, return the block and current participants to the entrance, and choose
+a new team. No grades or currency
 change. Solo play works.
 
 Refresh/reconnect restores each student's own inputs; duplicate tabs count as one
-student. Leaving removes that student from the current completion requirement but
-retains their work. An unfinished student joining removes the door until everyone
-is ready again. Stale standing choices stop counting after 1.5 seconds, inactive
+student. Leaving retains both the student's work and their place in the locked
+team; a five-player round still needs five matching boxplots. Walk-ins wait for the
+next team. If the whole team leaves for 30 seconds, the abandoned round releases
+the block so a new team can form. Stale standing choices stop counting after 1.5 seconds, inactive
 connections leave after five seconds, and hiding the tab leaves immediately.
 Teacher classroom calls recall students as with the Park.
 Doors do not respond to mouse clicks. There are no visible instructions or buttons
 below the playspace; status and summary announcements remain available to screen readers.
 
-The full room loads at entrance. Crossing into the platforms joins the shared
-mission; walking back leaves it. World positions become mission-local coordinates
-before reaching the relay, so scrolling requires no relay protocol change.
+The full room loads at entrance. Calculator protocol 5 adds an untimed lobby with
+world-coordinate poses and server-controlled block movement. Delivering the block
+locks the roster; only those students may join the timed mission. Walking back
+leaves active play without shrinking the roster. Mission poses use local coordinates.
 
 Files: `calculator-room.mjs` (scene and trainer bridge), `calculator-display.mjs`
 and `pixel-text.mjs` (scenery lettering), `calculator-mission.mjs`
-(geometry and deterministic personal input rules), and the sibling relay's
+(geometry and deterministic personal input rules), `calculator-lobby.mjs` (block
+geometry and pusher selection), and the sibling relay's
 `railway-server/apstat-park/calculator-service.mjs` (period-scoped authority).
-The relay has a byte-identical copy of `calculator-mission.mjs`; the mission test
+The relay has byte-identical copies of both rule modules; the tests
 pins that copy and the trainer route. No browser or backend import crosses repos
 at runtime. Deploy the relay change before the frontend. An older relay leaves
 the calculator waiting with an update message; Escape still returns to the entrance.

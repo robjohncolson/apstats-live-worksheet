@@ -7,6 +7,7 @@ import { createCalculatorRuntime } from '../../curriculum_render/railway-server/
 import { nativeScriptFilenames } from '../ti84-trainer-v2/native/manifest.mjs';
 import { createClassroomRegistry } from '../../curriculum_render/railway-server/classroom.js';
 import { createCalculatorService } from '../../curriculum_render/railway-server/apstat-park/calculator-service.mjs';
+import { CALCULATOR_PROTOCOL } from './calculator-lobby.mjs';
 const engine = createCalculatorRuntime();
 const advanceMission = (state, members, now) => advance(state, members, now, engine.transitions(state));
 
@@ -64,38 +65,38 @@ test('standing on a repeated key is not a fresh choice until released', () => {
   advanceMission(state, [member], 1000); advanceMission(state, [member], 1000 + HOLD_MS);
   assert.equal(state.step, 5);
 });
-test('a silent connection expires and cannot keep the team blocked', () => {
+test('a silent lobby connection expires without starting a calculator attempt', () => {
   let now = 0; const registry = createClassroomRegistry(), received = new Map();
   const service = createCalculatorService({ registry, now: () => now, send: (ws, packet) => received.set(ws, packet) });
   const a = {}, b = {};
+  const watch = ws => service.handle(ws, { type: 'calculator_lobby', protocol: CALCULATOR_PROTOCOL,
+    pose: { x: 65, y: 676 } });
   try {
     for (const [ws, name] of [[a,'a'],[b,'b']]) {
-      registry.join(ws, 'B', name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 4 });
+      registry.join(ws, 'B', name, 'student', 0); watch(ws);
     }
-    now = 5100;
-    service.handle(a, { type: 'calculator_pose', epoch: received.get(a).epoch, revision: 0, pose: pose('STAT') });
-    service.tick();
+    now = 5100; watch(a); service.tick();
     assert.deepEqual(received.get(a).members.map(member => member.name), ['a']);
-    now += HOLD_MS; service.tick(); assert.equal(received.get(a).step, 1);
+    assert.equal(received.get(a).phase, 'gathering');
+    assert.equal(received.get(a).startedAt, undefined);
   } finally { service.close(); }
 });
-test('relay isolates periods, resumes progress, deduplicates tabs, and drops disconnected members', () => {
-  let now = 0; const registry = createClassroomRegistry(), received = new Map();
-  const service = createCalculatorService({ registry, now: () => now, send: (ws, packet) => received.set(ws, packet) });
+
+test('lobby isolates periods and counts each identity once across multiple tabs', () => {
+  const registry = createClassroomRegistry(), received = new Map();
+  const service = createCalculatorService({ registry, now: () => 0, send: (ws, packet) => received.set(ws, packet) });
   const a = {}, b = {}, other = {}, tab = {};
   try {
     for (const [ws, section, name] of [[a,'B','a'],[b,'B','b'],[other,'E','a'],[tab,'B','a']]) {
-      registry.join(ws, section, name, 'student', 0); service.handle(ws, { type: 'calculator_join', protocol: 4 });
+      registry.join(ws, section, name, 'student', 0);
+      service.handle(ws, { type: 'calculator_lobby', protocol: CALCULATOR_PROTOCOL, pose: { x: 380, y: 676 }, pushing: true });
     }
+    service.tick();
     assert.equal(received.get(a).members.length, 2);
+    assert.equal(received.get(a).pushers.length, 2);
+    assert.equal(received.get(other).pushers.length, 1);
     assert.notEqual(received.get(a).epoch, received.get(other).epoch);
-    const sendPose = ws => service.handle(ws, { type: 'calculator_pose', epoch: received.get(ws).epoch,
-      revision: received.get(ws).revision, pose: pose('STAT') });
-    sendPose(a); sendPose(b); service.tick(); now = 950; sendPose(a); sendPose(b); service.tick();
-    assert.equal(received.get(a).step, 1); assert.equal(received.get(other).step, 0);
-    service.detached(b); service.detached(tab); assert.equal(received.get(a).members.length, 1);
-    service.handle(b, { type: 'calculator_join', protocol: 4 }); assert.equal(received.get(b).step, 1);
-    service.handle(a, { type: 'calculator_pose', epoch: received.get(a).epoch, revision: 0, pose: pose('STAT') });
-    assert.equal(received.get(a).step, 1);
+    service.detached(tab); assert.equal(received.get(a).members.length, 2);
+    service.detached(b); assert.equal(received.get(a).members.length, 1);
   } finally { service.close(); }
 });

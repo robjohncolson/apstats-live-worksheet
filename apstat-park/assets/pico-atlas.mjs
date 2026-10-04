@@ -17,6 +17,7 @@ export const ATLAS = {
   bridge:      { x: 32,  y: 48, w: 16, h: 16, src: [240, 576] },  // drawn 10x10 per segment
   key:         { x: 48,  y: 48, w: 16, h: 28, src: [112, 640] },  // art 12x24 at (2, 2)
   checkpoint:  { x: 80,  y: 48, w: 16, h: 32, src: [32, 320] },  // original orange checkpoint flag
+  pushBox:     { x: 244, y: 0,  w: 48, h: 48, src: [464, 32] },  // PushBox nine-slice source, bb340f0
   // Player cat, cells 0..10 of the sheet's row 0 (32 px cells, art 20x24 at (6, 8); the "dead"
   // cell 1 sits 2 px lower, at (6, 10)). Colour-coded: red = body, blue = outline, green = highlight.
   // The calendar strip's cats use the same cells (classroom-board.js CAT_ATLAS).

@@ -110,40 +110,37 @@ try {
       'every startup frame reserves the full calculator height, including delayed module loading');
     await page.evaluate(() => { window.originalRoom = board.getParkScene(); window.originalHeight = board.getBoardHeight(); });
     if (name === 'alice') await page.screenshot({ path: path.join(output, 'calculator-entrance.png'), fullPage: true });
-    // Enter from the main room using movement, not a new door.
-    await page.keyboard.down('ArrowRight');
-    await page.waitForFunction(() => board.getParkScene().getView().cameraX > 120);
-    assert.equal(await page.evaluate(() => board.getParkScene() === window.originalRoom), true);
-    assert.equal(await page.evaluate(() => board.getBoardHeight() === window.originalHeight), true);
-    if (name === 'alice') await page.screenshot({ path: path.join(output, 'calculator-scrolling.png'), fullPage: true });
-    // Stop inside the old trigger boundary. Time spent approaching is untimed,
-    // and the camera must keep following instead of snapping to the keypad.
-    await page.waitForFunction(() => board.getParkScene().getView().playerX >= 750);
-    await page.keyboard.up('ArrowRight');
-    await page.waitForTimeout(300);
+    // Navigating to the calculator without delivering the block cannot start it.
+    await page.evaluate(() => board.openCalculatorMission());
+    await page.waitForTimeout(250);
     assert.equal(await page.evaluate(() => board.getParkScene().getView().participating), false);
     assert.equal(await page.evaluate(() => board.getParkScene().getState()), null);
-    assert.ok(await page.evaluate(() => board.getParkScene().getView().cameraX < 550));
     if (name === 'alice') timeOffset += 20000;
     await page.waitForTimeout(200);
     assert.equal(packets.some(packet => packet.name === name && packet.type === 'calculator_join'), false,
-      'no server timer starts while the student is still approaching the keypad');
+      'walking in without the block never starts the countdown');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => board.getParkScene().getView().cameraX < 0.5);
+  }
+  // Both real browsers push the same physical block; its live count selects the team.
+  for (const page of [alice, bob]) {
     await page.keyboard.down('Shift');
     await page.keyboard.down('ArrowRight');
-    const runStart = await page.evaluate(() => board.getParkScene().getView().playerX);
-    await page.waitForTimeout(500);
-    const runDistance = await page.evaluate(() => board.getParkScene().getView().playerX) - runStart;
-    assert.ok(runDistance > 65 && runDistance < 120, 'holding Shift runs at twice walking speed');
-    await page.waitForSelector('[data-calculator-participating]', { timeout: 15000 });
+  }
+  await alice.waitForFunction(() => board.getParkScene().getView().lobby?.pushers.length === 2);
+  await alice.screenshot({ path: path.join(output, 'calculator-team-block.png'), fullPage: true });
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState()), null);
+  for (const page of [alice, bob]) {
+    await page.waitForSelector('[data-calculator-participating]', { timeout: 30000 });
     await page.keyboard.up('ArrowRight');
     await page.keyboard.up('Shift');
+    await page.waitForFunction(() => board.getParkScene()?.getState());
     assert.ok(await page.evaluate(() => board.getParkScene().getView().cameraX >= 719.5),
       'the full keypad is visible before joining starts the deadline');
-    await page.waitForFunction(() => board.getParkScene()?.getState());
     assert.ok(await page.evaluate(() => {
       const state = board.getParkScene().getState();
-      return !state.failure && state.clock - state.startedAt < 1000;
-    }), 'arrival receives the full first-key countdown');
+      return state.teamSize === 2 && !state.failure && state.clock - state.startedAt < 1500;
+    }), 'the block locks two players and gives both the full first-key countdown');
   }
   await alice.waitForFunction(() => board.getParkScene().getState().members.length === 2);
   assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
@@ -314,13 +311,16 @@ try {
   await alice.keyboard.up('ArrowRight');
   await alice.keyboard.press('ArrowUp');
   for (const page of [alice, bob]) {
-    await page.waitForFunction(() => board.getParkScene().getState().step === 0 && !board.getParkScene().getView().participating);
+    await page.waitForFunction(() => !board.getParkScene().getState() && !board.getParkScene().getView().participating);
     assert.equal(await page.evaluate(() => board.getParkScene().getView().resetDoor), null);
     assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 65);
-    assert.equal(await page.evaluate(() => board.getParkScene().getState().bonus), 0);
+    assert.deepEqual(await page.evaluate(() => board.getParkScene().getView().lobby.roster), []);
   }
-  await alice.evaluate(() => board.openCalculatorMission());
-  await alice.waitForFunction(() => board.getParkScene().getState().members.some(member => member.name === 'alice'));
+  await alice.keyboard.down('Shift');
+  await alice.keyboard.down('ArrowRight');
+  await alice.waitForFunction(() => board.getParkScene().getState()?.teamSize === 1, null, { timeout: 30000 });
+  await alice.keyboard.up('ArrowRight');
+  await alice.keyboard.up('Shift');
   await alice.keyboard.down('ArrowRight');
   await alice.waitForTimeout(300); await alice.keyboard.up('ArrowRight');
   await alice.keyboard.down('Space');

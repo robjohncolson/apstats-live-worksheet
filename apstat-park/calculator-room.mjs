@@ -11,6 +11,7 @@ const { approachSteps, createCalculatorMotion } = await import('./calculator-mot
 const { createSceneDissolve } = await import('./scene-transition.mjs' + V);
 const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
 const { ATLAS } = await import('./assets/pico-atlas.mjs' + V);
+const { TEAM_BLOCK, CALCULATOR_PROTOCOL } = await import('./calculator-lobby.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
@@ -24,7 +25,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const audio = createPicoAudio(win);
   art.load(board.atlas?.());
   const savedCamera = { ...api._camera };
-  const entities = new Map(), peers = new Map();
+  const entities = new Map(), peers = new Map(), lobbyPeers = new Map();
+  let lobby = null, lobbyAt = -Infinity;
   const display = createWorldDisplay();
   let calculator = win.TI84Native.create(null, { renderer: display });
   calculator.setList('L1', DATA);
@@ -54,6 +56,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
 
   const terrain = () => [
     { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 },
+    ...(lobby?.phase === 'gathering' && player.vy >= 0 && player.y + 24 <= TEAM_BLOCK.y + 1
+      ? [{ x: lobby.blockX, y: TEAM_BLOCK.y, w: TEAM_BLOCK.w, h: TEAM_BLOCK.h }] : []),
     // Key platforms are one-way: jump through from below, land from above.
     // A dense physical keypad must not trap cats underneath a row of keys.
     // Once the boxplot appears, every ledge becomes scenery; only the floor is solid.
@@ -92,7 +96,6 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function startMission() {
     player.x = ENTRY_WIDTH + 65;
     cameraX = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
-    setParticipating(true);
     pump();
   }
   function connected() { return socket?.readyState === 1 && performance.now() - receivedAt < 3000; }
@@ -133,14 +136,35 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
   }
   function onMessage(event) {
-    if (!participating) return;
     let packet;
     try { packet = JSON.parse(event.data); } catch { return; }
+    if (packet.type === 'calculator_lobby_state') {
+      if (packet.protocol !== CALCULATOR_PROTOCOL) return;
+      const reset = lobby && lobby.epoch !== packet.epoch && packet.phase === 'gathering';
+      lobby = packet;
+      for (const member of packet.members) {
+        if (member.name === board.username) continue;
+        if (!lobbyPeers.has(member.name)) lobbyPeers.set(member.name, board.createPeer(member.name, member.pose));
+        Object.assign(lobbyPeers.get(member.name), member.pose);
+      }
+      for (const name of lobbyPeers.keys()) if (!packet.members.some(member => member.name === name)) lobbyPeers.delete(name);
+      if (reset) {
+        state = null; peers.clear(); epoch = null; applied = 0; lastRevision = -1; computedSummary = null;
+        calculator = win.TI84Native.create(null, { renderer: display }); calculator.setList('L1', DATA);
+        readings.textContent = '';
+        returnToStart();
+      }
+      if (packet.phase === 'active' && packet.roster.includes(board.username) && player.x >= ENTRY_WIDTH + 20) {
+        setParticipating(true);
+      }
+      return;
+    }
+    if (!participating) return;
     if (packet.type === 'calculator_error') {
       status.textContent = packet.message; joinedAt = 0; return;
     }
     if (packet.type !== 'calculator_state') return;
-    if (packet.protocol !== 4) { status.textContent = 'Waiting for the team-restart server update.'; return; }
+    if (packet.protocol !== CALCULATOR_PROTOCOL) { status.textContent = 'Waiting for the team-block server update.'; return; }
     if (state?.epoch === packet.epoch && packet.revision < state.revision) return;
     if (packet.complete && !state?.complete) audio.clear();
     else if (state?.epoch === packet.epoch && packet.revision > state.revision) {
@@ -210,6 +234,13 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function pump() {
     if (disposed || doc.hidden) return;
     bind();
+    if (performance.now() - lobbyAt >= 100) {
+      lobbyAt = performance.now();
+      const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
+      send('calculator_lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch,
+        pose: { x: player.x, y: player.y }, pushing: !!input.right && !input.left,
+        ready: player.x >= ENTRY_WIDTH + 20 && cameraX >= missionCamera - 0.5 });
+    }
     if (!participating) return;
     if (socket?.readyState !== 1) { status.textContent = 'Reconnecting—your team progress is saved.'; return; }
     if (!joinedAt || performance.now() - receivedAt > 3000) {
@@ -219,7 +250,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         status.textContent = 'Reconnecting—your team progress is saved.';
       }
       if (performance.now() - joinedAt > 1500 || !joinedAt) {
-        send('calculator_join', { protocol: 4 }); joinedAt = performance.now();
+        send('calculator_join', { protocol: CALCULATOR_PROTOCOL }); joinedAt = performance.now();
       }
     }
     if (!state || !connected() || doc.hidden) return;
@@ -235,22 +266,25 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     if (disposed || doc.hidden) return;
     if (state?.failure && participating) return;
+    const previousX = player.x;
     movement.advance(dt);
+    if (lobby?.phase === 'gathering' && player.y + 24 > TEAM_BLOCK.y + 1) {
+      const left = lobby.blockX, right = left + TEAM_BLOCK.w;
+      if (previousX + 20 <= left + 4 && player.x + 20 > left) player.x = left - 20;
+      else if (previousX >= right - 4 && player.x < right) player.x = right;
+    }
     if (player.y > WORLD.floor) Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0 });
     if (player.x < ENTRY_WIDTH) setParticipating(false);
     if (!tileAt(localPose(), state?.step || 0)) needsRelease = false;
     selected = needsRelease ? null : tileAt(localPose(), state?.step || 0);
     const viewport = board.viewportW() / scale();
     // Mouse-first solving: keep every key visible instead of chasing the selected cat.
+    const assembling = lobby?.phase === 'assembling' && lobby.roster.includes(board.username);
     const target = Math.max(0, Math.min(LEVEL_WIDTH - viewport,
-      participating ? ENTRY_WIDTH : player.x - viewport * 0.4));
-    cameraX += (target - cameraX) * Math.min(1, dt * 8);
-    // Arriving must not change the camera target or consume solving time.
-    // Join only after the entire keypad has scrolled into view.
-    const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - viewport));
-    if (!participating && player.x >= ENTRY_WIDTH + 20 && cameraX >= missionCamera - 0.5) {
-      setParticipating(true);
-    }
+      participating || assembling ? ENTRY_WIDTH : player.x - viewport * 0.4));
+    const cameraStep = (target - cameraX) * Math.min(1, dt * 8);
+    const maxStep = (input.run ? 180 : 90) * dt;
+    cameraX += Math.max(-maxStep, Math.min(maxStep, cameraStep));
   }
   function text(ctx, value, x, y, size = 14, color = ink, align = 'left') {
     pixelText(ctx, value, x, y, size, color, align);
@@ -277,17 +311,29 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     // CanvasEngine clears each frame; transparency reveals the actual calendar DOM.
     art.block(ctx, { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 });
     text(ctx, 'CALCULATOR TOGETHER', 85, 365, 21);
-    text(ctx, 'WALK RIGHT TO START >', 85, 410, 21);
+    text(ctx, 'PUSH THE TEAM BLOCK RIGHT >', 85, 410, 19);
     text(ctx, 'CLICK A KEY TO CHOOSE IT', 85, 451, 14);
     text(ctx, 'FIND THE FIVE-NUMBER SUMMARY', 85, 485, 14);
     text(ctx, 'SOLVE YOUR WAY. MATCH THE BOXPLOT.', 85, 513, 14);
     text(ctx, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
     text(ctx, 'HOLD SHIFT TO RUN', 85, 573, 14);
+    text(ctx, 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);
     const atlas = board.atlas?.();
     if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
     else { ctx.fillStyle = '#493d48'; ctx.fillRect(30, WORLD.floor - 40, 40, 40); }
     text(ctx, 'PICO PARK', 24, WORLD.floor - 70, 14);
     text(ctx, 'UP TO ENTER', 24, WORLD.floor - 49, 10);
+    const blockX = lobby?.blockX ?? TEAM_BLOCK.start;
+    const block = ATLAS.pushBox;
+    if (atlas && block) ctx.drawImage(atlas, block.x, block.y, block.w, block.h, blockX, TEAM_BLOCK.y, TEAM_BLOCK.w, TEAM_BLOCK.h);
+    else art.block(ctx, { x: blockX, y: TEAM_BLOCK.y, w: TEAM_BLOCK.w, h: TEAM_BLOCK.h });
+    const count = lobby?.phase === 'gathering' ? lobby.pushers.length : lobby?.roster.length || 0;
+    text(ctx, String(count), blockX + 16, TEAM_BLOCK.y + 21, 14, ink, 'center');
+    text(ctx, count + (count === 1 ? ' PUSHER' : ' PUSHERS'), blockX + 16, TEAM_BLOCK.y - 9, 10, ink, 'center');
+    text(ctx, 'TEAM START', TEAM_BLOCK.dock + 16, WORLD.floor + 32, 10, ink, 'center');
+    if (!participating) for (const [name, peer] of lobbyPeers) {
+      peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center');
+    }
     ctx.save(); ctx.translate(ENTRY_WIDTH, 0);
     text(ctx, 'CALCULATOR TOGETHER', 28, 30, 20);
     text(ctx, 'MISSION: MAKE A FIVE-NUMBER SUMMARY', 28, 53, 14);
@@ -302,7 +348,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const remain = Math.max(0, Math.ceil((timeLimitFor(state || { step: 0 }) - elapsed) / 1000));
     text(ctx, state?.failure ? 'TIME UP! TEAM RESTART.'
       : state ? (state.solved ? 'Your boxplot is ready.'
-        : remain + (showingBoxplot ? 's · finish the whole plot' : 's · reach the next step')) : 'READY TO PLAY', 350, 143, 14);
+        : remain + (showingBoxplot ? 's · finish the whole plot' : 's · reach the next step'))
+        : lobby?.phase === 'assembling' ? 'TEAM FORMING · NO TIMER'
+        : lobby?.phase === 'active' ? 'TEAM ROUND IN PROGRESS' : 'PUSH THE BLOCK HERE TO START', 350, 143, 12);
     text(ctx, state?.failure ? (showingBoxplot ? 'Return to the checkpoint.' : 'Restart the calculator.') : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
       : showingBoxplot ? 'Click a value for the boxplot.' : 'Click to press your own keys.', 350, 175, 12);
     text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching boxplots ready' : 'Everyone solves independently.', 350, 197, 12);
@@ -349,7 +397,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       text(ctx, 'RESET', x + w / 2, y - 24, 14, ink, 'center');
       text(ctx, 'UP TO ENTER', x + w / 2, y - 9, 7, ink, 'center');
     }
-    for (const [name, peer] of peers) { drawCharacter(ctx, peer, name); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center'); }
+    if (participating) for (const [name, peer] of peers) { drawCharacter(ctx, peer, name); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center'); }
     if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, ink, 'center');
     ctx.restore();
     drawCharacter(ctx, player, board.username);
@@ -440,7 +488,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   doc.addEventListener('visibilitychange', visibility);
   const timer = setInterval(pump, 100); pump();
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
-    getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, entranceX: ENTRY_WIDTH,
+    getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, entranceX: ENTRY_WIDTH, lobby,
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
     getCalculatorScreen: () => calculator.getScreen() };
 }
