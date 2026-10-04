@@ -120,10 +120,25 @@ try {
     await page.evaluate(() => board.openCalculatorMission());
     }
     await page.waitForFunction(id => board.getParkScene().getState()?.missionId === id, level.id);
+    if (process.env.PARK_KEY_LAYERS === '1') {
+      for (const key of ['ALPHA', 'CLEAR']) {
+        const revision = await page.evaluate(() => board.getParkScene().getState().revision);
+        await clickKey(page, key);
+        await page.waitForFunction(revision => board.getParkScene().getState().revision > revision, revision);
+        if (key === 'ALPHA') {
+          assert.equal(await page.evaluate(() => board.getParkScene().getKeyboard().labels.MATH), 'A');
+          await page.screenshot({ path: path.join(output, level.id + '-alpha.png'), fullPage: true });
+        }
+      }
+    }
     for (const key of level.route) {
       const revision = await page.evaluate(() => board.getParkScene().getState().revision);
       await clickKey(page, key);
       await page.waitForFunction(revision => board.getParkScene().getState().revision > revision, revision);
+      if (process.env.PARK_KEY_LAYERS === '1' && key === '2ND') {
+        assert.equal(await page.evaluate(() => board.getParkScene().getKeyboard().labels['Y=']), 'STAT PLOT');
+        await page.screenshot({ path: path.join(output, level.id + '-second.png'), fullPage: true });
+      }
     }
     assert.equal(await page.evaluate(() => board.getParkScene().getState().step), level.route.length, level.id);
     await page.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);

@@ -5,6 +5,7 @@ const { DEFAULT_LEVEL, levelById, challengeFor, initializeCalculator } = await i
 const { drawChallenge } = await import('./calculator-challenge-view.mjs' + V);
 const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manifest.mjs' + V);
 const { pixelText } = await import('./pixel-text.mjs' + V);
+const { keyboardLayer, keyLabel } = await import('./calculator-key-labels.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
 const { createPicoArt } = await import('./pico-art.mjs' + V);
 const { createPicoAudio } = await import('./pico-audio.mjs' + V);
@@ -319,6 +320,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   }
   function draw(ctx) {
     const step = state?.step || 0;
+    const layer = keyboardLayer(calculator.save());
     const showingBoxplot = step >= level.route.length;
     if (performance.now() - inkAt > 1000) {
       ink = win.getComputedStyle(container).color || '#30263b';
@@ -378,7 +380,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       : showingBoxplot ? 'Click a value for the result.' : 'Click to press your own keys.', 350, 175, 12);
     text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching results ready' : 'Everyone solves independently.', 350, 197, 12);
     text(ctx, state?.solved ? 'All values matched.'
-      : showingBoxplot ? 'Checked after the whole answer.' : 'Equivalent keys count.', 350, 219, 12);
+      : showingBoxplot ? 'Checked after the whole answer.'
+      : layer === 'second' ? '2ND ACTIVE - CHOOSE A FUNCTION'
+      : layer === 'alpha' ? 'ALPHA ACTIVE - CHOOSE A LETTER' : 'Equivalent keys count.', 350, 219, 12);
     const hold = state?.holdAt == null ? 0 : Math.min(1, (clock() - state.holdAt) / HOLD_MS);
     if (!state?.solved && state?.holdAt != null) {
       ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
@@ -403,9 +407,18 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ctx.restore();
       ctx.save();
       if (state?.solved) ctx.globalAlpha *= 0.22;
-      text(ctx, tile.key, tile.x + tile.w / 2, tile.y + 18, 12,
-        showingBoxplot ? ink : selected === tile.key || hint ? '#30263b' : '#fff', 'center');
+      const label = showingBoxplot ? tile.key : keyLabel(tile.key, layer);
+      const changed = label !== tile.key;
+      const color = showingBoxplot ? ink : selected === tile.key || hint ? '#30263b'
+        : layer === 'second' || tile.key === '2ND' ? '#a9daff'
+        : layer === 'alpha' || tile.key === 'ALPHA' ? '#b7edab' : '#fff';
+      // Fit long legends such as STAT PLOT inside the existing clickable tile.
+      const width = Math.max(1, label.length * 6 - 1) * 2;
+      ctx.translate(tile.x + tile.w / 2, tile.y + (changed ? 14 : 18));
+      ctx.scale(Math.min(1, (tile.w - 8) / width), 1);
+      pixelText(ctx, label, 0, 0, 12, color, 'center');
       ctx.restore();
+      if (changed) text(ctx, tile.key, tile.x + tile.w / 2, tile.y + 24, 7, '#fff', 'center');
     }
     if (step >= level.route.length) drawBoxplot(ctx, step - level.route.length);
     else if (state) text(ctx, (level.hints[step] || '').slice(0, 46), 350, 252, 10);
@@ -495,5 +508,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
     getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
-    getCalculatorScreen: () => calculator.getScreen() };
+    getCalculatorScreen: () => calculator.getScreen(),
+    getKeyboard: () => {
+      const layer = keyboardLayer(calculator.save());
+      return { layer, labels: Object.fromEntries(mission.KEYS.map(tile => [tile.key, keyLabel(tile.key, layer)])) };
+    } };
 }
