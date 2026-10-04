@@ -31,7 +31,7 @@ DOM supplies their exact background, including live theme changes. Scenery text
 uses the container's text color. Movement uses the same half-scale Pico profile
 as Jump together: fixed 60 Hz simulation, instant walking, variable tap/held jump,
 and four-frame coyote allowance. Input press counters preserve taps between frames.
-Small approach ledges make every key and answer reachable with the 39px held jump;
+Small approach ledges make every calculator key reachable with the 39px held jump;
 `calculator-motion.test.mjs` checks routes using the actual player collision code.
 Pico jump, key-press switch, and completion sounds respect the existing mute toggle.
 The comparison used the recovered `player_action_held.c`, `player_action_edges.c`
@@ -44,9 +44,11 @@ clicking the tile again. A click never needs a standing hold.
 
 After reaching the five-number summary, each student assigns the displayed
 minimum, Q1, median, Q3 and maximum to their own proportional boxplot. The server
-validates the result against the common dataset: `4,7,11,14,20`. When a student
-finishes, their number and approach ledges become translucent and stop supporting
-their character. Their timer stops and a ready count shows the team's progress.
+validates the result against the common dataset: `4,7,11,14,20`. As soon as the
+boxplot appears, the calculator screen text disappears and the number and approach
+ledges become translucent and stop supporting the character. Gravity carries the
+character to the floor; clicking boxplot values leaves them there. When a student
+finishes, their timer stops and a ready count shows the team's progress.
 The reset door appears only when all current participants have matching correct
 boxplots, regardless of their key histories. Walk beside it and press Up to clear
 all attempts and return current participants to the entrance. No grades or currency

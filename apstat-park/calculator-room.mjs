@@ -53,7 +53,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 },
     // Key platforms are one-way: jump through from below, land from above.
     // A dense physical keypad must not trap cats underneath a row of keys.
-    ...(state?.solved ? [] : [...approachSteps(state?.step >= ROUTE.length), ...tilesFor(state?.step || 0)])
+    // Once the boxplot appears, every ledge becomes scenery; only the floor is solid.
+    ...(state?.step >= ROUTE.length ? [] : [...approachSteps(false), ...tilesFor(state?.step || 0)])
       .filter(tile => player.vy >= 0 && player.y + 24 <= tile.y + 1)
       .map(tile => ({ ...tile, x: tile.x + ENTRY_WIDTH, h: 8 })),
   ];
@@ -106,7 +107,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function choose(tile) {
     if (!participating || !state || state.solved || !connected()) return;
     for (const key in input) input[key] = false;
-    Object.assign(player, { x: ENTRY_WIDTH + tile.x + tile.w / 2 - 10, y: tile.y - 24, vx: 0, vy: 0, standingOn: null });
+    if (state.step < ROUTE.length) {
+      Object.assign(player, { x: ENTRY_WIDTH + tile.x + tile.w / 2 - 10, y: tile.y - 24, vx: 0, vy: 0, standingOn: null });
+    }
     needsRelease = true; selected = tile.key; poseAt = 0;
     keyQueue.push({ key: tile.key, summary: state.step >= ROUTE.length });
     flushPress();
@@ -175,7 +178,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     for (const name of peers.keys()) if (!state.members.some(member => member.name === name)) peers.delete(name);
     const hint = state.solved ? 'Your boxplot is ready. Help your teammates finish.'
       : state.step < ROUTE.length ? HINTS[state.step]
-      : 'Read ' + LABELS[state.step - ROUTE.length] + ' from the summary. Click its value.';
+      : 'Choose ' + LABELS[state.step - ROUTE.length] + ' for the boxplot. Click its value.';
     const text = state.complete ? 'Together! Your five-number summary builds the boxplot. ' + state.bonus + '/12 quick decisions.'
       : state.solved ? hint + ' ' + state.readyCount + '/' + state.members.length + ' ready.'
       : 'Step ' + (state.step + 1) + '/12 · ' + state.members.length + ' on the team. ' + hint
@@ -244,6 +247,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     ctx.closePath(); ctx.fill();
   }
   function draw(ctx) {
+    const step = state?.step || 0;
+    const showingBoxplot = step >= ROUTE.length;
     if (performance.now() - inkAt > 1000) {
       ink = win.getComputedStyle(container).color || '#30263b';
       inkAt = performance.now();
@@ -268,7 +273,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     text(ctx, 'MISSION: MAKE A FIVE-NUMBER SUMMARY', 28, 53, 14);
     text(ctx, 'L1 = {' + DATA.join(', ') + '}', 28, 76, 12);
     // No bezel or LCD background: live menu text is part of the scenery.
-    for (const [i, line] of display.getLines().slice(0, 8).entries()) {
+    for (const [i, line] of (showingBoxplot ? [] : display.getLines().slice(0, 8)).entries()) {
       text(ctx, (line.selected ? '> ' : '  ') + line.text, 28, 106 + i * 21, 14,
         ink);
     }
@@ -276,7 +281,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((ROUND_MS - elapsed) / 1000));
     text(ctx, state ? (state.solved ? 'Your boxplot is ready.' : remain + 's · hint + reset') : 'READY TO PLAY', 350, 143, 14);
-    text(ctx, state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.' : 'Click to press your own keys.', 350, 175, 12);
+    text(ctx, state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
+      : showingBoxplot ? 'Click a value for the boxplot.' : 'Click to press your own keys.', 350, 175, 12);
     text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching boxplots ready' : 'Everyone solves independently.', 350, 197, 12);
     text(ctx, state?.solved ? 'All five values matched.'
       : state?.hintKeys?.length ? 'HINT: ' + state.hintKeys.join(' / ') : 'Equivalent keys count.', 350, 219, 12);
@@ -289,16 +295,22 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     else if (state?.lastPress && !state.lastPress.advanced) {
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
     }
-    const step = state?.step || 0;
     ctx.save();
-    if (state?.solved) ctx.globalAlpha *= 0.22;
-    for (const ledge of approachSteps(step >= ROUTE.length)) keyPlatform(ctx, ledge, '#494458');
+    if (showingBoxplot) ctx.globalAlpha *= 0.22;
+    for (const ledge of approachSteps(showingBoxplot)) keyPlatform(ctx, ledge, '#494458');
+    ctx.restore();
     for (const tile of tilesFor(step)) {
       const hint = state?.hintKeys?.includes(tile.key);
+      ctx.save();
+      if (showingBoxplot) ctx.globalAlpha *= 0.22;
       keyPlatform(ctx, tile, selected === tile.key ? '#f9c45f' : hint ? '#9bdfae' : '#494458');
-      text(ctx, tile.key, tile.x + tile.w / 2, tile.y + 18, 12, selected === tile.key || hint ? '#30263b' : '#fff', 'center');
+      ctx.restore();
+      ctx.save();
+      if (state?.solved) ctx.globalAlpha *= 0.22;
+      text(ctx, tile.key, tile.x + tile.w / 2, tile.y + 18, 12,
+        showingBoxplot ? ink : selected === tile.key || hint ? '#30263b' : '#fff', 'center');
+      ctx.restore();
     }
-    ctx.restore();
     if (step >= ROUTE.length) drawBoxplot(ctx, step - ROUTE.length);
     if (state?.complete) {
       const { x, y, w, h } = RESET_DOOR;

@@ -123,11 +123,17 @@ try {
   // Submit the whole calculator route without waiting for replies between clicks.
   for (const key of ['RIGHT', '1', 'ENTER', 'DOWN', 'ENTER', 'DOWN']) await clickKey(alice, key);
   await alice.waitForFunction(() => board.getParkScene().getState().step === 7);
+  await alice.waitForFunction(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getState().solved), false,
+    'the character falls through the number ledges before answering any boxplot questions');
+  await alice.screenshot({ path: path.join(output, 'calculator-boxplot-transition.png'), fullPage: true });
   assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys),
     ['STAT', 'ENTER', 'STAT', 'RIGHT', '1', 'ENTER', 'DOWN', 'ENTER', 'DOWN']);
   for (const [i, key] of ['4','7','11','14','20'].entries()) {
     await clickKey(alice, key);
     await alice.waitForFunction(i => board.getParkScene().getState().step === 8 + i, i);
+    assert.ok(await alice.evaluate(() => Math.abs(board.getParkScene().getView().playerY - 676) < 0.1),
+      'clicking a boxplot value leaves the character on the ground');
   }
   await alice.waitForFunction(() => board.getParkScene().getState().solved);
   assert.equal(await alice.evaluate(() => board.getParkScene().getState().complete), false);
