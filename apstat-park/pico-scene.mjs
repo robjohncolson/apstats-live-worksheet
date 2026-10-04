@@ -35,7 +35,17 @@ export function createPicoScene({ board, replica, member, player, peers, status,
   let bridgeL = null, prevBlocks = null, prevBridgeL = null, key = null, walkTick = 0, lastRest = null;
   let seen = null, switchPressedLocally = false, statusStyled = false;
   const sentAt = new Map(), holdSent = new Map(), riderLevels = new Map();
-  let lastInputAt = null, hiddenSince = null;
+  let lastInputAt = null, hiddenSince = null, background = null, backgroundAt = -Infinity;
+  // The page colour around the board (see R.pageBackground); re-read once a second so a page
+  // whose colours change while the level is open follows along.
+  function pageColour() {
+    const at = now();
+    if (background && at - backgroundAt < 1000) return background;
+    backgroundAt = at;
+    const canvas = board.engine?.canvas, getStyle = win && typeof win.getComputedStyle === 'function' ? el => win.getComputedStyle(el) : null;
+    background = getStyle ? R.pageBackground(canvas?.parentElement || null, getStyle, doc?.body || null) : '#ffffff';
+    return background;
+  }
   const now = () => replica.now();
   const state = () => replica.state;
   const progress = () => replica.state.progress;
@@ -290,7 +300,7 @@ export function createPicoScene({ board, replica, member, player, peers, status,
   function scenery(ctx) {
     if (!level) return;
     const p = progress(), vw = board.api._camera?.vw || board.viewportW();
-    ctx.save(); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, Math.max(vw, level.width), level.height); ctx.restore();
+    ctx.save(); ctx.fillStyle = pageColour(); ctx.fillRect(0, 0, Math.max(vw, level.width), level.height); ctx.restore();
     world(ctx, () => {
       art.tiles(ctx, level);
       for (const item of terrain) if (item.party) art.block(ctx, item);
@@ -357,6 +367,7 @@ export function createPicoScene({ board, replica, member, player, peers, status,
     get key() { return key; },
     get bridgeLeft() { return bridgeL; },
     get activeParty() { return active; },
+    get background() { return pageColour(); },
     art, audio,
     dispose() {
       audio.dispose();

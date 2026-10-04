@@ -6,6 +6,7 @@ import { createServer } from 'node:http';
 import { createReadStream, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { PNG } from 'pngjs';
 import { createClassroomRegistry } from '../../curriculum_render/railway-server/classroom.js';
 import { createParkService } from '../../curriculum_render/railway-server/apstat-park/service.mjs';
 import { WebSocketServer } from '../../curriculum_render/railway-server/node_modules/ws/wrapper.mjs';
@@ -33,7 +34,7 @@ const server = createServer((request, response) => {
   if (url.pathname === '/') {
     response.setHeader('Content-Type', 'text/html');
     response.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:#edf3ee;font:16px system-ui"><main style="max-width:640px;margin:20px auto">
+<body style="margin:0;background:#edf3ee;font:16px system-ui"><main style="max-width:640px;margin:20px auto;background:#f7f5ee">
 <h1>AP Statistics calendar</h1><div id="board"></div><p id="calendar">Today's lesson stays here.</p></main>
 <script src="/canvas_engine.js"></script><script src="/sprite_sheet.js"></script><script src="/classroom-board.js"></script>
 <script>const params=new URL(location.href).searchParams;window.board=ClassroomBoard.mount(document.querySelector('#board'),{
@@ -120,6 +121,10 @@ async function arrive(page) {
   await progress(page,'doorOpen');await page.keyboard.press('ArrowUp',{delay:80});
   await page.waitForFunction(()=>board.getParkScene().replica.state.progress.arrived.includes(new URL(location.href).searchParams.get('user')));
 }
+async function pixelAt(page,x,y){const png=PNG.sync.read(await page.screenshot({clip:{x:Math.round(x),y:Math.round(y),width:1,height:1}}));return [png.data[0],png.data[1],png.data[2]];}
+const rgbOf=css=>css.match(/\d+(\.\d+)?/g).slice(0,3).map(Number);
+// The colour that shows through the board: first ancestor of the canvas with a background colour.
+const pageBg=page=>page.evaluate(()=>{for(let el=board.getCanvas().parentElement;el;el=el.parentElement){const c=getComputedStyle(el).backgroundColor;if(c&&c!=='transparent'&&!/rgba\(.*,\s*0\)$/.test(c))return c;}return 'rgb(255, 255, 255)';});
 async function gate(page,id) {await page.waitForFunction(id=>board.getParkScene().replica.state.progress.gates.includes(id),id);}
 
 // ---- Level 6 (PICO PARK 1-1, physics 'pico'): positions are board sprites (pose = sprite + (2,1)). ----
@@ -212,6 +217,15 @@ async function level6(){
   assert.doesNotMatch(await solo.evaluate(()=>document.querySelector('[data-park-status]').textContent),/friend/i);
   const start=await position(solo);assert.deepEqual([start.x+2,start.y+1],[48,193],'spawn slot 0');
   await solo.screenshot({path:path.join(shots,'level6-start.png')});
+  {
+    const r=await solo.evaluate(()=>{const b=board.getCanvas().getBoundingClientRect();return {left:b.left,top:b.top};});
+    const expected=rgbOf(await pageBg(solo));
+    assert.deepEqual(expected,[247,245,238],'harness board sits on the site colour');
+    assert.deepEqual(await pixelAt(solo,r.left+300,r.top+60),expected,'level sky = page colour');
+    assert.deepEqual(rgbOf(await solo.evaluate(()=>board.getParkScene().getGame().getWorld().pico.background)),expected);
+    // The exit door is the atlas's open door: black at its centre (cx 40, 16 px above the floor).
+    assert.deepEqual(await pixelAt(solo,r.left+40,r.top+216-16),[0,0,0]);
+  }
   // (3a) Pit 1: walk off the lip, caught, back above the near side.
   await solo.keyboard.down('ArrowRight');
   await solo.waitForFunction(()=>board.getParkScene().getGame().getWorld().player.y>200,null,{timeout:8000,polling:'raf'});
@@ -447,7 +461,7 @@ try {
     console.log('COOPERATIVE LEVEL PASS',index);
     await a.close();await b.close();
   }
-  if(filter==null&&!waitingOnly){
+  if((filter==null||filter.split(',').includes('calendar'))&&!waitingOnly){
   // Load the real calendar at Chromebook height, blocking production traffic.
   const companion = await open('calendar_buddy','F',800,0);
   const calendar = await browser.newPage({ viewport: { width:1100,height:650 } });
@@ -465,9 +479,62 @@ try {
   await calendar.evaluate(()=>{window.board=_classroomBoardHandle;window.originalCanvas=board.getCanvas();});
   const before=await calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
   await calendar.screenshot({path:path.join(output,'actual-calendar-before.png')});
-  // (6) Exactly one door on the real calendar.
+  // (6) Exactly one door on the real calendar: the park's open-door sprite, 32x32, button over it.
   assert.equal(await calendar.locator('[data-classroom-native]').count(),1);
   assert.equal(await calendar.getByRole('button',{name:/^Enter APStat Park/}).count(),1);
+  await calendar.waitForFunction(()=>{const b=document.querySelector('[data-classroom-native]');return b.style.width==='32px';},null,{timeout:8000});
+  // The real page puts the board below the fold: bring it into view for pixel reads.
+  await calendar.evaluate(()=>board.getCanvas().scrollIntoView({block:'center'}));await calendar.waitForTimeout(200);
+  const door=await calendar.evaluate(()=>{const c=board.getCanvas().getBoundingClientRect(),b=document.querySelector('[data-classroom-native]').getBoundingClientRect();
+    return {left:b.left-c.left,top:b.top-c.top,width:b.width,height:b.height,cLeft:c.left,cTop:c.top,cW:c.width};});
+  assert.deepEqual([door.left,door.top,door.width,door.height],[27,170-32,32,32],'button = drawn sprite');
+  assert.deepEqual(await pixelAt(calendar,door.cLeft+43,door.cTop+170-12),[0,0,0],'the open doorway is drawn there');
+  await calendar.screenshot({path:path.join(shots,'calendar-door.png'),clip:{x:door.cLeft-10,y:door.cTop-10,width:door.cW+20,height:240}});
+  const calendarBg=rgbOf(await pageBg(calendar));
+  const sky=await pixelAt(calendar,door.cLeft+300,door.cTop+30);
+  assert.deepEqual(sky,calendarBg,'calendar strip shows the page colour');
+  // Up on the door enters; so does walking left into it.
+  const me='calendar_test';
+  // Walk left to the door. The companion's calendar avatar stands just right of it (x 54) and
+  // calendar avatars block each other, so hop over it when the walk stalls.
+  const toDoor=async()=>{
+    await calendar.keyboard.down('ArrowLeft');
+    for(let i=0;i<60;i++){
+      const at=await calendar.evaluate(me=>board.getSpritePosition(me),me);
+      if(at.x+10<=50)break;
+      await calendar.waitForTimeout(250);
+      const now=await calendar.evaluate(me=>board.getSpritePosition(me),me);
+      if(Math.abs(now.x-at.x)<1){await calendar.keyboard.down('Space');await calendar.waitForTimeout(120);await calendar.keyboard.up('Space');}
+    }
+    await calendar.keyboard.up('ArrowLeft');await calendar.waitForTimeout(900);   // land
+    if((await calendar.evaluate(me=>board.getSpritePosition(me),me)).x+10<30){
+      await calendar.keyboard.down('ArrowRight');
+      await calendar.waitForFunction(me=>board.getSpritePosition(me).x+10>=33,me,{polling:'raf',timeout:5000});
+      await calendar.keyboard.up('ArrowRight');await calendar.waitForTimeout(200);
+    }
+    const at=await calendar.evaluate(me=>board.getSpritePosition(me),me);
+    assert.ok(at.x+10<=50&&at.x+10>=27,'at the door '+JSON.stringify(at));
+  };
+  await toDoor();await calendar.waitForTimeout(100);
+  // The calendar strip reads held keys once per frame (its input is unchanged), so a held press.
+  await calendar.keyboard.press('ArrowUp',{delay:100});
+  await calendar.waitForFunction(()=>board.getParkScene()?.getGame()?.getWorld().level?.index===6,null,{timeout:8000});
+  // In the level: same colour as the page, inside and just outside the canvas (no flash).
+  await calendar.waitForTimeout(400);
+  assert.deepEqual(await pixelAt(calendar,door.cLeft+300,door.cTop+60),calendarBg,'level sky = calendar strip colour');
+  assert.deepEqual(rgbOf(await calendar.evaluate(()=>board.getParkScene().getGame().getWorld().pico.background)),calendarBg);
+  await calendar.screenshot({path:path.join(shots,'real-level-start.png'),clip:{x:door.cLeft-10,y:door.cTop-10,width:door.cW+20,height:260}});
+  console.log('REAL PAGE BACKGROUND',JSON.stringify(calendarBg));
+  await calendar.keyboard.press('Escape');await calendar.waitForFunction(()=>!board.getParkScene());
+  assert.equal(await calendar.evaluate(()=>board.getCanvas().getBoundingClientRect().height),220);
+  await calendar.waitForTimeout(1400);
+  await calendar.keyboard.down('ArrowLeft');
+  await calendar.waitForFunction(()=>!!board.getParkScene(),null,{timeout:15000});
+  await calendar.keyboard.up('ArrowLeft');
+  await calendar.waitForFunction(()=>board.getParkScene()?.getGame()?.getWorld().level?.index===6,null,{timeout:8000});
+  await calendar.keyboard.press('Escape');await calendar.waitForFunction(()=>!board.getParkScene());
+  await calendar.waitForTimeout(1400);
+  console.log('CALENDAR DOOR PASS');
   await choose(calendar,6);
   const rect=()=>calendar.evaluate(()=>{const c=board.getCanvas();const r=c.getBoundingClientRect();return {width:r.width,height:r.height,background:getComputedStyle(c.parentElement).backgroundColor};});
   // The board grows to the level's height only while it is open: 220 -> 240 -> 220.

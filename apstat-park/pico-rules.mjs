@@ -227,3 +227,23 @@ export function tileCodeAt(level, col, row) {
   const column = level.tiles?.columns?.[col];
   return column ? column[row] || 'N' : 'N';
 }
+
+// ---- Page background ----
+// The calendar strip's canvas is transparent: what shows is the first ancestor with a background
+// colour. The level paints that same colour, so entering or leaving it never flashes.
+export function isOpaqueColour(colour) {
+  if (typeof colour !== 'string' || !colour || colour === 'transparent') return false;
+  const m = /^rgba?\(([^)]*)\)$/i.exec(colour.trim());
+  if (!m) return true;
+  const parts = m[1].split(/[\s,\/]+/).filter(Boolean);
+  return parts.length < 4 || parseFloat(parts[3]) > 0;
+}
+export function pageBackground(start, getStyle, body = null, fallback = '#ffffff') {
+  const colourOf = el => { try { return getStyle(el)?.backgroundColor; } catch { return null; } };
+  for (let el = start; el; el = el.parentElement) {
+    const colour = colourOf(el);
+    if (isOpaqueColour(colour)) return colour;
+  }
+  const colour = body ? colourOf(body) : null;
+  return isOpaqueColour(colour) ? colour : fallback;
+}

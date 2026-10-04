@@ -327,3 +327,18 @@ test('park modules, art and sounds carry the board build stamp', async () => {
   assert.match(board, /import\('\.\/apstat-park\/panel\.mjs' \+ parkBuildQuery\(\)\)/);
   assert.match(board, /root\.APP_BUILD/);
 });
+
+test('level background: the first ancestor with a background colour, then body, then white', () => {
+  const el = (backgroundColor, parentElement = null) => ({ backgroundColor, parentElement });
+  const style = e => ({ backgroundColor: e.backgroundColor });
+  const page = el('rgb(247, 245, 238)', el('rgb(22, 22, 22)'));          // .window-content inside body
+  const mount = el('rgba(0, 0, 0, 0)', el('transparent', page));
+  assert.equal(R.pageBackground(mount, style), 'rgb(247, 245, 238)', 'transparent ancestors are skipped');
+  assert.equal(R.pageBackground(el('rgba(10, 20, 30, 0.5)'), style), 'rgba(10, 20, 30, 0.5)', 'any alpha above 0 counts');
+  assert.equal(R.pageBackground(el('rgba(0, 0, 0, 0)'), style, el('rgb(237, 243, 238)')), 'rgb(237, 243, 238)', 'detached: body');
+  assert.equal(R.pageBackground(el('transparent'), style, el('rgba(0, 0, 0, 0)')), '#ffffff', 'nothing opaque: white');
+  assert.equal(R.pageBackground(null, style, null), '#ffffff');
+  assert.equal(R.pageBackground(mount, () => { throw new Error('detached'); }), '#ffffff', 'never throws');
+  assert.deepEqual(['transparent', 'rgba(0,0,0,0)', 'rgb(0 0 0 / 0)', '', null, 'rgb(1,2,3)', 'rgb(0 0 0 / 0.2)', '#fff'].map(R.isOpaqueColour),
+    [false, false, false, false, false, true, true, true]);
+});

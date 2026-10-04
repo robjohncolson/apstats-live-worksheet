@@ -63,7 +63,7 @@ describe('pico body: 23 tall from sprite y + 1', () => {
   });
 });
 
-function mountBoard() {
+function mountBoard({ image = null, appBuild = null } = {}) {
   const dom = new JSDOM('<!DOCTYPE html><html><body><div id="host"></div></body></html>', { url: 'https://example.com' });
   const win = dom.window;
   function WS() { this.readyState = 0; this.sent = []; }
@@ -81,9 +81,11 @@ function mountBoard() {
   Object.defineProperty(Engine.prototype, 'groundY', { get() { return 170; } });
   win.CanvasEngine = Engine;
   win.SpriteSheet = function () { this.loaded = true; this.drawFrame = () => {}; };
+  if (image) win.Image = image;
+  if (appBuild) win.APP_BUILD = appBuild;
   vm.runInContext(source, vm.createContext(win));
   const handle = win.ClassroomBoard.mount(win.document.getElementById('host'), { wsUrl: 'wss://x', section: 'B', username: 'me', role: 'student', hue: 90 });
-  return { win, handle };
+  return { win, handle, engine: win.__engine };
 }
 const key = (win, type, k, extra = {}) => win.document.dispatchEvent(new win.KeyboardEvent(type, { key: k, bubbles: true, ...extra }));
 
@@ -117,5 +119,50 @@ describe('board input', () => {
   it('the park panel is imported with the build stamp', () => {
     expect(source).toMatch(/import\('\.\/apstat-park\/panel\.mjs' \+ parkBuildQuery\(\)\)/);
     expect(source).toMatch(/presses: parkPresses/);
+  });
+});
+
+describe('calendar door: the park open-door sprite, painted arch until it loads', () => {
+  function drawn(engine) {
+    const calls = [];
+    const ctx = new Proxy({}, { get: (t, k) => k in t ? t[k] : (...args) => { calls.push([k, ...args]); }, set: (t, k, v) => { t[k] = v; return true; } });
+    engine.entities.get('park_doorway').render(ctx);
+    return calls;
+  }
+  const button = win => win.document.querySelector('[data-classroom-native]');
+
+  it('sprite not loaded (or 404): the old arch and its 44x53 hit box, centred at x 43', () => {
+    const { win, engine } = mountBoard();
+    engine.entities.get('park_doorway').update(1 / 60);
+    const calls = drawn(engine);
+    expect(calls.some(c => c[0] === 'arcTo')).toBe(true);
+    expect(calls.some(c => c[0] === 'drawImage')).toBe(false);
+    const b = button(win);
+    expect([b.style.left, b.style.top, b.style.width, b.style.height]).toEqual(['21px', '117px', '44px', '53px']);
+  });
+
+  it('sprite loaded: the open door 32x32 on the floor at the same centre, and the button matches it', () => {
+    const made = [];
+    class LoadedImage { constructor() { this.complete = true; this.naturalWidth = 242; made.push(this); } }
+    const { win, engine } = mountBoard({ image: LoadedImage, appBuild: '2026-10-03-test' });
+    expect(made[0].src).toBe('apstat-park/assets/pico-1-1.png?v=2026-10-03-test');
+    engine.entities.get('park_doorway').update(1 / 60);
+    const calls = drawn(engine);
+    const draw = calls.find(c => c[0] === 'drawImage');
+    expect(draw.slice(2)).toEqual([96, 0, 48, 48, 27, 138, 32, 32]);   // atlas doorOpen -> (43 - 16, 170 - 32)
+    expect(calls.some(c => c[0] === 'arcTo')).toBe(false);
+    const b = button(win);
+    expect([b.style.left, b.style.top, b.style.width, b.style.height]).toEqual(['27px', '138px', '32px', '32px']);
+  });
+
+  it('an image that fails to load keeps the arch', () => {
+    class BrokenImage { constructor() { this.complete = true; this.naturalWidth = 0; } }
+    const { engine } = mountBoard({ image: BrokenImage });
+    expect(drawn(engine).some(c => c[0] === 'drawImage')).toBe(false);
+  });
+
+  it('the atlas rectangle matches pico-atlas.mjs', async () => {
+    const { ATLAS } = await import('../apstat-park/assets/pico-atlas.mjs');
+    expect(source).toMatch(new RegExp('PARK_DOOR_SPRITE = \{ sx: ' + ATLAS.doorOpen.x + ', sy: ' + ATLAS.doorOpen.y + ', sw: ' + ATLAS.doorOpen.w + ', sh: ' + ATLAS.doorOpen.h + ', size: 32 \}'));
   });
 });

@@ -4317,6 +4317,25 @@
     // var PARK_DOORS_V4 = [{ level: 0, title: 'Hello together' }, { level: 3, title: 'Moving walls' }, { level: 4, title: 'Upstairs / downstairs' }];
     var PARK_DOOR_X0 = 24, PARK_DOOR_W = 38, PARK_DOOR_STEP = 54, PARK_DOOR_H = 50;
     function parkDoorCenter(i) { return PARK_DOOR_X0 + i * PARK_DOOR_STEP + PARK_DOOR_W / 2; }
+    // The door looks like the park's own doors: PICO PARK's open door from the level-6 atlas
+    // (apstat-park/assets/pico-1-1.png, rect `doorOpen` in pico-atlas.mjs; this classic script
+    // cannot import it), drawn 32x32 with smoothing like the level's goal door, centred where the
+    // old 38x50 arch was. Until the image has loaded (or if it 404s) the painted arch stays.
+    var PARK_DOOR_SPRITE = { sx: 96, sy: 0, sw: 48, sh: 48, size: 32 };
+    var parkDoorImage = null;
+    function parkDoorSpriteReady() {
+      return !!(parkDoorImage && parkDoorImage.complete && parkDoorImage.naturalWidth > 0 && !parkDoorImage._failed);
+    }
+    // Screen-space box of door i as drawn: the sprite's 32x32 once ready, else the arch with its
+    // 3 px frame. The click/touch button follows it (the Up and walk-in spans are inside both).
+    function parkDoorBox(i) {
+      var cx = parkDoorCenter(i), ground = engine ? engine.groundY : 170;
+      if (parkDoorSpriteReady()) {
+        var n = PARK_DOOR_SPRITE.size;
+        return { left: cx - n / 2, top: ground - n, width: n, height: n, radius: '14px 14px 0 0', sprite: true };
+      }
+      return { left: cx - PARK_DOOR_W / 2 - 3, top: ground - PARK_DOOR_H - 3, width: PARK_DOOR_W + 6, height: PARK_DOOR_H + 3, radius: '21px 21px 0 0', sprite: false };
+    }
     // Who is inside each level (relay park_lobby, polled every 3 s while on the board):
     // [{ levelIndex, online: [usernames] }]. Drawn on the doors so friends can meet without planning.
     var parkOccupancy = [], parkLobbyAt = 0, parkLobbyN = 0;
@@ -4742,9 +4761,23 @@
         || (state.activity && !state.activity.finished));
     }
     var parkWalkTicks = 0;
+    if (engineReady && role === 'student') {
+      // Small (1.4 KB), same build as the park modules; never waited on.
+      try {
+        if (typeof root.Image === 'function') {
+          parkDoorImage = new root.Image();
+          parkDoorImage.onerror = function () { parkDoorImage._failed = true; };
+          parkDoorImage.src = 'apstat-park/assets/pico-1-1.png' + parkBuildQuery();
+        }
+      } catch (_) { parkDoorImage = null; }
+    }
     if (engineReady && role === 'student') engine.addEntity('park_doorway', {
       update: function () {
-        setParkButtons(function (b) { b.style.top = (engine.groundY - 53) + 'px'; });
+        setParkButtons(function (b) {
+          var box = parkDoorBox(Number(b.getAttribute('data-classroom-native')) - 1);
+          b.style.left = box.left + 'px'; b.style.top = box.top + 'px';
+          b.style.width = box.width + 'px'; b.style.height = box.height + 'px'; b.style.borderRadius = box.radius;
+        });
         var player = spriteEntities[username];
         if (!player || nativeActive || Date.now() - parkReturnAt < 1200 || classroomBusy()) { parkWalkTicks = 0; return; }
         // Ask the relay who is inside each level (park_lobby). The reply lands in ws.onmessage;
@@ -4755,8 +4788,10 @@
         }
         var x = player.x + (player._spriteSize || 20) / 2 - (_camera.x || 0);
         // Deliberate walk-in applies to the first door (at the left edge, where walking LEFT
-        // naturally stops): hold LEFT inside its span for ~a quarter second.
-        var inDoor = x >= 27 && x <= 60 && Math.abs(player.y - getSpriteY()) < 16;
+        // naturally stops): hold LEFT for ~a quarter second anywhere from the door's right edge
+        // (x 60) to the wall. The cat stops at the wall (centre x 10), left of the door's own
+        // span, so a span-only check (27..60) let a student pressed against the wall never enter.
+        var inDoor = x <= 60 && Math.abs(player.y - getSpriteY()) < 16;
         parkWalkTicks = (inDoor && playerInput.left && !playerInput.right) ? parkWalkTicks + 1 : 0;
         if (parkWalkTicks >= 15) { parkWalkTicks = 0; enterPark(PARK_DOORS[0].level); }
       },
@@ -4776,19 +4811,28 @@
         };
         ctx.save();
         ctx.textAlign = 'center';
-        var summary = [];
+        var summary = [], sprite = parkDoorSpriteReady(), top = y;
         for (var i = 0; i < PARK_DOORS.length; i++) {
-          var x = PARK_DOOR_X0 + i * PARK_DOOR_STEP, cx = x + w / 2;
-          ctx.fillStyle = '#57756c';            // frame
-          arch(x - 3, y - 3, w + 6, h + 3, r + 3); ctx.fill();
-          ctx.fillStyle = '#030606';            // the black doorway
-          arch(x, y, w, h, r); ctx.fill();
-          ctx.fillStyle = '#8fb3a6';            // occupancy cats, inside the arch
+          var x = PARK_DOOR_X0 + i * PARK_DOOR_STEP, cx = x + w / 2, catsY = y + 34;
+          if (sprite) {
+            var n = PARK_DOOR_SPRITE.size;
+            top = engine.groundY - n; catsY = top + 24;
+            ctx.save();
+            ctx.imageSmoothingEnabled = true;   // 48 px art at 32 px, as the level's doors
+            ctx.drawImage(parkDoorImage, PARK_DOOR_SPRITE.sx, PARK_DOOR_SPRITE.sy, PARK_DOOR_SPRITE.sw, PARK_DOOR_SPRITE.sh, cx - n / 2, top, n, n);
+            ctx.restore();
+          } else {
+            ctx.fillStyle = '#57756c';            // frame
+            arch(x - 3, y - 3, w + 6, h + 3, r + 3); ctx.fill();
+            ctx.fillStyle = '#030606';            // the black doorway
+            arch(x, y, w, h, r); ctx.fill();
+          }
+          ctx.fillStyle = '#8fb3a6';            // occupancy cats, inside the doorway
           var inside = parkOccupants(PARK_DOORS[i].level);
           if (inside.length) {
             // One cat per classmate inside (max three), so a glance shows where friends are.
             ctx.font = '11px system-ui';
-            ctx.fillText('\u{1F431}'.repeat(Math.min(inside.length, 3)), cx, y + 34);
+            ctx.fillText('\u{1F431}'.repeat(Math.min(inside.length, 3)), cx, catsY);
             summary.push(parkOccupantLabel(inside, 2));
           }
         }
@@ -4797,7 +4841,7 @@
           ctx.fillStyle = '#b8862b';
           ctx.font = '10px system-ui';
           ctx.textAlign = 'left';
-          ctx.fillText(summary.join('   \u00b7   '), PARK_DOOR_X0, y - 10);
+          ctx.fillText(summary.join('   \u00b7   '), PARK_DOOR_X0, top - 10);
         }
         ctx.restore();
       }
