@@ -6,8 +6,9 @@ export function createWorldDisplay() {
     renderHome(values) { lines = (values.length ? values : ['READY']).map(text => ({ text })); },
     renderMenu(menu) {
       const tabs = menu.tabs?.map(tab => tab === menu.activeTab ? '[' + tab + ']' : tab).join('  ');
+      const first = Math.max(0, menu.cursorIndex - 6);
       lines = [{ text: tabs || menu.title || 'MENU' },
-        ...menu.items.slice(0, 7).map((text, i) => ({ text, selected: i === menu.cursorIndex }))];
+        ...menu.items.slice(first, first + 7).map((text, i) => ({ text, selected: first + i === menu.cursorIndex }))];
     },
     renderWizard(wizard) {
       lines = [{ text: wizard.title.replace(/-wizard$/, '').replaceAll('-', ' ') },

@@ -85,6 +85,37 @@ were stopped, so they are not claimed as ROM verification. List formulas, named
 lists, header editing, and other unimplemented calculator paths remain outside
 the verified scope.
 
+## ROM-derived behavior coverage
+
+The production calculator is ordinary JavaScript. ROM analysis supplies evidence
+for translating its behavior; the room and relay do not load or execute a ROM.
+The first static contract is `ti84-trainer-v2/native/stat-rom-contract.json`.
+Regenerate it in the sibling `ti84-transpile` repo with
+`node TI-84_Plus_CE/semantic/extract-stat-menu.mjs`, or verify the saved artifact
+with `--check`. The extractor reads the local ROM and SDK definitions, decodes in
+ADL mode, checks instruction operands and pins the full ROM hash. It launches no
+emulator. Copy the generated `semantic/stat-menu-contract.json` into the trainer
+after reviewing any changes.
+
+The normal STAT descriptor at `0x08709A` has EDIT/CALC/TESTS counts `5/15/18`.
+The program-editor variant has `5/14/18`; confusing these omitted
+`E:QuickPlot&Fit-EQ` from the trainer. The menu now includes that entry, though
+its graph tool remains unimplemented. `calculator-stat-pathways.test.mjs` checks
+all 38 cursor positions against arrow, ENTER and prefix selection rules (1,558
+checks), including wrapping, tab cursor reset and invalid prefixes. It separately
+checks that every selected row remains visible in the world display.
+
+These are menu navigation checks, not proof that every selected command works.
+The contract explicitly lists unresolved command handlers, paging, context
+returns, list editing, wizard errors, and decimal arithmetic. Those must be
+translated and verified before claiming all STAT pathways or 1:1 parity.
+
+Mission milestones compare visible calculator states and wizard values. Unrelated
+stored lists and stale prior results cannot reject a valid route; result milestones
+still compare the computed statistics against the supplied dataset. Modifier
+state is included, and printed game key legends normalize to trainer button IDs
+before modifiers are applied. Client and server use byte-identical implementations.
+
 ## Original Park rooms
 
 The calendar doorway selects a local scene in the existing CanvasEngine. The canvas element, background, 20x24 cat sprites, PlayerSprite physics, camera and keyboard handling are shared with the calendar. There is no second canvas, game panel, touch-control row or teacher group manager. A level taller than the 220px strip grows the board while it is open (level 6 is 240px) and every exit restores 220px.
