@@ -9144,6 +9144,56 @@ function _gradeMathToggle(host, ctx) {
   host.appendChild(btn); host.appendChild(panel);
 }
 
+// Last official grade fetched by the Do Now (My Ledger's balance card reads it too).
+var _officialGradeCache = null;
+// OFFICIAL_GRADE_SYNC_SPEC §4.4: the official quarter grade -- the number written into
+// Schoology each night (teacher 2026-10-02: the Desk and Schoology must agree). Returns
+// { quarter, grade, asOf, parts } or null (not published yet, offline, or server too old).
+async function _fetchOfficialGrade(baseUrl, token, quarter) {
+  try {
+    var ctx = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+    var path = '/official-grade?quarter=' + encodeURIComponent(quarter);
+    var headers = {};
+    if (ctx) {
+      // Teacher view-as: the teacher's token in the header, the student named in the query.
+      path += '&studentId=' + encodeURIComponent(ctx.studentId);
+      var teacherToken = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+      if (teacherToken) headers['Authorization'] = 'Bearer ' + teacherToken;
+    } else if (token) {
+      // The student's own token rides in the header, never the URL.
+      headers['Authorization'] = 'Bearer ' + token;
+    } else {
+      return null;
+    }
+    var res = (typeof _roadmapFetch === 'function')
+      ? await _roadmapFetch(baseUrl + path, { headers: headers }, ROADMAP_FETCH_TIMEOUT_MS)
+      : await fetch(baseUrl + path, { headers: headers });
+    if (!res || !res.ok) return null;
+    var json = await res.json();
+    if (!json || !json.ok || !json.official || typeof json.official.grade !== 'number') return null;
+    return json.official;
+  } catch (_) {
+    return null;
+  }
+}
+
+// One line explaining where the official number comes from (pill tooltip).
+function _officialGradeTitle(official) {
+  var p = official.parts || {};
+  var n = function (v) { return (typeof v === 'number') ? String(Math.round(v * 10) / 10) : '—'; };
+  var day = '';
+  try { day = new Date(official.asOf).toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric' }); } catch (_) { day = ''; }
+  var text = 'Official ' + official.quarter + ' grade' + (day ? ' as of ' + day : '') + ' — the same number Schoology shows. '
+    + 'Work ' + n(p.work) + ' (from Schoology)';
+  if (typeof p.pc === 'number') {
+    text += (p.rule === 'PC')
+      ? '; your Progress Check ' + n(p.pc) + ' is higher, and it counts because Work + bonuses reached 40'
+      : (p.rule === 'work (under 40)' ? '; your Progress Check ' + n(p.pc) + ' counts once Work + bonuses reach 40' : '; Progress Check ' + n(p.pc));
+  }
+  if (p.earlyBonus) text += '; + ' + n(p.earlyBonus) + ' early-finish bonus';
+  return text + '. Updated every night after the Schoology sync.';
+}
+
 async function renderDoNowGrades(baseUrl, token) {
   var host = document.getElementById('donow-grades');
   if (!host) return;
@@ -9317,17 +9367,27 @@ async function renderDoNowGrades(baseUrl, token) {
     // tracks and the 40% rule in one line (EFFORT_VISIBILITY_V2_SPEC §3; the ↑ceiling is gone,
     // the coach still has it). Shown to whoever is signed in (a student, or the student a teacher
     // is viewing as); a teacher's own /grade has no graded quarter, so it stays "Q1 —".
+    // The official grade (OFFICIAL_GRADE_SYNC_SPEC §4.4), when one has been published, is the
+    // headline number; the engine's live grade becomes "Today's estimate" beside it.
+    var official = (typeof _fetchOfficialGrade === 'function') ? await _fetchOfficialGrade(baseUrl, token, curQ) : null;
+    if (typeof _officialGradeCache !== 'undefined') _officialGradeCache = official;
     var pill = document.createElement('span');
-    pill.className = 'qpill' + (gradeRaw == null ? ' empty' : '');
+    pill.className = 'qpill' + (gradeRaw == null && !official ? ' empty' : '');
     var keySpan = document.createElement('span');
     keySpan.className = 'qkey';
     keySpan.textContent = curQ;
     pill.appendChild(keySpan);
     var gradeSpan = document.createElement('span');
     gradeSpan.className = 'qgrade';
-    gradeSpan.textContent = gradeRaw == null ? '—' : String(Math.round(gradeRaw));
+    if (official) gradeSpan.textContent = String(Math.round(official.grade * 10) / 10);
+    else gradeSpan.textContent = gradeRaw == null ? '—' : String(Math.round(gradeRaw));
     pill.appendChild(gradeSpan);
-    if (gradeRaw != null) {
+    if (official) {
+      var officialRule = document.createElement('span');
+      officialRule.className = 'qrule';
+      officialRule.textContent = 'official (same as Schoology)';
+      pill.appendChild(officialRule);
+    } else if (gradeRaw != null) {
       var pcOnFile = null;
       try { pcOnFile = (typeof _effortFacts === 'function') ? _effortFacts(curQ).pc : null; } catch (_) { pcOnFile = null; }
       var pcDay = (pcOnFile && !pcOnFile.counting && pcOnFile.day) ? pcOnFile.day : null;
@@ -9351,7 +9411,9 @@ async function renderDoNowGrades(baseUrl, token) {
       tip += ' — ' + lGraded + ' of ' + lTotal + ' lesson' + (lTotal === 1 ? '' : 's') + ' graded';
       if (lDue != null) tip += ' (' + lDue + ' due so far)';
     }
-    pill.title = tip + '. Once both tracks are at least 40%, your grade is the higher one. Tap to see where you stand in the class.';
+    pill.title = official
+      ? _officialGradeTitle(official) + ' Tap to see where you stand in the class.'
+      : tip + '. Once both tracks are at least 40%, your grade is the higher one. Tap to see where you stand in the class.';
     pill.style.cursor = 'pointer';
     pill.setAttribute('role', 'button'); pill.tabIndex = 0;
     pill.onclick = function () { if (typeof openWallet === 'function') openWallet(); };
@@ -9382,8 +9444,12 @@ async function renderDoNowGrades(baseUrl, token) {
     var _chipFacts = null;
     try { _chipFacts = (typeof _effortFacts === 'function') ? _effortFacts(curQ) : null; } catch (_) { _chipFacts = null; }
     var _aheadCount = (_chipFacts && _chipFacts.ahead) ? _chipFacts.ahead.length : 0;
+    // With an official grade published, the chip is the live estimate (teacher 2026-10-02: "a
+    // today's estimate that moves as students work"); the Schoology number is the pill itself.
+    if (official) host.appendChild(_trackChip("Today's estimate", gradeRaw,
+      'Moves as you work today. Tonight, after the Schoology sync, your official grade is recalculated from Schoology.'));
     // AHEAD_WORK_PROJECTION_SPEC: the chip text stays "Schoology today"; the title adds the projection.
-    host.appendChild(_trackChip('Schoology today', schToday,
+    else host.appendChild(_trackChip('Schoology today', schToday,
       'What the Schoology gradebook shows for ' + curQ + ' as of today: only work that is due AND completed. ' +
       'Blanks are not zeros and work done ahead of schedule is not counted until it comes due.' +
       ((typeof _effortAheadProjectionSentence === 'function') ? _effortAheadProjectionSentence(curQ, _aheadCount) : '')));
@@ -11258,9 +11324,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/68f6f23494f8196314f10603", title: "u2l2blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u2l2.pdf", label: "Worksheet" }
     ]
   },
   "2-3": {
@@ -11269,9 +11332,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/68f83be7f75399500ade8fe4", title: "u2l3blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u2l3.pdf", label: "Worksheet" }
     ]
   },
   "2-4": {
@@ -11281,9 +11341,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/68feeac79dcd782f18b6300d", title: "u2l4_2blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u2l4_1.pdf", label: "Worksheet" }
     ]
   },
   "2-5": {
@@ -11293,9 +11350,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6913511ef0393fccb4307a97", title: "u2l5blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u2l5.pdf", label: "Worksheet" }
     ]
   },
   "2-6": {
@@ -11305,9 +11359,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6916b5ed3cc5b74e6fe7d092", title: "u2l6blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u2l6.pdf", label: "Worksheet" }
     ]
   },
   "2-7": {
@@ -11317,9 +11368,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6917667c3cc5b74e6fe7f136", title: "u2l7blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u2l7.pdf", label: "Worksheet" }
     ]
   },
   "2-8": {
@@ -11330,9 +11378,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6917fa516ffd135030058b02", title: "u2l8blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u2l8.pdf", label: "Worksheet" }
     ]
   },
   "2-9": {
@@ -11342,9 +11387,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6918d3f96adc1a655284eb2d", title: "u2l9blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u2l9.pdf", label: "Worksheet" }
     ]
   },
 
@@ -11355,10 +11397,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/695b30a16b6c92373881e1e3", title: "u3l1blooket" },
-    ],
-    pdfs: [
-      { url: "pdf/u3_kickoff_student.pdf", label: "Kickoff Packet (Student)" },
-      { url: "pdf/u3l1.pdf", label: "Follow-Along Worksheet" }
     ]
   },
   "3-2": {
@@ -11367,10 +11405,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/695b30a16b6c92373881e1e3", title: "u3l2blooket" },
-    ],
-    pdfs: [
-      { url: "pdf/u3_kickoff_student.pdf", label: "Kickoff Packet (Student)" },
-      { url: "pdf/u3l2.pdf", label: "Follow-Along Worksheet" }
     ]
   },
   "3-3": {
@@ -11380,20 +11414,11 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/695b30a16b6c92373881e1e3", title: "u3l3blooket" },
-    ],
-    pdfs: [
-      { url: "pdf/u3_kickoff_student.pdf", label: "Kickoff Packet (Student)" },
-      { url: "pdf/u3l3_1.pdf", label: "Follow-Along Worksheet 1" },
-      { url: "pdf/u3l3_2.pdf", label: "Follow-Along Worksheet 2" }
     ]
   },
   "3-4": {
     videos: [
       { url: "https://apclassroom.collegeboard.org/d/tndkb7he2i?sui=33,3", altUrl: "https://drive.google.com/file/d/1o3YuZt7Kai5qovHysWo4vaXlHp3WXtc9/view?usp=drive_link" }
-    ],
-    pdfs: [
-      { url: "pdf/u3l4_worksheet.pdf", label: "Follow-Along Worksheet" },
-      { url: "worksheets/u3l4.html", label: "Live Worksheet (HTML, interactive)" }
     ]
   },
   "3-5": {
@@ -11404,10 +11429,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/69612ff7084e6af8ddb3ea4a", title: "u3l5blooket" }
-    ],
-    pdfs: [
-      { url: "pdf/u3l5_worksheet.pdf", label: "Follow-Along Worksheet" },
-      { url: "worksheets/u3l5.html", label: "Video Write-Along (HTML, interactive)" },
     ]
   },
   "3-6": {
@@ -11417,9 +11438,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/69612c55f522b6ed3e3233c7", title: "u3l6blooket" }
-    ],
-    pdfs: [
-      { url: "worksheets/u3l67.html", label: "Video Follow-Along (HTML, interactive)" }
     ]
   },
   "3-7": {
@@ -11428,9 +11446,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/69612c55f522b6ed3e3233c7", title: "u3l7blooket" }
-    ],
-    pdfs: [
-      { url: "worksheets/u3l67.html", label: "Video Follow-Along (HTML, interactive)" }
     ]
   },
 
@@ -11441,9 +11456,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/696edcfa2761a89ccdaf2fdc", title: "u4l1-2blooket" },
-    ],
-    pdfs: [
-      { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
     ]
   },
   "4-2": {
@@ -11453,9 +11465,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/696edcfa2761a89ccdaf2fdc", title: "u4l1-2blooket" },
-    ],
-    pdfs: [
-      { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
     ]
   },
   "4-3": {
@@ -11464,9 +11473,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6970461b0b6fcb7e199c7134", title: "u4l3-5blooket" },
-    ],
-    pdfs: [
-      { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
     ]
   },
   "4-4": {
@@ -11475,9 +11481,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6970461b0b6fcb7e199c7134", title: "u4l3-5blooket" },
-    ],
-    pdfs: [
-      { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
     ]
   },
   "4-5": {
@@ -11486,9 +11489,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6970461b0b6fcb7e199c7134", title: "u4l3-5blooket" },
-    ],
-    pdfs: [
-      { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
     ]
   },
   "4-6": {
@@ -11499,9 +11499,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/69719a57390d28db6d7edfa9", title: "u4l6blooket" },
-    ],
-    pdfs: [
-      { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson6_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
     ]
   },
   "4-7": {
@@ -12136,6 +12133,12 @@ function showResourcePanel(inf, dateStr) {
             return 'recordLinkVisit(\'' + _stuTopicId + '\',\'' + artifact + '\')';
         }
         const regEntry = getRegistryEntry(inf.t);
+        // Small three-colour Drive mark for the main video link.
+        const _DRIVE_ICON = '<svg width="14" height="12" viewBox="0 0 24 21" aria-hidden="true" style="vertical-align:-1px">'
+            + '<path d="M8 0h8l8 14h-8z" fill="#ffba00"/><path d="M8 0l4 7-8 14-4-7z" fill="#0f9d58"/>'
+            + '<path d="M8 14h16l-4 7H4z" fill="#4285f4"/></svg>';
+        // Labels of old resource-list worksheet copies (PDF / older HTML) that duplicate the live worksheet.
+        const _OLD_WORKSHEET_LABEL = /worksheet|follow-along|write-along/i;
         let lessonHtml = _lessonCoachHtml(inf, ids, regEntry);
         for (const id of ids) {
             const r = RESOURCES[id];
@@ -12157,10 +12160,16 @@ function showResourcePanel(inf, dateStr) {
                         ? (OfflineVideo.localFor(v.url) || OfflineVideo.localFor(v.altUrl)) : null;
                     if (_ovFile) {
                         lessonHtml += '<a href="#" onclick="OfflineVideo.open(' + _deskEsc(JSON.stringify(_ovFile)) + ',' + _deskEsc(JSON.stringify('Video ' + (i + 1))) + ');return false;" style="color:var(--accent-ink);text-decoration:underline">▶ Video ' + (i + 1) + ' (offline)</a>';
+                    } else if (_apAvail && v.altUrl) {
+                        // Teacher 2026-10-02: the AP Classroom links are unreliable, so the Drive
+                        // copy is the main "Video" link (with a Drive icon) and AP Classroom is the
+                        // small secondary link.
+                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Google Drive copy of the AP Classroom video">' + _DRIVE_ICON + ' Video ' + (i + 1) + ' (Google Drive)</a>';
+                        lessonHtml += ' <span style="font-size:9px;color:#555"><b style="font-size:13px;color:var(--accent-ink)">&#9664;</b> use this one</span>';
+                        lessonHtml += ' <span style="font-size:9px;color:#555;margin-left:6px">&mdash; <a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline" title="Same video on AP Classroom">AP Classroom</a> (may not load)</span>';
                     } else if (_apAvail) {
-                        // Standard render: AP Classroom primary + Drive alt secondary.
+                        // No Drive copy: AP Classroom is the only link.
                         lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline">Video ' + (i + 1) + '</a>';
-                        if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:var(--accent-ink);text-decoration:underline;font-size:9px">(alt)</a>';
                     } else if (v.altUrl) {
                         // Pre-cohort: Drive alt copy is the primary (and only) link.
                         // Renders as plain "Video N" so the student doesn't need to
@@ -12175,7 +12184,13 @@ function showResourcePanel(inf, dateStr) {
                 });
             }
             if (r.pdfs && r.pdfs.length) {
-                r.pdfs.forEach(p => {
+                // Teacher 2026-10-02: old PDF / HTML worksheet copies listed beside the real
+                // interactive worksheet made students think they had 2-3 worksheets (and that
+                // most were done). When the lesson has its live worksheet, show only that one.
+                // RESOURCES ids are dash-form ("3-3"); the registry is keyed dot-form ("3.3").
+                const _liveReg = getRegistryEntry(String(id).replace('-', '.'));
+                const _hasLiveWs = !!(_liveReg && _liveReg.urls && _liveReg.urls.worksheet);
+                r.pdfs.filter(p => !(_hasLiveWs && _OLD_WORKSHEET_LABEL.test(p.label))).forEach(p => {
                     lessonHtml += '<div style="margin:3px 0"><a href="' + p.url + '" target="_blank" style="color:var(--accent-ink);text-decoration:underline">' + p.label + '</a></div>';
                 });
             }
@@ -15793,6 +15808,17 @@ function _walletCurrentQuarter() {
 function _walletCurrentGrade() {
     var current = _walletCurrentQuarter();
     var q = current.data;
+    // OFFICIAL_GRADE_SYNC_SPEC §4.4: the official grade (the number in Schoology) leads when it has
+    // been published for this quarter; the Desk's live grade becomes "Today's estimate".
+    var official = (typeof _officialGradeCache !== 'undefined') ? _officialGradeCache : null;
+    if (official && typeof official.grade === 'number' && (!current.quarter || official.quarter === current.quarter)) {
+        return {
+            pct: Math.round(official.grade * 10) / 10,
+            q: official.quarter,
+            official: official,
+            estimate: (q && typeof q.quarterGrade === 'number') ? _walletPct(q.quarterGrade) : null,
+        };
+    }
     if (q && typeof q.quarterGrade === 'number') {
         return { pct: _walletPct(q.quarterGrade), q: current.quarter };
     }
@@ -18497,6 +18523,9 @@ function _walletBonusFooterText(applied) {
 // The one grouping of BONUS-* ledger rows for the current quarter (BONUS_DONOW_SPEC §2). Both the
 // My Ledger block and the Do Now line render from this, so the two surfaces cannot disagree.
 // Returns null when nothing is banked and nothing was applied this quarter.
+// Bonus sheets: stored points stay E 5 / P 3 / I 1; shown and counted x1.5 (teacher 2026-10-03,
+// retroactive). Mirrors roster-server/grade-config.js BONUS_MULTIPLIER (pinned equal by a test).
+var DESK_BONUS_MULTIPLIER = 1.5;
 function _bonusSummary(receipts) {
     var quarter = typeof quarterOfDate === 'function' ? 'Q' + quarterOfDate(new Date()) : _walletCurrentQuarter().quarter;
     var byItem = new Map();
@@ -18513,12 +18542,13 @@ function _bonusSummary(receipts) {
     var sheets = [];
     var total = 0;
     byItem.forEach(function (sheet, item) {
-        var points = Number(sheet.row.sc);
-        if (!isFinite(points)) points = 0;
+        var stored = Number(sheet.row.sc);
+        if (!isFinite(stored)) stored = 0;
+        var points = stored * (typeof DESK_BONUS_MULTIPLIER === 'number' ? DESK_BONUS_MULTIPLIER : 1);
         total += points;
         sheets.push({
             title: sheet.data.title || item.replace(/^BONUS-/, ''),
-            grade: sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[points] || '—',
+            grade: sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[stored] || '—',
             points: points
         });
     });
@@ -18770,16 +18800,25 @@ function _walletPaint(host, receipts, loading) {
     var gradeLbl = document.createElement('span');
     gradeLbl.className = 'geneva';
     gradeLbl.style.cssText = 'font-size:11px;color:#555';
-    gradeLbl.textContent = 'Grade';
+    gradeLbl.textContent = grade.official ? 'Official grade (same as Schoology)' : 'Grade';
+    if (grade.official && typeof _officialGradeTitle === 'function') gradeRow.title = _officialGradeTitle(grade.official);
     gradeRow.appendChild(gradeBig);
     gradeRow.appendChild(gradeLbl);
     card.appendChild(gradeRow);
+    if (grade.official) {
+        var estimate = document.createElement('div');
+        estimate.className = 'wallet-grade-estimate geneva';
+        estimate.style.cssText = 'font-size:11px;color:#555;margin-top:2px';
+        estimate.textContent = "Today's estimate: " + (grade.estimate != null ? grade.estimate + '%' : '—')
+            + ' — moves as you work; the official grade updates every night.';
+        card.appendChild(estimate);
+    }
 
     // LEDGER_GRADE_AGREEMENT_SPEC §3: while zeros are coming or counting, the number is not settled.
     if (warns.length) {
         var zerosNow = _zeroAnyPast(warns);
         gradeBig.style.color = zerosNow ? '#a30000' : '#7a5c00';
-        gradeLbl.textContent = 'Grade today';
+        if (!grade.official) gradeLbl.textContent = 'Grade today';
         var drop = document.createElement('div');
         drop.className = 'wallet-grade-drop geneva';
         drop.style.cssText = 'font-size:11px;line-height:1.35;margin-top:4px;color:#000;font-weight:bold';
@@ -26485,13 +26524,18 @@ function cellAria(i, ds){
 // never scroll past either edge of the school year. Reloads reset to 0.
 let _calPageOffset = 0;
 let _calStepWeeks = 2;   // last rendered window size; rCal publishes it so paging steps by the visible width
+// Set by the Today button. A student who is behind normally opens on the overdue next-up
+// week; once they press Today, the window anchors on the current week instead (teacher
+// 2026-10-02: "Today should always just go to the current date"). Reloads reset it.
+let _calOnToday = false;
 function calStep(dir) {
   _calPageOffset += dir * _calStepWeeks;
   rCal();
 }
-// "Today" button: jump the view back to today's window.
+// "Today" button: jump the view to the week holding today's date.
 function calToday() {
   _calPageOffset = 0;
+  _calOnToday = true;
   rCal();
 }
 // ── ☀️ Summer-prep weeks (woven into the calendar grid) ─────────────────────
@@ -26662,6 +26706,7 @@ function rCal(){
     const CAL_MIN_WEEKS = 1, CAL_MAX_WEEKS = _calShort ? 2 : 4;
     const _origLen = W.length;
     let _displayStart = 0;
+    let _calShowsToday = true;   // false while the window is anchored on an overdue next-up week
     if (_origLen > CAL_FOCUS_WEEKS) {
         // Find the week containing today. -1 = today is on a non-school day
         // (weekend / holiday) or outside the school year entirely; both are
@@ -26696,11 +26741,12 @@ function rCal(){
         if (_nextUpWk >= 0) {
             if (_nextUpWk >= _anchorWk) {
                 CAL_FOCUS_WEEKS = Math.min(CAL_MAX_WEEKS, Math.max(CAL_MIN_WEEKS, _nextUpWk - _anchorWk + 1));
-            } else {
+            } else if (!_calOnToday) {
                 _winAnchor = _nextUpWk;
                 CAL_FOCUS_WEEKS = Math.min(CAL_MAX_WEEKS, Math.max(CAL_MIN_WEEKS, _anchorWk - _nextUpWk + 1));
             }
         }
+        _calShowsToday = _winAnchor < 0;
         CAL_FOCUS_WEEKS = Math.min(CAL_FOCUS_WEEKS, _origLen);   // never exceed the array
         // In-school: anchor at today's week (or, when behind, the overdue next-up week).
         // Pre/post: clamp to either end. _calPageOffset (the nav arrows) shifts the window;
@@ -26870,9 +26916,9 @@ function rCal(){
     const _nn = document.getElementById('cal-next');
     if (_np) _np.classList.toggle('cal-nav-hidden', _displayStart <= 0);
     if (_nn) _nn.classList.toggle('cal-nav-hidden', _displayStart + CAL_FOCUS_WEEKS >= _origLen);
-    // Today button: dim + disable when already on today's window (offset 0).
+    // Today button: dim + disable only when the window really starts on today's week.
     const _nt = document.getElementById('cal-today');
-    if (_nt) _nt.classList.toggle('cal-today-off', _calPageOffset === 0);
+    if (_nt) _nt.classList.toggle('cal-today-off', _calPageOffset === 0 && _calShowsToday);
     // a11y: announce the visible window to screen readers (also fires on calStep paging).
     const _sr = document.getElementById('cal-sr');
     if (_sr && W.length) {
@@ -27554,7 +27600,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-09-30-tjkm';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-04-1hmt';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

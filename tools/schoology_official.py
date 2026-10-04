@@ -33,6 +33,9 @@ ROSTER_BASE = "https://roster-production-12c1.up.railway.app"
 PENDING_PATH = os.path.join(SCRIPT_DIR, ".official-grade-pending.json")
 
 GRADE_FLOOR = 40.0
+# Bonus sheets: stored points E 5 / P 3 / I 1, counted x1.5 (teacher 2026-10-03, retroactive).
+# Mirrors roster-server/grade-config.js BONUS_MULTIPLIER -- pinned equal by a test.
+BONUS_MULTIPLIER = 1.5
 # Schoology "calculate by percent" category weights (both SY26-27 sections).
 WORK_WEIGHTS = {"Lesson": 15, "Quizzes": 15, "Posters": 15, "Blooket": 5}
 
@@ -170,7 +173,7 @@ def post_official_grades(quarter: str, items: list[dict], secret: str) -> str:
 
 
 def banked_bonus_points(student_id: str, quarter: str, secret: str) -> float:
-    """Banked bonus-sheet points (E 5 / P 3 / I 1) for the quarter, not yet applied."""
+    """Banked bonus-sheet points for the quarter (stored E 5 / P 3 / I 1, x BONUS_MULTIPLIER)."""
     doc = roster_get("/ledger/student/%s?prefix=BONUS-" % student_id, secret)
     rows = doc.get("rows") or doc.get("ledger") or doc.get("items") or []
     points = 0.0
@@ -183,7 +186,7 @@ def banked_bonus_points(student_id: str, quarter: str, secret: str) -> float:
             meta = {}
         if meta.get("quarter", quarter) == quarter:
             points += float(row.get("score") or 0)
-    return points
+    return points * BONUS_MULTIPLIER
 
 
 # --------------------------------------------------------------------------- #

@@ -15,7 +15,14 @@ export const TEACHER_DIAGNOSTIC_CONFIG = {
   },
 };
 
+// Bonus (DOK) sheets: stored points stay E 5 / P 3 / I 1; every reader multiplies by this
+// (teacher 2026-10-03: 1.5x, retroactive to every sheet). Mirrored in the Desk
+// (DESK_BONUS_MULTIPLIER) and tools/schoology_official.py -- pinned equal by tests.
+export const BONUS_MULTIPLIER = 1.5;
+
 export const PHASE3_CONFIG = {
+  // Banked bonus-sheet points are multiplied by this when read (class.js bankedBonus).
+  bonusMultiplier: BONUS_MULTIPLIER,
   // Completion ceiling: doing all the work banks at most this (flat, all units —
   // the difficulty ramp lives entirely in the per-quarter PC→P curve).
   C: 85,

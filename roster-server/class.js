@@ -172,12 +172,19 @@ function friendlyLabel(realName) {
 // grade (bonusAudit). PC scores themselves are never changed by bonus application.
 const BONUS_POINTS = { E: 5, P: 3, I: 1 };
 
+function bonusMultiplierOf(config) {
+  const m = Number(config && config.bonusMultiplier);
+  return Number.isFinite(m) && m > 0 ? m : 1;
+}
+
 function closedQuarterGrade(snapshotRow, appliedRow) {
   if (appliedRow) return { grade: Number(appliedRow.adjustedGrade), source: 'applied' };
   return { grade: snapshotRow?.frozen_grade == null ? null : Number(snapshotRow.frozen_grade), source: 'frozen' };
 }
 
-function bankedBonus(rows, quarter, snapshot) {
+// multiplier: config.bonusMultiplier (PHASE3_CONFIG 1.5 since 2026-10-03); configs without it
+// (frozen SY2526, bespoke test worlds) keep 1x.
+function bankedBonus(rows, quarter, snapshot, multiplier = 1) {
   const bonus = { points: 0, sheets: [], applied: null };
   for (const row of rows) {
     if (row.source !== 'bonus' && row.source !== 'bonus_applied') continue;
@@ -189,8 +196,9 @@ function bankedBonus(rows, quarter, snapshot) {
       if (snapshot && snapshot.frozen_at !== detail?.frozenAt) bonus.applied.stale = true;
     }
     if (row.source !== 'bonus' || detail?.quarter !== quarter) continue;
-    const points = Number(row.score);
-    if (![1, 3, 5].includes(points)) continue;
+    const stored = Number(row.score);
+    if (![1, 3, 5].includes(stored)) continue;
+    const points = stored * multiplier;   // E 7.5 / P 4.5 / I 1.5 at 1.5x
     bonus.points += points;
     bonus.sheets.push({ itemId: row.item_id, title: detail.title, grade: detail.grade, points });
   }
@@ -421,7 +429,7 @@ export function mountClass(app, {
       const trainerRows = ledgerRows.filter(row => row && row.source === 'trainer');
       for (const [quarter, value] of Object.entries(computed.quarters || {})) {
         const snapshot = snapshots.get(`${roster.student_id}:${quarter}`);
-        const bonus = bankedBonus(ledgerRows, quarter);
+        const bonus = bankedBonus(ledgerRows, quarter, undefined, bonusMultiplierOf(config));
         value.closedGrade = snapshot ? closedQuarterGrade(snapshot, bonus.applied).grade : null;
         value.bonusApplied = bonus.applied;
       }
@@ -594,7 +602,7 @@ export function mountClass(app, {
         if (!frozen) continue;
         const ledger = await ledgerDb.getLedgerByStudent(student.student_id);
         if (ledger.error) throw ledger.error;
-        const bonus = bankedBonus(ledger.data || [], quarter, frozen);
+        const bonus = bankedBonus(ledger.data || [], quarter, frozen, bonusMultiplierOf(config));
         if (bonus.applied) {
           skipped.push({ studentId: student.student_id, username: student.login_username,
             reason: 'already applied', applied: bonus.applied });
@@ -686,7 +694,7 @@ export function mountClass(app, {
     const deltas = fg.graded.map(({ roster, computed, ledgerRows }) => {
       const fr = frozenById[roster.student_id];
       if (!fr) return null; // not frozen for this quarter
-      const bonus = bankedBonus(ledgerRows, quarter, fr);
+      const bonus = bankedBonus(ledgerRows, quarter, fr, bonusMultiplierOf(config));
       const q = computed && computed.quarters && computed.quarters[quarter];
       const current = q ? (q.quarterGrade ?? null) : null;
       // PostgREST serializes a `numeric` column as a STRING — coerce explicitly so

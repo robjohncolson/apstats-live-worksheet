@@ -109,3 +109,22 @@ describe('Do Now bonus line', () => {
     expect(src.indexOf('host.appendChild(pill)')).toBeLessThan(src.indexOf('renderDoNowBonus()'));
   });
 });
+
+describe('bonus multiplier 1.5x (teacher 2026-10-03, retroactive)', () => {
+  it('the Desk and the server use the same multiplier', () => {
+    const desk = html.match(/var DESK_BONUS_MULTIPLIER = ([0-9.]+);/);
+    const server = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'roster-server', 'grade-config.js'), 'utf8')
+      .match(/export const BONUS_MULTIPLIER = ([0-9.]+);/);
+    expect(desk && Number(desk[1])).toBe(1.5);
+    expect(server && Number(server[1])).toBe(Number(desk[1]));
+  });
+
+  it('a stored P (3) and E (5) show as +4.5 and +7.5, total +12', async () => {
+    const { s, host, close } = sandbox([screen, candle]);
+    try {
+      s.DESK_BONUS_MULTIPLIER = 1.5;
+      await s.renderDoNowBonus();
+      expect(host.textContent).toBe('Bonus banked: Screen Time P (+4.5) · Candle Tests E (+7.5) = +12 at quarter end');
+    } finally { close(); }
+  });
+});

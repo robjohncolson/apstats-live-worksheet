@@ -7,7 +7,7 @@
  *
  * Regenerate after any engine edit:  node scripts/build-grade-engine.mjs
  * Parity is pinned by tests/grade-engine-bundle-parity.test.js.
- * engine-version: 1e3d4bf047f2
+ * engine-version: 6a14267f2b72
  */
 ;(function (root) {
   'use strict';
@@ -43,7 +43,14 @@
       },
     };
     
+    // Bonus (DOK) sheets: stored points stay E 5 / P 3 / I 1; every reader multiplies by this
+    // (teacher 2026-10-03: 1.5x, retroactive to every sheet). Mirrored in the Desk
+    // (DESK_BONUS_MULTIPLIER) and tools/schoology_official.py -- pinned equal by tests.
+    const BONUS_MULTIPLIER = 1.5;
+    
     const PHASE3_CONFIG = {
+      // Banked bonus-sheet points are multiplied by this when read (class.js bankedBonus).
+      bonusMultiplier: BONUS_MULTIPLIER,
       // Completion ceiling: doing all the work banks at most this (flat, all units —
       // the difficulty ramp lives entirely in the per-quarter PC→P curve).
       C: 85,
@@ -3156,7 +3163,7 @@
     isCorrect: __reg["scoring"].isCorrect,
     normalizeResponse: __reg["scoring"].normalizeResponse,
     scoreAgainstKey: __reg["scoring"].scoreAgainstKey,
-    _engineVersion: "1e3d4bf047f2",
+    _engineVersion: "6a14267f2b72",
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = __api;

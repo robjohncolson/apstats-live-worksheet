@@ -18523,6 +18523,9 @@ function _walletBonusFooterText(applied) {
 // The one grouping of BONUS-* ledger rows for the current quarter (BONUS_DONOW_SPEC §2). Both the
 // My Ledger block and the Do Now line render from this, so the two surfaces cannot disagree.
 // Returns null when nothing is banked and nothing was applied this quarter.
+// Bonus sheets: stored points stay E 5 / P 3 / I 1; shown and counted x1.5 (teacher 2026-10-03,
+// retroactive). Mirrors roster-server/grade-config.js BONUS_MULTIPLIER (pinned equal by a test).
+var DESK_BONUS_MULTIPLIER = 1.5;
 function _bonusSummary(receipts) {
     var quarter = typeof quarterOfDate === 'function' ? 'Q' + quarterOfDate(new Date()) : _walletCurrentQuarter().quarter;
     var byItem = new Map();
@@ -18539,12 +18542,13 @@ function _bonusSummary(receipts) {
     var sheets = [];
     var total = 0;
     byItem.forEach(function (sheet, item) {
-        var points = Number(sheet.row.sc);
-        if (!isFinite(points)) points = 0;
+        var stored = Number(sheet.row.sc);
+        if (!isFinite(stored)) stored = 0;
+        var points = stored * (typeof DESK_BONUS_MULTIPLIER === 'number' ? DESK_BONUS_MULTIPLIER : 1);
         total += points;
         sheets.push({
             title: sheet.data.title || item.replace(/^BONUS-/, ''),
-            grade: sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[points] || '—',
+            grade: sheet.data.grade || ({ 5: 'E', 3: 'P', 1: 'I' })[stored] || '—',
             points: points
         });
     });
@@ -27596,7 +27600,7 @@ function _refreshRosterSession() {
 }
 try { _refreshRosterSession(); } catch (_) {}
 uClock();setInterval(uClock,15e3);
-var APP_BUILD = '2026-10-03-v8g1';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-10-04-1hmt';   // scripts/bump-build.mjs replaces this stamp
 try { if (typeof _fcLoadFlags === 'function') _fcLoadFlags(); } catch (_) {}
 // Screen-size aware calendar: re-render when the viewport crosses the short/tall
 // threshold (rCal re-reads innerHeight for its week cap). Debounced; no-op if rCal is absent.

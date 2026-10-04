@@ -11,6 +11,7 @@
     "5"
   ],
   "frozenConfig": {
+    "bonusMultiplier": 1.5,
     "C": 85,
     "feederWeights": {
       "W": 1,

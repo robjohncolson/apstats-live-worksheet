@@ -393,3 +393,20 @@ describe('bonus placement on the higher track', () => {
     expect(publicDetail).toEqual({ adjustedGrade: 90, appliedAt: expect.any(String), placement: 'pc' });
   });
 });
+
+describe('bonus multiplier (teacher 2026-10-03: 1.5x, retroactive)', () => {
+  it('production config carries 1.5x', async () => {
+    const { PHASE3_CONFIG, BONUS_MULTIPLIER } = await import('../grade-config.js');
+    expect(BONUS_MULTIPLIER).toBe(1.5);
+    expect(PHASE3_CONFIG.bonusMultiplier).toBe(1.5);
+  });
+
+  it('a stored E (5) reads as 7.5 banked points, and the apply step uses 7.5', async () => {
+    const { request, writes } = await start({ config: { ...CONFIG, bonusMultiplier: 1.5 } });
+    const deltas = await request('/class/quarter/deltas?quarter=Q1');
+    expect(deltas.body.deltas[0].bonus).toEqual({ points: 7.5, applied: null,
+      sheets: [{ itemId: 'BONUS-U1-screen-time', title: 'Screen Time', grade: 'E', points: 7.5 }] });
+    await request('/class/quarter/apply-bonus', { quarter: 'Q1', dryRun: false });
+    expect(JSON.parse(writes[0].response)).toMatchObject({ points: 7.5, workBefore: 35, workAfter: 42.5 });
+  });
+});

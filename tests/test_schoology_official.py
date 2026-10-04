@@ -1,6 +1,7 @@
 """Tests for the official-grade rule (OFFICIAL_GRADE_SYNC_SPEC.md §2 + §6)."""
 import json
 import os
+import re
 import sys
 import unittest
 from unittest import mock
@@ -119,6 +120,24 @@ class TestPublish(unittest.TestCase):
 
         with mock.patch.object(so, "urlopen", fake_urlopen):
             self.assertIn("migration 0038", so.post_official_grades("Q1", [self.item], "s"))
+
+
+class TestBonusMultiplier(unittest.TestCase):
+    """Teacher 2026-10-03: bonus sheets count 1.5x, everywhere, retroactively."""
+
+    def test_matches_the_server(self):
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, "roster-server", "grade-config.js"), encoding="utf-8") as fh:
+            server = re.search(r"export const BONUS_MULTIPLIER = ([0-9.]+);", fh.read())
+        self.assertEqual(so.BONUS_MULTIPLIER, 1.5)
+        self.assertEqual(float(server.group(1)), so.BONUS_MULTIPLIER)
+
+    def test_banked_points_are_multiplied(self):
+        rows = [{"source": "bonus", "score": 5, "response": json.dumps({"quarter": "Q1"})},
+                {"source": "bonus", "score": 3, "response": json.dumps({"quarter": "Q2"})},
+                {"source": "bonus_applied", "score": 90, "response": "{}"}]
+        with mock.patch.object(so, "roster_get", lambda path, secret: {"rows": rows}):
+            self.assertEqual(so.banked_bonus_points("stu", "Q1", "s"), 7.5)
 
 
 if __name__ == "__main__":

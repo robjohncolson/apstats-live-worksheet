@@ -5,6 +5,7 @@
   "schedule_1_1_B": "2099-06-01",
   "pcUnitsFromEvents": null,
   "frozenConfig": {
+    "bonusMultiplier": 1.5,
     "C": 85,
     "feederWeights": {
       "W": 1,

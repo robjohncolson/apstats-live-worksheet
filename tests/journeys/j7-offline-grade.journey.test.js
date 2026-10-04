@@ -130,20 +130,28 @@ function dispatchVisible(harness) {
   harness.document.dispatchEvent(new harness.window.Event('visibilitychange'));
 }
 
-async function expectIncidentCalendar(harness) {
+// Teacher 2026-10-02: Today always shows the current week, so a student who is behind sees the
+// overdue tiles by paging back from Today. Find each tile that way (bounded), then assert on it.
+async function findTileFromToday(harness, topic) {
   harness.window.calToday();
   await harness.flush(2);
+  for (let page = 0; page < 12; page++) {
+    const tile = harness.document.querySelector(`#cg .dc[data-topic="${topic}"]`);
+    if (tile) return tile;
+    harness.window.calStep(-1);
+    await harness.flush(2);
+  }
+  return null;
+}
 
-  const nextTile = await harness.waitFor(() => (
-    harness.document.querySelector(`#cg .dc[data-topic="${NEXT_TOPIC}"]`)
-  ), { message: `${NEXT_TOPIC} did not render in the summer focus window` });
+async function expectIncidentCalendar(harness) {
+  const nextTile = await findTileFromToday(harness, NEXT_TOPIC);
+  expect(nextTile, `${NEXT_TOPIC} did not render in the summer calendar`).toBeTruthy();
   expect(nextTile.classList.contains('cell-locked'), `${NEXT_TOPIC} relocked`).toBe(false);
 
-  harness.window.calStep(-1);
-  await harness.flush(2);
   for (const topic of ['1.2', '1.3']) {
-    const tile = harness.document.querySelector(`#cg .dc[data-topic="${topic}"]`);
-    expect(tile, `${topic} did not render on the preceding summer page`).toBeTruthy();
+    const tile = await findTileFromToday(harness, topic);
+    expect(tile, `${topic} did not render in the summer calendar`).toBeTruthy();
     expect(tile.classList.contains('dc-localdone'), `${topic} lost completed paint`).toBe(true);
     expect(tile.classList.contains('cell-locked'), `${topic} rendered locked`).toBe(false);
   }
