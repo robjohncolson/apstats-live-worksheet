@@ -69,6 +69,22 @@ screen content, cursor, field values, computed results, lists, and modifier stat
 it does not maintain a whitelist of equivalent key names. Parity tests pin every
 vendored file to the trainer source. Deploy the relay before this frontend update.
 
+STAT navigation verification (2026-10-04): CEmu running the local CE OS 5.8.2.0029
+ROM showed `STAT, ENTER` opening the list editor. `STAT, RIGHT` selects CALC,
+as documented in the TI CE Getting Started Guide. These are distinct paths.
+The native engine previously entered an editor stub without repainting; it now
+renders list columns, selection and numeric entries, and supports returning to
+STAT. The scenery renderer consumes that editor state. Automated tests cover both
+paths and a two-player editor detour during the mission.
+
+This is still a native model, not full ROM execution. The sibling transpile report
+lists 17.0149% byte coverage and its browser control-key report documents partial
+semantics. Those figures do not establish whole-calculator fidelity. The initial
+STAT/ENTER CEmu capture succeeded; subsequent automated CEmu scenarios failed and
+were stopped, so they are not claimed as ROM verification. List formulas, named
+lists, header editing, and other unimplemented calculator paths remain outside
+the verified scope.
+
 ## Original Park rooms
 
 The calendar doorway selects a local scene in the existing CanvasEngine. The canvas element, background, 20x24 cat sprites, PlayerSprite physics, camera and keyboard handling are shared with the calendar. There is no second canvas, game panel, touch-control row or teacher group manager. A level taller than the 220px strip grows the board while it is open (level 6 is 240px) and every exit restores 220px.

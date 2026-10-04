@@ -103,6 +103,10 @@ try {
     assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().type), 'menu');
     assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), ['MATH']);
   }
+  await alice.waitForFunction(() => {
+    const state = board.getParkScene().getState();
+    return state.members.every(member => member.revision === state.revision);
+  });
   timeOffset += 31000;
   // Move the mission clock without simulating a disconnected browser.
   for (const [ws, who] of sockets) {
@@ -118,16 +122,30 @@ try {
       await page.locator('[data-calculator-key="' + actualKey + '"]').click();
     }
     for (const page of [alice, bob]) await page.waitForFunction(step => board.getParkScene().getState().step === step + 1, step);
-    if (step === 0) await alice.screenshot({ path: path.join(output, 'calculator-team.png'), fullPage: true });
+    if (step === 0) {
+      await alice.screenshot({ path: path.join(output, 'calculator-team.png'), fullPage: true });
+      for (const page of [alice, bob]) await page.locator('[data-calculator-key="ENTER"]').click();
+      for (const page of [alice, bob]) {
+        await page.waitForFunction(() => board.getParkScene().getCalculatorScreen().id === 'stat-edit-lists');
+        assert.ok(await page.evaluate(() => board.getParkScene().getView().lines[0].text.includes('[L1]')));
+      }
+      await alice.screenshot({ path: path.join(output, 'calculator-list-editor.png'), fullPage: true });
+      for (const page of [alice, bob]) await page.locator('[data-calculator-key="STAT"]').click();
+      for (const page of [alice, bob]) await page.waitForFunction(() => board.getParkScene().getCalculatorScreen().id === 'stat-menu');
+    }
     if (step === 3) {
       await alice.waitForTimeout(1100);
       assert.equal(await alice.evaluate(() => board.getParkScene().getState().step), 4, 'held DOWN does not repeat into another step');
-      assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'RIGHT', '1', 'ENTER']);
+      assert.deepEqual(await alice.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'ENTER', 'STAT', 'RIGHT', '1', 'ENTER']);
       for (const page of [alice, bob]) await page.locator('[data-calculator-key="CLEAR"]').click();
       for (const page of [alice, bob]) {
         await page.waitForFunction(() => board.getParkScene().getState().lastPress?.key === 'CLEAR');
         assert.equal(await page.evaluate(() => board.getParkScene().getCalculatorScreen().type), 'home');
       }
+      await alice.waitForFunction(() => {
+        const state = board.getParkScene().getState();
+        return state.members.every(member => member.revision === state.revision);
+      });
       timeOffset += 31000;
       for (const [ws, who] of sockets) {
         const pose = packets.findLast(packet => packet.name === who.username && packet.type === 'calculator_pose');
@@ -136,7 +154,7 @@ try {
       for (const page of [alice, bob]) {
         await page.waitForFunction(() => board.getParkScene().getState().timeoutCount === 2);
         assert.equal(await page.evaluate(() => board.getParkScene().getState().step), 4);
-        assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'RIGHT', '1', 'ENTER']);
+        assert.deepEqual(await page.evaluate(() => board.getParkScene().getState().keys), ['STAT', 'ENTER', 'STAT', 'RIGHT', '1', 'ENTER']);
         assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 785);
         assert.ok(await page.evaluate(() => board.getParkScene().getView().lines.some(line => line.selected && line.text.includes('FreqList'))));
       }

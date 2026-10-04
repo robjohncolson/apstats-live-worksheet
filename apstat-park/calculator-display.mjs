@@ -17,7 +17,19 @@ export function createWorldDisplay() {
         }))];
     },
     renderResult(result) { lines = result.lines.map(text => ({ text })); },
-    renderEditor() { lines = [{ text: 'LIST EDITOR' }]; },
+    renderEditor(editor) {
+      const firstCol = Math.max(0, Math.min(3, editor.cursorCol - 1));
+      const firstRow = Math.max(0, editor.cursorRow - 4);
+      const cell = value => String(value ?? '').slice(0, 7).padEnd(8);
+      lines = [{ text: editor.columns.slice(firstCol, firstCol + 3)
+        .map((name, i) => cell(firstCol + i === editor.cursorCol ? '[' + name + ']' : name)).join('') }];
+      for (let row = firstRow; row < Math.min(editor.rows.length, firstRow + 5); row++) {
+        lines.push({ text: editor.rows[row].slice(firstCol, firstCol + 3).map(cell).join(''),
+          selected: row === editor.cursorRow });
+      }
+      const value = editor.entry ?? editor.rows[editor.cursorRow]?.[editor.cursorCol] ?? '';
+      lines.push({ text: editor.columns[editor.cursorCol] + '(' + (editor.cursorRow + 1) + ')=' + value });
+    },
     renderGraph() { lines = [{ text: 'GRAPH' }]; },
     clear() { lines = []; },
   };
