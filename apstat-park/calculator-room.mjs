@@ -157,6 +157,12 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         readings.textContent = '';
         returnToStart();
       }
+      const preview = levelById(packet.missionId);
+      if (!state && preview && preview.id !== level.id) {
+        level = preview; challenge = challengeFor(level);
+        calculator = win.TI84Native.create(null, { renderer: display });
+        initializeCalculator(calculator, level); applied = 0;
+      }
       if (packet.phase === 'active' && packet.roster.includes(board.username) && player.x >= ENTRY_WIDTH + 20) {
         setParticipating(true);
       }
@@ -348,8 +354,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     ctx.save(); ctx.translate(ENTRY_WIDTH, 0);
     text(ctx, 'CALCULATOR TOGETHER', 28, 30, 20);
-    text(ctx, level.title.toUpperCase(), 28, 53, 14);
-    const caption = inputCaption();
+    const hasMission = !!state || !!lobby?.missionId;
+    text(ctx, hasMission ? level.title.toUpperCase() : 'RANDOM SKILL ROUND', 28, 53, 14);
+    const caption = hasMission ? inputCaption() : lobby?.eligibleCount === 0
+      ? 'No calculator skills are scheduled yet for this class.' : 'Connecting to your class curriculum...';
     text(ctx, caption.slice(0, 106), 28, 76, 10);
     if (caption.length > 106) text(ctx, caption.slice(106), 28, 89, 10);
     // No bezel or LCD background: live menu text is part of the scenery.

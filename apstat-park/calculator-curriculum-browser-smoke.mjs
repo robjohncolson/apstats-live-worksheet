@@ -28,9 +28,13 @@ function delayed(map, ws, fn) {
   map.set(ws, at); setTimeout(fn, at - performance.now());
 }
 const send = (ws, message) => delayed(outAt, ws, () => { if (ws.readyState === 1) ws.send(JSON.stringify(message)); });
-let selectedLevel = CALCULATOR_LEVELS[0];
+const realCurriculum = process.env.PARK_REAL_CURRICULUM === '1';
+const filter = realCurriculum ? ['randint-sampling'] : process.env.PARK_SKILL_FILTER?.split(',');
+const levels = CALCULATOR_LEVELS.filter(level => !filter || filter.includes(level.id));
+let selectedLevel = levels[0];
 const latest = new Map();
-const service = createCalculatorService({ registry, available: () => [selectedLevel],
+const service = createCalculatorService({ registry,
+  ...(realCurriculum ? { wallNow: () => Date.parse('2026-10-04T16:00:00Z'), random: () => .99 } : { available: () => [selectedLevel] }),
   now: () => performance.now() + timeOffset, send(ws, packet) { latest.set(packet.type, packet); send(ws, packet); } });
 const server = createServer((request, response) => {
   const url = new URL(request.url, 'http://localhost');
@@ -91,14 +95,20 @@ async function clickKey(page, key) {
 try {
   const page = await browser.newPage({ viewport: { width: 900, height: 1000 } });
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(origin + '/?user=alice');
+  await page.goto(origin + '/?user=alice&section=' + (process.env.PARK_SECTION || 'PeriodB'));
   await page.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
   await page.waitForFunction(() => board.getParkScene().getView().lobby);
   const ws = [...sockets.keys()][0];
   const results = [];
-  const filter = process.env.PARK_SKILL_FILTER?.split(',');
-  for (const level of CALCULATOR_LEVELS.filter(level => !filter || filter.includes(level.id))) {
+  for (const level of levels) {
     selectedLevel = level;
+    assert.equal(await page.evaluate(() => board.getParkScene().getView().missionId), level.id, 'lobby shows the selected skill before arrival');
+    assert.equal(await page.evaluate(() => board.getParkScene().getState()), null);
+    if (realCurriculum) {
+      await page.keyboard.down('Shift'); await page.keyboard.down('ArrowRight');
+      await page.waitForFunction(() => board.getParkScene().getState(), null, { timeout: 30000 });
+      await page.keyboard.up('ArrowRight'); await page.keyboard.up('Shift');
+    } else {
     // Speed through block travel with valid authenticated lobby poses. The
     // separate cooperative smoke covers real keyboard pushing and the door.
     for (let i = 0; i < 115; i++) {
@@ -108,6 +118,7 @@ try {
       timeOffset += 100; service.tick();
     }
     await page.evaluate(() => board.openCalculatorMission());
+    }
     await page.waitForFunction(id => board.getParkScene().getState()?.missionId === id, level.id);
     for (const key of level.route) {
       const revision = await page.evaluate(() => board.getParkScene().getState().revision);
@@ -133,6 +144,7 @@ try {
     results.push({ id: level.id, passed: true });
     console.log('BROWSER PASS: ' + level.id);
     const state = latest.get('calculator_state');
+    selectedLevel = levels[(levels.indexOf(level) + 1) % levels.length];
     service.handle(ws, { type: 'calculator_restart', epoch: state.epoch, revision: state.revision });
     await page.waitForFunction(() => board.getParkScene().getState() === null);
   }

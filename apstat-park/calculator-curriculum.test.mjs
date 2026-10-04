@@ -28,6 +28,11 @@ test('date gating uses New York midnight, section dates, and no undated/future f
   assert.equal(schoolDate(Date.parse('2026-10-05T04:00:00Z')), '2026-10-05');
   assert.deepEqual(eligibleLevels('B', '2026-09-01'), []);
   assert.deepEqual(eligibleLevels('unknown', '2030-01-01'), []);
+  for (const period of ['B', 'E']) {
+    assert.deepEqual(eligibleLevels('Period' + period, '2026-10-04'), eligibleLevels(period, '2026-10-04'));
+    assert.equal(eligibleLevels('Period' + period, '2026-10-04').length, 4);
+  }
+  assert.deepEqual(eligibleLevels('PeriodX', '2030-01-01'), []);
   assert(eligibleLevels('B', '2026-09-22').some(level => level.id === DEFAULT_LEVEL.id));
   assert(!eligibleLevels('E', '2026-09-22').some(level => level.id === DEFAULT_LEVEL.id));
   assert(!eligibleLevels('B', '2030-01-01').some(level => level.id === 'geometcdf'));
