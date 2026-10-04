@@ -4498,7 +4498,10 @@
       setParkButtons(function (b) { b.disabled = true; });
       // ?v=<APP_BUILD>: the park modules (and their art and sounds, which inherit the query) come
       // from the same deploy as this board, never from a stale HTTP/CDN cache entry.
-      import('./apstat-park/panel.mjs' + parkBuildQuery()).then(function (module) {
+      var roomPromise = levelIndex === -1
+        ? import('./apstat-park/calculator-room.mjs' + parkBuildQuery())
+        : import('./apstat-park/panel.mjs' + parkBuildQuery());
+      roomPromise.then(function (module) {
         if (destroyed || classroomBusy() || !engineReady) { setParkButtons(function (b) { b.disabled = false; }); return; }
         nativeActive = true;
         setParkButtons(function (b) { b.style.visibility = 'hidden'; });
@@ -4871,6 +4874,27 @@
     // (or a release + re-press inside one frame) is still one press. The calendar strip keeps
     // reading playerInput's held flags only.
     var parkPresses = { left: 0, right: 0, jump: 0, up: 0 };
+    // The main room is the calculator approach; the existing left door still opens Pico Park.
+    if (engineReady && role === 'student') engine.addEntity('calculator_approach', {
+      zIndex: -20,
+      update: function () {
+        if (nativeActive || classroomBusy() || Date.now() - parkReturnAt < 1200) return;
+        var local = spriteEntities[username];
+        if (local && playerInput.right && local.x > _viewportW() - 80) enterPark(-1);
+      },
+      render: function (ctx) {
+        if (classroomBusy()) return;
+        var w = _viewportW(), floor = engine.groundY;
+        ctx.save(); ctx.fillStyle = '#fff7e7'; ctx.fillRect(0, 0, w, floor);
+        ctx.fillStyle = '#eb9447'; ctx.fillRect(0, floor, w, 50);
+        ctx.fillStyle = '#b95e30';
+        for (var x = 0; x < w; x += 24) ctx.fillRect(x, floor + 20, 18, 3);
+        ctx.fillStyle = '#3a3045'; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'right';
+        ctx.fillText('CALCULATOR TOGETHER →', w - 18, floor - 70);
+        ctx.font = '12px monospace'; ctx.fillText('Walk right · Make a five-number summary', w - 18, floor - 48);
+        ctx.restore();
+      }
+    });
     function clearPlayerInput() { for (var key in playerInput) { playerInput[key] = false; } }
 
     // The doorway is part of the existing scene. Walking into it enters locally;
@@ -6997,6 +7021,7 @@
     var handle = {
 
       openNativeGameplay: function (doorIndex) { enterPark((PARK_DOORS[doorIndex | 0] || PARK_DOORS[0]).level); },
+      openCalculatorMission: function () { enterPark(-1); },
       // Test-only: open a park level by index, including levels with no door
       // on the calendar (the local browser smoke uses it).
       openParkLevel: function (levelIndex) { enterPark(levelIndex | 0); },

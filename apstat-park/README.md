@@ -1,5 +1,50 @@
 # APStat Park: one continuous board
 
+## Calculator Together (main room)
+
+The student room now has an orange floor. Walk right to open **Make a five-number
+summary** in the same canvas. The left doorway still opens Jump together.
+The calculator mission uses the existing trainer's native JavaScript calculator,
+LCD renderer, and `one-var-stats` procedure. It is a guided learning activity, not
+the unrestricted ROM emulator. L1 starts with `4,6,7,8,10,12,13,14,18,20`.
+
+Move with Left/Right and jump with Space onto one-way key platforms. Clicking a
+tile, or using the expandable keyboard/touch controls, places the same character
+on that tile. All current participants in the period's calculator room must hold
+the correct key for 900 ms. The relay commits one step; the clients replay that
+key into the trainer. Wrong choices stay on the current step. Ten seconds earns a
+quick-decision bonus; expiration reveals a hint and never ends the attempt.
+Repeated DOWN/ENTER requires stepping or jumping off and returning, or explicitly
+choosing the accessible tile again. Characters stay where the team left them.
+
+After the seven calculator inputs, five group decisions assign the displayed
+minimum, Q1, median, Q3 and maximum to a proportional boxplot. The result is
+`4,7,11,14,20`. Play again starts a new shared attempt after completion. No grades
+or currency change. Solo play works. Refresh/reconnect replays the committed
+inputs; duplicate tabs count as one student. Stale choices stop counting after
+1.5 seconds, inactive connections leave after five seconds, and hiding the tab
+leaves immediately. Teacher classroom calls recall students as with the Park.
+
+Files: `calculator-room.mjs` (scene and trainer bridge), `calculator-mission.mjs`
+(geometry and deterministic consensus rules), and the sibling relay's
+`railway-server/apstat-park/calculator-service.mjs` (period-scoped authority).
+The relay has a byte-identical copy of `calculator-mission.mjs`; the mission test
+pins that copy and the trainer route. No browser or backend import crosses repos
+at runtime. Deploy the relay change before the frontend. An older relay leaves
+the calculator waiting with an update message and an available Back button.
+
+Validation: `node --test apstat-park/calculator-mission.test.mjs`, the existing
+Park suites in both repos, and `calculator-browser-smoke.mjs` (same Playwright
+environment options as `browser-smoke.mjs`). The latter runs a local relay and two
+real browser clients through disagreement, timeout hint, all twelve decisions,
+repeated-key protection, refresh, completion, re-entry, restart, keyboard motion,
+mobile sizing, the original Park doorway, and teacher recall. Screenshots and the
+result JSON go to `test-results/calculator-room` when `PARK_SMOKE_OUTPUT` is set
+to that path. Both repositories' pre-push hooks still require orchestrator review
+approval; implementation tests do not replace that release gate.
+
+## Original Park rooms
+
 The calendar doorway selects a local scene in the existing CanvasEngine. The canvas element, background, 20x24 cat sprites, PlayerSprite physics, camera and keyboard handling are shared with the calendar. There is no second canvas, game panel, touch-control row or teacher group manager. A level taller than the 220px strip grows the board while it is open (level 6 is 240px) and every exit restores 220px.
 
 One doorway sits at the left of the calendar board, drawn with PICO PARK's open-door sprite from the level-6 atlas (32x32, the same door as inside the level). The board preloads and decodes the atlas when it mounts and hands that same image to the level; until it is decoded nothing is drawn there (the door's hit area stays), and only if it can never load is a plain block in the page's text colour drawn instead. Standing on it and pressing Up, clicking it, or holding Left against the wall beside it opens **Jump together**, a faithful half-scale recreation of PICO PARK stage 1-1 (relay level 6). There is no lobby. Arrows move, Space jumps, and Up enters a door. Inside the park a key tap counts even when it is shorter than a frame, and held keys are released when the page loses focus or the tab is hidden. Inside the level the starting doorway returns to the calendar (Up on it, or walk left into it); Escape also returns. At the goal, Up enters the unlocked door and a subsequent Up returns to the calendar. Polls, armed gates, green light, voting doorways and live activities recall students and prevent entry while active.
