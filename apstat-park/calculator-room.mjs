@@ -5,6 +5,9 @@ const { nativeScriptFilenames } = await import('../ti84-trainer-v2/native/manife
 const { pixelText } = await import('./pixel-text.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
 const { createPicoArt } = await import('./pico-art.mjs' + V);
+const { createPicoAudio } = await import('./pico-audio.mjs' + V);
+const { PICO } = await import('./physics.mjs' + V);
+const { approachSteps, createCalculatorMotion } = await import('./calculator-motion.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
@@ -15,6 +18,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const doc = container.ownerDocument, win = doc.defaultView;
   const { engine, input, api } = board;
   const art = createPicoArt(doc);
+  const audio = createPicoAudio(win);
   art.load(board.atlas?.());
   const savedCamera = { ...api._camera };
   const entities = new Map(), peers = new Map();
@@ -27,9 +31,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const openedAt = performance.now();
   let selected = null, lastRevision = -1;
   let participating = false, cameraX = 0;
+  let ink = '#30263b', inkAt = -Infinity;
   const controls = doc.createElement('div');
   controls.dataset.calculatorControls = '';
-  controls.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:8px;background:#fff5df;color:#342c39;position:relative;z-index:2';
+  controls.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:8px;color:inherit;position:relative;z-index:2';
   const status = doc.createElement('span');
   status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   status.style.cssText = 'flex:1 1 240px;font:14px system-ui';
@@ -40,18 +45,18 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   controls.append(status, restart, exit); container.append(controls);
   const readings = doc.createElement('output');
   readings.setAttribute('aria-label', 'Calculator five-number summary');
-  readings.style.cssText = 'display:none;padding:8px;background:#fff7e7;color:#3a3045;font:14px monospace';
+  readings.style.cssText = 'display:none;padding:8px;color:inherit;font:14px monospace';
   container.append(readings);
   container.setAttribute('data-calculator-active', '');
 
   // Native buttons provide keyboard/screen-reader/touch access to the same spatial choices.
   const choices = doc.createElement('div');
   choices.setAttribute('aria-label', 'Calculator key tiles');
-  choices.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;background:#fff5df;padding:0 8px 8px';
+  choices.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;padding:0 8px 8px';
   const accessible = doc.createElement('details');
   const caption = doc.createElement('summary');
   caption.textContent = 'Choose a tile without jumping (keyboard or touch)';
-  accessible.style.cssText = 'background:#fff5df;color:#342c39;padding:8px;font:13px system-ui';
+  accessible.style.cssText = 'color:inherit;padding:8px;font:13px system-ui';
   accessible.append(caption, choices); container.append(accessible);
   let choicePhase = null;
   function rebuildChoices() {
@@ -71,7 +76,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 },
     // Key platforms are one-way: jump through from below, land from above.
     // A dense physical keypad must not trap cats underneath a row of keys.
-    ...tilesFor(state?.step || 0).filter(tile => player.vy >= 0 && player.y + 24 <= tile.y + 1)
+    ...[...approachSteps(state?.step >= ROUTE.length), ...tilesFor(state?.step || 0)]
+      .filter(tile => player.vy >= 0 && player.y + 24 <= tile.y + 1)
       .map(tile => ({ ...tile, x: tile.x + ENTRY_WIDTH, h: 8 })),
   ];
   const player = board.createPlayer({ x: 65, y: WORLD.floor - 24, input,
@@ -80,8 +86,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       if (player.x < 95) onPark();
       else if (besideResetDoor()) enterResetDoor();
     },
-    physics: { name: 'legacy', walkSpeed: 210, jumpV0: -360, gravity: 800 } });
+    physics: PICO });
   player.engine = engine;
+  const movement = createCalculatorMotion(player, input, board.presses, () => audio.play('jump'));
   board.setBoardHeight(Math.round(WORLD.height * scale()));
   let layoutWidth = board.viewportW();
   // One world and one player. Only the camera moves at the mission boundary.
@@ -136,6 +143,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     if (packet.type !== 'calculator_state') return;
     if (state?.epoch === packet.epoch && packet.revision < state.revision) return;
+    if (state?.epoch === packet.epoch && packet.revision > state.revision) {
+      if (packet.complete && !state.complete) audio.clear();
+      else if ((packet.keys?.length || 0) > (state.keys?.length || 0)) audio.play('switch');
+    }
     const restarted = state?.complete && epoch !== packet.epoch;
     const timedOut = state && packet.timeoutCount !== state.timeoutCount && epoch === packet.epoch;
     receivedAt = performance.now(); clockOffset = packet.clock - receivedAt;
@@ -210,7 +221,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       layoutWidth = board.viewportW(); board.setBoardHeight(Math.round(WORLD.height * scale()));
     }
     if (disposed || doc.hidden) return;
-    player.update(dt);
+    movement.advance(dt);
     if (player.y > WORLD.floor) Object.assign(player, { x: 65, y: WORLD.floor - 24, vx: 0, vy: 0 });
     if (player.x >= ENTRY_WIDTH + 20) setParticipating(true);
     if (player.x < ENTRY_WIDTH) setParticipating(false);
@@ -220,7 +231,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const target = Math.max(0, Math.min(LEVEL_WIDTH - viewport, player.x - viewport * 0.4));
     cameraX += (target - cameraX) * Math.min(1, dt * 8);
   }
-  function text(ctx, value, x, y, size = 14, color = '#30263b', align = 'left') {
+  function text(ctx, value, x, y, size = 14, color = ink, align = 'left') {
     pixelText(ctx, value, x, y, size, color, align);
   }
   function keyPlatform(ctx, tile, colour) {
@@ -234,15 +245,20 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     ctx.closePath(); ctx.fill();
   }
   function draw(ctx) {
+    if (performance.now() - inkAt > 1000) {
+      ink = win.getComputedStyle(container).color || '#30263b';
+      inkAt = performance.now();
+    }
     ctx.save(); ctx.scale(scale(), scale()); ctx.translate(-Math.round(cameraX), 0);
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#fff7e7'; ctx.fillRect(0, 0, LEVEL_WIDTH, WORLD.height);
+    // CanvasEngine clears each frame; transparency reveals the actual calendar DOM.
     art.block(ctx, { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 });
     text(ctx, 'CALCULATOR TOGETHER', 85, 365, 21);
     text(ctx, 'WALK RIGHT TO START >', 85, 410, 21);
     text(ctx, 'ARROWS MOVE . SPACE JUMPS', 85, 451, 14);
     text(ctx, 'FIND THE FIVE-NUMBER SUMMARY', 85, 485, 14);
     text(ctx, 'THE TEAM CHOOSES EACH KEY', 85, 513, 14);
+    text(ctx, 'TAP SPACE: LOW . HOLD: HIGH', 85, 545, 14);
     const atlas = board.atlas?.();
     if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
     else { ctx.fillStyle = '#493d48'; ctx.fillRect(30, WORLD.floor - 40, 40, 40); }
@@ -255,14 +271,14 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     // No bezel or LCD background: live menu text is part of the scenery.
     for (const [i, line] of display.getLines().slice(0, 8).entries()) {
       text(ctx, (line.selected ? '> ' : '  ') + line.text, 28, 106 + i * 21, 14,
-        line.selected ? '#a34d25' : '#30263b');
+        ink);
     }
     text(ctx, state?.complete ? 'MISSION COMPLETE!' : 'ONE TEAM · ONE GOAL', 350, 112, 17);
     const elapsed = state ? clock() - state.startedAt : 0;
     const remain = Math.max(0, Math.ceil((ROUND_MS - elapsed) / 1000));
     text(ctx, state ? (state.complete ? 'You built a boxplot.' : remain + 's · hint + reset') : 'READY TO PLAY', 350, 143, 14);
     text(ctx, 'Arrows move · Space jumps', 350, 175, 12);
-    text(ctx, 'Or tap a tile to stand there.', 350, 197, 12);
+    text(ctx, 'Tap jump low . Hold jump high.', 350, 197, 12);
     text(ctx, state?.hintKeys?.length ? 'HINT: ' + state.hintKeys.join(' / ') : 'Equivalent keys count.', 350, 219, 12);
     const hold = state?.holdAt == null ? 0 : Math.min(1, (clock() - state.holdAt) / HOLD_MS);
     ctx.fillStyle = '#d5c5ae'; ctx.fillRect(350, 234, 315, 12);
@@ -272,6 +288,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       text(ctx, state.lastPress.key + ' PRESSED · KEEP TRYING', 350, 269, 10);
     }
     const step = state?.step || 0;
+    for (const ledge of approachSteps(step >= ROUTE.length)) keyPlatform(ctx, ledge, '#494458');
     for (const tile of tilesFor(step)) {
       const hint = state?.hintKeys?.includes(tile.key);
       keyPlatform(ctx, tile, selected === tile.key ? '#f9c45f' : hint ? '#9bdfae' : '#494458');
@@ -282,30 +299,30 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       const { x, y, w, h } = RESET_DOOR;
       if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, x, y, w, h);
       else { ctx.fillStyle = '#493d48'; ctx.fillRect(x, y, w, h); }
-      text(ctx, 'RESET', x + w / 2, y - 24, 14, '#30263b', 'center');
-      text(ctx, 'UP TO ENTER', x + w / 2, y - 9, 7, '#30263b', 'center');
+      text(ctx, 'RESET', x + w / 2, y - 24, 14, ink, 'center');
+      text(ctx, 'UP TO ENTER', x + w / 2, y - 9, 7, ink, 'center');
     }
-    for (const [name, peer] of peers) { peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, '#3d3345', 'center'); }
-    if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, '#30263b', 'center');
+    for (const [name, peer] of peers) { peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center'); }
+    if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, ink, 'center');
     ctx.restore();
     player.render(ctx);
-    text(ctx, 'YOU', player.x + 10, player.y - 8, 10, '#3d3345', 'center');
+    text(ctx, 'YOU', player.x + 10, player.y - 8, 10, ink, 'center');
     ctx.restore();
   }
   function drawBoxplot(ctx, filled) {
-    text(ctx, state.complete ? 'Five numbers. One picture.' : 'BUILD THE BOXPLOT: ' + LABELS[filled], 360, 317, 18, '#30263b', 'center');
+    text(ctx, state.complete ? 'Five numbers. One picture.' : 'BUILD THE BOXPLOT: ' + LABELS[filled], 360, 317, 18, ink, 'center');
     const x = value => 105 + (value - 4) * 30;
     ctx.strokeStyle = '#aaa18f'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x(4), 448); ctx.lineTo(x(20), 448); ctx.stroke();
     for (let i = 0; i < filled; i++) {
-      text(ctx, LABELS[i], x(SUMMARY[i]), 394, 11, '#30263b', 'center');
-      text(ctx, String(SUMMARY[i]), x(SUMMARY[i]), 417, 16, '#30263b', 'center');
+      text(ctx, LABELS[i], x(SUMMARY[i]), 394, 11, ink, 'center');
+      text(ctx, String(SUMMARY[i]), x(SUMMARY[i]), 417, 16, ink, 'center');
     }
     if (filled === 5) {
       ctx.fillStyle = '#aad9ac'; ctx.fillRect(x(7), 428, x(14) - x(7), 40);
-      ctx.strokeStyle = '#30263b'; ctx.strokeRect(x(7), 428, x(14) - x(7), 40);
+      ctx.strokeStyle = ink; ctx.strokeRect(x(7), 428, x(14) - x(7), 40);
       for (const value of [4, 11, 20]) { ctx.beginPath(); ctx.moveTo(x(value), 428); ctx.lineTo(x(value), 468); ctx.stroke(); }
-      text(ctx, 'Half the observations lie between Q1 and Q3.', 360, 510, 12, '#30263b', 'center');
+      text(ctx, 'Half the observations lie between Q1 and Q3.', 360, 510, 12, ink, 'center');
     }
   }
   function pointer(event) {
@@ -335,6 +352,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   function dispose() {
     if (disposed) return;
     disposed = true; send('calculator_leave');
+    audio.dispose();
     clearInterval(timer); socket?.removeEventListener('message', onMessage);
     engine.canvas.removeEventListener('click', pointer, true);
     doc.removeEventListener('keydown', key); doc.removeEventListener('visibilitychange', visibility);

@@ -27,6 +27,20 @@ the last completed calculator checkpoint (discarding subsequent wrong inputs),
 clears selections, places players beside the keyboard, and starts another
 30 seconds. Earlier steps remain complete; a hinted
 step does not earn the quick-decision bonus.
+
+The canvas and controls have transparent backgrounds, so the surrounding calendar
+DOM supplies their exact background, including live theme changes. Scenery text
+uses the container's text color. Movement uses the same half-scale Pico profile
+as Jump together: fixed 60 Hz simulation, instant walking, variable tap/held jump,
+and four-frame coyote allowance. Input press counters preserve taps between frames.
+Small approach ledges make every key and answer reachable with the 39px held jump;
+`calculator-motion.test.mjs` checks routes using the actual player collision code.
+Pico jump, key-press switch, and completion sounds respect the existing mute toggle.
+The comparison used the recovered `player_action_held.c`, `player_action_edges.c`
+and `performance-review-2026-10-03/player-trace/run-1` experiments in the sibling
+`not-school/hermes/old-app/recovered/reconstruction` tree. This room keeps one-way
+key platforms and nonblocking teammates for calculator consensus; it is not a
+copy of every Pico stage rule.
 Repeated DOWN/ENTER requires stepping or jumping off and returning, or explicitly
 choosing the accessible tile again. Characters stay where the team left them.
 
