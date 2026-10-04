@@ -325,10 +325,12 @@ export function createPicoScene({ board, replica, member, player, peers, status,
     if (Math.abs(sprite.vy || 0) > 1) return JUMP_CELL;
     return Math.abs(sprite.vx || 0) > 1 ? WALK_CELLS[Math.floor(now() / (WALK_TICKS * 1000 / 60)) % WALK_CELLS.length] : IDLE_CELL;
   }
+  // Each student's own calendar colour (sprite.hue); the 8-colour table only if it is unknown.
+  const colourOf = (sprite, name) => R.catColour(sprite, state(), name, PLAYER_COLOURS);
   function drawCat(ctx, sprite, name) {
     if (!level || sprite._hidden) return;
     const local = sprite === player;
-    world(ctx, () => art.cat(ctx, R.colourIndex(state(), name), cellFor(sprite, local), sprite.facingRight !== false, snap(sprite.x), snap(sprite.y)));
+    world(ctx, () => art.cat(ctx, colourOf(sprite, name), cellFor(sprite, local), sprite.facingRight !== false, snap(sprite.x), snap(sprite.y)));
   }
   // Above the cats: the carried key, a marker over your own cat, and markers for teammates
   // outside the view.
@@ -340,7 +342,7 @@ export function createPicoScene({ board, replica, member, player, peers, status,
       const m = R.ownMarker(player, p.keyHolder === member && !p.doorOpen ? key : null);
       world(ctx, () => {
         ctx.save();
-        ctx.fillStyle = PLAYER_COLOURS[R.colourIndex(state(), member)]; ctx.strokeStyle = '#3a2418'; ctx.lineWidth = 1;
+        ctx.fillStyle = colourOf(player, member); ctx.strokeStyle = '#3a2418'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(snap(m.x) - 4, snap(m.y) - 5); ctx.lineTo(snap(m.x) + 4, snap(m.y) - 5); ctx.lineTo(snap(m.x), snap(m.y)); ctx.closePath();
         ctx.fill(); ctx.stroke(); ctx.restore();
       });
@@ -353,7 +355,7 @@ export function createPicoScene({ board, replica, member, player, peers, status,
       if (sx + 20 >= 0 && sx <= vw) continue;
       const right = sx > vw, y = Math.min(level.height - 8, Math.max(8, peer.y + 12)), x = right ? vw - 3 : 3;
       ctx.save();
-      ctx.fillStyle = PLAYER_COLOURS[R.colourIndex(state(), name)]; ctx.strokeStyle = '#5a3a2a'; ctx.lineWidth = 1;
+      ctx.fillStyle = colourOf(peer, name); ctx.strokeStyle = '#5a3a2a'; ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(x, y); ctx.lineTo(x + (right ? -9 : 9), y - 6); ctx.lineTo(x + (right ? -9 : 9), y + 6); ctx.closePath();
       ctx.fill(); ctx.stroke(); ctx.restore();

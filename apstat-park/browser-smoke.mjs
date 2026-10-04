@@ -38,7 +38,7 @@ const server = createServer((request, response) => {
 <h1>AP Statistics calendar</h1><div id="board"></div><p id="calendar">Today's lesson stays here.</p></main>
 <script src="/canvas_engine.js"></script><script src="/sprite_sheet.js"></script><script src="/classroom-board.js"></script>
 <script>const params=new URL(location.href).searchParams;window.board=ClassroomBoard.mount(document.querySelector('#board'),{
-wsUrl:location.origin.replace('http','ws'),section:params.get('section')||'B',username:params.get('user'),hue:90,role:params.get('role')||'student'});</script></body></html>`);
+wsUrl:location.origin.replace('http','ws'),section:params.get('section')||'B',username:params.get('user'),hue:params.has('hue')?+params.get('hue'):90,role:params.get('role')||'student'});</script></body></html>`);
     return;
   }
   if (url.pathname === '/favicon.ico') { response.writeHead(204); response.end(); return; }
@@ -231,7 +231,8 @@ async function level6(){
   await solo.waitForFunction(()=>board.getParkScene().getGame().getWorld().player.y>200,null,{timeout:8000,polling:'raf'});
   await solo.keyboard.up('ArrowRight');
   await solo.waitForFunction(()=>{const p=board.getParkScene().getGame().getWorld().player;return p._airFrames===0&&p.y===192;},null,{timeout:8000});
-  assert.equal((await position(solo)).x,352-2,'pit 1 respawn before the pit');
+  // Respawn at sprite x 350 (pose 352); one late Right step (keyup racing the catch) may add 1.5.
+  { const x=(await position(solo)).x; assert.ok(x>=350&&x<=351.5,'pit 1 respawn before the pit ('+x+')'); }
   await soloLevel6(solo);
   console.log('LEVEL 6 SOLO PASS');
   // A second plain tap of Up returns to the calendar.
@@ -440,9 +441,100 @@ async function transitions(){
     await broken.close();
   } finally { Object.assign(net,saved); }
 }
+
+// ---- Calendar cats: from the atlas, the same as the old sprite.png rendering ----
+// Old: SpriteSheet('sprite.png') + hue-rotate filter (still in sprite_sheet.js). New: the board's
+// AtlasCatSheet over the atlas. Same frame, hue, position and scale, compared per pixel and channel.
+async function catsCompare(){ for(const scale of [1,2,1.25])await catsCompareAt(scale); }
+async function catsCompareAt(deviceScaleFactor){
+  const page=await browser.newPage({viewport:{width:800,height:700},deviceScaleFactor});
+  await page.goto(`${origin}/?user=pixels&section=CP`);
+  await page.waitForFunction(()=>window.board?.getSpritePosition?.('pixels'));
+  const result=await page.evaluate(async()=>{
+    const old=new SpriteSheet('sprite.png',80,96,{columns:11,rows:2,paddingX:4,paddingY:4});
+    const atlas=new Image();atlas.src='apstat-park/assets/pico-1-1.png';
+    await new Promise(r=>{const t=setInterval(()=>{if(old.loaded&&atlas.complete&&atlas.naturalWidth){clearInterval(t);r();}},20);});
+    await atlas.decode();
+    const cats=new ClassroomBoard._AtlasCatSheet(()=>atlas,()=>false,document);
+    const draw=(sheet,f,x,y,h,dpr)=>{const c=document.createElement('canvas');c.width=40*dpr;c.height=40*dpr;const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);sheet.drawFrame(ctx,f,x,y,0.25,h);return ctx.getImageData(0,0,c.width,c.height).data;};
+    // Two passes. 'cold': sprite.png exactly as the calendar met it (first drawn downscaled, which lets
+    // Chrome decode it at a reduced size). 'warm': after one full-size draw, a full-resolution decode.
+    const pass=()=>{const out=[];let worst={d:0};
+      for(const dpr of [devicePixelRatio])for(const h of [0,45,90,137,200,300,345])for(const f of [0,1,2,3,4,5,10,11,12,13,16,21])for(const [x,y] of [[10,5],[10.4,5.6]]){
+        const a=draw(old,f,x,y,h,dpr),b=draw(cats,f,x,y,h,dpr);let d=0,at=-1;
+        // Compare what is seen: colour premultiplied by alpha (a nearly transparent pixel's colour is noise).
+        for(let i=0;i<a.length;i++){const k=i%4===3,e=k?Math.abs(a[i]-b[i]):Math.abs(a[i]*a[i-i%4+3]-b[i]*b[i-i%4+3])/255;if(e>d){d=e;at=i;}}
+        out.push({h,f,x,d});
+        if(d>worst.d)worst={h,f,x,y,d,old:[...a.slice(at-at%4,at-at%4+4)],new:[...b.slice(at-at%4,at-at%4+4)]};
+      }
+      return {whole:Math.max(...out.filter(o=>Number.isInteger(o.x)).map(o=>o.d)),sub:Math.max(...out.filter(o=>!Number.isInteger(o.x)).map(o=>o.d)),worst};};
+    const cold=pass();
+    {const c=document.createElement('canvas');c.width=920;c.height=196;c.getContext('2d').drawImage(old.image,0,0);}
+    const warm=pass();
+    return {cold,warm,colour:ClassroomBoard._catBodyForHue(137)};
+  });
+  console.log('CATS COMPARE dpr '+deviceScaleFactor,JSON.stringify(result));
+  assert.ok(result.cold.whole<=3&&result.warm.whole<=3,'whole-pixel positions: within 3 per channel');
+  assert.ok(result.warm.sub<=3,'sub-pixel positions against a full-resolution sprite.png: within 3 per channel');
+  await page.close();
+}
+// Screenshots: several students' cats on one calendar, and old vs new side by side (4x zoom).
+async function catsShots(){
+  const names=['ava','ben','cleo','dev','emi'],hues=[0,60,137,200,290],pages=[];
+  for(const [i,n] of names.entries()){const p=await browser.newPage({viewport:{width:800,height:400}});await p.goto(`${origin}/?user=${n}&section=CC&hue=${hues[i]}`);await p.waitForFunction(n=>window.board?.getSpritePosition?.(n),n);pages.push(p);}
+  const a=pages[0];
+  await a.waitForFunction(names=>names.every(n=>board.getSpritePosition(n)),names,{timeout:10000});
+  await a.waitForTimeout(800);
+  const r=await a.evaluate(()=>{const b=board.getCanvas().getBoundingClientRect();return {x:b.left,y:b.top,w:b.width,h:b.height};});
+  await a.screenshot({path:path.join(shots,'calendar-cats-after.png'),clip:{x:r.x,y:r.y,width:r.w,height:r.h}});
+  await a.evaluate(async()=>{
+    const old=new SpriteSheet('sprite.png',80,96,{columns:11,rows:2,paddingX:4,paddingY:4});
+    const atlas=new Image();atlas.src='apstat-park/assets/pico-1-1.png';await atlas.decode();
+    await new Promise(r=>{const t=setInterval(()=>{if(old.loaded){clearInterval(t);r();}},20);});
+    const cats=new ClassroomBoard._AtlasCatSheet(()=>atlas,()=>false,document);
+    const hues=[0,45,90,137,200,260,300,345],frames=[0,10,2,3,4,5,16,1];
+    const c=document.createElement('canvas');c.width=hues.length*24*4;c.height=frames.length*2*28*4+40;
+    const x=c.getContext('2d');x.fillStyle='#f7f5ee';x.fillRect(0,0,c.width,c.height);
+    const tmp=document.createElement('canvas');tmp.width=hues.length*24;tmp.height=frames.length*2*28;const t=tmp.getContext('2d');
+    frames.forEach((f,j)=>hues.forEach((h,i)=>{old.drawFrame(t,f,i*24+2,j*56+2,0.25,h);cats.drawFrame(t,f,i*24+2,j*56+30,0.25,h);}));
+    x.imageSmoothingEnabled=false;x.drawImage(tmp,0,0,c.width,c.height-40);
+    x.fillStyle='#333';x.font='16px system-ui';x.fillText('each pair of rows: old sprite.png + hue-rotate (top), atlas + game tint (bottom); frames 0,10,2,3,4,5,16(mirrored),1(dead)',8,c.height-14);
+    document.body.innerHTML='';document.body.appendChild(c);c.style.cssText='position:fixed;left:0;top:0';
+  });
+  await a.setViewportSize({width:800,height:1000});
+  const size=await a.evaluate(()=>{const c=document.querySelector('canvas');return {w:c.width,h:c.height};});
+  await a.screenshot({path:path.join(shots,'cats-before-after.png'),clip:{x:0,y:0,width:Math.min(800,size.w),height:Math.min(1000,size.h)}});
+  for(const p of pages)await p.close();
+}
+// The board and the park never request sprite.png; a student's calendar cat and level cat share a colour.
+async function catsNoSheet(){
+  const page=await browser.newPage({viewport:{width:800,height:700}});
+  const requested=[];page.on('request',r=>requested.push(r.url()));
+  page.on('pageerror',error=>{errors.push(error.message);});
+  await page.goto(`${origin}/?user=onecolour&section=CS`);
+  await page.waitForFunction(()=>window.board?.getSpritePosition?.('onecolour'));
+  await page.waitForFunction(()=>board._getParkAtlasState()==='ready');
+  await page.waitForTimeout(400);
+  // The calendar cat's body colour, sampled in the middle of its head.
+  const calendar=await page.evaluate(()=>{const p=board.getSpritePosition('onecolour'),c=board.getCanvas(),dpr=devicePixelRatio||1;
+    return [...c.getContext('2d').getImageData(Math.round((p.x+10)*dpr),Math.round((p.y+6)*dpr),1,1).data].slice(0,3);});
+  await choose(page,6);
+  await page.waitForFunction(()=>board.getParkScene()?.getGame()?.getWorld()?.shown);
+  await page.waitForTimeout(400);
+  const level=await page.evaluate(()=>{const w=board.getParkScene().getGame().getWorld(),p=w.player,c=board.getCanvas(),dpr=devicePixelRatio||1;
+    const cam=board._camera?.x||0;
+    return [...c.getContext('2d').getImageData(Math.round((p.x+10)*dpr),Math.round((p.y+6)*dpr),1,1).data].slice(0,3);});
+  console.log('CAT COLOUR calendar',JSON.stringify(calendar),'level',JSON.stringify(level));
+  assert.deepEqual(level,calendar,'same body colour on the calendar and in the level');
+  await page.keyboard.press('Escape');await page.waitForFunction(()=>!board.getParkScene());
+  assert.deepEqual(requested.filter(u=>/sprite\.png/.test(u)),[],'sprite.png is never requested by the board or the park');
+  console.log('CATS ONE SOURCE PASS');
+  await page.close();
+}
 try {
   const filter=process.env.PARK_LEVEL_FILTER;
   const waitingOnly=process.env.PARK_WAITING_ONLY==='1';
+  if(filter==null||filter.split(',').includes('cats')){await catsCompare();await catsNoSheet();await catsShots();}
   if(filter==null||filter.split(',').includes('transition'))await transitions();
   if(filter==null||filter.split(',').includes('6'))await level6();
   for(const index of [0,1,2,3,4,5].filter(i=>filter==null||filter.split(',').includes(String(i)))) {

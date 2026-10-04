@@ -3,7 +3,7 @@
 // use PICO PARK's assets here. Everything is drawn 1:1 at the level's half scale unless noted.
 // Carries this module's ?v=<build> so the image comes from the same deploy as the code.
 export const ATLAS_URL = new URL('./pico-1-1.png' + new URL(import.meta.url).search, import.meta.url).href;
-export const ATLAS_SIZE = { w: 242, h: 112 };
+export const ATLAS_SIZE = { w: 352, h: 112 };
 
 export const ATLAS = {
   // One rounded 48x48 orange square; tiles and stair blocks are windows into it.
@@ -16,9 +16,10 @@ export const ATLAS = {
   switchDown:  { x: 16,  y: 48, w: 16, h: 16, src: [176, 448] },
   bridge:      { x: 32,  y: 48, w: 16, h: 16, src: [240, 576] },  // drawn 10x10 per segment
   key:         { x: 48,  y: 48, w: 16, h: 28, src: [112, 640] },  // art 12x24 at (2, 2)
-  // Player cat, cells 0..5 of the sheet's row 0 (32 px cells, art 20x24 at (6, 8)).
-  // Colour-coded: red = body, blue = outline, green = highlight.
-  cats:        { x: 0,   y: 80, w: 192, h: 32, src: [0, 0], cell: 32, art: { x: 6, y: 8, w: 20, h: 24 } },
+  // Player cat, cells 0..10 of the sheet's row 0 (32 px cells, art 20x24 at (6, 8); the "dead"
+  // cell 1 sits 2 px lower, at (6, 10)). Colour-coded: red = body, blue = outline, green = highlight.
+  // The calendar strip's cats use the same cells (classroom-board.js CAT_ATLAS).
+  cats:        { x: 0,   y: 80, w: 352, h: 32, src: [0, 0], cell: 32, art: { x: 6, y: 8, w: 20, h: 24 }, deadArtY: 10 },
 };
 
 // 24x24 tile windows into `square` (atlas offsets), keyed by the relay's tile codes

@@ -175,3 +175,55 @@ describe('calendar door: the park open-door sprite; nothing until decoded; plain
     expect(source).toMatch(new RegExp('PARK_DOOR_SPRITE = \{ sx: ' + ATLAS.doorOpen.x + ', sy: ' + ATLAS.doorOpen.y + ', sw: ' + ATLAS.doorOpen.w + ', sh: ' + ATLAS.doorOpen.h + ', size: 32 \}'));
   });
 });
+
+describe('calendar cats from the atlas: colour and frames as before', () => {
+  const board = () => { const sandbox = { window: {} }; vm.runInNewContext(source, sandbox); return sandbox.window.ClassroomBoard; };
+
+  it('body colour = hue-rotate(#ff8c8c), matching what Chrome rendered (measured) within 1', async () => {
+    const B = board();
+    // Measured from Chrome's canvas filter hue-rotate on rgb(255,140,140).
+    const chrome = { 0: [255, 140, 140], 45: [211, 159, 83], 90: [140, 181, 74], 135: [83, 193, 118], 180: [74, 189, 189],
+      240: [140, 162, 255], 300: [231, 138, 231], 345: [255, 137, 164] };
+    for (const [h, rgb] of Object.entries(chrome)) {
+      const c = B._catBodyForHue(+h);
+      c.forEach((v, i) => expect(Math.abs(v - rgb[i])).toBeLessThanOrEqual(1));
+    }
+    const { catBodyForHue } = await import('../apstat-park/pico-rules.mjs');
+    for (let h = 0; h < 360; h++) expect(B._catBodyForHue(h)).toEqual(catBodyForHue(h));   // board and level agree
+    expect(B._catBodyForHue(undefined)).toEqual([255, 140, 140]);                            // no hue: the base pink
+    expect(B._catBodyForHue(450)).toEqual(B._catBodyForHue(90));
+  });
+
+  it('sprite.png frame -> atlas cell: f < 11 right-facing, 11 + f mirrored, dead frame 12 = cell 1 unmirrored', () => {
+    const B = board();
+    for (let f = 0; f < 11; f++) expect(B._catFrameCell(f)).toEqual({ cell: f, mirrored: false });
+    for (let f = 11; f < 22; f++) expect(B._catFrameCell(f)).toEqual({ cell: f - 11, mirrored: f !== 12 });
+  });
+
+  it('the calendar uses the same frame indices as before (idle 0/10, walk 2-5, jump 5, left = +11)', () => {
+    expect(source).toMatch(/var IDLE_FRAMES = \[0, 10\];/);
+    expect(source).toMatch(/var WALK_FRAMES = \[2, 3, 4, 5\];/);
+    expect(source).toMatch(/var JUMP_FRAME {4}= 5;/);
+    expect(source).toMatch(/return this\.facingRight \? baseFrame : baseFrame \+ 11;/);
+  });
+
+  it('atlas not decoded: nothing drawn; atlas failed: a flat block in the student colour, 20x24', () => {
+    const B = board();
+    const calls = [];
+    const ctx = { save() {}, restore() {}, fillRect(...a) { calls.push(['fillRect', this.fillStyle, ...a]); }, drawImage(...a) { calls.push(['drawImage', ...a]); } };
+    let failed = false;
+    const sheet = new B._AtlasCatSheet(() => null, () => failed, null);
+    sheet.drawFrame(ctx, 0, 10, 20, 0.25, 90);
+    expect(calls).toEqual([]);
+    expect(sheet.loaded).toBe(false);
+    failed = true;
+    sheet.drawFrame(ctx, 0, 10, 20, 0.25, 90);
+    expect(calls).toEqual([['fillRect', 'rgb(140,181,74)', 10, 20, 20, 24]]);
+    expect(sheet.loaded).toBe(true);
+  });
+
+  it('the board no longer loads sprite.png', () => {
+    expect(source).not.toMatch(/'sprite\.png'/);
+    expect(source).toMatch(/spriteSheet = new AtlasCatSheet\(/);
+  });
+});

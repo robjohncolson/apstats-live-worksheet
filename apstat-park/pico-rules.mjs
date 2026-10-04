@@ -247,3 +247,25 @@ export function pageBackground(start, getStyle, body = null, fallback = '#ffffff
   const colour = body ? colourOf(body) : null;
   return isOpaqueColour(colour) ? colour : fallback;
 }
+
+// ---- Cat colours ----
+// The calendar has always tinted each student's cat by rotating the hue of the pink cat
+// (#ff8c8c) with the canvas `hue-rotate()` filter (the CSS/SVG feColorMatrix hueRotate matrix in
+// sRGB, which is what Chrome applies). The body colour C that reproduces it is that matrix applied
+// to #ff8c8c; the game's tint formula then gives the outline (0.7 C), highlight and eyes.
+// classroom-board.js carries the same function (catBodyForHue) for the calendar strip.
+export const CAT_BASE = [255, 140, 140];
+export function hueRotate(rgb, hue) {
+  const r = (Number(hue) || 0) * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+  const m = [[0.213 + c * 0.787 - s * 0.213, 0.715 - c * 0.715 - s * 0.715, 0.072 - c * 0.072 + s * 0.928],
+             [0.213 - c * 0.213 + s * 0.143, 0.715 + c * 0.285 + s * 0.140, 0.072 - c * 0.072 - s * 0.283],
+             [0.213 - c * 0.213 - s * 0.787, 0.715 - c * 0.715 + s * 0.715, 0.072 + c * 0.928 + s * 0.072]];
+  return m.map(row => Math.max(0, Math.min(255, Math.round(row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2]))));
+}
+export const catBodyForHue = hue => hueRotate(CAT_BASE, typeof hue === 'number' && isFinite(hue) ? Math.round(hue) : 0);
+export const rgbHex = rgb => '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join('');
+// A park sprite's colour: the student's calendar hue when known, else the 8-colour game table.
+export function catColour(sprite, state, member, table) {
+  if (sprite && typeof sprite.hue === 'number' && isFinite(sprite.hue)) return rgbHex(catBodyForHue(sprite.hue));
+  return table[colourIndex(state, member) % table.length];
+}

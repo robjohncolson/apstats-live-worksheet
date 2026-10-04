@@ -16,7 +16,8 @@ export function tintPixel(r, g, b, colour) {
 
 export function createPicoArt(doc) {
   const win = doc?.defaultView;
-  let image = null, ready = false, cats = null, tiles = null, tilesFor = null;
+  let image = null, ready = false, cats = null, tiles = null, tilesFor = null, catPixels = null;
+  const CAT_CACHE_MAX = 64;   // tinted frame sets, one per colour (students' own hues)
   function canvas(w, h) {
     const c = doc.createElement('canvas'); c.width = w; c.height = h;
     const ctx = c.getContext && c.getContext('2d');
@@ -26,7 +27,7 @@ export function createPicoArt(doc) {
   // the level is drawable on its first frame; otherwise load (and decode) our own.
   function load(shared = null) {
     if (image) return;
-    const adopt = img => { image = img; ready = !!img.naturalWidth; try { bake(); } catch { cats = null; } };
+    const adopt = img => { image = img; ready = !!img.naturalWidth; cats = new Map(); catPixels = null; };
     if (shared && shared.complete && shared.naturalWidth > 0) { adopt(shared); return; }
     if (!win || typeof win.Image !== 'function') return;
     const own = new win.Image();
@@ -37,31 +38,41 @@ export function createPicoArt(doc) {
     image = own;
     own.src = ATLAS_URL;
   }
-  // Tinted cat frames, baked once: cats[colour][cell] = { right, left } 20x24 canvases.
-  function bake() {
+  // Tinted cat frames per colour, baked on first use and cached (at most CAT_CACHE_MAX colours):
+  // frames[cell] = { right, left } 20x24 canvases; the dead cell 1 is taken 2 px lower.
+  function bakeColour(colour) {
     const art = ATLAS.cats.art, cell = ATLAS.cats.cell, cellCount = ATLAS.cats.w / cell;
-    const source = canvas(ATLAS.cats.w, ATLAS.cats.h);
-    if (!source) return;
-    source.ctx.drawImage(image, ATLAS.cats.x, ATLAS.cats.y, ATLAS.cats.w, ATLAS.cats.h, 0, 0, ATLAS.cats.w, ATLAS.cats.h);
-    const pixels = source.ctx.getImageData(0, 0, ATLAS.cats.w, ATLAS.cats.h);
-    cats = PLAYER_COLOURS.map(colour => {
-      const frames = [];
-      for (let n = 0; n < cellCount; n++) {
-        const right = canvas(art.w, art.h), left = canvas(art.w, art.h);
-        const out = right.ctx.createImageData(art.w, art.h);
-        for (let y = 0; y < art.h; y++) for (let x = 0; x < art.w; x++) {
-          const from = ((art.y + y) * ATLAS.cats.w + n * cell + art.x + x) * 4, to = (y * art.w + x) * 4;
-          const a = pixels.data[from + 3];
-          if (!a) continue;
-          const [r, g, b] = tintPixel(pixels.data[from], pixels.data[from + 1], pixels.data[from + 2], colour);
-          out.data.set([r, g, b, a], to);
-        }
-        right.ctx.putImageData(out, 0, 0);
-        left.ctx.translate(art.w, 0); left.ctx.scale(-1, 1); left.ctx.drawImage(right.c, 0, 0);
-        frames.push({ right: right.c, left: left.c });
+    if (!catPixels) {
+      const source = canvas(ATLAS.cats.w, ATLAS.cats.h + 2);
+      if (!source) return null;
+      source.ctx.drawImage(image, ATLAS.cats.x, ATLAS.cats.y, ATLAS.cats.w, ATLAS.cats.h, 0, 0, ATLAS.cats.w, ATLAS.cats.h);
+      catPixels = source.ctx.getImageData(0, 0, ATLAS.cats.w, ATLAS.cats.h + 2);
+    }
+    const frames = [];
+    for (let n = 0; n < cellCount; n++) {
+      const right = canvas(art.w, art.h), left = canvas(art.w, art.h);
+      const out = right.ctx.createImageData(art.w, art.h), top = n === 1 ? (ATLAS.cats.deadArtY ?? art.y) : art.y;
+      for (let y = 0; y < art.h; y++) for (let x = 0; x < art.w; x++) {
+        const from = ((top + y) * catPixels.width + n * cell + art.x + x) * 4, to = (y * art.w + x) * 4;
+        const a = catPixels.data[from + 3];
+        if (!a) continue;
+        const [r, g, b] = tintPixel(catPixels.data[from], catPixels.data[from + 1], catPixels.data[from + 2], colour);
+        out.data.set([r, g, b, a], to);
       }
-      return frames;
-    });
+      right.ctx.putImageData(out, 0, 0);
+      left.ctx.translate(art.w, 0); left.ctx.scale(-1, 1); left.ctx.drawImage(right.c, 0, 0);
+      frames.push({ right: right.c, left: left.c });
+    }
+    return frames;
+  }
+  function framesFor(colour) {
+    if (!ready || !cats) return null;
+    if (cats.has(colour)) return cats.get(colour);
+    let frames = null;
+    try { frames = bakeColour(colour); } catch { frames = null; }
+    if (cats.size >= CAT_CACHE_MAX) cats.delete(cats.keys().next().value);
+    cats.set(colour, frames);
+    return frames;
   }
   // The static tile map, rendered once per level into a level-sized canvas.
   function tileLayer(level) {
@@ -85,6 +96,7 @@ export function createPicoArt(doc) {
     load,
     get ready() { return ready; },
     get baked() { return !!cats; },
+    framesFor,
     tiles(ctx, level) {
       const layer = tileLayer(level);
       if (layer) { ctx.drawImage(layer, 0, 0); return; }
@@ -140,11 +152,12 @@ export function createPicoArt(doc) {
       sprite(ctx, rect, cx - 16, floor - 32, 32, 32);
       ctx.restore();
     },
+    // colour: '#rrggbb' body colour (the student's own, see pico-rules catColour).
     cat(ctx, colour, cell, facingRight, x, y) {
-      const frame = cats?.[colour % cats.length]?.[cell];
+      const frame = framesFor(colour)?.[cell];
       if (frame) { ctx.drawImage(facingRight ? frame.right : frame.left, x, y); return; }
-      ctx.fillStyle = PLAYER_COLOURS[colour % PLAYER_COLOURS.length];
-      ctx.fillRect(x + 2, y + 2, 16, 22);
+      ctx.fillStyle = colour;
+      ctx.fillRect(x + 2, y + 1, 16, 23);
     },
   };
 }

@@ -342,3 +342,13 @@ test('level background: the first ancestor with a background colour, then body, 
   assert.deepEqual(['transparent', 'rgba(0,0,0,0)', 'rgb(0 0 0 / 0)', '', null, 'rgb(1,2,3)', 'rgb(0 0 0 / 0.2)', '#fff'].map(R.isOpaqueColour),
     [false, false, false, false, false, true, true, true]);
 });
+
+test('a park cat is the student calendar colour; the game table only when the hue is unknown', () => {
+  const table = ['#7fbfff', '#ff8c8c'];
+  const state = { members: ['a', 'b'] };
+  assert.equal(R.catColour({ hue: 90 }, state, 'a', table), R.rgbHex(R.catBodyForHue(90)));
+  assert.equal(R.rgbHex(R.catBodyForHue(90)), '#8cb54a');
+  assert.equal(R.catColour({ hue: 0 }, state, 'b', table), '#ff8c8c', 'hue 0 is the base pink');
+  assert.equal(R.catColour({}, state, 'b', table), '#ff8c8c', 'unknown: member-order table');
+  assert.equal(R.catColour({ hue: null }, state, 'a', table), '#7fbfff');
+});

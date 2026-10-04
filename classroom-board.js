@@ -378,6 +378,113 @@
   // Exact copy from curriculum_render/js/sprite_manager.js.
   // Maps any string to a hue in [0, 359].
 
+  // --- Calendar cats from PICO PARK's sheet ---------------------------------
+  //
+  // The cats used to come from sprite.png: 80x96 frames, 11 columns x 2 rows (row 2 mirrored,
+  // except the symmetric "dead" frame 1/12), a pixel-exact 4x upscale of the game's 20x24 cat in
+  // colour #ff8c8c (outline 0.7x, white highlight, black eyes), drawn at scale 0.25 with the
+  // canvas filter hue-rotate(<student hue>deg). They now come from the same cells of the level-6
+  // atlas (apstat-park/assets/pico-1-1.png, pico-atlas.mjs `cats`): frame f < 11 is cell f facing
+  // right, frame 11 + f is cell f mirrored (frame 12 = cell 1 unmirrored, as before). Each student's
+  // colour is the body colour C = hueRotate(#ff8c8c, hue) (the same matrix Chrome applies for
+  // hue-rotate), painted with the game's formula rgb = r*C + b*C*0.7 + g, baked once per hue
+  // (cached, at most CAT_CACHE_MAX frames). Same frames, size, timing and per-student colour.
+  var CAT_ATLAS = { x: 0, y: 80, cell: 32, artX: 6, artY: 8, deadArtY: 10, w: 20, h: 24, cells: 11 };
+  var CAT_BASE = [255, 140, 140];
+  // sprite.png layout: 11 x 2 frames of 80x96 with 4 px between them, none at the sheet edges.
+  function catFramePad(frameIndex) {
+    var f = frameIndex | 0, col = f % CAT_ATLAS.cells, row = f >= CAT_ATLAS.cells ? 1 : 0;
+    return { l: col === 0 ? 0 : 4, r: col === CAT_ATLAS.cells - 1 ? 0 : 4, t: row === 0 ? 0 : 4, b: row === 1 ? 0 : 4 };
+  }
+  var CAT_CACHE_MAX = 600;  // baked frames (80x96, ~31 KB each, ~18 MB at most); ~12 per hue in use
+  function hueRotateRgb(rgb, hue) {
+    var r = (Number(hue) || 0) * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+    var m = [[0.213 + c * 0.787 - s * 0.213, 0.715 - c * 0.715 - s * 0.715, 0.072 - c * 0.072 + s * 0.928],
+             [0.213 - c * 0.213 + s * 0.143, 0.715 + c * 0.285 + s * 0.140, 0.072 - c * 0.072 - s * 0.283],
+             [0.213 - c * 0.213 - s * 0.787, 0.715 - c * 0.715 + s * 0.715, 0.072 + c * 0.928 + s * 0.072]];
+    return m.map(function (row) { return Math.max(0, Math.min(255, Math.round(row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2]))); });
+  }
+  function catBodyForHue(hue) { return hueRotateRgb(CAT_BASE, (typeof hue === 'number' && isFinite(hue)) ? Math.round(hue) : 0); }
+  // sprite.png frame index -> atlas cell and facing.
+  function catFrameCell(frameIndex) {
+    var f = frameIndex | 0, cell = f % CAT_ATLAS.cells, mirrored = f >= CAT_ATLAS.cells && cell !== 1;
+    return { cell: cell, mirrored: mirrored };
+  }
+  // Drop-in for SpriteSheet (drawFrame / loaded) over the shared atlas image.
+  //   getImage(): the decoded atlas or null;  failed(): true once it can never load.
+  function AtlasCatSheet(getImage, failed, doc) {
+    this._getImage = getImage; this._failed = failed; this._doc = doc;
+    this._cache = new Map(); this._pixels = null;
+  }
+  Object.defineProperty(AtlasCatSheet.prototype, 'loaded', { get: function () { return !!this._getImage() || !!this._failed(); } });
+  AtlasCatSheet.prototype._canvas = function (w, h) {
+    var c = this._doc && this._doc.createElement('canvas');
+    // CPU-backed (willReadFrequently): Chrome then samples it exactly as it sampled sprite.png.
+    var ctx = c && c.getContext && c.getContext('2d', { willReadFrequently: true });
+    if (!ctx) { return null; }
+    c.width = w; c.height = h;
+    return { c: c, ctx: ctx };
+  };
+  // One frame for one hue, baked at sprite.png's own 4x (each art pixel a 4x4 block) and drawn
+  // scaled by 0.25 exactly as before, so smoothing, sub-pixel positions and every screen density
+  // look the same as the old sheet. Baked lazily: the calendar only uses about 12 of the 22.
+  AtlasCatSheet.prototype._frame = function (hue, frameIndex) {
+    var deg = (typeof hue === 'number' && isFinite(hue)) ? ((Math.round(hue) % 360) + 360) % 360 : 0;
+    var f = frameIndex | 0, key = deg + ':' + f;
+    if (this._cache.has(key)) { return this._cache.get(key); }
+    var frame = null;
+    try { frame = this._bake(catBodyForHue(deg), f); } catch (_) { frame = null; }
+    if (this._cache.size >= CAT_CACHE_MAX) { this._cache.delete(this._cache.keys().next().value); }
+    this._cache.set(key, frame);
+    return frame;
+  };
+  AtlasCatSheet.prototype._bake = function (C, f) {
+    var A = CAT_ATLAS, image = this._getImage(), K = 4;
+    if (!image) { return null; }
+    if (!this._pixels) {
+      var src = this._canvas(A.cell * A.cells, A.cell + 4);
+      if (!src) { return null; }
+      src.ctx.drawImage(image, A.x, A.y, A.cell * A.cells, A.cell, 0, 0, A.cell * A.cells, A.cell);
+      this._pixels = src.ctx.getImageData(0, 0, A.cell * A.cells, A.cell + 4);
+    }
+    var px = this._pixels, map = catFrameCell(f), top = map.cell === 1 ? A.deadArtY : A.artY;
+    // The frame's surroundings as they were in sprite.png: 4 px of transparent padding towards a
+    // neighbouring frame, none at the sheet's outer edges. Smoothing at sub-pixel positions then
+    // fades (or clamps) each edge exactly as the old sheet did.
+    var pad = catFramePad(f), W = A.w * K + pad.l + pad.r, H = A.h * K + pad.t + pad.b;
+    var out = this._canvas(W, H);
+    if (!out) { return null; }
+    var img = out.ctx.createImageData(W, H);
+    for (var y = 0; y < A.h; y++) {
+      for (var x = 0; x < A.w; x++) {
+        var sx = map.mirrored ? A.w - 1 - x : x;
+        var from = ((top + y) * px.width + map.cell * A.cell + A.artX + sx) * 4;
+        var a = px.data[from + 3];
+        if (!a) { continue; }
+        var r = px.data[from] / 255, g = px.data[from + 1], b = px.data[from + 2] / 255;
+        var rgba = [Math.min(255, Math.round(r * C[0] + b * C[0] * 0.7 + g)),
+                    Math.min(255, Math.round(r * C[1] + b * C[1] * 0.7 + g)),
+                    Math.min(255, Math.round(r * C[2] + b * C[2] * 0.7 + g)), a];
+        for (var dy = 0; dy < K; dy++) {
+          for (var dx = 0; dx < K; dx++) { img.data.set(rgba, ((pad.t + y * K + dy) * W + pad.l + x * K + dx) * 4); }
+        }
+      }
+    }
+    out.ctx.putImageData(img, 0, 0);
+    out.c._pad = pad;
+    return out.c;
+  };
+  AtlasCatSheet.prototype.drawFrame = function (ctx, frameIndex, x, y, scale, hueDegrees) {
+    var w = SPRITE_W * (scale || 1), h = SPRITE_H * (scale || 1);
+    var frame = this._getImage() ? this._frame(hueDegrees, frameIndex) : null;
+    if (frame) { ctx.drawImage(frame, frame._pad.l, frame._pad.t, SPRITE_W, SPRITE_H, x, y, w, h); return; }
+    if (this._failed()) {
+      // The atlas can never load: a flat block in the student's colour, never an invisible cat.
+      var C = catBodyForHue(hueDegrees);
+      ctx.save(); ctx.fillStyle = 'rgb(' + C[0] + ',' + C[1] + ',' + C[2] + ')'; ctx.fillRect(x, y, w, h); ctx.restore();
+    }
+  };
+
   function hashStringToHue(input) {
     var hash = 0;
     for (var i = 0; i < input.length; i++) {
@@ -4662,10 +4769,11 @@
       root.removeEventListener('resize', engine.resize);
       engine.resize = resizeBoardToContainer;
       root.addEventListener('resize', resizeBoardToContainer);
-      spriteSheet = new root.SpriteSheet(
-        'sprite.png', SPRITE_W, SPRITE_H,
-        { columns: 11, rows: 2, paddingX: 4, paddingY: 4 }
-      );
+      // Calendar cats come from the level-6 atlas (preloaded here, for every role); sprite.png
+      // is no longer requested by the board.
+      preloadParkAtlas();
+      spriteSheet = new AtlasCatSheet(function () { return parkDoorSpriteReady() ? parkDoorImage : null; },
+        function () { return parkAtlasState === 'failed'; }, doc);
       resizeBoardToContainer();
       engine.start();
       engineReady = true;
@@ -4775,8 +4883,8 @@
         || (state.activity && !state.activity.finished));
     }
     var parkWalkTicks = 0;
-    // Small (1.4 KB), same build as the park modules; never waited on.
-    if (engineReady && role === 'student') { preloadParkAtlas(); }
+    // The atlas (small, same build as the park modules, never waited on) was preloaded with the
+    // engine above: the cats need it for every role, the door for students.
     if (engineReady && role === 'student') engine.addEntity('park_doorway', {
       update: function () {
         setParkButtons(function (b) {
@@ -7108,6 +7216,9 @@
     _assignCells:      assignCells,
     _hashStringToHue:  hashStringToHue,  // exposed for tests
     _PlayerSprite:     PlayerSprite,     // Phase 1 -- exposed for unit tests
+    _AtlasCatSheet:    AtlasCatSheet,    // calendar cats from the level-6 atlas (unit tests)
+    _catBodyForHue:    catBodyForHue,
+    _catFrameCell:     catFrameCell,
     _CoinSprite:       CoinSprite,       // V7.4 -- exposed for unit tests
     _RevealTextSprite: RevealTextSprite, // V7.4 -- exposed for unit tests
     _TallyDisplay:     TallyDisplay,     // V7.4 -- exposed for unit tests
