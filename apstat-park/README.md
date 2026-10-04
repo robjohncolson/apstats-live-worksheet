@@ -23,7 +23,9 @@ choosing the accessible tile again. Characters stay where the team left them.
 
 After the seven calculator inputs, five group decisions assign the displayed
 minimum, Q1, median, Q3 and maximum to a proportional boxplot. The result is
-`4,7,11,14,20`. Play again starts a new shared attempt after completion. No grades
+`4,7,11,14,20`. Completion reveals a reset door at the far right. Press Up beside
+it, click it, or use Enter reset door to clear the shared attempt and return all
+current participants to the entrance. No grades
 or currency change. Solo play works. Refresh/reconnect replays the committed
 inputs; duplicate tabs count as one student. Stale choices stop counting after
 1.5 seconds, inactive connections leave after five seconds, and hiding the tab

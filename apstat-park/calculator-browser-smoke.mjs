@@ -89,6 +89,7 @@ try {
     await page.getByText('Choose a tile without jumping (keyboard or touch)', { exact: true }).click();
   }
   await alice.waitForFunction(() => board.getParkScene().getState().members.length === 2);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
   await alice.locator('[data-calculator-key="STAT"]').click();
   await bob.locator('[data-calculator-key="ENTER"]').click();
   await alice.waitForTimeout(1300);
@@ -123,9 +124,20 @@ try {
   await alice.evaluate(() => board.openCalculatorMission());
   await alice.waitForFunction(() => board.getParkScene()?.getState()?.complete);
   assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
-  await bob.getByText('Back to start', { exact: true }).click();
-  await alice.getByText('Play again', { exact: true }).click();
-  await alice.waitForFunction(() => board.getParkScene().getState().step === 0);
+  // The completed goal reveals a world door. Walk there and use the real Up input.
+  assert.ok(await alice.evaluate(() => board.getParkScene().getView().resetDoor));
+  await alice.keyboard.down('ArrowRight');
+  await alice.waitForFunction(() => board.getParkScene().getView().playerX >= 1378);
+  await alice.keyboard.up('ArrowRight');
+  await alice.keyboard.press('ArrowUp');
+  for (const page of [alice, bob]) {
+    await page.waitForFunction(() => board.getParkScene().getState().step === 0 && !board.getParkScene().getView().participating);
+    assert.equal(await page.evaluate(() => board.getParkScene().getView().resetDoor), null);
+    assert.equal(await page.evaluate(() => board.getParkScene().getView().playerX), 65);
+    assert.equal(await page.evaluate(() => board.getParkScene().getState().bonus), 0);
+  }
+  await alice.evaluate(() => board.openCalculatorMission());
+  await alice.waitForFunction(() => board.getParkScene().getState().members.some(member => member.name === 'alice'));
   await alice.keyboard.down('ArrowRight');
   await alice.waitForTimeout(300); await alice.keyboard.up('ArrowRight');
   await alice.keyboard.down('Space');

@@ -6,6 +6,7 @@ const { pixelText } = await import('./pixel-text.mjs' + V);
 const { createWorldDisplay } = await import('./calculator-display.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
+const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
 // Same calculator, with its menu payloads painted directly into the level.
 for (const file of nativeScriptFilenames) await import('../ti84-trainer-v2/native/' + file + V);
 
@@ -35,8 +36,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   status.style.cssText = 'flex:1 1 240px;font:14px system-ui';
   status.textContent = 'Connecting the calculator team…';
   const exit = doc.createElement('button'); exit.textContent = 'Back to start'; exit.onclick = returnToStart;
-  const restart = doc.createElement('button'); restart.textContent = 'Play again'; restart.hidden = true;
-  restart.onclick = () => send('calculator_restart');
+  const restart = doc.createElement('button'); restart.textContent = 'Enter reset door'; restart.hidden = true;
+  restart.onclick = enterResetDoor;
   controls.append(status, restart, exit); container.append(controls);
   const readings = doc.createElement('output');
   readings.setAttribute('aria-label', 'Calculator five-number summary');
@@ -76,7 +77,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   ];
   const player = board.createPlayer({ x: 65, y: WORLD.floor - 24, input,
     terrain, peers: () => ({}), canvasW: () => LEVEL_WIDTH,
-    onUpPressed: () => { if (player.x < 95) onPark(); },
+    onUpPressed: () => {
+      if (player.x < 95) onPark();
+      else if (besideResetDoor()) enterResetDoor();
+    },
     physics: { name: 'legacy', walkSpeed: 210, jumpV0: -360, gravity: 800 } });
   player.engine = engine;
   board.setBoardHeight(Math.round(WORLD.height * scale()));
@@ -106,6 +110,14 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     pump();
   }
   function connected() { return socket?.readyState === 1 && performance.now() - receivedAt < 3000; }
+  function besideResetDoor() {
+    return Math.abs(localPose().x + 10 - (RESET_DOOR.x + RESET_DOOR.w / 2)) < 34
+      && player.y + 24 >= RESET_DOOR.y;
+  }
+  function enterResetDoor() {
+    if (!participating || !state?.complete || !connected()) return;
+    send('calculator_restart');
+  }
   function send(type, extra = {}) {
     if (socket?.readyState !== 1 || socket.bufferedAmount > 4096) return;
     socket.send(JSON.stringify({ type, epoch: state?.epoch, revision: state?.revision, ...extra }));
@@ -125,6 +137,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     }
     if (packet.type !== 'calculator_state') return;
     if (state?.epoch === packet.epoch && packet.revision < state.revision) return;
+    const restarted = state?.complete && epoch !== packet.epoch;
     receivedAt = performance.now(); clockOffset = packet.clock - receivedAt;
     if (epoch !== packet.epoch) {
       calculator.reset(); calculator.setList('L1', DATA); applied = 0; epoch = packet.epoch;
@@ -154,6 +167,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       : 'Step ' + (state.step + 1) + '/12 · ' + state.members.length + ' on the team. ' + hint
         + (elapsed >= ROUND_MS ? ' Hint: choose ' + expectedAt(state.step) + '. Keep going—no lives lost.' : '');
     if (status.textContent !== text) status.textContent = text;
+    if (restarted) returnToStart();
   }
   function bind() {
     const next = getSocket();
@@ -245,6 +259,13 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       text(ctx, tile.key, tile.x + tile.w / 2, tile.y + 18, 12, selected === tile.key || hint ? '#30263b' : '#fff', 'center');
     }
     if (step >= ROUTE.length) drawBoxplot(ctx, step - ROUTE.length);
+    if (state?.complete) {
+      const { x, y, w, h } = RESET_DOOR;
+      if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, x, y, w, h);
+      else { ctx.fillStyle = '#493d48'; ctx.fillRect(x, y, w, h); }
+      text(ctx, 'RESET', x + w / 2, y - 24, 14, '#30263b', 'center');
+      text(ctx, 'UP TO ENTER', x + w / 2, y - 9, 7, '#30263b', 'center');
+    }
     for (const [name, peer] of peers) { peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, '#3d3345', 'center'); }
     if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, '#30263b', 'center');
     ctx.restore();
@@ -272,12 +293,21 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const rect = engine.canvas.getBoundingClientRect();
     const worldX = (event.clientX - rect.left) / scale() + Math.round(cameraX);
     const x = worldX - ENTRY_WIDTH, y = (event.clientY - rect.top) / scale();
+    if (state?.complete && x >= RESET_DOOR.x && x <= RESET_DOOR.x + RESET_DOOR.w
+      && y >= RESET_DOOR.y && y <= RESET_DOOR.y + RESET_DOOR.h) {
+      event.preventDefault(); event.stopImmediatePropagation(); enterResetDoor(); return;
+    }
     if (worldX >= 20 && worldX <= 85 && y >= WORLD.floor - 55 && y <= WORLD.floor) { onPark(); return; }
     const tile = tilesFor(state?.step || 0).find(tile => x >= tile.x && x <= tile.x + tile.w && y >= tile.y - 12 && y <= tile.y + tile.h);
     if (tile) { event.preventDefault(); event.stopImmediatePropagation(); choose(tile); }
   }
   function key(event) {
     if (event.key === 'Escape') { event.preventDefault(); returnToStart(); }
+    // Handle brief taps even when keydown and keyup fall between physics steps.
+    if (event.key === 'ArrowUp' && !event.repeat && !event.target?.closest?.('input, textarea, select, [contenteditable="true"]')
+      && state?.complete && besideResetDoor()) {
+      event.preventDefault(); enterResetDoor();
+    }
   }
   function visibility() {
     if (!doc.hidden) { joinedAt = 0; return; }
@@ -301,6 +331,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   controls.style.display = 'none'; accessible.hidden = true;
   rebuildChoices(); const timer = setInterval(pump, 100); pump();
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
-    getView: () => ({ cameraX, playerX: player.x, participating, entranceX: ENTRY_WIDTH, lines: display.getLines() }),
+    getView: () => ({ cameraX, playerX: player.x, participating, entranceX: ENTRY_WIDTH,
+      resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
     getCalculatorScreen: () => calculator.getScreen() };
 }
