@@ -199,3 +199,16 @@ Standalone native registration checkpoint:
   are still required before this framework replaces preview collision loops.
 - Next: native body descriptor initialization and actor PRE/POST attachment,
   followed by gameplay integration and complete input-only campaign validation.
+Native body setup and actor motion checkpoint:
+- Added recovered rectangle/circle constructors and actor-following motion,
+  placement and synchronization helpers. Tests now construct bodies through
+  native defaults and run the complete reconstructed world pass.
+- Live BoundBall map bodies use the native circle constructor at spawn,
+  including category 5, type 3 and radius 12. Rebuilt the campaign bundle.
+- 250 unit tests and the live BoundBall 2/8-player integration checks pass.
+- The rebuilt bundle also passes all-48-stage loading, 2/8-player replay,
+  team CLEAR and next-stage browser checks. These are smoke checks, not proof
+  of complete puzzle fidelity.
+- Actor-manager ordering, actor-specific PRE/POST hooks, presentation callbacks
+  and full replacement of preview body collision loops remain unfinished.
+  No additional campaign stage is certified by these foundation tests alone.

@@ -173,13 +173,19 @@
     "apstat-park/native-pitcher.mjs": "c143ddb2f78b869ea7e6c82a7bf799e88e42339b5551c56981bc1522b181653c",
     "apstat-park/native-key-box.mjs": "8baeaa1f8404e8238052d0087654e1cc1f53e5797c945106dc4cfa3c6d6ef5fe",
     "scripts/pico-bound-patches.mjs": "d76fa711618ad5efa192b8c26741269cc9821b4f3fff47dd9d5bd8f19359838e",
-    "apstat-park/native-bound-runtime.mjs": "968bc81dada2b70478f74971386e9eb36d9ee380bc5fc60a70a3c5cc7bbb8192",
+    "apstat-park/native-bound-runtime.mjs": "1439c93438b3a54ac9ecab10417eea03a4836cd921fe94e9ece25dd65c8cd015",
     "apstat-park/native-bound-ball.mjs": "9a74f5dc65c9f6884ff2a11ff6286953b2c07897651dce19e425d4ee95bf4e6a",
     "scripts/pico-player-patches.mjs": "9d713c1e0f7839bf418e8de130cb66377fdc7a4c581ec0442c7c09d0129f3603",
     "scripts/pico-contact-patches.mjs": "65f7b4f15c3b8eb9a17ecca216921a04103cc91f065aa36758f12fb8b3a3529e",
     "apstat-park/native-rectangle-pair.mjs": "856635715547f93559cdafb212f5facc207a8f4b958c93fdf4367798e3057dbb",
     "apstat-park/native-static-contact.mjs": "9ff5b6540717d9c2a88744811030b5ecbf36a57eba33e468cf34e8ebc91d463e",
-    "apstat-park/native-map-collision.mjs": "1f2f701602b4ec5e89c7713e27848ed829faa55308d0a4bcff2e7d656735e09b"
+    "apstat-park/native-map-collision.mjs": "1f2f701602b4ec5e89c7713e27848ed829faa55308d0a4bcff2e7d656735e09b",
+    "apstat-park/native-body.mjs": "fa046ff3fd8c6e032df8a52d61025684a117c4e1936ad033cf8f49dc8e49f04b",
+    "apstat-park/native-actor-motion.mjs": "45f867b8a3ad3ff7df67cf122e4aa44ac49f6cd2f20cbcc4ded151eda96ae434",
+    "apstat-park/native-body-support.mjs": "55a625a984342b6a684ee94d18f37b9d162e902fe117965cee7a166dbb348390",
+    "apstat-park/native-body-world.mjs": "ae338cdacf59a688a00a2fabcd1f04afa78d6fb84d94c526673ece78c32e8e66",
+    "apstat-park/native-body-overlap.mjs": "cec8cd39ccef79e2b7f7b5e657ed26f34fd23aa73fe8613ece97d67aa49e8676",
+    "apstat-park/native-circle-pair.mjs": "c271ea5de49487c1941c0438fc06ac8562d88d6d3ac7b4bb70b9a2bcb4a350ee"
   },
   "hashes": {
     "src/engine/actors/BattleBreakoutBall.ts": "90e2a60092f538c3b9fb7069955ee9689ce4dea139e02dd40fe7b63ac85bfe01",

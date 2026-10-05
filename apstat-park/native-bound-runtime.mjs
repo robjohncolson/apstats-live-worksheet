@@ -3,6 +3,8 @@ import { createNativeBoundBall } from './native-bound-ball.mjs';
 import { createNativeKeyBox } from './native-key-box.mjs';
 import { laserTouchesRect } from './native-laser.mjs';
 import { nativeMapFromRecovered, moveNativeBodyOnMap, finalizeNativeMapContacts } from './native-map-collision.mjs';
+import { createNativeBody, initializeNativeCircleBody } from './native-body.mjs';
+import { placeNativeActorBodies } from './native-actor-motion.mjs';
 
 export function createBoundRewardBox(runtime, original, makeView, makeKey) {
   const spawn = { ...original, x: Math.fround(original.x + Math.fround((Number(original.raw[6]) || 0) * runtime.activePlayerCount)) };
@@ -54,6 +56,12 @@ export function tickNativeBoundBalls(runtime, makeView, moveRect) {
       pitcher.nativeState = createNativePitcher({ spawn: pitcher.spawn, partySize: runtime.activePlayerCount,
         createProjectile: params => {
           const ball = createNativeBoundBall({ ...params, partySize: runtime.activePlayerCount });
+          const body = initializeNativeCircleBody(createNativeBody(), { x: 0, y: 0, radius: 12 }, 3);
+          body.category = 5;
+          body.actor = ball;
+          body.onContactStay = (_other, normal) => ball.contact(normal);
+          placeNativeActorBodies({ bodies: [{ body, followsActor: true }] }, ball.state);
+          ball.nativeMapBody = body;
           ball.view = makeView('native_bound_ball', 24, 24, true);
           runtime.actorLayer.addChild(ball.view);
           syncBallView(ball);
@@ -69,9 +77,7 @@ export function tickNativeBoundBalls(runtime, makeView, moveRect) {
     if (ball === previous) ball.tick();
     let state = ball.state;
     if (!state.remaining && !state.removed && ball === previous && runtime.tileMap) {
-      const body = ball.nativeMapBody ??= { flags: 1, type: 3,
-        localBounds: { x: -12, y: -12, width: 24, height: 24 },
-        onContactStay: (_other, normal) => ball.contact(normal) };
+      const body = ball.nativeMapBody;
       body.position = { x: before.x, y: before.y };
       body.previousPosition = { ...body.position };
       moveNativeBodyOnMap(nativeMap, body,

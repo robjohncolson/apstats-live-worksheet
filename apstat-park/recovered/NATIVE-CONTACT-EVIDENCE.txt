@@ -264,3 +264,29 @@ Native registry checkpoint (bc1d110, bc1ffa0, bc200c0):
 - Seven regression cases exercise ordering/sensor dispatch, automatic-ID
   collision, dictionary capacity, ownership sequencing and cleanup behavior.
   This registry is not yet connected to live campaign actor construction.
+Native body setup and actor motion checkpoint:
+- native-body.mjs reconstructs bc11f30 zero/default fields, bc12370 rectangle
+  initialization and bc123e0 circle initialization. Geometry setup enables the
+  body and reserves at least eight growable contacts without resetting IDs,
+  motion, existing contacts, or the unused circle descriptor. bc154c0 confirms
+  capacity increases only and preserves existing rows.
+- native-actor-motion.mjs implements the movement/body portions of bc16120,
+  bc17ca0 and bc1a2c0. Following bodies receive the actor position; independent
+  bodies do not. Movement flag 0x40 compares accepted position with current
+  position using bb93520's float32 EPSILON. Placement resets accepted position
+  and clears movement without overwriting the pass snapshot.
+- Common PRE movement follows the actor-specific PRE hook: position changes
+  by velocity + acceleration/2; velocity then changes by acceleration.
+  Raw data verifies bcff4fc = .5 and bc7d458 = 2^-23. bb97db0 confirms additive
+  translation. Common POST bc16460 invokes the actor-specific hook before
+  bc17ca0, leaving POST body movement pending for the next world pass.
+- These helpers cover motion/body synchronization only, not the complete
+  actor-manager, component presentation, transform history or PRE/POST wrappers.
+- BoundBall live map-body construction now uses the shared native constructor.
+  bb37a30 calls bc16e00 -> bc123e0 with circle c62add8 = (0,0,12), type 3,
+  and category 5. Raw bb37a5d sets omitted fourth argument r9d=1, confirming
+  following-body attachment. Existing BoundBall body-pair adapter remains.
+- Seven new unit cases cover construction, descriptor reuse, independent
+  sensors, acceleration, epsilon, complete map/callback sequencing and scale.
+  250 total unit tests pass. Live BoundBall browser checks pass for 2/8 players,
+  including a 2400-tick player-contact run with 14 bounces and no nonfinite state.
