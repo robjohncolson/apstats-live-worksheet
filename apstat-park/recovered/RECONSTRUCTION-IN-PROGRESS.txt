@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Player relocation checkpoint: native-player-relocation.mjs implements the
+walking controller's pending-position POST branch using native map/body
+placement queries. Blocked destinations retry; successful moves synchronize
+following bodies, clear own actor contacts and zero velocity. Scroll mode
+adjusts stale destinations to the camera edge. All 351 park tests pass.
+Player command dispatch, controller integration and live seesaw replacement
+remain incomplete; this checkpoint does not change the live campaign path.
+
 Player horizontal checkpoint: native-player-walk.mjs preserves Right-first
 input priority, .98 momentum damping, steering/response-flag gates and walk/
 push/idle animation selection. The body query now supports response flags

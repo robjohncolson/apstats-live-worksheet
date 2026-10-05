@@ -1,5 +1,29 @@
 Native body-pair reconstruction checkpoint
 
+Player relocation/placement checkpoint (bb6fa50, bc1d3a0, bc303e0):
+  Controller+20 vector is pending destination; abs(float32(x*x+y*y)) <=
+  FLT_EPSILON means no relocation. In nonzero scroll mode, targetX below
+  viewPosition.x+viewOffset.x-16 is replaced by that sum+16 (bcff664=16).
+  Temporarily put primary body at destination and recompute moved bit64 from
+  accepted position. bc1d3a0 mask -1 first checks map if type bit1, then bodies
+  if type bit2. Other body must be enabled and type bit2; categories <32;
+  matrix index is OTHER.category*32+queried.category. Either accepted-pose
+  or current-pose overlap blocks. Query ignores the queried body's enabled bit.
+  Map query bc303e0 uses scaled local bounds at current body position, divides
+  both corners by chip size in float32, truncates to integers and scans every
+  cell inclusively through the far corner. bc28270 extends edge cells and
+  uses native/default or custom bit1 solidity. This is not a swept query.
+  Blocked placement restores primary body pose/moved bit and retains pending
+  target. Success calls bc13a50: END each own actor contact (even state0),
+  then clear own actor contacts only; retain map and reciprocal contacts.
+  Set actor pose and PRE snapshot, synchronize every following body current
+  and accepted position, clear bit64, zero velocity through components, then
+  clear pending position. Controller flag4 calls player virtual+c0(true),
+  confirmed as bb67cc0's visibility/body/activity enable routine, then clears4.
+  Tests cover retry/success, contact lifecycle, scrolling target adjustment,
+  zero sentinel, asymmetric matrix lookup, disabled queried bodies and tile
+  edge/custom-flag placement. Complete controller wiring remains pending.
+
 Walking horizontal branch checkpoint (bb6f0e0 through bb6f36e):
   Copy velocity; if player+3f8 bit1 is clear multiply X by float32 .98
   (bcbea28), otherwise zero X. Test held Right (action6) before Left (5).
