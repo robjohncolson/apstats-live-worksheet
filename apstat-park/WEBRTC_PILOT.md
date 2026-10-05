@@ -13,10 +13,14 @@ Scope:
 - Calculator approach and calculator-area cat drawing only. The Pico Park campaign inside the door still uses its existing transport.
 - Positions run at 20 Hz with unordered, non-retransmitted data. The relay batches recent positions into one packet per recipient per tick. Frames carry a round ID and sequence number; old, malformed, and out-of-bounds positions are discarded. Repeated stale positions cannot keep an inactive cat visible indefinitely.
 - Server snapshots still establish membership. Direct data cannot submit answers, push the team block, start timers, move authoritative game objects, or clear a level.
-- WebSocket messages continue at their existing rate. This improves the visual update path where peer connections work; it does not yet reduce Railway traffic.
+- Calculator WebSocket motion sends changed positions at up to 10 Hz, with a one-second presence heartbeat when idle. Pushing retains 10 Hz intent updates. The server sends full snapshots when visible state changes and once per second for clock/reconnect recovery; incoming poses no longer each trigger a full roster echo. This works with older clients too. WebRTC retains its 20 Hz visual transport and 350 ms fallback deadline.
 - A missing peer position falls back to the latest server position after 350 ms. Unsupported browsers and failed setup continue over WebSocket. Failed student connections retry independently after 15 seconds, backing off to at most one retry every two minutes. Returning after a presence timeout uses a fresh connection ID; relay replacement reconnects the group.
 - Connections use no external STUN/TURN servers. School network isolation, browser policy, or different networks may prevent peer connections. Fallback remains available; do not assume same Wi-Fi guarantees connectivity.
 - Hiding a desk tab still follows the existing game-presence rules. WebRTC does not keep inactive students in the game.
+
+Remote calculator cats interpolate toward received positions over 50 ms for direct data or 100 ms for server data. They never extrapolate beyond the last received position; teleports, deaths and round resets snap. Local controls and all game decisions use their original positions. Static calculator scenery and bounded text bitmaps are cached, including theme/art invalidation.
+
+Campaign input edges send immediately without waiting for the next 16 ms pump. Backpressure retains a jump edge until sent, and blur releases held controls. The ordered server replay still owns physics for all 48 stages; this does not remove network round-trip latency. Unchanged campaign engine frames are reused between authoritative updates, while transitions and the CLEAR banner animate each display frame.
 
 ## Verify on school devices
 

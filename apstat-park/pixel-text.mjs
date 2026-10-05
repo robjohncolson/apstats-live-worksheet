@@ -32,6 +32,38 @@ const glyphs = {
 };
 const pixels = Object.fromEntries(Object.entries(glyphs).map(([key, rows]) => [key,
   rows.split('/').flatMap((row, y) => [...row].flatMap((bit, x) => bit === '1' ? [[x, y]] : []))]));
+const textCaches = new WeakMap();
+// Limit both entry count and pixels: changing countdowns/names cannot grow this
+// cache indefinitely. Each document retains at most about 4 MB of text bitmaps.
+function cachedText(doc, text, unit, color, width) {
+  if (!doc?.createElement || typeof color !== 'string' || !width || width > 4096) return null;
+  let cache = textCaches.get(doc);
+  if (!cache) { cache = { entries: new Map(), pixels: 0 }; textCaches.set(doc, cache); }
+  const key = JSON.stringify([text, unit, color]);
+  const hit = cache.entries.get(key);
+  if (hit) { cache.entries.delete(key); cache.entries.set(key, hit); return hit; }
+  const area = width * unit * 7;
+  if (area > 1048576) return null;
+  const canvas = doc.createElement('canvas'); canvas.width = width; canvas.height = unit * 7;
+  const paint = canvas.getContext('2d');
+  if (!paint) return null;
+  paint.fillStyle = color;
+  paintGlyphs(paint, text, 0, 0, unit);
+  while (cache.entries.size >= 256 || cache.pixels + area > 1048576) {
+    const oldest = cache.entries.keys().next().value, image = cache.entries.get(oldest);
+    cache.pixels -= image.width * image.height; cache.entries.delete(oldest);
+  }
+  cache.entries.set(key, canvas); cache.pixels += area;
+  return canvas;
+}
+function paintGlyphs(ctx, text, start, top, unit) {
+  [...text].forEach((character, index) => {
+    if (character === ' ') return;
+    for (const [px, py] of pixels[character] || pixels['?']) {
+      ctx.fillRect(start + (index * 6 + px) * unit, top + py * unit, unit, unit);
+    }
+  });
+}
 export function pixelText(ctx, value, x, y, size = 14, color = '#3a3045', align = 'left') {
   const text = String(value).toUpperCase().replace(/→/g, '>').replace(/[−⁻]/g, '-')
     .replace(/¹/g, '1').replace(/²/g, '2').replace(/×/g, '*').replace(/÷/g, '/').replace(/·/g, '.');
@@ -39,10 +71,8 @@ export function pixelText(ctx, value, x, y, size = 14, color = '#3a3045', align 
   const width = Math.max(0, text.length * 6 - 1) * unit;
   const start = Math.round(x - (align === 'center' ? width / 2 : align === 'right' ? width : 0));
   ctx.fillStyle = color;
-  [...text].forEach((character, index) => {
-    if (character === ' ') return;
-    for (const [px, py] of pixels[character] || pixels['?']) {
-      ctx.fillRect(start + (index * 6 + px) * unit, Math.round(y - 7 * unit) + py * unit, unit, unit);
-    }
-  });
+  const top = Math.round(y - 7 * unit);
+  const image = cachedText(ctx.canvas?.ownerDocument, text, unit, color, width);
+  if (image) ctx.drawImage(image, start, top);
+  else paintGlyphs(ctx, text, start, top, unit);
 }

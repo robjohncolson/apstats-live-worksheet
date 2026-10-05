@@ -16,6 +16,8 @@ const { catBodyForHue, rgbHex } = await import('./pico-rules.mjs' + V);
 const { ATLAS } = await import('./assets/pico-atlas.mjs' + V);
 const { TEAM_BLOCK, CALCULATOR_PROTOCOL } = await import('./calculator-lobby.mjs' + V);
 const { createPeerMotion } = await import('./peer-motion.mjs' + V);
+const { createUpdateGate } = await import('./update-gate.mjs' + V);
+const { createPoseSmoothing } = await import('./pose-smoothing.mjs' + V);
 const ENTRY_WIDTH = 720;
 const LEVEL_WIDTH = ENTRY_WIDTH + WORLD.width;
 const RESET_DOOR = { x: 650, y: WORLD.floor - 48, w: 48, h: 48 };
@@ -30,7 +32,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   art.load(board.atlas?.());
   const savedCamera = { ...api._camera };
   const entities = new Map(), peers = new Map(), lobbyPeers = new Map();
-  let lobby = null, lobbyAt = -Infinity;
+  let lobby = null;
+  const updates = createUpdateGate(), smoothing = createPoseSmoothing();
+  let scenery = null, sceneryInk = null, sceneryAtlas = null, sceneryReady = false;
   let arrivalPending = true;
   const display = createWorldDisplay();
   let level = DEFAULT_LEVEL, challenge = challengeFor(level);
@@ -119,8 +123,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     send('calculator_restart');
   }
   function send(type, extra = {}) {
-    if (socket?.readyState !== 1 || socket.bufferedAmount > 4096) return;
+    if (socket?.readyState !== 1 || socket.bufferedAmount > 4096) return false;
     socket.send(JSON.stringify({ type, epoch: state?.epoch, revision: state?.revision, ...extra }));
+    return true;
   }
   function choose(tile) {
     if (!participating || !state || state.solved || state.failure || !connected()) return;
@@ -260,6 +265,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const next = getSocket();
     if (next === socket) return;
     peerMotion.reset();
+    updates.reset();
     socket?.removeEventListener('message', onMessage);
     socket = next; joinedAt = 0; receivedAt = 0;
     socket?.addEventListener('message', onMessage);
@@ -268,14 +274,13 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (disposed || doc.hidden) return;
     bind();
     peerMotion.publish({ x: player.x, y: player.y });
-    if (performance.now() - lobbyAt >= 100) {
-      lobbyAt = performance.now();
-      const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
-      send('calculator_lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch, rtc: peerMotion.supported ? 2 : false,
-        rtcGeneration: peerMotion.connectionGeneration(),
-        pose: { x: player.x, y: player.y }, pushing: !!input.right && !input.left,
-        ready: player.x >= ENTRY_WIDTH + 20 && cameraX >= missionCamera - 0.5 });
-    }
+    const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
+    const pushing = !!input.right && !input.left;
+    updates.publish('lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch, rtc: peerMotion.supported ? 2 : false,
+      rtcGeneration: peerMotion.connectionGeneration(),
+      pose: { x: player.x, y: player.y }, pushing,
+      ready: player.x >= ENTRY_WIDTH + 20 && cameraX >= missionCamera - 0.5 },
+    value => send('calculator_lobby', value), pushing);
     if (!participating) return;
     if (socket?.readyState !== 1) { status.textContent = 'Reconnecting—your team progress is saved.'; return; }
     if (!joinedAt || performance.now() - receivedAt > 3000) {
@@ -291,8 +296,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (!state || !connected() || doc.hidden) return;
     flushPress();
     if (performance.now() - poseAt >= 100) {
-      poseAt = performance.now();
-      send('calculator_pose', { pose: localPose(), ready: !needsRelease && !pendingPress && !keyQueue.length });
+      if (updates.publish('pose', { epoch: state.epoch, revision: state.revision,
+        pose: localPose(), ready: !needsRelease && !pendingPress && !keyQueue.length },
+      value => send('calculator_pose', value))) poseAt = performance.now();
     }
   }
   function update(dt) {
@@ -341,6 +347,30 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     ctx.lineTo(x, y + h - cut); ctx.lineTo(x, y + cut);
     ctx.closePath(); ctx.fill();
   }
+  function drawScenery(ctx, atlas) {
+    if (!scenery || sceneryInk !== ink || sceneryAtlas !== atlas || sceneryReady !== art.ready) {
+      scenery ||= doc.createElement('canvas');
+      scenery.width = LEVEL_WIDTH; scenery.height = WORLD.height;
+      const paint = scenery.getContext('2d');
+      paint.imageSmoothingEnabled = false;
+      art.block(paint, { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 });
+      text(paint, 'CALCULATOR TOGETHER', 85, 365, 21);
+      text(paint, 'PUSH THE TEAM BLOCK RIGHT >', 85, 410, 19);
+      text(paint, 'CLICK A KEY TO CHOOSE IT', 85, 451, 14);
+      text(paint, 'PRACTICE THE SKILLS YOU HAVE LEARNED', 85, 485, 14);
+      text(paint, 'RANDOM SKILLS. ONE TEAM GOAL.', 85, 513, 14);
+      text(paint, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
+      text(paint, 'HOLD SHIFT TO RUN', 85, 573, 14);
+      text(paint, 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);
+      if (atlas) paint.drawImage(atlas, 96, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
+      else { paint.fillStyle = '#493d48'; paint.fillRect(30, WORLD.floor - 40, 40, 40); }
+      text(paint, 'PICO PARK', 24, WORLD.floor - 70, 14);
+      text(paint, 'UP TO ENTER', 24, WORLD.floor - 49, 10);
+      text(paint, 'TEAM START', TEAM_BLOCK.dock + 16, WORLD.floor + 32, 10, ink, 'center');
+      sceneryInk = ink; sceneryAtlas = atlas; sceneryReady = art.ready;
+    }
+    ctx.drawImage(scenery, 0, 0);
+  }
   function draw(ctx) {
     const step = state?.step || 0;
     const layer = keyboardLayer(calculator.save());
@@ -352,20 +382,9 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     ctx.save(); ctx.scale(scale(), scale()); ctx.translate(-Math.round(cameraX), 0);
     ctx.imageSmoothingEnabled = false;
     // CanvasEngine clears each frame; transparency reveals the actual calendar DOM.
-    art.block(ctx, { x: 0, y: WORLD.floor, w: LEVEL_WIDTH, h: 50 });
-    text(ctx, 'CALCULATOR TOGETHER', 85, 365, 21);
-    text(ctx, 'PUSH THE TEAM BLOCK RIGHT >', 85, 410, 19);
-    text(ctx, 'CLICK A KEY TO CHOOSE IT', 85, 451, 14);
-    text(ctx, 'PRACTICE THE SKILLS YOU HAVE LEARNED', 85, 485, 14);
-    text(ctx, 'RANDOM SKILLS. ONE TEAM GOAL.', 85, 513, 14);
-    text(ctx, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
-    text(ctx, 'HOLD SHIFT TO RUN', 85, 573, 14);
-    text(ctx, 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);
     const atlas = board.atlas?.();
-    if (atlas) ctx.drawImage(atlas, 96, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
-    else { ctx.fillStyle = '#493d48'; ctx.fillRect(30, WORLD.floor - 40, 40, 40); }
-    text(ctx, 'PICO PARK', 24, WORLD.floor - 70, 14);
-    text(ctx, 'UP TO ENTER', 24, WORLD.floor - 49, 10);
+    drawScenery(ctx, atlas);
+    smoothing.retain(new Set(participating ? peers.keys() : lobbyPeers.keys()));
     const blockX = lobby?.blockX ?? TEAM_BLOCK.start;
     const block = ATLAS.pushBox;
     if (atlas && block) ctx.drawImage(atlas, block.x, block.y, block.w, block.h, blockX, TEAM_BLOCK.y, TEAM_BLOCK.w, TEAM_BLOCK.h);
@@ -373,11 +392,11 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     const count = lobby?.phase === 'gathering' ? lobby.pushers.length : lobby?.roster.length || 0;
     text(ctx, String(count), blockX + 16, TEAM_BLOCK.y + 21, 14, ink, 'center');
     text(ctx, count + (count === 1 ? ' PUSHER' : ' PUSHERS'), blockX + 16, TEAM_BLOCK.y - 9, 10, ink, 'center');
-    text(ctx, 'TEAM START', TEAM_BLOCK.dock + 16, WORLD.floor + 32, 10, ink, 'center');
     if (!participating) for (const [name, peer] of lobbyPeers) {
       const original = { x: peer.x, y: peer.y };
       const direct = peerMotion.position(name);
-      if (direct) { peer.x = direct.x; peer.y = direct.y; }
+      const visual = smoothing.sample(name, direct || original, { epoch: lobby?.epoch, direct: !!direct });
+      peer.x = visual.x; peer.y = visual.y;
       peer.render(ctx); text(ctx, name.slice(0, 12), peer.x + 10, peer.y - 8, 10, ink, 'center');
       Object.assign(peer, original);
     }
@@ -461,7 +480,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (participating) for (const [name, peer] of peers) {
       const original = { x: peer.x, y: peer.y };
       const direct = peerMotion.position(name);
-      if (direct && direct.x >= ENTRY_WIDTH && !state.failure) { peer.x = direct.x - ENTRY_WIDTH; peer.y = direct.y; }
+      const live = direct && direct.x >= ENTRY_WIDTH && !state.failure;
+      const worldPose = live ? direct : { x: peer.x + ENTRY_WIDTH, y: peer.y };
+      const visual = smoothing.sample(name, worldPose, { epoch: state.epoch, direct: !!live, snap: !!state.failure });
+      peer.x = visual.x - ENTRY_WIDTH; peer.y = visual.y;
       drawCharacter(ctx, peer, name);
       text(ctx, name.slice(0, 12) + ' ' + (state.members.find(member => member.name === name)?.step || 0)
         + '/' + (level.route.length + challenge.answers.length), peer.x + 10, peer.y - 8, 10, ink, 'center');

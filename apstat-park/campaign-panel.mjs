@@ -15,6 +15,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   let bits = 0, buddy = 0, sentBits = -1, sentBuddy = -1, frame = null;
   let clearActive = false, soundClear = false, loadingState = null, hiddenTimer = null;
   let idle = false, activeJoin = false;
+  let paintedFrame = -1, paintedEpoch = null, paintedHelpers = null;
   const held = new Set();
   const replay = createCampaignReplay(inputs => game.step(inputs));
   const scale = () => Math.min(1, board.viewportW() / 720);
@@ -28,8 +29,9 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   }
   let dissolve = createSceneDissolve(board.transitionFrame);
   function send(type, data = {}) {
-    if (socket?.readyState !== 1 || socket.bufferedAmount > 8192) return;
+    if (socket?.readyState !== 1 || socket.bufferedAmount > 8192) return false;
     socket.send(JSON.stringify({ type, epoch: state?.epoch, ...data }));
+    return true;
   }
   function resume() {
     if (performance.now() - lastResume < 500) return;
@@ -85,9 +87,13 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 7, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
-    if (now - lastInput >= 16 && (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500)) {
-      send('campaign_input', { bits, buddy }); sentBits = bits & 31; sentBuddy = buddy & 31;
-      bits &= 31; buddy &= 31; lastInput = now;
+    // Keyboard edges send immediately. A blocked write must retain the jump
+    // pulse until it actually reaches the ordered authoritative input stream.
+    if (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500) {
+      if (send('campaign_input', { bits, buddy })) {
+        sentBits = bits & 31; sentBuddy = buddy & 31;
+        bits &= 31; buddy &= 31; lastInput = now;
+      }
     }
     if (game.stats.cleared && !clearActive && now - lastClear > 500 && replay.frame > 0) {
       lastClear = now; send('campaign_clear', { frame: replay.frame });
@@ -114,7 +120,11 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     else { buddy = down ? buddy | mask : buddy & ~mask; if (mask === 16 && fresh) buddy |= 32; }
     pump();
   }
-  function blur() { held.clear(); bits = 0; buddy = 0; sentBits = -1; sentBuddy = -1; }
+  function blur() {
+    held.clear(); bits = 0; buddy = 0;
+    if (send('campaign_input', { bits, buddy })) { sentBits = 0; sentBuddy = 0; lastInput = performance.now(); }
+    else { sentBits = -1; sentBuddy = -1; }
+  }
   function visibility() {
     clearTimeout(hiddenTimer); blur();
     if (doc.hidden) hiddenTimer = setTimeout(dispose, 15000);
@@ -142,7 +152,11 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     const entry = CAMPAIGN[state?.stageIndex || 0];
     frame = clear.sample(clearActive, state?.epoch, performance.now(), 720, 750);
     if (frame) ctx.filter = frame.filter;
-    if (game && state) game.render();
+    // Reuse the last engine bitmap on high-refresh displays or while waiting
+    // for a relay frame. Scene fades and the CLEAR banner still animate below.
+    if (game && state && (paintedFrame !== replay.frame || paintedEpoch !== state.epoch || paintedHelpers !== state.helpers)) {
+      game.render(); paintedFrame = replay.frame; paintedEpoch = state.epoch; paintedHelpers = state.helpers;
+    }
     // Same orange floor edge and exit doorway as the calculator room.
     if (!game || !state) { ctx.fillStyle = '#ff864d'; ctx.fillRect(0, 700, 720, 50); }
     const atlas = board.atlas?.();

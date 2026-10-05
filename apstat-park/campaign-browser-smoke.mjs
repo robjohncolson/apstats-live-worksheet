@@ -6,9 +6,12 @@ import { createServer } from 'node:http';
 import { createReadStream, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createClassroomRegistry } from '../../curriculum_render/railway-server/classroom.js';
-import { createParkService } from '../../curriculum_render/railway-server/apstat-park/service.mjs';
 import { WebSocketServer } from '../../curriculum_render/railway-server/node_modules/ws/wrapper.mjs';
+
+const relayRoot = process.env.PARK_RELAY_ROOT
+  ? path.resolve(process.env.PARK_RELAY_ROOT) : fileURLToPath(new URL('../../curriculum_render/', import.meta.url));
+const { createClassroomRegistry } = await import(pathToFileURL(path.join(relayRoot, 'railway-server/classroom.js')));
+const { createParkService } = await import(pathToFileURL(path.join(relayRoot, 'railway-server/apstat-park/service.mjs')));
 
 const { chromium } = await import(process.env.PARK_PLAYWRIGHT_MODULE
   ? pathToFileURL(process.env.PARK_PLAYWRIGHT_MODULE).href : 'playwright');
@@ -145,4 +148,3 @@ try {
   await new Promise(resolve => wss.close(resolve));
   await new Promise(resolve => server.close(resolve));
 }
-
