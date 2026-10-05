@@ -1,3 +1,26 @@
+ScaleSwitch / ordinary Player resize checkpoint:
+Factory bb7504e calls bb77a30 and sets scene scrollFlags800. Subclass replaces
+base Lua parser with bb78f00: numericparam0 is per-frame size increment; keeps
+momentary flag40 and manager priority2. PRE bb5f550 sends command21 to the last
+contacting category1 actor before ordinary switch PRE; null actor returns early.
+Label bb5f5e0 is +/- at displayY-40,32px,alignment2/2,depth.1.
+- Player bb6fd20 command21 now uses resizeNativePlayer by default (explicit
+  extension override remains supported). bb679c0 clamps spriteY to float32(.4)
+  through3.5, retaining facing sign. Body size above1 is1+(size-1)*.88; below1
+  it equals sprite size. Raw disassembly proves return is newY minus saved oldY.
+- Positive growth computes new-minus-old body width/height and carries category1
+  contacts UP by height, then RIGHT/LEFT by half width, using bb34f30's existing
+  contact traversal. Shared carry now accepts vertical directions too.
+- Normal body-world scale clearance remains responsible for clipping growth.
+  Player virtuale8 bb69ab0 expands resolved scales above1 by division/.88 and
+  notifies attached components; it does NOT rewrite the main sprite scale.
+Six tests cover clamp/facing/body ratio, component correction, continuous
+contact and release, actual Player growth, stacked/side neighbor carry, and
+original big_and_small initialization for2/8 players. Full suite598/598.
+Original jump07 still lacks SwitchRect. Sprite/label renderer, network snapshots,
+full cramped-level playthroughs and golden comparisons remain required; these
+unit/integration checks do not prove complete stage or production parity.
+
 Text checkpoint:
 Factory bb76a66 -> ctor bb60150, Lua bb602f0, PRE bb607c0, draw bb60820,
 input-label refresh bb609a0, visibility bb60c20. Bodyless actor; horizontal

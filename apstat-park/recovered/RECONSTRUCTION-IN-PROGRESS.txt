@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+ScaleSwitch checkpoint: continuous resize now reaches the ordinary native
+Player without an absent extension. Native size clamp, collision-size ratio,
+growth carry and component correction added. Original big_and_small initializes
+for2/8players; full suite598/598. jump07 still needs SwitchRect. Renderer,
+network snapshots, cramped-level solutions and golden comparisons remain open.
+Continue remaining controllers/mechanics and live integration. Full48-stage
+goal remains NOT complete.
+
 Text checkpoint: native label parameters, party/input substitutions, motion,
 lifetime and draw metadata now assemble original auto_scroll02 for2/8players,
 including deferred enemy creation. Full suite592/592. Actual font/glyph rendering,

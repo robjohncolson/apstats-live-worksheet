@@ -5,6 +5,7 @@ import { createNativeWarpActor } from './native-warp-actor.mjs';
 import { createNativeSwitchActor } from './native-switch-actor.mjs';
 import { createNativeDeadSwitchActor } from './native-dead-switch-actor.mjs';
 import { createNativeTextActor } from './native-text-actor.mjs';
+import { createNativeScaleSwitchActor } from './native-scale-switch-actor.mjs';
 import { createNativeBridgeActor } from './native-bridge-actor.mjs';
 import { createNativeWeightedLiftActor } from './native-weighted-lift-actor.mjs';
 import { createNativeDarknessLiftActor } from './native-darkness-lift-actor.mjs';
@@ -35,6 +36,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'Switch',
   'DeadSwitch',
   'Text',
+  'ScaleSwitch',
   'Bridge', 'KeyBridge', 'Gate',
   'WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2',
   'DarknessWeightedLift', 'InvisibleWeightedLift',
@@ -91,6 +93,10 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   if (spawn.actorName === 'Switch') return scene.addActor(createNativeSwitchActor({ spawn }));
   if (spawn.actorName === 'DeadSwitch') return scene.addActor(createNativeDeadSwitchActor({ spawn }));
   if (spawn.actorName === 'Text') return scene.addActor(createNativeTextActor({ spawn, partySize: scene.playerCount }));
+  if (spawn.actorName === 'ScaleSwitch') {
+    scene.scrollFlags |= 0x800;
+    return scene.addActor(createNativeScaleSwitchActor({ spawn }));
+  }
   if (['Bridge', 'KeyBridge', 'Gate'].includes(spawn.actorName)) {
     return scene.addActor(createNativeBridgeActor({ spawn, partySize: scene.playerCount }));
   }

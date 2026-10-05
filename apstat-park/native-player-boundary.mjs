@@ -103,15 +103,15 @@ export function checkNativePlayerFallBounds(scene, actor, state) {
 // Scroll uses RIGHT; PushBox also uses LEFT. Both carry only category1.
 export function carryNativeScrollNeighbors(actor, movement, directionIndex = 3,
   { allCategories = false, compensateOpposingVelocity = false } = {}) {
-  if (directionIndex !== 2 && directionIndex !== 3) throw new Error('Invalid native horizontal carry direction');
-  const direction = { x: directionIndex === 2 ? -1 : 1, y: 0 };
+  const direction = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }][directionIndex];
+  if (!direction) throw new Error('Invalid native carry direction');
   const delta = { x: f(movement.x), y: f(movement.y) };
   const visited = new Set();
   function carryFrom(carrier) {
     const body = carrier.bodies[0]?.body;
     if (!body?.world) return;
     const neighbors = body.contacts.filter(({ normal }) =>
-      Math.abs(f(normal.x - direction.x)) <= EPSILON && Math.abs(f(normal.y)) <= EPSILON)
+      Math.abs(f(normal.x - direction.x)) <= EPSILON && Math.abs(f(normal.y - direction.y)) <= EPSILON)
       .map(contact => findNativeBody(body.world, contact.bodyId)).filter(Boolean);
     if (neighbors.length > 16) throw new Error('Native scroll carry contact capacity exceeded');
     for (const neighbor of neighbors) {

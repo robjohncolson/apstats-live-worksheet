@@ -9,6 +9,7 @@ import { isNativePlayerAirborne, recordNativePlayerCorrection, applyNativePlayer
 import { runNativeCommonActorAdded, runNativeCommonActorPre, runNativeCommonActorPost } from './native-actor-lifecycle.mjs';
 import { unregisterNativeActorBodies } from './native-actor-bodies.mjs';
 import { placeNativeActorBodies } from './native-actor-motion.mjs';
+import { resizeNativePlayer } from './native-player-resize.mjs';
 const f = Math.fround;
 
 // Normal Player assembly (bb66e50/69010/690d0/691d0). Presentation implements
@@ -46,6 +47,11 @@ export function createNativePlayer({ playerIndex = 0, position, presentation, ex
       if (!(actor.motionFlags & 4)) return;
       actor.scale.x = f(Math.abs(actor.scale.x) * (direction < 0 ? -1 : 1));
       presentation.setScale(actor, actor.scale);
+    },
+    onScaleResolved(x, y) {
+      // bb69ab0 corrects attached components, not the main sprite's size.
+      const expand = value => value > 1 ? f(f(f(value - 1) / f(.88)) + 1) : value;
+      for (const component of actor.components) component.setScale?.(expand(x), expand(y));
     },
     onStopped() { actor.spriteFlags |= 2; actor.stepStartPosition = { ...actor.position }; },
     onResumed() { actor.spriteFlags &= ~2; },
@@ -95,7 +101,11 @@ export function createNativePlayer({ playerIndex = 0, position, presentation, ex
     },
     onCommand: (command, value) => receiveNativePlayerCommand(actor, command, value),
     handleWalkTransformCommand(state, command, value) {
-      if (command === 0x21) return extensions.resize(actor, state, value);
+      if (command === 0x21) {
+        const result = extensions.resize ? extensions.resize(actor, state, value) : resizeNativePlayer(actor, value);
+        presentation.setScale(actor, actor.scale);
+        return result;
+      }
       if (!value) actor.setEnabled(false);
       else {
         const pending = state.pendingPosition;
