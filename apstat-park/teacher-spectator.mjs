@@ -182,7 +182,7 @@ export function mountTeacherSpectator(container, { wsUrl, username, section = 'B
     }
     const count = packet?.students.length || 0;
     status.textContent = error || (!packet ? 'Connecting…' : performance.now() - receivedAt > 4000 ? 'Waiting for connection…'
-      : 'Period ' + classes.value.replace('Period', '') + ' · ' + count + ' student' + (count === 1 ? '' : 's') + ' online · Watching only');
+      : (packet.gameLabel || 'Period ' + classes.value.replace('Period', '')) + ' · ' + count + ' student' + (count === 1 ? '' : 's') + ' online · Watching only');
     animation = win.requestAnimationFrame(draw);
   }
   connect(); poll = setInterval(request, 200); animation = win.requestAnimationFrame(draw);
