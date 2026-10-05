@@ -12,9 +12,9 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   const audio = createPicoAudio(win), clear = createStageClear();
   let game = null, disposed = false, socket = null, joined = false, state = null, error = '';
   let lastPacket = 0, lastJoin = -Infinity, lastInput = -Infinity, lastClear = -Infinity, lastResume = -Infinity;
-  let bits = 0, buddy = 0, sentBits = -1, sentBuddy = -1, accumulator = 0, frame = null;
+  let bits = 0, buddy = 0, sentBits = -1, sentBuddy = -1, frame = null;
   let clearActive = false, soundClear = false, loadingState = null, hiddenTimer = null;
-  let idle = false, activeJoin = false, buffering = true;
+  let idle = false, activeJoin = false;
   const held = new Set();
   const replay = createCampaignReplay(inputs => game.step(inputs));
   const scale = () => Math.min(1, board.viewportW() / 720);
@@ -43,7 +43,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
       game.load(packet.stageIndex, Math.max(2, packet.roster.length), packet.seed);
       game.setPresentation({ focusSlot: Math.max(0, packet.roster.indexOf(board.username)),
         colours: packet.roster.map(name => rgbHex(catBodyForHue(board.createPeer(name, { x: 0, y: 0 }).hue))) });
-      clearActive = false; soundClear = false; accumulator = 0; buffering = true; sentBits = -1; sentBuddy = -1;
+      clearActive = false; soundClear = false; sentBits = -1; sentBuddy = -1;
       for (const key of Object.keys(board.input)) board.input[key] = false;
       held.clear(); bits = 0; buddy = 0;
     }
@@ -111,22 +111,14 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   function update(dt) {
     board.setBoardHeight?.(Math.round(750 * scale()));
     if (!game || !state || state.phase === 'waiting') return;
-    // Start each stream with one three-frame packet available. Otherwise the
-    // first frame arrives late, accumulated time drains the whole packet at
-    // once, and the avatar freezes until the next packet.
-    if (buffering) {
-      if (replay.received - replay.frame < 3) return;
-      buffering = false; accumulator = 0;
-    }
-    // Drain a reconnect backlog in bounded slices; ordinary play remains fixed at 60 Hz.
-    accumulator += Math.min(dt, .1);
-    const catchingUp = replay.received - replay.frame > 120;
+    // The relay already supplies a 60 Hz clock. Apply available frames now;
+    // a second client clock or refill threshold adds avoidable input latency.
+    // Keep reconnect catch-up bounded so the page stays responsive.
     const deadline = performance.now() + 6;
-    while (replay.frame < replay.received && (catchingUp || accumulator >= 1 / 60)) {
-      replay.advance(1); if (!catchingUp) accumulator -= 1 / 60;
+    while (replay.frame < replay.received) {
+      replay.advance(1);
       if (performance.now() >= deadline) break;
     }
-    if (replay.frame === replay.received) { accumulator = 0; buffering = true; }
     if (clearActive && !soundClear) { audio.clear(); soundClear = true; }
   }
   function render(ctx) {

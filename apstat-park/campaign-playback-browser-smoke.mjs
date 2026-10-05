@@ -41,16 +41,20 @@ try {
     const update = board.engine.sceneEntities.get('campaign').update;
     for (let i = 0; i < 10; i++) update(1 / 60); // wait for first packet
     const advances = [];
-    for (let batch = 0; batch < 10; batch++) {
-      receive({ type: 'campaign_frames', epoch: 'one', from: batch * 3, to: batch * 3 + 3, events: [] });
-      for (let i = 0; i < 3; i++) {
-        const before = window.played || 0;
-        update(1 / 60); advances.push((window.played || 0) - before);
-      }
+    for (let frame = 0; frame < 30; frame++) {
+      receive({ type: 'campaign_frames', epoch: 'one', from: frame, to: frame + 1, events: [] });
+      const before = window.played || 0;
+      update(1 / 144); advances.push((window.played || 0) - before);
+      // Running out of frames must not introduce a three-frame refill wait.
+      update(1 / 144);
     }
+    // A short network hiccup must not leave playback permanently behind.
+    receive({ type: 'campaign_frames', epoch: 'one', from: 30, to: 38, events: [] });
+    const beforeCatchup = window.played;
+    update(1 / 144); advances.push(window.played - beforeCatchup);
     return advances;
   });
-  assert.deepEqual(cadence, Array(30).fill(1), 'one simulation/animation step per display frame, not bursts');
+  assert.deepEqual(cadence, [...Array(30).fill(1), 8], 'single frames play immediately; a backlog is drained without an extra client clock');
   await page.evaluate(() => panel.dispose());
   assert.deepEqual(errors, []);
   console.log('Campaign playback cadence browser smoke passed');
