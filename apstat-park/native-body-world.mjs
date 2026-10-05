@@ -12,7 +12,7 @@ const ZERO_MOTION = 2 ** -52;
 const PAIR_GAP = f(.01);
 const CHAIN_GAP = f(.001);
 
-export function solveNativeBodyPairs(world) {
+export function solveNativeBodyPairs(world, { resetPriority = true } = {}) {
   let operations = 0;
   const countOperation = () => {
     if (++operations > (world.operationLimit ?? 10000)) {
@@ -20,7 +20,7 @@ export function solveNativeBodyPairs(world) {
     }
   };
   // Native clears the temporary priority-demotion bit once per world pass.
-  for (const body of world.bodies) body.flags &= ~8;
+  if (resetPriority) for (const body of world.bodies) body.flags &= ~8;
   let result;
   do {
     do { result = solvePhase(world, 0, countOperation); } while (result === 0);

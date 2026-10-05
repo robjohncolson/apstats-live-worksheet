@@ -198,3 +198,44 @@ Standalone circle/support checkpoint:
   integration boundary is still the BoundBall map/Thunder pair paths above.
   Next: bc1f7b0 scale-change resolution, bc146c0 finalization, complete bc1da80
   world-pass orchestration and original body registration/update ordering.
+
+Standalone scale and world-pass checkpoint:
+  native-body-scale.mjs implements bc12760 rectangle displacement probes and
+  bc1f7b0 deferred scale resolution. The displacement probe moves one body,
+  rewinds crossed axes against the other rectangle, applies positional .01
+  separation, and returns resolved position minus the starting position. It
+  does not use the pair solver's perpendicular-axis rejection or old-overlap
+  exclusion. This distinction also changes float32 rounding of allowed motion.
+
+  A strict shrink on BOTH scale axes applies directly. Otherwise changes
+  within .001 on both axes are ignored, and non-rectangle growth is ignored.
+  Rectangle growth computes four corner movements from old to desired bounds,
+  restores accepted scale, probes those movements without sliding against the
+  map, then against eligible rectangles. Each probe restores actor position.
+  The smallest clamped allowed/requested component ratio limits the scale.
+  A blocked result backs scale toward accepted scale by .02, not the .01 used
+  for positions (raw DAT_7ff72bcbbb28 = .019999999552965164).
+  An active physical non-rectangle encountered in registry order exits the
+  whole growth routine before category/distance checks. This unusual behavior
+  is retained and tested. Nonphysical rectangles take desired scale directly.
+  Raw bc1fb69..bc1fb7d confirms map input/output alias and slide=false;
+  bc1fcdb..bc1fced confirms Ghidra's omitted rectangle-probe delta/output args.
+
+  native-body-pass.mjs implements bc1da80 orchestration and bc146c0 finalization.
+  It snapshots entry positions, temporarily restores accepted scales, queues
+  up to 32 changed bodies, resolves map movement from accepted positions,
+  runs the pair phases, invokes the world after-pairs hook, resolves queued
+  scales, finalizes bodies, then dispatches the ordered overlap scan.
+  Finalization commits accepted position and clears moved bit first. It emits
+  a scale callback only when actual differs from requested, then stores actual
+  scale as requested and accepted. Position callbacks receive the correction
+  from the entry snapshot, gated by squared distance > FLT_EPSILON. Actor
+  contacts are refreshed before map contacts. Callback-caused position edits
+  do not retroactively rewrite the already committed accepted position.
+
+  Tests cover all rectangle probe faces, unblocked/blocked growth, shrink and
+  tiny-change branches, non-rectangle early exit, .02 scale correction, the
+  32-body queue limit, transform/contact/overlap callback order, and a complete
+  map-correction-to-contact pass. The reconstructed world pass runs standalone;
+  native actor registration and the actor PRE/POST bridge are still needed
+  before replacing the existing campaign update loop.

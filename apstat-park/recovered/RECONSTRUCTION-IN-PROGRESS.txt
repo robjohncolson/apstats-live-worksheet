@@ -175,3 +175,17 @@ Standalone circle/support checkpoint:
   current live integration remains the BoundBall map/Thunder pair checkpoint.
 - Next shared work: scale-change resolution (bc1f7b0), body finalization
   (bc146c0), complete world pass (bc1da80), body registration and actor ordering.
+
+Standalone scale/world-pass checkpoint:
+- Implemented bc12760 rectangle displacement probes and bc1f7b0 deferred
+  scale resolution. Growth probes four corners, limits scale against map/body
+  obstruction, then applies native .02 scale backoff. Shrink, tiny-change,
+  non-rectangle and nonphysical branches retain native behavior.
+- Added bc1da80 world-pass sequencing and bc146c0 finalization, including the
+  32-body scale queue, correction callbacks and actor/map/overlap event order.
+- 236 unit tests pass. Native source evidence and limitations are recorded in
+  NATIVE-CONTACT-EVIDENCE.txt. Live gameplay is still at the previous shared
+  BoundBall-map/Thunder-pair integration boundary.
+- Next: stable native body registration (bc1ffa0), body descriptor setup and
+  actor PRE/POST integration. ENGINE_SPEC around line 25995 identifies native
+  descending signed-priority insertion with stable equal-priority chronology.
