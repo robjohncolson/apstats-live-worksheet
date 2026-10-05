@@ -319,3 +319,30 @@ Native actor/body attachment checkpoint:
   callback ordering, component coordinates and complete movement/world/detach.
   This bridge is not yet a replacement for the campaign actor manager. Actor
   manager membership and the component on-added path still need integration.
+Native actor scheduler checkpoint:
+- native-actor-manager.mjs ports bba62b0 PRE, bba63e0 POST, bb9cfe0/bba6530
+  insertion, bba6590 circular append, bb9d050 removal requests, and
+  bb9d2b0/bba6600 active-list removal. Priority buckets run ascending, with
+  stable circular insertion order inside each bucket.
+- All insertions enter the pending ring. bb9cfe0 invokes on-added immediately,
+  so bodies can enter the physics registry before their actor receives PRE.
+  Only PRE promotes pending actors. Actors spawned during PRE/STEP/POST wait
+  until the next PRE for actor execution; POST does not drain pending entries.
+- PRE promotion checks removal bit 0x20 before ordinary disabled-bit gating.
+  Active iteration captures NEXT before dispatch and rereads bucket HEAD
+  afterward. Removing the current head makes captured NEXT equal new HEAD,
+  ending that bucket's current walk. Later buckets and POST still proceed.
+- bb9d140 chooses normal virtual +10 or alternate +18 using manager bit 8,
+  actor bits 4/8/0x10, cursor +38 and delay +3c. Alternate dispatch returns
+  without normal removal processing. bb9d1f0 resets/counts cursor, decays or
+  bounds delay against cursor and capacity +40, and gates virtual +20 using
+  the old cursor before increment. Bit 0x20 is processed after normal PRE/POST.
+- Manager bit 1 stops both passes, including pending promotion. Actor bit 1
+  skips dispatch without unregistering the actor or bodies. Manager bit 4
+  encloses each active walk. Removal notifies the actor then manager, unlinks,
+  clears membership, decrements the retained reference and releases at zero.
+- Nine cases verify ordering, deferred execution, immediate body participation,
+  head removal, pause/disabled flags and history dispatch counters. The actual
+  actor history snapshot hooks and complete scene loop remain to be connected.
+- Immediate removal of a still-pending actor is outside bba6600's active-ring
+  contract; normal removal requests use the native bit and promotion path.

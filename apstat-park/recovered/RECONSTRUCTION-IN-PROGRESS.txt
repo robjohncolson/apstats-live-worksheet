@@ -222,3 +222,13 @@ Native actor attachment checkpoint:
   then use that lifecycle to replace campaign per-family collision adapters.
 - No new stage is certified by this standalone bridge. Live runtime remains
   at the prior BoundBall constructor/map and Thunder-pair integration boundary.
+Native actor scheduler checkpoint:
+- Added priority-bucket PRE/POST scheduler, pending insertion, immediate
+  on-added callbacks, removal boundaries and history-mode dispatch gates.
+- Nine tests include a spawned actor whose body participates in the current
+  world pass while its own PRE/POST execution waits until the next frame.
+- The scheduler is standalone until the campaign actor implementations supply
+  native lifecycle hooks. Full common actor PRE/POST and scene-loop wiring,
+  then actor-family collision adapter replacement, remain the next work.
+- No stage is newly certified by scheduler tests. The 48-stage fidelity goal
+  still requires gameplay integration and complete route verification.
