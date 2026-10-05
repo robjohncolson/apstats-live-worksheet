@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Walking controller assembly checkpoint: native-walk-controller.mjs connects
+steering, grounded/airborne processing, small-step adjustment, jump processing,
+external velocity, pending relocation and motion commands. A native solver
+fixture lands on Balance, loads/rides it, jumps and lands again. All 353 park
+tests pass. The actor shell supplies input/state/presentation callbacks; scene
+clipping/scroll/fall callbacks and transform commands remain explicit required
+dependencies. Full Player construction, ownership/input modes, damage/forms,
+rendering and live campaign integration are still incomplete.
+
 Player relocation checkpoint: native-player-relocation.mjs implements the
 walking controller's pending-position POST branch using native map/body
 placement queries. Blocked destinations retry; successful moves synchronize

@@ -1,5 +1,32 @@
 Native body-pair reconstruction checkpoint
 
+Walking controller assembly checkpoint (bb6f020/bb6f0e0/bb6fa50/bb6fd20):
+  Native-walk-controller composes existing steering/gravity/jump routines in
+  recovered order. Frozen bit8 clears hold/jump count/bounce and bits1/2, then
+  skips velocity publication. Grounded processing resets vertical velocity,
+  resets forced/bounce vector unless pending, sets player steering bit1 and
+  handles animation2->0 plus command17. External actor+140 velocity is added
+  after forced horizontal velocity and cleared before component dispatch.
+  Raw bb6f523..608 confirms small-step RIGHT contact query precedes LEFT
+  regardless of movement sign. Only |vx|>epsilon proceeds. Among matching
+  body contacts take minimum world top Y; map-only contact keeps surface0.
+  Difference=player bottom-surface; only difference<.5 writes vy=-difference
+  -.01. This uses bb70550 scaled bounds, with a 16-pointer contact buffer.
+  Motion commands0/1 store forcedX/bounceY only with hold=0; null vector uses
+  {0,-5.1}; command1 sets force bit2. Command1e toggles frozen bit8 and zeros
+  velocity through components, returning1. Command22 multiplies speed scale,
+  capping only the upper side at2. Commands7/8 queue destination/current pose.
+  Enable/resize commands remain actor-owned dependencies. Command2 is not a
+  walking-controller bounce command; raw Player dispatcher forwards it and
+  bb6fd20 has no matching case, so this controller returns0 without a change.
+  POST runs recovered relocation and prediction-latch bookkeeping, gated by
+  manager bit8. Input ownership, scene clipping/scroll/fall rules and actor
+  transformations are required callbacks, not hidden preview implementations.
+  Integration fixture supplies a local actor shell with native geometry,
+  lifecycle/correction hooks and body solver: lands on Balance, drives load,
+  jumps from it and lands again. It is not the complete Player class or an
+  input-only campaign solution. GitNexus does not yet index these symbols.
+
 Player relocation/placement checkpoint (bb6fa50, bc1d3a0, bc303e0):
   Controller+20 vector is pending destination; abs(float32(x*x+y*y)) <=
   FLT_EPSILON means no relocation. In nonzero scroll mode, targetX below
