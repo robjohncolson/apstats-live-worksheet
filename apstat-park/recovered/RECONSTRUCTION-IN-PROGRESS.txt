@@ -1,5 +1,11 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+DelaySwitch checkpoint: source countdown, delayed publication, rearm, snapshot
+adapter and label metadata added; actual Player->platform activation tested.
+Full suite607/607. magnet02 remains incomplete (MagnetPlayer/Lift dependencies).
+Continue specialized controllers/mechanisms, rendering and network integration,
+full input-only stage solutions and golden comparisons. Full48 goal active.
+
 SwitchRect checkpoint: reference-counted platform activation, safe clear-space
 collision enable and release now assemble jump07. Original stage has2characters
 for both2/8 input-slot configurations with shuffle/control-swap rules. Full

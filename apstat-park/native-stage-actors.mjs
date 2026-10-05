@@ -5,6 +5,7 @@ import { createNativePushBoxActor } from './native-push-box-actor.mjs';
 import { createNativeWarpActor } from './native-warp-actor.mjs';
 import { createNativeSwitchActor } from './native-switch-actor.mjs';
 import { createNativeDeadSwitchActor } from './native-dead-switch-actor.mjs';
+import { createNativeDelaySwitchActor } from './native-delay-switch-actor.mjs';
 import { createNativeTextActor } from './native-text-actor.mjs';
 import { createNativeScaleSwitchActor } from './native-scale-switch-actor.mjs';
 import { createNativeBridgeActor } from './native-bridge-actor.mjs';
@@ -36,6 +37,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'Warp', 'WarpAll', 'WarpInitPos', 'WarpAllInitPos',
   'Switch',
   'DeadSwitch',
+  'DelaySwitch',
   'Text',
   'ScaleSwitch',
   'SwitchRect',
@@ -95,6 +97,7 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   }
   if (spawn.actorName === 'Switch') return scene.addActor(createNativeSwitchActor({ spawn }));
   if (spawn.actorName === 'DeadSwitch') return scene.addActor(createNativeDeadSwitchActor({ spawn }));
+  if (spawn.actorName === 'DelaySwitch') return scene.addActor(createNativeDelaySwitchActor({ spawn }));
   if (spawn.actorName === 'Text') return scene.addActor(createNativeTextActor({ spawn, partySize: scene.playerCount }));
   if (spawn.actorName === 'ScaleSwitch') {
     scene.scrollFlags |= 0x800;

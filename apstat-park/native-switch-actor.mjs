@@ -64,6 +64,7 @@ export function createNativeSwitchActor({ spawn }) {
     actor.scene.sendCommand(actor.name.slice(index + 6), pressed ? 9 : 10, actor.commandValue);
     if (actor.extraTarget) actor.scene.sendCommand(actor.extraTarget, pressed ? 9 : 10, actor.commandValue);
   }
+  actor.publishSwitchState = publish; // shared native bb5ebb0, also called by DelaySwitch expiry
   actor.body = createNativeActorCircle(actor, { x: 0, y: 0, radius: 12 }, 0, true);
   actor.body.category = 5;
   actor.body.onOverlap = other => {

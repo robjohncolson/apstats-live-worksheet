@@ -1,3 +1,21 @@
+DelaySwitch checkpoint:
+Factory bb750af -> bb5f6d0, Lua bb5f960, PRE bb5f9c0, transition bb5fa40.
+Constructor suppresses ordinary publication (flag100), priority2. Lua param0
+numeric float becomes delay; base switch momentary/target parameters are not read.
+PRE subtracts dt only when remaining>0. On crossing<=0 it invokes ordinary
+bb5ebb0 publication(true), sets rearm flag4 and zeroes remaining, then runs base
+Switch PRE. Press transition copies configured delay. Release does nothing.
+- Zero/negative delay never expires; no invented immediate trigger.
+- Snapshot bb5f7e0/5f830 stores pressed bit plus float remaining, restoring base
+  pressed-state/sound first. Client replica publication uses inherited guard.
+- Label bb5fa80 shows only remaining>0; integer(remaining+float32(.99)), display
+  X and Y-75,32px,alignment2/2,depth-.5. Renderer binding still pending.
+Four tests cover delayed expiry/rearm, zero-delay behavior, native display
+rounding, client snapshot/publication, and actual Player->DelaySwitch->SwitchRect.
+Full suite607/607. Original magnet02 still needs MagnetPlayer/Lift and other
+mechanisms; no original-stage completion claim. Transport and glyph rendering
+remain common integration work. Full48-stage fidelity is NOT complete.
+
 SwitchRect checkpoint:
 Factory bb7633f..3bd uses numeric width/height only, shifts negative width left,
 and calls bb5bcb0. Constructor matches ordinary Rect geometry/patch (32px tiles,
