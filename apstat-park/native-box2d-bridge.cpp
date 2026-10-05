@@ -119,6 +119,20 @@ void pico_body_linear_velocity(b2Body* body, float x, float y) { body->SetLinear
 void pico_body_angular_velocity(b2Body* body, float angular) { body->SetAngularVelocity(angular); }
 void pico_body_angular_damping(b2Body* body, float damping) { body->SetAngularDamping(damping); }
 void pico_body_active(b2Body* body, int active) { body->SetActive(active != 0); }
+void pico_body_awake(b2Body* body, int awake) { body->SetAwake(awake != 0); }
+b2ContactEdge* pico_contact_first(b2Body* body) { return body->GetContactList(); }
+b2ContactEdge* pico_contact_next(b2ContactEdge* edge) { return edge->next; }
+b2Body* pico_contact_other(b2ContactEdge* edge) { return edge->other; }
+float pico_contact_read(b2ContactEdge* edge, int field) {
+  const b2Manifold* manifold = edge->contact->GetManifold();
+  switch (field) {
+    case 0: return manifold->localNormal.x;
+    case 1: return manifold->localNormal.y;
+    case 2: return static_cast<float>(manifold->pointCount);
+    case 3: return edge->contact->IsTouching() ? 1.0f : 0.0f;
+    default: return 0.0f;
+  }
+}
 void pico_body_transform(b2Body* body, float x, float y, float angle) { body->SetTransform(b2Vec2(x, y), angle); }
 float pico_body_read(b2Body* body, int field) {
   switch (field) {

@@ -97,6 +97,25 @@ try {
   assert.ok(Math.abs(rayResult.y + 7) < 1e-5);
   assert.equal(rayResult.ownerMatches, true);
   console.log('NATIVE RAY BROWSER PASS: pixel query includes inactive sensor and returns wrapper identity');
+  const ballResult = await page.evaluate(async () => {
+    const { createNativeRigidWorld } = await import('/apstat-park/native-rigid-world.mjs');
+    const { createNativePhysicsBall } = await import('/apstat-park/native-physics-ball.mjs');
+    const world = await createNativeRigidWorld({ gravity: { x: 0, y: 10 } });
+    try {
+      const floor = world.createBody({ y: 1 }).addBox({ halfWidth: 10, halfHeight: .1 });
+      floor.userData = { discriminator: 1 };
+      const ball = createNativePhysicsBall();
+      ball.onAdded({ rigidWorld: world });
+      for (let i = 0; i < 120 && !ball.countdown; i++) {
+        ball.beforeMotion(); world.step(Math.fround(1 / 60)); ball.afterMotion();
+      }
+      const armed = ball.countdown;
+      for (let i = 0; i < 30; i++) { ball.beforeMotion(); world.step(Math.fround(1 / 60)); }
+      return { armed, countdown: ball.countdown, removed: Boolean(ball.flags & 32), alpha: ball.alphaByte };
+    } finally { world.dispose(); }
+  });
+  assert.deepEqual(ballResult, { armed: 30, countdown: 0, removed: true, alpha: 0 });
+  console.log('PHYSICS BALL BROWSER PASS: real contact arms native fade/removal sequence');
   console.log('RIGID WORLD BROWSER PASS: WASM loading, free fall, floor contact and revolute joint match desktop reference');
 } finally {
   await browser.close(); server.closeAllConnections();

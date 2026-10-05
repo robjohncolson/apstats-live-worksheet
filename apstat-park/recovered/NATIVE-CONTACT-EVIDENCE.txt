@@ -1,5 +1,24 @@
 Native body-pair reconstruction checkpoint
 
+PhysicsBall/contact-edge checkpoint (bb55c30/bb55d80/bb55e40/bb56000):
+  Circle radius 12, density .1, friction .5, restitution .2, angular damping
+  .5 and gravity scale 1. POST reads rigid position and integer sprite angle.
+  With countdown zero, scan body contact-edge order. Other body user data
+  points to its RIGID WRAPPER; field +c is the discriminator (not gameplay
+  category or owner/component pointer). PhysicsRect wrapper starts at actor
+  +3f8, making actor+404 this discriminator. Earlier component+c wording is
+  superseded by the actual pointer chain in bbe6520 and bb55e40.
+  discriminator==1 and abs(1-abs(manifold.localNormal.y))<=FLT_EPSILON arms 30.
+  IsTouching and point count are NOT checked. An edge can retain its local
+  normal after a bounce; read the previous step's contact data in actor PRE.
+  Positive old counts 30..20 set scale=float32(pow(1.0499999523162842,31-C)),
+  alphaByte=truncate(float32(float32((C-20)/10)*255)). Then decrement once.
+  New counts 1..14 force SetAwake(false), clearing motion/forces. New zero
+  marks actor removal; native manager removes after PRE and destroys its body.
+  Node scene tests verify all boundaries using actual solver contacts; Chrome
+  verifies contact arming and the subsequent transparent removal state. Tagged
+  polygon boundaries isolate the gate, not complete PhysicsArea geometry.
+
 Rigid ray query checkpoint (bbe7770):
   Scale p1 and p2 with float32 .01 and set maxFraction=1. Scan world body-list
   order and each fixture-list order, calling shape RayCast with its body

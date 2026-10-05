@@ -15,11 +15,11 @@
     "-sENVIRONMENT=web,node",
     "-sALLOW_MEMORY_GROWTH=1",
     "-sFILESYSTEM=0",
-    "-sEXPORTED_FUNCTIONS=[\"_pico_world_create\",\"_pico_world_destroy\",\"_pico_world_step\",\"_pico_world_ray_cast\",\"_pico_ray_read\",\"_pico_body_create\",\"_pico_body_destroy\",\"_pico_fixture_native_rectangle\",\"_pico_polygon_read\",\"_pico_fixture_box\",\"_pico_fixture_circle\",\"_pico_body_velocity\",\"_pico_body_linear_velocity\",\"_pico_body_angular_velocity\",\"_pico_body_angular_damping\",\"_pico_body_active\",\"_pico_body_transform\",\"_pico_body_read\",\"_pico_joint_revolute\",\"_pico_joint_local_revolute\",\"_pico_joint_destroy\",\"_pico_joint_gear\",\"_pico_gear_ratio\",\"_pico_revolute_read\"]"
+    "-sEXPORTED_FUNCTIONS=[\"_pico_world_create\",\"_pico_world_destroy\",\"_pico_world_step\",\"_pico_world_ray_cast\",\"_pico_ray_read\",\"_pico_body_create\",\"_pico_body_destroy\",\"_pico_fixture_native_rectangle\",\"_pico_polygon_read\",\"_pico_fixture_box\",\"_pico_fixture_circle\",\"_pico_body_velocity\",\"_pico_body_linear_velocity\",\"_pico_body_angular_velocity\",\"_pico_body_angular_damping\",\"_pico_body_active\",\"_pico_body_awake\",\"_pico_contact_first\",\"_pico_contact_next\",\"_pico_contact_other\",\"_pico_contact_read\",\"_pico_body_transform\",\"_pico_body_read\",\"_pico_joint_revolute\",\"_pico_joint_local_revolute\",\"_pico_joint_destroy\",\"_pico_joint_gear\",\"_pico_gear_ratio\",\"_pico_revolute_read\"]"
   ],
   "evidence": "Body, fixture and world layouts match recovered offsets; full solver parity remains unverified.",
   "hashes": {
-    "apstat-park/native-box2d-bridge.cpp": "c4f5626b699b2a88be241fd093d049457d56599f2859ab9fb4ec224df378a03b",
+    "apstat-park/native-box2d-bridge.cpp": "d3a59ceed9d0bfd1752c8a0351a6a6b856fdfe1dd5e553c377ad325311c4cbd8",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Box2D.h": "2b4a0628d40274c79819315b4f0e0fd26e9398445dfb16af2a6ad4ad981fd2f2",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Collision/Shapes/b2ChainShape.cpp": "27ac2393fdc9b1ae53ed99a899386e252019e32d60d9028ebad6e91f6fda550d",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Collision/Shapes/b2ChainShape.h": "fc954e35a79c26e930c6ac31cbb96b6de2ce14710a1588655067b5997c3c7c34",

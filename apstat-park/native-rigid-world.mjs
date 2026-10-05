@@ -92,6 +92,18 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
         setAngularVelocity(angular) { api._pico_body_angular_velocity(handle(body), angular); },
         setAngularDamping(damping) { api._pico_body_angular_damping(handle(body), damping); },
         setActive(active) { api._pico_body_active(handle(body), Number(Boolean(active))); },
+        setAwake(awake) { api._pico_body_awake(handle(body), Number(Boolean(awake))); },
+        readContacts() {
+          const result = [];
+          for (let edge = api._pico_contact_first(handle(body)); edge; edge = api._pico_contact_next(edge)) {
+            const pointer = api._pico_contact_other(edge);
+            const other = [...bodies].find(([, value]) => value === pointer)?.[0];
+            if (!other) throw new Error('Contact references an untracked native body');
+            result.push({ body: other, localNormal: { x: api._pico_contact_read(edge, 0), y: api._pico_contact_read(edge, 1) },
+              pointCount: api._pico_contact_read(edge, 2), touching: Boolean(api._pico_contact_read(edge, 3)) });
+          }
+          return result;
+        },
         setTransform(x, y, angle = 0) { api._pico_body_transform(handle(body), x, y, angle); },
         read() {
           const pointer = handle(body);

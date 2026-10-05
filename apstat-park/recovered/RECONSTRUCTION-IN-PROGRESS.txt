@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+PhysicsBall checkpoint: native-physics-ball.mjs uses real contact-edge data
+from the pinned backend. The recovered discriminator/local-normal gate arms
+30 later PRE ticks of scale/alpha changes, sleep and actor-manager removal.
+Node lifecycle and Chrome contact/fade tests pass; 318 total tests pass.
+Tests currently use a tagged polygon boundary to isolate the contact gate.
+Actual PhysicsArea edge construction, launcher timing and live stage factory
+integration remain required before claiming faithful seesaw gameplay.
+
 Rigid query checkpoint: native-rigid-raycast.mjs and the rebuilt pinned backend
 reproduce bbe7770's direct fixture scan, nearest-hit/tie order, pixel conversion
 and wrapper identity. Node and Chrome checks pass; the full suite has 315 tests.
