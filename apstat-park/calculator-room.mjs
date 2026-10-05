@@ -164,7 +164,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         calculator = win.TI84Native.create(null, { renderer: display });
         initializeCalculator(calculator, level); applied = 0;
       }
-      if (packet.phase === 'active' && packet.roster.includes(board.username) && player.x >= ENTRY_WIDTH + 20) {
+      if ((board.role === 'teacher' || (packet.phase === 'active' && packet.roster.includes(board.username))) && player.x >= ENTRY_WIDTH + 20) {
         setParticipating(true);
       }
       return;
@@ -229,8 +229,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       ? 'Time is up. Returning to your result checkpoint with a fresh timer.'
       : 'Time is up. Restarting the calculator portion.')
       : state.complete ? 'Together! ' + level.title + ' complete.'
-      : state.solved ? hint + ' ' + state.readyCount + '/' + state.members.length + ' ready.'
-      : 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length) + ' · ' + state.members.length + ' on the team. ' + hint
+      : state.solved ? hint + ' ' + state.readyCount + '/' + state.teamSize + ' ready.'
+      : 'Step ' + (state.step + 1) + '/' + (level.route.length + challenge.answers.length) + ' · ' + state.teamSize + ' on the team. ' + hint
         + (state.lastPress && !state.lastPress.advanced ? ' Pressed ' + state.lastPress.key + '. The countdown keeps running. Reach the next checkpoint before time runs out.' : '')
         + (state.hintKeys?.length ? ' Hint: choose ' + state.hintKeys.join(' or ') + '. Step reset—30 seconds to try again.' : '');
     if (status.textContent !== text) status.textContent = text;
@@ -379,7 +379,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
         : lobby?.phase === 'active' ? 'TEAM ROUND IN PROGRESS' : 'PUSH THE BLOCK HERE TO START', 350, 143, 12);
     text(ctx, state?.failure ? (showingBoxplot ? 'Return to the checkpoint.' : 'Restart the calculator.') : state?.complete ? 'Walk to the door. Press UP.' : state?.solved ? 'Help your teammates finish.'
       : showingBoxplot ? 'Click a value for the result.' : 'Click to press your own keys.', 350, 175, 12);
-    text(ctx, state ? state.readyCount + '/' + state.members.length + ' matching results ready' : 'Everyone solves independently.', 350, 197, 12);
+    text(ctx, state ? state.readyCount + '/' + state.teamSize + ' matching results ready' : 'Everyone solves independently.', 350, 197, 12);
     text(ctx, state?.solved ? 'All values matched.'
       : showingBoxplot ? 'Checked after the whole answer.'
       : layer === 'second' ? '2ND ACTIVE - CHOOSE A FUNCTION'

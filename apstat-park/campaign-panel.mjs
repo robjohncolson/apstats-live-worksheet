@@ -35,14 +35,24 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (performance.now() - lastResume < 500) return;
     lastResume = performance.now(); send('campaign_resume', { from: replay.received });
   }
+  function presentationNames(packet) {
+    const names = packet.roster.length ? packet.roster.slice() : (packet.helpers || []).slice(0, 1);
+    while (names.length < 2) names.push(names[0] || 'practice');
+    return names.concat((packet.helpers || []).slice(packet.roster.length ? 0 : 1));
+  }
+  function playerSlot(packet) { return packet ? Math.max(0, presentationNames(packet).indexOf(board.username)) : 0; }
+  function present(packet) {
+    game?.setPresentation({ focusSlot: playerSlot(packet),
+      colours: presentationNames(packet).map(name => rgbHex(catBodyForHue(board.createPeer(name, { x: 0, y: 0 }).hue))) });
+  }
   function start(packet) {
     if (!game) { loadingState = packet; return; }
     if (packet.epoch !== state?.epoch) {
       if (state) dissolve = createSceneDissolve(capture());
       replay.reset(Math.max(2, packet.roster.length));
       game.load(packet.stageIndex, Math.max(2, packet.roster.length), packet.seed);
-      game.setPresentation({ focusSlot: Math.max(0, packet.roster.indexOf(board.username)),
-        colours: packet.roster.map(name => rgbHex(catBodyForHue(board.createPeer(name, { x: 0, y: 0 }).hue))) });
+      game.setPresentation({ focusSlot: playerSlot(packet),
+        colours: presentationNames(packet).map(name => rgbHex(catBodyForHue(board.createPeer(name, { x: 0, y: 0 }).hue))) });
       clearActive = false; soundClear = false; sentBits = -1; sentBuddy = -1;
       for (const key of Object.keys(board.input)) board.input[key] = false;
       held.clear(); bits = 0; buddy = 0;
@@ -57,6 +67,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     lastPacket = performance.now(); error = '';
     if (packet.type === 'campaign_idle') { idle = true; joined = false; activeJoin = false; blur(); return; }
     if (packet.type === 'campaign_error') { error = packet.message; joined = false; return; }
+    if (packet.type === 'campaign_helpers' && packet.epoch === state?.epoch) { state.helpers = packet.helpers; present(state); return; }
     if (packet.type === 'campaign_state') { joined = true; idle = false; activeJoin = false; start(packet); return; }
     if (packet.epoch !== state?.epoch) { joined = false; return; }
     if (packet.type === 'campaign_frames' && !replay.accept(packet)) resume();
@@ -71,7 +82,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (disposed) return;
     bind(); if (idle) return;
     const now = performance.now();
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 6, active: activeJoin }); }
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 7, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     if (now - lastInput >= 16 && (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500)) {
@@ -93,7 +104,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     event.preventDefault();
     if (idle && down) { idle = false; activeJoin = true; lastJoin = -Infinity; pump(); return; }
     const fresh = down && !held.has(key);
-    const local = game?.getView().screenPlayers[Math.max(0, state?.roster.indexOf(board.username) ?? 0)];
+    const local = game?.getView().screenPlayers[playerSlot(state)];
     const doorX = 50 + (game?.getView().projection.x || 0);
     if (key === 'arrowup' && fresh && local && Math.abs(local.x - doorX) < 24 && Math.abs(local.feet - 700) < 8) {
       dispose(); return;
@@ -145,7 +156,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     pixelText(ctx, entry.title, 28, 52, 14);
     let message = error || (idle ? 'INACTIVE. PRESS A GAME KEY TO REJOIN.' : !game ? 'LOADING PICO PARK...' : !joined ? 'RECONNECTING TO YOUR TEAM...'
       : state?.phase === 'waiting' ? 'GATHERING YOUR TEAM...'
-      : state && !state.roster.includes(board.username) ? 'JOINING NEXT STAGE. TEAM CAN PRESS R TO RESTART.'
+      : state && !state.roster.includes(board.username) && !(state.helpers || []).includes(board.username) ? 'JOINING NEXT STAGE. TEAM CAN PRESS R TO RESTART.'
       : replay.received - replay.frame > 120 ? 'CATCHING UP WITH YOUR TEAM...'
       : clearActive ? 'NEXT STAGE...' : state?.roster.length === 1
         ? 'SOLO: ARROWS + SPACE / WASD + F.  R TO RETRY.' : 'ARROWS + SPACE. UP TO ENTER DOORS. R TO RETRY.');

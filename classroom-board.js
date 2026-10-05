@@ -4313,6 +4313,7 @@
     var section       = opts.section;
     var username      = opts.username;
     var role          = opts.role || 'student';
+    var canPlayPark   = role === 'student' || opts.playable === true;
     var nameMap       = opts.nameMap || null;
     var onStateChange = opts.onStateChange || null;
     var mountHue      = (opts.hue != null) ? opts.hue : null;
@@ -4355,7 +4356,7 @@
     canvas.style.display = 'block';
     canvas.style.width   = '100%';
     // Reserve the student room before the socket, sprites, or module imports load.
-    var initialBoardH = role === 'student'
+    var initialBoardH = canPlayPark
       ? Math.round(750 * Math.min(1, (container.clientWidth || DEFAULT_BOARD_W) / 720)) : BOARD_H;
     canvas.style.height = initialBoardH + 'px';
     container.appendChild(canvas);
@@ -4488,7 +4489,7 @@
       // so a student walks across them instead of vanishing behind a DOM box. No label: it's a door.
       button.style.cssText = 'position:absolute;left:' + (PARK_DOOR_X0 - 3 + i * PARK_DOOR_STEP) + 'px;top:123px;width:44px;height:53px;background:transparent;border:0;border-radius:21px 21px 0 0;cursor:pointer;z-index:4;padding:0;-webkit-tap-highlight-color:transparent;outline-offset:2px';
       container.appendChild(button);
-      if (role !== 'student') { button.style.display = 'none'; }   // students only (self-directed)
+      if (!canPlayPark) { button.style.display = 'none'; }   // students only (self-directed)
       button.onclick = function () { enterPark(door.level); };
       return button;
     });
@@ -4515,7 +4516,7 @@
       return frame;
     }
     function enterPark(levelIndex) {
-      if (destroyed || !engineReady || nativeLoading || role !== 'student' || classroomBusy()) { return; }
+      if (destroyed || !engineReady || nativeLoading || !canPlayPark || classroomBusy()) { return; }
       nativeLoading = true;
       var previousPanel = nativePanel, previousScene = engine.sceneEntities;
       var transitionFrame = nativeActive ? freezeParkFrame() : null;
@@ -4547,7 +4548,7 @@
           levelIndex: levelIndex,
           onPark: function () { enterPark(7); },
           board: {
-            engine: engine, input: playerInput, presses: parkPresses, username: username, api: root.ClassroomBoard,
+            engine: engine, input: playerInput, presses: parkPresses, username: username, role: role, api: root.ClassroomBoard,
             viewportW: _viewportW,
             roomPresentation: { width: 720, height: 750, floor: 700, doorX: 30, doorSize: 40 },
             transitionFrame: transitionFrame,
@@ -4922,7 +4923,7 @@
     // reading playerInput's held flags only.
     var parkPresses = { left: 0, right: 0, jump: 0, up: 0 };
     // The main room is the calculator approach; the existing left door still opens Pico Park.
-    if (engineReady && role === 'student') engine.addEntity('calculator_approach', {
+    if (engineReady && canPlayPark) engine.addEntity('calculator_approach', {
       zIndex: -20,
       update: function () {
         if (nativeActive || classroomBusy() || Date.now() - parkReturnAt < 1200) return;
@@ -4953,7 +4954,7 @@
     var parkWalkTicks = 0;
     // The atlas (small, same build as the park modules, never waited on) was preloaded with the
     // engine above: the cats need it for every role, the door for students.
-    if (engineReady && role === 'student') engine.addEntity('park_doorway', {
+    if (engineReady && canPlayPark) engine.addEntity('park_doorway', {
       update: function () {
         setParkButtons(function (b) {
           var box = parkDoorBox(Number(b.getAttribute('data-classroom-native')) - 1);
@@ -5026,7 +5027,7 @@
     function handlePlayerUp(player) {
       // Up enters only when the sprite is ON the door (±16px of its center), never from the first
       // idle slot beside it; never for teachers; never during a whole-class event.
-      if (role === 'student' && !nativeActive && !classroomBusy() && Date.now() - parkReturnAt >= 1200) {
+      if (canPlayPark && !nativeActive && !classroomBusy() && Date.now() - parkReturnAt >= 1200) {
         var footX = player.x + player._spriteSize / 2 - (_camera.x || 0);
         for (var di = 0; di < PARK_DOORS.length; di++) {
           if (Math.abs(footX - parkDoorCenter(di)) <= 16) { enterPark(PARK_DOORS[di].level); return; }

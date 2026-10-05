@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
 export const CAMPAIGN_PATCHES = [{
+  id: 'optional-teacher-cats',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['Desk requirement: teachers can help without counting toward the student team'],
+  behavior: 'Desk adaptation, not a native rule: optional teacher cats do not increase party thresholds, goal quorums, or scroll-camera membership.',
+}, {
   id: 'warp-sensor-origin',
   files: ['src/engine/actors/Warp.ts', 'src/engine/actors/WarpAll.ts'],
   evidence: ['FUN_7ff72bb62ec0', 'FUN_7ff72bc12370', 'FUN_7ff72bc17170'],
@@ -89,6 +94,27 @@ export function patchCampaignSource(file, source) {
     return source;
   }
   if (file === 'src/engine/GameRuntime.ts') {
+    // Desk-specific optional helpers: thresholds and goal requirements remain
+    // those of the student party selected before helper cats are spawned.
+    for (const before of [
+      'Math.max(2, this.players.length)',
+      '(thresholdPercent / 100) * this.players.length',
+      'requiredPushPlayers(box.weightPercent, box.offset, this.players.length)',
+    ]) {
+      const after = before.replace('this.players.length', '(this.requiredPlayerCount ?? this.players.length)');
+      source = replaceOnce(source, before, after, file);
+    }
+    source = replaceOnce(source, 'const goalEligiblePlayers = this.players.filter((player) => (',
+      'const goalEligiblePlayers = this.players.filter((player) => (!player.parkHelper &&', file);
+    source = source.replaceAll('.filter(({ player }) => (\n        !this.collisionChangePlayersCollisionOff.has(player)',
+      '.filter(({ player }) => (\n        !player.parkHelper && !this.collisionChangePlayersCollisionOff.has(player)');
+    source = source.replaceAll('const playerCount = this.players.length;', 'const playerCount = this.requiredPlayerCount ?? this.players.length;');
+    source = replaceOnce(source, 'const activeAvatarCount = this.players.length;',
+      'const activeAvatarCount = this.requiredPlayerCount ?? this.players.length;', file);
+    source = replaceOnce(source, 'this.players.map((player) => player.rect.x + player.rect.width / 2)',
+      'this.players.filter(player => !player.parkHelper).map((player) => player.rect.x + player.rect.width / 2)', file);
+    source = replaceOnce(source, 'this.players.some((player) => player.deathTimer > 0)',
+      'this.players.some((player) => !player.parkHelper && player.deathTimer > 0)', file);
     source = 'import { planBoxPush } from ' + JSON.stringify(fileURLToPath(new URL('../apstat-park/campaign-push-contacts.mjs', import.meta.url))) + ';\n' + source;
     source = replaceOnce(source, '    const previousPushBoxRects = this.pushBoxes.map((pushBox) => ({ ...pushBox.rect }));', `    const previousPushBoxRects = this.pushBoxes.map((pushBox) => ({ ...pushBox.rect }));
     const planPush = (previous: Rect, destination: Rect) => planBoxPush(previous, destination,

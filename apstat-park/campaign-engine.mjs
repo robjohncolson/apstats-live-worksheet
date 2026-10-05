@@ -1,6 +1,7 @@
 const V = new URL(import.meta.url).search;
 const recovered = await import('./recovered/runtime.mjs' + V);
 const { createJump01Art, restoreJump01Steps } = await import('./campaign-jump01.mjs' + V);
+const { createCampaignHelpers } = await import('./campaign-helpers.mjs' + V);
 
 export const campaignStages = recovered.stages;
 export const decodeInput = bits => ({ left: !!(bits & 1), right: !!(bits & 2), up: !!(bits & 4), down: !!(bits & 8),
@@ -16,6 +17,7 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
   let runtime = null, stats = {}, seed = 1, definition = null, floor = 432;
   let projection = { x: 0, y: 0, scale: .5 };
   let jump01 = false, ticks = 0, colours = [], focusSlot = 0;
+  let syncHelpers = () => {};
   function load(stageIndex, partySize, nextSeed) {
     if (runtime) { app.stage.removeChild(runtime.root); runtime.root.destroy({ children: true }); }
     const entry = campaignStages[stageIndex];
@@ -24,6 +26,7 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
     seed = nextSeed; recovered.setRandomState(seed);
     runtime = new recovered.GameRuntime(next => { stats = next; }, onEvent);
     runtime.loadStage(definition, 720, 750, { partySize, simplifyPassivePlaceholders: false });
+    syncHelpers = createCampaignHelpers(runtime, definition, partySize);
     jump01 = entry.source === 'stage_jump01'; ticks = 0;
     if (jump01) restoreJump01Steps(runtime);
     seed = recovered.getRandomState();
@@ -34,6 +37,7 @@ export async function createCampaignEngine({ onEvent = () => {} } = {}) {
   }
   function step(inputs) {
     recovered.setRandomState(seed);
+    syncHelpers(inputs);
     const decoded = inputs.map(decodeInput);
     runtime.update(1 / 60, decoded[0] || decodeInput(0), decoded);
     if (jump01) restoreJump01Steps(runtime);
