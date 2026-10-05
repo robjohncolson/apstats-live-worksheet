@@ -1,5 +1,28 @@
 Native body-pair reconstruction checkpoint
 
+Balance controller checkpoint (raw bb315f0..bb318ef, missing C export):
+  Parent vtable bcb6118+c8 points to bb315f0; children bcb6018+c8 to bb31050.
+  bb315f0 skips remote actors. ratio = clamp((right.load-left.load)/(party*.5),
+  -1,1), float32. bcb6210 is double 0.12217304855585098 (7 degrees); bc4cd3c
+  calls tan. extent = float32(tan(angle)) * float32(span*.5). Left target is
+  -ratio*extent if abs(ratio)>FLT_EPSILON, otherwise zero; right is its negation.
+  Speed starts max(abs(ratio),.2). Positive ratio: reduce to .2 when right is
+  above its target or left below its target (target-current sign tests).
+  Negative ratio swaps sides. Both children receive the same speed.
+  Angle uses atan2(sign(right.current)*max(abs(left.current),abs(right.current)),
+  span*.5), converted double->float. Zero right current selects positive sign.
+  The command target removes the first seven bytes of actor name, then scene
+  virtual +60 receives command 12 and the angle. BalanceSeesawParent therefore
+  targets SeesawParent; earlier notes denying this name binding are superseded.
+  bb31050 first calls bc132c0 with UP, recursion enabled and mask 2 (category 1).
+  The count traverses stored contact order, deduplicates the first 16 pointers,
+  and does not traverse excluded categories. bb934a0 compares float32 normal
+  components within FLT_EPSILON. Missing body IDs do not count.
+  bb31050 then moves each platform toward its target by at most speed, gated
+  by bc16f50; bc17330 handles supported-body displacement. Those movement and
+  carry routines remain outside this controller checkpoint. Tests do not
+  certify input-only Balance or seesaw stage completion.
+
 Revolute/gear identification checkpoint:
   bbe6d30 embeds b2RevoluteJointDef at wrapper+30, type 1, local anchors zero,
   reference angle zero, limit/motor disabled. bbe6ef0 stores both local

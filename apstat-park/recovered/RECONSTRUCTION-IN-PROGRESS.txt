@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Balance checkpoint: bb315f0 is absent from the split C export; its complete
+machine-code routine now supplies native-balance.mjs. It normalizes supported
+player counts, assigns two platform target offsets and speeds, and dispatches
+command 12 from actual platform heights to the actor-name suffix. Recursive
+category-filtered contact counting is reconstructed separately. Child platform
+collision-aware movement/carry, full factory wiring and routes remain pending.
+
 Seesaw actor checkpoint: native-seesaw.mjs now composes the recovered body,
 pivot and gear components with the native actor scheduler and scene frame.
 Tests cover all three plank geometries, parent target-angle control, coupled
