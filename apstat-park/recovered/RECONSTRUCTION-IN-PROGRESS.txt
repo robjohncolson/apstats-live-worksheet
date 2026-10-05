@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+DeadSwitch checkpoint: shared Switch press-transition hook now drives native
+team-death broadcast, hit sound and host packet metadata. Actual distant
+teammate dies on contact; original jump06 initializes for2/8 players. Full
+suite587/587. Warning rendering, application-wide music latch/audio ownership
+and network transport are pending. auto_scroll02 still needs Text. Remaining
+specialized controllers/mechanisms, full-stage solutions, golden comparisons
+and live integration keep the full48-stage goal active and NOT complete.
+
 ColorBox checkpoint: ordinary and forced colored-block factories, color-specific
 push chains, gravity, impulses and commands added. Real matching/wrong-color
 Player tests pass; original push01/auto_scroll01 initialize for2/8 players.

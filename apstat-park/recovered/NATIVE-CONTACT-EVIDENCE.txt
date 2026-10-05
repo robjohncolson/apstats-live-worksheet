@@ -1,3 +1,26 @@
+DeadSwitch checkpoint:
+Factory bb74f61 calls ctor bb3f080, inheriting Switch mode0/style0. Native
+vtable bcb84a0 uses the ordinary switch PRE bb5eef0 and snapshot bb5ed50/eda0,
+with press-change virtual+108 overridden by bb3f1f0. Added that optional hook
+to the shared Switch PRE after ordinary target publication and switch sound.
+- Pressed transition calls bb1b8c0 (music stop latch), plays hit, broadcasts
+  command3 with NULL target/payload (raw bb3f247..256), then sends host-owned
+  packet via bb0f7f0: targetff/channel1/command0/value0. Release does nothing.
+  The override itself has no replica guard; snapshot application does not call
+  it, but a following PRE may observe the transition. Tested explicitly.
+- Warning component flags1, sprite bounds[-72,-54,144,54], UV
+  (.359375,.3125,.046875,.017578125), depth.1, local offset(0,-26).
+- Music stop is represented by scene.nativeMusicStopped and stopNativeMusic
+  hook. Native latch is application-wide; production audio ownership/reset
+  and warning-component rendering remain integration work. Native network
+  packet is exposed through sendNativeDeathPacket; transport remains pending.
+Five tests cover event ordering, one-shot press/release, replica transition,
+actual two-Player team death, and original jump06 initialization for2/8 players.
+The synthetic team fixture requires distinct actor labels, as native broadcasts
+visit the unique-name hash registry. Existing Switch tests continue to pass.
+Full park suite587/587. Original auto_scroll02 still needs Text actor support.
+No full-level solution, live rendering or multiplayer parity claim.
+
 ColorBox / ForceColorBox checkpoint:
 Constructors bb3b350/3b490, factory bb76d9d/73c9b, setup bb3c0c0.
 - Ordinary color is uint(param0) modulo configured party count; nonnegative

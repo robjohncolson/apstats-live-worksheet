@@ -3,6 +3,7 @@ import { createNativeRectActor } from './native-rect-actor.mjs';
 import { createNativePushBoxActor } from './native-push-box-actor.mjs';
 import { createNativeWarpActor } from './native-warp-actor.mjs';
 import { createNativeSwitchActor } from './native-switch-actor.mjs';
+import { createNativeDeadSwitchActor } from './native-dead-switch-actor.mjs';
 import { createNativeBridgeActor } from './native-bridge-actor.mjs';
 import { createNativeWeightedLiftActor } from './native-weighted-lift-actor.mjs';
 import { createNativeDarknessLiftActor } from './native-darkness-lift-actor.mjs';
@@ -31,6 +32,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'PhysicsBallPitcher', 'PhysicsSwitch', 'PushBox',
   'Warp', 'WarpAll', 'WarpInitPos', 'WarpAllInitPos',
   'Switch',
+  'DeadSwitch',
   'Bridge', 'KeyBridge', 'Gate',
   'WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2',
   'DarknessWeightedLift', 'InvisibleWeightedLift',
@@ -85,6 +87,7 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
     return scene.addActor(createNativeJumpStandActor({ spawn }));
   }
   if (spawn.actorName === 'Switch') return scene.addActor(createNativeSwitchActor({ spawn }));
+  if (spawn.actorName === 'DeadSwitch') return scene.addActor(createNativeDeadSwitchActor({ spawn }));
   if (['Bridge', 'KeyBridge', 'Gate'].includes(spawn.actorName)) {
     return scene.addActor(createNativeBridgeActor({ spawn, partySize: scene.playerCount }));
   }

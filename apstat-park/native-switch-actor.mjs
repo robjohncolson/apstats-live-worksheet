@@ -31,6 +31,7 @@ export function createNativeSwitchActor({ spawn }) {
       if (pressed !== Boolean(actor.switchFlags & 1)) {
         if (!(actor.switchFlags & 0x100)) publish(pressed);
         if (pressed) actor.scene.playSound?.('switch');
+        actor.onSwitchChanged?.(pressed); // native virtual +108, after publication/sound
       }
       flags = actor.switchFlags;
       flags = flags & 2 ? flags | 1 : flags & ~1;
