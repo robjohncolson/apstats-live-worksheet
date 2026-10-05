@@ -20,6 +20,27 @@
         "FUN_7ff72bc17170"
       ],
       "behavior": "Local [0,0,width,height] sensor translated to the actor; downward-Y stage coordinates use a left/bottom anchor. Sensors have no visible artwork."
+    },
+    {
+      "id": "push-box-native-art",
+      "files": [
+        "src/engine/actors/PushBox.ts",
+        "src/engine/sprites.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb340f0"
+      ],
+      "behavior": "Native opaque white/orange nine-patch, 24-unit corners from the recovered atlas."
+    },
+    {
+      "id": "jump02-unsupported-boxes",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bb33890"
+      ],
+      "behavior": "In jump02, unsupported numbered boxes fall at .65 units/tick squared and settle on floors, boxes, or live cats. Other stages retain their current movement controllers."
     }
   ],
   "hashes": {

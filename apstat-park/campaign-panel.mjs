@@ -71,10 +71,10 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (disposed) return;
     bind(); if (idle) return;
     const now = performance.now();
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 4, active: activeJoin }); }
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 5, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
-    if (now - lastInput >= 50 && (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500)) {
+    if (now - lastInput >= 16 && (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500)) {
       send('campaign_input', { bits, buddy }); sentBits = bits & 31; sentBuddy = buddy & 31;
       bits &= 31; buddy &= 31; lastInput = now;
     }
@@ -101,6 +101,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (down) held.add(key); else held.delete(key);
     if (first[key]) { bits = down ? bits | mask : bits & ~mask; if (mask === 16 && fresh) bits |= 32; }
     else { buddy = down ? buddy | mask : buddy & ~mask; if (mask === 16 && fresh) buddy |= 32; }
+    pump();
   }
   function blur() { held.clear(); bits = 0; buddy = 0; sentBits = -1; sentBuddy = -1; }
   function visibility() {
@@ -169,7 +170,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   board.setBoardHeight?.(Math.round(750 * scale()));
   doc.addEventListener('keydown', keyboard); doc.addEventListener('keyup', keyboard); win.addEventListener('blur', blur);
   doc.addEventListener('visibilitychange', visibility);
-  const timer = setInterval(pump, 50); pump();
+  const timer = setInterval(pump, 16); pump();
   import('./campaign-engine.mjs' + V).then(module => module.createCampaignEngine({ onEvent(event) {
     if (!game || replay.received - replay.frame > 120 || event.type === 'clear') return;
     audio.play(({ get: 'key', coin: 'key', dead: 'dead', hit: 'dead' })[event.type] || event.type);
