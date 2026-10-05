@@ -1,5 +1,15 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Balance scene checkpoint: native-balance-actor.mjs creates and places its
+two following-body platforms, queues them through the native manager and
+connects contact-derived load/height to the seesaw parent's command handler.
+A 240-frame combined fixture generates contacts from a falling category-1
+test actor, moves the platforms and drives the rigid parent/child gear pair.
+All 312 tests pass. This is a mechanism integration fixture, not the native
+Player controller or a solved campaign route. Live GameRuntime still contains
+the preview Balance/seesaw heuristic and must be replaced with the recovered
+mechanism plus its player/collision/rendering bridge.
+
 Balance movement checkpoint: stepNativeBalancePlatform now samples loads,
 tests the recovered directional contact chain, updates its offset only when
 allowed and carries UP-connected actors with immediate body synchronization.

@@ -45,6 +45,7 @@ export function createNativeSeesaw({ type = 0, position = { x: 0, y: 0 }, parent
       actor.spriteAngle = Math.trunc(f(body.getAngle() * SPRITE_ANGLE_SCALE));
     },
     setTargetAngle(value) { actor.targetAngle = f(value); }, // bb5db00 command 12 payload
+    onCommand(command, value) { if (parent && command === 12) actor.setTargetAngle(value); return 0; },
     connectParent(other) { // bb5d9e0
       if (!gear.setConnections(other.body, body, other.pivot, pivot)) return false;
       gear.setRatio(-1);

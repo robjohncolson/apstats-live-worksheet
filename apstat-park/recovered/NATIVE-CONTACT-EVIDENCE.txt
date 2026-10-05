@@ -1,5 +1,17 @@
 Native body-pair reconstruction checkpoint
 
+Balance actor integration checkpoint:
+  bb313f0 creates two type-2 rectangle bodies. Raw bb314fc..bb3150e confirms
+  omitted argument r9d=1: both bodies follow their actor. Child initial target
+  and current offsets are zero, speed 1 and support count zero.
+  bb31900 calls common added, places children at spawn.x +/- span*.5 with
+  unchanged spawn.y, then queues left followed by right at priority zero.
+  bb31eb0 records resolved position.y - spawn.y after collision correction.
+  Native actor/scene integration now tests this full sequence against the
+  reconstructed custom-body world and pinned rigid world. Real generated
+  platform contacts drive command 12 and the seesaw gear-coupled angle.
+  The fixture's falling test actor is explicitly NOT the native Player port.
+
 Balance platform movement checkpoint:
   bc16f50 rejects displacement with both float32 components <= 2^-52, then
   normalizes it using bb93760. bc13550 resolves contacts with matching normals
