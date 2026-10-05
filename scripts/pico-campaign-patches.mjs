@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
 import { patchGoalUnlock } from './pico-goal-patches.mjs';
+import { patchNativeLasers } from './pico-laser-patches.mjs';
 
 export const CAMPAIGN_PATCHES = [{
   id: 'warp-sensor-origin',
   files: ['src/engine/actors/Warp.ts', 'src/engine/actors/WarpAll.ts'],
-  evidence: ['FUN_7ff72bb62ec0', 'FUN_7ff72bc12370', 'FUN_7ff72bc17170'],
-  behavior: 'Local [0,0,width,height] sensor translated to the actor; downward-Y stage coordinates use a left/bottom anchor. Sensors have no visible artwork.',
+  evidence: ['FUN_7ff72bb62ec0', 'FUN_7ff72bc12370', 'FUN_7ff72bc17170', 'FUN_7ff72bb4e260', 'FUN_7ff72bc119c0'],
+  behavior: 'Local [0,0,width,height] sensor translated directly to the actor, without Y inversion. Sensors have no visible artwork.',
 }, {
   id: 'goal-entry-edge',
   files: ['src/engine/GameRuntime.ts'],
@@ -21,6 +23,16 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/GameRuntime.ts'],
   evidence: ['FUN_7ff72bb64f20', 'FUN_7ff72bb65430', 'FUN_7ff72bc30790', 'FUN_7ff72bb778c0', 'FUN_7ff72bae82a0'],
   behavior: 'BreakoutKey uses the shared carried-key path and stays hidden while any BR1..BR5 chip remains. BreakoutSyncArea is not a clear trigger.',
+}, {
+  id: 'literal-rect-native-body',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/StaticRect.ts'],
+  evidence: ['FUN_7ff72bb72ae0:bb76872..bb76970', 'FUN_7ff72bb77c10', 'FUN_7ff72bb5b820'],
+  behavior: 'Literal Rect uses a bottom-left anchor, full height, party-dependent size and position, and signed-width normalization. Other actor families retain their separate geometry.',
+}, {
+  id: 'laser-reward-path',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
+  evidence: ['FUN_7ff72bb37d70', 'FUN_7ff72bb38130', 'FUN_7ff72bb383e0', 'FUN_7ff72bb4e6f0', 'FUN_7ff72bb4ea70', 'FUN_7ff72bb544e0', 'FUN_7ff72bb54860', 'FUN_7ff72bb54940'],
+  behavior: 'LaserBallPitcher owns one native-speed projectile. Player contacts reset the named reward box and launcher speed; three actor hits release a Key. Native box/ball atlas frames and removal countdowns replace placeholders. Global contact ordering remains under audit.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -30,18 +42,34 @@ function replaceOnce(source, before, after, file) {
 }
 
 export function patchCampaignSource(file, source) {
+  if (file === 'src/engine/actors/StaticRect.ts') {
+    source = replaceOnce(source, 'constructor(readonly spawn: ActorSpawnDef)',
+      'constructor(readonly spawn: ActorSpawnDef, nativeBody?: Rect)', file);
+    return replaceOnce(source, 'this.rect = getStaticRectRect(spawn);',
+      'this.rect = nativeBody ?? getStaticRectRect(spawn);', file);
+  }
   if (file === 'src/engine/actors/Goal.ts') return patchGoalView(source, file);
   if (file === 'src/engine/sprites.ts') {
     return replaceOnce(source, 'door_black: [96, 576, 48, 48],',
-      'door_black: [96, 576, 48, 48],\n  door_closed: [96, 512, 48, 48],', file);
+      `door_black: [96, 576, 48, 48],
+  door_closed: [96, 512, 48, 48],
+  native_laser_box_0: [288, 480, 23, 31],
+  native_laser_box_1: [320, 480, 23, 31],
+  native_laser_box_2: [352, 480, 23, 31],
+  native_laser_ball: [256, 512, 12, 12],`, file);
   }
   if (file === 'src/engine/GameRuntime.ts') {
     source = patchGoalEntry(source.replaceAll('\r\n', '\n'), file);
-    return patchGoalUnlock(source, replaceOnce, file);
+    const rectHelper = fileURLToPath(new URL('../apstat-park/native-rect.mjs', import.meta.url));
+    source = `import { nativeRect } from ${JSON.stringify(rectHelper)};\n` + source;
+    source = replaceOnce(source, 'Rect: (spawn) => {\n      const staticRect = new StaticRect(spawn);',
+      'Rect: (spawn) => {\n      const staticRect = new StaticRect(spawn, nativeRect(spawn, this.activePlayerCount));', file);
+    source = patchGoalUnlock(source, replaceOnce, file);
+    return patchNativeLasers(source, replaceOnce, file);
   }
   if (!CAMPAIGN_PATCHES[0].files.includes(file)) return source;
   source = replaceOnce(source, 'x: spawn.x - triggerSize.width / 2,', 'x: spawn.x,', file);
-  source = replaceOnce(source, 'y: spawn.y - triggerSize.height / 2,', 'y: spawn.y - triggerSize.height,', file);
+  source = replaceOnce(source, 'y: spawn.y - triggerSize.height / 2,', 'y: spawn.y,', file);
   return replaceOnce(source, 'this.view.addChild(g);', 'this.view.addChild(g);\n    this.view.visible = false;', file);
 }
 

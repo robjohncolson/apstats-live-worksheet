@@ -8,13 +8,6 @@ const TILE_CODES = { MC_NON: 'N', MC_FLC: 'C', MC_FLL: 'L', MC_FLR: 'R', MC_WAL:
 const restoredLifts = new WeakSet();
 
 export function restoreJump01Steps(runtime) {
-  for (const block of runtime.staticRects) {
-    const { spawn, rect } = block;
-    // stage_jump01's Rect rows use a left/bottom anchor and a 25-unit skirt.
-    // These are the same measured surfaces used by the working level-6 port.
-    const width = spawn.raw[6], height = spawn.raw[7];
-    Object.assign(rect, { x: spawn.x, y: spawn.y - height, width, height: height - 25 });
-  }
   for (const lift of runtime.weightedLifts) {
     if (restoredLifts.has(lift)) continue;
     // The prior verified lift is 92 x 9.5 at half scale, resting at y=201.5.

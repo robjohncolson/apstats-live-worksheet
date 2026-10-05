@@ -24,11 +24,17 @@ const report = CAMPAIGN.map(entry => {
     definitions: definitions.map(stage => stage.path),
     fidelity: 'not-fully-verified',
     actors: actors.map(name => ({ name, upstreamProvenance: provenance[name] || 'unclassified' })),
-    correctedContracts: actors.some(name => name.startsWith('Warp') && !name.startsWith('WarpGun'))
-      ? ['Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation'] : [],
+    correctedContracts: [
+      ...(actors.some(name => name.startsWith('Warp') && !name.startsWith('WarpGun'))
+        ? ['Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation'] : []),
+      ...(actors.includes('Rect') ? ['Literal Rect bottom anchor, native party scaling and full body height'] : []),
+      ...(actors.includes('Goal') ? ['Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry'] : []),
+      ...(actors.includes('BreakoutKey') ? ['Breakout reward key activation after removal of BR1..BR5 chips'] : []),
+      ...(actors.includes('LaserKeyBox') ? ['Laser launcher speed/lifecycle, hit/reset commands, three-hit reward and native atlas frames'] : []),
+    ],
     remainingChecks: [
-      ...(actors.includes('Goal') ? ['Goal unlock commands, key delivery, fresh-Up entry and team completion'] : []),
-      ...(actors.includes('Rect') && entry.index !== 0 ? ['Rect anchor, collision surface and visible skirt'] : []),
+      ...(actors.includes('Goal') ? ['Entered-player physical deactivation, dynamic reward paths and complete team solution'] : []),
+      ...(actors.includes('LaserKeyBox') ? ['Native global actor/contact phase ordering and complete player-input-only puzzle solution'] : []),
       'Native timing, collisions and complete puzzle solution for every supported party size',
       'Presentation and retry/checkpoint behavior against native evidence',
     ],

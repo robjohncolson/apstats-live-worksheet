@@ -16,7 +16,8 @@ CORRECTED SHARED CONTRACT: WARP SENSOR ORIGIN
 Native FUN_7ff72bb62ec0 constructs [0,0,width,height] and registers it through
 FUN_7ff72bc16bf0. FUN_7ff72bc12370 copies those bounds; FUN_7ff72bc17170
 translates them by the actor position. The downward-Y stage conversion
-therefore produces x=spawn.x, y=spawn.y-height, not a centered rectangle.
+produces x=spawn.x, y=spawn.y. bb4e260 and bc119c0 prove there is no Y
+inversion. This supersedes the earlier Y-height patch.
 Warp and WarpAll share this constructor, including their InitPos variants.
 The browser's colored diagnostic sensors are hidden in campaign gameplay.
 
@@ -35,10 +36,10 @@ Validation:
     two-client synchronization and a completion fixture. The fixture is
     deliberately NOT a complete playthrough or proof of solvability.
 
-CONFIRMED OPEN GAP: GOALS
+PARTIALLY CORRECTED: GOALS (see RECONSTRUCTION-IN-PROGRESS.txt)
 
-GameRuntime.checkGoals currently accumulates overlap, without requiring
-an opened standard Goal and a fresh Up press. Native FUN_7ff72bb531d0
+The original preview accumulated overlap without an opened standard Goal
+or fresh Up press. The work branch now corrects these requirements. Native FUN_7ff72bb531d0
 requires goal+0x3f8 bit 0 and FUN_7ff72bb68510(player,3); the latter reaches
 the input-edge test (including FUN_7ff72bb6ad30 for secondary controllers).
 Category-8 key contact opens the goal via FUN_7ff72bb52ec0. Command 9 also
@@ -53,7 +54,7 @@ not equivalent and can deadlock special stages. Standard Goal appears in
 
 OTHER OPEN WORK
 
-Generic Rect anchoring/collision skirts outside 1-1; shared player body
+Shared player body
 geometry and phase ordering; all actors marked suspected; native timing,
 failure/retry/checkpoint behavior and complete solutions for each supported
 party size; visual comparisons beyond the targeted 1-1 checks. Start with

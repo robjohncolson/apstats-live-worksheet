@@ -16,7 +16,20 @@ Integrated corrections with focused browser coverage:
 - BreakoutSyncArea no longer clears by overlap or draws a fake trigger.
   Factory bb778c0 and update bae82a0 provide network helper behavior.
 
-Reconstructed and unit-tested, NOT YET WIRED TO THE RUNTIME:
+Additional integrated corrections:
+- Literal Rect body placement and party scaling from bb76872..bb76970;
+  full body height replaces the old 1-1-only 25-unit truncation.
+- Warp world Y is actor Y, not Y-height. bc119c0 adds actor position to
+  bb4e260's unchanged [0,0,w,h] bounds. Boundary and pit-return tests pass.
+- LaserBallPitcher and LaserKeyBox reward path now integrated, with native
+  sprite frames. Browser tests cover 2/8-party layouts, a player-hit reset,
+  and three uninterrupted projectile deliveries producing the real Key.
+  These tests reposition players as fixtures, not complete puzzle solutions.
+- Contact callback argument 3 is actor/map kind (1/0), proven by bc13c60 /
+  bc14040, not a direction. Mixed circle/rectangle contacts in bc119c0 use
+  strict AABB bounds; circle distance applies only to circle/circle pairs.
+
+Reconstructed helpers (BoundBall integration still outstanding):
 - native-key-box.mjs: BallBox center tolerance 5, accepted command 11,
   reward at actor X,Y-30; LaserKeyBox three category-5 contacts with callback
   argument 3 == 1, command 37 reset, pitcher commands 21/22, 40-tick removal.
@@ -49,15 +62,14 @@ Next required integration:
    looping projectile and angle convention cannot solve native key boxes.
 2. Native BallBox/LaserKeyBox body placement and collision adapters, reward
    Key creation, pitcher speed/reset command routing and fade/removal.
-   Current strict goal locking makes stages 9-1 and 9-4 impossible because
-   their preview actors never create their reward keys. DO NOT DEPLOY THIS
+   Stage 9-1 now produces its reward through actual laser contacts. Stage
+   9-4 still cannot produce its reward until BoundBall/BallBox is integrated. DO NOT DEPLOY THIS
    BRANCH until these paths work and have end-to-end puzzle tests.
 3. Remove entered players from physical/support contacts without removing
    them from the team goal requirement. Current freezing/hiding is incomplete.
-4. Re-audit Warp Y anchoring. Prior patch claims a left/bottom anchor, but
-   bc12370 and bb4e260 expose no Y inversion. Need final world-body transform
-   proof; current tests only prove returning safely, not exact trigger height.
-5. Generic Rects, all remaining suspected mechanics, checkpoints/retries,
+4. Warp Y anchoring corrected with final bc119c0 proof. Remaining actor
+   body/contact and phase-order contracts still need independent verification.
+5. All remaining suspected mechanics, checkpoints/retries,
    movement/phase ordering and complete puzzle routes for all party sizes.
 
 Validation already passed before isolation:

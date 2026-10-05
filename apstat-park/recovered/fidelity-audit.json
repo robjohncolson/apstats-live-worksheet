@@ -44,10 +44,12 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -77,9 +79,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -134,11 +138,12 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -176,9 +181,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -225,11 +232,12 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -267,10 +275,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -309,10 +319,11 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -362,10 +373,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -403,9 +416,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -447,10 +462,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -500,9 +517,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -544,10 +563,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -581,9 +602,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -613,9 +636,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -662,9 +687,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -710,10 +737,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -772,11 +801,12 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -810,9 +840,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -867,10 +899,11 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -904,9 +937,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -940,10 +975,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -985,10 +1022,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1023,10 +1062,11 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1056,9 +1096,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1088,9 +1130,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1149,11 +1193,12 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1195,9 +1240,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1247,10 +1294,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1288,9 +1337,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1324,9 +1375,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry",
+        "Breakout reward key activation after removal of BR1..BR5 chips"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1368,9 +1422,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1404,9 +1460,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry",
+        "Breakout reward key activation after removal of BR1..BR5 chips"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1445,10 +1504,14 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry",
+        "Laser launcher speed/lifecycle, hit/reset commands, three-hit reward and native atlas frames"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
+        "Native global actor/contact phase ordering and complete player-input-only puzzle solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1502,9 +1565,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1534,9 +1599,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1571,9 +1638,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1632,10 +1701,11 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1690,10 +1760,11 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1814,11 +1885,12 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1852,10 +1924,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1898,10 +1972,11 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -1960,11 +2035,12 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -2010,10 +2086,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -2076,10 +2154,11 @@
         }
       ],
       "correctedContracts": [
-        "Warp/WarpAll left-bottom sensor bounds; invisible sensor presentation"
+        "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -2109,9 +2188,11 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]
@@ -2169,10 +2250,12 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Literal Rect bottom anchor, native party scaling and full body height",
+        "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
+      ],
       "remainingChecks": [
-        "Goal unlock commands, key delivery, fresh-Up entry and team completion",
-        "Rect anchor, collision surface and visible skirt",
+        "Entered-player physical deactivation, dynamic reward paths and complete team solution",
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
       ]

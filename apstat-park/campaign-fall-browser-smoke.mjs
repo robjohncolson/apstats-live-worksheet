@@ -73,6 +73,15 @@ try {
     const { createCampaignEngine } = await import('/apstat-park/campaign-engine.mjs');
     const events = [], game = await createCampaignEngine({ onEvent: event => events.push(event) });
     const cases = [];
+    game.load(0, 2, 100); events.length = 0;
+    const boundaryPlayer = game.runtime.players[0];
+    Object.assign(boundaryPlayer.rect, { x: 880, y: 576 - boundaryPlayer.rect.height - 4 });
+    boundaryPlayer.velocity.y = 0;
+    game.step([0, 0]);
+    const aboveSensorWarps = events.filter(event => event.type === 'warp').length;
+    Object.assign(boundaryPlayer.rect, { x: 880, y: 577 });
+    game.step([0, 0]);
+    const insideSensorWarps = events.filter(event => event.type === 'warp').length;
     for (const [x, expectedX] of [[880, 720], [910, 720], [1600, 1392], [1770, 1392]]) {
       game.load(0, 2, 100); events.length = 0;
       const player = game.runtime.players[0];
@@ -90,14 +99,14 @@ try {
     // Two arrivals use the native per-zone counter and -50 vertical offset.
     game.load(0, 2, 100); events.length = 0;
     for (const player of game.runtime.players) {
-      Object.assign(player.rect, { x: 897, y: 490 }); player.velocity.y = 200;
+      Object.assign(player.rect, { x: 897, y: 580 }); player.velocity.y = 200;
     }
     game.step([0, 0]);
     const pair = game.runtime.players.map(player => ({ x: player.rect.x + 13, y: player.rect.y + 32 }));
     for (let tick = 0; tick < 120; tick++) game.step([0, 0]);
     const settled = game.runtime.players.map(player => ({ x: player.rect.x + 13, feet: player.rect.y + player.rect.height }));
     const deaths = events.filter(event => event.type === 'hit' || event.type === 'dead');
-    game.dispose(); return { cases, walkingReturn, pair, settled, deaths };
+    game.dispose(); return { cases, walkingReturn, pair, settled, deaths, aboveSensorWarps, insideSensorWarps };
   });
   for (const sample of result.cases) {
     assert.ok(sample.events.includes('warp'), 'fall at x=' + sample.x + ' must enter its pit Warp: ' + JSON.stringify(sample));
@@ -105,6 +114,8 @@ try {
     assert.equal(sample.actorY, -48);
     assert.equal(sample.death, 0);
   }
+  assert.equal(result.aboveSensorWarps, 0, 'falling above native y=576 must not activate the pit sensor early');
+  assert.equal(result.insideSensorWarps, 1, 'crossing native y=576 activates the pit return');
   assert.deepEqual(result.pair, [{ x: 720, y: -48 }, { x: 720, y: -98 }]);
   assert.deepEqual(result.walkingReturn, { x: 720, y: -48, events: ['warp'] }, 'walking off the ledge uses the Warp, without death');
   assert.deepEqual(result.deaths, []);

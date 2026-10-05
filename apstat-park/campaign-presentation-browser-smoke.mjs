@@ -95,7 +95,10 @@ try {
       viewport: game.getView().projection, marker: pixel(50, 670), cat: pixel(50, 682) };
   });
   assert.equal(current.height, reference.height);
-  assert.deepEqual(current.steps, reference.steps, 'the campaign uses the previously verified stair collision surfaces');
+  assert.deepEqual(current.steps.map(({ h, ...surface }) => surface), reference.steps.map(({ h, ...surface }) => surface),
+    'native bodies retain the previously verified stair tops and widths');
+  assert.deepEqual(current.steps.map(step => step.h), [36.5, 36.5],
+    'Rect factory bb7696b uses the full 73-unit height, including the overlapping skirt');
   assert.deepEqual(current.lift, reference.lift, 'the lift keeps its verified resting surface and size');
   assert.deepEqual(current.lowerFloor, [255, 134, 77, 255], 'the ground continues to the bottom of the playspace');
   assert.equal(current.pit[3], 0, 'pits remain open');

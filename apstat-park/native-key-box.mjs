@@ -23,9 +23,10 @@ export function createNativeKeyBox({ kind, x, y, target = '', multiplier = 1,
       release();
       return true;
     },
-    laserContact(direction, bodyCategory) {
+    laserContact(contactKind, bodyCategory) {
       if (kind !== 'LaserKeyBox' || removed || released) return false;
-      if (direction !== 1 || bodyCategory !== 5) return false;
+      // bc13c60 passes 1 for actor contacts; bc14040 passes 0 for map contacts.
+      if (contactKind !== 1 || bodyCategory !== 5) return false;
       hits++;
       if (hits < 3) {
         if (target) sendCommand(target, 0x15, multiplier);
