@@ -98,9 +98,8 @@ test('old overlap and two priority bodies do not enter the pair solver', () => {
   assert.equal(d.position.x, 15);
 });
 
-test('unsupported geometry and absent map handling fail explicitly', () => {
-  const a = { ...body(1, 6, 0), shape: 1 }, b = { ...body(2, 12, 14), shape: 1 };
-  assert.throws(() => solveNativeBodyPairs(world([a, b])), /circle overlap/);
+test('absent map handling fails explicitly', () => {
+  const a = body(1, 6, 0);
   assert.throws(() => moveNativeBodyChain({ bodies: [a] }, a, { x: 7, y: 0 }), /map movement handler/);
 });
 

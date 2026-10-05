@@ -1,8 +1,10 @@
 import { resolveNativeRectanglePair } from './native-rectangle-pair.mjs';
+import { resolveNativeCirclePair } from './native-circle-pair.mjs';
+import { nativeBodiesOverlap } from './native-body-overlap.mjs';
 
 // Registered rectangle-body pair phases (bc1e050), priority-body recursion
 // (bc20280/bc203a0) and contact insertion (bc13830). This is not a replacement
-// for the whole bc1da80 pass: map sweeps, circle pairs, scale changes and
+// for the whole bc1da80 pass: map sweeps, scale changes and
 // contact callback lifecycle must be supplied/ported separately.
 const f = Math.fround;
 const EPSILON = 2 ** -23;
@@ -70,12 +72,13 @@ function solvePhase(world, phase, countOperation) {
 }
 
 function resolvePair(world, a, b, countOperation) {
-  if (a.shape === 1 && b.shape === 1) throw new Error('Native circle-pair response is not implemented');
+  const circles = a.shape === 1 && b.shape === 1;
   // First compute the ordinary candidate positions. Priority bodies use those
   // same candidates, but move the other body by the rejected correction.
-  const result = resolveNativeRectanglePair({ ...a, flags: a.flags & ~2 }, { ...b, flags: b.flags & ~2 });
+  const result = circles ? resolveNativeCirclePair(a, b)
+    : resolveNativeRectanglePair({ ...a, flags: a.flags & ~2 }, { ...b, flags: b.flags & ~2 });
   if (result.status !== 'resolved' && result.status !== 'rewound') return 2;
-  if (priority(a) || priority(b)) {
+  if (!circles && (priority(a) || priority(b))) {
     const fixed = priority(a) ? a : b;
     const moving = fixed === a ? b : a;
     const fixedCandidate = fixed === a ? result.positionA : result.positionB;
@@ -141,16 +144,11 @@ function allowed(world, a, b) {
 }
 
 function newOverlap(a, b) {
-  if (!(a.flags & 1) || !(b.flags & 1)) return false;
-  if (a.shape === 1 && b.shape === 1) throw new Error('Native circle overlap is not implemented');
   return overlaps(a, b, 'position') && !overlaps(a, b, 'previousPosition');
 }
 
 function overlaps(a, b, key) {
-  const ax = f(a.localBounds.x + a[key].x), ay = f(a.localBounds.y + a[key].y);
-  const bx = f(b.localBounds.x + b[key].x), by = f(b.localBounds.y + b[key].y);
-  return f(ax + a.localBounds.width) > bx && f(bx + b.localBounds.width) > ax
-    && f(ay + a.localBounds.height) > by && f(by + b.localBounds.height) > ay;
+  return nativeBodiesOverlap(a, b, { previous: key === 'previousPosition' });
 }
 
 function setPosition(body, position) {
@@ -171,7 +169,7 @@ function expand(delta, gap) {
     y: f(delta.y + (Math.abs(delta.y) > EPSILON ? Math.sign(delta.y) * gap : 0)) };
 }
 
-function recordContact(body, other, normal) {
+export function recordContact(body, other, normal) {
   const contacts = body.contacts ??= [];
   if (contacts.some(contact => contact.bodyId === other.id)) return;
   if (normal.x === 0 && normal.y === -1 && other.contacts?.some(contact =>

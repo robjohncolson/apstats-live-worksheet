@@ -153,3 +153,48 @@ Map integration boundary:
   BallBox and Player movement still use preview adapters. BoundBall's actor
   pair separation remains an adapter. Global native ordering, scale changes,
   circle pairs and full actor registry integration are not yet certified.
+
+Standalone circle/support checkpoint:
+  native-body-overlap.mjs now shares bc119c0/current and bc11be0/accepted
+  overlap behavior across the reconstructed world and contact lifecycle.
+  Both-circle queries use Euclidean distance; mixed pairs use strict AABB.
+  Raw bc11a38..bc11a68 confirms circle center = actor position * axis scale.
+  Raw bc11c5b..bc11cbe confirms accepted-position radii are multiplied by
+  max(scaleX,scaleY), unlike the current query's unscaled descriptor radii.
+  These asymmetric native operations are preserved, not normalized away.
+
+  native-circle-pair.mjs implements bc1f1c0. Original displacement directions
+  are normalized first. Same-direction radial motion zeros one displacement.
+  Relative movement then supplies a quadratic contact-time solution capped
+  at 1. Each moving body rewinds displacement*time plus .001 along its
+  original direction, capped at its full original displacement. The normal
+  is the normalized vector between the resolved positions. Mass and bounce
+  response remain actor callbacks. Unlike the rectangle path, this resolver
+  does not divert a single priority body to recursive displacement.
+  Raw constants bcff5c0=2, bcff650=4, bcb9a20=.001 were checked directly.
+  Circle response and overlap are connected to the standalone world solver
+  and lifecycle, with tests for opposing/overtaking/stationary/glancing hits,
+  full rollback, mixed corners, strict tangency and scaled queries.
+
+  native-body-support.mjs implements bc1d580 directional neighbor queries:
+  candidate must be enabled and physical; query must be physical but its
+  enabled bit is ignored. Matrix order is candidate->query. Current overlap
+  excludes the candidate; a .5 direction-offset query must newly overlap.
+  Native center-vs-edge comparisons and a 16-neighbor cap retain registry
+  order. Horizontal comparisons are intentionally kept as written in native:
+  selector bc1d6a3..bc1d6c0 and compare bc1d761..bc1d76a confirm direction 2
+  tests candidate center > query right, despite its negative-X probe. Direction
+  3 compare bc1d701..bc1d70a tests candidate center < query left. Do not fix
+  these into conventional side-neighbor behavior without new native evidence.
+
+  The flag-4 Player refresh in bc13c60 halves X scale, leaves Y scale intact,
+  performs the UP query and inserts deduplicated contacts. bb4e260 raw bounds,
+  pivot and independent scaling preserve float32 operation order. The helper
+  uses a temporary descriptor so original scale/bounds remain unchanged.
+  Native actor-contact finalization now uses this probe by default; callers
+  must provide rawBounds. A custom handler remains available for isolation.
+
+  These additions remain outside the live campaign runtime. The live shared
+  integration boundary is still the BoundBall map/Thunder pair paths above.
+  Next: bc1f7b0 scale-change resolution, bc146c0 finalization, complete bc1da80
+  world-pass orchestration and original body registration/update ordering.

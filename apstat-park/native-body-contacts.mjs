@@ -1,14 +1,14 @@
+import { nativeBodiesOverlap } from './native-body-overlap.mjs';
+import { refreshNativePlayerUpContacts } from './native-body-support.mjs';
 const f = Math.fround;
 
 // Actor-contact lifecycle from bc13c60, after positional finalization.
 // Map-contact lifecycle (bc14040) is separate. The Player half-width upward
-// probe requires the original body-scale/pivot data and an explicit handler.
+// probe uses original body-scale/pivot data; a caller can override the handler.
 export function finalizeNativeActorContacts(world, body) {
   if (body.flags & 4) {
-    if (typeof world.refreshUpContacts !== 'function') {
-      throw new Error('Native Player upward contact probe is required');
-    }
-    world.refreshUpContacts(body);
+    if (world.refreshUpContacts) world.refreshUpContacts(body);
+    else refreshNativePlayerUpContacts(world, body);
   }
   const contacts = body.contacts ??= [];
   for (let index = 0; index < contacts.length;) {
@@ -55,11 +55,5 @@ export function dispatchNativeOverlapCallbacks(world) {
 }
 
 function overlaps(a, b, offset = { x: 0, y: 0 }) {
-  if (!(a.flags & 1) || !(b.flags & 1)) return false;
-  if (a.shape === 1 && b.shape === 1) throw new Error('Native circle overlap is not implemented');
-  const ax = f(f(a.localBounds.x + a.position.x) + offset.x);
-  const ay = f(f(a.localBounds.y + a.position.y) + offset.y);
-  const bx = f(b.localBounds.x + b.position.x), by = f(b.localBounds.y + b.position.y);
-  return f(ax + a.localBounds.width) > bx && f(bx + b.localBounds.width) > ax
-    && f(ay + a.localBounds.height) > by && f(by + b.localBounds.height) > ay;
+  return nativeBodiesOverlap(a, b, { offsetA: offset });
 }

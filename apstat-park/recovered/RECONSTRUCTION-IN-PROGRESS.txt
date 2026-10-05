@@ -161,3 +161,17 @@ Native map collision checkpoint:
 - Remaining shared work: circle pairs; Player half-width probe; scale-change
   pass; native registry and actor update/callback integration; stage-specific
   custom occupancy. Map and pair helpers are not yet the runtime for all actors.
+
+Standalone circle/support checkpoint:
+- Added native circle overlap and quadratic pair response, including original
+  trajectory rollback, .001 separation, scaled-query asymmetry and radial
+  contact normals. Connected them to the standalone world/contact modules.
+- Added bc1d580 directional neighbors and the Player half-width upward probe.
+  Native matrix direction, strict half-unit gaps, capacity 16, raw geometry,
+  pivot/scaling and contact deduplication are covered by tests.
+- Raw assembly independently verifies circle scaling and the unusual native
+  horizontal neighbor comparisons. See NATIVE-CONTACT-EVIDENCE.txt.
+- 227 unit tests pass. These new modules are not yet live gameplay callers;
+  current live integration remains the BoundBall map/Thunder pair checkpoint.
+- Next shared work: scale-change resolution (bc1f7b0), body finalization
+  (bc146c0), complete world pass (bc1da80), body registration and actor ordering.
