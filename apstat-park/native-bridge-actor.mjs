@@ -19,27 +19,31 @@ function shell() {
   return actor;
 }
 
-// bb4f630/bb4f9d0: ordinary Bridge and KeyBridge. Gate's reversed start
-// geometry is a separate factory path and is deliberately not accepted here.
+// bb4f630/bb4f9d0: Bridge/KeyBridge use mode0; Gate uses mode1, with
+// spread starting positions and negated offsets back to the shared anchor.
 export function createNativeBridgeActor({ spawn, partySize }) {
   const params = spawn.raw.slice(6), count = integer(params[0]) >>> 0;
   if (count < 1 || count > 32) throw new Error('Native Bridge requires 1..32 segments');
-  const direction = { x: f(integer(params[1])), y: f(integer(params[2])) };
+  const gate = spawn.actorName === 'Gate';
+  const directionValue = value => gate ? (typeof value === 'number' ? f(value) : 0) : f(integer(value));
+  const direction = { x: directionValue(params[1]), y: directionValue(params[2]) };
   const length = f(Math.sqrt(f(f(direction.x * direction.x) + f(direction.y * direction.y))));
   if (length) { direction.x = f(direction.x / length); direction.y = f(direction.y / length); }
-  const size = integer(params[4]) || 32;
-  const adjustment = integer(params[3]);
+  const size = integer(params[gate ? 3 : 4]) || 32;
+  const adjustment = gate ? 0 : integer(params[3]);
   const initialSpread = adjustment > 0 ? Math.trunc(f(f(f(adjustment) * f(8 - partySize)) * f(.1))) : 0;
   const actor = Object.assign(shell(), {
     name: (spawn.actorName + (spawn.label ?? '')).slice(0, 31), segments: [], direction, segmentSize: size,
-    initialSpread, waitForKey: spawn.actorName === 'KeyBridge',
+    initialSpread, mode: gate ? 1 : 0, waitForKey: spawn.actorName === 'KeyBridge',
     onAdded(scene) {
       actor.scene = scene; runNativeCommonActorAdded(actor, scene);
       for (let index = 0; index < count; index++) {
         const segment = actor.segments[index];
-        segment.targetOffset = { x: f(f(direction.x * f(size >>> 0)) * f(count - index - 1)),
+        const offset = { x: f(f(direction.x * f(size >>> 0)) * f(count - index - 1)),
           y: f(f(direction.y * f(size >>> 0)) * f(count - index - 1)) };
-        placeNativeActorBodies(segment, actor.spawnPosition);
+        segment.targetOffset = gate ? { x: -offset.x, y: -offset.y } : offset;
+        const start = gate ? { x: f(offset.x + actor.spawnPosition.x), y: f(offset.y + actor.spawnPosition.y) } : actor.spawnPosition;
+        placeNativeActorBodies(segment, start);
         if (actor.replication && scene.networkMode === 1) segment.body.flags |= 0x20;
         scene.addActor(segment);
       }
@@ -82,7 +86,7 @@ export function createNativeBridgeActor({ spawn, partySize }) {
     let art = 0;
     if (!i) art = direction.y < 0 ? 1 : direction.y > 0 ? 2 : direction.x < 0 ? 3 : direction.x > 0 ? 4 : 0;
     const segment = Object.assign(shell(), { parent: actor, state: 0, delayTicks: 0,
-      bridgeFlags: i ? 0 : 2 | (integer(params[5]) > 0 ? 4 : 0),
+      bridgeFlags: i ? 0 : 2 | (!gate && integer(params[5]) > 0 ? 4 : 0),
       targetOffset: { x: 0, y: 0 }, savedPosition: { x: 0, y: 0 }, spriteDepth: f(.1),
       spriteBounds: { ...bounds }, spriteUV: { x: UV[art][0], y: UV[art][1], width: .015625, height: .015625 } });
     segment.beforeMotion = () => stepSegment(segment);

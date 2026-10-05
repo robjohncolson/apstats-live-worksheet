@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Gate/StepEnemy checkpoint: Gate now starts spread and opens/closes through
+native segment motion and named switches. StepEnemy walks, falls, turns at
+walls/contact, bounces riders and damages eligible side contacts. Actual native
+Player tests exercise gate crossing, enemy bounce and death. Suite507/507 passes.
+Next major missing families:DeadTimer,CollisionChangePlayer,FallBox,UpDownLift
+(each4 campaign source stages). Original-stage solutions, special player forms,
+skeletal animation/rendering, saved checkpoints/network transport, and live
+campaign integration remain unfinished. This is still NOT full48-stage parity.
+
 JumpStand/Watch checkpoint: factory explicitly ignores original Watch rows
 as the binary does. JumpStand and JumpStandEx use recovered contact-order,
 stack suppression and player/box launch commands. Actual native Player launches

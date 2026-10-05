@@ -8,6 +8,7 @@ import { createNativeWeightedLiftActor } from './native-weighted-lift-actor.mjs'
 import { createNativeDarknessLiftActor } from './native-darkness-lift-actor.mjs';
 import { createNativeThunderActor } from './native-thunder-actor.mjs';
 import { createNativeJumpStandActor } from './native-jump-stand-actor.mjs';
+import { createNativeStepEnemyActor } from './native-step-enemy-actor.mjs';
 import { populateNativeSeesawActors } from './native-seesaw-stage.mjs';
 
 // Explicit factory coverage (including the intentionally ignored Watch row).
@@ -19,11 +20,12 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'PhysicsBallPitcher', 'PhysicsSwitch', 'PushBox',
   'Warp', 'WarpAll', 'WarpInitPos', 'WarpAllInitPos',
   'Switch',
-  'Bridge', 'KeyBridge',
+  'Bridge', 'KeyBridge', 'Gate',
   'WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2',
   'DarknessWeightedLift', 'InvisibleWeightedLift',
   'Thunder', 'Watch',
   'JumpStand', 'JumpStandEx',
+  'StepEnemy',
 ]);
 
 export function spawnNativeStageActor(scene, spawn, { playerPresentation, playerExtensions } = {}) {
@@ -38,11 +40,12 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   }
   if (spawn.actorName === 'PushBox') return scene.addActor(createNativePushBoxActor({ spawn }));
   if (spawn.actorName === 'Thunder') return scene.addActor(createNativeThunderActor({ spawn }));
+  if (spawn.actorName === 'StepEnemy') return scene.addActor(createNativeStepEnemyActor({ spawn }));
   if (spawn.actorName === 'JumpStand' || spawn.actorName === 'JumpStandEx') {
     return scene.addActor(createNativeJumpStandActor({ spawn }));
   }
   if (spawn.actorName === 'Switch') return scene.addActor(createNativeSwitchActor({ spawn }));
-  if (spawn.actorName === 'Bridge' || spawn.actorName === 'KeyBridge') {
+  if (['Bridge', 'KeyBridge', 'Gate'].includes(spawn.actorName)) {
     return scene.addActor(createNativeBridgeActor({ spawn, partySize: scene.playerCount }));
   }
   if (['WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2'].includes(spawn.actorName)) {

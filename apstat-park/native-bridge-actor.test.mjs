@@ -61,6 +61,57 @@ test('Bridge command9 extends at2 pixels/frame with four-frame follower delay; c
   } finally { scene.rigidWorld.dispose(); }
 });
 
+test('Gate starts spread with synchronized bodies and uses parameter3 for size, without party adjustment', () => {
+  const { scene } = fixture([]);
+  try {
+    const gate = createNativeBridgeActor({ spawn: row('Gate', 200, 300, 3, .3, .4, 10, 99, 1), partySize: 2 });
+    scene.addActor(gate);
+    assert.equal(gate.mode, 1); assert.equal(gate.segmentSize, 10); assert.equal(gate.initialSpread, 0);
+    assert.deepEqual(gate.direction, { x: Math.fround(.6), y: Math.fround(.8) });
+    assert.deepEqual(gate.segments.map(s => s.position), [{ x: 212, y: 316 }, { x: 206, y: 308 }, { x: 200, y: 300 }]);
+    assert.deepEqual(gate.segments[0].targetOffset, { x: -12, y: -16 });
+    assert.equal(gate.segments[0].bridgeFlags, 2, 'Gate never enables leading-segment carry');
+    for (const segment of gate.segments) {
+      assert.deepEqual(segment.body.position, segment.position);
+      assert.deepEqual(segment.body.previousPosition, segment.position);
+      assert.deepEqual(segment.spawnPosition, segment.position);
+    }
+  } finally { scene.rigidWorld.dispose(); }
+});
+
+test('Gate command9 collapses at2 pixels/frame and command10 restores each own spawn at1', () => {
+  const { scene } = fixture([row('Gate', 100, 500, 3, 0, -1, 10)]);
+  try {
+    scene.setActive(true);
+    const gate = scene.findActor('Gate');
+    assert.deepEqual(gate.segments.map(s => s.position.y), [480, 490, 500]);
+    gate.onCommand(9); scene.step();
+    assert.deepEqual(gate.segments.map(s => s.position.y), [482, 490, 500]);
+    for (let i = 0; i < 14; i++) scene.step();
+    assert.deepEqual(gate.segments.map(s => s.position.y), [500, 500, 500]);
+    assert.ok(gate.segments.every(s => s.state === 3));
+    gate.onCommand(10); scene.step();
+    assert.deepEqual(gate.segments.map(s => s.position.y), [499, 500, 500]);
+    for (let i = 0; i < 24; i++) scene.step();
+    assert.deepEqual(gate.segments.map(s => s.position.y), [480, 490, 500]);
+    assert.ok(gate.segments.every(s => s.state === 0));
+  } finally { scene.rigidWorld.dispose(); }
+});
+
+test('native Player opens a named Gate by walking over Switch and then crosses its former barrier', () => {
+  const gate = row('Gate', 500, 672, 4, 0, -1, 32); gate.label = '1';
+  const button = row('Switch', 400, 672); button.label = 'Gate1';
+  const { scene, held } = fixture([gate, button, row('Player', 320, 670)]);
+  try {
+    scene.setActive(true); held.add(6);
+    for (let i = 0; i < 150; i++) scene.step();
+    const actor = scene.findActor('Gate1');
+    assert.ok(actor.segments.every(s => s.state === 3 && s.position.y === 672));
+    assert.ok(scene.players[0].position.x > 600);
+    assert.equal(scene.players[0].health, 1);
+  } finally { scene.rigidWorld.dispose(); }
+});
+
 test('segment collision correction schedules a shared restore, then motion resumes', () => {
   const { scene } = fixture([row('Bridge', 100, 500, 3, 1, 0, 0, 10)]);
   try {

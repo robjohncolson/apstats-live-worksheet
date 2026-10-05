@@ -1,3 +1,38 @@
+Gate and StepEnemy checkpoint:507/507 regression tests.
+Gate reuses recovered Bridge segment solver. Factory bb75274..bb75301 reads
+numericf32 direction params1/2 (unlike Bridge's integer direction), normalizes,
+uses intparam0 count/intparam3 size, mode1 and carry0. bb4f9d0 mode1 sets each
+segment spawn/body to parent+direction*size*(count-index-1), and target offset
+to its negation. No party spread. Existing command9 now collapses to anchor
+at2px/frame;command10 restores spread at1px/frame with same follower delays.
+Three new tests cover fractional direction, initial synced bodies, open/close
+and actual Player->SwitchGate1->Gate1 then crossing the former barrier.
+
+StepEnemy factory bb73e1e -> ctorbb6c6c0, vtablebcbe350: Lua bb6ca10,
+PRE bb6cbe0, BEGIN callback bb6ce10 at body+1c0. Bodyc62d250[-24,-13,48,26],
+type3/category7; spritebcbe460[-25,-14,50,28],UVbcb5ed0(.349609375,.0078125,
+.0244140625,.013671875),depth-.1,flag9. Walk/root trackc62aad8 points to3keys
+c62aa98 at0,12,24 withUV-Y0,.03125,0; shared skeletal playback still pending.
+- Direction starts(1,0);negative truncated Lua param0 setsX-1/spriteX-1.
+  Positive intparam1 selects replication mode0(default1); client scheduling
+  mode bits are retained. Full snapshot/history transport is not implemented.
+- PRE velocityX=directionX*c61f5e0(1),notify; DOWN contact setsY0, otherwise
+  addsf32 .65; notify again. No dt scaling and no velocity cap.
+- BEGIN map contact withabsX>EPS flips entire direction vector and spriteX.
+  BEGIN actor contact Y<0 sends0/null to ANY recipient. Otherwise nonzeroX
+  flips if recipientVX*enemyVX<=0;category1 plus virtual80 authority sends4/null.
+  Bottom-only contact does nothing. No STAY handler. Turning changes next
+  PRE's heading, not the current velocity already used in this collision pass.
+Six new tests cover constructor/gravity notifications, movement-dependent turns,
+authority/top/bottom commands, actual tile-wall turn, real Player top bounce
+and side-contact damage/death. Unsupported-factory regression now uses FallBox.
+
+Campaign missing-family leaders now:DeadTimer4,CollisionChangePlayer4,FallBox4,
+UpDownLift4; then BreakoutPlayer3,BreakoutSyncArea3,CollisionActorCreatorSilent3,
+UpDownEnemy3,CheckPoint3. Four original source stages have complete FACTORY
+coverage only; visual parity, complete input-only solutions and production
+integration remain unfinished. Do not report all48 stages faithfully ported.
+
 JumpStand/Watch checkpoint (498/498 regression tests):
 - Watch is intentionally ignored, NOT an unimplemented timer. Raw factory
   bb72b5f zeroesr14;bb72b62 copiesesi=0. Watch match bb75806/808 branches to
