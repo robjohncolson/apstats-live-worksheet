@@ -1,3 +1,18 @@
+Magnet PRE lifecycle checkpoint: bb59530 input/target branches connected in
+native-magnet-step.mjs. Owner sprite visibility gates action11; held input or
+c6301b0 toggle preference; client companion replicas preserve bit2 unless
+owner has authority. Sound repeats at .6 seconds, skips manager flag8 frames.
+Acquisition and movement occur on separate PRE frames; contact loss/input-off
+releases. Candidates clear every PRE; target ownership disables facing bit4.
+Mutual Player magnet grabs suppress target horizontal velocity and forward
+components, apply owner gravity only while airborne, and still displace the
+target. Non-mutual pulls assign velocity and forward components.
+Tests exercise actual Player command handlers, input/toggle/client visibility,
+sound timing/pause, acquire/pull/release and mutual grounded/airborne behavior.
+Still pending companion actor assembly, particles, carried-object recursive
+callbacks, application toggle preference, network snapshots and stage factory.
+No additional original stage completion or production integration claimed.
+
 Magnet follow/held-position/release checkpoint:
 Raw bb59e50 POST decoded: owner-facing predicate is sprite scaleX>0 (bae78c0).
 Right position owner+(20,-10), grip offset0, scale(+1,1); left position
