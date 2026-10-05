@@ -1,3 +1,27 @@
+Wind / ScrollLimitRange checkpoint:
+Wind ctorbb6e140, Luabb6e910, overlapbb6e6d0. Factorybb75e3a adds
+numericparam0*uintparty to spawnY. Strength selects params[max(1,party-1)],
+numericfloat32 only, index>=32 gives0. No temporal ramp or additive force.
+- Solid main bodyc62d280[-31,-75,62,74],type2/category0. Wind sensor
+  bcbe850[-1280,-60,1280,16],type0/category4. Overlap unconditionally assigns
+  recipient actor externalVelocity=(strength,0), including nonplayer actors.
+  Native walking consumes and clears this vector in the next PRE.
+- Main sprite[-32,-76,64,76],UV(.453125,.322265625,.03125,.037109375),
+  flags8,depth-.1. Fan component bounds[-64,-68,24,34],UV(.43359375,.3125,
+  .01171875,.0166015625),flags9,depth-.1. Default/root keys0/12/24,
+  UVX0/.00390625/0. Networktype2d/mode1 metadata. Body/history snapshots
+  bb6e5c0/620 and fan-component rendering still need common adapter integration.
+ScrollLimitRange factorybb764fe,ctorbb5d230,PREbb5d2e0:
+- Bodyless/invisible. numericparam0 is retained range field+3e8; recovered PRE
+  does not read it. Integerparam1!=0 selects all-player minX, else maxX.
+- Phase0 compares previous camera extrema strictly >actorX, then scrollMode2.
+  Phase1 waits for named Key, native Key RTTI and nonnull carrier, then mode1
+  and permanent phase2. No rearm, position teleport or per-player side effect.
+Six tests include real Player wind displacement, actual key pickup restoring
+follow-camera mode, and original jump05 initialization/30idle ticks for2/8players.
+Factory coverage now11/51campaign source files. Original full puzzle solutions,
+shared rendering/history/network and live48-stage integration remain unfinished.
+
 CollisionActorCreator / Silent checkpoint:
 Factory bb75d1c->bb3a640; Silent bb75d6b->same ctor then+3fc=1.
 Lua bb3a730, overlapbb3aa10, createbb3aa70, snapshotsbb3a980/9c0.

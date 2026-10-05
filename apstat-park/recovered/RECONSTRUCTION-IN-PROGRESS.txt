@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Wind/ScrollLimitRange checkpoint: party-indexed wind and key-gated scrolling
+mode changes now run with actual native Players. Original jump05 fully assembles
+for2/8players; complete factory coverage now11/51sources. This remains initial
+simulation coverage, not full input-only solutions. Next:remaining specialized
+forms/controllers (Breakout, Majority, Ghost, Plane, etc.) and mechanics. Shared
+rendering/snapshots/native networking, golden comparisons, full stage solutions
+and live campaign integration are still required. Keep48-stage goal active.
+
 Dynamic creator checkpoint: CollisionActorCreator and Silent now create native
 children on player contact/state replication, respecting Key/Goal authority and
 scene creation gating. Actual Player->Rect creation tested. Original darkness01/02
