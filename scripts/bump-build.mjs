@@ -28,6 +28,16 @@ if (!re.test(desk)) {
   process.exit(1);
 }
 desk = desk.replace(re, `$1${stamp}$2`);
+// The old worker may still control the first navigation after a deployment.
+// Version the entry scripts too, so cache-first cannot pair new HTML with an
+// old three-door board that never imports the current calculator room.
+for (const asset of ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js']) {
+  const escaped = asset.replaceAll('.', '\\.');
+  const script = new RegExp('src="' + escaped + '(?:\\?v=[^"<>]*)?"', 'g');
+  const matches = desk.match(script) || [];
+  if (matches.length !== 1) throw new Error('Expected one desk entry script: ' + asset);
+  desk = desk.replace(script, 'src="' + asset + '?v=' + stamp + '"');
+}
 writeFileSync(deskPath, desk);
 writeFileSync(versionPath, JSON.stringify({ build: stamp, ts: Date.now() }) + '\n');
 

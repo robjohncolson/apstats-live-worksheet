@@ -229,3 +229,14 @@ describe('service-worker partial responses and cache failures', () => {
     expect(b.put).not.toHaveBeenCalled();
   });
 });
+
+it('game entry scripts use the same build as the desk, bypassing older worker cache keys', () => {
+  const build = JSON.parse(read('version.json')).build;
+  const dom = new JSDOM(DESK);
+  const scripts = [...dom.window.document.querySelectorAll('script[src]')].map(s => s.getAttribute('src'));
+  for (const asset of ['canvas_engine.js', 'sprite_sheet.js', 'classroom-board.js']) {
+    expect(scripts.filter(src => src.split('?')[0] === asset)).toEqual([asset + '?v=' + build]);
+  }
+  expect(scripts.indexOf('canvas_engine.js?v=' + build)).toBeLessThan(scripts.indexOf('classroom-board.js?v=' + build));
+  expect(scripts.indexOf('sprite_sheet.js?v=' + build)).toBeLessThan(scripts.indexOf('classroom-board.js?v=' + build));
+});
