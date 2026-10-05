@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+GameScene assembly checkpoint: native-game-scene now joins the recovered
+physics, actor scheduler, player boundaries, camera, timer and outcome systems.
+An input-only synthetic Key-to-Goal course clears through this assembly; the
+original seesaw actor rows/maps/players run repeatably together. Native command
+lookup and activation ordering are included. Creation-table scheduling stays
+an explicit dependency. This is not yet the production campaign engine and
+does not prove a completed original seesaw puzzle or all48 campaign stages.
+Full park suite passes419/419 tests at this checkpoint.
+
 Camera/timer checkpoint: native-scene-camera and native-scene-timer recover
 team-follow/auto/scripted/correction-only camera modes, visible map columns,
 timer pause/peer gates and expiration command. Tests assemble those callbacks

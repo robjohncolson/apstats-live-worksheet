@@ -1,5 +1,30 @@
 Native body-pair reconstruction checkpoint
 
+GameScene assembly checkpoint (bb7a9b0/bc1a070/bc1afa0/bc1bf50/bc1be20):
+  native-game-scene combines recovered scheduler, custom-body/rigid worlds,
+  player boundaries, timer, camera/visible columns and outcomes. Constructor
+  starts inactive with flags600, four actor priority buckets, scrollFlags500,
+  scrollLimit0, cameraMaxStep3 and cameraBlend1. The 38 explicit GameScene
+  collision writes plus BodyWorld(0,0) make39 enabled matrix entries.
+  Original custom tile flags at bcc8c40 are [3,3,3,3,1,1,1,1,1], for IDs26..34.
+  bc1a070 uses gravity980; bbe76d0 multiplies Y by .01f before Box2D (9.8f).
+  Numeric Lua autoScroll=0 suppresses scrollable fallback. Speed/end offsets
+  depend on partySize-2; failure bounds use720/viewScale times failWindowScale
+  (default3). Darkness begins with map bit2 clear and remainingSeconds0.
+  Named actors use bb981b0 CRC32 and a sorted unique hash table. Duplicate
+  hashes do not replace earlier actors. Broadcasts visit hash order, exclude
+  unnamed actors; removal releases the dictionary reference. Supported stage
+  actors now register through this scene API when present. Ordinary Key rows
+  skip existing names; later Seesaw rows can bind an earlier scene parent.
+  bc1b610 activation calls creation scheduler at viewPosition.x, actor PRE(dt0),
+  then bb7b9c0 centers mode1 once (scroll bit4) and checks darkness expiry.
+  Scheduler callback remains explicit: activation refuses missing scheduling.
+  Seven tests cover constructor/command/activation semantics, an input-only
+  synthetic Key-to-Goal completion and repeatable original seesaw actor/map/
+  player assembly. The seesaw puzzle is NOT proven solved. Production renderer,
+  creation-table scheduling, full Player row configuration, saved checkpoint
+  restore, network/rewind and remaining actor families are still incomplete.
+
 Camera/timer checkpoint (bb7c150/bb7bbe0/bb7ccc0):
   Camera extrema use world X, omit only hidden kind2 Players, include anchor.
   Raw bb7c1f6..23d confirms world position rather than display offset. Mode0

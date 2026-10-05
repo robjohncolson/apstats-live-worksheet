@@ -19,9 +19,12 @@ export function populateNativeSeesawActors(scene, spawns) {
     let actor;
     switch (spawn.actorName) {
       case 'Key':
+        if (scene.findActor ? scene.findActor(name) : entries.some(entry => entry.actor.name === name)) continue;
+        actor = createNativeKeyActor({ name, position, params, partySize: scene.playerCount });
+        break;
       case 'BreakoutKey':
         actor = createNativeKeyActor({ name, position, params, partySize: scene.playerCount,
-          mode: spawn.actorName === 'BreakoutKey' ? 1 : 0 });
+          mode: 1 });
         break;
       case 'Goal':
         actor = createNativeGoalActor({ name, position });
@@ -31,8 +34,9 @@ export function populateNativeSeesawActors(scene, spawns) {
         const parent = spawn.actorName === 'SeesawParent';
         actor = createNativeSeesaw({ position, parent, type: Math.trunc(params[0] ?? 0) });
         if (!parent && Math.trunc(params[1] ?? 0)) {
-          const target = entries.find(entry => entry.actor.name === 'SeesawParent');
-          if (target) actor.connectParent(target.actor);
+          const target = scene.findActor ? scene.findActor('SeesawParent') :
+            entries.find(entry => entry.actor.name === 'SeesawParent')?.actor;
+          if (target) actor.connectParent(target);
         }
         break;
       }
@@ -54,7 +58,8 @@ export function populateNativeSeesawActors(scene, spawns) {
         continue;
     }
     actor.name = name;
-    queueNativeActor(scene.actorManager, actor, 0, scene);
+    if (scene.addActor) scene.addActor(actor);
+    else queueNativeActor(scene.actorManager, actor, 0, scene);
     entries.push({ spawn, actor });
   }
   return entries;
