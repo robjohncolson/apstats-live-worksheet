@@ -1150,3 +1150,16 @@ Correction updates offset from current position minus spawn. Counter is32px,
 centered X(+5 for ordinary), Y+7, max(0,required-supports), depth-.2.
 Native snapshot bb64200 additionally restores body-contact payloads and flag10;
 that transport path is not yet connected by this local actor implementation.
+Darkness/InvisibleWeightedLift evidence: bb62450 ctor, bb62580 Lua config,
+bb62790 PRE, bb62ab0 commands, bb62e70 visibility, bb62e10 correction.
+This is distinct from bb63cf0 styled lifts. Config is width,height,travel,
+optional return-enable integer (default1). Body uses top-left raw float bounds,
+type2/category5/flags3. Patch LiftRect32px tiles, origin(0,.515625), UVcell and
+insets.015625, depth.2. Factory hides Invisible variant before Lua setup;
+patch construction preserves its flags. Commands e(nonnull)/2c affect only
+patch bit8. Hidden lift plays switch sound only when recursive UP load rises.
+Required load is max(2,ceil(float32(actual scene players * percent/100))),
+default percent100; it is recomputed each active PRE, unlike styled lifts'
+configured-party threshold. Movement/cooldown/carry otherwise follow bb64310.
+Four tests cover geometry, visibility, live team size and actual riding while
+hidden. Snapshot restore/transport still requires later scene integration.

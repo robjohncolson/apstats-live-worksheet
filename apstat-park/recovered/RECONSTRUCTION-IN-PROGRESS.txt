@@ -1,5 +1,19 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Darkness lift checkpoint: native-darkness-lift-actor assembles DarknessWeightedLift
+and InvisibleWeightedLift with Lua-sized top-left geometry, live scene-player
+threshold, hidden boarding cue, and visibility commands that retain collision.
+Native Player tests ride visible/hidden lifts and survive darkness expiry.
+Full suite passes486/486. Native snapshot transport and production rendering
+remain unfinished, alongside missing campaign mechanisms and full solutions.
+
+Campaign-only coverage audit (48 catalog entries,51 unique source stages when
+large-party variants are included): missing factory families by stage count
+start with Thunder17, Watch11, JumpStand7, StepEnemy6, Gate5, DeadTimer4,
+CollisionChangePlayer4, FallBox4, UpDownLift4. This excludes unrelated menu,
+battle and endless sources; coverage counts are NOT fidelity/completion proof.
+Thunder is the next highest-coverage missing shared mechanism to recover.
+
 WeightedLift checkpoint: native-weighted-lift-actor assembles ordinary,
 Ex and Ex2 lift variants using recovered load counts, movement gate, carry,
 cooldown, party-dependent travel and return speed. Tests include two native

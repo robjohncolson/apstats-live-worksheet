@@ -5,6 +5,7 @@ import { createNativeWarpActor } from './native-warp-actor.mjs';
 import { createNativeSwitchActor } from './native-switch-actor.mjs';
 import { createNativeBridgeActor } from './native-bridge-actor.mjs';
 import { createNativeWeightedLiftActor } from './native-weighted-lift-actor.mjs';
+import { createNativeDarknessLiftActor } from './native-darkness-lift-actor.mjs';
 import { populateNativeSeesawActors } from './native-seesaw-stage.mjs';
 
 // Explicit coverage for the assembled native scene. Unsupported actors must
@@ -17,6 +18,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'Switch',
   'Bridge', 'KeyBridge',
   'WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2',
+  'DarknessWeightedLift', 'InvisibleWeightedLift',
 ]);
 
 export function spawnNativeStageActor(scene, spawn, { playerPresentation, playerExtensions } = {}) {
@@ -34,6 +36,9 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   }
   if (['WeightedLift', 'WeightedLiftEx', 'WeightedLiftEx2'].includes(spawn.actorName)) {
     return scene.addActor(createNativeWeightedLiftActor({ spawn, partySize: scene.playerCount }));
+  }
+  if (['DarknessWeightedLift', 'InvisibleWeightedLift'].includes(spawn.actorName)) {
+    return scene.addActor(createNativeDarknessLiftActor({ spawn }));
   }
   if (['Warp', 'WarpAll', 'WarpInitPos', 'WarpAllInitPos'].includes(spawn.actorName)) {
     return scene.addActor(createNativeWarpActor({ spawn }));
