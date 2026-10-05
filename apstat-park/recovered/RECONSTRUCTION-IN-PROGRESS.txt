@@ -1,5 +1,20 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Magnet companion assembly checkpoint: bb59090/59390/592d0 plus verified
+PRE/POST helpers assembled as native-magnet-actor.mjs. Priority3 category2
+sensor(20,-50,110,80), native sprite bounds/UV, owner attachment slot0,
+reference ownership, color update2e and raw player-index query1f preserved.
+Actual native scene collision contacts now grab, pull and release a Player.
+Particle bb5a8e0/5ac70 update/spawn translated: frame-based attraction .03/.04,
+fade .02, range30, capacity16, alpha.5, correlated spawn X80..110/Y30..40,
+strict probability>.8 with preserved random call counts and manager pause.
+External random-float adapter remains required (no claimed RNG stream parity).
+Still missing campaign factory, recursive carried-target adapter, network
+snapshots, particle draw/color pipeline and full original-stage solutions.
+Actor intentionally throws if carrying a grabbed target without the missing
+adapter. No production or campaign-completion claim. Full48 goal active.
+
+
 Magnet PRE lifecycle checkpoint: bb59530 input/target branches connected in
 native-magnet-step.mjs. Owner sprite visibility gates action11; held input or
 c6301b0 toggle preference; client companion replicas preserve bit2 unless
