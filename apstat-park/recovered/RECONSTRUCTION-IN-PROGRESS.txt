@@ -1,5 +1,15 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Bridge checkpoint: native-bridge-actor now assembles ordinary Bridge and
+KeyBridge parent/segment lifecycles, party-dependent starting spread, switch
+commands9/10, per-segment delay, extension/retraction, collision restore,
+leading-segment carry, key pickup trigger and deferred child removal. Shared
+carry helper accepts native bridge options while existing scroll/push defaults
+remain covered. Seven new tests include Player->Switch->Bridge and actual Key
+pickup->KeyBridge. Full suite passes475/475. WeightedLift is the remaining
+unimplemented family in stage_jump01; original-stage solutions and production
+rendering/campaign integration remain unfinished. Gate mode1 is not assembled.
+
 Ordinary Switch checkpoint: native-switch-actor implements mode0/style0,
 circular category5 overlap, delayed press/release publishing, momentary/latch
 configuration, second target, command14 cooldown bounce, rearm/input-lock

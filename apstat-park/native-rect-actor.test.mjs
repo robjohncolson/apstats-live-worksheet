@@ -100,7 +100,7 @@ test('Rect visibility query includes camera offset and attached stop command fre
 test('shared stage factory fails explicitly for an actor whose native implementation is missing', () => {
   const { scene } = fixture([]);
   try {
-    assert.throws(() => spawnNativeStageActor(scene, row('Bridge', 0, 0)), /not implemented: Bridge/);
+    assert.throws(() => spawnNativeStageActor(scene, row('WeightedLift', 0, 0)), /not implemented: WeightedLift/);
     assert.equal(scene.bodyWorld.bodies.length, 0);
   } finally { scene.rigidWorld.dispose(); }
 });

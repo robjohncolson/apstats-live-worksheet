@@ -101,7 +101,8 @@ export function checkNativePlayerFallBounds(scene, actor, state) {
 
 // bb34f30 -> bc17330/bc16780, options [1,0,1,0,0,0,2].
 // Scroll uses RIGHT; PushBox also uses LEFT. Both carry only category1.
-export function carryNativeScrollNeighbors(actor, movement, directionIndex = 3) {
+export function carryNativeScrollNeighbors(actor, movement, directionIndex = 3,
+  { allCategories = false, compensateOpposingVelocity = false } = {}) {
   if (directionIndex !== 2 && directionIndex !== 3) throw new Error('Invalid native horizontal carry direction');
   const direction = { x: directionIndex === 2 ? -1 : 1, y: 0 };
   const delta = { x: f(movement.x), y: f(movement.y) };
@@ -114,16 +115,26 @@ export function carryNativeScrollNeighbors(actor, movement, directionIndex = 3) 
       .map(contact => findNativeBody(body.world, contact.bodyId)).filter(Boolean);
     if (neighbors.length > 16) throw new Error('Native scroll carry contact capacity exceeded');
     for (const neighbor of neighbors) {
-      if ((neighbor.flags & 16) || (neighbor.category & 31) !== 1) continue;
+      if ((neighbor.flags & 16) || (!allCategories && (neighbor.category & 31) !== 1)) continue;
       const rider = neighbor.actor;
       if (!rider) throw new Error('Native scroll carry requires an owning actor');
       if (visited.has(rider)) continue;
       if (visited.size === 100) throw new Error('Native scroll carry pointer capacity exceeded');
       visited.add(rider);
-      rider.position = { x: f(rider.position.x + delta.x), y: f(rider.position.y + delta.y) };
+      const displacement = { ...delta };
+      if (compensateOpposingVelocity) {
+        const length = f(Math.sqrt(f(f(delta.x * delta.x) + f(delta.y * delta.y))));
+        const unit = length ? { x: f(delta.x / length), y: f(delta.y / length) } : { ...delta };
+        const projection = f(f(unit.x * rider.velocity.x) + f(unit.y * rider.velocity.y));
+        if (projection < 0) {
+          displacement.x = f(displacement.x - f(unit.x * projection));
+          displacement.y = f(displacement.y - f(unit.y * projection));
+        }
+      }
+      rider.position = { x: f(rider.position.x + displacement.x), y: f(rider.position.y + displacement.y) };
       syncNativeActorBodies(rider);
-      rider.postResetVector = { ...delta };
-      rider.onCarried?.({ ...delta }, direction, visited);
+      rider.postResetVector = { ...displacement };
+      rider.onCarried?.({ ...displacement }, direction, visited);
       carryFrom(rider);
     }
   }

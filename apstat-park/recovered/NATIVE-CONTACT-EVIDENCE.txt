@@ -1116,3 +1116,20 @@ clears active latch and enters bit10/20 cooldown; continued contact gets
 command0(-3,-7), restarts cooldown, and renderOffset(0,-3). Replica overlap
 only applies render offset; state application updates visuals/sound separately.
 Raw bb5ff70 (+108 change hook) is debug-only noop for this ordinary class.
+Bridge evidence: bb4f630 constructor, bb4f9d0 added, bb4fda0 removed,
+bb4fea0 commands, bb4fe10 KeyBridge trigger, bb4f230 segment PRE,
+bb4f3e0 movement, bb4f380 correction callback. Segment body type2/category6,
+fixed flag10/responseFlags1; size+1 width for horizontal direction, otherwise
+size+1 height. UV first-segment direction table bcba460; depth.1. Parent has
+no body; unnamed children enter scheduler directly. Party spread occurs after
+body registration, modifying only transforms until first PRE synchronizes.
+Positive Lua param3 yields int(float32(param3*(8-party)*float32(.1))).
+Extend state1 targets spawn+offset at2px/frame, retract state2 targets spawn
+at1px/frame; first segment bypasses four-call delay. Nonzero spread bypasses
+extension delay for all segments. Dot-product crossing snaps to exact target.
+Solver correction sets flag8 on all siblings; next PRE restores saved poses.
+Optional first-segment carry uses options[1,1,1,0,0,0,0]: all categories,
+fixed-body exclusion, opposite-velocity compensation, recursive original delta.
+KeyBridge reads actual Key RTTI and carrier+408 once before issuing command9.
+Parent removal marks children20; scheduler head changes defer their cleanup
+across subsequent PRE/POST passes. Tested through normal scene scheduling.

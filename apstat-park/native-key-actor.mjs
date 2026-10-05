@@ -9,7 +9,7 @@ const f = Math.fround;
 export function createNativeKeyActor({ name = 'Key', position = { x: 0, y: 0 }, mode = 0,
   params = [], partySize = 1 } = {}) {
   const actor = {
-    name: name.slice(0, 31), scene: null, flags: 0, motionFlags: 12, cameraRelative: true,
+    name: name.slice(0, 31), scene: null, flags: 0, motionFlags: 12, cameraRelative: true, isNativeKey: true,
     bodies: [], components: [], velocity: { x: 0, y: 0 }, acceleration: { x: 0, y: 0 },
     renderOffset: { x: 0, y: 0 }, spriteFlags: 8, keyFlags: 0, state: 0, mode,
     carrier: null, selectedCarrier: null, previousCarrier: null, handoffTicks: 0,

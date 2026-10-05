@@ -3,6 +3,7 @@ import { createNativeRectActor } from './native-rect-actor.mjs';
 import { createNativePushBoxActor } from './native-push-box-actor.mjs';
 import { createNativeWarpActor } from './native-warp-actor.mjs';
 import { createNativeSwitchActor } from './native-switch-actor.mjs';
+import { createNativeBridgeActor } from './native-bridge-actor.mjs';
 import { populateNativeSeesawActors } from './native-seesaw-stage.mjs';
 
 // Explicit coverage for the assembled native scene. Unsupported actors must
@@ -13,6 +14,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'PhysicsBallPitcher', 'PhysicsSwitch', 'PushBox',
   'Warp', 'WarpAll', 'WarpInitPos', 'WarpAllInitPos',
   'Switch',
+  'Bridge', 'KeyBridge',
 ]);
 
 export function spawnNativeStageActor(scene, spawn, { playerPresentation, playerExtensions } = {}) {
@@ -25,6 +27,9 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   }
   if (spawn.actorName === 'PushBox') return scene.addActor(createNativePushBoxActor({ spawn }));
   if (spawn.actorName === 'Switch') return scene.addActor(createNativeSwitchActor({ spawn }));
+  if (spawn.actorName === 'Bridge' || spawn.actorName === 'KeyBridge') {
+    return scene.addActor(createNativeBridgeActor({ spawn, partySize: scene.playerCount }));
+  }
   if (['Warp', 'WarpAll', 'WarpInitPos', 'WarpAllInitPos'].includes(spawn.actorName)) {
     return scene.addActor(createNativeWarpActor({ spawn }));
   }
