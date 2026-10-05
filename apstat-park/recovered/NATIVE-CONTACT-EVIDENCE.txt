@@ -1,5 +1,20 @@
 Native body-pair reconstruction checkpoint
 
+Scroll-edge carry checkpoint (bb6f0e0/bb34f30/bc17330/bc16780):
+  The branch runs for scrollMode2 or scrollFlags1000. Compute original display
+  X plus prepared vx minus bb7b610 autoscroll speed; if negative, subtract that
+  amount from vx and carry RIGHT contacts by {-displayX,0}. Constant bcb6220
+  supplies [1,0,1,0], followed by [0,0,2]: synchronize carried bodies, no
+  velocity compensation, recurse, direction unchanged, first body, category
+  mask2. Fixed body bit16 and non-category1 neighbors are skipped. Shared
+  descendants move once; body sync precedes postResetVector and onCarried.
+  The initiating actor is not directly repositioned by this neighbor routine.
+  Death then tests (32+originalDisplayX)-correctedVx<0 and actor virtual80;
+  bb67710 returns width64 and bcff4fc supplies .5 (both raw constants checked).
+  New tests cover shared descendants, hook order, fixed/category exclusions,
+  strict death boundary and eligibility. Walking/Balance fixture uses real
+  boundary callbacks. All 360 park tests pass; live campaign remains pending.
+
 Player boundary checkpoint (bb7b700/bb7cd20/bb7ca90/bb7b610):
   bb7cd20 follows UP category1 contacts in stored order, using actor display
   positions and the depth64 cutoff. Missing registry bodies are ignored.

@@ -1,5 +1,6 @@
 import { nativeActorDisplayPosition } from './native-actor-bodies.mjs';
 import { findNativeBody } from './native-body-registry.mjs';
+import { syncNativeActorBodies } from './native-actor-motion.mjs';
 
 const f = Math.fround;
 const EPSILON = 2 ** -23;
@@ -96,4 +97,47 @@ export function checkNativePlayerFallBounds(scene, actor, state) {
   actor.onCommand(4);
   actor.fallState = 1;
   if (scene.stageRetryEligible) scene.flags |= 2;
+}
+
+// bb34f30 -> bc17330/bc16780, direction3 and options [1,0,1,0,0,0,2].
+// Unlike Balance's UP carry, this follows RIGHT contacts and only category1.
+export function carryNativeScrollNeighbors(actor, movement) {
+  const direction = { x: 1, y: 0 };
+  const delta = { x: f(movement.x), y: f(movement.y) };
+  const visited = new Set();
+  function carryFrom(carrier) {
+    const body = carrier.bodies[0]?.body;
+    if (!body?.world) return;
+    const neighbors = body.contacts.filter(({ normal }) =>
+      Math.abs(f(normal.x - 1)) <= EPSILON && Math.abs(f(normal.y)) <= EPSILON)
+      .map(contact => findNativeBody(body.world, contact.bodyId)).filter(Boolean);
+    if (neighbors.length > 16) throw new Error('Native scroll carry contact capacity exceeded');
+    for (const neighbor of neighbors) {
+      if ((neighbor.flags & 16) || (neighbor.category & 31) !== 1) continue;
+      const rider = neighbor.actor;
+      if (!rider) throw new Error('Native scroll carry requires an owning actor');
+      if (visited.has(rider)) continue;
+      if (visited.size === 100) throw new Error('Native scroll carry pointer capacity exceeded');
+      visited.add(rider);
+      rider.position = { x: f(rider.position.x + delta.x), y: f(rider.position.y + delta.y) };
+      syncNativeActorBodies(rider);
+      rider.postResetVector = { ...delta };
+      rider.onCarried?.({ ...delta }, direction, visited);
+      carryFrom(rider);
+    }
+  }
+  carryFrom(actor);
+}
+
+// bb6f0e0 scroll branch, before grounded/gravity handling. Death checks the
+// original display X and corrected velocity; bb67710 returns fixed width64.
+export function applyNativePlayerScrollBoundary(scene, actor, velocity) {
+  if (scene.scrollMode !== 2 && !(scene.scrollFlags & 0x1000)) return;
+  const x = nativeActorDisplayPosition(actor).x;
+  const amount = f(f(x + velocity.x) - nativeAutoScrollSpeed(scene));
+  if (amount < 0) {
+    velocity.x = f(velocity.x - amount);
+    carryNativeScrollNeighbors(actor, { x: f(-x), y: 0 });
+  }
+  if (f(f(32 + x) - velocity.x) < 0 && actor.canReceiveDamage()) actor.onCommand(4);
 }

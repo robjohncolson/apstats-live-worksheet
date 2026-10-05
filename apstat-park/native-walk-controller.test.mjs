@@ -12,20 +12,24 @@ import { createNativeActorRectangle } from './native-actor-bodies.mjs';
 import { placeNativeActorBodies } from './native-actor-motion.mjs';
 import { runNativeCommonActorAdded, runNativeCommonActorPre, runNativeCommonActorPost } from './native-actor-lifecycle.mjs';
 import { stepNativeSceneFrame, stepNativeGameScenePhysics } from './native-scene-frame.mjs';
+import { nativePlayerMovementBoundary, applyNativePlayerScrollBoundary,
+  checkNativePlayerFallBounds } from './native-player-boundary.mjs';
 const wasmBinary = await readFile(new URL('./recovered/box2d.wasm', import.meta.url));
 
 async function makeScene() {
   const targets = new Map();
   const scene = { flags: 0x20, frame: 0n, highestFrame: 0n, viewPosition: { x: 0, y: 0 },
-    playerCount: 2, actorManager: createNativeActorManager(1), bodyWorld: createNativeBodyRegistry(),
+    playerCount: 2, players: [], viewOffset: { x: 0, y: 0 }, viewScale: 1,
+    scrollFlags: 0, scrollLimit: -1, maximumPlayerY: 720, minimumPlayerY: 0,
+    actorManager: createNativeActorManager(1), bodyWorld: createNativeBodyRegistry(),
     rigidWorld: await createNativeRigidWorld({ moduleOptions: { wasmBinary } }),
     updateCamera() {}, updateOutcomes() {}, sendCommand(name, command, value) { targets.get(name)?.onCommand(command, value); } };
   scene.bodyWorld.collisionMatrix[1] = scene.bodyWorld.collisionMatrix[32] = true;
   scene.scrollMode = 0;
-  // Fixed fixture has no camera boundaries, fall death, or relocation targets.
-  scene.clipPlayerMovement = (_actor, value) => value;
-  scene.applyPlayerScrollBoundary = () => {};
-  scene.checkPlayerFallBounds = () => {};
+  scene.clipPlayerMovement = (actor, value) => nativePlayerMovementBoundary(scene, actor, value);
+  scene.applyPlayerScrollBoundary = (actor, velocity) => applyNativePlayerScrollBoundary(scene, actor, velocity);
+  scene.checkPlayerFallBounds = (actor, state) => checkNativePlayerFallBounds(scene, actor, state);
+  // This fixture has no named relocation target actor.
   scene.notifyPlayerRelocation = () => {};
   scene.onStep = dt => stepNativeGameScenePhysics(scene, dt);
   return { scene, targets };
@@ -41,6 +45,7 @@ function makeWalker(scene, position) {
     externalVelocity: { x: 0, y: 0 }, collisionCorrection: { x: 0, y: 0 },
     renderOffset: { x: 0, y: 0 }, gravityDirection: { x: 0, y: 1 },
     inputEnabled: true, inputMode: 0, animation: 0, jumpLimit: 0, speedScale: 1,
+    controllerKind: 2, spriteFlags: 8, cameraRelative: true,
     input: { held: key => held.has(key), pressed: key => pressed.has(key) },
     getWalkSpeed() { return Math.fround(3 * actor.speedScale); },
     getJumpVelocity: () => nativePlayerJumpVelocity(),
@@ -56,6 +61,7 @@ function makeWalker(scene, position) {
   actor.body = createNativeActorRectangle(actor, { x: -16, y: -47, width: 32, height: 46 }, 2, true);
   actor.body.category = 1;
   placeNativeActorBodies(actor, position);
+  scene.players.push(actor);
   queueNativeActor(scene.actorManager, actor, 0, scene);
   return { actor, controller, held, pressed };
 }

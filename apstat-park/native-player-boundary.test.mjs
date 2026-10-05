@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { createNativeBody } from './native-body.mjs';
 import { createNativeBodyRegistry, attachNativeBody } from './native-body-registry.mjs';
 import { nativeStackMovementExtreme, nativePlayerDisplayRange,
-  nativePlayerMovementBoundary, nativeAutoScrollSpeed, checkNativePlayerFallBounds } from './native-player-boundary.mjs';
+  nativePlayerMovementBoundary, nativeAutoScrollSpeed, checkNativePlayerFallBounds,
+  carryNativeScrollNeighbors, applyNativePlayerScrollBoundary } from './native-player-boundary.mjs';
 
 const fixture = () => {
   const world = createNativeBodyRegistry();
@@ -120,4 +121,50 @@ test('fall boundaries defer death during relocation and preserve local authority
   commands.length = 0; scene.minimumPlayerY = 0;
   checkNativePlayerFallBounds(scene, actor, state);
   assert.deepEqual(commands, [], 'nonnegative upper boundary is disabled');
+});
+
+test('scroll carry follows right category1 contacts, synchronizes bodies and moves shared descendants once', () => {
+  const { add } = fixture();
+  const actors = [add(-5), add(10), add(20), add(30), add(40), add(50)];
+  for (const actor of actors) actor.bodies[0].followsActor = true;
+  const link = (a, b) => actors[a].bodies[0].body.contacts.push({
+    bodyId: actors[b].bodies[0].body.id, normal: { x: 1, y: 0 } });
+  link(0, 1); link(0, 2); link(1, 3); link(2, 3); link(0, 4); link(0, 5);
+  actors[4].bodies[0].body.category = 2;
+  actors[5].bodies[0].body.flags |= 16;
+  const order = [];
+  actors.forEach((actor, index) => { actor.onCarried = delta => {
+    order.push(index);
+    assert.deepEqual(actor.bodies[0].body.position, actor.position);
+    delta.x = 99;
+  }; });
+  carryNativeScrollNeighbors(actors[0], { x: 5, y: 0 });
+  assert.deepEqual(order, [1, 3, 2]);
+  assert.deepEqual(actors.map(actor => actor.position.x), [-5, 15, 25, 35, 40, 50]);
+  assert.deepEqual(actors[3].postResetVector, { x: 5, y: 0 });
+});
+
+test('scroll boundary corrects velocity before death threshold and honors damage eligibility', () => {
+  const { scene, add } = fixture();
+  const actor = add(-14.5), commands = [];
+  actor.canReceiveDamage = () => true;
+  actor.onCommand = command => commands.push(command);
+  scene.scrollMode = 2;
+  const velocity = { x: -3, y: 4 };
+  applyNativePlayerScrollBoundary(scene, actor, velocity);
+  assert.deepEqual(velocity, { x: 17.5, y: 4 });
+  assert.deepEqual(commands, [], 'exact boundary equality is not death');
+  actor.position.x = -15; velocity.x = -3;
+  applyNativePlayerScrollBoundary(scene, actor, velocity);
+  assert.deepEqual(commands, [4]);
+  assert.equal(actor.position.x, -15, 'the current actor moves later through its velocity');
+  commands.length = 0; actor.canReceiveDamage = () => false;
+  applyNativePlayerScrollBoundary(scene, actor, velocity);
+  assert.deepEqual(commands, []);
+  scene.scrollMode = 0; velocity.x = -3;
+  applyNativePlayerScrollBoundary(scene, actor, velocity);
+  assert.equal(velocity.x, -3);
+  scene.scrollFlags = 0x1000;
+  applyNativePlayerScrollBoundary(scene, actor, velocity);
+  assert.equal(velocity.x, 15, 'flag1000 applies the edge constraint without autoscroll');
 });
