@@ -111,6 +111,10 @@ try {
     await page.goto(origin + '/?user=' + name);
     await page.waitForFunction(() => board.getSpritePosition(new URL(location).searchParams.get('user')));
     await page.waitForFunction(() => board.getParkScene()?.kind === 'calculator');
+    assert.equal(await page.evaluate(() => board.getParkScene().getView().campaignUnlocked), false);
+    await page.evaluate(() => board.openNativeGameplay(0));
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => board.getParkScene()?.kind), 'calculator', 'campaign entrance stays locked before earning a key');
     assert.ok(await page.evaluate(() => bootHeights.length > 0 && bootHeights.every(height => height === board.getBoardHeight())),
       'every startup frame reserves the full calculator height, including delayed module loading');
     await page.evaluate(() => { window.originalRoom = board.getParkScene(); window.originalHeight = board.getBoardHeight(); });
@@ -194,6 +198,8 @@ try {
       'clicking a boxplot value leaves the character on the ground');
   }
   await alice.waitForFunction(() => board.getParkScene().getState().solved);
+  assert.equal(await alice.evaluate(() => board.getParkScene().getView().campaignUnlocked), false,
+    'one finished student does not unlock an unfinished team');
   assert.equal(await alice.evaluate(() => board.getParkScene().getState().complete), false);
   assert.equal(await alice.evaluate(() => board.getParkScene().getState().readyCount), 1);
   assert.equal(await alice.evaluate(() => board.getParkScene().getView().resetDoor), null);
@@ -253,6 +259,7 @@ try {
     }
   }
   await alice.waitForFunction(() => board.getParkScene().getState().complete);
+  await Promise.all([alice, bob].map(page => page.waitForFunction(() => board.getParkScene().getView().campaignUnlocked)));
   assert.equal(await alice.evaluate(() => board.getParkScene().getCalculatorScreen().id), 'one-var-stats-result-page2');
   assert.equal(await bob.evaluate(() => board.getParkScene().getState().complete), true);
   for (const page of [alice, bob]) {

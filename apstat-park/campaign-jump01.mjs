@@ -56,7 +56,7 @@ export async function createJump01Art(doc) {
         Math.max(0, runtime.players.length - riders));
     }
     for (const goal of runtime.goals) {
-      art.door(ctx, goal.view.x / 2, (goal.view.y - 2) / 2, runtime.keys.every(key => key.collected));
+      art.door(ctx, goal.view.x / 2, (goal.view.y - 2) / 2, goal.opened);
     }
   }
   function cats(ctx, runtime, ticks, colours, focusSlot) {

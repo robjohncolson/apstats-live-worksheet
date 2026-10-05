@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
 export const CAMPAIGN_PATCHES = [{
+  id: 'authored-switch-release-and-keyed-goal-entry',
+  files: ['src/engine/GameRuntime.ts', 'src/engine/actors/Goal.ts', 'src/engine/sprites.ts'],
+  evidence: ['FUN_7ff72bb78b70', 'FUN_7ff72bb5eef0', 'FUN_7ff72bb531d0', 'FUN_7ff72bb52ec0'],
+  behavior: 'Plain switches retain their pressed state unless the authored reset parameter is enabled. A carried key must reach the goal; cats enter with UP. Desk entry requires UP for key delivery as requested.',
+}, {
   id: 'optional-teacher-cats',
   files: ['src/engine/GameRuntime.ts'],
   evidence: ['Desk requirement: teachers can help without counting toward the student team'],
@@ -39,7 +44,18 @@ export function patchCampaignSource(file, source) {
   if (file === 'src/engine/sprites.ts') {
     const frames = Array.from({ length: 9 }, (_, i) =>
       `  push_box_${i}: [${464 + i % 3 * 16}, ${32 + Math.floor(i / 3) * 16}, 16, 16],`).join('\n');
-    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n' + frames, file);
+    return replaceOnce(source, 'export const PICO_ATLAS_FRAMES = {', 'export const PICO_ATLAS_FRAMES = {\n  door_closed: [96, 512, 48, 48],\n' + frames, file);
+  }
+  if (file === 'src/engine/actors/Goal.ts') {
+    source = replaceOnce(source, '  readonly rect: Rect;', `  readonly rect: Rect;
+  opened = false;
+  setOpened(opened: boolean): void {
+    this.opened = opened;
+    const sprite = this.view.children[0];
+    const texture = frameTexture(opened ? 'door_black' : 'door_closed');
+    if (sprite instanceof Sprite && texture) sprite.texture = texture;
+  }`, file);
+    return replaceOnce(source, "const texture = frameTexture('door_black');", "const texture = frameTexture('door_closed');", file);
   }
   if (file === 'src/engine/actors/PushBox.ts') {
     source = replaceOnce(source, "import { Container, Graphics, Text, TextStyle }", "import { Container, Graphics, Sprite, Text, TextStyle }", file);
@@ -94,6 +110,33 @@ export function patchCampaignSource(file, source) {
     return source;
   }
   if (file === 'src/engine/GameRuntime.ts') {
+    source = replaceOnce(source,
+      'const nowPressed = this.momentarySourceHasAnyActivationOverlap(switchPad.spawn);',
+      'const nowPressed = (switchPad.pressed && !switchPad.params.forceClearPressed) || this.momentarySourceHasAnyActivationOverlap(switchPad.spawn);', file);
+    source = replaceOnce(source, '      this.checkGoals();', '      this.checkGoals(resolvedPlayerInput);', file);
+    source = replaceOnce(source, '  private checkGoals(): void {', `  private checkGoals(input?: InputState): void {`, file);
+    source = replaceOnce(source, '    const singleUntargetedKey = this.keyGoals.length === 1', `    // The native Goal is armed by delivered Key contact, not remote pickup.
+    // The desk requires the carrier to press UP here to deliver and enter.
+    for (const goal of this.goals) {
+      const goalKeys = this.keys.filter(key => !getKeyTargetActorName(key.spawn)
+        || getKeyTargetActorName(key.spawn) === 'Goal');
+      if (!goalKeys.length) goal.setOpened(true);
+      if (!goal.opened && input?.up && this.player.deathTimer <= 0
+        && rectsOverlap(this.player.rect, goal.rect)) {
+        const delivery = this.carriedKeys.find(entry => entry.player === this.player && goalKeys.includes(entry.key));
+        if (delivery) {
+          goal.setOpened(true);
+          delivery.key.consume();
+          this.carriedKeys = this.carriedKeys.filter(entry => entry !== delivery);
+          this.onEvent?.({ type: 'get', playerIndex: this.currentInputPlayerIndex() });
+        }
+      }
+    }
+    const singleUntargetedKey = this.keyGoals.length === 1`, file);
+    source = replaceOnce(source, 'standardGoals.some((goal) => rectsOverlap(player.rect, goal.rect))',
+      'player === this.player && !!input?.up && player.deathTimer <= 0\n      && standardGoals.some((goal) => goal.opened && rectsOverlap(player.rect, goal.rect))', file);
+    source = replaceOnce(source, '      unlockedKeyGoals.some((goal) => (',
+      '      player === this.player && !!input?.up && player.deathTimer <= 0 && unlockedKeyGoals.some((goal) => (', file);
     // Desk-specific optional helpers: thresholds and goal requirements remain
     // those of the student party selected before helper cats are spawned.
     for (const before of [
@@ -160,7 +203,8 @@ export function patchCampaignSource(file, source) {
         }`, file);
     return source;
   }
-  if (!CAMPAIGN_PATCHES[0].files.includes(file)) return source;
+  // Select by identity: prepending another patch must not disable warp recovery.
+  if (!CAMPAIGN_PATCHES.find(patch => patch.id === 'warp-sensor-origin').files.includes(file)) return source;
   source = replaceOnce(source, 'x: spawn.x - triggerSize.width / 2,', 'x: spawn.x,', file);
   source = replaceOnce(source, 'y: spawn.y - triggerSize.height / 2,', 'y: spawn.y - triggerSize.height,', file);
   return replaceOnce(source, 'this.view.addChild(g);', 'this.view.addChild(g);\n    this.view.visible = false;', file);

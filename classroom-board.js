@@ -4517,6 +4517,7 @@
     }
     function enterPark(levelIndex) {
       if (destroyed || !engineReady || nativeLoading || !canPlayPark || classroomBusy()) { return; }
+      if (levelIndex >= 0 && nativePanel?.kind === 'calculator' && !nativePanel.getView().campaignUnlocked) return;
       nativeLoading = true;
       var previousPanel = nativePanel, previousScene = engine.sceneEntities;
       var transitionFrame = nativeActive ? freezeParkFrame() : null;

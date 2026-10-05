@@ -34,7 +34,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const entities = new Map(), peers = new Map(), lobbyPeers = new Map();
   let lobby = null;
   const updates = createUpdateGate(), smoothing = createPoseSmoothing();
-  let scenery = null, sceneryInk = null, sceneryAtlas = null, sceneryReady = false;
+  let scenery = null, sceneryInk = null, sceneryAtlas = null, sceneryReady = false, sceneryUnlocked = false;
   let arrivalPending = true;
   const display = createWorldDisplay();
   let level = DEFAULT_LEVEL, challenge = challengeFor(level);
@@ -82,7 +82,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const player = board.createPlayer({ x: 65, y: WORLD.floor - 24, input,
     terrain, peers: () => ({}), canvasW: () => LEVEL_WIDTH,
     onUpPressed: () => {
-      if (player.x < 95) onPark();
+      if (player.x < 95 && campaignUnlocked()) onPark();
       else if (besideResetDoor()) enterResetDoor();
     },
     physics: PICO });
@@ -93,6 +93,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   // One world and one player. Only the camera moves at the mission boundary.
   Object.assign(api._camera, { enabled: false, x: 0 });
   function scale() { return Math.min(1, board.viewportW() / WORLD.width); }
+  function campaignUnlocked() {
+    const holders = lobby?.campaignKeyHolders || [];
+    return board.role === 'teacher' ? holders.length > 0 : holders.includes(board.username);
+  }
   function clock() { return performance.now() + clockOffset; }
   function localPose() { return { x: player.x - ENTRY_WIDTH, y: player.y }; }
   function setParticipating(active) {
@@ -275,7 +279,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     bind();
     peerMotion.publish({ x: player.x, y: player.y });
     const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
-    const pushing = !!input.right && !input.left;
+    const pushing = board.role !== 'teacher' && !!input.right && !input.left;
     updates.publish('lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch, rtc: peerMotion.supported ? 2 : false,
       rtcGeneration: peerMotion.connectionGeneration(),
       pose: { x: player.x, y: player.y }, pushing,
@@ -348,7 +352,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     ctx.closePath(); ctx.fill();
   }
   function drawScenery(ctx, atlas) {
-    if (!scenery || sceneryInk !== ink || sceneryAtlas !== atlas || sceneryReady !== art.ready) {
+    const unlocked = campaignUnlocked();
+    if (!scenery || sceneryInk !== ink || sceneryAtlas !== atlas || sceneryReady !== art.ready || sceneryUnlocked !== unlocked) {
       scenery ||= doc.createElement('canvas');
       scenery.width = LEVEL_WIDTH; scenery.height = WORLD.height;
       const paint = scenery.getContext('2d');
@@ -362,12 +367,12 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
       text(paint, 'ARROWS MOVE . UP ENTERS DOORS', 85, 545, 14);
       text(paint, 'HOLD SHIFT TO RUN', 85, 573, 14);
       text(paint, 'THE PUSHERS BECOME YOUR TEAM', 85, 604, 14);
-      if (atlas) paint.drawImage(atlas, 96, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
+      if (atlas) paint.drawImage(atlas, unlocked ? 96 : 48, 0, 48, 48, 30, WORLD.floor - 40, 40, 40);
       else { paint.fillStyle = '#493d48'; paint.fillRect(30, WORLD.floor - 40, 40, 40); }
       text(paint, 'PICO PARK', 24, WORLD.floor - 70, 14);
-      text(paint, 'UP TO ENTER', 24, WORLD.floor - 49, 10);
+      text(paint, unlocked ? 'KEY EARNED - UP TO ENTER' : 'FINISH A CALCULATOR ACTIVITY TO EARN A KEY', 24, WORLD.floor - 49, 7);
       text(paint, 'TEAM START', TEAM_BLOCK.dock + 16, WORLD.floor + 32, 10, ink, 'center');
-      sceneryInk = ink; sceneryAtlas = atlas; sceneryReady = art.ready;
+      sceneryInk = ink; sceneryAtlas = atlas; sceneryReady = art.ready; sceneryUnlocked = unlocked;
     }
     ctx.drawImage(scenery, 0, 0);
   }
@@ -492,6 +497,10 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (participating && !connected()) text(ctx, 'CONNECTING TO YOUR TEAM...', 360, 280, 14, ink, 'center');
     ctx.restore();
     drawCharacter(ctx, player, board.username);
+    if (campaignUnlocked() && atlas) {
+      const key = ATLAS.key;
+      ctx.drawImage(atlas, key.x, key.y, key.w, key.h, player.x + 19, player.y - 18, key.w, key.h);
+    }
     text(ctx, 'YOU', player.x + 10, player.y - 8, 10, ink, 'center');
     ctx.restore();
   }
@@ -562,7 +571,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   const timer = setInterval(pump, peerMotion.supported ? 50 : 100); pump();
   return { kind: 'calculator', dispose, startMission, returnToStart, getState: () => state,
     getNetworkStats: () => peerMotion.stats(),
-    getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
+    getView: () => ({ cameraX, playerX: player.x, playerY: player.y, participating, campaignUnlocked: campaignUnlocked(), entranceX: ENTRY_WIDTH, lobby, missionId: level.id, challenge,
       resetDoor: state?.complete ? { ...RESET_DOOR } : null, lines: display.getLines() }),
     getCalculatorScreen: () => calculator.getScreen(),
     getKeyboard: () => {

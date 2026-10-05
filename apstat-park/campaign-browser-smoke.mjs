@@ -7,6 +7,8 @@ import { createReadStream, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { WebSocketServer } from '../../curriculum_render/railway-server/node_modules/ws/wrapper.mjs';
+import { DEFAULT_LEVEL } from './calculator-curriculum.mjs';
+import { earnCampaignEntry } from './campaign-entry-browser-fixture.mjs';
 
 const relayRoot = process.env.PARK_RELAY_ROOT
   ? path.resolve(process.env.PARK_RELAY_ROOT) : fileURLToPath(new URL('../../curriculum_render/', import.meta.url));
@@ -30,6 +32,7 @@ function delayed(map, ws, fn) {
 }
 const send = (ws, message) => delayed(outAt, ws, () => { if (ws.readyState === 1) ws.send(JSON.stringify(message)); });
 const service = createParkService({ registry, wallNow: () => hour * 3600000,
+  calculatorOptions: { available: () => [DEFAULT_LEVEL] },
   now: () => performance.now() + timeOffset, send });
 const server = createServer((request, response) => {
   const url = new URL(request.url, 'http://localhost');
@@ -117,6 +120,7 @@ try {
     await next.waitForFunction(() => window.board?.getParkScene?.()?.kind === 'calculator');
     return next;
   }));
+  await earnCampaignEntry(pages);
   await Promise.all(pages.map(next => next.evaluate(() => board.openNativeGameplay(0))));
   await Promise.all(pages.map(next => next.waitForFunction(() => board.getParkScene()?.kind === 'campaign'
     && board.getParkScene().getView().roster?.length === 2 && board.getParkScene().getView().frame > 30)));
