@@ -1,5 +1,22 @@
 Native body-pair reconstruction checkpoint
 
+Rigid ray query checkpoint (bbe7770):
+  Scale p1 and p2 with float32 .01 and set maxFraction=1. Scan world body-list
+  order and each fixture-list order, calling shape RayCast with its body
+  transform and child index zero. No active/sensor/category filtering or
+  broadphase traversal. Initial best fraction bcff5c0 is 2; only strictly
+  smaller hits replace it, retaining the first body/fixture on equal fractions.
+  Hit position is p1 + (p2-p1)*fraction in original float32 PIXEL coordinates;
+  normal is unscaled. Output identity is the body's wrapper user data.
+  bb5eef0's PhysicsSwitch branch is the only direct caller in the split dump:
+  it casts from display position to display+[0,-16] (bc7e738) and calls the
+  switch press handler on any hit. The backend query is implemented; its live
+  switch state-machine wiring remains separate work.
+  stage_seesaw01.lua places Balance below three geared seesaws, a PhysicsArea,
+  PhysicsBallPitcher and PhysicsSwitch targeting Key. This confirms a ball-
+  steering mechanism, superseding preview updateSeesawTilts' rider-weight
+  angle and position snapping. Do not use that heuristic as parity evidence.
+
 Balance actor integration checkpoint:
   bb313f0 creates two type-2 rectangle bodies. Raw bb314fc..bb3150e confirms
   omitted argument r9d=1: both bodies follow their actor. Child initial target

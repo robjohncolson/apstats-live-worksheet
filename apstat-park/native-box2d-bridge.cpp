@@ -1,12 +1,37 @@
 // Project-owned C ABI for the unmodified, pinned Box2D 2.3.1 source.
 // Units are Box2D meters/seconds except the explicitly native rectangle helper.
 #include <Box2D/Box2D.h>
+static b2RayCastOutput lastRayCast;
 
 extern "C" {
 b2World* pico_world_create(float x, float y) { return new b2World(b2Vec2(x, y)); }
 void pico_world_destroy(b2World* world) { delete world; }
 void pico_world_step(b2World* world, float dt, int velocityIterations, int positionIterations) {
   world->Step(dt, velocityIterations, positionIterations);
+}
+// bbe7770 deliberately scans shapes, not the broadphase World::RayCast API.
+b2Body* pico_world_ray_cast(b2World* world, float x1, float y1, float x2, float y2) {
+  b2RayCastInput input;
+  input.p1.Set(x1, y1);
+  input.p2.Set(x2, y2);
+  input.maxFraction = 1.0f;
+  float closest = 2.0f; // bcff5c0
+  b2Body* found = 0;
+  for (b2Body* body = world->GetBodyList(); body; body = body->GetNext()) {
+    for (b2Fixture* fixture = body->GetFixtureList(); fixture; fixture = fixture->GetNext()) {
+      b2RayCastOutput output;
+      if (fixture->GetShape()->RayCast(&output, input, body->GetTransform(), 0) && output.fraction < closest) {
+        closest = output.fraction;
+        lastRayCast = output;
+        found = body;
+      }
+    }
+  }
+  return found;
+}
+float pico_ray_read(int field) {
+  if (field == 0) return lastRayCast.fraction;
+  return field == 1 ? lastRayCast.normal.x : lastRayCast.normal.y;
 }
 b2Body* pico_body_create(b2World* world, int type, float x, float y, float angle,
                         float linearDamping, float angularDamping, float gravityScale, int flags) {

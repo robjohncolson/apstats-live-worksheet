@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Rigid query checkpoint: native-rigid-raycast.mjs and the rebuilt pinned backend
+reproduce bbe7770's direct fixture scan, nearest-hit/tie order, pixel conversion
+and wrapper identity. Node and Chrome checks pass; the full suite has 315 tests.
+The stage data confirms players use Balance platforms to steer PhysicsBall
+across the seesaws into PhysicsSwitch. Preview player-on-plank tilt is the
+wrong mechanism. PhysicsBall/PhysicsArea lifecycle and PhysicsSwitch query
+integration are required before replacing that live runtime path.
+
 Balance scene checkpoint: native-balance-actor.mjs creates and places its
 two following-body platforms, queues them through the native manager and
 connects contact-derived load/height to the seesaw parent's command handler.

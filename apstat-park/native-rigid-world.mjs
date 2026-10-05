@@ -44,6 +44,14 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
     return joint;
   }
   const result = {
+    rayCast(start, end) {
+      requireWorld();
+      const pointer = api._pico_world_ray_cast(world, start.x, start.y, end.x, end.y);
+      if (!pointer) return null;
+      const body = [...bodies].find(([, value]) => value === pointer)?.[0];
+      if (!body) throw new Error('Ray hit an untracked native body');
+      return { body, fraction: api._pico_ray_read(0), normal: { x: api._pico_ray_read(1), y: api._pico_ray_read(2) } };
+    },
     step(dt, velocityIterations = 10, positionIterations = 10) {
       requireWorld();
       api._pico_world_step(world, dt, velocityIterations, positionIterations);

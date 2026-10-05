@@ -81,6 +81,22 @@ try {
   assert.equal(gearResult.gearAttached, false);
   assert.equal(gearResult.secondPivotAttached, true);
   console.log('NATIVE GEAR BROWSER PASS: seesaw ratio coupling and body-removal lifecycle');
+  const rayResult = await page.evaluate(async () => {
+    const { createNativeRigidWorld } = await import('/apstat-park/native-rigid-world.mjs');
+    const { createNativeRigidBody, createNativeRigidCircle } = await import('/apstat-park/native-rigid-body.mjs');
+    const { rayCastNativeRigidWorld } = await import('/apstat-park/native-rigid-raycast.mjs');
+    const world = await createNativeRigidWorld();
+    try {
+      const body = createNativeRigidBody({ position: { x: 0, y: -10 },
+        shape: createNativeRigidCircle({ radius: 3, sensor: true }) });
+      body.attach(world); body.setActive(false);
+      const hit = rayCastNativeRigidWorld(world, { x: 0, y: 0 }, { x: 0, y: -16 });
+      return { y: hit?.position.y, ownerMatches: hit?.body === body };
+    } finally { world.dispose(); }
+  });
+  assert.ok(Math.abs(rayResult.y + 7) < 1e-5);
+  assert.equal(rayResult.ownerMatches, true);
+  console.log('NATIVE RAY BROWSER PASS: pixel query includes inactive sensor and returns wrapper identity');
   console.log('RIGID WORLD BROWSER PASS: WASM loading, free fall, floor contact and revolute joint match desktop reference');
 } finally {
   await browser.close(); server.closeAllConnections();
