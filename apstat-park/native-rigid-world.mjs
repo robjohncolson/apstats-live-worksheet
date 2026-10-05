@@ -36,6 +36,21 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
           api._pico_fixture_circle(handle(body), radius, x, y, density, friction, restitution, Number(sensor));
           return body;
         },
+        // Native pixel rectangle path; preserves the recovered cached centroid.
+        addNativeRectangle({ x, y, width, height, density = 0, friction = 0, restitution = 0, sensor = false }) {
+          api._pico_fixture_native_rectangle(handle(body), x, y, width, height, density, friction, restitution, Number(sensor));
+          return body;
+        },
+        readPolygonFixture(index = 0) {
+          if (!Number.isInteger(index) || index < 0) throw new Error('Invalid fixture index');
+          const pointer = handle(body);
+          const read = (field, vertex = 0) => api._pico_polygon_read(pointer, index, field, vertex);
+          const count = read(0);
+          if (count < 0) return null;
+          return { radius: read(1), centroid: { x: read(2), y: read(3) },
+            vertices: Array.from({ length: count }, (_, i) => ({ x: read(4, i), y: read(5, i) })),
+            normals: Array.from({ length: count }, (_, i) => ({ x: read(6, i), y: read(7, i) })) };
+        },
         setVelocity(x, y, angular = 0) { api._pico_body_velocity(handle(body), x, y, angular); },
         setLinearVelocity(x, y) { api._pico_body_linear_velocity(handle(body), x, y); },
         setAngularVelocity(angular) { api._pico_body_angular_velocity(handle(body), angular); },

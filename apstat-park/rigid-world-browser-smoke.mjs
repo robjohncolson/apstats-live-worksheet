@@ -31,6 +31,24 @@ try {
     for (const [field, value] of Object.entries(fields)) assert.ok(Math.abs(result[name][field] - value) < 2e-5, `${name}.${field}`);
   }
   console.log(JSON.stringify(result));
+  const rectangle = await page.evaluate(async () => {
+    const { createNativeRigidWorld } = await import('/apstat-park/native-rigid-world.mjs');
+    const { createNativeRigidBody, createNativeRigidRectangle } = await import('/apstat-park/native-rigid-body.mjs');
+    const world = await createNativeRigidWorld({ gravity: { x: 0, y: 10 } });
+    try {
+      world.createBody({ y: 5 }).addBox({ halfWidth: 10, halfHeight: .5 });
+      const wrapper = createNativeRigidBody({ type: 1,
+        shape: createNativeRigidRectangle({ x: -50, y: 0, width: 100, height: 100, density: 1 }) });
+      wrapper.attach(world);
+      for (let i = 0; i < 240; i++) world.step(Math.fround(1 / 60));
+      return { polygon: wrapper.body.readPolygonFixture(), state: wrapper.body.read() };
+    } finally { world.dispose(); }
+  });
+  assert.ok(Math.abs(rectangle.polygon.centroid.y + 50) < 1e-5);
+  assert.ok(rectangle.state.y > 4.47 && rectangle.state.y < 4.5);
+  assert.equal(rectangle.state.vy, 0);
+  assert.equal(rectangle.state.awake, false);
+  console.log('NATIVE RECTANGLE BROWSER PASS: cached centroid retained and inverted bounds land on floor');
   console.log('RIGID WORLD BROWSER PASS: WASM loading, free fall, floor contact and revolute joint match desktop reference');
 } finally {
   await browser.close(); server.closeAllConnections();

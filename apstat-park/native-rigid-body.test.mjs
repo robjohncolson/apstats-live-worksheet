@@ -2,10 +2,43 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { createNativeRigidWorld } from './native-rigid-world.mjs';
-import { createNativeRigidBody, createNativeRigidCircle } from './native-rigid-body.mjs';
+import { createNativeRigidBody, createNativeRigidCircle, createNativeRigidRectangle } from './native-rigid-body.mjs';
 const wasmBinary = await readFile(new URL('./recovered/box2d.wasm', import.meta.url));
 const makeWorld = gravity => createNativeRigidWorld({ gravity, moduleOptions: { wasmBinary } });
 const f = Math.fround, scale = f(.01), dt = f(1 / 60);
+
+test('native rectangle flips Y, builds a hull in pixels, then scales vertices without scaling its centroid', async () => {
+  const world = await makeWorld({ x: 0, y: 0 });
+  try {
+    const wrapper = createNativeRigidBody({ type: 1,
+      shape: createNativeRigidRectangle({ x: 10, y: 20, width: 30, height: 40, density: 2 }) });
+    wrapper.attach(world);
+    const polygon = wrapper.body.readPolygonFixture();
+    assert.equal(polygon.radius, f(.01));
+    assert.ok(Math.abs(polygon.centroid.x - 25) < 1e-5);
+    assert.ok(Math.abs(polygon.centroid.y + 40) < 1e-5);
+    assert.deepEqual(polygon.vertices, [[40, -60], [40, -20], [10, -20], [10, -60]]
+      .map(([x, y]) => ({ x: f(x * scale), y: f(y * scale) })));
+    assert.deepEqual(polygon.normals, [{ x: 1, y: -0 }, { x: 0, y: 1 }, { x: -1, y: -0 }, { x: 0, y: -1 }]);
+    assert.ok(Math.abs(wrapper.body.read().mass - .24) < 1e-6);
+    assert.equal(wrapper.body.readPolygonFixture(1), null);
+  } finally { world.dispose(); }
+});
+
+test('native rectangle lands on the actual solver floor using its inverted local Y bounds', async () => {
+  const world = await makeWorld({ x: 0, y: 10 });
+  try {
+    world.createBody({ y: 5 }).addBox({ halfWidth: 10, halfHeight: .5 });
+    const wrapper = createNativeRigidBody({ type: 1,
+      shape: createNativeRigidRectangle({ x: -50, y: 0, width: 100, height: 100, density: 1 }) });
+    wrapper.attach(world);
+    for (let i = 0; i < 240; i++) world.step(dt);
+    const state = wrapper.body.read();
+    assert.ok(state.y > 4.47 && state.y < 4.5, 'local bottom is zero, rather than half-height below the origin');
+    assert.equal(state.vy, 0);
+    assert.equal(state.awake, false);
+  } finally { world.dispose(); }
+});
 
 test('rigid wrapper applies native float32 pixel conversions and exposes itself to the shape callback', async () => {
   const world = await makeWorld({ x: 0, y: 0 });

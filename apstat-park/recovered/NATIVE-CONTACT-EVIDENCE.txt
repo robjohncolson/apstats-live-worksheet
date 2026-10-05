@@ -1,5 +1,18 @@
 Native body-pair reconstruction checkpoint
 
+Rectangle rigid fixture checkpoint (bbe5c70/bbe5d30):
+  Build four vertices in pixel coordinates: (x,-(y+h)), (x+w,-(y+h)),
+  (x+w,-y), (x,-y), then call the native polygon hull constructor.
+  At attachment copy the shape and multiply its vertices by float32 .01.
+  Machine code bbe5e35..bbe5e76 confirms only vertex storage is scaled;
+  normals, radius and cached centroid are retained. Memory at bcc6670 has
+  four identical .01 float32 lanes. Do not replace this with SetAsBox in
+  meters or recompute the centroid after scaling.
+  The project bridge uses the pinned upstream hull constructor and scales
+  populated vertices only (unused native slots have no observable effect).
+  Node checks hull ordering, centroid, material mass and floor response;
+  Chrome checks wrapper loading, retained centroid and the settled body.
+
 Rigid wrapper checkpoint (bbe6400/bbe6520/bbe6740/bbe67e0/bbe6850/bbe68a0):
   Native type 1 creates a dynamic Box2D body; all other values are static.
   Position and velocity multiply by float32 .01; position reads divide by

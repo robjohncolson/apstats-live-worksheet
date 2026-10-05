@@ -15,11 +15,11 @@
     "-sENVIRONMENT=web,node",
     "-sALLOW_MEMORY_GROWTH=1",
     "-sFILESYSTEM=0",
-    "-sEXPORTED_FUNCTIONS=[\"_pico_world_create\",\"_pico_world_destroy\",\"_pico_world_step\",\"_pico_body_create\",\"_pico_body_destroy\",\"_pico_fixture_box\",\"_pico_fixture_circle\",\"_pico_body_velocity\",\"_pico_body_linear_velocity\",\"_pico_body_angular_velocity\",\"_pico_body_angular_damping\",\"_pico_body_active\",\"_pico_body_transform\",\"_pico_body_read\",\"_pico_joint_revolute\"]"
+    "-sEXPORTED_FUNCTIONS=[\"_pico_world_create\",\"_pico_world_destroy\",\"_pico_world_step\",\"_pico_body_create\",\"_pico_body_destroy\",\"_pico_fixture_native_rectangle\",\"_pico_polygon_read\",\"_pico_fixture_box\",\"_pico_fixture_circle\",\"_pico_body_velocity\",\"_pico_body_linear_velocity\",\"_pico_body_angular_velocity\",\"_pico_body_angular_damping\",\"_pico_body_active\",\"_pico_body_transform\",\"_pico_body_read\",\"_pico_joint_revolute\"]"
   ],
   "evidence": "Body, fixture and world layouts match recovered offsets; full solver parity remains unverified.",
   "hashes": {
-    "apstat-park/native-box2d-bridge.cpp": "3dede49425b3d233e9a883c5bba0f7ee1db63b48dfbd4b548256595ecc014fa0",
+    "apstat-park/native-box2d-bridge.cpp": "83f71c0917740f94e3c5b819d619554a52546acaa159f62f44ba93fcd9718581",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Box2D.h": "2b4a0628d40274c79819315b4f0e0fd26e9398445dfb16af2a6ad4ad981fd2f2",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Collision/Shapes/b2ChainShape.cpp": "27ac2393fdc9b1ae53ed99a899386e252019e32d60d9028ebad6e91f6fda550d",
     "apstat-park/vendor/box2d-2.3.1/Box2D/Collision/Shapes/b2ChainShape.h": "fc954e35a79c26e930c6ac31cbb96b6de2ce14710a1588655067b5997c3c7c34",

@@ -1,5 +1,5 @@
 // Project-owned C ABI for the unmodified, pinned Box2D 2.3.1 source.
-// Units here are Box2D meters/seconds. Native pixel conversions live in JS.
+// Units are Box2D meters/seconds except the explicitly native rectangle helper.
 #include <Box2D/Box2D.h>
 
 extern "C" {
@@ -25,6 +25,42 @@ b2Body* pico_body_create(b2World* world, int type, float x, float y, float angle
   return world->CreateBody(&definition);
 }
 void pico_body_destroy(b2World* world, b2Body* body) { world->DestroyBody(body); }
+// bbe5c70 builds the hull in pixels. bbe5d30 scales vertices only, retaining
+// the hull's original centroid and normals. SetAsBox in meters is not equivalent.
+b2Fixture* pico_fixture_native_rectangle(b2Body* body, float x, float y, float width, float height,
+                                         float density, float friction, float restitution, int sensor) {
+  b2Vec2 vertices[4] = { b2Vec2(x, -(y + height)), b2Vec2(x + width, -(y + height)),
+                         b2Vec2(x + width, -y), b2Vec2(x, -y) };
+  b2PolygonShape shape;
+  shape.Set(vertices, 4);
+  for (int i = 0; i < shape.m_count; ++i) shape.m_vertices[i] *= 0.01f;
+  b2FixtureDef definition;
+  definition.shape = &shape;
+  definition.density = density;
+  definition.friction = friction;
+  definition.restitution = restitution;
+  definition.isSensor = sensor != 0;
+  return body->CreateFixture(&definition);
+}
+// Inspection uses the body's linked fixture order (newest first).
+float pico_polygon_read(b2Body* body, int fixtureIndex, int field, int vertex) {
+  b2Fixture* fixture = body->GetFixtureList();
+  for (int i = 0; fixture && i < fixtureIndex; ++i) fixture = fixture->GetNext();
+  if (!fixture || fixture->GetType() != b2Shape::e_polygon) return -1.0f;
+  const b2PolygonShape* shape = static_cast<const b2PolygonShape*>(fixture->GetShape());
+  if (field == 0) return static_cast<float>(shape->m_count);
+  if (field == 1) return shape->m_radius;
+  if (field == 2) return shape->m_centroid.x;
+  if (field == 3) return shape->m_centroid.y;
+  if (vertex < 0 || vertex >= shape->m_count) return -1.0f;
+  switch (field) {
+    case 4: return shape->m_vertices[vertex].x;
+    case 5: return shape->m_vertices[vertex].y;
+    case 6: return shape->m_normals[vertex].x;
+    case 7: return shape->m_normals[vertex].y;
+    default: return -1.0f;
+  }
+}
 b2Fixture* pico_fixture_box(b2Body* body, float halfWidth, float halfHeight, float x, float y,
                            float angle, float density, float friction, float restitution, int sensor) {
   b2PolygonShape shape;

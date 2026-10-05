@@ -3,9 +3,11 @@ Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 Rigid wrapper checkpoint: native-rigid-body.mjs now implements body attachment,
 native type mapping, float32 pixel conversion, live velocity/active setters,
 stored angular damping, position reads and circle fixture construction on the
-pinned WASM backend. Seven wrapper tests, 289 total park tests and the Chrome
-desktop-reference solver smoke pass. These wrappers are not wired into live
-campaign actors yet. Polygon fixtures, native joints/contact callbacks and
+pinned WASM backend. Nine wrapper tests, 291 total park tests and the Chrome
+desktop-reference solver smoke pass. Rectangle polygon fixtures now preserve
+the native pixel hull, Y flip and unscaled cached centroid; Chrome also checks
+their floor contact. These wrappers are not wired into live campaign actors
+yet. General polygon construction, native joints/contact callbacks and
 rigid actor integration remain unfinished; this is not 48-stage certification.
 
 The user requested continued work until the complete 48-stage campaign is

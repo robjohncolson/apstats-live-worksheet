@@ -65,3 +65,15 @@ export function createNativeRigidCircle({ radius = 0, x = 0, y = 0,
     },
   };
 }
+
+// bbe5c70/bbe5d30. Hull construction and vertex-only conversion happen in
+// the pinned backend so Box2D's float32 hull/centroid calculation is retained.
+export function createNativeRigidRectangle({ x = 0, y = 0, width, height,
+  density = 0, friction = 0, restitution = 0, sensor = false } = {}) {
+  return {
+    attach(wrapper) {
+      if (!wrapper?.body) return;
+      wrapper.body.addNativeRectangle({ x, y, width, height, density, friction, restitution, sensor });
+    },
+  };
+}
