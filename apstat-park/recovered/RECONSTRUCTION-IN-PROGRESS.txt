@@ -134,3 +134,14 @@ Native contact checkpoint:
 - See NATIVE-CONTACT-EVIDENCE.txt for source and exact integration limits.
   This is NOT yet the full registered-body solver. Recursive fixed bodies,
   native map resolution and moving support propagation remain outstanding.
+
+Standalone body-world reconstruction now added (not yet wired into gameplay):
+- Native rectangle pair phases, registered-order push-chain recursion and
+  whole-priority-pass rollback. Failed chains demote the priority body and
+  retry ordinary resolution; prior contact rows survive rollback.
+- Actor contact BEGIN/STAY/END lifecycle and registered sensor callback order.
+- 203 unit tests pass, including 16 new world/contact cases. The live runtime
+  remains at the preceding Thunder integration checkpoint.
+- Tile sweeping, circle pairs, Player half-width probe, scale-change pass and
+  native body registry setup still need implementation before live integration.
+  NATIVE-CONTACT-EVIDENCE.txt records exact sources and missing boundaries.

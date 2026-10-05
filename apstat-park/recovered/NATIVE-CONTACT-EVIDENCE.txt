@@ -64,6 +64,56 @@ Checks:
   all four faces plus resting support, no auxiliary drift, guard/disabled
   exclusion, with 2 and 8 players in the rebuilt browser runtime.
 
-Still required: world registry/order; native map solver; recursive bc20280;
-both-circle bc1f1c0; moving support propagation; full actor callback timing;
-input-only complete routes for all 48 stages and supported party sizes.
+Still required at the integrated Thunder boundary: world registry/order;
+native map solver; recursive bc20280; both-circle bc1f1c0; moving support
+propagation; full actor callback timing; input-only complete routes for all
+48 stages and supported party sizes. The standalone work below is not yet
+connected to that gameplay boundary.
+
+Standalone registered-body solver checkpoint (native-body-world.mjs):
+  bc1e050 phase 0 handles ordinary pairs; phase 1 handles one priority body.
+  Phase 1 snapshots every registered body's position. A failed recursive
+  move restores that entire snapshot, preserves the temporary demotion bit,
+  and retries phase 0. Previously inserted contact rows survive rollback.
+  bc20280 rejects bit 0x10, requests map movement, compares actual movement
+  with requested movement using bb93520 (componentwise FLT_EPSILON), then
+  invokes bc203a0 unless both components are at most 2^-52.
+  bc203a0 expands each non-negligible displacement component by signed .001,
+  traverses registered bodies in order, filters active/type/category/new
+  overlap, moves each reached body and recursively propagates the expanded
+  displacement. It does not invent contact rows for these recursive moves.
+  Raw bc2056e..bc20579 confirms the expanded vector is passed in R8; Ghidra
+  drops this third recursive argument in its C rendering.
+  bc21410 uses signed .01 when transferring a priority body's rejected
+  candidate correction into the other body's requested displacement.
+  bc21070 is !(flags & 0x10), not the priority predicate bc210a0.
+  bc12490 type-bit-1-clear branch directly updates position but leaves its
+  output displacement untouched; the caller initialized it to zero. This
+  means a nonzero such move can mutate position and return failure. Preserve
+  that behavior for the outer rollback; do not force success.
+  Raw constants also checked: bcb9a20 = .0010000000474974513;
+  bcc7ec8 = 2.220446049250313e-16 (2^-52 represented as float).
+  Contact insertion includes unique IDs, reciprocal-UP suppression and
+  fixed-capacity exclusion. Geometry uses rectangle/mixed bounds only.
+
+Standalone callback checkpoint (native-body-contacts.mjs):
+  bc13c60 offsets the querying body by contact.normal * .5 and uses strict
+  current overlap. New state 0 becomes 1, dispatches BEGIN, then STAY.
+  Existing accepted contact dispatches STAY. Lost accepted contact dispatches
+  END; a lost new contact or missing registry entry is simply discarded.
+  BEGIN can disable a body without cancelling that already-accepted STAY.
+  Player flag 4 requires a separate half-width upward-probe handler first.
+  bc1da80 overlap scan requires enabled bodies and ordered matrix eligibility,
+  but does not require physical type or moved bits. A callback runs before B.
+  B's callback is fetched after A's callback, without rechecking enabled bits.
+  The next pair does recheck enabled state through bc119c0.
+
+Current integration boundary:
+  These two standalone modules have no gameplay callers. Native tile sweep
+  is an explicit required handler; both-circle geometry and the Player
+  half-width probe fail explicitly if requested without implementation.
+  Tests cover free pushes, blocked chains, entire-pass rollback/replay,
+  category/type/active/previous-overlap gates, contact capacity and reciprocal
+  UP suppression, plus lifecycle timing and registered sensor-pair order.
+  Map-contact lifecycle, native map sweep, circle pairs, scale-change pass,
+  Player probe and native registry integration still remain.
