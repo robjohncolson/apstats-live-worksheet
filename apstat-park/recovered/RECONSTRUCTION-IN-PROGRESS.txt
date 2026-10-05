@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Key actor checkpoint: native-key-actor implements ordinary/BreakoutKey creation,
+hidden reveal, carrier following/handoff, return-to-spawn and Goal consumption
+on following PRE. Original seesaw rows now create the hidden Key before its
+switch and Goal. Key/Goal registered overlap is tested; all 397 park tests pass.
+Team-clear processing, full scene/renderer integration and input-only solutions
+across all48 stages remain incomplete.
+
 Goal actor checkpoint: native-goal-actor owns the category10 overlap sensor,
 opening art/state/sound, map-offset on-added hook and local command9. Native
 stage assembly now includes Goal in original row order. An actual registered

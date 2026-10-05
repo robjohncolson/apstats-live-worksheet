@@ -1,5 +1,29 @@
 Native body-pair reconstruction checkpoint
 
+Key actor checkpoint (bb64f20/bb65cf0/bb65430/bb657c0/bb65700/bb65340):
+  Category8/type0 sensor and sprite bounds [-16,-28,32,56], UV [.109375,.625,
+  .015625,.02734375] from bcbdab0/bcbdac0. Ordinary Lua params0/1 truncate to
+  integer party offsets: X+=(party-2)*p0; Y+=party*.8f*p1. Param2>0 hides,
+  param3 target truncates63 chars, param4 adds follow Y offset. BreakoutKey
+  starts hidden and ignores these ordinary configuration params.
+  PRE samples carrier target before processing state. Category1 follow uses
+  current scaled body bounds; facing left adds bounds.width to target X.
+  Squared distance>=.1f moves by .1f delta; otherwise snaps and clears return
+  state1. Consumption state2 hides/disables, becomes3, sends carrier command18,
+  releases carrier, but still follows the target sampled earlier this PRE.
+  Overlap1/9 handles pickup and one selection per pass; old carrier cooldown2
+  renews while overlap persists. Current Player carrier refreshes bounds.
+  Pickup may send target command9; old Player handoff plays get and server
+  broadcasts kind2 command6. Goal category10 sets state2 for next PRE.
+  Commands9/13 reveal only state0; command14 matching carrier clears it and
+  starts return state1. Replicated client ignores overlap; bb65340 visibility
+  flag1 and sound-on-rising flag2 are exposed through applyKeyFlags.
+  bc30790 scans raw chip IDs30..34 (unsigned id-30<5), NOT35. Once none remain,
+  hidden BreakoutKey becomes visible and sets scene.scrollFlags40.
+  Six tests cover handoff cooldown/facing, delayed Goal consumption, returning,
+  Breakout gate, party placement, replication and carrier reference cleanup.
+  Seesaw assembly includes its originally hidden Key at the original row index.
+
 Goal actor checkpoint (bb52c20/bb52ec0/bb53000/bb53100/bb531d0):
   Constructor sprite bounds [-32,-64,64,64], closed UV [.09375,.5,.046875,
   .046875]; open changes Y UV to .5625 and plays get only before opened flag1.

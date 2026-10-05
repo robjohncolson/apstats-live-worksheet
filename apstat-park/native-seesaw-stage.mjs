@@ -4,6 +4,7 @@ import { createNativePhysicsArea } from './native-physics-area.mjs';
 import { createNativePhysicsBallPitcher } from './native-physics-ball-pitcher.mjs';
 import { createNativePhysicsSwitch } from './native-physics-switch.mjs';
 import { createNativeGoalActor } from './native-goal-actor.mjs';
+import { createNativeKeyActor } from './native-key-actor.mjs';
 import { queueNativeActor } from './native-actor-manager.mjs';
 
 // bb72ae0's rigid-puzzle and Goal factory branches. Other stage actors are left to
@@ -17,6 +18,11 @@ export function populateNativeSeesawActors(scene, spawns) {
     const params = spawn.raw.slice(6);
     let actor;
     switch (spawn.actorName) {
+      case 'Key':
+      case 'BreakoutKey':
+        actor = createNativeKeyActor({ name, position, params, partySize: scene.playerCount,
+          mode: spawn.actorName === 'BreakoutKey' ? 1 : 0 });
+        break;
       case 'Goal':
         actor = createNativeGoalActor({ name, position });
         break;

@@ -51,7 +51,9 @@ test('original stage rows build bound seesaws, Balance, area, switch and a live 
       };
       entries = populateNativeSeesawActors(scene, stage.createTable);
       assert.deepEqual(entries.map(entry => entry.spawn.actorName),
-        ['PhysicsSwitch', 'Goal', 'PhysicsArea', 'SeesawParent', 'Seesaw', 'Seesaw', 'Balance', 'PhysicsBallPitcher']);
+        ['Key', 'PhysicsSwitch', 'Goal', 'PhysicsArea', 'SeesawParent', 'Seesaw', 'Seesaw', 'Balance', 'PhysicsBallPitcher']);
+      const key = entries.find(entry => entry.spawn.actorName === 'Key').actor;
+      assert.equal(key.body.flags & 1, 0, 'original Key is hidden until the switch reveals it');
       const parent = entries.find(entry => entry.spawn.actorName === 'SeesawParent').actor;
       assert.equal(parent.type, 1);
       for (const child of entries.filter(entry => entry.spawn.actorName === 'Seesaw')) {
