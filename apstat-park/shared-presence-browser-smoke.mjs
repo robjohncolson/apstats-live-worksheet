@@ -2,7 +2,7 @@
 // PARK_RELAY_ROOT may point to another curriculum_render checkout.
 // PARK_PLAYWRIGHT_MODULE may point to an installed playwright-core index.mjs.
 // PARK_BROWSER may point to an installed Chromium/Edge executable.
-// PARK_RTC_SMOKE=1 also checks the opt-in movement pilot and forced disconnect fallback.
+// PARK_RTC_SMOKE=1 also checks default-on movement and forced disconnect fallback.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { createReadStream, mkdirSync } from 'node:fs';
@@ -85,7 +85,7 @@ try {
       };
     });
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(origin+'/?user='+user+'&section='+section+'&role='+role + (rtcPilot ? '&parkRtc=1' : ''));
+    await page.goto(origin+'/?user='+user+'&section='+section+'&role='+role);
     await page.waitForFunction(() => board.getParkScene()?.getView()?.lobby?.members.length);
   }
   await pages[2].waitForFunction(() => board.getParkScene().getView().lobby.members.length === 3);
@@ -95,7 +95,7 @@ try {
   if (rtcPilot) {
     for (const page of pages) await page.waitForFunction(() => {
       const stats = board.getParkScene().getNetworkStats();
-      return stats.connected === 2 && stats.received > 0 && stats.rttMs.length === 2;
+      return stats.connected === (stats.hub ? 2 : 1) && stats.fresh === 2 && stats.received > 0;
     });
     console.log('RTC connected:', await pages[2].evaluate(() => board.getParkScene().getNetworkStats()));
     // Closing real peer connections must not remove the student or stop server motion.

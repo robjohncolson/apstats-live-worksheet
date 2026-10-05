@@ -45,7 +45,7 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
   let pendingPress = null, pressAt = 0;
   let participating = false, cameraX = 0;
   const peerMotion = createPeerMotion({ name: board.username,
-    enabled: new URL(win.location.href).searchParams.get('parkRtc') === '1',
+    enabled: new URL(win.location.href).searchParams.get('parkRtc') !== '0',
     PeerConnection: win.RTCPeerConnection,
     signal: message => send('calculator_rtc_signal', message) });
   let ink = '#30263b', inkAt = -Infinity;
@@ -271,7 +271,8 @@ export function mountParkPanel({ container, getSocket, board, onClose, onPark = 
     if (performance.now() - lobbyAt >= 100) {
       lobbyAt = performance.now();
       const missionCamera = Math.max(0, Math.min(ENTRY_WIDTH, LEVEL_WIDTH - board.viewportW() / scale()));
-      send('calculator_lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch, rtc: peerMotion.supported,
+      send('calculator_lobby', { protocol: CALCULATOR_PROTOCOL, epoch: lobby?.epoch, rtc: peerMotion.supported ? 2 : false,
+        rtcGeneration: peerMotion.connectionGeneration(),
         pose: { x: player.x, y: player.y }, pushing: !!input.right && !input.left,
         ready: player.x >= ENTRY_WIDTH + 20 && cameraX >= missionCamera - 0.5 });
     }
