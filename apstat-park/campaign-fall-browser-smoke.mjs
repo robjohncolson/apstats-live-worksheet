@@ -86,25 +86,25 @@ try {
       game.load(0, 2, 100); events.length = 0;
       const player = game.runtime.players[0];
       // Start below the floor, including the right edge missed by centered sensors.
-      Object.assign(player.rect, { x: x - 13, y: 490 }); player.velocity.y = 200;
+      Object.assign(player.rect, { x: x - 16, y: 490 }); player.velocity.y = 200;
       for (let tick = 0; tick < 180 && !events.some(e => e.type === 'warp' || e.type === 'hit'); tick++) game.step([0, 0]);
-      cases.push({ x, expectedX, actorX: player.rect.x + 13, actorY: player.rect.y + 32,
+      cases.push({ x, expectedX, actorX: player.rect.x + 16, actorY: player.rect.y + 47,
         events: events.map(e => e.type), death: player.deathTimer });
     }
     game.load(0, 2, 100); events.length = 0;
     const walker = game.runtime.players[0];
-    Object.assign(walker.rect, { x: 827, y: 398 });
+    Object.assign(walker.rect, { x: 827, y: 432 - walker.rect.height });
     for (let tick = 0; tick < 180 && !events.some(event => event.type === 'warp'); tick++) game.step([2, 0]);
-    const walkingReturn = { x: walker.rect.x + 13, y: walker.rect.y + 32, events: events.map(event => event.type) };
+    const walkingReturn = { x: walker.rect.x + 16, y: walker.rect.y + 47, events: events.map(event => event.type) };
     // Two arrivals use the native per-zone counter and -50 vertical offset.
     game.load(0, 2, 100); events.length = 0;
     for (const player of game.runtime.players) {
       Object.assign(player.rect, { x: 897, y: 580 }); player.velocity.y = 200;
     }
     game.step([0, 0]);
-    const pair = game.runtime.players.map(player => ({ x: player.rect.x + 13, y: player.rect.y + 32 }));
+    const pair = game.runtime.players.map(player => ({ x: player.rect.x + 16, y: player.rect.y + 47 }));
     for (let tick = 0; tick < 120; tick++) game.step([0, 0]);
-    const settled = game.runtime.players.map(player => ({ x: player.rect.x + 13, feet: player.rect.y + player.rect.height }));
+    const settled = game.runtime.players.map(player => ({ x: player.rect.x + 16, feet: player.rect.y + player.rect.height }));
     const deaths = events.filter(event => event.type === 'hit' || event.type === 'dead');
     game.dispose(); return { cases, walkingReturn, pair, settled, deaths, aboveSensorWarps, insideSensorWarps };
   });

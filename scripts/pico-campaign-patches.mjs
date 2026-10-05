@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { patchGoalUnlock } from './pico-goal-patches.mjs';
 import { patchNativeLasers } from './pico-laser-patches.mjs';
 import { patchNativeBound } from './pico-bound-patches.mjs';
+import { patchNativePlayer } from './pico-player-patches.mjs';
 
 export const CAMPAIGN_PATCHES = [{
   id: 'warp-sensor-origin',
@@ -39,6 +40,11 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/GameRuntime.ts', 'src/engine/sprites.ts'],
   evidence: ['FUN_7ff72bb36d10', 'FUN_7ff72bb36ee0', 'FUN_7ff72bb37250', 'FUN_7ff72bb37500', 'FUN_7ff72bb53e10', 'FUN_7ff72bb54330', 'FUN_7ff72bc16120'],
   behavior: 'BoundBallPitcher creates the gravity/mass-response ball; floor loss and capture use native removal timers. BallBox accepts command 11 through its narrow top sensor and publishes a Key. Preview collision separation remains an adapter, not a native solver reconstruction.',
+}, {
+  id: 'player-native-body-and-units',
+  files: ['src/engine/actors/PlayerGeometry.ts', 'src/engine/actors/Player.ts', 'src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bb66e50', 'DAT_7ff72c62d1a8', 'FUN_7ff72bb687e0', 'FUN_7ff72bc16120', 'FUN_7ff72bb6f0e0', 'FUN_7ff72bb70860', 'FUN_7ff72bb708d0', 'FUN_7ff72bb679c0'],
+  behavior: 'Player body [-16,-47,32,46], ordinary walk 3/frame, plane 4.5/frame, native directional priority. Sprite scale uses requested size while body growth uses the native .88 ratio; reset clears visual scale. Full controller/support graph remains under audit.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.
@@ -48,6 +54,7 @@ function replaceOnce(source, before, after, file) {
 }
 
 export function patchCampaignSource(file, source) {
+  source = patchNativePlayer(file, source, replaceOnce);
   if (file === 'src/engine/actors/StaticRect.ts') {
     source = replaceOnce(source, 'constructor(readonly spawn: ActorSpawnDef)',
       'constructor(readonly spawn: ActorSpawnDef, nativeBody?: Rect)', file);

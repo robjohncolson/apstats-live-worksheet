@@ -84,6 +84,7 @@ writeFileSync(resolve(output, 'provenance.json'), JSON.stringify({
     'scripts/pico-laser-patches.mjs', 'apstat-park/native-laser-runtime.mjs',
     'apstat-park/native-laser.mjs', 'apstat-park/native-pitcher.mjs', 'apstat-park/native-key-box.mjs',
     'scripts/pico-bound-patches.mjs', 'apstat-park/native-bound-runtime.mjs', 'apstat-park/native-bound-ball.mjs',
+    'scripts/pico-player-patches.mjs',
   ].map(path => [path, createHash('sha256').update(readFileSync(resolve(root, path))).digest('hex')])),
   hashes: Object.fromEntries(Object.entries(hashes).sort(([a], [b]) => a.localeCompare(b))),
 }, null, 2) + '\n');

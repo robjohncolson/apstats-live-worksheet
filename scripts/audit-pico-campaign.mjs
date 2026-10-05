@@ -25,6 +25,7 @@ const report = CAMPAIGN.map(entry => {
     fidelity: 'not-fully-verified',
     actors: actors.map(name => ({ name, upstreamProvenance: provenance[name] || 'unclassified' })),
     correctedContracts: [
+      ...(actors.some(name => name.endsWith('Player')) ? ['Native default player body, movement units, size/art alignment and visual reset'] : []),
       ...(actors.some(name => name.startsWith('Warp') && !name.startsWith('WarpGun'))
         ? ['Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation'] : []),
       ...(actors.includes('Rect') ? ['Literal Rect bottom anchor, native party scaling and full body height'] : []),

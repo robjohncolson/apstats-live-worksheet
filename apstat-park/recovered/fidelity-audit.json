@@ -44,6 +44,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
@@ -80,6 +81,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -138,6 +140,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
@@ -182,6 +185,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -232,6 +236,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
@@ -276,6 +281,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -319,6 +325,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -374,6 +381,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -417,6 +425,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -463,6 +472,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -518,6 +528,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -564,6 +575,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -603,6 +615,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -637,6 +650,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -688,6 +702,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -738,6 +753,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -801,6 +817,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
@@ -841,6 +858,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -899,6 +917,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -938,6 +957,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -976,6 +996,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -1023,6 +1044,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -1062,6 +1084,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -1097,6 +1120,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -1131,6 +1155,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -1193,6 +1218,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
@@ -1241,6 +1267,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -1295,6 +1322,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -1338,6 +1366,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -1376,6 +1405,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry",
         "Breakout reward key activation after removal of BR1..BR5 chips"
       ],
@@ -1423,6 +1453,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -1461,6 +1492,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry",
         "Breakout reward key activation after removal of BR1..BR5 chips"
       ],
@@ -1505,6 +1537,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry",
         "Laser launcher speed/lifecycle, hit/reset commands, three-hit reward and native atlas frames"
@@ -1566,6 +1599,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -1600,6 +1634,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -1639,6 +1674,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry",
         "BoundBall gravity/mass response and BallBox capture/reward lifecycle; preview collision adapter remains"
       ],
@@ -1703,6 +1739,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -1762,6 +1799,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -1804,7 +1842,9 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset"
+      ],
       "remainingChecks": [
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
@@ -1847,7 +1887,9 @@
           "upstreamProvenance": "recovered-data"
         }
       ],
-      "correctedContracts": [],
+      "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset"
+      ],
       "remainingChecks": [
         "Native timing, collisions and complete puzzle solution for every supported party size",
         "Presentation and retry/checkpoint behavior against native evidence"
@@ -1887,6 +1929,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
@@ -1927,6 +1970,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -1974,6 +2018,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -2037,6 +2082,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
@@ -2089,6 +2135,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -2156,6 +2203,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Warp/WarpAll actor-origin sensor bounds; invisible sensor presentation",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
@@ -2191,6 +2239,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],
       "remainingChecks": [
@@ -2253,6 +2302,7 @@
         }
       ],
       "correctedContracts": [
+        "Native default player body, movement units, size/art alignment and visual reset",
         "Literal Rect bottom anchor, native party scaling and full body height",
         "Closed/open goal, key delivery and deferred consumption, per-player fresh-Up entry"
       ],

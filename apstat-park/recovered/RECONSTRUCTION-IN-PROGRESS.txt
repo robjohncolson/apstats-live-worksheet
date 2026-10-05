@@ -74,30 +74,26 @@ uses previous position/velocity to reconstruct vertical speed, then contact
 normals, both actors' masses and a party-dependent coefficient. Do not replace
 it with a guessed restitution or player jump control.
 
-Next required integration:
-1. Native projectile movement, collision response and 30-tick removal.
-   Laser projectile bb4e470, PRE bb4e6f0, contact bb4ea70, removal bb4ec10.
-   Body bb4ecb0 is category 5. Player contact broadcasts target command 37;
-   any physical contact starts removal. The current preview's 96-pixel
-   looping projectile and angle convention cannot solve native key boxes.
-2. Native BallBox/LaserKeyBox body placement and collision adapters, reward
-   Key creation, pitcher speed/reset command routing and fade/removal.
-   Stage 9-1 now produces its reward through actual laser contacts. Stage
-   9-4 now also produces its reward via a capture fixture; its full puzzle
-   route and native collision solver parity still need verification. DO NOT DEPLOY THIS
-   BRANCH until these paths work and have end-to-end puzzle tests.
-3. Standard goal entry uses the disabled-body registry, verified by the
-   input-only two-player laser route. Audit every remaining support/contact
-   family for registry use; nonstandard goal families remain separate.
-4. Warp Y anchoring corrected with final bc119c0 proof. Remaining actor
-   body/contact and phase-order contracts still need independent verification.
-5. All remaining suspected mechanics, checkpoints/retries,
-   movement/phase ordering and complete puzzle routes for all party sizes.
+Remaining reconstruction work:
+1. Native global body solver/order and moving-body support graph. BoundBall
+   uses a documented preview collision adapter; BallBox horizontal pushing
+   and support traversal are still unverified.
+2. Complete input-only solutions for all stages and supported team sizes.
+   Laser 9-1 has a two-player route. Other integration checks use targeted
+   fixtures or deterministic replay and do not prove complete solvability.
+3. Audit all contact families for goal-entry disabled-body handling and
+   verify nonstandard goal types, controller modes, checkpoints and retries.
+4. Finish actor families still marked suspected; their source mappings and
+   implementation labels are not proof of complete behavior.
+5. Verify native full Player controller, charged-launch input locks, special
+   controller modes, collision tolerances and simultaneous contacts.
 
-Validation already passed before isolation:
-  campaign-goals-browser-smoke.mjs (also covers breakout01/02 activation)
-  campaign-browser-smoke.mjs (48 stages, 2/8 players, replay/team transition)
-  11 focused native-*.test.mjs cases. These do NOT certify stage fidelity.
+Validation at checkpoint b17dc366:
+  npm run test:park: 178 passed.
+  campaign-browser-smoke.mjs: 48 stages, 2/8 players, replay and team clear.
+  Native goal, laser, bound, sensor, fall and 1-1 presentation checks passed.
+  New player-basics checks also pass for native geometry, movement units,
+  direction priority, independent visual/body growth and reset.
 
 Native evidence root:
   C:/Users/rober/Downloads/Projects/not-school/hermes/old-app/recovered
@@ -111,13 +107,18 @@ run meaningful scenario tests plus full existing regressions, bump the desk
 build and inspect GitNexus detect_changes. Original main checkout retains
 unrelated dirty user work; do not stage or discard it.
 
-Additional foundational discrepancies confirmed during this slice:
-- Preview PlayerGeometry uses 26x34 with (-13,-32) origin. Native default
-  body is {-16,-47,32,46}; see c62d1a8 and Player ctor/body initialization.
-- Preview horizontal movement uses 300 px/s * .98. Native base +0x41c is
-  3 actor units/tick; bb687e0 returns that times +0x418 and bc16120 applies
-  per frame. The .98 term in bb6f0e0 is in the disabled-input momentum
-  branch, not a universal axis multiplier. Do not globally change this until
-  native movement/support/control flags and all coordinate adapters are traced.
-- Plane native multiplier is 1.5. Existing preview comments still mix the
-  unrelated Box2D meter conversion with actor-space motion.
+Player foundation corrections now integrated:
+- PlayerGeometry now uses {-16,-47,32,46}. Carried keys and custom 1-1 art
+  use actor Y = collision bottom + 1; body top is actorY-47 at unit size.
+- Ordinary walk is 3 actor units/frame = 180 px/s, without the preview's
+  unsupported universal .98 multiplier. Opposing directions prefer right.
+- Plane uses 4.5 units/frame = 270 px/s, on both axes; Up takes priority over
+  Down, and Jump does not act as Up. See bb70860/bb708d0.
+- ScaleSwitch keeps native body growth 1+(size-1)*.88 while artwork uses
+  the requested size directly. Sprite and collision body share the actor
+  anchor. Reset clears the visual scale as well as the body/charge.
+- Full actor-space movement has NOT been certified: the preview's support
+  graph, contact solver, forced-launch locks and controller modes remain.
+- The input-only laser route now completes in 532 ticks after correcting
+  walk speed, versus 426 with the old preview speed. Bound contact probe
+  now records 14 bounces in 2400 ticks, all finite.
