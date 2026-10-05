@@ -14,6 +14,7 @@ import { createNativeCheckPointActor } from './native-checkpoint-actor.mjs';
 import { createNativeCollisionActorCreator } from './native-collision-actor-creator.mjs';
 import { createNativeWindActor } from './native-wind-actor.mjs';
 import { createNativeGhostActor } from './native-ghost-actor.mjs';
+import { createNativeColorBoxActor } from './native-color-box-actor.mjs';
 import { createNativeScrollLimitRangeActor } from './native-scroll-limit-range-actor.mjs';
 import { createNativeUpDownLiftActor } from './native-up-down-lift-actor.mjs';
 import { createNativeFallBoxActor } from './native-fall-box-actor.mjs';
@@ -41,6 +42,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'CollisionActorCreator', 'CollisionActorCreatorSilent',
   'Wind', 'ScrollLimitRange',
   'Ghost',
+  'ColorBox', 'ForceColorBox',
   'UpDownLift',
   'FallBox',
   'DeadTimer',
@@ -58,6 +60,9 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
     return scene.addActor(createNativeRectActor({ spawn, partySize: scene.playerCount }));
   }
   if (spawn.actorName === 'PushBox') return scene.addActor(createNativePushBoxActor({ spawn }));
+  if (['ColorBox', 'ForceColorBox'].includes(spawn.actorName)) {
+    return scene.addActor(createNativeColorBoxActor({ spawn, partySize: scene.playerCount }));
+  }
   if (spawn.actorName === 'Thunder') return scene.addActor(createNativeThunderActor({ spawn }));
   if (spawn.actorName === 'StepEnemy') return scene.addActor(createNativeStepEnemyActor({ spawn }));
   if (spawn.actorName === 'UpDownEnemy') return scene.addActor(createNativeUpDownEnemyActor({ spawn }));

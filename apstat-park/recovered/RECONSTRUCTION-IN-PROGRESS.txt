@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+ColorBox checkpoint: ordinary and forced colored-block factories, color-specific
+push chains, gravity, impulses and commands added. Real matching/wrong-color
+Player tests pass; original push01/auto_scroll01 initialize for2/8 players.
+Full suite582/582. Body+148 freeze-side-effect consumer remains unresolved;
+BallBox jumping, snapshots/rendering and network transport remain open. Continue
+remaining controllers/mechanisms, full-stage input solutions and golden visual
+comparisons before live integration. Full48-stage goal remains NOT complete.
+
 Ghost checkpoint: native gaze hysteresis, key pursuit, damage sensors, camera
 anchor selection and goal-release fading now run in the native simulation.
 Original ghost01 initializes for 2/8 players. Full suite: 574/574 passing.

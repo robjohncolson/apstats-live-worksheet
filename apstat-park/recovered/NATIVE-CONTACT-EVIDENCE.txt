@@ -1,3 +1,32 @@
+ColorBox / ForceColorBox checkpoint:
+Constructors bb3b350/3b490, factory bb76d9d/73c9b, setup bb3c0c0.
+- Ordinary color is uint(param0) modulo configured party count; nonnegative
+  param3 excludes its modulo color by advancing one slot. Forced variant uses
+  the unmodified uint slot. Dimensions default32 and use numeric params1/2.
+- Centered bottom-origin art; collision inset2 on every side, type3/category2.
+  Network13/mode0, priority2. Ordinary motion flags include bit16 and mass100;
+  forced keeps common flags12 and mass1. Mass is used by rebound bb37500.
+- Patch uses16px edges, .0078125 UV extents; columns .140625/.15625/.1796875,
+  rows .625/.640625/.6640625, depth-.4, player-slot palette tint.
+- PRE bb3b5e0 (ordinary non-BallBox branch) clears horizontal speed, recursively
+  searches left then right contacts (bb3c2e0), and moves +/-1 only for matching
+  Player slot with inward velocity beyond float epsilon. Map contacts do not
+  contribute. Gravity .65, retained horizontal impulses, one-shot vertical
+  impulse and grounded reset preserve source order. No extra rider carry.
+- POST bb3b920 marks client movement from adjacent actor flags18 before pending
+  relocation. Placement reuses the identical primary-body probe/rollback path.
+- Commands bb3bc10: 1f returns color+1; 0/2 impulse,7 pending position,8 reset;
+  e toggles patch/body and manager stop/resume;1e freezes with bit4 and clears
+  velocity. The write to body+148 is preserved as nativeField148; its consumer
+  remains unresolved and needs verification before claiming full command parity.
+- BallBox's jumping branch is NOT enabled by these two factories and remains
+  separate missing work. Snapshot bb3be70/3bf40, component rendering and network
+  transport still need integration. No complete stage/playthrough claim.
+Eight tests cover real matching/wrong-color Player pushing, chained contacts,
+party/excluded/forced colors, commands, and original push01/auto_scroll01 initial
+simulation for2/8 players. Full suite582/582 passing before metadata-only mass
+field correction verified from common ctor bc155e0 and rebound bb37500.
+
 Ghost checkpoint:
 Factory bb75bd3 calls ctor bb51b00 and stores the first Ghost as scene camera
 anchor. Lua bb51ce0 supplies stop ratio, orientation, speed and key range.
