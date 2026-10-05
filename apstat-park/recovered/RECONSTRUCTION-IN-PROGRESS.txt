@@ -1,5 +1,21 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Lift checkpoint: bb550a0/551f0/55370/55700/55ab0 translated.
+Raw x64 confirms integer X/Y parameters plus party-scaled parameters2/3;
+speed is unrestricted float, absolute-sine and command flags are separate.
+Category5 inset body; command9 starts one cycle and toggles scene flag1000.
+Blocked phase uses native midpoint2.5/period5/wrap7.5. Signed displacement
+preserved (decompiler falsely suggests in-place absolute-value mutation).
+Vertical carry recurses UP; horizontal carry starts UP then recurses along
+movement, per bb34f30/bc17330/bc16780 options +10. Tests cover parsing,
+cycle/retrigger/replica command guard, signed motion, side-contact carry and
+actual Player->DelaySwitch->Lift activation. Full park suite612/612.
+Pending: Lift body/network snapshots bb55780/55830, sprite integration,
+CRT sin bit-level comparison, MagnetPlayer and original magnet02 solution.
+GitNexus native-symbol coverage remains missing; zero indexed impact is not
+proof of safety. Full48 campaign goal remains active; no deployment claimed.
+
+
 DelaySwitch checkpoint: source countdown, delayed publication, rearm, snapshot
 adapter and label metadata added; actual Player->platform activation tested.
 Full suite607/607. magnet02 remains incomplete (MagnetPlayer/Lift dependencies).

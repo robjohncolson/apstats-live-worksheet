@@ -21,6 +21,7 @@ import { createNativeWindActor } from './native-wind-actor.mjs';
 import { createNativeGhostActor } from './native-ghost-actor.mjs';
 import { createNativeColorBoxActor } from './native-color-box-actor.mjs';
 import { createNativeScrollLimitRangeActor } from './native-scroll-limit-range-actor.mjs';
+import { createNativeLiftActor } from './native-lift-actor.mjs';
 import { createNativeUpDownLiftActor } from './native-up-down-lift-actor.mjs';
 import { createNativeFallBoxActor } from './native-fall-box-actor.mjs';
 import { createNativeDeadTimerActor } from './native-dead-timer-actor.mjs';
@@ -53,7 +54,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'Wind', 'ScrollLimitRange',
   'Ghost',
   'ColorBox', 'ForceColorBox',
-  'UpDownLift',
+  'UpDownLift', 'Lift',
   'FallBox',
   'DeadTimer',
   'CollisionChangePlayer',
@@ -88,6 +89,7 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   if (['CollisionActorCreator', 'CollisionActorCreatorSilent'].includes(spawn.actorName)) {
     return scene.addActor(createNativeCollisionActorCreator({ spawn }));
   }
+  if (spawn.actorName === 'Lift') return scene.addActor(createNativeLiftActor({ spawn, partySize: scene.playerCount }));
   if (spawn.actorName === 'UpDownLift') return scene.addActor(createNativeUpDownLiftActor({ spawn, partySize: scene.playerCount }));
   if (spawn.actorName === 'FallBox') return scene.addActor(createNativeFallBoxActor({ spawn }));
   if (spawn.actorName === 'DeadTimer') return scene.addActor(createNativeDeadTimerActor({ spawn, partySize: scene.playerCount }));
