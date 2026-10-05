@@ -3,6 +3,7 @@ import { nativePlayerHeld, nativePlayerPressed, nativePlayerHasInputAuthority } 
 import { receiveNativePlayerCommand } from './native-player-command.mjs';
 import { createNativeWalkController } from './native-walk-controller.mjs';
 import { createNativeDeathController, createNativeHiddenController, applyNativePlayerControllerChange } from './native-player-death.mjs';
+import { createNativeDoorController } from './native-player-door.mjs';
 import { nativePlayerJumpVelocity } from './native-player-jump.mjs';
 import { isNativePlayerAirborne, recordNativePlayerCorrection, applyNativePlayerCorrectionVelocity } from './native-player-motion.mjs';
 import { runNativeCommonActorAdded, runNativeCommonActorPre, runNativeCommonActorPost } from './native-actor-lifecycle.mjs';
@@ -111,6 +112,7 @@ export function createNativePlayer({ playerIndex = 0, position, presentation, ex
     if (kind === 1) return createNativeHiddenController();
     if (kind === 2) return createNativeWalkController();
     if (kind === 3) return createNativeDeathController();
+    if (kind === 4) return createNativeDoorController();
     return extensions.createController(kind, actor);
   }
   actor.controller = makeController(2);

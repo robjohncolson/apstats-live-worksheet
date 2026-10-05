@@ -1,5 +1,21 @@
 Native body-pair reconstruction checkpoint
 
+Door-controller checkpoint (bb531d0/bb6e990/bb6ea00/bb6eab0/bb6eb80):
+  Goal bb53000 installs continuous-overlap callback at body+188, captured target
+  bb531d0 at+1a8. This is not BEGIN-only: a later Up press while overlapping
+  can enter. Category1 + opened flag1 + pressed action3 requests Player kind4,
+  subject to Goal and Player client-replication gates. Default sensor bounds
+  bcbada0=[-24,-32,48,32] checked in raw constant data; type0/category10.
+  Kind4 enter clears sprite8 and primary body1, emits END for each own actor
+  contact regardless of accepted state, clears own contacts, retains reciprocal
+  and map contacts. First PRE publishes zero velocity; following PREs subtract
+  dt from initial1. POST permits exit at phase2 on pressed3 when native placement
+  is unblocked. Player flag40 chooses kind5, otherwise2; client actors defer.
+  Leave restores sprite8/body1. The assembled factory now supplies kind4.
+  Four tests include constructor integration and an actual registered Goal
+  overlap sensor. Initial sensor test lacked reverse category pairing; fixing
+  its matrix made ordered native overlap dispatch reach the callback.
+
 Player assembly checkpoint (bb66e50/690d0/691d0/67740):
   Normal local actor composes recovered modules through native common PRE/POST.
   Health snapshot precedes deferred controller replacement; controller PRE

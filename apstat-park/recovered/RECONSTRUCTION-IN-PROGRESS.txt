@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Door-controller checkpoint: native-player-door implements kind4 and is connected
+to the assembled Player factory. Goal overlap requests entry on Up; entering
+hides/disables the Player and clears own actor contacts. After a one-second
+delay, a new Up press requests exit only if map/body occupancy permits it.
+Alternate kind5 remains an explicit controller dependency. Production Goal
+assembly, team-clear processing and live campaign integration remain open.
+
 Player assembly checkpoint: native-player-actor combines normal body creation,
 input routing, command dispatch, walking/death/hidden controllers and common
 actor lifecycle. Scene-loop tests cover map landing/walking/jumping, death,
