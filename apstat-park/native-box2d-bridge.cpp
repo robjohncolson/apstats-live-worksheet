@@ -122,4 +122,34 @@ b2Joint* pico_joint_revolute(b2World* world, b2Body* a, b2Body* b, float x, floa
   definition.enableMotor = motor != 0;
   return world->CreateJoint(&definition);
 }
+b2Joint* pico_joint_local_revolute(b2World* world, b2Body* a, b2Body* b,
+                                  float ax, float ay, float bx, float by,
+                                  float lower, float upper, int limit, int collide) {
+  b2RevoluteJointDef definition;
+  definition.bodyA = a;
+  definition.bodyB = b;
+  definition.localAnchorA.Set(ax, ay);
+  definition.localAnchorB.Set(bx, by);
+  definition.lowerAngle = lower;
+  definition.upperAngle = upper;
+  definition.enableLimit = limit != 0;
+  definition.collideConnected = collide != 0;
+  return world->CreateJoint(&definition);
+}
+void pico_joint_destroy(b2World* world, b2Joint* joint) { world->DestroyJoint(joint); }
+float pico_revolute_read(b2RevoluteJoint* joint, int field) {
+  switch (field) {
+    case 0: return joint->GetLocalAnchorA().x;
+    case 1: return joint->GetLocalAnchorA().y;
+    case 2: return joint->GetLocalAnchorB().x;
+    case 3: return joint->GetLocalAnchorB().y;
+    case 4: return joint->GetReferenceAngle();
+    case 5: return joint->GetJointAngle();
+    case 6: return joint->GetLowerLimit();
+    case 7: return joint->GetUpperLimit();
+    case 8: return joint->IsLimitEnabled() ? 1.0f : 0.0f;
+    case 9: return joint->GetCollideConnected() ? 1.0f : 0.0f;
+    default: return 0.0f;
+  }
+}
 }

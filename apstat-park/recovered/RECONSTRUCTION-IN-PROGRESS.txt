@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Revolute joint checkpoint: native-rigid-joint.mjs reconstructs local pixel
+anchors, zero reference angle, optional ground body, stored angle limits,
+collide-connected bit and detach/body-removal bookkeeping. Five focused
+tests cover actual solver constraints and multiple-joint destruction.
+The seesaw connector is a Box2D gear joint (type 6), not another pivot;
+bb5d9e0 sets its ratio to -1. Gear integration remains the next joint task.
+
 Rigid wrapper checkpoint: native-rigid-body.mjs now implements body attachment,
 native type mapping, float32 pixel conversion, live velocity/active setters,
 stored angular damping, position reads and circle fixture construction on the
@@ -7,7 +14,7 @@ pinned WASM backend. Nine wrapper tests, 291 total park tests and the Chrome
 desktop-reference solver smoke pass. Rectangle polygon fixtures now preserve
 the native pixel hull, Y flip and unscaled cached centroid; Chrome also checks
 their floor contact. These wrappers are not wired into live campaign actors
-yet. General polygon construction, native joints/contact callbacks and
+yet. General polygon construction, gear joints/contact callbacks and
 rigid actor integration remain unfinished; this is not 48-stage certification.
 
 The user requested continued work until the complete 48-stage campaign is

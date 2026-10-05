@@ -1,5 +1,23 @@
 Native body-pair reconstruction checkpoint
 
+Revolute/gear identification checkpoint:
+  bbe6d30 embeds b2RevoluteJointDef at wrapper+30, type 1, local anchors zero,
+  reference angle zero, limit/motor disabled. bbe6ef0 stores both local
+  anchors after float32 pixel conversion. bbe6ea0 stores radian limits and
+  enables the definition limit; neither setter changes an existing joint.
+  bbe6f70 fills body pointers, using world+19380 for a null first wrapper,
+  copies flags bit 0 into collideConnected and creates the joint WITHOUT
+  Initialize (which would overwrite reference angle and local anchors).
+  bbe74f0 creates the world's default static, origin ground body.
+  bbe6c10 clears live world/joint pointers before body-owned destruction;
+  bbe7010 explicitly destroys the joint then clears those pointers.
+  Backend joint handles now reject reads after joint/body/world destruction.
+  JS body edge lists prepend and notification traversal survives unlinking.
+  bbe7060 embeds type 6 (b2GearJointDef) at +40. bbe7250 copies two underlying
+  joint handles to +68/+70. bbe7210 sets ratio +78; bb5d9e0 supplies -1.
+  Gear coupling remains unimplemented; existing preview seesaw tilt is not
+  certified by the revolute wrapper tests.
+
 Rectangle rigid fixture checkpoint (bbe5c70/bbe5d30):
   Build four vertices in pixel coordinates: (x,-(y+h)), (x+w,-(y+h)),
   (x+w,-y), (x,-y), then call the native polygon hull constructor.

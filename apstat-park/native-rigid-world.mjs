@@ -6,6 +6,8 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
   const api = await createBox2D(moduleOptions);
   let world = api._pico_world_create(gravity.x, gravity.y);
   const bodies = new Map();
+  const joints = new Map();
+  let ground = null;
   function requireWorld() {
     if (!world) throw new Error('Rigid world has been disposed');
   }
@@ -15,7 +17,29 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
     if (!pointer) throw new Error('Body is not live in this rigid world');
     return pointer;
   }
-  return {
+  function registerJoint(pointer, a, b) {
+    function requireJoint() {
+      requireWorld();
+      if (!joints.has(joint)) throw new Error('Joint is not live in this rigid world');
+    }
+    const joint = {
+      read() {
+        requireJoint();
+        const read = field => api._pico_revolute_read(pointer, field);
+        return { anchorA: { x: read(0), y: read(1) }, anchorB: { x: read(2), y: read(3) },
+          referenceAngle: read(4), angle: read(5), lower: read(6), upper: read(7),
+          limit: Boolean(read(8)), collideConnected: Boolean(read(9)) };
+      },
+      destroy() {
+        requireJoint();
+        api._pico_joint_destroy(world, pointer);
+        joints.delete(joint);
+      },
+    };
+    joints.set(joint, { pointer, a, b });
+    return joint;
+  }
+  const result = {
     step(dt, velocityIterations = 10, positionIterations = 10) {
       requireWorld();
       api._pico_world_step(world, dt, velocityIterations, positionIterations);
@@ -64,19 +88,37 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
             angularVelocity: values[5], mass: values[6], awake: Boolean(values[7]),
             active: Boolean(values[8]), angularDamping: values[9] };
         },
-        destroy() { api._pico_body_destroy(world, handle(body)); bodies.delete(body); },
+        destroy() {
+          api._pico_body_destroy(world, handle(body));
+          bodies.delete(body);
+          for (const [joint, entry] of joints) {
+            if (entry.a === body || entry.b === body) joints.delete(joint);
+          }
+          if (ground === body) ground = null;
+        },
       };
       bodies.set(body, pointer);
       return body;
     },
     createRevoluteJoint(a, b, { x, y, lower = 0, upper = 0, limit = false, speed = 0, torque = 0, motor = false }) {
-      api._pico_joint_revolute(world, handle(a), handle(b), x, y, lower, upper, Number(limit), speed, torque, Number(motor));
+      const pointer = api._pico_joint_revolute(world, handle(a), handle(b), x, y, lower, upper, Number(limit), speed, torque, Number(motor));
+      return registerJoint(pointer, a, b);
+    },
+    createLocalRevoluteJoint(a, b, { anchorA, anchorB, lower = 0, upper = 0, limit = false, collideConnected = false }) {
+      handle(b);
+      if (!a) { ground ??= result.createBody(); a = ground; }
+      const pointer = api._pico_joint_local_revolute(world, handle(a), handle(b),
+        anchorA.x, anchorA.y, anchorB.x, anchorB.y, lower, upper, Number(limit), Number(collideConnected));
+      return registerJoint(pointer, a, b);
     },
     dispose() {
       if (!world) return;
       api._pico_world_destroy(world);
       world = 0;
       bodies.clear();
+      joints.clear();
+      ground = null;
     },
   };
+  return result;
 }

@@ -44,7 +44,7 @@ export function createNativeRigidBody({ type = 0, shape = null, position = { x: 
     detach() {
       if (!world) return;
       // Joint-wrapper notifications are supplied when those wrappers exist.
-      for (const joint of wrapper.joints ?? []) joint.onBodyRemoved();
+      for (const joint of [...(wrapper.joints ?? [])]) joint.onBodyRemoved();
       body.destroy();
       body = null;
       world = null;
