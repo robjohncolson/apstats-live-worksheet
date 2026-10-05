@@ -1,3 +1,17 @@
+Magnet follow/held-position/release checkpoint:
+Raw bb59e50 POST decoded: owner-facing predicate is sprite scaleX>0 (bae78c0).
+Right position owner+(20,-10), grip offset0, scale(+1,1); left position
+owner+(-170,-10), grip offset(150,0), scale(-1,1). Owner spriteFlags bit8
+controls companion visibility. bb5a2d0 uses target first-body rawX/pivotX/
+scaleX/width, horizontal gap +/-10 and vertical+10. Do not use unscaled
+standard Player bounds. POST clears only latch bit1 when float vector length
+exceeds32 (bc7d7f8), retaining the frozen target. bb59530 release separately
+clears latch, sends command1e(0), restores Player flag8 and clears target.
+Tests cover both facings, scaled pivot, exact32 boundary, visibility, and real
+Player/PushBox release. Companion assembly, input/authority, mutual grab,
+particles, network and factory integration remain pending. No new stage is
+claimed complete. Full48 goal remains active.
+
 Magnet target interaction checkpoint (not yet connected to stage factory):
 bb5a180 candidate overlap translated: category1 excluding owner OR PushBox
 RTTI c62a10f, strict normalized absY < float(sin(stored double .6981316804885864)),
