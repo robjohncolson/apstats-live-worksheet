@@ -1,5 +1,30 @@
 Native body-pair reconstruction checkpoint
 
+Player jump checkpoint (bb6f608..bb6f8ac, bb68770, bc13690, bc15c70):
+  Direct DOWN contact resets grace to float32 .07 and jump count to zero.
+  With no contact, a positive old grace value is decremented by dt but still
+  permits that crossing-zero tick. Active hold counts 1..13 also permit the
+  branch; player+3f8 bit2 allows air jumping. Null body bypasses eligibility.
+  A pressed edge, available jump count and no pending bounce flag starts a
+  jump. Free jump zeroes X, uses -5.1 default Y, and starts hold=1; an already
+  faster upward Y is preserved with hold=14. Each held tick 1..13 adds
+  jumpVelocity * float32((1-count/14)*.2). Nonnegative Y clears hold first.
+  Shrink factor is float32(scaleY*.19999998807907104+.800000011920929),
+  applied only below scale 1. Enlarging does not strengthen ordinary jump.
+  Pending bounces differ with grounded/grace eligibility and controller bit2;
+  presentation/velocity/flag ordering is retained. Jump sound is "jump".
+  bc13690 with null flags output accepts stored directional contacts without
+  resolving their other-body ID. This intentionally differs from bb69dd0.
+  An UP contact invokes bc15c70 rather than free-jump velocity: maximum UP
+  chain depth (bc13430) divides the impulse. bc132c0 collects at most 16 unique
+  direct contacts; each gets command2 with {0,impulse}. bc15dc0 recurses only
+  through actors with +90 bit16, increasing impulse by the original share at
+  each level. Shared descendants can receive commands once per branch.
+  Tests cover grace boundary, held duration, faster upward velocity, limits,
+  stale contacts, bounce flags, shrinking and branching overhead propagation.
+  Input filters, controller POST, movement states and live Player integration
+  remain outside this vertical-branch checkpoint.
+
 Player support/motion checkpoint (bb69dd0/bb67850/bb67da0/bb6add0/bb691d0):
   bb69dd0 returns false for null body or a DOWN map contact. It enumerates
   matching DOWN actor contacts with bc13550 in stored order, resolving through

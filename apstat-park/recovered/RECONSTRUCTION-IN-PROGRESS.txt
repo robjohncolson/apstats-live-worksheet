@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Player jump checkpoint: native-player-jump.mjs implements the recovered
+walking-controller vertical branch, with direct contact eligibility, .07s
+ledge grace, 13 held boosts, jump limits and pending bounce gates. Overhead
+jumps now distribute impulses through the native contact graph by maximum
+depth. All 342 park tests pass. Horizontal input/state transitions, complete
+Player actor/controller wiring and live stage integration remain required.
+
 Player motion checkpoint: native-player-motion.mjs reconstructs recursive
 DOWN support, conditional airborne override, projected gravity and last-contact
 velocity correction. 333 park tests pass. These are native controller building
