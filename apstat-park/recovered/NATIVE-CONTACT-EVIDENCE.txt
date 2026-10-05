@@ -1,5 +1,19 @@
 Native body-pair reconstruction checkpoint
 
+PhysicsArea/PhysicsRect edge checkpoint (bb56400/bb77970/bb56520):
+  Constructors share the rigid wrapper/descriptor arrangement; discriminator
+  is 1 for PhysicsArea and 0 for PhysicsRect. Four float parameters truncate
+  through signed integer conversion. Five vertices are (x,y), (x,y+h),
+  (x+w,y+h), (x+w,y), (x,y), with no Y inversion. Static body, density 1,
+  friction 1, restitution 0. bbe5f80 scales adjacent endpoints by float32 .01
+  and creates four separate edge fixtures in that order (linked list reverses).
+  Although bbe5f80 prepares neighbor vertices and flags before bbef230,
+  bbef230 clears both adjacency flag bytes at +30 after copying endpoints.
+  Upstream b2EdgeShape::Set reproduces this. A chain shape is not equivalent.
+  Node tests inspect all edges/flags, world-space rays and wrapper identity;
+  actual scene frames verify bottom-edge expiry and PhysicsRect retention.
+  Chrome now uses the actual PhysicsArea for the ball contact/fade test.
+
 PhysicsBall/contact-edge checkpoint (bb55c30/bb55d80/bb55e40/bb56000):
   Circle radius 12, density .1, friction .5, restitution .2, angular damping
   .5 and gravity scale 1. POST reads rigid position and integer sprite angle.

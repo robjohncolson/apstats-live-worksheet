@@ -100,11 +100,12 @@ try {
   const ballResult = await page.evaluate(async () => {
     const { createNativeRigidWorld } = await import('/apstat-park/native-rigid-world.mjs');
     const { createNativePhysicsBall } = await import('/apstat-park/native-physics-ball.mjs');
+    const { createNativePhysicsArea } = await import('/apstat-park/native-physics-area.mjs');
     const world = await createNativeRigidWorld({ gravity: { x: 0, y: 10 } });
     try {
-      const floor = world.createBody({ y: 1 }).addBox({ halfWidth: 10, halfHeight: .1 });
-      floor.userData = { discriminator: 1 };
-      const ball = createNativePhysicsBall();
+      const area = createNativePhysicsArea({ width: 200, height: 100 });
+      area.onAdded({ rigidWorld: world });
+      const ball = createNativePhysicsBall({ position: { x: 100, y: 40 } });
       ball.onAdded({ rigidWorld: world });
       for (let i = 0; i < 120 && !ball.countdown; i++) {
         ball.beforeMotion(); world.step(Math.fround(1 / 60)); ball.afterMotion();
@@ -115,7 +116,7 @@ try {
     } finally { world.dispose(); }
   });
   assert.deepEqual(ballResult, { armed: 30, countdown: 0, removed: true, alpha: 0 });
-  console.log('PHYSICS BALL BROWSER PASS: real contact arms native fade/removal sequence');
+  console.log('PHYSICS AREA/BALL BROWSER PASS: independent boundary edges arm native fade/removal sequence');
   console.log('RIGID WORLD BROWSER PASS: WASM loading, free fall, floor contact and revolute joint match desktop reference');
 } finally {
   await browser.close(); server.closeAllConnections();

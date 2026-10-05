@@ -83,3 +83,18 @@ export function createNativeRigidRectangle({ x = 0, y = 0, width, height,
     },
   };
 }
+
+// bbe5ec0/bbe5f80. bbef230 (EdgeShape::Set) clears both adjacency flags;
+// the native neighboring-vertex setup therefore has no collision effect.
+export function createNativeRigidPolyline({ points = [], density = 0, friction = 0, restitution = 0, sensor = false } = {}) {
+  if (points.length > 8) throw new Error('Native edge descriptor capacity exceeded');
+  const vertices = points.map(point => ({ x: f(f(point.x) * PIXEL_TO_METER), y: f(f(point.y) * PIXEL_TO_METER) }));
+  return {
+    attach(wrapper) {
+      if (!wrapper?.body) return;
+      for (let i = 1; i < vertices.length; i++) {
+        wrapper.body.addEdge({ start: vertices[i - 1], end: vertices[i], density, friction, restitution, sensor });
+      }
+    },
+  };
+}

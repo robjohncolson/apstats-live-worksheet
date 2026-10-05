@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+PhysicsArea checkpoint: native-physics-area.mjs reconstructs the parameter
+truncation, positive-Y rectangle and four independent rigid edge fixtures.
+The edge setter clears adjacency flags even though its caller prepared them;
+using a chain would change native corner behavior. Actual area/ball tests
+verify expiry versus PhysicsRect retention. All 320 tests and Chrome rigid
+checks pass. Launcher timing, PhysicsSwitch and live stage factory integration
+remain required; this is not a claim of complete campaign fidelity.
+
 PhysicsBall checkpoint: native-physics-ball.mjs uses real contact-edge data
 from the pinned backend. The recovered discriminator/local-normal gate arms
 30 later PRE ticks of scale/alpha changes, sleep and actor-manager removal.

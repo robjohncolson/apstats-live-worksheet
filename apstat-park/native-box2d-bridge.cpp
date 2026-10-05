@@ -50,6 +50,34 @@ b2Body* pico_body_create(b2World* world, int type, float x, float y, float angle
   return world->CreateBody(&definition);
 }
 void pico_body_destroy(b2World* world, b2Body* body) { world->DestroyBody(body); }
+b2Fixture* pico_fixture_edge(b2Body* body, float x1, float y1, float x2, float y2,
+                             float density, float friction, float restitution, int sensor) {
+  b2EdgeShape shape;
+  shape.Set(b2Vec2(x1, y1), b2Vec2(x2, y2));
+  b2FixtureDef definition;
+  definition.shape = &shape;
+  definition.density = density;
+  definition.friction = friction;
+  definition.restitution = restitution;
+  definition.isSensor = sensor != 0;
+  return body->CreateFixture(&definition);
+}
+float pico_edge_read(b2Body* body, int fixtureIndex, int field) {
+  b2Fixture* fixture = body->GetFixtureList();
+  for (int i = 0; fixture && i < fixtureIndex; ++i) fixture = fixture->GetNext();
+  if (!fixture || fixture->GetType() != b2Shape::e_edge) return -1.0f;
+  const b2EdgeShape* shape = static_cast<const b2EdgeShape*>(fixture->GetShape());
+  switch (field) {
+    case 0: return 1.0f;
+    case 1: return shape->m_vertex1.x;
+    case 2: return shape->m_vertex1.y;
+    case 3: return shape->m_vertex2.x;
+    case 4: return shape->m_vertex2.y;
+    case 5: return shape->m_hasVertex0 ? 1.0f : 0.0f;
+    case 6: return shape->m_hasVertex3 ? 1.0f : 0.0f;
+    default: return 0.0f;
+  }
+}
 // bbe5c70 builds the hull in pixels. bbe5d30 scales vertices only, retaining
 // the hull's original centroid and normals. SetAsBox in meters is not equivalent.
 b2Fixture* pico_fixture_native_rectangle(b2Body* body, float x, float y, float width, float height,
