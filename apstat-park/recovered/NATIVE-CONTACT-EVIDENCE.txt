@@ -1087,3 +1087,18 @@ Patch origin(.453125,.03125), cell24px, UVcell/insets.015625. Counter32px,
 alignment2/2, depth-.5, format at bcb6770 is "%d". Draw value is max(0,
 required minus pusher count), using+410 replicated count for network mode1.
 Original-stage tests drive stage_push02 using held-left input for2/8 players.
+Warp evidence: bb62ec0 constructor, bb63060 overlap, factory raw bb76a8a
+and bb76b1e, bb78b30/destination, bb78af0/offset. bb63040 PRE is a debug-only
+no-op, so destinationIndex persists. Body type0/category2, top-left bounds,
+default manager priority0. Six factory params pass through bb78470 signed
+float32-to-int conversion; InitPos variants read only width/height.
+Overlap category1: destination zero vector preserves current XY, zero X with
+nonzero vector preserves current X only. Ordinary Warp adds index*offset and
+advances index=index%playerCount+1, giving0,1,...,N,1. WarpAll mutates a single
+target with index*offset per player, producing triangular cumulative offsets.
+Category2 receives command7 with raw destination, without offsets or fallback.
+InitPos sends command8; AllInitPos broadcasts command8 to the scene dictionary.
+Other categories and replicas in network mode1 are ignored. Raw instruction
+bb6fda5 reads Player+130 for walking command8, proving saved spawnPosition;
+the earlier current-position implementation and expectation were incorrect.
+Player relocation still controls safe placement, contact cleanup and timing.

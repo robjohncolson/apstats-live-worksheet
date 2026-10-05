@@ -1,5 +1,14 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Warp checkpoint: shared factory now assembles Warp, WarpAll, WarpInitPos,
+and WarpAllInitPos. Tests cover sensor geometry, numeric conversion, per-entry
+offset cycling, cumulative team offsets, category-specific commands and client
+replica suppression. Native Player input tests exercise destination and reset
+warps. Reset command8 in the walking controller was corrected from current
+position to saved spawnPosition after raw instruction verification. This does
+not yet prove original-stage completion: Bridge/Switch/WeightedLift and other
+actor families remain missing, as does production renderer/campaign wiring.
+
 PushBox actor checkpoint: native-push-box-actor and native-push-box-commands
 assemble ordinary PushBox motion, inset collision, relocation, local commands,
 BEGIN-contact launch distribution, replica POST flags and counter metadata.

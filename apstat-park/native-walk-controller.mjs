@@ -103,7 +103,7 @@ export function createNativeWalkController() {
       if (command === 7) {
         if (value != null) state.pendingPosition = { x: f(value.x), y: f(value.y) };
         actor.scene.notifyPlayerRelocation(actor);
-      } else if (command === 8) state.pendingPosition = { ...actor.position };
+      } else if (command === 8) state.pendingPosition = { ...actor.spawnPosition }; // bb6fda5: actor+130
       else if (command === 0x1e && value != null) {
         state.flags = value ? state.flags | 8 : state.flags & ~8;
         setVelocity(actor, { x: 0, y: 0 });

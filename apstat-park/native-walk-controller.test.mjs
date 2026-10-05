@@ -111,6 +111,7 @@ test('controller commands preserve hold immunity, forced bounce, freeze clearing
     actor.onCommand(0x22, -1);
     assert.equal(actor.speedScale, -2, 'native cap has no lower clamp');
     actor.onCommand(8);
-    assert.deepEqual(controller.state.pendingPosition, actor.position);
+    assert.deepEqual(controller.state.pendingPosition, actor.spawnPosition);
+    assert.notDeepEqual(actor.position, actor.spawnPosition, 'test actor has moved before reset');
   } finally { scene.rigidWorld.dispose(); }
 });
