@@ -2,6 +2,7 @@ import { createNativePitcher } from './native-pitcher.mjs';
 import { createNativeBoundBall } from './native-bound-ball.mjs';
 import { createNativeKeyBox } from './native-key-box.mjs';
 import { laserTouchesRect } from './native-laser.mjs';
+import { nativeMapFromRecovered, moveNativeBodyOnMap, finalizeNativeMapContacts } from './native-map-collision.mjs';
 
 export function createBoundRewardBox(runtime, original, makeView, makeKey) {
   const spawn = { ...original, x: Math.fround(original.x + Math.fround((Number(original.raw[6]) || 0) * runtime.activePlayerCount)) };
@@ -20,6 +21,13 @@ export function createBoundRewardBox(runtime, original, makeView, makeKey) {
 }
 
 export function tickNativeBoundBalls(runtime, makeView, moveRect) {
+  let nativeMap = null;
+  if (runtime.tileMap && runtime.deadBallPitchers.some(pitcher => pitcher.spawn.actorName === 'BoundBallPitcher')) {
+    nativeMap = runtime.nativeBoundMap ??= {};
+    // Contact rows retain the map object. Refresh its data without replacing
+    // that identity when an actor paints or removes chips.
+    Object.assign(nativeMap, nativeMapFromRecovered(runtime.tileMap.map));
+  }
   for (const box of runtime.nativeBoundBoxes ?? []) {
     box.nativeState.tick();
     const state = box.nativeState.state;
@@ -61,12 +69,15 @@ export function tickNativeBoundBalls(runtime, makeView, moveRect) {
     if (ball === previous) ball.tick();
     let state = ball.state;
     if (!state.remaining && !state.removed && ball === previous && runtime.tileMap) {
-      const result = moveRect(runtime.tileMap,
-        { x: before.x - 12, y: before.y - 12, width: 24, height: 24 },
-        { x: state.x - before.x, y: state.y - before.y });
-      ball.resolvePosition(result.rect.x + 12, result.rect.y + 12);
-      if (result.hitLeft || result.hitRight) ball.contact({ x: result.hitLeft ? -1 : 1, y: 0 });
-      if (result.hitCeiling || result.grounded) ball.contact({ x: 0, y: result.hitCeiling ? -1 : 1 });
+      const body = ball.nativeMapBody ??= { flags: 1, type: 3,
+        localBounds: { x: -12, y: -12, width: 24, height: 24 },
+        onContactStay: (_other, normal) => ball.contact(normal) };
+      body.position = { x: before.x, y: before.y };
+      body.previousPosition = { ...body.position };
+      moveNativeBodyOnMap(nativeMap, body,
+        { x: Math.fround(state.x - before.x), y: Math.fround(state.y - before.y) });
+      ball.resolvePosition(body.position.x, body.position.y);
+      finalizeNativeMapContacts(body);
     }
     syncBallView(ball);
   }

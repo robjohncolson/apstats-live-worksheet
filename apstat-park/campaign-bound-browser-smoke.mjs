@@ -50,7 +50,11 @@ try {
       const reward = { captured: ball.state.captured, keys: runtime.keys.length, hits: box.nativeState.state.released,
         key: runtime.keys[0] && { active: runtime.keys[0].active, x: runtime.keys[0].spawn.x, y: runtime.keys[0].spawn.y },
         x: box.spawn.x, y: box.spawn.y - 30 };
-      samples.push({ party, initial, removedAt, replacementAt, reward });
+      const mapContact = { active: first.nativeMapBody?.mapContacts,
+        pending: first.nativeMapBody?.pendingMapContacts,
+        sharedMap: first.nativeMapBody?.contactMap === runtime.nativeBoundMap,
+        numericMap: runtime.nativeBoundMap?.table.every(Number.isInteger) };
+      samples.push({ party, initial, removedAt, replacementAt, reward, mapContact });
     }
     game.load(35, 2, 44);
     const runtime = game.runtime;
@@ -84,6 +88,10 @@ try {
     assert.equal(sample.reward.keys, 1);
     assert.equal(sample.reward.hits, true);
     assert.deepEqual(sample.reward.key, { active: true, x: sample.reward.x, y: sample.reward.y });
+    assert.ok(sample.mapContact.active.some(normal => normal.x === 0 && normal.y === 1), 'native floor contact was accepted');
+    assert.deepEqual(sample.mapContact.pending, [], 'native map finalization consumed pending contacts');
+    assert.equal(sample.mapContact.sharedMap, true, 'retained contacts share the refreshed native map');
+    assert.equal(sample.mapContact.numericMap, true);
   }
   assert.ok(result.bounces > 0, 'moving players actually bounce the ball during the contact run');
   assert.equal(result.invalid, null, 'player-body contacts keep native state finite');

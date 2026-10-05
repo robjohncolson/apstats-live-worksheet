@@ -51,6 +51,11 @@ export const CAMPAIGN_PATCHES = [{
   files: ['src/engine/GameRuntime.ts'],
   evidence: ['FUN_7ff72bc1e4a0', 'FUN_7ff72bc11be0', 'FUN_7ff72bc13830', 'FUN_7ff72bb4d330'],
   behavior: 'Stationary active type-3 Thunder support uses native trajectory rollback, float32 actor anchors and .01 separation with a previous-position clamp. Full world ordering and recursive bodies remain separate work.',
+}, {
+  id: 'bound-native-map-sweep',
+  files: ['src/engine/GameRuntime.ts'],
+  evidence: ['FUN_7ff72bc2fca0', 'FUN_7ff72bc304f0', 'FUN_7ff72bc12490', 'FUN_7ff72bc14040', 'DAT_7ff72bcc8a30'],
+  behavior: 'BoundBall uses native tile-boundary traversal, .01 separation, half-unit probes, sliding and map-contact lifecycle. Player/box pair separation and global ordering remain separate adapters.',
 }];
 
 // Fail the build if upstream code changes: never silently skip a correction.

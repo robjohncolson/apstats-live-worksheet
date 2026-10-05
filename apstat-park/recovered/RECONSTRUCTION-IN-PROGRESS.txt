@@ -42,10 +42,11 @@ Further integrated work:
   its reward Key. Native ball/box atlas frames replace the preview graphics.
 - Bound browser coverage: 2/8-player launch and floor loss, exact two-tick
   replacement delay, capture/reward contact fixtures, and a 2400-tick input
-  run with 47 actual player bounces and finite state. This is NOT a solved
+  run with 14 actual player bounces and finite state. This is NOT a solved
   input-only puzzle route.
-- IMPORTANT: Bound adapter still uses the preview tile sweep and a rectangle
-  separation adapter for player contacts. Native global solver ordering,
+- BoundBall now uses the reconstructed native tile sweep and map-contact
+  lifecycle. Player contacts still use a rectangle separation adapter.
+  Native global solver ordering,
   BallBox horizontal push/support behavior and exact simultaneous contacts
   remain unverified. Do not describe this integration as full physics parity.
 
@@ -145,3 +146,18 @@ Standalone body-world reconstruction now added (not yet wired into gameplay):
 - Tile sweeping, circle pairs, Player half-width probe, scale-change pass and
   native body registry setup still need implementation before live integration.
   NATIVE-CONTACT-EVIDENCE.txt records exact sources and missing boundaries.
+
+Native map collision checkpoint:
+- Reconstructed bc2fca0 boundary traversal, bc304f0 half-unit probe, bc12490
+  sliding and bc14040 map-contact lifecycle. Native numeric occupancy, edge
+  extension, truncation toward zero, Y-first ties and float32 operation order
+  are preserved. Custom chip occupancy must be supplied explicitly.
+- Connected native map movement to the 9-4 BoundBall path. Browser tests
+  confirm numeric map data, retained floor contact, consumed pending list,
+  shared refreshed map identity, floor loss/replacement and reward capture.
+- 215 unit tests pass. All 48 stages pass 2/8-player loading, deterministic
+  replay and team-clear/next-stage regression. Bound contact run remains
+  finite with 14 player bounces. Complete input-only 9-4 solution still absent.
+- Remaining shared work: circle pairs; Player half-width probe; scale-change
+  pass; native registry and actor update/callback integration; stage-specific
+  custom occupancy. Map and pair helpers are not yet the runtime for all actors.

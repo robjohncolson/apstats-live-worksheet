@@ -145,10 +145,24 @@
         "FUN_7ff72bb4d330"
       ],
       "behavior": "Stationary active type-3 Thunder support uses native trajectory rollback, float32 actor anchors and .01 separation with a previous-position clamp. Full world ordering and recursive bodies remain separate work."
+    },
+    {
+      "id": "bound-native-map-sweep",
+      "files": [
+        "src/engine/GameRuntime.ts"
+      ],
+      "evidence": [
+        "FUN_7ff72bc2fca0",
+        "FUN_7ff72bc304f0",
+        "FUN_7ff72bc12490",
+        "FUN_7ff72bc14040",
+        "DAT_7ff72bcc8a30"
+      ],
+      "behavior": "BoundBall uses native tile-boundary traversal, .01 separation, half-unit probes, sliding and map-contact lifecycle. Player/box pair separation and global ordering remain separate adapters."
     }
   ],
   "localSources": {
-    "scripts/pico-campaign-patches.mjs": "85d6f3a641bfca927f303bcfb6e0092b6aa16b1cf7d67a2788dd6ebf2f8eba6e",
+    "scripts/pico-campaign-patches.mjs": "caed5dfb9eb8a0ec897ed832896bd1b135ff62548ac09117a9202bf048b2de40",
     "scripts/pico-goal-patches.mjs": "0ac45c97a1b9e5bf17d2df95b7123751d435a21e52a94a262cb6f866363ae878",
     "apstat-park/native-goals.mjs": "de2f0d8e83d66500542bdabda94330749510524b10c56b124c55f3898ab669be",
     "apstat-park/native-breakout-key.mjs": "5ca96726cc1d54bd64cb569c44850492c27789e5ff8531fc7fdf80fb1177d853",
@@ -159,12 +173,13 @@
     "apstat-park/native-pitcher.mjs": "c143ddb2f78b869ea7e6c82a7bf799e88e42339b5551c56981bc1522b181653c",
     "apstat-park/native-key-box.mjs": "8baeaa1f8404e8238052d0087654e1cc1f53e5797c945106dc4cfa3c6d6ef5fe",
     "scripts/pico-bound-patches.mjs": "d76fa711618ad5efa192b8c26741269cc9821b4f3fff47dd9d5bd8f19359838e",
-    "apstat-park/native-bound-runtime.mjs": "4e83db2b4a6865648baf07decdb0a21038510c54526bce7113015cf8c01ae7c0",
+    "apstat-park/native-bound-runtime.mjs": "968bc81dada2b70478f74971386e9eb36d9ee380bc5fc60a70a3c5cc7bbb8192",
     "apstat-park/native-bound-ball.mjs": "9a74f5dc65c9f6884ff2a11ff6286953b2c07897651dce19e425d4ee95bf4e6a",
     "scripts/pico-player-patches.mjs": "9d713c1e0f7839bf418e8de130cb66377fdc7a4c581ec0442c7c09d0129f3603",
     "scripts/pico-contact-patches.mjs": "65f7b4f15c3b8eb9a17ecca216921a04103cc91f065aa36758f12fb8b3a3529e",
     "apstat-park/native-rectangle-pair.mjs": "856635715547f93559cdafb212f5facc207a8f4b958c93fdf4367798e3057dbb",
-    "apstat-park/native-static-contact.mjs": "9ff5b6540717d9c2a88744811030b5ecbf36a57eba33e468cf34e8ebc91d463e"
+    "apstat-park/native-static-contact.mjs": "9ff5b6540717d9c2a88744811030b5ecbf36a57eba33e468cf34e8ebc91d463e",
+    "apstat-park/native-map-collision.mjs": "1f2f701602b4ec5e89c7713e27848ed829faa55308d0a4bcff2e7d656735e09b"
   },
   "hashes": {
     "src/engine/actors/BattleBreakoutBall.ts": "90e2a60092f538c3b9fb7069955ee9689ce4dea139e02dd40fe7b63ac85bfe01",

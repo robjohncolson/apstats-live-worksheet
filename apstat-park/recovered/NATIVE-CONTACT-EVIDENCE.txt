@@ -117,3 +117,39 @@ Current integration boundary:
   UP suppression, plus lifecycle timing and registered sensor-pair order.
   Map-contact lifecycle, native map sweep, circle pairs, scale-change pass,
   Player probe and native registry integration still remain.
+
+Native map checkpoint (supersedes the missing map-sweep/lifecycle items above):
+  native-map-collision.mjs implements bc2fca0, bc304f0, bc12490 and bc14040.
+  bc2fca0 first probes the requested cardinal directions. A blocked component
+  is zeroed while the other can continue. It then visits crossed tile rows
+  and columns in boundary-time order; equal times choose Y. A blocked edge
+  commits trajectory motion to first contact plus a signed .01 gap. Movement
+  and actor-position addition are independently float32, not one double sum.
+  bc12490 subtracts actual motion, projects out the blocked normal and repeats
+  until no contact remains. New map normals deduplicate against both retained
+  and pending lists; pending capacity is eight. Non-map bodies move directly
+  without writing output motion, matching the previously recovered contract.
+  bc304f0 normalizes the supplied direction, scales it to .5, collapses the
+  shifted rectangle onto its leading edge, divides by chip size and truncates
+  toward zero. Both scan endpoints are inclusive. bc28270/bc28390/bc284a0
+  clamp map coordinates to the edge cell, including beyond map boundaries.
+  Raw bcc8a30 int32[26] verified: IDs 0/1 have flags 0; IDs 2..25 flags 1.
+  Higher IDs use the explicit stage custom table. Missing custom IDs pass.
+  Raw bcbabe8 is FLT_MAX; bcb69c0 is -FLT_EPSILON. Boundary pixel accumulators
+  are uint32 (raw bc2fff9 and bc30037 convert zero-extended values via RAX).
+  Numeric IDs match recovered stage/stage_common.lua. The conversion helper
+  rejects unknown names or custom IDs without an explicit custom flag table.
+  bc14040 processes retained contacts before pending ones. Retained contacts
+  emit STAY or END; accepted pending contacts emit BEGIN then STAY and join
+  the retained list. The pending branch has no body-enabled check; this is
+  preserved and tested. Pending entries are cleared after the pass.
+
+Map integration boundary:
+  BoundBall now calls the native map movement and lifecycle helpers. The map
+  object stays stable while its numeric table refreshes from the live tiles.
+  Stage_bound01 uses base IDs only, so no guessed custom occupancy is needed.
+  Browser fixtures validate accepted floor contact, launch/loss/replacement,
+  reward capture and a finite 2400-tick player-contact run for this path.
+  BallBox and Player movement still use preview adapters. BoundBall's actor
+  pair separation remains an adapter. Global native ordering, scale changes,
+  circle pairs and full actor registry integration are not yet certified.
