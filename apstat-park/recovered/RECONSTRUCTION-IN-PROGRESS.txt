@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+CheckPoint checkpoint: capture and ordinary Player retry placement are now
+connected through an explicit shared scene store. Tests cover actual contact,
+reconstruction, shuffled-slot vertical stacking and scene isolation. Scene+178
+is preserved as an opaque checkpointWord pending semantic recovery. Production
+retry/store ownership, CHECK label rendering, specialized Player factory restore
+and remaining native mechanisms still need integration. Next:dynamic actor
+creators and specialized forms/controllers; full48-stage goal is NOT complete.
+
 UpDownEnemy checkpoint: native four-phase motion and overshoot timing, sensor
 damage, appearance metadata and snapshot adapter added. Actual Player death
 and full-cycle sensor movement tested. Used by majo01/02 and ghost01, whose

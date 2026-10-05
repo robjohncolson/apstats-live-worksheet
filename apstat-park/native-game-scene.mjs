@@ -37,7 +37,8 @@ export function nativeActorNameHash(name) {
 // No preview GameRuntime solver participates in this scene's frame loop.
 export function createNativeGameScene({ stage, playerCount, createRigidWorld,
   playerInput, playSound, stageRetryEligible, notifyPlayerRelocation,
-  getTimerPeer, resolveGoalFollower, spawnDueActors, spawnActor, randomInclusive }) {
+  getTimerPeer, resolveGoalFollower, spawnDueActors, spawnActor, randomInclusive,
+  checkpointStore = new Map(), sceneId = 0, checkpointWord = 0 }) {
   if (spawnDueActors && spawnActor) throw new Error('Supply either native actor construction or an external creation scheduler');
   if (stage.enableShufflePlayer && typeof randomInclusive !== 'function') {
     throw new Error('Native player-slot shuffle requires an inclusive native random source');
@@ -57,6 +58,7 @@ export function createNativeGameScene({ stage, playerCount, createRigidWorld,
   bodyWorld.map = nativeMapFromRecovered(stage.map, [3, 3, 3, 3, 1, 1, 1, 1, 1]); // bc2fc00/bcc8c40
   for (const [a, b] of COLLISION_PAIRS) bodyWorld.collisionMatrix[a * 32 + b] = 1;
   const scene = {
+    checkpointStore, sceneId: sceneId >>> 0, checkpointWord: checkpointWord >>> 0,
     flags: 0x600, frame: 0n, highestFrame: 0n, playerCount, players: [],
     playerSlots,
     actorManager: createNativeActorManager(4), bodyWorld,

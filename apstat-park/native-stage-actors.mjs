@@ -10,6 +10,7 @@ import { createNativeThunderActor } from './native-thunder-actor.mjs';
 import { createNativeJumpStandActor } from './native-jump-stand-actor.mjs';
 import { createNativeStepEnemyActor } from './native-step-enemy-actor.mjs';
 import { createNativeUpDownEnemyActor } from './native-up-down-enemy-actor.mjs';
+import { createNativeCheckPointActor } from './native-checkpoint-actor.mjs';
 import { createNativeUpDownLiftActor } from './native-up-down-lift-actor.mjs';
 import { createNativeFallBoxActor } from './native-fall-box-actor.mjs';
 import { createNativeDeadTimerActor } from './native-dead-timer-actor.mjs';
@@ -32,6 +33,7 @@ export const NATIVE_STAGE_ACTOR_TYPES = Object.freeze([
   'JumpStand', 'JumpStandEx',
   'StepEnemy',
   'UpDownEnemy',
+  'CheckPoint',
   'UpDownLift',
   'FallBox',
   'DeadTimer',
@@ -52,6 +54,7 @@ export function spawnNativeStageActor(scene, spawn, { playerPresentation, player
   if (spawn.actorName === 'Thunder') return scene.addActor(createNativeThunderActor({ spawn }));
   if (spawn.actorName === 'StepEnemy') return scene.addActor(createNativeStepEnemyActor({ spawn }));
   if (spawn.actorName === 'UpDownEnemy') return scene.addActor(createNativeUpDownEnemyActor({ spawn }));
+  if (spawn.actorName === 'CheckPoint') return scene.addActor(createNativeCheckPointActor({ spawn }));
   if (spawn.actorName === 'UpDownLift') return scene.addActor(createNativeUpDownLiftActor({ spawn, partySize: scene.playerCount }));
   if (spawn.actorName === 'FallBox') return scene.addActor(createNativeFallBoxActor({ spawn }));
   if (spawn.actorName === 'DeadTimer') return scene.addActor(createNativeDeadTimerActor({ spawn, partySize: scene.playerCount }));

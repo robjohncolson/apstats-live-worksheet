@@ -1,3 +1,28 @@
+CheckPoint capture/restore checkpoint:
+Factory bb746a7->bb50710 alloc3f0, vtablebcba708. Sprite/bodybcba810
+[-16,-64,32,64], UVbcba800(.03125,.3125,.015625,.03125),depth-.4,
+spriteflags9; bodytype0/category8. No Lua configuration.
+- Overlap bb509d0 accepts category1 once per flag actor, plays check. Uses
+  recipient actor's first body's bb4e260 scaled dimensions, not overlap body.
+  SavedXY=(flagX-width/2,flagY-height/2-1), float32 boundaries preserved.
+  Saves scene+178 opaque32-bit word and position to global cc98+sceneId*a0
+  when unsigned sceneId<100. Actor becomes checked even for invalid scene ID.
+- Player factory bb774a0 loads the first record for the scene. Restores +178,
+  replaces spawnXY with savedXY-(0,inputSlot*48), initializes viewPosition to
+  (max(0,savedX-180),0). Uses mapped/shuffled input slot, not creation sequence.
+- Native scene accepts checkpointStore/sceneId/checkpointWord; caller shares
+  the Map across retry scenes. Ordinary Player factory consumes it before
+  registration. Native record clears when entering title/stage selection
+  (bb2e670/bb2e1c0), not on ordinary retry. Production sequence ownership and
+  clearing remain integration work. The meaning of scene+178 is not yet named;
+  preserve raw word via checkpointWord instead of guessing another scene field.
+Three tests cover scaled dimensions, one-shot/scene ID bounds, actual Player
+capture then reconstructed retry, slot stacking, shuffled inputs and isolation.
+Draw bb50880 CHECK label remains renderer work: font16*viewScale, alignment2/1,
+X=(actorX-viewX-offsetX)*scale,Y=(actorY-bodyHeight*1.2)*scale. Note Y does
+not subtract viewY. Flag actor starts unchecked on reconstruction.
+Missing factory regression now uses Ghost. Full48-stage goal remains active.
+
 UpDownEnemy checkpoint:
 Factory bb74467..bb7447e alloc5a0->bb6d170. Lua bb6d4b0, PRE bb6d5c0,
 overlap bb6d780. Bodyc62d260[-28,-22,56,48], type0/category7 (sensor),
