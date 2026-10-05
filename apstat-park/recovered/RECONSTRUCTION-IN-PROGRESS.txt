@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Ghost checkpoint: native gaze hysteresis, key pursuit, damage sensors, camera
+anchor selection and goal-release fading now run in the native simulation.
+Original ghost01 initializes for 2/8 players. Full suite: 574/574 passing.
+This is initial simulation coverage, not an input-only completion of the stage.
+Ghost snapshots and common rendering/network integration remain unfinished,
+as do specialized player controllers and other mechanisms. Full 48-stage
+fidelity and production integration are NOT complete; keep the goal active.
+
 Wind/ScrollLimitRange checkpoint: party-indexed wind and key-gated scrolling
 mode changes now run with actual native Players. Original jump05 fully assembles
 for2/8players; complete factory coverage now11/51sources. This remains initial

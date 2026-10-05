@@ -1,3 +1,25 @@
+Ghost checkpoint:
+Factory bb75bd3 calls ctor bb51b00 and stores the first Ghost as scene camera
+anchor. Lua bb51ce0 supplies stop ratio, orientation, speed and key range.
+PRE bb51e10 counts eligible controllers 2/5 facing the Ghost; starts only with
+zero watchers and stops at max(1, trunc(activePlayers * stopRatio)). A nearby
+free Key takes precedence over the nearest player. Movement uses float32
+normalization toward target relative to Ghost position minus 50 vertical.
+- Primary sensor [-21,-99,42,56], type0/category9 permits key pickup. Identical
+  secondary category4 sensor damages authoritative category1 recipients via
+  command4 (bb52910). A carried Key disables only the primary sensor.
+- Command9 sets flag2; command18 sets fade flag4 (bb51db0). PRE subtracts .1
+  opacity per frame and removes after opacity becomes negative. Flag8 returns
+  before velocity clearing. POST bb52360 adds render-only sin(2*time)*8 bob,
+  skipping actor-manager replay. CRT sin bit parity is not proven.
+- Sprite bounds [-25,-100,50,58], flags8, depth-.4. Initial UV
+  (.453125,.375,.0244140625,.0283203125); chase row .28125 changes by watchers.
+- Snapshot pack bb52420/apply bb524a0 remain pending, including body state,
+  low-byte flags, facing and opacity. Rendering integration also remains open.
+Seven tests cover gaze hysteresis, strict key range, carrier sensor changes,
+freeze/fade/removal, visual bob, actual Player death and original ghost01 idle
+initialization for 2/8 players. Full suite 574/574; no full-stage solution claim.
+
 Wind / ScrollLimitRange checkpoint:
 Wind ctorbb6e140, Luabb6e910, overlapbb6e6d0. Factorybb75e3a adds
 numericparam0*uintparty to spawnY. Strength selects params[max(1,party-1)],
