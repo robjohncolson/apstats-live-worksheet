@@ -14,6 +14,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   let lastPacket = 0, lastJoin = -Infinity, lastInput = -Infinity, lastClear = -Infinity, lastResume = -Infinity;
   let bits = 0, buddy = 0, sentBits = -1, sentBuddy = -1, accumulator = 0, frame = null;
   let clearActive = false, soundClear = false, loadingState = null, hiddenTimer = null;
+  let idle = false, activeJoin = false;
   const held = new Set();
   const replay = createCampaignReplay(inputs => game.step(inputs));
   const scale = () => Math.min(1, board.viewportW() / 720);
@@ -54,8 +55,9 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     let packet; try { packet = JSON.parse(event.data); } catch { return; }
     if (!packet.type?.startsWith('campaign_')) return;
     lastPacket = performance.now(); error = '';
+    if (packet.type === 'campaign_idle') { idle = true; joined = false; activeJoin = false; blur(); return; }
     if (packet.type === 'campaign_error') { error = packet.message; joined = false; return; }
-    if (packet.type === 'campaign_state') { joined = true; start(packet); return; }
+    if (packet.type === 'campaign_state') { joined = true; idle = false; activeJoin = false; start(packet); return; }
     if (packet.epoch !== state?.epoch) { joined = false; return; }
     if (packet.type === 'campaign_frames' && !replay.accept(packet)) resume();
     if (packet.type === 'campaign_clear') clearActive = true;
@@ -67,8 +69,9 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
   }
   function pump() {
     if (disposed) return;
-    bind(); const now = performance.now();
-    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 4 }); }
+    bind(); if (idle) return;
+    const now = performance.now();
+    if (!joined && now - lastJoin > 1000) { lastJoin = now; send('campaign_join', { protocol: 4, active: activeJoin }); }
     if (!state || !game) return;
     if (now - lastPacket > 1500) resume();
     if (now - lastInput >= 50 && (bits !== sentBits || buddy !== sentBuddy || now - lastInput > 500)) {
@@ -88,6 +91,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     const second = { a: 1, d: 2, w: 4, s: 8, f: 16 };
     const mask = first[key] || second[key]; if (!mask) return;
     event.preventDefault();
+    if (idle && down) { idle = false; activeJoin = true; lastJoin = -Infinity; pump(); return; }
     const fresh = down && !held.has(key);
     const local = game?.getView().screenPlayers[Math.max(0, state?.roster.indexOf(board.username) ?? 0)];
     const doorX = 50 + (game?.getView().projection.x || 0);
@@ -139,7 +143,7 @@ export function mountCampaign({ container, getSocket, board, onClose }) {
     if (game && state) ctx.drawImage(game.canvas, 0, 0);
     pixelText(ctx, 'PICO PARK ' + entry.world + '-' + entry.stage + '  /  48', 28, 30, 14);
     pixelText(ctx, entry.title, 28, 52, 14);
-    let message = error || (!game ? 'LOADING PICO PARK...' : !joined ? 'RECONNECTING TO YOUR TEAM...'
+    let message = error || (idle ? 'INACTIVE. PRESS A GAME KEY TO REJOIN.' : !game ? 'LOADING PICO PARK...' : !joined ? 'RECONNECTING TO YOUR TEAM...'
       : state?.phase === 'waiting' ? 'GATHERING YOUR TEAM...'
       : state && !state.roster.includes(board.username) ? 'JOINING NEXT STAGE. TEAM CAN PRESS R TO RESTART.'
       : replay.received - replay.frame > 120 ? 'CATCHING UP WITH YOUR TEAM...'
