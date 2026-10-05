@@ -1,3 +1,36 @@
+CollisionChangePlayer checkpoint:
+Factory bb75ccd..bb75cf1 alloc3f8->bb3a210, vtablebcb78e8;
+Lua bb3a300 makes top-left float rectangle type0/category4, param2 integer>0
+allows rearming. PRE bb3a2a0 consumes overlapSeen; only a subsequent empty
+frame clears triggered. Default is one-shot. No visible sprite geometry.
+- Raw overlap LAB_bb3a420..bb3a636: scene networkflag100+clientmode1 returns
+  before setting overlapSeen. All other overlaps mark seen, including nonplayers.
+  Already triggered or category!=1 returns. Snapshot actual scene player count.
+- For each Player, find current slot in shuffled scene.playerSlots (missing=>0),
+  next=(index+actualCharacterCount)%configuredParty. Missing mapped index=>slot0.
+  Host uses bc22ce0 connected peers, slot0 always connected; otherwise increments
+  numeric slot modulo party until connected or back at previous slot.
+- Party>2 plays generate (stringbcb77b8); network host emits bb0f7f0(ff,1,3,0).
+  Adapter exposes transporthost,targetff,channel1,kind2,command3,value0.
+- Slot setter bb67670 updates playerIndex+400. Slots<10 update spritecolor+378
+  via baea070 (palettec62a040, configurable indices; defaults identity from
+  bc181f0). appearanceMode+1528==1 uses ffbfffdf. Writes embedded shared input
+  owner+1958 through bb58d20. Exactly two carried attachments+c98/ca0 receive
+  command2e with NULL payload (raw bb676df), even when slot did not change.
+Seven tests cover one-shot/rearm, nonplayer overlap, shuffled/sparse mapping,
+client/host/disconnected slots, two-person silence, palette and attachment state,
+and actual Player switching held-input authority while keeping position/spawn.
+Renderer color binding, specialized shared-input component and network transport
+remain integration work. Missing-factory regression now uses CheckPoint.
+
+Original stage_time_limit01/02 now assemble AND expire into native death at
+2/8players in four tests. This checks idle expiry, not completed puzzle solutions.
+Native actor factory coverage is complete for8 of51 campaign source files:
+jump01,push02,fall01,fall02,time_limit01,time_limit02,weight02,seesaw01.
+Remaining leaders at3sources each:UpDownEnemy,CheckPoint,BreakoutPlayer,
+BreakoutSyncArea,CollisionActorCreatorSilent. Full48-stage parity unfinished.
+Also verified DeadTimer retains bbaa920 spriteflags8, without Player's flag1.
+
 DeadTimer checkpoint:
 Factory bb7564c..bb75682 calls bb60c50(mode1), sets expiry action2.
 Lua bb618a0 uses numeric float32 param0+party*param1 when present; positive

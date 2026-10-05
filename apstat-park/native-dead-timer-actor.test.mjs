@@ -23,6 +23,7 @@ test('DeadTimer uses party-adjusted float time and screen-fixed rounded-up minut
   const { actor } = timer(69, -2, 2);
   assert.equal(actor.seconds, 65); assert.equal(actor.resetValue, 0);
   assert.equal(actor.cameraRelative, false); assert.equal(actor.bodies.length, 0);
+  assert.equal(actor.spriteFlags, 8, 'timer retains bbaa920 defaults without the Player animation flag');
   assert.deepEqual(actor.readTimerDisplay(), { text: '01:05', x: 426, y: 60, fontSize: 32,
     horizontalAlignment: 2, verticalAlignment: 2, timeUp: null });
   actor.beforeMotion(.1); assert.equal(actor.readTimerDisplay().text, '01:05');
@@ -137,3 +138,28 @@ test('actual Player presses a named Switch to add time once through scene comman
     assert.equal(actor.timerFlags & 1, 0); assert.equal(scene.players[0].health, 1);
   } finally { scene.rigidWorld.dispose(); }
 });
+
+const originalStages = JSON.parse(await readFile(new URL('./recovered/stages.json', import.meta.url)));
+for (const name of ['stage_time_limit01', 'stage_time_limit02']) for (const playerCount of [2, 8]) {
+  test(`original ${name} assembles and expires through native player death for ${playerCount} players`, () => {
+    const sounds = [];
+    const scene = createNativeGameScene({ playerCount, createRigidWorld,
+      stage: originalStages.find(stage => stage.name === name),
+      playerInput: { held: () => false, pressed: () => false }, playSound: sound => sounds.push(sound),
+      stageRetryEligible: () => false,
+      spawnActor: (scene, spawn) => spawnNativeStageActor(scene, spawn, {
+        playerPresentation: { setAnimation() {}, setScale() {}, resetSpriteBounds() {} } }) });
+    try {
+      scene.setActive(true);
+      const actor = scene.findActor('DeadTimer');
+      assert.equal(scene.players.length, playerCount);
+      assert.equal(scene.creationSchedule.state.cursor, scene.creationSchedule.state.entries.length);
+      assert.equal(actor.seconds, name === 'stage_time_limit01' ? 10 : playerCount <= 5 ? 3 : 2);
+      for (let i = 0; i < 900 && !(actor.timerFlags & 2); i++) scene.step();
+      assert.equal(actor.timerFlags & 6, 6); assert.equal(actor.seconds, 0);
+      scene.step();
+      assert.ok(scene.players.every(p => p.health === 0 && p.controllerKind === 3));
+      assert.equal(sounds.filter(sound => sound === 'blip').length, 1);
+    } finally { scene.rigidWorld.dispose(); }
+  });
+}

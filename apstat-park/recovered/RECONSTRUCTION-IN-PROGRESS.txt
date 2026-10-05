@@ -1,5 +1,16 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Control-swap checkpoint: CollisionChangePlayer now rotates real Player input
+slots using actual character count, shuffled mapping, rearm delay and host peer
+availability. Native slot setter preserves color/shared-owner/attachment effects
+as state; renderer, shared-form input and network integration are still pending.
+Original time_limit01/02 assemble and expire correctly for2/8players. Factory
+coverage is now complete for8 of51 campaign source files, NOT complete solutions.
+Next:UpDownEnemy,CheckPoint,BreakoutPlayer,BreakoutSyncArea,
+CollisionActorCreatorSilent (each3sources), then remaining mechanisms/forms.
+Golden traces, renderer, native transport, saved checkpoints, full input-only
+solutions and live campaign integration remain unfinished. Keep goal active.
+
 DeadTimer checkpoint: countdown/bonuses/pause/reset/expiry, snapshot adapter
 and display layout recovered from C plus raw instructions. Actual Player tests
 verify all-player native death and Switch bonus routing. Nine new tests pass.

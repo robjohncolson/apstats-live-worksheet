@@ -23,7 +23,7 @@ export function createNativeDeadTimerActor({ spawn, partySize }) {
     networkType: 0x23, replicationMode: 1,
     seconds: initial > 0 ? initial : 0, resetValue: 0, previousReplicatedSeconds: 0,
     timerFlags: 0, bonusCount: 0, timeUpSeconds: 0, fontSize: 32,
-    spriteFlags: 9, spriteDepth: f(-.5), textDepth: f(-.6),
+    spriteFlags: 8, spriteDepth: f(-.5), textDepth: f(-.6),
     spriteBounds: { x: -82, y: -32, width: 164, height: 64 },
     spriteUV: { x: .3125, y: .421875, width: .0400390625, height: .015625 },
     onAdded(scene) { actor.scene = scene; runNativeCommonActorAdded(actor, scene); },
