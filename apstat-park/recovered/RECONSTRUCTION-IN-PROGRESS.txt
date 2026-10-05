@@ -1,5 +1,12 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Text checkpoint: native label parameters, party/input substitutions, motion,
+lifetime and draw metadata now assemble original auto_scroll02 for2/8players,
+including deferred enemy creation. Full suite592/592. Actual font/glyph rendering,
+non-ASCII byte encoding and OnlineText remain unfinished. Continue specialized
+controllers and remaining mechanisms, complete-stage input solutions, golden
+comparisons and live integration. Full48-stage goal remains NOT complete.
+
 DeadSwitch checkpoint: shared Switch press-transition hook now drives native
 team-death broadcast, hit sound and host packet metadata. Actual distant
 teammate dies on contact; original jump06 initializes for2/8 players. Full

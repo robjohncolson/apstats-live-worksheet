@@ -1,3 +1,25 @@
+Text checkpoint:
+Factory bb76a66 -> ctor bb60150, Lua bb602f0, PRE bb607c0, draw bb60820,
+input-label refresh bb609a0, visibility bb60c20. Bodyless actor; horizontal
+velocity is numeric param3 per frame. Lifetime defaults-1; nonnegative lifetime
+counts down by dt and removes at<=0. Draw metadata uses native camera-relative
+position truncated to integers, vertical alignment2 and default depth-.4.
+- Param0 string capacity64, first [pl] replaced with unsigned party count.
+  Positive integer param1 changes font size; otherwise-1 preserves font state.
+  Param2 nonzero swaps orange ffff864d and white; param4 enables outline;
+  param5 changes depth to.1. ASCII shipped strings tested; non-ASCII native
+  byte encoding/truncation is not yet proven by the JS string adapter.
+- [shot] switches action12(default pixel/centered) to11(input-label/left).
+  Prefix copies six characters rather than match offset (source quirk).
+  Input label refreshes only when mode revision changes. Current adapter exposes
+  nativeInputLabelRevision/resolveNativeInputLabel. Actual glyph and font binding
+  remains renderer/input integration work; OnlineText subclass still unsupported.
+Five tests cover display options/camera transform, frame motion, lifetime,
+party and binding substitution, and original auto_scroll02 for2/8players.
+Original final two StepEnemy rows remain deferred until trigger1968; tests
+verify initial cursor20 and explicitly advance scheduler to assemble those rows.
+This is assembly coverage, not a complete input-only solution. Full suite592/592.
+
 DeadSwitch checkpoint:
 Factory bb74f61 calls ctor bb3f080, inheriting Switch mode0/style0. Native
 vtable bcb84a0 uses the ordinary switch PRE bb5eef0 and snapshot bb5ed50/eda0,
