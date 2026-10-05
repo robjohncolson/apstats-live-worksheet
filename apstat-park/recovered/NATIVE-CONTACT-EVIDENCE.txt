@@ -1,5 +1,18 @@
 Native body-pair reconstruction checkpoint
 
+Rigid wrapper checkpoint (bbe6400/bbe6520/bbe6740/bbe67e0/bbe6850/bbe68a0):
+  Native type 1 creates a dynamic Box2D body; all other values are static.
+  Position and velocity multiply by float32 .01; position reads divide by
+  that value. Setters change the live velocity without rewriting initial
+  snapshots. Angular damping persists across reattachment; active state does
+  not. World and body identity are visible before the shape attach callback.
+  bbe5a00/bbe5ad0 circle materials default to zero, including friction.
+  Radius converts to meters; local circle center is copied without scaling.
+  bbe66b0 notifies joint wrappers before DestroyBody. The JS notification
+  hook exists, but native joint-edge tracking and contact callbacks do not.
+  Backend tests exercise real WASM bodies, including offset-center rotation
+  and zero-friction floor sliding. No upstream Box2D source was modified.
+
 Source: recovered/memdump/ghidra_decompiled/functions_split, read only.
 This file records the boundary of the implemented response; it does not
 certify the global solver or the entire campaign.

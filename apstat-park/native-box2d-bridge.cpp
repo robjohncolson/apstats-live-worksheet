@@ -54,6 +54,10 @@ void pico_body_velocity(b2Body* body, float x, float y, float angular) {
   body->SetLinearVelocity(b2Vec2(x, y));
   body->SetAngularVelocity(angular);
 }
+void pico_body_linear_velocity(b2Body* body, float x, float y) { body->SetLinearVelocity(b2Vec2(x, y)); }
+void pico_body_angular_velocity(b2Body* body, float angular) { body->SetAngularVelocity(angular); }
+void pico_body_angular_damping(b2Body* body, float damping) { body->SetAngularDamping(damping); }
+void pico_body_active(b2Body* body, int active) { body->SetActive(active != 0); }
 void pico_body_transform(b2Body* body, float x, float y, float angle) { body->SetTransform(b2Vec2(x, y), angle); }
 float pico_body_read(b2Body* body, int field) {
   switch (field) {
@@ -65,6 +69,8 @@ float pico_body_read(b2Body* body, int field) {
     case 5: return body->GetAngularVelocity();
     case 6: return body->GetMass();
     case 7: return body->IsAwake() ? 1.0f : 0.0f;
+    case 8: return body->IsActive() ? 1.0f : 0.0f;
+    case 9: return body->GetAngularDamping();
     default: return 0.0f;
   }
 }

@@ -37,12 +37,17 @@ export async function createNativeRigidWorld({ gravity = { x: 0, y: 0 }, moduleO
           return body;
         },
         setVelocity(x, y, angular = 0) { api._pico_body_velocity(handle(body), x, y, angular); },
+        setLinearVelocity(x, y) { api._pico_body_linear_velocity(handle(body), x, y); },
+        setAngularVelocity(angular) { api._pico_body_angular_velocity(handle(body), angular); },
+        setAngularDamping(damping) { api._pico_body_angular_damping(handle(body), damping); },
+        setActive(active) { api._pico_body_active(handle(body), Number(Boolean(active))); },
         setTransform(x, y, angle = 0) { api._pico_body_transform(handle(body), x, y, angle); },
         read() {
           const pointer = handle(body);
-          const values = Array.from({ length: 8 }, (_, field) => api._pico_body_read(pointer, field));
+          const values = Array.from({ length: 10 }, (_, field) => api._pico_body_read(pointer, field));
           return { x: values[0], y: values[1], angle: values[2], vx: values[3], vy: values[4],
-            angularVelocity: values[5], mass: values[6], awake: Boolean(values[7]) };
+            angularVelocity: values[5], mass: values[6], awake: Boolean(values[7]),
+            active: Boolean(values[8]), angularDamping: values[9] };
         },
         destroy() { api._pico_body_destroy(world, handle(body)); bodies.delete(body); },
       };

@@ -1,5 +1,13 @@
 Work branch: work/pico-native-fidelity. NOT READY TO MERGE OR DEPLOY.
 
+Rigid wrapper checkpoint: native-rigid-body.mjs now implements body attachment,
+native type mapping, float32 pixel conversion, live velocity/active setters,
+stored angular damping, position reads and circle fixture construction on the
+pinned WASM backend. Seven wrapper tests, 289 total park tests and the Chrome
+desktop-reference solver smoke pass. These wrappers are not wired into live
+campaign actors yet. Polygon fixtures, native joints/contact callbacks and
+rigid actor integration remain unfinished; this is not 48-stage certification.
+
 The user requested continued work until the complete 48-stage campaign is
 faithful. That objective is not yet achieved. This isolated checkout keeps
 unfinished runtime changes out of the classroom deployment.
